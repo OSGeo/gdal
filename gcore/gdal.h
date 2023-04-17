@@ -422,21 +422,36 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DMD_OPENOPTIONLIST "DMD_OPENOPTIONLIST"
 
-/** List of (space separated) raster data types support by the
+/** List of (space separated) raster data types supported by the
  * Create()/CreateCopy() API. */
 #define GDAL_DMD_CREATIONDATATYPES "DMD_CREATIONDATATYPES"
 
-/** List of (space separated) vector field types support by the CreateField()
+/** List of (space separated) vector field types supported by the CreateField()
  * API.
  * @since GDAL 2.0
  * */
 #define GDAL_DMD_CREATIONFIELDDATATYPES "DMD_CREATIONFIELDDATATYPES"
 
-/** List of (space separated) vector field sub-types support by the
+/** List of (space separated) vector field sub-types supported by the
  * CreateField() API.
  * @since GDAL 2.3
  * */
 #define GDAL_DMD_CREATIONFIELDDATASUBTYPES "DMD_CREATIONFIELDDATASUBTYPES"
+
+/** List of (space separated) capability flags supported by the CreateField() API.
+ *
+ * Supported values are:
+ *
+ * - "AlternativeName": field alternative names are supported
+ * - "Comment": field comments are supported
+ * - "Domain": fields can be associated with a domain
+ *
+ * @see GDAL_DMD_ALTER_FIELD_DEFN_FLAGS for capabilities supported when altering
+ * existing fields.
+ *
+ * @since GDAL 3.7
+ */
+#define GDAL_DMD_CREATION_FIELD_DEFN_FLAGS "DMD_CREATION_FIELD_DEFN_FLAGS"
 
 /** Capability set by a driver that exposes Subdatasets.
  *
@@ -558,7 +573,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_REORDER_FIELDS "DCAP_REORDER_FIELDS"
 
-/** List of (space separated) flags support by the OGRLayer::AlterFieldDefn()
+/** List of (space separated) flags supported by the OGRLayer::AlterFieldDefn()
  * API.
  *
  * Supported values are "Name", "Type", "WidthPrecision", "Nullable", "Default",
@@ -571,6 +586,9 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  * all modifications of the corresponding property can be made. For example,
  * altering the field type may be restricted by the current type of the field,
  * etc.
+ *
+ * @see GDAL_DMD_CREATION_FIELD_DEFN_FLAGS for capabilities supported
+ * when creating new fields.
  *
  * @since GDAL 3.6
  */
@@ -753,7 +771,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_RENAME_LAYERS "DCAP_RENAME_LAYERS"
 
-/** List of (space separated) field domain types support by the AddFieldDomain()
+/** List of (space separated) field domain types supported by the AddFieldDomain()
  * API.
  *
  * Supported values are Coded, Range and Glob, corresponding to the
@@ -764,7 +782,7 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DMD_CREATION_FIELD_DOMAIN_TYPES "DMD_CREATION_FIELD_DOMAIN_TYPES"
 
-/** List of (space separated) flags support by the
+/** List of (space separated) flags supported by the
  * OGRLayer::AlterGeomFieldDefn() API.
  *
  * Supported values are "Name", "Type", "Nullable", "SRS", "CoordinateEpoch",

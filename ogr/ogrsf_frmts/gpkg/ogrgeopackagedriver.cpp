@@ -593,6 +593,9 @@ void RegisterOGRGeoPackage()
                               "Binary");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Boolean Int16 Float32 JSON");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "Comment AlternativeName Domain");
+
     poDriver->SetMetadataItem(GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
                               "Name Type WidthPrecision Nullable Default "
                               "Unique Domain AlternativeName Comment");
