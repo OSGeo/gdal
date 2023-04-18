@@ -62,3 +62,18 @@ def test_osr_erm_2():
     srs2.SetFromUserInput("EPSG:3395")
 
     assert srs2.IsSame(srs), "EPSG:n import does not match."
+
+
+###############################################################################
+
+
+def test_osr_erm_GDA2020():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(7850)  #  "GDA2020 / MGA zone 50"
+    proj, datum, units = srs.ExportToERM()
+    assert (proj, datum, units) == ("MGA50", "GDA2020", "METERS")
+
+    srs2 = osr.SpatialReference()
+    srs2.ImportFromERM(proj, datum, units)
+    assert srs.IsSame(srs2)
