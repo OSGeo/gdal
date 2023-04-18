@@ -1088,6 +1088,17 @@ public:
 %clear (long*);
 %clear (double *params[15]);
 
+%apply (char **argout) { (char **) };
+  OGRErr ExportToERM( char **proj, char** datum, char **units ) {
+    char szProj[32] = {0}, szDatum[32] = {0}, szUnits[32] = {0};
+    OGRErr ret = OSRExportToERM( self, szProj, szDatum, szUnits );
+    *proj = CPLStrdup(szProj);
+    *datum = CPLStrdup(szDatum);
+    *units = CPLStrdup(szUnits);
+    return ret;
+  }
+%clear (char **);
+
   OGRErr ExportToXML( char **argout, const char *dialect = "" ) {
     return OSRExportToXML( self, argout, dialect );
   }
