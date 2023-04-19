@@ -593,3 +593,47 @@ def test_metadata_alter_geom_field_defn_flags(driver_name):
     if flags_str is not None:
         for flag in flags_str.split(" "):
             assert flag in supported_flags
+
+
+@pytest.mark.parametrize("driver_name", ogr_driver_names)
+def test_metadata_alter_field_defn_flags(driver_name):
+    """Test if GDAL_DMD_ALTER_FIELD_DEFN_FLAGS metadataitem returns valid flags"""
+
+    supported_flags = {
+        "Name",
+        "Type",
+        "WidthPrecision",
+        "Nullable",
+        "Default",
+        "Unique",
+        "AlternativeName",
+        "Comment",
+        "Domain",
+    }
+
+    driver = gdal.GetDriverByName(driver_name)
+    flags_str = driver.GetMetadataItem(gdal.DMD_ALTER_FIELD_DEFN_FLAGS)
+    if flags_str is not None:
+        for flag in flags_str.split(" "):
+            assert flag in supported_flags
+
+
+@pytest.mark.parametrize("driver_name", ogr_driver_names)
+def test_metadata_creation_field_defn_flags(driver_name):
+    """Test if GDAL_DMD_CREATION_FIELD_DEFN_FLAGS metadataitem returns valid flags"""
+
+    supported_flags = {
+        "WidthPrecision",
+        "Nullable",
+        "Default",
+        "Unique",
+        "AlternativeName",
+        "Comment",
+        "Domain",
+    }
+
+    driver = gdal.GetDriverByName(driver_name)
+    flags_str = driver.GetMetadataItem(gdal.DMD_CREATION_FIELD_DEFN_FLAGS)
+    if flags_str is not None:
+        for flag in flags_str.split(" "):
+            assert flag in supported_flags

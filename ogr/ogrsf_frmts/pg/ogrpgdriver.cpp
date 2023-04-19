@@ -210,7 +210,8 @@ void RegisterOGRPG()
                               "StringList Binary");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Boolean Int16 Float32");
-    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS, "Comment");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "WidthPrecision Nullable Unique Default Comment");
 
     poDriver->SetMetadataItem(
         GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
