@@ -706,10 +706,19 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
     {
         auto oResult = SQLQuery(
             hDB,
-            "SELECT m.name, p.id, p.seq, p.\"table\", p.\"from\", p.\"to\", "
+            "SELECT m.name, p.id, p.seq, p.\"table\" AS base_table_name, "
+            "p.\"from\", p.\"to\", "
             "p.on_delete FROM sqlite_master m "
             "JOIN pragma_foreign_key_list(m.name) p ON m.name != p.\"table\" "
             "WHERE m.type = 'table' "
+            // skip over foreign keys which relate to private GPKG tables
+            "AND base_table_name NOT LIKE 'gpkg_%' "
+            // Same with NGA GeoInt system tables
+            "AND base_table_name NOT LIKE 'nga_%' "
+            // Same with Spatialite system tables
+            "AND base_table_name NOT IN ('geometry_columns', "
+            "'spatial_ref_sys', 'views_geometry_columns', "
+            "'virts_geometry_columns') "
             "ORDER BY m.name");
 
         if (!oResult)
@@ -726,10 +735,6 @@ void OGRSQLiteBaseDataSource::LoadRelationshipsFromForeignKeys() const
 
             const char *pszBaseTableName = oResult->GetValue(3, iRecord);
             if (!pszBaseTableName)
-                continue;
-
-            // skip over foreign keys which relate to private GPKG tables
-            if (STARTS_WITH(pszBaseTableName, "gpkg_"))
                 continue;
 
             const char *pszRelatedFieldName = oResult->GetValue(4, iRecord);
