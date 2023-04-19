@@ -873,6 +873,165 @@ def test_vsiaz_fake_unlink():
 
 
 ###############################################################################
+# Test UnlinkBatch()
+
+
+def test_vsiaz_fake_unlink_batch():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/azure/blob/myaccount/?comp=batch",
+        202,
+        {"content-type": "multipart/mixed; boundary=my_boundary"},
+        """--my_boundary
+Content-Type: application/http
+Content-ID: <0>
+
+HTTP/1.1 202 Accepted
+
+--my_boundary
+Content-Type: application/http
+Content-ID: <1>
+
+HTTP/1.1 202 Accepted
+
+--my_boundary--
+""",
+        expected_body=b"--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <0>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE /az_bucket_test_unlink/myfile HTTP/1.1\r\nx-ms-date: my_timestamp\r\nAuthorization: SharedKey myaccount:Dnfp0tNObKAYSOkqSNuMyzxeHo75tKnFv0SP74SLlGg=\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <1>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE /az_bucket_test_unlink/myfile2 HTTP/1.1\r\nx-ms-date: my_timestamp\r\nAuthorization: SharedKey myaccount:j9rNG0PKzqhgOF45zZi2V6Gvkq12Zql3cXO8TVjizTc=\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589--\r\n",
+    )
+
+    with webserver.install_http_handler(handler):
+        ret = gdal.UnlinkBatch(
+            [
+                "/vsiaz/az_bucket_test_unlink/myfile",
+                "/vsiaz/az_bucket_test_unlink/myfile2",
+            ]
+        )
+    assert ret
+
+
+###############################################################################
+# Test UnlinkBatch()
+
+
+def test_vsiaz_fake_unlink_batch_max_batch_size_1():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/azure/blob/myaccount/?comp=batch",
+        202,
+        {"content-type": "multipart/mixed; boundary=my_boundary"},
+        """--my_boundary
+Content-Type: application/http
+Content-ID: <0>
+
+HTTP/1.1 202 Accepted
+
+--my_boundary--
+""",
+        expected_body=b"--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <0>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE /az_bucket_test_unlink/myfile HTTP/1.1\r\nx-ms-date: my_timestamp\r\nAuthorization: SharedKey myaccount:Dnfp0tNObKAYSOkqSNuMyzxeHo75tKnFv0SP74SLlGg=\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589--\r\n",
+    )
+    handler.add(
+        "POST",
+        "/azure/blob/myaccount/?comp=batch",
+        202,
+        {"content-type": "multipart/mixed; boundary=my_boundary"},
+        """--my_boundary
+Content-Type: application/http
+Content-ID: <1>
+
+HTTP/1.1 202 Accepted
+
+--my_boundary--
+""",
+        expected_body=b"--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <1>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE /az_bucket_test_unlink/myfile2 HTTP/1.1\r\nx-ms-date: my_timestamp\r\nAuthorization: SharedKey myaccount:j9rNG0PKzqhgOF45zZi2V6Gvkq12Zql3cXO8TVjizTc=\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589--\r\n",
+    )
+
+    with gdaltest.config_option("CPL_VSIAZ_UNLINK_BATCH_SIZE", "1"):
+        with webserver.install_http_handler(handler):
+            ret = gdal.UnlinkBatch(
+                [
+                    "/vsiaz/az_bucket_test_unlink/myfile",
+                    "/vsiaz/az_bucket_test_unlink/myfile2",
+                ]
+            )
+    assert ret
+
+
+###############################################################################
+# Test UnlinkBatch()
+
+
+def test_vsiaz_fake_unlink_batch_max_payload_4MB():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    longfilename1 = "/az_bucket_test_unlink/myfile" + ("X" * (3000 * 1000))
+    longfilename2 = "/az_bucket_test_unlink/myfile2" + ("X" * (3000 * 1000))
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "POST",
+        "/azure/blob/myaccount/?comp=batch",
+        202,
+        {"content-type": "multipart/mixed; boundary=my_boundary"},
+        """--my_boundary
+Content-Type: application/http
+Content-ID: <0>
+
+HTTP/1.1 202 Accepted
+
+--my_boundary--
+""",
+        expected_body=b"--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <0>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE "
+        + longfilename1.encode("UTF-8")
+        + b" HTTP/1.1\r\nx-ms-date: my_timestamp\r\nAuthorization: SharedKey myaccount:/yczq3N49gssy5a0exoyTyS6FIWXXwOBLPMxgaflJBI=\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589--\r\n",
+    )
+    handler.add(
+        "POST",
+        "/azure/blob/myaccount/?comp=batch",
+        202,
+        {"content-type": "multipart/mixed; boundary=my_boundary"},
+        """--my_boundary
+Content-Type: application/http
+Content-ID: <1>
+
+HTTP/1.1 202 Accepted
+
+--my_boundary
+Content-Type: application/http
+Content-ID: <2>
+
+HTTP/1.1 202 Accepted
+
+--my_boundary--
+""",
+        expected_body=b"--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <1>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE "
+        + longfilename2.encode("UTF-8")
+        + b" HTTP/1.1\r\nx-ms-date: my_timestamp\r\nAuthorization: SharedKey myaccount:MSulMcLyy+3xYWT7RGIfS0pd6zjc9Gq3OV9jIR2Rh5w=\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589\r\nContent-Type: application/http\r\nContent-ID: <2>\r\nContent-Transfer-Encoding: binary\r\n\r\nDELETE /az_bucket_test_unlink/myfile HTTP/1.1\r\nx-ms-date: my_timestamp\r\nAuthorization: SharedKey myaccount:Dnfp0tNObKAYSOkqSNuMyzxeHo75tKnFv0SP74SLlGg=\r\nContent-Length: 0\r\n\r\n\r\n--batch_ec2ce0a7-deaf-11ed-9ad8-3fabe5ecd589--\r\n",
+    )
+
+    with webserver.install_http_handler(handler):
+        ret = gdal.UnlinkBatch(
+            [
+                "/vsiaz" + longfilename1,
+                "/vsiaz" + longfilename2,
+                "/vsiaz/az_bucket_test_unlink/myfile",
+            ]
+        )
+    assert ret
+
+
+###############################################################################
 # Test Mkdir() / Rmdir()
 
 
