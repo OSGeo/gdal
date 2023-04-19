@@ -64,7 +64,7 @@ template <class STAT_TYPE> struct GetStats
             if (columnChunk->is_stats_set() && colStats &&
                 colStats->HasMinMax())
             {
-                auto castStats = dynamic_cast<STAT_TYPE *>(colStats.get());
+                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
                 const auto rowGroupVal = castStats->min();
                 if (iGroup == 0 || rowGroupVal < v)
                 {
@@ -89,7 +89,7 @@ template <class STAT_TYPE> struct GetStats
             if (columnChunk->is_stats_set() && colStats &&
                 colStats->HasMinMax())
             {
-                auto castStats = dynamic_cast<STAT_TYPE *>(colStats.get());
+                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
                 const auto rowGroupVal = castStats->max();
                 if (iGroup == 0 || rowGroupVal > v)
                 {
@@ -123,8 +123,8 @@ template <> struct GetStats<parquet::ByteArrayStatistics>
             if (columnChunk->is_stats_set() && colStats &&
                 colStats->HasMinMax())
             {
-                auto castStats = dynamic_cast<parquet::ByteArrayStatistics *>(
-                    colStats.get());
+                auto castStats =
+                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
                 const auto rowGroupValRaw = castStats->min();
                 const std::string rowGroupVal(
                     reinterpret_cast<const char *>(rowGroupValRaw.ptr),
@@ -153,8 +153,8 @@ template <> struct GetStats<parquet::ByteArrayStatistics>
             if (columnChunk->is_stats_set() && colStats &&
                 colStats->HasMinMax())
             {
-                auto castStats = dynamic_cast<parquet::ByteArrayStatistics *>(
-                    colStats.get());
+                auto castStats =
+                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
                 const auto rowGroupValRaw = castStats->max();
                 const std::string rowGroupVal(
                     reinterpret_cast<const char *>(rowGroupValRaw.ptr),
