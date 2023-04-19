@@ -119,7 +119,7 @@ class ILI2Reader : public IILI2Reader
     void SetFieldValues(OGRFeature *feature, DOMElement *elem);
     const char *GetLayerName(/*IOM_BASKET model, IOM_OBJECT table*/);
     void AddField(OGRLayer *layer /*, IOM_BASKET model, IOM_OBJECT obj*/);
-    OGRCircularString *getArc(DOMElement *elem);
+    static OGRCircularString *getArc(DOMElement *elem);
     OGRGeometry *getGeometry(DOMElement *elem, int type);
     void setFieldDefn(OGRFeatureDefn *featureDef, DOMElement *elem);
 };

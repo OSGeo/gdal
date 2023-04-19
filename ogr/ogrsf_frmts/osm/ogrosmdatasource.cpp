@@ -445,6 +445,7 @@ bool OGROSMDataSource::IndexPointSQLite(OSMNode *psNode)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Failed inserting node " CPL_FRMT_GIB ": %s", psNode->nID,
                  sqlite3_errmsg(m_hDB));
+        return false;
     }
 
     return true;
@@ -3138,8 +3139,7 @@ bool OGROSMDataSource::SetDBOptions()
         return false;
     }
 
-    if (!SetCacheSize())
-        return false;
+    SetCacheSize();
 
     if (!StartTransactionCacheDB())
         return false;
@@ -3151,13 +3151,13 @@ bool OGROSMDataSource::SetDBOptions()
 /*                              SetCacheSize()                          */
 /************************************************************************/
 
-bool OGROSMDataSource::SetCacheSize()
+void OGROSMDataSource::SetCacheSize()
 {
     const char *pszSqliteCacheMB =
         CPLGetConfigOption("OSM_SQLITE_CACHE", nullptr);
 
     if (pszSqliteCacheMB == nullptr)
-        return true;
+        return;
 
     char *pszErrMsg = nullptr;
     char **papszResult = nullptr;
@@ -3184,16 +3184,16 @@ bool OGROSMDataSource::SetCacheSize()
                  "Unable to run PRAGMA page_size : %s",
                  pszErrMsg ? pszErrMsg : sqlite3_errmsg(m_hDB));
         sqlite3_free(pszErrMsg);
-        return true;
+        return;
     }
     if (iSqlitePageSize == 0)
-        return true;
+        return;
 
     /* computing the CacheSize as #Pages */
     const int iSqliteCachePages =
         static_cast<int>(iSqliteCacheBytes / iSqlitePageSize);
     if (iSqliteCachePages <= 0)
-        return true;
+        return;
 
     rc = sqlite3_exec(m_hDB,
                       CPLSPrintf("PRAGMA cache_size = %d", iSqliteCachePages),
@@ -3204,8 +3204,6 @@ bool OGROSMDataSource::SetCacheSize()
                  "Unrecognized value for PRAGMA cache_size : %s", pszErrMsg);
         sqlite3_free(pszErrMsg);
     }
-
-    return true;
 }
 
 /************************************************************************/

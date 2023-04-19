@@ -552,10 +552,10 @@ OGRPoint *OGRESRIJSONReadPoint(json_object *poObj)
 }
 
 /************************************************************************/
-/*                     OGRESRIJSONReaderParseZM()                  */
+/*                     OGRESRIJSONReaderParseZM()                      */
 /************************************************************************/
 
-static bool OGRESRIJSONReaderParseZM(json_object *poObj, bool *bHasZ,
+static void OGRESRIJSONReaderParseZM(json_object *poObj, bool *bHasZ,
                                      bool *bHasM)
 {
     CPLAssert(nullptr != poObj);
@@ -586,7 +586,6 @@ static bool OGRESRIJSONReaderParseZM(json_object *poObj, bool *bHasZ,
         *bHasZ = bZ;
     if (bHasM != nullptr)
         *bHasM = bM;
-    return true;
 }
 
 /************************************************************************/
@@ -727,11 +726,7 @@ OGRGeometry *OGRESRIJSONReadLineString(json_object *poObj)
     bool bHasZ = false;
     bool bHasM = false;
 
-    if (!OGRESRIJSONReaderParseZM(poObj, &bHasZ, &bHasM))
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Failed to parse hasZ and/or hasM from geometry");
-    }
+    OGRESRIJSONReaderParseZM(poObj, &bHasZ, &bHasM);
 
     json_object *poObjPaths = OGRGeoJSONFindMemberByName(poObj, "paths");
     if (nullptr == poObjPaths)
@@ -831,11 +826,7 @@ OGRGeometry *OGRESRIJSONReadPolygon(json_object *poObj)
     bool bHasZ = false;
     bool bHasM = false;
 
-    if (!OGRESRIJSONReaderParseZM(poObj, &bHasZ, &bHasM))
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Failed to parse hasZ and/or hasM from geometry");
-    }
+    OGRESRIJSONReaderParseZM(poObj, &bHasZ, &bHasM);
 
     json_object *poObjRings = OGRGeoJSONFindMemberByName(poObj, "rings");
     if (nullptr == poObjRings)
@@ -930,11 +921,7 @@ OGRMultiPoint *OGRESRIJSONReadMultiPoint(json_object *poObj)
     bool bHasZ = false;
     bool bHasM = false;
 
-    if (!OGRESRIJSONReaderParseZM(poObj, &bHasZ, &bHasM))
-    {
-        CPLError(CE_Warning, CPLE_AppDefined,
-                 "Failed to parse hasZ and/or hasM from geometry");
-    }
+    OGRESRIJSONReaderParseZM(poObj, &bHasZ, &bHasM);
 
     json_object *poObjPoints = OGRGeoJSONFindMemberByName(poObj, "points");
     if (nullptr == poObjPoints)

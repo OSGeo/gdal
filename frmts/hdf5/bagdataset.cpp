@@ -2054,7 +2054,8 @@ GDALDataset *BAGDataset::Open(GDALOpenInfo *poOpenInfo)
     H5Pset_driver(fapl, HDF5GetFileDriver(), nullptr);
     hid_t hHDF5 = H5Fopen(
         osFilename,
-        poOpenInfo->eAccess == GA_Update ? H5F_ACC_RDWR : H5F_ACC_RDONLY, fapl);
+        /*poOpenInfo->eAccess == GA_Update ? H5F_ACC_RDWR : */ H5F_ACC_RDONLY,
+        fapl);
     H5Pclose(fapl);
     if (hHDF5 < 0)
         return nullptr;

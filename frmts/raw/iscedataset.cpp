@@ -687,7 +687,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         auto poBand = cpl::make_unique<ISCERasterBand>(
             poDS.get(), b + 1, poDS->fpImage, nBandOffset * b, nPixelOffset,
             nLineOffset, eDataType, bNativeOrder);
-        if (!poBand)
+        if (!poBand->IsValid())
             return nullptr;
         poDS->SetBand(b + 1, std::move(poBand));
     }

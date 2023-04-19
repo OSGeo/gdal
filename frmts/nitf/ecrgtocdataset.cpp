@@ -319,9 +319,10 @@ static int NEAR_ROUND(double a, double b)
 
 constexpr int ECRG_PIXELS = 2304;
 
-static int GetExtent(const char *pszFrameName, int nScale, int nZone,
-                     double &dfMinX, double &dfMaxX, double &dfMinY,
-                     double &dfMaxY, double &dfPixelXSize, double &dfPixelYSize)
+static void GetExtent(const char *pszFrameName, int nScale, int nZone,
+                      double &dfMinX, double &dfMaxX, double &dfMinY,
+                      double &dfMaxY, double &dfPixelXSize,
+                      double &dfPixelYSize)
 {
     const int nAbsZone = abs(nZone);
 #ifdef DEBUG
@@ -408,8 +409,6 @@ static int GetExtent(const char *pszFrameName, int nScale, int nZone,
              "Frame %s : minx=%.16g, maxy=%.16g, maxx=%.16g, miny=%.16g",
              pszFrameName, dfMinX, dfMaxY, dfMaxX, dfMinY);
 #endif
-
-    return TRUE;
 }
 
 /************************************************************************/
@@ -857,11 +856,8 @@ GDALDataset *ECRGTOCDataset::Build(const char *pszTOCFilename,
                     double dfMaxY = 0.0;
                     double dfPixelXSize = 0.0;
                     double dfPixelYSize = 0.0;
-                    if (!GetExtent(pszFrameName, nScale, nZone, dfMinX, dfMaxX,
-                                   dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize))
-                    {
-                        continue;
-                    }
+                    GetExtent(pszFrameName, nScale, nZone, dfMinX, dfMaxX,
+                              dfMinY, dfMaxY, dfPixelXSize, dfPixelYSize);
 
                     nValidFrames++;
 

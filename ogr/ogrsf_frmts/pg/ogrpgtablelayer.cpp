@@ -1078,10 +1078,7 @@ CPLString OGRPGTableLayer::BuildFields()
             }
             else if (poDS->sPostGISVersion.nMajor >= 1)
             {
-                if (poDS->sPostGISVersion.nMajor >= 2)
-                    osFieldList += "ST_AsEWKT(";
-                else
-                    osFieldList += "AsEWKT(";
+                osFieldList += "AsEWKT(";
                 osFieldList += osEscapedGeom;
                 osFieldList += ") AS ";
                 osFieldList += OGRPGEscapeColumnName(

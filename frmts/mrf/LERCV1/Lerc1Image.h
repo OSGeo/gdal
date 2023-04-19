@@ -213,11 +213,10 @@ class Lerc1Image : public TImage<float>
     // Only initialize the size from the header, if LERC1
     static bool getwh(const Byte *ppByte, size_t nBytes, int &w, int &h);
 
-    bool resize(int width, int height)
+    void resize(int width, int height)
     {
         setsize(width, height);
         mask.resize(getWidth(), getHeight());
-        return true;
     }
 
     bool IsValid(int row, int col) const

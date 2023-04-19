@@ -515,8 +515,7 @@ bool Lerc1Image::read(Byte **ppByte, size_t &nRemainingBytes, double maxZError,
     }
     else
     {  // Resize clears the buffer
-        if (!resize(width, height))
-            return false;
+        resize(width, height);
     }
 
     do

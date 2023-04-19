@@ -596,9 +596,12 @@ bool GDALPDFComposerWriter::SerializeOutlineKids(
             oDict.Add("Count", poItem->m_bOpen ? poItem->m_nKidsRecCount
                                                : -poItem->m_nKidsRecCount);
         }
-        VSIFPrintfL(m_fp, "%s\n", oDict.Serialize().c_str());
+        int ret = VSIFPrintfL(m_fp, "%s\n", oDict.Serialize().c_str());
         EndObj();
-        SerializeOutlineKids(poItem.get());
+        if (ret == 0)
+            return false;
+        if (!SerializeOutlineKids(poItem.get()))
+            return false;
     }
     return true;
 }

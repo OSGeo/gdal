@@ -312,8 +312,7 @@ CPLErr GTIFFBuildOverviewsEx(const char *pszFilename, int nBands,
 
     CPLAssert((panOverviewList != nullptr) ^ (pasOverviewSize != nullptr));
 
-    if (!GTiffOneTimeInit())
-        return CE_Failure;
+    GTiffOneTimeInit();
 
     TIFF *hOTIFF = nullptr;
     int nBitsPerPixel = 0;

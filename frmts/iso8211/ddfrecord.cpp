@@ -172,8 +172,7 @@ int DDFRecord::Read()
 int DDFRecord::Write()
 
 {
-    if (!ResetDirectory())
-        return FALSE;
+    ResetDirectory();
 
     /* -------------------------------------------------------------------- */
     /*      Prepare leader.                                                 */
@@ -1510,7 +1509,7 @@ int DDFRecord::UpdateFieldRaw(DDFField *poField, int iIndexWithinField,
 /*      Re-prepares the directory information for the record.           */
 /************************************************************************/
 
-int DDFRecord::ResetDirectory()
+void DDFRecord::ResetDirectory()
 
 {
     int iField;
@@ -1575,8 +1574,6 @@ int DDFRecord::ResetDirectory()
     }
 
     pachData[nEntrySize * nFieldCount] = DDF_FIELD_TERMINATOR;
-
-    return TRUE;
 }
 
 /************************************************************************/

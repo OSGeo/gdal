@@ -168,10 +168,10 @@ class CPL_DLL GDALJP2Metadata
     int nMSIGSize;
     GByte *pabyMSIGData;
 
-    int GetGMLJP2GeoreferencingInfo(int &nEPSGCode, double adfOrigin[2],
-                                    double adfXVector[2], double adfYVector[2],
-                                    const char *&pszComment,
-                                    CPLString &osDictBox, int &bNeedAxisFlip);
+    void GetGMLJP2GeoreferencingInfo(int &nEPSGCode, double adfOrigin[2],
+                                     double adfXVector[2], double adfYVector[2],
+                                     const char *&pszComment,
+                                     CPLString &osDictBox, bool &bNeedAxisFlip);
     static CPLXMLNode *CreateGDALMultiDomainMetadataXML(GDALDataset *poSrcDS,
                                                         int bMainMDDomainOnly);
 

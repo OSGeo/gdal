@@ -39,7 +39,7 @@
 #include "tiffio.h"
 
 CPL_C_START
-int GTiffOneTimeInit();
+void GTiffOneTimeInit();
 void CPL_DLL LibgeotiffOneTimeInit();
 CPL_C_END
 

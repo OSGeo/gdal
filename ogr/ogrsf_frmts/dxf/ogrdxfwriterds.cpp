@@ -693,7 +693,9 @@ bool OGRDXFWriterDS::WriteNewLayerDefinitions(VSILFILE *fpOut)
             }
             else if (anDefaultLayerCode[i] == 5)
             {
-                WriteEntityID(fpOut);
+                long nIgnored;
+                if (!WriteEntityID(fpOut, nIgnored))
+                    return false;
             }
             else
             {
@@ -730,31 +732,33 @@ bool OGRDXFWriterDS::WriteNewLineTypeRecords(VSILFILE *fpIn)
     std::map<CPLString, std::vector<double>> &oNewLineTypes =
         poLayer->GetNewLineTypeMap();
 
+    bool bRet = true;
     for (const auto &oPair : oNewLineTypes)
     {
-        WriteValue(fpIn, 0, "LTYPE");
-        WriteEntityID(fpIn);
-        WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
-        WriteValue(fpIn, 100, "AcDbLinetypeTableRecord");
-        WriteValue(fpIn, 2, oPair.first);
-        WriteValue(fpIn, 70, "0");
-        WriteValue(fpIn, 3, "");
-        WriteValue(fpIn, 72, "65");
-        WriteValue(fpIn, 73, static_cast<int>(oPair.second.size()));
+        bRet &= WriteValue(fpIn, 0, "LTYPE");
+        long nIgnored;
+        bRet &= WriteEntityID(fpIn, nIgnored);
+        bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
+        bRet &= WriteValue(fpIn, 100, "AcDbLinetypeTableRecord");
+        bRet &= WriteValue(fpIn, 2, oPair.first);
+        bRet &= WriteValue(fpIn, 70, "0");
+        bRet &= WriteValue(fpIn, 3, "");
+        bRet &= WriteValue(fpIn, 72, "65");
+        bRet &= WriteValue(fpIn, 73, static_cast<int>(oPair.second.size()));
 
         double dfTotalLength = 0.0;
         for (const double &dfSegment : oPair.second)
             dfTotalLength += fabs(dfSegment);
-        WriteValue(fpIn, 40, dfTotalLength);
+        bRet &= WriteValue(fpIn, 40, dfTotalLength);
 
         for (const double &dfSegment : oPair.second)
         {
-            WriteValue(fpIn, 49, dfSegment);
-            WriteValue(fpIn, 74, "0");
+            bRet &= WriteValue(fpIn, 49, dfSegment);
+            bRet &= WriteValue(fpIn, 74, "0");
         }
     }
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -769,37 +773,40 @@ bool OGRDXFWriterDS::WriteNewTextStyleRecords(VSILFILE *fpIn)
 
     auto &oNewTextStyles = poLayer->GetNewTextStyleMap();
 
+    bool bRet = true;
     for (auto &oPair : oNewTextStyles)
     {
-        WriteValue(fpIn, 0, "STYLE");
-        WriteEntityID(fpIn);
-        WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
-        WriteValue(fpIn, 100, "AcDbTextStyleTableRecord");
-        WriteValue(fpIn, 2, oPair.first);
-        WriteValue(fpIn, 70, "0");
-        WriteValue(fpIn, 40, "0.0");
+        bRet &= WriteValue(fpIn, 0, "STYLE");
+        long nIgnored;
+        bRet &= WriteEntityID(fpIn, nIgnored);
+        bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
+        bRet &= WriteValue(fpIn, 100, "AcDbTextStyleTableRecord");
+        bRet &= WriteValue(fpIn, 2, oPair.first);
+        bRet &= WriteValue(fpIn, 70, "0");
+        bRet &= WriteValue(fpIn, 40, "0.0");
 
         if (oPair.second.count("Width"))
-            WriteValue(fpIn, 41, oPair.second["Width"]);
+            bRet &= WriteValue(fpIn, 41, oPair.second["Width"]);
         else
-            WriteValue(fpIn, 41, "1.0");
+            bRet &= WriteValue(fpIn, 41, "1.0");
 
-        WriteValue(fpIn, 50, "0.0");
-        WriteValue(fpIn, 71, "0");
-        WriteValue(fpIn, 1001, "ACAD");
+        bRet &= WriteValue(fpIn, 50, "0.0");
+        bRet &= WriteValue(fpIn, 71, "0");
+        bRet &= WriteValue(fpIn, 1001, "ACAD");
 
         if (oPair.second.count("Font"))
-            WriteValue(fpIn, 1000, oPair.second["Font"]);
+            bRet &= WriteValue(fpIn, 1000, oPair.second["Font"]);
 
         int nStyleValue = 0;
         if (oPair.second.count("Italic") && oPair.second["Italic"] == "1")
             nStyleValue |= 0x1000000;
         if (oPair.second.count("Bold") && oPair.second["Bold"] == "1")
             nStyleValue |= 0x2000000;
-        WriteValue(fpIn, 1071, CPLString().Printf("%d", nStyleValue).c_str());
+        bRet &= WriteValue(fpIn, 1071,
+                           CPLString().Printf("%d", nStyleValue).c_str());
     }
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -814,6 +821,7 @@ bool OGRDXFWriterDS::WriteNewBlockRecords(VSILFILE *fpIn)
     /* ==================================================================== */
     /*      Loop over all block objects written via the blocks layer.       */
     /* ==================================================================== */
+    bool bRet = true;
     for (size_t iBlock = 0; iBlock < poBlocksLayer->apoBlocks.size(); iBlock++)
     {
         OGRFeature *poThisBlockFeat = poBlocksLayer->apoBlocks[iBlock];
@@ -843,16 +851,16 @@ bool OGRDXFWriterDS::WriteNewBlockRecords(VSILFILE *fpIn)
         /*      Write the block record. */
         /* --------------------------------------------------------------------
          */
-        WriteValue(fpIn, 0, "BLOCK_RECORD");
-        WriteEntityID(fpIn);
-        WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
-        WriteValue(fpIn, 100, "AcDbBlockTableRecord");
-        WriteValue(fpIn, 2, poThisBlockFeat->GetFieldAsString("Block"));
-        if (!WriteValue(fpIn, 340, "0"))
-            return false;
+        bRet &= WriteValue(fpIn, 0, "BLOCK_RECORD");
+        long nIgnored;
+        bRet &= WriteEntityID(fpIn, nIgnored);
+        bRet &= WriteValue(fpIn, 100, "AcDbSymbolTableRecord");
+        bRet &= WriteValue(fpIn, 100, "AcDbBlockTableRecord");
+        bRet &= WriteValue(fpIn, 2, poThisBlockFeat->GetFieldAsString("Block"));
+        bRet &= WriteValue(fpIn, 340, "0");
     }
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -869,6 +877,7 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions(VSILFILE *fpIn)
     /* ==================================================================== */
     /*      Loop over all block objects written via the blocks layer.       */
     /* ==================================================================== */
+    bool bRet = true;
     for (size_t iBlock = 0; iBlock < poBlocksLayer->apoBlocks.size(); iBlock++)
     {
         OGRFeature *poThisBlockFeat = poBlocksLayer->apoBlocks[iBlock];
@@ -891,24 +900,26 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions(VSILFILE *fpIn)
         CPLDebug("DXF", "Writing BLOCK definition for '%s'.",
                  poThisBlockFeat->GetFieldAsString("Block"));
 
-        WriteValue(fpIn, 0, "BLOCK");
-        WriteEntityID(fpIn);
-        WriteValue(fpIn, 100, "AcDbEntity");
+        bRet &= WriteValue(fpIn, 0, "BLOCK");
+        long nIgnored;
+        bRet &= WriteEntityID(fpIn, nIgnored);
+        bRet &= WriteValue(fpIn, 100, "AcDbEntity");
         if (strlen(poThisBlockFeat->GetFieldAsString("Layer")) > 0)
-            WriteValue(fpIn, 8, poThisBlockFeat->GetFieldAsString("Layer"));
+            bRet &=
+                WriteValue(fpIn, 8, poThisBlockFeat->GetFieldAsString("Layer"));
         else
-            WriteValue(fpIn, 8, "0");
-        WriteValue(fpIn, 100, "AcDbBlockBegin");
-        WriteValue(fpIn, 2, poThisBlockFeat->GetFieldAsString("Block"));
-        WriteValue(fpIn, 70, "0");
+            bRet &= WriteValue(fpIn, 8, "0");
+        bRet &= WriteValue(fpIn, 100, "AcDbBlockBegin");
+        bRet &= WriteValue(fpIn, 2, poThisBlockFeat->GetFieldAsString("Block"));
+        bRet &= WriteValue(fpIn, 70, "0");
 
         // Origin
-        WriteValue(fpIn, 10, "0.0");
-        WriteValue(fpIn, 20, "0.0");
-        WriteValue(fpIn, 30, "0.0");
+        bRet &= WriteValue(fpIn, 10, "0.0");
+        bRet &= WriteValue(fpIn, 20, "0.0");
+        bRet &= WriteValue(fpIn, 30, "0.0");
 
-        WriteValue(fpIn, 3, poThisBlockFeat->GetFieldAsString("Block"));
-        WriteValue(fpIn, 1, "");
+        bRet &= WriteValue(fpIn, 3, poThisBlockFeat->GetFieldAsString("Block"));
+        bRet &= WriteValue(fpIn, 1, "");
 
         /* --------------------------------------------------------------------
          */
@@ -940,17 +951,18 @@ bool OGRDXFWriterDS::WriteNewBlockDefinitions(VSILFILE *fpIn)
         /*      Write out the block definition postamble. */
         /* --------------------------------------------------------------------
          */
-        WriteValue(fpIn, 0, "ENDBLK");
-        WriteEntityID(fpIn);
-        WriteValue(fpIn, 100, "AcDbEntity");
+        bRet &= WriteValue(fpIn, 0, "ENDBLK");
+        bRet &= WriteEntityID(fpIn, nIgnored);
+        bRet &= WriteValue(fpIn, 100, "AcDbEntity");
         if (strlen(poThisBlockFeat->GetFieldAsString("Layer")) > 0)
-            WriteValue(fpIn, 8, poThisBlockFeat->GetFieldAsString("Layer"));
+            bRet &=
+                WriteValue(fpIn, 8, poThisBlockFeat->GetFieldAsString("Layer"));
         else
-            WriteValue(fpIn, 8, "0");
-        WriteValue(fpIn, 100, "AcDbBlockEnd");
+            bRet &= WriteValue(fpIn, 8, "0");
+        bRet &= WriteValue(fpIn, 100, "AcDbBlockEnd");
     }
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/
@@ -1028,7 +1040,8 @@ bool OGRDXFWriterDS::CheckEntityID(const char *pszEntityID)
 /*                           WriteEntityID()                            */
 /************************************************************************/
 
-long OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, long nPreferredFID)
+bool OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, long &nAssignedFID,
+                                   long nPreferredFID)
 
 {
     CPLString osEntityID;
@@ -1040,8 +1053,10 @@ long OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, long nPreferredFID)
         if (!CheckEntityID(osEntityID))
         {
             aosUsedEntities.insert(osEntityID);
-            WriteValue(fpIn, 5, osEntityID);
-            return nPreferredFID;
+            if (!WriteValue(fpIn, 5, osEntityID))
+                return false;
+            nAssignedFID = nPreferredFID;
+            return true;
         }
     }
 
@@ -1051,9 +1066,11 @@ long OGRDXFWriterDS::WriteEntityID(VSILFILE *fpIn, long nPreferredFID)
     } while (CheckEntityID(osEntityID));
 
     aosUsedEntities.insert(osEntityID);
-    WriteValue(fpIn, 5, osEntityID);
+    if (!WriteValue(fpIn, 5, osEntityID))
+        return false;
 
-    return nNextFID - 1;
+    nAssignedFID = nNextFID - 1;
+    return true;
 }
 
 /************************************************************************/

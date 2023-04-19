@@ -1256,17 +1256,17 @@ GDALJP2Box *GDALJP2Metadata::CreateJP2GeoTIFF()
 /*                     GetGMLJP2GeoreferencingInfo()                    */
 /************************************************************************/
 
-int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
+void GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
     int &nEPSGCode, double adfOrigin[2], double adfXVector[2],
     double adfYVector[2], const char *&pszComment, CPLString &osDictBox,
-    int &bNeedAxisFlip)
+    bool &bNeedAxisFlip)
 {
 
     /* -------------------------------------------------------------------- */
     /*      Try do determine a PCS or GCS code we can use.                  */
     /* -------------------------------------------------------------------- */
     nEPSGCode = 0;
-    bNeedAxisFlip = FALSE;
+    bNeedAxisFlip = false;
     OGRSpatialReference oSRS(m_oSRS);
 
     if (oSRS.IsProjected())
@@ -1299,7 +1299,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
     {
         if (oSRS.EPSGTreatsAsLatLong() || oSRS.EPSGTreatsAsNorthingEasting())
         {
-            bNeedAxisFlip = TRUE;
+            bNeedAxisFlip = true;
         }
     }
 
@@ -1323,7 +1323,7 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
     if (bNeedAxisFlip && CPLTestBool(CPLGetConfigOption(
                              "GDAL_IGNORE_AXIS_ORIENTATION", "FALSE")))
     {
-        bNeedAxisFlip = FALSE;
+        bNeedAxisFlip = false;
         CPLDebug("GMLJP2", "Suppressed axis flipping on write based on "
                            "GDAL_IGNORE_AXIS_ORIENTATION.");
     }
@@ -1395,8 +1395,6 @@ int GDALJP2Metadata::GetGMLJP2GeoreferencingInfo(
         }
         CPLFree(pszGMLDef);
     }
-
-    return TRUE;
 }
 
 /************************************************************************/
@@ -1452,13 +1450,9 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2(int nXSize, int nYSize)
     double adfYVector[2];
     const char *pszComment = "";
     CPLString osDictBox;
-    int bNeedAxisFlip = FALSE;
-    if (!GetGMLJP2GeoreferencingInfo(nEPSGCode, adfOrigin, adfXVector,
-                                     adfYVector, pszComment, osDictBox,
-                                     bNeedAxisFlip))
-    {
-        return nullptr;
-    }
+    bool bNeedAxisFlip = false;
+    GetGMLJP2GeoreferencingInfo(nEPSGCode, adfOrigin, adfXVector, adfYVector,
+                                pszComment, osDictBox, bNeedAxisFlip);
 
     char szSRSName[100];
     if (nEPSGCode != 0)
@@ -2467,13 +2461,10 @@ GDALJP2Box *GDALJP2Metadata::CreateGMLJP2V2(int nXSize, int nYSize,
         double adfXVector[2];
         double adfYVector[2];
         const char *pszComment = "";
-        int bNeedAxisFlip = FALSE;
-        if (!GetGMLJP2GeoreferencingInfo(nEPSGCode, adfOrigin, adfXVector,
-                                         adfYVector, pszComment, osDictBox,
-                                         bNeedAxisFlip))
-        {
-            return nullptr;
-        }
+        bool bNeedAxisFlip = false;
+        GetGMLJP2GeoreferencingInfo(nEPSGCode, adfOrigin, adfXVector,
+                                    adfYVector, pszComment, osDictBox,
+                                    bNeedAxisFlip);
 
         char szSRSName[100] = {0};
         if (nEPSGCode != 0)
