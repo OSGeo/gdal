@@ -70,6 +70,16 @@ to be fully or partially evaluated on OGR side. For example, given the filter
 int_attribute will be translated as a TileDB query condition, and the right
 side of the AND operation will be evaluated as a post-filter on OGR side.
 
+Arrow C Stream data interface
+-----------------------------
+
+The driver has an efficient implementation of the
+:ref:`Arrow C Stream data interface <vector_api_tut_arrow_stream>`
+
+The ``INCLUDE_FID=YES/NO`` and ``MAX_FEATURES_IN_BATCH=number`` options of
+:cpp:func:`OGRLayer::GetArrowStream()` are supported. If MAX_FEATURES_IN_BATCH
+is not specified, it defaults to the value of the BATCH_SIZE open option.
+
 Creation issues
 ---------------
 

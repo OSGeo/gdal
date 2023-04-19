@@ -204,6 +204,17 @@ class OGRTileDBDataset;
 class OGRTileDBLayer final : public OGRLayer,
                              public OGRGetNextFeatureThroughRaw<OGRTileDBLayer>
 {
+  public:
+    typedef std::variant<std::shared_ptr<std::string>,
+                         std::shared_ptr<std::vector<uint8_t>>,
+                         std::shared_ptr<std::vector<int16_t>>,
+                         std::shared_ptr<std::vector<int32_t>>,
+                         std::shared_ptr<std::vector<int64_t>>,
+                         std::shared_ptr<std::vector<float>>,
+                         std::shared_ptr<std::vector<double>>>
+        ArrayType;
+
+  private:
     friend OGRTileDBDataset;
     std::string m_osGroupName{};
     std::string m_osFilename{};
@@ -258,20 +269,40 @@ class OGRTileDBLayer final : public OGRLayer,
     // Extent of all features
     OGREnvelope m_oLayerExtent;
 
-    std::vector<int64_t> m_anFIDs;
-    std::vector<double> m_adfXs;
-    std::vector<double> m_adfYs;
-    std::vector<double> m_adfZs;
-    typedef std::variant<std::string, std::vector<uint8_t>,
-                         std::vector<int16_t>, std::vector<int32_t>,
-                         std::vector<int64_t>, std::vector<float>,
-                         std::vector<double>>
-        ArrayType;
+    // Boolean shared between the OGRTileDBLayer instance and the
+    // OGRTileDBArrowArrayPrivateData instances, that are stored in
+    // ArrowArray::private_data, so ReleaseArrowArray() function knows
+    // if the OGRLayer is still alive.
+    std::shared_ptr<bool> m_pbLayerStillAlive;
+
+    // Flag set to false by GetNextArrowArray() to indicate that the m_anFIDs,
+    // m_adfXs, m_adfYs, m_adfZs, m_aFieldValues, m_aFieldValueOffsets,
+    // m_abyGeometries and m_anGeometryOffsets are currently used by a
+    // ArrowArray returned. If this flag is still set to false when the
+    // next SetupQuery() is called, we need to re-instanciate new arrays, so
+    // the ArrowArray's can be used independently of the new state of the layer.
+    bool m_bArrowBatchReleased = true;
+
+    std::shared_ptr<std::vector<int64_t>> m_anFIDs;
+    std::shared_ptr<std::vector<double>> m_adfXs;
+    std::shared_ptr<std::vector<double>> m_adfYs;
+    std::shared_ptr<std::vector<double>> m_adfZs;
     std::vector<ArrayType> m_aFieldValues;
-    std::vector<std::vector<uint64_t>> m_aFieldValueOffsets;
+    std::vector<std::shared_ptr<std::vector<uint64_t>>> m_aFieldValueOffsets;
     std::vector<std::vector<uint8_t>> m_aFieldValidity;
-    std::vector<unsigned char> m_abyGeometries;
-    std::vector<uint64_t> m_anGeometryOffsets;
+    std::shared_ptr<std::vector<unsigned char>> m_abyGeometries;
+    std::shared_ptr<std::vector<uint64_t>> m_anGeometryOffsets;
+
+    struct OGRTileDBArrowArrayPrivateData
+    {
+        OGRTileDBLayer *m_poLayer = nullptr;
+        std::shared_ptr<bool> m_pbLayerStillAlive;
+
+        ArrayType valueHolder;
+        std::shared_ptr<std::vector<uint8_t>> nullHolder;
+        std::shared_ptr<std::vector<uint64_t>> offsetHolder;
+    };
+
     size_t m_nBatchSize = 65536;
     double m_dfTileExtent = 0;
     size_t m_nEstimatedWkbSizePerRow = 0;
@@ -299,6 +330,22 @@ class OGRTileDBLayer final : public OGRLayer,
     std::unique_ptr<tiledb::QueryCondition> CreateQueryCondition(
         int nOperation, bool bColumnIsLeft, const swq_expr_node *poColumn,
         const swq_expr_node *poValue, bool &bAlwaysTrue, bool &bAlwaysFalse);
+
+    static void ReleaseArrowArray(struct ArrowArray *array);
+    void FillBoolArray(struct ArrowArray *psChild, int iField);
+    void SetNullBuffer(struct ArrowArray *psChild, int iField);
+    template <typename T>
+    void FillPrimitiveArray(struct ArrowArray *psChild, int iField);
+    void FillBoolListArray(struct ArrowArray *psChild, int iField);
+    template <typename T>
+    void FillPrimitiveListArray(struct ArrowArray *psChild, int iField);
+    template <typename T>
+    void FillStringOrBinaryArray(struct ArrowArray *psChild, int iField);
+    void FillTimeOrDateArray(struct ArrowArray *psChild, int iField);
+    int GetArrowSchema(struct ArrowArrayStream *,
+                       struct ArrowSchema *out_schema) override;
+    int GetNextArrowArray(struct ArrowArrayStream *,
+                          struct ArrowArray *out_array) override;
 
   public:
     OGRTileDBLayer(const char *pszFilename, const char *pszLayerName,

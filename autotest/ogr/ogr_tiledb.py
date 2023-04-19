@@ -29,6 +29,7 @@
 ###############################################################################
 
 import json
+import math
 import os
 import shutil
 
@@ -40,15 +41,10 @@ from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("TileDB")
 
-
 ###############################################################################
 
 
-@pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
-def test_ogr_tiledb_basic(nullable, batch_size):
-
-    if os.path.exists("tmp/test.tiledb"):
-        shutil.rmtree("tmp/test.tiledb")
+def create_tiledb_dataset(nullable, batch_size, include_bool):
 
     ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
     srs = osr.SpatialReference()
@@ -72,10 +68,11 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     fld_defn.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld_defn)
 
-    fld_defn = ogr.FieldDefn("boolfield", ogr.OFTInteger)
-    fld_defn.SetNullable(nullable)
-    fld_defn.SetSubType(ogr.OFSTBoolean)
-    lyr.CreateField(fld_defn)
+    if include_bool:
+        fld_defn = ogr.FieldDefn("boolfield", ogr.OFTInteger)
+        fld_defn.SetNullable(nullable)
+        fld_defn.SetSubType(ogr.OFSTBoolean)
+        lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn("int64field", ogr.OFTInteger64)
     fld_defn.SetNullable(nullable)
@@ -103,10 +100,11 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     fld_defn.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld_defn)
 
-    fld_defn = ogr.FieldDefn("boollistfield", ogr.OFTIntegerList)
-    fld_defn.SetNullable(nullable)
-    fld_defn.SetSubType(ogr.OFSTBoolean)
-    lyr.CreateField(fld_defn)
+    if include_bool:
+        fld_defn = ogr.FieldDefn("boollistfield", ogr.OFTIntegerList)
+        fld_defn.SetNullable(nullable)
+        fld_defn.SetSubType(ogr.OFSTBoolean)
+        lyr.CreateField(fld_defn)
 
     fld_defn = ogr.FieldDefn("doublelistfield", ogr.OFTRealList)
     fld_defn.SetNullable(nullable)
@@ -139,14 +137,16 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     f["strfield"] = "foo"
     f["intfield"] = -123456789
     f["int16field"] = -32768
-    f["boolfield"] = True
+    if include_bool:
+        f["boolfield"] = True
     f["int64field"] = -1234567890123456
     f["doublefield"] = 1.2345
     f["floatfield"] = 1.5
     f.SetFieldBinaryFromHexString("binaryfield", "DEADBEEF")
     f["intlistfield"] = [-123456789, 123]
     f["int16listfield"] = [-32768, 32767]
-    f["boollistfield"] = [True, False]
+    if include_bool:
+        f["boollistfield"] = [True, False]
     f["doublelistfield"] = [1.2345, -1.2345]
     f["floatlistfield"] = [1.5, -1.5, 0]
     f["datetimefield"] = "2023-04-07T12:34:56.789Z"
@@ -171,14 +171,16 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     f["strfield"] = "barbaz"
     f["intfield"] = 123456789
     f["int16field"] = 32767
-    f["boolfield"] = False
+    if include_bool:
+        f["boolfield"] = False
     f["int64field"] = 1234567890123456
     f["doublefield"] = -1.2345
     f["floatfield"] = -1.5
     f.SetFieldBinaryFromHexString("binaryfield", "BEEFDEAD")
     f["intlistfield"] = [123456789, -123]
     f["int16listfield"] = [32767, -32768]
-    f["boollistfield"] = [False, True]
+    if include_bool:
+        f["boollistfield"] = [False, True]
     f["doublelistfield"] = [-1.2345, 1.2345]
     f["floatlistfield"] = [0.0, -1.5, 1.5]
     # Will be transformed to "2023/04/07 10:19:56.789+00"
@@ -191,6 +193,19 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     assert f.GetFID() == 3
 
     ds = None
+    return field_count, srs, options
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
+def test_ogr_tiledb_basic(nullable, batch_size):
+
+    if os.path.exists("tmp/test.tiledb"):
+        shutil.rmtree("tmp/test.tiledb")
+
+    field_count, srs, options = create_tiledb_dataset(nullable, batch_size, True)
 
     ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
@@ -1050,6 +1065,362 @@ def test_ogr_tiledb_errors():
     f.SetGeometry(ogr.Geometry(ogr.wkbPoint))
     with pytest.raises(Exception):
         lyr.CreateFeature(f)
+    ds = None
+
+    shutil.rmtree("tmp/test.tiledb")
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
+def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
+    pytest.importorskip("pyarrow")
+
+    if os.path.exists("tmp/test.tiledb"):
+        shutil.rmtree("tmp/test.tiledb")
+
+    include_bool = "Boolean" in gdal.GetDriverByName("TileDB").GetMetadataItem(
+        gdal.DMD_CREATIONFIELDDATASUBTYPES
+    )
+    _, _, options = create_tiledb_dataset(nullable, batch_size, include_bool)
+
+    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    lyr = ds.GetLayer(0)
+
+    mapFeatures = {}
+    for f in lyr:
+        mapFeatures[f.GetFID()] = f
+
+    stream = lyr.GetArrowStreamAsPyArrow()
+    schema = stream.schema
+    fields = set(
+        [
+            (schema.field(i).name, str(schema.field(i).type))
+            for i in range(schema.num_fields)
+        ]
+    )
+    expected_fields = set(
+        [
+            ("FID", "int64"),
+            ("strfield", "large_string"),
+            ("intfield", "int32"),
+            ("int16field", "int16"),
+            ("int64field", "int64"),
+            ("doublefield", "double"),
+            ("floatfield", "float"),
+            ("binaryfield", "large_binary"),
+            ("intlistfield", "large_list<item: int32 not null>"),
+            ("int16listfield", "large_list<item: int16 not null>"),
+            ("doublelistfield", "large_list<item: double not null>"),
+            ("floatlistfield", "large_list<item: float not null>"),
+            ("datetimefield", "timestamp[ms]"),
+            ("datefield", "date32[day]"),
+            ("timefield", "time32[ms]"),
+            ("intfieldextra", "int32"),
+            ("wkb_geometry", "large_binary"),
+        ]
+    )
+    if include_bool:
+        expected_fields.add(("boolfield", "bool"))
+        expected_fields.add(("boollistfield", "large_list<item: bool not null>"))
+    assert fields == expected_fields
+
+    def check_batch(batch):
+        for idx, fid in enumerate(batch.field("FID")):
+            f = mapFeatures[fid.as_py()]
+            for field_idx in range(lyr.GetLayerDefn().GetFieldCount()):
+                field_defn = lyr.GetLayerDefn().GetFieldDefn(field_idx)
+                got_val = batch.field(field_defn.GetName())[idx].as_py()
+                field_type = field_defn.GetType()
+                if field_type == ogr.OFTDateTime:
+                    if f.IsFieldSetAndNotNull(field_idx):
+                        expected_val = f.GetFieldAsDateTime(field_idx)
+                        assert [
+                            got_val.year,
+                            got_val.month,
+                            got_val.day,
+                            got_val.hour,
+                            got_val.minute,
+                            got_val.second + got_val.microsecond * 1e-6,
+                        ] == pytest.approx(
+                            expected_val[0:-1], abs=1e-4
+                        ), field_defn.GetName()
+                elif field_type == ogr.OFTBinary:
+                    if f.IsFieldSetAndNotNull(field_idx):
+                        got_val = bytes(got_val)
+                        assert got_val == f.GetFieldAsBinary(
+                            field_idx
+                        ), field_defn.GetName()
+                    else:
+                        assert got_val is None, field_defn.GetName()
+                elif field_type not in (
+                    ogr.OFTDate,
+                    ogr.OFTTime,
+                ):
+                    if isinstance(got_val, float) and math.isnan(got_val):
+                        assert math.isnan(f.GetField(field_idx)), field_defn.GetName()
+                    else:
+                        assert got_val == f.GetField(field_idx), field_defn.GetName()
+
+    for batch in stream:
+        check_batch(batch)
+
+    # Collect all batches (that is do not release them immediately)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    batches = [batch for batch in stream]
+    for batch in batches:
+        check_batch(batch)
+
+    ds = None
+
+    shutil.rmtree("tmp/test.tiledb")
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("nullable,batch_size", [(True, None), (False, 2)])
+def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
+    pytest.importorskip("osgeo.gdal_array")
+    numpy = pytest.importorskip("numpy")
+    import datetime
+
+    if os.path.exists("tmp/test.tiledb"):
+        shutil.rmtree("tmp/test.tiledb")
+
+    include_bool = True
+    _, _, options = create_tiledb_dataset(nullable, batch_size, include_bool)
+
+    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    lyr = ds.GetLayer(0)
+
+    mapFeatures = {}
+    for f in lyr:
+        mapFeatures[f.GetFID()] = f
+
+    ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+
+    def check_batch(batch):
+        for idx, fid in enumerate(batch["FID"]):
+            f = mapFeatures[fid]
+
+            for field_idx in range(lyr.GetLayerDefn().GetFieldCount()):
+                field_defn = lyr.GetLayerDefn().GetFieldDefn(field_idx)
+                got_val = batch[field_defn.GetName()][idx]
+                field_type = field_defn.GetType()
+                if field_type in (ogr.OFTDateTime, ogr.OFTDate):
+                    if f.IsFieldSetAndNotNull(field_idx):
+                        expected_val = f.GetFieldAsDateTime(field_idx)
+                        # Convert numpy.datetime64 to datetime.datetime
+                        got_val = (
+                            got_val - numpy.datetime64("1970-01-01T00:00:00")
+                        ) / numpy.timedelta64(1, "s")
+                        got_val = datetime.datetime.utcfromtimestamp(got_val)
+                        assert [
+                            got_val.year,
+                            got_val.month,
+                            got_val.day,
+                            got_val.hour,
+                            got_val.minute,
+                            got_val.second + got_val.microsecond * 1e-6,
+                        ] == pytest.approx(
+                            expected_val[0:-1], abs=1e-4
+                        ), field_defn.GetName()
+                elif field_type == ogr.OFTString:
+                    if f.IsFieldSetAndNotNull(field_idx):
+                        assert got_val == f.GetField(field_idx).encode(
+                            "UTF-8"
+                        ), field_defn.GetName()
+                    else:
+                        assert len(got_val) == 0, field_defn.GetName()
+                elif field_type == ogr.OFTBinary:
+                    if f.IsFieldSetAndNotNull(field_idx):
+                        got_val = bytes(got_val)
+                        assert got_val == f.GetFieldAsBinary(
+                            field_idx
+                        ), field_defn.GetName()
+                    else:
+                        assert got_val is None, field_defn.GetName()
+                else:
+                    if f.IsFieldSetAndNotNull(field_idx):
+                        if (
+                            isinstance(got_val, numpy.float64)
+                            or isinstance(got_val, numpy.float32)
+                        ) and math.isnan(got_val):
+                            assert math.isnan(
+                                f.GetField(field_idx)
+                            ), field_defn.GetName()
+                        else:
+                            expected_val = f.GetField(field_idx)
+                            if isinstance(expected_val, list):
+                                got_val = list(got_val)
+                                assert got_val == expected_val, field_defn.GetName()
+
+            got_geom = ogr.CreateGeometryFromWkb(batch["wkb_geometry"][idx])
+            assert got_geom.ExportToIsoWkt() == f.GetGeometryRef().ExportToIsoWkt()
+
+    for batch in stream:
+        expected_fields = {
+            "FID",
+            "strfield",
+            "intfield",
+            "int16field",
+            "int64field",
+            "doublefield",
+            "floatfield",
+            "binaryfield",
+            "intlistfield",
+            "int16listfield",
+            "doublelistfield",
+            "floatlistfield",
+            "datetimefield",
+            "datefield",
+            "timefield",
+            "intfieldextra",
+            "wkb_geometry",
+        }
+        if include_bool:
+            expected_fields.add("boolfield")
+            expected_fields.add("boollistfield")
+        assert batch.keys() == expected_fields
+
+        check_batch(batch)
+
+    # Collect all batches (that is do not release them immediately)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert len(batches) == (1 if batch_size is None else 2)
+
+    for batch in batches:
+        check_batch(batch)
+
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "INCLUDE_FID=NO", "MAX_FEATURES_IN_BATCH=1000"]
+    )
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert "FID" not in batch.keys()
+    strfield_values = [x.decode("UTF-8") for x in batch["strfield"]]
+    assert "foo" in strfield_values
+    assert "barbaz" in strfield_values
+    got_geom = ogr.CreateGeometryFromWkb(batch["wkb_geometry"][0])
+    assert got_geom
+
+    lyr.SetIgnoredFields(["strfield"])
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "MAX_FEATURES_IN_BATCH=1000"]
+    )
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert "strfield" not in batch.keys()
+    assert "intfield" in batch.keys()
+    assert set([x for x in batch["intfield"]]) == set([-123456789, 0, 123456789])
+
+    lyr.SetIgnoredFields(["wkb_geometry"])
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "MAX_FEATURES_IN_BATCH=1000"]
+    )
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert "wkb_geometry" not in batch.keys()
+    assert "intfield" in batch.keys()
+    assert set([x for x in batch["intfield"]]) == set([-123456789, 0, 123456789])
+
+    ds = None
+
+    shutil.rmtree("tmp/test.tiledb")
+
+
+###############################################################################
+
+
+def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    if os.path.exists("tmp/test.tiledb"):
+        shutil.rmtree("tmp/test.tiledb")
+
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    srs = osr.SpatialReference()
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer(
+        "test", srs=srs, geom_type=ogr.wkbPoint, options=["GEOMETRY_NAME="]
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = gdal.OpenEx("tmp/test.tiledb")
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    for idx, fid in enumerate(batch["FID"]):
+        got_geom = ogr.CreateGeometryFromWkb(batch["wkb_geometry"][idx])
+        if fid == 1:
+            assert got_geom.ExportToIsoWkt() == "POINT (1 2)"
+        else:
+            assert got_geom.ExportToIsoWkt() == "POINT (3 4)"
+
+    ds = None
+
+    shutil.rmtree("tmp/test.tiledb")
+
+
+###############################################################################
+
+
+def test_ogr_tiledb_arrow_stream_numpy_pointz_no_wkb_geometry_col():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    if os.path.exists("tmp/test.tiledb"):
+        shutil.rmtree("tmp/test.tiledb")
+
+    ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
+    srs = osr.SpatialReference()
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer(
+        "test", srs=srs, geom_type=ogr.wkbPoint25D, options=["GEOMETRY_NAME="]
+    )
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (4 5 6)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    ds = gdal.OpenEx("tmp/test.tiledb")
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    for idx, fid in enumerate(batch["FID"]):
+        got_geom = ogr.CreateGeometryFromWkb(batch["wkb_geometry"][idx])
+        if fid == 1:
+            assert got_geom.ExportToIsoWkt() == "POINT Z (1 2 3)"
+        else:
+            assert got_geom.ExportToIsoWkt() == "POINT Z (4 5 6)"
+
     ds = None
 
     shutil.rmtree("tmp/test.tiledb")
