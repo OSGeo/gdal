@@ -1747,7 +1747,7 @@ GDALMultiDimTranslate(const char *pszDest, GDALDatasetH hDstDS, int nSrcCount,
  * filename and open options too), or NULL. The accepted options are the ones of
  * the <a href="/programs/gdalmdimtranslate.html">gdalmdimtranslate</a> utility.
  * @param psOptionsForBinary should be nullptr, unless called from
- * gdalmultidimtranslate_bin.cpp
+ * gdalmdimtranslate_bin.cpp
  * @return pointer to the allocated GDALMultiDimTranslateOptions struct. Must be
  * freed with GDALMultiDimTranslateOptionsFree().
  *
