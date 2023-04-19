@@ -4295,32 +4295,18 @@ def worker_tile_details(
 
 
 class ProgressBar(object):
-    def __init__(self, total_items: int) -> None:
+    def __init__(self, total_items: int, progress_cbk=gdal.TermProgress_nocb) -> None:
         self.total_items = total_items
         self.nb_items_done = 0
-        self.current_progress = 0
-        self.STEP = 2.5
+        self.progress_cbk = progress_cbk
 
     def start(self) -> None:
-        sys.stdout.write("0")
+        self.progress_cbk(0, "", None)
 
     def log_progress(self, nb_items: int = 1) -> None:
         self.nb_items_done += nb_items
-        progress = float(self.nb_items_done) / self.total_items * 100
-        if progress >= self.current_progress + self.STEP:
-            done = False
-            while not done:
-                if self.current_progress + self.STEP <= progress:
-                    self.current_progress += self.STEP
-                    if self.current_progress % 10 == 0:
-                        sys.stdout.write(str(int(self.current_progress)))
-                        if self.current_progress == 100:
-                            sys.stdout.write("\n")
-                    else:
-                        sys.stdout.write(".")
-                else:
-                    done = True
-        sys.stdout.flush()
+        progress = float(self.nb_items_done) / self.total_items
+        self.progress_cbk(progress, "", None)
 
 
 def get_tile_swne(tile_job_info, options):
