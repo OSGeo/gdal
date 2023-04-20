@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# If :decl_configoption: is phased out in favor of :config:, this
+# script can be removed and an option index can be inserted directly
+# via .. config_index::
+
 import fnmatch
 import os
 import re
@@ -26,10 +30,20 @@ for filename in matches:
                 if match:
                     link = match.group(1)
             else:
-                for configoption in re.findall(r":decl_configoption:`[A-Z_0-9]+`", l):
+                # Detect the .. config:: directive
+                for configoption in re.findall(r".. config:: ([A-Z_0-9]+)", l):
                     if configoption not in configoptions:
                         configoptions[configoption] = set()
                     configoptions[configoption].add(":ref:`%s`" % link)
+
+                # Detect the multiple roles that can be used to declare
+                # or reference config options.
+                for role in ("decl_configoption", "config"):
+                    for configoption in re.findall(rf":{role}:`([A-Z_0-9]+)`", l):
+                        if configoption not in configoptions:
+                            configoptions[configoption] = set()
+                        configoptions[configoption].add(":ref:`%s`" % link)
+
 
 # Parse and edit .xml files
 matches = []
@@ -85,7 +99,7 @@ with open(outfile, "wt", encoding="utf-8") as f:
     f.write("\n")
 
     for key in sorted(configoptions.keys()):
-        f.write("* %s:" % key)
+        f.write(f"* **{key}**:")
         if len(configoptions[key]) >= 2:
             f.write("\n")
             f.write("\n")

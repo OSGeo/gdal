@@ -278,21 +278,39 @@ Open options
 
 The following open options are available.
 
--  **ENCODING**\ =encoding_name: to override the encoding interpretation
+.. oo:: ENCODING
+   :choices: <encoding_name>, ""
+
+   Override the encoding interpretation
    of the shapefile with any encoding supported by CPLRecode or to "" to
-   avoid any recoding
--  **DBF_DATE_LAST_UPDATE=**\ *YYYY-MM-DD*: Modification date to write
+   avoid any recoding.
+
+.. oo:: DBF_DATE_LAST_UPDATE
+   :choices: YYYY-MM-DD
+
+   Modification date to write
    in DBF header with year-month-day format. If not specified, current
    date is used.
--  **ADJUST_TYPE**\ =YES/NO: Set to YES (default is NO) to read the
+
+.. oo:: ADJUST_TYPE
+   :choices: YES, NO
+   :default: NO
+
+   Set to YES to read the
    whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer
    field types when possible. This can be used when field widths are
    ambiguous and that by default OGR would select the larger data type.
    For example, a numeric column with 0 decimal figures and with width
    of 10/11 character may hold Integer or Integer64, and with width
    19/20 may hold Integer64 or larger integer (hold as Real)
--  **ADJUST_GEOM_TYPE**\ =NO/FIRST_SHAPE/ALL_SHAPES. (Starting with GDAL
-   2.1) Defines how layer geometry type is computed, in particular to
+
+
+.. oo:: ADJUST_GEOM_TYPE
+   :choices: NO, FIRST_SHAPE, ALL_SHAPES
+   :default: FIRST_SHAPE
+   :since: 2.1
+
+   Defines how layer geometry type is computed, in particular to
    distinguish shapefiles that have shapes with significant values in
    the M dimension from the ones where the M values are set to the
    nodata value. By default (FIRST_SHAPE), the driver will look at the
@@ -300,10 +318,21 @@ The following open options are available.
    a M dimension. By specifying ALL_SHAPES, the driver will iterate over
    features until a shape with a valid M value is found to decide the
    appropriate layer type.
--  **AUTO_REPACK=**\ *YES/NO*: (OGR >= 2.2) Default to YES in GDAL 2.2.
+
+
+.. oo:: AUTO_REPACK
+   :choices: YES, NO
+   :default: YES
+   :since: 2.2
+
    Whether the shapefile should be automatically repacked when needed,
    at dataset closing or at FlushCache()/SyncToDisk() time.
--  **DBF_EOF_CHAR=**\ *YES/NO*: (OGR >= 2.2) Default to YES in GDAL 2.2.
+
+.. oo:: DBF_EOF_CHAR
+   :choices: YES, NO
+   :default: YES
+   :since: 2.2
+
    Whether the .DBF should be terminated by a 0x1A end-of-file
    character, as in the DBF spec and done by other software vendors.
    Previous GDAL versions did not write one.
@@ -316,31 +345,62 @@ None
 Layer creation options
 ----------------------
 
--  **SHPT=type**: Override the type of shapefile created. Can be one of
+.. lco:: SHPT
+   :choices: <type>
+
+   Override the type of shapefile created. Can be one of
    NULL for a simple .dbf file with no .shp file, POINT, ARC, POLYGON or
    MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ, MULTIPOINTZ or MULTIPATCH
    for 3D; POINTM, ARCM, POLYGONM or MULTIPOINTM for measured
    geometries; and POINTZM, ARCZM, POLYGONZM or MULTIPOINTZM for 3D
    measured geometries. The measure support was added in GDAL 2.1.
    MULTIPATCH files are supported since GDAL 2.2.
--  **ENCODING=**\ *value*: set the encoding value in the DBF file. The
+
+.. lco:: ENCODING
+
+   Set the encoding value in the DBF file. The
    default value is "LDID/87". It is not clear what other values may be
    appropriate.
--  **RESIZE=**\ *YES/NO*: set the YES to resize fields
-   to their optimal size. See above "Field sizes" section. Defaults to
-   NO.
--  **2GB_LIMIT=**\ *YES/NO*: set the YES to enforce the
-   2GB file size for .SHP or .DBF files. Defaults to NO.
--  **SPATIAL_INDEX=**\ *YES/NO*: set the YES to create a
-   spatial index (.qix). Defaults to NO.
--  **DBF_DATE_LAST_UPDATE=**\ *YYYY-MM-DD*: Modification
+
+.. lco:: RESIZE
+   :choices: YES, NO
+   :default: NO
+
+   Set to YES to resize fields to their optimal size. See above "Field sizes" section.
+
+.. lco:: 2GB_LIMIT
+   :choices: YES, NO
+   :default: NO
+
+   Set to YES to enforce the 2GB file size for .SHP or .DBF files.
+
+.. lco:: SPATIAL_INDEX
+   :choices: YES, NO
+   :default: NO
+
+   Set to YES to create a spatial index (.qix).
+
+.. lco:: DBF_DATE_LAST_UPDATE
+   :choices: <YYYY-MM-DD>
+
+   Modification
    date to write in DBF header with year-month-day format. If not
    specified, current date is used. Note: behavior of past GDAL
    releases was to write 1995-07-26
--  **AUTO_REPACK=**\ *YES/NO*: (OGR >= 2.2) Default to YES in GDAL 2.2.
+
+.. lco:: AUTO_REPACK
+   :choices: YES, NO
+   :default: YES
+   :since: 2.2
+
    Whether the shapefile should be automatically repacked when needed,
    at dataset closing or at FlushCache()/SyncToDisk() time.
--  **DBF_EOF_CHAR=**\ *YES/NO*: (OGR >= 2.2) Default to YES in GDAL 2.2.
+
+.. lco:: DBF_EOF_CHAR
+   :choices: YES, NO
+   :default: YES
+   :since: 2.2
+
    Whether the .DBF should be terminated by a 0x1A end-of-file
    character, as in the DBF spec and done by other software vendors.
    Previous GDAL versions did not write one.
