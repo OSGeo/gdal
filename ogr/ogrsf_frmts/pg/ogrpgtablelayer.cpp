@@ -2365,18 +2365,34 @@ OGRPGTableLayer::RunAddGeometryColumn(const OGRPGGeomFieldDefn *poGeomField)
 /************************************************************************/
 
 OGRErr
-OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField)
+OGRPGTableLayer::RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
+                                       int nIdx)
 {
     PGconn *hPGConn = poDS->GetPGConn();
     CPLString osCommand;
 
-    osCommand.Printf(
-        "CREATE INDEX %s ON %s USING %s (%s)",
-        OGRPGEscapeColumnName(CPLSPrintf("%s_%s_geom_idx", pszTableName,
-                                         poGeomField->GetNameRef()))
-            .c_str(),
-        pszSqlTableName, osSpatialIndexType.c_str(),
-        OGRPGEscapeColumnName(poGeomField->GetNameRef()).c_str());
+    std::string osIndexName(pszTableName);
+    std::string osSuffix("_");
+    osSuffix += poGeomField->GetNameRef();
+    osSuffix += "_geom_idx";
+    if (bLaunderColumnNames)
+    {
+        if (osSuffix.size() >= static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+        {
+            osSuffix = "_";
+            osSuffix += CPLSPrintf("%d", nIdx);
+            osSuffix += "_geom_idx";
+        }
+        if (osIndexName.size() + osSuffix.size() >
+            static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+            osIndexName.resize(OGR_PG_NAMEDATALEN - 1 - osSuffix.size());
+    }
+    osIndexName += osSuffix;
+
+    osCommand.Printf("CREATE INDEX %s ON %s USING %s (%s)",
+                     OGRPGEscapeColumnName(osIndexName.c_str()).c_str(),
+                     pszSqlTableName, osSpatialIndexType.c_str(),
+                     OGRPGEscapeColumnName(poGeomField->GetNameRef()).c_str());
 
     PGresult *hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
@@ -2491,7 +2507,7 @@ OGRErr OGRPGTableLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
 
         if (bCreateSpatialIndexFlag)
         {
-            if (RunCreateSpatialIndex(poGeomField.get()) != OGRERR_NONE)
+            if (RunCreateSpatialIndex(poGeomField.get(), 0) != OGRERR_NONE)
             {
                 return OGRERR_FAILURE;
             }
@@ -3706,7 +3722,7 @@ OGRErr OGRPGTableLayer::RunDeferredCreationIfNecessary()
         {
             OGRPGGeomFieldDefn *poGeomField =
                 poFeatureDefn->GetGeomFieldDefn(i);
-            if (RunCreateSpatialIndex(poGeomField) != OGRERR_NONE)
+            if (RunCreateSpatialIndex(poGeomField, i) != OGRERR_NONE)
             {
                 return OGRERR_FAILURE;
             }

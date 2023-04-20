@@ -26,6 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <algorithm>
 #include <cstring>
 #include "ogr_pgdump.h"
 #include "cpl_conv.h"
@@ -131,7 +132,8 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
 {
     char *pszSafeName = CPLStrdup(pszSrcName);
 
-    for (int i = 0; pszSafeName[i] != '\0'; i++)
+    int i = 0;  // needed after loop
+    for (; i < OGR_PG_NAMEDATALEN - 1 && pszSafeName[i] != '\0'; i++)
     {
         pszSafeName[i] = (char)tolower(pszSafeName[i]);
         if (pszSafeName[i] == '\'' || pszSafeName[i] == '-' ||
@@ -140,10 +142,21 @@ char *OGRPGCommonLaunderName(const char *pszSrcName, const char *pszDebugPrefix)
             pszSafeName[i] = '_';
         }
     }
+    pszSafeName[i] = '\0';
 
     if (strcmp(pszSrcName, pszSafeName) != 0)
-        CPLDebug(pszDebugPrefix, "LaunderName('%s') -> '%s'", pszSrcName,
-                 pszSafeName);
+    {
+        if (strlen(pszSafeName) < strlen(pszSrcName))
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s identifier truncated to %s", pszSrcName, pszSafeName);
+        }
+        else
+        {
+            CPLDebug(pszDebugPrefix, "LaunderName('%s') -> '%s'", pszSrcName,
+                     pszSafeName);
+        }
+    }
 
     return pszSafeName;
 }
@@ -470,12 +483,19 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
 
     if (bCreateTable && !osFIDColumnName.empty())
     {
+        std::string osConstraintName(osTable);
+        if (bLaunder && osConstraintName.size() + strlen("_pk") >
+                            static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+        {
+            osConstraintName.resize(OGR_PG_NAMEDATALEN - 1 - strlen("_pk"));
+        }
+        osConstraintName += "_pk";
         osCommand.Printf(
             "ALTER TABLE %s.%s ADD COLUMN %s %s "
             "CONSTRAINT %s PRIMARY KEY",
             pszSchemaEscaped, pszTableEscaped, osFIDColumnNameEscaped.c_str(),
             pszSerialType,
-            OGRPGDumpEscapeColumnName((osTable + "_pk").c_str()).c_str());
+            OGRPGDumpEscapeColumnName(osConstraintName.c_str()).c_str());
         Log(osCommand);
     }
 
@@ -558,18 +578,31 @@ OGRLayer *OGRPGDumpDataSource::ICreateLayer(const char *pszLayerName,
     std::vector<std::string> aosSpatialIndexCreationCommands;
     if (bCreateTable && bCreateSpatialIndex && pszGFldName && eType != wkbNone)
     {
+        std::string osIndexName(osTable);
+        std::string osSuffix("_");
+        osSuffix += pszGFldName;
+        osSuffix += "_geom_idx";
+        if (bLaunder)
+        {
+            if (osSuffix.size() >= static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+            {
+                osSuffix = "_0_geom_idx";
+            }
+            if (osIndexName.size() + osSuffix.size() >
+                static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+                osIndexName.resize(OGR_PG_NAMEDATALEN - 1 - osSuffix.size());
+        }
+        osIndexName += osSuffix;
+
         /* --------------------------------------------------------------- */
         /*      Create the spatial index.                                  */
         /* --------------------------------------------------------------- */
-        osCommand.Printf(
-            "CREATE INDEX %s "
-            "ON %s.%s "
-            "USING %s (%s)",
-            OGRPGDumpEscapeColumnName(
-                CPLSPrintf("%s_%s_geom_idx", osTable.c_str(), pszGFldName))
-                .c_str(),
-            pszSchemaEscaped, pszTableEscaped, pszSpatialIndexType,
-            OGRPGDumpEscapeColumnName(pszGFldName).c_str());
+        osCommand.Printf("CREATE INDEX %s "
+                         "ON %s.%s "
+                         "USING %s (%s)",
+                         OGRPGDumpEscapeColumnName(osIndexName.c_str()).c_str(),
+                         pszSchemaEscaped, pszTableEscaped, pszSpatialIndexType,
+                         OGRPGDumpEscapeColumnName(pszGFldName).c_str());
         aosSpatialIndexCreationCommands.push_back(osCommand);
     }
 

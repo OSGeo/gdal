@@ -1812,12 +1812,30 @@ OGRErr OGRPGDumpLayer::CreateGeomField(OGRGeomFieldDefn *poGeomFieldIn,
 
         if (m_bCreateSpatialIndexFlag)
         {
+            std::string osIndexName(GetName());
+            std::string osSuffix("_");
+            osSuffix += poGeomField->GetNameRef();
+            osSuffix += "_geom_idx";
+            if (m_bLaunderColumnNames)
+            {
+                if (osSuffix.size() >=
+                    static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+                {
+                    osSuffix = "_";
+                    osSuffix +=
+                        CPLSPrintf("%d", m_poFeatureDefn->GetGeomFieldCount());
+                    osSuffix += "_geom_idx";
+                }
+                if (osIndexName.size() + osSuffix.size() >
+                    static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+                    osIndexName.resize(OGR_PG_NAMEDATALEN - 1 -
+                                       osSuffix.size());
+            }
+            osIndexName += osSuffix;
+
             osCommand.Printf(
                 "CREATE INDEX %s ON %s USING %s (%s)",
-                OGRPGDumpEscapeColumnName(CPLSPrintf("%s_%s_geom_idx",
-                                                     GetName(),
-                                                     poGeomField->GetNameRef()))
-                    .c_str(),
+                OGRPGDumpEscapeColumnName(osIndexName.c_str()).c_str(),
                 m_pszSqlTableName, m_osSpatialIndexType.c_str(),
                 OGRPGDumpEscapeColumnName(poGeomField->GetNameRef()).c_str());
 

@@ -1693,13 +1693,15 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
 
     EndCopy();
 
+    const bool bLaunder = CPLFetchBool(papszOptions, "LAUNDER", true);
+
     const char *pszFIDColumnNameIn = CSLFetchNameValue(papszOptions, "FID");
     CPLString osFIDColumnName;
     if (pszFIDColumnNameIn == nullptr)
         osFIDColumnName = "ogc_fid";
     else
     {
-        if (CPLFetchBool(papszOptions, "LAUNDER", true))
+        if (bLaunder)
         {
             char *pszLaunderedFid =
                 OGRPGCommonLaunderName(pszFIDColumnNameIn, "PG");
@@ -1777,7 +1779,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         strncpy(pszSchemaName, pszLayerName, length);
         pszSchemaName[length] = '\0';
 
-        if (CPLFetchBool(papszOptions, "LAUNDER", true))
+        if (bLaunder)
             pszTableName =
                 OGRPGCommonLaunderName(pszDotPos + 1, "PG");  // skip "."
         else
@@ -1786,7 +1788,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
     else
     {
         pszSchemaName = nullptr;
-        if (CPLFetchBool(papszOptions, "LAUNDER", true))
+        if (bLaunder)
             pszTableName =
                 OGRPGCommonLaunderName(pszLayerName, "PG");  // skip "."
         else
@@ -2176,16 +2178,30 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
             /*      so this may not be exactly the best way to do it. */
             /* --------------------------------------------------------------------
              */
+            std::string osIndexName(pszTableName);
+            std::string osSuffix("_");
+            osSuffix += pszGFldName;
+            osSuffix += "_geom_idx";
+            if (bLaunder)
+            {
+                if (osSuffix.size() >=
+                    static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+                {
+                    osSuffix = "_0_geom_idx";
+                }
+                if (osIndexName.size() + osSuffix.size() >
+                    static_cast<size_t>(OGR_PG_NAMEDATALEN - 1))
+                    osIndexName.resize(OGR_PG_NAMEDATALEN - 1 -
+                                       osSuffix.size());
+            }
+            osIndexName += osSuffix;
 
-            osCommand.Printf(
-                "CREATE INDEX %s ON %s.%s USING %s (%s)",
-                OGRPGEscapeColumnName(
-                    CPLSPrintf("%s_%s_geom_idx", pszTableName, pszGFldName))
-                    .c_str(),
-                OGRPGEscapeColumnName(pszSchemaName).c_str(),
-                OGRPGEscapeColumnName(pszTableName).c_str(),
-                pszSpatialIndexType,
-                OGRPGEscapeColumnName(pszGFldName).c_str());
+            osCommand.Printf("CREATE INDEX %s ON %s.%s USING %s (%s)",
+                             OGRPGEscapeColumnName(osIndexName.c_str()).c_str(),
+                             OGRPGEscapeColumnName(pszSchemaName).c_str(),
+                             OGRPGEscapeColumnName(pszTableName).c_str(),
+                             pszSpatialIndexType,
+                             OGRPGEscapeColumnName(pszGFldName).c_str());
 
             hResult = OGRPG_PQexec(hPGConn, osCommand.c_str());
 
@@ -2222,7 +2238,7 @@ OGRLayer *OGRPGDataSource::ICreateLayer(const char *pszLayerName,
         this, osCurrentSchema, pszTableName, pszSchemaName, "", nullptr, TRUE);
     poLayer->SetTableDefinition(osFIDColumnName, pszGFldName, eType,
                                 pszGeomType, nSRSId, GeometryTypeFlags);
-    poLayer->SetLaunderFlag(CPLFetchBool(papszOptions, "LAUNDER", true));
+    poLayer->SetLaunderFlag(bLaunder);
     poLayer->SetPrecisionFlag(CPLFetchBool(papszOptions, "PRECISION", true));
     // poLayer->SetForcedSRSId(nForcedSRSId);
     poLayer->SetForcedGeometryTypeFlags(ForcedGeometryTypeFlags);
@@ -2372,6 +2388,10 @@ OGRLayer *OGRPGDataSource::GetLayerByName(const char *pszNameIn)
     {
         pszTableName = CPLStrdup(pszNameWithoutBracket);
     }
+
+    if (strlen(pszTableName) > OGR_PG_NAMEDATALEN - 1)
+        pszTableName[OGR_PG_NAMEDATALEN - 1] = 0;
+
     CPLFree(pszNameWithoutBracket);
     pszNameWithoutBracket = nullptr;
 

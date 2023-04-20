@@ -6352,6 +6352,34 @@ def test_ogr_pg_field_comment():
 
 
 ###############################################################################
+# Test long identifiers
+
+
+def test_ogr_pg_long_identifiers():
+
+    if gdaltest.pg_ds is None:
+        pytest.skip()
+
+    long_name = "test_" + ("X" * 64) + "_long_name"
+    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    try:
+        with gdaltest.error_handler():
+            lyr = gdaltest.pg_ds.CreateLayer(long_name)
+        assert lyr.GetName() == short_name
+        f = ogr.Feature(lyr.GetLayerDefn())
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert lyr.SyncToDisk() == ogr.OGRERR_NONE
+
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        got_lyr = ds.GetLayerByName(long_name)
+        assert got_lyr
+        assert got_lyr.GetName() == short_name
+
+    finally:
+        gdaltest.pg_ds.ExecuteSQL("DELLAYER:" + short_name)
+
+
+###############################################################################
 #
 
 
