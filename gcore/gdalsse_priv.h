@@ -36,7 +36,8 @@
 
 /* We restrict to 64bit processors because they are guaranteed to have SSE2 */
 /* Could possibly be used too on 32bit, but we would need to check at runtime */
-#if (defined(__x86_64) || defined(_M_X64)) && !defined(USE_SSE2_EMULATION)
+#if (defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)) &&             \
+    !defined(USE_SSE2_EMULATION)
 
 /* Requires SSE2 */
 #include <emmintrin.h>
@@ -72,7 +73,9 @@ static inline __m128i GDALCopyInt32ToXMM(const void *ptr)
 
 static inline __m128i GDALCopyInt64ToXMM(const void *ptr)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
+#if defined(__i386__) || defined(_M_IX86)
+    return _mm_loadl_epi64(static_cast<const __m128i *>(ptr));
+#elif defined(CPL_CPU_REQUIRES_ALIGNED_ACCESS)
     GInt64 i;
     memcpy(&i, ptr, 8);
     return _mm_cvtsi64_si128(i);
