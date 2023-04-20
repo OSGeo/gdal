@@ -243,7 +243,7 @@ the :ref:`/vsi7z/ <vsi7z>` virtual file system.
 
     Path to a shared or static library file.
 
-.. option:: GDAL_USE_ARC=ON/OFF
+.. option:: GDAL_USE_ARCHIVE=ON/OFF
 
     Control whether to use libarchive. Defaults to ON when libarchive is found.
 
