@@ -126,69 +126,6 @@ OGRLayerH:
     occurs.
 ";
 
-%feature("docstring")  ExecuteSQL "OGRLayerH
-OGR_DS_ExecuteSQL(OGRDataSourceH hDS, const char \\*pszStatement,
-OGRGeometryH hSpatialFilter, const char \\*pszDialect)
-
-Execute an SQL statement against the data store.
-
-The result of an SQL query is either NULL for statements that are in
-error, or that have no results set, or an OGRLayer handle representing
-a results set from the query. Note that this OGRLayer is in addition
-to the layers in the data store and must be destroyed with
-OGR_DS_ReleaseResultSet() before the data source is closed
-(destroyed).
-
-For more information on the SQL dialect supported internally by OGR
-review theOGR SQL document. Some drivers (i.e. Oracle and PostGIS)
-pass the SQL directly through to the underlying RDBMS.
-
-TheSQLITE dialect can also be used.
-
-Deprecated Use GDALDatasetExecuteSQL() in GDAL 2.0
-
-Parameters
------------
-hDS:
-    handle to the data source on which the SQL query is executed.
-pszStatement:
-    the SQL statement to execute.
-hSpatialFilter:
-    handle to a geometry which represents a spatial
-    filter. Can be NULL.
-pszDialect:
-    allows control of the statement dialect. If set to NULL,
-    the OGR SQL engine will be used, except for RDBMS drivers that will
-    use their dedicated SQL engine, unless OGRSQL is explicitly passed as
-    the dialect. The SQLITE dialect can also be used.
-
-Returns
---------
-OGRLayerH:
-    a handle to a OGRLayer containing the results of the query. Deallocate
-    with OGR_DS_ReleaseResultSet().
-";
-
-%feature("docstring")  ReleaseResultSet "void
-OGR_DS_ReleaseResultSet(OGRDataSourceH hDS, OGRLayerH hLayer)
-
-Release results of OGR_DS_ExecuteSQL().
-
-This function should only be used to deallocate OGRLayers resulting
-from an OGR_DS_ExecuteSQL() call on the same OGRDataSource. Failure to
-deallocate a results set before destroying the OGRDataSource may cause
-errors.
-
-Deprecated Use GDALDatasetReleaseResultSet() in GDAL 2.0
-
-Parameters
------------
-hDS:
-    a handle to the data source on which was executed an SQL query.
-hLayer:
-    handle to the result of a previous OGR_DS_ExecuteSQL() call.
-";
-
 %feature("docstring")  TestCapability "int
 OGR_DS_TestCapability(OGRDataSourceH hDS, const char \\*pszCapability)
 
