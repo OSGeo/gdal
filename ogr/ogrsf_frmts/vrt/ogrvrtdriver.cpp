@@ -229,6 +229,7 @@ void RegisterOGRVRT()
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "WidthPrecision Nullable Unique Default "
                               "Comment AlternativeName");
 
     poDriver->pfnOpen = OGRVRTDriverOpen;

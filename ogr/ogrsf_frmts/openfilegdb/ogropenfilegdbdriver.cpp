@@ -328,10 +328,11 @@ void RegisterOGROpenFileGDB()
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
                               "Int16 Float32");
     poDriver->SetMetadataItem(GDAL_DMD_CREATION_FIELD_DEFN_FLAGS,
+                              "Nullable Default "
                               "AlternativeName Domain");
     poDriver->SetMetadataItem(
         GDAL_DMD_ALTER_FIELD_DEFN_FLAGS,
-        "Name Type WidthPrecision Nullable Default Domain AlternativeName");
+        "Name Type Nullable Default Domain AlternativeName");
     // see https://support.esri.com/en/technical-article/000010906
     poDriver->SetMetadataItem(
         GDAL_DMD_ILLEGAL_FIELD_NAMES,

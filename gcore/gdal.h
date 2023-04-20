@@ -442,9 +442,13 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  *
  * Supported values are:
  *
- * - "AlternativeName": field alternative names are supported
- * - "Comment": field comments are supported
- * - "Domain": fields can be associated with a domain
+ * - "WidthPrecision": field width and precision is supported.
+ * - "Nullable": field (non-)nullable status is supported.
+ * - "Unique": field unique constraint is supported.
+ * - "Default": field default value is supported.
+ * - "AlternativeName": field alternative name is supported.
+ * - "Comment": field comment is supported.
+ * - "Domain": field can be associated with a domain.
  *
  * @see GDAL_DMD_ALTER_FIELD_DEFN_FLAGS for capabilities supported when altering
  * existing fields.
