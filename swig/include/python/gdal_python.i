@@ -1069,11 +1069,11 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
       - or a ogr.Layer handle representing a results set from the query.
 
     Note that this ogr.Layer is in addition to the layers in the data store
-    and must be destroyed with ReleaseResultSet() before the data source is closed
+    and must be released with ReleaseResultSet() before the data source is closed
     (destroyed).
 
     Starting with GDAL 3.7, this method can also be used as a context manager,
-    as a convenient way of automatically de-allocating the returned result layer.
+    as a convenient way of automatically releasing the returned result layer.
 
     For more information on the SQL dialect supported internally by OGR
     review the OGR SQL document (:ref:`ogr_sql_sqlite_dialect`)
@@ -1101,7 +1101,7 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
     -------
     ogr.Layer:
         a ogr.Layer containing the results of the query, that will be
-        automatically freed when the context manager goes out of scope
+        automatically released when the context manager goes out of scope.
 
     Examples
     --------
