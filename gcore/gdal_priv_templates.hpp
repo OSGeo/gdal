@@ -485,7 +485,7 @@ inline void GDALCopy8Words(const Tin *pValueIn, Tout *const pValueOut)
 }
 
 // Needs SSE2
-#if (defined(__x86_64) || defined(_M_X64))
+#if defined(__x86_64) || defined(_M_X64) || defined(USE_SSE2)
 
 #include <emmintrin.h>
 
@@ -504,6 +504,8 @@ static inline void GDALCopyXMMToInt64(const __m128i xmm, void *pDest)
 #ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     GInt64 n64 = _mm_cvtsi128_si64(xmm);  // Extract lower 64 bit word
     memcpy(pDest, &n64, sizeof(n64));
+#elif defined(__i386__) || defined(_M_IX86)
+    _mm_storel_epi64(reinterpret_cast<__m128i *>(pDest), xmm);
 #else
     *static_cast<GInt64 *>(pDest) = _mm_cvtsi128_si64(xmm);
 #endif
