@@ -661,6 +661,11 @@ inline __m128d SQUARE(__m128d x)
 
 #ifdef __AVX2__
 
+inline __m256d SQUARE(__m256d x)
+{
+    return _mm256_mul_pd(x, x);
+}
+
 inline __m256d FIXUP_LANES(__m256d x)
 {
     return _mm256_permute4x64_pd(x, _MM_SHUFFLE(3, 1, 2, 0));
