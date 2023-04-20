@@ -43,12 +43,12 @@ pytestmark = pytest.mark.require_curl()
 
 def test_vsicurl_streaming_1():
 
-    gdal.SetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", "5")
-    fp = gdal.VSIFOpenL(
-        "/vsicurl_streaming/http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem",
-        "rb",
-    )
-    gdal.SetConfigOption("GDAL_HTTP_CONNECTTIMEOUT", None)
+    with gdal.config_option("GDAL_HTTP_CONNECTTIMEOUT", "5"):
+        fp = gdal.VSIFOpenL(
+            "/vsicurl_streaming/http://download.osgeo.org/gdal/data/usgsdem/cded/114p01_0100_deme.dem",
+            "rb",
+        )
+
     if fp is None:
         if (
             gdaltest.gdalurlopen(

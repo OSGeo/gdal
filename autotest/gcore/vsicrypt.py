@@ -170,12 +170,10 @@ def test_vsicrypt_2():
             if fp is not None:
                 gdal.VSIFCloseL(fp)
 
-    gdal.SetConfigOption("VSICRYPT_IV", "TOO_SHORT")
-    with gdaltest.error_handler():
+    with gdal.config_option("VSICRYPT_IV", "TOO_SHORT"), gdaltest.error_handler():
         fp = gdal.VSIFOpenL(
             "/vsicrypt/key=DONT_USE_IN_PROD,file=" "/vsimem/file.bin", "wb"
         )
-    gdal.SetConfigOption("VSICRYPT_IV", None)
     if fp is not None:
         gdal.VSIFCloseL(fp)
 
@@ -442,11 +440,10 @@ def test_vsicrypt_3():
     # Test key generation
 
     # Do NOT set VSICRYPT_CRYPTO_RANDOM=NO in production. This is just to speed up tests !
-    gdal.SetConfigOption("VSICRYPT_CRYPTO_RANDOM", "NO")
-    fp = gdal.VSIFOpenL(
-        "/vsicrypt/key=GENERATE_IT,add_key_check=yes,file=/vsimem/file.bin", "wb"
-    )
-    gdal.SetConfigOption("VSICRYPT_CRYPTO_RANDOM", None)
+    with gdal.config_option("VSICRYPT_CRYPTO_RANDOM", "NO"):
+        fp = gdal.VSIFOpenL(
+            "/vsicrypt/key=GENERATE_IT,add_key_check=yes,file=/vsimem/file.bin", "wb"
+        )
 
     # Get the generated random key
     key_b64 = gdal.GetConfigOption("VSICRYPT_KEY_B64")

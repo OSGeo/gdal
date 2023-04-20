@@ -612,10 +612,8 @@ def test_tiff_write_17():
 
 
 def test_tiff_write_17_disable_readdir():
-    oldval = gdal.GetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN")
-    gdal.SetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE")
-    ret = test_tiff_write_17()
-    gdal.SetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", oldval)
+    with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
+        ret = test_tiff_write_17()
     return ret
 
 
@@ -720,10 +718,8 @@ def test_tiff_write_imd_with_space_in_values():
 
 
 def test_tiff_write_18_disable_readdir():
-    oldval = gdal.GetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN")
-    gdal.SetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE")
-    ret = test_tiff_write_18()
-    gdal.SetConfigOption("GDAL_DISABLE_READDIR_ON_OPEN", oldval)
+    with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
+        ret = test_tiff_write_18()
     return ret
 
 
@@ -2567,18 +2563,15 @@ def test_tiff_write_73():
 @gdaltest.require_creation_option("GTiff", "JPEG")
 def test_tiff_write_74():
 
-    old_accum = gdal.GetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
-    gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
-    gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.config_option("CPL_ACCUM_ERROR_MSG", "ON"):
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
 
-        try:
-            ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
-            ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
-        except Exception:
-            ds = None
-
-    gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", old_accum)
+            try:
+                ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
+                ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
+            except Exception:
+                ds = None
 
     if gdal.GetLastErrorMsg().find("Unsupported JPEG data precision 12") != -1:
         pytest.skip("12bit jpeg not available")
@@ -3099,13 +3092,12 @@ def test_tiff_write_84():
             pass
 
         ds = gdal.Open("tmp/tiff_write_84.tif")
-        gdal.SetConfigOption("COMPRESS_OVERVIEW", "JPEG")
-        gdal.SetConfigOption("JPEG_QUALITY_OVERVIEW", "90")
-        ds.BuildOverviews("NEAREST", overviewlist=[2])
-        cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
-        ds = None
-        gdal.SetConfigOption("COMPRESS_OVERVIEW", None)
-        gdal.SetConfigOption("JPEG_QUALITY_OVERVIEW", None)
+        with gdal.config_options(
+            {"COMPRESS_OVERVIEW": "JPEG", "JPEG_QUALITY_OVERVIEW": "90"}
+        ):
+            ds.BuildOverviews("NEAREST", overviewlist=[2])
+            cs = ds.GetRasterBand(2).GetOverview(0).Checksum()
+            ds = None
 
     gdaltest.tiff_drv.Delete("tmp/tiff_write_84.tif")
 
@@ -3197,75 +3189,81 @@ def test_tiff_write_85():
 
 def test_tiff_write_86():
 
-    gdal.SetConfigOption("ESRI_XML_PAM", "YES")
+    with gdal.config_option("ESRI_XML_PAM", "YES"):
 
-    ds = gdaltest.tiff_drv.Create("tmp/tiff_write_86.tif", 100, 100, 1, gdal.GDT_Byte)
-    ds.SetMetadata(["<abc></abc>"], "xml:ESRI")
-    ds.SetMetadataItem("BaseTest", "Value")
-    ds = None
+        ds = gdaltest.tiff_drv.Create(
+            "tmp/tiff_write_86.tif", 100, 100, 1, gdal.GDT_Byte
+        )
+        ds.SetMetadata(["<abc></abc>"], "xml:ESRI")
+        ds.SetMetadataItem("BaseTest", "Value")
+        ds = None
 
-    # Is the xml:ESRI data available?
-    ds = gdal.Open("tmp/tiff_write_86.tif")
-    assert ds.GetMetadata("xml:ESRI") == [
-        "<abc />\n"
-    ], "did not get expected xml:ESRI metadata."
+        # Is the xml:ESRI data available?
+        ds = gdal.Open("tmp/tiff_write_86.tif")
+        assert ds.GetMetadata("xml:ESRI") == [
+            "<abc />\n"
+        ], "did not get expected xml:ESRI metadata."
 
-    if ds.GetMetadataItem("BaseTest") != "Value":
-        gdaltest.post_value("missing metadata(1)")
-        pytest.fail()
-    ds = None
+        if ds.GetMetadataItem("BaseTest") != "Value":
+            gdaltest.post_value("missing metadata(1)")
+            pytest.fail()
+        ds = None
 
-    # After removing the pam file is it gone, but the conventional
-    # metadata still available?
+        # After removing the pam file is it gone, but the conventional
+        # metadata still available?
 
-    os.rename("tmp/tiff_write_86.tif.aux.xml", "tmp/tiff_write_86.tif.aux.xml.hidden")
+        os.rename(
+            "tmp/tiff_write_86.tif.aux.xml", "tmp/tiff_write_86.tif.aux.xml.hidden"
+        )
 
-    ds = gdal.Open("tmp/tiff_write_86.tif")
-    assert ds.GetMetadata("xml:ESRI") is None, "unexpectedly got xml:ESRI metadata"
+        ds = gdal.Open("tmp/tiff_write_86.tif")
+        assert ds.GetMetadata("xml:ESRI") is None, "unexpectedly got xml:ESRI metadata"
 
-    if ds.GetMetadataItem("BaseTest") != "Value":
-        gdaltest.post_value("missing metadata(2)")
-        pytest.fail()
+        if ds.GetMetadataItem("BaseTest") != "Value":
+            gdaltest.post_value("missing metadata(2)")
+            pytest.fail()
 
-    ds = None
+        ds = None
 
-    # now confirm that CreateCopy also preserves things similarly.
+        # now confirm that CreateCopy also preserves things similarly.
 
-    os.rename("tmp/tiff_write_86.tif.aux.xml.hidden", "tmp/tiff_write_86.tif.aux.xml")
+        os.rename(
+            "tmp/tiff_write_86.tif.aux.xml.hidden", "tmp/tiff_write_86.tif.aux.xml"
+        )
 
-    ds_src = gdal.Open("tmp/tiff_write_86.tif")
-    ds = gdaltest.tiff_drv.CreateCopy("tmp/tiff_write_86_cc.tif", ds_src)
-    ds_src = None
-    ds = None
+        ds_src = gdal.Open("tmp/tiff_write_86.tif")
+        ds = gdaltest.tiff_drv.CreateCopy("tmp/tiff_write_86_cc.tif", ds_src)
+        ds_src = None
+        ds = None
 
-    # Is the xml:ESRI data available?
-    ds = gdal.Open("tmp/tiff_write_86_cc.tif")
-    assert ds.GetMetadata("xml:ESRI") == [
-        "<abc />\n"
-    ], "did not get expected xml:ESRI metadata (cc)."
+        # Is the xml:ESRI data available?
+        ds = gdal.Open("tmp/tiff_write_86_cc.tif")
+        assert ds.GetMetadata("xml:ESRI") == [
+            "<abc />\n"
+        ], "did not get expected xml:ESRI metadata (cc)."
 
-    if ds.GetMetadataItem("BaseTest") != "Value":
-        gdaltest.post_value("missing metadata(1cc)")
-        pytest.fail()
-    ds = None
+        if ds.GetMetadataItem("BaseTest") != "Value":
+            gdaltest.post_value("missing metadata(1cc)")
+            pytest.fail()
+        ds = None
 
-    # After removing the pam file is it gone, but the conventional
-    # metadata still available?
+        # After removing the pam file is it gone, but the conventional
+        # metadata still available?
 
-    os.remove("tmp/tiff_write_86_cc.tif.aux.xml")
+        os.remove("tmp/tiff_write_86_cc.tif.aux.xml")
 
-    ds = gdal.Open("tmp/tiff_write_86_cc.tif")
-    assert ds.GetMetadata("xml:ESRI") is None, "unexpectedly got xml:ESRI metadata(2)"
+        ds = gdal.Open("tmp/tiff_write_86_cc.tif")
+        assert (
+            ds.GetMetadata("xml:ESRI") is None
+        ), "unexpectedly got xml:ESRI metadata(2)"
 
-    if ds.GetMetadataItem("BaseTest") != "Value":
-        gdaltest.post_value("missing metadata(2cc)")
-        pytest.fail()
+        if ds.GetMetadataItem("BaseTest") != "Value":
+            gdaltest.post_value("missing metadata(2cc)")
+            pytest.fail()
 
-    ds = None
+        ds = None
 
     # Cleanup
-
-    gdal.SetConfigOption("ESRI_XML_PAM", "NO")
 
     gdaltest.tiff_drv.Delete("tmp/tiff_write_86.tif")
     gdaltest.tiff_drv.Delete("tmp/tiff_write_86_cc.tif")
@@ -3378,18 +3376,15 @@ def test_tiff_write_88():
 
     src_ds = gdal.Open("tmp/tiff_write_88_src.tif")
     # for testing only. We need to keep the file to check it was a bigtiff
-    gdal.SetConfigOption("GTIFF_DELETE_ON_ERROR", "NO")
-    gdal.SetConfigOption(
-        "CHECK_DISK_FREE_SPACE", "NO"
-    )  # we don't want free space to be an issue here
-    with gdaltest.error_handler():
+    # we don't want free space to be an issue here
+    with gdal.config_options(
+        {"GTIFF_DELETE_ON_ERROR": "NO", "CHECK_DISK_FREE_SPACE": "NO"}
+    ), gdaltest.error_handler():
         ds = gdaltest.tiff_drv.CreateCopy(
             "tmp/tiff_write_88_dst.tif",
             src_ds,
             options=["TILED=YES", "COPY_SRC_OVERVIEWS=YES", "ENDIANNESS=LITTLE"],
         )
-    gdal.SetConfigOption("GTIFF_DELETE_ON_ERROR", None)
-    gdal.SetConfigOption("CHECK_DISK_FREE_SPACE", None)
     del ds
     src_ds = None
 
@@ -3426,9 +3421,8 @@ def test_tiff_write_89():
             options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR", "JPEG_QUALITY=%d" % quality],
         )
 
-        gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", "YES")
-        ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-        gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", None)
+        with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
+            ds.CreateMaskBand(gdal.GMF_PER_DATASET)
 
         data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 1024, 1024)
         ds.GetRasterBand(1).WriteRaster(0, 0, 1024, 1024, data)
@@ -3646,9 +3640,8 @@ def test_tiff_write_91():
         ds = None
 
         ds = gdal.Open("tmp/tiff_write_91.tif", gdal.GA_Update)
-        gdal.SetConfigOption("JPEG_QUALITY_OVERVIEW", "%d" % quality)
-        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-        gdal.SetConfigOption("JPEG_QUALITY_OVERVIEW", None)
+        with gdal.config_option("JPEG_QUALITY_OVERVIEW", "%d" % quality):
+            ds.BuildOverviews("NEAR", overviewlist=[2, 4])
 
         src_ds = None
         ds = None
@@ -3815,13 +3808,14 @@ def test_tiff_write_93():
             pass
 
         ds = gdal.Open("tmp/tiff_write_93.tif")
-        gdal.SetConfigOption("COMPRESS_OVERVIEW", "JPEG")
-        gdal.SetConfigOption("JPEG_QUALITY_OVERVIEW", "%d" % quality)
-        gdal.SetConfigOption("PHOTOMETRIC_OVERVIEW", "YCBCR")
-        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-        gdal.SetConfigOption("COMPRESS_OVERVIEW", None)
-        gdal.SetConfigOption("JPEG_QUALITY_OVERVIEW", None)
-        gdal.SetConfigOption("PHOTOMETRIC_OVERVIEW", None)
+        with gdal.config_options(
+            {
+                "COMPRESS_OVERVIEW": "JPEG",
+                "JPEG_QUALITY_OVERVIEW": "%d" % quality,
+                "PHOTOMETRIC_OVERVIEW": "YCBCR",
+            }
+        ):
+            ds.BuildOverviews("NEAR", overviewlist=[2, 4])
         ds = None
 
         f = open("tmp/tiff_write_93.tif.ovr", "rb")
@@ -3854,18 +3848,16 @@ def test_tiff_write_94():
     src_ds = gdal.GetDriverByName("GTiff").Create(
         "tmp/tiff_write_94_src.tif", 1024, 1024, 3
     )
-    gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", "YES")
-    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", None)
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
+        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(0, 0, 1, 1, "\xff", 1, 1)
 
-    gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", "YES")
-    ds = gdal.GetDriverByName("GTiff").CreateCopy(
-        "tmp/tiff_write_94_dst.tif",
-        src_ds,
-        options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR", "JPEG_QUALITY=30"],
-    )
-    gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", None)
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
+        ds = gdal.GetDriverByName("GTiff").CreateCopy(
+            "tmp/tiff_write_94_dst.tif",
+            src_ds,
+            options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR", "JPEG_QUALITY=30"],
+        )
 
     src_ds = None
     ds = None
@@ -3891,11 +3883,10 @@ def test_tiff_write_95():
         "tmp/tiff_write_95_src.tif", 7171, 6083, options=["SPARSE_OK=YES"]
     )
     src_ds.BuildOverviews("NONE", overviewlist=[2, 4, 8, 16, 32, 64])
-    gdal.SetConfigOption("GTIFF_DONT_WRITE_BLOCKS", "YES")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "tmp/tiff_write_95_dst.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
-    )
-    gdal.SetConfigOption("GTIFF_DONT_WRITE_BLOCKS", None)
+    with gdal.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "tmp/tiff_write_95_dst.tif", src_ds, options=["COPY_SRC_OVERVIEWS=YES"]
+        )
     ok = ds is not None
     ds = None
     src_ds = None
@@ -3912,33 +3903,38 @@ def test_tiff_write_95():
 
 def test_tiff_write_96(other_options=[], nbands=1, nbits=8):
 
-    gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", "YES")
-    src_ds = gdaltest.tiff_drv.Create(
-        "tmp/tiff_write_96_src.tif", 100, 100, nbands, options=["NBITS=" + str(nbits)]
-    )
-    src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
-    src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
-    src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25, 25, 50, 50, b"\xff", 1, 1)
-    src_ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-    expected_cs = src_ds.GetRasterBand(1).Checksum()
-    expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
-    expected_cs_ovr_1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
-    expected_cs_ovr_mask_1 = (
-        src_ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
-    )
-    expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
-    expected_cs_ovr_mask_2 = (
-        src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
-    )
+    with gdal.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
+        src_ds = gdaltest.tiff_drv.Create(
+            "tmp/tiff_write_96_src.tif",
+            100,
+            100,
+            nbands,
+            options=["NBITS=" + str(nbits)],
+        )
+        src_ds.GetRasterBand(1).Fill(255 if nbits == 8 else 127)
+        src_ds.CreateMaskBand(gdal.GMF_PER_DATASET)
+        src_ds.GetRasterBand(1).GetMaskBand().WriteRaster(25, 25, 50, 50, b"\xff", 1, 1)
+        src_ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        expected_cs = src_ds.GetRasterBand(1).Checksum()
+        expected_cs_mask = src_ds.GetRasterBand(1).GetMaskBand().Checksum()
+        expected_cs_ovr_1 = src_ds.GetRasterBand(1).GetOverview(0).Checksum()
+        expected_cs_ovr_mask_1 = (
+            src_ds.GetRasterBand(1).GetOverview(0).GetMaskBand().Checksum()
+        )
+        expected_cs_ovr_2 = src_ds.GetRasterBand(1).GetOverview(1).Checksum()
+        expected_cs_ovr_mask_2 = (
+            src_ds.GetRasterBand(1).GetOverview(1).GetMaskBand().Checksum()
+        )
 
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "tmp/tiff_write_96_dst.tif",
-        src_ds,
-        options=["COPY_SRC_OVERVIEWS=YES"] + other_options + ["NBITS=" + str(nbits)],
-    )
-    ds = None
-    src_ds = None
-    gdal.SetConfigOption("GDAL_TIFF_INTERNAL_MASK", None)
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "tmp/tiff_write_96_dst.tif",
+            src_ds,
+            options=["COPY_SRC_OVERVIEWS=YES"]
+            + other_options
+            + ["NBITS=" + str(nbits)],
+        )
+        ds = None
+        src_ds = None
 
     ds = gdal.Open("tmp/tiff_write_96_dst.tif")
     cs = ds.GetRasterBand(1).Checksum()
@@ -4140,44 +4136,42 @@ def test_tiff_write_ifd_offsets():
 
 def test_tiff_write_97():
 
-    gdal.SetConfigOption("GTIFF_POINT_GEO_IGNORE", "FALSE")
+    with gdal.config_option("GTIFF_POINT_GEO_IGNORE", "FALSE"):
 
-    src_ds = gdal.Open("data/byte_point.tif")
+        src_ds = gdal.Open("data/byte_point.tif")
 
-    new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_97.tif", src_ds)
+        new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_97.tif", src_ds)
 
-    gt = new_ds.GetGeoTransform()
-    md = new_ds.GetMetadataItem("AREA_OR_POINT")
-    new_ds = None
+        gt = new_ds.GetGeoTransform()
+        md = new_ds.GetMetadataItem("AREA_OR_POINT")
+        new_ds = None
 
-    gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
+        gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
 
-    assert gt == gt_expected, "did not get expected geotransform"
+        assert gt == gt_expected, "did not get expected geotransform"
 
-    assert md == "Point", "did not get expected AREA_OR_POINT value"
+        assert md == "Point", "did not get expected AREA_OR_POINT value"
 
-    gdaltest.tiff_drv.Delete("tmp/test_97.tif")
+        gdaltest.tiff_drv.Delete("tmp/test_97.tif")
 
     # Again, but ignoring PixelIsPoint
 
-    gdal.SetConfigOption("GTIFF_POINT_GEO_IGNORE", "TRUE")
+    with gdal.config_option("GTIFF_POINT_GEO_IGNORE", "TRUE"):
 
-    new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_97_2.tif", src_ds)
+        new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_97_2.tif", src_ds)
 
-    gt = new_ds.GetGeoTransform()
-    md = new_ds.GetMetadataItem("AREA_OR_POINT")
-    new_ds = None
-    src_ds = None
+        gt = new_ds.GetGeoTransform()
+        md = new_ds.GetMetadataItem("AREA_OR_POINT")
+        new_ds = None
+        src_ds = None
 
-    gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
+        gt_expected = (440690.0, 60.0, 0.0, 3751350.0, 0.0, -60.0)
 
-    assert (
-        gt == gt_expected
-    ), "did not get expected geotransform when ignoring PixelIsPoint"
+        assert (
+            gt == gt_expected
+        ), "did not get expected geotransform when ignoring PixelIsPoint"
 
-    assert md == "Point", "did not get expected AREA_OR_POINT value"
-
-    gdal.SetConfigOption("GTIFF_POINT_GEO_IGNORE", None)
+        assert md == "Point", "did not get expected AREA_OR_POINT value"
 
     # read back this file with pixelispoint behavior enabled.
 
@@ -5635,18 +5629,15 @@ def test_tiff_write_127():
 @pytest.mark.require_driver("JPEG")
 def test_tiff_write_128():
 
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
-    src_ds = gdal.Open("../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg")
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", None)
+    with gdal.config_option("GDAL_JPEG_TO_RGB", "NO"):
+        src_ds = gdal.Open("../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg")
 
     # Will received implicitly CMYK photometric interpretation.
-    old_val = gdal.GetConfigOption("GDAL_PAM_ENABLED")
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/tiff_write_128.tif", src_ds, options=["COMPRESS=JPEG"]
-    )
-    ds = None
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", old_val)
+    with gdal.config_option("GDAL_PAM_ENABLED", "NO"):
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "/vsimem/tiff_write_128.tif", src_ds, options=["COMPRESS=JPEG"]
+        )
+        ds = None
 
     # We need to reopen in raw to avoig automatic CMYK->RGBA to trigger
     ds = gdal.Open("GTIFF_RAW:/vsimem/tiff_write_128.tif")
@@ -5663,15 +5654,13 @@ def test_tiff_write_128():
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_128.tif")
 
     # Try with explicit CMYK photometric interpretation
-    old_val = gdal.GetConfigOption("GDAL_PAM_ENABLED")
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/tiff_write_128.tif",
-        src_ds,
-        options=["COMPRESS=JPEG", "PHOTOMETRIC=CMYK"],
-    )
-    ds = None
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", old_val)
+    with gdal.config_option("GDAL_PAM_ENABLED", "NO"):
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "/vsimem/tiff_write_128.tif",
+            src_ds,
+            options=["COMPRESS=JPEG", "PHOTOMETRIC=CMYK"],
+        )
+        ds = None
 
     # We need to reopen in raw to avoig automatic CMYK->RGBA to trigger
     ds = gdal.Open("GTIFF_RAW:/vsimem/tiff_write_128.tif")
@@ -5688,15 +5677,13 @@ def test_tiff_write_128():
     gdaltest.tiff_drv.Delete("/vsimem/tiff_write_128.tif")
 
     # Try with more neutral colorspace in the case the source JPEG is not really CMYK (yes that happens !)
-    old_val = gdal.GetConfigOption("GDAL_PAM_ENABLED")
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "/vsimem/tiff_write_128.tif",
-        src_ds,
-        options=["COMPRESS=JPEG", "PHOTOMETRIC=MINISBLACK", "PROFILE=BASELINE"],
-    )
-    ds = None
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", old_val)
+    with gdal.config_option("GDAL_PAM_ENABLED", "NO"):
+        ds = gdaltest.tiff_drv.CreateCopy(
+            "/vsimem/tiff_write_128.tif",
+            src_ds,
+            options=["COMPRESS=JPEG", "PHOTOMETRIC=MINISBLACK", "PROFILE=BASELINE"],
+        )
+        ds = None
 
     # Here we can reopen without GTIFF_RAW trick
     ds = gdal.Open("/vsimem/tiff_write_128.tif")
@@ -5926,9 +5913,8 @@ def test_tiff_write_133():
     )
     out_ds = None
 
-    gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-    ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
-    gdal.SetConfigOption("TIFF_READ_STREAMING", None)
+    with gdal.config_option("TIFF_READ_STREAMING", "YES"):
+        ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
     assert ds.GetProjectionRef().find("32601") >= 0
     assert ds.GetGeoTransform() == (1.0, 2.0, 0.0, 3.0, 0.0, -2.0)
     assert ds.GetMetadataItem("FOO") == "BAR"
@@ -5955,9 +5941,8 @@ def test_tiff_write_133():
     )
     out_ds = None
 
-    gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-    ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
-    gdal.SetConfigOption("TIFF_READ_STREAMING", None)
+    with gdal.config_option("TIFF_READ_STREAMING", "YES"):
+        ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
     assert ds.GetProjectionRef().find("32601") >= 0
     assert ds.GetGeoTransform() == (1.0, 2.0, 0.0, 3.0, 0.0, -2.0)
     assert ds.GetMetadataItem("FOO") == "BAR"
@@ -5988,9 +5973,8 @@ def test_tiff_write_133():
     )
     out_ds = None
 
-    gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-    ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
-    gdal.SetConfigOption("TIFF_READ_STREAMING", None)
+    with gdal.config_option("TIFF_READ_STREAMING", "YES"):
+        ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
     assert ds.GetMetadataItem("UNORDERED_BLOCKS", "TIFF") is None
 
     with gdaltest.SetCacheMax(0):
@@ -6011,9 +5995,8 @@ def test_tiff_write_133():
         )
         out_ds = None
 
-        gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-        ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
-        gdal.SetConfigOption("TIFF_READ_STREAMING", None)
+        with gdal.config_option("TIFF_READ_STREAMING", "YES"):
+            ds = gdal.Open("/vsimem/tiff_write_133_dst.tif")
         assert ds.GetMetadataItem("UNORDERED_BLOCKS", "TIFF") is None
 
         with gdaltest.SetCacheMax(0):
@@ -6048,10 +6031,8 @@ def test_tiff_write_133():
     src_ds = None
 
     # Classical TIFF with IFD not at offset 8
-    gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-    with gdaltest.error_handler():
+    with gdal.config_option("TIFF_READ_STREAMING", "YES"), gdaltest.error_handler():
         ds = gdal.Open("data/byte.tif")
-    gdal.SetConfigOption("TIFF_READ_STREAMING", None)
     assert ds is None
 
     # BigTIFF with IFD not at offset 16
@@ -6064,10 +6045,8 @@ def test_tiff_write_133():
         ds.SetGeoTransform([1, 2, 0, 3, 0, -2])
         ds = None
 
-        gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-        with gdaltest.error_handler():
+        with gdal.config_option("TIFF_READ_STREAMING", "YES"), gdaltest.error_handler():
             ds = gdal.Open("/vsimem/tiff_write_133.tif")
-        gdal.SetConfigOption("TIFF_READ_STREAMING", None)
         assert ds is None
 
     # Test reading strips in not increasing order
@@ -6079,10 +6058,8 @@ def test_tiff_write_133():
         ds.FlushCache()
     ds = None
 
-    gdal.SetConfigOption("TIFF_READ_STREAMING", "YES")
-    with gdaltest.error_handler():
+    with gdal.config_option("TIFF_READ_STREAMING", "YES"), gdaltest.error_handler():
         ds = gdal.Open("/vsimem/tiff_write_133.tif")
-    gdal.SetConfigOption("TIFF_READ_STREAMING", None)
     assert ds.GetMetadataItem("UNORDERED_BLOCKS", "TIFF") == "YES"
 
     with gdaltest.SetCacheMax(0):
@@ -7144,15 +7121,12 @@ def test_tiff_write_146():
 @pytest.mark.require_driver("JPEG")
 def test_tiff_write_147():
 
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
-    gdal.Translate(
-        "/vsimem/tiff_write_147.tif",
-        "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg",
-        options="-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK",
-    )
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", None)
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", None)
+    with gdal.config_options({"GDAL_JPEG_TO_RGB": "NO", "GDAL_PAM_ENABLED": "NO"}):
+        gdal.Translate(
+            "/vsimem/tiff_write_147.tif",
+            "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg",
+            options="-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK",
+        )
     out_ds = gdal.Open("/vsimem/tiff_write_147.tif")
     assert out_ds.GetRasterBand(1).GetOverview(0) is None, "did not expected overview"
     out_ds = None
@@ -7167,21 +7141,20 @@ def test_tiff_write_147():
 @pytest.mark.require_driver("JPEG")
 def test_tiff_write_148():
 
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
-    tmp_ds = gdal.Translate("", "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg", format="MEM")
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", None)
+    with gdal.config_option("GDAL_JPEG_TO_RGB", "NO"):
+        tmp_ds = gdal.Translate(
+            "", "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg", format="MEM"
+        )
     original_stats = [
         tmp_ds.GetRasterBand(i + 1).ComputeStatistics(True) for i in range(4)
     ]
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", "NO")
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", "NO")
-    gdal.Translate(
-        "/vsimem/tiff_write_148.tif",
-        "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg",
-        options="-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK",
-    )
-    gdal.SetConfigOption("GDAL_JPEG_TO_RGB", None)
-    gdal.SetConfigOption("GDAL_PAM_ENABLED", None)
+
+    with gdal.config_options({"GDAL_JPEG_TO_RGB": "NO", "GDAL_PAM_ENABLED": "NO"}):
+        gdal.Translate(
+            "/vsimem/tiff_write_148.tif",
+            "../gdrivers/data/jpeg/rgb_ntf_cmyk.jpg",
+            options="-outsize 1000% 1000% -co COMPRESS=JPEG -co PHOTOMETRIC=CMYK",
+        )
     out_ds = gdal.Open("GTIFF_RAW:/vsimem/tiff_write_148.tif")
     got_stats = [
         out_ds.GetRasterBand(i + 1).GetOverview(0).ComputeStatistics(True)

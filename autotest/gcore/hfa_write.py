@@ -262,11 +262,9 @@ def test_hfa_use_rrd():
 
     shutil.copyfile("data/small_ov.img", "tmp/small.img")
 
-    old_value = gdal.GetConfigOption("HFA_USE_RRD", "NO")
-    gdal.SetConfigOption("HFA_USE_RRD", "YES")
-    ds = gdal.Open("tmp/small.img", gdal.GA_Update)
-    result = ds.BuildOverviews(overviewlist=[2])
-    gdal.SetConfigOption("HFA_USE_RRD", old_value)
+    with gdal.config_option("HFA_USE_RRD", "YES"):
+        ds = gdal.Open("tmp/small.img", gdal.GA_Update)
+        result = ds.BuildOverviews(overviewlist=[2])
 
     assert result == 0, "BuildOverviews() failed."
     ds = None
@@ -293,74 +291,66 @@ def test_hfa_use_rrd():
 @pytest.mark.require_driver("BMP")
 def test_hfa_update_existing_aux_overviews():
 
-    gdal.SetConfigOption("USE_RRD", "YES")
+    with gdal.config_option("USE_RRD", "YES"):
 
-    ds = gdal.GetDriverByName("BMP").Create(
-        "tmp/hfa_update_existing_aux_overviews.bmp", 100, 100, 1
-    )
-    ds.GetRasterBand(1).Fill(255)
-    ds = None
+        ds = gdal.GetDriverByName("BMP").Create(
+            "tmp/hfa_update_existing_aux_overviews.bmp", 100, 100, 1
+        )
+        ds.GetRasterBand(1).Fill(255)
+        ds = None
 
-    # Create overviews
-    ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
-    ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-    ds = None
+        # Create overviews
+        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        ds = None
 
-    # Save overviews checksum
-    ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
-    cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+        # Save overviews checksum
+        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
 
-    # and regenerate them
-    ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-    ds = None
+        # and regenerate them
+        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        ds = None
 
-    ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
-    # Check overviews checksum
-    new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs_ovr0 != new_cs_ovr0:
-        gdal.SetConfigOption("USE_RRD", None)
-        pytest.fail()
-    if cs_ovr1 != new_cs_ovr1:
-        gdal.SetConfigOption("USE_RRD", None)
-        pytest.fail()
+        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        # Check overviews checksum
+        new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+        if cs_ovr0 != new_cs_ovr0:
+            pytest.fail()
+        if cs_ovr1 != new_cs_ovr1:
+            pytest.fail()
 
-    # and regenerate them twice in a row
-    ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-    ds.BuildOverviews("NEAR", overviewlist=[2, 4])
-    ds = None
+        # and regenerate them twice in a row
+        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        ds.BuildOverviews("NEAR", overviewlist=[2, 4])
+        ds = None
 
-    ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
-    # Check overviews checksum
-    new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs_ovr0 != new_cs_ovr0:
-        gdal.SetConfigOption("USE_RRD", None)
-        pytest.fail()
-    if cs_ovr1 != new_cs_ovr1:
-        gdal.SetConfigOption("USE_RRD", None)
-        pytest.fail()
+        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        # Check overviews checksum
+        new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+        if cs_ovr0 != new_cs_ovr0:
+            pytest.fail()
+        if cs_ovr1 != new_cs_ovr1:
+            pytest.fail()
 
-    # and regenerate them with an extra overview level
-    ds.BuildOverviews("NEAR", overviewlist=[8])
-    ds = None
+        # and regenerate them with an extra overview level
+        ds.BuildOverviews("NEAR", overviewlist=[8])
+        ds = None
 
-    ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
-    # Check overviews checksum
-    new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
-    if cs_ovr0 != new_cs_ovr0:
-        gdal.SetConfigOption("USE_RRD", None)
-        pytest.fail()
-    if cs_ovr1 != new_cs_ovr1:
-        gdal.SetConfigOption("USE_RRD", None)
-        pytest.fail()
-    ds = None
+        ds = gdal.Open("tmp/hfa_update_existing_aux_overviews.bmp")
+        # Check overviews checksum
+        new_cs_ovr0 = ds.GetRasterBand(1).GetOverview(0).Checksum()
+        new_cs_ovr1 = ds.GetRasterBand(1).GetOverview(1).Checksum()
+        if cs_ovr0 != new_cs_ovr0:
+            pytest.fail()
+        if cs_ovr1 != new_cs_ovr1:
+            pytest.fail()
+        ds = None
 
-    gdal.GetDriverByName("BMP").Delete("tmp/hfa_update_existing_aux_overviews.bmp")
-
-    gdal.SetConfigOption("USE_RRD", None)
+        gdal.GetDriverByName("BMP").Delete("tmp/hfa_update_existing_aux_overviews.bmp")
 
 
 ###############################################################################

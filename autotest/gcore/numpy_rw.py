@@ -688,9 +688,8 @@ def test_numpy_rw_17():
         ds = gdal.Open(gdal_array.GetArrayFilename(array))
     assert ds is None
 
-    gdal.SetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", "TRUE")
-    ds = gdal.Open(gdal_array.GetArrayFilename(array))
-    gdal.SetConfigOption("GDAL_ARRAY_OPEN_BY_FILENAME", None)
+    with gdal.config_option("GDAL_ARRAY_OPEN_BY_FILENAME", "TRUE"):
+        ds = gdal.Open(gdal_array.GetArrayFilename(array))
     assert ds is not None
 
     # Invalid value

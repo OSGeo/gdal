@@ -780,15 +780,12 @@ def test_transformer_14():
     ]
     ds.SetMetadata(rpc, "RPC")
 
-    old_rpc_inverse_verbose = gdal.GetConfigOption("RPC_INVERSE_VERBOSE")
-    gdal.SetConfigOption("RPC_INVERSE_VERBOSE", "YES")
-    old_rpc_inverse_log = gdal.GetConfigOption("RPC_INVERSE_LOG")
-    gdal.SetConfigOption("RPC_INVERSE_LOG", "/vsimem/transformer_14.csv")
-    tr = gdal.Transformer(
-        ds, None, ["METHOD=RPC", "RPC_DEM=data/transformer_14_dem.tif"]
-    )
-    gdal.SetConfigOption("RPC_INVERSE_VERBOSE", old_rpc_inverse_verbose)
-    gdal.SetConfigOption("RPC_INVERSE_LOG", old_rpc_inverse_log)
+    with gdal.config_options(
+        {"RPC_INVERSE_VERBOSE": "YES", "RPC_INVERSE_LOG": "/vsimem/transformer_14.csv"}
+    ):
+        tr = gdal.Transformer(
+            ds, None, ["METHOD=RPC", "RPC_DEM=data/transformer_14_dem.tif"]
+        )
     (success, pnt) = tr.TransformPoint(0, 0, 0)
     assert (
         success

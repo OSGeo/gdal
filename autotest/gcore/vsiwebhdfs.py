@@ -40,23 +40,23 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_curl()
 
 
-def open_for_read(uri):
-    """
-    Opens a test file for reading.
-    """
-    return gdal.VSIFOpenExL(uri, "rb", 1)
+@pytest.fixture(scope="module", autouse=True)
+def startup_and_cleanup():
+
+    options = {"WEBHDFS_USERNAME": None, "WEBHDFS_DELEGATION": None}
+
+    with gdal.config_options(options):
+        yield
 
 
 ###############################################################################
 
 
-def test_vsiwebhdfs_init():
-
-    gdaltest.webhdfs_vars = {}
-    for var in ("WEBHDFS_USERNAME", "WEBHDFS_DELEGATION"):
-        gdaltest.webhdfs_vars[var] = gdal.GetConfigOption(var)
-        if gdaltest.webhdfs_vars[var] is not None:
-            gdal.SetConfigOption(var, "")
+def open_for_read(uri):
+    """
+    Opens a test file for reading.
+    """
+    return gdal.VSIFOpenExL(uri, "rb", 1)
 
 
 ###############################################################################
@@ -666,12 +666,3 @@ def test_vsiwebhdfs_extra_1():
     gdal.VSIFCloseL(f)
 
     assert len(ret) == 1
-
-
-###############################################################################
-
-
-def test_vsiwebhdfs_cleanup():
-
-    for var in gdaltest.webhdfs_vars:
-        gdal.SetConfigOption(var, gdaltest.webhdfs_vars[var])
