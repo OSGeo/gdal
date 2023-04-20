@@ -5117,12 +5117,10 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
 
             /* A bit inefficient but still faster than OGR filtering */
             osSpatialWHERE.Printf(
-                "(ST_MaxX(\"%s\") >= %.12f AND ST_MinX(\"%s\") <= %.12f AND "
-                "ST_MaxY(\"%s\") >= %.12f AND ST_MinY(\"%s\") <= %.12f)",
+                "ST_EnvelopesIntersects(\"%s\", %.12f, %.12f, %.12f, %.12f)",
                 SQLEscapeName(pszC).c_str(), sEnvelope.MinX - 1e-11,
-                SQLEscapeName(pszC).c_str(), sEnvelope.MaxX + 1e-11,
-                SQLEscapeName(pszC).c_str(), sEnvelope.MinY - 1e-11,
-                SQLEscapeName(pszC).c_str(), sEnvelope.MaxY + 1e-11);
+                sEnvelope.MinY - 1e-11, sEnvelope.MaxX + 1e-11,
+                sEnvelope.MaxY + 1e-11);
         }
     }
 

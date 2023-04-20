@@ -123,6 +123,13 @@ Spatialite, are also available :
    to the SRS of specified srs_id. If no SRS with that given srs_id is not found
    in gpkg_spatial_ref_sys, starting with GDAL 3.2, it will be interpreted as
    a EPSG code.
+-  ST_EnvIntersects(geom *Geometry*, minx *Double*, miny *Double*, maxx *Double*, maxy *Double*):
+   (GDAL >= 3.7) Returns 1 if the minimum bounding box of geom intersects the
+   bounding box defined by (minx,miny)-(maxx,maxy), or 0 otherwise.
+-  ST_EnvIntersects(geom1 *Geometry*, geom2 *Geometry*):
+   (GDAL >= 3.7) Returns 1 if the minimum bounding box of geom1 intersects the
+   one of geom2, or 0 otherwise. (Note: this function, as all others, does not
+   automatically uses spatial indices)
 
 The raster SQL functions mentioned at :ref:`raster.gpkg.raster`
 are also available.

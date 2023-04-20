@@ -7524,16 +7524,16 @@ OGRErr GDALGeoPackageDataset::CreateExtensionsTableIfNecessary()
 
 static bool OGRGeoPackageGetHeader(sqlite3_context *pContext, int /*argc*/,
                                    sqlite3_value **argv, GPkgHeader *psHeader,
-                                   bool bNeedExtent)
+                                   bool bNeedExtent, int iGeomIdx = 0)
 {
-    if (sqlite3_value_type(argv[0]) != SQLITE_BLOB)
+    if (sqlite3_value_type(argv[iGeomIdx]) != SQLITE_BLOB)
     {
         sqlite3_result_null(pContext);
         return false;
     }
-    int nBLOBLen = sqlite3_value_bytes(argv[0]);
+    int nBLOBLen = sqlite3_value_bytes(argv[iGeomIdx]);
     const GByte *pabyBLOB =
-        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[0]));
+        reinterpret_cast<const GByte *>(sqlite3_value_blob(argv[iGeomIdx]));
 
     if (nBLOBLen < 8 ||
         GPkgHeaderFromWKB(pabyBLOB, nBLOBLen, psHeader) != OGRERR_NONE)
@@ -7689,6 +7689,79 @@ static void OGRGeoPackageSTGeometryType(sqlite3_context *pContext, int /*argc*/,
     else
         sqlite3_result_text(pContext, OGRToOGCGeomType(eGeometryType), -1,
                             SQLITE_TRANSIENT);
+}
+
+/************************************************************************/
+/*                 OGRGeoPackageSTEnvelopesIntersects()                 */
+/************************************************************************/
+
+static void OGRGeoPackageSTEnvelopesIntersects(sqlite3_context *pContext,
+                                               int argc, sqlite3_value **argv)
+{
+    GPkgHeader sHeader;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true))
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    const double dfMinX = sqlite3_value_double(argv[1]);
+    if (sHeader.MaxX < dfMinX)
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    const double dfMinY = sqlite3_value_double(argv[2]);
+    if (sHeader.MaxY < dfMinY)
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    const double dfMaxX = sqlite3_value_double(argv[3]);
+    if (sHeader.MinX > dfMaxX)
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    const double dfMaxY = sqlite3_value_double(argv[4]);
+    sqlite3_result_int(pContext, sHeader.MinY <= dfMaxY);
+}
+
+/************************************************************************/
+/*              OGRGeoPackageSTEnvelopesIntersectsTwoParams()           */
+/************************************************************************/
+
+static void
+OGRGeoPackageSTEnvelopesIntersectsTwoParams(sqlite3_context *pContext, int argc,
+                                            sqlite3_value **argv)
+{
+    GPkgHeader sHeader;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader, true, 0))
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    GPkgHeader sHeader2;
+    if (!OGRGeoPackageGetHeader(pContext, argc, argv, &sHeader2, true, 1))
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    if (sHeader.MaxX < sHeader2.MinX)
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    if (sHeader.MaxY < sHeader2.MinY)
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    if (sHeader.MinX > sHeader2.MaxX)
+    {
+        sqlite3_result_int(pContext, FALSE);
+        return;
+    }
+    sqlite3_result_int(pContext, sHeader.MinY <= sHeader2.MaxY);
 }
 
 /************************************************************************/
@@ -8792,6 +8865,20 @@ void GDALGeoPackageDataset::InstallSQLFunctions()
                             OGRGeoPackageTransform, nullptr, nullptr);
     sqlite3_create_function(hDB, "SridFromAuthCRS", 2, SQLITE_UTF8, this,
                             OGRGeoPackageSridFromAuthCRS, nullptr, nullptr);
+
+    sqlite3_create_function(
+        hDB, "ST_EnvIntersects", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+        OGRGeoPackageSTEnvelopesIntersectsTwoParams, nullptr, nullptr);
+    sqlite3_create_function(
+        hDB, "ST_EnvelopesIntersects", 2, SQLITE_UTF8 | SQLITE_DETERMINISTIC,
+        nullptr, OGRGeoPackageSTEnvelopesIntersectsTwoParams, nullptr, nullptr);
+
+    sqlite3_create_function(
+        hDB, "ST_EnvIntersects", 5, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
+        OGRGeoPackageSTEnvelopesIntersects, nullptr, nullptr);
+    sqlite3_create_function(
+        hDB, "ST_EnvelopesIntersects", 5, SQLITE_UTF8 | SQLITE_DETERMINISTIC,
+        nullptr, OGRGeoPackageSTEnvelopesIntersects, nullptr, nullptr);
 
     // Implementation that directly hacks the GeoPackage geometry blob header
     sqlite3_create_function(hDB, "SetSRID", 2,
