@@ -7536,6 +7536,17 @@ def test_ogr_gpkg_arrow_stream_numpy():
         "binary",
     }
 
+    # Check that OGR_GPKG_FillArrowArray_INTERNAL() function is no longer
+    # registered
+    with gdaltest.error_handler():
+        sql_lyr = ds.ExecuteSQL(
+            "SELECT 1 FROM pragma_function_list WHERE name=lower('OGR_GPKG_FillArrowArray_INTERNAL')"
+        )
+    if sql_lyr:
+        fc = sql_lyr.GetFeatureCount()
+        ds.ReleaseResultSet(sql_lyr)
+        assert fc == 0
+
     ds = None
 
     ogr.GetDriverByName("GPKG").DeleteDataSource("/vsimem/test.gpkg")
