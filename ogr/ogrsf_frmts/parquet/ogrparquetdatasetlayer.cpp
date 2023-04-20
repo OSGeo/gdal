@@ -221,7 +221,7 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
             *psExtent = OGREnvelope();
             int nFragmentCount = 0;
             int nBBoxFragmentCount = 0;
-            for (auto oFragmentStatus : *statusFragments)
+            for (const auto &oFragmentStatus : *statusFragments)
             {
                 if (oFragmentStatus.ok())
                 {

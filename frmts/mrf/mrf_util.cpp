@@ -89,8 +89,7 @@ static const char *const ILC_N[] = {
 
 static const char *const ILC_E[] = {
 #ifdef HAVE_PNG
-    ".ppg",
-    ".ppg",
+    ".ppg", ".ppg",
 #endif
 #ifdef HAVE_JPEG
     ".pjg",
@@ -98,9 +97,7 @@ static const char *const ILC_E[] = {
 #if defined(HAVE_PNG) && defined(HAVE_JPEG)
     ".pjp",
 #endif
-    ".til",
-    ".pzp",
-    ".ptf",
+    ".til", ".pzp", ".ptf",
 #if defined(LERC)
     ".lrc",
 #endif
@@ -108,7 +105,7 @@ static const char *const ILC_E[] = {
     ".pzs",
 #endif
 #if defined(QB3_SUPPORT)
-    ".pq3"
+    ".pq3",
 #endif
     ""};
 
