@@ -437,6 +437,8 @@ class GTiffDataset final : public GDALPamDataset
 
     toff_t m_nDirOffset = 0;
 
+    int m_nBlocksPerRow = 0;
+    int m_nBlocksPerColumn = 0;
     int m_nBlocksPerBand = 0;
     int m_nBlockXSize = 0;
     int m_nBlockYSize = 0;
@@ -729,6 +731,8 @@ class GTiffDataset final : public GDALPamDataset
                                    const int *, GDALProgressFunc, void *,
                                    CSLConstList papszOptions) override;
 
+    bool ComputeBlocksPerColRowAndBand(int l_nBands);
+
     CPLErr OpenOffset(TIFF *, toff_t nDirOffset, GDALAccess,
                       bool bAllowRGBAInterface = true,
                       bool bReadGeoTransform = false);
@@ -969,10 +973,8 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
          m_poGDS->m_poParentDS->m_nBlockYSize != nParentBlockYSize);
     if (!bIsSingleStripAsSplit)
     {
-        int l_nBlocksPerRow =
-            DIV_ROUND_UP(m_poGDS->m_poParentDS->nRasterXSize,
-                         m_poGDS->m_poParentDS->m_nBlockXSize);
-        nBlockId = nBlockYOff * l_nBlocksPerRow + nBlockXOff;
+        nBlockId =
+            nBlockYOff * m_poGDS->m_poParentDS->m_nBlocksPerRow + nBlockXOff;
     }
     if (m_poGDS->m_poParentDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
     {
@@ -1007,9 +1009,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         // In which case we must invalidate the dataset.
         TIFF *hTIFF = m_poGDS->m_poParentDS->m_hTIFF;
         if (!TIFFIsTiled(hTIFF) && !bIsSingleStripAsSplit &&
-            (nBlockYOff + 1 ==
-                 DIV_ROUND_UP(m_poGDS->m_poParentDS->nRasterYSize,
-                              m_poGDS->m_poParentDS->m_nBlockYSize) ||
+            (nBlockYOff + 1 == m_poGDS->m_poParentDS->m_nBlocksPerColumn ||
              (m_poGDS->m_poJPEGDS != nullptr &&
               m_poGDS->m_poJPEGDS->GetRasterYSize() !=
                   nBlockYSize * nScaleFactor)))
@@ -1152,9 +1152,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         int nBufXSize = nBlockXSize;
         int nBufYSize = nBlockYSize;
-        if (nBlockXOff == DIV_ROUND_UP(m_poGDS->m_poParentDS->nRasterXSize,
-                                       m_poGDS->m_poParentDS->m_nBlockXSize) -
-                              1)
+        if (nBlockXOff == m_poGDS->m_poParentDS->m_nBlocksPerRow - 1)
         {
             nReqXSize = m_poGDS->m_poParentDS->nRasterXSize -
                         nBlockXOff * m_poGDS->m_poParentDS->m_nBlockXSize;
@@ -1164,9 +1162,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             nReqXSize = l_poDS->GetRasterXSize() - nReqXOff;
         }
         if (!bIsSingleStripAsSplit &&
-            nBlockYOff == DIV_ROUND_UP(m_poGDS->m_poParentDS->nRasterYSize,
-                                       m_poGDS->m_poParentDS->m_nBlockYSize) -
-                              1)
+            nBlockYOff == m_poGDS->m_poParentDS->m_nBlocksPerColumn - 1)
         {
             nReqYSize = m_poGDS->m_poParentDS->nRasterYSize -
                         nBlockYOff * m_poGDS->m_poParentDS->m_nBlockYSize;
@@ -1649,6 +1645,10 @@ GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
     /* -------------------------------------------------------------------- */
     nBlockXSize = m_poGDS->m_nBlockXSize;
     nBlockYSize = m_poGDS->m_nBlockYSize;
+    nRasterXSize = m_poGDS->nRasterXSize;
+    nRasterYSize = m_poGDS->nRasterYSize;
+    nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
 }
 
 /************************************************************************/
@@ -1885,7 +1885,6 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const int nBlockXOff = 0;
         const int nBlockYOff = nSrcLine / nBlockYSize;
         const int nYOffsetInBlock = nSrcLine % nBlockYSize;
-        nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
         int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
         if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
         {
@@ -2387,9 +2386,8 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
           m_nPlanarConfig == PLANARCONFIG_CONTIG)))
     {
         CPLStringList aosList;
-        const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
         int nBlockId =
-            (nXOff / m_nBlockXSize) + (nYOff / m_nBlockYSize) * l_nBlocksPerRow;
+            (nXOff / m_nBlockXSize) + (nYOff / m_nBlockYSize) * m_nBlocksPerRow;
         if (m_nPlanarConfig == PLANARCONFIG_SEPARATE && panBandList != nullptr)
             nBlockId += panBandList[0] * m_nBlocksPerBand;
 
@@ -2467,10 +2465,8 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         {
             std::string osDetailedFormat = aosTokens[0];
 
-            const int l_nBlocksPerRow =
-                DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
             int nBlockId = (nXOff / m_nBlockXSize) +
-                           (nYOff / m_nBlockYSize) * l_nBlocksPerRow;
+                           (nYOff / m_nBlockYSize) * m_nBlocksPerRow;
             if (m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
                 panBandList != nullptr)
                 nBlockId += panBandList[0] * m_nBlocksPerBand;
@@ -3028,10 +3024,9 @@ static void ThreadDecompressionFunc(void *pData)
             VSI_TIFFOpen(osTmpFilename.c_str(),
                          psContext->bTIFFIsBigEndian ? "wb+" : "wl+", fpTmp);
         CPLAssert(hTIFFTmp != nullptr);
-        const int nBlocksPerColumn =
-            DIV_ROUND_UP(poDS->nRasterYSize, poDS->m_nBlockYSize);
         const int nBlockYSize =
-            (psContext->bIsTiled || psJob->nYBlock < nBlocksPerColumn - 1)
+            (psContext->bIsTiled ||
+             psJob->nYBlock < poDS->m_nBlocksPerColumn - 1)
                 ? poDS->m_nBlockYSize
             : (poDS->nRasterYSize % poDS->m_nBlockYSize) == 0
                 ? poDS->m_nBlockYSize
@@ -3088,7 +3083,8 @@ static void ThreadDecompressionFunc(void *pData)
         // Request m_nBlockYSize line in the block, except on the bottom-most
         // tile/strip.
         const int nBlockReqYSize =
-            (psJob->nYBlock < nBlocksPerColumn - 1) ? poDS->m_nBlockYSize
+            (psJob->nYBlock < poDS->m_nBlocksPerColumn - 1)
+                ? poDS->m_nBlockYSize
             : (poDS->nRasterYSize % poDS->m_nBlockYSize) == 0
                 ? poDS->m_nBlockYSize
                 : poDS->nRasterYSize % poDS->m_nBlockYSize;
@@ -3356,7 +3352,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     sContext.bIsTiled = CPL_TO_BOOL(TIFFIsTiled(m_hTIFF));
     sContext.bTIFFIsBigEndian = CPL_TO_BOOL(TIFFIsBigEndian(m_hTIFF));
     sContext.nPredictor = PREDICTOR_NONE;
-    sContext.nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+    sContext.nBlocksPerRow = m_nBlocksPerRow;
 
     if (m_bDirectIO)
     {
@@ -4009,7 +4005,7 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
     const int nBandsPerBlock =
         m_nPlanarConfig == PLANARCONFIG_SEPARATE ? 1 : nBands;
     const int nBandsPerBlockDTSize = nBandsPerBlock * nDTSize;
-    const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+    const int nBlocksPerRow = m_nBlocksPerRow;
     const bool bNoTypeChange = (eDataType == eBufType);
     const bool bNoXResampling = (nXSize == nBufXSize);
     const bool bNoXResamplingNoTypeChange = (bNoTypeChange && bNoXResampling);
@@ -5285,8 +5281,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
         const int nBlockXOff = 0;
         const int nBlockYOff = nSrcLine / m_nBlockYSize;
         const int nYOffsetInBlock = nSrcLine % m_nBlockYSize;
-        const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
-        const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+        const int nBlockId = nBlockXOff + nBlockYOff * m_nBlocksPerRow;
 
         panOffsets[iLine] = panTIFFOffsets[nBlockId];
         if (panOffsets[iLine] == 0)  // We don't support sparse files.
@@ -5476,9 +5471,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                      (nBufYSize - 1 + 0.5) * dfSrcYInc + dfYOff + EPS)) /
         nBlockYSize;
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-    const int nBlockXCount = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-    const int nBlockYCount = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
-    const int nBlockCount = nBlockXCount * nBlockYCount;
+    const int nBlockCount = nBlocksPerRow * nBlocksPerColumn;
     struct StrileData
     {
         vsi_l_offset nOffset;
@@ -5743,7 +5736,6 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
     {
         std::vector<std::pair<vsi_l_offset, size_t>> aOffsetSize;
         size_t nTotalSize = 0;
-        nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
         const unsigned int nMaxRawBlockCacheSize = atoi(
             CPLGetConfigOption("GDAL_MAX_RAW_BLOCK_CACHE_SIZE", "10485760"));
         bool bGoOn = true;
@@ -6074,9 +6066,6 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     int nStatus = 0;
     VSILFILE *fp = VSI_TIFFGetVSILFile(TIFFClientdata(m_poGDS->m_hTIFF));
     GIntBig nPixelsData = 0;
-    // We need to compute this here as it might not have been computed
-    // previously (which sucks...)
-    nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
     for (int iY = iYBlockStart; iY <= iYBlockEnd; ++iY)
     {
         for (int iX = iXBlockStart; iX <= iXBlockEnd; ++iX)
@@ -6262,7 +6251,6 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             static_cast<GPtrDiff_t>(TIFFStripSize(m_poGDS->m_hTIFF));
     }
 
-    CPLAssert(nBlocksPerRow != 0);
     const int nBlockIdBand0 = nBlockXOff + nBlockYOff * nBlocksPerRow;
     int nBlockId = nBlockIdBand0;
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
@@ -6519,8 +6507,6 @@ CPLErr GTiffRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         // correctly.
         return CE_Failure;
     }
-
-    CPLAssert(nBlocksPerRow != 0);
 
     /* -------------------------------------------------------------------- */
     /*      Handle case of "separate" images                                */
@@ -6908,10 +6894,6 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
         if (sscanf(pszName, "BLOCK_OFFSET_%d_%d", &nBlockXOff, &nBlockYOff) ==
             2)
         {
-            nBlocksPerRow =
-                DIV_ROUND_UP(m_poGDS->nRasterXSize, m_poGDS->m_nBlockXSize);
-            nBlocksPerColumn =
-                DIV_ROUND_UP(m_poGDS->nRasterYSize, m_poGDS->m_nBlockYSize);
             if (nBlockXOff < 0 || nBlockXOff >= nBlocksPerRow ||
                 nBlockYOff < 0 || nBlockYOff >= nBlocksPerColumn)
                 return nullptr;
@@ -6933,10 +6915,6 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
 
         if (sscanf(pszName, "BLOCK_SIZE_%d_%d", &nBlockXOff, &nBlockYOff) == 2)
         {
-            nBlocksPerRow =
-                DIV_ROUND_UP(m_poGDS->nRasterXSize, m_poGDS->m_nBlockXSize);
-            nBlocksPerColumn =
-                DIV_ROUND_UP(m_poGDS->nRasterYSize, m_poGDS->m_nBlockYSize);
             if (nBlockXOff < 0 || nBlockXOff >= nBlocksPerRow ||
                 nBlockYOff < 0 || nBlockYOff >= nBlocksPerColumn)
                 return nullptr;
@@ -8310,7 +8288,6 @@ CPLErr GTiffRGBABand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     m_poGDS->Crystalize();
 
-    CPLAssert(nBlocksPerRow != 0);
     const auto nBlockBufSize =
         4 * static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
     const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
@@ -8534,7 +8511,6 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Load the block buffer.                                          */
     /* -------------------------------------------------------------------- */
-    CPLAssert(nBlocksPerRow != 0);
     int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
@@ -9039,7 +9015,6 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 {
     m_poGDS->Crystalize();
 
-    CPLAssert(nBlocksPerRow != 0);
     int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
 
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
@@ -10155,7 +10130,6 @@ CPLErr GTiffDataset::FillEmptyTiles()
                                     m_nBlockYSize);
             }
             CPLErr eErr = CE_None;
-            const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockYSize);
             for (int iBlock = 0; iBlock < nBlockCount; ++iBlock)
             {
                 if (panByteCounts[iBlock] == 0)
@@ -10163,10 +10137,11 @@ CPLErr GTiffDataset::FillEmptyTiles()
                     if (m_nPlanarConfig == PLANARCONFIG_SEPARATE || nBands == 1)
                     {
                         if (GetRasterBand(1 + iBlock / m_nBlocksPerBand)
-                                ->WriteBlock(
-                                    (iBlock % m_nBlocksPerBand) % nBlocksPerRow,
-                                    (iBlock % m_nBlocksPerBand) / nBlocksPerRow,
-                                    pabyData) != CE_None)
+                                ->WriteBlock((iBlock % m_nBlocksPerBand) %
+                                                 m_nBlocksPerRow,
+                                             (iBlock % m_nBlocksPerBand) /
+                                                 m_nBlocksPerRow,
+                                             pabyData) != CE_None)
                         {
                             eErr = CE_Failure;
                         }
@@ -10176,9 +10151,9 @@ CPLErr GTiffDataset::FillEmptyTiles()
                         // In contig case, don't directly call WriteBlock(), as
                         // it could cause useless decompression-recompression.
                         const int nXOff =
-                            (iBlock % nBlocksPerRow) * m_nBlockXSize;
+                            (iBlock % m_nBlocksPerRow) * m_nBlockXSize;
                         const int nYOff =
-                            (iBlock / nBlocksPerRow) * m_nBlockYSize;
+                            (iBlock / m_nBlocksPerRow) * m_nBlockYSize;
                         const int nXSize =
                             (nXOff + m_nBlockXSize <= nRasterXSize)
                                 ? m_nBlockXSize
@@ -10448,8 +10423,6 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
 {
     int iRow = 0;
     int iColumn = 0;
-    int nBlocksPerRow = 1;
-    int nBlocksPerColumn = 1;
 
     /* -------------------------------------------------------------------- */
     /*      Don't write empty blocks in some cases.                         */
@@ -10460,18 +10433,16 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
         {
             const int nComponents =
                 m_nPlanarConfig == PLANARCONFIG_CONTIG ? nBands : 1;
-            nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
-            nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, m_nBlockYSize);
 
-            iColumn = (tile % m_nBlocksPerBand) % nBlocksPerRow;
-            iRow = (tile % m_nBlocksPerBand) / nBlocksPerRow;
+            iColumn = (tile % m_nBlocksPerBand) % m_nBlocksPerRow;
+            iRow = (tile % m_nBlocksPerBand) / m_nBlocksPerRow;
 
             const int nActualBlockWidth =
-                (iColumn == nBlocksPerRow - 1)
+                (iColumn == m_nBlocksPerRow - 1)
                     ? nRasterXSize - iColumn * m_nBlockXSize
                     : m_nBlockXSize;
             const int nActualBlockHeight =
-                (iRow == nBlocksPerColumn - 1)
+                (iRow == m_nBlocksPerColumn - 1)
                     ? nRasterYSize - iRow * m_nBlockYSize
                     : m_nBlockYSize;
 
@@ -10488,18 +10459,15 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
     bool bNeedTileFill = false;
     if (m_nCompression == COMPRESSION_JPEG)
     {
-        nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
-        nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, m_nBlockYSize);
-
-        iColumn = (tile % m_nBlocksPerBand) % nBlocksPerRow;
-        iRow = (tile % m_nBlocksPerBand) / nBlocksPerRow;
+        iColumn = (tile % m_nBlocksPerBand) % m_nBlocksPerRow;
+        iRow = (tile % m_nBlocksPerBand) / m_nBlocksPerRow;
 
         // Is this a partial right edge tile?
-        if (iRow == nBlocksPerRow - 1 && nRasterXSize % m_nBlockXSize != 0)
+        if (iRow == m_nBlocksPerRow - 1 && nRasterXSize % m_nBlockXSize != 0)
             bNeedTileFill = true;
 
         // Is this a partial bottom edge tile?
-        if (iColumn == nBlocksPerColumn - 1 &&
+        if (iColumn == m_nBlocksPerColumn - 1 &&
             nRasterYSize % m_nBlockYSize != 0)
             bNeedTileFill = true;
     }
@@ -10533,11 +10501,11 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
         CPLDebug("GTiff", "Filling out jpeg edge tile on write.");
 
         const int nRightPixelsToFill =
-            iColumn == nBlocksPerRow - 1
+            iColumn == m_nBlocksPerRow - 1
                 ? m_nBlockXSize * (iColumn + 1) - nRasterXSize
                 : 0;
         const int nBottomPixelsToFill =
-            iRow == nBlocksPerColumn - 1
+            iRow == m_nBlocksPerColumn - 1
                 ? m_nBlockYSize * (iRow + 1) - nRasterYSize
                 : 0;
 
@@ -11969,8 +11937,7 @@ CPLErr GTiffDataset::LoadBlockBuf(int nBlockId, bool bReadFromDisk)
     /*      decode buffer.                                                  */
     /* -------------------------------------------------------------------- */
     auto nBlockReqSize = nBlockBufSize;
-    const int nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
-    const int nBlockYOff = (nBlockId % m_nBlocksPerBand) / nBlocksPerRow;
+    const int nBlockYOff = (nBlockId % m_nBlocksPerBand) / m_nBlocksPerRow;
 
     if (nBlockYOff * m_nBlockYSize > nRasterYSize - m_nBlockYSize &&
         !(m_nCompression == COMPRESSION_WEBP && TIFFIsTiled(m_hTIFF)))
@@ -16703,6 +16670,35 @@ void GTiffDataset::SaveICCProfile(GTiffDataset *pDS, TIFF *l_hTIFF,
 }
 
 /************************************************************************/
+/*                     ComputeBlocksPerColRowAndBand()                  */
+/************************************************************************/
+
+bool GTiffDataset::ComputeBlocksPerColRowAndBand(int l_nBands)
+{
+    m_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, m_nBlockYSize);
+    m_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
+    if (m_nBlocksPerColumn > INT_MAX / m_nBlocksPerRow)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined, "Too many blocks: %d x %d",
+                    m_nBlocksPerRow, m_nBlocksPerColumn);
+        return false;
+    }
+
+    // Note: we could potentially go up to UINT_MAX blocks, but currently
+    // we use a int nBlockId
+    m_nBlocksPerBand = m_nBlocksPerColumn * m_nBlocksPerRow;
+    if (m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
+        m_nBlocksPerBand > INT_MAX / l_nBands)
+    {
+        ReportError(CE_Failure, CPLE_AppDefined,
+                    "Too many blocks: %d x %d x %d bands", m_nBlocksPerRow,
+                    m_nBlocksPerColumn, l_nBands);
+        return false;
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                             OpenOffset()                             */
 /*                                                                      */
 /*      Initialize the GTiffDataset based on a passed in file           */
@@ -16847,26 +16843,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
         m_nBlockYSize = m_nRowsPerStrip;
     }
 
-    const int l_nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, m_nBlockYSize);
-    const int l_nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, m_nBlockXSize);
-    if (l_nBlocksPerColumn > INT_MAX / l_nBlocksPerRow)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined, "Too many blocks: %d x %d",
-                    l_nBlocksPerRow, l_nBlocksPerColumn);
+    if (!ComputeBlocksPerColRowAndBand(nBands))
         return CE_Failure;
-    }
-
-    // Note: we could potentially go up to UINT_MAX blocks, but currently
-    // we use a int nBlockId
-    m_nBlocksPerBand = l_nBlocksPerColumn * l_nBlocksPerRow;
-    if (m_nPlanarConfig == PLANARCONFIG_SEPARATE &&
-        m_nBlocksPerBand > INT_MAX / nBands)
-    {
-        ReportError(CE_Failure, CPLE_AppDefined,
-                    "Too many blocks: %d x %d x %d bands", l_nBlocksPerRow,
-                    l_nBlocksPerColumn, nBands);
-        return CE_Failure;
-    }
 
     /* -------------------------------------------------------------------- */
     /*      Should we handle this using the GTiffBitmapBand?                */
@@ -19968,8 +19946,11 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
             std::min(static_cast<int>(poDS->m_nRowsPerStrip), nYSize);
     }
 
-    poDS->m_nBlocksPerBand = DIV_ROUND_UP(nYSize, poDS->m_nBlockYSize) *
-                             DIV_ROUND_UP(nXSize, poDS->m_nBlockXSize);
+    if (!poDS->ComputeBlocksPerColRowAndBand(l_nBands))
+    {
+        delete poDS;
+        return nullptr;
+    }
 
     poDS->m_eProfile = GetProfile(CSLFetchNameValue(papszParamList, "PROFILE"));
 
@@ -20138,9 +20119,7 @@ CPLErr GTiffDataset::CopyImageryAndMask(GTiffDataset *poDstDS,
     }
     const int nYSize = poDstDS->nRasterYSize;
     const int nXSize = poDstDS->nRasterXSize;
-    const int nYBlocks = DIV_ROUND_UP(nYSize, poDstDS->m_nBlockYSize);
-    const int nXBlocks = DIV_ROUND_UP(nXSize, poDstDS->m_nBlockXSize);
-    const int nBlocks = nXBlocks * nYBlocks;
+    const int nBlocks = poDstDS->m_nBlocksPerBand;
 
     CPLAssert(l_nBands == 1 || poDstDS->m_nPlanarConfig == PLANARCONFIG_CONTIG);
 
