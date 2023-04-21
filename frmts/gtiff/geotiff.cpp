@@ -1398,6 +1398,8 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     void ResetNoDataValues(bool bResetDatasetToo);
 
+    int ComputeBlockId(int nBlockXOff, int nBlockYOff) const;
+
   public:
     GTiffRasterBand(GTiffDataset *, int);
     virtual ~GTiffRasterBand();
@@ -1885,11 +1887,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const int nBlockXOff = 0;
         const int nBlockYOff = nSrcLine / nBlockYSize;
         const int nYOffsetInBlock = nSrcLine % nBlockYSize;
-        int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-        if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-        {
-            nBlockId += (nBand - 1) * m_poGDS->m_nBlocksPerBand;
-        }
+        const int nBlockId = ComputeBlockId(nBlockXOff, nBlockYOff);
 
         panOffsets[iLine] = panTIFFOffsets[nBlockId];
         if (panOffsets[iLine] == 0)  // We don't support sparse files.
@@ -3971,7 +3969,9 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                                     int *panBandMap, GSpacing nPixelSpace,
                                     GSpacing nLineSpace, GSpacing nBandSpace)
 {
-    const GDALDataType eDataType = GetRasterBand(1)->GetRasterDataType();
+    const auto poFirstBand =
+        cpl::down_cast<GTiffRasterBand *>(GetRasterBand(1));
+    const GDALDataType eDataType = poFirstBand->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     const bool bIsComplex = CPL_TO_BOOL(GDALDataTypeIsComplex(eDataType));
     const int nBufDTSize = GDALGetDataTypeSizeBytes(eBufType);
@@ -4005,7 +4005,6 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
     const int nBandsPerBlock =
         m_nPlanarConfig == PLANARCONFIG_SEPARATE ? 1 : nBands;
     const int nBandsPerBlockDTSize = nBandsPerBlock * nDTSize;
-    const int nBlocksPerRow = m_nBlocksPerRow;
     const bool bNoTypeChange = (eDataType == eBufType);
     const bool bNoXResampling = (nXSize == nBufXSize);
     const bool bNoXResamplingNoTypeChange = (bNoTypeChange && bNoXResampling);
@@ -4016,7 +4015,7 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
     const double dfSrcYInc = nYSize / static_cast<double>(nBufYSize);
 
     int bNoDataSetIn = FALSE;
-    double dfNoData = GetRasterBand(1)->GetNoDataValue(&bNoDataSetIn);
+    double dfNoData = poFirstBand->GetNoDataValue(&bNoDataSetIn);
     GByte abyNoData = 0;
     if (!bNoDataSetIn)
         dfNoData = 0;
@@ -4038,7 +4037,7 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
 
             int nBlockXOff = nXOff / m_nBlockXSize;
             int nXOffsetInBlock = nXOff % m_nBlockXSize;
-            int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+            int nBlockId = poFirstBand->ComputeBlockId(nBlockXOff, nBlockYOff);
 
             int x = 0;
             while (x < nBufXSize)
@@ -4132,6 +4131,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
         {
             GByte *pabyData = static_cast<GByte *>(pData) + iBand * nBandSpace;
             const int nBand = panBandMap[iBand];
+            auto poCurBand =
+                cpl::down_cast<GTiffRasterBand *>(GetRasterBand(nBand));
             for (int y = 0; y < nBufYSize;)
             {
                 const int nSrcLine = nYOff + y;
@@ -4142,16 +4143,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
 
                 int nBlockXOff = nXOff / m_nBlockXSize;
                 int nXOffsetInBlock = nXOff % m_nBlockXSize;
-                int nBlockId = nBlockXOff + m_nBlockYOff * nBlocksPerRow;
-                if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-                {
-                    REACHED(33);
-                    nBlockId += m_nBlocksPerBand * (nBand - 1);
-                }
-                else
-                {
-                    REACHED(34);
-                }
+                int nBlockId =
+                    poCurBand->ComputeBlockId(nBlockXOff, m_nBlockYOff);
 
                 int x = 0;
                 while (x < nBufXSize)
@@ -4273,7 +4266,7 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                     nCurBlockXOff = nBlockXOff * m_nBlockXSize;
                     nNextBlockXOff = nCurBlockXOff + m_nBlockXSize;
                     const int nBlockId =
-                        nBlockXOff + m_nBlockYOff * nBlocksPerRow;
+                        poFirstBand->ComputeBlockId(nBlockXOff, m_nBlockYOff);
                     nCurOffset = panOffsets[nBlockId];
                     if (nCurOffset != 0)
                     {
@@ -4378,6 +4371,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
         {
             GByte *pabyData = static_cast<GByte *>(pData) + iBand * nBandSpace;
             const int nBand = panBandMap[iBand];
+            auto poCurBand =
+                cpl::down_cast<GTiffRasterBand *>(GetRasterBand(nBand));
             int anSrcYOffset[256] = {0};
             for (int y = 0; y < nBufYSize;)
             {
@@ -4422,17 +4417,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                         const int nBlockXOff = nSrcPixel / m_nBlockXSize;
                         nCurBlockXOff = nBlockXOff * m_nBlockXSize;
                         nNextBlockXOff = nCurBlockXOff + m_nBlockXSize;
-                        int nBlockId =
-                            nBlockXOff + m_nBlockYOff * nBlocksPerRow;
-                        if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-                        {
-                            REACHED(43);
-                            nBlockId += m_nBlocksPerBand * (nBand - 1);
-                        }
-                        else
-                        {
-                            REACHED(44);
-                        }
+                        const int nBlockId =
+                            poCurBand->ComputeBlockId(nBlockXOff, m_nBlockYOff);
                         nCurOffset = panOffsets[nBlockId];
                         if (nCurOffset != 0)
                         {
@@ -4545,7 +4531,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                     GByte *pabyLocalData = pabyData + y * nLineSpace;
                     int nBlockXOff = nXOff / m_nBlockXSize;
                     int nXOffsetInBlock = nXOff % m_nBlockXSize;
-                    int nBlockId = nBlockXOff + m_nBlockYOff * nBlocksPerRow;
+                    int nBlockId =
+                        poFirstBand->ComputeBlockId(nBlockXOff, m_nBlockYOff);
 
                     int x = 0;
                     while (x < nBufXSize)
@@ -4662,8 +4649,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                             const int nBlockXOff = nSrcPixel / m_nBlockXSize;
                             nCurBlockXOff = nBlockXOff * m_nBlockXSize;
                             nNextBlockXOff = nCurBlockXOff + m_nBlockXSize;
-                            const int nBlockId =
-                                nBlockXOff + m_nBlockYOff * nBlocksPerRow;
+                            const int nBlockId = poFirstBand->ComputeBlockId(
+                                nBlockXOff, m_nBlockYOff);
                             nCurOffset = panOffsets[nBlockId];
                             if (nCurOffset != 0)
                             {
@@ -4819,6 +4806,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
             for (int iBand = 0; iBand < nBandCount; ++iBand)
             {
                 const int nBand = panBandMap[iBand];
+                auto poCurBand =
+                    cpl::down_cast<GTiffRasterBand *>(GetRasterBand(nBand));
                 GByte *const pabyData =
                     static_cast<GByte *>(pData) + iBand * nBandSpace;
                 for (int y = 0; y < nBufYSize; ++y)
@@ -4846,16 +4835,7 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                         GByte *pabyLocalData = pabyData + y * nLineSpace;
                         int nBlockXOff = nXOff / m_nBlockXSize;
                         int nBlockId =
-                            nBlockXOff + m_nBlockYOff * nBlocksPerRow;
-                        if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-                        {
-                            REACHED(14);
-                            nBlockId += m_nBlocksPerBand * (nBand - 1);
-                        }
-                        else
-                        {
-                            REACHED(15);
-                        }
+                            poCurBand->ComputeBlockId(nBlockXOff, m_nBlockYOff);
                         int nXOffsetInBlock = nXOff % m_nBlockXSize;
 
                         int x = 0;
@@ -4942,17 +4922,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                                     nSrcPixel / m_nBlockXSize;
                                 nCurBlockXOff = nBlockXOff * m_nBlockXSize;
                                 nNextBlockXOff = nCurBlockXOff + m_nBlockXSize;
-                                int nBlockId =
-                                    nBlockXOff + m_nBlockYOff * nBlocksPerRow;
-                                if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-                                {
-                                    REACHED(19);
-                                    nBlockId += m_nBlocksPerBand * (nBand - 1);
-                                }
-                                else
-                                {
-                                    REACHED(20);
-                                }
+                                const int nBlockId = poCurBand->ComputeBlockId(
+                                    nBlockXOff, m_nBlockYOff);
                                 nCurOffset = panOffsets[nBlockId];
                                 if (nCurOffset != 0)
                                 {
@@ -5281,7 +5252,8 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
         const int nBlockXOff = 0;
         const int nBlockYOff = nSrcLine / m_nBlockYSize;
         const int nYOffsetInBlock = nSrcLine % m_nBlockYSize;
-        const int nBlockId = nBlockXOff + nBlockYOff * m_nBlocksPerRow;
+        const int nBlockId =
+            poProtoBand->ComputeBlockId(nBlockXOff, nBlockYOff);
 
         panOffsets[iLine] = panTIFFOffsets[nBlockId];
         if (panOffsets[iLine] == 0)  // We don't support sparse files.
@@ -6251,10 +6223,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             static_cast<GPtrDiff_t>(TIFFStripSize(m_poGDS->m_hTIFF));
     }
 
-    const int nBlockIdBand0 = nBlockXOff + nBlockYOff * nBlocksPerRow;
-    int nBlockId = nBlockIdBand0;
-    if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-        nBlockId = nBlockIdBand0 + (nBand - 1) * m_poGDS->m_nBlocksPerBand;
+    const int nBlockId = ComputeBlockId(nBlockXOff, nBlockYOff);
 
     /* -------------------------------------------------------------------- */
     /*      The bottom most partial tiles and strips are sometimes only     */
@@ -6417,17 +6386,19 @@ void GTiffRasterBand::CacheMaskForBlock(int nBlockXOff, int nBlockYOff)
 
 {
     // Preload mask data if layout compatible and we have cached ranges
-    if (m_poGDS->m_bMaskInterleavedWithImagery &&
-        m_poGDS->GetRasterBand(1)->GetMaskBand() && m_poGDS->m_poMaskDS &&
-        VSI_TIFFHasCachedRanges(TIFFClientdata(m_poGDS->m_hTIFF)) &&
-        m_poGDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount.contains(
-            nBlockXOff + nBlockYOff * nBlocksPerRow))
+    if (m_poGDS->m_bMaskInterleavedWithImagery && m_poGDS->m_poMaskDS &&
+        VSI_TIFFHasCachedRanges(TIFFClientdata(m_poGDS->m_hTIFF)))
     {
-        GDALRasterBlock *poBlock =
-            m_poGDS->m_poMaskDS->GetRasterBand(1)->GetLockedBlockRef(
-                nBlockXOff, nBlockYOff);
-        if (poBlock)
-            poBlock->DropLock();
+        auto poBand = cpl::down_cast<GTiffRasterBand *>(
+            m_poGDS->m_poMaskDS->GetRasterBand(1));
+        if (m_poGDS->m_poMaskDS->m_oCacheStrileToOffsetByteCount.contains(
+                poBand->ComputeBlockId(nBlockXOff, nBlockYOff)))
+        {
+            GDALRasterBlock *poBlock =
+                poBand->GetLockedBlockRef(nBlockXOff, nBlockYOff);
+            if (poBlock)
+                poBlock->DropLock();
+        }
     }
 }
 #endif
@@ -6489,6 +6460,23 @@ CPLErr GTiffRasterBand::FillCacheForOtherBands(int nBlockXOff, int nBlockYOff)
 }
 
 /************************************************************************/
+/*                        ComputeBlockId()                              */
+/************************************************************************/
+
+/** Computes the TIFF block identifier from the tile coordinate, band
+ * number and planar configuration.
+ */
+int GTiffRasterBand::ComputeBlockId(int nBlockXOff, int nBlockYOff) const
+{
+    const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
+    {
+        return nBlockId + (nBand - 1) * m_poGDS->m_nBlocksPerBand;
+    }
+    return nBlockId;
+}
+
+/************************************************************************/
 /*                            IWriteBlock()                             */
 /************************************************************************/
 
@@ -6508,15 +6496,14 @@ CPLErr GTiffRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         return CE_Failure;
     }
 
+    const int nBlockId = ComputeBlockId(nBlockXOff, nBlockYOff);
+
     /* -------------------------------------------------------------------- */
     /*      Handle case of "separate" images                                */
     /* -------------------------------------------------------------------- */
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE ||
         m_poGDS->nBands == 1)
     {
-        const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow +
-                             (nBand - 1) * m_poGDS->m_nBlocksPerBand;
-
         const CPLErr eErr =
             m_poGDS->WriteEncodedTileOrStrip(nBlockId, pImage, true);
 
@@ -6526,7 +6513,6 @@ CPLErr GTiffRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Handle case of pixel interleaved (PLANARCONFIG_CONTIG) images.  */
     /* -------------------------------------------------------------------- */
-    const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
     // Why 10 ? Somewhat arbitrary
     constexpr int MAX_BANDS_FOR_DIRTY_CHECK = 10;
     GDALRasterBlock *apoBlocks[MAX_BANDS_FOR_DIRTY_CHECK] = {};
@@ -8511,10 +8497,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Load the block buffer.                                          */
     /* -------------------------------------------------------------------- */
-    int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-
-    if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-        nBlockId += (nBand - 1) * m_poGDS->m_nBlocksPerBand;
+    const int nBlockId = ComputeBlockId(nBlockXOff, nBlockYOff);
 
     // Only read content from disk in the CONTIG case.
     {
@@ -9015,10 +8998,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 {
     m_poGDS->Crystalize();
 
-    int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
-
-    if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-        nBlockId += (nBand - 1) * m_poGDS->m_nBlocksPerBand;
+    const int nBlockId = ComputeBlockId(nBlockXOff, nBlockYOff);
 
     /* -------------------------------------------------------------------- */
     /*      Handle the case of a strip in a writable file that doesn't      */
