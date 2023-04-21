@@ -1837,7 +1837,7 @@ GDALRasterAttributeTable *GDALOpenFileGDBRasterBand::GetDefaultRAT()
     auto poGDS = cpl::down_cast<OGROpenFileGDBDataSource *>(poDS);
     const std::string osVATTableName(
         std::string("VAT_").append(poGDS->m_osRasterLayerName));
-    // Instanciate a new dataset, os that the RAT is standalone
+    // Instantiate a new dataset, os that the RAT is standalone
     auto poDSNew = cpl::make_unique<OGROpenFileGDBDataSource>();
     GDALOpenInfo oOpenInfo(poGDS->m_osDirName.c_str(), GA_ReadOnly);
     if (!poDSNew->Open(&oOpenInfo))

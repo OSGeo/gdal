@@ -351,11 +351,11 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
       return retval;
    }
 
-   public static Dataset BuildVRT(string dest, string[] poObjects, GDALBuildVRTOptions buidVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
-      return wrapper_GDALBuildVRT_names(dest, poObjects, buidVrtAppOptions, callback, callback_data); 
+   public static Dataset BuildVRT(string dest, string[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+      return wrapper_GDALBuildVRT_names(dest, poObjects, buildVrtAppOptions, callback, callback_data); 
    }
 
-   public static Dataset BuildVRT(string dest, Dataset[] poObjects, GDALBuildVRTOptions buidVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
+   public static Dataset BuildVRT(string dest, Dataset[] poObjects, GDALBuildVRTOptions buildVrtAppOptions, $module.GDALProgressFuncDelegate callback, string callback_data) {
       Dataset retval = null;
       if (poObjects.Length <= 0)
         throw new ArgumentException("poObjects size is small (BuildVRT)");
@@ -366,7 +366,7 @@ public CPLErr SetGCPs(GCP[] pGCPs, string pszGCPProjection) {
           for (int i=0; i < poObjects.Length; i++)
             Marshal.WriteIntPtr(nativeArray, i * intPtrSize, Dataset.getCPtr(poObjects[i]).Handle);
 
-          retval  = wrapper_GDALBuildVRT_objects(dest, poObjects.Length, nativeArray, buidVrtAppOptions, callback, callback_data);
+          retval  = wrapper_GDALBuildVRT_objects(dest, poObjects.Length, nativeArray, buildVrtAppOptions, callback, callback_data);
       } finally {
           Marshal.FreeHGlobal(nativeArray);
       }

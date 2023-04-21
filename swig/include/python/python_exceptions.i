@@ -326,7 +326,7 @@ static void popErrorHandler()
 
 def UseExceptions():
     """ Enable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
-        Note: prior to GDAL 3.7, this only affected the calling modue"""
+        Note: prior to GDAL 3.7, this only affected the calling module"""
 
     try:
         from . import gdal
@@ -351,7 +351,7 @@ def UseExceptions():
 
 def DontUseExceptions():
     """ Disable exceptions in all GDAL related modules (osgeo.gdal, osgeo.ogr, osgeo.osr, osgeo.gnm).
-        Note: prior to GDAL 3.7, this only affected the calling modue"""
+        Note: prior to GDAL 3.7, this only affected the calling module"""
 
     try:
         from . import gdal

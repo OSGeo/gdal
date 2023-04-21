@@ -1641,7 +1641,7 @@ bool OGRSQLiteDataSource::OpenOrCreateDB(int flagsIn,
                                          bool bRegisterOGR2SQLiteExtensions)
 {
     {
-        // Make sure that OGR2SQLITE_static_register() doesn't instanciate
+        // Make sure that OGR2SQLITE_static_register() doesn't instantiate
         // its default OGR2SQLITEModule. Let's do it ourselves just afterwards
         //
         CPLConfigOptionSetter oSetter("OGR_SQLITE_STATIC_VIRTUAL_OGR", "NO",

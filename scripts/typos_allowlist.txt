@@ -290,3 +290,7 @@ scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.
      * The Paeth function predicts d to be whichever of a, b, or c is nearest to
         /* Paeth breaks ties favoring a over b over c. */
     ned_ds = gdal.Open("data/dimap2/vhr2020_ms_fs/MS-FS/IMG_NED_R1C1.TIF")
+``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, and ``outsize``.
+The effect of the ``ot`` option (added in GDAL 3.7) is to force the output image bands to have a
+        "HE5_GCTP_ROBIN",  "HE5_GCTP_SOM",    "HE5_GCTP_ALASKA",
+            else if (EQUAL(pszKey, "ot"))
