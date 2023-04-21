@@ -113,6 +113,10 @@ jobs:
         shell: bash
 
     steps:
+      - name: Set variables
+        run:
+          echo "CONTAINER_NAME_FULL=${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}" >>${GITHUB_ENV}
+
       - name: Checkout
         uses: actions/checkout@v3
 
@@ -127,14 +131,14 @@ jobs:
         if: env.CONTAINER_REGISTRY == 'ghcr.io'
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
 
+        # Pull build environment in forks or pull requests, unless [skip cache] is included in the commit message
       - name: Pull build environment
-        shell: bash
+        if: "(github.repository_owner != 'OSGeo' || github.event_name == 'pull_request') && !contains(github.event.head_commit.message, '[skip cache]')"
         run: |
-          export CONTAINER_NAME_FULL="${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}"
           docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} || true
           docker pull ${CONTAINER_REGISTRY}/osgeo/${CACHE_CONTAINER_NAME} || true
           docker pull ${CONTAINER_NAME_FULL} || true
-          echo "CONTAINER_NAME_FULL=${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
+          echo "DOCKER_BUILD_CACHE_FROM=--cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CACHE_CONTAINER_NAME} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
 
       - name: Prepare build context
         run: |
@@ -147,20 +151,10 @@ jobs:
         run: |
           docker build \
             --build-arg BUILDKIT_INLINE_CACHE=1 \
-            --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} \
-            --cache-from ${CONTAINER_REGISTRY}/osgeo/${CACHE_CONTAINER_NAME} \
-            --cache-from ${CONTAINER_NAME_FULL} \
+            ${DOCKER_BUILD_CACHE_FROM} \
             -t ${CONTAINER_NAME_FULL} \
             -f .github/workflows/${{ matrix.container }}/Dockerfile.ci \
             docker-build-context
-
-      - name: Push build environment
-        if: github.event_name == 'push'
-        continue-on-error: true
-        env:
-          DOCKER_BUILDKIT: 1
-        run: |
-          docker push ${CONTAINER_NAME_FULL}
 
       # Get the architecture so we can use it as part of the cache key,
       # but only if we are going to use avx2 in the build. If we are not,
@@ -187,7 +181,6 @@ jobs:
           restore-keys: |
             ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}-${{ github.ref_name }}
             ${{ matrix.id }}-${{ steps.get-arch.outputs.arch }}
-
 
       - name: Prepare ccache
         run: |
@@ -257,3 +250,13 @@ jobs:
             --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \
             ${TEST_CMD}
+
+
+      - name: Push build environment
+        if: github.event_name == 'push'
+        continue-on-error: true
+        env:
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker push ${CONTAINER_NAME_FULL}
+
