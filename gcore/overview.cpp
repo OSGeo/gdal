@@ -506,8 +506,26 @@ inline __m128i sse2_hadd_epi16(__m128i a, __m128i b)
 #define zeroupper() (void)0
 #endif
 
+#if defined(__GNUC__) && defined(__AVX2__)
+// Disabling inlining works around a bug with gcc 9.3 (Ubuntu 20.04) in
+// -O2 -mavx2 mode in QuadraticMeanFloatSSE2(),
+// where the registry that contains minus_zero is correctly
+// loaded the first time the function is called (looking at the disassembly,
+// one sees it is loaded much earlier than the function), but gets corrupted
+// (zeroed) in following iterations.
+// It appears the bug is due to the explicit zeroupper() call at the end of
+// the function.
+// The bug is at least solved in gcc 10.2.
+// Inlining doesn't bring much here to performance.
+// This is also needed with gcc 9.3 on QuadraticMeanByteSSE2OrAVX2() in
+// -O3 -mavx2 mode
+#define NOINLINE __attribute__((noinline))
+#else
+#define NOINLINE
+#endif
+
 template <class T>
-static int
+static int NOINLINE
 QuadraticMeanByteSSE2OrAVX2(int nDstXWidth, int nChunkXSize,
                             const T *&CPL_RESTRICT pSrcScanlineShiftedInOut,
                             T *CPL_RESTRICT pDstScanline)
@@ -1033,21 +1051,6 @@ inline __m128 FIXUP_LANES(__m128 x)
     return x;
 }
 
-#endif
-
-#if defined(__GNUC__) && defined(__AVX2__)
-// Disabling inlining works around a bug with gcc 9.3 (Ubuntu 20.04) in
-// -O2 -mavx2 mode, where the registry that contains minus_zero is correctly
-// loaded the first time the function is called (looking at the disassembly,
-// one sees it is loaded much earlier than the function), but gets corrupted
-// (zeroed) in following iterations.
-// It appears the bug is due to the explicit zeroupper() call at the end of
-// the function.
-// The bug is at least solved in gcc 10.2.
-// Inlining doesn't bring much here to performance.
-#define NOINLINE __attribute__((noinline))
-#else
-#define NOINLINE
 #endif
 
 template <class T>
