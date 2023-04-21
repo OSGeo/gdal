@@ -96,11 +96,11 @@ If you are getting a ``<jemalloc>: arena 0 background thread creation failed (1)
 
 # Images of releases
 
-Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.6.3 and PROJ 9.2.0, for linux/amd64 and linux/arm64:
-* ghcr.io/osgeo/gdal:alpine-small-3.6.3
-* ghcr.io/osgeo/gdal:alpine-normal-3.6.3
-* ghcr.io/osgeo/gdal:ubuntu-small-3.6.3
-* ghcr.io/osgeo/gdal:ubuntu-full-3.6.3
+Tagged images of recent past releases are available. The last ones (at time of writing) are for GDAL 3.6.4 and PROJ 9.2.0, for linux/amd64 and linux/arm64:
+* ghcr.io/osgeo/gdal:alpine-small-3.6.4
+* ghcr.io/osgeo/gdal:alpine-normal-3.6.4
+* ghcr.io/osgeo/gdal:ubuntu-small-3.6.4
+* ghcr.io/osgeo/gdal:ubuntu-full-3.6.4
 
 ## Multi-arch Images
 
