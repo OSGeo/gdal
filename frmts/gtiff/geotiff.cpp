@@ -11211,6 +11211,28 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
         }
     }
 
+    const auto SetupJob =
+        [this, pabyData, cc, nHeight, nStripOrTile](GTiffCompressionJob &sJob)
+    {
+        sJob.poDS = this;
+        sJob.bTIFFIsBigEndian = CPL_TO_BOOL(TIFFIsBigEndian(m_hTIFF));
+        sJob.pabyBuffer = static_cast<GByte *>(CPLRealloc(sJob.pabyBuffer, cc));
+        memcpy(sJob.pabyBuffer, pabyData, cc);
+        sJob.nBufferSize = cc;
+        sJob.nHeight = nHeight;
+        sJob.nStripOrTile = nStripOrTile;
+        sJob.nPredictor = PREDICTOR_NONE;
+        if (GTIFFSupportsPredictor(m_nCompression))
+        {
+            TIFFGetField(m_hTIFF, TIFFTAG_PREDICTOR, &sJob.nPredictor);
+        }
+
+        sJob.pExtraSamples = nullptr;
+        sJob.nExtraSampleCount = 0;
+        TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sJob.nExtraSampleCount,
+                     &sJob.pExtraSamples);
+    };
+
     if (poQueue == nullptr || !(m_nCompression == COMPRESSION_ADOBE_DEFLATE ||
                                 m_nCompression == COMPRESSION_LZW ||
                                 m_nCompression == COMPRESSION_PACKBITS ||
@@ -11226,26 +11248,9 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
         {
             GTiffCompressionJob sJob;
             memset(&sJob, 0, sizeof(sJob));
-            sJob.poDS = this;
+            SetupJob(sJob);
             sJob.pszTmpFilename =
                 CPLStrdup(CPLSPrintf("/vsimem/gtiff/%p", this));
-            sJob.bTIFFIsBigEndian = CPL_TO_BOOL(TIFFIsBigEndian(m_hTIFF));
-            sJob.pabyBuffer =
-                static_cast<GByte *>(CPLRealloc(sJob.pabyBuffer, cc));
-            memcpy(sJob.pabyBuffer, pabyData, cc);
-            sJob.nBufferSize = cc;
-            sJob.nHeight = nHeight;
-            sJob.nStripOrTile = nStripOrTile;
-            sJob.nPredictor = PREDICTOR_NONE;
-            if (GTIFFSupportsPredictor(m_nCompression))
-            {
-                TIFFGetField(m_hTIFF, TIFFTAG_PREDICTOR, &sJob.nPredictor);
-            }
-
-            sJob.pExtraSamples = nullptr;
-            sJob.nExtraSampleCount = 0;
-            TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sJob.nExtraSampleCount,
-                         &sJob.pExtraSamples);
 
             ThreadCompressionFunc(&sJob);
 
@@ -11292,19 +11297,7 @@ bool GTiffDataset::SubmitCompressionJob(int nStripOrTile, GByte *pabyData,
     CPLAssert(nNextCompressionJobAvail >= 0);
 
     GTiffCompressionJob *psJob = &asJobs[nNextCompressionJobAvail];
-    psJob->poDS = this;
-    psJob->bTIFFIsBigEndian = CPL_TO_BOOL(TIFFIsBigEndian(m_hTIFF));
-    psJob->pabyBuffer = static_cast<GByte *>(CPLRealloc(psJob->pabyBuffer, cc));
-    memcpy(psJob->pabyBuffer, pabyData, cc);
-    psJob->nBufferSize = cc;
-    psJob->nHeight = nHeight;
-    psJob->nStripOrTile = nStripOrTile;
-    psJob->nPredictor = PREDICTOR_NONE;
-    if (GTIFFSupportsPredictor(m_nCompression))
-    {
-        TIFFGetField(m_hTIFF, TIFFTAG_PREDICTOR, &psJob->nPredictor);
-    }
-
+    SetupJob(*psJob);
     poQueue->SubmitJob(ThreadCompressionFunc, psJob);
     oQueue.push(nNextCompressionJobAvail);
 
