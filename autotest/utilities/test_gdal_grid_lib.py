@@ -124,38 +124,34 @@ def test_gdal_grid_lib_2():
     shape_lyr.CreateFeature(dst_feat)
     shape_ds = None
 
-    for env_list in [
-        [("GDAL_USE_AVX", "NO"), ("GDAL_USE_SSE", "NO")],
-        [("GDAL_USE_AVX", "NO")],
-        [],
+    for env in [
+        {"GDAL_USE_AVX": "NO", "GDAL_USE_SSE": "NO"},
+        {"GDAL_USE_AVX": "NO"},
+        {},
     ]:
 
-        for (key, value) in env_list:
-            gdal.SetConfigOption(key, value)
+        with gdal.config_options(env):
 
-        # Point strictly on grid
-        ds1 = gdal.Grid(
-            "",
-            "/vsimem/tmp/test_gdal_grid_lib_2.shp",
-            format="MEM",
-            outputBounds=[-0.5, -0.5, 0.5, 0.5],
-            width=1,
-            height=1,
-            outputType=gdal.GDT_Byte,
-        )
+            # Point strictly on grid
+            ds1 = gdal.Grid(
+                "",
+                "/vsimem/tmp/test_gdal_grid_lib_2.shp",
+                format="MEM",
+                outputBounds=[-0.5, -0.5, 0.5, 0.5],
+                width=1,
+                height=1,
+                outputType=gdal.GDT_Byte,
+            )
 
-        ds2 = gdal.Grid(
-            "",
-            "/vsimem/tmp/test_gdal_grid_lib_2.shp",
-            format="MEM",
-            outputBounds=[-0.4, -0.4, 0.6, 0.6],
-            width=10,
-            height=10,
-            outputType=gdal.GDT_Byte,
-        )
-
-        gdal.SetConfigOption("GDAL_USE_AVX", None)
-        gdal.SetConfigOption("GDAL_USE_SSE", None)
+            ds2 = gdal.Grid(
+                "",
+                "/vsimem/tmp/test_gdal_grid_lib_2.shp",
+                format="MEM",
+                outputBounds=[-0.4, -0.4, 0.6, 0.6],
+                width=10,
+                height=10,
+                outputType=gdal.GDT_Byte,
+            )
 
         cs = ds1.GetRasterBand(1).Checksum()
         assert cs == 2

@@ -1341,25 +1341,23 @@ def test_gdalwarp_lib_128():
         gdal.Unlink(cutlineDSName)
         return
 
-    gdal.SetConfigOption("GDALWARP_DENSIFY_CUTLINE", "ONLY_IF_INVALID")
-    ds = gdal.Warp(
-        "",
-        mem_ds,
-        format="MEM",
-        cutlineDSName=cutlineDSName,
-        dstSRS="EPSG:4326",
-        outputBounds=[7.2, 32.52, 7.217, 32.59],
-        xRes=0.000226555,
-        yRes=0.000226555,
-        transformerOptions=["RPC_DEM=data/test_gdalwarp_lib_128_dem.tif"],
-    )
-    gdal.SetConfigOption("GDALWARP_DENSIFY_CUTLINE", None)
+    with gdal.config_option("GDALWARP_DENSIFY_CUTLINE", "ONLY_IF_INVALID"):
+        ds = gdal.Warp(
+            "",
+            mem_ds,
+            format="MEM",
+            cutlineDSName=cutlineDSName,
+            dstSRS="EPSG:4326",
+            outputBounds=[7.2, 32.52, 7.217, 32.59],
+            xRes=0.000226555,
+            yRes=0.000226555,
+            transformerOptions=["RPC_DEM=data/test_gdalwarp_lib_128_dem.tif"],
+        )
     cs = ds.GetRasterBand(1).Checksum()
 
     assert cs == 4248, "bad checksum"
 
-    gdal.SetConfigOption("GDALWARP_DENSIFY_CUTLINE", "NO")
-    with pytest.raises(Exception):
+    with gdal.config_option("GDALWARP_DENSIFY_CUTLINE", "NO"), pytest.raises(Exception):
         gdal.Warp(
             "",
             mem_ds,
@@ -1371,7 +1369,6 @@ def test_gdalwarp_lib_128():
             yRes=0.000226555,
             transformerOptions=["RPC_DEM=data/test_gdalwarp_lib_128_dem.tif"],
         )
-    gdal.SetConfigOption("GDALWARP_DENSIFY_CUTLINE", None)
 
     gdal.Unlink(cutlineDSName)
 
