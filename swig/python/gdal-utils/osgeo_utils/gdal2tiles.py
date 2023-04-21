@@ -3478,8 +3478,8 @@ function ExtDraggableObject(src, opt_drag) {
 """
 
         s = (
-            r"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-            <html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml">
+            r"""<!DOCTYPE html>
+            <html>
               <head>
                 <title>%(xml_escaped_title)s</title>
                 <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
@@ -3489,9 +3489,9 @@ function ExtDraggableObject(src, opt_drag) {
                     body { margin: 10px; background: #fff; }
                     h1 { margin: 0; padding: 6px; border:0; font-size: 20pt; }
                     #header { height: 43px; padding: 0; background-color: #eee; border: 1px solid #888; }
-              #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
-              #map { height: 95%%; border: 1px solid #888; }
-          </style>
+                    #subheader { height: 12px; text-align: right; font-size: 10px; color: #555;}
+                    #map { height: 95%%; border: 1px solid #888; }
+                 </style>
           %(googlemapsurl_hint)s
           <script src='%(googlemapsurl)s'></script>
           <script>
@@ -3901,10 +3901,11 @@ function ExtDraggableObject(src, opt_drag) {
         args["center_y"] = (self.ominy + self.omaxy) / 2
 
         s = (
-            r"""<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
+            r"""<!DOCTYPE html>
+<html>
     <head>
     <title>%(xml_escaped_title)s</title>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <meta http-equiv='imagetoolbar' content='no'/>
     <style type="text/css"> v\:* {behavior:url(#default#VML);}
         html, body { overflow: hidden; padding: 0; height: 100%%; width: 100%%; font-family: 'Lucida Grande',Geneva,Arial,Verdana,sans-serif; }
