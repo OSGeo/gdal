@@ -83,29 +83,29 @@ def test_xmp(drivername, filename, expect_xmp):
             pytest.skip()
 
     # we set ECW to not resolve projection and datum strings to get 3.x behavior.
-    gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
+    with gdal.config_option("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES"):
 
-    if ".jp2" in filename:
-        gdaltest.deregister_all_jpeg2000_drivers_but(drivername)
-
-    try:
-        ds = gdal.Open(filename)
-        if filename == "data/rgbsmall_with_xmp.webp":
-            if ds is None:
-                pytest.skip("Old libwebp don't support VP8X containers")
-        else:
-            assert ds is not None, "open failed"
-
-        xmp_md = ds.GetMetadata("xml:XMP")
-
-        assert ds.GetDriver().ShortName == drivername, "opened with wrong driver"
-        assert not (expect_xmp and not xmp_md), "did not find xml:XMP metadata"
-        assert not (
-            expect_xmp and "xml:XMP" not in ds.GetMetadataDomainList()
-        ), "did not find xml:XMP metadata domain"
-        assert expect_xmp or not xmp_md, "found unexpected xml:XMP metadata"
-
-        ds = None
-    finally:
         if ".jp2" in filename:
-            gdaltest.reregister_all_jpeg2000_drivers()
+            gdaltest.deregister_all_jpeg2000_drivers_but(drivername)
+
+        try:
+            ds = gdal.Open(filename)
+            if filename == "data/rgbsmall_with_xmp.webp":
+                if ds is None:
+                    pytest.skip("Old libwebp don't support VP8X containers")
+            else:
+                assert ds is not None, "open failed"
+
+            xmp_md = ds.GetMetadata("xml:XMP")
+
+            assert ds.GetDriver().ShortName == drivername, "opened with wrong driver"
+            assert not (expect_xmp and not xmp_md), "did not find xml:XMP metadata"
+            assert not (
+                expect_xmp and "xml:XMP" not in ds.GetMetadataDomainList()
+            ), "did not find xml:XMP metadata domain"
+            assert expect_xmp or not xmp_md, "found unexpected xml:XMP metadata"
+
+            ds = None
+        finally:
+            if ".jp2" in filename:
+                gdaltest.reregister_all_jpeg2000_drivers()

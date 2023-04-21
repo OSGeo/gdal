@@ -714,12 +714,11 @@ def test_jpeg_19():
         out_ds = None
 
         # Generate a JPEG file with a MSB bit mask order
-        gdal.SetConfigOption("JPEG_WRITE_MASK_BIT_ORDER", "MSB")
-        out_ds = gdal.GetDriverByName("JPEG").CreateCopy(
-            "/vsimem/jpeg_19_msb.jpg", src_ds
-        )
-        del out_ds
-        gdal.SetConfigOption("JPEG_WRITE_MASK_BIT_ORDER", None)
+        with gdal.config_option("JPEG_WRITE_MASK_BIT_ORDER", "MSB"):
+            out_ds = gdal.GetDriverByName("JPEG").CreateCopy(
+                "/vsimem/jpeg_19_msb.jpg", src_ds
+            )
+            del out_ds
 
         src_ds = None
 
@@ -1025,13 +1024,12 @@ def test_jpeg_27_max_memory():
     gdal.ErrorReset()
     with gdaltest.error_handler():
         os.environ["JPEGMEM"] = "10M"
-        gdal.SetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "1000")
-        ds = gdal.Open(
-            "/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip"
-        )
-        cs = ds.GetRasterBand(1).Checksum()
-        del os.environ["JPEGMEM"]
-        gdal.SetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", None)
+        with gdal.config_option("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "1000"):
+            ds = gdal.Open(
+                "/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip"
+            )
+            cs = ds.GetRasterBand(1).Checksum()
+            del os.environ["JPEGMEM"]
         assert cs == -1 and gdal.GetLastErrorMsg() != ""
 
 
@@ -1040,13 +1038,15 @@ def test_jpeg_27_max_scan_number():
     # Should error out with 'Scan number...
     gdal.ErrorReset()
     ds = gdal.Open("/vsisubfile/146,/vsizip/../gcore/data/eofloop_valid_huff.tif.zip")
-    with gdaltest.error_handler():
-        gdal.SetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", "YES")
-        gdal.SetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "10")
+
+    options = {
+        "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC": "YES",
+        "GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER": "10",
+    }
+
+    with gdal.config_options(options), gdaltest.error_handler():
         cs = ds.GetRasterBand(1).Checksum()
-        gdal.SetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", None)
-        gdal.SetConfigOption("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", None)
-        assert cs == -1 and gdal.GetLastErrorMsg() != ""
+    assert cs == -1 and gdal.GetLastErrorMsg() != ""
 
 
 ###############################################################################

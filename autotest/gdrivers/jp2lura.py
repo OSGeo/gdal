@@ -90,14 +90,10 @@ def startup_and_cleanup():
 
 def test_jp2lura_missing_license_num():
 
-    old_num_1 = gdal.GetConfigOption("LURA_LICENSE_NUM_1")
-    old_num_2 = gdal.GetConfigOption("LURA_LICENSE_NUM_2")
-    gdal.SetConfigOption("LURA_LICENSE_NUM_1", "")
-    gdal.SetConfigOption("LURA_LICENSE_NUM_2", "")
-    with gdaltest.error_handler():
+    with gdal.config_options(
+        {"LURA_LICENSE_NUM_1": "", "LURA_LICENSE_NUM_2": ""}
+    ), gdaltest.error_handler():
         ds = gdal.Open("data/jpeg2000/byte.jp2")
-    gdal.SetConfigOption("LURA_LICENSE_NUM_1", old_num_1)
-    gdal.SetConfigOption("LURA_LICENSE_NUM_2", old_num_2)
 
     assert ds is None
 
@@ -108,14 +104,10 @@ def test_jp2lura_missing_license_num():
 
 def test_jp2lura_invalid_license_num():
 
-    old_num_1 = gdal.GetConfigOption("LURA_LICENSE_NUM_1")
-    old_num_2 = gdal.GetConfigOption("LURA_LICENSE_NUM_2")
-    gdal.SetConfigOption("LURA_LICENSE_NUM_1", "1")
-    gdal.SetConfigOption("LURA_LICENSE_NUM_2", "1")
-    with gdaltest.error_handler():
+    with gdal.config_options(
+        {"LURA_LICENSE_NUM_1": "1", "LURA_LICENSE_NUM_2": "2"}
+    ), gdaltest.error_handler():
         ds = gdal.Open("data/jpeg2000/byte.jp2")
-    gdal.SetConfigOption("LURA_LICENSE_NUM_1", old_num_1)
-    gdal.SetConfigOption("LURA_LICENSE_NUM_2", old_num_2)
 
     assert ds is None
 
@@ -542,13 +534,11 @@ def test_jp2lura_16():
 
     assert gt == gt_expected, "did not get expected geotransform"
 
-    gdal.SetConfigOption("GTIFF_POINT_GEO_IGNORE", "TRUE")
+    with gdal.config_option("GTIFF_POINT_GEO_IGNORE", "TRUE"):
 
-    ds = gdal.Open("data/jpeg2000/byte_point.jp2")
-    gt = ds.GetGeoTransform()
-    ds = None
-
-    gdal.SetConfigOption("GTIFF_POINT_GEO_IGNORE", None)
+        ds = gdal.Open("data/jpeg2000/byte_point.jp2")
+        gt = ds.GetGeoTransform()
+        ds = None
 
     gt_expected = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
@@ -1417,7 +1407,6 @@ def test_jp2lura_40():
     # No metadata
     src_ds = gdal.GetDriverByName("MEM").Create("", 20, 20)
     src_ds.SetGeoTransform([0, 60, 0, 0, 0, -60])
-    gdal.SetConfigOption("GMLJP2OVERRIDE", "/vsimem/override.gml")
 
     gdal.FileFromMemBuffer(
         "/vsimem/override.gml",
@@ -1471,10 +1460,11 @@ def test_jp2lura_40():
     </gmljp2:featureMember>
 </gmljp2:GMLJP2CoverageCollection>""",
     )
-    out_ds = gdaltest.jp2lura_drv.CreateCopy(
-        "/vsimem/jp2lura_40.jp2", src_ds, options=["GeoJP2=NO"]
-    )
-    gdal.SetConfigOption("GMLJP2OVERRIDE", None)
+
+    with gdal.config_option("GMLJP2OVERRIDE", "/vsimem/override.gml"):
+        out_ds = gdaltest.jp2lura_drv.CreateCopy(
+            "/vsimem/jp2lura_40.jp2", src_ds, options=["GeoJP2=NO"]
+        )
     gdal.Unlink("/vsimem/override.gml")
     del out_ds
     ds = gdal.Open("/vsimem/jp2lura_40.jp2")
@@ -1895,26 +1885,25 @@ def test_jp2lura_49():
         expected_srs,
         expected_gt,
     ) in tests:
-        gdal.SetConfigOption("GDAL_GEOREF_SOURCES", config_option_value)
-        gdal.FileFromMemBuffer(
-            "/vsimem/byte_nogeoref.jp2",
-            open("data/jpeg2000/byte_nogeoref.jp2", "rb").read(),
-        )
-        if copy_pam:
+        with gdal.config_option("GDAL_GEOREF_SOURCES", config_option_value):
             gdal.FileFromMemBuffer(
-                "/vsimem/byte_nogeoref.jp2.aux.xml",
-                open("data/jpeg2000/byte_nogeoref.jp2.aux.xml", "rb").read(),
+                "/vsimem/byte_nogeoref.jp2",
+                open("data/jpeg2000/byte_nogeoref.jp2", "rb").read(),
             )
-        if copy_worldfile:
-            gdal.FileFromMemBuffer(
-                "/vsimem/byte_nogeoref.j2w",
-                open("data/jpeg2000/byte_nogeoref.j2w", "rb").read(),
-            )
-        ds = gdal.Open("/vsimem/byte_nogeoref.jp2")
-        gt = ds.GetGeoTransform()
-        srs_wkt = ds.GetProjectionRef()
-        ds = None
-        gdal.SetConfigOption("GDAL_GEOREF_SOURCES", None)
+            if copy_pam:
+                gdal.FileFromMemBuffer(
+                    "/vsimem/byte_nogeoref.jp2.aux.xml",
+                    open("data/jpeg2000/byte_nogeoref.jp2.aux.xml", "rb").read(),
+                )
+            if copy_worldfile:
+                gdal.FileFromMemBuffer(
+                    "/vsimem/byte_nogeoref.j2w",
+                    open("data/jpeg2000/byte_nogeoref.j2w", "rb").read(),
+                )
+            ds = gdal.Open("/vsimem/byte_nogeoref.jp2")
+            gt = ds.GetGeoTransform()
+            srs_wkt = ds.GetProjectionRef()
+            ds = None
         gdal.Unlink("/vsimem/byte_nogeoref.jp2")
         gdal.Unlink("/vsimem/byte_nogeoref.jp2.aux.xml")
         gdal.Unlink("/vsimem/byte_nogeoref.j2w")

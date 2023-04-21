@@ -285,9 +285,8 @@ def test_pdf_online_2(poppler_or_pdfium):
 
 
 def test_pdf_1(poppler_or_pdfium):
-    gdal.SetConfigOption("GDAL_PDF_DPI", "200")
-    ds = gdal.Open("data/pdf/adobe_style_geospatial.pdf")
-    gdal.SetConfigOption("GDAL_PDF_DPI", None)
+    with gdal.config_option("GDAL_PDF_DPI", "200"):
+        ds = gdal.Open("data/pdf/adobe_style_geospatial.pdf")
     assert ds is not None
 
     gt = ds.GetGeoTransform()
@@ -376,15 +375,16 @@ def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
 
 
 def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE")
-    tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"])
-    ret = tst.testCreateCopy(
-        check_minmax=0,
-        check_gt=1,
-        check_srs=True,
-        check_checksum_not_null=pdf_checksum_available(),
-    )
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", None)
+    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
+        tst = gdaltest.GDALTest(
+            "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
+        )
+        ret = tst.testCreateCopy(
+            check_minmax=0,
+            check_gt=1,
+            check_srs=True,
+            check_checksum_not_null=pdf_checksum_available(),
+        )
 
     return ret
 
@@ -394,17 +394,16 @@ def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
 
 
 def test_pdf_ogcbp_dpi_300(poppler_or_pdfium):
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE")
-    tst = gdaltest.GDALTest(
-        "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP", "DPI=300"]
-    )
-    ret = tst.testCreateCopy(
-        check_minmax=0,
-        check_gt=1,
-        check_srs=True,
-        check_checksum_not_null=pdf_checksum_available(),
-    )
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", None)
+    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
+        tst = gdaltest.GDALTest(
+            "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP", "DPI=300"]
+        )
+        ret = tst.testCreateCopy(
+            check_minmax=0,
+            check_gt=1,
+            check_srs=True,
+            check_checksum_not_null=pdf_checksum_available(),
+        )
 
     return ret
 
@@ -431,11 +430,10 @@ def test_pdf_ogcbp_lcc(poppler_or_pdfium):
     src_ds.SetProjection(wkt)
     src_ds.SetGeoTransform([500000, 1, 0, 1000000, 0, -1])
 
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE")
-    out_ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_ogcbp_lcc.pdf", src_ds)
-    out_wkt = out_ds.GetProjectionRef()
-    out_ds = None
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", None)
+    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "FALSE"):
+        out_ds = gdaltest.pdf_drv.CreateCopy("tmp/pdf_ogcbp_lcc.pdf", src_ds)
+        out_wkt = out_ds.GetProjectionRef()
+        out_ds = None
 
     src_ds = None
 
@@ -552,11 +550,10 @@ def pdf_rgba_default_compression(options_param=None):
     out_ds = None
 
     # gdal.SetConfigOption('GDAL_PDF_BANDS', '4')
-    gdal.SetConfigOption("PDF_DUMP_OBJECT", "tmp/rgba.pdf.txt")
-    gdal.SetConfigOption("PDF_DUMP_PARENT", "YES")
-    out_ds = gdal.Open("tmp/rgba.pdf")
-    gdal.SetConfigOption("PDF_DUMP_OBJECT", None)
-    gdal.SetConfigOption("PDF_DUMP_PARENT", None)
+    with gdal.config_options(
+        {"PDF_DUMP_OBJECT": "tmp/rgba.pdf.txt", "PDF_DUMP_PARENT": "YES"}
+    ):
+        out_ds = gdal.Open("tmp/rgba.pdf")
     content = open("tmp/rgba.pdf.txt", "rt").read()
     os.unlink("tmp/rgba.pdf.txt")
     cs1 = out_ds.GetRasterBand(1).Checksum()
@@ -1043,9 +1040,8 @@ def test_pdf_update_gcps_iso32000(poppler_or_pdfium):
 
 
 def test_pdf_update_gcps_ogc_bp(poppler_or_pdfium):
-    gdal.SetConfigOption("GDAL_PDF_GEO_ENCODING", "OGC_BP")
-    _pdf_update_gcps(poppler_or_pdfium)
-    gdal.SetConfigOption("GDAL_PDF_GEO_ENCODING", None)
+    with gdal.config_option("GDAL_PDF_GEO_ENCODING", "OGC_BP"):
+        _pdf_update_gcps(poppler_or_pdfium)
 
 
 ###############################################################################
@@ -1240,24 +1236,23 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     ds = None
 
     # Check
-    gdal.SetConfigOption("GDAL_PDF_GEO_ENCODING", geo_encoding)
-    ds = gdal.Open(out_filename)
-    got_gt = ds.GetGeoTransform()
-    got_neatline = ds.GetMetadataItem("NEATLINE")
+    with gdal.config_option("GDAL_PDF_GEO_ENCODING", geo_encoding):
+        ds = gdal.Open(out_filename)
+        got_gt = ds.GetGeoTransform()
+        got_neatline = ds.GetMetadataItem("NEATLINE")
 
-    if pdf_is_pdfium():
-        if geo_encoding == "ISO32000":
-            expected_gt = (
-                440722.36151923181,
-                59.93217744208814,
-                0.0,
-                3751318.7819266757,
-                0.0,
-                -59.941906300000845,
-            )
+        if pdf_is_pdfium():
+            if geo_encoding == "ISO32000":
+                expected_gt = (
+                    440722.36151923181,
+                    59.93217744208814,
+                    0.0,
+                    3751318.7819266757,
+                    0.0,
+                    -59.941906300000845,
+                )
 
-    ds = None
-    gdal.SetConfigOption("GDAL_PDF_GEO_ENCODING", None)
+        ds = None
 
     for i in range(6):
         assert not (
@@ -1324,12 +1319,13 @@ def test_pdf_check_identity_ogc_bp(poppler_or_pdfium):
     out_filename = "tmp/pdf_check_identity_ogc_bp.pdf"
 
     src_ds = gdal.Open("data/pdf/test_pdf.vrt")
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", "NO")
-    out_ds = gdaltest.pdf_drv.CreateCopy(
-        out_filename, src_ds, options=["GEO_ENCODING=OGC_BP", "STREAM_COMPRESS=NONE"]
-    )
-    del out_ds
-    gdal.SetConfigOption("GDAL_PDF_OGC_BP_WRITE_WKT", None)
+    with gdal.config_option("GDAL_PDF_OGC_BP_WRITE_WKT", "NO"):
+        out_ds = gdaltest.pdf_drv.CreateCopy(
+            out_filename,
+            src_ds,
+            options=["GEO_ENCODING=OGC_BP", "STREAM_COMPRESS=NONE"],
+        )
+        del out_ds
     src_ds = None
 
     f = open("data/pdf/test_ogc_bp.pdf", "rb")
@@ -1371,20 +1367,18 @@ def test_pdf_layers(poppler_or_pdfium):
         pytest.skip()
 
     # Turn a layer off
-    gdal.SetConfigOption("GDAL_PDF_LAYERS_OFF", "New_Data_Frame")
-    ds = gdal.Open("data/pdf/adobe_style_geospatial.pdf")
-    cs2 = ds.GetRasterBand(1).Checksum()
-    ds = None
-    gdal.SetConfigOption("GDAL_PDF_LAYERS_OFF", None)
+    with gdal.config_option("GDAL_PDF_LAYERS_OFF", "New_Data_Frame"):
+        ds = gdal.Open("data/pdf/adobe_style_geospatial.pdf")
+        cs2 = ds.GetRasterBand(1).Checksum()
+        ds = None
 
     assert cs2 != cs1, "did not get expected checksum"
 
     # Turn the other layer on
-    gdal.SetConfigOption("GDAL_PDF_LAYERS", "Layers")
-    ds = gdal.Open("data/pdf/adobe_style_geospatial.pdf")
-    cs3 = ds.GetRasterBand(1).Checksum()
-    ds = None
-    gdal.SetConfigOption("GDAL_PDF_LAYERS", None)
+    with gdal.config_option("GDAL_PDF_LAYERS", "Layers"):
+        ds = gdal.Open("data/pdf/adobe_style_geospatial.pdf")
+        cs3 = ds.GetRasterBand(1).Checksum()
+        ds = None
 
     # So the end result must be identical
     assert cs3 == cs2, "did not get expected checksum"
@@ -1758,14 +1752,13 @@ def test_pdf_jpeg_in_vrt_direct_copy(poppler_or_pdfium):
 @pytest.mark.parametrize("src_filename", ["data/byte.tif", "data/rgbsmall.tif"])
 def pdf_georef_on_image(src_filename, pdf_backend):
     src_ds = gdal.Open(src_filename)
-    gdal.SetConfigOption("GDAL_PDF_WRITE_GEOREF_ON_IMAGE", "YES")
-    out_ds = gdaltest.pdf_drv.CreateCopy(
-        "tmp/pdf_georef_on_image.pdf",
-        src_ds,
-        options=["MARGIN=10", "GEO_ENCODING=NONE"],
-    )
-    del out_ds
-    gdal.SetConfigOption("GDAL_PDF_WRITE_GEOREF_ON_IMAGE", None)
+    with gdal.config_option("GDAL_PDF_WRITE_GEOREF_ON_IMAGE", "YES"):
+        out_ds = gdaltest.pdf_drv.CreateCopy(
+            "tmp/pdf_georef_on_image.pdf",
+            src_ds,
+            options=["MARGIN=10", "GEO_ENCODING=NONE"],
+        )
+        del out_ds
     if pdf_checksum_available():
         src_cs = src_ds.GetRasterBand(1).Checksum()
     else:

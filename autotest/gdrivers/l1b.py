@@ -174,11 +174,10 @@ def test_l1b_metadata_before_noaa_15():
     except OSError:
         pytest.skip()
 
-    gdal.SetConfigOption("L1B_FETCH_METADATA", "YES")
-    gdal.SetConfigOption("L1B_METADATA_DIRECTORY", "tmp")
-    ds = gdal.Open("tmp/cache/n12gac10bit.l1b")
-    gdal.SetConfigOption("L1B_FETCH_METADATA", None)
-    gdal.SetConfigOption("L1B_METADATA_DIRECTORY", None)
+    with gdal.config_options(
+        {"L1B_FETCH_METADATA": "YES", "L1B_METADATA_DIRECTORY": "tmp"}
+    ):
+        ds = gdal.Open("tmp/cache/n12gac10bit.l1b")
     del ds
 
     f = open("tmp/n12gac10bit.l1b_metadata.csv", "rb")
@@ -261,11 +260,10 @@ def test_l1b_metadata_after_noaa_15():
     except OSError:
         pytest.skip()
 
-    gdal.SetConfigOption("L1B_FETCH_METADATA", "YES")
-    gdal.SetConfigOption("L1B_METADATA_DIRECTORY", "tmp")
-    ds = gdal.Open("tmp/cache/n16gac10bit.l1b")
-    gdal.SetConfigOption("L1B_FETCH_METADATA", None)
-    gdal.SetConfigOption("L1B_METADATA_DIRECTORY", None)
+    with gdal.config_options(
+        {"L1B_FETCH_METADATA": "YES", "L1B_METADATA_DIRECTORY": "tmp"}
+    ):
+        ds = gdal.Open("tmp/cache/n16gac10bit.l1b")
     del ds
 
     f = open("tmp/n16gac10bit.l1b_metadata.csv", "rb")

@@ -104,10 +104,9 @@ def test_adrg_2subdatasets():
     drv = gdal.GetDriverByName("ADRG")
     srcds = gdal.Open("data/adrg/SMALL_ADRG/ABCDEF01.GEN")
 
-    gdal.SetConfigOption("ADRG_SIMULATE_MULTI_IMG", "ON")
-    dstds = drv.CreateCopy("tmp/XXXXXX01.GEN", srcds)
-    del dstds
-    gdal.SetConfigOption("ADRG_SIMULATE_MULTI_IMG", "OFF")
+    with gdal.config_option("ADRG_SIMULATE_MULTI_IMG", "ON"):
+        dstds = drv.CreateCopy("tmp/XXXXXX01.GEN", srcds)
+        del dstds
 
     shutil.copy("tmp/XXXXXX01.IMG", "tmp/XXXXXX02.IMG")
 

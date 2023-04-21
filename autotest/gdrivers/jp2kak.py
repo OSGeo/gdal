@@ -323,35 +323,34 @@ def test_jp2kak_16():
 
 def test_jp2kak_17():
 
-    gdal.SetConfigOption("GDAL_JP2K_ALT_OFFSETVECTOR_ORDER", "YES")
+    with gdal.config_option("GDAL_JP2K_ALT_OFFSETVECTOR_ORDER", "YES"):
 
-    ds = gdal.Open("data/jpeg2000/gmljp2_dtedsm_epsg_4326_axes_alt_offsetVector.jp2")
+        ds = gdal.Open(
+            "data/jpeg2000/gmljp2_dtedsm_epsg_4326_axes_alt_offsetVector.jp2"
+        )
 
-    gt = ds.GetGeoTransform()
-    gte = (
-        42.999583333333369,
-        0.008271349862259,
-        0,
-        34.000416666666631,
-        0,
-        -0.008271349862259,
-    )
+        gt = ds.GetGeoTransform()
+        gte = (
+            42.999583333333369,
+            0.008271349862259,
+            0,
+            34.000416666666631,
+            0,
+            -0.008271349862259,
+        )
 
-    if (
-        gt[0] != pytest.approx(gte[0], abs=0.0000001)
-        or gt[3] != pytest.approx(gte[3], abs=0.000001)
-        or gt[1] != pytest.approx(gte[1], abs=0.000000000005)
-        or gt[2] != pytest.approx(gte[2], abs=0.000000000005)
-        or gt[4] != pytest.approx(gte[4], abs=0.000000000005)
-        or gt[5] != pytest.approx(gte[5], abs=0.000000000005)
-    ):
-        print("got: ", gt)
-        gdal.SetConfigOption("GDAL_JP2K_ALT_OFFSETVECTOR_ORDER", "NO")
-        pytest.fail("did not get expected geotransform")
+        if (
+            gt[0] != pytest.approx(gte[0], abs=0.0000001)
+            or gt[3] != pytest.approx(gte[3], abs=0.000001)
+            or gt[1] != pytest.approx(gte[1], abs=0.000000000005)
+            or gt[2] != pytest.approx(gte[2], abs=0.000000000005)
+            or gt[4] != pytest.approx(gte[4], abs=0.000000000005)
+            or gt[5] != pytest.approx(gte[5], abs=0.000000000005)
+        ):
+            print("got: ", gt)
+            pytest.fail("did not get expected geotransform")
 
-    ds = None
-
-    gdal.SetConfigOption("GDAL_JP2K_ALT_OFFSETVECTOR_ORDER", "NO")
+        ds = None
 
 
 ###############################################################################

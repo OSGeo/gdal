@@ -514,19 +514,14 @@ def test_mbtiles_9():
 @pytest.mark.require_driver("PNG")
 def test_mbtiles_10():
 
-    old_val_GPKG_FORCE_TEMPDB_COMPACTION = gdal.GetConfigOption(
-        "GPKG_FORCE_TEMPDB_COMPACTION"
-    )
-    gdal.SetConfigOption("GPKG_FORCE_TEMPDB_COMPACTION", "YES")
-    with gdaltest.SetCacheMax(0):
+    with gdal.config_option(
+        "GPKG_FORCE_TEMPDB_COMPACTION", "YES"
+    ), gdaltest.SetCacheMax(0):
         gdal.Translate(
             "/vsimem/mbtiles_10.mbtiles",
             "../gcore/data/byte.tif",
             options="-of MBTILES -outsize 512 512",
         )
-    gdal.SetConfigOption(
-        "GPKG_FORCE_TEMPDB_COMPACTION", old_val_GPKG_FORCE_TEMPDB_COMPACTION
-    )
 
     ds = gdal.Open("/vsimem/mbtiles_10.mbtiles")
     cs = ds.GetRasterBand(1).Checksum()

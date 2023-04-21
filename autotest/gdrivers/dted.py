@@ -331,16 +331,15 @@ def test_dted_14():
 
 def test_dted_15():
 
-    gdal.SetConfigOption("GDAL_DTED_SINGLE_BLOCK", "YES")
-    tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 49187)
-    ret = tst.testOpen()
-    gdal.SetConfigOption("GDAL_DTED_SINGLE_BLOCK", None)
+    with gdal.config_option("GDAL_DTED_SINGLE_BLOCK", "YES"):
+        tst = gdaltest.GDALTest("dted", "n43.dt0", 1, 49187)
+        ret = tst.testOpen()
     return ret
 
 
 def test_dted_16():
 
-    with gdaltest.config_option("DTED_APPLY_PIXEL_IS_POINT", "TRUE"):
+    with gdal.config_option("DTED_APPLY_PIXEL_IS_POINT", "TRUE"):
         ds = gdal.Open("data/n43.dt0")
         assert ds is not None
 

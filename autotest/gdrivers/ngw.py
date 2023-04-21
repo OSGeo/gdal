@@ -271,14 +271,12 @@ def test_ngw_7():
         pytest.skip()
 
     gdal.ErrorReset()
-    gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "ON")
-    with gdaltest.error_handler():
+    with gdal.config_option("CPL_ACCUM_ERROR_MSG", "ON"), gdaltest.error_handler():
 
         ovr_band = gdaltest.ngw_ds.GetRasterBand(1).GetOverview(21)
         assert ovr_band is not None
         ovr_band.Checksum()
 
-    gdal.SetConfigOption("CPL_ACCUM_ERROR_MSG", "OFF")
     msg = gdal.GetLastErrorMsg()
 
     assert gdal.GetLastErrorType() != gdal.CE_Failure, msg

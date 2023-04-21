@@ -6251,12 +6251,10 @@ def test_nitf_online_24():
     except OSError:
         pytest.skip()
 
-    oldval = gdal.GetConfigOption("NITF_OPEN_UNDERLYING_DS")
-    gdal.SetConfigOption("NITF_OPEN_UNDERLYING_DS", "NO")
-    ds = gdal.Open(
-        "/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/clfc/2/000000009s0013.lf2"
-    )
-    gdal.SetConfigOption("NITF_OPEN_UNDERLYING_DS", oldval)
+    with gdal.config_option("NITF_OPEN_UNDERLYING_DS", "NO"):
+        ds = gdal.Open(
+            "/vsizip/tmp/cache/ECRG_Sample.zip/ECRG_Sample/EPF/clfc/2/000000009s0013.lf2"
+        )
     assert ds is not None
     xml_tre = ds.GetMetadata("xml:TRE")[0]
     ds = None

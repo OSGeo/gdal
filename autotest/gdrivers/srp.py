@@ -113,9 +113,8 @@ def test_srp_4():
 
 def test_srp_5():
 
-    gdal.SetConfigOption("SRP_SINGLE_GEN_IN_THF_AS_DATASET", "FALSE")
-    ds = gdal.Open("data/srp/USRP_PCB0/TRANSH01.THF")
-    gdal.SetConfigOption("SRP_SINGLE_GEN_IN_THF_AS_DATASET", None)
+    with gdal.config_option("SRP_SINGLE_GEN_IN_THF_AS_DATASET", "FALSE"):
+        ds = gdal.Open("data/srp/USRP_PCB0/TRANSH01.THF")
     subdatasets = ds.GetMetadata("SUBDATASETS")
     assert (
         subdatasets["SUBDATASET_1_NAME"].replace("\\", "/")

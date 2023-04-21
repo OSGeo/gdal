@@ -210,8 +210,6 @@ def test_jp2metadata_3():
 
     ds = None
 
-    gdal.SetConfigOption("GDAL_IGNORE_AXIS_ORIENTATION", "NO")
-
 
 ###############################################################################
 # Test reading a file with axis orientation set properly for an alternate
