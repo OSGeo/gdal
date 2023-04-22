@@ -656,7 +656,32 @@ Authentication options, and read-only features, are identical to :ref:`/vsiswift
 /vsihdfs/ (Hadoop File System)
 ++++++++++++++++++++++++++++++
 
-/vsihdfs/ is a file system handler that provides read access to HDFS. This handler requires GDAL to have been built with Java support (``--with-java``) and HDFS support (``--with-hdfs``). Support for this handler is currently only available on Unix-like systems. Note: support for the HTTP REST API (webHdfs) is also available with :ref:`vsiwebhdfs`
+/vsihdfs/ is a file system handler that provides read access to HDFS.
+This handler requires GDAL to have been built with Java support
+(CMake `FindJNI <https://cmake.org/cmake/help/latest/module/FindJNI.html>`__)
+and :ref:`HDFS <building_from_source_hdfs>` support.
+Support for this handler is currently only available on Unix-like systems.
+
+Note: support for the HTTP REST API (webHdfs) is also available with :ref:`vsiwebhdfs`
+
+The LD_LIBRARY_PATH and CLASSPATH environment variables must be typically
+set up as following.
+
+::
+
+    HADOOP_HOME=$HOME/hadoop-3.3.5
+    LD_LIBRARY_PATH=$HADOOP_HOME/lib/native:$LD_LIBRARY_PATH
+    CLASSPATH=$HADOOP_HOME/etc/hadoop:$HADOOP_HOME/share/hadoop/common/*:$HADOOP_HOME/share/hadoop/common/lib/*:$HADOOP_HOME/share/hadoop/hdfs/*
+
+
+Failure to properly define the CLASSPATH will result in hard crashes in the
+native libhdfs.
+
+Relevant Hadoop documentation links:
+
+- `C API libhdfs <https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/LibHdfs.html>`__
+- `HDFS Users Guide <https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsUserGuide.html>`__
+- `Hadoop: Setting up a Single Node Cluster <https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-common/SingleCluster.html>`__
 
 Recognized filenames are of the form :file:`/vsihdfs/hdfsUri` where ``hdfsUri`` is a valid HDFS URI.
 
@@ -664,8 +689,8 @@ Examples:
 
 ::
 
-    /vsihdfs/file:/tmp/my.tif  (a local file accessed through HDFS)
-    /vsihdfs/hdfs:/hadoop/my.tif  (a file stored in HDFS)
+    /vsihdfs/file:/home/user//my.tif  (a local file accessed through HDFS)
+    /vsihdfs/hdfs://localhost:9000/my.tif  (a file stored in HDFS)
 
 .. versionadded:: 2.4
 
