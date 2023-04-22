@@ -1005,18 +1005,6 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         nOffset += 2;  // Skip leading 0xFF 0xF8.
         nByteCount -= 2;
 
-        // Special case for last strip that might be smaller than other strips
-        // In which case we must invalidate the dataset.
-        TIFF *hTIFF = m_poGDS->m_poParentDS->m_hTIFF;
-        if (!TIFFIsTiled(hTIFF) && !bIsSingleStripAsSplit &&
-            (nBlockYOff + 1 == m_poGDS->m_poParentDS->m_nBlocksPerColumn ||
-             (m_poGDS->m_poJPEGDS != nullptr &&
-              m_poGDS->m_poJPEGDS->GetRasterYSize() !=
-                  nBlockYSize * nScaleFactor)))
-        {
-            m_poGDS->m_poJPEGDS.reset();
-        }
-
         CPLString osFileToOpen;
         m_poGDS->m_osTmpFilename.Printf("/vsimem/sparse_%p", m_poGDS);
         VSILFILE *fp = VSIFOpenL(m_poGDS->m_osTmpFilename, "wb+");
@@ -1027,13 +1015,6 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         const bool bInMemoryJPEGFile = nByteCount < 256 * 256;
         if (bInMemoryJPEGFile)
         {
-            // If the previous file was opened as a /vsisparse/, must re-open.
-            if (m_poGDS->m_poJPEGDS != nullptr &&
-                STARTS_WITH(m_poGDS->m_poJPEGDS->GetDescription(),
-                            "/vsisparse/"))
-            {
-                m_poGDS->m_poJPEGDS.reset();
-            }
             osFileToOpen = m_poGDS->m_osTmpFilename;
 
             bool bError = false;
@@ -1047,6 +1028,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 VSIGetMemFileBuffer(m_poGDS->m_osTmpFilename, nullptr, FALSE);
             memcpy(pabyBuffer, m_poGDS->m_pabyJPEGTable,
                    m_poGDS->m_nJPEGTableSize);
+            TIFF *hTIFF = m_poGDS->m_poParentDS->m_hTIFF;
             VSILFILE *fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata(hTIFF));
             if (!bError && VSIFSeekL(fpTIF, nOffset, SEEK_SET) != 0)
                 bError = true;
@@ -1064,9 +1046,6 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             // If the JPEG strip/tile is too big (e.g. a single-strip
             // JPEG-in-TIFF), we will use /vsisparse mechanism to make a
             // fake JPEG file.
-
-            // Always re-open.
-            m_poGDS->m_poJPEGDS.reset();
 
             osFileToOpen =
                 CPLSPrintf("/vsisparse/%s", m_poGDS->m_osTmpFilename.c_str());
