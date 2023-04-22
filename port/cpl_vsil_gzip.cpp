@@ -590,19 +590,17 @@ void VSIGZipHandle::check_header()
         if (len)
             inbuf[0] = stream.next_in[0];
         errno = 0;
-        len = static_cast<uInt>(m_poBaseHandle->Read(
-            inbuf + len, 1, static_cast<size_t>(Z_BUFSIZE) >> len));
+        size_t nToRead = static_cast<size_t>(Z_BUFSIZE - len);
+        CPLAssert(m_poBaseHandle->Tell() <= offsetEndCompressedData);
+        if (m_poBaseHandle->Tell() + nToRead > offsetEndCompressedData)
+            nToRead = static_cast<size_t>(offsetEndCompressedData -
+                                          m_poBaseHandle->Tell());
+
+        len = static_cast<uInt>(m_poBaseHandle->Read(inbuf + len, 1, nToRead));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
                  m_poBaseHandle->Tell(), offsetEndCompressedData);
 #endif
-        if (m_poBaseHandle->Tell() > offsetEndCompressedData)
-        {
-            len = len + static_cast<uInt>(offsetEndCompressedData -
-                                          m_poBaseHandle->Tell());
-            if (m_poBaseHandle->Seek(offsetEndCompressedData, SEEK_SET) != 0)
-                z_err = Z_DATA_ERROR;
-        }
         if (len == 0)  // && ferror(file)
         {
             if (m_poBaseHandle->Tell() != offsetEndCompressedData)
@@ -687,20 +685,17 @@ int VSIGZipHandle::get_byte()
     if (stream.avail_in == 0)
     {
         errno = 0;
-        stream.avail_in = static_cast<uInt>(
-            m_poBaseHandle->Read(inbuf, 1, static_cast<size_t>(Z_BUFSIZE)));
+        size_t nToRead = static_cast<size_t>(Z_BUFSIZE);
+        CPLAssert(m_poBaseHandle->Tell() <= offsetEndCompressedData);
+        if (m_poBaseHandle->Tell() + nToRead > offsetEndCompressedData)
+            nToRead = static_cast<size_t>(offsetEndCompressedData -
+                                          m_poBaseHandle->Tell());
+        stream.avail_in =
+            static_cast<uInt>(m_poBaseHandle->Read(inbuf, 1, nToRead));
 #ifdef ENABLE_DEBUG
         CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
                  m_poBaseHandle->Tell(), offsetEndCompressedData);
 #endif
-        if (m_poBaseHandle->Tell() > offsetEndCompressedData)
-        {
-            stream.avail_in =
-                stream.avail_in + static_cast<uInt>(offsetEndCompressedData -
-                                                    m_poBaseHandle->Tell());
-            if (m_poBaseHandle->Seek(offsetEndCompressedData, SEEK_SET) != 0)
-                return EOF;
-        }
         if (stream.avail_in == 0)
         {
             z_eof = 1;
