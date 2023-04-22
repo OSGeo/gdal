@@ -18,6 +18,12 @@ This format is supported for read and write access, and using the traditional
 The driver supports the Zarr V2 specification, and has experimental support
 for the in-progress Zarr V3 specification.
 
+.. warning::
+
+    The current implementation of Zarr V3 is at time of writing no longer up to
+    date with the latest state of the specification, and is not interoperable
+    with other implementations. Cf https://github.com/OSGeo/gdal/issues/7637
+
 Local and cloud storage (see :ref:`virtual_file_systems`) are supported in read and write.
 
 Driver capabilities
