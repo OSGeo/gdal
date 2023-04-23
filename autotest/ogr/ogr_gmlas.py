@@ -1617,20 +1617,19 @@ def test_ogr_gmlas_xlink_resolver():
     # Enable remote resolution (but local caching disabled)
     gdal.FileFromMemBuffer("/vsimem/resource.xml", "bar")
     gdal.FileFromMemBuffer("/vsimem/resource2.xml", "baz")
-    gdal.SetConfigOption("GMLAS_XLINK_RAM_CACHE_SIZE", "5")
-    ds = gdal.OpenEx(
-        "GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml",
-        open_options=[
-            """CONFIG_FILE=<Configuration>
-        <XLinkResolution>
-            <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
-            <DefaultResolution enabled="true">
-                <AllowRemoteDownload>true</AllowRemoteDownload>
-            </DefaultResolution>
-        </XLinkResolution></Configuration>"""
-        ],
-    )
-    gdal.SetConfigOption("GMLAS_XLINK_RAM_CACHE_SIZE", None)
+    with gdal.config_option("GMLAS_XLINK_RAM_CACHE_SIZE", "5"):
+        ds = gdal.OpenEx(
+            "GMLAS:/vsimem/ogr_gmlas_xlink_resolver.xml",
+            open_options=[
+                """CONFIG_FILE=<Configuration>
+            <XLinkResolution>
+                <CacheDirectory>/vsimem/gmlas_xlink_cache</CacheDirectory>
+                <DefaultResolution enabled="true">
+                    <AllowRemoteDownload>true</AllowRemoteDownload>
+                </DefaultResolution>
+            </XLinkResolution></Configuration>"""
+            ],
+        )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     if f["my_link_rawcontent"] != "bar":

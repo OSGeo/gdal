@@ -2694,10 +2694,9 @@ def test_ogr_pg_48():
         assert lyr is not None, "could not get no_pk_table"
 
         # Try again by setting PG_LIST_ALL_TABLES=YES
-        gdal.SetConfigOption("PG_LIST_ALL_TABLES", "YES")
-        gdaltest.pg_ds.Destroy()
-        gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-        gdal.SetConfigOption("PG_LIST_ALL_TABLES", None)
+        with gdal.config_option("PG_LIST_ALL_TABLES", "YES"):
+            gdaltest.pg_ds.Destroy()
+            gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
         found = ogr_pg_check_layer_in_list(gdaltest.pg_ds, "no_pk_table")
 
         assert found is not False, "layer no_pk_table not listed"
@@ -2746,11 +2745,10 @@ def test_ogr_pg_49():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.SetConfigOption("PGSQL_OGR_FID", "other_id")
-    gdaltest.pg_ds = None
-    gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-    lyr = gdaltest.pg_ds.GetLayer("no_pk_table")
-    gdal.SetConfigOption("PGSQL_OGR_FID", None)
+    with gdal.config_option("PGSQL_OGR_FID", "other_id"):
+        gdaltest.pg_ds = None
+        gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        lyr = gdaltest.pg_ds.GetLayer("no_pk_table")
 
     feat = lyr.GetNextFeature()
     lyr.ResetReading()  # to close implicit transaction
@@ -3035,12 +3033,10 @@ def test_ogr_pg_55():
 
     layer.ResetReading()  # force above feature to be committed
 
-    old_val = gdal.GetConfigOption("PG_USE_BASE64")
-    gdal.SetConfigOption("PG_USE_BASE64", "YES")
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-    layer = ds.GetLayerByName("ogr_pg_55")
-    feat = layer.GetNextFeature()
-    gdal.SetConfigOption("PG_USE_BASE64", old_val)
+    with gdal.config_option("PG_USE_BASE64", "YES"):
+        ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        layer = ds.GetLayerByName("ogr_pg_55")
+        feat = layer.GetNextFeature()
     assert feat.GetGeometryRef().ExportToWkt() == "POINT (1 2 3)"
     ds = None
 
@@ -3414,12 +3410,10 @@ def test_ogr_pg_64():
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
     lyr = ds.GetLayerByName("ogr_pg_63")
 
-    gdal.SetConfigOption("OGR_TRUNCATE", "YES")
-    feat = ogr.Feature(lyr.GetLayerDefn())
-    feat.SetField("foo", "125")
-    lyr.CreateFeature(feat)
-
-    gdal.SetConfigOption("OGR_TRUNCATE", None)
+    with gdal.config_option("OGR_TRUNCATE", "YES"):
+        feat = ogr.Feature(lyr.GetLayerDefn())
+        feat.SetField("foo", "125")
+        lyr.CreateFeature(feat)
 
     # Just one feature because of truncation
     assert lyr.GetFeatureCount() == 1
@@ -3761,7 +3755,7 @@ def test_ogr_pg_69():
 
 
 ###############################################################################
-# Test historical non-differed creation of tables (#5547)
+# Test historical non-deferred creation of tables (#5547)
 
 
 def test_ogr_pg_70():
@@ -3769,9 +3763,8 @@ def test_ogr_pg_70():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    gdal.SetConfigOption("OGR_PG_DEFERRED_CREATION", "NO")
-    lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_70")
-    gdal.SetConfigOption("OGR_PG_DEFERRED_CREATION", None)
+    with gdal.config_option("OGR_PG_DEFERRED_CREATION", "NO"):
+        lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_70")
 
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
     lyr2 = ds.GetLayerByName("ogr_pg_70")
@@ -3801,11 +3794,10 @@ def test_ogr_pg_70():
 
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:ogr_pg_70")
 
-        gdal.SetConfigOption("OGR_PG_DEFERRED_CREATION", "NO")
-        lyr = gdaltest.pg_ds.CreateLayer(
-            "ogr_pg_70", options=["GEOM_TYPE=geography", "GEOMETRY_NAME=my_geog"]
-        )
-        gdal.SetConfigOption("OGR_PG_DEFERRED_CREATION", None)
+        with gdal.config_option("OGR_PG_DEFERRED_CREATION", "NO"):
+            lyr = gdaltest.pg_ds.CreateLayer(
+                "ogr_pg_70", options=["GEOM_TYPE=geography", "GEOMETRY_NAME=my_geog"]
+            )
 
         ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
         lyr2 = ds.GetLayerByName("ogr_pg_70")
@@ -4514,14 +4506,13 @@ def test_ogr_pg_76():
         gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
         assert res == 0
 
-    gdal.SetConfigOption("OGR_PG_CURSOR_PAGE", "1")
-    lyr1 = gdaltest.pg_ds.CreateLayer(
-        "ogr_pg_76_lyr1", geom_type=ogr.wkbNone, options=["OVERWRITE=YES"]
-    )
-    lyr2 = gdaltest.pg_ds.CreateLayer(
-        "ogr_pg_76_lyr2", geom_type=ogr.wkbNone, options=["OVERWRITE=YES"]
-    )
-    gdal.SetConfigOption("OGR_PG_CURSOR_PAGE", None)
+    with gdal.config_option("OGR_PG_CURSOR_PAGE", "1"):
+        lyr1 = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_76_lyr1", geom_type=ogr.wkbNone, options=["OVERWRITE=YES"]
+        )
+        lyr2 = gdaltest.pg_ds.CreateLayer(
+            "ogr_pg_76_lyr2", geom_type=ogr.wkbNone, options=["OVERWRITE=YES"]
+        )
     lyr1.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     # lyr2.CreateField(ogr.FieldDefn('foo', ogr.OFTString))
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
@@ -4960,48 +4951,48 @@ def test_ogr_pg_78():
 
     gdaltest.pg_ds = None
     # Test with slow method
-    gdal.SetConfigOption("PG_USE_POSTGIS2_OPTIM", "NO")
-    gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
-    lc = gdaltest.pg_ds.GetLayerCount()  # force discovery of all tables
-    ogr_pg_78_found = False
-    ogr_pg_78_2_found = False
-    for i in range(lc):
-        lyr = gdaltest.pg_ds.GetLayer(i)
-        if lyr.GetName() == "ogr_pg_78":
-            ogr_pg_78_found = True
-            if lyr.GetGeomType() != ogr.wkbPoint25D:
-                # FIXME: why does it fail suddenly on Travis ? Change of PostGIS version ?
-                # But apparently not :
-                # Last good: https://travis-ci.org/OSGeo/gdal/builds/60211881
-                # First bad: https://travis-ci.org/OSGeo/gdal/builds/60290209
-                val = gdal.GetConfigOption("TRAVIS", None)
-                if val is not None:
-                    print("Fails on Travis. geom_type = %d" % lyr.GetGeomType())
-                else:
-                    pytest.fail()
-            if (
-                lyr.GetSpatialRef() is None
-                or lyr.GetSpatialRef().ExportToWkt().find("4326") < 0
-            ):
-                val = gdal.GetConfigOption("TRAVIS", None)
-                if val is not None:
-                    print(
-                        "Fails on Travis. GetSpatialRef() = %s"
-                        % str(lyr.GetSpatialRef())
-                    )
-                else:
-                    pytest.fail()
-        if lyr.GetName() == "ogr_pg_78_2":
-            ogr_pg_78_2_found = True
-            # No logic in geography_columns to get type/coordim/srid from constraints
-            # if lyr.GetGeomType() != ogr.wkbPoint25D:
-            #    gdaltest.post_reason('fail')
-            #    return 'fail'
-            # if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
-            #    gdaltest.post_reason('fail')
-            #    return 'fail'
-    assert ogr_pg_78_found
-    assert ogr_pg_78_2_found
+    with gdal.config_option("PG_USE_POSTGIS2_OPTIM", "NO"):
+        gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
+        lc = gdaltest.pg_ds.GetLayerCount()  # force discovery of all tables
+        ogr_pg_78_found = False
+        ogr_pg_78_2_found = False
+        for i in range(lc):
+            lyr = gdaltest.pg_ds.GetLayer(i)
+            if lyr.GetName() == "ogr_pg_78":
+                ogr_pg_78_found = True
+                if lyr.GetGeomType() != ogr.wkbPoint25D:
+                    # FIXME: why does it fail suddenly on Travis ? Change of PostGIS version ?
+                    # But apparently not :
+                    # Last good: https://travis-ci.org/OSGeo/gdal/builds/60211881
+                    # First bad: https://travis-ci.org/OSGeo/gdal/builds/60290209
+                    val = gdal.GetConfigOption("TRAVIS", None)
+                    if val is not None:
+                        print("Fails on Travis. geom_type = %d" % lyr.GetGeomType())
+                    else:
+                        pytest.fail()
+                if (
+                    lyr.GetSpatialRef() is None
+                    or lyr.GetSpatialRef().ExportToWkt().find("4326") < 0
+                ):
+                    val = gdal.GetConfigOption("TRAVIS", None)
+                    if val is not None:
+                        print(
+                            "Fails on Travis. GetSpatialRef() = %s"
+                            % str(lyr.GetSpatialRef())
+                        )
+                    else:
+                        pytest.fail()
+            if lyr.GetName() == "ogr_pg_78_2":
+                ogr_pg_78_2_found = True
+                # No logic in geography_columns to get type/coordim/srid from constraints
+                # if lyr.GetGeomType() != ogr.wkbPoint25D:
+                #    gdaltest.post_reason('fail')
+                #    return 'fail'
+                # if lyr.GetSpatialRef().ExportToWkt().find('4326') < 0:
+                #    gdaltest.post_reason('fail')
+                #    return 'fail'
+        assert ogr_pg_78_found
+        assert ogr_pg_78_2_found
 
 
 ###############################################################################

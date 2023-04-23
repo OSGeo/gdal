@@ -44,6 +44,13 @@ def module_disable_exceptions():
 
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def setup_and_cleanup():
+    with gdal.config_option("CPL_CURL_ENABLE_VSIMEM", "YES"):
+        yield
+
+
+###############################################################################
 # Test underlying OGR drivers
 #
 
@@ -80,17 +87,14 @@ def test_ogr_csw_pycsw():
 
 
 def test_ogr_csw_vsimem_fail_because_not_enabled():
-    with gdaltest.error_handler():
+    with gdal.config_option("CPL_CURL_ENABLE_VSIMEM", "NO"):
         ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
 
 
 ###############################################################################
 def test_ogr_csw_vsimem_fail_because_no_get_capabilities():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
-    with gdaltest.error_handler():
-        ds = ogr.Open("CSW:/vsimem/csw_endpoint")
+    ds = ogr.Open("CSW:/vsimem/csw_endpoint")
     assert ds is None
 
 
@@ -98,8 +102,6 @@ def test_ogr_csw_vsimem_fail_because_no_get_capabilities():
 
 
 def test_ogr_csw_vsimem_fail_because_empty_response():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities", ""
     )
@@ -113,8 +115,6 @@ def test_ogr_csw_vsimem_fail_because_empty_response():
 
 
 def test_ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities", "<foo/>"
     )
@@ -128,8 +128,6 @@ def test_ogr_csw_vsimem_fail_because_no_CSW_Capabilities():
 
 
 def test_ogr_csw_vsimem_fail_because_exception():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities",
         "<ServiceExceptionReport/>",
@@ -149,8 +147,6 @@ def test_ogr_csw_vsimem_fail_because_exception():
 
 
 def test_ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities", "<invalid_xml"
     )
@@ -164,8 +160,6 @@ def test_ogr_csw_vsimem_fail_because_invalid_xml_capabilities():
 
 
 def test_ogr_csw_vsimem_fail_because_missing_version():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities",
         """<Capabilities>
@@ -182,8 +176,6 @@ def test_ogr_csw_vsimem_fail_because_missing_version():
 
 
 def test_ogr_csw_vsimem_csw_minimal_instance():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
-
     # Invalid response, but enough for use
     gdal.FileFromMemBuffer(
         "/vsimem/csw_endpoint?SERVICE=CSW&REQUEST=GetCapabilities",
@@ -630,7 +622,6 @@ def test_ogr_csw_vsimem_csw_output_schema_fgdc():
 
 
 def test_ogr_csw_vsimem_cleanup():
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
 
     for f in gdal.ReadDir("/vsimem/"):
         gdal.Unlink("/vsimem/" + f)

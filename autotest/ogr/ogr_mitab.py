@@ -1805,9 +1805,8 @@ def test_ogr_mitab_35():
         coordsys
         == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000'
     )
-    gdal.SetConfigOption("MITAB_BOUNDS_FILE", "data/mitab/mitab_bounds.txt")
-    coordsys = get_coordsys_from_srs(srs)
-    gdal.SetConfigOption("MITAB_BOUNDS_FILE", None)
+    with gdal.config_option("MITAB_BOUNDS_FILE", "data/mitab/mitab_bounds.txt"):
+        coordsys = get_coordsys_from_srs(srs)
     assert (
         coordsys
         == 'CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000002, 700000, 6600000 Bounds (75000, 6000000) (1275000, 7200000)'
