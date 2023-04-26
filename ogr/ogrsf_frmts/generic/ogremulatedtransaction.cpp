@@ -90,6 +90,8 @@ class OGRDataSourceWithTransaction final : public OGRDataSource
     std::map<CPLString, OGRLayerWithTransaction *> m_oMapLayers{};
     std::set<OGRLayerWithTransaction *> m_oSetLayers{};
     std::set<OGRLayer *> m_oSetExecuteSQLLayers{};
+    std::string m_osEmptyAlternativeName{};
+    std::string m_osEmptyComment{};
 
     OGRLayer *WrapLayer(OGRLayer *poLayer);
     void RemapLayers();
@@ -114,6 +116,9 @@ class OGRDataSourceWithTransaction final : public OGRDataSource
     virtual OGRLayer *GetLayerByName(const char *) override;
     virtual OGRErr DeleteLayer(int) override;
     virtual bool IsLayerPrivate(int iLayer) const override;
+    virtual const std::string &
+    GetLayerAlternativeName(int iLayer) const override;
+    virtual const std::string &GetLayerComment(int iLayer) const override;
 
     virtual int TestCapability(const char *) override;
 
@@ -310,6 +315,22 @@ bool OGRDataSourceWithTransaction::IsLayerPrivate(int iLayer) const
     if (!m_poBaseDataSource)
         return false;
     return m_poBaseDataSource->IsLayerPrivate(iLayer);
+}
+
+const std::string &
+OGRDataSourceWithTransaction::GetLayerAlternativeName(int iLayer) const
+{
+    if (!m_poBaseDataSource)
+        return m_osEmptyAlternativeName;
+    return m_poBaseDataSource->GetLayerAlternativeName(iLayer);
+}
+
+const std::string &
+OGRDataSourceWithTransaction::GetLayerComment(int iLayer) const
+{
+    if (!m_poBaseDataSource)
+        return m_osEmptyComment;
+    return m_poBaseDataSource->GetLayerComment(iLayer);
 }
 
 int OGRDataSourceWithTransaction::TestCapability(const char *pszCap)

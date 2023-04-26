@@ -56,6 +56,9 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     std::map<OGRLayer *, OGRMutexedLayer *> m_oMapLayers{};
     std::map<OGRMutexedLayer *, OGRLayer *> m_oReverseMapLayers{};
 
+    std::string m_osEmptyAlternativeName{};
+    std::string m_osEmptyComment{};
+
     OGRLayer *WrapLayerIfNecessary(OGRLayer *poLayer);
 
   public:
@@ -78,6 +81,9 @@ class CPL_DLL OGRMutexedDataSource : public OGRDataSource
     virtual OGRLayer *GetLayerByName(const char *) override;
     virtual OGRErr DeleteLayer(int) override;
     virtual bool IsLayerPrivate(int iLayer) const override;
+    virtual const std::string &
+    GetLayerAlternativeName(int iLayer) const override;
+    virtual const std::string &GetLayerComment(int iLayer) const override;
 
     virtual int TestCapability(const char *) override;
 

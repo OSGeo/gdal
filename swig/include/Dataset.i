@@ -809,6 +809,14 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     return GDALDatasetIsLayerPrivate(self, index);
   }
 
+  const char * GetLayerAlternativeName( int index ) {
+    return GDALDatasetGetLayerAlternativeName(self, index);
+  }
+
+  const char * GetLayerComment( int index ) {
+    return GDALDatasetGetLayerComment(self, index);
+  }
+
 #ifdef SWIGJAVA
   OGRLayerShadow *GetLayerByIndex( int index ) {
 #else

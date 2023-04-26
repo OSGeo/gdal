@@ -388,6 +388,9 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     mutable std::map<std::string, std::unique_ptr<OGRFieldDomain>>
         m_oMapFieldDomains{};
 
+    mutable std::map<int, std::string> m_oMapLayerAlternativeNames{};
+    mutable std::map<int, std::string> m_oMapLayerComments{};
+
     GDALDataset(void);
     explicit GDALDataset(int bForceCachedIO);
 
@@ -740,6 +743,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
     virtual OGRLayer *GetLayer(int iLayer);
 
     virtual bool IsLayerPrivate(int iLayer) const;
+    virtual const std::string &GetLayerAlternativeName(int iLayer) const;
+    virtual const std::string &GetLayerComment(int iLayer) const;
 
     /** Class returned by GetLayers() that acts as a range of layers.
      * @since GDAL 2.3

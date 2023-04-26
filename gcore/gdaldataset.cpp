@@ -4566,6 +4566,56 @@ int GDALDatasetIsLayerPrivate(GDALDatasetH hDS, int iLayer)
 }
 
 /************************************************************************/
+/*                  GDALDatasetGetLayerAlternativeName()                */
+/************************************************************************/
+
+/**
+ \brief Returns the alternative name (or "alias") of the layer at the specified index.
+
+ The alternative name is an optional attribute for a layer which can provide
+ a more user-friendly, descriptive name of the layer which is not subject to
+ the usual naming constraints defined by the data provider.
+
+ @since GDAL 3.7
+
+ @param hDS the dataset handle.
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return alternative name or nullptr if not available or not supported by the driver.
+*/
+
+const char *GDALDatasetGetLayerAlternativeName(GDALDatasetH hDS, int iLayer)
+{
+    VALIDATE_POINTER1(hDS, "GDALDatasetGetLayerAlternativeName", nullptr);
+
+    return GDALDataset::FromHandle(hDS)
+        ->GetLayerAlternativeName(iLayer)
+        .c_str();
+}
+
+/************************************************************************/
+/*                  GDALDatasetGetLayerComment()                        */
+/************************************************************************/
+
+/**
+ \brief Returns the comment for the layer at the specified index.
+
+ @since GDAL 3.7
+
+ @param hDS the dataset handle.
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return comment or nullptr if not available or not supported by the driver.
+*/
+
+const char *GDALDatasetGetLayerComment(GDALDatasetH hDS, int iLayer)
+{
+    VALIDATE_POINTER1(hDS, "GDALDatasetGetLayerComment", nullptr);
+
+    return GDALDataset::FromHandle(hDS)->GetLayerComment(iLayer).c_str();
+}
+
+/************************************************************************/
 /*                        GDALDatasetDeleteLayer()                      */
 /************************************************************************/
 
@@ -7030,6 +7080,55 @@ OGRLayer *GDALDataset::GetLayer(CPL_UNUSED int iLayer)
 bool GDALDataset::IsLayerPrivate(CPL_UNUSED int iLayer) const
 {
     return false;
+}
+
+/************************************************************************/
+/*                       GetLayerAlternativeName()                      */
+/************************************************************************/
+
+/**
+ \fn GDALDataset::GetLayerAlternativeName(int)
+ \brief Returns the alternative name (or "alias") of the layer at the specified index.
+
+ The alternative name is an optional attribute for a layer which can provide
+ a more user-friendly, descriptive name of the layer which is not subject to
+ the usual naming constraints defined by the data provider.
+
+ This method is the same as the C function GDALDatasetGetLayerAlternativeName().
+
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return alternative name or empty string if not available or not supported by the driver.
+
+ @since GDAL 3.7
+*/
+
+const std::string &
+GDALDataset::GetLayerAlternativeName(CPL_UNUSED int iLayer) const
+{
+    return m_oMapLayerAlternativeNames[iLayer];
+}
+
+/************************************************************************/
+/*                       GetLayerComment()                              */
+/************************************************************************/
+
+/**
+ \fn GDALDataset::GetLayerComment(int)
+ \brief Returns the comment attached to layer at the specified index.
+
+ This method is the same as the C function GDALDatasetGetLayerComment().
+
+ @param iLayer a layer number between 0 and GetLayerCount()-1.
+
+ @return comment or empty string if not available or not supported by the driver.
+
+ @since GDAL 3.7
+*/
+
+const std::string &GDALDataset::GetLayerComment(CPL_UNUSED int iLayer) const
+{
+    return m_oMapLayerComments[iLayer];
 }
 
 /************************************************************************/

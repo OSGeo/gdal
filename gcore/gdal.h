@@ -1204,6 +1204,8 @@ int CPL_DLL GDALDatasetGetLayerCount(GDALDatasetH);
 OGRLayerH CPL_DLL GDALDatasetGetLayer(GDALDatasetH, int);
 OGRLayerH CPL_DLL GDALDatasetGetLayerByName(GDALDatasetH, const char *);
 int CPL_DLL GDALDatasetIsLayerPrivate(GDALDatasetH, int);
+const char CPL_DLL *GDALDatasetGetLayerAlternativeName(GDALDatasetH, int);
+const char CPL_DLL *GDALDatasetGetLayerComment(GDALDatasetH, int);
 OGRErr CPL_DLL GDALDatasetDeleteLayer(GDALDatasetH, int);
 OGRLayerH CPL_DLL GDALDatasetCreateLayer(GDALDatasetH, const char *,
                                          OGRSpatialReferenceH,
