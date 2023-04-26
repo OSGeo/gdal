@@ -239,7 +239,7 @@ you will get whichever is appropriate to the current bindings type.
 Examples
 ~~~~~~~~
 
-One example of GDAL/numpy integration is found in the `val_repl.py <https://github.com/OSGeo/gdal/blob/master/swig/python/gdal-utils/osgeo_utils/samples/val_repl.py>`__ script.
+One example of GDAL/numpy integration is found in the :source_file:`swig/python/gdal-utils/osgeo_utils/samples/val_repl.py` script.
 
 .. note::
    **Performance Notes**

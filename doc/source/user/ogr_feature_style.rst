@@ -310,14 +310,14 @@ representation. Note again that all parameters are optional:
  followed by a dash (-), followed by whatever information is meaningful to that
  system (a number, a name, a filename, etc.).
  e.g. "mapinfo-5", or "mysoft-lines.sym-123", or "othersystems-funnyline"
- 
+
  System-specific ids are allowed in order to prevent loss of information when
  dealing with data from systems that store line patterns in external files or
  that have their own pre-defined set of line styles (for instance, to do a
  MapInfo MIF to TAB translation without any loss.
 
  Examples:
- 
+
  - PEN(c:#00FF00,id:"ogr-pen-0") - simple solid line
  - PEN(c:#00FF00,id:"mapinfo-5,ogr-pen-7") - corresponds to MapInfo's Pen #5,
    and a system that can't understand MapInfo pens falls back on the default
@@ -380,7 +380,7 @@ optional:
   * Example: BRUSH(fc:#FF0000)
 
 
-- ``bc``: **Brush BackColor**, expressed in hexadecimal (#RRGGBB[AA]). 
+- ``bc``: **Brush BackColor**, expressed in hexadecimal (#RRGGBB[AA]).
   Used for painting the area behind the brush pattern.
 
   * [AA]: the last 2 digits define the alpha channel value, with 0 being
@@ -518,7 +518,7 @@ optional:
 
   * [AA]: the last 2 digits define the alpha channel value, with 0 being
     transparent and FF being opaque. The default is FF (opaque)
-  * Suggested default symbol color: black (c:#000000) 
+  * Suggested default symbol color: black (c:#000000)
   * Example ::
 
         SYMBOL(c:#FF0000)
@@ -802,9 +802,9 @@ one for each tool (:cpp:class:`OGRStylePen`,
 :cpp:class:`OGRStyleLabel`), with each available
 parameter represented by a getter and setter member function. To
 understand these classes better, it may be useful to read the
-`ogr_featurestyle.h <https://github.com/OSGeo/gdal/blob/master/ogr/ogr_featurestyle.h>`__
+:source_file:`ogr/ogr_featurestyle.h`
 and
-`ogrfeaturestyle.cpp <https://github.com/OSGeo/gdal/blob/master/ogr/ogrfeaturestyle.cpp>`__
+:source_file:`ogr/ogrfeaturestyle.cpp`
 code files.
 
 Here is some example C++ code:

@@ -128,7 +128,7 @@ access the point coordinates as follows:
 Access a Feature's data fields
 ++++++++++++++++++++++++++++++
 
-Each :file:`Feature` object can have a number of data fields associated. The schema for the data fields 
+Each :file:`Feature` object can have a number of data fields associated. The schema for the data fields
 is defined in a :file:`FieldDefn` object. The fields can be fetched a follows:
 
 .. code-block:: C#
@@ -213,8 +213,8 @@ Related C# examples
 
 The following examples demonstrate the usage of the OGR vector operations mentioned above:
 
-* `ogrinfo.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/ogrinfo.cs>`__
-* `OGRLayerAlg.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/OGRLayerAlg.cs>`__
-* `OGRFeatureEdit.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/OGRFeatureEdit.cs>`__
-* `OSRTransform.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/OSRTransform.cs>`__
-* `GetCRSInfo.cs <https://github.com/OSGeo/gdal/blob/master/swig/csharp/apps/GetCRSInfo.cs>`__
+* :source_file:`swig/csharp/apps/ogrinfo.cs`
+* :source_file:`swig/csharp/apps/OGRLayerAlg.cs`
+* :source_file:`swig/csharp/apps/OGRFeatureEdit.cs`
+* :source_file:`swig/csharp/apps/OSRTransform.cs`
+* :source_file:`swig/csharp/apps/GetCRSInfo.cs`
