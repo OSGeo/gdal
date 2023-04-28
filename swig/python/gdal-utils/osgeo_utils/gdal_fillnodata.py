@@ -244,10 +244,12 @@ class GDALFillNoData(GDALScript):
             "-co",
             dest="creation_options",
             type=str,
-            action="extend",
-            nargs="*",
+            default=[],
+            action="append",
             metavar="name=value",
-            help="Creation options for the destination dataset.",
+            help="Passes a creation option to the output format driver. Multiple "
+            "options may be listed. See format specific documentation for legal "
+            "creation options for each format.",
         )
 
         parser.add_argument(
