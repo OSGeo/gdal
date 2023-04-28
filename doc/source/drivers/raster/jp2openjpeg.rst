@@ -80,7 +80,7 @@ variable or the GDAL_NUM_THREADS configuration option.
 
 Both multi-threading mechanism can be combined together.
 
-Option Options
+Open Options
 --------------
 
 The following open options are available:
@@ -152,7 +152,7 @@ Creation Options
 
 -  **BLOCKYSIZE=int_value** : Tile height. Defaults to 1024.
 
--  **PROGRESSION=LRCP/RLCP/RPCL/PCRL/CPRL** : Progession order. Defaults
+-  **PROGRESSION=LRCP/RLCP/RPCL/PCRL/CPRL** : Progression order. Defaults
    to LRCP.
 
 -  **SOP=YES/NO** : YES means generate SOP (Start Of Packet) marker
