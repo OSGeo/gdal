@@ -360,7 +360,6 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
         return nullptr;
     }
 
-
     // If we are not the top-left tile, then we must shift LINE_OFF and SAMP_OFF
     int nLineOffShift = 0;
     int nPixelOffShift = 0;
@@ -418,20 +417,24 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
     CPLXMLNode *psDoc = CPLGetXMLNode(pNode, "=Dimap_Document");
     if (!psDoc)
         psDoc = CPLGetXMLNode(pNode, "=PHR_DIMAP_Document");
-    const char *pszMetadataProfile =
-        CPLGetXMLValue(psDoc, "Metadata_Identification.METADATA_PROFILE", "PHR_SENSOR");
+    const char *pszMetadataProfile = CPLGetXMLValue(
+        psDoc, "Metadata_Identification.METADATA_PROFILE", "PHR_SENSOR");
     if (EQUAL(pszMetadataProfile, "PHR_SENSOR") ||
         EQUAL(pszMetadataProfile, "S7_SENSOR") ||
         EQUAL(pszMetadataProfile, "S6_SENSOR"))
     {
-        topleftOffset=1;
-    } else if (EQUAL(pszMetadataProfile, "PNEO_SENSOR")) {
-        topleftOffset=0;
-    } else {
+        topleftOffset = 1;
+    }
+    else if (EQUAL(pszMetadataProfile, "PNEO_SENSOR"))
+    {
+        topleftOffset = 0;
+    }
+    else
+    {
         //CPLError(CE_Warning, CPLE_AppDefined,
         //         "Unknown RPC Metadata Profile: %s. Assuming PHR_SENSOR",
         //         pszMetadataProfile);
-        topleftOffset=1;
+        topleftOffset = 1;
     }
 
     // format list
@@ -440,7 +443,7 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
     {
         const char *pszValue =
             CSLFetchNameValue(papszRawRPCList, apszRPBMap[i + 1]);
-        if ((i == 0 || i == 2) && pszValue) //i.e. LINE_OFF or SAMP_OFF
+        if ((i == 0 || i == 2) && pszValue)  //i.e. LINE_OFF or SAMP_OFF
         {
             CPLString osField;
             double dfVal = CPLAtofM(pszValue) - topleftOffset;
