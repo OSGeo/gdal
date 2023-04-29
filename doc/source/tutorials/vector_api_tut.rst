@@ -892,7 +892,7 @@ array specifications, to know, in which buffer of an array, data is to be read,
 which data type void* buffers should be cast to, how to use buffers that contain
 null/not_null information, how to use offset buffers for data types of type List, etc.
 The study of the gdal_array._RecordBatchAsNumpy() method of the SWIG Python
-bindings (https://github.com/OSGeo/gdal/blob/master/swig/include/gdal_array.i)
+bindings (:source_file:`swig/include/gdal_array.i`)
 can give a good hint of how to use an ArrowArray object, in conjunction
 with the associated ArrowSchema.
 

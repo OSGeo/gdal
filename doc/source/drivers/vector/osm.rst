@@ -37,8 +37,8 @@ Driver capabilities
 Configuration
 -------------
 
-In the *data* folder of the GDAL distribution, you can find a
-`osmconf.ini <https://github.com/OSGeo/gdal/blob/master/data/osmconf.ini>`__
+In the *data* folder of the GDAL distribution, you can find an
+:source_file:`data/osmconf.ini`
 file that can be customized to fit your needs. You can also define an
 alternate path with the :decl_configoption:`OSM_CONFIG_FILE` configuration option.
 

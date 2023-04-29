@@ -357,8 +357,8 @@ The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
 XML configuration file
 ----------------------
 
-A XML configuration file conforming to the following
-`schema <https://github.com/OSGeo/gdal/blob/master/data/netcdf_config.xsd>`__
+A XML configuration file conforming to the schema specified in
+:source_file:`data/netcdf_config.xsd`
 can be used for very precise control on the output format, in particular
 to set all needed attributes (such as units) to conform to the `NetCDF
 CF-1.6

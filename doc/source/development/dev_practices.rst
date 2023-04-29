@@ -29,7 +29,7 @@ Fork |OSGeo/gdal| from the GitHub UI, and then run:
 
 .. code-block:: bash
 
-    git clone https://github.com/DSGeo/gdal
+    git clone https://github.com/OSGeo/gdal
     cd gdal
     git remote add my_user_name git@github.com:my_user_name/gdal.git
 

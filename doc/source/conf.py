@@ -33,6 +33,7 @@ extensions = [
     "configoptions",
     "redirects",
     "driverproperties",
+    "source_file",
     "sphinx.ext.napoleon",
     "sphinxcontrib.jquery",
 ]
@@ -450,6 +451,11 @@ breathe_default_project = "api"
 
 # Tell sphinx what the primary language being documented is.
 primary_domain = "cpp"
+
+# -- Source file links ------------------------------------------
+
+source_file_root = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+source_file_url_template = "https://github.com/OSGeo/gdal/blob/master/{}"
 
 # -- Redirects --------------------------------------------------
 

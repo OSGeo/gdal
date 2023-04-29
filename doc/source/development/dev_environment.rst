@@ -66,7 +66,7 @@ Docker
 
 The Linux environments used for building and testing GDAL on GitHub Actions are
 defined by Docker images that can be pulled to any machine for development. The
-Docker image used for each build is specified in `linux_build.yml <https://github.com/OSGeo/gdal/blob/master/.github/workflows/linux_build.yml>`_ . As an
+Docker image used for each build is specified in :source_file:`.github/workflows/linux_build.yml`. As an
 example, the following commands can be run from the GDAL source root to build
 and test GDAL using the clang address sanitizer (ASAN) in the same environment
 that is used in GitHub Actions:
