@@ -107,10 +107,7 @@ def mk_src_feature():
     src_feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 0)
     got_vals = src_feature.GetFieldAsDateTime(feat_def.GetFieldIndex("field_datetime"))
     expected_vals = [2011, 11, 11, 14, 10, 35.123, 0]
-    for i, exp_val in enumerate(expected_vals):
-        if got_vals[i] != pytest.approx(exp_val, abs=1e-4):
-            print(got_vals)
-            print(expected_vals)
+    assert got_vals == pytest.approx(expected_vals, abs=1e-4)
     src_feature.field_integerlist = "(3:10,20,30)"
     src_feature.field_integer64list = [9876543210]
     src_feature.field_reallist = [123.5, 567.0]
@@ -1025,3 +1022,45 @@ def test_ogr_feature_set_boolean_through_string_warning(input_val, output_val):
         f.SetField("field", input_val)
     assert gdal.GetLastErrorMsg() != ""
     assert f.GetField("field") == output_val
+
+
+###############################################################################
+# Test GetFieldAsISO8601DateTime()
+
+
+def test_ogr_feature_GetFieldAsISO8601DateTime():
+
+    feature = mk_src_feature()
+
+    assert (
+        feature.GetFieldAsISO8601DateTime("field_datetime") == "2011-11-11T14:10:35.123"
+    )
+    assert (
+        feature.GetFieldAsISO8601DateTime(
+            feature.GetDefnRef().GetFieldIndex("field_datetime")
+        )
+        == "2011-11-11T14:10:35.123"
+    )
+
+    feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 100)
+    assert (
+        feature.GetFieldAsISO8601DateTime("field_datetime")
+        == "2011-11-11T14:10:35.123Z"
+    )
+
+    feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35, 100)
+    assert feature.GetFieldAsISO8601DateTime("field_datetime") == "2011-11-11T14:10:35Z"
+
+    feature.SetField("field_datetime", 2011, 11, 11, 14, 10, 35.123, 101)
+    assert (
+        feature.GetFieldAsISO8601DateTime("field_datetime")
+        == "2011-11-11T14:10:35.123+00:15"
+    )
+
+    with pytest.raises(Exception):
+        assert feature.GetFieldAsISO8601DateTime(-1)
+
+    assert feature.GetFieldAsISO8601DateTime("field_integer") == ""
+
+    feature.SetFieldNull("field_datetime")
+    assert feature.GetFieldAsISO8601DateTime("field_datetime") == ""

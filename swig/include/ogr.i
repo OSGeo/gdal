@@ -1677,6 +1677,23 @@ public:
 
   /* ------------------------------------------- */
 
+  /* ---- GetFieldAsISO8601DateTime ------------ */
+
+  const char* GetFieldAsISO8601DateTime(int id, char** options = 0) {
+    return OGR_F_GetFieldAsISO8601DateTime(self, id, options);
+  }
+
+  const char* GetFieldAsISO8601DateTime(const char* field_name, char** options = 0) {
+      int i = OGR_F_GetFieldIndex(self, field_name);
+      if (i == -1)
+          CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
+      else
+          return OGR_F_GetFieldAsISO8601DateTime(self, i, options);
+      return NULL;
+  }
+
+  /* ------------------------------------------- */
+
   /* ---- GetFieldAsInteger -------------------- */
 
   int GetFieldAsInteger(int id) {

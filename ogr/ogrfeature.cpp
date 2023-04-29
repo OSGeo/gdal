@@ -2388,9 +2388,17 @@ static void OGRFeatureFormatDateTimeBuffer(char *szTempBuffer, size_t nMaxSize,
  * \fn OGRFeature::GetFieldAsString( const char* pszFName ) const
  * \brief Fetch field value as a string.
  *
- * OFTReal and OFTInteger fields will be translated to string using
+ * OFTReal, OFTInteger, OFTInteger64 fields will be translated to string using
  * sprintf(), but not necessarily using the established formatting rules.
- * Other field types, or errors will result in a return value of zero.
+ * OFTDateTime fields are formatted with "YYYY/MM/DD HH:MM:SS[.sss]+ZZ"
+ * (note this is not a ISO-8601 compliant string. Use
+ * GetFieldAsISO8601DateTime())
+ * OFTDate fields are formatted as "YYYY/MM/DD"
+ * OFTTime fields are formatted as "HH:MM:SS[.sss]"
+ * OFTRealList, OFTIntegerList, OFTInteger64List, OFTStringList fields are
+ * formatted as "(number_of_values:val1,val2,...,valN)"
+ * OFTBinary fields are formatted as an hexadecimal representation.
+ * Other field types, or errors will result in a return of an empty string.
  *
  * @param pszFName the name of the field to fetch.
  *
@@ -2401,9 +2409,17 @@ static void OGRFeatureFormatDateTimeBuffer(char *szTempBuffer, size_t nMaxSize,
 /**
  * \brief Fetch field value as a string.
  *
- * OFTReal and OFTInteger fields will be translated to string using
+ * OFTReal, OFTInteger, OFTInteger64 fields will be translated to string using
  * sprintf(), but not necessarily using the established formatting rules.
- * Other field types, or errors will result in a return value of zero.
+ * OFTDateTime fields are formatted with "YYYY/MM/DD HH:MM:SS[.sss]+ZZ"
+ * (note this is not a ISO-8601 compliant string. Use
+ * GetFieldAsISO8601DateTime())
+ * OFTDate fields are formatted as "YYYY/MM/DD"
+ * OFTTime fields are formatted as "HH:MM:SS[.sss]"
+ * OFTRealList, OFTIntegerList, OFTInteger64List, OFTStringList fields are
+ * formatted as "(number_of_values:val1,val2,...,valN)"
+ * OFTBinary fields are formatted as an hexadecimal representation.
+ * Other field types, or errors will result in a return of an empty string.
  *
  * This method is the same as the C function OGR_F_GetFieldAsString().
  *
@@ -2735,6 +2751,117 @@ const char *OGR_F_GetFieldAsString(OGRFeatureH hFeat, int iField)
     VALIDATE_POINTER1(hFeat, "OGR_F_GetFieldAsString", nullptr);
 
     return OGRFeature::FromHandle(hFeat)->GetFieldAsString(iField);
+}
+
+/************************************************************************/
+/*                     GetFieldAsISO8601DateTime()                      */
+/************************************************************************/
+
+/* clang-format off */
+/**
+ * \fn OGRFeature::GetFieldAsISO8601DateTime( const char* pszFName, CSLConstList papszOptions ) const
+ * \brief Fetch OFTDateTime field value as a ISO8601 representation.
+ *
+ * Return a string like "YYYY-MM-DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?"
+ * Milliseconds are omitted if equal to zero.
+ * Other field types, or errors will result in a return of an empty string.
+ *
+ * @param pszFName the name of the field to fetch.
+ * @param papszOptions NULL terminated list of strings, or NULL.
+ * No options are defined currently.
+ *
+ * @return the field value.  This string is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.
+ *
+ * @since GDAL 3.7
+ */
+/* clang-format on */
+
+/**
+ * \brief Fetch OFTDateTime field value as a ISO8601 representation.
+ *
+ * Return a string like "YYYY-MM-DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?"
+ * Milliseconds are omitted if equal to zero.
+ * Other field types, or errors will result in a return of an empty string.
+ *
+ * This method is the same as the C function OGR_F_GetFieldAsISO8601DateTime().
+ *
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param papszOptions NULL terminated list of strings, or NULL.
+ * No options are defined currently.
+ *
+ * @return the field value.  This string is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.
+ *
+ * @since GDAL 3.7
+ */
+
+const char *OGRFeature::GetFieldAsISO8601DateTime(
+    int iField, CPL_UNUSED CSLConstList papszOptions) const
+
+{
+    CPLFree(m_pszTmpFieldValue);
+    m_pszTmpFieldValue = nullptr;
+
+    const int iSpecialField = iField - poDefn->GetFieldCount();
+    if (iSpecialField >= 0)
+    {
+        return "";
+    }
+
+    OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
+
+    if (poFDefn == nullptr)
+        return "";
+
+    if (!IsFieldSetAndNotNullUnsafe(iField))
+        return "";
+
+    OGRFieldType eType = poFDefn->GetType();
+    if (eType != OFTDateTime)
+        return "";
+
+    m_pszTmpFieldValue =
+        static_cast<char *>(CPLMalloc(OGR_SIZEOF_ISO8601_DATETIME_BUFFER));
+    constexpr bool bAlwaysMillisecond = false;
+    OGRGetISO8601DateTime(&pauFields[iField], bAlwaysMillisecond,
+                          m_pszTmpFieldValue);
+    return m_pszTmpFieldValue;
+    ;
+}
+
+/************************************************************************/
+/*                     OGR_F_GetFieldAsISO8601DateTime()                */
+/************************************************************************/
+
+/**
+ * \brief Fetch OFTDateTime field value as a ISO8601 representation.
+ *
+ * Return a string like "YYYY-MM6DDTHH:MM:SS(.sss)?(Z|([+|-]HH:MM))?"
+ * Milliseconds are omitted if equal to zero.
+ * Other field types, or errors will result in a return of an empty string.
+ *
+ * This function is the same as the C++ method OGRFeature::GetFieldAsISO8601DateTime().
+ *
+ * @param hFeat handle to the feature that owned the field.
+ * @param iField the field to fetch, from 0 to GetFieldCount()-1.
+ * @param papszOptions NULL terminated list of strings, or NULL.
+ * No options are defined currently.
+ *
+ * @return the field value.  This string is internal, and should not be
+ * modified, or freed.  Its lifetime may be very brief.
+ *
+ * @since GDAL 3.7
+ */
+
+const char *OGR_F_GetFieldAsISO8601DateTime(OGRFeatureH hFeat, int iField,
+                                            CSLConstList papszOptions)
+
+{
+    VALIDATE_POINTER1(hFeat, "OGR_F_GetFieldAsISO8601DateTime", nullptr);
+
+    return OGRFeature::FromHandle(hFeat)->GetFieldAsISO8601DateTime(
+        iField, papszOptions);
 }
 
 /************************************************************************/
