@@ -80,7 +80,7 @@ class STACITDataset final : public VRTDataset
     bool SetupDataset(GDALOpenInfo *poOpenInfo,
                       const std::string &osSTACITFilename,
                       std::map<std::string, Collection> &oMapCollection);
-    bool
+    void
     SetSubdatasets(const std::string &osFilename,
                    const std::map<std::string, Collection> &oMapCollection);
 
@@ -635,7 +635,7 @@ bool STACITDataset::SetupDataset(
 /*                         SetSubdatasets()                             */
 /************************************************************************/
 
-bool STACITDataset::SetSubdatasets(
+void STACITDataset::SetSubdatasets(
     const std::string &osFilename,
     const std::map<std::string, Collection> &oMapCollection)
 {
@@ -685,7 +685,6 @@ bool STACITDataset::SetSubdatasets(
         }
     }
     GDALDataset::SetMetadata(aosSubdatasets.List(), "SUBDATASETS");
-    return true;
 }
 
 /************************************************************************/
@@ -879,7 +878,8 @@ bool STACITDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         // If there's more than one asset type or more than one SRS, expose
         // subdatasets.
-        return SetSubdatasets(osFilename, oMapCollection);
+        SetSubdatasets(osFilename, oMapCollection);
+        return true;
     }
     else
     {

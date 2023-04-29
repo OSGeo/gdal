@@ -370,8 +370,7 @@ int DDFFieldDefn::Initialize(DDFModule *poModuleIn, const char *pszTagIn,
     /* -------------------------------------------------------------------- */
     if (_data_struct_code != dsc_elementary)
     {
-        if (!BuildSubfields())
-            return FALSE;
+        BuildSubfields();
 
         if (!ApplyFormats())
             return FALSE;
@@ -477,7 +476,7 @@ void DDFFieldDefn::Dump(FILE *fp)
 /*      Based on the _arrayDescr build a set of subfields.              */
 /************************************************************************/
 
-int DDFFieldDefn::BuildSubfields()
+void DDFFieldDefn::BuildSubfields()
 
 {
     const char *pszSublist = _arrayDescr;
@@ -527,8 +526,6 @@ int DDFFieldDefn::BuildSubfields()
     }
 
     CSLDestroy(papszSubfieldNames);
-
-    return TRUE;
 }
 
 /************************************************************************/

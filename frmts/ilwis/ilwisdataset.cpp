@@ -566,7 +566,7 @@ void ILWISDataset::CollectTransformCoef(std::string &pszRefName)
 /*      Try to write a geo-reference file for the dataset to create     */
 /************************************************************************/
 
-CPLErr ILWISDataset::WriteGeoReference()
+void ILWISDataset::WriteGeoReference()
 {
     // Check whether we should write out a georeference file.
     // Dataset must be north up.
@@ -622,7 +622,6 @@ CPLErr ILWISDataset::WriteGeoReference()
             }
         }
     }
-    return CE_None;
 }
 
 /************************************************************************/
@@ -890,8 +889,7 @@ CPLErr ILWISDataset::FlushCache(bool bAtClosing)
 
     if (bGeoDirty == TRUE)
     {
-        if (WriteGeoReference() != CE_None)
-            eErr = CE_Failure;
+        WriteGeoReference();
         if (WriteProjection() != CE_None)
             eErr = CE_Failure;
         bGeoDirty = FALSE;

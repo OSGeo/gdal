@@ -516,7 +516,7 @@ class OGROSMDataSource final : public OGRDataSource
     bool ParseConf(char **papszOpenOptions);
     bool CreateTempDB();
     bool SetDBOptions();
-    bool SetCacheSize();
+    void SetCacheSize();
     bool CreatePreparedStatements();
     void CloseDB();
 

@@ -1227,7 +1227,7 @@ void VFKDataBlockSQLite::UpdateVfkBlocks(int nGeometries)
   \param iFID feature id to set up
   \param rowId list of rows to update
 */
-void VFKDataBlockSQLite::UpdateFID(GIntBig iFID, std::vector<int> rowId)
+void VFKDataBlockSQLite::UpdateFID(GIntBig iFID, const std::vector<int> &rowId)
 {
     CPLString osSQL, osValue;
     VFKReaderSQLite *poReader = (VFKReaderSQLite *)m_poReader;

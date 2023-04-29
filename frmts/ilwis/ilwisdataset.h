@@ -163,7 +163,7 @@ class ILWISDataset final : public GDALPamDataset
     std::string pszFileType;  // indicating the input dataset: Map/MapList
     CPLErr ReadProjection(const std::string &csyFileName);
     CPLErr WriteProjection();
-    CPLErr WriteGeoReference();
+    void WriteGeoReference();
     void CollectTransformCoef(std::string &pszRefFile);
 
   public:

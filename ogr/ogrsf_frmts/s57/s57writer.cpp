@@ -645,6 +645,8 @@ bool S57Writer::WritePrimitive(OGRFeature *poFeature)
     poRec->SetIntSubfield("VRID", 0, "RVER", 0, 1);
     poRec->SetIntSubfield("VRID", 0, "RUIN", 0, 1);
 
+    bool bRet = true;
+
     /* -------------------------------------------------------------------- */
     /*      Handle simple point.                                            */
     /* -------------------------------------------------------------------- */
@@ -660,9 +662,9 @@ bool S57Writer::WritePrimitive(OGRFeature *poFeature)
         const double adfZ[1] = {poPoint->getZ()};
 
         if (adfZ[0] == 0.0)
-            WriteGeometry(poRec, 1, &adfX[0], &adfY[0], nullptr);
+            bRet = WriteGeometry(poRec, 1, &adfX[0], &adfY[0], nullptr);
         else
-            WriteGeometry(poRec, 1, &adfX[0], &adfY[0], &adfZ[0]);
+            bRet = WriteGeometry(poRec, 1, &adfX[0], &adfY[0], &adfZ[0]);
     }
 
     /* -------------------------------------------------------------------- */
@@ -689,7 +691,7 @@ bool S57Writer::WritePrimitive(OGRFeature *poFeature)
             padfZ[i] = poPoint->getZ();
         }
 
-        WriteGeometry(poRec, nVCount, padfX, padfY, padfZ);
+        bRet = WriteGeometry(poRec, nVCount, padfX, padfY, padfZ);
 
         CPLFree(padfX);
         CPLFree(padfY);
@@ -717,7 +719,7 @@ bool S57Writer::WritePrimitive(OGRFeature *poFeature)
         }
 
         if (nVCount)
-            WriteGeometry(poRec, nVCount, padfX, padfY, nullptr);
+            bRet = WriteGeometry(poRec, nVCount, padfX, padfY, nullptr);
 
         CPLFree(padfX);
         CPLFree(padfY);
@@ -770,10 +772,11 @@ bool S57Writer::WritePrimitive(OGRFeature *poFeature)
     /* -------------------------------------------------------------------- */
     /*      Write out the record.                                           */
     /* -------------------------------------------------------------------- */
-    poRec->Write();
+    if (!poRec->Write())
+        bRet = false;
     delete poRec;
 
-    return true;
+    return bRet;
 }
 
 /************************************************************************/

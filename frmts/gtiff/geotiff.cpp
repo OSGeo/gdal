@@ -15377,8 +15377,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH_CI(pszFilename, "GTIFF_DIR:"))
         return OpenDir(poOpenInfo);
 
-    if (!GTiffOneTimeInit())
-        return nullptr;
+    GTiffOneTimeInit();
 
     /* -------------------------------------------------------------------- */
     /*      Try opening the dataset.                                        */
@@ -16196,8 +16195,7 @@ GDALDataset *GTiffDataset::OpenDir(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Try opening the dataset.                                        */
     /* -------------------------------------------------------------------- */
-    if (!GTiffOneTimeInit())
-        return nullptr;
+    GTiffOneTimeInit();
 
     const char *pszFlag = poOpenInfo->eAccess == GA_Update ? "r+DC" : "rDOC";
     VSILFILE *l_fpL = VSIFOpenL(pszFilename, pszFlag);
@@ -18617,8 +18615,7 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
                              CPLString &l_osTmpFilename)
 
 {
-    if (!GTiffOneTimeInit())
-        return nullptr;
+    GTiffOneTimeInit();
 
     /* -------------------------------------------------------------------- */
     /*      Blow on a few errors.                                           */
@@ -23329,10 +23326,16 @@ static std::mutex oDeleteMutex;
 static TIFFCodec *pJXLCodec = nullptr;
 #endif
 
-int GTiffOneTimeInit()
+void GTiffOneTimeInit()
 
 {
     std::lock_guard<std::mutex> oLock(oDeleteMutex);
+
+    static bool bOneTimeInitDone = false;
+    if (bOneTimeInitDone)
+        return;
+
+    bOneTimeInitDone = true;
 
 #ifdef HAVE_JXL
     if (pJXLCodec == nullptr)
@@ -23340,12 +23343,6 @@ int GTiffOneTimeInit()
         pJXLCodec = TIFFRegisterCODEC(COMPRESSION_JXL, "JXL", TIFFInitJXL);
     }
 #endif
-
-    static bool bOneTimeInitDone = false;
-    if (bOneTimeInitDone)
-        return TRUE;
-
-    bOneTimeInitDone = true;
 
     _ParentExtender = TIFFSetTagExtender(GTiffTagExtender);
 
@@ -23355,8 +23352,6 @@ int GTiffOneTimeInit()
 #endif
 
     LibgeotiffOneTimeInit();
-
-    return TRUE;
 }
 
 /************************************************************************/

@@ -319,6 +319,7 @@ GDALDataset::~GDALDataset()
                 sStruct.nPID = nPIDCreatorForShared;
                 sStruct.eAccess = eAccess;
                 sStruct.pszDescription = const_cast<char *>(GetDescription());
+                sStruct.poDS = nullptr;
                 SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
                     CPLHashSetLookup(phSharedDatasetSet, &sStruct));
                 if (psStruct && psStruct->poDS == this)
@@ -3397,6 +3398,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             sStruct.pszDescription = const_cast<char *>(pszFilename);
             sStruct.eAccess =
                 (nOpenFlags & GDAL_OF_UPDATE) ? GA_Update : GA_ReadOnly;
+            sStruct.poDS = nullptr;
             SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
                 CPLHashSetLookup(phSharedDatasetSet, &sStruct));
             if (psStruct == nullptr && (nOpenFlags & GDAL_OF_UPDATE) == 0)

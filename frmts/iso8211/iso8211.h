@@ -335,7 +335,7 @@ class CPL_ODLL DDFFieldDefn
     int bRepeatingSubfields;
     int nFixedWidth;  // zero if variable.
 
-    int BuildSubfields();
+    void BuildSubfields();
     int ApplyFormats();
 
     DDF_data_struct_code _data_struct_code;
@@ -587,7 +587,7 @@ class CPL_ODLL DDFRecord
     // This is really just for the DDFModule class.
     int Read();
     void Clear();
-    int ResetDirectory();
+    void ResetDirectory();
     void RemoveIsCloneFlag()
     {
         bIsClone = FALSE;

@@ -209,15 +209,16 @@ void OGRPGDataSource::OGRPGDecodeVersionString(PGver *psVersion,
 /*                     One entry for each PG table                      */
 /************************************************************************/
 
-typedef struct
+struct PGTableEntry
 {
-    char *pszTableName;
-    char *pszSchemaName;
-    char *pszDescription;
-    int nGeomColumnCount;
-    PGGeomColumnDesc *pasGeomColumns; /* list of geometry columns */
-    int bDerivedInfoAdded; /* set to TRUE if it derives from another table */
-} PGTableEntry;
+    char *pszTableName = nullptr;
+    char *pszSchemaName = nullptr;
+    char *pszDescription = nullptr;
+    int nGeomColumnCount = 0;
+    PGGeomColumnDesc *pasGeomColumns = nullptr; /* list of geometry columns */
+    int bDerivedInfoAdded =
+        false; /* set to TRUE if it derives from another table */
+};
 
 static unsigned long OGRPGHashTableEntry(const void *_psTableEntry)
 {
@@ -1446,8 +1447,7 @@ void OGRPGDataSource::LoadTables()
                     /* We must be careful that a derived table can have its own
                      * geometry column(s) */
                     /* and some inherited from another table */
-                    if (psEntry == nullptr ||
-                        psEntry->bDerivedInfoAdded == FALSE)
+                    if (psEntry == nullptr || !psEntry->bDerivedInfoAdded)
                     {
                         PGTableEntry *psParentEntry = OGRPGFindTableEntry(
                             hSetTables, pszParentTable, pszSchemaName);
@@ -1492,7 +1492,7 @@ void OGRPGDataSource::LoadTables()
                                          ->pasGeomColumns[iGeomColumn]);
                             }
 
-                            psEntry->bDerivedInfoAdded = TRUE;
+                            psEntry->bDerivedInfoAdded = true;
                         }
                     }
                 }

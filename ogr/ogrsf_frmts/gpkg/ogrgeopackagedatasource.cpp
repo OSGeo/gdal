@@ -987,8 +987,7 @@ CPLErr GDALGeoPackageDataset::Close()
         if (GDALGeoPackageDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
 
-        if (FlushMetadata() != CE_None)
-            eErr = CE_Failure;
+        FlushMetadata();
 
         if (eAccess == GA_Update || !m_bMetadataDirty)
         {
@@ -4553,16 +4552,16 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
 /*                            FlushMetadata()                           */
 /************************************************************************/
 
-CPLErr GDALGeoPackageDataset::FlushMetadata()
+void GDALGeoPackageDataset::FlushMetadata()
 {
     if (!m_bMetadataDirty || m_poParentDS != nullptr ||
         !CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")))
-        return CE_None;
+        return;
     m_bMetadataDirty = false;
 
     if (eAccess == GA_ReadOnly)
     {
-        return CE_None;
+        return;
     }
 
     bool bCanWriteAreaOrPoint =
@@ -4831,8 +4830,6 @@ CPLErr GDALGeoPackageDataset::FlushMetadata()
 
         WriteMetadata(psXMLNode, m_papoLayers[i]->GetName());
     }
-
-    return CE_None;
 }
 
 /************************************************************************/

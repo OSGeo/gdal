@@ -212,7 +212,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     void
     WriteMetadata(CPLXMLNode *psXMLNode, /* will be destroyed by the method */
                   const char *pszTableName);
-    CPLErr FlushMetadata();
+    void FlushMetadata();
 
     int FindLayerIndex(const char *pszLayerName);
 

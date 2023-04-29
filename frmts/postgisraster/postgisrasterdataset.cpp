@@ -767,9 +767,9 @@ PostGISRasterDataset *PostGISRasterDataset::GetOverviewDS(int iOvr)
  *
  * This method is adapted from gdalbuildvrt as is in GDAL 1.10.0
  ***********************************************************************/
-GBool PostGISRasterDataset::GetDstWin(PostGISRasterTileDataset *psDP,
-                                      int *pnDstXOff, int *pnDstYOff,
-                                      int *pnDstXSize, int *pnDstYSize)
+void PostGISRasterDataset::GetDstWin(PostGISRasterTileDataset *psDP,
+                                     int *pnDstXOff, int *pnDstYOff,
+                                     int *pnDstXSize, int *pnDstYSize)
 {
     double we_res = this->adfGeoTransform[GEOTRSFRM_WE_RES];
     double ns_res = this->adfGeoTransform[GEOTRSFRM_NS_RES];
@@ -793,8 +793,6 @@ GBool PostGISRasterDataset::GetDstWin(PostGISRasterTileDataset *psDP,
     *pnDstYSize = static_cast<int>(
         0.5 + psDP->GetRasterYSize() * adfTileGeoTransform[GEOTRSFRM_NS_RES] /
                   ns_res);
-
-    return true;
 }
 
 /***********************************************************************
@@ -809,10 +807,7 @@ GBool PostGISRasterDataset::AddComplexSource(PostGISRasterTileDataset *poRTDS)
     int nDstYSize = 0;
 
     // Get src and dst parameters
-    GBool bValidTile =
-        GetDstWin(poRTDS, &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize);
-    if (!bValidTile)
-        return false;
+    GetDstWin(poRTDS, &nDstXOff, &nDstYOff, &nDstXSize, &nDstYSize);
 
 #ifdef DEBUG_VERBOSE
     CPLDebug("PostGIS_Raster",

@@ -405,7 +405,7 @@ class VFKDataBlockSQLite : public IVFKDataBlock
 
     static bool IsRingClosed(const OGRLinearRing *);
     void UpdateVfkBlocks(int);
-    void UpdateFID(GIntBig, std::vector<int>);
+    void UpdateFID(GIntBig, const std::vector<int> &);
 
     friend class VFKFeatureSQLite;
 

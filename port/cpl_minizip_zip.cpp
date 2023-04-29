@@ -692,7 +692,7 @@ static int LoadCentralDirectoryRecord(zip64_internal *pziinit)
     {
         hasZIP64Record = 1;
     }
-    else if (central_pos == 0)
+    else /* if (central_pos == 0) */
     {
         central_pos = zip64local_SearchCentralDir(&pziinit->z_filefunc,
                                                   pziinit->filestream);

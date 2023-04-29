@@ -2529,6 +2529,7 @@ CPLErr GDALGridLinear(const void *poOptionsIn, GUInt32 nPoints,
         else
         {
             GDALGridNearestNeighborOptions sNeighbourOptions;
+            sNeighbourOptions.nSizeOfStructure = sizeof(sNeighbourOptions);
             sNeighbourOptions.dfRadius1 = dfRadius < 0.0 ? 0.0 : dfRadius;
             sNeighbourOptions.dfRadius2 = dfRadius < 0.0 ? 0.0 : dfRadius;
             sNeighbourOptions.dfAngle = 0.0;

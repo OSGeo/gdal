@@ -4632,9 +4632,9 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
     {
         if (poDS->m_poExternalDS != nullptr)
         {
-            PDS4WrapperRasterBand *poBand = new PDS4WrapperRasterBand(
+            auto poBand = cpl::make_unique<PDS4WrapperRasterBand>(
                 poDS->m_poExternalDS->GetRasterBand(i + 1));
-            poDS->SetBand(i + 1, poBand);
+            poDS->SetBand(i + 1, std::move(poBand));
         }
         else
         {
@@ -4644,8 +4644,6 @@ PDS4Dataset *PDS4Dataset::CreateInternal(const char *pszFilename,
                 nLineOffset, eType,
                 bIsLSB ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
                        : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN);
-            if (!poBand)
-                return nullptr;
             poDS->SetBand(i + 1, std::move(poBand));
         }
     }

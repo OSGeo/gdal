@@ -445,11 +445,12 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
 /************************************************************************/
 
 static GDALDatasetH CreateOutputDataset(
-    std::vector<OGRLayerH> ahLayers, OGRSpatialReferenceH hSRS, bool bGotBounds,
-    OGREnvelope sEnvelop, GDALDriverH hDriver, const char *pszDest, int nXSize,
-    int nYSize, double dfXRes, double dfYRes, bool bTargetAlignedPixels,
-    int nBandCount, GDALDataType eOutputType, char **papszCreationOptions,
-    std::vector<double> adfInitVals, int bNoDataSet, double dfNoData)
+    const std::vector<OGRLayerH> &ahLayers, OGRSpatialReferenceH hSRS,
+    bool bGotBounds, OGREnvelope sEnvelop, GDALDriverH hDriver,
+    const char *pszDest, int nXSize, int nYSize, double dfXRes, double dfYRes,
+    bool bTargetAlignedPixels, int nBandCount, GDALDataType eOutputType,
+    char **papszCreationOptions, const std::vector<double> &adfInitVals,
+    int bNoDataSet, double dfNoData)
 {
     bool bFirstLayer = true;
     char *pszWKT = nullptr;

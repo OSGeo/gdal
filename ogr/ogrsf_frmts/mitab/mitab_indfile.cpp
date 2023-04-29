@@ -1648,17 +1648,19 @@ int TABINDNode::UpdateCurChildEntry(GByte *pKeyValue, GInt32 nRecordNo)
      *----------------------------------------------------------------*/
     m_poDataBlock->GotoByteInBlock(12 + m_nCurIndexEntry * (m_nKeyLength + 4));
 
+    int ret;
     if (m_nCurIndexEntry == 0 && m_nSubTreeDepth > 1 && m_nPrevNodePtr == 0)
     {
-        m_poDataBlock->WriteZeros(m_nKeyLength);
+        ret = m_poDataBlock->WriteZeros(m_nKeyLength);
     }
     else
     {
-        m_poDataBlock->WriteBytes(m_nKeyLength, pKeyValue);
+        ret = m_poDataBlock->WriteBytes(m_nKeyLength, pKeyValue);
     }
-    m_poDataBlock->WriteInt32(nRecordNo);
+    if (ret == 0)
+        ret = m_poDataBlock->WriteInt32(nRecordNo);
 
-    return 0;
+    return ret;
 }
 
 /**********************************************************************

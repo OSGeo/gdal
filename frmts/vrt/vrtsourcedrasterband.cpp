@@ -2474,6 +2474,7 @@ CPLErr VRTSourcedRasterBand::SetMetadata(char **papszNewMD,
                 return CE_Failure;
 
             const CPLErr eErr = AddSource(poSource);
+            // cppcheck-suppress knownConditionTrueFalse
             if (eErr != CE_None)
                 return eErr;
         }

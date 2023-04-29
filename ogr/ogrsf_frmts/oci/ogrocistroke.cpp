@@ -121,7 +121,7 @@ static int OGROCIArcCenterFromEdgePoints(double x_c0, double y_c0, double x_c1,
 /*                OGROCIStrokeArcToOGRGeometry_Angles()                 */
 /************************************************************************/
 
-static int OGROCIStrokeArcToOGRGeometry_Angles(
+static void OGROCIStrokeArcToOGRGeometry_Angles(
     double dfCenterX, double dfCenterY, double dfRadius, double dfStartAngle,
     double dfEndAngle, double dfMaxAngleStepSizeDegrees, OGRLineString *poLine)
 
@@ -164,8 +164,6 @@ static int OGROCIStrokeArcToOGRGeometry_Angles(
         else
             poLine->setPoint(iAppendLocation++, dfArcX, dfArcY);
     }
-
-    return TRUE;
 }
 
 /************************************************************************/
@@ -229,11 +227,9 @@ int OGROCIStrokeArcToOGRGeometry_Points(double dfStartX, double dfStartY,
     dfRadius = sqrt((dfCenterX - dfStartX) * (dfCenterX - dfStartX) +
                     (dfCenterY - dfStartY) * (dfCenterY - dfStartY));
 
-    int bResult;
-
-    bResult = OGROCIStrokeArcToOGRGeometry_Angles(
-        dfCenterX, dfCenterY, dfRadius, dfStartAngle, dfEndAngle,
-        dfMaxAngleStepSizeDegrees, poLine);
+    OGROCIStrokeArcToOGRGeometry_Angles(dfCenterX, dfCenterY, dfRadius,
+                                        dfStartAngle, dfEndAngle,
+                                        dfMaxAngleStepSizeDegrees, poLine);
 
     /* -------------------------------------------------------------------- */
     /*      Force the points for arcs, to avoid odd rounding/math           */
@@ -241,10 +237,10 @@ int OGROCIStrokeArcToOGRGeometry_Points(double dfStartX, double dfStartY,
     /*      this is a bit tricky since it isn't obvious which point is      */
     /*      the start.                                                      */
     /* -------------------------------------------------------------------- */
-    if (bResult && !bForceWholeCircle)
+    if (!bForceWholeCircle)
     {
         poLine->setPoint(poLine->getNumPoints() - 1, dfEndX, dfEndY);
     }
 
-    return bResult;
+    return TRUE;
 }
