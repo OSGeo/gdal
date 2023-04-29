@@ -602,7 +602,7 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
         if (poSrcGeom)
         {
             // Only take into account areal geometries.
-            if (poSrcGeom->getCoordinateDimension() == 2)
+            if (poSrcGeom->getDimension() == 2)
             {
                 if (!poSrcGeom->IsValid())
                 {
