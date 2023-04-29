@@ -77,7 +77,8 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
     std::unique_ptr<TileMatrixSet> poTMS(new TileMatrixSet());
 
     constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
-    if (EQUAL(fileOrDef, "GoogleMapsCompatible"))
+    if (EQUAL(fileOrDef, "http://www.opengis.net/def/tilematrixset/OGC/1.0/GoogleCRS84Quad")
+            || EQUAL(fileOrDef, "http://www.opengis.net/def/tilematrixset/OGC/1.0/WebMercatorQuad"))
     {
         /* See http://portal.opengeospatial.org/files/?artifact_id=35326
          * (WMTS 1.0), Annex E.4 */
@@ -109,7 +110,7 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
         return poTMS;
     }
 
-    if (EQUAL(fileOrDef, "InspireCRS84Quad"))
+    if (EQUAL(fileOrDef, "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldCRS84Quad"))
     {
         /* See InspireCRS84Quad at
          * http://inspire.ec.europa.eu/documents/Network_Services/TechnicalGuidance_ViewServices_v3.0.pdf

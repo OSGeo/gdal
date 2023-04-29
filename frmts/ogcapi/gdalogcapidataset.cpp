@@ -1670,7 +1670,18 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
     if (!DownloadJSon(osTilingSchemeURL.c_str(), oDoc, nullptr,
                       MEDIA_TYPE_JSON))
         return false;
-    auto tms = gdal::TileMatrixSet::parse(oDoc.SaveAsString().c_str());
+
+    const auto uri =
+        oDoc.GetRoot().GetString("uri");
+
+    if (uri.empty())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Cannot parse TMS uri");
+        return false;
+    }
+
+    auto tms = gdal::TileMatrixSet::parse(uri.c_str());
     if (tms == nullptr)
         return false;
 
