@@ -1,7 +1,7 @@
 !
 ! By email on December 2nd, 2010:
 !
-! I, Louis Burry, on behalf of PCI Geomatics agree to allow the ellips.txt 
+! I, Louis Burry, on behalf of PCI Geomatics agree to allow the ellips.txt
 ! and datum.txt file to be distributed under the GDAL open source license.
 !
 ! Louis Burry
@@ -47,6 +47,7 @@
 "E007","WGS 66",6378145.,6356759.769356
 "E005","WGS 72",6378135.,6356750.519915
 "E012","WGS 84",6378137.,6356752.314245
+"E020","WGS 84 semimajor axis",6378137.,6378137.
 "E600","D-PAF (Orbits)",6378144.0,6356759.0
 "E601","Test Data Set 1",6378144.0,6356759.0
 "E602","Test Data Set 2",6377397.2,6356079.0

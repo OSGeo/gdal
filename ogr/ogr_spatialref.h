@@ -176,6 +176,10 @@ class CPL_DLL OGRSpatialReference
 
     static CPLString lookupInDict(const char *pszDictFile, const char *pszCode);
 
+    OGRErr GetWKT2ProjectionMethod(const char **ppszMethodName,
+                                   const char **ppszMethodAuthName = nullptr,
+                                   const char **ppszMethodCode = nullptr) const;
+
   public:
     explicit OGRSpatialReference(const char * = nullptr);
     OGRSpatialReference(const OGRSpatialReference &);
