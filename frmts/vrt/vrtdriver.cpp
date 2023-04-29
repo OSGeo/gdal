@@ -203,9 +203,9 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         /* --------------------------------------------------------------------
          */
         char *pszVRTPath = CPLStrdup(CPLGetPath(pszFilename));
-        static_cast<VRTDataset *>(poSrcDS)->UnsetPreservedRelativeFilenames();
-        CPLXMLNode *psDSTree =
-            static_cast<VRTDataset *>(poSrcDS)->SerializeToXML(pszVRTPath);
+        auto poSrcVRTDS = cpl::down_cast<VRTDataset *>(poSrcDS);
+        poSrcVRTDS->UnsetPreservedRelativeFilenames();
+        CPLXMLNode *psDSTree = poSrcVRTDS->SerializeToXML(pszVRTPath);
 
         char *pszXML = CPLSerializeXMLTree(psDSTree);
 

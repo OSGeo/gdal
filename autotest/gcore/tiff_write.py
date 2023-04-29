@@ -746,6 +746,7 @@ def test_tiff_write_rpc_txt():
         ds_in_without_imd,
         options=["PROFILE=BASELINE", "RPCTXT=YES"],
     )
+    assert gdal.GetLastErrorMsg() == ""
 
     ds_in = None
     ds = None

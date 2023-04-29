@@ -995,9 +995,11 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         }
     }
 
-    auto poSrcDS =
-        GDALDataset::Open(osFilename, GDAL_OF_RASTER | GDAL_OF_SHARED,
-                          aosAllowedDrivers.List(), nullptr, nullptr);
+    // We don't open in GDAL_OF_SHARED mode to avoid issues when we open a
+    // http://.jp2 file with the JP2OpenJPEG driver through the HTTP driver,
+    // which returns a /vsimem/ file
+    auto poSrcDS = GDALDataset::Open(
+        osFilename, GDAL_OF_RASTER, aosAllowedDrivers.List(), nullptr, nullptr);
     if (poSrcDS == nullptr)
     {
         return nullptr;
@@ -1190,11 +1192,34 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
 
     GDALTranslateOptionsFree(psOptions);
 
+    // Situation where we open a http://.jp2 file with the JP2OpenJPEG driver
+    // through the HTTP driver, which returns a /vsimem/ file
+    const bool bPatchSourceFilename =
+        (STARTS_WITH(osFilename.c_str(), "http://") ||
+         STARTS_WITH(osFilename.c_str(), "https://")) &&
+        osFilename != poSrcDS->GetDescription();
+
     poSrcDS->ReleaseRef();
 
     auto poDS = cpl::down_cast<VRTDataset *>(GDALDataset::FromHandle(hRet));
     if (poDS)
     {
+        if (bPatchSourceFilename)
+        {
+            for (int i = 0; i < poDS->nBands; ++i)
+            {
+                auto poBand =
+                    dynamic_cast<VRTSourcedRasterBand *>(poDS->papoBands[i]);
+                if (poBand && poBand->nSources == 1 &&
+                    poBand->papoSources[0]->IsSimpleSource())
+                {
+                    auto poSource = cpl::down_cast<VRTSimpleSource *>(
+                        poBand->papoSources[0]);
+                    poSource->m_bRelativeToVRTOri = 0;
+                    poSource->m_osSourceFileNameOri = osFilename;
+                }
+            }
+        }
         poDS->SetDescription(pszSpec);
         poDS->SetWritable(false);
     }
