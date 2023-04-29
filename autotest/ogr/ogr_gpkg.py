@@ -1317,6 +1317,79 @@ def test_ogr_gpkg_SetSRID():
 
 
 ###############################################################################
+# Test ST_EnvIntersects() function
+
+
+def test_ogr_gpkg_ST_EnvIntersects():
+
+    filename = "/vsimem/test_ogr_gpkg_ST_EnvIntersects.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(1 2,3 4)"))
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("LINESTRING(5 6,7 8)"))
+    lyr.CreateFeature(f)
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT ST_EnvIntersects(geom, 0, 0, 0.99, 100),"
+        + "       ST_EnvIntersects(geom, 0, 4.01, 100, 100),"
+        + "       ST_EnvIntersects(geom, 3.01, 0, 100, 100),"
+        + "       ST_EnvIntersects(geom, 0, 0, 100, 1.99),"
+        + "       ST_EnvIntersects(geom, 0.99, 1.99, 1.01, 2.01),"
+        + "       ST_EnvIntersects(geom, 0.99, 3.99, 1.01, 4.01),"
+        + "       ST_EnvIntersects(geom, 2.99, 3.99, 3.01, 4.01),"
+        + "       ST_EnvIntersects(geom, 2.99, 1.99, 3.01, 2.01)"
+        + " FROM foo WHERE fid = 1"
+    )
+    f = sql_lyr.GetNextFeature()
+    try:
+        assert f.GetField(0) == 0
+        assert f.GetField(1) == 0
+        assert f.GetField(2) == 0
+        assert f.GetField(3) == 0
+        assert f.GetField(4) == 1
+        assert f.GetField(5) == 1
+        assert f.GetField(6) == 1
+        assert f.GetField(7) == 1
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT ST_EnvIntersects(a.geom, b.geom) FROM foo a, foo b WHERE a.fid = 1 AND b.fid = 1"
+    )
+    f = sql_lyr.GetNextFeature()
+    try:
+        assert f.GetField(0) == 1
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT ST_EnvIntersects(a.geom, b.geom) FROM foo a, foo b WHERE a.fid = 1 AND b.fid = 2"
+    )
+    f = sql_lyr.GetNextFeature()
+    try:
+        assert f.GetField(0) == 0
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    sql_lyr = ds.ExecuteSQL(
+        "SELECT ST_EnvIntersects(a.geom, b.geom) FROM foo a, foo b WHERE a.fid = 2 AND b.fid = 1"
+    )
+    f = sql_lyr.GetNextFeature()
+    try:
+        assert f.GetField(0) == 0
+    finally:
+        ds.ReleaseResultSet(sql_lyr)
+
+    ds = None
+    gdal.Unlink("/vsimem/test_ogr_gpkg_ST_EnvIntersects.gpkg")
+
+
+###############################################################################
 # Test unknown extensions
 
 
