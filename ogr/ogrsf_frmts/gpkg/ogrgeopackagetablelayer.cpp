@@ -7127,8 +7127,6 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
 {
     auto psFillArrowArray = static_cast<OGRGPKGTableLayerFillArrowArray *>(
         sqlite3_user_data(pContext));
-    if (psFillArrowArray == nullptr)
-        return;
 
     if (psFillArrowArray->nCountRows >=
         psFillArrowArray->psHelper->nMaxBatchSize)
@@ -7590,11 +7588,10 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     }
     sqlite3_free(pszErrMsg);
 
-    // "Unregister" function by setting its user data pointer to nullptr
+    // Delete function
     sqlite3_create_function(m_poDS->GetDB(), "OGR_GPKG_FillArrowArray_INTERNAL",
                             -1, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
-                            nullptr, OGR_GPKG_FillArrowArray_Step,
-                            OGR_GPKG_FillArrowArray_Finalize);
+                            nullptr, nullptr, nullptr);
 
     std::lock_guard<std::mutex> oLock(m_poFillArrowArray->oMutex);
     m_poFillArrowArray->bIsFinished = true;
@@ -7940,11 +7937,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     }
     sqlite3_free(pszErrMsg);
 
-    // "Unregister" function by setting its user data pointer to nullptr
+    // Delete function
     sqlite3_create_function(m_poDS->GetDB(), "OGR_GPKG_FillArrowArray_INTERNAL",
                             -1, SQLITE_UTF8 | SQLITE_DETERMINISTIC, nullptr,
-                            nullptr, OGR_GPKG_FillArrowArray_Step,
-                            OGR_GPKG_FillArrowArray_Finalize);
+                            nullptr, nullptr, nullptr);
 
     if (sFillArrowArray.bErrorOccurred)
     {
