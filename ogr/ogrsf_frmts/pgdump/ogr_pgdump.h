@@ -35,6 +35,9 @@
 
 #include <vector>
 
+// Cf https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+constexpr int OGR_PG_NAMEDATALEN = 64;
+
 CPLString OGRPGDumpEscapeColumnName(const char *pszColumnName);
 CPLString OGRPGDumpEscapeString(const char *pszStrValue, int nMaxLength = -1,
                                 const char *pszFieldName = "");

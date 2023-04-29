@@ -356,7 +356,8 @@ class OGRPGTableLayer final : public OGRPGLayer
     }
 
     OGRErr RunAddGeometryColumn(const OGRPGGeomFieldDefn *poGeomField);
-    OGRErr RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField);
+    OGRErr RunCreateSpatialIndex(const OGRPGGeomFieldDefn *poGeomField,
+                                 int nIdx);
 
     void UpdateSequenceIfNeeded();
 

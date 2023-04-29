@@ -1546,6 +1546,50 @@ def test_ogr_pgdump_CREATE_TABLE_NO():
 
 
 ###############################################################################
+# Test long identifiers
+
+
+def test_ogr_pgdump_long_identifiers():
+
+    ds = ogr.GetDriverByName("PGDump").CreateDataSource(
+        "/vsimem/test_ogr_pgdump_long_identifiers.sql", options=["LINEFORMAT=LF"]
+    )
+
+    long_name = "test_" + ("X" * 64) + "_long_name"
+    short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+    with gdaltest.error_handler():
+        lyr = ds.CreateLayer(long_name, geom_type=ogr.wkbPoint)
+    lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f["str"] = "foo"
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(0 1)"))
+    lyr.CreateFeature(f)
+    ds = None
+
+    f = gdal.VSIFOpenL("/vsimem/test_ogr_pgdump_long_identifiers.sql", "rb")
+    sql = gdal.VSIFReadL(1, 10000, f).decode("utf8")
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink("/vsimem/test_ogr_pgdump_long_identifiers.sql")
+
+    # print(sql)
+
+    def check_and_remove(needle):
+        nonlocal sql
+        assert needle in sql, sql
+        sql = sql[sql.find(needle) + len(needle) :]
+
+    check_and_remove(f"""CREATE TABLE "public"."{short_name}"();""")
+    check_and_remove(
+        f"""ALTER TABLE "public"."{short_name}" ADD COLUMN "ogc_fid" SERIAL CONSTRAINT "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_pk" PRIMARY KEY;"""
+    )
+    check_and_remove(
+        f"""CREATE INDEX "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_wkb_geometry_geom_idx" ON "public"."{short_name}" USING GIST ("wkb_geometry");"""
+    )
+
+
+###############################################################################
 # Cleanup
 
 
