@@ -49,8 +49,16 @@ pytestmark = pytest.mark.require_driver("GPKG")
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
+def setup_and_cleanup():
+    options = {
+        # This is to speed-up the runtime of tests on EXT4 filesystems
+        # Do not use this for production environment if you care about data safety
+        # w.r.t system/OS crashes, unless you know what you are doing.
+        "OGR_SQLITE_SYNCHRONOUS": "OFF",
+        "GPKG_DEBUG": "ON",
+    }
+
+    with gdaltest.disable_exceptions(), gdal.config_options(options):
         yield
 
 
@@ -114,13 +122,6 @@ def test_gpkg_init():
         md = gdaltest.webp_dr.GetMetadata()
         if md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") >= 0:
             gdaltest.webp_supports_rgba = True
-
-    # This is to speed-up the runtime of tests on EXT4 filesystems
-    # Do not use this for production environment if you care about data safety
-    # w.r.t system/OS crashes, unless you know what you are doing.
-    gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
-
-    gdal.SetConfigOption("GPKG_DEBUG", "ON")
 
 
 ###############################################################################
@@ -1662,19 +1663,19 @@ def test_gpkg_17():
 
     # Test building non-supported overview levels
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER | gdal.OF_UPDATE)
-    with gdaltest.error_handler():
-        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO")
+    with gdal.config_option(
+        "ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO"
+    ), gdaltest.error_handler():
         ret = out_ds.BuildOverviews("NEAR", [3])
-        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", None)
     assert ret != 0
     out_ds = None
 
     # Test building non-supported overview levels
     out_ds = gdal.OpenEx("/vsimem/tmp.gpkg", gdal.OF_RASTER | gdal.OF_UPDATE)
-    with gdaltest.error_handler():
-        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO")
+    with gdal.config_option(
+        "ALLOW_GPKG_ZOOM_OTHER_EXTENSION", "NO"
+    ), gdaltest.error_handler():
         ret = out_ds.BuildOverviews("NEAR", [2, 4])
-        gdal.SetConfigOption("ALLOW_GPKG_ZOOM_OTHER_EXTENSION", None)
     assert ret != 0
     out_ds = None
 
@@ -2708,13 +2709,12 @@ def test_gpkg_31():
 
     # Force use of RGBA instead of Grey-Alpha (the natural use case is WEBP)
     # but here we can test losslessly
-    gdal.SetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", "NO")
-    gdaltest.gpkg_dr.CreateCopy(
-        "/vsimem/tmp.gpkg",
-        gdal.Open("data/byte.tif"),
-        options=["TILE_FORMAT=PNG", "BLOCKSIZE=21"],
-    )
-    gdal.SetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", None)
+    with gdal.config_option("GPKG_PNG_SUPPORTS_2BANDS", "NO"):
+        gdaltest.gpkg_dr.CreateCopy(
+            "/vsimem/tmp.gpkg",
+            gdal.Open("data/byte.tif"),
+            options=["TILE_FORMAT=PNG", "BLOCKSIZE=21"],
+        )
 
     ds = gdal.OpenEx("/vsimem/tmp.gpkg", open_options=["BAND_COUNT=4"])
     check_tile_format(ds, "PNG", 4, False)
@@ -2738,13 +2738,12 @@ def test_gpkg_32():
 
     # Force use of RGBA instead of Grey-Alpha (the natural use case is WEBP)
     # but here we can test losslessly
-    gdal.SetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", "NO")
-    gdaltest.gpkg_dr.CreateCopy(
-        "/vsimem/tmp.gpkg",
-        get_georeferenced_greyalpha_ds(),
-        options=["TILE_FORMAT=PNG", "BLOCKSIZE=200"],
-    )
-    gdal.SetConfigOption("GPKG_PNG_SUPPORTS_2BANDS", None)
+    with gdal.config_option("GPKG_PNG_SUPPORTS_2BANDS", "NO"):
+        gdaltest.gpkg_dr.CreateCopy(
+            "/vsimem/tmp.gpkg",
+            get_georeferenced_greyalpha_ds(),
+            options=["TILE_FORMAT=PNG", "BLOCKSIZE=200"],
+        )
 
     ds = gdal.OpenEx("/vsimem/tmp.gpkg", open_options=["BAND_COUNT=4"])
     check_tile_format(ds, "PNG", 4, False)
@@ -2773,10 +2772,11 @@ def test_gpkg_33():
 
     # Force use of RGBA instead of color-table (the natural use case is WEBP)
     # but here we can test losslessly
-    gdal.SetConfigOption("GPKG_PNG_SUPPORTS_CT", "NO")
-    src_ds = get_georeferenced_ds_with_pct32()
-    gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", src_ds, options=["TILE_FORMAT=PNG"])
-    gdal.SetConfigOption("GPKG_PNG_SUPPORTS_CT", None)
+    with gdal.config_option("GPKG_PNG_SUPPORTS_CT", "NO"):
+        src_ds = get_georeferenced_ds_with_pct32()
+        gdaltest.gpkg_dr.CreateCopy(
+            "/vsimem/tmp.gpkg", src_ds, options=["TILE_FORMAT=PNG"]
+        )
     gdal.Unlink(src_ds.GetDescription())
 
     ds = gdal.OpenEx("/vsimem/tmp.gpkg", open_options=["BAND_COUNT=4"])
@@ -3130,15 +3130,14 @@ def test_gpkg_39():
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4118 or cs == 4077
 
-    gdal.SetConfigOption("GPKG_ADD_DEFINITION_12_063", "YES")
-    gdal.Translate(
-        "/vsimem/gpkg_39.gpkg",
-        src_ds,
-        format="GPKG",
-        noData=1,
-        creationOptions=["TILING_SCHEME=GoogleMapsCompatible"],
-    )
-    gdal.SetConfigOption("GPKG_ADD_DEFINITION_12_063", None)
+    with gdal.config_option("GPKG_ADD_DEFINITION_12_063", "YES"):
+        gdal.Translate(
+            "/vsimem/gpkg_39.gpkg",
+            src_ds,
+            format="GPKG",
+            noData=1,
+            creationOptions=["TILING_SCHEME=GoogleMapsCompatible"],
+        )
     ds = gdal.Open("/vsimem/gpkg_39.gpkg")
     cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4118 or cs == 4077
@@ -3629,15 +3628,15 @@ def test_gpkg_41():
             % (gdal.GetUsablePhysicalRAM() / 1e9)
         )
 
-    gdal.SetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", "YES")
-    with gdaltest.error_handler():
+    with gdal.config_option(
+        "GPKG_ALLOW_CRAZY_SETTINGS", "YES"
+    ), gdaltest.error_handler():
         gdal.Translate(
             "/vsimem/gpkg_41.gpkg",
             "data/gpkg/huge_line.tif",
             format="GPKG",
             creationOptions=["BLOCKXSIZE=500000000", "BLOCKYSIZE=1"],
         )
-    gdal.SetConfigOption("GPKG_ALLOW_CRAZY_SETTINGS", None)
 
     gdal.Unlink("/vsimem/gpkg_41.gpkg")
 
@@ -3651,9 +3650,8 @@ def test_gpkg_42():
     if gdaltest.gpkg_dr is None:
         pytest.skip()
 
-    gdal.SetConfigOption("CREATE_GEOMETRY_COLUMNS", "NO")
-    gdal.Translate("/vsimem/gpkg_42.gpkg", "data/byte.tif", format="GPKG")
-    gdal.SetConfigOption("CREATE_GEOMETRY_COLUMNS", None)
+    with gdal.config_option("CREATE_GEOMETRY_COLUMNS", "NO"):
+        gdal.Translate("/vsimem/gpkg_42.gpkg", "data/byte.tif", format="GPKG")
 
     ds = gdal.OpenEx("/vsimem/gpkg_42.gpkg", gdal.OF_VECTOR | gdal.OF_UPDATE)
     sql_lyr = ds.ExecuteSQL(
@@ -3680,9 +3678,8 @@ def test_gpkg_43():
     if gdaltest.gpkg_dr is None:
         pytest.skip()
 
-    gdal.SetConfigOption("CREATE_RASTER_TABLES", "NO")
-    ds = gdaltest.gpkg_dr.Create("/vsimem/gpkg_43.gpkg", 0, 0, 0, gdal.GDT_Unknown)
-    gdal.SetConfigOption("CREATE_RASTER_TABLES", None)
+    with gdal.config_option("CREATE_RASTER_TABLES", "NO"):
+        ds = gdaltest.gpkg_dr.Create("/vsimem/gpkg_43.gpkg", 0, 0, 0, gdal.GDT_Unknown)
     ds.CreateLayer("foo")
     ds = None
 
@@ -4449,8 +4446,6 @@ def test_gpkg_cleanup():
 
     gdal.Unlink("/vsimem/tmp.gpkg")
     gdal.Unlink("/vsimem/tmp.gpkg.aux.xml")
-
-    gdal.SetConfigOption("GPKG_DEBUG", None)
 
 
 ###############################################################################

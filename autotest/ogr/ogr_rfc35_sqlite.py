@@ -43,6 +43,16 @@ def module_disable_exceptions():
 
 
 ###############################################################################
+@pytest.fixture(autouse=True, scope="module")
+def setup_and_cleanup():
+    # This is to speed-up the runtime of tests on EXT4 filesystems
+    # Do not use this for production environment if you care about data safety
+    # w.r.t system/OS crashes, unless you know what you are doing.
+    with gdal.config_option("OGR_SQLITE_SYNCHRONOUS", "OFF"):
+        yield
+
+
+###############################################################################
 # Initiate the test file
 
 
@@ -55,11 +65,6 @@ def test_ogr_rfc35_sqlite_1():
         pytest.skip()
 
     gdal.Unlink("tmp/rfc35_test.sqlite")
-
-    # This is to speed-up the runtime of tests on EXT4 filesystems
-    # Do not use this for production environment if you care about data safety
-    # w.r.t system/OS crashes, unless you know what you are doing.
-    gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
 
     gdaltest.rfc35_sqlite_ds_name = "/vsimem/rfc35_test.sqlite"
     with gdaltest.error_handler():

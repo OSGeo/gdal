@@ -56,16 +56,12 @@ def module_disable_exceptions():
 def startup_and_cleanup():
 
     # Unset environment variables that influence the driver behavior
-    daas_vars = {}
-    for var in (
-        "GDAL_DAAS_API_KEY",
-        "GDAL_DAAS_CLIENT_ID",
-        "GDAL_DAAS_AUTH_URL",
-        "GDAL_DAAS_ACCESS_TOKEN",
-    ):
-        daas_vars[var] = gdal.GetConfigOption(var)
-        if daas_vars[var] is not None:
-            gdal.SetConfigOption(var, "")
+    options = {
+        "GDAL_DAAS_API_KEY": None,
+        "GDAL_DAAS_CLIENT_ID": None,
+        "GDAL_DAAS_AUTH_URL": None,
+        "GDAL_DAAS_ACCESS_TOKEN": None,
+    }
 
     (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
         handler=webserver.DispatcherHttpHandler
@@ -73,15 +69,13 @@ def startup_and_cleanup():
     if gdaltest.webserver_port == 0:
         pytest.skip()
 
-    yield
+    with gdal.config_options(options):
+        yield
 
     if gdaltest.webserver_port != 0:
         webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
     gdal.RmdirRecursive("/vsimem/cache_dir")
-
-    for var in daas_vars:
-        gdal.SetConfigOption(var, daas_vars[var])
 
 
 ###############################################################################

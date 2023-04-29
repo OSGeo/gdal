@@ -855,48 +855,34 @@ def test_warp_29():
     cs_monothread = ds.GetRasterBand(1).Checksum()
     ds = None
 
-    old_val = gdal.GetConfigOption("GDAL_NUM_THREADS")
-    gdal.SetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS")
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", "0")
-    ds = gdal.Open("data/white_nodata.vrt")
-    cs_multithread = ds.GetRasterBand(1).Checksum()
-    ds = None
-    gdal.SetConfigOption("GDAL_NUM_THREADS", old_val)
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", None)
+    with gdal.config_options(
+        {"GDAL_NUM_THREADS": "ALL_CPUS", "WARP_THREAD_CHUNK_SIZE": "0"}
+    ):
+        ds = gdal.Open("data/white_nodata.vrt")
+        cs_multithread = ds.GetRasterBand(1).Checksum()
+        ds = None
 
     assert cs_monothread == cs_multithread
 
-    old_val = gdal.GetConfigOption("GDAL_NUM_THREADS")
-    gdal.SetConfigOption("GDAL_NUM_THREADS", "2")
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", "0")
-    ds = gdal.Open("data/white_nodata.vrt")
-    cs_multithread = ds.GetRasterBand(1).Checksum()
-    ds = None
-    gdal.SetConfigOption("GDAL_NUM_THREADS", old_val)
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", None)
+    with gdal.config_options({"GDAL_NUM_THREADS": "2", "WARP_THREAD_CHUNK_SIZE": "0"}):
+        ds = gdal.Open("data/white_nodata.vrt")
+        cs_multithread = ds.GetRasterBand(1).Checksum()
+        ds = None
 
     assert cs_monothread == cs_multithread
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
 
     ds = gdal.Open("data/byte_gcp.vrt")
-    old_val = gdal.GetConfigOption("GDAL_NUM_THREADS")
-    gdal.SetConfigOption("GDAL_NUM_THREADS", "2")
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", "0")
-    got_cs = ds.GetRasterBand(1).Checksum()
-    gdal.SetConfigOption("GDAL_NUM_THREADS", old_val)
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", None)
+    with gdal.config_options({"GDAL_NUM_THREADS": "2", "WARP_THREAD_CHUNK_SIZE": "0"}):
+        got_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     assert got_cs == src_ds.GetRasterBand(1).Checksum()
 
     ds = gdal.Open("data/byte_tps.vrt")
-    old_val = gdal.GetConfigOption("GDAL_NUM_THREADS")
-    gdal.SetConfigOption("GDAL_NUM_THREADS", "2")
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", "0")
-    got_cs = ds.GetRasterBand(1).Checksum()
-    gdal.SetConfigOption("GDAL_NUM_THREADS", old_val)
-    gdal.SetConfigOption("WARP_THREAD_CHUNK_SIZE", None)
+    with gdal.config_options({"GDAL_NUM_THREADS": "2", "WARP_THREAD_CHUNK_SIZE": "0"}):
+        got_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     assert got_cs == src_ds.GetRasterBand(1).Checksum()

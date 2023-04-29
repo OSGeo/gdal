@@ -90,9 +90,8 @@ def test_rl2_2():
     expected_subds = []
     assert subds == expected_subds
 
-    gdal.SetConfigOption("RL2_SHOW_ALL_PYRAMID_LEVELS", "YES")
-    ds = gdal.Open("data/rasterlite2/byte.rl2")
-    gdal.SetConfigOption("RL2_SHOW_ALL_PYRAMID_LEVELS", None)
+    with gdal.config_option("RL2_SHOW_ALL_PYRAMID_LEVELS", "YES"):
+        ds = gdal.Open("data/rasterlite2/byte.rl2")
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 1087

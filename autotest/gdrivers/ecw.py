@@ -113,9 +113,8 @@ def startup_and_cleanup():
         gdaltest.ecw_drv.minor_version = 3
 
     # we set ECW to not resolve projection and datum strings to get 3.x behavior.
-    gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
-
-    yield
+    with gdal.config_option("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES"):
+        yield
 
     gdaltest.reregister_all_jpeg2000_drivers()
 
@@ -2341,11 +2340,9 @@ def test_ecw_48():
 
 def test_ecw_49():
 
-    ecw_upward_old = gdal.GetConfigOption("ECW_ALWAYS_UPWARD", "TRUE")
-    gdal.SetConfigOption("ECW_ALWAYS_UPWARD", "FALSE")
-    ds = gdal.Open("data/ecw/spif83_downward.ecw")
-    gt = ds.GetGeoTransform()
-    gdal.SetConfigOption("ECW_ALWAYS_UPWARD", ecw_upward_old)
+    with gdal.config_option("ECW_ALWAYS_UPWARD", "FALSE"):
+        ds = gdal.Open("data/ecw/spif83_downward.ecw")
+        gt = ds.GetGeoTransform()
 
     # expect Y resolution positive
     expected_gt = (

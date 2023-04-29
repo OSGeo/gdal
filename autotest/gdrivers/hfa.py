@@ -983,22 +983,18 @@ def test_hfa_write_bit2grayscale():
     shutil.copyfile("data/hfa/small1bit.img", "tmp/small1bit.img")
     shutil.copyfile("data/hfa/small1bit.rrd", "tmp/small1bit.rrd")
 
-    gdal.SetConfigOption("USE_RRD", "YES")
-    gdal.SetConfigOption("HFA_USE_RRD", "YES")
+    with gdal.config_options({"USE_RRD": "YES", "HFA_USE_RRD": "YES"}):
 
-    ds = gdal.Open("tmp/small1bit.img", gdal.GA_Update)
-    ds.BuildOverviews(resampling="average_bit2grayscale", overviewlist=[2])
+        ds = gdal.Open("tmp/small1bit.img", gdal.GA_Update)
+        ds.BuildOverviews(resampling="average_bit2grayscale", overviewlist=[2])
 
-    ov = ds.GetRasterBand(1).GetOverview(1)
+        ov = ds.GetRasterBand(1).GetOverview(1)
 
-    assert ov.Checksum() == 57325, "wrong checksum for greyscale overview."
+        assert ov.Checksum() == 57325, "wrong checksum for greyscale overview."
 
-    ds = None
+        ds = None
 
-    gdal.GetDriverByName("HFA").Delete("tmp/small1bit.img")
-
-    gdal.SetConfigOption("USE_RRD", "NO")
-    gdal.SetConfigOption("HFA_USE_RRD", "NO")
+        gdal.GetDriverByName("HFA").Delete("tmp/small1bit.img")
 
     # as an aside, confirm the .rrd file was deleted.
     assert not os.path.exists("tmp/small1bit.rrd")

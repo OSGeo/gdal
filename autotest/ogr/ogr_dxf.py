@@ -732,8 +732,7 @@ def test_ogr_dxf_15():
 
 def test_ogr_dxf_16():
 
-    gdal.SetConfigOption("DXF_INLINE_BLOCKS", "FALSE")
-    try:
+    with gdal.config_option("DXF_INLINE_BLOCKS", "FALSE"):
 
         dxf_ds = ogr.Open("data/dxf/assorted.dxf")
 
@@ -814,10 +813,6 @@ def test_ogr_dxf_16():
         )
 
         feat = None
-
-    finally:
-        # cleanup
-        gdal.SetConfigOption("DXF_INLINE_BLOCKS", None)
 
 
 ###############################################################################
@@ -1163,10 +1158,9 @@ def test_ogr_dxf_21():
         "LINESTRING (5 2 3,4.990256201039297 1.720974105023499 3,4.961072274966281 1.443307596159738 3,4.912590402935223 1.168353236728963 3,4.845046783753276 0.897450576732003 3,4.758770483143634 0.631919426697325 3,4.654181830570403 0.373053427696799 3,4.531790371435708 0.122113748856437 3,4.392192384625703 -0.11967705693282 3,4.23606797749979 -0.351141009169893 3,4.064177772475912 -0.571150438746157 3,3.877359201354605 -0.778633481835989 3,3.676522425435433 -0.972579301909577 3,3.462645901302633 -1.152043014426888 3,3.236771613882987 -1.316150290220167 3,3.0 -1.464101615137754 3,2.75348458715631 -1.595176185196668 3,2.498426373663648 -1.70873541826715 3,2.23606797749979 -1.804226065180614 3,1.967687582398672 -1.881182905103986 3,1.694592710667722 -1.939231012048832 3,1.418113853070614 -1.978087581473093 3,1.139597986810004 -1.997563308076383 3,0.860402013189997 -1.997563308076383 3,0.581886146929387 -1.978087581473094 3,0.305407289332279 -1.939231012048832 3,0.032312417601329 -1.881182905103986 3,-0.236067977499789 -1.804226065180615 3,-0.498426373663648 -1.70873541826715 3,-0.75348458715631 -1.595176185196668 3,-1.0 -1.464101615137755 3,-1.236771613882987 -1.316150290220167 3,-1.462645901302633 -1.152043014426888 3,-1.676522425435433 -0.972579301909577 3,-1.877359201354605 -0.778633481835989 3,-2.064177772475912 -0.571150438746158 3,-2.236067977499789 -0.351141009169893 3,-2.392192384625704 -0.11967705693282 3,-2.531790371435707 0.122113748856436 3,-2.654181830570403 0.373053427696798 3,-2.758770483143633 0.631919426697324 3,-2.845046783753275 0.897450576732001 3,-2.912590402935223 1.168353236728963 3,-2.961072274966281 1.443307596159737 3,-2.990256201039297 1.720974105023498 3,-3.0 2.0 3,-2.990256201039297 2.279025894976499 3,-2.961072274966281 2.556692403840262 3,-2.912590402935223 2.831646763271036 3,-2.845046783753276 3.102549423267996 3,-2.758770483143634 3.368080573302675 3,-2.654181830570404 3.626946572303199 3,-2.531790371435708 3.877886251143563 3,-2.392192384625704 4.119677056932819 3,-2.23606797749979 4.351141009169892 3,-2.064177772475912 4.571150438746157 3,-1.877359201354604 4.778633481835989 3,-1.676522425435434 4.972579301909576 3,-1.462645901302632 5.152043014426889 3,-1.236771613882989 5.316150290220166 3,-1.0 5.464101615137753 3,-0.753484587156311 5.595176185196667 3,-0.498426373663649 5.70873541826715 3,-0.23606797749979 5.804226065180615 3,0.032312417601329 5.881182905103985 3,0.305407289332279 5.939231012048833 3,0.581886146929387 5.978087581473094 3,0.860402013189993 5.997563308076383 3,1.139597986810005 5.997563308076383 3,1.418113853070612 5.978087581473094 3,1.69459271066772 5.939231012048833 3,1.96768758239867 5.881182905103986 3,2.236067977499789 5.804226065180615 3,2.498426373663648 5.70873541826715 3,2.75348458715631 5.595176185196668 3,3.0 5.464101615137754 3,3.236771613882985 5.316150290220168 3,3.462645901302634 5.152043014426887 3,3.676522425435431 4.972579301909578 3,3.877359201354603 4.778633481835991 3,4.064177772475912 4.571150438746159 3,4.23606797749979 4.351141009169893 3,4.392192384625702 4.119677056932823 3,4.531790371435708 3.877886251143563 3,4.654181830570404 3.626946572303201 3,4.758770483143634 3.368080573302675 3,4.845046783753275 3.102549423267999 3,4.912590402935223 2.831646763271039 3,4.961072274966281 2.556692403840263 3,4.990256201039298 2.279025894976499 3,5.0 2.0 3)",
     )
 
-    gdal.SetConfigOption("OGR_ARC_MAX_GAP", "80")
-    feat = lyr.GetNextFeature()
-    geom = feat.GetGeometryRef()
-    gdal.SetConfigOption("OGR_ARC_MAX_GAP", None)
+    with gdal.config_option("OGR_ARC_MAX_GAP", "80"):
+        feat = lyr.GetNextFeature()
+        geom = feat.GetGeometryRef()
 
     assert geom.GetPointCount() == 4, (
         "did not get expected number of points, got %d" % geom.GetPointCount()
@@ -1222,9 +1216,8 @@ def test_ogr_dxf_22():
     gdal.Unlink("/vsimem/ogr_dxf_22.dxf")
 
     # Now try reading in the MTEXT feature without translating escape sequences
-    gdal.SetConfigOption("DXF_TRANSLATE_ESCAPE_SEQUENCES", "FALSE")
-    ds = ogr.Open("data/dxf/text.dxf")
-    gdal.SetConfigOption("DXF_TRANSLATE_ESCAPE_SEQUENCES", None)
+    with gdal.config_option("DXF_TRANSLATE_ESCAPE_SEQUENCES", "FALSE"):
+        ds = ogr.Open("data/dxf/text.dxf")
     lyr = ds.GetLayer(0)
 
     feat = lyr.GetNextFeature()
@@ -1279,17 +1272,15 @@ def test_ogr_dxf_24():
     ds = ogr.Open("data/dxf/hatch.dxf")
     lyr = ds.GetLayer(0)
 
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    feat = lyr.GetNextFeature()
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        feat = lyr.GetNextFeature()
     assert not ogrtest.check_feature_geometry(
         feat,
         "POLYGON ((2 1,1.646446609406726 0.853553390593274,1.5 0.5,1.646446609406726 0.146446609406726,2 0,2.146446609406726 -0.353553390593274,2.5 -0.5,2.853553390593274 -0.353553390593274,3.0 -0.0,3.353553390593274 0.146446609406726,3.5 0.5,3.353553390593274 0.853553390593273,3 1,2.853553390593274 1.353553390593274,2.5 1.5,2.146446609406726 1.353553390593274,2 1))",
     )
 
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", "45")
-    feat = lyr.GetNextFeature()
-    gdal.SetConfigOption("OGR_ARC_STEPSIZE", None)
+    with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
+        feat = lyr.GetNextFeature()
     assert not ogrtest.check_feature_geometry(
         feat,
         "POLYGON ((0.0 0.0 0,-0.353553390593274 0.146446609406726 0,-0.5 0.5 0,-0.353553390593274 0.853553390593274 0,-0.0 1.0 0,0.146446609406726 1.353553390593274 0,0.5 1.5 0,0.853553390593274 1.353553390593274 0,1.0 1.0 0,1.353553390593274 0.853553390593274 0,1.5 0.5 0,1.353553390593274 0.146446609406727 0,1.0 0.0 0,0.853553390593274 -0.353553390593274 0,0.5 -0.5 0,0.146446609406726 -0.353553390593274 0,0.0 0.0 0))",
@@ -1888,9 +1879,8 @@ def test_ogr_dxf_31():
 
 def test_ogr_dxf_32():
 
-    gdal.SetConfigOption("DXF_INCLUDE_RAW_CODE_VALUES", "TRUE")
-    ds = ogr.Open("data/dxf/ocs2wcs2.dxf")
-    gdal.SetConfigOption("DXF_INCLUDE_RAW_CODE_VALUES", None)
+    with gdal.config_option("DXF_INCLUDE_RAW_CODE_VALUES", "TRUE"):
+        ds = ogr.Open("data/dxf/ocs2wcs2.dxf")
     lyr = ds.GetLayer(0)
 
     # INFO: Open of `ocs2wcs2.dxf' using driver `DXF' successful.
@@ -2483,9 +2473,8 @@ def test_ogr_dxf_32():
 
 def test_ogr_dxf_33():
 
-    gdal.SetConfigOption("DXF_3D_EXTENSIBLE_MODE", "TRUE")
-    ds = ogr.Open("data/dxf/3d.dxf")
-    gdal.SetConfigOption("DXF_3D_EXTENSIBLE_MODE", None)
+    with gdal.config_option("DXF_3D_EXTENSIBLE_MODE", "TRUE"):
+        ds = ogr.Open("data/dxf/3d.dxf")
 
     layer = ds.GetLayer(0)
 
@@ -2843,9 +2832,8 @@ def test_ogr_dxf_35():
 
 def test_ogr_dxf_36():
 
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE")
-    ds = ogr.Open("data/dxf/insert_only.dxf")
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", None)
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open("data/dxf/insert_only.dxf")
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 5
 
@@ -2869,9 +2857,8 @@ def test_ogr_dxf_37():
     ds = None
 
     # Read back.
-    gdal.SetConfigOption("DXF_INLINE_BLOCKS", "FALSE")
-    ds = ogr.Open("/vsimem/ogr_dxf_37.dxf")
-    gdal.SetConfigOption("DXF_INLINE_BLOCKS", None)
+    with gdal.config_option("DXF_INLINE_BLOCKS", "FALSE"):
+        ds = ogr.Open("/vsimem/ogr_dxf_37.dxf")
     lyr = ds.GetLayerByName("blocks")
 
     # Check first feature
@@ -3041,9 +3028,8 @@ def test_ogr_dxf_42():
     )
 
     # No inlining, merging
-    gdal.SetConfigOption("DXF_INLINE_BLOCKS", "FALSE")
-    ds = ogr.Open("data/dxf/block-insert-order.dxf")
-    gdal.SetConfigOption("DXF_INLINE_BLOCKS", None)
+    with gdal.config_option("DXF_INLINE_BLOCKS", "FALSE"):
+        ds = ogr.Open("data/dxf/block-insert-order.dxf")
 
     lyr = ds.GetLayerByName("entities")
     assert lyr.GetFeatureCount() == 2, (
@@ -3087,9 +3073,8 @@ def test_ogr_dxf_42():
     assert f.GetField("Block") == "BLOCK3", "Wrong Block"
 
     # Inlining, no merging
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE")
-    ds = ogr.Open("data/dxf/block-insert-order.dxf")
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", None)
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open("data/dxf/block-insert-order.dxf")
 
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 4, (
@@ -3536,9 +3521,8 @@ def test_ogr_dxf_47():
 
 def test_ogr_dxf_48():
 
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE")
-    ds = ogr.Open("data/dxf/byblock-bylayer.dxf")
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", None)
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open("data/dxf/byblock-bylayer.dxf")
 
     lyr = ds.GetLayer(0)
 
@@ -3648,9 +3632,8 @@ def test_ogr_dxf_49():
     assert f.GetField("Text") == "", "Wrong Text value on ATTRIB on second INSERT"
 
     # No inlining
-    gdal.SetConfigOption("DXF_INLINE_BLOCKS", "FALSE")
-    ds = ogr.Open("data/dxf/attrib.dxf")
-    gdal.SetConfigOption("DXF_INLINE_BLOCKS", None)
+    with gdal.config_option("DXF_INLINE_BLOCKS", "FALSE"):
+        ds = ogr.Open("data/dxf/attrib.dxf")
 
     lyr = ds.GetLayerByName("entities")
 
@@ -3685,9 +3668,8 @@ def test_ogr_dxf_49():
 
 def test_ogr_dxf_50():
 
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE")
-    ds = ogr.Open("data/dxf/text-fancy.dxf")
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", None)
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open("data/dxf/text-fancy.dxf")
 
     lyr = ds.GetLayer(0)
 
@@ -3911,9 +3893,8 @@ def test_ogr_dxf_53():
 
 def test_ogr_dxf_54():
 
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE")
-    ds = ogr.Open("data/dxf/frozen-off.dxf")
-    gdal.SetConfigOption("DXF_MERGE_BLOCK_GEOMETRIES", None)
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open("data/dxf/frozen-off.dxf")
     lyr = ds.GetLayer(0)
 
     # Features should be visible/hidden in the following order:

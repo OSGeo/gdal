@@ -560,11 +560,10 @@ def test_ogr_wfs_fake_wfs_server():
     if port == 0:
         pytest.skip()
 
-    gdal.SetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO")
-    ds = ogr.Open(
-        "WFS:http://127.0.0.1:%d/fakewfs?OUTPUTFORMAT=application/flatgeobuf" % port
-    )
-    gdal.SetConfigOption("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", None)
+    with gdal.config_option("OGR_WFS_LOAD_MULTIPLE_LAYER_DEFN", "NO"):
+        ds = ogr.Open(
+            "WFS:http://127.0.0.1:%d/fakewfs?OUTPUTFORMAT=application/flatgeobuf" % port
+        )
     if ds is None:
         webserver.server_stop(process, port)
         pytest.fail("did not managed to open WFS datastore")

@@ -97,12 +97,12 @@ def test_srs_write_compd_cs():
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
-    gdal.SetConfigOption("GTIFF_REPORT_COMPD_CS", "YES")
-    ds = gdal.Open("/vsimem/tiff_srs_compd_cs.tif")
-    gdal.ErrorReset()
-    wkt = ds.GetProjectionRef()
-    assert gdal.GetLastErrorMsg() == ""
-    gdal.SetConfigOption("GTIFF_REPORT_COMPD_CS", None)
+    with gdal.config_option("GTIFF_REPORT_COMPD_CS", "YES"):
+        ds = gdal.Open("/vsimem/tiff_srs_compd_cs.tif")
+        gdal.ErrorReset()
+        wkt = ds.GetProjectionRef()
+        assert gdal.GetLastErrorMsg() == ""
+
     sr2 = osr.SpatialReference()
     sr2.SetFromUserInput(wkt)
     ds = None
@@ -118,10 +118,9 @@ def test_srs_write_compd_cs():
 
 def test_srs_read_compd_cs():
 
-    gdal.SetConfigOption("GTIFF_REPORT_COMPD_CS", "YES")
-    ds = gdal.Open("data/vertcs_user_defined.tif")
-    wkt = ds.GetProjectionRef()
-    gdal.SetConfigOption("GTIFF_REPORT_COMPD_CS", None)
+    with gdal.config_option("GTIFF_REPORT_COMPD_CS", "YES"):
+        ds = gdal.Open("data/vertcs_user_defined.tif")
+        wkt = ds.GetProjectionRef()
 
     assert (
         wkt
@@ -359,22 +358,11 @@ def test_tiff_custom_datum_known_ellipsoid():
 # override to another unit (us-feet) ... (#6210)
 
 
-def test_tiff_srs_epsg_2853_with_us_feet():
+@pytest.mark.parametrize("gtiff_import_from_epsg", ("YES", "NO"))
+def test_tiff_srs_epsg_2853_with_us_feet(gtiff_import_from_epsg):
 
-    old_val = gdal.GetConfigOption("GTIFF_IMPORT_FROM_EPSG")
-    gdal.SetConfigOption("GTIFF_IMPORT_FROM_EPSG", "YES")
-    ds = gdal.Open("data/epsg_2853_with_us_feet.tif")
-    gdal.SetConfigOption("GTIFF_IMPORT_FROM_EPSG", old_val)
-    wkt = ds.GetProjectionRef()
-    assert (
-        'PARAMETER["false_easting",11482916.66' in wkt
-        and 'UNIT["us_survey_feet",0.3048006' in wkt
-        and "2853" not in wkt
-    )
-
-    gdal.SetConfigOption("GTIFF_IMPORT_FROM_EPSG", "NO")
-    ds = gdal.Open("data/epsg_2853_with_us_feet.tif")
-    gdal.SetConfigOption("GTIFF_IMPORT_FROM_EPSG", old_val)
+    with gdal.config_option("GTIFF_IMPORT_FROM_EPSG", gtiff_import_from_epsg):
+        ds = gdal.Open("data/epsg_2853_with_us_feet.tif")
     wkt = ds.GetProjectionRef()
     assert (
         'PARAMETER["false_easting",11482916.66' in wkt

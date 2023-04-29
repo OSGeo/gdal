@@ -366,9 +366,8 @@ def test_ogr_osm_3(options=None, all_layers=False):
 
 
 def test_ogr_osm_3_sqlite_nodes():
-    gdal.SetConfigOption("OSM_USE_CUSTOM_INDEXING", "NO")
-    ret = test_ogr_osm_3(options="-skip")
-    gdal.SetConfigOption("OSM_USE_CUSTOM_INDEXING", None)
+    with gdal.config_option("OSM_USE_CUSTOM_INDEXING", "NO"):
+        ret = test_ogr_osm_3(options="-skip")
     return ret
 
 
@@ -377,9 +376,8 @@ def test_ogr_osm_3_sqlite_nodes():
 
 
 def test_ogr_osm_3_custom_compress_nodes():
-    gdal.SetConfigOption("OSM_COMPRESS_NODES", "YES")
-    ret = test_ogr_osm_3()
-    gdal.SetConfigOption("OSM_COMPRESS_NODES", None)
+    with gdal.config_option("OSM_COMPRESS_NODES", "YES"):
+        ret = test_ogr_osm_3()
     return ret
 
 
@@ -580,10 +578,8 @@ def test_ogr_osm_8():
 
 def test_ogr_osm_9():
 
-    old_val = gdal.GetConfigOption("OSM_USE_CUSTOM_INDEXING")
-    gdal.SetConfigOption("OSM_USE_CUSTOM_INDEXING", "NO")
-    ret = test_ogr_osm_8()
-    gdal.SetConfigOption("OSM_USE_CUSTOM_INDEXING", old_val)
+    with gdal.config_option("OSM_USE_CUSTOM_INDEXING", "NO"):
+        ret = test_ogr_osm_8()
 
     return ret
 
@@ -669,9 +665,8 @@ def test_ogr_osm_10():
 
 def test_ogr_osm_11():
 
-    gdal.SetConfigOption("OSM_CONFIG_FILE", "data/osm/osmconf_alltags.ini")
-    ds = ogr.Open("data/osm/test.pbf")
-    gdal.SetConfigOption("OSM_CONFIG_FILE", None)
+    with gdal.config_option("OSM_CONFIG_FILE", "data/osm/osmconf_alltags.ini"):
+        ds = ogr.Open("data/osm/test.pbf")
     lyr = ds.GetLayerByName("points")
     feat = lyr.GetNextFeature()
     if (

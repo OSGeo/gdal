@@ -91,13 +91,11 @@ def startup_and_cleanup():
 
     ogrtest.elasticsearch_drv = ogr.GetDriverByName("Elasticsearch")
 
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", "YES")
+    with gdal.config_option("CPL_CURL_ENABLE_VSIMEM", "YES"):
 
-    yield
+        yield
 
-    ogr_elasticsearch_delete_files()
-
-    gdal.SetConfigOption("CPL_CURL_ENABLE_VSIMEM", None)
+        ogr_elasticsearch_delete_files()
 
 
 ###############################################################################

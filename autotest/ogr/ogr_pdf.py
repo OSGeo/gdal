@@ -278,10 +278,9 @@ def test_ogr_pdf_4_podofo():
 
     md = gdal_pdf_drv.GetMetadata()
     if "HAVE_POPPLER" in md and "HAVE_PODOFO" in md:
-        gdal.SetConfigOption("GDAL_PDF_LIB", "PODOFO")
-        print("Using podofo now")
-        ret = test_ogr_pdf_4()
-        gdal.SetConfigOption("GDAL_PDF_LIB", None)
+        with gdal.config_option("GDAL_PDF_LIB", "PODOFO"):
+            print("Using podofo now")
+            ret = test_ogr_pdf_4()
         return ret
     pytest.skip()
 

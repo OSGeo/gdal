@@ -56,10 +56,6 @@ def test_ogr_s57_1():
 
     gdaltest.s57_ds = None
 
-    # Clear S57 options if set or our results will be messed up.
-    if gdal.GetConfigOption("OGR_S57_OPTIONS", "") != "":
-        gdal.SetConfigOption("OGR_S57_OPTIONS", "")
-
     gdaltest.s57_ds = ogr.Open("data/s57/1B5X02NE.000")
     assert gdaltest.s57_ds is not None, "failed to open test file."
 
@@ -256,12 +252,12 @@ def test_ogr_s57_write():
 
     gdal.Unlink("tmp/ogr_s57_9.000")
 
-    gdal.SetConfigOption(
+    with gdal.config_option(
         "OGR_S57_OPTIONS", "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
-    )
-    ds = ogr.GetDriverByName("S57").CreateDataSource("tmp/ogr_s57_9.000")
-    src_ds = ogr.Open("data/s57/1B5X02NE.000")
-    gdal.SetConfigOption("OGR_S57_OPTIONS", None)
+    ):
+        ds = ogr.GetDriverByName("S57").CreateDataSource("tmp/ogr_s57_9.000")
+        src_ds = ogr.Open("data/s57/1B5X02NE.000")
+
     for src_lyr in src_ds:
         if src_lyr.GetName() == "DSID":
             continue
@@ -286,15 +282,14 @@ def test_ogr_s57_write():
 
     gdal.Unlink("tmp/ogr_s57_9.000")
 
-    gdal.SetConfigOption(
+    with gdal.config_option(
         "OGR_S57_OPTIONS", "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
-    )
-    gdal.VectorTranslate(
-        "tmp/ogr_s57_9.000",
-        "data/s57/1B5X02NE.000",
-        options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL SOUNDG",
-    )
-    gdal.SetConfigOption("OGR_S57_OPTIONS", None)
+    ):
+        gdal.VectorTranslate(
+            "tmp/ogr_s57_9.000",
+            "data/s57/1B5X02NE.000",
+            options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL SOUNDG",
+        )
 
     ds = gdal.OpenEx("tmp/ogr_s57_9.000", open_options=["RETURN_PRIMITIVES=ON"])
     assert ds is not None
@@ -445,11 +440,10 @@ def test_ogr_s57_online_4():
         except OSError:
             pytest.skip()
 
-    gdal.SetConfigOption(
+    with gdal.config_option(
         "OGR_S57_OPTIONS", "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
-    )
-    ds = ogr.Open("tmp/cache/ENC_ROOT/JP34NC94.000")
-    gdal.SetConfigOption("OGR_S57_OPTIONS", None)
+    ):
+        ds = ogr.Open("tmp/cache/ENC_ROOT/JP34NC94.000")
     lyr = ds.GetLayerByName("LNDMRK")
     for feat in lyr:
         feat.NOBJNM

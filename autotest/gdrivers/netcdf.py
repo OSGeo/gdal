@@ -1086,17 +1086,13 @@ def test_netcdf_27():
 
     # test default config
     test = gdaltest.GDALTest("NETCDF", "netcdf/int16-nogeo.nc", 1, 4672)
-    config_bak = gdal.GetConfigOption("GDAL_NETCDF_BOTTOMUP")
-    gdal.SetConfigOption("GDAL_NETCDF_BOTTOMUP", None)
-    test.testOpen()
-    gdal.SetConfigOption("GDAL_NETCDF_BOTTOMUP", config_bak)
+    with gdal.config_option("GDAL_NETCDF_BOTTOMUP", None):
+        test.testOpen()
 
     # test GDAL_NETCDF_BOTTOMUP=NO
     test = gdaltest.GDALTest("NETCDF", "netcdf/int16-nogeo.nc", 1, 4855)
-    config_bak = gdal.GetConfigOption("GDAL_NETCDF_BOTTOMUP")
-    gdal.SetConfigOption("GDAL_NETCDF_BOTTOMUP", "NO")
-    test.testOpen()
-    gdal.SetConfigOption("GDAL_NETCDF_BOTTOMUP", config_bak)
+    with gdal.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
+        test.testOpen()
 
 
 ###############################################################################
@@ -1282,8 +1278,6 @@ def test_netcdf_32():
 
     ifile = "data/byte.tif"
     ofile = "tmp/netcdf_32.nc"
-
-    # gdal.SetConfigOption('CPL_DEBUG', 'ON')
 
     # test basic read/write
     netcdf_test_copy(ifile, 1, 4672, ofile, ["FORMAT=NC4"])
@@ -3047,18 +3041,17 @@ def test_netcdf_67():
         pytest.skip()
 
     # disable bottom-up mode to use the real file's blocks size
-    gdal.SetConfigOption("GDAL_NETCDF_BOTTOMUP", "NO")
-    # for the moment the next test using check_stat does not work, seems like
-    # the last pixel (9) of the image is not handled by stats...
-    #    tst = gdaltest.GDALTest( 'NetCDF', 'partial_block_ticket5950.nc', 1, 45 )
-    #    result = tst.testOpen( check_stat=(1, 9, 5, 2.582) )
-    # so for the moment compare the full image
-    ds = gdal.Open("data/netcdf/partial_block_ticket5950.nc", gdal.GA_ReadOnly)
-    ref = numpy.arange(1, 10).reshape((3, 3))
-    if not numpy.array_equal(ds.GetRasterBand(1).ReadAsArray(), ref):
-        pytest.fail()
-    ds = None
-    gdal.SetConfigOption("GDAL_NETCDF_BOTTOMUP", None)
+    with gdal.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
+        # for the moment the next test using check_stat does not work, seems like
+        # the last pixel (9) of the image is not handled by stats...
+        #    tst = gdaltest.GDALTest( 'NetCDF', 'partial_block_ticket5950.nc', 1, 45 )
+        #    result = tst.testOpen( check_stat=(1, 9, 5, 2.582) )
+        # so for the moment compare the full image
+        ds = gdal.Open("data/netcdf/partial_block_ticket5950.nc", gdal.GA_ReadOnly)
+        ref = numpy.arange(1, 10).reshape((3, 3))
+        if not numpy.array_equal(ds.GetRasterBand(1).ReadAsArray(), ref):
+            pytest.fail()
+        ds = None
 
 
 ###############################################################################

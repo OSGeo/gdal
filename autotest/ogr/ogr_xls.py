@@ -102,14 +102,12 @@ def test_ogr_xls_2():
     if drv is None:
         pytest.skip()
 
-    gdal.SetConfigOption("OGR_XLS_HEADERS", "DISABLE")
-    ds = ogr.Open("data/xls/test972000xp.xls")
+    with gdal.config_option("OGR_XLS_HEADERS", "DISABLE"):
+        ds = ogr.Open("data/xls/test972000xp.xls")
 
-    lyr = ds.GetLayer(0)
+        lyr = ds.GetLayer(0)
 
-    assert lyr.GetFeatureCount() == 4
-
-    gdal.SetConfigOption("OGR_XLS_HEADERS", None)
+        assert lyr.GetFeatureCount() == 4
 
 
 ###############################################################################
@@ -122,14 +120,12 @@ def test_ogr_xls_3():
     if drv is None:
         pytest.skip()
 
-    gdal.SetConfigOption("OGR_XLS_FIELD_TYPES", "STRING")
-    ds = ogr.Open("data/xls/test972000xp.xls")
+    with gdal.config_option("OGR_XLS_FIELD_TYPES", "STRING"):
+        ds = ogr.Open("data/xls/test972000xp.xls")
 
-    lyr = ds.GetLayer(0)
+        lyr = ds.GetLayer(0)
 
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
-
-    gdal.SetConfigOption("OGR_XLS_FIELD_TYPES", None)
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
 
 
 ###############################################################################

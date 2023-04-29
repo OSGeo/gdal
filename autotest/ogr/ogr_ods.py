@@ -189,14 +189,12 @@ def test_ogr_ods_kspread_1():
 
 def test_ogr_ods_2():
 
-    gdal.SetConfigOption("OGR_ODS_HEADERS", "DISABLE")
-    ds = ogr.Open("data/ods/test.ods")
+    with gdal.config_option("OGR_ODS_HEADERS", "DISABLE"):
+        ds = ogr.Open("data/ods/test.ods")
 
-    lyr = ds.GetLayerByName("Feuille7")
+        lyr = ds.GetLayerByName("Feuille7")
 
-    assert lyr.GetFeatureCount() == 3
-
-    gdal.SetConfigOption("OGR_ODS_HEADERS", None)
+        assert lyr.GetFeatureCount() == 3
 
 
 ###############################################################################
@@ -205,14 +203,12 @@ def test_ogr_ods_2():
 
 def test_ogr_ods_3():
 
-    gdal.SetConfigOption("OGR_ODS_FIELD_TYPES", "STRING")
-    ds = ogr.Open("data/ods/test.ods")
+    with gdal.config_option("OGR_ODS_FIELD_TYPES", "STRING"):
+        ds = ogr.Open("data/ods/test.ods")
 
-    lyr = ds.GetLayerByName("Feuille7")
+        lyr = ds.GetLayerByName("Feuille7")
 
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
-
-    gdal.SetConfigOption("OGR_ODS_FIELD_TYPES", None)
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
 
 
 ###############################################################################

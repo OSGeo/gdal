@@ -499,9 +499,8 @@ def test_ogr_libkml_check_write_kmz():
 
 
 def test_ogr_libkml_write_kmz_use_doc_off():
-    gdal.SetConfigOption("LIBKML_USE_DOC.KML", "NO")
-    ret = ogr_libkml_write("/vsimem/libkml_use_doc_off.kmz")
-    gdal.SetConfigOption("LIBKML_USE_DOC.KML", None)
+    with gdal.config_option("LIBKML_USE_DOC.KML", "NO"):
+        ret = ogr_libkml_write("/vsimem/libkml_use_doc_off.kmz")
     return ret
 
 
@@ -1437,10 +1436,9 @@ def test_ogr_libkml_read_write_style():
         pytest.fail(resolved_stylemap)
 
     # Test reading highlight style in StyleMap
-    gdal.SetConfigOption("LIBKML_STYLEMAP_KEY", "HIGHLIGHT")
-    src_ds = ogr.Open("/vsimem/ogr_libkml_read_write_style_read.kml")
-    style_table = src_ds.GetStyleTable()
-    gdal.SetConfigOption("LIBKML_STYLEMAP_KEY", None)
+    with gdal.config_option("LIBKML_STYLEMAP_KEY", "HIGHLIGHT"):
+        src_ds = ogr.Open("/vsimem/ogr_libkml_read_write_style_read.kml")
+        style_table = src_ds.GetStyleTable()
 
     ds = ogr.GetDriverByName("LIBKML").CreateDataSource(
         "/vsimem/ogr_libkml_read_write_style_write.kml"
@@ -1930,9 +1928,8 @@ def test_ogr_libkml_read_write_data():
     ds = ogr.GetDriverByName("LIBKML").CreateDataSource(
         "/vsimem/ogr_libkml_read_write_data.kml"
     )
-    gdal.SetConfigOption("LIBKML_USE_SIMPLEFIELD", "NO")
-    lyr = ds.CreateLayer("test")
-    gdal.SetConfigOption("LIBKML_USE_SIMPLEFIELD", None)
+    with gdal.config_option("LIBKML_USE_SIMPLEFIELD", "NO"):
+        lyr = ds.CreateLayer("test")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField("foo", "bar")

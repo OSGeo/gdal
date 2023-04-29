@@ -109,14 +109,16 @@ def test_ograpispy_2():
         lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
         ds = None
 
-        gdal.SetConfigOption("OGR_API_SPY_FILE", "tmp/ograpispy_2.py")
-        gdal.SetConfigOption("OGR_API_SPY_SNAPSHOT_PATH", "tmp")
-        ds = ogr.Open("tmp/ograpispy_2.shp", update=1)
-        lyr = ds.GetLayer(0)
-        lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
-        ds = None
-        gdal.SetConfigOption("OGR_API_SPY_FILE", None)
-        gdal.SetConfigOption("OGR_API_SPY_SNAPSHOT_PATH", None)
+        with gdal.config_options(
+            {
+                "OGR_API_SPY_FILE": "tmp/ograpispy_2.py",
+                "OGR_API_SPY_SNAPSHOT_PATH": "tmp",
+            }
+        ):
+            ds = ogr.Open("tmp/ograpispy_2.shp", update=1)
+            lyr = ds.GetLayer(0)
+            lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))
+            ds = None
 
         ds = ogr.Open("tmp/snapshot_1/source/ograpispy_2.shp")
         lyr = ds.GetLayer(0)

@@ -412,9 +412,8 @@ def test_vsizip_9():
 
 def test_vsizip_10():
 
-    gdal.SetConfigOption("CPL_ZIP_ENCODING", "CP866")
-    content = gdal.ReadDir("/vsizip/data/cp866.zip")
-    gdal.SetConfigOption("CPL_ZIP_ENCODING", None)
+    with gdal.config_option("CPL_ZIP_ENCODING", "CP866"):
+        content = gdal.ReadDir("/vsizip/data/cp866.zip")
     ok = 0
     try:
         local_vars = {"content": content, "ok": ok}

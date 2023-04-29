@@ -197,68 +197,46 @@ def test_vsifile_4():
 # Test vsicache
 
 
-def test_vsifile_5():
+@pytest.mark.parametrize("cache_size", ("0", "65536", None))
+def test_vsifile_5(cache_size):
 
     fp = gdal.VSIFOpenL("tmp/vsifile_5.bin", "wb")
     ref_data = "".join(["%08X" % i for i in range(5 * 32768)])
     gdal.VSIFWriteL(ref_data, 1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)
 
-    gdal.SetConfigOption("VSI_CACHE", "YES")
-
-    for i in range(3):
-        if i == 0:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", "0")
-        elif i == 1:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", "65536")
-        else:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-
+    with gdal.config_options({"VSI_CACHE": "YES", "VSI_CACHE_SIZE": cache_size}):
         fp = gdal.VSIFOpenL("tmp/vsifile_5.bin", "rb")
 
         gdal.VSIFSeekL(fp, 50000, 0)
         if gdal.VSIFTellL(fp) != 50000:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-            gdal.SetConfigOption("VSI_CACHE", None)
             pytest.fail()
 
         gdal.VSIFSeekL(fp, 50000, 1)
         if gdal.VSIFTellL(fp) != 100000:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-            gdal.SetConfigOption("VSI_CACHE", None)
             pytest.fail()
 
         gdal.VSIFSeekL(fp, 0, 2)
         if gdal.VSIFTellL(fp) != 5 * 32768 * 8:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-            gdal.SetConfigOption("VSI_CACHE", None)
             pytest.fail()
         gdal.VSIFReadL(1, 1, fp)
 
         gdal.VSIFSeekL(fp, 0, 0)
         data = gdal.VSIFReadL(1, 3 * 32768, fp)
         if data.decode("ascii") != ref_data[0 : 3 * 32768]:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-            gdal.SetConfigOption("VSI_CACHE", None)
             pytest.fail()
 
         gdal.VSIFSeekL(fp, 16384, 0)
         data = gdal.VSIFReadL(1, 5 * 32768, fp)
         if data.decode("ascii") != ref_data[16384 : 16384 + 5 * 32768]:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-            gdal.SetConfigOption("VSI_CACHE", None)
             pytest.fail()
 
         data = gdal.VSIFReadL(1, 50 * 32768, fp)
         if data[0:1130496].decode("ascii") != ref_data[16384 + 5 * 32768 :]:
-            gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-            gdal.SetConfigOption("VSI_CACHE", None)
             pytest.fail()
 
         gdal.VSIFCloseL(fp)
 
-    gdal.SetConfigOption("VSI_CACHE_SIZE", None)
-    gdal.SetConfigOption("VSI_CACHE", None)
     gdal.Unlink("tmp/vsifile_5.bin")
 
 
@@ -341,9 +319,8 @@ def test_vsifile_6():
     assert ref_data == got_data
 
     # Real test now
-    gdal.SetConfigOption("VSI_CACHE", "YES")
-    fp = gdal.VSIFOpenL("tmp/vsifile_6.bin", "rb")
-    gdal.SetConfigOption("VSI_CACHE", None)
+    with gdal.config_option("VSI_CACHE", "YES"):
+        fp = gdal.VSIFOpenL("tmp/vsifile_6.bin", "rb")
     gdal.VSIFSeekL(fp, offset, 0)
     got_data = gdal.VSIFReadL(1, len(ref_data), fp)
     gdal.VSIFCloseL(fp)

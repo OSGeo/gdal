@@ -71,6 +71,12 @@ def setup():
         ds = None
         gdal.Unlink("/vsimem/foo.db")
 
+        # This is to speed-up the runtime of tests on EXT4 filesystems
+        # Do not use this for production environment if you care about data safety
+        # w.r.t system/OS crashes, unless you know what you are doing.
+        with gdal.config_option("OGR_SQLITE_SYNCHRONOUS", "OFF"):
+            yield
+
 
 @pytest.fixture()
 def require_spatialite(setup):
@@ -102,11 +108,6 @@ def test_ogr_sqlite_1():
         os.remove("tmp/sqlite_test.db")
     except OSError:
         pass
-
-    # This is to speed-up the runtime of tests on EXT4 filesystems
-    # Do not use this for production environment if you care about data safety
-    # w.r.t system/OS crashes, unless you know what you are doing.
-    gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
 
     gdaltest.sl_ds = sqlite_dr.CreateDataSource("tmp/sqlite_test.db")
 
@@ -1304,9 +1305,8 @@ def test_ogr_sqlite_25():
     ds = None
     gdal.Unlink("/vsimem/ogr_sqlite_25.db")
 
-    gdal.SetConfigOption("GDAL_HTTP_TIMEOUT", "5")
-    ds = ogr.Open("/vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db")
-    gdal.SetConfigOption("GDAL_HTTP_TIMEOUT", None)
+    with gdal.config_option("GDAL_HTTP_TIMEOUT", "5"):
+        ds = ogr.Open("/vsicurl/http://download.osgeo.org/gdal/data/sqlite3/polygon.db")
     if ds is None:
         if (
             gdaltest.gdalurlopen(

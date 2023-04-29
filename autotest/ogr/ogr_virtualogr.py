@@ -186,9 +186,8 @@ def test_ogr_virtualogr_2(require_auto_load_extension):
     ds = None
 
     # Check that it is listed if OGR_SQLITE_LIST_VIRTUAL_OGR=YES
-    gdal.SetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", "YES")
-    ds = ogr.Open("/vsimem/ogr_virtualogr_2.db")
-    gdal.SetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", None)
+    with gdal.config_option("OGR_SQLITE_LIST_VIRTUAL_OGR", "YES"):
+        ds = ogr.Open("/vsimem/ogr_virtualogr_2.db")
     found = False
     for i in range(ds.GetLayerCount()):
         if ds.GetLayer(i).GetName() == "foo":
@@ -220,10 +219,10 @@ def test_ogr_virtualogr_2(require_auto_load_extension):
         pytest.fail("expected a failure")
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
-        gdal.SetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", "YES")
+    with gdal.config_option(
+        "OGR_SQLITE_LIST_VIRTUAL_OGR", "YES"
+    ), gdaltest.error_handler():
         ds = ogr.Open("/vsimem/ogr_virtualogr_2.db")
-        gdal.SetConfigOption("OGR_SQLITE_LIST_VIRTUAL_OGR", None)
     if gdal.GetLastErrorMsg() == "":
         ds = None
         gdal.Unlink("/vsimem/ogr_virtualogr_2.db")

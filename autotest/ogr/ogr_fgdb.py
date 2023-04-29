@@ -619,21 +619,19 @@ def test_ogr_fgdb_7(fgdb_drv):
     ds = fgdb_drv.CreateDataSource("tmp/test.gdb")
     lyr = ds.CreateLayer("test", srs=srs, geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
-    gdal.SetConfigOption("FGDB_BULK_LOAD", "YES")
-    for i in range(1000):
-        feat = ogr.Feature(lyr.GetLayerDefn())
-        feat.SetField(0, i)
-        geom = ogr.CreateGeometryFromWkt("POINT(0 1)")
-        feat.SetGeometry(geom)
-        lyr.CreateFeature(feat)
-        feat = None
+    with gdal.config_option("FGDB_BULK_LOAD", "YES"):
+        for i in range(1000):
+            feat = ogr.Feature(lyr.GetLayerDefn())
+            feat.SetField(0, i)
+            geom = ogr.CreateGeometryFromWkt("POINT(0 1)")
+            feat.SetGeometry(geom)
+            lyr.CreateFeature(feat)
+            feat = None
 
-    lyr.ResetReading()
-    feat = lyr.GetNextFeature()
-    assert feat.GetField(0) == 0
-    ds = None
-
-    gdal.SetConfigOption("FGDB_BULK_LOAD", None)
+        lyr.ResetReading()
+        feat = lyr.GetNextFeature()
+        assert feat.GetField(0) == 0
+        ds = None
 
 
 ###############################################################################
@@ -1450,19 +1448,15 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
     # Simulate an error case where StartTransaction() cannot copy backup files
     lyr_count = ds.GetLayerCount()
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-    with gdaltest.error_handler():
+    with gdal.config_option("FGDB_SIMUL_FAIL", "CASE1"), gdaltest.error_handler():
         ret = ds.StartTransaction(force=True)
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
     assert ds.GetLayerCount() == lyr_count
 
     # Simulate an error case where StartTransaction() cannot reopen database
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-    with gdaltest.error_handler():
+    with gdal.config_option("FGDB_SIMUL_FAIL", "CASE2"), gdaltest.error_handler():
         ret = ds.StartTransaction(force=True)
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
     assert ds.GetLayerCount() == 0
@@ -1543,10 +1537,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
         ds.DeleteLayer(ds.GetLayerCount() - 1)
 
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-        with gdaltest.error_handler():
+        with gdal.config_option("FGDB_SIMUL_FAIL", "CASE1"), gdaltest.error_handler():
             ret = ds.CommitTransaction()
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
         ds = None
@@ -1575,10 +1567,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         lyr.SetFeature(f)
         f = None
 
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-        with gdaltest.error_handler():
+        with gdal.config_option("FGDB_SIMUL_FAIL", "CASE2"), gdaltest.error_handler():
             ret = ds.CommitTransaction()
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
         ds = None
@@ -1602,10 +1592,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
         lyr.SetFeature(f)
         f = None
 
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE3")
-        with gdaltest.error_handler():
+        with gdal.config_option("FGDB_SIMUL_FAIL", "CASE3"), gdaltest.error_handler():
             ret = ds.CommitTransaction()
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
         ds = None
@@ -1631,10 +1619,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
             lyr.SetFeature(f)
             f = None
 
-            gdal.SetConfigOption("FGDB_SIMUL_FAIL", case)
-            with gdaltest.error_handler():
+            with gdal.config_option("FGDB_SIMUL_FAIL", case), gdaltest.error_handler():
                 ret = ds.CommitTransaction()
-            gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
             assert ret == 0, case
 
             ds = None
@@ -1660,10 +1646,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
         assert ds.StartTransaction(force=True) == 0
 
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-        with gdaltest.error_handler():
+        with gdal.config_option("FGDB_SIMUL_FAIL", "CASE1"), gdaltest.error_handler():
             ret = ds.CommitTransaction()
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
         ds = None
@@ -1677,10 +1661,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
         assert ds.StartTransaction(force=True) == 0
 
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-        with gdaltest.error_handler():
+        with gdal.config_option("FGDB_SIMUL_FAIL", "CASE2"), gdaltest.error_handler():
             ret = ds.CommitTransaction()
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret != 0
 
         ds = None
@@ -1695,10 +1677,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
         assert ds.StartTransaction(force=True) == 0
 
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE3")
-        with gdaltest.error_handler():
+        with gdal.config_option("FGDB_SIMUL_FAIL", "CASE3"), gdaltest.error_handler():
             ret = ds.CommitTransaction()
-        gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
         assert ret == 0
 
         ds = None
@@ -1713,10 +1693,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
     assert ds.StartTransaction(force=True) == 0
 
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE_REOPEN")
-    with gdaltest.error_handler():
+    with gdal.config_option("FGDB_SIMUL_FAIL", "CASE_REOPEN"), gdaltest.error_handler():
         ret = ds.CommitTransaction()
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
     assert ds.GetLayerCount() == 0
@@ -1732,10 +1710,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
     assert ds.StartTransaction(force=True) == 0
 
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE1")
-    with gdaltest.error_handler():
+    with gdal.config_option("FGDB_SIMUL_FAIL", "CASE1"), gdaltest.error_handler():
         ret = ds.RollbackTransaction()
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
     ds = None
@@ -1750,10 +1726,8 @@ def test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv):
 
     assert ds.StartTransaction(force=True) == 0
 
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", "CASE2")
-    with gdaltest.error_handler():
+    with gdal.config_option("FGDB_SIMUL_FAIL", "CASE2"), gdaltest.error_handler():
         ret = ds.RollbackTransaction()
-    gdal.SetConfigOption("FGDB_SIMUL_FAIL", None)
     assert ret != 0
 
     assert ds.GetLayerCount() == 0
@@ -1787,9 +1761,8 @@ def test_ogr_fgdb_19bis(openfilegdb_drv, fgdb_drv):
     if not bPerLayerCopyingForTransaction:
         pytest.skip()
 
-    gdal.SetConfigOption("FGDB_PER_LAYER_COPYING_TRANSACTION", "FALSE")
-    ret = test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv)
-    gdal.SetConfigOption("FGDB_PER_LAYER_COPYING_TRANSACTION", None)
+    with gdal.config_option("FGDB_PER_LAYER_COPYING_TRANSACTION", "FALSE"):
+        ret = test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv)
     return ret
 
 
@@ -2101,19 +2074,17 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
     # Multi-page indexes
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(32630)
-    gdal.SetConfigOption("FGDB_RESYNC_THRESHOLD", "600")
-    lyr = ds.CreateLayer("ogr_fgdb_20_indexes", geom_type=ogr.wkbPoint, srs=srs)
-    gdal.SetConfigOption("FGDB_RESYNC_THRESHOLD", None)
+    with gdal.config_option("FGDB_RESYNC_THRESHOLD", "600"):
+        lyr = ds.CreateLayer("ogr_fgdb_20_indexes", geom_type=ogr.wkbPoint, srs=srs)
     lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
     ds.ExecuteSQL("CREATE INDEX ogr_fgdb_20_indexes_id ON ogr_fgdb_20_indexes(id)")
-    gdal.SetConfigOption("FGDB_BULK_LOAD", "YES")
-    for i in range(1000):
-        f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFID(i + 2)
-        f.SetField("id", i + 2)
-        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 0)" % i))
-        lyr.CreateFeature(f)
-    gdal.SetConfigOption("FGDB_BULK_LOAD", None)
+    with gdal.config_option("FGDB_BULK_LOAD", "YES"):
+        for i in range(1000):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetFID(i + 2)
+            f.SetField("id", i + 2)
+            f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (%d 0)" % i))
+            lyr.CreateFeature(f)
     ds = None
 
     # Check consistency after re-opening
@@ -2258,9 +2229,8 @@ def test_ogr_fgdb_20(openfilegdb_drv, fgdb_drv):
         lyr.CreateFeature(f)
 
         with gdaltest.error_handler():
-            gdal.SetConfigOption("FGDB_SIMUL_FAIL_REOPEN", case)
-            sql_lyr = ds.ExecuteSQL("SELECT * FROM foo")
-            gdal.SetConfigOption("FGDB_SIMUL_FAIL_REOPEN", None)
+            with gdal.config_option("FGDB_SIMUL_FAIL_REOPEN", case):
+                sql_lyr = ds.ExecuteSQL("SELECT * FROM foo")
         if case == "CASE3":
             assert sql_lyr is not None, case
             ds.ReleaseResultSet(sql_lyr)

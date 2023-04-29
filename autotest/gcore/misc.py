@@ -224,37 +224,37 @@ def test_misc_5():
         # This is to speed-up the runtime of tests on EXT4 filesystems
         # Do not use this for production environment if you care about data safety
         # w.r.t system/OS crashes, unless you know what you are doing.
-        gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
+        with gdal.config_option("OGR_SQLITE_SYNCHRONOUS", "OFF"):
 
-        # Test Create() with various band numbers, including 0
-        for i in range(gdal.GetDriverCount()):
-            drv = gdal.GetDriver(i)
-            md = drv.GetMetadata()
-            if drv.ShortName == "PDF":
-                # PDF Create() is vector-only
-                continue
-            if drv.ShortName == "MBTiles":
-                # MBTiles only support some precise resolutions
-                continue
-            if "DCAP_CREATE" in md and "DCAP_RASTER" in md:
-                datatype = gdal.GDT_Byte
-                for nBands in range(6):
-                    _misc_5_internal(drv, datatype, nBands)
-
-                for nBands in [1, 3]:
-                    for datatype in (
-                        gdal.GDT_UInt16,
-                        gdal.GDT_Int16,
-                        gdal.GDT_UInt32,
-                        gdal.GDT_Int32,
-                        gdal.GDT_Float32,
-                        gdal.GDT_Float64,
-                        gdal.GDT_CInt16,
-                        gdal.GDT_CInt32,
-                        gdal.GDT_CFloat32,
-                        gdal.GDT_CFloat64,
-                    ):
+            # Test Create() with various band numbers, including 0
+            for i in range(gdal.GetDriverCount()):
+                drv = gdal.GetDriver(i)
+                md = drv.GetMetadata()
+                if drv.ShortName == "PDF":
+                    # PDF Create() is vector-only
+                    continue
+                if drv.ShortName == "MBTiles":
+                    # MBTiles only support some precise resolutions
+                    continue
+                if "DCAP_CREATE" in md and "DCAP_RASTER" in md:
+                    datatype = gdal.GDT_Byte
+                    for nBands in range(6):
                         _misc_5_internal(drv, datatype, nBands)
+
+                    for nBands in [1, 3]:
+                        for datatype in (
+                            gdal.GDT_UInt16,
+                            gdal.GDT_Int16,
+                            gdal.GDT_UInt32,
+                            gdal.GDT_Int32,
+                            gdal.GDT_Float32,
+                            gdal.GDT_Float64,
+                            gdal.GDT_CInt16,
+                            gdal.GDT_CInt32,
+                            gdal.GDT_CFloat32,
+                            gdal.GDT_CFloat64,
+                        ):
+                            _misc_5_internal(drv, datatype, nBands)
 
 
 ###############################################################################
@@ -477,33 +477,33 @@ def test_misc_6():
         # This is to speed-up the runtime of tests on EXT4 filesystems
         # Do not use this for production environment if you care about data safety
         # w.r.t system/OS crashes, unless you know what you are doing.
-        gdal.SetConfigOption("OGR_SQLITE_SYNCHRONOUS", "OFF")
+        with gdal.config_option("OGR_SQLITE_SYNCHRONOUS", "OFF"):
 
-        datatype = gdal.GDT_Byte
-        setDriversDone = set()
-        for nBands in range(6):
-            ret = misc_6_internal(datatype, nBands, setDriversDone)
-            if ret != "success":
-                gdal.PopErrorHandler()
-                return ret
+            datatype = gdal.GDT_Byte
+            setDriversDone = set()
+            for nBands in range(6):
+                ret = misc_6_internal(datatype, nBands, setDriversDone)
+                if ret != "success":
+                    gdal.PopErrorHandler()
+                    return ret
 
-        nBands = 1
-        for datatype in (
-            gdal.GDT_UInt16,
-            gdal.GDT_Int16,
-            gdal.GDT_UInt32,
-            gdal.GDT_Int32,
-            gdal.GDT_Float32,
-            gdal.GDT_Float64,
-            gdal.GDT_CInt16,
-            gdal.GDT_CInt32,
-            gdal.GDT_CFloat32,
-            gdal.GDT_CFloat64,
-        ):
-            ret = misc_6_internal(datatype, nBands, setDriversDone)
-            if ret != "success":
-                gdal.PopErrorHandler()
-                return ret
+            nBands = 1
+            for datatype in (
+                gdal.GDT_UInt16,
+                gdal.GDT_Int16,
+                gdal.GDT_UInt32,
+                gdal.GDT_Int32,
+                gdal.GDT_Float32,
+                gdal.GDT_Float64,
+                gdal.GDT_CInt16,
+                gdal.GDT_CInt32,
+                gdal.GDT_CFloat32,
+                gdal.GDT_CFloat64,
+            ):
+                ret = misc_6_internal(datatype, nBands, setDriversDone)
+                if ret != "success":
+                    gdal.PopErrorHandler()
+                    return ret
 
 
 ###############################################################################
