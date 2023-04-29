@@ -753,6 +753,8 @@ detect the HDF5 library.
     be manually set when needed.
 
 
+.. _building_from_source_hdfs:
+
 HDFS
 ****
 

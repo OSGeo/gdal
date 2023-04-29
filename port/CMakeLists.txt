@@ -261,11 +261,6 @@ if (HAVE_USERFAULTFD_H)
   target_compile_definitions(cpl PRIVATE -DENABLE_UFFD)
 endif ()
 
-option(HDFS_ENABLED "Include HDFS support" OFF)
-if (HDFS_ENABLED)
-  target_compile_definitions(cpl PRIVATE -DHDFS_ENABLED)
-endif ()
-
 # for plugin DLFCN: for win32 https://github.com/dlfcn-win32/dlfcn-win32/archive/v1.1.1.tar.gz if(WIN32)
 # find_package(dlfcn- win32 REQUIRED) set(CMAKE_DL_LIBS dlfcn-win32::dl) endif()
 

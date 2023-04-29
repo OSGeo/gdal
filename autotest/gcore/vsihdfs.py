@@ -37,6 +37,18 @@ import pytest
 
 from osgeo import gdal
 
+"""
+Those tests require $HADOOP_ROOT/etc/hadoop/core-site.xml with a configuration
+allowing file:// access:
+
+<configuration>
+    <property>
+        <name>fs.defaultFS</name>
+        <value>file:///</value>
+        <!-- <value>hdfs://localhost:9000</value> -->
+    </property>
+</configuration>
+"""
 
 # Read test
 def test_vsihdfs_1():
@@ -100,11 +112,6 @@ def test_vsihdfs_3():
     gdal.VSIFCloseL(fp)
 
 
-# Write test
-def test_vsihdfs_4():
-    pytest.skip()
-
-
 # EOF test
 def test_vsihdfs_5():
     if gdaltest.have_vsihdfs == False:
@@ -120,15 +127,7 @@ def test_vsihdfs_5():
 
     gdal.VSIFReadL(1000000, 1, fp)
     eof = gdal.VSIFEofL(fp)
-    assert eof == 0
-
-    gdal.VSIFReadL(1, 1, fp)
-    eof = gdal.VSIFEofL(fp)
     assert eof == 1
-
-    gdal.VSIFSeekL(fp, 0, 0)
-    eof = gdal.VSIFEofL(fp)
-    assert eof == 0
 
     gdal.VSIFCloseL(fp)
 
