@@ -337,6 +337,13 @@ Starting with GDAL 3.6, the following configuration options control the TCP keep
 - :decl_configoption:`GDAL_HTTP_TCP_KEEPIDLE` = integer, in seconds. Keep-alive idle time. Defaults to 60. Only taken into account if GDAL_HTTP_TCP_KEEPALIVE=YES.
 - :decl_configoption:`GDAL_HTTP_TCP_KEEPINTVL` = integer, in seconds. Interval time between keep-alive probes. Defaults to 60. Only taken into account if GDAL_HTTP_TCP_KEEPALIVE=YES.
 
+Starting with GDAL 3.7, the following configuration options control support for SSL client certificates:
+
+- :decl_configoption:`GDAL_HTTP_SSLCERT` = filename. Filename of the the SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html
+- :decl_configoption:`GDAL_HTTP_SSLCERTTYPE` = string. Format of the SSL certificate: "PEM" or "DER". Cf https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html
+- :decl_configoption:`GDAL_HTTP_SSLKEY` = filename. Private key file for TLS and SSL client certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLKEY.html
+- :decl_configoption:`GDAL_HTTP_KEYPASSWD` = string. Passphrase to private key. Cf https://curl.se/libcurl/c/CURLOPT_KEYPASSWD.html
+
 More generally options of :cpp:func:`CPLHTTPFetch` available through configuration options are available.
 Starting with GDAL 3.7, the above configuration options can also be specified
 as path-specific options with :cpp:func:`VSISetPathSpecificOption`.
