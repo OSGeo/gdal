@@ -48,6 +48,7 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
     CPLString m_osSAS;
     CPLString m_osAccessToken;
     bool m_bFromManagedIdentities;
+    bool m_bIncludeMSVersion = true;
 
     enum class Service
     {
@@ -81,6 +82,11 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
     static VSIAzureBlobHandleHelper *
     BuildFromURI(const char *pszURI, const char *pszFSPrefix,
                  CSLConstList papszOptions = nullptr);
+
+    void SetIncludeMSVersion(bool bInclude)
+    {
+        m_bIncludeMSVersion = bInclude;
+    }
 
     struct curl_slist *
     GetCurlHeaders(const CPLString &osVerbosVerb,
