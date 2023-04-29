@@ -368,8 +368,8 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
         }
     }
     uint32_t nFirstExtraChannel = (bAlphaEmbedded) ? 1 : 0;
-    size_t main_buffer_size = sp->uncompressed_size;
-    size_t channel_size = main_buffer_size / td->td_samplesperpixel;
+    unsigned int main_buffer_size = sp->uncompressed_size;
+    unsigned int channel_size = main_buffer_size / td->td_samplesperpixel;
     uint8_t *extra_channel_buffer = NULL;
 
     int nBytesPerSample = GetJXLDataTypeSize(format.data_type);
@@ -403,7 +403,7 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
             {
                 TIFFErrorExtR(tif, module,
                               "JxlDecoderExtraChannelBufferSize returned %ld, "
-                              "expecting %ld",
+                              "expecting %u",
                               buffer_size, channel_size);
                 _TIFFfreeExt(tif, extra_channel_buffer);
                 return 0;
@@ -516,14 +516,18 @@ static int JXLPreDecode(TIFF *tif, uint16_t s)
         // first reorder the main buffer
         int nMainChannels = bAlphaEmbedded ? info.num_color_channels + 1
                                            : info.num_color_channels;
-        int mainPixSize = nMainChannels * nBytesPerSample;
-        int fullPixSize = td->td_samplesperpixel * nBytesPerSample;
+        unsigned int mainPixSize = nMainChannels * nBytesPerSample;
+        unsigned int fullPixSize = td->td_samplesperpixel * nBytesPerSample;
         unsigned int outOff = sp->uncompressed_size - fullPixSize;
-        int inOff = main_buffer_size - mainPixSize;
-        for (; inOff >= 0; inOff -= mainPixSize, outOff -= fullPixSize)
+        unsigned int inOff = main_buffer_size - mainPixSize;
+        while (TRUE)
         {
             memcpy(sp->uncompressed_buffer + outOff,
                    sp->uncompressed_buffer + inOff, mainPixSize);
+            if (inOff < mainPixSize)
+                break;
+            inOff -= mainPixSize;
+            outOff -= fullPixSize;
         }
         // then copy over the data from the extra_channel_buffer
         int nExtraChannelsToExtract =
