@@ -172,7 +172,7 @@ MDSYS.SDO_GEORASTER)" \\
    Defaults to 1024.
 
 -  **JP2_PROGRESSION=LRCP/RLCP/RPCL/PCRL/CPRL** Only if COMPRESS=JP2-f :
-   Progession order. Defaults to LRCP.
+   Progression order. Defaults to LRCP.
 
 -  **NBITS**: Sub byte data type, options: 1, 2 or 4.
 -  **SPATIALEXTENT**: Generate Spatial Extents. The default for that
