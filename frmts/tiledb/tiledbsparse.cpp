@@ -268,6 +268,7 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
         if (!poLayer->InitFromStorage(poDS->m_ctx.get(), nTimestamp,
                                       poOpenInfo->papszOpenOptions))
         {
+            poLayer->m_array.reset();
             return false;
         }
 

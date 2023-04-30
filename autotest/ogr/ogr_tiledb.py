@@ -876,6 +876,16 @@ def test_ogr_tiledb_dimension_names_open_option():
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (2 1)"
     ds = None
 
+    with pytest.raises(Exception):
+        gdal.OpenEx("tmp/test.tiledb", open_options=["DIM_X=invalid", "DIM_Y=_Y"])
+
+    with pytest.raises(Exception):
+        gdal.OpenEx(
+            "tmp/test.tiledb",
+            gdal.OF_UPDATE,
+            open_options=["DIM_X=invalid", "DIM_Y=_Y"],
+        )
+
     shutil.rmtree("tmp/test.tiledb")
 
 
