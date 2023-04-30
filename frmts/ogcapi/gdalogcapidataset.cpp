@@ -1671,13 +1671,11 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                       MEDIA_TYPE_JSON))
         return false;
 
-    const auto uri =
-        oDoc.GetRoot().GetString("uri");
+    const auto uri = oDoc.GetRoot().GetString("uri");
 
     if (uri.empty())
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Cannot parse TMS uri");
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot parse TMS uri");
         return false;
     }
 
