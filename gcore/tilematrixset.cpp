@@ -78,8 +78,6 @@ std::unique_ptr<TileMatrixSet> TileMatrixSet::parse(const char *fileOrDef)
 
     constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
     if (EQUAL(fileOrDef, "GoogleMapsCompatible") ||
-        EQUAL(fileOrDef, "http://www.opengis.net/def/tilematrixset/OGC/1.0/"
-                         "GoogleCRS84Quad") ||
         EQUAL(
             fileOrDef,
             "http://www.opengis.net/def/tilematrixset/OGC/1.0/WebMercatorQuad"))
