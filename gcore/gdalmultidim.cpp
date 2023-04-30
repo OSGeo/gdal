@@ -1314,6 +1314,29 @@ void GDALGroup::ClearStatistics()
 }
 
 /************************************************************************/
+/*                            Rename()                                  */
+/************************************************************************/
+
+/** Rename the group.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C function GDALGroupRename().
+ *
+ * @param osNewName New name.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALGroup::Rename(CPL_UNUSED const std::string &osNewName)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "Rename() not implemented");
+    return false;
+}
+
+/************************************************************************/
 /*                       ~GDALAbstractMDArray()                         */
 /************************************************************************/
 
@@ -1373,6 +1396,30 @@ GDALAbstractMDArray::GDALAbstractMDArray(const std::string &osParentName,
 size_t GDALAbstractMDArray::GetDimensionCount() const
 {
     return GetDimensions().size();
+}
+
+/************************************************************************/
+/*                            Rename()                                  */
+/************************************************************************/
+
+/** Rename the attribute/array.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C functions GDALMDArrayRename() or
+ * GDALAttributeRename().
+ *
+ * @param osNewName New name.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALAbstractMDArray::Rename(CPL_UNUSED const std::string &osNewName)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "Rename() not implemented");
+    return false;
 }
 
 /************************************************************************/
@@ -8840,6 +8887,29 @@ bool GDALDimension::SetIndexingVariable(
 }
 
 /************************************************************************/
+/*                            Rename()                                  */
+/************************************************************************/
+
+/** Rename the dimension.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C function GDALDimensionRename().
+ *
+ * @param osNewName New name.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALDimension::Rename(CPL_UNUSED const std::string &osNewName)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "Rename() not implemented");
+    return false;
+}
+
+/************************************************************************/
 /************************************************************************/
 /************************************************************************/
 /*                              C API                                   */
@@ -9766,6 +9836,28 @@ GDALAttributeH GDALGroupCreateAttribute(GDALGroupH hGroup, const char *pszName,
     if (!ret)
         return nullptr;
     return new GDALAttributeHS(ret);
+}
+
+/************************************************************************/
+/*                          GDALGroupRename()                           */
+/************************************************************************/
+
+/** Rename the group.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C++ method GDALGroup::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALGroupRename(GDALGroupH hGroup, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hGroup, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hGroup->m_poImpl->Rename(pszNewName);
 }
 
 /************************************************************************/
@@ -10936,6 +11028,28 @@ int GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions)
 }
 
 /************************************************************************/
+/*                       GDALMDArrayRename()                           */
+/************************************************************************/
+
+/** Rename the array.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C++ method GDALAbstractMDArray::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hArray->m_poImpl->Rename(pszNewName);
+}
+
+/************************************************************************/
 /*                        GDALAttributeRelease()                        */
 /************************************************************************/
 
@@ -11381,6 +11495,28 @@ int GDALAttributeWriteDoubleArray(GDALAttributeH hAttr,
 }
 
 /************************************************************************/
+/*                      GDALAttributeRename()                           */
+/************************************************************************/
+
+/** Rename the attribute.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C++ method GDALAbstractMDArray::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALAttributeRename(GDALAttributeH hAttr, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hAttr, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hAttr->m_poImpl->Rename(pszNewName);
+}
+
+/************************************************************************/
 /*                        GDALDimensionRelease()                        */
 /************************************************************************/
 
@@ -11504,6 +11640,28 @@ int GDALDimensionSetIndexingVariable(GDALDimensionH hDim, GDALMDArrayH hArray)
     VALIDATE_POINTER1(hDim, __func__, FALSE);
     return hDim->m_poImpl->SetIndexingVariable(hArray ? hArray->m_poImpl
                                                       : nullptr);
+}
+
+/************************************************************************/
+/*                      GDALDimensionRename()                           */
+/************************************************************************/
+
+/** Rename the dimension.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C++ method GDALDimension::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALDimensionRename(GDALDimensionH hDim, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hDim, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hDim->m_poImpl->Rename(pszNewName);
 }
 
 /************************************************************************/

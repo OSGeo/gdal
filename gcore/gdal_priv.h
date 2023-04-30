@@ -2368,6 +2368,15 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     virtual void ClearStatistics();
 
+    virtual bool Rename(const std::string &osNewName);
+
+    //! @cond Doxygen_Suppress
+    virtual void
+    ParentRenamed(CPL_UNUSED const std::string &osNewParentFullName)
+    {
+    }
+    //! @endcond
+
     //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
     //! @endcond
@@ -2508,6 +2517,15 @@ class CPL_DLL GDALAbstractMDArray
           const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer,
           const void *pSrcBufferAllocStart = nullptr,
           size_t nSrcBufferAllocSize = 0);
+
+    virtual bool Rename(const std::string &osNewName);
+
+    //! @cond Doxygen_Suppress
+    virtual void
+    ParentRenamed(CPL_UNUSED const std::string &osNewParentFullName)
+    {
+    }
+    //! @endcond
 };
 
 /* ******************************************************************** */
@@ -3086,6 +3104,15 @@ class CPL_DLL GDALDimension
 
     virtual bool
     SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable);
+
+    virtual bool Rename(const std::string &osNewName);
+
+    //! @cond Doxygen_Suppress
+    virtual void
+    ParentRenamed(CPL_UNUSED const std::string &osNewParentFullName)
+    {
+    }
+    //! @endcond
 
   protected:
     //! @cond Doxygen_Suppress
