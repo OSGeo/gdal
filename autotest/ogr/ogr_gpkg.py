@@ -4773,34 +4773,97 @@ def test_ogr_gpkg_creation_fid():
 
 def test_ogr_gpkg_57():
 
-    if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != "YES":
-        pytest.skip()
+    out_filename = "/vsimem/test_ogr_gpkg_57.gpkg"
+    ogr.GetDriverByName("GPKG").CreateDataSource(out_filename)
 
-    tmpfile = "/vsimem/tmp.gpkg.txt"
-    gdal.FileFromMemBuffer(
-        tmpfile,
-        """-- SQL GPKG
-CREATE TABLE gpkg_spatial_ref_sys (srs_name,srs_id,organization,organization_coordsys_id,definition,description);
-INSERT INTO "gpkg_spatial_ref_sys" VALUES('',0,'NONE',0,'undefined','');
-CREATE TABLE gpkg_contents (table_name,data_type,identifier,description,last_change,min_x, min_y,max_x, max_y,srs_id);
-INSERT INTO "gpkg_contents" VALUES('poly','features','poly','','',NULL,NULL,NULL,NULL,0);
-INSERT INTO "gpkg_contents" VALUES('poly','features','poly','','',NULL,NULL,NULL,NULL,0);
-CREATE TABLE gpkg_geometry_columns (table_name,column_name,geometry_type_name,srs_id,z,m);
-INSERT INTO "gpkg_geometry_columns" VALUES('poly','geom','POLYGON',0,0,0);
-CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON);
-""",
+    ds = ogr.Open(out_filename, update=1)
+    ds.ExecuteSQL("DROP TABLE gpkg_contents")
+    ds.ExecuteSQL(
+        "CREATE TABLE gpkg_contents (table_name,data_type,identifier,description,last_change,min_x, min_y,max_x, max_y,srs_id)"
     )
+    ds.ExecuteSQL(
+        """INSERT INTO "gpkg_contents" VALUES('poly','features','poly','','',NULL,NULL,NULL,NULL,0)"""
+    )
+    ds.ExecuteSQL(
+        """INSERT INTO "gpkg_contents" VALUES('poly','features','poly','','',NULL,NULL,NULL,NULL,0)"""
+    )
+    ds.ExecuteSQL(
+        """INSERT INTO "gpkg_geometry_columns" VALUES('poly','geom','POLYGON',0,0,0)"""
+    )
+    ds.ExecuteSQL("""CREATE TABLE "poly"("fid" INTEGER PRIMARY KEY, "geom" POLYGON)""")
+    ds = None
 
     gdal.ErrorReset()
     with gdaltest.error_handler():
-        ds = ogr.Open(tmpfile)
+        ds = ogr.Open(out_filename)
     assert ds.GetLayerCount() == 1, "bad layer count"
-    assert (
-        gdal.GetLastErrorMsg().find("Table poly appearing several times") >= 0
-    ), "should NOT have warned"
+    assert gdal.GetLastErrorMsg() != ""
     ds = None
 
-    gdal.Unlink(tmpfile)
+    gdal.Unlink(out_filename)
+
+
+###############################################################################
+# Test opening a non-standard GeoPackage with multiple geometry columns
+
+
+def test_ogr_gpkg_multiple_geom_columns():
+
+    out_filename = "/vsimem/test_ogr_gpkg_multiple_geom_columns.gpkg"
+    ogr.GetDriverByName("GPKG").CreateDataSource(out_filename)
+
+    ds = ogr.Open(out_filename, update=1)
+    ds.ExecuteSQL("DROP TABLE gpkg_geometry_columns")
+    # Modified gpkg_geometry_columns definition with a UNIQUE constraint on both (table_name, column_name)
+    ds.ExecuteSQL(
+        """CREATE TABLE gpkg_geometry_columns (table_name TEXT NOT NULL,column_name TEXT NOT NULL,geometry_type_name TEXT NOT NULL,srs_id INTEGER NOT NULL,z TINYINT NOT NULL,m TINYINT NOT NULL,CONSTRAINT pk_geom_cols PRIMARY KEY (table_name, column_name),CONSTRAINT uk_gc_table_name_column_name UNIQUE (table_name, column_name),CONSTRAINT fk_gc_tn FOREIGN KEY (table_name) REFERENCES gpkg_contents(table_name),CONSTRAINT fk_gc_srs FOREIGN KEY (srs_id) REFERENCES gpkg_spatial_ref_sys (srs_id));"""
+    )
+    ds.ExecuteSQL(
+        """CREATE TABLE "test" ( "ogc_fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, "poly" POLYGON, "pt" POINT, "area" REAL, "eas_id" INTEGER, "prfedea" TEXT(16))"""
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO test VALUES(1,X'4750000300000000000000401f401d41000000e05e511d4100000080322c5241000000001d2d52410103000000010000001b000000000000c01a481d4100000080072d5241000000e0814b1d41000000001d2d524100000040c44b1d41000000000f2d5241000000002c4c1d41000000a0002d524100000000774d1d41000000c0072d5241000000a0c44e1d4100000080112d52410000002008501d41000000c0172d5241000000e05e511d4100000020dd2c5241000000405e511d4100000040cf2c524100000000f0501d41000000c0ba2c52410000008084501d4100000020af2c524100000040a94f1d4100000000a42c524100000080744e1d41000000a09a2c524100000040014f1d41000000c0852c5241000000e0e04d1d4100000020872c524100000040f8441d41000000e0432c5241000000c012441d4100000080322c524100000000ff431d4100000020362c5241000000004b431d4100000080552c52410000000030431d41000000c05d2c5241000000c09b421d4100000000712c524100000080d6411d4100000080912c52410000008027411d4100000040b22c5241000000401f401d4100000040d62c5241000000a043441d4100000060f02c524100000060aa461d4100000080ff2c5241000000c01a481d4100000080072d5241',X'4750000100000000010100000000000000804b1d41000000001d2d5241',NULL,170,NULL);"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_contents VALUES('test','features','test',NULL,'2023-04-21T13:53:59.009Z',478315.53124999999998,4762880.5,481645.3125,4765610.4999999999998,0);"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_geometry_columns VALUES('test','poly','POLYGON',-1,0,0);"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_geometry_columns VALUES('test','pt','POINT',4326,0,0);"
+    )
+    ds = None
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        ds = ogr.Open(out_filename)
+    assert gdal.GetLastErrorMsg() != ""
+    assert ds.GetLayerCount() == 2
+
+    lyr = ds.GetLayerByName("test (poly)")
+    assert lyr.GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetGeometryColumn() == "poly"
+    assert lyr.GetSpatialRef().GetName() == "Undefined Cartesian SRS"
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f["eas_id"] == 170
+    assert f.GetGeometryRef().ExportToWkt().startswith("POLYGON ((479750")
+
+    lyr = ds.GetLayerByName("test (pt)")
+    assert lyr.GetGeomType() == ogr.wkbPoint
+    assert lyr.GetGeometryColumn() == "pt"
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    assert lyr.GetLayerDefn().GetFieldCount() == 3
+    f = lyr.GetNextFeature()
+    assert f.GetFID() == 1
+    assert f["eas_id"] == 170
+    assert f.GetGeometryRef().ExportToWkt() == "POINT (479968 4764788)"
+
+    ds = None
+
+    gdal.Unlink(out_filename)
 
 
 ###############################################################################

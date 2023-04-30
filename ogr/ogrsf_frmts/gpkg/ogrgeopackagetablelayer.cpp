@@ -914,6 +914,10 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     }
 #endif
 
+    bool bHasPreexistingSingleGeomColumn =
+        m_poFeatureDefn->GetGeomFieldCount() == 1;
+    bool bHasMultipleGeomColsInGpkgGeometryColumns = false;
+
     if (m_bIsInGpkgContents)
     {
         /* Check that the table name is registered in gpkg_contents */
@@ -961,7 +965,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 #ifdef WORKAROUND_SQLITE3_BUGS
                                            " OR 0"
 #endif
-                                           " LIMIT 2",
+                                           " LIMIT 2000",
                                            m_pszTableName);
 
             auto oResultGeomCols = SQLQuery(poDb, pszSQL);
@@ -975,7 +979,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 #ifdef WORKAROUND_SQLITE3_BUGS
                                          " OR 0"
 #endif
-                                         " LIMIT 2",
+                                         " LIMIT 2000",
                                          m_pszTableName);
 
                 oResultGeomCols = SQLQuery(poDb, pszSQL);
@@ -983,31 +987,64 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
             }
 
             /* gpkg_geometry_columns query has to work */
-            /* gpkg_geometry_columns.table_name is supposed to be unique */
-            if (!oResultGeomCols || oResultGeomCols->RowCount() != 1)
+            if (!(oResultGeomCols && oResultGeomCols->RowCount() > 0))
             {
-                if (oResultGeomCols)
-                    CPLError(
-                        CE_Failure, CPLE_AppDefined,
-                        "layer '%s' is not registered in gpkg_geometry_columns",
-                        m_pszTableName);
-
-                return OGRERR_FAILURE;
+                CPLError(
+                    CE_Warning, CPLE_AppDefined,
+                    "layer '%s' is not registered in gpkg_geometry_columns",
+                    m_pszTableName);
             }
-
-            const char *pszGeomColName = oResultGeomCols->GetValue(1, 0);
-            if (pszGeomColName != nullptr)
-                osGeomColumnName = pszGeomColName;
-            const char *pszGeomColsType = oResultGeomCols->GetValue(2, 0);
-            if (pszGeomColsType != nullptr)
-                osGeomColsType = pszGeomColsType;
-            m_iSrs = oResultGeomCols->GetValueAsInteger(3, 0);
-            m_nZFlag = oResultGeomCols->GetValueAsInteger(4, 0);
-            m_nMFlag = oResultGeomCols->GetValueAsInteger(5, 0);
-            if (!(EQUAL(osGeomColsType, "GEOMETRY") && m_nZFlag == 2))
+            else
             {
-                bHasZ = CPL_TO_BOOL(m_nZFlag);
-                bHasM = CPL_TO_BOOL(m_nMFlag);
+                int iRow = -1;
+                bHasMultipleGeomColsInGpkgGeometryColumns =
+                    oResultGeomCols->RowCount() > 1;
+                for (int i = 0; i < oResultGeomCols->RowCount(); ++i)
+                {
+                    const char *pszGeomColName =
+                        oResultGeomCols->GetValue(1, i);
+                    if (!pszGeomColName)
+                        continue;
+                    if (!bHasPreexistingSingleGeomColumn ||
+                        strcmp(pszGeomColName,
+                               m_poFeatureDefn->GetGeomFieldDefn(0)
+                                   ->GetNameRef()) == 0)
+                    {
+                        iRow = i;
+                        break;
+                    }
+                }
+
+                if (iRow >= 0)
+                {
+                    const char *pszGeomColName =
+                        oResultGeomCols->GetValue(1, iRow);
+                    if (pszGeomColName != nullptr)
+                        osGeomColumnName = pszGeomColName;
+                    const char *pszGeomColsType =
+                        oResultGeomCols->GetValue(2, iRow);
+                    if (pszGeomColsType != nullptr)
+                        osGeomColsType = pszGeomColsType;
+                    m_iSrs = oResultGeomCols->GetValueAsInteger(3, iRow);
+                    m_nZFlag = oResultGeomCols->GetValueAsInteger(4, iRow);
+                    m_nMFlag = oResultGeomCols->GetValueAsInteger(5, iRow);
+                    if (!(EQUAL(osGeomColsType, "GEOMETRY") && m_nZFlag == 2))
+                    {
+                        bHasZ = CPL_TO_BOOL(m_nZFlag);
+                        bHasM = CPL_TO_BOOL(m_nMFlag);
+                    }
+                }
+                else
+                {
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Cannot find record for layer '%s' and geometry column "
+                        "'%s' in gpkg_geometry_columns",
+                        m_pszTableName,
+                        bHasPreexistingSingleGeomColumn
+                            ? m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()
+                            : "unknown");
+                }
             }
         }
     }
@@ -1059,8 +1096,6 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                  m_pszTableName);
     }
 
-    bool bHasPreexistingSingleGeomColumn =
-        m_poFeatureDefn->GetGeomFieldCount() == 1;
     m_abGeneratedColumns.resize(oResultTable->RowCount());
     for (int iRecord = 0; iRecord < oResultTable->RowCount(); iRecord++)
     {
@@ -1117,22 +1152,29 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                 oGeomType = wkbUnknown;
             if (oGeomType != wkbNone)
             {
-                OGRwkbGeometryType oGeomTypeGeomCols =
-                    GPkgGeometryTypeToWKB(osGeomColsType.c_str(), bHasZ, bHasM);
-                /* Enforce consistency between table and metadata */
-                if (wkbFlatten(oGeomType) == wkbUnknown)
-                    oGeomType = oGeomTypeGeomCols;
-                if (oGeomType != oGeomTypeGeomCols)
-                {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "geometry column type in '%s.%s' is not "
-                             "consistent with type in gpkg_geometry_columns",
-                             m_pszTableName, pszName);
-                }
-
-                if (bHasPreexistingSingleGeomColumn ||
+                if ((bHasPreexistingSingleGeomColumn &&
+                     (!bHasMultipleGeomColsInGpkgGeometryColumns ||
+                      strcmp(pszName, m_poFeatureDefn->GetGeomFieldDefn(0)
+                                          ->GetNameRef()) == 0)) ||
                     m_poFeatureDefn->GetGeomFieldCount() == 0)
                 {
+                    OGRwkbGeometryType oGeomTypeGeomCols =
+                        GPkgGeometryTypeToWKB(osGeomColsType.c_str(), bHasZ,
+                                              bHasM);
+                    /* Enforce consistency between table and metadata */
+                    if (wkbFlatten(oGeomType) == wkbUnknown)
+                        oGeomType = oGeomTypeGeomCols;
+                    if (oGeomType != oGeomTypeGeomCols)
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "geometry column type for layer '%s' in "
+                                 "'%s.%s' (%s) is not "
+                                 "consistent with type in "
+                                 "gpkg_geometry_columns (%s)",
+                                 GetName(), m_pszTableName, pszName,
+                                 osType.c_str(), osGeomColsType.c_str());
+                    }
+
                     if (!bHasPreexistingSingleGeomColumn)
                     {
                         OGRGeomFieldDefn oGeomField(pszName, oGeomType);
@@ -1152,19 +1194,18 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                         poSRS->Dereference();
                     }
                 }
-                else
+                else if (!STARTS_WITH(
+                             GetName(),
+                             (std::string(m_pszTableName) + " (").c_str()))
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "table '%s' has multiple geometry fields? not "
-                             "legal in gpkg",
-                             m_pszTableName);
-                    return OGRERR_FAILURE;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "table '%s' has multiple geometry fields. "
+                             "Ignoring field '%s' for this layer",
+                             m_pszTableName, pszName);
                 }
             }
             else
             {
-                // CPLError( CE_Failure, CPLE_AppDefined, "invalid field type
-                // '%s'", osType.c_str() );
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "geometry column '%s' of type '%s' ignored", pszName,
                          osType.c_str());
@@ -5166,9 +5207,12 @@ void OGRGeoPackageTableLayer::BuildWhere()
 /************************************************************************/
 
 void OGRGeoPackageTableLayer::SetOpeningParameters(
-    const char *pszObjectType, bool bIsInGpkgContents, bool bIsSpatial,
-    const char *pszGeomColName, const char *pszGeomType, bool bHasZ, bool bHasM)
+    const char *pszTableName, const char *pszObjectType, bool bIsInGpkgContents,
+    bool bIsSpatial, const char *pszGeomColName, const char *pszGeomType,
+    bool bHasZ, bool bHasM)
 {
+    CPLFree(m_pszTableName);
+    m_pszTableName = CPLStrdup(pszTableName);
     m_bIsTable = EQUAL(pszObjectType, "table");
     m_bIsInGpkgContents = bIsInGpkgContents;
     m_bIsSpatial = bIsSpatial;

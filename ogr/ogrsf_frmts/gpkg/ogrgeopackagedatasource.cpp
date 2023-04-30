@@ -1669,13 +1669,13 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
             m_papoLayers = static_cast<OGRGeoPackageTableLayer **>(CPLMalloc(
                 sizeof(OGRGeoPackageTableLayer *) * oResult->RowCount()));
 
-            std::set<CPLString> oSetTables;
+            std::map<std::string, int> oMapTableRefCount;
             for (int i = 0; i < oResult->RowCount(); i++)
             {
                 const char *pszTableName = oResult->GetValue(0, i);
                 if (pszTableName == nullptr)
                     continue;
-                if (oSetTables.find(pszTableName) != oSetTables.end())
+                if (++oMapTableRefCount[pszTableName] == 2)
                 {
                     // This should normally not happen if all constraints are
                     // properly set
@@ -1683,9 +1683,17 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                              "Table %s appearing several times in "
                              "gpkg_contents and/or gpkg_geometry_columns",
                              pszTableName);
-                    continue;
                 }
-                oSetTables.insert(pszTableName);
+            }
+
+            std::set<std::string> oExistingLayers;
+            for (int i = 0; i < oResult->RowCount(); i++)
+            {
+                const char *pszTableName = oResult->GetValue(0, i);
+                if (pszTableName == nullptr)
+                    continue;
+                const bool bTableHasSeveralGeomColumns =
+                    oMapTableRefCount[pszTableName] > 1;
                 bool bIsSpatial = CPL_TO_BOOL(oResult->GetValueAsInteger(2, i));
                 const char *pszGeomColName = oResult->GetValue(3, i);
                 const char *pszGeomType = oResult->GetValue(4, i);
@@ -1706,8 +1714,25 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                              pszTableName);
                     continue;
                 }
+                // Non-standard and undocumented behavior:
+                // if the same table appears to have several geometry columns,
+                // handle it for now as multiple layers named
+                // "table_name (geom_col_name)"
+                // The way we handle that might change in the future (e.g
+                // could be a single layer with multiple geometry columns)
+                const std::string osLayerNameWithGeomColName =
+                    pszGeomColName ? std::string(pszTableName) + " (" +
+                                         pszGeomColName + ')'
+                                   : std::string(pszTableName);
+                if (oExistingLayers.find(osLayerNameWithGeomColName) !=
+                    oExistingLayers.end())
+                    continue;
+                oExistingLayers.insert(osLayerNameWithGeomColName);
+                const std::string osLayerName = bTableHasSeveralGeomColumns
+                                                    ? osLayerNameWithGeomColName
+                                                    : std::string(pszTableName);
                 OGRGeoPackageTableLayer *poLayer =
-                    new OGRGeoPackageTableLayer(this, pszTableName);
+                    new OGRGeoPackageTableLayer(this, osLayerName.c_str());
                 bool bHasZ = pszZ && atoi(pszZ) > 0;
                 bool bHasM = pszM && atoi(pszM) > 0;
                 if (pszGeomType && EQUAL(pszGeomType, "GEOMETRY"))
@@ -1717,9 +1742,9 @@ int GDALGeoPackageDataset::Open(GDALOpenInfo *poOpenInfo,
                     if (pszM && atoi(pszM) == 2)
                         bHasM = false;
                 }
-                poLayer->SetOpeningParameters(pszObjectType, bIsInGpkgContents,
-                                              bIsSpatial, pszGeomColName,
-                                              pszGeomType, bHasZ, bHasM);
+                poLayer->SetOpeningParameters(
+                    pszTableName, pszObjectType, bIsInGpkgContents, bIsSpatial,
+                    pszGeomColName, pszGeomType, bHasZ, bHasM);
                 m_papoLayers[m_nLayers++] = poLayer;
             }
         }
