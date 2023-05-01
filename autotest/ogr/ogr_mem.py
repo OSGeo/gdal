@@ -914,6 +914,41 @@ def test_ogr_mem_arrow_stream_numpy():
 
 
 ###############################################################################
+# Test optimization to save memory on string fields with huge strings compared
+# to the average size
+
+
+def test_ogr_mem_arrow_stream_numpy_huge_string():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("foo")
+    field = ogr.FieldDefn("str", ogr.OFTString)
+    lyr.CreateField(field)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "X")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFieldNull("str")
+    lyr.CreateFeature(f)
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("str", "Y" * (1000 * 1000))
+    lyr.CreateFeature(f)
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert str(batch["str"].dtype) == "object"
+    assert isinstance(batch["str"][0], str)
+    assert [x for x in batch["str"]] == ["X", None, "Y" * (1000 * 1000)]
+
+
+###############################################################################
 
 
 def test_ogr_mem_arrow_stream_pyarrow():

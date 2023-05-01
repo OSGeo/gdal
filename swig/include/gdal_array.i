@@ -1201,6 +1201,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             // numpy can't deal with zero length strings
             int32_t maxLength = 1;
             int32_t minLength = 0x7FFFFFFF;
+            int64_t averageLength = 0;
             for( npy_intp j = 0; j < dims; j++ )
             {
                 const int32_t nLength = offsets[j+1] - offsets[j];
@@ -1208,7 +1209,11 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                     minLength = nLength;
                 if( nLength > maxLength )
                     maxLength = nLength;
+                averageLength += nLength;
             }
+            if( dims )
+                averageLength /= dims;
+
 
             if( arrowType[0] == 'z' && (minLength == 0 || minLength != maxLength) )
             {
@@ -1229,6 +1234,38 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                     {
                         const int32_t nLength = offsets[j+1] - offsets[j];
                         subObj = PyBytes_FromStringAndSize(
+                            ((const char*)arrayField->buffers[2]) + offsets[j],
+                            nLength);
+                    }
+                    memcpy(PyArray_GETPTR1((PyArrayObject *) numpyArray, j),
+                           &subObj,
+                           sizeof(PyObject*));
+                }
+            }
+            else if( arrowType[0] == 'u' && dims > 0 && maxLength > 32 &&
+                     maxLength > 100 * 1000 / dims &&
+                     maxLength > averageLength * 2 )
+            {
+                // If the maximum string size is significantly large, and
+                // larger than the average one, then do not use fixed size
+                // strings, but create an array of string objects to save memory
+                const uint8_t* panNotNulls =
+                     arrayField->null_count == 0 ? NULL :
+                    (const uint8_t*)arrayField->buffers[0];
+                numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
+                for( npy_intp j = 0; j < dims; j++ )
+                {
+                    PyObject* subObj;
+                    size_t srcOffset = static_cast<size_t>(arrayField->offset + j);
+                    if( panNotNulls && (panNotNulls[srcOffset / 8] & (1 << (srcOffset%8))) == 0 )
+                    {
+                        subObj = Py_None;
+                        Py_INCREF(subObj);
+                    }
+                    else
+                    {
+                        const int32_t nLength = offsets[j+1] - offsets[j];
+                        subObj = PyUnicode_FromStringAndSize(
                             ((const char*)arrayField->buffers[2]) + offsets[j],
                             nLength);
                     }
