@@ -68,6 +68,16 @@ def create_tiledb_dataset(nullable, batch_size, include_bool):
     fld_defn.SetSubType(ogr.OFSTInt16)
     lyr.CreateField(fld_defn)
 
+    fld_defn = ogr.FieldDefn("uint8field", ogr.OFTInteger)
+    fld_defn.SetNullable(nullable)
+    with gdal.config_option("TILEDB_INT_TYPE", "UINT8"):
+        lyr.CreateField(fld_defn)
+
+    fld_defn = ogr.FieldDefn("uint16field", ogr.OFTInteger)
+    fld_defn.SetNullable(nullable)
+    with gdal.config_option("TILEDB_INT_TYPE", "UINT16"):
+        lyr.CreateField(fld_defn)
+
     if include_bool:
         fld_defn = ogr.FieldDefn("boolfield", ogr.OFTInteger)
         fld_defn.SetNullable(nullable)
@@ -139,6 +149,8 @@ def create_tiledb_dataset(nullable, batch_size, include_bool):
     f["int16field"] = -32768
     if include_bool:
         f["boolfield"] = True
+    f["uint8field"] = 0
+    f["uint16field"] = 0
     f["int64field"] = -1234567890123456
     f["doublefield"] = 1.2345
     f["floatfield"] = 1.5
@@ -173,6 +185,8 @@ def create_tiledb_dataset(nullable, batch_size, include_bool):
     f["int16field"] = 32767
     if include_bool:
         f["boolfield"] = False
+    f["uint8field"] = 255
+    f["uint16field"] = 65535
     f["int64field"] = 1234567890123456
     f["doublefield"] = -1.2345
     f["floatfield"] = -1.5
@@ -224,6 +238,8 @@ def test_ogr_tiledb_basic(nullable, batch_size):
             assert f["intfield"] == -123456789
             assert f["int16field"] == -32768
             assert f["boolfield"] == True
+            assert f["uint8field"] == 0
+            assert f["uint16field"] == 0
             assert f["int64field"] == -1234567890123456
             assert f["doublefield"] == 1.2345
             assert f["floatfield"] == 1.5
@@ -252,6 +268,8 @@ def test_ogr_tiledb_basic(nullable, batch_size):
             assert f["intfield"] == 123456789
             assert f["int16field"] == 32767
             assert f["boolfield"] == False
+            assert f["uint8field"] == 255
+            assert f["uint16field"] == 65535
             assert f["int64field"] == 1234567890123456
             assert f["doublefield"] == -1.2345
             assert f["floatfield"] == -1.5
@@ -1117,6 +1135,8 @@ def test_ogr_tiledb_arrow_stream_pyarrow(nullable, batch_size):
             ("intfield", "int32"),
             ("int16field", "int16"),
             ("int64field", "int64"),
+            ("uint8field", "uint8"),
+            ("uint16field", "uint16"),
             ("doublefield", "double"),
             ("floatfield", "float"),
             ("binaryfield", "large_binary"),
@@ -1280,6 +1300,8 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
             "intfield",
             "int16field",
             "int64field",
+            "uint8field",
+            "uint16field",
             "doublefield",
             "floatfield",
             "binaryfield",

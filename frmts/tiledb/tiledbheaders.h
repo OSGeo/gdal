@@ -212,6 +212,7 @@ class OGRTileDBLayer final : public OGRLayer,
     typedef std::variant<std::shared_ptr<std::string>,
                          std::shared_ptr<std::vector<uint8_t>>,
                          std::shared_ptr<std::vector<int16_t>>,
+                         std::shared_ptr<std::vector<uint16_t>>,
                          std::shared_ptr<std::vector<int32_t>>,
                          std::shared_ptr<std::vector<int64_t>>,
                          std::shared_ptr<std::vector<float>>,
@@ -293,6 +294,8 @@ class OGRTileDBLayer final : public OGRLayer,
     std::shared_ptr<std::vector<double>> m_adfXs;
     std::shared_ptr<std::vector<double>> m_adfYs;
     std::shared_ptr<std::vector<double>> m_adfZs;
+    std::vector<tiledb_datatype_t> m_aeFieldTypes{};
+    std::vector<int> m_aeFieldTypesInCreateField{};
     std::vector<size_t> m_anFieldValuesCapacity{};
     std::vector<ArrayType> m_aFieldValues;
     std::vector<std::shared_ptr<std::vector<uint64_t>>> m_aFieldValueOffsets;
