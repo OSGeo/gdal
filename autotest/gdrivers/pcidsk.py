@@ -35,7 +35,7 @@ import os
 import gdaltest
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 pytestmark = pytest.mark.require_driver("PCIDSK")
 
@@ -747,6 +747,25 @@ def test_pcidsk_invalid_files(filename):
     with gdaltest.error_handler():
         assert gdal.VSIStatL(filename) is not None
         assert gdal.Open(filename) is None
+
+
+###############################################################################
+# Test Web Mercator support
+
+
+def test_pcidsk_web_mercator():
+
+    gdal.Translate(
+        "tmp/test_pcidsk_web_mercator.pix",
+        "data/byte.tif",
+        options="-of PCIDSK -a_srs EPSG:3857",
+    )
+    gdal.Unlink("tmp/test_pcidsk_web_mercator.pix.aux.xml")
+    ds = gdal.Open("tmp/test_pcidsk_web_mercator.pix")
+    expected_srs = osr.SpatialReference()
+    expected_srs.ImportFromEPSG(3857)
+    assert ds.GetSpatialRef().IsSame(expected_srs)
+    gdal.GetDriverByName("PCIDSK").Delete("tmp/test_pcidsk_web_mercator.pix")
 
 
 ###############################################################################

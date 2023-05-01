@@ -1,7 +1,7 @@
 !
 ! By email on December 2nd, 2010:
 !
-! I, Louis Burry, on behalf of PCI Geomatics agree to allow the ellips.txt 
+! I, Louis Burry, on behalf of PCI Geomatics agree to allow the ellips.txt
 ! and datum.txt file to be distributed under the GDAL open source license.
 !
 ! Louis Burry
@@ -419,13 +419,13 @@
 "D765","NAD83 (USA, NADCON)","E008","Ohio","ohhpgn.los","ohhpgn.las"
 "D766","NAD83 HARN (USA, NADCON)","E008","Ohio","ohhpgn.los","ohhpgn.las"
 "D767","NAD83 (USA, NADCON)","E008","Oklahoma","okhpgn.los","okhpgn.las"
-"D768","NAD83 HARN (USA, NADCON)","E008","Oklahoma","okhpgn.los","okhpgn.las" 
+"D768","NAD83 HARN (USA, NADCON)","E008","Oklahoma","okhpgn.los","okhpgn.las"
 "D769","NAD83 (USA, NADCON)","E008","Pennsylvania","pahpgn.los","pahpgn.las"
 "D770","NAD83 HARN (USA, NADCON)","E008","Pennsylvania","pahpgn.los","pahpgn.las"
 "D771","NAD83 (USA, NADCON)","E008","Puerto Rico-Virgin Is","pvhpgn.los","pvhpgn.las"
-"D772","NAD83 HARN (USA, NADCON)","E008","Puerto Rico-Virgin Is","pvhpgn.los","pvhpgn.las" 
+"D772","NAD83 HARN (USA, NADCON)","E008","Puerto Rico-Virgin Is","pvhpgn.los","pvhpgn.las"
 "D773","American Samoa 1962 (USA, NADCON)","E000","Samoa (Eastern Islands)","eshpgn.los","eshpgn.las"
-"D774","NAD83 HARN (USA, NADCON)","E008","Samoa (Eastern Islands)","eshpgn.los","eshpgn.las" 
+"D774","NAD83 HARN (USA, NADCON)","E008","Samoa (Eastern Islands)","eshpgn.los","eshpgn.las"
 "D775","American Samoa 1962 (USA, NADCON)","E000","Samoa (Western Islands)","wshpgn.los","wshpgn.las"
 "D776","NAD83 HARN (USA, NADCON)","E008","Samoa (Western Islands)","wshpgn.los","wshpgn.las"
 "D777","NAD83 (USA, NADCON)","E008","South Carolina","schpgn.los","schpgn.las"
@@ -435,7 +435,7 @@
 "D781","NAD83 (USA, NADCON)","E008","Tennessee","tnhpgn.los","tnhpgn.las"
 "D782","NAD83 HARN (USA, NADCON)","E008","Tennessee","tnhpgn.los","tnhpgn.las"
 "D783","NAD83 (USA, NADCON)","E008","Texas (East of 100dW)","ethpgn.los","ethpgn.las"
-"D784","NAD83 HARN (USA, NADCON)","E008","Texas (East of 100dW)","ethpgn.los","ethpgn.las" 
+"D784","NAD83 HARN (USA, NADCON)","E008","Texas (East of 100dW)","ethpgn.los","ethpgn.las"
 "D785","NAD83 (USA, NADCON)","E008","Texas (West of 100dW)","wthpgn.los","wthpgn.las"
 "D786","NAD83 HARN (USA, NADCON)","E008","Texas (West of 100dW)","wthpgn.los","wthpgn.las"
 "D787","NAD83 (USA, NADCON)","E008","Utah","uthpgn.los","uthpgn.las"
@@ -449,15 +449,15 @@
 "D795","NAD83 (USA, NADCON)","E008","Wisconsin","wihpgn.los","wihpgn.las"
 "D796","NAD83 HARN (USA, NADCON)","E008","Wisconsin","wihpgn.los","wihpgn.las"
 "D797","NAD83 (USA, NADCON)","E008","Wyoming","wyhpgn.los","wyhpgn.las"
-"D798","NAD83 HARN (USA, NADCON)","E008","Wyoming","wyhpgn.los","wyhpgn.las" 
-"D886", "Reseau Geodesique Francais 1993", "E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
-"D887", "Reseau National Belge 1972", "E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D798","NAD83 HARN (USA, NADCON)","E008","Wyoming","wyhpgn.los","wyhpgn.las"
+"D886","Reseau Geodesique Francais 1993","E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
+"D887","Reseau National Belge 1972","E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329
 "D888","Lebanon Stereographic","E012",154.2668777,107.2190767,-263.01161212,"Lebanon",0,0,0,0,0.310716,0.218736,0.191232,0.99999913
 "D889","Lebanon Lambert","E202",190.9999,133.32473,-232.8391,"Lebanon",0,0,0,0,0.307836,0.216756,0.189036,0.9995341
 "D890","Luxembourg (LUREF)","E004",-192.986,13.673,-39.309,"Luxembourg",0,0,0,0,0.409900,2.933200,-2.688100,1.00000043
 "D891","Datum 73","E004",-223.237,110.193,36.649,"Portugal",0,0,0,0
 "D892","Datum Lisboa","E004",-304.046,-60.576,103.640,"Portugal",0,0,0,0
 "D893","PDO Survey Datum 1993","E001",-180.624,-225.516,173.919,"Oman",0,0,0,0,0.80970,1.89755,-8.33604,16.71006
-"D894", "WGS 1984 semi-major","E020",0,0,0,"WGS 1984 Auxiliary Sphere semi-major axis",0,0,0,0
+"D894","WGS 1984 semi-major","E020",0,0,0,"WGS 1984 Auxiliary Sphere semi-major axis",0,0,0,0
 "D898","TWD97","E008",0,0,0,"Taiwan",0,0,0,0,0.0,0.0,0.0,0.0
 "D899","TWD67","E899",-752,-358,-179,"Taiwan",0,0,0,0,-0.0000011698,0.0000018398,0.0000009822,0.00002329

@@ -5424,6 +5424,59 @@ OGRErr OSRSetProjection(OGRSpatialReferenceH hSRS, const char *pszProjection)
 }
 
 /************************************************************************/
+/*                      GetWKT2ProjectionMethod()                       */
+/************************************************************************/
+
+/**
+ * \brief Returns info on the projection method, based on WKT2 naming
+ * conventions.
+ *
+ * The returned strings are short lived and should be considered to be
+ * invalidated by any further call to the GDAL API.
+ *
+ * @param[out] ppszMethodName Pointer to a string that will receive the
+ * projection method name.
+ * @param[out] ppszMethodAuthName null pointer, or pointer to a string that will
+ * receive the name of the autority that defines the projection method.
+ * *ppszMethodAuthName may be nullptr if the projection method is not linked to
+ * an authority.
+ * @param[out] ppszMethodCode null pointer, or pointer to a string that will
+ * receive the code that defines the projection method.
+ * *ppszMethodCode may be nullptr if the projection method is not linked to
+ * an authority.
+ *
+ * @return OGRERR_NONE on success.
+ */
+OGRErr
+OGRSpatialReference::GetWKT2ProjectionMethod(const char **ppszMethodName,
+                                             const char **ppszMethodAuthName,
+                                             const char **ppszMethodCode) const
+{
+    auto conv = proj_crs_get_coordoperation(d->getPROJContext(), d->m_pj_crs);
+    if (!conv)
+        return OGRERR_FAILURE;
+    const char *pszTmpMethodName = "";
+    const char *pszTmpMethodAuthName = "";
+    const char *pszTmpMethodCode = "";
+    int ret = proj_coordoperation_get_method_info(
+        d->getPROJContext(), conv, &pszTmpMethodName, &pszTmpMethodAuthName,
+        &pszTmpMethodCode);
+    // "Internalize" temporary strings returned by PROJ
+    CPLAssert(pszTmpMethodName);
+    if (ppszMethodName)
+        *ppszMethodName = CPLSPrintf("%s", pszTmpMethodName);
+    if (ppszMethodAuthName)
+        *ppszMethodAuthName = pszTmpMethodAuthName
+                                  ? CPLSPrintf("%s", pszTmpMethodAuthName)
+                                  : nullptr;
+    if (ppszMethodCode)
+        *ppszMethodCode =
+            pszTmpMethodCode ? CPLSPrintf("%s", pszTmpMethodCode) : nullptr;
+    proj_destroy(conv);
+    return ret ? OGRERR_NONE : OGRERR_FAILURE;
+}
+
+/************************************************************************/
 /*                            SetProjParm()                             */
 /************************************************************************/
 
