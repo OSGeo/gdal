@@ -46,7 +46,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
             libtiff5-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
-ARG JAVA_VERSION=11
+ARG JAVA_VERSION=17
 # Setup build env for GDAL
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
@@ -223,13 +223,21 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Arrow C++
+ARG ARROW_VERSION=11.0.0-1
+# ARROW_SOVERSION to be updated in the "Build final image" section too
+ARG ARROW_SOVERSION=1100
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=10.0.1-1 libparquet-dev${APT_ARCH_SUFFIX}=10.0.1-1 libarrow-dataset-dev${APT_ARCH_SUFFIX}=10.0.1-1 \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset${ARROW_SOVERSION}${APT_ARCH_SUFFIX} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset-dev${APT_ARCH_SUFFIX}=${ARROW_VERSION} \
     && rm -rf /var/lib/apt/lists/*
 
 RUN apt-get update -y \
@@ -275,7 +283,8 @@ FROM $TARGET_BASE_IMAGE as runner
 
 USER root
 RUN date
-ARG JAVA_VERSION=11
+ARG JAVA_VERSION=17
+ARG ARROW_SOVERSION=1100
 
 # Update distro
 RUN apt-get update -y && apt-get upgrade -y \
@@ -311,7 +320,9 @@ RUN apt-get update \
     && wget https://apache.jfrog.io/artifactory/arrow/$(lsb_release --id --short | tr 'A-Z' 'a-z')/apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ./apache-arrow-apt-source-latest-$(lsb_release --codename --short).deb \
     && apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow1000 libparquet1000 libarrow-dataset1000 \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow${ARROW_SOVERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libparquet${ARROW_SOVERSION} \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y -V libarrow-dataset${ARROW_SOVERSION} \
     && rm -rf /var/lib/apt/lists/*
 
 # Attempt to order layers starting with less frequently varying ones
