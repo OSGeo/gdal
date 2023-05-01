@@ -1204,9 +1204,9 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
         return std::max(m_nBatchSize * nMulFactor, nCapacity);
     };
 
+    m_anFIDs->resize(m_nBatchSize);
     if (!m_osFIDColumn.empty())
     {
-        m_anFIDs->resize(m_nBatchSize);
         m_query->set_buffer(m_osFIDColumn, *(m_anFIDs));
     }
 
@@ -1788,9 +1788,14 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
         //CPLDebug("TILEDB", "Read %d rows", int(nRowCount));
 
         const auto result_buffer_elements = m_query->result_buffer_elements();
-        if (!m_osFIDColumn.empty())
+        m_anFIDs->resize(nRowCount);
+        if (m_osFIDColumn.empty())
         {
-            m_anFIDs->resize(nRowCount);
+            for (uint64_t i = 0; i < nRowCount; ++i)
+            {
+                (*m_anFIDs)[i] = m_nNextFID;
+                m_nNextFID++;
+            }
         }
 
         if (!m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored())
@@ -2873,10 +2878,8 @@ const char *OGRTileDBLayer::GetMetadataItem(const char *pszName,
 OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
 {
     auto poFeature = new OGRFeature(m_poFeatureDefn);
-    if (!m_anFIDs->empty())
-        poFeature->SetFID((*m_anFIDs)[m_nOffsetInResultSet]);
-    else
-        poFeature->SetFID(m_nNextFID++);
+
+    poFeature->SetFID((*m_anFIDs)[m_nOffsetInResultSet]);
 
     // For a variable size attribute (list type), return the number of elements
     // for the feature of index m_nOffsetInResultSet.

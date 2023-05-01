@@ -1417,7 +1417,7 @@ def test_ogr_tiledb_arrow_stream_numpy_point_no_wkb_geometry_col():
 ###############################################################################
 
 
-def test_ogr_tiledb_arrow_stream_numpy_pointz_no_wkb_geometry_col():
+def test_ogr_tiledb_arrow_stream_numpy_pointz_no_fid_and_wkb_geometry_col():
     pytest.importorskip("osgeo.gdal_array")
     pytest.importorskip("numpy")
 
@@ -1429,7 +1429,7 @@ def test_ogr_tiledb_arrow_stream_numpy_pointz_no_wkb_geometry_col():
     srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
     srs.ImportFromEPSG(4326)
     lyr = ds.CreateLayer(
-        "test", srs=srs, geom_type=ogr.wkbPoint25D, options=["GEOMETRY_NAME="]
+        "test", srs=srs, geom_type=ogr.wkbPoint25D, options=["FID=", "GEOMETRY_NAME="]
     )
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT Z (1 2 3)"))
@@ -1446,12 +1446,10 @@ def test_ogr_tiledb_arrow_stream_numpy_pointz_no_wkb_geometry_col():
     batches = [batch for batch in stream]
     assert len(batches) == 1
     batch = batches[0]
-    for idx, fid in enumerate(batch["FID"]):
-        got_geom = ogr.CreateGeometryFromWkb(batch["wkb_geometry"][idx])
-        if fid == 1:
-            assert got_geom.ExportToIsoWkt() == "POINT Z (1 2 3)"
-        else:
-            assert got_geom.ExportToIsoWkt() == "POINT Z (4 5 6)"
+    assert [x for x in batch["OGC_FID"]] == [1, 2]
+    assert set(
+        [ogr.CreateGeometryFromWkb(x).ExportToIsoWkt() for x in batch["wkb_geometry"]]
+    ) == {"POINT Z (1 2 3)", "POINT Z (4 5 6)"}
 
     ds = None
 
