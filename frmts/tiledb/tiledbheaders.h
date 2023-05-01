@@ -81,6 +81,8 @@ typedef enum
     ATTRIBUTES = 2
 } TILEDB_INTERLEAVE_MODE;
 
+#define DEFAULT_TILE_CAPACITY 10000
+
 const CPLString TILEDB_VALUES("TDB_VALUES");
 
 /************************************************************************/
@@ -307,6 +309,7 @@ class OGRTileDBLayer final : public OGRLayer,
     };
 
     size_t m_nBatchSize = 65536;
+    size_t m_nTileCapacity = DEFAULT_TILE_CAPACITY;
     double m_dfTileExtent = 0;
     size_t m_nEstimatedWkbSizePerRow = 0;
     std::map<std::string, size_t> m_oMapEstimatedSizePerRow;

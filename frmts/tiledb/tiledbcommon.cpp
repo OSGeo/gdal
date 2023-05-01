@@ -309,6 +309,9 @@ GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
 /*                         GDALRegister_TILEDB()                        */
 /************************************************************************/
 
+#define XSTRINGIFY(X) #X
+#define STRINGIFY(X) XSTRINGIFY(X)
+
 void GDALRegister_TileDB()
 
 {
@@ -415,6 +418,7 @@ void GDALRegister_TileDB()
         "description='Name of the Z dimension.'/>"
         "</OpenOptionList>");
 
+    // clang-format off
     poDriver->SetMetadataItem(
         GDAL_DS_LAYER_CREATIONOPTIONLIST,
         "<LayerCreationOptionList>"
@@ -433,6 +437,9 @@ void GDALRegister_TileDB()
         "description='Compression level'/>\n"
         "   <Option name='BATCH_SIZE' type='int' "
         "description='Number of features to write at once'/>"
+        "   <Option name='TILE_CAPACITY' type='int' default='"
+        STRINGIFY(DEFAULT_TILE_CAPACITY) "' "
+        "description='Number of non-empty cells stored in a data tile'/>"
         "   <Option name='BOUNDS' type='string' description='Specify "
         "bounds for sparse array, minx, miny, [minz,] maxx, maxy [, maxz]'/>\n"
         "   <Option name='ADD_Z_DIM' type='string-select' description='"
@@ -452,15 +459,16 @@ void GDALRegister_TileDB()
         "   <Option name='TILEDB_STRING_TYPE' type='string-select' "
         "description='Which TileDB type to create string attributes' "
 #ifdef HAS_TILEDB_WORKING_UTF8_STRING_FILTER
-        "default='UTF8'"
+       "default='UTF8'"
 #else
-        "default='ASCII'"
+       "default='ASCII'"
 #endif
         ">"
         "       <Value>UTF8</Value>"
         "       <Value>ASCII</Value>"
         "   </Option>"
         "</LayerCreationOptionList>");
+    // clang-format on
 
     poDriver->pfnIdentify = TileDBDataset::Identify;
     poDriver->pfnOpen = TileDBDataset::Open;

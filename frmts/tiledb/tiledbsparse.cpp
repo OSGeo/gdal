@@ -453,6 +453,12 @@ OGRLayer *OGRTileDBDataset::ICreateLayer(const char *pszName,
 
     poLayer->m_nBatchSize = std::max(
         1, atoi(CSLFetchNameValueDef(papszOptions, "BATCH_SIZE", "65536")));
+
+    int nTileCapacity =
+        atoi(CSLFetchNameValueDef(papszOptions, "TILE_CAPACITY", "0"));
+    poLayer->m_nTileCapacity =
+        nTileCapacity <= 0 ? DEFAULT_TILE_CAPACITY : nTileCapacity;
+
     poLayer->m_dfTileExtent =
         std::min(poLayer->m_dfYEnd - poLayer->m_dfYStart,
                  poLayer->m_dfXEnd - poLayer->m_dfXStart) /
@@ -3252,6 +3258,8 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
         }
 
         m_schema->set_domain(domain);
+
+        m_schema->set_capacity(m_nTileCapacity);
 
         // allow geometries with same _X, _Y
         m_schema->set_allows_dups(true);
