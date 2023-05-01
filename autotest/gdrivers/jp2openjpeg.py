@@ -35,6 +35,7 @@ import sys
 
 import gdaltest
 import pytest
+import webserver
 from test_py_scripts import samples_path
 
 from osgeo import gdal, ogr, osr
@@ -3807,3 +3808,42 @@ def test_jp2openjpeg_mosaic():
         assert vrt_ds.GetRasterBand(1).Checksum() == 57182
     for name in src_ds_names:
         gdal.Unlink(name)
+
+
+###############################################################################
+
+
+@pytest.mark.require_curl()
+def test_jp2openjpeg_vrt_protocol():
+
+    (webserver_process, webserver_port) = webserver.launch(
+        handler=webserver.DispatcherHttpHandler
+    )
+    if webserver_port == 0:
+        pytest.skip("cannot start HTTP server")
+
+    gdal.VSICurlClearCache()
+
+    try:
+        handler = webserver.FileHandler(
+            {"/byte.jp2": open("data/jpeg2000/byte.jp2", "rb").read()}
+        )
+        with webserver.install_http_handler(handler):
+            gdal.ErrorReset()
+            http_filename = "http://localhost:%d/byte.jp2" % webserver_port
+            ds = gdal.Open("vrt://" + http_filename)
+            assert gdal.GetLastErrorMsg() == ""
+
+            gdal.GetDriverByName("VRT").CreateCopy("/vsimem/out.vrt", ds)
+
+            fp = gdal.VSIFOpenL("/vsimem/out.vrt", "rb")
+            if fp is not None:
+                data = gdal.VSIFReadL(1, 100000, fp).decode("ascii")
+                gdal.VSIFCloseL(fp)
+            gdal.Unlink("/vsimem/out.vrt")
+            assert http_filename in data
+
+    finally:
+        webserver.server_stop(webserver_process, webserver_port)
+
+        gdal.VSICurlClearCache()
