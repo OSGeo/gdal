@@ -3230,6 +3230,7 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
         m_schema->set_cell_order(TILEDB_ROW_MAJOR);
 
         m_schema->set_coords_filter_list(*m_filterList);
+        m_schema->set_offsets_filter_list(*m_filterList);
 
         tiledb::Domain domain(*m_ctx);
 
