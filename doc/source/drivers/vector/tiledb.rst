@@ -107,7 +107,7 @@ The following open options are available:
   should be greater than 0.
 
 - **BATCH_SIZE=integer**: Number of features to fetch/write at once.
-  Default is 65,536.
+  Default is 500,000.
 
 - **DIM_X=string**: Name of the X dimension. Default is ``_X``.
 
@@ -139,7 +139,7 @@ The following layer options are available:
 
 - **COMPRESSION_LEVEL=integer**: compression level
 
-- **BATCH_SIZE=integer**: Number of features to write at once. Default is 65,536.
+- **BATCH_SIZE=integer**: Number of features to write at once. Default is 500,000.
 
 - **TILE_CAPACITY=integer**: Number of non-empty cells stored in a data tile. Default is 10,000.
 

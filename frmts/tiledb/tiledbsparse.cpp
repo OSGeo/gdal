@@ -272,9 +272,10 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
             return false;
         }
 
+        int nBatchSize = atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                                   "BATCH_SIZE", "0"));
         poLayer->m_nBatchSize =
-            std::max(1, atoi(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
-                                                  "BATCH_SIZE", "65536")));
+            nBatchSize <= 0 ? DEFAULT_BATCH_SIZE : nBatchSize;
 
         poDS->m_apoLayers.emplace_back(std::move(poLayer));
         return true;
@@ -451,8 +452,9 @@ OGRLayer *OGRTileDBDataset::ICreateLayer(const char *pszName,
         return nullptr;
     }
 
-    poLayer->m_nBatchSize = std::max(
-        1, atoi(CSLFetchNameValueDef(papszOptions, "BATCH_SIZE", "65536")));
+    int nBatchSize =
+        atoi(CSLFetchNameValueDef(papszOptions, "BATCH_SIZE", "0"));
+    poLayer->m_nBatchSize = nBatchSize <= 0 ? DEFAULT_BATCH_SIZE : nBatchSize;
 
     int nTileCapacity =
         atoi(CSLFetchNameValueDef(papszOptions, "TILE_CAPACITY", "0"));

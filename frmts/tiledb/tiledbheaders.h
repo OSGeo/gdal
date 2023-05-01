@@ -83,6 +83,8 @@ typedef enum
 
 #define DEFAULT_TILE_CAPACITY 10000
 
+#define DEFAULT_BATCH_SIZE 500000
+
 const CPLString TILEDB_VALUES("TDB_VALUES");
 
 /************************************************************************/
@@ -308,7 +310,7 @@ class OGRTileDBLayer final : public OGRLayer,
         std::shared_ptr<std::vector<uint64_t>> offsetHolder;
     };
 
-    size_t m_nBatchSize = 65536;
+    size_t m_nBatchSize = DEFAULT_BATCH_SIZE;
     size_t m_nTileCapacity = DEFAULT_TILE_CAPACITY;
     double m_dfTileExtent = 0;
     size_t m_nEstimatedWkbSizePerRow = 0;

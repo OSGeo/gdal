@@ -396,6 +396,7 @@ void GDALRegister_TileDB()
 #endif
         "</CreationOptionList>\n");
 
+    // clang-format off
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
@@ -408,7 +409,8 @@ void GDALRegister_TileDB()
         "of configuration file for TileDB'/>"
         "   <Option name='TILEDB_TIMESTAMP' type='int' description='Open array "
         "at this timestamp, the timestamp should be > 0'/>"
-        "   <Option name='BATCH_SIZE' type='int' scope='vector' "
+        "   <Option name='BATCH_SIZE' scope='vector' type='int' default='"
+        STRINGIFY(DEFAULT_BATCH_SIZE) "' "
         "description='Number of features to fetch/write at once'/>"
         "   <Option name='DIM_X' type='string' scope='vector' default='_X' "
         "description='Name of the X dimension.'/>"
@@ -417,6 +419,7 @@ void GDALRegister_TileDB()
         "   <Option name='DIM_Z' type='string' scope='vector' default='_Z' "
         "description='Name of the Z dimension.'/>"
         "</OpenOptionList>");
+    // clang-format on
 
     // clang-format off
     poDriver->SetMetadataItem(
@@ -435,7 +438,8 @@ void GDALRegister_TileDB()
         "   </Option>\n"
         "   <Option name='COMPRESSION_LEVEL' type='int' "
         "description='Compression level'/>\n"
-        "   <Option name='BATCH_SIZE' type='int' "
+        "   <Option name='BATCH_SIZE' type='int' default='"
+        STRINGIFY(DEFAULT_BATCH_SIZE) "' "
         "description='Number of features to write at once'/>"
         "   <Option name='TILE_CAPACITY' type='int' default='"
         STRINGIFY(DEFAULT_TILE_CAPACITY) "' "
