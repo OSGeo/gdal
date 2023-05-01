@@ -566,8 +566,8 @@ expose a layer as GeoPandas GeoDataFrame (which involves parsing WKB as GEOS obj
 
 .. _rfc-86-bench-geopandas:
 
-bench_gepandas.py
-+++++++++++++++++
+bench_geopandas.py
+++++++++++++++++++
 
 Use of the GeoPandas Python library which uses Fiona underneath to
 expose a layer as GeoPandas GeoDataFrame.
