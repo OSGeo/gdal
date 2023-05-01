@@ -368,9 +368,8 @@ void GDALRegister_TileDB()
         "description='Tile Width'/>"
         "   <Option name='BLOCKYSIZE' scope='raster' type='int' "
         "description='Tile Height'/>"
-        "   <Option name='STATS' scope='raster' type='boolean' "
-        "description='Dump TileDB "
-        "stats'/>"
+        "   <Option name='STATS' scope='raster' type='boolean' default='false' "
+        "description='Dump TileDB stats'/>"
         "   <Option name='TILEDB_CONFIG' type='string' "
         "description='location "
         "of configuration file for TileDB'/>"
@@ -400,9 +399,8 @@ void GDALRegister_TileDB()
     poDriver->SetMetadataItem(
         GDAL_DMD_OPENOPTIONLIST,
         "<OpenOptionList>"
-        "   <Option name='STATS' scope='raster' type='boolean' "
-        "description='Dump TileDB "
-        "stats'/>"
+        "   <Option name='STATS' scope='raster' type='boolean' default='false' "
+        "description='Dump TileDB stats'/>"
         "   <Option name='TILEDB_ATTRIBUTE' scope='raster' type='string' "
         "description='Attribute to read from each band'/>"
         "   <Option name='TILEDB_CONFIG' type='string' description='location "
@@ -471,6 +469,8 @@ void GDALRegister_TileDB()
         "       <Value>UTF8</Value>"
         "       <Value>ASCII</Value>"
         "   </Option>"
+        "   <Option name='STATS' type='boolean' default='false' "
+        "description='Dump TileDB stats'/>"
         "</LayerCreationOptionList>");
     // clang-format on
 

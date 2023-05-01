@@ -247,6 +247,7 @@ class OGRTileDBLayer final : public OGRLayer,
     std::string m_osFIDColumn{};
     GIntBig m_nNextFID = -1;
     int64_t m_nTotalFeatureCount = -1;
+    bool m_bStats = false;
     bool m_bQueryComplete = false;
     bool m_bGrowBuffers = false;
     uint64_t m_nOffsetInResultSet = 0;

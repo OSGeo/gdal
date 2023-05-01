@@ -277,6 +277,9 @@ GDALDataset *OGRTileDBDataset::Open(GDALOpenInfo *poOpenInfo,
         poLayer->m_nBatchSize =
             nBatchSize <= 0 ? DEFAULT_BATCH_SIZE : nBatchSize;
 
+        poLayer->m_bStats =
+            CPLFetchBool(poOpenInfo->papszOpenOptions, "STATS", false);
+
         poDS->m_apoLayers.emplace_back(std::move(poLayer));
         return true;
     };
@@ -460,6 +463,8 @@ OGRLayer *OGRTileDBDataset::ICreateLayer(const char *pszName,
         atoi(CSLFetchNameValueDef(papszOptions, "TILE_CAPACITY", "0"));
     poLayer->m_nTileCapacity =
         nTileCapacity <= 0 ? DEFAULT_TILE_CAPACITY : nTileCapacity;
+
+    poLayer->m_bStats = CPLFetchBool(papszOptions, "STATS", false);
 
     poLayer->m_dfTileExtent =
         std::min(poLayer->m_dfYEnd - poLayer->m_dfYStart,
@@ -1636,7 +1641,17 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
         while (true)
         {
             // Submit query and get status
+            if (m_bStats)
+                tiledb::Stats::enable();
+
             m_query->submit();
+
+            if (m_bStats)
+            {
+                tiledb::Stats::dump(stdout);
+                tiledb::Stats::disable();
+            }
+
             status = m_query->query_status();
             if (status == tiledb::Query::Status::FAILED)
             {
@@ -4243,7 +4258,16 @@ void OGRTileDBLayer::FlushArrays()
             }
         }
 
+        if (m_bStats)
+            tiledb::Stats::enable();
+
         query.submit();
+
+        if (m_bStats)
+        {
+            tiledb::Stats::dump(stdout);
+            tiledb::Stats::disable();
+        }
     }
     catch (const std::exception &)
     {
