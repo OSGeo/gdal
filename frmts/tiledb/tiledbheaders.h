@@ -244,6 +244,7 @@ class OGRTileDBLayer final : public OGRLayer,
     GIntBig m_nNextFID = -1;
     int64_t m_nTotalFeatureCount = -1;
     bool m_bQueryComplete = false;
+    bool m_bGrowBuffers = false;
     uint64_t m_nOffsetInResultSet = 0;
     uint64_t m_nRowCountInResultSet = 0;
     int m_nUseOptimizedAttributeFilter = -1;  // uninitialized
@@ -287,9 +288,11 @@ class OGRTileDBLayer final : public OGRLayer,
     std::shared_ptr<std::vector<double>> m_adfXs;
     std::shared_ptr<std::vector<double>> m_adfYs;
     std::shared_ptr<std::vector<double>> m_adfZs;
+    std::vector<size_t> m_anFieldValuesCapacity{};
     std::vector<ArrayType> m_aFieldValues;
     std::vector<std::shared_ptr<std::vector<uint64_t>>> m_aFieldValueOffsets;
     std::vector<std::vector<uint8_t>> m_aFieldValidity;
+    size_t m_nGeometriesCapacity = 0;
     std::shared_ptr<std::vector<unsigned char>> m_abyGeometries;
     std::shared_ptr<std::vector<uint64_t>> m_anGeometryOffsets;
 
@@ -319,7 +322,7 @@ class OGRTileDBLayer final : public OGRLayer,
     void SwitchToWritingMode();
     bool InitFromStorage(tiledb::Context *poCtx, uint64_t nTimestamp,
                          CSLConstList papszOpenOptions);
-    void SetReadBuffers(bool bGrowVariableSizeArrays = false);
+    void SetReadBuffers(bool bGrowVariableSizeArrays);
     bool SetupQuery(tiledb::QueryCondition *queryCondition);
     OGRFeature *TranslateCurrentFeature();
 

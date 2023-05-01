@@ -1171,21 +1171,21 @@ const char *OGRTileDBLayer::GetDatabaseGeomColName()
 
 void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
 {
-    const auto GetOffsetSize =
-        [this](const std::string & /*osColName*/, size_t nCapacity)
-    { return std::max(m_nBatchSize, nCapacity); };
     const auto GetValueSize =
         [this, bGrowVariableSizeArrays](const std::string & /*osColName*/,
                                         size_t nCapacity, size_t nMulFactor = 1)
     {
         if (bGrowVariableSizeArrays)
+        {
+            CPLAssert(nCapacity > 0);
             return 2 * nCapacity;
+        }
         return std::max(m_nBatchSize * nMulFactor, nCapacity);
     };
 
     if (!m_osFIDColumn.empty())
     {
-        m_anFIDs->resize(GetValueSize(m_osFIDColumn, m_anFIDs->capacity()));
+        m_anFIDs->resize(m_nBatchSize);
         m_query->set_buffer(m_osFIDColumn, *(m_anFIDs));
     }
 
@@ -1194,11 +1194,11 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
         const char *pszGeomColName = GetDatabaseGeomColName();
         if (pszGeomColName)
         {
-            m_anGeometryOffsets->resize(
-                GetOffsetSize(pszGeomColName, m_anGeometryOffsets->capacity()));
+            m_anGeometryOffsets->resize(m_nBatchSize);
             m_abyGeometries->resize(GetValueSize(pszGeomColName,
-                                                 m_abyGeometries->capacity(),
+                                                 m_nGeometriesCapacity,
                                                  m_nEstimatedWkbSizePerRow));
+            m_nGeometriesCapacity = m_abyGeometries->capacity();
             const auto colType = m_schema->attribute(pszGeomColName).type();
             if (colType == TILEDB_UINT8)
             {
@@ -1220,19 +1220,22 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
         }
         else
         {
-            m_adfXs->resize(GetValueSize(m_osXDim, m_adfXs->capacity()));
+            m_adfXs->resize(m_nBatchSize);
             m_query->set_buffer(m_osXDim, *m_adfXs);
 
-            m_adfYs->resize(GetValueSize(m_osYDim, m_adfYs->capacity()));
+            m_adfYs->resize(m_nBatchSize);
             m_query->set_buffer(m_osYDim, *m_adfYs);
 
             if (!m_osZDim.empty())
             {
-                m_adfZs->resize(GetValueSize(m_osZDim, m_adfZs->capacity()));
+                m_adfZs->resize(m_nBatchSize);
                 m_query->set_buffer(m_osZDim, *m_adfZs);
             }
         }
     }
+
+    if (m_anFieldValuesCapacity.empty())
+        m_anFieldValuesCapacity.resize(m_poFeatureDefn->GetFieldCount());
 
     for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
     {
@@ -1243,8 +1246,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
         auto &anOffsets = *(m_aFieldValueOffsets[i]);
         if (poFieldDefn->IsNullable())
         {
-            m_aFieldValidity[i].resize(
-                GetValueSize(pszFieldName, m_aFieldValidity[i].capacity()));
+            m_aFieldValidity[i].resize(m_nBatchSize);
             m_query->set_validity_buffer(pszFieldName, m_aFieldValidity[i]);
         }
         auto &fieldValues = m_aFieldValues[i];
@@ -1257,7 +1259,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<uint8_t>>>(
                         fieldValues));
-                    v.resize(GetValueSize(pszFieldName, v.capacity()));
+                    v.resize(m_nBatchSize);
                     m_query->set_buffer(pszFieldName, v);
                 }
                 else
@@ -1266,14 +1268,14 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int16_t>>>(
                         fieldValues));
-                    v.resize(GetValueSize(pszFieldName, v.capacity()));
+                    v.resize(m_nBatchSize);
                     m_query->set_buffer(pszFieldName, v);
                 }
                 else
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int32_t>>>(
                         fieldValues));
-                    v.resize(GetValueSize(pszFieldName, v.capacity()));
+                    v.resize(m_nBatchSize);
                     m_query->set_buffer(pszFieldName, v);
                 }
                 break;
@@ -1292,10 +1294,10 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<uint8_t>>>(
                         fieldValues));
-                    v.resize(
-                        GetValueSize(pszFieldName, v.capacity(), nMulFactor));
-                    anOffsets.resize(
-                        GetOffsetSize(pszFieldName, anOffsets.capacity()));
+                    v.resize(GetValueSize(
+                        pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
+                    m_anFieldValuesCapacity[i] = v.capacity();
+                    anOffsets.resize(m_nBatchSize);
                     m_query->set_offsets_buffer(pszFieldName, anOffsets);
                     m_query->set_data_buffer(pszFieldName, v);
                 }
@@ -1305,20 +1307,20 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int16_t>>>(
                         fieldValues));
-                    v.resize(
-                        GetValueSize(pszFieldName, v.capacity(), nMulFactor));
-                    anOffsets.resize(
-                        GetOffsetSize(pszFieldName, anOffsets.capacity()));
+                    v.resize(GetValueSize(
+                        pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
+                    m_anFieldValuesCapacity[i] = v.capacity();
+                    anOffsets.resize(m_nBatchSize);
                     m_query->set_buffer(pszFieldName, anOffsets, v);
                 }
                 else
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<int32_t>>>(
                         fieldValues));
-                    v.resize(
-                        GetValueSize(pszFieldName, v.capacity(), nMulFactor));
-                    anOffsets.resize(
-                        GetOffsetSize(pszFieldName, anOffsets.capacity()));
+                    v.resize(GetValueSize(
+                        pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
+                    m_anFieldValuesCapacity[i] = v.capacity();
+                    anOffsets.resize(m_nBatchSize);
                     m_query->set_buffer(pszFieldName, anOffsets, v);
                 }
                 break;
@@ -1331,7 +1333,7 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
             {
                 auto &v = *(std::get<std::shared_ptr<std::vector<int64_t>>>(
                     fieldValues));
-                v.resize(GetValueSize(pszFieldName, v.capacity()));
+                v.resize(m_nBatchSize);
                 m_query->set_buffer(pszFieldName, v);
                 break;
             }
@@ -1346,9 +1348,10 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         : 8;
                 auto &v = *(std::get<std::shared_ptr<std::vector<int64_t>>>(
                     fieldValues));
-                v.resize(GetValueSize(pszFieldName, v.capacity(), nMulFactor));
-                anOffsets.resize(
-                    GetOffsetSize(pszFieldName, anOffsets.capacity()));
+                v.resize(GetValueSize(pszFieldName, m_anFieldValuesCapacity[i],
+                                      nMulFactor));
+                m_anFieldValuesCapacity[i] = v.capacity();
+                anOffsets.resize(m_nBatchSize);
                 m_query->set_buffer(pszFieldName, anOffsets, v);
                 break;
             }
@@ -1359,14 +1362,14 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<float>>>(
                         fieldValues));
-                    v.resize(GetValueSize(pszFieldName, v.capacity()));
+                    v.resize(m_nBatchSize);
                     m_query->set_buffer(pszFieldName, v);
                 }
                 else
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<double>>>(
                         fieldValues));
-                    v.resize(GetValueSize(pszFieldName, v.capacity()));
+                    v.resize(m_nBatchSize);
                     m_query->set_buffer(pszFieldName, v);
                 }
                 break;
@@ -1380,22 +1383,23 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                         ? static_cast<int>(
                               std::min<uint64_t>(1000, iter->second))
                         : 8;
-                anOffsets.resize(
-                    GetOffsetSize(pszFieldName, anOffsets.capacity()));
+                anOffsets.resize(m_nBatchSize);
                 if (poFieldDefn->GetSubType() == OFSTFloat32)
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<float>>>(
                         fieldValues));
-                    v.resize(
-                        GetValueSize(pszFieldName, v.capacity(), nMulFactor));
+                    v.resize(GetValueSize(
+                        pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
+                    m_anFieldValuesCapacity[i] = v.capacity();
                     m_query->set_buffer(pszFieldName, anOffsets, v);
                 }
                 else
                 {
                     auto &v = *(std::get<std::shared_ptr<std::vector<double>>>(
                         fieldValues));
-                    v.resize(
-                        GetValueSize(pszFieldName, v.capacity(), nMulFactor));
+                    v.resize(GetValueSize(
+                        pszFieldName, m_anFieldValuesCapacity[i], nMulFactor));
+                    m_anFieldValuesCapacity[i] = v.capacity();
                     m_query->set_buffer(pszFieldName, anOffsets, v);
                 }
                 break;
@@ -1406,12 +1410,12 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 auto &v =
                     *(std::get<std::shared_ptr<std::string>>(fieldValues));
                 auto iter = m_oMapEstimatedSizePerRow.find(pszFieldName);
-                v.resize(GetValueSize(pszFieldName, v.capacity(),
+                v.resize(GetValueSize(pszFieldName, m_anFieldValuesCapacity[i],
                                       iter != m_oMapEstimatedSizePerRow.end()
                                           ? iter->second
                                           : 8));
-                anOffsets.resize(
-                    GetOffsetSize(pszFieldName, anOffsets.capacity()));
+                m_anFieldValuesCapacity[i] = v.capacity();
+                anOffsets.resize(m_nBatchSize);
                 m_query->set_buffer(pszFieldName, anOffsets, v);
                 break;
             }
@@ -1422,12 +1426,12 @@ void OGRTileDBLayer::SetReadBuffers(bool bGrowVariableSizeArrays)
                 auto &v = *(std::get<std::shared_ptr<std::vector<uint8_t>>>(
                     fieldValues));
                 auto iter = m_oMapEstimatedSizePerRow.find(pszFieldName);
-                v.resize(GetValueSize(pszFieldName, v.capacity(),
+                v.resize(GetValueSize(pszFieldName, m_anFieldValuesCapacity[i],
                                       iter != m_oMapEstimatedSizePerRow.end()
                                           ? iter->second
                                           : 8));
-                anOffsets.resize(
-                    GetOffsetSize(pszFieldName, anOffsets.capacity()));
+                m_anFieldValuesCapacity[i] = v.capacity();
+                anOffsets.resize(m_nBatchSize);
                 if (eType == TILEDB_UINT8)
                 {
                     m_query->set_buffer(pszFieldName, anOffsets, v);
@@ -1615,7 +1619,8 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
             }
         }
 
-        SetReadBuffers();
+        SetReadBuffers(m_bGrowBuffers);
+        m_bGrowBuffers = false;
 
         // Create a loop
         tiledb::Query::Status status;
@@ -1685,10 +1690,13 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
             }
             else if (nRowCount < m_nBatchSize)
             {
-                //CPLDebug("TILEDB", "Got %d rows. Grow buffers", int(nRowCount));
-                SetReadBuffers(true);
                 if (nRowCount > 0)
+                {
+                    m_bGrowBuffers = true;
                     break;
+                }
+                CPLDebug("TILEDB", "Got 0 rows. Grow buffers");
+                SetReadBuffers(true);
             }
             else
                 break;
