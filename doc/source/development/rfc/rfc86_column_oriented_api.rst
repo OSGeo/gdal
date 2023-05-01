@@ -641,7 +641,7 @@ GeoPandas GeoDataFrame from the concatenation of the returned arrays.
         geom_field_name = None
         for field in schema:
             field_md = field.metadata
-            if (field_md and field_md.get(b'ARROW:extension:name', None) == b'WKB') or field.name == lyr.GetGeometryColumn():
+            if (field_md and field_md.get(b'ARROW:extension:name', None) == b'ogc.wkb') or field.name == lyr.GetGeometryColumn():
                 geom_field_name = field.name
                 break
 
