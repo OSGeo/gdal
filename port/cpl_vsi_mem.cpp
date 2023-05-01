@@ -840,7 +840,15 @@ std::string VSIMemFilesystemHandler::NormalizePath(const std::string &in)
     s.replaceAll("//", '/');
     if (!s.empty() && s.back() == '/')
         s.resize(s.size() - 1);
+#if __GNUC__ >= 13
+    // gcc 13 complains about below explicit std::move()
+    return s;
+#else
+    // Android NDK (and probably other compilers) warn about
+    // "warning: local variable 's' will be copied despite being returned by name [-Wreturn-std-move]"
+    // if not specifying std::move()
     return std::move(s);
+#endif
 }
 
 /************************************************************************/
