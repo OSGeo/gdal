@@ -1760,11 +1760,25 @@ OGRErr GMLHandler::endElementGeometry()
                 GMLFeatureClass *poClass = poGMLFeature->GetClass();
                 if (poClass->GetGeometryPropertyCount() > 1)
                 {
+                    if (poGMLFeature->GetGeometryRef(m_nGeometryPropertyIndex))
+                    {
+                        // If we have already a geometry, setting a new one
+                        // will invalidate nodes potentially stored in
+                        // m_oMapElementToSubstitute, so clear it
+                        m_oMapElementToSubstitute.clear();
+                    }
                     poGMLFeature->SetGeometryDirectly(m_nGeometryPropertyIndex,
                                                       psInterestNode);
                 }
                 else
                 {
+                    if (poGMLFeature->GetGeometryRef(0))
+                    {
+                        // If we have already a geometry, setting a new one
+                        // will invalidate nodes potentially stored in
+                        // m_oMapElementToSubstitute, so clear it
+                        m_oMapElementToSubstitute.clear();
+                    }
                     poGMLFeature->SetGeometryDirectly(psInterestNode);
                 }
             }
