@@ -845,12 +845,24 @@ bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
     // Figure out dimensions
     m_osXDim.clear();
     m_osYDim.clear();
+
+    // to improve interoperability with PDAL generated datasets
+    const bool bDefaultDimNameWithoutUnderscore =
+        !CSLFetchNameValue(papszOpenOptions, "DIM_X") &&
+        !CSLFetchNameValue(papszOpenOptions, "DIM_Y") &&
+        !CSLFetchNameValue(papszOpenOptions, "DIM_Z") &&
+        !domain.has_dimension("_X") && !domain.has_dimension("_Y") &&
+        domain.has_dimension("X") && domain.has_dimension("Y");
+
     const std::string osXDim =
-        CSLFetchNameValueDef(papszOpenOptions, "DIM_X", "_X");
+        CSLFetchNameValueDef(papszOpenOptions, "DIM_X",
+                             bDefaultDimNameWithoutUnderscore ? "X" : "_X");
     const std::string osYDim =
-        CSLFetchNameValueDef(papszOpenOptions, "DIM_Y", "_Y");
+        CSLFetchNameValueDef(papszOpenOptions, "DIM_Y",
+                             bDefaultDimNameWithoutUnderscore ? "Y" : "_Y");
     const std::string osZDim =
-        CSLFetchNameValueDef(papszOpenOptions, "DIM_Z", "_Z");
+        CSLFetchNameValueDef(papszOpenOptions, "DIM_Z",
+                             bDefaultDimNameWithoutUnderscore ? "Z" : "_Z");
     for (unsigned int i = 0; i < domain.ndim(); ++i)
     {
         auto dim = domain.dimension(i);
