@@ -38,7 +38,7 @@ static void Usage()
 {
     printf(
         "Usage: bench_ogr_c_api [-where filter] [-spat xmin ymin xmax ymax]\n");
-    printf("                       filename [layer_name]\n");
+    printf("                       [-oo NAME=VALUE]* filename [layer_name]\n");
     exit(1);
 }
 
@@ -59,6 +59,7 @@ int main(int argc, char *argv[])
     const char *pszDataset = nullptr;
     std::unique_ptr<OGRPolygon> poSpatialFilter;
     const char *pszLayerName = nullptr;
+    CPLStringList aosOpenOptions;
     for (int iArg = 1; iArg < argc; ++iArg)
     {
         if (iArg + 1 < argc && strcmp(argv[iArg], "-where") == 0)
@@ -79,6 +80,11 @@ int main(int argc, char *argv[])
             poSpatialFilter->addRing(&oRing);
 
             iArg += 4;
+        }
+        else if (iArg + 1 < argc && strcmp(argv[iArg], "-oo") == 0)
+        {
+            ++iArg;
+            aosOpenOptions.AddString(argv[iArg]);
         }
         else if (argv[iArg][0] == '-')
         {
@@ -105,7 +111,8 @@ int main(int argc, char *argv[])
     GDALAllRegister();
 
     auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open(pszDataset, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR));
+        GDALDataset::Open(pszDataset, GDAL_OF_VECTOR | GDAL_OF_VERBOSE_ERROR,
+                          nullptr, aosOpenOptions.List()));
     if (poDS == nullptr)
     {
         CSLDestroy(argv);

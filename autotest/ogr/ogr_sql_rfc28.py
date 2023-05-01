@@ -1516,6 +1516,30 @@ def test_ogr_rfc28_48():
 
 
 ###############################################################################
+def test_ogr_rfc28_datetime_null():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("lyr")
+    fld_defn = ogr.FieldDefn("dt", ogr.OFTDateTime)
+    lyr.CreateField(fld_defn)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetFieldNull("dt")
+    lyr.CreateFeature(feat)
+    feat = ogr.Feature(lyr.GetLayerDefn())
+    feat.SetField("dt", "2017/02/17 11:06:34")
+    lyr.CreateFeature(feat)
+
+    gdal.ErrorReset()
+    lyr.SetAttributeFilter("dt = '2017/02/17 11:06:34'")
+    assert lyr.GetFeatureCount() == 1
+    assert gdal.GetLastErrorMsg() == ""
+
+    lyr.SetAttributeFilter("dt IS NULL")
+    assert lyr.GetFeatureCount() == 1
+    assert gdal.GetLastErrorMsg() == ""
+
+
+###############################################################################
 def test_ogr_rfc28_int_overflows():
 
     ds = ogr.GetDriverByName("Memory").CreateDataSource("")

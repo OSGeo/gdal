@@ -639,6 +639,19 @@ swq_expr_node *SWQGeneralEvaluator(swq_expr_node *node,
               node->nOperation == SWQ_LE || node->nOperation == SWQ_IN ||
               node->nOperation == SWQ_BETWEEN))
     {
+        if (node->field_type == SWQ_BOOLEAN)
+        {
+            for (int i = 0; i < node->nSubExprCount; i++)
+            {
+                if (sub_node_values[i]->is_null)
+                {
+                    poRet = new swq_expr_node(FALSE);
+                    poRet->field_type = node->field_type;
+                    return poRet;
+                }
+            }
+        }
+
         OGRField sField0, sField1;
         poRet = new swq_expr_node(0);
         poRet->field_type = node->field_type;
