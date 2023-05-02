@@ -482,6 +482,216 @@ def ReleaseResultSet(self, sql_lyr):
 
   %}
 
+  %feature("shadow") SetAttributeFilter %{
+  def SetAttributeFilter(self, filter_string: "Optional[str]"):
+      """SetAttributeFilter(self, filter_string: Optional[str])
+
+      Set the attribute query string to be used when fetching features.
+
+      See :cpp:func:`OGRLayer::SetAttributeFilter` for more information on
+      the filter statement format.
+
+      Starting with GDAL 3.8, this method can be used as a context manager,
+      automatically disabling the attribute filter when exiting the context.
+
+      Parameters
+      ----------
+      filter_string:
+        filter statement in the format of a SQL WHERE clause
+
+      Returns
+      -------
+      a proxy object that can be used as a context manager, or can be compared to an OGRErr value.
+
+      Examples
+      --------
+
+      1. Use as a context manager:
+
+      >>> with lyr.SetAttributeFilter("FID = 5"):
+      ...     print(lyr.GetFeatureCount())
+
+      2. Used to set the filter until it is explicitly disabled.
+
+      >>> err = lyr.SetAttributeFilter("FID = 5")
+      ... try:
+      ...     assert err = gdal.CE_None
+      ... finally:
+      ...     lyr.SetAttributeFilter(None)
+      """
+
+      class AttributeFilterProxy:
+          def __init__(self, lyr):
+              self.lyr = lyr
+              self.err = $action(lyr, filter_string)
+
+          def __int__(self):
+              return self.err
+
+          def __eq__(self, other):
+              return int(self) == other
+
+          def __enter__(self):
+              pass
+
+          def __exit__(self, *args):
+              $action(self.lyr, None)
+
+      return AttributeFilterProxy(self)
+  %}
+
+  %feature("shadow") SetSpatialFilter %{
+  def SetSpatialFilter(self, *args):
+      """
+      SetSpatialFilter(self, geom_field: int, filter: Union[str, ogr.Geometry])
+      SetSpatialFilter(self, filter: Union[str, ogr.Geometry])
+
+      Set the spatial filter geometry to be used when fetching features.
+
+      See :cpp:func:`OGRLayer::SetSpatialFilter` for more information on
+      spatial filtering.
+
+      Starting with GDAL 3.8, this method can be used as a context manager,
+      automatically disabling the spatial filter when exiting the context.
+
+      Parameters
+      ----------
+      geom_field:
+        numeric index of the geometry field used for filtering
+      filter:
+        WKT string or ogr.Geometry to be used for filtering
+
+      Returns
+      -------
+      a proxy object that can be used as a context manager, or can be compared
+      to an OGRErr value.
+
+      Examples
+      --------
+
+      1. Use as a context manager:
+
+      >>> with lyr.SetSpatialFilter(0, "LINESTRING (0 0, 1 1)"):
+      ...     print(lyr.GetFeatureCount())
+
+      2. Used to set the filter until it is explicitly disabled.
+
+      >>> err = lyr.SetSpatialFilter("LINESTRING (0 0, 1 1)")
+      ... try:
+      ...     assert err = gdal.CE_None
+      ... finally:
+      ...     lyr.SetSpatialFilter(None)
+      """
+
+      if len(args) == 2:
+        geom_field = args[0]
+      else:
+        geom_field = 0
+
+      filter = args[-1]
+
+      class SpatialFilterProxy:
+          def __init__(self, lyr, geom_field, filter):
+              self.lyr = lyr
+              self.geom_field = geom_field
+
+              if filter is None:
+                filter_geom = None
+              if type(filter) is str:
+                filter_geom = CreateGeometryFromWkt(filter)
+              else:
+                filter_geom = filter
+
+              self.err = $action(lyr, geom_field, filter_geom)
+
+              if type(filter) is str:
+                 filter_geom.Destroy()
+
+          def __int__(self):
+              return self.err
+
+          def __eq__(self, other):
+              return int(self) == other
+
+          def __enter__(self):
+              pass
+
+          def __exit__(self, *args):
+              $action(self.lyr, self.geom_field, None)
+
+      return SpatialFilterProxy(self, geom_field, filter)
+  %}
+
+  %feature("shadow") SetSpatialFilterRect %{
+  def SetSpatialFilterRect(self, *args):
+      """
+      SetSpatialFilterRect(self, geom_field: int, minx: float, miny: float, maxx: float, maxy: float)
+      SetSpatialFilterRect(self, minx: float, miny: float, maxx: float, maxy: float)
+
+      Set the spatial filter geometry to be used when fetching features.
+
+      See :cpp:func:`OGRLayer::SetSpatialFilterRect` for more information on
+      spatial filtering.
+
+      Starting with GDAL 3.8, this method can be used as a context manager,
+      automatically disabling the spatial filter when exiting the context.
+
+      Parameters
+      ----------
+      geom_field:
+        numeric index of the geometry field used for filtering
+      minx:
+        the minimum X coordinate for the rectangular region
+      miny:
+        the minimum Y coordinate for the rectangular region
+      maxx:
+        the maximum X coordinate for the rectangular region
+      maxy:
+        the maximum Y coordinate for the rectangular region
+
+      Returns
+      -------
+      a proxy object that can be used as a context manager
+
+      Examples
+      --------
+
+      1. Use as a context manager:
+
+      >>> with lyr.SetSpatialFilterRect(0, 10, 10, 20, 20)"):
+      ...     print(lyr.GetFeatureCount())
+
+      2. Used to set the filter until it is explicitly disabled.
+
+      >>> err = lyr.SetSpatialFilterRect(10, 10, 20, 20)
+      ... try:
+      ...     assert err = gdal.CE_None
+      ... finally:
+      ...     lyr.SetSpatialFilter(None)
+      """
+
+      if len(args) == 4:
+          geom_field = 0
+      else:
+          geom_field = args[0]
+
+      minx, miny, maxx, maxy = args[-4:]
+
+      class SpatialFilterRectProxy:
+          def __init__(self, lyr, geom_field):
+              self.lyr = lyr
+              self.geom_field = geom_field
+              $action(lyr, geom_field, minx, miny, maxx, maxy)
+
+          def __enter__(self):
+              pass
+
+          def __exit__(self, *args):
+              self.lyr.SetSpatialFilter(self.geom_field, None)
+
+      return SpatialFilterRectProxy(self, geom_field)
+  %}
+
 }
 
 %extend OGRFeatureShadow {
