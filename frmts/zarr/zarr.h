@@ -132,23 +132,25 @@ class ZarrRasterBand final : public GDALRasterBand
 class ZarrAttributeGroup
 {
     // Use a MEMGroup as a convenient container for attributes.
-    MEMGroup m_oGroup;
+    const bool m_bContainerIsGroup;
+    std::shared_ptr<MEMGroup> m_poGroup;
     bool m_bModified = false;
 
   public:
-    explicit ZarrAttributeGroup(const std::string &osParentName);
+    explicit ZarrAttributeGroup(const std::string &osParentName,
+                                bool bContainerIsGroup);
 
     void Init(const CPLJSONObject &obj, bool bUpdatable);
 
     std::shared_ptr<GDALAttribute> GetAttribute(const std::string &osName) const
     {
-        return m_oGroup.GetAttribute(osName);
+        return m_poGroup->GetAttribute(osName);
     }
 
     std::vector<std::shared_ptr<GDALAttribute>>
     GetAttributes(CSLConstList papszOptions = nullptr) const
     {
-        return m_oGroup.GetAttributes(papszOptions);
+        return m_poGroup->GetAttributes(papszOptions);
     }
 
     std::shared_ptr<GDALAttribute>
@@ -157,8 +159,8 @@ class ZarrAttributeGroup
                     const GDALExtendedDataType &oDataType,
                     CSLConstList /* papszOptions */ = nullptr)
     {
-        auto poAttr =
-            m_oGroup.CreateAttribute(osName, anDimensions, oDataType, nullptr);
+        auto poAttr = m_poGroup->CreateAttribute(osName, anDimensions,
+                                                 oDataType, nullptr);
         if (poAttr)
         {
             m_bModified = true;
@@ -168,7 +170,7 @@ class ZarrAttributeGroup
 
     void SetUpdatable(bool bUpdatable)
     {
-        auto attrs = m_oGroup.GetAttributes(nullptr);
+        auto attrs = m_poGroup->GetAttributes(nullptr);
         for (auto &attr : attrs)
         {
             auto memAttr = std::dynamic_pointer_cast<MEMAttribute>(attr);
@@ -180,7 +182,7 @@ class ZarrAttributeGroup
     void UnsetModified()
     {
         m_bModified = false;
-        auto attrs = m_oGroup.GetAttributes(nullptr);
+        auto attrs = m_poGroup->GetAttributes(nullptr);
         for (auto &attr : attrs)
         {
             auto memAttr = std::dynamic_pointer_cast<MEMAttribute>(attr);
@@ -193,7 +195,7 @@ class ZarrAttributeGroup
     {
         if (m_bModified)
             return true;
-        const auto attrs = m_oGroup.GetAttributes(nullptr);
+        const auto attrs = m_poGroup->GetAttributes(nullptr);
         for (const auto &attr : attrs)
         {
             const auto memAttr = std::dynamic_pointer_cast<MEMAttribute>(attr);
@@ -306,7 +308,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     ZarrGroupBase(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                   const std::string &osParentName, const std::string &osName)
         : GDALGroup(osParentName, osName), m_poSharedResource(poSharedResource),
-          m_oAttrGroup(osParentName)
+          m_oAttrGroup(m_osFullName, /*bContainerIsGroup=*/true)
     {
     }
 

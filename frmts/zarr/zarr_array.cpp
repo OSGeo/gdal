@@ -120,7 +120,8 @@ ZarrArray::ZarrArray(
       GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
       m_poSharedResource(poSharedResource), m_aoDims(aoDims), m_oType(oType),
       m_aoDtypeElts(aoDtypeElts), m_anBlockSize(anBlockSize),
-      m_bFortranOrder(bFortranOrder), m_oAttrGroup(osParentName)
+      m_bFortranOrder(bFortranOrder),
+      m_oAttrGroup(m_osFullName, /*bContainerIsGroup=*/false)
 {
     m_oCompressorJSonV2.Deinit();
     m_oCompressorJSonV3.Deinit();

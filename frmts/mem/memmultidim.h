@@ -84,6 +84,8 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
     MEMGroup(const std::string &osParentName, const char *pszName)
         : GDALGroup(osParentName, pszName ? pszName : "")
     {
+        if (!osParentName.empty() && !pszName)
+            m_osFullName = osParentName;
     }
 
     static std::shared_ptr<MEMGroup> Create(const std::string &osParentName,

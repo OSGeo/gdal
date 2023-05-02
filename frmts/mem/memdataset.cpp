@@ -2808,10 +2808,14 @@ std::shared_ptr<MEMAttribute> MEMAttribute::Create(
     const std::vector<GUInt64> &anDimensions, const GDALExtendedDataType &oType)
 {
     const std::string osParentName =
-        (poParentGroup == nullptr || poParentGroup->GetFullName() == "/"
-             ? "/"
-             : poParentGroup->GetFullName() + "/") +
-        "_GLOBAL_";
+        (poParentGroup && poParentGroup->GetName().empty())
+            ?
+            // Case of the ZarrAttributeGroup::m_oGroup fake group
+            poParentGroup->GetFullName()
+            : ((poParentGroup == nullptr || poParentGroup->GetFullName() == "/"
+                    ? "/"
+                    : poParentGroup->GetFullName() + "/") +
+               "_GLOBAL_");
     auto attr(Create(osParentName, osName, anDimensions, oType));
     if (!attr)
         return nullptr;

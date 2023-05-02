@@ -1288,6 +1288,7 @@ def test_zarr_create_group(format, create_z_metadata):
                 "str_attr", [], gdal.ExtendedDataType.CreateString()
             )
             assert attr
+            assert attr.GetFullName() == "/_GLOBAL_/str_attr"
             assert attr.Write("my_string") == gdal.CE_None
 
             attr = rg.CreateAttribute(
@@ -1794,11 +1795,13 @@ def test_zarr_create_array_attributes(format):
                 "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
             )
             assert ar
+            assert ar.GetFullName() == "/test"
 
             attr = ar.CreateAttribute(
                 "str_attr", [], gdal.ExtendedDataType.CreateString()
             )
             assert attr
+            assert attr.GetFullName() == "/test/str_attr"
             assert attr.Write("my_string") == gdal.CE_None
 
             with gdaltest.error_handler():
