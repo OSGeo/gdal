@@ -2106,6 +2106,8 @@ This can be done with:
     Set to OFF to disable loading of GDAL plugins. Default is ON.
 
 
+.. _building-python-bindings:
+
 Python bindings options
 +++++++++++++++++++++++
 
