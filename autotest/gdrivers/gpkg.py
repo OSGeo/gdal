@@ -4192,7 +4192,7 @@ def test_gpkg_coordinate_epoch():
 # Test preservation of IsDynamic() and support for coordinate epoch
 
 
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_gpkg_coordinate_epoch_is_dynamic():
 
     gdal.Unlink("/vsimem/tmp.gpkg")

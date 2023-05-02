@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from osgeo import gdal, ogr
+from osgeo import gdal, ogr, osr
 
 # Explicitly enable exceptions since autotest/ now assumes them to be
 # enabled
@@ -167,6 +167,26 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(
                     pytest.mark.skip(
                         f"Requires GEOS >= {'.'.join(str(x) for x in required_version)}"
+                    )
+                )
+
+        for mark in item.iter_markers("require_proj"):
+            required_version = (
+                mark.args[0],
+                mark.args[1] if len(mark.args) > 1 else 0,
+                mark.args[2] if len(mark.args) > 2 else 0,
+            )
+
+            actual_version = (
+                osr.GetPROJVersionMajor(),
+                osr.GetPROJVersionMinor(),
+                osr.GetPROJVersionMicro(),
+            )
+
+            if actual_version < required_version:
+                item.add_marker(
+                    pytest.mark.skip(
+                        f"Requires PROJ >= {'.'.join(str(x) for x in required_version)}"
                     )
                 )
 

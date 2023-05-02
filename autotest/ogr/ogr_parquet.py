@@ -1437,7 +1437,7 @@ def test_ogr_parquet_read_partitioned_geo():
 # Cf https://github.com/opengeospatial/geoparquet/discussions/110
 
 
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_ogr_parquet_write_crs_without_id_in_datum_ensemble_members():
 
     outfilename = "/vsimem/out.parquet"

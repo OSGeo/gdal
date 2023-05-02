@@ -804,7 +804,7 @@ def test_osr_proj4_error_cases_export_mercator():
         srs.ExportToProj4()
 
 
-@gdaltest.require_proj_version(6, 2)
+@pytest.mark.require_proj(6, 2)
 def test_osr_unknown_member_id_in_datum_ensemble():
 
     # Test workaround fix for https://github.com/OSGeo/PROJ/pull/3221

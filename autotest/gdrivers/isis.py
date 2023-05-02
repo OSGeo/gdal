@@ -2001,7 +2001,7 @@ def test_isis3_point_perspective_read():
     )
 
 
-@gdaltest.require_proj_version(7)
+@pytest.mark.require_proj(7)
 def test_isis3_point_perspective_write():
 
     sr = osr.SpatialReference()

@@ -1532,7 +1532,7 @@ def test_osr_basic_set_from_user_input_non_existing_authority():
 # Test IAU: CRS
 
 
-@gdaltest.require_proj_version(8, 2)
+@pytest.mark.require_proj(8, 2)
 def test_osr_basic_set_from_user_input_IAU():
 
     srs = osr.SpatialReference()
@@ -1758,7 +1758,7 @@ def test_osr_get_name():
     assert sr.GetName() == "WGS 84"
 
 
-@gdaltest.require_proj_version(6, 1)
+@pytest.mark.require_proj(6, 1)
 def test_SetPROJSearchPath():
 
     # OSRSetPROJSearchPaths() is only taken into priority over other methods
@@ -1797,7 +1797,7 @@ def test_SetPROJSearchPath():
     assert sr.ImportFromEPSG(32631) == 0
 
 
-@gdaltest.require_proj_version(6, 1)
+@pytest.mark.require_proj(6, 1)
 def test_Set_PROJ_DATA_config_option():
 
     # OSRSetPROJSearchPaths() is only taken into priority over other methods
@@ -1843,7 +1843,7 @@ def test_Set_PROJ_DATA_config_option():
 ###############################################################################
 
 
-@gdaltest.require_proj_version(6, 1)
+@pytest.mark.require_proj(6, 1)
 def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ok():
 
     backup_search_paths = osr.GetPROJSearchPaths()
@@ -1862,7 +1862,7 @@ def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ok():
 ###############################################################################
 
 
-@gdaltest.require_proj_version(6, 1)
+@pytest.mark.require_proj(6, 1)
 def test_Set_PROJ_DATA_config_option_sub_proccess_config_option_ko():
 
     backup_search_paths = osr.GetPROJSearchPaths()
@@ -1887,7 +1887,7 @@ def test_osr_import_projjson_possibly_error_out():
         sr.SetFromUserInput(projjson)
 
 
-@gdaltest.require_proj_version(6, 2)
+@pytest.mark.require_proj(6, 2)
 def test_osr_import_projjson():
 
     sr = osr.SpatialReference()
@@ -1910,7 +1910,7 @@ def test_osr_export_projjson_possibly_error_out():
         sr.ExportToPROJJSON()
 
 
-@gdaltest.require_proj_version(6, 2)
+@pytest.mark.require_proj(6, 2)
 def test_osr_export_projjson():
 
     sr = osr.SpatialReference()
@@ -1928,7 +1928,7 @@ def test_osr_promote_to_3D_possibly_error_out():
         sr.PromoteTo3D()
 
 
-@gdaltest.require_proj_version(6, 3)
+@pytest.mark.require_proj(6, 3)
 def test_osr_promote_to_3D():
 
     sr = osr.SpatialReference()
@@ -1992,7 +1992,7 @@ def test_osr_SpatialReference_invalid_wkt_in_constructor():
 # Check GetUTMZone() on a Projected 3D CRS
 
 
-@gdaltest.require_proj_version(6, 3)
+@pytest.mark.require_proj(6, 3)
 def test_osr_GetUTMZone_Projected3D():
 
     utm_srs = osr.SpatialReference()
@@ -2011,7 +2011,7 @@ def test_osr_GetUTMZone_Projected3D():
 # Check GetProjParm() on a Projected 3D CRS
 
 
-@gdaltest.require_proj_version(6, 3)
+@pytest.mark.require_proj(6, 3)
 def test_osr_GetProjParm_Projected3D():
 
     utm_srs = osr.SpatialReference()
@@ -2052,7 +2052,7 @@ def test_SetPROJAuxDbPaths():
 # Test IsDynamic()
 
 
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_osr_basic_is_dynamic():
 
     srs = osr.SpatialReference()
@@ -2259,7 +2259,7 @@ def test_osr_basic_export_derived_projected_crs_to_wkt():
 # Test osr.GetPROJEnableNetwork / osr.SetPROJEnableNetwork
 
 
-@gdaltest.require_proj_version(7)
+@pytest.mark.require_proj(7)
 def test_osr_basic_proj_network():
 
     initial_value = osr.GetPROJEnableNetwork()
@@ -2306,7 +2306,7 @@ def test_osr_basic_get_linear_units_compound_engineering_crs():
 # Test EPSG:horizontal_code+geographic_code
 
 
-@gdaltest.require_proj_version(9)
+@pytest.mark.require_proj(9)
 def test_osr_basic_epsg_horizontal_and_ellipsoidal_height():
 
     sr = osr.SpatialReference()
@@ -2343,7 +2343,7 @@ def test_osr_exceptions():
 # Test SetFromUserInput() with COORDINATEMETADATA[]
 
 
-@gdaltest.require_proj_version(9, 2)
+@pytest.mark.require_proj(9, 2)
 def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
 
     srs = osr.SpatialReference()
@@ -2382,7 +2382,7 @@ def test_osr_basic_set_from_user_input_COORDINATEMETADATA_with_epoch():
 # Test SetFromUserInput() with COORDINATEMETADATA[]
 
 
-@gdaltest.require_proj_version(9, 2)
+@pytest.mark.require_proj(9, 2)
 def test_osr_basic_set_from_user_input_COORDINATEMETADATA_without_epoch():
 
     srs = osr.SpatialReference()

@@ -486,7 +486,7 @@ def test_osr_ct_geocentric():
 # Test with +lon_wrap=180
 
 
-@gdaltest.require_proj_version(7, 0, 1)
+@pytest.mark.require_proj(7, 0, 1)
 def test_osr_ct_lon_wrap():
 
     s = osr.SpatialReference()
@@ -505,7 +505,7 @@ def test_osr_ct_lon_wrap():
 # Test ct.TransformPointWithErrorCode
 
 
-@gdaltest.require_proj_version(8)
+@pytest.mark.require_proj(8)
 def test_osr_ct_transformpointwitherrorcode():
 
     s = osr.SpatialReference()
@@ -591,7 +591,7 @@ def test_osr_ct_non_specified_time_with_time_dependent_transformation():
 # Test using OGRSpatialReference::CoordinateEpoch()
 
 
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_osr_ct_take_into_account_srs_coordinate_epoch():
 
     s = osr.SpatialReference()
@@ -700,7 +700,7 @@ def test_osr_ct_wkt_non_consistent_with_epsg_definition():
 # https://github.com/OSGeo/PROJ/issues/2955
 
 
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_osr_ct_OGR_CT_PREFER_OFFICIAL_SRS_DEF():
 
     # Not sure about the minimal version, but works as expected with 7.2.1
