@@ -444,6 +444,8 @@ void GDALRegister_TileDB()
         "description='Number of non-empty cells stored in a data tile'/>"
         "   <Option name='BOUNDS' type='string' description='Specify "
         "bounds for sparse array, minx, miny, [minz,] maxx, maxy [, maxz]'/>\n"
+        "   <Option name='TILE_EXTENT' type='float' description='Specify "
+        "square tile extents for a sparse array'/>\n"
         "   <Option name='ADD_Z_DIM' type='string-select' description='"
         "Whether to add a Z dimension' default='AUTO'>"
         "       <Value>AUTO</Value>"
