@@ -3863,3 +3863,83 @@ def test_zarr_multidim_rename_array_after_reopening(create_z_metadata):
 
     finally:
         gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("create_z_metadata", [True, False])
+def test_zarr_multidim_rename_attr_after_reopening(create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        group_attr.Write("foo")
+
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        group.CreateMDArray(
+            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+
+    def rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Rename group attribute and test effects
+        group_attr = group.GetAttribute("group_attr")
+        group_attr.Rename("group_attr_renamed")
+
+        assert group_attr.GetName() == "group_attr_renamed"
+        assert group_attr.GetFullName() == "/group/_GLOBAL_/group_attr_renamed"
+
+        group_attr.Write("bar")
+
+        ar = group.OpenMDArray("ar")
+        attr = ar.GetAttribute("attr")
+
+        # Rename attribute and test effects
+        attr.Rename("attr_renamed")
+
+        assert attr.GetName() == "attr_renamed"
+        assert attr.GetFullName() == "/group/ar/attr_renamed"
+
+        attr.Write("bar")
+
+    def reopen_after_rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        group_attr_renamed = group.GetAttribute("group_attr_renamed")
+        assert group_attr_renamed.Read() == "bar"
+
+        ar = group.OpenMDArray("ar")
+        attr_renamed = ar.GetAttribute("attr_renamed")
+        assert attr_renamed.Read() == "bar"
+
+    try:
+        create()
+        rename()
+        reopen_after_rename()
+
+    finally:
+        gdal.RmdirRecursive(filename)

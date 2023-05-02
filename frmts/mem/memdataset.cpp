@@ -2863,6 +2863,8 @@ bool MEMAttribute::Rename(const std::string &osNewName)
     m_osFullName += osNewName;
     m_osName = osNewName;
 
+    m_bModified = true;
+
     return true;
 }
 

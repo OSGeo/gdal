@@ -336,8 +336,8 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
 
 void ZarrAttributeGroup::ParentRenamed(const std::string &osNewParentFullName)
 {
-    if (m_poGroup->GetFullName().find("/_GLOBAL_") != std::string::npos)
-        m_poGroup->SetFullName(osNewParentFullName + "/_GLOBAL_");
+    if (m_bContainerIsGroup)
+        m_poGroup->SetFullName(osNewParentFullName + ATTRIBUTE_GROUP_SUFFIX);
     else
         m_poGroup->SetFullName(osNewParentFullName);
     const auto attrs = m_poGroup->GetAttributes(nullptr);
