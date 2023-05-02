@@ -118,10 +118,12 @@ Process :
 
 8.2) Create a snapshot of the documentation (only for feature releases)
 
-    0. Potentially refresh
-       https://download.osgeo.org/gdal/for_doc/javadoc.zip (./make_doc.sh from swig/java)
-    1. cd doc
-    2. ./build_doc_snapshot 310
+    1. Refresh
+       https://download.osgeo.org/gdal/for_doc/javadoc.zip
+       by building the Java bindings, with -DGDAL_JAVA_GENERATE_JAVADOC=ON.
+       javadoc.zip is in the swig/java subdirectory of the build directory.
+    2. cd doc
+    3. ./build_doc_snapshot 310
        This generates gdal310doc.zip
 
 8.3) Publish the resulting files on download.osgeo.org,
