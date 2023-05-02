@@ -168,7 +168,7 @@ def test_jpegxl_rgba_quality(quality, equivalent_distance):
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
 
 
-@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
+@pytest.mark.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_xmp():
 
     src_ds = gdal.Open("data/gtiff/byte_with_xmp.tif")
@@ -185,7 +185,7 @@ def test_jpegxl_xmp():
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
 
 
-@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
+@pytest.mark.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_exif():
 
     src_ds = gdal.Open("../gcore/data/exif_and_gps.tif")
@@ -202,7 +202,7 @@ def test_jpegxl_exif():
     gdal.GetDriverByName("JPEGXL").Delete(outfilename)
 
 
-@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
+@pytest.mark.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_read_huge_xmp_compressed_box():
 
     with gdaltest.error_handler():
@@ -364,7 +364,7 @@ def test_jpegxl_lossless_copy_of_jpeg():
             )
 
 
-@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
+@pytest.mark.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_lossless_copy_of_jpeg_disabled():
 
     jpeg_drv = gdal.GetDriverByName("JPEG")
@@ -436,7 +436,7 @@ def test_jpegxl_lossless_copy_of_jpeg_with_mask_band():
     jpeg_drv.Delete(outfilename_jpg)
 
 
-@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOX")
+@pytest.mark.require_creation_option("JPEGXL", "COMPRESS_BOX")
 def test_jpegxl_lossless_copy_of_jpeg_xmp():
 
     jpeg_drv = gdal.GetDriverByName("JPEG")
@@ -802,7 +802,7 @@ def test_jpegxl_apply_orientation(orientation):
 # Test ALPHA_DISTANCE option
 
 
-@gdaltest.require_creation_option(
+@pytest.mark.require_creation_option(
     "JPEGXL", "ALPHA_DISTANCE"
 )  # "libjxl > 0.8.1 required"
 def test_jpegxl_alpha_distance_zero():

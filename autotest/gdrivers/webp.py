@@ -74,7 +74,7 @@ def test_webp_3():
 # CreateCopy() on RGBA
 
 
-@gdaltest.require_creation_option("WEBP", "LOSSLESS")
+@pytest.mark.require_creation_option("WEBP", "LOSSLESS")
 def test_webp_4():
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
@@ -108,7 +108,7 @@ def test_webp_4():
 # CreateCopy() on RGBA with lossless compression
 
 
-@gdaltest.require_creation_option("WEBP", "LOSSLESS")
+@pytest.mark.require_creation_option("WEBP", "LOSSLESS")
 def test_webp_5():
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")
@@ -136,8 +136,8 @@ def test_webp_5():
 # CreateCopy() on RGBA with lossless compression and exact rgb values
 
 
-@gdaltest.require_creation_option("WEBP", "LOSSLESS")
-@gdaltest.require_creation_option("WEBP", "EXACT")
+@pytest.mark.require_creation_option("WEBP", "LOSSLESS")
+@pytest.mark.require_creation_option("WEBP", "EXACT")
 def test_webp_6():
 
     src_ds = gdal.Open("../gcore/data/stefan_full_rgba.tif")

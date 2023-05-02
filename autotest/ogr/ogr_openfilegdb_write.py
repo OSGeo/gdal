@@ -4186,7 +4186,7 @@ def test_ogr_openfilegdb_write_delete():
 @pytest.mark.parametrize(
     "write_wkid,write_vcswkid", [(True, True), (True, False), (False, False)]
 )
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_ogr_openfilegdb_write_compound_crs(write_wkid, write_vcswkid):
 
     dirname = "/vsimem/test_ogr_openfilegdb_write_compound_crs.gdb"

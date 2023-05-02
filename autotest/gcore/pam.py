@@ -176,7 +176,7 @@ def test_pam_4():
 #
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_pam_5():
 
     ds = gdal.Open("data/sasha.tif")

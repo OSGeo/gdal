@@ -821,7 +821,7 @@ def test_ogr2ogr_assign_coord_epoch():
 # Test -s_coord_epoch
 
 
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_ogr2ogr_s_coord_epoch():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
@@ -847,7 +847,7 @@ def test_ogr2ogr_s_coord_epoch():
 # Test -t_coord_epoch
 
 
-@gdaltest.require_proj_version(7, 2)
+@pytest.mark.require_proj(7, 2)
 def test_ogr2ogr_t_coord_epoch():
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)

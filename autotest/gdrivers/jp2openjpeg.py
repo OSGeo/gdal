@@ -3552,7 +3552,7 @@ def test_jp2openjpeg_50():
 # Test CODEBLOCK_STYLE
 
 
-@gdaltest.require_creation_option("JP2OpenJPEG", "CODEBLOCK_STYLE")
+@pytest.mark.require_creation_option("JP2OpenJPEG", "CODEBLOCK_STYLE")
 def test_jp2openjpeg_codeblock_style():
 
     filename = "/vsimem/jp2openjpeg_codeblock_style.jp2"
@@ -3658,7 +3658,7 @@ def test_jp2openjpeg_odd_dimensions():
 ###############################################################################
 
 
-@gdaltest.require_creation_option("JP2OpenJPEG", "CODEBLOCK_STYLE")
+@pytest.mark.require_creation_option("JP2OpenJPEG", "CODEBLOCK_STYLE")
 def test_jp2openjpeg_odd_dimensions_overviews():
 
     # Check that we don't request outside of the full resolution coordinates
@@ -3695,7 +3695,7 @@ def test_jp2openjpeg_tilesize_16():
 # Test generation of PLT marker segments
 
 
-@gdaltest.require_creation_option(
+@pytest.mark.require_creation_option(
     "JP2OpenJPEG", "PLT"
 )  # Only try the test with openjpeg >= 2.4.0 that supports it
 def test_jp2openjpeg_generate_PLT():
@@ -3722,7 +3722,7 @@ def test_jp2openjpeg_generate_PLT():
 # Test generation of TLM marker segments
 
 
-@gdaltest.require_creation_option(
+@pytest.mark.require_creation_option(
     "JP2OpenJPEG", "TLM"
 )  # Only try the test with openjpeg >= 2.5.0 that supports it
 def test_jp2openjpeg_generate_TLM():
@@ -3749,7 +3749,7 @@ def test_jp2openjpeg_generate_TLM():
 # Test STRICT=NO open option
 
 
-@gdaltest.require_creation_option(
+@pytest.mark.require_creation_option(
     "JP2OpenJPEG", "'STRICT'"
 )  # Only try the test with openjpeg >= 2.5.0 that supports it
 def test_jp2openjpeg_STRICT_NO():

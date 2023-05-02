@@ -120,7 +120,7 @@ def test_vrtmask_2():
 # Translate a RGB dataset with a mask into a VRT
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_vrtmask_3():
 
     src_ds = gdal.Open("../gcore/data/ycbcr_with_mask.tif")
@@ -146,7 +146,7 @@ def test_vrtmask_3():
 # Same with gdalbuildvrt
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_vrtmask_4():
 
     src_ds = gdal.Open("../gcore/data/ycbcr_with_mask.tif")
@@ -167,7 +167,7 @@ def test_vrtmask_4():
 # Same with gdal_translate
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_vrtmask_5():
 
     gdal.Translate(
@@ -193,7 +193,7 @@ def test_vrtmask_5():
 # Same with gdal_translate with explicit -b and -mask arguments
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_vrtmask_6():
 
     gdal.Translate(
@@ -219,7 +219,7 @@ def test_vrtmask_6():
 # gdal_translate with RGBmask -> RGBA and then RGBA->RGBmask
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_vrtmask_7():
 
     try:
@@ -267,7 +267,7 @@ def test_vrtmask_7():
 # gdal_translate with RGBmask -> RGB
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_vrtmask_8():
 
     gdal.Translate(

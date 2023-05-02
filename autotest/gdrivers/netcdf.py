@@ -3300,7 +3300,7 @@ def test_netcdf_81():
 # Write netCDF file in rotated_pole projection
 
 
-@gdaltest.require_proj_version(7, 1)
+@pytest.mark.require_proj(7, 1)
 def test_netcdf_write_rotated_pole_from_method_proj():
 
     ds = gdal.GetDriverByName("netCDF").Create("tmp/rotated_pole.nc", 2, 2)
@@ -3333,7 +3333,7 @@ def test_netcdf_write_rotated_pole_from_method_proj():
 # Write netCDF file in rotated_pole projection
 
 
-@gdaltest.require_proj_version(8, 2)
+@pytest.mark.require_proj(8, 2)
 def test_netcdf_write_rotated_pole_from_method_netcdf_cf():
 
     expected_wkt = """GEOGCRS["Rotated_pole",BASEGEOGCRS["unknown",DATUM["unnamed",ELLIPSOID["Spheroid",6367470,594.313048347956,LENGTHUNIT["metre",1,ID["EPSG",9001]]]],PRIMEM["Greenwich",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],DERIVINGCONVERSION["Pole rotation (netCDF CF convention)",METHOD["Pole rotation (netCDF CF convention)"],PARAMETER["Grid north pole latitude (netCDF CF convention)",39.25,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["Grid north pole longitude (netCDF CF convention)",-162,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],PARAMETER["North pole grid longitude (netCDF CF convention)",0,ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]],CS[ellipsoidal,2],AXIS["latitude",north,ORDER[1],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]],AXIS["longitude",east,ORDER[2],ANGLEUNIT["degree",0.0174532925199433,ID["EPSG",9122]]]]"""
@@ -3356,7 +3356,7 @@ def test_netcdf_write_rotated_pole_from_method_netcdf_cf():
 # Write netCDF file in rotated_pole projection
 
 
-@gdaltest.require_proj_version(7, 0)
+@pytest.mark.require_proj(7, 0)
 def test_netcdf_write_rotated_pole_from_method_grib():
 
     ds = gdal.GetDriverByName("netCDF").Create("tmp/rotated_pole.nc", 2, 2)
