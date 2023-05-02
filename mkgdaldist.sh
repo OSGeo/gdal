@@ -153,8 +153,9 @@ fi
 
 cd "$CWD"
 
-echo "* Cleaning doc/ and perftests/ under $CWD..."
+echo "* Cleaning doc/, fuzzers/ and perftests/ under $CWD..."
 rm -rf doc
+rm -rf fuzzers
 rm -rf perftests
 
 #
