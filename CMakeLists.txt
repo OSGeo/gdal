@@ -252,11 +252,14 @@ if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/autotest")
       add_subdirectory(autotest)
   endif()
 endif ()
-# Google OSS-Fuzz project utilities
-add_subdirectory(fuzzers)
-if (BUILD_TESTING)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/fuzzers")
+    # Google OSS-Fuzz project utilities
+    add_subdirectory(fuzzers)
+    if (BUILD_TESTING)
+        add_subdirectory(fuzzers/tests)
+    endif()
+endif()
+if (BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/perftests")
   add_subdirectory(perftests)
-  # Google OSS-Fuzz tests
-  add_subdirectory(fuzzers/tests)
 endif ()
 # vim: ts=4 sw=4 sts=4 et
