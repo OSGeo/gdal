@@ -684,7 +684,7 @@ bool OGCAPIDataset::ProcessScale(CPLJSONObject &oScaleDenominator,
         dfYSize /= 2;
     }
 
-    nRasterXSize = std::max(1, static_cast<int>(0 + 5 + dfXSize));
+    nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
     nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
     m_adfGeoTransform[0] = dfXMin;
     m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
