@@ -461,7 +461,7 @@ def test_mask_13():
 # Test creation of internal TIFF mask band
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_mask_14():
 
     src_ds = gdal.Open("data/byte.tif")
@@ -800,7 +800,7 @@ def test_mask_22():
 # internal mask (#3800)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_mask_23():
 
     drv = gdal.GetDriverByName("GTiff")

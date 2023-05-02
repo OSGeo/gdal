@@ -147,6 +147,22 @@ def pytest_collection_modifyitems(config, items):
             if not gdaltest.run_slow_tests():
                 item.add_marker(pytest.mark.skip("GDAL_RUN_SLOW_TESTS not set"))
 
+        for mark in item.iter_markers("require_creation_option"):
+
+            driver, option = mark.args
+
+            drv = gdal.GetDriverByName(driver)
+            if drv is None:
+                item.add_marker(
+                    pytest.mark.skip(f"{driver} driver is not included in this build")
+                )
+            elif option not in drv.GetMetadata()["DMD_CREATIONOPTIONLIST"]:
+                item.add_marker(
+                    pytest.mark.skip(
+                        f"{driver} creation option {option} not supported in this build"
+                    )
+                )
+
         for mark in item.iter_markers("require_geos"):
             if not ogrtest.have_geos():
                 item.add_marker(pytest.mark.skip("GEOS not available"))

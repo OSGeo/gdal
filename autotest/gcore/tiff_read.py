@@ -250,7 +250,7 @@ def test_tiff_read_cmyk_raw():
 # Test reading a OJPEG image
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_ojpeg():
     with gdal.ExceptionMgr(useExceptions=False):
         with gdaltest.error_handler():
@@ -705,7 +705,7 @@ def test_tiff_GTModelTypeGeoKey_only():
 @pytest.mark.skipif(
     "SKIP_TIFF_JPEG12" in os.environ, reason="Crashes on build-windows-msys2-mingw"
 )
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 @gdaltest.disable_exceptions()
 def test_tiff_12bitjpeg():
     gdal.ErrorReset()
@@ -1071,7 +1071,7 @@ def test_tiff_read_exif_and_gps():
 # Test reading a pixel interleaved RGBA JPEG-compressed TIFF
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_jpeg_rgba_pixel_interleaved():
     ds = gdal.Open("data/stefan_full_rgba_jpeg_contig.tif")
     md = ds.GetMetadata("IMAGE_STRUCTURE")
@@ -1094,7 +1094,7 @@ def test_tiff_jpeg_rgba_pixel_interleaved():
 # Test reading a band interleaved RGBA JPEG-compressed TIFF
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_jpeg_rgba_band_interleaved():
     ds = gdal.Open("data/stefan_full_rgba_jpeg_separate.tif")
     md = ds.GetMetadata("IMAGE_STRUCTURE")
@@ -1117,7 +1117,7 @@ def test_tiff_jpeg_rgba_band_interleaved():
 # Test reading a YCbCr JPEG all-in-one-strip multiband TIFF (#3259, #3894)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_online_1():
     gdaltest.download_or_skip(
         "http://trac.osgeo.org/gdal/raw-attachment/ticket/3259/imgpb17.tif",
@@ -1251,7 +1251,7 @@ def test_tiff_read_bigtiff():
 # Test reading in TIFF metadata domain
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_tiff_metadata():
 
     ds = gdal.Open("data/stefan_full_rgba_jpeg_contig.tif")
@@ -1272,7 +1272,7 @@ def test_tiff_read_tiff_metadata():
 # Test reading a JPEG-in-TIFF with tiles of irregular size (corrupted image)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_irregular_tile_size_jpeg_in_tiff():
 
     ds = gdal.Open("data/irregular_tile_size_jpeg_in_tiff.tif")
@@ -1281,7 +1281,7 @@ def test_tiff_read_irregular_tile_size_jpeg_in_tiff():
 
 
 # Getting (hidden) overview band requires JPEG driver availability
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 @pytest.mark.require_driver("JPEG")
 def test_tiff_read_irregular_tile_size_jpeg_in_tiff_overview():
 
@@ -3280,7 +3280,7 @@ def test_tiff_read_one_band_from_two_bands():
     gdal.Unlink("/vsimem/tiff_read_one_band_from_two_bands_dst.tif")
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_jpeg_cloud_optimized():
 
     for i in range(4):
@@ -3297,7 +3297,7 @@ def test_tiff_read_jpeg_cloud_optimized():
 # error while jpeg-8 works fine
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_corrupted_jpeg_cloud_optimized():
 
     ds = gdal.Open("data/byte_ovr_jpeg_tablesmode_not_correctly_set_on_ovr.tif")
@@ -3829,7 +3829,7 @@ def test_tiff_read_stripoffset_types():
 # http://www.libjpeg-turbo.org/pmwiki/uploads/About/TwoIssueswiththeJPEGStandard.pdf
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_progressive_jpeg_denial_of_service():
 
     if not check_libtiff_internal_or_at_least(4, 0, 9):
@@ -3910,7 +3910,7 @@ def test_tiff_read_mmap_interface():
 # image height.
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_jpeg_too_big_last_stripe():
 
     if not check_libtiff_internal_or_at_least(4, 0, 9):
@@ -3950,7 +3950,7 @@ def test_tiff_read_negative_scaley():
 # Test ZSTD compression
 
 
-@gdaltest.require_creation_option("GTiff", "ZSTD")
+@pytest.mark.require_creation_option("GTiff", "ZSTD")
 def test_tiff_read_zstd():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd.tif", 1, 4672)
@@ -3961,7 +3961,7 @@ def test_tiff_read_zstd():
 # Test ZSTD compression
 
 
-@gdaltest.require_creation_option("GTiff", "ZSTD")
+@pytest.mark.require_creation_option("GTiff", "ZSTD")
 def test_tiff_read_zstd_corrupted():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted.tif", 1, -1)
@@ -3973,7 +3973,7 @@ def test_tiff_read_zstd_corrupted():
 # Test ZSTD compression
 
 
-@gdaltest.require_creation_option("GTiff", "ZSTD")
+@pytest.mark.require_creation_option("GTiff", "ZSTD")
 def test_tiff_read_zstd_corrupted2():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted2.tif", 1, -1)
@@ -3985,7 +3985,7 @@ def test_tiff_read_zstd_corrupted2():
 # Test WEBP compression
 
 
-@gdaltest.require_creation_option("GTiff", "WEBP")
+@pytest.mark.require_creation_option("GTiff", "WEBP")
 def test_tiff_read_webp():
 
     stats = (0, 215, 66.38, 47.186)
@@ -3999,7 +3999,7 @@ def test_tiff_read_webp():
 # Test WEBP compression
 
 
-@gdaltest.require_creation_option("GTiff", "WEBP")
+@pytest.mark.require_creation_option("GTiff", "WEBP")
 def test_tiff_read_webp_huge_single_strip():
 
     ds = gdal.Open("data/tif_webp_huge_single_strip.tif")
@@ -4019,7 +4019,7 @@ def test_tiff_read_1bit_2bands():
 # Test LERC compression
 
 
-@gdaltest.require_creation_option("GTiff", "LERC")
+@pytest.mark.require_creation_option("GTiff", "LERC")
 def test_tiff_read_lerc():
 
     ut = gdaltest.GDALTest("GTiff", "byte_lerc.tif", 1, 4672)
@@ -4539,7 +4539,7 @@ def test_tiff_read_unhandled_codec_unknown_name():
 # channel handling was not explicitly handled (#6393)
 
 
-@gdaltest.require_creation_option("GTiff", "JXL")
+@pytest.mark.require_creation_option("GTiff", "JXL")
 def test_tiff_jxl_read_for_files_created_before_6393():
     gdal.ErrorReset()
     with gdaltest.error_handler():

@@ -30,7 +30,6 @@
 ###############################################################################
 
 import contextlib
-import functools
 import io
 import math
 import os
@@ -1575,31 +1574,6 @@ def skip_on_travis():
         post_reason("Test skipped on Travis")
         return True
     return False
-
-
-###############################################################################
-# Decorator to skip a test if specified creation option is not available
-
-
-def require_creation_option(driver, option):
-
-    drv = gdal.GetDriverByName(driver)
-
-    def decorator(func):
-        @pytest.mark.skipif(
-            drv is None or option not in drv.GetMetadata()["DMD_CREATIONOPTIONLIST"],
-            reason=f"{driver} creation option {option} not supported in this build",
-        )
-        @pytest.mark.skipif(
-            drv is None, reason=f"{driver} driver is not included in this build"
-        )
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            return func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
 
 
 ###############################################################################

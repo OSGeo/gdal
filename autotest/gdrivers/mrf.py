@@ -428,7 +428,7 @@ def test_mrf_overview_external():
     cleanup()
 
 
-@gdaltest.require_creation_option("MRF", "LERC")
+@pytest.mark.require_creation_option("MRF", "LERC")
 def test_mrf_lerc_nodata():
 
     gdal.Translate(
@@ -448,7 +448,7 @@ def test_mrf_lerc_nodata():
     cleanup()
 
 
-@gdaltest.require_creation_option("MRF", "LERC")
+@pytest.mark.require_creation_option("MRF", "LERC")
 def test_mrf_lerc_with_huffman():
 
     gdal.Translate(
@@ -467,7 +467,7 @@ def test_mrf_lerc_with_huffman():
     cleanup()
 
 
-@gdaltest.require_creation_option("MRF", "LERC")
+@pytest.mark.require_creation_option("MRF", "LERC")
 def test_raw_lerc():
 
     # Defaults to LERC2

@@ -543,7 +543,7 @@ def test_gdalwarp_24(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=sinu (#2305)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_25(gdalwarp_path):
 
     gdaltest.runexternal(
@@ -575,7 +575,7 @@ def test_gdalwarp_25(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=eck4 (#2305)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_26(gdalwarp_path):
 
     gdaltest.runexternal(
@@ -607,7 +607,7 @@ def test_gdalwarp_26(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=vandg (#2305)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_27(gdalwarp_path):
 
     gdaltest.runexternal(
@@ -641,7 +641,7 @@ def test_gdalwarp_27(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to +proj=aeqd +lat_0=45 +lon_0=90 (#2305)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_28(gdalwarp_path):
 
     gdaltest.runexternal(
@@ -676,7 +676,7 @@ def test_gdalwarp_28(gdalwarp_path):
 # Test warping a full EPSG:4326 extent to EPSG:3785 (#2305)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def DISABLED_test_gdalwarp_29(gdalwarp_path):
 
     # This test has been disabled since PROJ 8 will reproject a coordinates at
@@ -712,7 +712,7 @@ def DISABLED_test_gdalwarp_29(gdalwarp_path):
 # Test the effect of the -wo OPTIMIZE_SIZE=TRUE and -wo STREAMABLE_OUTPUT=TRUE options (#3459, #1866)
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_30(gdalwarp_path):
 
     te = " -te -20037508.343 -16206629.152 20036845.112 16213801.068"
@@ -846,7 +846,7 @@ def test_gdalwarp_32(gdalwarp_path):
 # Test warping a JPEG compressed image with a mask into a RGBA image
 
 
-@gdaltest.require_creation_option("GTiff", "JPEG")
+@pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_gdalwarp_33(gdalwarp_path):
 
     if test_cli_utilities.get_gdal_translate_path() is None:

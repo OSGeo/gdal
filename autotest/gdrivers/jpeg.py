@@ -1435,7 +1435,7 @@ def test_jpeg_apply_orientation(orientation):
 # Test lossless conversion from JPEGXL
 
 
-@gdaltest.require_creation_option("JPEGXL", "COMPRESS_BOXES")
+@pytest.mark.require_creation_option("JPEGXL", "COMPRESS_BOXES")
 def test_jpeg_from_jpegxl():
 
     jpegxl_drv = gdal.GetDriverByName("JPEGXL")
