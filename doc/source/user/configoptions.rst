@@ -399,7 +399,7 @@ General options
 .. config:: GDAL_MAX_DATASET_POOL_SIZE
    :default: 100
 
-    Used by gcore/gdalproxypool.cpp
+    Used by :source_file:`gcore/gdalproxypool.cpp`
 
     Number of datasets that can be opened simultaneously by the GDALProxyPool
     mechanism (used by VRT for example). Can be increased to get better random I/O
@@ -410,7 +410,7 @@ General options
 .. config:: GDAL_SWATH_SIZE
    :default: 1/4 of the maximum block cache size (GDAL_CACHEMAX)
 
-    Used by gcore/rasterio.cpp
+    Used by :source_file:`gcore/rasterio.cpp`
 
     Size of the swath when copying raster data from one dataset to another one (in
     bytes). Should not be smaller than :config:`GDAL_CACHEMAX`.
@@ -419,7 +419,7 @@ General options
    :choices: YES, NO
    :default: NO
 
-    Used by gcore/gdaldefaultoverviews.cpp
+    Used by :source_file:`gcore/gdaldefaultoverviews.cpp`
 
     Can be set to YES to use Erdas Imagine format (.aux) as overview format. See
     :program:`gdaladdo` documentation.
@@ -559,7 +559,7 @@ PROJ options
 .. config:: CHECK_WITH_INVERT_PROJ
    :since: 1.7.0
 
-    Used by ogr/ogrct.cpp and apps/gdalwarp.cpp.
+    Used by :source_file:`ogr/ogrct.cpp` and :source_file:`apps/gdalwarp_lib.cpp`.
 
     This option can be used to control the behaviour of gdalwarp when warping global
     datasets or when transforming from/to polar projections, which causes
@@ -581,7 +581,7 @@ PROJ options
 .. config:: THRESHOLD
    :since: 1.7.0
 
-    Used by ogr/ogrct.cpp.
+    Used by :source_file:`ogr/ogrct.cpp`.
 
     Used in combination with CHECK_WITH_INVERT_PROJ=TRUE. Define the acceptable
     threshold used to check if the roundtrip from src_srs to dst_srs and from
@@ -594,7 +594,7 @@ PROJ options
    :choices: YES, NO
    :default: NO
 
-    Used by OGRLineString::transform().
+    Used by :cpp:func:`OGRLineString::transform`.
 
     Can be set to YES to remove points that can't be reprojected. See #3758 for the
     purpose of this option.
@@ -605,8 +605,8 @@ Other global options
 .. config:: OGR_ARC_STEPSIZE
    :since: 1.8.0
 
-    Used by OGR_G_CreateFromGML() (for gml:Arc and gml:Circle) and
-    OGRGeometryFactory::approximateArcAngles() to stroke arc to linestrings.
+    Used by :cpp:func:`OGR_G_CreateFromGML` (for gml:Arc and gml:Circle) and
+    :cpp:func:`OGRGeometryFactory::approximateArcAngles` to stroke arc to linestrings.
     Defaults to 4 (degrees).
 
     The largest step in degrees along the arc.
