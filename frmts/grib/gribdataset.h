@@ -158,7 +158,7 @@ class GRIBRasterBand final : public GDALPamRasterBand
     virtual const char *GetMetadataItem(const char *pszName,
                                         const char *pszDomain = "") override;
 
-    void FindPDSTemplate();
+    void FindPDSTemplateGRIB2();
 
     void UncacheData();
 
