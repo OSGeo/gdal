@@ -31,7 +31,7 @@ _gdal2xyz.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-h -skip -srcwin -b -allbands -csv -skipnodata -srcnodata -dstnodata "
+      key_list=""
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -102,21 +102,6 @@ _gdal_calc.py()
   return 0
 }
 complete -o default -F _gdal_calc.py gdal_calc.py
-_gdalchksum.py()
-{
-  local cur prev
-  COMPREPLY=()
-  _get_comp_words_by_ref cur prev
-  case "$cur" in
-    -*)
-      key_list=""
-      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
-      return 0
-      ;;
-  esac
-  return 0
-}
-complete -o default -F _gdalchksum.py gdalchksum.py
 _gdalcompare.py()
 {
   local cur prev
@@ -258,7 +243,7 @@ _gdal_grid()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ot -of -co -zfield -z_increase -z_multiply -a_srs -spat -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -l -where -sql -txe -tye -tr -outsize -a -q --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -oo -ot -of -co -zfield -z_increase -z_multiply -a_srs -spat -clipsrc -clipsrcsql -clipsrclayer -clipsrcwhere -l -where -sql -txe -tye -tr -outsize -a -q --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -281,36 +266,6 @@ _gdal_grid()
   return 0
 }
 complete -o default -F _gdal_grid gdal_grid
-_gdalident.py()
-{
-  local cur prev
-  COMPREPLY=()
-  _get_comp_words_by_ref cur prev
-  case "$cur" in
-    -*)
-      key_list=""
-      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
-      return 0
-      ;;
-  esac
-  return 0
-}
-complete -o default -F _gdalident.py gdalident.py
-_gdalimport.py()
-{
-  local cur prev
-  COMPREPLY=()
-  _get_comp_words_by_ref cur prev
-  case "$cur" in
-    -*)
-      key_list=""
-      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
-      return 0
-      ;;
-  esac
-  return 0
-}
-complete -o default -F _gdalimport.py gdalimport.py
 _gdalinfo()
 {
   local cur prev
@@ -422,7 +377,7 @@ _gdal_polygonize.py()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-h -q -8 -o -mask -nomask -b -of "
+      key_list="-h -q -8 -o -mask -nomask -b -of -lco "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -470,7 +425,7 @@ _gdal_rasterize()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="-b -i -at -burn -a -3d -add -l -where -sql -dialect -of -a_srs -to -co -a_nodata -init -te -tr -tap -ts -ot -optim -q "
+      key_list="-b -i -at -oo -burn -a -3d -add -l -where -sql -dialect -of -a_srs -to -co -a_nodata -init -te -tr -tap -ts -ot -optim -q "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -619,7 +574,7 @@ _gdalwarp()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general --formats -s_srs -t_srs -to -vshift -novshift -s_coord_epoch -t_coord_epoch -order -tps -rpc -geoloc -et -refine_gcps -te -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -if -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --build --license --format --optfile --config --debug --pause --locale "
+      key_list="--help-general --formats -b -srcband -dstband -s_srs -t_srs -ct -to -vshift -novshift -s_coord_epoch -t_coord_epoch -order -tps -rpc -geoloc -et -refine_gcps -te -te_srs -tr -tr -tap -ts -ovr -wo -ot -wt -srcnodata -dstnodata -srcalpha -nosrcalpha -dstalpha -r -wm -multi -q -cutline -cl -cwhere -csql -cblend -crop_to_cutline -if -of -co -overwrite -nomd -cvmd -setci -oo -doo --version --build --license --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;
@@ -687,6 +642,21 @@ _gdal_create()
   return 0
 }
 complete -o default -F _gdal_create gdal_create
+_sozip()
+{
+  local cur prev
+  COMPREPLY=()
+  _get_comp_words_by_ref cur prev
+  case "$cur" in
+    -*)
+      key_list="--quiet --verbose -g --grow --overwrite -r --recurse-paths -j --junk -l --list --validate --optimize-from=input.zip --enable-sozip=auto/yes/no --sozip-chunk-size=value --sozip-min-file-size=value --content-type=value "
+      mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
+      return 0
+      ;;
+  esac
+  return 0
+}
+complete -o default -F _sozip sozip
 _ogr2ogr()
 {
   local cur prev
@@ -720,7 +690,7 @@ _ogrinfo()
   _get_comp_words_by_ref cur prev
   case "$cur" in
     -*)
-      key_list="--help-general -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -oo -nomd -listmdd -mdd -nocount -noextent -nogeomtype -wkt_format -fielddomain --version --build --license --formats --format --optfile --config --debug --pause --locale "
+      key_list="--help-general -json -ro -q -where -spat -geomfield -fid -sql -dialect -al -rl -so -features -fields=YES -fields=NO -geom=YES -geom=NO -geom=SUMMARY -oo -nomd -listmdd -mdd -nocount -noextent -nogeomtype -wkt_format -fielddomain --version --build --license --formats --format --optfile --config --debug --pause --locale "
       mapfile -t COMPREPLY < <(compgen -W "$key_list" -- "$cur")
       return 0
       ;;

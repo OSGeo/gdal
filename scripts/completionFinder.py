@@ -224,7 +224,6 @@ def main(argv):
         "gdaladdo",
         "gdalbuildvrt",
         "gdal_calc.py",
-        "gdalchksum.py",
         "gdalcompare.py",
         "gdal-config",
         "gdal_contour",
@@ -233,8 +232,6 @@ def main(argv):
         "gdalenhance",
         "gdal_fillnodata.py",
         "gdal_grid",
-        "gdalident.py",
-        "gdalimport.py",
         "gdalinfo",
         "gdallocationinfo",
         "gdalmanage",
@@ -252,6 +249,7 @@ def main(argv):
         "gdalwarp",
         "gdal_viewshed",
         "gdal_create",
+        "sozip",
     ]
 
     ogrtools = [
