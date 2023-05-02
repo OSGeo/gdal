@@ -240,15 +240,17 @@ vsi_l_offset GRIBRasterBand::FindTrueStart(VSILFILE *fp, vsi_l_offset start)
 }
 
 /************************************************************************/
-/*                          FindPDSTemplate()                           */
+/*                      FindPDSTemplateGRIB2()                          */
 /*                                                                      */
 /*      Scan the file for the PDS template info and represent it as     */
 /*      metadata.                                                       */
 /************************************************************************/
 
-void GRIBRasterBand::FindPDSTemplate()
+void GRIBRasterBand::FindPDSTemplateGRIB2()
 
 {
+    CPLAssert(m_nGribVersion == 2);
+
     if (bLoadedPDS)
         return;
     bLoadedPDS = true;
@@ -908,7 +910,7 @@ char **GRIBRasterBand::GetMetadata(const char *pszDomain)
     if (m_nGribVersion == 2 &&
         CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
-        FindPDSTemplate();
+        FindPDSTemplateGRIB2();
     }
     return GDALPamRasterBand::GetMetadata(pszDomain);
 }
@@ -923,7 +925,7 @@ const char *GRIBRasterBand::GetMetadataItem(const char *pszName,
     if (m_nGribVersion == 2 &&
         CPLTestBool(CPLGetConfigOption("GRIB_PDS_ALL_BANDS", "ON")))
     {
-        FindPDSTemplate();
+        FindPDSTemplateGRIB2();
     }
     return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
 }
@@ -1495,7 +1497,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
             gribBand = new GRIBRasterBand(poDS, bandNr, psInv);
 
             if (psInv->GribVersion == 2)
-                gribBand->FindPDSTemplate();
+                gribBand->FindPDSTemplateGRIB2();
 
             gribBand->m_Grib_MetaData = metaData;
         }
@@ -2321,7 +2323,7 @@ GDALDataset *GRIBDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
             // coverity[tainted_data]
             GRIBRasterBand gribBand(poDS, bandNr, psInv);
             if (psInv->GribVersion == 2)
-                gribBand.FindPDSTemplate();
+                gribBand.FindPDSTemplateGRIB2();
             osElement = psInv->element;
             osShortFstLevel = psInv->shortFstLevel;
             dfRefTime = psInv->refTime;
