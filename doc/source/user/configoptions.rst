@@ -356,19 +356,6 @@ General options
    specialize IRasterIO() at the dataset or raster band level, for example
    JP2KAK, NITF, HFA, WCS, ECW, MrSID, and JPEG.
 
-.. config:: GDAL_VALIDATE_CREATION_OPTIONS
-   :choices: YES, NO
-   :default: YES
-
-   When using :cpp:func:`GDALDriver::Create` or
-   :cpp:func:`GDALDriver::CreateCopy` (for example when using the -co option of
-   :program:`gdal_translate` or :program:`gdalwarp` utilies) , GDAL checks by
-   default that the passed creation options match the syntax of the allowed
-   options declared by the driver. If they don't match the syntax, a warning
-   will be emitted. There should be hardly any reason to set this option to
-   FALSE, as it's either a sign of a user typo, or an error in the declared
-   options of the driver. The latter should be worth a bug report.
-
 .. config:: GDAL_MAX_DATASET_POOL_SIZE
    :default: 100
 
