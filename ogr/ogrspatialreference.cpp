@@ -5437,7 +5437,7 @@ OGRErr OSRSetProjection(OGRSpatialReferenceH hSRS, const char *pszProjection)
  * @param[out] ppszMethodName Pointer to a string that will receive the
  * projection method name.
  * @param[out] ppszMethodAuthName null pointer, or pointer to a string that will
- * receive the name of the autority that defines the projection method.
+ * receive the name of the authority that defines the projection method.
  * *ppszMethodAuthName may be nullptr if the projection method is not linked to
  * an authority.
  * @param[out] ppszMethodCode null pointer, or pointer to a string that will

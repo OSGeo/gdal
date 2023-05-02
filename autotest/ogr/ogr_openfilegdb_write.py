@@ -2193,7 +2193,7 @@ def test_ogr_openfilegdb_write_freelist_scenario_issue_7504():
         # overwriting the first few bytes of feature 2...
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetFID(3)
-        f["str"] = "e" * (N + 3)  # must not be greather than N+3 to test the bug
+        f["str"] = "e" * (N + 3)  # must not be greater than N+3 to test the bug
         assert lyr.SetFeature(f) == ogr.OGRERR_NONE
 
         assert lyr.SyncToDisk() == ogr.OGRERR_NONE

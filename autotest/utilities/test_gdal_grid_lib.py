@@ -166,7 +166,7 @@ def test_gdal_grid_lib_2():
 # Test bugfix for #7101 (segmentation fault with linear interpolation)
 
 
-# May fail on minimum builds withou qhull
+# May fail on minimum builds without qhull
 @gdaltest.disable_exceptions()
 def test_gdal_grid_lib_3():
 

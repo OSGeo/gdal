@@ -294,3 +294,4 @@ scan-build -o $GDAL_TOPDIR/scanbuildoutput -sarif -v -enable-checker alpha.unix.
 The effect of the ``ot`` option (added in GDAL 3.7) is to force the output image bands to have a
         "HE5_GCTP_ROBIN",  "HE5_GCTP_SOM",    "HE5_GCTP_ALASKA",
             else if (EQUAL(pszKey, "ot"))
+    ds = gdal.Open("vrt://data/float32.tif?ot=Int32")
