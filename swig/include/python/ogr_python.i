@@ -597,15 +597,12 @@ def ReleaseResultSet(self, sql_lyr):
 
               if filter is None:
                 filter_geom = None
-              if type(filter) is str:
+              elif type(filter) is str:
                 filter_geom = CreateGeometryFromWkt(filter)
               else:
                 filter_geom = filter
 
               self.err = $action(lyr, geom_field, filter_geom)
-
-              if type(filter) is str:
-                 filter_geom.Destroy()
 
           def __int__(self):
               return self.err
@@ -658,7 +655,7 @@ def ReleaseResultSet(self, sql_lyr):
 
       1. Use as a context manager:
 
-      >>> with lyr.SetSpatialFilterRect(0, 10, 10, 20, 20)"):
+      >>> with lyr.SetSpatialFilterRect(0, 10, 10, 20, 20):
       ...     print(lyr.GetFeatureCount())
 
       2. Used to set the filter until it is explicitly disabled.
