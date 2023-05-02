@@ -157,9 +157,6 @@ echo "* Cleaning doc/ and perftests/ under $CWD..."
 rm -rf doc
 rm -rf perftests
 
-echo "* Update swig/python/extensions timestamps"
-touch swig/python/extensions/*
-
 #
 # Make distribution packages
 #
