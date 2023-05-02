@@ -659,7 +659,9 @@ set(GDAL_DATA_FILES
     data/gdalinfo_output.schema.json
     data/gdalmdiminfo_output.schema.json
     data/gdalvrt.xsd
+    data/gfs.xsd
     data/gml_registry.xml
+    data/gml_registry.xsd
     data/gmlasconf.xml
     data/gmlasconf.xsd
     data/grib2_table_versions.csv
