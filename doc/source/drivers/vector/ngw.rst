@@ -102,7 +102,7 @@ object the new NGW feature *extensions* json object will fill from this json
 object.
 
 Extensions json object structure see in `NextGIS Web API
-documentation <http://docs.nextgis.comu/docs_ngweb_dev/doc/developer/resource.html#feature>`__
+documentation <https://docs.nextgis.com/docs_ngweb_dev/doc/developer/resource.html#feature>`__
 
 Geometry
 --------
@@ -333,6 +333,6 @@ See also
 
 -  :ref:`Raster side of the driver <raster.ngw>`
 -  `NextGIS Web
-   documentation <http://docs.nextgis.com/docs_ngweb/source/toc.html>`__
+   documentation <https://docs.nextgis.com/docs_ngweb/source/toc.html>`__
 -  `NextGIS Web for
-   developers <http://docs.nextgis.com/docs_ngweb_dev/doc/toc.html>`__
+   developers <https://docs.nextgis.com/docs_ngweb_dev/doc/toc.html>`__
