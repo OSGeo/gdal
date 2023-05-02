@@ -10,7 +10,7 @@ A BibTeX entry for LaTeX users is
     title = {{GDAL/OGR} Geospatial Data Abstraction software Library},
     author = {{GDAL/OGR contributors}},
     organization = {Open Source Geospatial Foundation},
-    year = {2022},
+    year = {2023},
     url = {https://gdal.org},
     doi = {10.5281/zenodo.5884351},
   }
