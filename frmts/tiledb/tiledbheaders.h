@@ -317,6 +317,7 @@ class OGRTileDBLayer final : public OGRLayer,
     size_t m_nBatchSize = DEFAULT_BATCH_SIZE;
     size_t m_nTileCapacity = DEFAULT_TILE_CAPACITY;
     double m_dfTileExtent = 0;
+    double m_dfZTileExtent = 0;
     size_t m_nEstimatedWkbSizePerRow = 0;
     std::map<std::string, size_t> m_oMapEstimatedSizePerRow;
     double m_dfPadX = 0;
