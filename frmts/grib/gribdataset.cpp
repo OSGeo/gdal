@@ -1017,8 +1017,8 @@ double GRIBRasterBand::GetNoDataValue(int *pbSuccess)
 
     if (m_Grib_MetaData->gridAttrib.f_miss == 0)
     {
-        m_bHasNoData = false;
-        m_dfNoData = 0;
+        m_bHasLookedForNoData = false;
+        FindPDSTemplate();
         if (pbSuccess)
             *pbSuccess = m_bHasNoData;
         return m_dfNoData;
