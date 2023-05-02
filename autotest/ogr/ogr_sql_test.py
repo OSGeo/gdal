@@ -130,14 +130,13 @@ def test_ogr_sql_1():
     gdaltest.ds = ogr.Open("data")
     gdaltest.lyr = gdaltest.ds.GetLayerByName("poly")
 
-    gdaltest.lyr.SetAttributeFilter("eas_id < 167")
+    with gdaltest.lyr.SetAttributeFilter("eas_id < 167"):
 
-    count = gdaltest.lyr.GetFeatureCount()
-    assert count == 3, (
-        "Got wrong count with GetFeatureCount() - %d, expecting 3" % count
-    )
+        count = gdaltest.lyr.GetFeatureCount()
+        assert count == 3, (
+            "Got wrong count with GetFeatureCount() - %d, expecting 3" % count
+        )
 
-    gdaltest.lyr.SetAttributeFilter("")
     count = gdaltest.lyr.GetFeatureCount()
     assert count == 10, (
         "Got wrong count with GetFeatureCount() - %d, expecting 10" % count
@@ -1167,9 +1166,8 @@ def test_ogr_sql_41():
 def test_ogr_sql_42():
 
     lyr = gdaltest.ds.GetLayerByName("poly")
-    lyr.SetAttributeFilter("prfedea <> ''")
-    feat = lyr.GetNextFeature()
-    lyr.SetAttributeFilter(None)
+    with lyr.SetAttributeFilter("prfedea <> ''"):
+        feat = lyr.GetNextFeature()
     assert feat is not None
 
     with gdaltest.ds.ExecuteSQL("SELECT * FROM poly WHERE prfedea <> ''") as sql_lyr:
@@ -1496,20 +1494,20 @@ def test_ogr_sql_attribute_filter_on_top_of_non_forward_where_clause(dialect):
     with mem_ds.ExecuteSQL(
         "SELECT * FROM test WHERE OGR_GEOMETRY = 'POLYGON'", dialect=dialect
     ) as sql_lyr:
-        sql_lyr.SetAttributeFilter("")
-        assert sql_lyr.GetFeatureCount() == 1
+        with sql_lyr.SetAttributeFilter(""):
+            assert sql_lyr.GetFeatureCount() == 1
 
     with mem_ds.ExecuteSQL(
         "SELECT * FROM test WHERE OGR_GEOMETRY = 'POLYGON'", dialect=dialect
     ) as sql_lyr:
-        sql_lyr.SetAttributeFilter("1")
-        assert sql_lyr.GetFeatureCount() == 1
+        with sql_lyr.SetAttributeFilter("1"):
+            assert sql_lyr.GetFeatureCount() == 1
 
     with mem_ds.ExecuteSQL(
         "SELECT * FROM test WHERE OGR_GEOMETRY = 'POLYGON'", dialect=dialect
     ) as sql_lyr:
-        sql_lyr.SetAttributeFilter("0")
-        assert sql_lyr.GetFeatureCount() == 0
+        with sql_lyr.SetAttributeFilter("0"):
+            assert sql_lyr.GetFeatureCount() == 0
 
 
 ###############################################################################
