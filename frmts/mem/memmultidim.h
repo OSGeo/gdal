@@ -91,6 +91,11 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
     static std::shared_ptr<MEMGroup> Create(const std::string &osParentName,
                                             const char *pszName);
 
+    void SetFullName(const std::string &osFullName)
+    {
+        m_osFullName = osFullName;
+    }
+
     std::vector<std::string>
     GetMDArrayNames(CSLConstList papszOptions) const override;
     std::shared_ptr<GDALMDArray>

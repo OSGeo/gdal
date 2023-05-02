@@ -329,3 +329,20 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
     }
     return o;
 }
+
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void ZarrAttributeGroup::ParentRenamed(const std::string &osNewParentFullName)
+{
+    if (m_poGroup->GetFullName().find("/_GLOBAL_") != std::string::npos)
+        m_poGroup->SetFullName(osNewParentFullName + "/_GLOBAL_");
+    else
+        m_poGroup->SetFullName(osNewParentFullName);
+    const auto attrs = m_poGroup->GetAttributes(nullptr);
+    for (auto &attr : attrs)
+    {
+        attr->ParentRenamed(m_poGroup->GetFullName());
+    }
+}

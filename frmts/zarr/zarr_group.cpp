@@ -159,8 +159,8 @@ std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(
                  "A dimension with same name already exists");
         return nullptr;
     }
-    auto newDim(std::make_shared<GDALDimensionWeakIndexingVar>(
-        GetFullName(), osName, osType, osDirection, nSize));
+    auto newDim(std::make_shared<ZarrDimension>(GetFullName(), osName, osType,
+                                                osDirection, nSize));
     m_oMapDimensions[osName] = newDim;
     return newDim;
 }
@@ -197,8 +197,7 @@ void ZarrGroupBase::UpdateDimensionSize(
                 if (poDim->GetFullName() == poUpdatedDim->GetFullName())
                 {
                     auto poModifiableDim =
-                        std::dynamic_pointer_cast<GDALDimensionWeakIndexingVar>(
-                            poDim);
+                        std::dynamic_pointer_cast<ZarrDimension>(poDim);
                     CPLAssert(poModifiableDim);
                     poModifiableDim->SetSize(poUpdatedDim->GetSize());
                     poArray->SetDefinitionModified(true);
@@ -867,6 +866,7 @@ ZarrGroupV2::CreateGroup(const std::string &osName,
                                 osDirectoryName);
     if (!poGroup)
         return nullptr;
+    poGroup->m_poParent = m_pSelf;
     m_oMapGroups[osName] = poGroup;
     m_aosGroups.emplace_back(osName);
     return poGroup;
@@ -1431,6 +1431,127 @@ std::shared_ptr<GDALMDArray> ZarrGroupV2::CreateMDArray(
     RegisterArray(poArray);
 
     return poArray;
+}
+
+/************************************************************************/
+/*                              Rename()                                */
+/************************************************************************/
+
+bool ZarrGroupV2::Rename(const std::string &osNewName)
+{
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+    if (!IsValidObjectName(osNewName))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid group name");
+        return false;
+    }
+    if (m_osName == "/")
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Cannot rename root group");
+        return false;
+    }
+
+    auto pParent = std::dynamic_pointer_cast<ZarrGroupV2>(m_poParent.lock());
+    if (pParent)
+    {
+        const auto groupNames = pParent->GetGroupNames();
+        if (std::find(groupNames.begin(), groupNames.end(), osNewName) !=
+            groupNames.end())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "A group with same name already exists");
+            return false;
+        }
+    }
+
+    std::string osNewDirectoryName(m_osDirectoryName);
+    osNewDirectoryName.resize(osNewDirectoryName.size() - m_osName.size());
+    osNewDirectoryName += osNewName;
+
+    if (VSIRename(m_osDirectoryName.c_str(), osNewDirectoryName.c_str()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Renaming of %s to %s failed",
+                 m_osDirectoryName.c_str(), osNewDirectoryName.c_str());
+        return false;
+    }
+
+    if (pParent)
+    {
+        auto oIter = pParent->m_oMapGroups.find(m_osName);
+        if (oIter != pParent->m_oMapGroups.end())
+        {
+            pParent->m_oMapGroups.erase(oIter);
+            CPLAssert(m_pSelf.lock());
+            pParent->m_oMapGroups[osNewName] = m_pSelf.lock();
+        }
+
+        for (auto &osName : pParent->m_aosGroups)
+        {
+            if (osName == m_osName)
+            {
+                osName = osNewName;
+                break;
+            }
+        }
+    }
+
+    m_poSharedResource->RenameZMetadataRecursive(m_osDirectoryName,
+                                                 osNewDirectoryName);
+
+    std::string osNewFullName(m_osFullName);
+    osNewFullName.resize(osNewFullName.size() - m_osName.size());
+    osNewFullName += osNewName;
+
+    m_osDirectoryName = osNewDirectoryName;
+    m_osFullName = osNewFullName;
+    m_osName = osNewName;
+
+    NotifyChildrenOfRenaming();
+
+    return true;
+}
+
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void ZarrGroupV2::ParentRenamed(const std::string &osNewParentFullName)
+{
+    auto pParent = std::dynamic_pointer_cast<ZarrGroupV2>(m_poParent.lock());
+    // The parent necessarily exist, since it notified us
+    CPLAssert(pParent);
+
+    m_osDirectoryName = CPLFormFilename(pParent->m_osDirectoryName.c_str(),
+                                        m_osName.c_str(), nullptr);
+
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+
+    NotifyChildrenOfRenaming();
+}
+
+/************************************************************************/
+/*                       NotifyChildrenOfRenaming()                     */
+/************************************************************************/
+
+void ZarrGroupV2::NotifyChildrenOfRenaming()
+{
+    for (const auto &oIter : m_oMapGroups)
+        oIter.second->ParentRenamed(m_osFullName);
+
+    for (const auto &oIter : m_oMapMDArrays)
+        oIter.second->ParentRenamed(m_osFullName);
+
+    m_oAttrGroup.ParentRenamed(m_osFullName);
+
+    for (const auto &oIter : m_oMapDimensions)
+        oIter.second->ParentRenamed(m_osFullName);
 }
 
 /************************************************************************/
@@ -2052,8 +2173,68 @@ void ZarrSharedResource::SetZMetadataItem(const std::string &osFilename,
         m_bZMetadataModified = true;
         const char *pszKey =
             osNormalizedFilename.c_str() + m_osRootDirectoryName.size() + 1;
+        auto oMetadata = m_oObj["metadata"];
+        oMetadata.DeleteNoSplitName(pszKey);
+        oMetadata.AddNoSplitName(pszKey, obj);
+    }
+}
+
+/************************************************************************/
+/*             ZarrSharedResource::DeleteZMetadataItem()                */
+/************************************************************************/
+
+void ZarrSharedResource::DeleteZMetadataItem(const std::string &osFilename)
+{
+    if (m_bZMetadataEnabled)
+    {
+        CPLString osNormalizedFilename(osFilename);
+        osNormalizedFilename.replaceAll('\\', '/');
+        CPLAssert(STARTS_WITH(osNormalizedFilename.c_str(),
+                              (m_osRootDirectoryName + '/').c_str()));
+        m_bZMetadataModified = true;
+        const char *pszKey =
+            osNormalizedFilename.c_str() + m_osRootDirectoryName.size() + 1;
         m_oObj["metadata"].DeleteNoSplitName(pszKey);
-        m_oObj["metadata"].AddNoSplitName(pszKey, obj);
+    }
+}
+
+/************************************************************************/
+/*             ZarrSharedResource::RenameZMetadataRecursive()           */
+/************************************************************************/
+
+void ZarrSharedResource::RenameZMetadataRecursive(
+    const std::string &osOldFilename, const std::string &osNewFilename)
+{
+    if (m_bZMetadataEnabled)
+    {
+        CPLString osNormalizedOldFilename(osOldFilename);
+        osNormalizedOldFilename.replaceAll('\\', '/');
+        CPLAssert(STARTS_WITH(osNormalizedOldFilename.c_str(),
+                              (m_osRootDirectoryName + '/').c_str()));
+
+        CPLString osNormalizedNewFilename(osNewFilename);
+        osNormalizedNewFilename.replaceAll('\\', '/');
+        CPLAssert(STARTS_WITH(osNormalizedNewFilename.c_str(),
+                              (m_osRootDirectoryName + '/').c_str()));
+
+        m_bZMetadataModified = true;
+
+        const char *pszOldKeyRadix =
+            osNormalizedOldFilename.c_str() + m_osRootDirectoryName.size() + 1;
+        const char *pszNewKeyRadix =
+            osNormalizedNewFilename.c_str() + m_osRootDirectoryName.size() + 1;
+
+        auto oMetadata = m_oObj["metadata"];
+        for (auto &item : oMetadata.GetChildren())
+        {
+            if (STARTS_WITH(item.GetName().c_str(), pszOldKeyRadix))
+            {
+                oMetadata.DeleteNoSplitName(item.GetName());
+                std::string osNewKey(pszNewKeyRadix);
+                osNewKey += (item.GetName().c_str() + strlen(pszOldKeyRadix));
+                oMetadata.AddNoSplitName(osNewKey, item);
+            }
+        }
     }
 }
 
@@ -2076,4 +2257,15 @@ void ZarrSharedResource::UpdateDimensionSize(
         CPLError(CE_Failure, CPLE_AppDefined, "UpdateDimensionSize() failed");
     }
     poRG.reset();
+}
+
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void ZarrDimension::ParentRenamed(const std::string &osNewParentFullName)
+{
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
 }

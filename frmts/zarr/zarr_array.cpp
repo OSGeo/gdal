@@ -3330,7 +3330,7 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for shape");
             return nullptr;
         }
-        aoDims.emplace_back(std::make_shared<GDALDimensionWeakIndexingVar>(
+        aoDims.emplace_back(std::make_shared<ZarrDimension>(
             std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
             nSize));
     }
@@ -3497,7 +3497,7 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
             GetDimensionTypeDirection(osType, osDirection);
         }
 
-        auto poDimLocal = std::make_shared<GDALDimensionWeakIndexingVar>(
+        auto poDimLocal = std::make_shared<ZarrDimension>(
             GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
         m_oMapDimensions[osDimName] = poDimLocal;
         poDim = poDimLocal;
@@ -3598,11 +3598,11 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
                                             .get());
                                 if (poDimParentGroup)
                                 {
-                                    auto poDimLocal = std::make_shared<
-                                        GDALDimensionWeakIndexingVar>(
-                                        poDimParentGroup->GetFullName(),
-                                        poDim->GetName(), osType, osDirection,
-                                        poDim->GetSize());
+                                    auto poDimLocal =
+                                        std::make_shared<ZarrDimension>(
+                                            poDimParentGroup->GetFullName(),
+                                            poDim->GetName(), osType,
+                                            osDirection, poDim->GetSize());
                                     aoDims[i] = poDimLocal;
 
                                     poDimParentGroup
@@ -4510,8 +4510,7 @@ bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         m_bDefinitionModified = true;
         for (size_t dimIdx : anGrownDimIdx)
         {
-            auto dim = std::dynamic_pointer_cast<GDALDimensionWeakIndexingVar>(
-                dims[dimIdx]);
+            auto dim = std::dynamic_pointer_cast<ZarrDimension>(dims[dimIdx]);
             if (dim)
             {
                 dim->SetSize(anNewDimSizes[dimIdx]);
@@ -4528,4 +4527,37 @@ bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         }
     }
     return true;
+}
+
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
+{
+    CPLAssert(m_nVersion == 2);
+
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+
+    auto poParent = m_poGroupWeak.lock();
+    // The parent necessarily exist, since it notified us
+    CPLAssert(poParent);
+
+    m_osFilename =
+        CPLFormFilename(CPLFormFilename(poParent->GetDirectoryName().c_str(),
+                                        m_osName.c_str(), nullptr),
+                        ".zarray", nullptr);
+
+    NotifyChildrenOfRenaming();
+}
+
+/************************************************************************/
+/*                       NotifyChildrenOfRenaming()                     */
+/************************************************************************/
+
+void ZarrArray::NotifyChildrenOfRenaming()
+{
+    m_oAttrGroup.ParentRenamed(m_osFullName);
 }

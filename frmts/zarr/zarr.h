@@ -206,6 +206,8 @@ class ZarrAttributeGroup
     }
 
     CPLJSONObject Serialize() const;
+
+    void ParentRenamed(const std::string &osNewParentFullName);
 };
 
 /************************************************************************/
@@ -243,6 +245,11 @@ class ZarrSharedResource
     void SetZMetadataItem(const std::string &osFilename,
                           const CPLJSONObject &obj);
 
+    void DeleteZMetadataItem(const std::string &osFilename);
+
+    void RenameZMetadataRecursive(const std::string &osOldFilename,
+                                  const std::string &osNewFilename);
+
     const std::shared_ptr<GDALPamMultiDim> &GetPAM()
     {
         return m_poPAM;
@@ -274,6 +281,7 @@ class ZarrSharedResource
 /************************************************************************/
 
 class ZarrArray;
+class ZarrDimension;
 
 class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 {
@@ -289,7 +297,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
                                 // a subgroup
     mutable std::map<CPLString, std::shared_ptr<ZarrGroupBase>> m_oMapGroups{};
     mutable std::map<CPLString, std::shared_ptr<ZarrArray>> m_oMapMDArrays{};
-    mutable std::map<CPLString, std::shared_ptr<GDALDimensionWeakIndexingVar>>
+    mutable std::map<CPLString, std::shared_ptr<ZarrDimension>>
         m_oMapDimensions{};
     mutable bool m_bDirectoryExplored = false;
     mutable std::vector<std::string> m_aosGroups{};
@@ -383,6 +391,11 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
         m_osDirectoryName = osDirectoryName;
     }
 
+    const std::string &GetDirectoryName() const
+    {
+        return m_osDirectoryName;
+    }
+
     std::shared_ptr<ZarrArray>
     LoadArray(const std::string &osArrayName,
               const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
@@ -416,6 +429,8 @@ class ZarrGroupV2 final : public ZarrGroupBase
     {
     }
 
+    void NotifyChildrenOfRenaming();
+
   public:
     static std::shared_ptr<ZarrGroupV2>
     Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
@@ -448,6 +463,10 @@ class ZarrGroupV2 final : public ZarrGroupBase
 
     void InitFromZMetadata(const CPLJSONObject &oRoot);
     bool InitFromZGroup(const CPLJSONObject &oRoot);
+
+    bool Rename(const std::string &osNewName) override;
+
+    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -496,6 +515,25 @@ class ZarrGroupV3 final : public ZarrGroupBase
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         const GDALExtendedDataType &oDataType,
         CSLConstList papszOptions = nullptr) override;
+};
+
+/************************************************************************/
+/*                           ZarrDimension                              */
+/************************************************************************/
+
+class ZarrDimension final : public GDALDimensionWeakIndexingVar
+{
+
+  public:
+    ZarrDimension(const std::string &osParentName, const std::string &osName,
+                  const std::string &osType, const std::string &osDirection,
+                  GUInt64 nSize)
+        : GDALDimensionWeakIndexingVar(osParentName, osName, osType,
+                                       osDirection, nSize)
+    {
+    }
+
+    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -574,7 +612,7 @@ class ZarrArray final : public GDALPamMDArray
     double m_dfScale = 1.0;
     bool m_bHasScale = false;
     bool m_bScaleModified = false;
-    std::weak_ptr<GDALGroup> m_poGroupWeak{};
+    std::weak_ptr<ZarrGroupBase> m_poGroupWeak{};
     uint64_t m_nTotalTileCount = 0;
     mutable bool m_bHasTriedCacheTilePresenceArray = false;
     mutable std::shared_ptr<GDALMDArray> m_poCacheTilePresenceArray{};
@@ -623,6 +661,8 @@ class ZarrArray final : public GDALPamMDArray
     bool FlushDirtyTile() const;
 
     std::shared_ptr<GDALMDArray> OpenTilePresenceCache(bool bCanCreate) const;
+
+    void NotifyChildrenOfRenaming();
 
     // Disable copy constructor and assignment operator
     ZarrArray(const ZarrArray &) = delete;
@@ -696,7 +736,7 @@ class ZarrArray final : public GDALPamMDArray
         m_osUnit = osUnit;
     }
 
-    void RegisterGroup(std::weak_ptr<GDALGroup> group)
+    void RegisterGroup(std::weak_ptr<ZarrGroupBase> group)
     {
         m_poGroupWeak = group;
     }
@@ -832,6 +872,8 @@ class ZarrArray final : public GDALPamMDArray
     void Flush();
 
     bool CacheTilePresence();
+
+    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 #endif  // ZARR_H

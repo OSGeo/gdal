@@ -3457,3 +3457,228 @@ def test_zarr_resize_dim_referenced_twice():
 
     finally:
         gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("create_z_metadata", [True, False])
+def test_zarr_multidim_rename_group_at_creation(create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def test():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        rg.CreateGroup("other_group")
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute(
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        subgroup = group.CreateGroup("subgroup")
+        subgroup_attr = subgroup.CreateAttribute(
+            "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        subgroup_ar = subgroup.CreateMDArray(
+            "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        subgroup_ar_attr = subgroup_ar.CreateAttribute(
+            "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        # Cannot rename root group
+        with pytest.raises(Exception):
+            rg.Rename("foo")
+
+        # Empty name
+        with pytest.raises(Exception):
+            group.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            group.Rename("other_group")
+
+        # Rename group and test effects
+        group.Rename("group_renamed")
+        assert group.GetName() == "group_renamed"
+        assert group.GetFullName() == "/group_renamed"
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        assert dim.GetName() == "dim0"
+        assert dim.GetFullName() == "/group_renamed/dim0"
+
+        assert group_attr.GetName() == "group_attr"
+        assert group_attr.GetFullName() == "/group_renamed/_GLOBAL_/group_attr"
+
+        assert ar.GetName() == "ar"
+        assert ar.GetFullName() == "/group_renamed/ar"
+
+        assert attr.GetName() == "attr"
+        assert attr.GetFullName() == "/group_renamed/ar/attr"
+
+        assert subgroup.GetName() == "subgroup"
+        assert subgroup.GetFullName() == "/group_renamed/subgroup"
+
+        assert subgroup_attr.GetName() == "subgroup_attr"
+        assert (
+            subgroup_attr.GetFullName()
+            == "/group_renamed/subgroup/_GLOBAL_/subgroup_attr"
+        )
+
+        assert subgroup_ar.GetName() == "subgroup_ar"
+        assert subgroup_ar.GetFullName() == "/group_renamed/subgroup/subgroup_ar"
+
+        assert subgroup_ar_attr.GetName() == "subgroup_ar_attr"
+        assert (
+            subgroup_ar_attr.GetFullName()
+            == "/group_renamed/subgroup/subgroup_ar/subgroup_ar_attr"
+        )
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        group = rg.OpenGroup("group_renamed")
+        assert set([attr.GetName() for attr in group.GetAttributes()]) == {"group_attr"}
+
+        assert group.GetMDArrayNames() == ["ar"]
+
+        # Read-only
+        with pytest.raises(Exception):
+            group.Rename("group_renamed2")
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+    try:
+        test()
+        reopen()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("create_z_metadata", [True, False])
+def test_zarr_multidim_rename_group_after_reopening(create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        group_attr.Write("my_string")
+        rg.CreateGroup("other_group")
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+        attr2 = ar.CreateAttribute("attr2", [], gdal.ExtendedDataType.CreateString())
+        attr2.Write("foo2")
+
+        group.CreateGroup("subgroup")
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Read-only
+        with pytest.raises(Exception):
+            group.Rename("group_renamed2")
+
+        assert set(rg.GetGroupNames()) == {"group", "other_group"}
+
+    def rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Cannot rename root group
+        with pytest.raises(Exception):
+            rg.Rename("foo")
+
+        # Empty name
+        with pytest.raises(Exception):
+            group.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            group.Rename("other_group")
+
+        group_attr = group.GetAttribute("group_attr")
+        ar = group.OpenMDArray("ar")
+        attr = ar.GetAttribute("attr")
+        attr.Write("bar")
+
+        # Rename group and test effects
+        group.Rename("group_renamed")
+        assert group.GetName() == "group_renamed"
+        assert group.GetFullName() == "/group_renamed"
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        assert group_attr.GetFullName() == "/group_renamed/_GLOBAL_/group_attr"
+
+        attr2 = ar.GetAttribute("attr2")
+        attr2.Write("bar2")
+
+    def reopen_after_rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        group = rg.OpenGroup("group_renamed")
+        assert set([attr.GetName() for attr in group.GetAttributes()]) == {"group_attr"}
+
+        assert group.GetMDArrayNames() == ["ar"]
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        ar = group.OpenMDArray("ar")
+
+        attr = ar.GetAttribute("attr")
+        assert attr.Read() == "bar"
+
+        attr2 = ar.GetAttribute("attr2")
+        assert attr2.Read() == "bar2"
+
+    try:
+        create()
+        reopen_readonly()
+        rename()
+        reopen_after_rename()
+
+    finally:
+        gdal.RmdirRecursive(filename)
