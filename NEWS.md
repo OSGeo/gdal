@@ -1,5 +1,6 @@
-# GDAL/OGR 3.7.0 *preliminary* Releases Notes up to d3c883bea456700b52d294fcd4715b3c83b56146
+# GDAL/OGR 3.7.0 Releases Notes
 
+GDAL/OGR 3.7.0 is a feature release.
 Those notes include changes since GDAL 3.6.0, but not already included in a
 GDAL 3.6.x bugfix release.
 
@@ -24,6 +25,7 @@ GDAL 3.6.x bugfix release.
 * Add read-only raster driver NOAA_B to read NOAA GEOCON/NADCON5 .b grids
 * Add read-only raster driver NSIDCbin for Sea Ice Concentrations (#7263)
 * Add read-only vector GTFS (General Transit Feed Specification) driver
+* TileDB: add read/write vector side
 * Add support for [SOZip](https://sozip.org] (Seek Optimized ZIP) with enhanced
   /vsizip/ virtual file system and a new sozip utility
 * OpenFileGDB: add read-only support for raster datasets (.gdb v10)
@@ -81,12 +83,16 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.7/MIGRATI
 * Make it possible to specify all HTTP related configuration options as
   path-specific options with VSISetPathSpecificOption()
 * VSIGSFSHandler::UnlinkBatch(): avoid potential nullptr deref
+* /vsiaz/: implement UnlinkBatch()
+* /vsis3/: add CPL_VSIS3_CREATE_DIR_OBJECT configuration option
 * /vsigs/ allow GDAL_HTTP_HEADERS config option to be used as authentication method if contains at least a line starting with "Authorization:"
+* /vsihdfs/: fix ReadDir() and EOF flag (#7632)
 * add a robust CPLParseKeyValueJson() function (#6753)
 * HTTP: set default User-Agent header to GDAL/x.y.z and add a
   CPLHTTPSetDefaultUserAgent() function (#6376)
 * HTTP: CUSTOMREQUEST option overrides POST while send form
 * /vsicurl/ / CPLHTTPFetch(): add a GDAL_HTTP_NETRC_FILE config option
+* /vsicurl/ / CPLHTTPFetch(): add options to support SSL client certificates
 * VSICurlHandle::ReadMultiRange(): avoid potential infinite loop
 * Add VSIVirtualHandle::AdviseRead() virtual method and implement it in /vsicurl
 * Add VSICopyFile()
@@ -155,6 +161,9 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.7/MIGRATI
 * gdalbuildvrt: implement numerically stable averaging of resolution (#7502)
 * gdal2tiles: use logging module instead of print() for verbose output (#4894)
 * gdal2tiles: update doctype to html format (#7631)
+* gdal2tiles: uses GDALTermProgress() for progress bar
+* gdal_calc: uses GDALTermProgress() for progress bar (#7549)
+* gdal_fillnodata: fix parsing of -co option
 * validate_gpkg.py: make it work better on examples from ngageoint repositories
 * gdal_cp.py: use gdal.CopyFile()
 * C/C++ command line utilities: take into account GDALClose() error code
@@ -179,6 +188,7 @@ GRIB driver:
  * update tables to wmo-im/GRIB2@v30
  * g2clib: allow negative longitudes in grid templates Lon/Lat, Rotated,
    Stretched, Stretched & Rotated, LAEA (#7456) and Mercator
+ * fix GetNoDataValue() on band > 1 when there's a bitmap section (#7649)
 
 GTiff driver:
  * add a JXL_ALPHA_DISTANCE creation option, e.g. to have lossless alpha and
@@ -245,6 +255,14 @@ NITF driver:
  * add VALIDATE and FAIL_IF_VALIDATION_ERROR open options
  * fix bug that prevents adding subsequent TREs after a HEX TRE (#6827)
 
+OGCAPI driver:
+ * define raster/vector scope of open options
+ * Passed uri to TileMatrixSet::parse
+ * Updated uris of well-known tile matrix sets
+
+PCIDSK driver:
+ * support Web Mercator projection (#7647)
+
 PDF driver:
  * skip JP2ECW driver if ECW_ENCODE_KEY required but not found
 
@@ -268,6 +286,8 @@ VRT driver:
  * VRTPansharpened: avoid issue when querying overviews when PAN and MS bands
    have significant different spatial extent
  * serialize NODATA/NoDataValue elements with double precision (#7486)
+ * fix warning regarding with OpenShared with vrt://http://example.com/test.jp2
+   with the JP2OpenJPEG driver
 
 WEBP driver:
  * implement GetCompressionFormats() and ReadCompressedData()
@@ -294,8 +314,10 @@ WEBP driver:
 * OGRToOGCGeomType(): add options to control output
 * GenSQL: fix SetAttributeFilter() when dialect=OGRSQL and not forwarding the
   initial where clause to the source layer (#7087)
+* OGR SQL: do not emit error message when comparing a NULL datetime
 * OGRFeature::SetField(string argument): for bool, recognize 0/false/off/no as
   false and 1/true/on/yes as true
+* Add OGRFeature::GetFieldAsISO8601DateTime() (#7555)
 * Geometry WKT import: accept nan as a value, for parity with PostGIS and GEOS
 * GDALDataset::CopyLayer(): copy source layer metadata, unless the COPY_MD=NO
   option is specified
@@ -387,6 +409,9 @@ GPKG driver:
  * Map field alternative name with "name" attribute from gpkg_data_columns table
  * Map field comment with "description" attribute from gpkg_data_columns table
  * hide implicit relationships from NGA GeoInt and Spatialite system tables
+ * add ST_EnvIntersects() for faster spatial filtering when there is no
+   spatial index
+ * minimum (read) support for non-standard multiple geometry columns per table
 
 GPX driver:
  * add capability to read & write content of <metadata> element (#7190)
@@ -443,12 +468,14 @@ PG driver:
  * Remove PG_USE_TEXT config option
  * use standard_conforming_strings=ON
  * add support for getting/setting/altering field comments (#7587)
+ * truncate table names larger than 63 characters (#7628)
 
 PGDump driver:
  * fix TEMPORARY layer creation option
  * add GEOM_COLUMN_POSITION layer creation option and allow empty FID= (#7482)
  * fix escaping of schema and table name (#7497)
  * add support for setting field comments
+ * truncate table names larger than 63 characters (#7628)
 
 Shapefile driver:
  * writer: do no use SHPRewindObject() for [Multi]Polygon layers, but use the
@@ -495,6 +522,11 @@ Python bindings:
  * __init__.py: more robust handling of PATH (cf rasterio/rasterio#2713)
  * do not make gdal.PushErrorHandler()/PopErrorHandler() sensitive to the GDAL
    error context
+ * Make GetArrowStreamAsNumPy() handle large lists, strings and binaries
+ * make Dataset.ExecuteSQL() usable as a context manager to automatically
+   release the layer (#7459)
+ * GetArrowStreamAsNumPy(): optimization to save memory on string fields with
+   huge strings compared to the average size
 
 # GDAL/OGR 3.6.0 Release Notes
 
