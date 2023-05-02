@@ -45,7 +45,7 @@ See [MIGRATION_GUIDE.TXT](https://github.com/OSGeo/gdal/blob/release/3.7/MIGRATI
 
 * data/gfs.xsd: XML schema for .gfs files (#6655)
 * data/gml_registry.xsd: new file with XML schema of gml_registry.xml (#6716)
-* data/ogrinfo_output.json.schema: to validate ogrinfo -json output
+* data/ogrinfo_output.schema.json: to validate ogrinfo -json output
 * data/gdalinfo_output.schema.json: to validate gdalinfo -json output (fixes #6850)
 * data/grib2_table_4_2_0_21.csv
 * data/grib2_table_4_2_2_6.csv
