@@ -409,6 +409,11 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     }
 
     void UpdateDimensionSize(const std::shared_ptr<GDALDimension> &poDim);
+
+    static bool IsValidObjectName(const std::string &osName);
+
+    void NotifyArrayRenamed(const std::string &osOldName,
+                            const std::string &osNewName);
 };
 
 /************************************************************************/
@@ -578,6 +583,7 @@ class ZarrArray final : public GDALPamMDArray
     GByte *m_pabyNoData = nullptr;
     std::string m_osDimSeparator{"."};
     std::string m_osFilename{};
+    std::string m_osRootDirectoryName{};  // ZarrV3 specific
     size_t m_nTileSize = 0;
     mutable std::vector<GByte> m_abyRawTileData{};
     mutable std::vector<GByte> m_abyDecodedTileData{};
@@ -598,7 +604,6 @@ class ZarrArray final : public GDALPamMDArray
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     mutable bool m_bAllocateWorkingBuffersDone = false;
     mutable bool m_bWorkingBuffersOK = false;
-    std::string m_osRootDirectoryName{};
     int m_nVersion = 0;
     bool m_bUpdatable = false;
     bool m_bDefinitionModified = false;
@@ -872,6 +877,8 @@ class ZarrArray final : public GDALPamMDArray
     void Flush();
 
     bool CacheTilePresence();
+
+    bool Rename(const std::string &osNewName) override;
 
     void ParentRenamed(const std::string &osNewParentFullName) override;
 };

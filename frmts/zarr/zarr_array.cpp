@@ -4561,3 +4561,74 @@ void ZarrArray::NotifyChildrenOfRenaming()
 {
     m_oAttrGroup.ParentRenamed(m_osFullName);
 }
+
+/************************************************************************/
+/*                              Rename()                                */
+/************************************************************************/
+
+bool ZarrArray::Rename(const std::string &osNewName)
+{
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+    if (m_nVersion != 2)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Rename only supported on Zarr V2 currently");
+        return false;
+    }
+    if (!ZarrGroupBase::IsValidObjectName(osNewName))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid array name");
+        return false;
+    }
+
+    auto poParent = m_poGroupWeak.lock();
+    if (poParent)
+    {
+        const auto arrayNames = poParent->GetMDArrayNames();
+        if (std::find(arrayNames.begin(), arrayNames.end(), osNewName) !=
+            arrayNames.end())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "An array with same name already exists");
+            return false;
+        }
+    }
+
+    const std::string osRootDirectoryName(
+        CPLGetDirname(CPLGetDirname(m_osFilename.c_str())));
+    const std::string osOldDirectoryName =
+        CPLFormFilename(osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
+    const std::string osNewDirectoryName = CPLFormFilename(
+        osRootDirectoryName.c_str(), osNewName.c_str(), nullptr);
+
+    if (VSIRename(osOldDirectoryName.c_str(), osNewDirectoryName.c_str()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Renaming of %s to %s failed",
+                 osOldDirectoryName.c_str(), osNewDirectoryName.c_str());
+        return false;
+    }
+
+    m_poSharedResource->RenameZMetadataRecursive(osOldDirectoryName,
+                                                 osNewDirectoryName);
+
+    m_osFilename =
+        CPLFormFilename(osNewDirectoryName.c_str(), ".zarray", nullptr);
+
+    if (poParent)
+    {
+        poParent->NotifyArrayRenamed(m_osName, osNewName);
+    }
+
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+
+    NotifyChildrenOfRenaming();
+
+    return true;
+}

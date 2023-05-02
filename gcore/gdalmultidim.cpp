@@ -1406,7 +1406,7 @@ size_t GDALAbstractMDArray::GetDimensionCount() const
  *
  * This is not implemented by all drivers.
  *
- * Drivers known to implement it: MEM, netCDF.
+ * Drivers known to implement it: MEM, netCDF, Zarr.
  *
  * This is the same as the C functions GDALMDArrayRename() or
  * GDALAttributeRename().
@@ -11035,7 +11035,7 @@ int GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions)
  *
  * This is not implemented by all drivers.
  *
- * Drivers known to implement it: MEM, netCDF.
+ * Drivers known to implement it: MEM, netCDF, Zarr.
  *
  * This is the same as the C++ method GDALAbstractMDArray::Rename()
  *

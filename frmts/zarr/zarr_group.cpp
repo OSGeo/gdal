@@ -212,6 +212,31 @@ void ZarrGroupBase::UpdateDimensionSize(
 }
 
 /************************************************************************/
+/*                  ZarrGroupBase::NotifyArrayRenamed()                 */
+/************************************************************************/
+
+void ZarrGroupBase::NotifyArrayRenamed(const std::string &osOldName,
+                                       const std::string &osNewName)
+{
+    for (auto &osName : m_aosArrays)
+    {
+        if (osName == osOldName)
+        {
+            osName = osNewName;
+            break;
+        }
+    }
+
+    auto oIter = m_oMapMDArrays.find(osOldName);
+    if (oIter != m_oMapMDArrays.end())
+    {
+        auto poArray = oIter->second;
+        m_oMapMDArrays.erase(oIter);
+        m_oMapMDArrays[osNewName] = poArray;
+    }
+}
+
+/************************************************************************/
 /*                      ZarrGroupV2::Create()                           */
 /************************************************************************/
 
@@ -833,7 +858,8 @@ std::shared_ptr<ZarrGroupV2> ZarrGroupV2::CreateOnDisk(
 /*                         IsValidObjectName()                          */
 /************************************************************************/
 
-static bool IsValidObjectName(const std::string &osName)
+/* static */
+bool ZarrGroupBase::IsValidObjectName(const std::string &osName)
 {
     return !(osName.empty() || osName == "." || osName == ".." ||
              osName.find('/') != std::string::npos ||
