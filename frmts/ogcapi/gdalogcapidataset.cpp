@@ -94,7 +94,7 @@ class OGCAPIDataset final : public GDALDataset
 
     bool InitFromFile(GDALOpenInfo *poOpenInfo);
     bool InitFromURL(GDALOpenInfo *poOpenInfo);
-    bool ProcessScale(CPLJSONObject &oScaleDenominator, const double dfXMin,
+    void ProcessScale(CPLJSONObject &oScaleDenominator, const double dfXMin,
                       const double dfYMin, const double dfXMax,
                       const double dfYMax);
     bool InitFromCollection(GDALOpenInfo *poOpenInfo, CPLJSONDocument &oDoc);
@@ -662,12 +662,11 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
 /*                        ProcessScale()                          */
 /************************************************************************/
 
-bool OGCAPIDataset::ProcessScale(CPLJSONObject &oScaleDenominator,
+void OGCAPIDataset::ProcessScale(CPLJSONObject &oScaleDenominator,
                                  const double dfXMin, const double dfYMin,
                                  const double dfXMax, const double dfYMax)
 
 {
-    bool bRet = FALSE;
     double dfRes = 1e-8;  // arbitrary
     if (oScaleDenominator.IsValid())
     {
@@ -690,10 +689,6 @@ bool OGCAPIDataset::ProcessScale(CPLJSONObject &oScaleDenominator,
     m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
     m_adfGeoTransform[3] = dfYMax;
     m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
-
-    bRet = TRUE;
-
-    return bRet;
 }
 
 /************************************************************************/
@@ -743,11 +738,7 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
 
     auto oScaleDenominator = oRoot["scaleDenominator"];
 
-    if (!ProcessScale(oScaleDenominator, dfXMin, dfYMin, dfXMax, dfYMax))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Could not process scale");
-        return false;
-    }
+    ProcessScale(oScaleDenominator, dfXMin, dfYMin, dfXMax, dfYMax);
 
     bool bFoundMap = false;
     CPLString osTilesetsMapURL;
