@@ -350,6 +350,9 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         case arrow::Type::DURATION:
         case arrow::Type::LARGE_LIST:
         case arrow::Type::INTERVAL_MONTH_DAY_NANO:
+#if ARROW_VERSION_MAJOR >= 12
+        case arrow::Type::RUN_END_ENCODED:
+#endif
         case arrow::Type::MAX_ID:
         {
             bTypeOK = false;
@@ -1844,6 +1847,9 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
             case arrow::Type::DURATION:
             case arrow::Type::LARGE_LIST:
             case arrow::Type::INTERVAL_MONTH_DAY_NANO:
+#if ARROW_VERSION_MAJOR >= 12
+            case arrow::Type::RUN_END_ENCODED:
+#endif
             case arrow::Type::MAX_ID:
             {
                 // Shouldn't happen normally as we should have discarded those
