@@ -214,7 +214,7 @@ JP2OpenJPEG driver:
 JPEG driver:
  * add a APPLY_ORIENTATION=YES open option to take into account EXIF_Orientation
  * advertise JPEG_QUALITY metadata item in IMAGE_STRUCTURE domain
- * use GetCompressedData(), implement lossless copy from JPEGXL that has
+ * use ReadCompressedData(), implement lossless copy from JPEGXL that has
    JPEG reconstruction box
  * add a LOSSLESS_COPY creation option
  * add support for reading lossless 8-bit JPEG if using libjpeg-turbo >= 2.2

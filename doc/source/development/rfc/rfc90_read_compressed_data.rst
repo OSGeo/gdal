@@ -391,7 +391,7 @@ Backward compatibility
 
 No backward incompatibility. Only API addition.
 
-For driver using GetCompressedData() in their CreateCopy() implementation,
+For driver using ReadCompressedData() in their CreateCopy() implementation,
 generated files might be changed, with more frequent lossless conversions.
 
 SWIG Bindings
