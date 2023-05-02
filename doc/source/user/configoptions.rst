@@ -279,19 +279,18 @@ General options
 
 .. config:: GDAL_CACHEMAX
    :choices: <size>
+   :default: 5%
 
    This option controls the default GDAL raster block cache size. If its value
    is small (less than 100000), it is assumed to be measured in megabytes,
-   otherwise in bytes. Starting with GDAL 2.1, the value can be set to "X%" to
-   mean X% of the usable physical RAM. Note that this value is only consulted
-   the first time the cache size is requested overriding the initial default
-   (40MB up to GDAL 2.0, 5% of the usable physical RAM starting with GDAL 2.1).
-   To change this value programmatically during operation of the program it is
-   better to use :cpp:func:`GDALSetCacheMax` (always in bytes). Since GDAL
-   1.8.0, it is possible to specify a 64bit value through
-   :config:`GDAL_CACHEMAX` or with :cpp:func:`GDALSetCacheMax64` (but the
-   maximum practical value on 32 bit OS is between 2 and 4 GB. It is the
-   responsibility of the user to set a consistent value)
+   otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%
+   of the usable physical RAM. Note that this value is only consulted the first
+   time the cache size is requested.  To change this value programmatically
+   during operation of the program it is better to use
+   :cpp:func:`GDALSetCacheMax` (always in bytes) or or
+   :cpp:func:`GDALSetCacheMax64`. The maximum practical value on 32 bit OS is
+   between 2 and 4 GB. It is the responsibility of the user to set a consistent
+   value.
 
 .. config:: GDAL_NUM_THREADS
    :choices: ALL_CPUS, <integer>
