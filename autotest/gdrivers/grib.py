@@ -128,6 +128,24 @@ def test_grib_grib2_read_nodata():
 
 
 ###############################################################################
+# Check nodata
+
+
+@pytest.mark.parametrize("band_nr", [1, 2])
+@pytest.mark.parametrize("call_getmetadata_before", [False, True])
+def test_grib_grib2_read_nodata_bands_with_bitmap(band_nr, call_getmetadata_before):
+
+    # File generated with the following (build in -DDEBUG mode so GRIB_WRITE_BITMAP_TEST related code is compiled)
+    # gdal_translate autotest/gcore/data/byte.tif test.grib2 --config GRIB_WRITE_BITMAP_TEST YES
+    # gdal_translate autotest/gcore/data/byte.tif test.grib2 --config GRIB_WRITE_BITMAP_TEST YES -co append_subdataset=yes
+
+    ds = gdal.Open("data/grib/two_bands_with_bitmap.grib2")
+    if call_getmetadata_before:
+        ds.GetRasterBand(band_nr).GetMetadata()
+    assert ds.GetRasterBand(band_nr).GetNoDataValue() == 9999
+
+
+###############################################################################
 # Check grib units (#3606)
 
 

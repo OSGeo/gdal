@@ -1375,6 +1375,13 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
             meta->pds2.sect2.wx.ugly[i].validIndex = -1;
          }
       }
+   } else {
+       // Simulate part of ParseGrid() "Resolve bitmap (if there is one) in the data"
+       // behavior just to set nodata value.
+       if (ibitmap && (meta->gridAttrib.f_miss != 1) && (meta->gridAttrib.f_miss != 2)) {
+           meta->gridAttrib.f_miss = 1;
+           meta->gridAttrib.missPri = 9999;
+       }
    }
 
    /* Figure out some other non-section oriented meta data. */
