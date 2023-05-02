@@ -693,18 +693,14 @@ def test_ogr_sql_sqlite_8():
 
     expect = [171, 172, 173, 179]
 
-    sql_lyr = ds.ExecuteSQL(
+    with ds.ExecuteSQL(
         "SELECT p.*, il.name FROM poly p "
         + 'LEFT JOIN "data/idlink.dbf".idlink il USING (eas_id) '
         + "WHERE eas_id > 170 ORDER BY eas_id",
         dialect="SQLite",
-    )
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
-
-    ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -1999,18 +1995,19 @@ def test_ogr_sql_sqlite_27():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, "2013/01/01 00:00:00")
     lyr.CreateFeature(feat)
-    lyr = ds.ExecuteSQL("SELECT MIN(DATE), MAX(DATE) from test", dialect="SQLite")
-    assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDateTime
-    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
-    tr = ogrtest.check_features_against_list(lyr, "MIN(DATE)", ["2013/01/01 00:00:00"])
-    lyr.ResetReading()
-    tr2 = ogrtest.check_features_against_list(lyr, "MAX(DATE)", ["2013/12/31 23:59:59"])
 
-    ds.ReleaseResultSet(lyr)
-
-    assert tr
-
-    assert tr2
+    with ds.ExecuteSQL(
+        "SELECT MIN(DATE), MAX(DATE) from test", dialect="SQLite"
+    ) as lyr:
+        assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDateTime
+        assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
+        assert ogrtest.check_features_against_list(
+            lyr, "MIN(DATE)", ["2013/01/01 00:00:00"]
+        )
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(
+            lyr, "MAX(DATE)", ["2013/12/31 23:59:59"]
+        )
 
 
 ###############################################################################

@@ -139,11 +139,8 @@ def test_ogr_dgn_5():
     dgn_ds = ogr.Open("data/dgn/smalltest.dgn")
     dgn_lyr = dgn_ds.GetLayer(0)
 
-    dgn_lyr.SetAttributeFilter("Type = 15 and Level = 2")
-    tr = ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
-    dgn_lyr.SetAttributeFilter(None)
-
-    assert tr
+    with ogrtest.attribute_filter(dgn_lyr, "Type = 15 and Level = 2"):
+        assert ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
 
 
 ###############################################################################
@@ -155,14 +152,9 @@ def test_ogr_dgn_6():
     dgn_ds = ogr.Open("data/dgn/smalltest.dgn")
     dgn_lyr = dgn_ds.GetLayer(0)
 
-    geom = ogr.CreateGeometryFromWkt("LINESTRING(1.0 8.55, 2.5 6.86)")
-    dgn_lyr.SetSpatialFilter(geom)
-    geom.Destroy()
+    with ogrtest.spatial_filter(dgn_lyr, "LINESTRING(1.0 8.55, 2.5 6.86)"):
 
-    tr = ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
-    dgn_lyr.SetSpatialFilter(None)
-
-    assert tr
+        assert ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
 
 
 ###############################################################################

@@ -80,8 +80,7 @@ def test_ogr_gxt_1():
         "000-2007-0050-6585-LAMB93",
     ]
 
-    tr = ogrtest.check_features_against_list(lyr, "idSel", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "idSel", expect)
 
     lyr.ResetReading()
 
@@ -129,8 +128,7 @@ def test_ogr_gxt_2():
         "000-2007-0050-6585-LAMB93",
     ]
 
-    tr = ogrtest.check_features_against_list(lyr, "idSel", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "idSel", expect)
 
     lyr.ResetReading()
 
@@ -198,22 +196,19 @@ def test_ogr_gxt_3():
 
     expect = ["PID1", "PID2"]
 
-    tr = ogrtest.check_features_against_list(gxt_lyr, "Primary_ID", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(gxt_lyr, "Primary_ID", expect)
 
     gxt_lyr.ResetReading()
 
     expect = ["SID1", "SID2"]
 
-    tr = ogrtest.check_features_against_list(gxt_lyr, "Secondary_ID", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(gxt_lyr, "Secondary_ID", expect)
 
     gxt_lyr.ResetReading()
 
     expect = ["TID1", None]
 
-    tr = ogrtest.check_features_against_list(gxt_lyr, "Third_ID", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(gxt_lyr, "Third_ID", expect)
 
     gxt_lyr.ResetReading()
 

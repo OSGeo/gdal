@@ -171,40 +171,31 @@ def test_ogr_rfc28_7_good_quoting():
 
 
 def test_ogr_rfc28_8_wrong_quoting():
-    with gdaltest.error_handler():
-        ql = gdaltest.ds.ExecuteSQL(
-            'select "idlink.eas_id" from idlink where "idlink.eas_id" = 166'
+    with gdaltest.error_handler(), gdaltest.ds.ExecuteSQL(
+        'select "idlink.eas_id" from idlink where "idlink.eas_id" = 166'
+    ) as ql:
+
+        count = ql.GetFeatureCount()
+        assert count == 1, (
+            "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
         )
 
-    count = ql.GetFeatureCount()
-    assert count == 1, (
-        "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
-    )
-
-    expect = [166]
-    tr = ogrtest.check_features_against_list(ql, "idlink.eas_id", expect)
-
-    gdaltest.ds.ReleaseResultSet(ql)
-
-    assert tr
+        expect = [166]
+        assert ogrtest.check_features_against_list(ql, "idlink.eas_id", expect)
 
 
 def test_ogr_rfc28_8_good_quoting():
-    ql = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "select idlink.eas_id from idlink where idlink.eas_id = 166"
-    )
+    ) as ql:
 
-    count = ql.GetFeatureCount()
-    assert count == 1, (
-        "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
-    )
+        count = ql.GetFeatureCount()
+        assert count == 1, (
+            "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
+        )
 
-    expect = [166]
-    tr = ogrtest.check_features_against_list(ql, "idlink.eas_id", expect)
-
-    gdaltest.ds.ReleaseResultSet(ql)
-
-    assert tr
+        expect = [166]
+        assert ogrtest.check_features_against_list(ql, "idlink.eas_id", expect)
 
 
 ###############################################################################
@@ -224,8 +215,7 @@ def test_ogr_rfc28_9():
     )
 
     expect = ["8902"]
-    tr = ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
 
 
 # TODO: unparse quoting?
@@ -237,18 +227,15 @@ def test_ogr_rfc28_9():
 def test_ogr_rfc28_10():
 
     ds = ogr.Open("data/csv/oddname.csv")
-    lyr = ds.ExecuteSQL("SELECT * from oddname where \"Funky @Name\" = '32'")
+    with ds.ExecuteSQL("SELECT * from oddname where \"Funky @Name\" = '32'") as lyr:
 
-    count = lyr.GetFeatureCount()
-    assert count == 1, (
-        "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
-    )
+        count = lyr.GetFeatureCount()
+        assert count == 1, (
+            "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
+        )
 
-    expect = ["8902"]
-    tr = ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
-    ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = ["8902"]
+        assert ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
 
 
 ###############################################################################
@@ -259,20 +246,17 @@ def test_ogr_rfc28_10():
 def test_ogr_rfc28_11():
 
     ds = ogr.Open("data/csv/oddname.csv")
-    lyr = ds.ExecuteSQL(
+    with ds.ExecuteSQL(
         "SELECT \"Funky @Name\" from oddname where prime_meridian_code = '8902'"
-    )
+    ) as lyr:
 
-    count = lyr.GetFeatureCount()
-    assert count == 1, (
-        "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
-    )
+        count = lyr.GetFeatureCount()
+        assert count == 1, (
+            "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
+        )
 
-    expect = ["32"]
-    tr = ogrtest.check_features_against_list(lyr, "Funky @Name", expect)
-    ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = ["32"]
+        assert ogrtest.check_features_against_list(lyr, "Funky @Name", expect)
 
 
 ###############################################################################
@@ -280,31 +264,25 @@ def test_ogr_rfc28_11():
 
 
 def test_ogr_rfc28_12():
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT 'constant string', 'other' as abc, eas_id from idlink where eas_id = 165"
-    )
+    ) as lyr:
 
-    count = lyr.GetFeatureCount()
-    assert count == 1, (
-        "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
-    )
+        count = lyr.GetFeatureCount()
+        assert count == 1, (
+            "Got wrong count with GetFeatureCount() - %d, expecting 1" % count
+        )
 
-    expect = ["other"]
-    tr = ogrtest.check_features_against_list(lyr, "abc", expect)
+        expect = ["other"]
+        assert ogrtest.check_features_against_list(lyr, "abc", expect)
 
-    expect = [165]
-    if tr:
+        expect = [165]
         lyr.ResetReading()
-        tr = ogrtest.check_features_against_list(lyr, "eas_id", expect)
+        assert ogrtest.check_features_against_list(lyr, "eas_id", expect)
 
-    expect = ["constant string"]
-    if tr:
+        expect = ["constant string"]
         lyr.ResetReading()
-        tr = ogrtest.check_features_against_list(lyr, "field_1", expect)
-
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
+        assert ogrtest.check_features_against_list(lyr, "field_1", expect)
 
 
 ###############################################################################
@@ -327,16 +305,12 @@ def test_ogr_rfc28_13():
 
 
 def test_ogr_rfc28_14():
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT SUBSTR(PRFEDEA,4,5) from poly where eas_id in (168,179)"
-    )
+    ) as lyr:
 
-    expect = ["43411", "43423"]
-    tr = ogrtest.check_features_against_list(lyr, "substr_prfedea", expect)
-
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = ["43411", "43423"]
+        assert ogrtest.check_features_against_list(lyr, "substr_prfedea", expect)
 
 
 ###############################################################################
@@ -344,16 +318,12 @@ def test_ogr_rfc28_14():
 
 
 def test_ogr_rfc28_15():
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT CONCAT(PRFEDEA,' ',CAST(EAS_ID AS CHARACTER(3))) from poly where eas_id in (168,179)"
-    )
+    ) as lyr:
 
-    expect = ["35043411 168", "35043423 179"]
-    tr = ogrtest.check_features_against_list(lyr, "concat_prfedea", expect)
-
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = ["35043411 168", "35043423 179"]
+        assert ogrtest.check_features_against_list(lyr, "concat_prfedea", expect)
 
 
 ###############################################################################
@@ -361,32 +331,28 @@ def test_ogr_rfc28_15():
 
 
 def test_ogr_rfc28_16():
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT -1, 3--1,3*-1,2e-1,3-1 from poly where eas_id = 168"
-    )
+    ) as lyr:
 
-    expect = [-1]
-    tr = ogrtest.check_features_against_list(lyr, "field_1", expect)
+        expect = [-1]
+        assert ogrtest.check_features_against_list(lyr, "field_1", expect)
 
-    expect = [4]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "field_2", expect)
+        expect = [4]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "field_2", expect)
 
-    expect = [-3]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "field_3", expect)
+        expect = [-3]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "field_3", expect)
 
-    expect = [0.2]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "field_4", expect)
+        expect = [0.2]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "field_4", expect)
 
-    expect = [2]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "field_5", expect)
-
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = [2]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "field_5", expect)
 
 
 ###############################################################################
@@ -394,28 +360,24 @@ def test_ogr_rfc28_16():
 
 
 def test_ogr_rfc28_17():
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT 5/2, 5.0/2.0, 5/2.0, 5.0/2 from poly where eas_id = 168"
-    )
+    ) as lyr:
 
-    expect = [2]
-    tr = ogrtest.check_features_against_list(lyr, "field_1", expect)
+        expect = [2]
+        assert ogrtest.check_features_against_list(lyr, "field_1", expect)
 
-    expect = [2.5]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "field_2", expect)
+        expect = [2.5]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "field_2", expect)
 
-    expect = [2.5]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "field_3", expect)
+        expect = [2.5]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "field_3", expect)
 
-    expect = [2.5]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "field_4", expect)
-
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = [2.5]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "field_4", expect)
 
 
 ###############################################################################
@@ -424,20 +386,16 @@ def test_ogr_rfc28_17():
 
 def test_ogr_rfc28_18():
     ds = ogr.Open("data/shp/departs.shp")
-    lyr = ds.ExecuteSQL(
+    with ds.ExecuteSQL(
         'SELECT COUNT(distinct id), COUNT(distinct id) as "xx" from departs'
-    )
+    ) as lyr:
 
-    expect = [1]
-    tr = ogrtest.check_features_against_list(lyr, "COUNT_id", expect)
+        expect = [1]
+        assert ogrtest.check_features_against_list(lyr, "COUNT_id", expect)
 
-    expect = [1]
-    lyr.ResetReading()
-    tr = ogrtest.check_features_against_list(lyr, "xx", expect)
-
-    ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = [1]
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(lyr, "xx", expect)
 
 
 ###############################################################################
@@ -630,16 +588,12 @@ def test_ogr_rfc28_25():
 
 
 def test_ogr_rfc28_26():
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT SUBSTR(PRFEDEA,-2) from poly where eas_id in (168,179)"
-    )
+    ) as lyr:
 
-    expect = ["11", "23"]
-    tr = ogrtest.check_features_against_list(lyr, "substr_prfedea", expect)
-
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
+        expect = ["11", "23"]
+        assert ogrtest.check_features_against_list(lyr, "substr_prfedea", expect)
 
 
 ###############################################################################
@@ -991,13 +945,9 @@ def test_ogr_rfc28_38():
 
 def test_ogr_rfc28_39():
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT COUNT(*) from poly where 0 = 1")
+    with gdaltest.ds.ExecuteSQL("SELECT COUNT(*) from poly where 0 = 1") as lyr:
 
-    tr = ogrtest.check_features_against_list(lyr, "count_*", [0])
-
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
+        assert ogrtest.check_features_against_list(lyr, "count_*", [0])
 
 
 ###############################################################################
@@ -1015,23 +965,20 @@ def test_ogr_rfc28_40():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetField(0, "2013/01/01 00:00:00")
     lyr.CreateFeature(feat)
-    lyr = ds.ExecuteSQL("SELECT MIN(DATE), MAX(DATE), AVG(DATE) from test")
 
-    tr = ogrtest.check_features_against_list(lyr, "MIN_DATE", ["2013/01/01 00:00:00"])
-    lyr.ResetReading()
-    tr2 = ogrtest.check_features_against_list(lyr, "MAX_DATE", ["2013/12/31 23:59:59"])
-    lyr.ResetReading()
-    tr3 = ogrtest.check_features_against_list(
-        lyr, "AVG_DATE", ["2013/07/02 11:59:59.500"]
-    )
+    with ds.ExecuteSQL("SELECT MIN(DATE), MAX(DATE), AVG(DATE) from test") as lyr:
 
-    gdaltest.ds.ReleaseResultSet(lyr)
-
-    assert tr
-
-    assert tr2
-
-    assert tr3
+        assert ogrtest.check_features_against_list(
+            lyr, "MIN_DATE", ["2013/01/01 00:00:00"]
+        )
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(
+            lyr, "MAX_DATE", ["2013/12/31 23:59:59"]
+        )
+        lyr.ResetReading()
+        assert ogrtest.check_features_against_list(
+            lyr, "AVG_DATE", ["2013/07/02 11:59:59.500"]
+        )
 
 
 ###############################################################################
@@ -1348,94 +1295,76 @@ def test_ogr_rfc28_46():
 
 def test_ogr_rfc28_47():
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 0")
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 0") as lyr:
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1")
-    assert lyr.GetFeatureCount() == 1
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [168])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1") as lyr:
+        assert lyr.GetFeatureCount() == 1
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [168])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY EAS_ID LIMIT 1")
-    assert lyr.GetFeatureCount() == 1
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [158])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY EAS_ID LIMIT 1") as lyr:
+        assert lyr.GetFeatureCount() == 1
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [158])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY PRFEDEA LIMIT 1")
-    assert lyr.GetFeatureCount() == 1
-    tr = ogrtest.check_features_against_list(lyr, "PRFEDEA", ["35043369"])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY PRFEDEA LIMIT 1") as lyr:
+        assert lyr.GetFeatureCount() == 1
+        assert ogrtest.check_features_against_list(lyr, "PRFEDEA", ["35043369"])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE 0 ORDER BY EAS_ID LIMIT 1")
-    assert lyr.GetNextFeature() is None
-    gdaltest.ds.ReleaseResultSet(lyr)
+    with gdaltest.ds.ExecuteSQL(
+        "SELECT * FROM POLY WHERE 0 ORDER BY EAS_ID LIMIT 1"
+    ) as lyr:
+        assert lyr.GetNextFeature() is None
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE EAS_ID = 168 LIMIT 11")
-    assert lyr.GetFeatureCount() == 1
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [168])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL(
+        "SELECT * FROM POLY WHERE EAS_ID = 168 LIMIT 11"
+    ) as lyr:
+        assert lyr.GetFeatureCount() == 1
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [168])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 0")
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [168])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL(
+        "SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 0"
+    ) as lyr:
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [168])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 1")
-    assert lyr.GetFeatureCount() == 0
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL(
+        "SELECT * FROM POLY WHERE EAS_ID = 168 OFFSET 1"
+    ) as lyr:
+        assert lyr.GetFeatureCount() == 0
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY OFFSET 10")
-    assert lyr.GetFeatureCount() == 0
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY OFFSET 10") as lyr:
+        assert lyr.GetFeatureCount() == 0
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY OFFSET 8")
-    assert lyr.GetFeatureCount() == 2
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [165, 170])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY OFFSET 8") as lyr:
+        assert lyr.GetFeatureCount() == 2
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [165, 170])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1 OFFSET 8")
-    assert lyr.GetFeatureCount() == 1
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [165])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 1 OFFSET 8") as lyr:
+        assert lyr.GetFeatureCount() == 1
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [165])
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 2 OFFSET 8")
-    lyr.SetNextByIndex(1)
-    f = lyr.GetNextFeature()
-    assert f["EAS_ID"] == 170
-    f = lyr.GetNextFeature()
-    assert f is None
-    gdaltest.ds.ReleaseResultSet(lyr)
+    with gdaltest.ds.ExecuteSQL("SELECT * FROM POLY LIMIT 2 OFFSET 8") as lyr:
+        lyr.SetNextByIndex(1)
+        f = lyr.GetNextFeature()
+        assert f["EAS_ID"] == 170
+        f = lyr.GetNextFeature()
+        assert f is None
 
-    lyr = gdaltest.ds.ExecuteSQL("SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 2")
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [179, 173])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    with gdaltest.ds.ExecuteSQL(
+        "SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 2"
+    ) as lyr:
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [179, 173])
 
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT * FROM POLY ORDER BY EAS_ID DESC LIMIT 1 OFFSET 1"
-    )
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [173])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    ) as lyr:
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [173])
 
-    lyr = gdaltest.ds.ExecuteSQL(
+    with gdaltest.ds.ExecuteSQL(
         "SELECT DISTINCT EAS_ID FROM POLY ORDER BY EAS_ID DESC LIMIT 2 OFFSET 3"
-    )
-    tr = ogrtest.check_features_against_list(lyr, "EAS_ID", [171, 170])
-    gdaltest.ds.ReleaseResultSet(lyr)
-    assert tr
+    ) as lyr:
+        assert ogrtest.check_features_against_list(lyr, "EAS_ID", [171, 170])
 
 
 ###############################################################################

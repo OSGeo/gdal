@@ -170,12 +170,12 @@ def test_ogr_hana_3():
     ds = open_datasource()
     layer = ds.GetLayerByName("tpoly")
 
-    layer.SetAttributeFilter("EAS_ID > 160 AND EAS_ID < 170")
-    tr = ogrtest.check_features_against_list(layer, "EAS_ID", [168, 169, 166, 165])
+    with ogrtest.attribute_filter(layer, "EAS_ID > 160 AND EAS_ID < 170"):
+        assert ogrtest.check_features_against_list(
+            layer, "EAS_ID", [168, 169, 166, 165]
+        )
 
-    check_feature_count(layer, 4)
-
-    assert tr
+        check_feature_count(layer, 4)
 
 
 ###############################################################################
@@ -300,14 +300,13 @@ def test_ogr_hana_10():
 
 def test_ogr_hana_11():
     ds = open_datasource()
-    layer = ds.ExecuteSQL("SELECT DISTINCT EAS_ID FROM TPOLY ORDER BY EAS_ID DESC")
-    check_feature_count(layer, 10)
+    with ds.ExecuteSQL(
+        "SELECT DISTINCT EAS_ID FROM TPOLY ORDER BY EAS_ID DESC"
+    ) as layer:
+        check_feature_count(layer, 10)
 
-    expected = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
-    tr = ogrtest.check_features_against_list(layer, "EAS_ID", expected)
-    ds.ReleaseResultSet(layer)
-
-    assert tr
+        expected = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
+        assert ogrtest.check_features_against_list(layer, "EAS_ID", expected)
 
 
 ###############################################################################

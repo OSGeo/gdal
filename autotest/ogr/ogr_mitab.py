@@ -133,9 +133,10 @@ def test_ogr_mitab_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mapinfo_lyr.SetAttributeFilter("EAS_ID < 170")
-    tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, "EAS_ID", expect)
-    gdaltest.mapinfo_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.mapinfo_lyr, "EAS_ID < 170"):
+        assert ogrtest.check_features_against_list(
+            gdaltest.mapinfo_lyr, "EAS_ID", expect
+        )
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
@@ -156,8 +157,6 @@ def test_ogr_mitab_3():
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
 
-    assert tr
-
 
 ###############################################################################
 # Test ExecuteSQL() results layers with geometry.
@@ -165,27 +164,22 @@ def test_ogr_mitab_3():
 
 def test_ogr_mitab_4():
 
-    sql_lyr = gdaltest.mapinfo_ds.ExecuteSQL(
+    with gdaltest.mapinfo_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'"
-    )
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "prfedea", ["35043413"])
-    if tr:
+        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["35043413"])
+
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if (
+        assert (
             ogrtest.check_feature_geometry(
                 feat_read,
                 "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))",
                 max_error=0.02,
             )
-            != 0
-        ):
-            tr = 0
-
-    gdaltest.mapinfo_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+            == 0
+        )
 
 
 ###############################################################################
@@ -196,13 +190,11 @@ def test_ogr_mitab_5():
 
     gdaltest.mapinfo_lyr.SetAttributeFilter(None)
 
-    gdaltest.mapinfo_lyr.SetSpatialFilterRect(479505, 4763195, 480526, 4762819)
+    with ogrtest.spatial_filter(gdaltest.mapinfo_lyr, 479505, 4763195, 480526, 4762819):
 
-    tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, "eas_id", [158])
-
-    gdaltest.mapinfo_lyr.SetSpatialFilter(None)
-
-    assert tr
+        assert ogrtest.check_features_against_list(
+            gdaltest.mapinfo_lyr, "eas_id", [158]
+        )
 
 
 ###############################################################################
@@ -288,9 +280,10 @@ def test_ogr_mitab_9():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mapinfo_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, "eas_id", expect)
-    gdaltest.mapinfo_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.mapinfo_lyr, "eas_id < 170"):
+        assert ogrtest.check_features_against_list(
+            gdaltest.mapinfo_lyr, "eas_id", expect
+        )
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
@@ -310,8 +303,6 @@ def test_ogr_mitab_9():
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
-
-    assert tr
 
 
 ###############################################################################

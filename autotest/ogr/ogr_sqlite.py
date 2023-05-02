@@ -234,12 +234,10 @@ def test_ogr_sqlite_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.sl_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", expect)
+    with ogrtest.attribute_filter(gdaltest.sl_lyr, "eas_id < 170"):
+        assert ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", expect)
 
-    assert gdaltest.sl_lyr.GetFeatureCount() == 5
-
-    gdaltest.sl_lyr.SetAttributeFilter(None)
+        assert gdaltest.sl_lyr.GetFeatureCount() == 5
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
@@ -264,8 +262,6 @@ def test_ogr_sqlite_3():
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
-
-    assert tr
 
 
 ###############################################################################
@@ -357,8 +353,8 @@ def test_ogr_sqlite_4():
         ######################################################################
         # Read back the feature and get the geometry.
 
-        gdaltest.sl_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
-        feat_read = gdaltest.sl_lyr.GetNextFeature()
+        with ogrtest.attribute_filter(gdaltest.sl_lyr, "PRFEDEA = '%s'" % item):
+            feat_read = gdaltest.sl_lyr.GetNextFeature()
 
         assert feat_read is not None, "Did not get as many features as expected."
 
@@ -382,11 +378,9 @@ def test_ogr_sqlite_5():
 
     assert sql_lyr.GetFeatureCount() == 11
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+    assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
 
 
 ###############################################################################
@@ -398,24 +392,21 @@ def test_ogr_sqlite_6():
     if gdaltest.sl_ds is None:
         pytest.skip()
 
-    sql_lyr = gdaltest.sl_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
+    with gdaltest.sl_ds.ExecuteSQL(
+        "select * from tpoly where prfedea = '2'"
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
-    if tr:
+        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
+
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if (
+        assert (
             ogrtest.check_feature_geometry(
                 feat_read,
                 "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
             )
-            != 0
-        ):
-            tr = 0
-
-    gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+            == 0
+        )
 
 
 ###############################################################################
@@ -427,25 +418,16 @@ def test_ogr_sqlite_7():
     if gdaltest.sl_ds is None:
         pytest.skip()
 
-    gdaltest.sl_lyr.SetAttributeFilter(None)
+    with ogrtest.spatial_filter(
+        gdaltest.sl_lyr, "LINESTRING(479505 4763195,480526 4762819)"
+    ):
 
-    geom = ogr.CreateGeometryFromWkt("LINESTRING(479505 4763195,480526 4762819)")
-    gdaltest.sl_lyr.SetSpatialFilter(geom)
-    geom.Destroy()
+        assert gdaltest.sl_lyr.GetFeatureCount() == 1
 
-    assert gdaltest.sl_lyr.GetFeatureCount() == 1
+        assert ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", [158])
 
-    tr = ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", [158])
-
-    gdaltest.sl_lyr.SetAttributeFilter("eas_id = 158")
-
-    assert gdaltest.sl_lyr.GetFeatureCount() == 1
-
-    gdaltest.sl_lyr.SetAttributeFilter(None)
-
-    gdaltest.sl_lyr.SetSpatialFilter(None)
-
-    assert tr
+        with ogrtest.attribute_filter(gdaltest.sl_lyr, "eas_id = 158"):
+            assert gdaltest.sl_lyr.GetFeatureCount() == 1
 
 
 ###############################################################################
@@ -475,9 +457,8 @@ def test_ogr_sqlite_8():
     ######################################################################
     # Verify that it is not in the layer.
 
-    gdaltest.sl_lyr.SetAttributeFilter("PRFEDEA = 'rollbacktest'")
-    feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.sl_lyr, "PRFEDEA = 'rollbacktest'"):
+        feat_read = gdaltest.sl_lyr.GetNextFeature()
 
     assert feat_read is None, "Unexpectedly got rollbacktest feature."
 
@@ -491,9 +472,8 @@ def test_ogr_sqlite_8():
     ######################################################################
     # Verify that it is not in the layer.
 
-    gdaltest.sl_lyr.SetAttributeFilter("PRFEDEA = 'rollbacktest'")
-    feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.sl_lyr, "PRFEDEA = 'rollbacktest'"):
+        feat_read = gdaltest.sl_lyr.GetNextFeature()
 
     assert feat_read is not None, "Failed to get committed feature."
 
@@ -513,9 +493,8 @@ def test_ogr_sqlite_9():
     ######################################################################
     # Read feature with EAS_ID 158.
 
-    gdaltest.sl_lyr.SetAttributeFilter("eas_id = 158")
-    feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.sl_lyr, "eas_id = 158"):
+        feat_read = gdaltest.sl_lyr.GetNextFeature()
 
     assert feat_read is not None, "did not find eas_id 158!"
 
@@ -529,9 +508,8 @@ def test_ogr_sqlite_9():
     ######################################################################
     # Read feature with EAS_ID 158 and check that PRFEDEA was altered.
 
-    gdaltest.sl_lyr.SetAttributeFilter("eas_id = 158")
-    feat_read_2 = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.sl_lyr, "eas_id = 158"):
+        feat_read_2 = gdaltest.sl_lyr.GetNextFeature()
 
     assert feat_read_2 is not None, "did not find eas_id 158!"
 
@@ -566,9 +544,8 @@ def test_ogr_sqlite_10():
     ######################################################################
     # Read feature with EAS_ID 158.
 
-    gdaltest.sl_lyr.SetAttributeFilter("eas_id = 158")
-    feat_read = gdaltest.sl_lyr.GetNextFeature()
-    gdaltest.sl_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.sl_lyr, "eas_id = 158"):
+        feat_read = gdaltest.sl_lyr.GetNextFeature()
 
     assert feat_read is not None, "did not find eas_id 158!"
 
@@ -1667,17 +1644,13 @@ def test_ogr_spatialite_3(require_spatialite):
     )
     ds.Destroy()
 
-    ds = ogr.Open("tmp/spatialite_test.db")
-    lyr = ds.GetLayerByName("testpoly")
-    assert lyr is not None
+    with ogr.Open("tmp/spatialite_test.db") as ds:
+        lyr = ds.GetLayerByName("testpoly")
+        assert lyr is not None
 
-    lyr.SetSpatialFilterRect(-400, 22, -120, 400)
+        lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
-    tr = ogrtest.check_features_against_list(lyr, "FID", [0, 4, 8])
-
-    ds.Destroy()
-
-    assert tr
+        assert ogrtest.check_features_against_list(lyr, "FID", [0, 4, 8])
 
 
 ###############################################################################
@@ -2507,44 +2480,44 @@ def test_ogr_sqlite_35(with_and_without_spatialite):
     ]:
         sql_lyr = ds.ExecuteSQL(sql)
 
-        sql_lyr.SetAttributeFilter("foo = 'bar'")
+        with ogrtest.attribute_filter(sql_lyr, "foo = 'bar'"):
+            sql_lyr.ResetReading()
+            feat = sql_lyr.GetNextFeature()
+            assert feat is not None
+            feat = None
+
+        with ogrtest.attribute_filter(sql_lyr, "foo = 'baz'"):
+            sql_lyr.ResetReading()
+            feat = sql_lyr.GetNextFeature()
+            assert feat is None
+            feat = None
+
         sql_lyr.ResetReading()
         feat = sql_lyr.GetNextFeature()
         assert feat is not None
         feat = None
 
-        sql_lyr.SetAttributeFilter("foo = 'baz'")
-        sql_lyr.ResetReading()
-        feat = sql_lyr.GetNextFeature()
-        assert feat is None
-        feat = None
+        with ogrtest.spatial_filter(sql_lyr, 0, 0, 2, 2), ogrtest.attribute_filter(
+            sql_lyr, "foo = 'bar'"
+        ):
+            sql_lyr.ResetReading()
+            feat = sql_lyr.GetNextFeature()
+            assert feat is not None
+            feat = None
 
-        sql_lyr.SetAttributeFilter(None)
-        sql_lyr.ResetReading()
-        feat = sql_lyr.GetNextFeature()
-        assert feat is not None
-        feat = None
+        with ogrtest.attribute_filter(sql_lyr, "foo = 'bar'"), ogrtest.spatial_filter(
+            sql_lyr, 1.5, 1.5, 2, 2
+        ):
+            sql_lyr.ResetReading()
+            feat = sql_lyr.GetNextFeature()
+            assert feat is None
+            feat = None
 
-        sql_lyr.SetSpatialFilterRect(0, 0, 2, 2)
-        sql_lyr.SetAttributeFilter("foo = 'bar'")
-        sql_lyr.ResetReading()
-        feat = sql_lyr.GetNextFeature()
-        assert feat is not None
-        feat = None
-
-        sql_lyr.SetSpatialFilterRect(1.5, 1.5, 2, 2)
-        sql_lyr.SetAttributeFilter("foo = 'bar'")
-        sql_lyr.ResetReading()
-        feat = sql_lyr.GetNextFeature()
-        assert feat is None
-        feat = None
-
-        sql_lyr.SetSpatialFilterRect(0, 0, 2, 2)
-        sql_lyr.SetAttributeFilter(None)
-        sql_lyr.ResetReading()
-        feat = sql_lyr.GetNextFeature()
-        assert feat is not None
-        feat = None
+        with ogrtest.spatial_filter(sql_lyr, 0, 0, 2, 2):
+            sql_lyr.ResetReading()
+            feat = sql_lyr.GetNextFeature()
+            assert feat is not None
+            feat = None
 
         ds.ReleaseResultSet(sql_lyr)
 

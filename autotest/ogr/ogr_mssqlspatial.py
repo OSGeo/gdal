@@ -160,14 +160,13 @@ def test_ogr_mssqlspatial_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mssqlspatial_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(
-        gdaltest.mssqlspatial_lyr, "eas_id", expect
-    )
+    with ogrtest.attribute_filter(gdaltest.mssqlspatial_lyr, "eas_id < 170"):
+        assert ogrtest.check_features_against_list(
+            gdaltest.mssqlspatial_lyr, "eas_id", expect
+        )
 
-    assert gdaltest.mssqlspatial_lyr.GetFeatureCount() == 5
+        assert gdaltest.mssqlspatial_lyr.GetFeatureCount() == 5
 
-    gdaltest.mssqlspatial_lyr.SetAttributeFilter(None)
     gdaltest.mssqlspatial_lyr.ResetReading()
 
     for i in range(len(gdaltest.poly_feat)):
@@ -193,8 +192,6 @@ def test_ogr_mssqlspatial_3():
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
-
-    assert tr
 
 
 ###############################################################################

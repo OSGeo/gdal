@@ -87,28 +87,25 @@ def test_gdal_polygonize_1(script_path):
 
     expect = [107, 123, 115, 115, 140, 148, 123, 140, 100, 101, 102, 156, 103]
 
-    tr = ogrtest.check_features_against_list(shp_lyr, "DN", expect)
+    assert ogrtest.check_features_against_list(shp_lyr, "DN", expect)
 
     # check at least one geometry.
-    if tr:
-        shp_lyr.SetAttributeFilter("dn = 156")
-        feat_read = shp_lyr.GetNextFeature()
-        if (
-            ogrtest.check_feature_geometry(
-                feat_read,
-                "POLYGON ((440720 3751200,440900 3751200,440900 3751020,440720 3751020,440720 3751200),(440780 3751140,440780 3751080,440840 3751080,440840 3751140,440780 3751140))",
-            )
-            != 0
-        ):
-            tr = 0
-        feat_read.Destroy()
+    shp_lyr.SetAttributeFilter("dn = 156")
+    feat_read = shp_lyr.GetNextFeature()
+    assert (
+        ogrtest.check_feature_geometry(
+            feat_read,
+            "POLYGON ((440720 3751200,440900 3751200,440900 3751020,440720 3751020,440720 3751200),(440780 3751140,440780 3751080,440840 3751080,440840 3751140,440780 3751140))",
+        )
+        == 0
+    )
+
+    feat_read.Destroy()
 
     shp_ds.Destroy()
     # Reload drv because of side effects of run_py_script()
     shp_drv = ogr.GetDriverByName("ESRI Shapefile")
     shp_drv.DeleteDataSource(outfilename)
-
-    assert tr
 
 
 ###############################################################################

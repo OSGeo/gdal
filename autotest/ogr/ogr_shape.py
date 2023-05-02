@@ -116,9 +116,8 @@ def test_ogr_shape_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.shape_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, "eas_id", expect)
-    gdaltest.shape_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.shape_lyr, "eas_id < 170"):
+        assert ogrtest.check_features_against_list(gdaltest.shape_lyr, "eas_id", expect)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
@@ -137,8 +136,6 @@ def test_ogr_shape_3():
             )
 
     gdaltest.poly_feat = None
-
-    assert tr
 
 
 ###############################################################################
@@ -160,8 +157,8 @@ def test_ogr_shape_4():
     ######################################################################
     # Read back the feature and get the geometry.
 
-    gdaltest.shape_lyr.SetAttributeFilter("PRFEDEA = 'nulled'")
-    feat_read = gdaltest.shape_lyr.GetNextFeature()
+    with ogrtest.attribute_filter(gdaltest.shape_lyr, "PRFEDEA = 'nulled'"):
+        feat_read = gdaltest.shape_lyr.GetNextFeature()
     assert feat_read is not None, "Didn't get feature with null geometry back."
 
     assert feat_read.GetGeometryRef() is None, "Didn't get null geometry as expected."
@@ -178,15 +175,11 @@ def test_ogr_shape_5():
 
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
-    sql_lyr = gdaltest.shape_ds.ExecuteSQL(
+    with gdaltest.shape_ds.ExecuteSQL(
         "select distinct eas_id from tpoly order by eas_id desc"
-    )
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
-
-    gdaltest.shape_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -198,27 +191,22 @@ def test_ogr_shape_6():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    sql_lyr = gdaltest.shape_ds.ExecuteSQL(
+    with gdaltest.shape_ds.ExecuteSQL(
         "select * from tpoly where prfedea = '35043413'"
-    )
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "prfedea", ["35043413"])
-    if tr:
+        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["35043413"])
+
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if (
+        assert (
             ogrtest.check_feature_geometry(
                 feat_read,
                 "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))",
                 max_error=0.001,
             )
-            != 0
-        ):
-            tr = 0
-
-    gdaltest.shape_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+            == 0
+        )
 
 
 ###############################################################################
@@ -230,17 +218,10 @@ def test_ogr_shape_7():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    gdaltest.shape_lyr.SetAttributeFilter(None)
-
-    geom = ogr.CreateGeometryFromWkt("LINESTRING(479505 4763195,480526 4762819)")
-    gdaltest.shape_lyr.SetSpatialFilter(geom)
-    geom.Destroy()
-
-    tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, "eas_id", [158])
-
-    gdaltest.shape_lyr.SetSpatialFilter(None)
-
-    assert tr
+    with ogrtest.spatial_filter(
+        gdaltest.shape_lyr, "LINESTRING(479505 4763195,480526 4762819)"
+    ):
+        assert ogrtest.check_features_against_list(gdaltest.shape_lyr, "eas_id", [158])
 
 
 ###############################################################################
@@ -252,20 +233,14 @@ def test_ogr_shape_8():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON tpoly")
 
     assert os.access("tmp/tpoly.qix", os.F_OK), "tpoly.qix not created"
 
-    geom = ogr.CreateGeometryFromWkt("LINESTRING(479505 4763195,480526 4762819)")
-    gdaltest.shape_lyr.SetSpatialFilter(geom)
-    geom.Destroy()
-
-    tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, "eas_id", [158])
-
-    gdaltest.shape_lyr.SetSpatialFilter(None)
-
-    assert tr
+    with ogrtest.spatial_filter(
+        gdaltest.shape_lyr, "LINESTRING(479505 4763195,480526 4762819)"
+    ):
+        assert ogrtest.check_features_against_list(gdaltest.shape_lyr, "eas_id", [158])
 
     # Test recreating while already existing
     gdaltest.shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON tpoly")
@@ -288,12 +263,12 @@ def test_ogr_shape_9():
     gdaltest.shape_ds = ogr.Open("data/shp/testpoly.shp")
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
 
-    gdaltest.shape_lyr.SetSpatialFilterRect(-10, -130, 10, -110)
+    with ogrtest.spatial_filter(gdaltest.shape_lyr, -10, -130, 10, -110):
 
-    if ogrtest.have_geos():
-        assert gdaltest.shape_lyr.GetFeatureCount() == 0
-    else:
-        assert gdaltest.shape_lyr.GetFeatureCount() == 1
+        if ogrtest.have_geos():
+            assert gdaltest.shape_lyr.GetFeatureCount() == 0
+        else:
+            assert gdaltest.shape_lyr.GetFeatureCount() == 1
 
 
 ###############################################################################
@@ -305,11 +280,8 @@ def test_ogr_shape_10():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
-
-    tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, "FID", [0, 4, 8])
-
-    assert tr
+    with ogrtest.spatial_filter(gdaltest.shape_lyr, -400, 22, -120, 400):
+        assert ogrtest.check_features_against_list(gdaltest.shape_lyr, "FID", [0, 4, 8])
 
 
 ###############################################################################
@@ -321,22 +293,15 @@ def test_ogr_shape_11():
     if gdaltest.shape_ds is None:
         pytest.skip()
 
-    gdaltest.shape_lyr.SetAttributeFilter("FID = 5")
-    gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
+    with ogrtest.attribute_filter(
+        gdaltest.shape_lyr, "FID = 5"
+    ), ogrtest.spatial_filter(gdaltest.shape_lyr, -400, 22, -120, 400):
+        assert ogrtest.check_features_against_list(gdaltest.shape_lyr, "FID", [])
 
-    tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, "FID", [])
-
-    assert tr
-
-    gdaltest.shape_lyr.SetAttributeFilter("FID = 4")
-    gdaltest.shape_lyr.SetSpatialFilterRect(-400, 22, -120, 400)
-
-    tr = ogrtest.check_features_against_list(gdaltest.shape_lyr, "FID", [4])
-
-    gdaltest.shape_lyr.SetAttributeFilter(None)
-    gdaltest.shape_lyr.SetSpatialFilter(None)
-
-    assert tr
+    with ogrtest.attribute_filter(
+        gdaltest.shape_lyr, "FID = 4"
+    ), ogrtest.spatial_filter(gdaltest.shape_lyr, -400, 22, -120, 400):
+        assert ogrtest.check_features_against_list(gdaltest.shape_lyr, "FID", [4])
 
 
 ###############################################################################
@@ -687,8 +652,9 @@ def test_ogr_shape_21(f):
     # Test fix for #3665
     lyr.ResetReading()
     (minx, maxx, miny, maxy) = lyr.GetExtent()
-    lyr.SetSpatialFilterRect(minx + 1e-9, miny + 1e-9, maxx - 1e-9, maxy - 1e-9)
-    with gdaltest.error_handler():
+    with ogrtest.spatial_filter(
+        lyr, minx + 1e-9, miny + 1e-9, maxx - 1e-9, maxy - 1e-9
+    ), gdaltest.error_handler():
         feat = lyr.GetNextFeature()
 
     assert feat is None or feat.GetGeometryRef() is None
@@ -1734,7 +1700,7 @@ def test_ogr_shape_40():
 
     gdaltest.shape_ds = ogr.Open("tmp/gjpoint.shp", update=1)
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
-    gdaltest.shape_lyr.SetAttributeFilter(None)
+    # gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON gjpoint")
 
     # Check if updating a feature removes the indices
@@ -1756,7 +1722,7 @@ def test_ogr_shape_40():
 
     gdaltest.shape_ds = ogr.Open("tmp/gjpoint.shp", update=1)
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
-    gdaltest.shape_lyr.SetAttributeFilter(None)
+    # gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON gjpoint")
     feat = ogr.Feature(gdaltest.shape_lyr.GetLayerDefn())
     geom = ogr.CreateGeometryFromWkt("POINT (98 2)")
@@ -1779,7 +1745,7 @@ def test_ogr_shape_40():
         )
     gdaltest.shape_ds = ogr.Open("tmp/gjpoint.shp", update=1)
     gdaltest.shape_lyr = gdaltest.shape_ds.GetLayer(0)
-    gdaltest.shape_lyr.SetAttributeFilter(None)
+    # gdaltest.shape_lyr.SetAttributeFilter(None)
     gdaltest.shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON gjpoint")
 
     for f in indexfiles:
@@ -5003,10 +4969,10 @@ def test_ogr_shape_108():
 
     ds = ogr.Open("data/poly.shp")
     lyr = ds.GetLayer(0)
-    lyr.SetSpatialFilterRect(479750.6875, 4764702.0, 479750.6875, 4764702.0)
-    expected_fc = lyr.GetFeatureCount()
-    lyr.SetAttributeFilter("1=1")
-    assert lyr.GetFeatureCount() == expected_fc
+    with ogrtest.spatial_filter(lyr, 479750.6875, 4764702.0, 479750.6875, 4764702.0):
+        expected_fc = lyr.GetFeatureCount()
+        with ogrtest.attribute_filter(lyr, "1=1"):
+            assert lyr.GetFeatureCount() == expected_fc
 
 
 ###############################################################################
@@ -5445,10 +5411,10 @@ def test_ogr_shape_point_nan():
 
     ds = ogr.Open("data/shp/pointnan.shp")
     lyr = ds.GetLayer(0)
-    lyr.SetSpatialFilterRect(0, 0, 100, 100)
-    count = 0
-    for f in lyr:
-        count += 1
+    with ogrtest.spatial_filter(lyr, 0, 0, 100, 100):
+        count = 0
+        for f in lyr:
+            count += 1
     assert count == 1
 
 

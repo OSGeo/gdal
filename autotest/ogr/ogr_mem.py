@@ -114,9 +114,8 @@ def test_ogr_mem_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.mem_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", expect)
-    gdaltest.mem_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gdaltest.mem_lyr, "eas_id < 170"):
+        assert ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", expect)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
@@ -136,8 +135,6 @@ def test_ogr_mem_3():
 
     gdaltest.poly_feat = None
     gdaltest.shp_ds = None
-
-    assert tr
 
 
 ###############################################################################
@@ -179,15 +176,11 @@ def test_ogr_mem_5():
 
     expect = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158, None]
 
-    sql_lyr = gdaltest.mem_ds.ExecuteSQL(
+    with gdaltest.mem_ds.ExecuteSQL(
         "select distinct eas_id from tpoly order by eas_id desc"
-    )
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
-
-    gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -196,24 +189,22 @@ def test_ogr_mem_5():
 
 def test_ogr_mem_6():
 
-    sql_lyr = gdaltest.mem_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
+    with gdaltest.mem_ds.ExecuteSQL(
+        "select * from tpoly where prfedea = '2'"
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
-    if tr:
+        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
+
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        if (
+
+        assert (
             ogrtest.check_feature_geometry(
                 feat_read,
                 "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
             )
-            != 0
-        ):
-            tr = 0
-
-    gdaltest.mem_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+            == 0
+        )
 
 
 ###############################################################################
@@ -224,19 +215,15 @@ def test_ogr_mem_7():
 
     gdaltest.mem_lyr.SetAttributeFilter(None)
 
-    geom = ogr.CreateGeometryFromWkt("LINESTRING(479505 4763195,480526 4762819)")
-    gdaltest.mem_lyr.SetSpatialFilter(geom)
-    geom.Destroy()
+    with ogrtest.spatial_filter(
+        gdaltest.mem_lyr, "LINESTRING(479505 4763195,480526 4762819)"
+    ):
 
-    assert not gdaltest.mem_lyr.TestCapability(
-        ogr.OLCFastSpatialFilter
-    ), "OLCFastSpatialFilter capability test should have failed."
+        assert not gdaltest.mem_lyr.TestCapability(
+            ogr.OLCFastSpatialFilter
+        ), "OLCFastSpatialFilter capability test should have failed."
 
-    tr = ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", [158])
-
-    gdaltest.mem_lyr.SetSpatialFilter(None)
-
-    assert tr
+        assert ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", [158])
 
 
 ###############################################################################
@@ -269,15 +256,11 @@ def test_ogr_mem_8():
     ####################################################################
     # Now fetch two features and verify the new column works OK.
 
-    gdaltest.mem_lyr.SetAttributeFilter("PRFEDEA IN ( '2', '1' )")
+    with ogrtest.attribute_filter(gdaltest.mem_lyr, "PRFEDEA IN ( '2', '1' )"):
 
-    tr = ogrtest.check_features_against_list(
-        gdaltest.mem_lyr, "new_string", ["test1", None]
-    )
-
-    gdaltest.mem_lyr.SetAttributeFilter(None)
-
-    assert tr
+        assert ogrtest.check_features_against_list(
+            gdaltest.mem_lyr, "new_string", ["test1", None]
+        )
 
 
 ###############################################################################
