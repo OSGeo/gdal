@@ -94,6 +94,9 @@ class OGCAPIDataset final : public GDALDataset
 
     bool InitFromFile(GDALOpenInfo *poOpenInfo);
     bool InitFromURL(GDALOpenInfo *poOpenInfo);
+    void ProcessScale(CPLJSONObject &oScaleDenominator, const double dfXMin,
+                      const double dfYMin, const double dfXMax,
+                      const double dfYMax);
     bool InitFromCollection(GDALOpenInfo *poOpenInfo, CPLJSONDocument &oDoc);
     bool Download(const CPLString &osURL, const char *pszPostContent,
                   const char *pszAccept, CPLString &osResult,
@@ -656,6 +659,39 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
+/*                        ProcessScale()                          */
+/************************************************************************/
+
+void OGCAPIDataset::ProcessScale(CPLJSONObject &oScaleDenominator,
+                                 const double dfXMin, const double dfYMin,
+                                 const double dfXMax, const double dfYMax)
+
+{
+    double dfRes = 1e-8;  // arbitrary
+    if (oScaleDenominator.IsValid())
+    {
+        const double dfScaleDenominator = oScaleDenominator.ToDouble();
+        constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
+        dfRes = dfScaleDenominator / ((HALF_CIRCUMFERENCE / 180) / 0.28e-3);
+    }
+
+    double dfXSize = (dfXMax - dfXMin) / dfRes;
+    double dfYSize = (dfYMax - dfYMin) / dfRes;
+    while (dfXSize > INT_MAX || dfYSize > INT_MAX)
+    {
+        dfXSize /= 2;
+        dfYSize /= 2;
+    }
+
+    nRasterXSize = std::max(1, static_cast<int>(0.5 + dfXSize));
+    nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
+    m_adfGeoTransform[0] = dfXMin;
+    m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
+    m_adfGeoTransform[3] = dfYMax;
+    m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
+}
+
+/************************************************************************/
 /*                        InitFromCollection()                          */
 /************************************************************************/
 
@@ -701,28 +737,8 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
                                      CPLSPrintf("%.18g", oBbox[3].ToDouble())));
 
     auto oScaleDenominator = oRoot["scaleDenominator"];
-    double dfRes = 1e-8;  // arbitrary
-    if (oScaleDenominator.IsValid())
-    {
-        const double dfScaleDenominator = oScaleDenominator.ToDouble();
-        constexpr double HALF_CIRCUMFERENCE = 6378137 * M_PI;
-        dfRes = dfScaleDenominator / ((HALF_CIRCUMFERENCE / 180) / 0.28e-3);
-    }
 
-    double dfXSize = (dfXMax - dfXMin) / dfRes;
-    double dfYSize = (dfYMax - dfYMin) / dfRes;
-    while (dfXSize > INT_MAX || dfYSize > INT_MAX)
-    {
-        dfXSize /= 2;
-        dfYSize /= 2;
-    }
-
-    nRasterXSize = std::max(1, static_cast<int>(0 + 5 + dfXSize));
-    nRasterYSize = std::max(1, static_cast<int>(0.5 + dfYSize));
-    m_adfGeoTransform[0] = dfXMin;
-    m_adfGeoTransform[1] = (dfXMax - dfXMin) / nRasterXSize;
-    m_adfGeoTransform[3] = dfYMax;
-    m_adfGeoTransform[5] = -(dfYMax - dfYMin) / nRasterYSize;
+    ProcessScale(oScaleDenominator, dfXMin, dfYMin, dfXMax, dfYMax);
 
     bool bFoundMap = false;
     CPLString osTilesetsMapURL;
@@ -1670,7 +1686,12 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
     if (!DownloadJSon(osTilingSchemeURL.c_str(), oDoc, nullptr,
                       MEDIA_TYPE_JSON))
         return false;
-    auto tms = gdal::TileMatrixSet::parse(oDoc.SaveAsString().c_str());
+
+    // Attempts to find the uri for a well-known TMS; if it does not work, it will send the entire document
+    const auto uri = oDoc.GetRoot().GetString("uri");
+
+    auto tms = gdal::TileMatrixSet::parse(
+        !uri.empty() ? uri.c_str() : oDoc.SaveAsString().c_str());
     if (tms == nullptr)
         return false;
 
