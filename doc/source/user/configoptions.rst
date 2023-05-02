@@ -196,32 +196,6 @@ Logging
    on bigger or faster drives (SSD).
 
 
-.. config:: CPL_VSIL_CURL_ALLOWED_EXTENSIONS
-   :choices: <comma-separated list>
-
-   Consider that only the files whose extension ends up with one that is listed
-   in ``CPL_VSIL_CURL_ALLOWED_EXTENSIONS`` exist on the server. This can speed up
-   dramatically open experience, in case the server cannot return a file list.
-
-   For example:
-
-   .. code-block::
-
-      gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS "".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
-
-
-.. config:: CPL_VSIL_CURL_NON_CACHED
-   :choices: <colon-separated list>
-   :since: 2.3
-
-   A global LRU cache of 16 MB shared among all downloaded content is enabled
-   by default, and content in it may be reused after a file handle has been
-   closed and reopened. The ``CPL_VSIL_CURL_NON_CACHED`` configuration option
-   can be set to values like
-   ``/vsis3/bucket/foo.tif:/vsis3/another_bucket/some_directory``, so that at
-   file handle closing, all cached content related to the mentioned file(s) is
-   no longer cached. This can help when dealing with resources that can be
-   modified during execution of GDAL-related code.
 
 General options
 ^^^^^^^^^^^^^^^
@@ -425,8 +399,36 @@ General options
     :program:`gdaladdo` documentation.
 
 
-HTTP options
-^^^^^^^^^^^^
+Networking options
+^^^^^^^^^^^^^^^^^^
+
+.. config:: CPL_VSIL_CURL_ALLOWED_EXTENSIONS
+   :choices: <comma-separated list>
+
+   Consider that only the files whose extension ends up with one that is listed
+   in ``CPL_VSIL_CURL_ALLOWED_EXTENSIONS`` exist on the server. This can speed up
+   dramatically open experience, in case the server cannot return a file list.
+
+   For example:
+
+   .. code-block::
+
+      gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS "".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
+
+
+.. config:: CPL_VSIL_CURL_NON_CACHED
+   :choices: <colon-separated list>
+   :since: 2.3
+
+   A global LRU cache of 16 MB shared among all downloaded content is enabled
+   by default, and content in it may be reused after a file handle has been
+   closed and reopened. The ``CPL_VSIL_CURL_NON_CACHED`` configuration option
+   can be set to values like
+   ``/vsis3/bucket/foo.tif:/vsis3/another_bucket/some_directory``, so that at
+   file handle closing, all cached content related to the mentioned file(s) is
+   no longer cached. This can help when dealing with resources that can be
+   modified during execution of GDAL-related code.
+
 
 .. config:: GDAL_HTTP_VERSION
    :since: 2.3
