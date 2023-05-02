@@ -1040,15 +1040,23 @@ int CPLHTTPPopFetchCallback(void)
  * GDAL core sets it by default (during driver initialization) to GDAL/x.y.z
  * where x.y.z is the GDAL version number. Applications may override it with the
  * CPLHTTPSetDefaultUserAgent() function.</li>
+ * <li>SSLCERT=filename (GDAL >= 3.7): Filename of the the SSL client certificate.
+ * Cf https://curl.se/libcurl/c/CURLOPT_SSLCERT.html</li>
+ * <li>SSLCERTTYPE=string (GDAL >= 3.7): Format of the SSL certificate: "PEM"
+ * or "DER". Cf https://curl.se/libcurl/c/CURLOPT_SSLCERTTYPE.html</li>
+ * <li>SSLKEY=filename (GDAL >= 3.7): Private key file for TLS and SSL client
+ * certificate. Cf https://curl.se/libcurl/c/CURLOPT_SSLKEY.html</li>
+ * <li>KEYPASSWD=string (GDAL >= 3.7): Passphrase to private key.
+ * Cf https://curl.se/libcurl/c/CURLOPT_KEYPASSWD.html</li>
  * </ul>
  *
- * Alternatively, if not defined in the papszOptions arguments, the
+ * Alternatively, if not defined in the papszOptions arguments, the following
  * CONNECTTIMEOUT, TIMEOUT,
  * LOW_SPEED_TIME, LOW_SPEED_LIMIT, USERPWD, PROXY, HTTPS_PROXY, PROXYUSERPWD,
  * PROXYAUTH, NETRC, NETRC_FILE, MAX_RETRY and RETRY_DELAY, HEADER_FILE, HTTP_VERSION,
  * SSL_VERIFYSTATUS, USE_CAPI_STORE, GSSAPI_DELEGATION, TCP_KEEPALIVE,
- * TCP_KEEPIDLE, TCP_KEEPINTVL, USERAGENT values are searched in the
- * configuration options
+ * TCP_KEEPIDLE, TCP_KEEPINTVL, USERAGENT, SSLCERT, SSLCERTTYPE, SSLKEY,
+ * KEYPASSWD values are searched in the configuration options
  * respectively named GDAL_HTTP_CONNECTTIMEOUT, GDAL_HTTP_TIMEOUT,
  * GDAL_HTTP_LOW_SPEED_TIME, GDAL_HTTP_LOW_SPEED_LIMIT, GDAL_HTTP_USERPWD,
  * GDAL_HTTP_PROXY, GDAL_HTTPS_PROXY, GDAL_HTTP_PROXYUSERPWD, GDAL_PROXY_AUTH,
@@ -1056,7 +1064,8 @@ int CPLHTTPPopFetchCallback(void)
  * GDAL_HTTP_HEADER_FILE, GDAL_HTTP_VERSION, GDAL_HTTP_SSL_VERIFYSTATUS,
  * GDAL_HTTP_USE_CAPI_STORE, GDAL_GSSAPI_DELEGATION,
  * GDAL_HTTP_TCP_KEEPALIVE, GDAL_HTTP_TCP_KEEPIDLE, GDAL_HTTP_TCP_KEEPINTVL,
- * GDAL_HTTP_USERAGENT
+ * GDAL_HTTP_USERAGENT, GDAL_HTTP_SSLCERT, GDAL_HTTP_SSLCERTTYPE,
+ * GDAL_HTTP_SSLKEY and GDAL_HTTP_KEYPASSWD.
  *
  * Starting with GDAL 3.6, the GDAL_HTTP_HEADERS configuration option can also
  * be used to specify a comma separated list of key: value pairs. This is an
@@ -2386,6 +2395,38 @@ void *CPLHTTPSetOptions(void *pcurl, const char *pszURL,
     {
         unchecked_curl_easy_setopt(http_handle, CURLOPT_CAPATH, pszCAPath);
     }
+
+    // Support for SSL client certificates
+
+    // Filename of the the client certificate
+    const char *pszSSLCert = CSLFetchNameValue(papszOptions, "SSLCERT");
+    if (!pszSSLCert)
+        pszSSLCert = CPLGetConfigOption("GDAL_HTTP_SSLCERT", nullptr);
+    if (pszSSLCert)
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_SSLCERT, pszSSLCert);
+
+    // private key file for TLS and SSL client cert
+    const char *pszSSLKey = CSLFetchNameValue(papszOptions, "SSLKEY");
+    if (!pszSSLKey)
+        pszSSLKey = CPLGetConfigOption("GDAL_HTTP_SSLKEY", nullptr);
+    if (pszSSLKey)
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_SSLKEY, pszSSLKey);
+
+    // type of client SSL certificate ("PEM", "DER", ...)
+    const char *pszSSLCertType = CSLFetchNameValue(papszOptions, "SSLCERTTYPE");
+    if (!pszSSLCertType)
+        pszSSLCertType = CPLGetConfigOption("GDAL_HTTP_SSLCERTTYPE", nullptr);
+    if (pszSSLCertType)
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_SSLCERTTYPE,
+                                   pszSSLCertType);
+
+    // passphrase to private key
+    const char *pszKeyPasswd = CSLFetchNameValue(papszOptions, "KEYPASSWD");
+    if (!pszKeyPasswd)
+        pszKeyPasswd = CPLGetConfigOption("GDAL_HTTP_KEYPASSWD", nullptr);
+    if (pszKeyPasswd)
+        unchecked_curl_easy_setopt(http_handle, CURLOPT_KEYPASSWD,
+                                   pszKeyPasswd);
 
     /* Set Referer */
     const char *pszReferer = CSLFetchNameValue(papszOptions, "REFERER");
