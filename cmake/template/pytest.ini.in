@@ -16,7 +16,7 @@ env =
 # Deprecated vector drivers
    GDAL_ENABLE_DEPRECATED_DRIVER_OGR_DODS=YES
    GDAL_ENABLE_DEPRECATED_DRIVER_TIGER=YES
-gdal_version = @GDAL_VERSION@
+gdal_version = @GDAL_VERSION_NO_DEV_SUFFIX@
 
 markers =
     require_curl: Skip test(s) if curl support is absent
