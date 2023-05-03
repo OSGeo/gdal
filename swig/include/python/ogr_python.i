@@ -586,7 +586,7 @@ def ReleaseResultSet(self, sql_lyr):
       if len(args) == 2:
         geom_field = args[0]
       else:
-        geom_field = 0
+        geom_field = None
 
       filter = args[-1]
 
@@ -596,13 +596,16 @@ def ReleaseResultSet(self, sql_lyr):
               self.geom_field = geom_field
 
               if filter is None:
-                filter_geom = None
+                  filter_geom = None
               elif type(filter) is str:
-                filter_geom = CreateGeometryFromWkt(filter)
+                  filter_geom = CreateGeometryFromWkt(filter)
               else:
-                filter_geom = filter
+                  filter_geom = filter
 
-              self.err = $action(lyr, geom_field, filter_geom)
+              if self.geom_field is None:
+                  self.err = $action(self.lyr, filter_geom)
+              else:
+                  self.err = $action(self.lyr, geom_field, filter_geom)
 
           def __int__(self):
               return self.err
@@ -614,7 +617,10 @@ def ReleaseResultSet(self, sql_lyr):
               pass
 
           def __exit__(self, *args):
-              $action(self.lyr, self.geom_field, None)
+              if self.geom_field is None:
+                  $action(self.lyr, None)
+              else:
+                  $action(self.lyr, geom_field, filter_geom)
 
       return SpatialFilterProxy(self, geom_field, filter)
   %}
@@ -668,7 +674,7 @@ def ReleaseResultSet(self, sql_lyr):
       """
 
       if len(args) == 4:
-          geom_field = 0
+          geom_field = None
       else:
           geom_field = args[0]
 
@@ -678,13 +684,20 @@ def ReleaseResultSet(self, sql_lyr):
           def __init__(self, lyr, geom_field):
               self.lyr = lyr
               self.geom_field = geom_field
-              $action(lyr, geom_field, minx, miny, maxx, maxy)
+
+              if self.geom_field is None:
+                  $action(self.lyr, minx, miny, maxx, maxy)
+              else:
+                  $action(self.lyr, geom_field, minx, miny, maxx, maxy)
 
           def __enter__(self):
               pass
 
           def __exit__(self, *args):
-              self.lyr.SetSpatialFilter(self.geom_field, None)
+              if self.geom_field is None:
+                  self.lyr.SetSpatialFilter(None)
+              else:
+                  self.lyr.SetSpatialFilter(self.geom_field, None)
 
       return SpatialFilterRectProxy(self, geom_field)
   %}
