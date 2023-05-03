@@ -1173,84 +1173,80 @@ def download_file(
     elif filename.startswith(base_dir + "/"):
         filename = filename[len(base_dir + "/") :]
 
-    try:
-        os.stat(base_dir + "/" + filename)
+    if os.path.exists(os.path.join(base_dir, filename)):
         return True
-    except OSError:
-        if force_download or download_test_data():
-            val = None
-            start_time = time.time()
-            try:
-                handle = gdalurlopen(url)
-                if handle is None:
-                    return False
-                if download_size == -1:
-                    try:
-                        handle_info = handle.info()
-                        download_size = int(handle_info["content-length"])
-                        print(
-                            "Downloading %s (length = %d bytes)..."
-                            % (url, download_size)
-                        )
-                    except Exception:
-                        print("Downloading %s..." % (url))
-                else:
-                    print("Downloading %d bytes from %s..." % (download_size, url))
-            except Exception:
-                return False
 
-            if download_size >= 0:
-                sys.stdout.write("Progress: ")
-            nLastTick = -1
-            val = "".encode("ascii")
-            while len(val) < download_size or download_size < 0:
-                chunk_size = 1024
-                if download_size >= 0 and len(val) + chunk_size > download_size:
-                    chunk_size = download_size - len(val)
-                try:
-                    chunk = handle.read(chunk_size)
-                except Exception:
-                    print("Did not get expected data length.")
-                    return False
-                val = val + chunk
-                if len(chunk) < chunk_size:
-                    if download_size < 0:
-                        break
-                    print("Did not get expected data length.")
-                    return False
-                if download_size >= 0:
-                    nThisTick = int(40 * len(val) / download_size)
-                    while nThisTick > nLastTick:
-                        nLastTick = nLastTick + 1
-                        if nLastTick % 4 == 0:
-                            sys.stdout.write("%d" % int((nLastTick / 4) * 10))
-                        else:
-                            sys.stdout.write(".")
-                    nLastTick = nThisTick
-                    if nThisTick == 40:
-                        sys.stdout.write(" - done.\n")
+    if not (force_download or download_test_data()):
+        return False
 
-                current_time = time.time()
-                if (
-                    max_download_duration is not None
-                    and current_time - start_time > max_download_duration
-                ):
-                    print("Download aborted due to timeout.")
-                    return False
-
-            try:
-                os.stat(base_dir)
-            except OSError:
-                os.mkdir(base_dir)
-
-            try:
-                open(base_dir + "/" + filename, "wb").write(val)
-                return True
-            except IOError:
-                print("Cannot write %s" % (filename))
-                return False
-        else:
+    val = None
+    start_time = time.time()
+    try:
+        handle = gdalurlopen(url)
+        if handle is None:
             return False
+        if download_size == -1:
+            try:
+                handle_info = handle.info()
+                download_size = int(handle_info["content-length"])
+                print("Downloading %s (length = %d bytes)..." % (url, download_size))
+            except Exception:
+                print("Downloading %s..." % (url))
+        else:
+            print("Downloading %d bytes from %s..." % (download_size, url))
+    except Exception:
+        return False
+
+    if download_size >= 0:
+        sys.stdout.write("Progress: ")
+    nLastTick = -1
+    val = "".encode("ascii")
+    while len(val) < download_size or download_size < 0:
+        chunk_size = 1024
+        if download_size >= 0 and len(val) + chunk_size > download_size:
+            chunk_size = download_size - len(val)
+        try:
+            chunk = handle.read(chunk_size)
+        except Exception:
+            print("Did not get expected data length.")
+            return False
+        val = val + chunk
+        if len(chunk) < chunk_size:
+            if download_size < 0:
+                break
+            print("Did not get expected data length.")
+            return False
+        if download_size >= 0:
+            nThisTick = int(40 * len(val) / download_size)
+            while nThisTick > nLastTick:
+                nLastTick = nLastTick + 1
+                if nLastTick % 4 == 0:
+                    sys.stdout.write("%d" % int((nLastTick / 4) * 10))
+                else:
+                    sys.stdout.write(".")
+            nLastTick = nThisTick
+            if nThisTick == 40:
+                sys.stdout.write(" - done.\n")
+
+        current_time = time.time()
+        if (
+            max_download_duration is not None
+            and current_time - start_time > max_download_duration
+        ):
+            print("Download aborted due to timeout.")
+            return False
+
+    try:
+        os.stat(base_dir)
+    except OSError:
+        os.mkdir(base_dir)
+
+    try:
+        open(base_dir + "/" + filename, "wb").write(val)
+        return True
+    except IOError:
+        print("Cannot write %s" % (filename))
+        return False
 
 
 # Attempt to download file using `download_file`; skip test in case of failure
