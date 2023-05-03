@@ -143,6 +143,10 @@ The following layer options are available:
 
 - **TILE_CAPACITY=integer**: Number of non-empty cells stored in a data tile. Default is 10,000.
 
+- **TILE_EXTENT=float**: The square TileDB tile extents in the X and Y dimensions. Default is auto-calculated.
+
+- **TILE_Z_EXTENT=float**: The TIleDB tile extent in the Z dimension. Default is auto-calculated.
+
 - **BOUNDS=minx,miny,[minz,]maxx,maxy[, maxz]**: Specify bounds for sparse array.
   If not specified, the CRS passed at layer creation will be used to infer
   default values for bounds.

@@ -458,12 +458,23 @@ OGRLayer *OGRTileDBDataset::ICreateLayer(const char *pszName,
         std::min(poLayer->m_dfYEnd - poLayer->m_dfYStart,
                  poLayer->m_dfXEnd - poLayer->m_dfXStart) /
         10;
+
     const char *pszTileExtent = CSLFetchNameValue(papszOptions, "TILE_EXTENT");
     if (pszTileExtent)
         poLayer->m_dfTileExtent = CPLAtof(pszTileExtent);
 
     if (wkbHasZ(eGType) || eGType == wkbUnknown)
+    {
         poLayer->m_osZDim = "_Z";
+        poLayer->m_dfZTileExtent =
+            (poLayer->m_dfZEnd - poLayer->m_dfZStart) / 2;
+
+        const char *pszZTileExtent =
+            CSLFetchNameValue(papszOptions, "TILE_Z_EXTENT");
+        if (pszZTileExtent)
+            poLayer->m_dfZTileExtent = CPLAtof(pszZTileExtent);
+    }
+
     const char *pszAddZDim = CSLFetchNameValue(papszOptions, "ADD_Z_DIM");
     if (pszAddZDim && !EQUAL(pszAddZDim, "AUTO") && !CPLTestBool(pszAddZDim))
         poLayer->m_osZDim.clear();
@@ -3440,7 +3451,6 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
     {
         // create the tiledb schema
         // dimensions will be _x and _y, we can also add _z (2.5d)
-        // filters should be implemented as per tiledbdense
         // set dimensions and attribute type for schema
         // we will use row-major for now but we could use hilbert indexing
         m_schema.reset(new tiledb::ArraySchema(*m_ctx, TILEDB_SPARSE));
@@ -3452,16 +3462,14 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
 
         tiledb::Domain domain(*m_ctx);
 
-        // hard code block size but this is a creation option in dense arrays
         auto xdim = tiledb::Dimension::create<double>(
             *m_ctx, m_osXDim, {m_dfXStart, m_dfXEnd}, m_dfTileExtent);
         auto ydim = tiledb::Dimension::create<double>(
             *m_ctx, m_osYDim, {m_dfYStart, m_dfYEnd}, m_dfTileExtent);
         if (!m_osZDim.empty())
         {
-            const double dfZTileExtent = (m_dfZEnd - m_dfZStart) / 10;
             auto zdim = tiledb::Dimension::create<double>(
-                *m_ctx, m_osZDim, {m_dfZStart, m_dfZEnd}, dfZTileExtent);
+                *m_ctx, m_osZDim, {m_dfZStart, m_dfZEnd}, m_dfZTileExtent);
             domain.add_dimensions(xdim, ydim, zdim);
         }
         else
