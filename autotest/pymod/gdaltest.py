@@ -1212,12 +1212,12 @@ def download_file(
                 except Exception:
                     print("Did not get expected data length.")
                     return False
+                val = val + chunk
                 if len(chunk) < chunk_size:
                     if download_size < 0:
                         break
                     print("Did not get expected data length.")
                     return False
-                val = val + chunk
                 if download_size >= 0:
                     nThisTick = int(40 * len(val) / download_size)
                     while nThisTick > nLastTick:
