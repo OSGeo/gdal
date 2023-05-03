@@ -163,10 +163,33 @@ std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(
                  "A dimension with same name already exists");
         return nullptr;
     }
-    auto newDim(std::make_shared<ZarrDimension>(GetFullName(), osName, osType,
+    auto newDim(std::make_shared<ZarrDimension>(m_poSharedResource, m_pSelf,
+                                                GetFullName(), osName, osType,
                                                 osDirection, nSize));
+    newDim->SetXArrayDimension();
     m_oMapDimensions[osName] = newDim;
     return newDim;
+}
+
+/************************************************************************/
+/*                          RenameDimension()                           */
+/************************************************************************/
+
+bool ZarrGroupBase::RenameDimension(const std::string &osOldName,
+                                    const std::string &osNewName)
+{
+    if (m_oMapDimensions.find(osNewName) != m_oMapDimensions.end())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A dimension with same name already exists");
+        return false;
+    }
+    auto oIter = m_oMapDimensions.find(osOldName);
+    auto poDim = oIter->second;
+    CPLAssert(oIter != m_oMapDimensions.end());
+    m_oMapDimensions.erase(oIter);
+    m_oMapDimensions[osNewName] = poDim;
+    return true;
 }
 
 /************************************************************************/
@@ -2293,6 +2316,48 @@ void ZarrSharedResource::UpdateDimensionSize(
         CPLError(CE_Failure, CPLE_AppDefined, "UpdateDimensionSize() failed");
     }
     poRG.reset();
+}
+
+/************************************************************************/
+/*                              Rename()                                */
+/************************************************************************/
+
+bool ZarrDimension::Rename(const std::string &osNewName)
+{
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+    if (!IsXArrayDimension())
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Cannot rename an implicit dimension "
+                 "(that is one listed in _ARRAY_DIMENSIONS attribute)");
+        return false;
+    }
+    if (!ZarrGroupBase::IsValidObjectName(osNewName))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid dimension name");
+        return false;
+    }
+
+    if (auto poParentGroup = m_poParentGroup.lock())
+    {
+        if (!poParentGroup->RenameDimension(m_osName, osNewName))
+        {
+            return false;
+        }
+    }
+
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+
+    m_bModified = true;
+
+    return true;
 }
 
 /************************************************************************/

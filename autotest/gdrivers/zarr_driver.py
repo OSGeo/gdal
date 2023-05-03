@@ -3943,3 +3943,152 @@ def test_zarr_multidim_rename_attr_after_reopening(create_z_metadata):
 
     finally:
         gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("create_z_metadata", [True, False])
+def test_zarr_multidim_rename_dim_at_creation(create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+        )
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("dim", None, None, 2)
+        other_dim = rg.CreateDimension("other_dim", None, None, 2)
+        var = rg.CreateMDArray(
+            "var", [dim, other_dim], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+
+        # Empty name
+        with pytest.raises(Exception):
+            dim.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            dim.Rename("other_dim")
+        assert dim.GetName() == "dim"
+        assert dim.GetFullName() == "/dim"
+
+        dim.Rename("dim_renamed")
+        assert dim.GetName() == "dim_renamed"
+        assert dim.GetFullName() == "/dim_renamed"
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        assert [x.GetName() for x in var.GetDimensions()] == [
+            "dim_renamed",
+            "other_dim",
+        ]
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        # Read-only
+        with pytest.raises(Exception):
+            rg.GetDimensions()[0].Rename("dim_renamed2")
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+    try:
+        create()
+        reopen()
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("create_z_metadata", [True, False])
+def test_zarr_multidim_rename_dim_after_reopening(create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+        )
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("dim", None, None, 2)
+        other_dim = rg.CreateDimension("other_dim", None, None, 2)
+        rg.CreateMDArray(
+            "var", [dim, other_dim], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+
+    def rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        dim = list(filter(lambda dim: dim.GetName() == "dim", rg.GetDimensions()))[0]
+
+        # Empty name
+        with pytest.raises(Exception):
+            dim.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            dim.Rename("other_dim")
+        assert dim.GetName() == "dim"
+        assert dim.GetFullName() == "/dim"
+
+        dim.Rename("dim_renamed")
+        assert dim.GetName() == "dim_renamed"
+        assert dim.GetFullName() == "/dim_renamed"
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+    def reopen_after_rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        # Read-only
+        with pytest.raises(Exception):
+            rg.GetDimensions()[0].Rename("dim_renamed2")
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        var = rg.OpenMDArray("var")
+        assert [x.GetName() for x in var.GetDimensions()] == [
+            "dim_renamed",
+            "other_dim",
+        ]
+
+    try:
+        create()
+        rename()
+        reopen_after_rename()
+    finally:
+        gdal.RmdirRecursive(filename)

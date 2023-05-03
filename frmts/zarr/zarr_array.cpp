@@ -219,13 +219,17 @@ void ZarrArray::Flush()
     }
 
     CPLJSONArray j_ARRAY_DIMENSIONS;
+    bool bDimensionsModified = false;
     if (!m_aoDims.empty())
     {
         for (const auto &poDim : m_aoDims)
         {
-            if (dynamic_cast<const ZarrArray *>(
-                    poDim->GetIndexingVariable().get()) != nullptr)
+            const auto poZarrDim =
+                dynamic_cast<const ZarrDimension *>(poDim.get());
+            if (poZarrDim && poZarrDim->IsXArrayDimension())
             {
+                if (poZarrDim->IsModified())
+                    bDimensionsModified = true;
                 j_ARRAY_DIMENSIONS.Add(poDim->GetName());
             }
             else
@@ -237,7 +241,7 @@ void ZarrArray::Flush()
     }
 
     CPLJSONObject oAttrs;
-    if (m_oAttrGroup.IsModified() ||
+    if (m_oAttrGroup.IsModified() || bDimensionsModified ||
         (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) || m_bUnitModified ||
         m_bOffsetModified || m_bScaleModified || m_bSRSModified)
     {
@@ -3331,8 +3335,8 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
             return nullptr;
         }
         aoDims.emplace_back(std::make_shared<ZarrDimension>(
-            std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
-            nSize));
+            m_poSharedResource, m_pSelf, std::string(), CPLSPrintf("dim%d", i),
+            std::string(), std::string(), nSize));
     }
 
     const auto GetDimensionTypeDirection =
@@ -3498,7 +3502,9 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
         }
 
         auto poDimLocal = std::make_shared<ZarrDimension>(
-            GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
+            m_poSharedResource, m_pSelf, GetFullName(), osDimName, osType,
+            osDirection, poDim->GetSize());
+        poDimLocal->SetXArrayDimension();
         m_oMapDimensions[osDimName] = poDimLocal;
         poDim = poDimLocal;
         return true;
@@ -3600,6 +3606,8 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
                                 {
                                     auto poDimLocal =
                                         std::make_shared<ZarrDimension>(
+                                            m_poSharedResource,
+                                            poDimParentGroup->m_pSelf,
                                             poDimParentGroup->GetFullName(),
                                             poDim->GetName(), osType,
                                             osDirection, poDim->GetSize());

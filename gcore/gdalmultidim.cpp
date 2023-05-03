@@ -8894,7 +8894,7 @@ bool GDALDimension::SetIndexingVariable(
  *
  * This is not implemented by all drivers.
  *
- * Drivers known to implement it: MEM, netCDF.
+ * Drivers known to implement it: MEM, netCDF, ZARR.
  *
  * This is the same as the C function GDALDimensionRename().
  *

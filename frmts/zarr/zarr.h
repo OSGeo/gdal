@@ -237,6 +237,11 @@ class ZarrSharedResource
 
     ~ZarrSharedResource();
 
+    bool IsUpdatable() const
+    {
+        return m_bUpdatable;
+    }
+
     void EnableZMetadata()
     {
         m_bZMetadataEnabled = true;
@@ -319,6 +324,11 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
           m_oAttrGroup(m_osFullName, /*bContainerIsGroup=*/true)
     {
     }
+
+  protected:
+    friend class ZarrDimension;
+    bool RenameDimension(const std::string &osOldName,
+                         const std::string &osNewName);
 
   public:
     ~ZarrGroupBase() override;
@@ -528,17 +538,42 @@ class ZarrGroupV3 final : public ZarrGroupBase
 
 class ZarrDimension final : public GDALDimensionWeakIndexingVar
 {
+    const bool m_bUpdatable;
+    std::weak_ptr<ZarrGroupBase> m_poParentGroup;
+    bool m_bModified = false;
+    bool m_bXArrayDim = false;
 
   public:
-    ZarrDimension(const std::string &osParentName, const std::string &osName,
+    ZarrDimension(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+                  const std::weak_ptr<ZarrGroupBase> &poParentGroup,
+                  const std::string &osParentName, const std::string &osName,
                   const std::string &osType, const std::string &osDirection,
                   GUInt64 nSize)
         : GDALDimensionWeakIndexingVar(osParentName, osName, osType,
-                                       osDirection, nSize)
+                                       osDirection, nSize),
+          m_bUpdatable(poSharedResource->IsUpdatable()),
+          m_poParentGroup(poParentGroup)
     {
     }
 
+    bool Rename(const std::string &osNewName) override;
+
     void ParentRenamed(const std::string &osNewParentFullName) override;
+
+    bool IsModified() const
+    {
+        return m_bModified;
+    }
+
+    void SetXArrayDimension()
+    {
+        m_bXArrayDim = true;
+    }
+
+    bool IsXArrayDimension() const
+    {
+        return m_bXArrayDim;
+    }
 };
 
 /************************************************************************/
