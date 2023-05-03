@@ -27,7 +27,6 @@
 ###############################################################################
 
 import shutil
-import sys
 
 import gdaltest
 import pytest
@@ -97,7 +96,7 @@ def test_ogr_sxf_3():
 # Open SXF datasource with layers fullname.
 
 
-def test_ogr_sxf_4(capsys):
+def test_ogr_sxf_4():
 
     lyr_names = [
         "СИСТЕМНЫЙ",
@@ -118,21 +117,14 @@ def test_ogr_sxf_4(capsys):
     assert sxf_ds is not None
     assert sxf_ds.GetLayerCount() == len(lyr_names)
 
-    if sys.platform != "win32":
-        with capsys.disabled():
-            print("Expected:")
-            for n in lyr_names:
-                print(n)
-            print("In fact:")
-            for layer_n in range(sxf_ds.GetLayerCount()):
-                lyr = sxf_ds.GetLayer(layer_n)
-                print(lyr.GetName())
-
+    actual_layer_names = []
     for layer_n in range(sxf_ds.GetLayerCount()):
         lyr = sxf_ds.GetLayer(layer_n)
         if lyr.TestCapability(ogr.OLCStringsAsUTF8) != 1:
             pytest.skip("skipping test: recode is not possible")
-        assert lyr_names[layer_n] == lyr.GetName()
+        actual_layer_names.append(lyr.GetName())
+
+    assert actual_layer_names == lyr_names
 
 
 ###############################################################################
