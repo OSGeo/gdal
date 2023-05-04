@@ -3663,6 +3663,26 @@ def test_ogr_dxf_49():
 
 
 ###############################################################################
+# Test blocks that insert blocks that themselves have attributes
+
+
+def test_ogr_dxf_49a():
+
+    with gdal.config_option("DXF_MERGE_BLOCK_GEOMETRIES", "FALSE"):
+        ds = ogr.Open("data/dxf/attrib-nested.dxf")
+
+    lyr = ds.GetLayer(0)
+    assert lyr.GetFeatureCount() == 1
+
+    f = lyr.GetFeature(0)
+    assert not ogrtest.check_feature_geometry(f, "POINT Z (0 0 0)")
+    assert (
+        f.GetStyleString()
+        == 'LABEL(f:"Arial",t:"Gamma Goochee",p:1,s:0.4g,w:100,c:#000000)'
+    )
+
+
+###############################################################################
 # Test extended text styling (#7151) and additional ByBlock/ByLayer tests (#7130)
 
 

@@ -73,6 +73,13 @@ OGRDXFFeature *OGRDXFFeature::CloneDXFFeature()
             new OGRDXFAffineTransform(*poASMTransform));
     }
 
+    for (const std::unique_ptr<OGRDXFFeature> &poAttribFeature :
+         apoAttribFeatures)
+    {
+        poNew->apoAttribFeatures.emplace_back(
+            poAttribFeature->CloneDXFFeature());
+    }
+
     return poNew;
 }
 

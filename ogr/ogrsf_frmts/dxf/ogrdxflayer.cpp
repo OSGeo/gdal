@@ -2868,6 +2868,10 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline(
 
             poSubFeature->bIsBlockReference = false;
 
+            // Keep a reference to the attributes that need to be inserted
+            std::vector<std::unique_ptr<OGRDXFFeature>> apoInnerAttribFeatures =
+                std::move(poSubFeature->apoAttribFeatures);
+
             // Insert this block recursively
             try
             {
@@ -2893,9 +2897,20 @@ OGRDXFFeature *OGRDXFLayer::InsertBlockInline(
                 {
                     break;
                 }
+
+                // Append the attribute features to the pending feature stack
+                for (auto &poAttribFeature : apoInnerAttribFeatures)
+                {
+                    // Clear the attribute tag so the feature doesn't get mistaken
+                    // for an ATTDEF and skipped
+                    poAttribFeature->osAttributeTag = "";
+
+                    apoInnerExtraFeatures.push(poAttribFeature.release());
+                }
+
                 if (apoInnerExtraFeatures.empty())
                 {
-                    // Block is empty. Skip it and keep going
+                    // Block is empty and has no attributes. Skip it and keep going
                     continue;
                 }
                 else
@@ -3246,6 +3261,8 @@ bool OGRDXFLayer::GenerateINSERTFeatures()
         auto papszAttribs = m_oInsertState.m_aosAttribs.List();
         if (papszAttribs)
             poFeature->SetField("BlockAttributes", papszAttribs);
+
+        poFeature->apoAttribFeatures = std::move(m_oInsertState.m_apoAttribs);
 
         apoPendingFeatures.push(poFeature);
     }
