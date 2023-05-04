@@ -39,6 +39,7 @@ static void Usage()
 {
     printf(
         "Usage: bench_ogr_batch [-where filter] [-spat xmin ymin xmax ymax]\n");
+    printf("                      [--stream-opt NAME=VALUE]*\n");
     printf("                      filename [layer_name]\n");
     exit(1);
 }
@@ -60,6 +61,7 @@ int main(int argc, char *argv[])
     const char *pszDataset = nullptr;
     std::unique_ptr<OGRPolygon> poSpatialFilter;
     const char *pszLayerName = nullptr;
+    CPLStringList aosSteamOptions;
     for (int iArg = 1; iArg < argc; ++iArg)
     {
         if (iArg + 1 < argc && strcmp(argv[iArg], "-where") == 0)
@@ -80,6 +82,11 @@ int main(int argc, char *argv[])
             poSpatialFilter->addRing(&oRing);
 
             iArg += 4;
+        }
+        else if (iArg + 1 < argc && strcmp(argv[iArg], "--stream-opt") == 0)
+        {
+            aosSteamOptions.AddString(argv[iArg + 1]);
+            ++iArg;
         }
         else if (argv[iArg][0] == '-')
         {
@@ -135,7 +142,7 @@ int main(int argc, char *argv[])
 
     OGRLayerH hLayer = OGRLayer::ToHandle(poLayer);
     struct ArrowArrayStream stream;
-    if (!OGR_L_GetArrowStream(hLayer, &stream, nullptr))
+    if (!OGR_L_GetArrowStream(hLayer, &stream, aosSteamOptions.List()))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "OGR_L_GetArrowStream() failed\n");
