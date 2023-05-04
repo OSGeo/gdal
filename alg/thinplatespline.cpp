@@ -215,7 +215,7 @@ static inline double VizGeorefSpline2DBase_func(const double x1,
 #endif  // defined(__INTEL_COMPILER)
 #endif
 
-#if defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4)
+#if defined(USE_OPTIMIZED_VizGeorefSpline2DBase_func4) && !defined(CPPCHECK)
 
 /* Derived and adapted from code originating from: */
 

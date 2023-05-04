@@ -1623,7 +1623,6 @@ static void CPLVirtualMemManagerSIGSEGVHandler(int the_signal,
     memset(&msg, 0, sizeof(msg));
     msg.pFaultAddr = the_info->si_addr;
     msg.hRequesterThread = pthread_self();
-    msg.opType = OP_UNKNOWN;
 
 #if defined(__x86_64__) || defined(__i386__)
     ucontext_t *the_ucontext = static_cast<ucontext_t *>(the_ctxt);
@@ -1671,6 +1670,8 @@ static void CPLVirtualMemManagerSIGSEGVHandler(int the_signal,
         }
     }
 #endif
+#else
+    msg.opType = OP_UNKNOWN;
 #endif
 
 #if defined DEBUG_VIRTUALMEM && defined DEBUG_VERBOSE
