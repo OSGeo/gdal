@@ -46,6 +46,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*third_party/*)
+	  continue
+	  ;;
+
 	*.cpp|*.c|*.h|*.cxx|*.hxx|*.c++|*.h++|*.cc|*.hh|*.C|*.H)
 		;;
 
