@@ -49,4 +49,84 @@ bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
 const GByte CPL_DLL *WKBFromEWKB(GByte *pabyEWKB, size_t nEWKBSize,
                                  size_t &nWKBSizeOut, int *pnSRIDOut);
 
+/************************************************************************/
+/*                       OGRAppendBuffer                                */
+/************************************************************************/
+
+/** Append buffer that can be grown dynamically. */
+class CPL_DLL OGRAppendBuffer
+{
+  public:
+    /** Constructor */
+    OGRAppendBuffer();
+
+    /** Destructor */
+    virtual ~OGRAppendBuffer();
+
+    /** Return the pointer at which nItemSize bytes can be written,
+     * or nullptr in case of error.
+     */
+    inline void *GetPtrForNewBytes(size_t nItemSize)
+    {
+        if (nItemSize > m_nCapacity - m_nSize)
+        {
+            if (!Grow(nItemSize))
+                return nullptr;
+        }
+        void *pRet = static_cast<GByte *>(m_pRawBuffer) + m_nSize;
+        m_nSize += nItemSize;
+        return pRet;
+    }
+
+    /** Return the number of valid bytes in the buffer. */
+    inline size_t GetSize() const
+    {
+        return m_nSize;
+    }
+
+  protected:
+    /** Capacity of the buffer (ie number of bytes allocated). */
+    size_t m_nCapacity = 0;
+
+    /** Number of valid bytes in the buffer. */
+    size_t m_nSize = 0;
+
+    /** Raw buffer pointer. */
+    void *m_pRawBuffer = nullptr;
+
+    /** Extend the capacity of m_pRawBuffer to be at least m_nSize + nItemSize
+     * large.
+     */
+    virtual bool Grow(size_t nItemSize) = 0;
+
+  private:
+    OGRAppendBuffer(const OGRAppendBuffer &) = delete;
+    OGRAppendBuffer &operator=(const OGRAppendBuffer &) = delete;
+};
+
+/************************************************************************/
+/*                       OGRWKTToWKBTranslator                          */
+/************************************************************************/
+
+/** Translate WKT geometry to WKB geometry and append it to a buffer */
+class CPL_DLL OGRWKTToWKBTranslator
+{
+    OGRAppendBuffer &m_oAppendBuffer;
+    bool m_bCanUseStrtod = false;
+
+  public:
+    /** Construtor */
+    explicit OGRWKTToWKBTranslator(OGRAppendBuffer &oAppendBuffer);
+
+    /** Translate the WKT geometry starting at pabyWKTStart and of length nLength.
+     *
+     * If pabyWKTStart[nLength] can be dereferenced and temporarily modified,
+     * set bCanAlterByteAfter to true, which will optimize performance.
+     *
+     * Returns the number of bytes of the generated WKB, or -1 in case of error.
+     */
+    size_t TranslateWKT(void *pabyWKTStart, size_t nLength,
+                        bool bCanAlterByteAfter);
+};
+
 #endif  // OGR_WKB_H_INCLUDED
