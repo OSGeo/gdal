@@ -278,6 +278,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     bool m_bWriteFieldArrowExtensionName = false;
     OGRArrowGeomEncoding m_eGeomEncoding = OGRArrowGeomEncoding::WKB;
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
+    int m_nWKTCoordinatePrecision = -1;
 
     std::string m_osFIDColumn{};
     int64_t m_nFeatureCount = 0;

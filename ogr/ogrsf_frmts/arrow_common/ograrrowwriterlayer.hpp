@@ -1302,6 +1302,11 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
         {
             OGRWktOptions options;
             options.variant = wkbVariantIso;
+            if (m_nWKTCoordinatePrecision >= 0)
+            {
+                options.format = OGRWktFormat::F;
+                options.precision = m_nWKTCoordinatePrecision;
+            }
             OGR_ARROW_RETURN_OGRERR_NOT_OK(
                 static_cast<arrow::StringBuilder *>(poBuilder)->Append(
                     poGeom->exportToWkt(options)));

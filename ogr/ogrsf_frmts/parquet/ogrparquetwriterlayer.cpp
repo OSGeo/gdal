@@ -109,6 +109,11 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
         }
     }
 
+    const char *pszCoordPrecision =
+        CSLFetchNameValue(papszOptions, "COORDINATE_PRECISION");
+    if (pszCoordPrecision)
+        m_nWKTCoordinatePrecision = atoi(pszCoordPrecision);
+
     m_bForceCounterClockwiseOrientation =
         EQUAL(CSLFetchNameValueDef(papszOptions, "POLYGON_ORIENTATION",
                                    "COUNTERCLOCKWISE"),

@@ -733,6 +733,15 @@ void OGRParquetDriver::InitMetadata()
 
     {
         auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+        CPLAddXMLAttributeAndValue(psOption, "name", "COORDINATE_PRECISION");
+        CPLAddXMLAttributeAndValue(psOption, "type", "float");
+        CPLAddXMLAttributeAndValue(psOption, "description",
+                                   "Number of decimals for coordinates (only "
+                                   "for GEOMETRY_ENCODING=WKT)");
+    }
+
+    {
+        auto psOption = CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
         CPLAddXMLAttributeAndValue(psOption, "name", "FID");
         CPLAddXMLAttributeAndValue(psOption, "type", "string");
         CPLAddXMLAttributeAndValue(psOption, "description",
