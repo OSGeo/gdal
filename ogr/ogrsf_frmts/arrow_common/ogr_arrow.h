@@ -90,6 +90,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void ExploreExprNode(const swq_expr_node *poNode);
     bool UseRecordBatchBaseImplementation() const;
 
+    static struct ArrowArray *
+    CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
+
   protected:
     OGRArrowDataset *m_poArrowDS = nullptr;
     arrow::MemoryPool *m_poMemoryPool = nullptr;

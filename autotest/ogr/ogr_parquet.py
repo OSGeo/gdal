@@ -1673,3 +1673,126 @@ def test_ogr_parquet_field_alternative_name_comment():
         ds = None
     finally:
         gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test reading a parquet file with WKT content as WKB through ArrowArray
+# interface
+
+
+@pytest.mark.parametrize("nullable_geom", [False, True])
+@pytest.mark.parametrize("ignore_geom_field", [False, True])
+@pytest.mark.parametrize("ignore_geom_before", [False, True])
+def test_ogr_parquet_read_wkt_as_wkt_arrow_array(
+    nullable_geom, ignore_geom_field, ignore_geom_before
+):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    outfilename = "/vsimem/out.parquet"
+    try:
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbNone, options=["GEOMETRY_ENCODING=WKT"]
+        )
+        lyr.CreateGeomField(ogr.GeomFieldDefn("geom_before", ogr.wkbUnknown))
+        geom_fld_defn = ogr.GeomFieldDefn("my_geom", ogr.wkbUnknown)
+        geom_fld_defn.SetNullable(nullable_geom)
+        lyr.CreateGeomField(geom_fld_defn)
+        lyr.CreateGeomField(ogr.GeomFieldDefn("geom_after", ogr.wkbUnknown))
+        fld_defn = ogr.FieldDefn("fld", ogr.OFTInteger)
+        lyr.CreateField(fld_defn)
+
+        input_wkts = [
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))",  # benefits from optimization for single part single ring
+            "MULTIPOLYGON (((0 0,0 2,2 2,0 0)))",
+            "MULTIPOLYGON Z (((0 0 -1,0 2 -1,2 2 -1,0 0 -1)))",
+            "MULTIPOLYGON M (((0 0 -1,0 2 -1,2 2 -1,0 0 -1)))",
+            "MULTIPOLYGON ZM (((0 0 -1 -2,0 2 -1 -2,2 2 -1 -2,0 0 -1 -2)))",
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0)),((10 10,10 11,11 11,10 10)))",  # two parts
+            "MULTIPOLYGON (((0 0,0 1,1 1,0 0),(0.2 0.2,0.2 0.8,0.8 0.8,0.2 0.2)))",  # two rings
+            None,
+            "POLYGON ((0 0,0 2,2 2,0 0))",
+        ]
+        expected_wkts = []
+
+        val = 1
+        for wkt in input_wkts:
+            if wkt:
+                f = ogr.Feature(lyr.GetLayerDefn())
+                f["fld"] = val
+                val += 1
+                f.SetGeomField(0, ogr.CreateGeometryFromWkt("POINT (1 2)"))
+                f.SetGeomField(1, ogr.CreateGeometryFromWkt(wkt))
+                f.SetGeomField(2, ogr.CreateGeometryFromWkt("POINT (3 4)"))
+                lyr.CreateFeature(f)
+                expected_wkts.append(wkt)
+            elif nullable_geom:
+                f = ogr.Feature(lyr.GetLayerDefn())
+                f["fld"] = val
+                val += 1
+                f.SetGeomField(0, ogr.CreateGeometryFromWkt("POINT (1 2)"))
+                f.SetGeomField(2, ogr.CreateGeometryFromWkt("POINT (3 4)"))
+                lyr.CreateFeature(f)
+                expected_wkts.append(None)
+        ds = None
+
+        ds = ogr.Open(outfilename)
+        lyr = ds.GetLayer(0)
+
+        ignored_fields = []
+        if ignore_geom_before:
+            ignored_fields.append("geom_before")
+        if ignore_geom_field:
+            ignored_fields.append("my_geom")
+        if ignored_fields:
+            lyr.SetIgnoredFields(ignored_fields)
+
+        # Get geometry column in its raw form (WKT)
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        batch = batches[0]
+        assert [x for x in batch["fld"]] == [
+            i for i in range(1, len(expected_wkts) + 1)
+        ]
+        if not ignore_geom_before:
+            assert [x.decode("ASCII") for x in batch["geom_before"]] == [
+                "POINT (1 2)"
+            ] * len(expected_wkts)
+        if ignore_geom_field:
+            assert "my_geom" not in batch.keys()
+        else:
+            assert [
+                (x.decode("ASCII") if x else None) for x in batch["my_geom"]
+            ] == expected_wkts
+        assert [x.decode("ASCII") for x in batch["geom_after"]] == [
+            "POINT (3 4)"
+        ] * len(expected_wkts)
+
+        # Force geometry column as WKB
+        stream = lyr.GetArrowStreamAsNumPy(
+            options=["USE_MASKED_ARRAYS=NO", "GEOMETRY_ENCODING=WKB"]
+        )
+        batches = [batch for batch in stream]
+        batch = batches[0]
+        assert [x for x in batch["fld"]] == [
+            i for i in range(1, len(expected_wkts) + 1)
+        ]
+        if not ignore_geom_before:
+            assert [
+                ogr.CreateGeometryFromWkb(x).ExportToIsoWkt()
+                for x in batch["geom_before"]
+            ] == ["POINT (1 2)"] * len(expected_wkts)
+        if ignore_geom_field:
+            assert "my_geom" not in batch.keys()
+        else:
+            assert [
+                (ogr.CreateGeometryFromWkb(x).ExportToIsoWkt() if x else None)
+                for x in batch["my_geom"]
+            ] == expected_wkts
+        assert [
+            ogr.CreateGeometryFromWkb(x).ExportToIsoWkt() for x in batch["geom_after"]
+        ] == ["POINT (3 4)"] * len(expected_wkts)
+
+    finally:
+        gdal.Unlink(outfilename)

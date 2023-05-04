@@ -32,6 +32,7 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
+#include "ogr_wkb.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -3493,8 +3494,12 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
         const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
         for (int i = 0; i < nGeomFieldCount; i++)
         {
-            if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+            if (!m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored() &&
+                m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB &&
+                m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKT)
+            {
                 return true;
+            }
         }
     }
 
@@ -3547,58 +3552,86 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
 
     CPLAssert(out_schema->n_children == m_poSchema->num_fields());
 
-    if (m_bIgnoredFields)
-    {
-        // Remove ignored fields from the ArrowSchema.
+    // Remove ignored fields from the ArrowSchema.
 
-        struct FieldDesc
+    struct FieldDesc
+    {
+        bool bIsRegularField =
+            false;  // true = attribute field, false = geometry field
+        int nIdx = -1;
+    };
+    // cppcheck-suppress unreadVariable
+    std::vector<FieldDesc> fieldDesc(out_schema->n_children);
+    for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)
+    {
+        const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
+        if (fieldDesc[nArrowCol].nIdx < 0)
         {
-            bool bIsRegularField =
-                false;  // true = attribute field, false = geometry field
-            int nIdx = -1;
-        };
-        // cppcheck-suppress unreadVariable
-        std::vector<FieldDesc> fieldDesc(out_schema->n_children);
-        for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)
-        {
-            const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
-            if (fieldDesc[nArrowCol].nIdx < 0)
-            {
-                fieldDesc[nArrowCol].bIsRegularField = true;
-                fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
-            }
-        }
-        for (size_t i = 0; i < m_anMapGeomFieldIndexToArrowColumn.size(); i++)
-        {
-            const int nArrowCol = m_anMapGeomFieldIndexToArrowColumn[i];
-            CPLAssert(fieldDesc[nArrowCol].nIdx < 0);
-            fieldDesc[nArrowCol].bIsRegularField = false;
+            fieldDesc[nArrowCol].bIsRegularField = true;
             fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
         }
+    }
+    for (size_t i = 0; i < m_anMapGeomFieldIndexToArrowColumn.size(); i++)
+    {
+        const int nArrowCol = m_anMapGeomFieldIndexToArrowColumn[i];
+        CPLAssert(fieldDesc[nArrowCol].nIdx < 0);
+        fieldDesc[nArrowCol].bIsRegularField = false;
+        fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
+    }
 
-        int j = 0;
-        for (int i = 0; i < out_schema->n_children; ++i)
+    int j = 0;
+    for (int i = 0; i < out_schema->n_children; ++i)
+    {
+        const auto bIsIgnored =
+            fieldDesc[i].bIsRegularField
+                ? m_poFeatureDefn->GetFieldDefn(fieldDesc[i].nIdx)->IsIgnored()
+                : m_poFeatureDefn->GetGeomFieldDefn(fieldDesc[i].nIdx)
+                      ->IsIgnored();
+        if (bIsIgnored)
         {
-            const auto bIsIgnored =
-                fieldDesc[i].bIsRegularField
-                    ? m_poFeatureDefn->GetFieldDefn(fieldDesc[i].nIdx)
-                          ->IsIgnored()
-                    : m_poFeatureDefn->GetGeomFieldDefn(fieldDesc[i].nIdx)
-                          ->IsIgnored();
-            if (bIsIgnored)
+            out_schema->children[i]->release(out_schema->children[i]);
+        }
+        else
+        {
+            if (!fieldDesc[i].bIsRegularField &&
+                EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(
+                          "GEOMETRY_ENCODING", ""),
+                      "WKB"))
             {
-                out_schema->children[i]->release(out_schema->children[i]);
+                const int iGeomField = fieldDesc[i].nIdx;
+                if (m_aeGeomEncoding[iGeomField] == OGRArrowGeomEncoding::WKT)
+                {
+                    const auto poGeomFieldDefn =
+                        m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
+                    CPLAssert(strcmp(out_schema->children[i]->name,
+                                     poGeomFieldDefn->GetNameRef()) == 0);
+                    out_schema->children[i]->release(out_schema->children[i]);
+                    out_schema->children[j] =
+                        CreateSchemaForWKBGeometryColumn(poGeomFieldDefn);
+                }
+                else if (m_aeGeomEncoding[iGeomField] !=
+                         OGRArrowGeomEncoding::WKB)
+                {
+                    // Shouldn't happen if UseRecordBatchBaseImplementation()
+                    // is up to date
+                    CPLAssert(false);
+                }
+                else
+                {
+                    out_schema->children[j] = out_schema->children[i];
+                }
             }
             else
             {
                 out_schema->children[j] = out_schema->children[i];
-                ++j;
             }
+            ++j;
         }
-        out_schema->n_children = j;
     }
+    out_schema->n_children = j;
 
     OverrideArrowRelease(m_poArrowDS, out_schema);
+
     return 0;
 }
 
@@ -3638,9 +3671,191 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         return EIO;
     }
 
+    if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(
+                  "GEOMETRY_ENCODING", ""),
+              "WKB"))
+    {
+        const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+        for (int i = 0; i < nGeomFieldCount; i++)
+        {
+            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
+            if (!poGeomFieldDefn->IsIgnored())
+            {
+                if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKT)
+                {
+                    const int nArrayIdx =
+                        m_bIgnoredFields
+                            ? m_anMapGeomFieldIndexToArrayIndex[i]
+                            : m_anMapGeomFieldIndexToArrowColumn[i];
+                    auto sourceArray = out_array->children[nArrayIdx];
+                    auto targetArray = CreateWKTArrayFromWKBArray(sourceArray);
+                    if (targetArray)
+                    {
+                        sourceArray->release(sourceArray);
+                        out_array->children[nArrayIdx] = targetArray;
+                    }
+                    else
+                    {
+                        out_array->release(out_array);
+                        memset(out_array, 0, sizeof(*out_array));
+                        return ENOMEM;
+                    }
+                }
+                else if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+                {
+                    // Shouldn't happen if UseRecordBatchBaseImplementation()
+                    // is up to date
+                    CPLAssert(false);
+                }
+            }
+        }
+    }
+
     OverrideArrowRelease(m_poArrowDS, out_array);
 
     return 0;
+}
+
+/************************************************************************/
+/*                    OGRArrowLayerAppendBuffer                         */
+/************************************************************************/
+
+class OGRArrowLayerAppendBuffer : public OGRAppendBuffer
+{
+  public:
+    OGRArrowLayerAppendBuffer(struct ArrowArray *targetArrayIn,
+                              size_t nInitialCapacityIn)
+        : m_psTargetArray(targetArrayIn)
+    {
+        m_nCapacity = nInitialCapacityIn;
+        m_pRawBuffer = const_cast<void *>(m_psTargetArray->buffers[2]);
+    }
+
+  protected:
+    bool Grow(size_t nItemSize) override
+    {
+        constexpr uint32_t MAX_SIZE_SINT32 =
+            static_cast<uint32_t>(std::numeric_limits<int32_t>::max());
+        if (nItemSize > MAX_SIZE_SINT32 - m_nSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large WKT content");
+            return false;
+        }
+        size_t nNewCapacity = m_nSize + nItemSize;
+        CPLAssert(m_nCapacity <= MAX_SIZE_SINT32);
+        const size_t nDoubleCapacity =
+            std::min<size_t>(MAX_SIZE_SINT32, 2 * m_nCapacity);
+        if (nNewCapacity < nDoubleCapacity)
+            nNewCapacity = nDoubleCapacity;
+        CPLAssert(nNewCapacity <= MAX_SIZE_SINT32);
+        void *newBuffer = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nNewCapacity);
+        if (newBuffer == nullptr)
+        {
+            return false;
+        }
+        m_nCapacity = nNewCapacity;
+        memcpy(newBuffer, m_pRawBuffer, m_nSize);
+        VSIFreeAligned(m_pRawBuffer);
+        m_pRawBuffer = newBuffer;
+        m_psTargetArray->buffers[2] = m_pRawBuffer;
+        return true;
+    }
+
+  private:
+    struct ArrowArray *m_psTargetArray;
+
+    OGRArrowLayerAppendBuffer(const OGRArrowLayerAppendBuffer &) = delete;
+    OGRArrowLayerAppendBuffer &
+    operator=(const OGRArrowLayerAppendBuffer &) = delete;
+};
+
+/************************************************************************/
+/*                    CreateWKTArrayFromWKBArray()                      */
+/************************************************************************/
+
+inline struct ArrowArray *
+OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
+{
+    CPLAssert(sourceArray->n_buffers == 3);
+    CPLAssert(sourceArray->buffers[1] != nullptr);
+    CPLAssert(sourceArray->buffers[2] != nullptr);
+
+    const size_t nLength = static_cast<size_t>(sourceArray->length);
+    auto targetArray = static_cast<struct ArrowArray *>(
+        CPLCalloc(1, sizeof(struct ArrowArray)));
+    targetArray->release = OGRLayer::ReleaseArray;
+    targetArray->length = nLength;
+
+    targetArray->n_buffers = 3;
+    targetArray->buffers =
+        static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
+
+    // Allocate validity map buffer if needed
+    const auto sourceNull =
+        static_cast<const uint8_t *>(sourceArray->buffers[0]);
+    if (sourceArray->null_count && sourceNull)
+    {
+        targetArray->buffers[0] =
+            VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nLength + 7) / 8);
+        if (targetArray->buffers[0])
+        {
+            targetArray->null_count = sourceArray->null_count;
+            memcpy(const_cast<void *>(targetArray->buffers[0]), sourceNull,
+                   (nLength + 7) / 8);
+        }
+    }
+
+    // Allocate offset buffer
+    targetArray->buffers[1] =
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(uint32_t) * (1 + nLength));
+
+    // Allocate data (WKB) buffer
+    constexpr size_t DEFAULT_WKB_SIZE = 100;
+    uint32_t nInitialCapacity = static_cast<uint32_t>(std::max<size_t>(
+        std::numeric_limits<int32_t>::max(), DEFAULT_WKB_SIZE * nLength));
+    targetArray->buffers[2] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nInitialCapacity);
+
+    // Check buffers have been allocated
+    if ((sourceNull && targetArray->buffers[0] == nullptr) ||
+        targetArray->buffers[1] == nullptr ||
+        targetArray->buffers[2] == nullptr)
+    {
+        targetArray->release(targetArray);
+        return nullptr;
+    }
+
+    OGRArrowLayerAppendBuffer oOGRAppendBuffer(targetArray, nInitialCapacity);
+    OGRWKTToWKBTranslator oTranslator(oOGRAppendBuffer);
+
+    const auto sourceOffsets =
+        static_cast<const uint32_t *>(sourceArray->buffers[1]);
+    auto sourceBytes =
+        static_cast<char *>(const_cast<void *>(sourceArray->buffers[2]));
+    auto targetOffsets =
+        static_cast<uint32_t *>(const_cast<void *>(targetArray->buffers[1]));
+    for (size_t i = 0; i < nLength; ++i)
+    {
+        targetOffsets[i] = static_cast<uint32_t>(oOGRAppendBuffer.GetSize());
+
+        if (sourceArray->null_count && sourceNull &&
+            ((sourceNull[i / 8] >> (i % 8)) & 1) == 0)
+        {
+            continue;
+        }
+
+        const size_t nWKBSize = oTranslator.TranslateWKT(
+            sourceBytes + sourceOffsets[i],
+            sourceOffsets[i + 1] - sourceOffsets[i],
+            sourceOffsets[i + 1] < sourceOffsets[nLength]);
+        if (nWKBSize == static_cast<size_t>(-1))
+        {
+            targetArray->release(targetArray);
+            return nullptr;
+        }
+    }
+    targetOffsets[nLength] = static_cast<uint32_t>(oOGRAppendBuffer.GetSize());
+
+    return targetArray;
 }
 
 /************************************************************************/
