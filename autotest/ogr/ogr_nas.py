@@ -48,6 +48,10 @@ pytestmark = pytest.mark.require_driver("NAS")
 #
 
 
+@pytest.mark.skipif(
+    not os.path.exists("tmp/cache/nas_testdaten_peine.zip"),
+    reason="Test data no longer available",
+)
 def test_ogr_nas_1():
 
     gdaltest.download_or_skip(
