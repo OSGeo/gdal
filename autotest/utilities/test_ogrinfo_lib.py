@@ -27,6 +27,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -589,33 +590,13 @@ def test_ogrinfo_lib_json_features():
     assert ret_json_features == ret_features_json
 
 
-###############################################################################
-# Validate json schema output
-
-
-def _validate_json_output(instance):
-
-    try:
-        from jsonschema import validate
-    except ImportError:
-        pytest.skip("jsonschema module not available")
-
-    gdal_data = gdal.GetConfigOption("GDAL_DATA")
-    if gdal_data is None:
-        pytest.skip("GDAL_DATA not defined")
-
-    import json
-
-    schema = json.loads(open(gdal_data + "/ogrinfo_output.schema.json", "rb").read())
-
-    validate(instance=instance, schema=schema)
-
-
 def test_ogrinfo_lib_json_validate():
 
     ds = gdal.OpenEx("../ogr/data/poly.shp")
 
-    _validate_json_output(gdal.VectorInfo(ds, format="json", dumpFeatures=True))
+    ret = gdal.VectorInfo(ds, format="json", dumpFeatures=True)
+
+    gdaltest.validate_json(ret, "ogrinfo_output.schema.json")
 
 
 ###############################################################################
@@ -667,7 +648,7 @@ def test_ogrinfo_lib_json_relationships():
     ds = gdal.OpenEx("../ogr/data/filegdb/relationships.gdb")
 
     ret = gdal.VectorInfo(ds, format="json")
-    _validate_json_output(ret)
+    gdaltest.validate_json(ret, "ogrinfo_output.schema.json")
 
     # print(ret["relationships"]["composite_many_to_many"])
     assert ret["relationships"]["composite_many_to_many"] == {

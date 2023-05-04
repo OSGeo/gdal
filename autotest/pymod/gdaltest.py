@@ -31,6 +31,7 @@
 
 import contextlib
 import io
+import json
 import math
 import os
 import os.path
@@ -2046,3 +2047,37 @@ def runexternal_out_and_err(cmd, check_memleak=True, encoding="ascii"):
         ret_stderr = f"{ret_stderr}\nERROR ret code = {waitcode}"
 
     return (ret_stdout, ret_stderr)
+
+
+###############################################################################
+# Validate JSON according to a JSON schema
+#
+# "jsn" should be a string or a json object
+# "schema" should be a path to file containing a JSON schema. If the
+# file is not found relative to the current working directory or GDAL_DATA,
+# the test will fail.
+def validate_json(jsn, schema):
+    __tracebackhide__ = True
+
+    try:
+        import jsonschema
+    except ImportError:
+        pytest.skip("jsonschema module not available")
+
+    if not os.path.exists(schema):
+        gdal_data = gdal.GetConfigOption("GDAL_DATA")
+
+        if gdal_data and os.path.exists(os.path.join(gdal_data, schema)):
+            schema = os.path.join(gdal_data, schema)
+        else:
+            pytest.fail(f"Could not find schema {schema}")
+
+    if isinstance(jsn, str):
+        jsn = json.loads(jsn)
+
+    schema = json.loads(open(schema, "rb").read())
+
+    try:
+        jsonschema.validate(instance=jsn, schema=schema)
+    except jsonschema.exceptions.RefResolutionError:
+        pytest.skip("Failed to resolve remote reference in JSON schema")
