@@ -314,8 +314,9 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             auto kvMetadata = field->metadata()
                                   ? field->metadata()->Copy()
                                   : std::make_shared<arrow::KeyValueMetadata>();
-            kvMetadata->Append("ARROW:extension:name",
-                               GetGeomEncodingAsString(m_aeGeomEncoding[i]));
+            kvMetadata->Append(
+                "ARROW:extension:name",
+                GetGeomEncodingAsString(m_aeGeomEncoding[i], false));
             field = field->WithMetadata(kvMetadata);
         }
 
@@ -560,18 +561,19 @@ OGRArrowWriterLayer::GetPreciseArrowGeomEncoding(OGRwkbGeometryType eGType)
 }
 
 /************************************************************************/
-/*                        GetGeomEncodingAsString()                   */
+/*                        GetGeomEncodingAsString()                     */
 /************************************************************************/
 
 inline const char *
-OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding)
+OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
+                                             bool bForParquetGeo)
 {
     switch (eGeomEncoding)
     {
         case OGRArrowGeomEncoding::WKB:
-            return "WKB";
+            return bForParquetGeo ? "WKB" : "ogc.wkb";
         case OGRArrowGeomEncoding::WKT:
-            return "WKT";
+            return bForParquetGeo ? "WKT" : "ogc.wkt";
         case OGRArrowGeomEncoding::GEOARROW_GENERIC:
             CPLAssert(false);
             break;

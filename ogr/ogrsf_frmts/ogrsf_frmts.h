@@ -155,7 +155,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     static const char *GetLastErrorArrowArrayStream(struct ArrowArrayStream *);
 
     static struct ArrowSchema *
-    CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn);
+    CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
+                                     const char *pszArrowFormat = "z");
 
   public:
     OGRLayer();

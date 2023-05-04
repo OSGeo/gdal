@@ -1796,3 +1796,55 @@ def test_ogr_parquet_read_wkt_as_wkt_arrow_array(
 
     finally:
         gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Check that GetArrowStream interface always returns
+# ARROW:extension:name = ogc.wkb as a field schema metadata.
+
+
+def test_ogr_parquet_check_geom_column_schema_metadata():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    stream = lyr.GetArrowStreamAsPyArrow()
+    schema = stream.schema
+    field = schema.field("geometry")
+    field_md = field.metadata
+    arrow_extension_name = field_md.get(b"ARROW:extension:name", None)
+    assert arrow_extension_name == b"ogc.wkb"
+
+
+###############################################################################
+# Check that we recognize the geometry field just from the presence of
+# a ARROW:extension:name == ogc.wkb column on it
+
+
+def test_ogr_parquet_recognize_geo_from_arrow_extension_name():
+
+    outfilename = "/vsimem/out.parquet"
+    try:
+        with gdaltest.config_options(
+            {
+                "OGR_PARQUET_WRITE_GEO": "NO",
+                "OGR_PARQUET_WRITE_ARROW_EXTENSION_NAME": "YES",
+            }
+        ):
+            ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+            lyr = ds.CreateLayer("test")
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+            lyr.CreateFeature(f)
+            f = None
+            ds = None
+
+            ds = ogr.Open(outfilename)
+            lyr = ds.GetLayer(0)
+            geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+            assert geo is None
+            assert lyr.GetGeomType() == ogr.wkbPoint
+            ds = None
+
+    finally:
+        gdal.Unlink(outfilename)

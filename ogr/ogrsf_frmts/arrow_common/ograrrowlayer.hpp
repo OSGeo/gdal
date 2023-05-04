@@ -671,7 +671,10 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
 
     eGeomTypeOut = wkbUnknown;
 
-    if (osEncoding == "WKT")
+    if (osEncoding == "WKT" ||  // As used in Parquet geo metadata
+        osEncoding ==
+            "ogc.wkt"  // As used in ARROW:extension:name field metadata
+    )
     {
         if (fieldTypeId != arrow::Type::STRING)
         {
@@ -685,7 +688,10 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
         return true;
     }
 
-    if (osEncoding == "WKB")
+    if (osEncoding == "WKB" ||  // As used in Parquet geo metadata
+        osEncoding ==
+            "ogc.wkb"  // As used in ARROW:extension:name field metadata
+    )
     {
         if (fieldTypeId != arrow::Type::BINARY)
         {
@@ -3580,6 +3586,8 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
     }
 
     int j = 0;
+    const char *pszReqGeomEncoding =
+        m_aosArrowArrayStreamOptions.FetchNameValueDef("GEOMETRY_ENCODING", "");
     for (int i = 0; i < out_schema->n_children; ++i)
     {
         const auto bIsIgnored =
@@ -3594,9 +3602,7 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
         else
         {
             if (!fieldDesc[i].bIsRegularField &&
-                EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(
-                          "GEOMETRY_ENCODING", ""),
-                      "WKB"))
+                EQUAL(pszReqGeomEncoding, "WKB"))
             {
                 const int iGeomField = fieldDesc[i].nIdx;
                 if (m_aeGeomEncoding[iGeomField] == OGRArrowGeomEncoding::WKT)
@@ -3625,6 +3631,28 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
             {
                 out_schema->children[j] = out_schema->children[i];
             }
+
+            if (!fieldDesc[i].bIsRegularField &&
+                (EQUAL(pszReqGeomEncoding, "WKB") ||
+                 EQUAL(pszReqGeomEncoding, "")))
+            {
+                const int iGeomField = fieldDesc[i].nIdx;
+                const char *pszFormat = out_schema->children[j]->format;
+                if (m_aeGeomEncoding[iGeomField] == OGRArrowGeomEncoding::WKB &&
+                    !out_schema->children[j]->metadata &&
+                    (strcmp(pszFormat, "z") == 0 ||
+                     strcmp(pszFormat, "Z") == 0))
+                {
+                    const auto poGeomFieldDefn =
+                        m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
+                    // Set ARROW:extension:name = ogc:wkb
+                    auto poSchema = CreateSchemaForWKBGeometryColumn(
+                        poGeomFieldDefn, pszFormat);
+                    out_schema->children[j]->release(out_schema->children[j]);
+                    out_schema->children[j] = poSchema;
+                }
+            }
+
             ++j;
         }
     }

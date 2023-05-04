@@ -43,6 +43,8 @@ OGRParquetWriterLayer::OGRParquetWriterLayer(
     const char *pszLayerName)
     : OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName)
 {
+    m_bWriteFieldArrowExtensionName = CPLTestBool(
+        CPLGetConfigOption("OGR_PARQUET_WRITE_ARROW_EXTENSION_NAME", "NO"));
 }
 
 /************************************************************************/
@@ -371,7 +373,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
             CPLJSONObject oColumn;
             oColumns.Add(poGeomFieldDefn->GetNameRef(), oColumn);
             oColumn.Add("encoding",
-                        GetGeomEncodingAsString(m_aeGeomEncoding[i]));
+                        GetGeomEncodingAsString(m_aeGeomEncoding[i], true));
 
             if (CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_CRS", "YES")))
             {

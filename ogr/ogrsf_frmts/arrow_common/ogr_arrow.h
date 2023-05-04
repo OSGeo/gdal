@@ -301,7 +301,8 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     static OGRArrowGeomEncoding
     GetPreciseArrowGeomEncoding(OGRwkbGeometryType eGType);
     static const char *
-    GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding);
+    GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
+                            bool bForParquetGeo);
 
     virtual bool IsSupportedGeometryType(OGRwkbGeometryType eGType) const = 0;
 

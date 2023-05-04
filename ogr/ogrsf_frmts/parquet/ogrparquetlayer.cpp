@@ -142,6 +142,7 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
     {
         auto oIter = m_oMapGeometryColumns.find(field->name());
         if (oIter != m_oMapGeometryColumns.end() ||
+            STARTS_WITH(osExtensionName.c_str(), "ogc.") ||
             STARTS_WITH(osExtensionName.c_str(), "geoarrow."))
         {
             CPLJSONObject oJSONDef;
@@ -163,10 +164,14 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
                 OGRSpatialReference *poSRS = nullptr;
                 if (!oCRS.IsValid())
                 {
-                    // WGS 84 is implied if no crs member is found.
-                    poSRS = new OGRSpatialReference();
-                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poSRS->importFromEPSG(4326);
+                    if (!m_oMapGeometryColumns.empty())
+                    {
+                        // WGS 84 is implied if no crs member is found.
+                        poSRS = new OGRSpatialReference();
+                        poSRS->SetAxisMappingStrategy(
+                            OAMS_TRADITIONAL_GIS_ORDER);
+                        poSRS->importFromEPSG(4326);
+                    }
                 }
                 else if (oCRS.GetType() == CPLJSONObject::Type::String)
                 {
