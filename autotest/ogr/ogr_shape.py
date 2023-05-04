@@ -5756,18 +5756,17 @@ def test_ogr_shape_write_non_planar_polygon():
     filename = "/vsimem/" + layer_name + ".shp"
     shape_drv = ogr.GetDriverByName("ESRI Shapefile")
 
-    ds = shape_drv.CreateDataSource(filename)
-    lyr = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon25D)
+    with shape_drv.CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer(layer_name, geom_type=ogr.wkbPolygon25D)
 
-    # Create a shape
-    f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetGeometry(
-        ogr.CreateGeometryFromWkt(
-            "POLYGON Z ((516113.631069 5041435.137874 137.334, 516141.2239 5041542.465874 137.614, 515998.390418 5041476.527121 137.288, 516113.631069 5041435.137874 137.334), (516041.808551 5041476.527121 137.418, 516111.602184 5041505.337284 137.322, 516098.617322 5041456.644051 137.451, 516041.808551 5041476.527121 137.418))"
+        # Create a shape
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(
+            ogr.CreateGeometryFromWkt(
+                "POLYGON Z ((516113.631069 5041435.137874 137.334, 516141.2239 5041542.465874 137.614, 515998.390418 5041476.527121 137.288, 516113.631069 5041435.137874 137.334), (516041.808551 5041476.527121 137.418, 516111.602184 5041505.337284 137.322, 516098.617322 5041456.644051 137.451, 516041.808551 5041476.527121 137.418))"
+            )
         )
-    )
-    lyr.CreateFeature(f)
-    ds = None
+        lyr.CreateFeature(f)
 
     ds = ogr.Open(filename)
     lyr = ds.GetLayer(0)
@@ -5779,7 +5778,6 @@ def test_ogr_shape_write_non_planar_polygon():
         )
         == 0
     )
-    ds = None
 
     shape_drv.DeleteDataSource(filename)
 

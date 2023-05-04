@@ -891,6 +891,32 @@ def test_ogr_basic_test_future_warning_exceptions():
 
 
 ###############################################################################
+# Test CreateDataSource context manager
+
+
+def test_ogr_basic_create_data_source_context_manager(tmp_path):
+    fname = str(tmp_path / "out.shp")
+
+    drv = ogr.GetDriverByName("ESRI Shapefile")
+    with drv.CreateDataSource(fname) as ds:
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
+        lyr.CreateFeature(f)
+
+    # Make sure we don't crash when accessing ds after it has been closed
+    with pytest.raises(Exception):
+        ds.GetLayerByName("test")
+
+    # Make sure the feature has actually been written
+    ds_in = ogr.Open(fname)
+    lyr_in = ds_in.GetLayer(0)
+
+    assert lyr_in.GetFeatureCount() == 1
+
+
+###############################################################################
 # cleanup
 
 

@@ -1054,6 +1054,12 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         else:
             return self._SetGCPs2(gcps, wkt_or_spatial_ref)
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        _gdal.delete_Dataset(self)
+        self.this = None
 %}
 
 %feature("shadow") ExecuteSQL %{

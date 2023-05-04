@@ -756,3 +756,18 @@ def test_basic_test_DontUseExceptions():
     assert "ERROR " in err
     assert "FutureWarning: Neither gdal.UseExceptions()" not in err
     assert "FutureWarning: Neither ogr.UseExceptions()" not in err
+
+
+def test_create_context_manager(tmp_path):
+    fname = str(tmp_path / "out.tif")
+
+    drv = gdal.GetDriverByName("GTiff")
+    with drv.Create(fname, xsize=10, ysize=10, bands=1, eType=gdal.GDT_Float32) as ds:
+        ds.GetRasterBand(1).Fill(100)
+
+    # Make sure we don't crash when accessing ds after it has been closed
+    with pytest.raises(Exception):
+        ds.GetRasterBand(1).ReadRaster()
+
+    ds_in = gdal.Open(fname)
+    assert ds_in.GetRasterBand(1).Checksum() != 0

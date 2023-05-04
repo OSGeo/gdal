@@ -99,6 +99,13 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         """Returns the number of layers on the datasource"""
         return self.GetLayerCount()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.Destroy()
+        self.this = None
+
     def __getitem__(self, value):
         """Support dictionary, list, and slice -like access to the datasource.
         ds[0] would return the first layer on the datasource.
