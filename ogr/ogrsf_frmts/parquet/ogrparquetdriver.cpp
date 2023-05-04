@@ -279,7 +279,8 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
 
 static GDALDataset *OpenFromDatasetFactory(
     const std::string &osBasePath,
-    const std::shared_ptr<arrow::dataset::DatasetFactory> &factory)
+    const std::shared_ptr<arrow::dataset::DatasetFactory> &factory,
+    CSLConstList papszOpenOptions)
 {
     std::shared_ptr<arrow::dataset::Dataset> dataset;
     PARQUET_ASSIGN_OR_THROW(dataset, factory->Finish());
@@ -308,7 +309,7 @@ static GDALDataset *OpenFromDatasetFactory(
     auto poDS = cpl::make_unique<OGRParquetDataset>(poMemoryPool);
     auto poLayer = cpl::make_unique<OGRParquetDatasetLayer>(
         poDS.get(), CPLGetBasename(osBasePath.c_str()), scanner,
-        scannerBuilder->schema());
+        scannerBuilder->schema(), papszOpenOptions);
     poDS->SetLayer(std::move(poLayer));
     return poDS.release();
 }
@@ -352,10 +353,9 @@ GetFileSystem(std::string &osBasePathInOut,
 /*                  OpenParquetDatasetWithMetadata()                    */
 /************************************************************************/
 
-static GDALDataset *
-OpenParquetDatasetWithMetadata(const std::string &osBasePathIn,
-                               const char *pszMetadataFile,
-                               const std::string &osQueryParameters)
+static GDALDataset *OpenParquetDatasetWithMetadata(
+    const std::string &osBasePathIn, const char *pszMetadataFile,
+    const std::string &osQueryParameters, CSLConstList papszOpenOptions)
 {
     std::string osBasePath(osBasePathIn);
     auto fs = GetFileSystem(osBasePath, osQueryParameters);
@@ -372,7 +372,7 @@ OpenParquetDatasetWithMetadata(const std::string &osBasePathIn,
             osBasePath + '/' + pszMetadataFile, fs,
             std::make_shared<arrow::dataset::ParquetFileFormat>(), options));
 
-    return OpenFromDatasetFactory(osBasePath, factory);
+    return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
 }
 
 /************************************************************************/
@@ -381,7 +381,8 @@ OpenParquetDatasetWithMetadata(const std::string &osBasePathIn,
 
 static GDALDataset *
 OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
-                                  const std::string &osQueryParameters)
+                                  const std::string &osQueryParameters,
+                                  CSLConstList papszOpenOptions)
 {
     std::string osBasePath(osBasePathIn);
     auto fs = GetFileSystem(osBasePath, osQueryParameters);
@@ -402,7 +403,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
             fs, selector, std::make_shared<arrow::dataset::ParquetFileFormat>(),
             options));
 
-    return OpenFromDatasetFactory(osBasePath, factory);
+    return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
 }
 
 #endif
@@ -456,8 +457,9 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
             // If there's a _metadata file, then use it to avoid listing files
             try
             {
-                return OpenParquetDatasetWithMetadata(osBasePath, "_metadata",
-                                                      osQueryParameters);
+                return OpenParquetDatasetWithMetadata(
+                    osBasePath, "_metadata", osQueryParameters,
+                    poOpenInfo->papszOpenOptions);
             }
             catch (const std::exception &e)
             {
@@ -503,8 +505,9 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
             {
                 try
                 {
-                    return OpenParquetDatasetWithoutMetadata(osBasePath,
-                                                             osQueryParameters);
+                    return OpenParquetDatasetWithoutMetadata(
+                        osBasePath, osQueryParameters,
+                        poOpenInfo->papszOpenOptions);
                 }
                 catch (const std::exception &e)
                 {
@@ -574,7 +577,7 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
         auto poDS = cpl::make_unique<OGRParquetDataset>(poMemoryPool);
         auto poLayer = cpl::make_unique<OGRParquetLayer>(
             poDS.get(), CPLGetBasename(osFilename.c_str()),
-            std::move(arrow_reader));
+            std::move(arrow_reader), poOpenInfo->papszOpenOptions);
         poDS->SetLayer(std::move(poLayer));
         return poDS.release();
     }
@@ -818,6 +821,17 @@ void RegisterOGRParquet()
                               "WidthPrecision Nullable Comment "
                               "AlternativeName Domain");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_OPENOPTIONLIST,
+        "<OpenOptionList>"
+        "  <Option name='GEOM_POSSIBLE_NAMES' type='string' description='Comma "
+        "separated list of possible names for geometry column(s).' "
+        "default='geometry,wkb_geometry,wkt_geometry'/>"
+        "  <Option name='CRS' type='string' "
+        "description='Set/override CRS, typically defined as AUTH:CODE "
+        "(e.g EPSG:4326), of geometry column(s)'/>"
+        "</OpenOptionList>");
 
     poDriver->pfnOpen = OGRParquetDriverOpen;
     poDriver->pfnIdentify = OGRParquetDriverIdentify;

@@ -30,6 +30,22 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Open options
+------------
+
+- **GEOM_POSSIBLE_NAMES=string**: (GDAL >= 3.8)
+  Comma separated list of possible names for geometry column(s). Only used
+  for files without GeoParquet dataset-level metadata. Default value is
+  "geometry,wkb_geometry,wkt_geometry". Columns are recognized as geometry
+  columns only if they are of type binary (they are assumed to contain
+  WKB encoded geometries), or if they are of type string and contain the
+  "wkt" substring in their name (they are then assumed to contain WKT encoded
+  geometries).
+
+- **CRS=string**: (GDAL >= 3.8).
+  To set or override the CRS of geometry columns.
+  The string is typically formatted as CODE:AUTH (e.g "EPSG:4326"), or can
+  be a PROJ.4 or WKT CRS string.
 
 Creation issues
 ---------------

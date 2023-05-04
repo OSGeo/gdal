@@ -1848,3 +1848,66 @@ def test_ogr_parquet_recognize_geo_from_arrow_extension_name():
 
     finally:
         gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Check that we recognize the geometry field just from its name
+
+
+@pytest.mark.parametrize(
+    "geom_col_name,is_wkb", [("geometry", True), ("wkt_geometry", False)]
+)
+def test_ogr_parquet_recognize_geo_from_geom_possible_names(geom_col_name, is_wkb):
+
+    outfilename = "/vsimem/out.parquet"
+    try:
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone)
+        lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
+        lyr.CreateField(
+            ogr.FieldDefn(geom_col_name, ogr.OFTBinary if is_wkb else ogr.OFTString)
+        )
+        lyr.CreateField(ogr.FieldDefn("bar", ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        if is_wkb:
+            wkb = ogr.CreateGeometryFromWkt("POINT (1 2)").ExportToIsoWkb()
+            f.SetFieldBinaryFromHexString(
+                geom_col_name, "".join("%02X" % x for x in wkb)
+            )
+        else:
+            f[geom_col_name] = "POINT (1 2)"
+        lyr.CreateFeature(f)
+        f = None
+        ds = None
+
+        ds = ogr.Open(outfilename)
+        lyr = ds.GetLayer(0)
+        geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
+        assert geo is None
+        assert lyr.GetGeometryColumn() == geom_col_name
+        assert lyr.GetGeomType() == ogr.wkbUnknown
+        assert lyr.GetSpatialRef() is None
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+        ds = None
+
+        ds = gdal.OpenEx(outfilename, open_options=["GEOM_POSSIBLE_NAMES=bar"])
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbNone
+        ds = None
+
+        ds = gdal.OpenEx(
+            outfilename,
+            open_options=[
+                f"GEOM_POSSIBLE_NAMES=foo,{geom_col_name},bar",
+                "CRS=EPSG:4326",
+            ],
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeometryColumn() == geom_col_name
+        assert lyr.GetGeomType() == ogr.wkbUnknown
+        assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
