@@ -3,6 +3,8 @@
 GeoPackage aspatial extension
 =============================
 
+.. warning:: This extension has been superseded by GeoPackage 1.2 ``attributes`` data type.
+
 GeoPackage 1.0 Extension
 
 Extension follows template from Annex I of the OGC `GeoPackage 1.0 Specification`_.
