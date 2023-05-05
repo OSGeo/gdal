@@ -9,25 +9,30 @@ LCP -- FARSITE v.4 LCP Format
 .. built_in_by_default::
 
 FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by
-wildland fire behavior and fire effect simulation models such as
-FARSITE, FLAMMAP, and FBAT (`www.fire.org <http://www.fire.org>`__). The
+wildland fire behavior and fire effect simulation models such as 
+FlamMap (`firelab.org <https://www.firelab.org/project/flammap>`__). The
 bands of an LCP file store data describing terrain, tree canopy, and
-surface fuel. The `LANDFIRE Data Distribrution
-Site <https://landfire.cr.usgs.gov/viewer/>`__ distributes data in LCP
-format, and programs such as FARSITE and
-`LFDAT <http://www.landfire.gov/datatool.php>`__ can create LCP files
-from a set of input rasters.
+surface fuel. The `LANDFIRE Program <https://www.landfire.gov/>`__ 
+provides geospatial data in LCP format to support fire simulation modeling.
 
 An LCP file (.lcp) is basically a raw format with a 7,316-byte header
 described below. The data type for all bands is 16-bit signed integer.
 Bands are interleaved by pixel. Five bands are required: elevation,
 slope, aspect, fuel model, and tree canopy cover. Crown fuel bands
 (canopy height, canopy base height, canopy bulk density), and surface
-fuel bands (duff, coarse woody debris) are optional.
+fuel bands (duff, coarse woody debris) are optional. The LCP driver reports 
+several band-level metadata items described below. The band names used are: 
+ELEVATION, SLOPE, ASPECT, FUEL_MODEL, CANOPY_COV, CANOPY_HT, CBH, CBD, DUFF 
+and CWD.
 
-The LCP driver reads the linear unit, cell size, and extent, but the LCP
-file does not specify the projection. UTM projections are typical, but
-other projections are possible.
+
+The LCP driver reads the linear unit, cell size, and extent, but the .lcp 
+file does not specify a projection internally. UTM projections are typical, 
+but other projections are possible. The driver will look for a file with 
+.prj extension and read the coordinate system in ESRI pseudo-OGC WKT format.
+
+LCP does not support an inherent no data value, but -9999 is used by 
+convention to mark pixels that are not valid data.
 
 Driver capabilities
 -------------------
