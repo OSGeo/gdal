@@ -26,7 +26,7 @@ GDAL 3.6.x bugfix release.
 * Add read-only raster driver NSIDCbin for Sea Ice Concentrations (#7263)
 * Add read-only vector GTFS (General Transit Feed Specification) driver
 * TileDB: add read/write vector side
-* Add support for [SOZip](https://sozip.org] (Seek Optimized ZIP) with enhanced
+* Add support for [SOZip](https://sozip.org) (Seek Optimized ZIP) with enhanced
   /vsizip/ virtual file system and a new sozip utility
 * OpenFileGDB: add read-only support for raster datasets (.gdb v10)
 * PNG: 1.7-2.0x speed-up in whole image decompression with libdeflate on
