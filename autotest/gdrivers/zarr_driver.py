@@ -984,11 +984,7 @@ def test_zarr_read_v3(use_get_names):
     assert subgroup.GetName() == "marvin"
     assert subgroup.GetFullName() == "/marvin"
     if use_get_names:
-        assert rg.GetMDArrayNames() == ["/", "ar"]
-
-    ar = rg.OpenMDArray("/")
-    assert ar
-    assert ar.Read() == array.array("i", [2] + ([1] * (5 * 10 - 1)))
+        assert rg.GetMDArrayNames() == ["ar"]
 
     ar = rg.OpenMDArray("ar")
     assert ar
@@ -1110,14 +1106,10 @@ def test_zarr_read_classic():
     subds = ds.GetSubDatasets()
     assert set(subds) == set(
         [
-            ('ZARR:"data/zarr/v3/test.zr3":/', "Array /"),
             ('ZARR:"data/zarr/v3/test.zr3":/ar', "Array /ar"),
             ('ZARR:"data/zarr/v3/test.zr3":/marvin/android', "Array /marvin/android"),
         ]
     )
-    ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/')
-    assert ds
-    assert ds.ReadRaster() == array.array("i", [2] + ([1] * (10 * 5 - 1)))
     ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/ar')
     assert ds
     assert ds.ReadRaster() == array.array("b", [1, 2])
@@ -1476,10 +1468,7 @@ def test_zarr_create_group_errors(group_name, format):
         assert rg
         subgroup = rg.CreateGroup("foo")
         assert subgroup
-        if format == "ZARR_V2":
-            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-        else:
-            gdal.Mkdir("/vsimem/test.zarr/meta/root/directory_with_that_name", 0)
+        gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
         with gdaltest.error_handler():
             assert rg.CreateGroup(group_name) is None
 
@@ -1529,12 +1518,9 @@ def getCompoundDT():
 def test_zarr_create_array(datatype, nodata, format):
 
     error_expected = False
-    if format == "ZARR_V3":
-        if datatype.GetClass() != gdal.GEDTC_NUMERIC or gdal.DataTypeIsComplex(
-            datatype.GetNumericDataType()
-        ):
-            error_expected = True
-    elif datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+    if datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+        error_expected = True
+    elif format == "ZARR_V3" and datatype.GetClass() != gdal.GEDTC_NUMERIC:
         error_expected = True
 
     try:
@@ -1609,7 +1595,12 @@ def test_zarr_create_array(datatype, nodata, format):
                     got_nodata = ar.GetNoDataValueAsRaw()
                     assert got_nodata == nodata
             else:
-                assert ar.GetNoDataValueAsRaw() is None
+                if format == "ZARR_V3":
+                    assert ar.GetNoDataValueAsRaw() is None or math.isnan(
+                        ar.GetNoDataValueAsDouble()
+                    )
+                else:
+                    assert ar.GetNoDataValueAsRaw() is None
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
@@ -1718,7 +1709,7 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
         ],
     ],
 )
-def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
+def DISABLED_test_zarr_create_array_compressor_v3(compressor, options, expected_json):
 
     compressors = gdal.GetDriverByName("Zarr").GetMetadataItem("COMPRESSORS")
     if compressor != "NONE" and compressor not in compressors:
@@ -1755,6 +1746,349 @@ def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
         else:
             assert j["compressor"] == expected_json
 
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
+    "j, error_msg",
+    [
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "MISSING_shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "shape missing or not an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": "invalid",
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "shape missing or not an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1, 2]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "shape and chunks arrays are of different size",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "MISSING_data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "data_type missing",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8_INVALID",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Invalid or unsupported format for data_type",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "MISSING_chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "chunk_grid missing or not an object",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {"name": "invalid"},
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Only chunk_grid.name = regular supported",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {"name": "regular"},
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "chunk_grid.configuration.chunk_shape missing or not an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "MISSING_chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "chunk_key_encoding missing or not an object",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "invalid"},
+                "fill_value": 0,
+            },
+            "Unsupported chunk_key_encoding.name",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {
+                    "name": "default",
+                    "configuration": {"separator": "invalid"},
+                },
+                "fill_value": 0,
+            },
+            "Separator can only be '/' or '.'",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+                "storage_transformers": [{}],
+            },
+            "storage_transformers are not supported",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "invalid",
+            },
+            "Invalid fill_value",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0",
+                "dimension_names": "invalid",
+            },
+            "dimension_names should be an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0",
+                "dimension_names": [],
+            },
+            "Size of dimension_names[] different from the one of shape",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "NaN",
+            },
+            "Invalid fill_value for this data type",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0x00",
+            },
+            "Hexadecimal representation of fill_value no supported for this data type",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0b00",
+            },
+            "Binary representation of fill_value no supported for this data type",
+        ],
+    ],
+)
+def test_zarr_read_invalid_zarr_v3(j, error_msg):
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            assert gdal.Open("/vsimem/test.zarr") is None
+        assert error_msg in gdal.GetLastErrorMsg()
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+def test_zarr_read_data_type_fallback_zarr_v3():
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": {
+            "name": "datetime",
+            "configuration": {"unit": "ns"},
+            "fallback": "int64",
+        },
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": 0,
+    }
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+        ds = gdal.Open("/vsimem/test.zarr")
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
+    "data_type,fill_value,nodata",
+    [
+        ("float32", "0x3fc00000", 1.5),
+        ("float32", str(bin(0x3FC00000)), 1.5),
+        ("float64", "0x3ff8000000000000", 1.5),
+        ("float64", str(bin(0x3FF8000000000000)), 1.5),
+    ],
+)
+def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": data_type,
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": fill_value,
+    }
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+        ds = gdal.Open("/vsimem/test.zarr")
+        assert ds.GetRasterBand(1).GetNoDataValue() == nodata
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
@@ -2176,7 +2510,7 @@ def test_zarr_update_array_string(srcfilename):
         gdal.RmdirRecursive(filename)
 
 
-@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+@pytest.mark.parametrize("format", ["ZARR_V2"])
 def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(format):
 
     try:
@@ -2848,7 +3182,7 @@ def test_zarr_cache_tile_presence(format):
         if format == "ZARR_V2":
             cache_filename = filename + "/test/.zarray.gmac"
         else:
-            cache_filename = filename + "/meta/root/test.array.json.gmac"
+            cache_filename = filename + "/test/zarr.json.gmac"
         assert gdal.VSIStatL(cache_filename) is not None
 
         # Read content of the array

@@ -83,84 +83,145 @@ ZarrSharedResource::~ZarrSharedResource()
 
 std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
 {
-    auto poRG = ZarrV2Group::Create(shared_from_this(), std::string(), "/");
-    poRG->SetUpdatable(m_bUpdatable);
-    poRG->SetDirectoryName(m_osRootDirectoryName);
-
-    const std::string osZarrayFilename(
-        CPLFormFilename(m_osRootDirectoryName.c_str(), ".zarray", nullptr));
-    VSIStatBufL sStat;
-    if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
     {
-        CPLJSONDocument oDoc;
-        if (!oDoc.Load(osZarrayFilename))
-            return nullptr;
-        const auto oRoot = oDoc.GetRoot();
-        if (oRoot["_NCZARR_ARRAY"].IsValid())
-        {
-            // If opening a NCZarr array, initialize its group from NCZarr
-            // metadata.
-            const std::string osGroupFilename(
-                CPLFormFilename(CPLGetDirname(m_osRootDirectoryName.c_str()),
-                                ".zgroup", nullptr));
-            if (VSIStatL(osGroupFilename.c_str(), &sStat) == 0)
-            {
-                CPLJSONDocument oDocGroup;
-                if (oDocGroup.Load(osGroupFilename))
-                {
-                    if (!poRG->InitFromZGroup(oDocGroup.GetRoot()))
-                        return nullptr;
-                }
-            }
-        }
-        const std::string osArrayName(
-            CPLGetBasename(m_osRootDirectoryName.c_str()));
-        std::set<std::string> oSetFilenamesInLoading;
-        if (!poRG->LoadArray(osArrayName, osZarrayFilename, oRoot, false,
-                             CPLJSONObject(), oSetFilenamesInLoading))
-            return nullptr;
+        auto poRG = ZarrV2Group::Create(shared_from_this(), std::string(), "/");
+        poRG->SetUpdatable(m_bUpdatable);
+        poRG->SetDirectoryName(m_osRootDirectoryName);
 
-        return poRG;
-    }
-
-    const std::string osZmetadataFilename(
-        CPLFormFilename(m_osRootDirectoryName.c_str(), ".zmetadata", nullptr));
-    if (CPLTestBool(
-            CSLFetchNameValueDef(GetOpenOptions(), "USE_ZMETADATA", "YES")) &&
-        VSIStatL(osZmetadataFilename.c_str(), &sStat) == 0)
-    {
-        if (!m_bZMetadataEnabled)
+        const std::string osZarrayFilename(
+            CPLFormFilename(m_osRootDirectoryName.c_str(), ".zarray", nullptr));
+        VSIStatBufL sStat;
+        if (VSIStatL(osZarrayFilename.c_str(), &sStat) == 0)
         {
             CPLJSONDocument oDoc;
-            if (!oDoc.Load(osZmetadataFilename))
+            if (!oDoc.Load(osZarrayFilename))
+                return nullptr;
+            const auto oRoot = oDoc.GetRoot();
+            if (oRoot["_NCZARR_ARRAY"].IsValid())
+            {
+                // If opening a NCZarr array, initialize its group from NCZarr
+                // metadata.
+                const std::string osGroupFilename(CPLFormFilename(
+                    CPLGetDirname(m_osRootDirectoryName.c_str()), ".zgroup",
+                    nullptr));
+                if (VSIStatL(osGroupFilename.c_str(), &sStat) == 0)
+                {
+                    CPLJSONDocument oDocGroup;
+                    if (oDocGroup.Load(osGroupFilename))
+                    {
+                        if (!poRG->InitFromZGroup(oDocGroup.GetRoot()))
+                            return nullptr;
+                    }
+                }
+            }
+            const std::string osArrayName(
+                CPLGetBasename(m_osRootDirectoryName.c_str()));
+            std::set<std::string> oSetFilenamesInLoading;
+            if (!poRG->LoadArray(osArrayName, osZarrayFilename, oRoot, false,
+                                 CPLJSONObject(), oSetFilenamesInLoading))
                 return nullptr;
 
-            m_bZMetadataEnabled = true;
-            m_oObj = oDoc.GetRoot();
+            return poRG;
         }
-        poRG->InitFromZMetadata(m_oObj);
 
-        return poRG;
-    }
+        const std::string osZmetadataFilename(CPLFormFilename(
+            m_osRootDirectoryName.c_str(), ".zmetadata", nullptr));
+        if (CPLTestBool(CSLFetchNameValueDef(GetOpenOptions(), "USE_ZMETADATA",
+                                             "YES")) &&
+            VSIStatL(osZmetadataFilename.c_str(), &sStat) == 0)
+        {
+            if (!m_bZMetadataEnabled)
+            {
+                CPLJSONDocument oDoc;
+                if (!oDoc.Load(osZmetadataFilename))
+                    return nullptr;
 
-    const std::string osGroupFilename(
-        CPLFormFilename(m_osRootDirectoryName.c_str(), ".zgroup", nullptr));
-    if (VSIStatL(osGroupFilename.c_str(), &sStat) == 0)
-    {
-        CPLJSONDocument oDoc;
-        if (!oDoc.Load(osGroupFilename))
-            return nullptr;
+                m_bZMetadataEnabled = true;
+                m_oObj = oDoc.GetRoot();
+            }
+            poRG->InitFromZMetadata(m_oObj);
 
-        if (!poRG->InitFromZGroup(oDoc.GetRoot()))
-            return nullptr;
-        return poRG;
+            return poRG;
+        }
+
+        const std::string osGroupFilename(
+            CPLFormFilename(m_osRootDirectoryName.c_str(), ".zgroup", nullptr));
+        if (VSIStatL(osGroupFilename.c_str(), &sStat) == 0)
+        {
+            CPLJSONDocument oDoc;
+            if (!oDoc.Load(osGroupFilename))
+                return nullptr;
+
+            if (!poRG->InitFromZGroup(oDoc.GetRoot()))
+                return nullptr;
+            return poRG;
+        }
     }
 
     // Zarr v3
     auto poRG_V3 = ZarrV3Group::Create(shared_from_this(), std::string(), "/",
                                        m_osRootDirectoryName);
     poRG_V3->SetUpdatable(m_bUpdatable);
-    return poRG_V3;
+
+    const std::string osZarrJsonFilename(
+        CPLFormFilename(m_osRootDirectoryName.c_str(), "zarr.json", nullptr));
+    VSIStatBufL sStat;
+    if (VSIStatL(osZarrJsonFilename.c_str(), &sStat) == 0)
+    {
+        CPLJSONDocument oDoc;
+        if (!oDoc.Load(osZarrJsonFilename))
+            return nullptr;
+        const auto oRoot = oDoc.GetRoot();
+        if (oRoot.GetInteger("zarr_format") != 3)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unhandled zarr_format value");
+            return nullptr;
+        }
+        const std::string osNodeType = oRoot.GetString("node_type");
+        if (osNodeType == "array")
+        {
+            const std::string osArrayName(
+                CPLGetBasename(m_osRootDirectoryName.c_str()));
+            poRG_V3->SetExplored();
+            std::set<std::string> oSetFilenamesInLoading;
+            if (!poRG_V3->LoadArray(osArrayName, osZarrJsonFilename, oRoot,
+                                    oSetFilenamesInLoading))
+                return nullptr;
+
+            return poRG_V3;
+        }
+        else if (osNodeType == "group")
+        {
+            return poRG_V3;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Unhandled node_type value");
+            return nullptr;
+        }
+    }
+
+    // No explict zarr.json in root directory ? Then recurse until we find
+    // one.
+    auto psDir = VSIOpenDir(m_osRootDirectoryName.c_str(), -1, nullptr);
+    if (!psDir)
+        return nullptr;
+    bool bZarrJsonFound = false;
+    while (const VSIDIREntry *psEntry = VSIGetNextDirEntry(psDir))
+    {
+        if (!VSI_ISDIR(psEntry->nMode) &&
+            strcmp(CPLGetFilename(psEntry->pszName), "zarr.json") == 0)
+        {
+            bZarrJsonFound = true;
+            break;
+        }
+    }
+    VSICloseDir(psDir);
+    if (bZarrJsonFound)
+        return poRG_V3;
+
+    return nullptr;
 }
 
 /************************************************************************/

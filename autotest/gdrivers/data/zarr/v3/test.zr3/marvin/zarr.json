@@ -2,6 +2,6 @@
   "zarr_format":3,
   "node_type":"group",
   "attributes":{
-    "root_foo":"bar"
+    "foo":"bar"
   }
 }

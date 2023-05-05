@@ -44,12 +44,11 @@ ZarrV3Array::ZarrV3Array(
     const std::string &osParentName, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
-    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
+    const std::vector<GUInt64> &anBlockSize)
     : GDALAbstractMDArray(osParentName, osName),
       ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
-                aoDtypeElts, anBlockSize, bFortranOrder)
+                aoDtypeElts, anBlockSize, /*bFortranOrder=*/false)
 {
-    m_oCompressorJSon.Deinit();
 }
 
 /************************************************************************/
@@ -62,7 +61,7 @@ ZarrV3Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                     const GDALExtendedDataType &oType,
                     const std::vector<DtypeElt> &aoDtypeElts,
-                    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
+                    const std::vector<GUInt64> &anBlockSize)
 {
     uint64_t nTotalTileCount = 1;
     for (size_t i = 0; i < aoDims.size(); ++i)
@@ -85,7 +84,7 @@ ZarrV3Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 
     auto arr = std::shared_ptr<ZarrV3Array>(
         new ZarrV3Array(poSharedResource, osParentName, osName, aoDims, oType,
-                        aoDtypeElts, anBlockSize, bFortranOrder));
+                        aoDtypeElts, anBlockSize));
     arr->SetSelf(arr);
 
     arr->m_nTotalTileCount = nTotalTileCount;
@@ -112,7 +111,6 @@ void ZarrV3Array::Flush()
 {
     ZarrV3Array::FlushDirtyTile();
 
-    CPLJSONArray j_ARRAY_DIMENSIONS;
     if (!m_aoDims.empty())
     {
         for (const auto &poDim : m_aoDims)
@@ -123,11 +121,9 @@ void ZarrV3Array::Flush()
             {
                 if (poZarrDim->IsModified())
                     m_bDefinitionModified = true;
-                j_ARRAY_DIMENSIONS.Add(poDim->GetName());
             }
             else
             {
-                j_ARRAY_DIMENSIONS = CPLJSONArray();
                 break;
             }
         }
@@ -146,28 +142,8 @@ void ZarrV3Array::Flush()
 
     if (m_bDefinitionModified)
     {
-        if (j_ARRAY_DIMENSIONS.Size() != 0)
-        {
-            oAttrs.Delete("_ARRAY_DIMENSIONS");
-            oAttrs.Add("_ARRAY_DIMENSIONS", j_ARRAY_DIMENSIONS);
-        }
-
         Serialize(oAttrs);
         m_bDefinitionModified = false;
-    }
-}
-
-/************************************************************************/
-/*           StripUselessItemsFromCompressorConfiguration()             */
-/************************************************************************/
-
-static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
-{
-    if (o.GetType() == CPLJSONObject::Type::Object)
-    {
-        o.Delete("num_threads");  // Blosc
-        o.Delete("typesize");     // Blosc
-        o.Delete("header");       // LZ4
     }
 }
 
@@ -180,6 +156,9 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
     CPLJSONDocument oDoc;
     CPLJSONObject oRoot = oDoc.GetRoot();
 
+    oRoot.Add("zarr_format", 3);
+    oRoot.Add("node_type", "array");
+
     CPLJSONArray oShape;
     for (const auto &poDim : m_aoDims)
     {
@@ -189,38 +168,73 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
 
     oRoot.Add("data_type", m_dtype.ToString());
 
-    CPLJSONObject oChunkGrid;
-    oChunkGrid.Add("type", "regular");
-    CPLJSONArray oChunks;
-    for (const auto nBlockSize : m_anBlockSize)
     {
-        oChunks.Add(static_cast<GInt64>(nBlockSize));
+        CPLJSONObject oChunkGrid;
+        oRoot.Add("chunk_grid", oChunkGrid);
+        oChunkGrid.Add("name", "regular");
+        CPLJSONObject oConfiguration;
+        oChunkGrid.Add("configuration", oConfiguration);
+        CPLJSONArray oChunks;
+        for (const auto nBlockSize : m_anBlockSize)
+        {
+            oChunks.Add(static_cast<GInt64>(nBlockSize));
+        }
+        oConfiguration.Add("chunk_shape", oChunks);
     }
-    oChunkGrid.Add("chunk_shape", oChunks);
-    oChunkGrid.Add("separator", m_osDimSeparator);
-    oRoot.Add("chunk_grid", oChunkGrid);
 
-    if (m_oCompressorJSon.IsValid())
     {
-        oRoot.Add("compressor", m_oCompressorJSon);
-        CPLJSONObject oConfiguration = oRoot["compressor"]["configuration"];
-        StripUselessItemsFromCompressorConfiguration(oConfiguration);
+        CPLJSONObject oChunkKeyEncoding;
+        oRoot.Add("chunk_key_encoding", oChunkKeyEncoding);
+        oChunkKeyEncoding.Add("name", m_bV2ChunkKeyEncoding ? "v2" : "default");
+        CPLJSONObject oConfiguration;
+        oChunkKeyEncoding.Add("configuration", oConfiguration);
+        oConfiguration.Add("separator", m_osDimSeparator);
     }
 
     if (m_pabyNoData == nullptr)
     {
-        oRoot.AddNull("fill_value");
+        if (m_oType.GetNumericDataType() == GDT_Float32 ||
+            m_oType.GetNumericDataType() == GDT_Float64)
+        {
+            oRoot.Add("fill_value", "NaN");
+        }
+        else
+        {
+            oRoot.AddNull("fill_value");
+        }
     }
     else
     {
         SerializeNumericNoData(oRoot);
     }
 
-    oRoot.Add("chunk_memory_layout", m_bFortranOrder ? "F" : "C");
-
-    oRoot.Add("extensions", CPLJSONArray());
-
     oRoot.Add("attributes", oAttrs);
+
+    // Set dimension_names
+    if (!m_aoDims.empty())
+    {
+        CPLJSONArray oDimensions;
+        for (const auto &poDim : m_aoDims)
+        {
+            const auto poZarrDim =
+                dynamic_cast<const ZarrDimension *>(poDim.get());
+            if (poZarrDim && poZarrDim->IsXArrayDimension())
+            {
+                oDimensions.Add(poDim->GetName());
+            }
+            else
+            {
+                oDimensions = CPLJSONArray();
+                break;
+            }
+        }
+        if (oDimensions.Size() > 0)
+        {
+            oRoot.Add("dimension_names", oDimensions);
+        }
+    }
+
+    // TODO: codecs
 
     oDoc.Save(m_osFilename);
 }
@@ -270,12 +284,6 @@ bool ZarrV3Array::FlushDirtyTile() const
         }
     }
 
-    if (m_bFortranOrder && !m_aoDims.empty())
-    {
-        BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData, false);
-        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
-    }
-
     size_t nRawDataSize = m_abyRawTileData.size();
     CPLAssert(m_oFiltersArray.Size() == 0);
 
@@ -303,72 +311,12 @@ bool ZarrV3Array::FlushDirtyTile() const
     }
 
     bool bRet = true;
-    if (m_psCompressor == nullptr)
+    if (VSIFWriteL(m_abyRawTileData.data(), 1, nRawDataSize, fp) !=
+        nRawDataSize)
     {
-        if (VSIFWriteL(m_abyRawTileData.data(), 1, nRawDataSize, fp) !=
-            nRawDataSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not write tile %s correctly", osFilename.c_str());
-            bRet = false;
-        }
-    }
-    else
-    {
-        std::vector<GByte> abyCompressedData;
-        try
-        {
-            constexpr size_t MIN_BUF_SIZE = 64;  // somewhat arbitrary
-            abyCompressedData.resize(static_cast<size_t>(
-                MIN_BUF_SIZE + nRawDataSize + nRawDataSize / 3));
-        }
-        catch (const std::exception &)
-        {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate memory for tile %s", osFilename.c_str());
-            bRet = false;
-        }
-
-        if (bRet)
-        {
-            void *out_buffer = &abyCompressedData[0];
-            size_t out_size = abyCompressedData.size();
-            CPLStringList aosOptions;
-            const auto compressorConfig = m_oCompressorJSon["configuration"];
-            for (const auto &obj : compressorConfig.GetChildren())
-            {
-                aosOptions.SetNameValue(obj.GetName().c_str(),
-                                        obj.ToString().c_str());
-            }
-            if (EQUAL(m_psCompressor->pszId, "blosc") &&
-                m_oType.GetClass() == GEDTC_NUMERIC)
-            {
-                aosOptions.SetNameValue(
-                    "TYPESIZE",
-                    CPLSPrintf("%d", GDALGetDataTypeSizeBytes(
-                                         GDALGetNonComplexDataType(
-                                             m_oType.GetNumericDataType()))));
-            }
-
-            if (!m_psCompressor->pfnFunc(
-                    m_abyRawTileData.data(), nRawDataSize, &out_buffer,
-                    &out_size, aosOptions.List(), m_psCompressor->user_data))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Compression of tile %s failed", osFilename.c_str());
-                bRet = false;
-            }
-            abyCompressedData.resize(out_size);
-        }
-
-        if (bRet &&
-            VSIFWriteL(abyCompressedData.data(), 1, abyCompressedData.size(),
-                       fp) != abyCompressedData.size())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not write tile %s correctly", osFilename.c_str());
-            bRet = false;
-        }
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Could not write tile %s correctly", osFilename.c_str());
+        bRet = false;
     }
     VSIFCloseL(fp);
 
@@ -381,27 +329,27 @@ bool ZarrV3Array::FlushDirtyTile() const
 
 std::string ZarrV3Array::BuildTileFilename(const uint64_t *tileIndices) const
 {
-    std::string osFilename;
     if (m_aoDims.empty())
     {
-        osFilename = "0";
+        return CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
+                               m_bV2ChunkKeyEncoding ? "0" : "c", nullptr);
     }
     else
     {
+        std::string osFilename(CPLGetDirname(m_osFilename.c_str()));
+        osFilename += '/';
+        if (!m_bV2ChunkKeyEncoding)
+        {
+            osFilename += 'c';
+        }
         for (size_t i = 0; i < m_aoDims.size(); ++i)
         {
-            if (!osFilename.empty())
+            if (i > 0 || !m_bV2ChunkKeyEncoding)
                 osFilename += m_osDimSeparator;
             osFilename += std::to_string(tileIndices[i]);
         }
+        return osFilename;
     }
-
-    std::string osTmp = m_osRootDirectoryName + "/data/root";
-    if (GetFullName() != "/")
-        osTmp += GetFullName();
-    osFilename = osTmp + "/c" + osFilename;
-
-    return osFilename;
 }
 
 /************************************************************************/
@@ -410,10 +358,7 @@ std::string ZarrV3Array::BuildTileFilename(const uint64_t *tileIndices) const
 
 std::string ZarrV3Array::GetDataDirectory() const
 {
-    std::string osTmp = m_osRootDirectoryName + "/data/root";
-    if (GetFullName() != "/")
-        osTmp += GetFullName();
-    return osTmp;
+    return std::string(CPLGetDirname(m_osFilename.c_str()));
 }
 
 /************************************************************************/
@@ -423,10 +368,23 @@ std::string ZarrV3Array::GetDataDirectory() const
 CPLStringList
 ZarrV3Array::GetTileIndicesFromFilename(const char *pszFilename) const
 {
-    if (pszFilename[0] != 'c')
-        return CPLStringList();
+    if (!m_bV2ChunkKeyEncoding)
+    {
+        if (pszFilename[0] != 'c')
+            return CPLStringList();
+        if (m_osDimSeparator == "/")
+        {
+            if (pszFilename[1] != '/' && pszFilename[1] != '\\')
+                return CPLStringList();
+        }
+        else if (pszFilename[1] != m_osDimSeparator[0])
+        {
+            return CPLStringList();
+        }
+    }
     return CPLStringList(
-        CSLTokenizeString2(pszFilename + 1, m_osDimSeparator.c_str(), 0));
+        CSLTokenizeString2(pszFilename + (m_bV2ChunkKeyEncoding ? 0 : 2),
+                           m_osDimSeparator.c_str(), 0));
 }
 
 /************************************************************************/
@@ -441,132 +399,100 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
         if (obj.GetType() == CPLJSONObject::Type::String)
         {
             const auto str = obj.ToString();
-            char chEndianness = 0;
-            char chType;
-            int nBytes;
             DtypeElt elt;
+            GDALDataType eDT = GDT_Unknown;
 
-            if (str.size() < 2)
-                break;
-            if (str == "bool")
-            {
-                chType = 'b';
-                nBytes = 1;
-            }
-            else if (str == "u1" || str == "i1")
-            {
-                chType = str[0];
-                nBytes = 1;
-            }
-            else
-            {
-                if (str.size() < 3)
-                    break;
-                chEndianness = str[0];
-                chType = str[1];
-                nBytes = atoi(str.c_str() + 2);
-            }
-
-            if (nBytes <= 0 || nBytes >= 1000)
-                break;
-
-            elt.needByteSwapping = false;
-            if ((nBytes > 1 && chType != 'S') || chType == 'U')
-            {
-                if (chEndianness == '<')
-                    elt.needByteSwapping = (CPL_IS_LSB == 0);
-                else if (chEndianness == '>')
-                    elt.needByteSwapping = (CPL_IS_LSB != 0);
-            }
-
-            GDALDataType eDT;
-            if (!elts.empty())
-            {
-                elt.nativeOffset =
-                    elts.back().nativeOffset + elts.back().nativeSize;
-            }
-            elt.nativeSize = nBytes;
-            if (chType == 'b' && nBytes == 1)  // boolean
+            if (str == "bool")  // boolean
             {
                 elt.nativeType = DtypeElt::NativeType::BOOLEAN;
                 eDT = GDT_Byte;
             }
-            else if (chType == 'u' && nBytes == 1)
-            {
-                elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_Byte;
-            }
-            else if (chType == 'i' && nBytes == 1)
+            else if (str == "int8")
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 eDT = GDT_Int8;
             }
-            else if (chType == 'i' && nBytes == 2)
+            else if (str == "uint8")
+            {
+                elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
+                eDT = GDT_Byte;
+            }
+            else if (str == "int16")
             {
                 elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
                 eDT = GDT_Int16;
             }
-            else if (chType == 'i' && nBytes == 4)
-            {
-                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                eDT = GDT_Int32;
-            }
-            else if (chType == 'i' && nBytes == 8)
-            {
-                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                eDT = GDT_Int64;
-            }
-            else if (chType == 'u' && nBytes == 2)
+            else if (str == "uint16")
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_UInt16;
             }
-            else if (chType == 'u' && nBytes == 4)
+            else if (str == "int32")
+            {
+                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                eDT = GDT_Int32;
+            }
+            else if (str == "uint32")
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_UInt32;
             }
-            else if (chType == 'u' && nBytes == 8)
+            else if (str == "int64")
+            {
+                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
+                eDT = GDT_Int64;
+            }
+            else if (str == "uint64")
             {
                 elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
                 eDT = GDT_UInt64;
             }
-            else if (chType == 'f' && nBytes == 2)
+            else if (str == "float16")
             {
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
+                elt.nativeSize = 2;
                 elt.gdalTypeIsApproxOfNative = true;
                 eDT = GDT_Float32;
             }
-            else if (chType == 'f' && nBytes == 4)
+            else if (str == "float32")
             {
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 eDT = GDT_Float32;
             }
-            else if (chType == 'f' && nBytes == 8)
+            else if (str == "float64")
             {
                 elt.nativeType = DtypeElt::NativeType::IEEEFP;
                 eDT = GDT_Float64;
             }
-            else if (chType == 'c' && nBytes == 8)
+            else if (str == "complex64")
             {
                 elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                 eDT = GDT_CFloat32;
             }
-            else if (chType == 'c' && nBytes == 16)
+            else if (str == "complex128")
             {
                 elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
                 eDT = GDT_CFloat64;
             }
             else
                 break;
+
             elt.gdalType = GDALExtendedDataType::Create(eDT);
             elt.gdalSize = elt.gdalType.GetSize();
+            if (!elt.gdalTypeIsApproxOfNative)
+                elt.nativeSize = elt.gdalSize;
+
+            if (elt.nativeSize > 1)
+            {
+                elt.needByteSwapping = (CPL_IS_LSB == 0);
+            }
+
             elts.emplace_back(elt);
             return GDALExtendedDataType::Create(eDT);
         }
     } while (false);
     CPLError(CE_Failure, CPLE_AppDefined,
-             "Invalid or unsupported format for dtype: %s",
+             "Invalid or unsupported format for data_type: %s",
              obj.ToString().c_str());
     return GDALExtendedDataType::Create(GDT_Unknown);
 }
@@ -618,21 +544,38 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     // of this function call.
     SetFilenameAdder filenameAdder(oSetFilenamesInLoading, osZarrayFilename);
 
-    bool bFortranOrder = false;
-    const char *orderKey = "chunk_memory_layout";
-    const auto osOrder = oRoot[orderKey].ToString();
-    if (osOrder == "C")
+    // Warn about unknown members (the spec suggests to error out, but let be
+    // a bit more lenient)
+    for (const auto &oNode : oRoot.GetChildren())
     {
-        // ok
+        const auto osName = oNode.GetName();
+        if (osName != "zarr_format" && osName != "node_type" &&
+            osName != "shape" && osName != "chunk_grid" &&
+            osName != "data_type" && osName != "chunk_key_encoding" &&
+            osName != "fill_value" &&
+            // Below are optional
+            osName != "dimension_names" && osName != "codecs" &&
+            osName != "storage_transformers" && osName != "attributes")
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s array definition contains a unknown member (%s). "
+                     "Interpretation of the array might be wrong.",
+                     osZarrayFilename.c_str(), osName.c_str());
+        }
     }
-    else if (osOrder == "F")
+
+    const auto oCodecs = oRoot["codecs"].ToArray();
+    if (oCodecs.Size() > 0)
     {
-        bFortranOrder = true;
+        CPLError(CE_Failure, CPLE_AppDefined, "Codecs are not supported.");
+        return nullptr;
     }
-    else
+
+    const auto oStorageTransformers = oRoot["storage_transformers"].ToArray();
+    if (oStorageTransformers.Size() > 0)
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "Invalid value for %s",
-                 orderKey);
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "storage_transformers are not supported.");
         return nullptr;
     }
 
@@ -643,12 +586,29 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         return nullptr;
     }
 
-    const char *chunksKey = "chunk_grid/chunk_shape";
-    const auto oChunks = oRoot[chunksKey].ToArray();
+    // Parse chunk_grid
+    const auto oChunkGrid = oRoot["chunk_grid"];
+    if (oChunkGrid.GetType() != CPLJSONObject::Type::Object)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "chunk_grid missing or not an object");
+        return nullptr;
+    }
+
+    const auto oChunkGridName = oChunkGrid["name"];
+    if (oChunkGridName.ToString() != "regular")
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Only chunk_grid.name = regular supported");
+        return nullptr;
+    }
+
+    const auto oChunks = oChunkGrid["configuration"]["chunk_shape"].ToArray();
     if (!oChunks.IsValid())
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s missing or not an array",
-                 chunksKey);
+        CPLError(
+            CE_Failure, CPLE_AppDefined,
+            "chunk_grid.configuration.chunk_shape missing or not an array");
         return nullptr;
     }
 
@@ -659,9 +619,56 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         return nullptr;
     }
 
+    // Parse chunk_key_encoding
+    const auto oChunkKeyEncoding = oRoot["chunk_key_encoding"];
+    if (oChunkKeyEncoding.GetType() != CPLJSONObject::Type::Object)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "chunk_key_encoding missing or not an object");
+        return nullptr;
+    }
+
+    std::string osDimSeparator;
+    bool bV2ChunkKeyEncoding = false;
+    const auto oChunkKeyEncodingName = oChunkKeyEncoding["name"];
+    if (oChunkKeyEncodingName.ToString() == "default")
+    {
+        osDimSeparator = "/";
+    }
+    else if (oChunkKeyEncodingName.ToString() == "v2")
+    {
+        osDimSeparator = ".";
+        bV2ChunkKeyEncoding = true;
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Unsupported chunk_key_encoding.name");
+        return nullptr;
+    }
+
+    {
+        auto oConfiguration = oChunkKeyEncoding["configuration"];
+        if (oConfiguration.GetType() == CPLJSONObject::Type::Object)
+        {
+            auto oSeparator = oConfiguration["separator"];
+            if (oSeparator.IsValid())
+            {
+                osDimSeparator = oSeparator.ToString();
+                if (osDimSeparator != "/" && osDimSeparator != ".")
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Separator can only be '/' or '.'");
+                    return nullptr;
+                }
+            }
+        }
+    }
+
     CPLJSONObject oAttributes = oRoot["attributes"];
 
     // Deep-clone of oAttributes
+    if (oAttributes.IsValid())
     {
         CPLJSONDocument oTmpDoc;
         oTmpDoc.SetRoot(oAttributes);
@@ -683,8 +690,8 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             std::string(), std::string(), nSize));
     }
 
-    // XArray extension
-    const auto arrayDimensionsObj = oAttributes["_ARRAY_DIMENSIONS"];
+    // Deal with dimension_names
+    const auto dimensionNames = oRoot["dimension_names"];
 
     const auto FindDimension =
         [this, &aoDims, &osArrayName, &oAttributes,
@@ -722,7 +729,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
                 const std::string osArrayFilenameDim =
                     CPLFormFilename(CPLFormFilename(osDirName.c_str(),
                                                     osDimName.c_str(), nullptr),
-                                    ".zarray", nullptr);
+                                    "zarr.json", nullptr);
                 VSIStatBufL sStat;
                 if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
                 {
@@ -774,38 +781,39 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         return true;
     };
 
-    if (arrayDimensionsObj.GetType() == CPLJSONObject::Type::Array)
+    if (dimensionNames.GetType() == CPLJSONObject::Type::Array)
     {
-        const auto arrayDims = arrayDimensionsObj.ToArray();
+        const auto arrayDims = dimensionNames.ToArray();
         if (arrayDims.Size() == oShape.Size())
         {
-            bool ok = true;
             for (int i = 0; i < oShape.Size(); ++i)
             {
                 if (arrayDims[i].GetType() == CPLJSONObject::Type::String)
                 {
                     const auto osDimName = arrayDims[i].ToString();
-                    ok &= FindDimension(osDimName, aoDims[i], i);
+                    FindDimension(osDimName, aoDims[i], i);
                 }
-            }
-            if (ok)
-            {
-                oAttributes.Delete("_ARRAY_DIMENSIONS");
             }
         }
         else
         {
             CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "Size of _ARRAY_DIMENSIONS different from the one of shape");
+                CE_Failure, CPLE_AppDefined,
+                "Size of dimension_names[] different from the one of shape");
+            return nullptr;
         }
     }
+    else if (dimensionNames.IsValid())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "dimension_names should be an array");
+        return nullptr;
+    }
 
-    const char *dtypeKey = "data_type";
-    auto oDtype = oRoot[dtypeKey];
+    auto oDtype = oRoot["data_type"];
     if (!oDtype.IsValid())
     {
-        CPLError(CE_Failure, CPLE_NotSupported, "%s missing", dtypeKey);
+        CPLError(CE_Failure, CPLE_NotSupported, "data_type missing");
         return nullptr;
     }
     if (oDtype["fallback"].IsValid())
@@ -820,92 +828,37 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     if (!ZarrArray::ParseChunkSize(oChunks, oType, anBlockSize))
         return nullptr;
 
-    std::string osDimSeparator = oRoot["chunk_grid/separator"].ToString();
-    if (osDimSeparator.empty())
-        osDimSeparator = "/";
-
     std::vector<GByte> abyNoData;
-
-    struct NoDataFreer
-    {
-        std::vector<GByte> &m_abyNodata;
-        const GDALExtendedDataType &m_oType;
-
-        NoDataFreer(std::vector<GByte> &abyNoDataIn,
-                    const GDALExtendedDataType &oTypeIn)
-            : m_abyNodata(abyNoDataIn), m_oType(oTypeIn)
-        {
-        }
-
-        ~NoDataFreer()
-        {
-            if (!m_abyNodata.empty())
-                m_oType.FreeDynamicMemory(&m_abyNodata[0]);
-        }
-    };
-    NoDataFreer NoDataFreer(abyNoData, oType);
 
     auto oFillValue = oRoot["fill_value"];
     auto eFillValueType = oFillValue.GetType();
 
     if (!oFillValue.IsValid())
     {
-        // fill_value is normally required but some implementations
-        // are lacking it: https://github.com/Unidata/netcdf-c/issues/2059
-        CPLError(CE_Warning, CPLE_AppDefined, "fill_value missing");
+        CPLError(CE_Warning, CPLE_AppDefined, "Missing fill_value is invalid");
     }
     else if (eFillValueType == CPLJSONObject::Type::Null)
     {
-        // Nothing to do
+        CPLError(CE_Warning, CPLE_AppDefined, "fill_value = null is invalid");
     }
     else if (eFillValueType == CPLJSONObject::Type::String)
     {
         const auto osFillValue = oFillValue.ToString();
-        if (oType.GetClass() == GEDTC_NUMERIC &&
-            CPLGetValueType(osFillValue.c_str()) != CPL_VALUE_STRING)
+        if (osFillValue == "NaN" || osFillValue == "Infinity" ||
+            osFillValue == "-Infinity")
         {
-            abyNoData.resize(oType.GetSize());
-            // Be tolerant with numeric values serialized as strings.
-            if (oType.GetNumericDataType() == GDT_Int64)
-            {
-                const int64_t nVal = static_cast<int64_t>(
-                    std::strtoll(osFillValue.c_str(), nullptr, 10));
-                GDALCopyWords(&nVal, GDT_Int64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-            else if (oType.GetNumericDataType() == GDT_UInt64)
-            {
-                const uint64_t nVal = static_cast<uint64_t>(
-                    std::strtoull(osFillValue.c_str(), nullptr, 10));
-                GDALCopyWords(&nVal, GDT_UInt64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-            else
-            {
-                const double dfNoDataValue = CPLAtof(osFillValue.c_str());
-                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-        }
-        else if (oType.GetClass() == GEDTC_NUMERIC)
-        {
-            double dfNoDataValue;
+            double dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
             if (osFillValue == "NaN")
             {
-                dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
+                // initialized above
             }
             else if (osFillValue == "Infinity")
             {
                 dfNoDataValue = std::numeric_limits<double>::infinity();
             }
-            else if (osFillValue == "-Infinity")
+            else /* if (osFillValue == "-Infinity") */
             {
                 dfNoDataValue = -std::numeric_limits<double>::infinity();
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-                return nullptr;
             }
             if (oType.GetNumericDataType() == GDT_Float32)
             {
@@ -920,79 +873,65 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             }
             else
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid fill_value for this data type");
                 return nullptr;
             }
         }
-        else if (oType.GetClass() == GEDTC_STRING)
+        else if (STARTS_WITH(osFillValue.c_str(), "0x"))
         {
-            // zarr.open('unicode_be.zarr', mode = 'w', shape=(1,), dtype =
-            // '>U1', compressor = None) oddly generates "fill_value": "0"
-            if (osFillValue != "0")
-            {
-                std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
-                memcpy(&abyNativeFillValue[0], osFillValue.data(),
-                       osFillValue.size());
-                int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
-                abyNativeFillValue.resize(nBytes + 1);
-                abyNativeFillValue[nBytes] = 0;
-                abyNoData.resize(oType.GetSize());
-                char *pDstStr = CPLStrdup(
-                    reinterpret_cast<const char *>(&abyNativeFillValue[0]));
-                char **pDstPtr = reinterpret_cast<char **>(&abyNoData[0]);
-                memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
-            }
-        }
-        else
-        {
-            std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
-            memcpy(&abyNativeFillValue[0], osFillValue.data(),
-                   osFillValue.size());
-            int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
-            abyNativeFillValue.resize(nBytes);
-            if (abyNativeFillValue.size() !=
-                aoDtypeElts.back().nativeOffset + aoDtypeElts.back().nativeSize)
+            if (osFillValue.size() > 2 + 2 * oType.GetSize())
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
                 return nullptr;
             }
-            abyNoData.resize(oType.GetSize());
-            ZarrArray::DecodeSourceElt(aoDtypeElts, abyNativeFillValue.data(),
-                                       &abyNoData[0]);
-        }
-    }
-    else if (eFillValueType == CPLJSONObject::Type::Boolean ||
-             eFillValueType == CPLJSONObject::Type::Integer ||
-             eFillValueType == CPLJSONObject::Type::Long ||
-             eFillValueType == CPLJSONObject::Type::Double)
-    {
-        if (oType.GetClass() == GEDTC_NUMERIC)
-        {
-            const double dfNoDataValue = oFillValue.ToDouble();
-            if (oType.GetNumericDataType() == GDT_Int64)
+            uint64_t nVal = static_cast<uint64_t>(
+                std::strtoull(osFillValue.c_str() + 2, nullptr, 16));
+            if (oType.GetSize() == 4)
             {
-                const int64_t nNoDataValue =
-                    static_cast<int64_t>(oFillValue.ToLong());
                 abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
+                uint32_t nTmp = static_cast<uint32_t>(nVal);
+                memcpy(&abyNoData[0], &nTmp, sizeof(nTmp));
             }
-            else if (oType.GetNumericDataType() == GDT_UInt64 &&
-                     /* we can't really deal with nodata value between */
-                     /* int64::max and uint64::max due to json-c limitations */
-                     dfNoDataValue >= 0)
+            else if (oType.GetSize() == 8)
             {
-                const int64_t nNoDataValue =
-                    static_cast<int64_t>(oFillValue.ToLong());
                 abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
+                memcpy(&abyNoData[0], &nVal, sizeof(nVal));
             }
             else
             {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Hexadecimal representation of fill_value no "
+                         "supported for this data type");
+                return nullptr;
+            }
+        }
+        else if (STARTS_WITH(osFillValue.c_str(), "0b"))
+        {
+            if (osFillValue.size() > 2 + 8 * oType.GetSize())
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                return nullptr;
+            }
+            uint64_t nVal = static_cast<uint64_t>(
+                std::strtoull(osFillValue.c_str() + 2, nullptr, 2));
+            if (oType.GetSize() == 4)
+            {
                 abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
+                uint32_t nTmp = static_cast<uint32_t>(nVal);
+                memcpy(&abyNoData[0], &nTmp, sizeof(nTmp));
+            }
+            else if (oType.GetSize() == 8)
+            {
+                abyNoData.resize(oType.GetSize());
+                memcpy(&abyNoData[0], &nVal, sizeof(nVal));
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Binary representation of fill_value no supported for "
+                         "this data type");
+                return nullptr;
             }
         }
         else
@@ -1001,71 +940,57 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
             return nullptr;
         }
     }
+    else if (eFillValueType == CPLJSONObject::Type::Boolean ||
+             eFillValueType == CPLJSONObject::Type::Integer ||
+             eFillValueType == CPLJSONObject::Type::Long ||
+             eFillValueType == CPLJSONObject::Type::Double)
+    {
+        const double dfNoDataValue = oFillValue.ToDouble();
+        if (oType.GetNumericDataType() == GDT_Int64)
+        {
+            const int64_t nNoDataValue =
+                static_cast<int64_t>(oFillValue.ToLong());
+            abyNoData.resize(oType.GetSize());
+            GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
+                          oType.GetNumericDataType(), 0, 1);
+        }
+        else if (oType.GetNumericDataType() == GDT_UInt64 &&
+                 /* we can't really deal with nodata value between */
+                 /* int64::max and uint64::max due to json-c limitations */
+                 dfNoDataValue >= 0)
+        {
+            const int64_t nNoDataValue =
+                static_cast<int64_t>(oFillValue.ToLong());
+            abyNoData.resize(oType.GetSize());
+            GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
+                          oType.GetNumericDataType(), 0, 1);
+        }
+        else
+        {
+            abyNoData.resize(oType.GetSize());
+            GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, &abyNoData[0],
+                          oType.GetNumericDataType(), 0, 1);
+        }
+    }
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
         return nullptr;
     }
 
-    const CPLCompressor *psCompressor = nullptr;
-    const CPLCompressor *psDecompressor = nullptr;
-    const auto oCompressor = oRoot["compressor"];
-    std::string osDecompressorId("NONE");
-    if (oCompressor.IsValid())
-    {
-        const auto oCodec = oCompressor["codec"];
-        if (oCodec.GetType() == CPLJSONObject::Type::String)
-        {
-            const auto osCodec = oCodec.ToString();
-            // See https://github.com/zarr-developers/zarr-specs/pull/119
-            // We accept the plural form, but singular is the official one.
-            for (const char *key : {"https://purl.org/zarr/spec/codec/",
-                                    "https://purl.org/zarr/spec/codecs/"})
-            {
-                if (osCodec.find(key) == 0)
-                {
-                    auto osCodecName = osCodec.substr(strlen(key));
-                    auto posSlash = osCodecName.find('/');
-                    if (posSlash != std::string::npos)
-                    {
-                        osDecompressorId = osCodecName.substr(0, posSlash);
-                        psCompressor =
-                            CPLGetCompressor(osDecompressorId.c_str());
-                        psDecompressor =
-                            CPLGetDecompressor(osDecompressorId.c_str());
-                    }
-                    break;
-                }
-            }
-            if (psCompressor == nullptr || psDecompressor == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Decompressor %s not handled", osCodec.c_str());
-                return nullptr;
-            }
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid compressor");
-            return nullptr;
-        }
-    }
-
-    auto poArray = ZarrV3Array::Create(m_poSharedResource, GetFullName(),
-                                       osArrayName, aoDims, oType, aoDtypeElts,
-                                       anBlockSize, bFortranOrder);
+    auto poArray =
+        ZarrV3Array::Create(m_poSharedResource, GetFullName(), osArrayName,
+                            aoDims, oType, aoDtypeElts, anBlockSize);
     poArray->SetUpdatable(m_bUpdatable);  // must be set before SetAttributes()
     poArray->SetFilename(osZarrayFilename);
+    poArray->SetIsV2ChunkKeyEncoding(bV2ChunkKeyEncoding);
     poArray->SetDimSeparator(osDimSeparator);
-    poArray->SetCompressorDecompressor(osDecompressorId, psCompressor,
-                                       psDecompressor);
     if (!abyNoData.empty())
     {
         poArray->RegisterNoDataValue(abyNoData.data());
     }
     poArray->ParseSpecialAttributes(oAttributes);
     poArray->SetAttributes(oAttributes);
-    poArray->SetRootDirectoryName(m_osDirectoryName);
     poArray->SetDtype(oDtype);
     RegisterArray(poArray);
 

@@ -498,15 +498,12 @@ class ZarrV2Group final : public ZarrGroupBase
 
 class ZarrV3Group final : public ZarrGroupBase
 {
-    std::string m_osGroupFilename;
-    bool m_bNew = false;
-
     void ExploreDirectory() const override;
     void LoadAttributes() const override;
 
     ZarrV3Group(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
-                const std::string &osRootDirectoryName);
+                const std::string &osDirectoryName);
 
   public:
     ~ZarrV3Group() override;
@@ -514,7 +511,7 @@ class ZarrV3Group final : public ZarrGroupBase
     static std::shared_ptr<ZarrV3Group>
     Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
            const std::string &osParentName, const std::string &osName,
-           const std::string &osRootDirectoryName);
+           const std::string &osDirectoryName);
 
     std::shared_ptr<ZarrArray>
     OpenZarrArray(const std::string &osName,
@@ -527,7 +524,7 @@ class ZarrV3Group final : public ZarrGroupBase
     static std::shared_ptr<ZarrV3Group>
     CreateOnDisk(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                  const std::string &osParentFullName, const std::string &osName,
-                 const std::string &osRootDirectoryName);
+                 const std::string &osDirectoryName);
 
     std::shared_ptr<GDALGroup>
     CreateGroup(const std::string &osName,
@@ -543,6 +540,11 @@ class ZarrV3Group final : public ZarrGroupBase
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         const GDALExtendedDataType &oDataType,
         CSLConstList papszOptions = nullptr) override;
+
+    void SetExplored()
+    {
+        m_bDirectoryExplored = true;
+    }
 };
 
 /************************************************************************/
@@ -980,15 +982,14 @@ class ZarrV2Array final : public ZarrArray
 
 class ZarrV3Array final : public ZarrArray
 {
-    CPLJSONObject m_oCompressorJSon{};
-    std::string m_osRootDirectoryName{};
+    bool m_bV2ChunkKeyEncoding = false;
 
     ZarrV3Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
                 const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                 const GDALExtendedDataType &oType,
                 const std::vector<DtypeElt> &aoDtypeElts,
-                const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+                const std::vector<GUInt64> &anBlockSize);
 
     void Serialize(const CPLJSONObject &oAttrs);
 
@@ -1001,19 +1002,14 @@ class ZarrV3Array final : public ZarrArray
            const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
            const GDALExtendedDataType &oType,
            const std::vector<DtypeElt> &aoDtypeElts,
-           const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+           const std::vector<GUInt64> &anBlockSize);
 
-    void SetCompressorJson(const CPLJSONObject &oCompressor)
+    void SetIsV2ChunkKeyEncoding(bool b)
     {
-        m_oCompressorJSon = oCompressor;
+        m_bV2ChunkKeyEncoding = b;
     }
 
     void Flush() override;
-
-    void SetRootDirectoryName(const std::string &osRootDirectoryName)
-    {
-        m_osRootDirectoryName = osRootDirectoryName;
-    }
 
   protected:
     std::string GetDataDirectory() const override;

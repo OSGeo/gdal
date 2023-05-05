@@ -209,36 +209,27 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         if (aosTokens.size() < 2)
             return nullptr;
         osFilename = aosTokens[1];
-        std::string osErrorMsgSuffix;
+        std::string osErrorMsg;
         if (osFilename == "http" || osFilename == "https")
         {
-            osErrorMsgSuffix = "\nThere is likely a quoting error of the whole "
-                               "connection string, and the filename should "
-                               "likely be prefixed with /vsicurl/";
+            osErrorMsg = "There is likely a quoting error of the whole "
+                         "connection string, and the filename should "
+                         "likely be prefixed with /vsicurl/";
         }
         else if (osFilename == "/vsicurl/http" ||
                  osFilename == "/vsicurl/https")
         {
-            osErrorMsgSuffix = "\nThere is likely a quoting error of the whole "
-                               "connection string.";
+            osErrorMsg = "There is likely a quoting error of the whole "
+                         "connection string.";
         }
-        if (!osErrorMsgSuffix.empty() ||
-            !CheckExistenceOfOneZarrFile(osFilename.c_str()))
+        else if (STARTS_WITH(osFilename.c_str(), "http://") ||
+                 STARTS_WITH(osFilename.c_str(), "https://"))
         {
-            std::string osErrorMsg(
-                "Cannot find any of Zarr metadata files in '");
-            osErrorMsg += osFilename;
-            osErrorMsg += "'.";
-            if (!osErrorMsgSuffix.empty())
-            {
-                osErrorMsg += osErrorMsgSuffix;
-            }
-            else if (STARTS_WITH(osFilename.c_str(), "http://") ||
-                     STARTS_WITH(osFilename.c_str(), "https://"))
-            {
-                osErrorMsg +=
-                    "\nThe filename should likely be prefixed with /vsicurl/";
-            }
+            osErrorMsg =
+                "The filename should likely be prefixed with /vsicurl/";
+        }
+        if (!osErrorMsg.empty())
+        {
             CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
             return nullptr;
         }
