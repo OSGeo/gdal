@@ -41,6 +41,10 @@
 #include <mutex>
 #include <set>
 
+#define ZARR_DEBUG_KEY "ZARR"
+
+#define CRS_ATTRIBUTE_NAME "_CRS"
+
 /************************************************************************/
 /*                            ZarrDataset                               */
 /************************************************************************/
@@ -291,6 +295,9 @@ class ZarrDimension;
 class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 {
   protected:
+    friend class ZarrV2Group;
+    friend class ZarrV3Group;
+
     // For ZarrV2, this is the directory of the group
     // For ZarrV3, this is the root directory of the dataset
     std::shared_ptr<ZarrSharedResource> m_poSharedResource;
@@ -406,11 +413,6 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
         return m_osDirectoryName;
     }
 
-    std::shared_ptr<ZarrArray>
-    LoadArray(const std::string &osArrayName,
-              const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
-              bool bLoadedFromZMetadata, const CPLJSONObject &oAttributes,
-              std::set<std::string> &oSetFilenamesInLoading) const;
     void RegisterArray(const std::shared_ptr<ZarrArray> &array) const;
 
     void SetUpdatable(bool bUpdatable)
@@ -470,6 +472,12 @@ class ZarrV2Group final : public ZarrGroupBase
     CreateGroup(const std::string &osName,
                 CSLConstList papszOptions = nullptr) override;
 
+    std::shared_ptr<ZarrArray>
+    LoadArray(const std::string &osArrayName,
+              const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
+              bool bLoadedFromZMetadata, const CPLJSONObject &oAttributes,
+              std::set<std::string> &oSetFilenamesInLoading) const;
+
     std::shared_ptr<GDALMDArray> CreateMDArray(
         const std::string &osName,
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
@@ -524,6 +532,11 @@ class ZarrV3Group final : public ZarrGroupBase
     std::shared_ptr<GDALGroup>
     CreateGroup(const std::string &osName,
                 CSLConstList papszOptions = nullptr) override;
+
+    std::shared_ptr<ZarrArray>
+    LoadArray(const std::string &osArrayName,
+              const std::string &osZarrayFilename, const CPLJSONObject &oRoot,
+              std::set<std::string> &oSetFilenamesInLoading) const;
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
         const std::string &osName,
@@ -607,8 +620,9 @@ struct DtypeElt
 /*                             ZarrArray                                */
 /************************************************************************/
 
-class ZarrArray final : public GDALPamMDArray
+class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 {
+  protected:
     std::shared_ptr<ZarrSharedResource> m_poSharedResource;
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
     const GDALExtendedDataType m_oType;
@@ -618,7 +632,6 @@ class ZarrArray final : public GDALPamMDArray
     GByte *m_pabyNoData = nullptr;
     std::string m_osDimSeparator{"."};
     std::string m_osFilename{};
-    std::string m_osRootDirectoryName{};  // ZarrV3 specific
     size_t m_nTileSize = 0;
     mutable std::vector<GByte> m_abyRawTileData{};
     mutable std::vector<GByte> m_abyDecodedTileData{};
@@ -631,15 +644,12 @@ class ZarrArray final : public GDALPamMDArray
     const CPLCompressor *m_psCompressor = nullptr;
     std::string m_osDecompressorId{};
     const CPLCompressor *m_psDecompressor = nullptr;
-    CPLJSONObject m_oCompressorJSonV2{};
-    CPLJSONObject m_oCompressorJSonV3{};
-    CPLJSONArray m_oFiltersArray{};
+    CPLJSONArray m_oFiltersArray{};                    // ZarrV2 specific
     mutable std::vector<GByte> m_abyTmpRawTileData{};  // used for Fortran order
     mutable ZarrAttributeGroup m_oAttrGroup;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     mutable bool m_bAllocateWorkingBuffersDone = false;
     mutable bool m_bWorkingBuffersOK = false;
-    int m_nVersion = 0;
     bool m_bUpdatable = false;
     bool m_bDefinitionModified = false;
     bool m_bSRSModified = false;
@@ -692,23 +702,26 @@ class ZarrArray final : public GDALPamMDArray
 
     void SerializeNumericNoData(CPLJSONObject &oRoot) const;
 
-    void SerializeV2();
-
-    void SerializeV3(const CPLJSONObject &oAttrs);
-
     void DeallocateDecodedTileData();
 
-    bool FlushDirtyTile() const;
+    virtual std::string GetDataDirectory() const = 0;
+
+    virtual CPLStringList
+    GetTileIndicesFromFilename(const char *pszFilename) const = 0;
+
+    virtual bool FlushDirtyTile() const = 0;
 
     std::shared_ptr<GDALMDArray> OpenTilePresenceCache(bool bCanCreate) const;
 
     void NotifyChildrenOfRenaming();
 
+    static void EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
+                          GByte *pDst);
+
     // Disable copy constructor and assignment operator
     ZarrArray(const ZarrArray &) = delete;
     ZarrArray &operator=(const ZarrArray &) = delete;
 
-  protected:
     bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
@@ -722,16 +735,19 @@ class ZarrArray final : public GDALPamMDArray
     bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
 
+    bool IsEmptyTile(const std::vector<GByte> &abyTile) const;
+
+    CPLJSONObject SerializeSpecialAttributes();
+
+    virtual std::string
+    BuildTileFilename(const uint64_t *tileIndices) const = 0;
+
   public:
     ~ZarrArray() override;
 
-    static std::shared_ptr<ZarrArray>
-    Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-           const std::string &osParentName, const std::string &osName,
-           const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-           const GDALExtendedDataType &oType,
-           const std::vector<DtypeElt> &aoDtypeElts,
-           const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+    static bool ParseChunkSize(const CPLJSONArray &oChunks,
+                               const GDALExtendedDataType &oType,
+                               std::vector<GUInt64> &anBlockSize);
 
     static bool FillBlockSize(
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
@@ -842,6 +858,8 @@ class ZarrArray final : public GDALPamMDArray
         m_oFiltersArray = oFiltersArray;
     }
 
+    void ParseSpecialAttributes(CPLJSONObject &oAttributes);
+
     void SetAttributes(const CPLJSONObject &attrs)
     {
         m_oAttrGroup.Init(attrs, m_bUpdatable);
@@ -850,16 +868,6 @@ class ZarrArray final : public GDALPamMDArray
     void SetSRS(const std::shared_ptr<OGRSpatialReference> &srs)
     {
         m_poSRS = srs;
-    }
-
-    void SetRootDirectoryName(const std::string &osRootDirectoryName)
-    {
-        m_osRootDirectoryName = osRootDirectoryName;
-    }
-
-    void SetVersion(int nVersion)
-    {
-        m_nVersion = nVersion;
     }
 
     std::shared_ptr<GDALAttribute>
@@ -899,28 +907,123 @@ class ZarrArray final : public GDALPamMDArray
         m_bDefinitionModified = bModified;
     }
 
-    void SetCompressorJsonV2(const CPLJSONObject &oCompressor)
-    {
-        m_oCompressorJSonV2 = oCompressor;
-    }
-
-    void SetCompressorJsonV3(const CPLJSONObject &oCompressor)
-    {
-        m_oCompressorJSonV3 = oCompressor;
-    }
-
     void SetNew(bool bNew)
     {
         m_bNew = bNew;
     }
 
-    void Flush();
+    virtual void Flush() = 0;
 
     bool CacheTilePresence();
+
+    static void DecodeSourceElt(const std::vector<DtypeElt> &elts,
+                                const GByte *pSrc, GByte *pDst);
+
+    static void GetDimensionTypeDirection(CPLJSONObject &oAttributes,
+                                          std::string &osType,
+                                          std::string &osDirection);
+};
+
+/************************************************************************/
+/*                           ZarrV2Array                                */
+/************************************************************************/
+
+class ZarrV2Array final : public ZarrArray
+{
+    CPLJSONObject m_oCompressorJSon{};
+
+    ZarrV2Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+                const std::string &osParentName, const std::string &osName,
+                const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+                const GDALExtendedDataType &oType,
+                const std::vector<DtypeElt> &aoDtypeElts,
+                const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+
+    void Serialize();
+
+  public:
+    ~ZarrV2Array() override;
+
+    static std::shared_ptr<ZarrV2Array>
+    Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+           const std::string &osParentName, const std::string &osName,
+           const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+           const GDALExtendedDataType &oType,
+           const std::vector<DtypeElt> &aoDtypeElts,
+           const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+
+    void SetCompressorJson(const CPLJSONObject &oCompressor)
+    {
+        m_oCompressorJSon = oCompressor;
+    }
+
+    void Flush() override;
 
     bool Rename(const std::string &osNewName) override;
 
     void ParentRenamed(const std::string &osNewParentFullName) override;
+
+  protected:
+    std::string GetDataDirectory() const override;
+
+    CPLStringList
+    GetTileIndicesFromFilename(const char *pszFilename) const override;
+
+    bool FlushDirtyTile() const override;
+
+    std::string BuildTileFilename(const uint64_t *tileIndices) const override;
+};
+
+/************************************************************************/
+/*                           ZarrV3Array                                */
+/************************************************************************/
+
+class ZarrV3Array final : public ZarrArray
+{
+    CPLJSONObject m_oCompressorJSon{};
+    std::string m_osRootDirectoryName{};
+
+    ZarrV3Array(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+                const std::string &osParentName, const std::string &osName,
+                const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+                const GDALExtendedDataType &oType,
+                const std::vector<DtypeElt> &aoDtypeElts,
+                const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+
+    void Serialize(const CPLJSONObject &oAttrs);
+
+  public:
+    ~ZarrV3Array() override;
+
+    static std::shared_ptr<ZarrV3Array>
+    Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+           const std::string &osParentName, const std::string &osName,
+           const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+           const GDALExtendedDataType &oType,
+           const std::vector<DtypeElt> &aoDtypeElts,
+           const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+
+    void SetCompressorJson(const CPLJSONObject &oCompressor)
+    {
+        m_oCompressorJSon = oCompressor;
+    }
+
+    void Flush() override;
+
+    void SetRootDirectoryName(const std::string &osRootDirectoryName)
+    {
+        m_osRootDirectoryName = osRootDirectoryName;
+    }
+
+  protected:
+    std::string GetDataDirectory() const override;
+
+    CPLStringList
+    GetTileIndicesFromFilename(const char *pszFilename) const override;
+
+    bool FlushDirtyTile() const override;
+
+    std::string BuildTileFilename(const uint64_t *tileIndices) const override;
 };
 
 #endif  // ZARR_H

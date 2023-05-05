@@ -1077,9 +1077,9 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     const char *pszDimSeparator =
         CSLFetchNameValueDef(papszOptions, "DIM_SEPARATOR", ".");
 
-    auto poArray = ZarrArray::Create(m_poSharedResource, GetFullName(), osName,
-                                     aoDimensions, oDataType, aoDtypeElts,
-                                     anBlockSize, bFortranOrder);
+    auto poArray = ZarrV2Array::Create(m_poSharedResource, GetFullName(),
+                                       osName, aoDimensions, oDataType,
+                                       aoDtypeElts, anBlockSize, bFortranOrder);
 
     if (!poArray)
         return nullptr;
@@ -1087,14 +1087,12 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
         CPLFormFilename(osZarrayDirectory.c_str(), ".zarray", nullptr);
     poArray->SetNew(true);
     poArray->SetFilename(osZarrayFilename);
-    poArray->SetRootDirectoryName(m_osDirectoryName);
     poArray->SetDimSeparator(pszDimSeparator);
-    poArray->SetVersion(2);
     poArray->SetDtype(dtype);
     poArray->SetCompressorDecompressor(pszCompressor, psCompressor,
                                        psDecompressor);
     if (oCompressor.IsValid())
-        poArray->SetCompressorJsonV2(oCompressor);
+        poArray->SetCompressorJson(oCompressor);
     poArray->SetFilters(oFilters);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);

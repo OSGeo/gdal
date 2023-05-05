@@ -80,8 +80,7 @@ std::shared_ptr<ZarrArray> ZarrV3Group::OpenZarrArray(const std::string &osName,
             return nullptr;
         const auto oRoot = oDoc.GetRoot();
         std::set<std::string> oSetFilenamesInLoading;
-        return LoadArray(osName, osFilename, oRoot, false, CPLJSONObject(),
-                         oSetFilenamesInLoading);
+        return LoadArray(osName, osFilename, oRoot, oSetFilenamesInLoading);
     }
 
     return nullptr;
@@ -673,9 +672,9 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     const char *pszDimSeparator =
         CSLFetchNameValueDef(papszOptions, "DIM_SEPARATOR", "/");
 
-    auto poArray = ZarrArray::Create(m_poSharedResource, GetFullName(), osName,
-                                     aoDimensions, oDataType, aoDtypeElts,
-                                     anBlockSize, bFortranOrder);
+    auto poArray = ZarrV3Array::Create(m_poSharedResource, GetFullName(),
+                                       osName, aoDimensions, oDataType,
+                                       aoDtypeElts, anBlockSize, bFortranOrder);
 
     if (!poArray)
         return nullptr;
@@ -683,12 +682,11 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     poArray->SetFilename(osFilename);
     poArray->SetRootDirectoryName(m_osDirectoryName);
     poArray->SetDimSeparator(pszDimSeparator);
-    poArray->SetVersion(3);
     poArray->SetDtype(dtype);
     poArray->SetCompressorDecompressor(pszCompressor, psCompressor,
                                        psDecompressor);
     if (oCompressor.IsValid())
-        poArray->SetCompressorJsonV3(oCompressor);
+        poArray->SetCompressorJson(oCompressor);
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     poArray->Flush();
