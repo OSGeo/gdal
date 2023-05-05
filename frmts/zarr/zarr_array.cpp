@@ -351,6 +351,68 @@ void ZarrArray::Flush()
 }
 
 /************************************************************************/
+/*                          FillBlockSize()                             */
+/************************************************************************/
+
+/* static */
+bool ZarrArray::FillBlockSize(
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
+    const GDALExtendedDataType &oDataType, std::vector<GUInt64> &anBlockSize,
+    CSLConstList papszOptions)
+{
+    const auto nDims = aoDimensions.size();
+    anBlockSize.resize(nDims);
+    for (size_t i = 0; i < nDims; ++i)
+        anBlockSize[i] = 1;
+    if (nDims >= 2)
+    {
+        anBlockSize[nDims - 2] =
+            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 2]->GetSize()),
+                     static_cast<GUInt64>(256));
+        anBlockSize[nDims - 1] =
+            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 1]->GetSize()),
+                     static_cast<GUInt64>(256));
+    }
+    else if (nDims == 1)
+    {
+        anBlockSize[0] = std::max<GUInt64>(1, aoDimensions[0]->GetSize());
+    }
+
+    const char *pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
+    if (pszBlockSize)
+    {
+        const auto aszTokens(
+            CPLStringList(CSLTokenizeString2(pszBlockSize, ",", 0)));
+        if (static_cast<size_t>(aszTokens.size()) != nDims)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid number of values in BLOCKSIZE");
+            return false;
+        }
+        size_t nBlockSize = oDataType.GetSize();
+        for (size_t i = 0; i < nDims; ++i)
+        {
+            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            if (anBlockSize[i] == 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Values in BLOCKSIZE should be > 0");
+                return false;
+            }
+            if (anBlockSize[i] >
+                std::numeric_limits<size_t>::max() / nBlockSize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too large values in BLOCKSIZE");
+                return false;
+            }
+            nBlockSize *= static_cast<size_t>(anBlockSize[i]);
+        }
+    }
+    return true;
+}
+
+/************************************************************************/
 /*                      DeallocateDecodedTileData()                     */
 /************************************************************************/
 
@@ -3186,7 +3248,7 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
     // of this function call.
     SetFilenameAdder filenameAdder(oSetFilenamesInLoading, osZarrayFilename);
 
-    const bool isZarrV2 = dynamic_cast<const ZarrGroupV2 *>(this) != nullptr;
+    const bool isZarrV2 = dynamic_cast<const ZarrV2Group *>(this) != nullptr;
 
     if (isZarrV2)
     {

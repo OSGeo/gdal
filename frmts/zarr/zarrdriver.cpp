@@ -826,7 +826,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
         ZarrSharedResource::Create(pszFilename, /*bUpdatable=*/true);
     if (EQUAL(pszFormat, "ZARR_V3"))
     {
-        poRG = ZarrGroupV3::CreateOnDisk(poSharedResource, std::string(), "/",
+        poRG = ZarrV3Group::CreateOnDisk(poSharedResource, std::string(), "/",
                                          pszFilename);
     }
     else
@@ -837,7 +837,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
         {
             poSharedResource->EnableZMetadata();
         }
-        poRG = ZarrGroupV2::CreateOnDisk(poSharedResource, std::string(), "/",
+        poRG = ZarrV2Group::CreateOnDisk(poSharedResource, std::string(), "/",
                                          pszFilename);
     }
     if (!poRG)
@@ -895,7 +895,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             ZarrSharedResource::Create(pszName, /*bUpdatable=*/true);
         if (EQUAL(pszFormat, "ZARR_V3"))
         {
-            poRG = ZarrGroupV3::CreateOnDisk(poSharedResource, std::string(),
+            poRG = ZarrV3Group::CreateOnDisk(poSharedResource, std::string(),
                                              "/", pszName);
         }
         else
@@ -906,7 +906,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             {
                 poSharedResource->EnableZMetadata();
             }
-            poRG = ZarrGroupV2::CreateOnDisk(poSharedResource, std::string(),
+            poRG = ZarrV2Group::CreateOnDisk(poSharedResource, std::string(),
                                              "/", pszName);
         }
         poSharedResource->SetRootGroup(poRG);

@@ -427,18 +427,18 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 };
 
 /************************************************************************/
-/*                             ZarrGroupV2                              */
+/*                             ZarrV2Group                              */
 /************************************************************************/
 
-class ZarrGroupV2 final : public ZarrGroupBase
+class ZarrV2Group final : public ZarrGroupBase
 {
     void ExploreDirectory() const override;
     void LoadAttributes() const override;
 
-    std::shared_ptr<ZarrGroupV2>
+    std::shared_ptr<ZarrV2Group>
     GetOrCreateSubGroup(const std::string &osSubGroupFullname);
 
-    ZarrGroupV2(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    ZarrV2Group(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName)
         : ZarrGroupBase(poSharedResource, osParentName, osName)
     {
@@ -447,13 +447,13 @@ class ZarrGroupV2 final : public ZarrGroupBase
     void NotifyChildrenOfRenaming();
 
   public:
-    static std::shared_ptr<ZarrGroupV2>
+    static std::shared_ptr<ZarrV2Group>
     Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
            const std::string &osParentName, const std::string &osName);
 
-    ~ZarrGroupV2() override;
+    ~ZarrV2Group() override;
 
-    static std::shared_ptr<ZarrGroupV2>
+    static std::shared_ptr<ZarrV2Group>
     CreateOnDisk(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                  const std::string &osParentName, const std::string &osName,
                  const std::string &osDirectoryName);
@@ -485,10 +485,10 @@ class ZarrGroupV2 final : public ZarrGroupBase
 };
 
 /************************************************************************/
-/*                             ZarrGroupV3                              */
+/*                             ZarrV3Group                              */
 /************************************************************************/
 
-class ZarrGroupV3 final : public ZarrGroupBase
+class ZarrV3Group final : public ZarrGroupBase
 {
     std::string m_osGroupFilename;
     bool m_bNew = false;
@@ -496,14 +496,14 @@ class ZarrGroupV3 final : public ZarrGroupBase
     void ExploreDirectory() const override;
     void LoadAttributes() const override;
 
-    ZarrGroupV3(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    ZarrV3Group(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 const std::string &osParentName, const std::string &osName,
                 const std::string &osRootDirectoryName);
 
   public:
-    ~ZarrGroupV3() override;
+    ~ZarrV3Group() override;
 
-    static std::shared_ptr<ZarrGroupV3>
+    static std::shared_ptr<ZarrV3Group>
     Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
            const std::string &osParentName, const std::string &osName,
            const std::string &osRootDirectoryName);
@@ -516,7 +516,7 @@ class ZarrGroupV3 final : public ZarrGroupBase
     OpenZarrGroup(const std::string &osName,
                   CSLConstList papszOptions = nullptr) const override;
 
-    static std::shared_ptr<ZarrGroupV3>
+    static std::shared_ptr<ZarrV3Group>
     CreateOnDisk(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                  const std::string &osParentFullName, const std::string &osName,
                  const std::string &osRootDirectoryName);
@@ -732,6 +732,11 @@ class ZarrArray final : public GDALPamMDArray
            const GDALExtendedDataType &oType,
            const std::vector<DtypeElt> &aoDtypeElts,
            const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+
+    static bool FillBlockSize(
+        const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
+        const GDALExtendedDataType &oDataType,
+        std::vector<GUInt64> &anBlockSize, CSLConstList papszOptions);
 
     bool IsWritable() const override
     {
