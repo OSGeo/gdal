@@ -7668,6 +7668,8 @@ class GDALDatasetFromArray final : public GDALDataset
                          size_t iXDim, size_t iYDim)
         : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
     {
+        eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
+
         const auto &dims(m_poArray->GetDimensions());
         const auto nDimCount = dims.size();
         nRasterYSize =
@@ -7743,6 +7745,23 @@ class GDALDatasetFromArray final : public GDALDataset
         }
         if (iDim > 0)
             goto lbl_return_to_caller;
+    }
+
+    ~GDALDatasetFromArray()
+    {
+        GDALDatasetFromArray::Close();
+    }
+
+    CPLErr Close() override
+    {
+        CPLErr eErr = CE_None;
+        if (nOpenFlags != OPEN_FLAGS_CLOSED)
+        {
+            if (GDALDatasetFromArray::FlushCache() != CE_None)
+                eErr = CE_Failure;
+            m_poArray.reset();
+        }
+        return eErr;
     }
 
     CPLErr GetGeoTransform(double *padfGeoTransform) override
