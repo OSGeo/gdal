@@ -192,12 +192,6 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         return nullptr;
     }
-    if (poOpenInfo->eAccess == GA_Update &&
-        (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) == 0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Update not supported");
-        return nullptr;
-    }
 
     CPLString osFilename(poOpenInfo->pszFilename);
     CPLString osArrayOfInterest;
