@@ -1125,6 +1125,8 @@ def test_zarr_read_classic_2d():
         ds = gdal.Open("/vsimem/test.zarr")
         assert ds is not None
         assert len(ds.GetSubDatasets()) == 0
+        srs = ds.GetSpatialRef()
+        assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
         ds = None
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
