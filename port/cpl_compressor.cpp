@@ -163,7 +163,7 @@ static bool CPLBloscDecompressor(const void *input_data, size_t input_size,
     if (output_data != nullptr && *output_data != nullptr &&
         output_size != nullptr && *output_size != 0)
     {
-        if (nSafeSize < *output_size)
+        if (*output_size < nSafeSize)
         {
             *output_size = nSafeSize;
             return false;
