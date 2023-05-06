@@ -25,6 +25,9 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#ifndef CPL_COMPRESSOR_H_INCLUDED
+#define CPL_COMPRESSOR_H_INCLUDED
+
 #include "cpl_port.h"
 
 #include <stdbool.h>
@@ -121,3 +124,5 @@ void CPL_DLL CPLDestroyCompressorRegistry(void);
 /*! @endcond */
 
 CPL_C_END
+
+#endif  // CPL_COMPRESSOR_H_INCLUDED
