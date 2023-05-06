@@ -8532,6 +8532,34 @@ GDALExtendedDataType::GDALExtendedDataType(const GDALExtendedDataType &other)
 /*                            operator= ()                              */
 /************************************************************************/
 
+/** Copy assignment. */
+GDALExtendedDataType &
+GDALExtendedDataType::operator=(const GDALExtendedDataType &other)
+{
+    if (this != &other)
+    {
+        m_osName = other.m_osName;
+        m_eClass = other.m_eClass;
+        m_eSubType = other.m_eSubType;
+        m_eNumericDT = other.m_eNumericDT;
+        m_nSize = other.m_nSize;
+        m_nMaxStringLength = other.m_nMaxStringLength;
+        m_aoComponents.clear();
+        if (m_eClass == GEDTC_COMPOUND)
+        {
+            for (const auto &elt : other.m_aoComponents)
+            {
+                m_aoComponents.emplace_back(new GDALEDTComponent(*elt));
+            }
+        }
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                            operator= ()                              */
+/************************************************************************/
+
 /** Move assignment. */
 GDALExtendedDataType &
 GDALExtendedDataType::operator=(GDALExtendedDataType &&other)

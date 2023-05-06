@@ -4,6 +4,7 @@ add_gdal_driver(
           zarr_v2_array.cpp
           zarr_v3_array.cpp
           zarr_attribute.cpp
+          zarr_v3_codec.cpp
           zarr_dimension.cpp
           zarr_group.cpp
           zarr_v2_group.cpp

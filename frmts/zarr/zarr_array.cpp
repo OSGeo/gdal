@@ -26,9 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
 #include "zarr.h"
-#include "gdal_thread_pool.h"
 #include "ucs4_utf8.hpp"
 
 #include "cpl_float.h"
@@ -136,6 +134,36 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }
 
 /************************************************************************/
+/*                      ZarrArray::ComputeTileCount()                   */
+/************************************************************************/
+
+/* static */ uint64_t ZarrArray::ComputeTileCount(
+    const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const std::vector<GUInt64> &anBlockSize)
+{
+    uint64_t nTotalTileCount = 1;
+    for (size_t i = 0; i < aoDims.size(); ++i)
+    {
+        uint64_t nTileThisDim =
+            (aoDims[i]->GetSize() / anBlockSize[i]) +
+            (((aoDims[i]->GetSize() % anBlockSize[i]) != 0) ? 1 : 0);
+        if (nTileThisDim != 0 &&
+            nTotalTileCount >
+                std::numeric_limits<uint64_t>::max() / nTileThisDim)
+        {
+            CPLError(
+                CE_Failure, CPLE_NotSupported,
+                "Array %s has more than 2^64 tiles. This is not supported.",
+                osName.c_str());
+            return 0;
+        }
+        nTotalTileCount *= nTileThisDim;
+    }
+    return nTotalTileCount;
+}
+
+/************************************************************************/
 /*                         ZarrArray::ZarrArray()                       */
 /************************************************************************/
 
@@ -144,7 +172,7 @@ ZarrArray::ZarrArray(
     const std::string &osParentName, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
-    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
+    const std::vector<GUInt64> &anBlockSize)
     :
 #if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
       GDALAbstractMDArray(osParentName, osName),
@@ -152,9 +180,12 @@ ZarrArray::ZarrArray(
       GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
       m_poSharedResource(poSharedResource), m_aoDims(aoDims), m_oType(oType),
       m_aoDtypeElts(aoDtypeElts), m_anBlockSize(anBlockSize),
-      m_bFortranOrder(bFortranOrder),
       m_oAttrGroup(m_osFullName, /*bContainerIsGroup=*/false)
 {
+    m_nTotalTileCount = ComputeTileCount(osName, aoDims, anBlockSize);
+    if (m_nTotalTileCount == 0)
+        return;
+
     // Compute individual tile size
     const size_t nSourceSize =
         m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
@@ -163,6 +194,9 @@ ZarrArray::ZarrArray(
     {
         m_nTileSize *= static_cast<size_t>(nBlockSize);
     }
+
+    m_bUseOptimizedCodePaths = CPLTestBool(
+        CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES"));
 }
 
 /************************************************************************/
@@ -556,143 +590,6 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
 }
 
 /************************************************************************/
-/*                  ZarrArray::NeedDecodedBuffer()                      */
-/************************************************************************/
-
-bool ZarrArray::NeedDecodedBuffer() const
-{
-    const size_t nSourceSize =
-        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-    if (m_oType.GetClass() == GEDTC_COMPOUND &&
-        nSourceSize != m_oType.GetSize())
-    {
-        return true;
-    }
-    else if (m_oType.GetClass() != GEDTC_STRING)
-    {
-        for (const auto &elt : m_aoDtypeElts)
-        {
-            if (elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
-                elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
-                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-/************************************************************************/
-/*               ZarrArray::AllocateWorkingBuffers()                    */
-/************************************************************************/
-
-bool ZarrArray::AllocateWorkingBuffers() const
-{
-    if (m_bAllocateWorkingBuffersDone)
-        return m_bWorkingBuffersOK;
-
-    m_bAllocateWorkingBuffersDone = true;
-
-    size_t nSizeNeeded = m_nTileSize;
-    if (m_bFortranOrder || m_oFiltersArray.Size() != 0)
-    {
-        if (nSizeNeeded > std::numeric_limits<size_t>::max() / 2)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
-            return false;
-        }
-        nSizeNeeded *= 2;
-    }
-    if (NeedDecodedBuffer())
-    {
-        size_t nDecodedBufferSize = m_oType.GetSize();
-        for (const auto &nBlockSize : m_anBlockSize)
-        {
-            if (nDecodedBufferSize > std::numeric_limits<size_t>::max() /
-                                         static_cast<size_t>(nBlockSize))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
-                return false;
-            }
-            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
-        }
-        if (nSizeNeeded >
-            std::numeric_limits<size_t>::max() - nDecodedBufferSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
-            return false;
-        }
-        nSizeNeeded += nDecodedBufferSize;
-    }
-
-    // Reserve a buffer for tile content
-    if (nSizeNeeded > 1024 * 1024 * 1024 &&
-        !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
-                 "By default the driver limits to 1 GB. To allow that memory "
-                 "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
-                 "option to YES.",
-                 static_cast<GUIntBig>(nSizeNeeded));
-        return false;
-    }
-
-    m_bWorkingBuffersOK = AllocateWorkingBuffers(
-        m_abyRawTileData, m_abyTmpRawTileData, m_abyDecodedTileData);
-    return m_bWorkingBuffersOK;
-}
-
-bool ZarrArray::AllocateWorkingBuffers(
-    std::vector<GByte> &abyRawTileData, std::vector<GByte> &abyTmpRawTileData,
-    std::vector<GByte> &abyDecodedTileData) const
-{
-    // This method should NOT modify any ZarrArray member, as it is going to
-    // be called concurrently from several threads.
-
-    // Set those #define to avoid accidental use of some global variables
-#define m_abyTmpRawTileData cannot_use_here
-#define m_abyRawTileData cannot_use_here
-#define m_abyDecodedTileData cannot_use_here
-
-    try
-    {
-        abyRawTileData.resize(m_nTileSize);
-        if (m_bFortranOrder || m_oFiltersArray.Size() != 0)
-            abyTmpRawTileData.resize(m_nTileSize);
-    }
-    catch (const std::bad_alloc &e)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return false;
-    }
-
-    if (NeedDecodedBuffer())
-    {
-        size_t nDecodedBufferSize = m_oType.GetSize();
-        for (const auto &nBlockSize : m_anBlockSize)
-        {
-            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
-        }
-        try
-        {
-            abyDecodedTileData.resize(nDecodedBufferSize);
-        }
-        catch (const std::bad_alloc &e)
-        {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-            return false;
-        }
-    }
-
-    return true;
-#undef m_abyTmpRawTileData
-#undef m_abyRawTileData
-#undef m_abyDecodedTileData
-}
-
-/************************************************************************/
 /*                    ZarrArray::GetSpatialRef()                        */
 /************************************************************************/
 
@@ -752,8 +649,9 @@ void ZarrArray::RegisterNoDataValue(const void *pNoData)
 /*                      ZarrArray::BlockTranspose()                     */
 /************************************************************************/
 
-void ZarrArray::BlockTranspose(const std::vector<GByte> &abySrc,
-                               std::vector<GByte> &abyDst, bool bDecode) const
+void ZarrArray::BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
+                               ZarrByteVectorQuickResize &abyDst,
+                               bool bDecode) const
 {
     // Perform transposition
     const size_t nDims = m_anBlockSize.size();
@@ -973,252 +871,31 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
 }
 
 /************************************************************************/
-/*                        ZarrArray::LoadTileData()                     */
+/*                  ZarrArray::IAdviseReadCommon()                      */
 /************************************************************************/
 
-bool ZarrArray::LoadTileData(const uint64_t *tileIndices,
-                             bool &bMissingTileOut) const
-{
-    return LoadTileData(tileIndices,
-                        false,  // use mutex
-                        m_psDecompressor, m_abyRawTileData, m_abyTmpRawTileData,
-                        m_abyDecodedTileData, bMissingTileOut);
-}
-
-bool ZarrArray::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
-                             const CPLCompressor *psDecompressor,
-                             std::vector<GByte> &abyRawTileData,
-                             std::vector<GByte> &abyTmpRawTileData,
-                             std::vector<GByte> &abyDecodedTileData,
-                             bool &bMissingTileOut) const
-{
-    // This method should NOT modify any ZarrArray member, as it is going to
-    // be called concurrently from several threads.
-
-    // Set those #define to avoid accidental use of some global variables
-#define m_abyTmpRawTileData cannot_use_here
-#define m_abyRawTileData cannot_use_here
-#define m_abyDecodedTileData cannot_use_here
-#define m_psDecompressor cannot_use_here
-
-    bMissingTileOut = false;
-
-    std::string osFilename = BuildTileFilename(tileIndices);
-
-    // For network file systems, get the streaming version of the filename,
-    // as we don't need arbitrary seeking in the file
-    osFilename = VSIFileManager::GetHandler(osFilename.c_str())
-                     ->GetStreamingFilename(osFilename);
-
-    // First if we have a tile presence cache, check tile presence from it
-    if (bUseMutex)
-        m_oMutex.lock();
-    auto poTilePresenceArray = OpenTilePresenceCache(false);
-    if (poTilePresenceArray)
-    {
-        std::vector<GUInt64> anTileIdx(m_aoDims.size());
-        const std::vector<size_t> anCount(m_aoDims.size(), 1);
-        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
-        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-        for (size_t i = 0; i < m_aoDims.size(); ++i)
-        {
-            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
-        }
-        GByte byValue = 0;
-        if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
-                                      anArrayStep.data(), anBufferStride.data(),
-                                      eByteDT, &byValue) &&
-            byValue == 0)
-        {
-            if (bUseMutex)
-                m_oMutex.unlock();
-            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                         osFilename.c_str());
-            bMissingTileOut = true;
-            return true;
-        }
-    }
-    if (bUseMutex)
-        m_oMutex.unlock();
-
-    VSILFILE *fp = nullptr;
-    // This is the number of files returned in a S3 directory listing operation
-    constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
-    if ((m_osDimSeparator == "/" &&
-         m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
-        (m_osDimSeparator != "/" &&
-         m_nTotalTileCount > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING))
-    {
-        // Avoid issuing ReadDir() when a lot of files are expected
-        CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN",
-                                           "YES", true);
-        fp = VSIFOpenL(osFilename.c_str(), "rb");
-    }
-    else
-    {
-        fp = VSIFOpenL(osFilename.c_str(), "rb");
-    }
-    if (fp == nullptr)
-    {
-        // Missing files are OK and indicate nodata_value
-        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                     osFilename.c_str());
-        bMissingTileOut = true;
-        return true;
-    }
-
-    bMissingTileOut = false;
-    bool bRet = true;
-    size_t nRawDataSize = abyRawTileData.size();
-    if (psDecompressor == nullptr)
-    {
-        nRawDataSize = VSIFReadL(&abyRawTileData[0], 1, nRawDataSize, fp);
-    }
-    else
-    {
-        VSIFSeekL(fp, 0, SEEK_END);
-        const auto nSize = VSIFTellL(fp);
-        VSIFSeekL(fp, 0, SEEK_SET);
-        if (nSize > static_cast<vsi_l_offset>(std::numeric_limits<int>::max()))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too large tile %s",
-                     osFilename.c_str());
-            bRet = false;
-        }
-        else
-        {
-            std::vector<GByte> abyCompressedData;
-            try
-            {
-                abyCompressedData.resize(static_cast<size_t>(nSize));
-            }
-            catch (const std::exception &)
-            {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Cannot allocate memory for tile %s",
-                         osFilename.c_str());
-                bRet = false;
-            }
-
-            if (bRet &&
-                (abyCompressedData.empty() ||
-                 VSIFReadL(&abyCompressedData[0], 1, abyCompressedData.size(),
-                           fp) != abyCompressedData.size()))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Could not read tile %s correctly",
-                         osFilename.c_str());
-                bRet = false;
-            }
-            else
-            {
-                void *out_buffer = &abyRawTileData[0];
-                if (!psDecompressor->pfnFunc(
-                        abyCompressedData.data(), abyCompressedData.size(),
-                        &out_buffer, &nRawDataSize, nullptr,
-                        psDecompressor->user_data))
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Decompression of tile %s failed",
-                             osFilename.c_str());
-                    bRet = false;
-                }
-            }
-        }
-    }
-    VSIFCloseL(fp);
-    if (!bRet)
-        return false;
-
-    for (int i = m_oFiltersArray.Size(); i > 0;)
-    {
-        --i;
-        const auto &oFilter = m_oFiltersArray[i];
-        const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterDecompressor =
-            CPLGetDecompressor(osFilterId.c_str());
-        CPLAssert(psFilterDecompressor);
-
-        CPLStringList aosOptions;
-        for (const auto &obj : oFilter.GetChildren())
-        {
-            aosOptions.SetNameValue(obj.GetName().c_str(),
-                                    obj.ToString().c_str());
-        }
-        void *out_buffer = &abyTmpRawTileData[0];
-        size_t nOutSize = abyTmpRawTileData.size();
-        if (!psFilterDecompressor->pfnFunc(
-                abyRawTileData.data(), nRawDataSize, &out_buffer, &nOutSize,
-                aosOptions.List(), psFilterDecompressor->user_data))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Filter %s for tile %s failed", osFilterId.c_str(),
-                     osFilename.c_str());
-            return false;
-        }
-
-        nRawDataSize = nOutSize;
-        std::swap(abyRawTileData, abyTmpRawTileData);
-    }
-    if (nRawDataSize != abyRawTileData.size())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Decompressed tile %s has not expected size after filters",
-                 osFilename.c_str());
-        return false;
-    }
-
-    if (m_bFortranOrder && !m_aoDims.empty())
-    {
-        BlockTranspose(abyRawTileData, abyTmpRawTileData, true);
-        std::swap(abyRawTileData, abyTmpRawTileData);
-    }
-
-    if (!abyDecodedTileData.empty())
-    {
-        const size_t nSourceSize =
-            m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-        const auto nDTSize = m_oType.GetSize();
-        const size_t nValues = abyDecodedTileData.size() / nDTSize;
-        const GByte *pSrc = abyRawTileData.data();
-        GByte *pDst = &abyDecodedTileData[0];
-        for (size_t i = 0; i < nValues;
-             i++, pSrc += nSourceSize, pDst += nDTSize)
-        {
-            DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
-        }
-    }
-
-    return true;
-
-#undef m_abyTmpRawTileData
-#undef m_abyRawTileData
-#undef m_abyDecodedTileData
-#undef m_psDecompressor
-}
-
-/************************************************************************/
-/*                      ZarrArray::IAdviseRead()                        */
-/************************************************************************/
-
-bool ZarrArray::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                            CSLConstList papszOptions) const
+bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
+                                  const size_t *count,
+                                  CSLConstList papszOptions,
+                                  std::vector<uint64_t> &anIndicesCur,
+                                  int &nThreadsMax,
+                                  std::vector<uint64_t> &anReqTilesIndices,
+                                  size_t &nReqTiles) const
 {
     const size_t nDims = m_aoDims.size();
-    std::vector<uint64_t> anIndicesCur(nDims);
+    anIndicesCur.resize(nDims);
     std::vector<uint64_t> anIndicesMin(nDims);
     std::vector<uint64_t> anIndicesMax(nDims);
 
     // Compute min and max tile indices in each dimension, and the total
     // nomber of tiles this represents.
-    uint64_t nReqTiles = 1;
+    nReqTiles = 1;
     for (size_t i = 0; i < nDims; ++i)
     {
         anIndicesMin[i] = arrayStartIdx[i] / m_anBlockSize[i];
         anIndicesMax[i] = (arrayStartIdx[i] + count[i] - 1) / m_anBlockSize[i];
         // Overflow on number of tiles already checked in Create()
-        nReqTiles *= (anIndicesMax[i] - anIndicesMin[i] + 1);
+        nReqTiles *= static_cast<size_t>(anIndicesMax[i] - anIndicesMin[i] + 1);
     }
 
     // Find available cache size
@@ -1267,34 +944,26 @@ bool ZarrArray::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         return false;
     }
 
-    const int nThreadsMax = [papszOptions]()
-    {
-        int nThreadsTmp;
-        const char *pszNumThreads = CSLFetchNameValueDef(
-            papszOptions, "NUM_THREADS",
-            CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-        if (EQUAL(pszNumThreads, "ALL_CPUS"))
-            nThreadsTmp = CPLGetNumCPUs();
-        else
-            nThreadsTmp = std::max(1, atoi(pszNumThreads));
-        if (nThreadsTmp > 1024)
-            nThreadsTmp = 1024;
-        return nThreadsTmp;
-    }();
+    const char *pszNumThreads = CSLFetchNameValueDef(
+        papszOptions, "NUM_THREADS",
+        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
+    if (EQUAL(pszNumThreads, "ALL_CPUS"))
+        nThreadsMax = CPLGetNumCPUs();
+    else
+        nThreadsMax = std::max(1, atoi(pszNumThreads));
+    if (nThreadsMax > 1024)
+        nThreadsMax = 1024;
     if (nThreadsMax <= 1)
         return true;
     CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads",
              nThreadsMax);
-    const int nThreads = static_cast<int>(
-        std::min(static_cast<uint64_t>(nThreadsMax), nReqTiles));
 
     m_oMapTileIndexToCachedTile.clear();
 
-    std::vector<uint64_t> anReqTilesIndices;
     // Overflow checked above
     try
     {
-        anReqTilesIndices.resize(static_cast<size_t>(nDims * nReqTiles));
+        anReqTilesIndices.resize(nDims * nReqTiles);
     }
     catch (const std::bad_alloc &e)
     {
@@ -1346,146 +1015,7 @@ lbl_next_depth:
         goto lbl_return_to_caller;
     assert(nTileIter == nReqTiles);
 
-    CPLWorkerThreadPool *wtp = GDALGetGlobalThreadPool(nThreadsMax);
-    if (wtp == nullptr)
-        return false;
-
-    struct JobStruct
-    {
-        JobStruct() = default;
-
-        JobStruct(const JobStruct &) = delete;
-        JobStruct &operator=(const JobStruct &) = delete;
-
-        JobStruct(JobStruct &&) = default;
-        JobStruct &operator=(JobStruct &&) = default;
-
-        const ZarrArray *poArray = nullptr;
-        bool *pbGlobalStatus = nullptr;
-        int *pnRemainingThreads = nullptr;
-        const std::vector<uint64_t> *panReqTilesIndices = nullptr;
-        size_t nFirstIdx = 0;
-        size_t nLastIdxNotIncluded = 0;
-    };
-    std::vector<JobStruct> asJobStructs;
-
-    bool bGlobalStatus = true;
-    int nRemainingThreads = nThreads;
-    // Check for very highly overflow in below loop
-    assert(static_cast<size_t>(nThreads) <
-           std::numeric_limits<size_t>::max() / nReqTiles);
-
-    // Setup jobs
-    for (int i = 0; i < nThreads; i++)
-    {
-        JobStruct jobStruct;
-        jobStruct.poArray = this;
-        jobStruct.pbGlobalStatus = &bGlobalStatus;
-        jobStruct.pnRemainingThreads = &nRemainingThreads;
-        jobStruct.panReqTilesIndices = &anReqTilesIndices;
-        jobStruct.nFirstIdx = static_cast<size_t>(i * nReqTiles / nThreads);
-        jobStruct.nLastIdxNotIncluded = std::min(
-            static_cast<size_t>((i + 1) * nReqTiles / nThreads), nTileIter);
-        asJobStructs.emplace_back(std::move(jobStruct));
-    }
-
-    const auto JobFunc = [](void *pThreadData)
-    {
-        const JobStruct *jobStruct =
-            static_cast<const JobStruct *>(pThreadData);
-
-        const auto poArray = jobStruct->poArray;
-        const auto &aoDims = poArray->m_aoDims;
-        const size_t l_nDims = poArray->GetDimensionCount();
-        std::vector<GByte> abyRawTileData;
-        std::vector<GByte> abyDecodedTileData;
-        std::vector<GByte> abyTmpRawTileData;
-        const CPLCompressor *psDecompressor =
-            CPLGetDecompressor(poArray->m_osDecompressorId.c_str());
-
-        for (size_t iReq = jobStruct->nFirstIdx;
-             iReq < jobStruct->nLastIdxNotIncluded; ++iReq)
-        {
-            // Check if we must early exit
-            {
-                std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-                if (!(*jobStruct->pbGlobalStatus))
-                    return;
-            }
-
-            const uint64_t *tileIndices =
-                jobStruct->panReqTilesIndices->data() + iReq * l_nDims;
-
-            uint64_t nTileIdx = 0;
-            for (size_t j = 0; j < l_nDims; ++j)
-            {
-                if (j > 0)
-                    nTileIdx *= aoDims[j - 1]->GetSize();
-                nTileIdx += tileIndices[j];
-            }
-
-            if (!poArray->AllocateWorkingBuffers(
-                    abyRawTileData, abyTmpRawTileData, abyDecodedTileData))
-            {
-                std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-                *jobStruct->pbGlobalStatus = false;
-                break;
-            }
-
-            bool bIsEmpty = false;
-            bool success = poArray->LoadTileData(tileIndices,
-                                                 true,  // use mutex
-                                                 psDecompressor, abyRawTileData,
-                                                 abyTmpRawTileData,
-                                                 abyDecodedTileData, bIsEmpty);
-
-            std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-            if (!success)
-            {
-                *jobStruct->pbGlobalStatus = false;
-                break;
-            }
-
-            CachedTile cachedTile;
-            if (!bIsEmpty)
-            {
-                if (!abyDecodedTileData.empty())
-                    std::swap(cachedTile.abyDecoded, abyDecodedTileData);
-                else
-                    std::swap(cachedTile.abyDecoded, abyRawTileData);
-            }
-            poArray->m_oMapTileIndexToCachedTile[nTileIdx] =
-                std::move(cachedTile);
-        }
-
-        std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-        (*jobStruct->pnRemainingThreads)--;
-    };
-
-    // Start jobs
-    for (int i = 0; i < nThreads; i++)
-    {
-        if (!wtp->SubmitJob(JobFunc, &asJobStructs[i]))
-        {
-            std::lock_guard<std::mutex> oLock(m_oMutex);
-            bGlobalStatus = false;
-            nRemainingThreads = i;
-            break;
-        }
-    }
-
-    // Wait for all jobs to be finished
-    while (true)
-    {
-        {
-            std::lock_guard<std::mutex> oLock(m_oMutex);
-            if (nRemainingThreads == 0)
-                break;
-        }
-        wtp->WaitEvent();
-    }
-
-    return bGlobalStatus;
+    return true;
 }
 
 /************************************************************************/
@@ -2394,7 +1924,7 @@ lbl_next_depth:
 /*                   ZarrArray::IsEmptyTile()                           */
 /************************************************************************/
 
-bool ZarrArray::IsEmptyTile(const std::vector<GByte> &abyTile) const
+bool ZarrArray::IsEmptyTile(const ZarrByteVectorQuickResize &abyTile) const
 {
     if (m_pabyNoData == nullptr || (m_oType.GetClass() == GEDTC_NUMERIC &&
                                     GetNoDataValueAsDouble() == 0.0))

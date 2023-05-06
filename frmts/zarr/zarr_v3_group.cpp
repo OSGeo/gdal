@@ -515,25 +515,6 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
-    const bool bFortranOrder = EQUAL(
-        CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
-    if (bFortranOrder)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "CHUNK_MEMORY_LAYOUT = F not yet implemented with Zarr V3");
-        return nullptr;
-    }
-
-    const char *pszCompressor =
-        CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
-    if (!EQUAL(pszCompressor, "NONE"))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "COMPRESS = %s not yet implemented with Zarr V3",
-                 pszCompressor);
-        return nullptr;
-    }
-
     std::vector<DtypeElt> aoDtypeElts;
     const auto dtype = FillDTypeElts(oDataType, aoDtypeElts)["dummy"];
     if (!dtype.IsValid() || aoDtypeElts.empty())
@@ -575,6 +556,117 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
+    std::unique_ptr<ZarrV3CodecSequence> poCodecs;
+    CPLJSONArray oCodecs;
+
+    const bool bFortranOrder = EQUAL(
+        CSLFetchNameValueDef(papszOptions, "CHUNK_MEMORY_LAYOUT", "C"), "F");
+    if (bFortranOrder)
+    {
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "transpose");
+        oCodec.Add("configuration",
+                   ZarrV3CodecTranspose::GetConfiguration("F"));
+        oCodecs.Add(oCodec);
+    }
+
+    // Not documented
+    const char *pszEndian = CSLFetchNameValue(papszOptions, "@ENDIAN");
+    if (pszEndian)
+    {
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "endian");
+        oCodec.Add("configuration", ZarrV3CodecEndian::GetConfiguration(
+                                        EQUAL(pszEndian, "little")));
+        oCodecs.Add(oCodec);
+    }
+
+    const char *pszCompressor =
+        CSLFetchNameValueDef(papszOptions, "COMPRESS", "NONE");
+    if (EQUAL(pszCompressor, "GZIP"))
+    {
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "gzip");
+        const char *pszLevel =
+            CSLFetchNameValueDef(papszOptions, "GZIP_LEVEL", "6");
+        oCodec.Add("configuration",
+                   ZarrV3CodecGZip::GetConfiguration(atoi(pszLevel)));
+        oCodecs.Add(oCodec);
+    }
+    else if (EQUAL(pszCompressor, "BLOSC"))
+    {
+        const auto psCompressor = CPLGetCompressor("blosc");
+        if (!psCompressor)
+            return nullptr;
+        const char *pszOptions =
+            CSLFetchNameValueDef(psCompressor->papszMetadata, "OPTIONS", "");
+        CPLXMLTreeCloser oTreeCompressor(CPLParseXMLString(pszOptions));
+        const auto psRoot =
+            oTreeCompressor.get()
+                ? CPLGetXMLNode(oTreeCompressor.get(), "=Options")
+                : nullptr;
+        if (!psRoot)
+            return nullptr;
+
+        const char *cname = "zlib";
+        for (const CPLXMLNode *psNode = psRoot->psChild; psNode != nullptr;
+             psNode = psNode->psNext)
+        {
+            if (psNode->eType == CXT_Element)
+            {
+                const char *pszName = CPLGetXMLValue(psNode, "name", "");
+                if (EQUAL(pszName, "CNAME"))
+                {
+                    cname = CPLGetXMLValue(psNode, "default", cname);
+                }
+            }
+        }
+
+        CPLJSONObject oCodec;
+        oCodec.Add("name", "blosc");
+        cname = CSLFetchNameValueDef(papszOptions, "BLOSC_CNAME", cname);
+        const int clevel =
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOSC_CLEVEL", "5"));
+        const char *shuffle =
+            CSLFetchNameValueDef(papszOptions, "BLOSC_SHUFFLE", "BYTE");
+        shuffle = (EQUAL(shuffle, "0") || EQUAL(shuffle, "NONE")) ? "noshuffle"
+                  : (EQUAL(shuffle, "1") || EQUAL(shuffle, "BYTE")) ? "shuffle"
+                  : (EQUAL(shuffle, "2") || EQUAL(shuffle, "BIT"))
+                      ? "bitshuffle"
+                      : "invalid";
+        const int typesize = atoi(CSLFetchNameValueDef(
+            papszOptions, "BLOSC_TYPESIZE",
+            CPLSPrintf("%d", GDALGetDataTypeSizeBytes(GDALGetNonComplexDataType(
+                                 oDataType.GetNumericDataType())))));
+        const int blocksize =
+            atoi(CSLFetchNameValueDef(papszOptions, "BLOSC_BLOCKSIZE", "0"));
+        oCodec.Add("configuration",
+                   ZarrV3CodecBlosc::GetConfiguration(cname, clevel, shuffle,
+                                                      typesize, blocksize));
+        oCodecs.Add(oCodec);
+    }
+    else if (!EQUAL(pszCompressor, "NONE"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "COMPRESS = %s not implemented with Zarr V3", pszCompressor);
+        return nullptr;
+    }
+
+    if (oCodecs.Size() > 0)
+    {
+        // Byte swapping will be done by the codec chain
+        aoDtypeElts.back().needByteSwapping = false;
+
+        ZarrArrayMetadata oInputArrayMetadata;
+        for (auto &nSize : anBlockSize)
+            oInputArrayMetadata.anBlockSizes.push_back(
+                static_cast<size_t>(nSize));
+        oInputArrayMetadata.oElt = aoDtypeElts.back();
+        poCodecs = cpl::make_unique<ZarrV3CodecSequence>(oInputArrayMetadata);
+        if (!poCodecs->InitFromJson(oCodecs))
+            return nullptr;
+    }
+
     auto poArray =
         ZarrV3Array::Create(m_poSharedResource, GetFullName(), osName,
                             aoDimensions, oDataType, aoDtypeElts, anBlockSize);
@@ -587,6 +679,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
     poArray->SetFilename(osFilename);
     poArray->SetDimSeparator(pszDimSeparator);
     poArray->SetDtype(dtype);
+    if (poCodecs)
+        poArray->SetCodecs(std::move(poCodecs));
     poArray->SetUpdatable(true);
     poArray->SetDefinitionModified(true);
     poArray->Flush();
