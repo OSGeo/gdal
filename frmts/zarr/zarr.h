@@ -337,6 +337,8 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     bool RenameDimension(const std::string &osOldName,
                          const std::string &osNewName);
 
+    void NotifyChildrenOfRenaming();
+
   public:
     ~ZarrGroupBase() override;
 
@@ -424,6 +426,10 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
     static bool IsValidObjectName(const std::string &osName);
 
+    bool Rename(const std::string &osNewName) override;
+
+    void ParentRenamed(const std::string &osNewParentFullName) override;
+
     void NotifyArrayRenamed(const std::string &osOldName,
                             const std::string &osNewName);
 };
@@ -445,8 +451,6 @@ class ZarrV2Group final : public ZarrGroupBase
         : ZarrGroupBase(poSharedResource, osParentName, osName)
     {
     }
-
-    void NotifyChildrenOfRenaming();
 
   public:
     static std::shared_ptr<ZarrV2Group>
@@ -486,10 +490,6 @@ class ZarrV2Group final : public ZarrGroupBase
 
     void InitFromZMetadata(const CPLJSONObject &oRoot);
     bool InitFromZGroup(const CPLJSONObject &oRoot);
-
-    bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -953,6 +953,10 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         m_bNew = bNew;
     }
 
+    bool Rename(const std::string &osNewName) override;
+
+    void ParentRenamed(const std::string &osNewParentFullName) override;
+
     virtual void Flush() = 0;
 
     bool CacheTilePresence();
@@ -1038,10 +1042,6 @@ class ZarrV2Array final : public ZarrArray
     }
 
     void Flush() override;
-
-    bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 
   protected:
     std::string GetDataDirectory() const override;

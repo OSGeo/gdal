@@ -354,6 +354,7 @@ ZarrV3Group::CreateGroup(const std::string &osName,
                                 osDirectoryName);
     if (!poGroup)
         return nullptr;
+    poGroup->m_poParent = m_pSelf;
     m_oMapGroups[osName] = poGroup;
     m_aosGroups.emplace_back(osName);
     return poGroup;

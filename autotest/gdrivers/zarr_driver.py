@@ -4014,8 +4014,11 @@ def test_zarr_resize_dim_referenced_twice():
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_multidim_rename_group_at_creation(create_z_metadata):
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_group_at_creation(format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
     filename = "/vsimem/test.zarr"
@@ -4023,7 +4026,7 @@ def test_zarr_multidim_rename_group_at_creation(create_z_metadata):
     def test():
         ds = drv.CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
         )
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
@@ -4130,8 +4133,11 @@ def test_zarr_multidim_rename_group_at_creation(create_z_metadata):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_multidim_rename_group_after_reopening(create_z_metadata):
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_group_after_reopening(format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
     filename = "/vsimem/test.zarr"
@@ -4139,7 +4145,7 @@ def test_zarr_multidim_rename_group_after_reopening(create_z_metadata):
     def create():
         ds = drv.CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
         )
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
@@ -4239,8 +4245,11 @@ def test_zarr_multidim_rename_group_after_reopening(create_z_metadata):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_multidim_rename_array_at_creation(create_z_metadata):
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
     filename = "/vsimem/test.zarr"
@@ -4248,7 +4257,7 @@ def test_zarr_multidim_rename_array_at_creation(create_z_metadata):
     def test():
         ds = drv.CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
         )
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
@@ -4277,8 +4286,12 @@ def test_zarr_multidim_rename_array_at_creation(create_z_metadata):
         # Rename array and test effects
         ar.Rename("ar_renamed")
 
-        assert gdal.VSIStatL(filename + "/group/ar/.zarray") is None
-        assert gdal.VSIStatL(filename + "/group/ar_renamed/.zarray") is not None
+        if format == "ZARR_V2":
+            assert gdal.VSIStatL(filename + "/group/ar/.zarray") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/.zarray") is not None
+        else:
+            assert gdal.VSIStatL(filename + "/group/ar/zarr.json") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/zarr.json") is not None
 
         assert ar.GetName() == "ar_renamed"
         assert ar.GetFullName() == "/group/ar_renamed"
@@ -4320,8 +4333,11 @@ def test_zarr_multidim_rename_array_at_creation(create_z_metadata):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_multidim_rename_array_after_reopening(create_z_metadata):
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_array_after_reopening(format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
     filename = "/vsimem/test.zarr"
@@ -4329,7 +4345,7 @@ def test_zarr_multidim_rename_array_after_reopening(create_z_metadata):
     def create():
         ds = drv.CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
         )
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
@@ -4374,8 +4390,12 @@ def test_zarr_multidim_rename_array_after_reopening(create_z_metadata):
         # Rename array and test effects
         ar.Rename("ar_renamed")
 
-        assert gdal.VSIStatL(filename + "/group/ar/.zarray") is None
-        assert gdal.VSIStatL(filename + "/group/ar_renamed/.zarray") is not None
+        if format == "ZARR_V2":
+            assert gdal.VSIStatL(filename + "/group/ar/.zarray") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/.zarray") is not None
+        else:
+            assert gdal.VSIStatL(filename + "/group/ar/zarr.json") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/zarr.json") is not None
 
         assert ar.GetName() == "ar_renamed"
         assert ar.GetFullName() == "/group/ar_renamed"
@@ -4416,8 +4436,11 @@ def test_zarr_multidim_rename_array_after_reopening(create_z_metadata):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_multidim_rename_attr_after_reopening(create_z_metadata):
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_attr_after_reopening(format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
     filename = "/vsimem/test.zarr"
@@ -4425,7 +4448,7 @@ def test_zarr_multidim_rename_attr_after_reopening(create_z_metadata):
     def create():
         ds = drv.CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
         )
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
@@ -4496,8 +4519,11 @@ def test_zarr_multidim_rename_attr_after_reopening(create_z_metadata):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_multidim_rename_dim_at_creation(create_z_metadata):
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_dim_at_creation(format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
     filename = "/vsimem/test.zarr"
@@ -4505,7 +4531,7 @@ def test_zarr_multidim_rename_dim_at_creation(create_z_metadata):
     def create():
         ds = drv.CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
         )
         rg = ds.GetRootGroup()
         dim = rg.CreateDimension("dim", None, None, 2)
@@ -4567,8 +4593,11 @@ def test_zarr_multidim_rename_dim_at_creation(create_z_metadata):
 
 
 @gdaltest.enable_exceptions()
-@pytest.mark.parametrize("create_z_metadata", [True, False])
-def test_zarr_multidim_rename_dim_after_reopening(create_z_metadata):
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_dim_after_reopening(format, create_z_metadata):
 
     drv = gdal.GetDriverByName("ZARR")
     filename = "/vsimem/test.zarr"
@@ -4576,7 +4605,7 @@ def test_zarr_multidim_rename_dim_after_reopening(create_z_metadata):
     def create():
         ds = drv.CreateMultiDimensional(
             filename,
-            options=["CREATE_ZMETADATA=" + ("YES" if create_z_metadata else "NO")],
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
         )
         rg = ds.GetRootGroup()
         dim = rg.CreateDimension("dim", None, None, 2)
