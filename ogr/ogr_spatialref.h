@@ -235,7 +235,7 @@ class CPL_DLL OGRSpatialReference
     OGRErr importFromEPSGA(int);
     OGRErr importFromESRI(char **);
     OGRErr importFromPCI(const char *, const char * = nullptr,
-                         double * = nullptr);
+                         const double * = nullptr);
 
 #define USGS_ANGLE_DECIMALDEGREES 0 /**< Angle is in decimal degrees. */
 #define USGS_ANGLE_PACKEDDMS                                                   \
