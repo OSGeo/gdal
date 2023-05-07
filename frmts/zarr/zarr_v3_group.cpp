@@ -541,7 +541,8 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
 
     GetMDArrayNames();
 
-    if (m_oMapMDArrays.find(osName) != m_oMapMDArrays.end())
+    if (std::find(m_aosArrays.begin(), m_aosArrays.end(), osName) !=
+        m_aosArrays.end())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "An array with same name already exists");

@@ -1460,17 +1460,32 @@ def test_zarr_create_group(format, create_z_metadata):
 def test_zarr_create_group_errors(group_name, format):
 
     try:
-        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            "/vsimem/test.zarr", options=["FORMAT=" + format]
-        )
-        assert ds is not None
-        rg = ds.GetRootGroup()
-        assert rg
-        subgroup = rg.CreateGroup("foo")
-        assert subgroup
-        gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-        with gdaltest.error_handler():
-            assert rg.CreateGroup(group_name) is None
+
+        def at_creation():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                "/vsimem/test.zarr", options=["FORMAT=" + format]
+            )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            subgroup = rg.CreateGroup("foo")
+            assert subgroup
+            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
+            with gdaltest.error_handler():
+                assert rg.CreateGroup(group_name) is None
+
+        at_creation()
+
+        def after_reopen():
+            ds = gdal.OpenEx(
+                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+            )
+            rg = ds.GetRootGroup()
+            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
+            with gdaltest.error_handler():
+                assert rg.CreateGroup(group_name) is None
+
+        after_reopen()
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
@@ -1620,25 +1635,48 @@ def test_zarr_create_array(datatype, nodata, format):
         ".zarray",
     ],
 )
-def test_zarr_create_array_errors(array_name):
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_create_array_errors(array_name, format):
 
     try:
-        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional("/vsimem/test.zarr")
-        assert ds is not None
-        rg = ds.GetRootGroup()
-        assert rg
-        assert (
-            rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-            is not None
-        )
-        gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-        with gdaltest.error_handler():
-            assert (
-                rg.CreateMDArray(
-                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-                )
-                is None
+
+        def at_creation():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                "/vsimem/test.zarr", options=["FORMAT=" + format]
             )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            assert (
+                rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+                is not None
+            )
+            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
+            with gdaltest.error_handler():
+                assert (
+                    rg.CreateMDArray(
+                        array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                    )
+                    is None
+                )
+
+        at_creation()
+
+        def after_reopen():
+            ds = gdal.OpenEx(
+                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+            )
+            rg = ds.GetRootGroup()
+            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
+            with gdaltest.error_handler():
+                assert (
+                    rg.CreateMDArray(
+                        array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                    )
+                    is None
+                )
+
+        after_reopen()
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")

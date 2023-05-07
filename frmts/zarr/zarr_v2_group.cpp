@@ -597,12 +597,14 @@ ZarrV2Group::CreateGroup(const std::string &osName,
 
     GetGroupNames();
 
-    if (m_oMapGroups.find(osName) != m_oMapGroups.end())
+    if (std::find(m_aosGroups.begin(), m_aosGroups.end(), osName) !=
+        m_aosGroups.end())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "A group with same name already exists");
         return nullptr;
     }
+
     const std::string osDirectoryName =
         CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
     auto poGroup = CreateOnDisk(m_poSharedResource, GetFullName(), osName,
@@ -846,7 +848,8 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
 
     GetMDArrayNames();
 
-    if (m_oMapMDArrays.find(osName) != m_oMapMDArrays.end())
+    if (std::find(m_aosArrays.begin(), m_aosArrays.end(), osName) !=
+        m_aosArrays.end())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "An array with same name already exists");
