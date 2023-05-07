@@ -1659,7 +1659,7 @@ void qh_printcenter(qhT *qh, FILE *fp, qh_PRINT format, const char *string, face
 void qh_printcentrum(qhT *qh, FILE *fp, facetT *facet, realT radius) {
   pointT *centrum, *projpt;
   boolT tempcentrum= False;
-  realT xaxis[4], yaxis[4], normal[4], dist;
+  realT xaxis[4] = {0}, yaxis[4], normal[4] = {0}, dist;
   realT green[3]={0, 1, 0};
   vertexT *apex;
   int k;
