@@ -271,7 +271,15 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
         {
             return false;
         }
+        // GCC 13.1 warns here. Definitely a false positive.
+#if defined(__GNUC__) && __GNUC__ >= 13
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+#endif
         m_anLastStartIdx = anStartIdx;
+#if defined(__GNUC__) && __GNUC__ >= 13
+#pragma GCC diagnostic pop
+#endif
     }
 
     // Determine the X,Y spatial extent of the request
