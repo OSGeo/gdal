@@ -64,17 +64,21 @@ void CPLClearRecodeIconvWarningFlags()
 /************************************************************************/
 
 static const char *CPLFixInputEncoding(const char *pszSrcEncoding,
-                                       int nFirstByteVal)
+                                       int nFirstVal)
 {
+#if CPL_IS_LSB
     // iconv on Alpine Linux seems to assume BE order, when it is not explicit
     if (EQUAL(pszSrcEncoding, CPL_ENC_UCS2))
         pszSrcEncoding = "UCS-2LE";
-    else if (EQUAL(pszSrcEncoding, CPL_ENC_UTF16) && nFirstByteVal != 0xFF &&
-             nFirstByteVal != 0xFE)
+    else if (EQUAL(pszSrcEncoding, CPL_ENC_UTF16) && nFirstVal != 0xFF &&
+             nFirstVal != 0xFE && nFirstVal != 0xFFFE && nFirstVal != 0xFEFF)
     {
         // Only force UTF-16LE if there's no starting endianness marker
         pszSrcEncoding = "UTF-16LE";
     }
+#else
+    CPL_IGNORE_RET_VAL(nFirstVal);
+#endif
     return pszSrcEncoding;
 }
 

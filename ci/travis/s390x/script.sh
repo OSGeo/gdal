@@ -4,7 +4,7 @@ set -e
 
 export PYTEST="python3 -m pytest -vv -p no:sugar --color=no"
 
-(cd "$PWD/build" && make quicktest || echo "error in quick_test")
+(cd "$PWD/build" && make quicktest)
 
 # install pip and use it to install test dependencies
 sudo sh -c "curl -sSL 'https://bootstrap.pypa.io/pip/3.6/get-pip.py' | python3"

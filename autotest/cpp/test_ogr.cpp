@@ -1452,7 +1452,7 @@ TEST_F(test_ogr, field_iterator)
         oFeatureTmp["str_field"] = std::string("foo");
         oFeatureTmp["int_field"] = 123;
         oFeatureTmp["int64_field"] = oFeatureTmp["int_field"];
-        ASSERT_EQ(oFeatureTmp["int64_field"].GetInteger(), 123);
+        ASSERT_EQ(oFeatureTmp["int64_field"].GetInteger64(), 123);
         oFeatureTmp["int64_field"] = static_cast<GIntBig>(1234567890123);
         oFeatureTmp["double_field"] = 123.45;
         oFeatureTmp["null_field"].SetNull();
@@ -2346,14 +2346,8 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
     // Test prepared arg substitution
     hFeature = OGR_F_Create(OGR_L_GetLayerDefn(hLayer));
     poFeature.reset(OGRFeature::FromHandle(hFeature));
-    const char *wkt = "POLYGON ((479819 4765180,479690 4765259,479647 4765369, "
-                      "479819 4765180))";
-    OGRGeometryH testGeom = nullptr;
-    OGRErr err = OGR_G_CreateFromWkt((char **)&wkt, nullptr, &testGeom);
-    ASSERT_EQ(OGRERR_NONE, err);
-    err = OGR_F_SetGeometryDirectly(hFeature, testGeom);
-    ASSERT_EQ(OGRERR_NONE, err);
-    err = OGR_L_CreateFeature(hLayer, hFeature);
+    OGR_F_SetFieldInteger(hFeature, 1, 123);
+    OGRErr err = OGR_L_CreateFeature(hLayer, hFeature);
     ASSERT_EQ(OGRERR_NONE, err);
 
     auto insertEntry = std::find_if(
@@ -2364,7 +2358,7 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
     ASSERT_TRUE(insertEntry != queryLog.end());
     ASSERT_EQ(
         insertEntry->sql.find(
-            R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (x'47500003346c0000000000007c461d41)sql",
+            R"sql(INSERT INTO "poly" ( "geom", "AREA", "EAS_ID", "PRFEDEA") VALUES (NULL, NULL, '123', NULL))sql",
             0),
         0);
 #endif
