@@ -70,7 +70,11 @@ std::vector<std::string> ZarrGroupBase::GetMDArrayNames(CSLConstList) const
 void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray> &array) const
 {
     m_oMapMDArrays[array->GetName()] = array;
-    m_aosArrays.emplace_back(array->GetName());
+    if (std::find(m_aosArrays.begin(), m_aosArrays.end(), array->GetName()) ==
+        m_aosArrays.end())
+    {
+        m_aosArrays.emplace_back(array->GetName());
+    }
     array->RegisterGroup(m_pSelf);
 }
 
