@@ -4067,6 +4067,10 @@ def test_zarr_multidim_rename_group_at_creation(format, create_z_metadata):
         with pytest.raises(Exception):
             group.Rename("other_group")
 
+        # Existing array name (group and array names share the same namespace)
+        with pytest.raises(Exception):
+            subgroup.Rename("ar")
+
         # Rename group and test effects
         group.Rename("group_renamed")
         assert group.GetName() == "group_renamed"
@@ -4261,6 +4265,7 @@ def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
         )
         rg = ds.GetRootGroup()
         group = rg.CreateGroup("group")
+        group.CreateGroup("subgroup")
 
         dim = group.CreateDimension(
             "dim0", "unspecified type", "unspecified direction", 2
@@ -4282,6 +4287,10 @@ def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
         # Existing name
         with pytest.raises(Exception):
             ar.Rename("other_ar")
+
+        # Existing subgroup name (group and array names share the same namespace)
+        with pytest.raises(Exception):
+            ar.Rename("subgroup")
 
         # Rename array and test effects
         ar.Rename("ar_renamed")

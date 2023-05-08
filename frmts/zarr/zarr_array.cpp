@@ -2560,14 +2560,8 @@ bool ZarrArray::Rename(const std::string &osNewName)
     auto poParent = m_poGroupWeak.lock();
     if (poParent)
     {
-        const auto arrayNames = poParent->GetMDArrayNames();
-        if (std::find(arrayNames.begin(), arrayNames.end(), osNewName) !=
-            arrayNames.end())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "An array with same name already exists");
+        if (!poParent->CheckArrayOrGroupWithSameNameDoesNotExist(osNewName))
             return false;
-        }
     }
 
     const std::string osRootDirectoryName(

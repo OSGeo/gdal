@@ -272,6 +272,34 @@ bool ZarrGroupBase::IsValidObjectName(const std::string &osName)
 }
 
 /************************************************************************/
+/*                 CheckArrayOrGroupWithSameNameDoesNotExist()          */
+/************************************************************************/
+
+bool ZarrGroupBase::CheckArrayOrGroupWithSameNameDoesNotExist(
+    const std::string &osName) const
+{
+    const auto groupNames = GetGroupNames();
+    if (std::find(groupNames.begin(), groupNames.end(), osName) !=
+        groupNames.end())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "A group with same name already exists");
+        return false;
+    }
+
+    const auto arrayNames = GetMDArrayNames();
+    if (std::find(arrayNames.begin(), arrayNames.end(), osName) !=
+        arrayNames.end())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "An array with same name already exists");
+        return false;
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                              Rename()                                */
 /************************************************************************/
 
@@ -297,14 +325,8 @@ bool ZarrGroupBase::Rename(const std::string &osNewName)
     auto pParent = std::dynamic_pointer_cast<ZarrGroupBase>(m_poParent.lock());
     if (pParent)
     {
-        const auto groupNames = pParent->GetGroupNames();
-        if (std::find(groupNames.begin(), groupNames.end(), osNewName) !=
-            groupNames.end())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "A group with same name already exists");
+        if (!pParent->CheckArrayOrGroupWithSameNameDoesNotExist(osNewName))
             return false;
-        }
     }
 
     std::string osNewDirectoryName(m_osDirectoryName);

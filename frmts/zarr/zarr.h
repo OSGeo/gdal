@@ -428,6 +428,10 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
     bool Rename(const std::string &osNewName) override;
 
+    //! Returns false in case of error
+    bool
+    CheckArrayOrGroupWithSameNameDoesNotExist(const std::string &osName) const;
+
     void ParentRenamed(const std::string &osNewParentFullName) override;
 
     void NotifyArrayRenamed(const std::string &osOldName,
