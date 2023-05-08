@@ -1675,31 +1675,16 @@ bool MEMGroup::Rename(const std::string &osNewName)
         }
         pParent->m_oMapGroups.erase(pParent->m_oMapGroups.find(m_osName));
     }
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
+
+    BaseRename(osNewName);
+
     if (pParent)
     {
         CPLAssert(m_pSelf.lock());
         pParent->m_oMapGroups[m_osName] = m_pSelf.lock();
     }
 
-    NotifyChildrenOfRenaming();
-
     return true;
-}
-
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void MEMGroup::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
-
-    NotifyChildrenOfRenaming();
 }
 
 /************************************************************************/
@@ -2193,17 +2178,6 @@ bool MEMAbstractMDArray::IWrite(const GUInt64 *arrayStartIdx,
 
     ReadWrite(true, count, stack, bufferDataType, m_oType);
     return true;
-}
-
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void MEMAbstractMDArray::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
 }
 
 /************************************************************************/
@@ -2720,24 +2694,9 @@ bool MEMMDArray::Rename(const std::string &osNewName)
         }
     }
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
-
-    NotifyChildrenOfRenaming();
+    BaseRename(osNewName);
 
     return true;
-}
-
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void MEMMDArray::ParentRenamed(const std::string &osNewParentFullName)
-{
-    MEMAbstractMDArray::ParentRenamed(osNewParentFullName);
-
-    NotifyChildrenOfRenaming();
 }
 
 /************************************************************************/
@@ -2859,9 +2818,7 @@ bool MEMAttribute::Rename(const std::string &osNewName)
         }
     }
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
+    BaseRename(osNewName);
 
     m_bModified = true;
 
@@ -2961,22 +2918,9 @@ bool MEMDimension::Rename(const std::string &osNewName)
         }
     }
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
+    BaseRename(osNewName);
 
     return true;
-}
-
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void MEMDimension::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
 }
 
 /************************************************************************/

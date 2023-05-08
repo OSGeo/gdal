@@ -341,15 +341,9 @@ bool ZarrGroupBase::Rename(const std::string &osNewName)
     m_poSharedResource->RenameZMetadataRecursive(m_osDirectoryName,
                                                  osNewDirectoryName);
 
-    std::string osNewFullName(m_osFullName);
-    osNewFullName.resize(osNewFullName.size() - m_osName.size());
-    osNewFullName += osNewName;
-
     m_osDirectoryName = osNewDirectoryName;
-    m_osFullName = osNewFullName;
-    m_osName = osNewName;
 
-    NotifyChildrenOfRenaming();
+    BaseRename(osNewName);
 
     return true;
 }
@@ -367,11 +361,7 @@ void ZarrGroupBase::ParentRenamed(const std::string &osNewParentFullName)
     m_osDirectoryName = CPLFormFilename(pParent->m_osDirectoryName.c_str(),
                                         m_osName.c_str(), nullptr);
 
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
-
-    NotifyChildrenOfRenaming();
+    GDALGroup::ParentRenamed(osNewParentFullName);
 }
 
 /************************************************************************/

@@ -2527,9 +2527,7 @@ void ZarrArray::NotifyChildrenOfRenaming()
 
 void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
 {
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
+    GDALMDArray::ParentRenamed(osNewParentFullName);
 
     auto poParent = m_poGroupWeak.lock();
     // The parent necessarily exist, since it notified us
@@ -2539,8 +2537,6 @@ void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
         CPLFormFilename(CPLFormFilename(poParent->GetDirectoryName().c_str(),
                                         m_osName.c_str(), nullptr),
                         CPLGetFilename(m_osFilename.c_str()), nullptr);
-
-    NotifyChildrenOfRenaming();
 }
 
 /************************************************************************/
@@ -2600,11 +2596,7 @@ bool ZarrArray::Rename(const std::string &osNewName)
         poParent->NotifyArrayRenamed(m_osName, osNewName);
     }
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
-
-    NotifyChildrenOfRenaming();
+    BaseRename(osNewName);
 
     return true;
 }

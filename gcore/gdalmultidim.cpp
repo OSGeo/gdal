@@ -1337,6 +1337,36 @@ bool GDALGroup::Rename(CPL_UNUSED const std::string &osNewName)
 }
 
 /************************************************************************/
+/*                         BaseRename()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALGroup::BaseRename(const std::string &osNewName)
+{
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+/************************************************************************/
+/*                        ParentRenamed()                               */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALGroup::ParentRenamed(const std::string &osNewParentFullName)
+{
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+/************************************************************************/
 /*                       ~GDALAbstractMDArray()                         */
 /************************************************************************/
 
@@ -2234,6 +2264,36 @@ GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
     }
     return anChunkSize;
 }
+
+/************************************************************************/
+/*                         BaseRename()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALAbstractMDArray::BaseRename(const std::string &osNewName)
+{
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+//! @cond Doxygen_Suppress
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void GDALAbstractMDArray::ParentRenamed(const std::string &osNewParentFullName)
+{
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
 
 /************************************************************************/
 /*                             SetUnit()                                */
@@ -8955,6 +9015,33 @@ bool GDALDimension::Rename(CPL_UNUSED const std::string &osNewName)
     CPLError(CE_Failure, CPLE_NotSupported, "Rename() not implemented");
     return false;
 }
+
+/************************************************************************/
+/*                         BaseRename()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALDimension::BaseRename(const std::string &osNewName)
+{
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+}
+//! @endcond
+
+//! @cond Doxygen_Suppress
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void GDALDimension::ParentRenamed(const std::string &osNewParentFullName)
+{
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+}
+
+//! @endcond
 
 /************************************************************************/
 /************************************************************************/

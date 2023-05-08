@@ -337,7 +337,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
     bool RenameDimension(const std::string &osOldName,
                          const std::string &osNewName);
 
-    void NotifyChildrenOfRenaming();
+    void NotifyChildrenOfRenaming() override;
 
   public:
     ~ZarrGroupBase() override;
@@ -573,8 +573,6 @@ class ZarrDimension final : public GDALDimensionWeakIndexingVar
 
     bool Rename(const std::string &osNewName) override;
 
-    void ParentRenamed(const std::string &osNewParentFullName) override;
-
     bool IsModified() const
     {
         return m_bModified;
@@ -764,7 +762,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     std::shared_ptr<GDALMDArray> OpenTilePresenceCache(bool bCanCreate) const;
 
-    void NotifyChildrenOfRenaming();
+    void NotifyChildrenOfRenaming() override;
 
     static void EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
                           GByte *pDst);

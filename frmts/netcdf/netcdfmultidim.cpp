@@ -246,8 +246,6 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
         m_oSetGroups.erase(poSubGroup);
     }
 
-    void NotifyChildrenOfRenaming();
-
   protected:
     friend class netCDFDimension;
     void RegisterDimension(GDALDimension *poDim)
@@ -268,6 +266,8 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
     {
         m_oSetArrays.erase(poArray);
     }
+
+    void NotifyChildrenOfRenaming() override;
 
   public:
     netCDFGroup(const std::shared_ptr<netCDFSharedResources> &poShared,
@@ -324,8 +324,6 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
     void ClearStatistics() override;
 
     bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -407,8 +405,6 @@ class netCDFDimension final : public GDALDimension
     }
 
     bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -479,8 +475,6 @@ class netCDFAttribute final : public GDALAttribute
     const GDALExtendedDataType &GetDataType() const override;
 
     bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -544,8 +538,6 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
                     NCGetPutVarmFuncType NCGetPutVarmFunc,
                     ReadOrWriteOneElementType ReadOrWriteOneElement) const;
 
-    void NotifyChildrenOfRenaming();
-
   protected:
     netCDFVariable(const std::shared_ptr<netCDFSharedResources> &poShared,
                    int gid, int varid,
@@ -570,6 +562,8 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
 
     bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
+
+    void NotifyChildrenOfRenaming() override;
 
   public:
     static std::shared_ptr<netCDFVariable>
@@ -675,8 +669,6 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
     }
 
     bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -1417,26 +1409,9 @@ bool netCDFGroup::Rename(const std::string &osNewName)
     if (ret != NC_NOERR)
         return false;
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
-
-    NotifyChildrenOfRenaming();
+    BaseRename(osNewName);
 
     return true;
-}
-
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void netCDFGroup::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
-
-    NotifyChildrenOfRenaming();
 }
 
 /************************************************************************/
@@ -1960,17 +1935,6 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
 }
 
 /************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void netCDFDimension::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
-}
-
-/************************************************************************/
 /*                              Rename()                                */
 /************************************************************************/
 
@@ -1995,9 +1959,7 @@ bool netCDFDimension::Rename(const std::string &osNewName)
     if (ret != NC_NOERR)
         return false;
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
+    BaseRename(osNewName);
 
     return true;
 }
@@ -4087,26 +4049,9 @@ bool netCDFVariable::Rename(const std::string &osNewName)
     if (ret != NC_NOERR)
         return false;
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
-
-    NotifyChildrenOfRenaming();
+    BaseRename(osNewName);
 
     return true;
-}
-
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void netCDFVariable::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
-
-    NotifyChildrenOfRenaming();
 }
 
 /************************************************************************/
@@ -4676,23 +4621,11 @@ bool netCDFAttribute::Rename(const std::string &osNewName)
     if (ret != NC_NOERR)
         return false;
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
+    BaseRename(osNewName);
 
     return true;
 }
 
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void netCDFAttribute::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
-}
 /************************************************************************/
 /*                           OpenMultiDim()                             */
 /************************************************************************/

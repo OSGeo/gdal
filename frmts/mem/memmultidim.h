@@ -69,8 +69,6 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
     std::weak_ptr<MEMGroup> m_pSelf{};
     std::weak_ptr<MEMGroup> m_pParent{};
 
-    void NotifyChildrenOfRenaming();
-
   protected:
     friend class MEMDimension;
     bool RenameDimension(const std::string &osOldName,
@@ -79,6 +77,8 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
     friend class MEMMDArray;
     bool RenameArray(const std::string &osOldName,
                      const std::string &osNewName);
+
+    void NotifyChildrenOfRenaming() override;
 
   public:
     MEMGroup(const std::string &osParentName, const char *pszName)
@@ -144,8 +144,6 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
                     CSLConstList papszOptions) override;
 
     bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -237,8 +235,6 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
     {
         m_bModified = bModified;
     }
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -274,7 +270,7 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
     bool Resize(const std::vector<GUInt64> &anNewDimSizes,
                 bool bResizeOtherArrays);
 
-    void NotifyChildrenOfRenaming();
+    void NotifyChildrenOfRenaming() override;
 
   protected:
     MEMMDArray(const std::string &osParentName, const std::string &osName,
@@ -396,8 +392,6 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
                 CSLConstList) override;
 
     bool Rename(const std::string &osNewName) override;
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 };
 
 /************************************************************************/
@@ -464,8 +458,6 @@ class MEMDimension CPL_NON_FINAL : public GDALDimensionWeakIndexingVar
     {
         return m_oSetArrays;
     }
-
-    void ParentRenamed(const std::string &osNewParentFullName) override;
 
     bool Rename(const std::string &osNewName) override;
 };

@@ -61,22 +61,9 @@ bool ZarrDimension::Rename(const std::string &osNewName)
         }
     }
 
-    m_osFullName.resize(m_osFullName.size() - m_osName.size());
-    m_osFullName += osNewName;
-    m_osName = osNewName;
+    BaseRename(osNewName);
 
     m_bModified = true;
 
     return true;
-}
-
-/************************************************************************/
-/*                          ParentRenamed()                             */
-/************************************************************************/
-
-void ZarrDimension::ParentRenamed(const std::string &osNewParentFullName)
-{
-    m_osFullName = osNewParentFullName;
-    m_osFullName += "/";
-    m_osFullName += m_osName;
 }

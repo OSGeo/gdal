@@ -2282,6 +2282,12 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     GetInnerMostGroup(const std::string &osPathOrArrayOrDim,
                       std::shared_ptr<GDALGroup> &curGroupHolder,
                       std::string &osLastPart) const;
+
+    void BaseRename(const std::string &osNewName);
+
+    virtual void NotifyChildrenOfRenaming()
+    {
+    }
     //! @endcond
 
   public:
@@ -2372,10 +2378,7 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     virtual bool Rename(const std::string &osNewName);
 
     //! @cond Doxygen_Suppress
-    virtual void
-    ParentRenamed(CPL_UNUSED const std::string &osNewParentFullName)
-    {
-    }
+    virtual void ParentRenamed(const std::string &osNewParentFullName);
     //! @endcond
 
     //! @cond Doxygen_Suppress
@@ -2432,6 +2435,13 @@ class CPL_DLL GDALAbstractMDArray
            const GInt64 *arrayStep,         // step in elements
            const GPtrDiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer);
+
+    void BaseRename(const std::string &osNewName);
+
+    virtual void NotifyChildrenOfRenaming()
+    {
+    }
+
     //! @endcond
 
   public:
@@ -2522,10 +2532,7 @@ class CPL_DLL GDALAbstractMDArray
     virtual bool Rename(const std::string &osNewName);
 
     //! @cond Doxygen_Suppress
-    virtual void
-    ParentRenamed(CPL_UNUSED const std::string &osNewParentFullName)
-    {
-    }
+    virtual void ParentRenamed(const std::string &osNewParentFullName);
     //! @endcond
 };
 
@@ -2770,6 +2777,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                                   const GPtrDiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const;
+
     //! @endcond
 
   public:
@@ -3109,10 +3117,7 @@ class CPL_DLL GDALDimension
     virtual bool Rename(const std::string &osNewName);
 
     //! @cond Doxygen_Suppress
-    virtual void
-    ParentRenamed(CPL_UNUSED const std::string &osNewParentFullName)
-    {
-    }
+    virtual void ParentRenamed(const std::string &osNewParentFullName);
     //! @endcond
 
   protected:
@@ -3122,6 +3127,9 @@ class CPL_DLL GDALDimension
     std::string m_osType;
     std::string m_osDirection;
     GUInt64 m_nSize;
+
+    void BaseRename(const std::string &osNewName);
+
     //! @endcond
 };
 
