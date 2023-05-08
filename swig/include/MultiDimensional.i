@@ -231,6 +231,10 @@ public:
                                     data_type, options);
   }
 
+  CPLErr Rename( const char* newName ) {
+    return GDALGroupRename( self, newName ) ? CE_None : CE_Failure;
+  }
+
 } /* extend */
 }; /* GDALGroupH */
 
@@ -1130,6 +1134,10 @@ public:
       return GDALMDArrayCache(self, options);
   }
 
+  CPLErr Rename( const char* newName ) {
+    return GDALMDArrayRename( self, newName ) ? CE_None : CE_Failure;
+  }
+
 } /* extend */
 }; /* GDALMDArrayH */
 
@@ -1300,6 +1308,10 @@ public:
   }
 #endif
 
+  CPLErr Rename( const char* newName ) {
+    return GDALAttributeRename( self, newName ) ? CE_None : CE_Failure;
+  }
+
 } /* extend */
 }; /* GDALAttributeH */
 
@@ -1354,6 +1366,10 @@ public:
 
   bool SetIndexingVariable(GDALMDArrayHS* array) {
     return GDALDimensionSetIndexingVariable(self, array);
+  }
+
+  CPLErr Rename( const char* newName ) {
+    return GDALDimensionRename( self, newName ) ? CE_None : CE_Failure;
   }
 
 } /* extend */

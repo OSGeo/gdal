@@ -32,12 +32,21 @@
 #include <cassert>
 #include <map>
 
+constexpr const char *ATTRIBUTE_GROUP_SUFFIX = "/_GLOBAL_";
+
 /************************************************************************/
 /*             ZarrAttributeGroup::ZarrAttributeGroup()                 */
 /************************************************************************/
 
-ZarrAttributeGroup::ZarrAttributeGroup(const std::string &osParentName)
-    : m_oGroup(osParentName, nullptr)
+ZarrAttributeGroup::ZarrAttributeGroup(const std::string &osParentName,
+                                       bool bContainerIsGroup)
+    : m_bContainerIsGroup(bContainerIsGroup),
+      m_poGroup(MEMGroup::Create(
+          bContainerIsGroup
+              ? (osParentName == "/" ? ATTRIBUTE_GROUP_SUFFIX
+                                     : osParentName + ATTRIBUTE_GROUP_SUFFIX)
+              : osParentName,
+          nullptr))
 {
 }
 
@@ -58,7 +67,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
         if (itemType == CPLJSONObject::Type::String)
         {
             bDone = true;
-            poAttr = m_oGroup.CreateAttribute(
+            poAttr = m_poGroup->CreateAttribute(
                 item.GetName(), {}, GDALExtendedDataType::CreateString(),
                 nullptr);
             if (poAttr)
@@ -78,7 +87,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                  itemType == CPLJSONObject::Type::Double)
         {
             bDone = true;
-            poAttr = m_oGroup.CreateAttribute(
+            poAttr = m_poGroup->CreateAttribute(
                 item.GetName(), {},
                 GDALExtendedDataType::Create(
                     itemType == CPLJSONObject::Type::Integer ? GDT_Int32
@@ -151,7 +160,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
             if (!mixedType && !isFirst)
             {
                 bDone = true;
-                poAttr = m_oGroup.CreateAttribute(
+                poAttr = m_poGroup->CreateAttribute(
                     item.GetName(), {countItems},
                     isString ? GDALExtendedDataType::CreateString()
                              : GDALExtendedDataType::Create(
@@ -198,7 +207,8 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
             constexpr size_t nMaxStringLength = 0;
             const auto eDT = GDALExtendedDataType::CreateString(
                 nMaxStringLength, GEDTST_JSON);
-            poAttr = m_oGroup.CreateAttribute(item.GetName(), {}, eDT, nullptr);
+            poAttr =
+                m_poGroup->CreateAttribute(item.GetName(), {}, eDT, nullptr);
             if (poAttr)
             {
                 const GUInt64 arrayStartIdx = 0;
@@ -226,7 +236,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
 CPLJSONObject ZarrAttributeGroup::Serialize() const
 {
     CPLJSONObject o;
-    const auto attrs = m_oGroup.GetAttributes(nullptr);
+    const auto attrs = m_poGroup->GetAttributes(nullptr);
     for (const auto &attr : attrs)
     {
         const auto oType = attr->GetDataType();
@@ -318,4 +328,21 @@ CPLJSONObject ZarrAttributeGroup::Serialize() const
         }
     }
     return o;
+}
+
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void ZarrAttributeGroup::ParentRenamed(const std::string &osNewParentFullName)
+{
+    if (m_bContainerIsGroup)
+        m_poGroup->SetFullName(osNewParentFullName + ATTRIBUTE_GROUP_SUFFIX);
+    else
+        m_poGroup->SetFullName(osNewParentFullName);
+    const auto attrs = m_poGroup->GetAttributes(nullptr);
+    for (auto &attr : attrs)
+    {
+        attr->ParentRenamed(m_poGroup->GetFullName());
+    }
 }

@@ -94,6 +94,9 @@ class CPL_DLL CPLJSONObject
     CPLJSONObject &operator=(const CPLJSONObject &other);
     CPLJSONObject &operator=(CPLJSONObject &&other);
 
+    // This method is not thread-safe
+    CPLJSONObject Clone() const;
+
   private:
     explicit CPLJSONObject(const std::string &osName, JSONObjectH poJsonObject);
     /*! @endcond */

@@ -26,9 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include "cpl_vsi_virtual.h"
 #include "zarr.h"
-#include "gdal_thread_pool.h"
 #include "ucs4_utf8.hpp"
 
 #include "cpl_float.h"
@@ -42,9 +40,9 @@
 #include <map>
 #include <set>
 
-#define ZARR_DEBUG_KEY "ZARR"
-
-#define CRS_ATTRIBUTE_NAME "_CRS"
+#if defined(__clang__) || defined(_MSC_VER)
+#define COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT
+#endif
 
 namespace
 {
@@ -107,45 +105,42 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 }  // namespace
 
 /************************************************************************/
-/*                         ZarrArray::ZarrArray()                       */
+/*                      ZarrArray::ParseChunkSize()                     */
 /************************************************************************/
 
-ZarrArray::ZarrArray(
-    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-    const std::string &osParentName, const std::string &osName,
-    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-    const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
-    const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
-    : GDALAbstractMDArray(osParentName, osName),
-      GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
-      m_poSharedResource(poSharedResource), m_aoDims(aoDims), m_oType(oType),
-      m_aoDtypeElts(aoDtypeElts), m_anBlockSize(anBlockSize),
-      m_bFortranOrder(bFortranOrder), m_oAttrGroup(osParentName)
+/* static */ bool ZarrArray::ParseChunkSize(const CPLJSONArray &oChunks,
+                                            const GDALExtendedDataType &oType,
+                                            std::vector<GUInt64> &anBlockSize)
 {
-    m_oCompressorJSonV2.Deinit();
-    m_oCompressorJSonV3.Deinit();
-
-    // Compute individual tile size
-    const size_t nSourceSize =
-        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-    m_nTileSize = nSourceSize;
-    for (const auto &nBlockSize : m_anBlockSize)
+    size_t nBlockSize = oType.GetSize();
+    for (const auto &item : oChunks)
     {
-        m_nTileSize *= static_cast<size_t>(nBlockSize);
+        const auto nSize = static_cast<GUInt64>(item.ToLong());
+        if (nSize == 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for chunks");
+            return false;
+        }
+        if (nBlockSize > std::numeric_limits<size_t>::max() / nSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunks");
+            return false;
+        }
+        nBlockSize *= static_cast<size_t>(nSize);
+        anBlockSize.emplace_back(nSize);
     }
+
+    return true;
 }
 
 /************************************************************************/
-/*                          ZarrArray::Create()                         */
+/*                      ZarrArray::ComputeTileCount()                   */
 /************************************************************************/
 
-std::shared_ptr<ZarrArray>
-ZarrArray::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
-                  const std::string &osParentName, const std::string &osName,
-                  const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-                  const GDALExtendedDataType &oType,
-                  const std::vector<DtypeElt> &aoDtypeElts,
-                  const std::vector<GUInt64> &anBlockSize, bool bFortranOrder)
+/* static */ uint64_t ZarrArray::ComputeTileCount(
+    const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const std::vector<GUInt64> &anBlockSize)
 {
     uint64_t nTotalTileCount = 1;
     for (size_t i = 0; i < aoDims.size(); ++i)
@@ -161,21 +156,47 @@ ZarrArray::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                 CE_Failure, CPLE_NotSupported,
                 "Array %s has more than 2^64 tiles. This is not supported.",
                 osName.c_str());
-            return nullptr;
+            return 0;
         }
         nTotalTileCount *= nTileThisDim;
     }
+    return nTotalTileCount;
+}
 
-    auto arr = std::shared_ptr<ZarrArray>(
-        new ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
-                      aoDtypeElts, anBlockSize, bFortranOrder));
-    arr->SetSelf(arr);
+/************************************************************************/
+/*                         ZarrArray::ZarrArray()                       */
+/************************************************************************/
 
-    arr->m_nTotalTileCount = nTotalTileCount;
-    arr->m_bUseOptimizedCodePaths = CPLTestBool(
+ZarrArray::ZarrArray(
+    const std::shared_ptr<ZarrSharedResource> &poSharedResource,
+    const std::string &osParentName, const std::string &osName,
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
+    const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
+    const std::vector<GUInt64> &anBlockSize)
+    :
+#if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
+      GDALAbstractMDArray(osParentName, osName),
+#endif
+      GDALPamMDArray(osParentName, osName, poSharedResource->GetPAM()),
+      m_poSharedResource(poSharedResource), m_aoDims(aoDims), m_oType(oType),
+      m_aoDtypeElts(aoDtypeElts), m_anBlockSize(anBlockSize),
+      m_oAttrGroup(m_osFullName, /*bContainerIsGroup=*/false)
+{
+    m_nTotalTileCount = ComputeTileCount(osName, aoDims, anBlockSize);
+    if (m_nTotalTileCount == 0)
+        return;
+
+    // Compute individual tile size
+    const size_t nSourceSize =
+        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
+    m_nTileSize = nSourceSize;
+    for (const auto &nBlockSize : m_anBlockSize)
+    {
+        m_nTileSize *= static_cast<size_t>(nBlockSize);
+    }
+
+    m_bUseOptimizedCodePaths = CPLTestBool(
         CPLGetConfigOption("GDAL_ZARR_USE_OPTIMIZED_CODE_PATHS", "YES"));
-
-    return arr;
 }
 
 /************************************************************************/
@@ -184,8 +205,6 @@ ZarrArray::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 
 ZarrArray::~ZarrArray()
 {
-    Flush();
-
     if (m_pabyNoData)
     {
         m_oType.FreeDynamicMemory(&m_pabyNoData[0]);
@@ -196,153 +215,150 @@ ZarrArray::~ZarrArray()
 }
 
 /************************************************************************/
-/*                                Flush()                               */
+/*              ZarrArray::SerializeSpecialAttributes()                 */
 /************************************************************************/
 
-void ZarrArray::Flush()
+CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 {
-    FlushDirtyTile();
-    bool bSerializeV3 = false;
+    m_bSRSModified = false;
+    m_oAttrGroup.UnsetModified();
 
-    if (m_bDefinitionModified)
+    auto oAttrs = m_oAttrGroup.Serialize();
+
+    if (m_poSRS)
     {
-        if (m_nVersion == 2)
+        CPLJSONObject oCRS;
+        const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
+        char *pszWKT = nullptr;
+        if (m_poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE)
         {
-            SerializeV2();
+            oCRS.Add("wkt", pszWKT);
         }
-        else
+        CPLFree(pszWKT);
+
         {
-            bSerializeV3 = true;
-        }
-        m_bDefinitionModified = false;
-    }
-
-    CPLJSONArray j_ARRAY_DIMENSIONS;
-    if (!m_aoDims.empty())
-    {
-        for (const auto &poDim : m_aoDims)
-        {
-            if (dynamic_cast<const ZarrArray *>(
-                    poDim->GetIndexingVariable().get()) != nullptr)
+            CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
+            CPLErrorStateBackuper errorStateBackuper;
+            char *projjson = nullptr;
+            if (m_poSRS->exportToPROJJSON(&projjson, nullptr) == OGRERR_NONE &&
+                projjson != nullptr)
             {
-                j_ARRAY_DIMENSIONS.Add(poDim->GetName());
-            }
-            else
-            {
-                j_ARRAY_DIMENSIONS = CPLJSONArray();
-                break;
-            }
-        }
-    }
-
-    CPLJSONObject oAttrs;
-    if (m_oAttrGroup.IsModified() ||
-        (m_bNew && j_ARRAY_DIMENSIONS.Size() != 0) || m_bUnitModified ||
-        m_bOffsetModified || m_bScaleModified || m_bSRSModified)
-    {
-        m_bNew = false;
-        m_bSRSModified = false;
-        m_oAttrGroup.UnsetModified();
-
-        oAttrs = m_oAttrGroup.Serialize();
-
-        if (j_ARRAY_DIMENSIONS.Size() != 0)
-        {
-            oAttrs.Delete("_ARRAY_DIMENSIONS");
-            oAttrs.Add("_ARRAY_DIMENSIONS", j_ARRAY_DIMENSIONS);
-        }
-
-        if (m_poSRS)
-        {
-            CPLJSONObject oCRS;
-            const char *const apszOptions[] = {"FORMAT=WKT2_2019", nullptr};
-            char *pszWKT = nullptr;
-            if (m_poSRS->exportToWkt(&pszWKT, apszOptions) == OGRERR_NONE)
-            {
-                oCRS.Add("wkt", pszWKT);
-            }
-            CPLFree(pszWKT);
-
-            {
-                CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
-                CPLErrorStateBackuper errorStateBackuper;
-                char *projjson = nullptr;
-                if (m_poSRS->exportToPROJJSON(&projjson, nullptr) ==
-                        OGRERR_NONE &&
-                    projjson != nullptr)
+                CPLJSONDocument oDocProjJSON;
+                if (oDocProjJSON.LoadMemory(std::string(projjson)))
                 {
-                    CPLJSONDocument oDocProjJSON;
-                    if (oDocProjJSON.LoadMemory(std::string(projjson)))
-                    {
-                        oCRS.Add("projjson", oDocProjJSON.GetRoot());
-                    }
+                    oCRS.Add("projjson", oDocProjJSON.GetRoot());
                 }
-                CPLFree(projjson);
             }
-
-            const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
-            const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
-            if (pszAuthorityCode && pszAuthorityName &&
-                EQUAL(pszAuthorityName, "EPSG"))
-            {
-                oCRS.Add("url",
-                         std::string("http://www.opengis.net/def/crs/EPSG/0/") +
-                             pszAuthorityCode);
-            }
-
-            oAttrs.Add(CRS_ATTRIBUTE_NAME, oCRS);
+            CPLFree(projjson);
         }
 
-        if (m_osUnit.empty())
+        const char *pszAuthorityCode = m_poSRS->GetAuthorityCode(nullptr);
+        const char *pszAuthorityName = m_poSRS->GetAuthorityName(nullptr);
+        if (pszAuthorityCode && pszAuthorityName &&
+            EQUAL(pszAuthorityName, "EPSG"))
         {
-            if (m_bUnitModified)
-                oAttrs.Delete(CF_UNITS);
+            oCRS.Add("url",
+                     std::string("http://www.opengis.net/def/crs/EPSG/0/") +
+                         pszAuthorityCode);
         }
-        else
-        {
-            oAttrs.Set(CF_UNITS, m_osUnit);
-        }
-        m_bUnitModified = false;
 
-        if (!m_bHasOffset)
-        {
-            oAttrs.Delete(CF_ADD_OFFSET);
-        }
-        else
-        {
-            oAttrs.Set(CF_ADD_OFFSET, m_dfOffset);
-        }
-        m_bOffsetModified = false;
-
-        if (!m_bHasScale)
-        {
-            oAttrs.Delete(CF_SCALE_FACTOR);
-        }
-        else
-        {
-            oAttrs.Set(CF_SCALE_FACTOR, m_dfScale);
-        }
-        m_bScaleModified = false;
-
-        if (m_nVersion == 2)
-        {
-            CPLJSONDocument oDoc;
-            oDoc.SetRoot(oAttrs);
-            const std::string osAttrFilename = CPLFormFilename(
-                CPLGetDirname(m_osFilename.c_str()), ".zattrs", nullptr);
-            oDoc.Save(osAttrFilename);
-            m_poSharedResource->SetZMetadataItem(osAttrFilename, oAttrs);
-        }
-        else
-        {
-            bSerializeV3 = true;
-        }
+        oAttrs.Add(CRS_ATTRIBUTE_NAME, oCRS);
     }
 
-    if (bSerializeV3)
+    if (m_osUnit.empty())
     {
-        SerializeV3(oAttrs);
+        if (m_bUnitModified)
+            oAttrs.Delete(CF_UNITS);
     }
+    else
+    {
+        oAttrs.Set(CF_UNITS, m_osUnit);
+    }
+    m_bUnitModified = false;
+
+    if (!m_bHasOffset)
+    {
+        oAttrs.Delete(CF_ADD_OFFSET);
+    }
+    else
+    {
+        oAttrs.Set(CF_ADD_OFFSET, m_dfOffset);
+    }
+    m_bOffsetModified = false;
+
+    if (!m_bHasScale)
+    {
+        oAttrs.Delete(CF_SCALE_FACTOR);
+    }
+    else
+    {
+        oAttrs.Set(CF_SCALE_FACTOR, m_dfScale);
+    }
+    m_bScaleModified = false;
+
+    return oAttrs;
+}
+
+/************************************************************************/
+/*                          FillBlockSize()                             */
+/************************************************************************/
+
+/* static */
+bool ZarrArray::FillBlockSize(
+    const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
+    const GDALExtendedDataType &oDataType, std::vector<GUInt64> &anBlockSize,
+    CSLConstList papszOptions)
+{
+    const auto nDims = aoDimensions.size();
+    anBlockSize.resize(nDims);
+    for (size_t i = 0; i < nDims; ++i)
+        anBlockSize[i] = 1;
+    if (nDims >= 2)
+    {
+        anBlockSize[nDims - 2] =
+            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 2]->GetSize()),
+                     static_cast<GUInt64>(256));
+        anBlockSize[nDims - 1] =
+            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 1]->GetSize()),
+                     static_cast<GUInt64>(256));
+    }
+    else if (nDims == 1)
+    {
+        anBlockSize[0] = std::max<GUInt64>(1, aoDimensions[0]->GetSize());
+    }
+
+    const char *pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
+    if (pszBlockSize)
+    {
+        const auto aszTokens(
+            CPLStringList(CSLTokenizeString2(pszBlockSize, ",", 0)));
+        if (static_cast<size_t>(aszTokens.size()) != nDims)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid number of values in BLOCKSIZE");
+            return false;
+        }
+        size_t nBlockSize = oDataType.GetSize();
+        for (size_t i = 0; i < nDims; ++i)
+        {
+            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            if (anBlockSize[i] == 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Values in BLOCKSIZE should be > 0");
+                return false;
+            }
+            if (anBlockSize[i] >
+                std::numeric_limits<size_t>::max() / nBlockSize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Too large values in BLOCKSIZE");
+                return false;
+            }
+            nBlockSize *= static_cast<size_t>(anBlockSize[i]);
+        }
+    }
+    return true;
 }
 
 /************************************************************************/
@@ -379,8 +395,9 @@ void ZarrArray::DeallocateDecodedTileData()
 /************************************************************************/
 
 /* Encode from GDAL raw type to Zarr native type */
-static void EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
-                      GByte *pDst)
+/*static*/
+void ZarrArray::EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
+                          GByte *pDst)
 {
     for (const auto &elt : elts)
     {
@@ -528,20 +545,6 @@ static void EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
 }
 
 /************************************************************************/
-/*           StripUselessItemsFromCompressorConfiguration()             */
-/************************************************************************/
-
-static void StripUselessItemsFromCompressorConfiguration(CPLJSONObject &o)
-{
-    if (o.GetType() == CPLJSONObject::Type::Object)
-    {
-        o.Delete("num_threads");  // Blosc
-        o.Delete("typesize");     // Blosc
-        o.Delete("header");       // LZ4
-    }
-}
-
-/************************************************************************/
 /*                ZarrArray::SerializeNumericNoData()                   */
 /************************************************************************/
 
@@ -584,306 +587,6 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
         else
             oRoot.Add("fill_value", dfVal);
     }
-}
-
-/************************************************************************/
-/*                    ZarrArray::SerializeV2()                          */
-/************************************************************************/
-
-void ZarrArray::SerializeV2()
-{
-    CPLJSONDocument oDoc;
-    CPLJSONObject oRoot = oDoc.GetRoot();
-
-    CPLJSONArray oChunks;
-    for (const auto nBlockSize : m_anBlockSize)
-    {
-        oChunks.Add(static_cast<GInt64>(nBlockSize));
-    }
-    oRoot.Add("chunks", oChunks);
-
-    if (m_oCompressorJSonV2.IsValid())
-    {
-        oRoot.Add("compressor", m_oCompressorJSonV2);
-        CPLJSONObject compressor = oRoot["compressor"];
-        StripUselessItemsFromCompressorConfiguration(compressor);
-    }
-    else
-    {
-        oRoot.AddNull("compressor");
-    }
-
-    if (m_dtype.GetType() == CPLJSONObject::Type::Object)
-        oRoot.Add("dtype", m_dtype["dummy"]);
-    else
-        oRoot.Add("dtype", m_dtype);
-
-    if (m_pabyNoData == nullptr)
-    {
-        oRoot.AddNull("fill_value");
-    }
-    else
-    {
-        switch (m_oType.GetClass())
-        {
-            case GEDTC_NUMERIC:
-            {
-                SerializeNumericNoData(oRoot);
-                break;
-            }
-
-            case GEDTC_STRING:
-            {
-                char *pszStr;
-                char **ppszStr = reinterpret_cast<char **>(m_pabyNoData);
-                memcpy(&pszStr, ppszStr, sizeof(pszStr));
-                if (pszStr)
-                {
-                    const size_t nNativeSize =
-                        m_aoDtypeElts.back().nativeOffset +
-                        m_aoDtypeElts.back().nativeSize;
-                    char *base64 = CPLBase64Encode(
-                        static_cast<int>(std::min(nNativeSize, strlen(pszStr))),
-                        reinterpret_cast<const GByte *>(pszStr));
-                    oRoot.Add("fill_value", base64);
-                    CPLFree(base64);
-                }
-                else
-                {
-                    oRoot.AddNull("fill_value");
-                }
-                break;
-            }
-
-            case GEDTC_COMPOUND:
-            {
-                const size_t nNativeSize = m_aoDtypeElts.back().nativeOffset +
-                                           m_aoDtypeElts.back().nativeSize;
-                std::vector<GByte> nativeNoData(nNativeSize);
-                EncodeElt(m_aoDtypeElts, m_pabyNoData, &nativeNoData[0]);
-                char *base64 = CPLBase64Encode(static_cast<int>(nNativeSize),
-                                               nativeNoData.data());
-                oRoot.Add("fill_value", base64);
-                CPLFree(base64);
-            }
-        }
-    }
-
-    if (m_oFiltersArray.Size() == 0)
-        oRoot.AddNull("filters");
-    else
-        oRoot.Add("filters", m_oFiltersArray);
-
-    oRoot.Add("order", m_bFortranOrder ? "F" : "C");
-
-    CPLJSONArray oShape;
-    for (const auto &poDim : m_aoDims)
-    {
-        oShape.Add(static_cast<GInt64>(poDim->GetSize()));
-    }
-    oRoot.Add("shape", oShape);
-
-    oRoot.Add("zarr_format", m_nVersion);
-
-    if (m_osDimSeparator != ".")
-    {
-        oRoot.Add("dimension_separator", m_osDimSeparator);
-    }
-
-    oDoc.Save(m_osFilename);
-
-    m_poSharedResource->SetZMetadataItem(m_osFilename, oRoot);
-}
-
-/************************************************************************/
-/*                    ZarrArray::SerializeV3()                          */
-/************************************************************************/
-
-void ZarrArray::SerializeV3(const CPLJSONObject &oAttrs)
-{
-    CPLJSONDocument oDoc;
-    CPLJSONObject oRoot = oDoc.GetRoot();
-
-    CPLJSONArray oShape;
-    for (const auto &poDim : m_aoDims)
-    {
-        oShape.Add(static_cast<GInt64>(poDim->GetSize()));
-    }
-    oRoot.Add("shape", oShape);
-
-    oRoot.Add("data_type", m_dtype.ToString());
-
-    CPLJSONObject oChunkGrid;
-    oChunkGrid.Add("type", "regular");
-    CPLJSONArray oChunks;
-    for (const auto nBlockSize : m_anBlockSize)
-    {
-        oChunks.Add(static_cast<GInt64>(nBlockSize));
-    }
-    oChunkGrid.Add("chunk_shape", oChunks);
-    oChunkGrid.Add("separator", m_osDimSeparator);
-    oRoot.Add("chunk_grid", oChunkGrid);
-
-    if (m_oCompressorJSonV3.IsValid())
-    {
-        oRoot.Add("compressor", m_oCompressorJSonV3);
-        CPLJSONObject oConfiguration = oRoot["compressor"]["configuration"];
-        StripUselessItemsFromCompressorConfiguration(oConfiguration);
-    }
-
-    if (m_pabyNoData == nullptr)
-    {
-        oRoot.AddNull("fill_value");
-    }
-    else
-    {
-        SerializeNumericNoData(oRoot);
-    }
-
-    oRoot.Add("chunk_memory_layout", m_bFortranOrder ? "F" : "C");
-
-    oRoot.Add("extensions", CPLJSONArray());
-
-    oRoot.Add("attributes", oAttrs);
-
-    oDoc.Save(m_osFilename);
-}
-
-/************************************************************************/
-/*                  ZarrArray::NeedDecodedBuffer()                      */
-/************************************************************************/
-
-bool ZarrArray::NeedDecodedBuffer() const
-{
-    const size_t nSourceSize =
-        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-    if (m_oType.GetClass() == GEDTC_COMPOUND &&
-        nSourceSize != m_oType.GetSize())
-    {
-        return true;
-    }
-    else if (m_oType.GetClass() != GEDTC_STRING)
-    {
-        for (const auto &elt : m_aoDtypeElts)
-        {
-            if (elt.needByteSwapping || elt.gdalTypeIsApproxOfNative ||
-                elt.nativeType == DtypeElt::NativeType::STRING_ASCII ||
-                elt.nativeType == DtypeElt::NativeType::STRING_UNICODE)
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-/************************************************************************/
-/*               ZarrArray::AllocateWorkingBuffers()                    */
-/************************************************************************/
-
-bool ZarrArray::AllocateWorkingBuffers() const
-{
-    if (m_bAllocateWorkingBuffersDone)
-        return m_bWorkingBuffersOK;
-
-    m_bAllocateWorkingBuffersDone = true;
-
-    size_t nSizeNeeded = m_nTileSize;
-    if (m_bFortranOrder || m_oFiltersArray.Size() != 0)
-    {
-        if (nSizeNeeded > std::numeric_limits<size_t>::max() / 2)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
-            return false;
-        }
-        nSizeNeeded *= 2;
-    }
-    if (NeedDecodedBuffer())
-    {
-        size_t nDecodedBufferSize = m_oType.GetSize();
-        for (const auto &nBlockSize : m_anBlockSize)
-        {
-            if (nDecodedBufferSize > std::numeric_limits<size_t>::max() /
-                                         static_cast<size_t>(nBlockSize))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
-                return false;
-            }
-            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
-        }
-        if (nSizeNeeded >
-            std::numeric_limits<size_t>::max() - nDecodedBufferSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunk size");
-            return false;
-        }
-        nSizeNeeded += nDecodedBufferSize;
-    }
-
-    // Reserve a buffer for tile content
-    if (nSizeNeeded > 1024 * 1024 * 1024 &&
-        !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")))
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
-                 "By default the driver limits to 1 GB. To allow that memory "
-                 "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
-                 "option to YES.",
-                 static_cast<GUIntBig>(nSizeNeeded));
-        return false;
-    }
-
-    m_bWorkingBuffersOK = AllocateWorkingBuffers(
-        m_abyRawTileData, m_abyTmpRawTileData, m_abyDecodedTileData);
-    return m_bWorkingBuffersOK;
-}
-
-bool ZarrArray::AllocateWorkingBuffers(
-    std::vector<GByte> &abyRawTileData, std::vector<GByte> &abyTmpRawTileData,
-    std::vector<GByte> &abyDecodedTileData) const
-{
-    // This method should NOT modify any ZarrArray member, as it is going to
-    // be called concurrently from several threads.
-
-    // Set those #define to avoid accidental use of some global variables
-#define m_abyTmpRawTileData cannot_use_here
-#define m_abyRawTileData cannot_use_here
-#define m_abyDecodedTileData cannot_use_here
-
-    try
-    {
-        abyRawTileData.resize(m_nTileSize);
-        if (m_bFortranOrder || m_oFiltersArray.Size() != 0)
-            abyTmpRawTileData.resize(m_nTileSize);
-    }
-    catch (const std::bad_alloc &e)
-    {
-        CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-        return false;
-    }
-
-    if (NeedDecodedBuffer())
-    {
-        size_t nDecodedBufferSize = m_oType.GetSize();
-        for (const auto &nBlockSize : m_anBlockSize)
-        {
-            nDecodedBufferSize *= static_cast<size_t>(nBlockSize);
-        }
-        try
-        {
-            abyDecodedTileData.resize(nDecodedBufferSize);
-        }
-        catch (const std::bad_alloc &e)
-        {
-            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
-            return false;
-        }
-    }
-
-    return true;
-#undef m_abyTmpRawTileData
-#undef m_abyRawTileData
-#undef m_abyDecodedTileData
 }
 
 /************************************************************************/
@@ -946,8 +649,9 @@ void ZarrArray::RegisterNoDataValue(const void *pNoData)
 /*                      ZarrArray::BlockTranspose()                     */
 /************************************************************************/
 
-void ZarrArray::BlockTranspose(const std::vector<GByte> &abySrc,
-                               std::vector<GByte> &abyDst, bool bDecode) const
+void ZarrArray::BlockTranspose(const ZarrByteVectorQuickResize &abySrc,
+                               ZarrByteVectorQuickResize &abyDst,
+                               bool bDecode) const
 {
     // Perform transposition
     const size_t nDims = m_anBlockSize.size();
@@ -1050,8 +754,9 @@ lbl_next_depth:
 /*                        DecodeSourceElt()                             */
 /************************************************************************/
 
-static void DecodeSourceElt(const std::vector<DtypeElt> &elts,
-                            const GByte *pSrc, GByte *pDst)
+/* static */
+void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
+                                const GByte *pSrc, GByte *pDst)
 {
     for (auto &elt : elts)
     {
@@ -1166,278 +871,31 @@ static void DecodeSourceElt(const std::vector<DtypeElt> &elts,
 }
 
 /************************************************************************/
-/*                        ZarrArray::LoadTileData()                     */
+/*                  ZarrArray::IAdviseReadCommon()                      */
 /************************************************************************/
 
-bool ZarrArray::LoadTileData(const uint64_t *tileIndices,
-                             bool &bMissingTileOut) const
-{
-    return LoadTileData(tileIndices,
-                        false,  // use mutex
-                        m_psDecompressor, m_abyRawTileData, m_abyTmpRawTileData,
-                        m_abyDecodedTileData, bMissingTileOut);
-}
-
-bool ZarrArray::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
-                             const CPLCompressor *psDecompressor,
-                             std::vector<GByte> &abyRawTileData,
-                             std::vector<GByte> &abyTmpRawTileData,
-                             std::vector<GByte> &abyDecodedTileData,
-                             bool &bMissingTileOut) const
-{
-    // This method should NOT modify any ZarrArray member, as it is going to
-    // be called concurrently from several threads.
-
-    // Set those #define to avoid accidental use of some global variables
-#define m_abyTmpRawTileData cannot_use_here
-#define m_abyRawTileData cannot_use_here
-#define m_abyDecodedTileData cannot_use_here
-#define m_psDecompressor cannot_use_here
-
-    bMissingTileOut = false;
-
-    std::string osFilename;
-    if (m_aoDims.empty())
-    {
-        osFilename = "0";
-    }
-    else
-    {
-        for (size_t i = 0; i < m_aoDims.size(); ++i)
-        {
-            if (!osFilename.empty())
-                osFilename += m_osDimSeparator;
-            osFilename += std::to_string(tileIndices[i]);
-        }
-    }
-
-    if (m_nVersion == 2)
-    {
-        osFilename = CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
-                                     osFilename.c_str(), nullptr);
-    }
-    else
-    {
-        std::string osTmp = m_osRootDirectoryName + "/data/root";
-        if (GetFullName() != "/")
-            osTmp += GetFullName();
-        osFilename = osTmp + "/c" + osFilename;
-    }
-
-    // For network file systems, get the streaming version of the filename,
-    // as we don't need arbitrary seeking in the file
-    osFilename = VSIFileManager::GetHandler(osFilename.c_str())
-                     ->GetStreamingFilename(osFilename);
-
-    // First if we have a tile presence cache, check tile presence from it
-    if (bUseMutex)
-        m_oMutex.lock();
-    auto poTilePresenceArray = OpenTilePresenceCache(false);
-    if (poTilePresenceArray)
-    {
-        std::vector<GUInt64> anTileIdx(m_aoDims.size());
-        const std::vector<size_t> anCount(m_aoDims.size(), 1);
-        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
-        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
-        const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
-        for (size_t i = 0; i < m_aoDims.size(); ++i)
-        {
-            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
-        }
-        GByte byValue = 0;
-        if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
-                                      anArrayStep.data(), anBufferStride.data(),
-                                      eByteDT, &byValue) &&
-            byValue == 0)
-        {
-            if (bUseMutex)
-                m_oMutex.unlock();
-            CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                         osFilename.c_str());
-            bMissingTileOut = true;
-            return true;
-        }
-    }
-    if (bUseMutex)
-        m_oMutex.unlock();
-
-    VSILFILE *fp = nullptr;
-    // This is the number of files returned in a S3 directory listing operation
-    constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
-    if ((m_osDimSeparator == "/" &&
-         m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
-        (m_osDimSeparator != "/" &&
-         m_nTotalTileCount > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING))
-    {
-        // Avoid issuing ReadDir() when a lot of files are expected
-        CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN",
-                                           "YES", true);
-        fp = VSIFOpenL(osFilename.c_str(), "rb");
-    }
-    else
-    {
-        fp = VSIFOpenL(osFilename.c_str(), "rb");
-    }
-    if (fp == nullptr)
-    {
-        // Missing files are OK and indicate nodata_value
-        CPLDebugOnly(ZARR_DEBUG_KEY, "Tile %s missing (=nodata)",
-                     osFilename.c_str());
-        bMissingTileOut = true;
-        return true;
-    }
-
-    bMissingTileOut = false;
-    bool bRet = true;
-    size_t nRawDataSize = abyRawTileData.size();
-    if (psDecompressor == nullptr)
-    {
-        nRawDataSize = VSIFReadL(&abyRawTileData[0], 1, nRawDataSize, fp);
-    }
-    else
-    {
-        VSIFSeekL(fp, 0, SEEK_END);
-        const auto nSize = VSIFTellL(fp);
-        VSIFSeekL(fp, 0, SEEK_SET);
-        if (nSize > static_cast<vsi_l_offset>(std::numeric_limits<int>::max()))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too large tile %s",
-                     osFilename.c_str());
-            bRet = false;
-        }
-        else
-        {
-            std::vector<GByte> abyCompressedData;
-            try
-            {
-                abyCompressedData.resize(static_cast<size_t>(nSize));
-            }
-            catch (const std::exception &)
-            {
-                CPLError(CE_Failure, CPLE_OutOfMemory,
-                         "Cannot allocate memory for tile %s",
-                         osFilename.c_str());
-                bRet = false;
-            }
-
-            if (bRet &&
-                (abyCompressedData.empty() ||
-                 VSIFReadL(&abyCompressedData[0], 1, abyCompressedData.size(),
-                           fp) != abyCompressedData.size()))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Could not read tile %s correctly",
-                         osFilename.c_str());
-                bRet = false;
-            }
-            else
-            {
-                void *out_buffer = &abyRawTileData[0];
-                if (!psDecompressor->pfnFunc(
-                        abyCompressedData.data(), abyCompressedData.size(),
-                        &out_buffer, &nRawDataSize, nullptr,
-                        psDecompressor->user_data))
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Decompression of tile %s failed",
-                             osFilename.c_str());
-                    bRet = false;
-                }
-            }
-        }
-    }
-    VSIFCloseL(fp);
-    if (!bRet)
-        return false;
-
-    for (int i = m_oFiltersArray.Size(); i > 0;)
-    {
-        --i;
-        const auto &oFilter = m_oFiltersArray[i];
-        const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterDecompressor =
-            CPLGetDecompressor(osFilterId.c_str());
-        CPLAssert(psFilterDecompressor);
-
-        CPLStringList aosOptions;
-        for (const auto &obj : oFilter.GetChildren())
-        {
-            aosOptions.SetNameValue(obj.GetName().c_str(),
-                                    obj.ToString().c_str());
-        }
-        void *out_buffer = &abyTmpRawTileData[0];
-        size_t nOutSize = abyTmpRawTileData.size();
-        if (!psFilterDecompressor->pfnFunc(
-                abyRawTileData.data(), nRawDataSize, &out_buffer, &nOutSize,
-                aosOptions.List(), psFilterDecompressor->user_data))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Filter %s for tile %s failed", osFilterId.c_str(),
-                     osFilename.c_str());
-            return false;
-        }
-
-        nRawDataSize = nOutSize;
-        std::swap(abyRawTileData, abyTmpRawTileData);
-    }
-    if (nRawDataSize != abyRawTileData.size())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Decompressed tile %s has not expected size after filters",
-                 osFilename.c_str());
-        return false;
-    }
-
-    if (m_bFortranOrder && !m_aoDims.empty())
-    {
-        BlockTranspose(abyRawTileData, abyTmpRawTileData, true);
-        std::swap(abyRawTileData, abyTmpRawTileData);
-    }
-
-    if (!abyDecodedTileData.empty())
-    {
-        const size_t nSourceSize =
-            m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-        const auto nDTSize = m_oType.GetSize();
-        const size_t nValues = abyDecodedTileData.size() / nDTSize;
-        const GByte *pSrc = abyRawTileData.data();
-        GByte *pDst = &abyDecodedTileData[0];
-        for (size_t i = 0; i < nValues;
-             i++, pSrc += nSourceSize, pDst += nDTSize)
-        {
-            DecodeSourceElt(m_aoDtypeElts, pSrc, pDst);
-        }
-    }
-
-    return true;
-
-#undef m_abyTmpRawTileData
-#undef m_abyRawTileData
-#undef m_abyDecodedTileData
-#undef m_psDecompressor
-}
-
-/************************************************************************/
-/*                      ZarrArray::IAdviseRead()                        */
-/************************************************************************/
-
-bool ZarrArray::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                            CSLConstList papszOptions) const
+bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
+                                  const size_t *count,
+                                  CSLConstList papszOptions,
+                                  std::vector<uint64_t> &anIndicesCur,
+                                  int &nThreadsMax,
+                                  std::vector<uint64_t> &anReqTilesIndices,
+                                  size_t &nReqTiles) const
 {
     const size_t nDims = m_aoDims.size();
-    std::vector<uint64_t> anIndicesCur(nDims);
+    anIndicesCur.resize(nDims);
     std::vector<uint64_t> anIndicesMin(nDims);
     std::vector<uint64_t> anIndicesMax(nDims);
 
     // Compute min and max tile indices in each dimension, and the total
     // nomber of tiles this represents.
-    uint64_t nReqTiles = 1;
+    nReqTiles = 1;
     for (size_t i = 0; i < nDims; ++i)
     {
         anIndicesMin[i] = arrayStartIdx[i] / m_anBlockSize[i];
         anIndicesMax[i] = (arrayStartIdx[i] + count[i] - 1) / m_anBlockSize[i];
         // Overflow on number of tiles already checked in Create()
-        nReqTiles *= (anIndicesMax[i] - anIndicesMin[i] + 1);
+        nReqTiles *= static_cast<size_t>(anIndicesMax[i] - anIndicesMin[i] + 1);
     }
 
     // Find available cache size
@@ -1486,34 +944,26 @@ bool ZarrArray::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
         return false;
     }
 
-    const int nThreadsMax = [papszOptions]()
-    {
-        int nThreadsTmp;
-        const char *pszNumThreads = CSLFetchNameValueDef(
-            papszOptions, "NUM_THREADS",
-            CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
-        if (EQUAL(pszNumThreads, "ALL_CPUS"))
-            nThreadsTmp = CPLGetNumCPUs();
-        else
-            nThreadsTmp = std::max(1, atoi(pszNumThreads));
-        if (nThreadsTmp > 1024)
-            nThreadsTmp = 1024;
-        return nThreadsTmp;
-    }();
+    const char *pszNumThreads = CSLFetchNameValueDef(
+        papszOptions, "NUM_THREADS",
+        CPLGetConfigOption("GDAL_NUM_THREADS", "ALL_CPUS"));
+    if (EQUAL(pszNumThreads, "ALL_CPUS"))
+        nThreadsMax = CPLGetNumCPUs();
+    else
+        nThreadsMax = std::max(1, atoi(pszNumThreads));
+    if (nThreadsMax > 1024)
+        nThreadsMax = 1024;
     if (nThreadsMax <= 1)
         return true;
     CPLDebug(ZARR_DEBUG_KEY, "IAdviseRead(): Using up to %d threads",
              nThreadsMax);
-    const int nThreads = static_cast<int>(
-        std::min(static_cast<uint64_t>(nThreadsMax), nReqTiles));
 
     m_oMapTileIndexToCachedTile.clear();
 
-    std::vector<uint64_t> anReqTilesIndices;
     // Overflow checked above
     try
     {
-        anReqTilesIndices.resize(static_cast<size_t>(nDims * nReqTiles));
+        anReqTilesIndices.resize(nDims * nReqTiles);
     }
     catch (const std::bad_alloc &e)
     {
@@ -1565,146 +1015,7 @@ lbl_next_depth:
         goto lbl_return_to_caller;
     assert(nTileIter == nReqTiles);
 
-    CPLWorkerThreadPool *wtp = GDALGetGlobalThreadPool(nThreadsMax);
-    if (wtp == nullptr)
-        return false;
-
-    struct JobStruct
-    {
-        JobStruct() = default;
-
-        JobStruct(const JobStruct &) = delete;
-        JobStruct &operator=(const JobStruct &) = delete;
-
-        JobStruct(JobStruct &&) = default;
-        JobStruct &operator=(JobStruct &&) = default;
-
-        const ZarrArray *poArray = nullptr;
-        bool *pbGlobalStatus = nullptr;
-        int *pnRemainingThreads = nullptr;
-        const std::vector<uint64_t> *panReqTilesIndices = nullptr;
-        size_t nFirstIdx = 0;
-        size_t nLastIdxNotIncluded = 0;
-    };
-    std::vector<JobStruct> asJobStructs;
-
-    bool bGlobalStatus = true;
-    int nRemainingThreads = nThreads;
-    // Check for very highly overflow in below loop
-    assert(static_cast<size_t>(nThreads) <
-           std::numeric_limits<size_t>::max() / nReqTiles);
-
-    // Setup jobs
-    for (int i = 0; i < nThreads; i++)
-    {
-        JobStruct jobStruct;
-        jobStruct.poArray = this;
-        jobStruct.pbGlobalStatus = &bGlobalStatus;
-        jobStruct.pnRemainingThreads = &nRemainingThreads;
-        jobStruct.panReqTilesIndices = &anReqTilesIndices;
-        jobStruct.nFirstIdx = static_cast<size_t>(i * nReqTiles / nThreads);
-        jobStruct.nLastIdxNotIncluded = std::min(
-            static_cast<size_t>((i + 1) * nReqTiles / nThreads), nTileIter);
-        asJobStructs.emplace_back(std::move(jobStruct));
-    }
-
-    const auto JobFunc = [](void *pThreadData)
-    {
-        const JobStruct *jobStruct =
-            static_cast<const JobStruct *>(pThreadData);
-
-        const auto poArray = jobStruct->poArray;
-        const auto &aoDims = poArray->m_aoDims;
-        const size_t l_nDims = poArray->GetDimensionCount();
-        std::vector<GByte> abyRawTileData;
-        std::vector<GByte> abyDecodedTileData;
-        std::vector<GByte> abyTmpRawTileData;
-        const CPLCompressor *psDecompressor =
-            CPLGetDecompressor(poArray->m_osDecompressorId.c_str());
-
-        for (size_t iReq = jobStruct->nFirstIdx;
-             iReq < jobStruct->nLastIdxNotIncluded; ++iReq)
-        {
-            // Check if we must early exit
-            {
-                std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-                if (!(*jobStruct->pbGlobalStatus))
-                    return;
-            }
-
-            const uint64_t *tileIndices =
-                jobStruct->panReqTilesIndices->data() + iReq * l_nDims;
-
-            uint64_t nTileIdx = 0;
-            for (size_t j = 0; j < l_nDims; ++j)
-            {
-                if (j > 0)
-                    nTileIdx *= aoDims[j - 1]->GetSize();
-                nTileIdx += tileIndices[j];
-            }
-
-            if (!poArray->AllocateWorkingBuffers(
-                    abyRawTileData, abyTmpRawTileData, abyDecodedTileData))
-            {
-                std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-                *jobStruct->pbGlobalStatus = false;
-                break;
-            }
-
-            bool bIsEmpty = false;
-            bool success = poArray->LoadTileData(tileIndices,
-                                                 true,  // use mutex
-                                                 psDecompressor, abyRawTileData,
-                                                 abyTmpRawTileData,
-                                                 abyDecodedTileData, bIsEmpty);
-
-            std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-            if (!success)
-            {
-                *jobStruct->pbGlobalStatus = false;
-                break;
-            }
-
-            CachedTile cachedTile;
-            if (!bIsEmpty)
-            {
-                if (!abyDecodedTileData.empty())
-                    std::swap(cachedTile.abyDecoded, abyDecodedTileData);
-                else
-                    std::swap(cachedTile.abyDecoded, abyRawTileData);
-            }
-            poArray->m_oMapTileIndexToCachedTile[nTileIdx] =
-                std::move(cachedTile);
-        }
-
-        std::lock_guard<std::mutex> oLock(poArray->m_oMutex);
-        (*jobStruct->pnRemainingThreads)--;
-    };
-
-    // Start jobs
-    for (int i = 0; i < nThreads; i++)
-    {
-        if (!wtp->SubmitJob(JobFunc, &asJobStructs[i]))
-        {
-            std::lock_guard<std::mutex> oLock(m_oMutex);
-            bGlobalStatus = false;
-            nRemainingThreads = i;
-            break;
-        }
-    }
-
-    // Wait for all jobs to be finished
-    while (true)
-    {
-        {
-            std::lock_guard<std::mutex> oLock(m_oMutex);
-            if (nRemainingThreads == 0)
-                break;
-        }
-        wtp->WaitEvent();
-    }
-
-    return bGlobalStatus;
+    return true;
 }
 
 /************************************************************************/
@@ -2195,256 +1506,6 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                    ZarrArray::FlushDirtyTile()                       */
-/************************************************************************/
-
-bool ZarrArray::FlushDirtyTile() const
-{
-    if (!m_bDirtyTile)
-        return true;
-    m_bDirtyTile = false;
-
-    std::string osFilename;
-    if (m_anCachedTiledIndices.empty())
-    {
-        osFilename = "0";
-    }
-    else
-    {
-        for (const auto index : m_anCachedTiledIndices)
-        {
-            if (!osFilename.empty())
-                osFilename += m_osDimSeparator;
-            osFilename += std::to_string(index);
-        }
-    }
-
-    if (m_nVersion == 2)
-    {
-        osFilename = CPLFormFilename(CPLGetDirname(m_osFilename.c_str()),
-                                     osFilename.c_str(), nullptr);
-    }
-    else
-    {
-        std::string osTmp = m_osRootDirectoryName + "/data/root";
-        if (GetFullName() != "/")
-            osTmp += GetFullName();
-        osFilename = osTmp + "/c" + osFilename;
-    }
-
-    const size_t nSourceSize =
-        m_aoDtypeElts.back().nativeOffset + m_aoDtypeElts.back().nativeSize;
-    auto &abyTile =
-        m_abyDecodedTileData.empty() ? m_abyRawTileData : m_abyDecodedTileData;
-
-    bool bEmptyTile = false;
-    if (m_pabyNoData == nullptr || (m_oType.GetClass() == GEDTC_NUMERIC &&
-                                    GetNoDataValueAsDouble() == 0.0))
-    {
-        const size_t nBytes = abyTile.size();
-        size_t i = 0;
-        bEmptyTile = true;
-        for (; i + (sizeof(size_t) - 1) < nBytes; i += sizeof(size_t))
-        {
-            if (*reinterpret_cast<const size_t *>(abyTile.data() + i) != 0)
-            {
-                bEmptyTile = false;
-                break;
-            }
-        }
-        if (bEmptyTile)
-        {
-            for (; i < nBytes; ++i)
-            {
-                if (abyTile[i] != 0)
-                {
-                    bEmptyTile = false;
-                    break;
-                }
-            }
-        }
-    }
-    else if (m_oType.GetClass() == GEDTC_NUMERIC &&
-             !GDALDataTypeIsComplex(m_oType.GetNumericDataType()))
-    {
-        const int nDTSize = static_cast<int>(m_oType.GetSize());
-        const size_t nElts = abyTile.size() / nDTSize;
-        const auto eDT = m_oType.GetNumericDataType();
-        bEmptyTile = GDALBufferHasOnlyNoData(
-            abyTile.data(), GetNoDataValueAsDouble(),
-            nElts,        // nWidth
-            1,            // nHeight
-            nElts,        // nLineStride
-            1,            // nComponents
-            nDTSize * 8,  // nBitsPerSample
-            GDALDataTypeIsInteger(eDT)
-                ? (GDALDataTypeIsSigned(eDT) ? GSF_SIGNED_INT
-                                             : GSF_UNSIGNED_INT)
-                : GSF_FLOATING_POINT);
-    }
-
-    if (bEmptyTile)
-    {
-        m_bCachedTiledEmpty = true;
-
-        VSIStatBufL sStat;
-        if (VSIStatL(osFilename.c_str(), &sStat) == 0)
-        {
-            CPLDebugOnly(ZARR_DEBUG_KEY,
-                         "Deleting tile %s that has now empty content",
-                         osFilename.c_str());
-            return VSIUnlink(osFilename.c_str()) == 0;
-        }
-        return true;
-    }
-
-    if (!m_abyDecodedTileData.empty())
-    {
-        const size_t nDTSize = m_oType.GetSize();
-        const size_t nValues = m_abyDecodedTileData.size() / nDTSize;
-        GByte *pDst = &m_abyRawTileData[0];
-        const GByte *pSrc = m_abyDecodedTileData.data();
-        for (size_t i = 0; i < nValues;
-             i++, pDst += nSourceSize, pSrc += nDTSize)
-        {
-            EncodeElt(m_aoDtypeElts, pSrc, pDst);
-        }
-    }
-
-    if (m_bFortranOrder && !m_aoDims.empty())
-    {
-        BlockTranspose(m_abyRawTileData, m_abyTmpRawTileData, false);
-        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
-    }
-
-    size_t nRawDataSize = m_abyRawTileData.size();
-    for (const auto &oFilter : m_oFiltersArray)
-    {
-        const auto osFilterId = oFilter["id"].ToString();
-        const auto psFilterCompressor = CPLGetCompressor(osFilterId.c_str());
-        CPLAssert(psFilterCompressor);
-
-        CPLStringList aosOptions;
-        for (const auto &obj : oFilter.GetChildren())
-        {
-            aosOptions.SetNameValue(obj.GetName().c_str(),
-                                    obj.ToString().c_str());
-        }
-        void *out_buffer = &m_abyTmpRawTileData[0];
-        size_t nOutSize = m_abyTmpRawTileData.size();
-        if (!psFilterCompressor->pfnFunc(
-                m_abyRawTileData.data(), nRawDataSize, &out_buffer, &nOutSize,
-                aosOptions.List(), psFilterCompressor->user_data))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Filter %s for tile %s failed", osFilterId.c_str(),
-                     osFilename.c_str());
-            return false;
-        }
-
-        nRawDataSize = nOutSize;
-        std::swap(m_abyRawTileData, m_abyTmpRawTileData);
-    }
-
-    if (m_osDimSeparator == "/")
-    {
-        std::string osDir = CPLGetDirname(osFilename.c_str());
-        VSIStatBufL sStat;
-        if (VSIStatL(osDir.c_str(), &sStat) != 0)
-        {
-            if (VSIMkdirRecursive(osDir.c_str(), 0755) != 0)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot create directory %s", osDir.c_str());
-                return false;
-            }
-        }
-    }
-
-    VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "wb");
-    if (fp == nullptr)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Cannot create tile %s",
-                 osFilename.c_str());
-        return false;
-    }
-
-    bool bRet = true;
-    if (m_psCompressor == nullptr)
-    {
-        if (VSIFWriteL(m_abyRawTileData.data(), 1, nRawDataSize, fp) !=
-            nRawDataSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not write tile %s correctly", osFilename.c_str());
-            bRet = false;
-        }
-    }
-    else
-    {
-        std::vector<GByte> abyCompressedData;
-        try
-        {
-            constexpr size_t MIN_BUF_SIZE = 64;  // somewhat arbitrary
-            abyCompressedData.resize(static_cast<size_t>(
-                MIN_BUF_SIZE + nRawDataSize + nRawDataSize / 3));
-        }
-        catch (const std::exception &)
-        {
-            CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate memory for tile %s", osFilename.c_str());
-            bRet = false;
-        }
-
-        if (bRet)
-        {
-            void *out_buffer = &abyCompressedData[0];
-            size_t out_size = abyCompressedData.size();
-            CPLStringList aosOptions;
-            const auto compressorConfig =
-                m_nVersion == 2 ? m_oCompressorJSonV2
-                                : m_oCompressorJSonV3["configuration"];
-            for (const auto &obj : compressorConfig.GetChildren())
-            {
-                aosOptions.SetNameValue(obj.GetName().c_str(),
-                                        obj.ToString().c_str());
-            }
-            if (EQUAL(m_psCompressor->pszId, "blosc") &&
-                m_oType.GetClass() == GEDTC_NUMERIC)
-            {
-                aosOptions.SetNameValue(
-                    "TYPESIZE",
-                    CPLSPrintf("%d", GDALGetDataTypeSizeBytes(
-                                         GDALGetNonComplexDataType(
-                                             m_oType.GetNumericDataType()))));
-            }
-
-            if (!m_psCompressor->pfnFunc(
-                    m_abyRawTileData.data(), nRawDataSize, &out_buffer,
-                    &out_size, aosOptions.List(), m_psCompressor->user_data))
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Compression of tile %s failed", osFilename.c_str());
-                bRet = false;
-            }
-            abyCompressedData.resize(out_size);
-        }
-
-        if (bRet &&
-            VSIFWriteL(abyCompressedData.data(), 1, abyCompressedData.size(),
-                       fp) != abyCompressedData.size())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Could not write tile %s correctly", osFilename.c_str());
-            bRet = false;
-        }
-    }
-    VSIFCloseL(fp);
-
-    return bRet;
-}
-
-/************************************************************************/
 /*                           ZarrArray::IRead()                         */
 /************************************************************************/
 
@@ -2860,1177 +1921,51 @@ lbl_next_depth:
 }
 
 /************************************************************************/
-/*                             ParseDtype()                             */
+/*                   ZarrArray::IsEmptyTile()                           */
 /************************************************************************/
 
-static size_t GetAlignment(const CPLJSONObject &obj)
+bool ZarrArray::IsEmptyTile(const ZarrByteVectorQuickResize &abyTile) const
 {
-    if (obj.GetType() == CPLJSONObject::Type::String)
+    if (m_pabyNoData == nullptr || (m_oType.GetClass() == GEDTC_NUMERIC &&
+                                    GetNoDataValueAsDouble() == 0.0))
     {
-        const auto str = obj.ToString();
-        if (str.size() < 3)
-            return 1;
-        const char chType = str[1];
-        const int nBytes = atoi(str.c_str() + 2);
-        if (chType == 'S')
-            return sizeof(char *);
-        if (chType == 'c' && nBytes == 8)
-            return sizeof(float);
-        if (chType == 'c' && nBytes == 16)
-            return sizeof(double);
-        return nBytes;
-    }
-    else if (obj.GetType() == CPLJSONObject::Type::Array)
-    {
-        const auto oArray = obj.ToArray();
-        size_t nAlignment = 1;
-        for (const auto &oElt : oArray)
+        const size_t nBytes = abyTile.size();
+        size_t i = 0;
+        for (; i + (sizeof(size_t) - 1) < nBytes; i += sizeof(size_t))
         {
-            const auto oEltArray = oElt.ToArray();
-            if (!oEltArray.IsValid() || oEltArray.Size() != 2 ||
-                oEltArray[0].GetType() != CPLJSONObject::Type::String)
+            if (*reinterpret_cast<const size_t *>(abyTile.data() + i) != 0)
             {
-                return 1;
-            }
-            nAlignment = std::max(nAlignment, GetAlignment(oEltArray[1]));
-            if (nAlignment == sizeof(void *))
-                break;
-        }
-        return nAlignment;
-    }
-    return 1;
-}
-
-static GDALExtendedDataType ParseDtype(bool isZarrV2, const CPLJSONObject &obj,
-                                       std::vector<DtypeElt> &elts)
-{
-    const auto AlignOffsetOn = [](size_t offset, size_t alignment)
-    { return offset + (alignment - (offset % alignment)) % alignment; };
-
-    do
-    {
-        if (obj.GetType() == CPLJSONObject::Type::String)
-        {
-            const auto str = obj.ToString();
-            char chEndianness = 0;
-            char chType;
-            int nBytes;
-            DtypeElt elt;
-            if (isZarrV2)
-            {
-                if (str.size() < 3)
-                    break;
-                chEndianness = str[0];
-                chType = str[1];
-                nBytes = atoi(str.c_str() + 2);
-            }
-            else
-            {
-                if (str.size() < 2)
-                    break;
-                if (str == "bool")
-                {
-                    chType = 'b';
-                    nBytes = 1;
-                }
-                else if (str == "u1" || str == "i1")
-                {
-                    chType = str[0];
-                    nBytes = 1;
-                }
-                else
-                {
-                    if (str.size() < 3)
-                        break;
-                    chEndianness = str[0];
-                    chType = str[1];
-                    nBytes = atoi(str.c_str() + 2);
-                }
-            }
-            if (nBytes <= 0 || nBytes >= 1000)
-                break;
-
-            elt.needByteSwapping = false;
-            if ((nBytes > 1 && chType != 'S') || chType == 'U')
-            {
-                if (chEndianness == '<')
-                    elt.needByteSwapping = (CPL_IS_LSB == 0);
-                else if (chEndianness == '>')
-                    elt.needByteSwapping = (CPL_IS_LSB != 0);
-            }
-
-            GDALDataType eDT;
-            if (!elts.empty())
-            {
-                elt.nativeOffset =
-                    elts.back().nativeOffset + elts.back().nativeSize;
-            }
-            elt.nativeSize = nBytes;
-            if (chType == 'b' && nBytes == 1)  // boolean
-            {
-                elt.nativeType = DtypeElt::NativeType::BOOLEAN;
-                eDT = GDT_Byte;
-            }
-            else if (chType == 'u' && nBytes == 1)
-            {
-                elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_Byte;
-            }
-            else if (chType == 'i' && nBytes == 1)
-            {
-                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                eDT = GDT_Int8;
-            }
-            else if (chType == 'i' && nBytes == 2)
-            {
-                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                eDT = GDT_Int16;
-            }
-            else if (chType == 'i' && nBytes == 4)
-            {
-                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                eDT = GDT_Int32;
-            }
-            else if (chType == 'i' && nBytes == 8)
-            {
-                elt.nativeType = DtypeElt::NativeType::SIGNED_INT;
-                eDT = GDT_Int64;
-            }
-            else if (chType == 'u' && nBytes == 2)
-            {
-                elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_UInt16;
-            }
-            else if (chType == 'u' && nBytes == 4)
-            {
-                elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_UInt32;
-            }
-            else if (chType == 'u' && nBytes == 8)
-            {
-                elt.nativeType = DtypeElt::NativeType::UNSIGNED_INT;
-                eDT = GDT_UInt64;
-            }
-            else if (chType == 'f' && nBytes == 2)
-            {
-                elt.nativeType = DtypeElt::NativeType::IEEEFP;
-                elt.gdalTypeIsApproxOfNative = true;
-                eDT = GDT_Float32;
-            }
-            else if (chType == 'f' && nBytes == 4)
-            {
-                elt.nativeType = DtypeElt::NativeType::IEEEFP;
-                eDT = GDT_Float32;
-            }
-            else if (chType == 'f' && nBytes == 8)
-            {
-                elt.nativeType = DtypeElt::NativeType::IEEEFP;
-                eDT = GDT_Float64;
-            }
-            else if (chType == 'c' && nBytes == 8)
-            {
-                elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
-                eDT = GDT_CFloat32;
-            }
-            else if (chType == 'c' && nBytes == 16)
-            {
-                elt.nativeType = DtypeElt::NativeType::COMPLEX_IEEEFP;
-                eDT = GDT_CFloat64;
-            }
-            else if (chType == 'S')
-            {
-                elt.nativeType = DtypeElt::NativeType::STRING_ASCII;
-                elt.gdalType = GDALExtendedDataType::CreateString(nBytes);
-                elt.gdalSize = elt.gdalType.GetSize();
-                elts.emplace_back(elt);
-                return GDALExtendedDataType::CreateString(nBytes);
-            }
-            else if (chType == 'U')
-            {
-                elt.nativeType = DtypeElt::NativeType::STRING_UNICODE;
-                // the dtype declaration is number of UCS4 characters. Store it
-                // as bytes
-                elt.nativeSize *= 4;
-                // We can really map UCS4 size to UTF-8
-                elt.gdalType = GDALExtendedDataType::CreateString();
-                elt.gdalSize = elt.gdalType.GetSize();
-                elts.emplace_back(elt);
-                return GDALExtendedDataType::CreateString();
-            }
-            else
-                break;
-            elt.gdalType = GDALExtendedDataType::Create(eDT);
-            elt.gdalSize = elt.gdalType.GetSize();
-            elts.emplace_back(elt);
-            return GDALExtendedDataType::Create(eDT);
-        }
-        else if (isZarrV2 && obj.GetType() == CPLJSONObject::Type::Array)
-        {
-            bool error = false;
-            const auto oArray = obj.ToArray();
-            std::vector<std::unique_ptr<GDALEDTComponent>> comps;
-            size_t offset = 0;
-            size_t alignmentMax = 1;
-            for (const auto &oElt : oArray)
-            {
-                const auto oEltArray = oElt.ToArray();
-                if (!oEltArray.IsValid() || oEltArray.Size() != 2 ||
-                    oEltArray[0].GetType() != CPLJSONObject::Type::String)
-                {
-                    error = true;
-                    break;
-                }
-                GDALExtendedDataType subDT =
-                    ParseDtype(isZarrV2, oEltArray[1], elts);
-                if (subDT.GetClass() == GEDTC_NUMERIC &&
-                    subDT.GetNumericDataType() == GDT_Unknown)
-                {
-                    error = true;
-                    break;
-                }
-
-                const std::string osName = oEltArray[0].ToString();
-                // Add padding for alignment
-                const size_t alignmentSub = GetAlignment(oEltArray[1]);
-                assert(alignmentSub);
-                alignmentMax = std::max(alignmentMax, alignmentSub);
-                offset = AlignOffsetOn(offset, alignmentSub);
-                comps.emplace_back(std::unique_ptr<GDALEDTComponent>(
-                    new GDALEDTComponent(osName, offset, subDT)));
-                offset += subDT.GetSize();
-            }
-            if (error)
-                break;
-            size_t nTotalSize = offset;
-            nTotalSize = AlignOffsetOn(nTotalSize, alignmentMax);
-            return GDALExtendedDataType::Create(obj.ToString(), nTotalSize,
-                                                std::move(comps));
-        }
-    } while (false);
-    CPLError(CE_Failure, CPLE_AppDefined,
-             "Invalid or unsupported format for dtype: %s",
-             obj.ToString().c_str());
-    return GDALExtendedDataType::Create(GDT_Unknown);
-}
-
-static void SetGDALOffset(const GDALExtendedDataType &dt,
-                          const size_t nBaseOffset, std::vector<DtypeElt> &elts,
-                          size_t &iCurElt)
-{
-    if (dt.GetClass() == GEDTC_COMPOUND)
-    {
-        const auto &comps = dt.GetComponents();
-        for (const auto &comp : comps)
-        {
-            const size_t nBaseOffsetSub = nBaseOffset + comp->GetOffset();
-            SetGDALOffset(comp->GetType(), nBaseOffsetSub, elts, iCurElt);
-        }
-    }
-    else
-    {
-        elts[iCurElt].gdalOffset = nBaseOffset;
-        iCurElt++;
-    }
-}
-
-/************************************************************************/
-/*                     ZarrGroupBase::LoadArray()                       */
-/************************************************************************/
-
-std::shared_ptr<ZarrArray>
-ZarrGroupBase::LoadArray(const std::string &osArrayName,
-                         const std::string &osZarrayFilename,
-                         const CPLJSONObject &oRoot, bool bLoadedFromZMetadata,
-                         const CPLJSONObject &oAttributesIn,
-                         std::set<std::string> &oSetFilenamesInLoading) const
-{
-    // Prevent too deep or recursive array loading
-    if (oSetFilenamesInLoading.find(osZarrayFilename) !=
-        oSetFilenamesInLoading.end())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt at recursively loading %s", osZarrayFilename.c_str());
-        return nullptr;
-    }
-    if (oSetFilenamesInLoading.size() == 32)
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too deep call stack in LoadArray()");
-        return nullptr;
-    }
-
-    struct SetFilenameAdder
-    {
-        std::set<std::string> &m_oSetFilenames;
-        std::string m_osFilename;
-
-        SetFilenameAdder(std::set<std::string> &oSetFilenamesIn,
-                         const std::string &osFilename)
-            : m_oSetFilenames(oSetFilenamesIn), m_osFilename(osFilename)
-        {
-            m_oSetFilenames.insert(osFilename);
-        }
-
-        ~SetFilenameAdder()
-        {
-            m_oSetFilenames.erase(m_osFilename);
-        }
-    };
-
-    // Add osZarrayFilename to oSetFilenamesInLoading during the scope
-    // of this function call.
-    SetFilenameAdder filenameAdder(oSetFilenamesInLoading, osZarrayFilename);
-
-    const bool isZarrV2 = dynamic_cast<const ZarrGroupV2 *>(this) != nullptr;
-
-    if (isZarrV2)
-    {
-        const auto osFormat = oRoot["zarr_format"].ToString();
-        if (osFormat != "2")
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Invalid value for zarr_format");
-            return nullptr;
-        }
-    }
-
-    bool bFortranOrder = false;
-    const char *orderKey = isZarrV2 ? "order" : "chunk_memory_layout";
-    const auto osOrder = oRoot[orderKey].ToString();
-    if (osOrder == "C")
-    {
-        // ok
-    }
-    else if (osOrder == "F")
-    {
-        bFortranOrder = true;
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Invalid value for %s",
-                 orderKey);
-        return nullptr;
-    }
-
-    const auto oShape = oRoot["shape"].ToArray();
-    if (!oShape.IsValid())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "shape missing or not an array");
-        return nullptr;
-    }
-
-    const char *chunksKey = isZarrV2 ? "chunks" : "chunk_grid/chunk_shape";
-    const auto oChunks = oRoot[chunksKey].ToArray();
-    if (!oChunks.IsValid())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "%s missing or not an array",
-                 chunksKey);
-        return nullptr;
-    }
-
-    if (oShape.Size() != oChunks.Size())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "shape and chunks arrays are of different size");
-        return nullptr;
-    }
-
-    CPLJSONObject oAttributes(oAttributesIn);
-    if (!bLoadedFromZMetadata && isZarrV2)
-    {
-        CPLJSONDocument oDoc;
-        const std::string osZattrsFilename(CPLFormFilename(
-            CPLGetDirname(osZarrayFilename.c_str()), ".zattrs", nullptr));
-        CPLErrorHandlerPusher quietError(CPLQuietErrorHandler);
-        CPLErrorStateBackuper errorStateBackuper;
-        if (oDoc.Load(osZattrsFilename))
-        {
-            oAttributes = oDoc.GetRoot();
-        }
-    }
-    else if (!isZarrV2)
-    {
-        oAttributes = oRoot["attributes"];
-    }
-
-    // Deep-clone of oAttributes
-    {
-        CPLJSONDocument oTmpDoc;
-        oTmpDoc.SetRoot(oAttributes);
-        CPL_IGNORE_RET_VAL(oTmpDoc.LoadMemory(oTmpDoc.SaveAsString()));
-        oAttributes = oTmpDoc.GetRoot();
-    }
-
-    const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
-    std::shared_ptr<OGRSpatialReference> poSRS;
-    if (crs.GetType() == CPLJSONObject::Type::Object)
-    {
-        for (const char *key : {"url", "wkt", "projjson"})
-        {
-            const auto item = crs[key];
-            if (item.IsValid())
-            {
-                poSRS = std::make_shared<OGRSpatialReference>();
-                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (poSRS->SetFromUserInput(
-                        item.ToString().c_str(),
-                        OGRSpatialReference::
-                            SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
-                    OGRERR_NONE)
-                {
-                    oAttributes.Delete(CRS_ATTRIBUTE_NAME);
-                    break;
-                }
-                poSRS.reset();
-            }
-        }
-    }
-
-    const auto unit = oAttributes[CF_UNITS];
-    std::string osUnit;
-    if (unit.GetType() == CPLJSONObject::Type::String)
-    {
-        osUnit = unit.ToString();
-        oAttributes.Delete(CF_UNITS);
-    }
-
-    bool bHasOffset = false;
-    double dfOffset = 0.0;
-    const auto offset = oAttributes[CF_ADD_OFFSET];
-    const auto offsetType = offset.GetType();
-    if (offsetType == CPLJSONObject::Type::Integer ||
-        offsetType == CPLJSONObject::Type::Long ||
-        offsetType == CPLJSONObject::Type::Double)
-    {
-        dfOffset = offset.ToDouble();
-        bHasOffset = true;
-        oAttributes.Delete(CF_ADD_OFFSET);
-    }
-
-    bool bHasScale = false;
-    double dfScale = 1.0;
-    const auto scale = oAttributes[CF_SCALE_FACTOR];
-    const auto scaleType = scale.GetType();
-    if (scaleType == CPLJSONObject::Type::Integer ||
-        scaleType == CPLJSONObject::Type::Long ||
-        scaleType == CPLJSONObject::Type::Double)
-    {
-        dfScale = scale.ToDouble();
-        bHasScale = true;
-        oAttributes.Delete(CF_SCALE_FACTOR);
-    }
-
-    std::vector<std::shared_ptr<GDALDimension>> aoDims;
-    for (int i = 0; i < oShape.Size(); ++i)
-    {
-        const auto nSize = static_cast<GUInt64>(oShape[i].ToLong());
-        if (nSize == 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for shape");
-            return nullptr;
-        }
-        aoDims.emplace_back(std::make_shared<GDALDimensionWeakIndexingVar>(
-            std::string(), CPLSPrintf("dim%d", i), std::string(), std::string(),
-            nSize));
-    }
-
-    const auto GetDimensionTypeDirection =
-        [&oAttributes, &osUnit](std::string &osType, std::string &osDirection)
-    {
-        const auto oStdName = oAttributes[CF_STD_NAME];
-        if (oStdName.GetType() == CPLJSONObject::Type::String)
-        {
-            const auto osStdName = oStdName.ToString();
-            if (osStdName == CF_PROJ_X_COORD ||
-                osStdName == CF_LONGITUDE_STD_NAME)
-            {
-                osType = GDAL_DIM_TYPE_HORIZONTAL_X;
-                oAttributes.Delete(CF_STD_NAME);
-                if (osUnit == CF_DEGREES_EAST)
-                {
-                    osDirection = "EAST";
-                }
-            }
-            else if (osStdName == CF_PROJ_Y_COORD ||
-                     osStdName == CF_LATITUDE_STD_NAME)
-            {
-                osType = GDAL_DIM_TYPE_HORIZONTAL_Y;
-                oAttributes.Delete(CF_STD_NAME);
-                if (osUnit == CF_DEGREES_NORTH)
-                {
-                    osDirection = "NORTH";
-                }
-            }
-            else if (osStdName == "time")
-            {
-                osType = GDAL_DIM_TYPE_TEMPORAL;
-                oAttributes.Delete(CF_STD_NAME);
-            }
-        }
-
-        const auto osAxis = oAttributes[CF_AXIS].ToString();
-        if (osAxis == "Z")
-        {
-            osType = GDAL_DIM_TYPE_VERTICAL;
-            const auto osPositive = oAttributes["positive"].ToString();
-            if (osPositive == "up")
-            {
-                osDirection = "UP";
-                oAttributes.Delete("positive");
-            }
-            else if (osPositive == "down")
-            {
-                osDirection = "DOWN";
-                oAttributes.Delete("positive");
-            }
-            oAttributes.Delete(CF_AXIS);
-        }
-    };
-
-    // XArray extension
-    const auto arrayDimensionsObj = oAttributes["_ARRAY_DIMENSIONS"];
-
-    const auto FindDimension =
-        [this, &aoDims, &GetDimensionTypeDirection, bLoadedFromZMetadata,
-         &osArrayName, &osZarrayFilename, &oSetFilenamesInLoading,
-         isZarrV2](const std::string &osDimName,
-                   std::shared_ptr<GDALDimension> &poDim, int i)
-    {
-        auto oIter = m_oMapDimensions.find(osDimName);
-        if (oIter != m_oMapDimensions.end())
-        {
-            if (m_bDimSizeInUpdate ||
-                oIter->second->GetSize() == poDim->GetSize())
-            {
-                poDim = oIter->second;
-                return true;
-            }
-            else
-            {
-                CPLError(CE_Warning, CPLE_AppDefined,
-                         "Size of _ARRAY_DIMENSIONS[%d] different "
-                         "from the one of shape",
-                         i);
                 return false;
             }
         }
-
-        // Try to load the indexing variable.
-
-        // If loading from zmetadata, we should have normally
-        // already loaded the dimension variables, unless they
-        // are in a upper level.
-        if (bLoadedFromZMetadata && osArrayName != osDimName &&
-            m_oMapMDArrays.find(osDimName) == m_oMapMDArrays.end())
+        for (; i < nBytes; ++i)
         {
-            auto poParent = m_poParent.lock();
-            while (poParent != nullptr)
+            if (abyTile[i] != 0)
             {
-                oIter = poParent->m_oMapDimensions.find(osDimName);
-                if (oIter != poParent->m_oMapDimensions.end() &&
-                    oIter->second->GetSize() == poDim->GetSize())
-                {
-                    poDim = oIter->second;
-                    return true;
-                }
-                poParent = poParent->m_poParent.lock();
+                return false;
             }
         }
-
-        // Not loading from zmetadata, and not in m_oMapMDArrays,
-        // then stat() the indexing variable.
-        else if (!bLoadedFromZMetadata && osArrayName != osDimName &&
-                 m_oMapMDArrays.find(osDimName) == m_oMapMDArrays.end())
-        {
-            std::string osDirName = m_osDirectoryName;
-            while (true)
-            {
-                const std::string osArrayFilenameDim =
-                    isZarrV2
-                        ? CPLFormFilename(CPLFormFilename(osDirName.c_str(),
-                                                          osDimName.c_str(),
-                                                          nullptr),
-                                          ".zarray", nullptr)
-                        : CPLFormFilename(
-                              CPLGetDirname(osZarrayFilename.c_str()),
-                              (osDimName + ".array.json").c_str(), nullptr);
-                VSIStatBufL sStat;
-                if (VSIStatL(osArrayFilenameDim.c_str(), &sStat) == 0)
-                {
-                    CPLJSONDocument oDoc;
-                    if (oDoc.Load(osArrayFilenameDim))
-                    {
-                        LoadArray(osDimName, osArrayFilenameDim, oDoc.GetRoot(),
-                                  false, CPLJSONObject(),
-                                  oSetFilenamesInLoading);
-                    }
-                }
-                else
-                {
-                    // Recurse to upper level for datasets such as
-                    // /vsis3/hrrrzarr/sfc/20210809/20210809_00z_anl.zarr/0.1_sigma_level/HAIL_max_fcst/0.1_sigma_level/HAIL_max_fcst
-                    const std::string osDirNameNew =
-                        CPLGetPath(osDirName.c_str());
-                    if (!osDirNameNew.empty() && osDirNameNew != osDirName)
-                    {
-                        osDirName = osDirNameNew;
-                        continue;
-                    }
-                }
-                break;
-            }
-        }
-
-        oIter = m_oMapDimensions.find(osDimName);
-        if (oIter != m_oMapDimensions.end() &&
-            oIter->second->GetSize() == poDim->GetSize())
-        {
-            poDim = oIter->second;
-            return true;
-        }
-
-        std::string osType;
-        std::string osDirection;
-        if (aoDims.size() == 1 && osArrayName == osDimName)
-        {
-            GetDimensionTypeDirection(osType, osDirection);
-        }
-
-        auto poDimLocal = std::make_shared<GDALDimensionWeakIndexingVar>(
-            GetFullName(), osDimName, osType, osDirection, poDim->GetSize());
-        m_oMapDimensions[osDimName] = poDimLocal;
-        poDim = poDimLocal;
         return true;
-    };
-
-    if (arrayDimensionsObj.GetType() == CPLJSONObject::Type::Array)
-    {
-        const auto arrayDims = arrayDimensionsObj.ToArray();
-        if (arrayDims.Size() == oShape.Size())
-        {
-            bool ok = true;
-            for (int i = 0; i < oShape.Size(); ++i)
-            {
-                if (arrayDims[i].GetType() == CPLJSONObject::Type::String)
-                {
-                    const auto osDimName = arrayDims[i].ToString();
-                    ok &= FindDimension(osDimName, aoDims[i], i);
-                }
-            }
-            if (ok)
-            {
-                oAttributes.Delete("_ARRAY_DIMENSIONS");
-            }
-        }
-        else
-        {
-            CPLError(
-                CE_Warning, CPLE_AppDefined,
-                "Size of _ARRAY_DIMENSIONS different from the one of shape");
-        }
     }
-
-    // _NCZARR_ARRAY extension
-    const auto nczarrArrayDimrefs = oRoot["_NCZARR_ARRAY"]["dimrefs"].ToArray();
-    if (nczarrArrayDimrefs.IsValid())
+    else if (m_oType.GetClass() == GEDTC_NUMERIC &&
+             !GDALDataTypeIsComplex(m_oType.GetNumericDataType()))
     {
-        const auto arrayDims = nczarrArrayDimrefs.ToArray();
-        if (arrayDims.Size() == oShape.Size())
-        {
-            auto poRG = m_pSelf.lock();
-            CPLAssert(poRG != nullptr);
-            while (true)
-            {
-                auto poNewRG = poRG->m_poParent.lock();
-                if (poNewRG == nullptr)
-                    break;
-                poRG = poNewRG;
-            }
-
-            for (int i = 0; i < oShape.Size(); ++i)
-            {
-                if (arrayDims[i].GetType() == CPLJSONObject::Type::String)
-                {
-                    const auto osDimFullpath = arrayDims[i].ToString();
-                    auto poDim = poRG->OpenDimensionFromFullname(osDimFullpath);
-                    if (poDim == nullptr)
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Cannot find NCZarr dimension %s",
-                                 osDimFullpath.c_str());
-                    }
-                    else if (poDim->GetSize() != aoDims[i]->GetSize())
-                    {
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Inconsistency in size between NCZarr "
-                                 "dimension %s and regular dimension",
-                                 osDimFullpath.c_str());
-                    }
-                    else
-                    {
-                        aoDims[i] = poDim;
-
-                        // If this is an indexing variable, then fetch the
-                        // dimension type and direction, and patch the dimension
-                        const std::string osArrayFullname =
-                            (GetFullName() != "/" ? GetFullName()
-                                                  : std::string()) +
-                            '/' + osArrayName;
-                        if (aoDims.size() == 1 &&
-                            osArrayFullname == poDim->GetFullName())
-                        {
-                            std::string osType;
-                            std::string osDirection;
-                            GetDimensionTypeDirection(osType, osDirection);
-
-                            std::string osDimParent = osDimFullpath;
-                            const auto nPos = osDimParent.rfind('/');
-                            if (nPos != std::string::npos)
-                            {
-                                if (nPos == 0)
-                                    osDimParent = '/';
-                                else
-                                    osDimParent.resize(nPos);
-                                auto poDimParentGroup =
-                                    dynamic_cast<ZarrGroupBase *>(
-                                        poRG->OpenGroupFromFullname(osDimParent)
-                                            .get());
-                                if (poDimParentGroup)
-                                {
-                                    auto poDimLocal = std::make_shared<
-                                        GDALDimensionWeakIndexingVar>(
-                                        poDimParentGroup->GetFullName(),
-                                        poDim->GetName(), osType, osDirection,
-                                        poDim->GetSize());
-                                    aoDims[i] = poDimLocal;
-
-                                    poDimParentGroup
-                                        ->m_oMapDimensions[poDim->GetName()] =
-                                        poDimLocal;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        else
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "Size of _NCZARR_ARRAY.dimrefs different from the one of "
-                     "shape");
-        }
+        const int nDTSize = static_cast<int>(m_oType.GetSize());
+        const size_t nElts = abyTile.size() / nDTSize;
+        const auto eDT = m_oType.GetNumericDataType();
+        return GDALBufferHasOnlyNoData(abyTile.data(), GetNoDataValueAsDouble(),
+                                       nElts,        // nWidth
+                                       1,            // nHeight
+                                       nElts,        // nLineStride
+                                       1,            // nComponents
+                                       nDTSize * 8,  // nBitsPerSample
+                                       GDALDataTypeIsInteger(eDT)
+                                           ? (GDALDataTypeIsSigned(eDT)
+                                                  ? GSF_SIGNED_INT
+                                                  : GSF_UNSIGNED_INT)
+                                           : GSF_FLOATING_POINT);
     }
-
-    const char *dtypeKey = isZarrV2 ? "dtype" : "data_type";
-    auto oDtype = oRoot[dtypeKey];
-    if (!oDtype.IsValid())
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "%s missing", dtypeKey);
-        return nullptr;
-    }
-    if (!isZarrV2 && oDtype["fallback"].IsValid())
-        oDtype = oDtype["fallback"];
-    std::vector<DtypeElt> aoDtypeElts;
-    const auto oType = ParseDtype(isZarrV2, oDtype, aoDtypeElts);
-    if (oType.GetClass() == GEDTC_NUMERIC &&
-        oType.GetNumericDataType() == GDT_Unknown)
-        return nullptr;
-    size_t iCurElt = 0;
-    SetGDALOffset(oType, 0, aoDtypeElts, iCurElt);
-
-    std::vector<GUInt64> anBlockSize;
-    size_t nBlockSize = oType.GetSize();
-    for (const auto &item : oChunks)
-    {
-        const auto nSize = static_cast<GUInt64>(item.ToLong());
-        if (nSize == 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for chunks");
-            return nullptr;
-        }
-        if (nBlockSize > std::numeric_limits<size_t>::max() / nSize)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Too large chunks");
-            return nullptr;
-        }
-        nBlockSize *= static_cast<size_t>(nSize);
-        anBlockSize.emplace_back(nSize);
-    }
-
-    std::string osDimSeparator;
-    if (isZarrV2)
-    {
-        osDimSeparator = oRoot["dimension_separator"].ToString();
-        if (osDimSeparator.empty())
-            osDimSeparator = ".";
-    }
-    else
-    {
-        osDimSeparator = oRoot["chunk_grid/separator"].ToString();
-        if (osDimSeparator.empty())
-            osDimSeparator = "/";
-    }
-
-    std::vector<GByte> abyNoData;
-
-    struct NoDataFreer
-    {
-        std::vector<GByte> &m_abyNodata;
-        const GDALExtendedDataType &m_oType;
-
-        NoDataFreer(std::vector<GByte> &abyNoDataIn,
-                    const GDALExtendedDataType &oTypeIn)
-            : m_abyNodata(abyNoDataIn), m_oType(oTypeIn)
-        {
-        }
-
-        ~NoDataFreer()
-        {
-            if (!m_abyNodata.empty())
-                m_oType.FreeDynamicMemory(&m_abyNodata[0]);
-        }
-    };
-    NoDataFreer NoDataFreer(abyNoData, oType);
-
-    auto oFillValue = oRoot["fill_value"];
-    auto eFillValueType = oFillValue.GetType();
-
-    // Normally arrays are not supported, but that's what NCZarr 4.8.0 outputs
-    if (eFillValueType == CPLJSONObject::Type::Array &&
-        oFillValue.ToArray().Size() == 1)
-    {
-        oFillValue = oFillValue.ToArray()[0];
-        eFillValueType = oFillValue.GetType();
-    }
-
-    if (!oFillValue.IsValid())
-    {
-        // fill_value is normally required but some implementations
-        // are lacking it: https://github.com/Unidata/netcdf-c/issues/2059
-        CPLError(CE_Warning, CPLE_AppDefined, "fill_value missing");
-    }
-    else if (eFillValueType == CPLJSONObject::Type::Null)
-    {
-        // Nothing to do
-    }
-    else if (eFillValueType == CPLJSONObject::Type::String)
-    {
-        const auto osFillValue = oFillValue.ToString();
-        if (oType.GetClass() == GEDTC_NUMERIC &&
-            CPLGetValueType(osFillValue.c_str()) != CPL_VALUE_STRING)
-        {
-            abyNoData.resize(oType.GetSize());
-            // Be tolerant with numeric values serialized as strings.
-            if (oType.GetNumericDataType() == GDT_Int64)
-            {
-                const int64_t nVal = static_cast<int64_t>(
-                    std::strtoll(osFillValue.c_str(), nullptr, 10));
-                GDALCopyWords(&nVal, GDT_Int64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-            else if (oType.GetNumericDataType() == GDT_UInt64)
-            {
-                const uint64_t nVal = static_cast<uint64_t>(
-                    std::strtoull(osFillValue.c_str(), nullptr, 10));
-                GDALCopyWords(&nVal, GDT_UInt64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-            else
-            {
-                const double dfNoDataValue = CPLAtof(osFillValue.c_str());
-                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-        }
-        else if (oType.GetClass() == GEDTC_NUMERIC)
-        {
-            double dfNoDataValue;
-            if (osFillValue == "NaN")
-            {
-                dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
-            }
-            else if (osFillValue == "Infinity")
-            {
-                dfNoDataValue = std::numeric_limits<double>::infinity();
-            }
-            else if (osFillValue == "-Infinity")
-            {
-                dfNoDataValue = -std::numeric_limits<double>::infinity();
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-                return nullptr;
-            }
-            if (oType.GetNumericDataType() == GDT_Float32)
-            {
-                const float fNoDataValue = static_cast<float>(dfNoDataValue);
-                abyNoData.resize(sizeof(fNoDataValue));
-                memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
-            }
-            else if (oType.GetNumericDataType() == GDT_Float64)
-            {
-                abyNoData.resize(sizeof(dfNoDataValue));
-                memcpy(&abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue));
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-                return nullptr;
-            }
-        }
-        else if (oType.GetClass() == GEDTC_STRING)
-        {
-            // zarr.open('unicode_be.zarr', mode = 'w', shape=(1,), dtype =
-            // '>U1', compressor = None) oddly generates "fill_value": "0"
-            if (osFillValue != "0")
-            {
-                std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
-                memcpy(&abyNativeFillValue[0], osFillValue.data(),
-                       osFillValue.size());
-                int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
-                abyNativeFillValue.resize(nBytes + 1);
-                abyNativeFillValue[nBytes] = 0;
-                abyNoData.resize(oType.GetSize());
-                char *pDstStr = CPLStrdup(
-                    reinterpret_cast<const char *>(&abyNativeFillValue[0]));
-                char **pDstPtr = reinterpret_cast<char **>(&abyNoData[0]);
-                memcpy(pDstPtr, &pDstStr, sizeof(pDstStr));
-            }
-        }
-        else
-        {
-            std::vector<GByte> abyNativeFillValue(osFillValue.size() + 1);
-            memcpy(&abyNativeFillValue[0], osFillValue.data(),
-                   osFillValue.size());
-            int nBytes = CPLBase64DecodeInPlace(&abyNativeFillValue[0]);
-            abyNativeFillValue.resize(nBytes);
-            if (abyNativeFillValue.size() !=
-                aoDtypeElts.back().nativeOffset + aoDtypeElts.back().nativeSize)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-                return nullptr;
-            }
-            abyNoData.resize(oType.GetSize());
-            DecodeSourceElt(aoDtypeElts, abyNativeFillValue.data(),
-                            &abyNoData[0]);
-        }
-    }
-    else if (eFillValueType == CPLJSONObject::Type::Boolean ||
-             eFillValueType == CPLJSONObject::Type::Integer ||
-             eFillValueType == CPLJSONObject::Type::Long ||
-             eFillValueType == CPLJSONObject::Type::Double)
-    {
-        if (oType.GetClass() == GEDTC_NUMERIC)
-        {
-            const double dfNoDataValue = oFillValue.ToDouble();
-            if (oType.GetNumericDataType() == GDT_Int64)
-            {
-                const int64_t nNoDataValue =
-                    static_cast<int64_t>(oFillValue.ToLong());
-                abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-            else if (oType.GetNumericDataType() == GDT_UInt64 &&
-                     /* we can't really deal with nodata value between */
-                     /* int64::max and uint64::max due to json-c limitations */
-                     dfNoDataValue >= 0)
-            {
-                const int64_t nNoDataValue =
-                    static_cast<int64_t>(oFillValue.ToLong());
-                abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&nNoDataValue, GDT_Int64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-            else
-            {
-                abyNoData.resize(oType.GetSize());
-                GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, &abyNoData[0],
-                              oType.GetNumericDataType(), 0, 1);
-            }
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-            return nullptr;
-        }
-    }
-    else
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-        return nullptr;
-    }
-
-    const CPLCompressor *psCompressor = nullptr;
-    const CPLCompressor *psDecompressor = nullptr;
-    const auto oCompressor = oRoot["compressor"];
-    std::string osDecompressorId("NONE");
-    if (isZarrV2)
-    {
-        if (!oCompressor.IsValid())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "compressor missing");
-            return nullptr;
-        }
-        if (oCompressor.GetType() == CPLJSONObject::Type::Null)
-        {
-            // nothing to do
-        }
-        else if (oCompressor.GetType() == CPLJSONObject::Type::Object)
-        {
-            osDecompressorId = oCompressor["id"].ToString();
-            if (osDecompressorId.empty())
-            {
-                CPLError(CE_Failure, CPLE_AppDefined, "Missing compressor id");
-                return nullptr;
-            }
-            psCompressor = CPLGetCompressor(osDecompressorId.c_str());
-            psDecompressor = CPLGetDecompressor(osDecompressorId.c_str());
-            if (psCompressor == nullptr || psDecompressor == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Decompressor %s not handled",
-                         osDecompressorId.c_str());
-                return nullptr;
-            }
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid compressor");
-            return nullptr;
-        }
-    }
-    else if (oCompressor.IsValid())
-    {
-        const auto oCodec = oCompressor["codec"];
-        if (oCodec.GetType() == CPLJSONObject::Type::String)
-        {
-            const auto osCodec = oCodec.ToString();
-            // See https://github.com/zarr-developers/zarr-specs/pull/119
-            // We accept the plural form, but singular is the official one.
-            for (const char *key : {"https://purl.org/zarr/spec/codec/",
-                                    "https://purl.org/zarr/spec/codecs/"})
-            {
-                if (osCodec.find(key) == 0)
-                {
-                    auto osCodecName = osCodec.substr(strlen(key));
-                    auto posSlash = osCodecName.find('/');
-                    if (posSlash != std::string::npos)
-                    {
-                        osDecompressorId = osCodecName.substr(0, posSlash);
-                        psCompressor =
-                            CPLGetCompressor(osDecompressorId.c_str());
-                        psDecompressor =
-                            CPLGetDecompressor(osDecompressorId.c_str());
-                    }
-                    break;
-                }
-            }
-            if (psCompressor == nullptr || psDecompressor == nullptr)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Decompressor %s not handled", osCodec.c_str());
-                return nullptr;
-            }
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid compressor");
-            return nullptr;
-        }
-    }
-
-    CPLJSONArray oFiltersArray;
-    if (isZarrV2)
-    {
-        const auto oFilters = oRoot["filters"];
-        if (!oFilters.IsValid())
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "filters missing");
-            return nullptr;
-        }
-        if (oFilters.GetType() == CPLJSONObject::Type::Null)
-        {
-        }
-        else if (oFilters.GetType() == CPLJSONObject::Type::Array)
-        {
-            oFiltersArray = oFilters.ToArray();
-            for (const auto &oFilter : oFiltersArray)
-            {
-                const auto osFilterId = oFilter["id"].ToString();
-                if (osFilterId.empty())
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined, "Missing filter id");
-                    return nullptr;
-                }
-                const auto psFilterCompressor =
-                    CPLGetCompressor(osFilterId.c_str());
-                const auto psFilterDecompressor =
-                    CPLGetDecompressor(osFilterId.c_str());
-                if (psFilterCompressor == nullptr ||
-                    psFilterDecompressor == nullptr)
-                {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Filter %s not handled", osFilterId.c_str());
-                    return nullptr;
-                }
-            }
-        }
-        else
-        {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid filters");
-            return nullptr;
-        }
-    }
-
-    auto poArray = ZarrArray::Create(m_poSharedResource, GetFullName(),
-                                     osArrayName, aoDims, oType, aoDtypeElts,
-                                     anBlockSize, bFortranOrder);
-    if (!poArray)
-        return nullptr;
-    poArray->SetUpdatable(m_bUpdatable);  // must be set before SetAttributes()
-    poArray->SetFilename(osZarrayFilename);
-    poArray->SetDimSeparator(osDimSeparator);
-    if (isZarrV2)
-        poArray->SetCompressorJsonV2(oCompressor);
-    poArray->SetCompressorDecompressor(osDecompressorId, psCompressor,
-                                       psDecompressor);
-    poArray->SetFilters(oFiltersArray);
-    if (!abyNoData.empty())
-    {
-        poArray->RegisterNoDataValue(abyNoData.data());
-    }
-    poArray->SetSRS(poSRS);
-    poArray->SetAttributes(oAttributes);
-    poArray->SetRootDirectoryName(m_osDirectoryName);
-    poArray->SetVersion(isZarrV2 ? 2 : 3);
-    poArray->SetDtype(oDtype);
-    poArray->RegisterUnit(osUnit);
-    if (bHasOffset)
-        poArray->RegisterOffset(dfOffset);
-    if (bHasScale)
-        poArray->RegisterScale(dfScale);
-    RegisterArray(poArray);
-
-    // If this is an indexing variable, attach it to the dimension.
-    if (aoDims.size() == 1 && aoDims[0]->GetName() == poArray->GetName())
-    {
-        auto oIter = m_oMapDimensions.find(poArray->GetName());
-        if (oIter != m_oMapDimensions.end())
-        {
-            oIter->second->SetIndexingVariable(poArray);
-        }
-    }
-
-    if (CPLTestBool(m_poSharedResource->GetOpenOptions().FetchNameValueDef(
-            "CACHE_TILE_PRESENCE", "NO")))
-    {
-        poArray->CacheTilePresence();
-    }
-
-    return poArray;
+    return false;
 }
 
 /************************************************************************/
@@ -4156,16 +2091,7 @@ bool ZarrArray::CacheTilePresence()
     if (m_nTotalTileCount == 1)
         return true;
 
-    const std::string osDirectoryName = [this]()
-    {
-        if (m_nVersion == 2)
-            return std::string(CPLGetDirname(m_osFilename.c_str()));
-
-        std::string osTmp = m_osRootDirectoryName + "/data/root";
-        if (GetFullName() != "/")
-            osTmp += GetFullName();
-        return osTmp;
-    }();
+    const std::string osDirectoryName = GetDataDirectory();
 
     struct DirCloser
     {
@@ -4218,15 +2144,8 @@ bool ZarrArray::CacheTilePresence()
     {
         if (!VSI_ISDIR(psEntry->nMode))
         {
-            int nOff = 0;
-            if (m_nVersion == 3)
-            {
-                if (psEntry->pszName[0] != 'c')
-                    continue;
-                nOff = 1;
-            }
-            const CPLStringList aosTokens(CSLTokenizeString2(
-                psEntry->pszName + nOff, m_osDimSeparator.c_str(), 0));
+            const CPLStringList aosTokens =
+                GetTileIndicesFromFilename(psEntry->pszName);
             if (aosTokens.size() == static_cast<int>(m_aoDims.size()))
             {
                 // Get tile indices from filename
@@ -4403,6 +2322,71 @@ bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
 }
 
 /************************************************************************/
+/*                      GetDimensionTypeDirection()                     */
+/************************************************************************/
+
+/* static */
+void ZarrArray::GetDimensionTypeDirection(CPLJSONObject &oAttributes,
+                                          std::string &osType,
+                                          std::string &osDirection)
+{
+    std::string osUnit;
+    const auto unit = oAttributes[CF_UNITS];
+    if (unit.GetType() == CPLJSONObject::Type::String)
+    {
+        osUnit = unit.ToString();
+    }
+
+    const auto oStdName = oAttributes[CF_STD_NAME];
+    if (oStdName.GetType() == CPLJSONObject::Type::String)
+    {
+        const auto osStdName = oStdName.ToString();
+        if (osStdName == CF_PROJ_X_COORD || osStdName == CF_LONGITUDE_STD_NAME)
+        {
+            osType = GDAL_DIM_TYPE_HORIZONTAL_X;
+            oAttributes.Delete(CF_STD_NAME);
+            if (osUnit == CF_DEGREES_EAST)
+            {
+                osDirection = "EAST";
+            }
+        }
+        else if (osStdName == CF_PROJ_Y_COORD ||
+                 osStdName == CF_LATITUDE_STD_NAME)
+        {
+            osType = GDAL_DIM_TYPE_HORIZONTAL_Y;
+            oAttributes.Delete(CF_STD_NAME);
+            if (osUnit == CF_DEGREES_NORTH)
+            {
+                osDirection = "NORTH";
+            }
+        }
+        else if (osStdName == "time")
+        {
+            osType = GDAL_DIM_TYPE_TEMPORAL;
+            oAttributes.Delete(CF_STD_NAME);
+        }
+    }
+
+    const auto osAxis = oAttributes[CF_AXIS].ToString();
+    if (osAxis == "Z")
+    {
+        osType = GDAL_DIM_TYPE_VERTICAL;
+        const auto osPositive = oAttributes["positive"].ToString();
+        if (osPositive == "up")
+        {
+            osDirection = "UP";
+            oAttributes.Delete("positive");
+        }
+        else if (osPositive == "down")
+        {
+            osDirection = "DOWN";
+            oAttributes.Delete("positive");
+        }
+        oAttributes.Delete(CF_AXIS);
+    }
+}
+
+/************************************************************************/
 /*                      GetCoordinateVariables()                        */
 /************************************************************************/
 
@@ -4509,8 +2493,7 @@ bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         m_bDefinitionModified = true;
         for (size_t dimIdx : anGrownDimIdx)
         {
-            auto dim = std::dynamic_pointer_cast<GDALDimensionWeakIndexingVar>(
-                dims[dimIdx]);
+            auto dim = std::dynamic_pointer_cast<ZarrDimension>(dims[dimIdx]);
             if (dim)
             {
                 dim->SetSize(anNewDimSizes[dimIdx]);
@@ -4527,4 +2510,175 @@ bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         }
     }
     return true;
+}
+
+/************************************************************************/
+/*                       NotifyChildrenOfRenaming()                     */
+/************************************************************************/
+
+void ZarrArray::NotifyChildrenOfRenaming()
+{
+    m_oAttrGroup.ParentRenamed(m_osFullName);
+}
+
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
+{
+    GDALMDArray::ParentRenamed(osNewParentFullName);
+
+    auto poParent = m_poGroupWeak.lock();
+    // The parent necessarily exist, since it notified us
+    CPLAssert(poParent);
+
+    m_osFilename =
+        CPLFormFilename(CPLFormFilename(poParent->GetDirectoryName().c_str(),
+                                        m_osName.c_str(), nullptr),
+                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+}
+
+/************************************************************************/
+/*                              Rename()                                */
+/************************************************************************/
+
+bool ZarrArray::Rename(const std::string &osNewName)
+{
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+    if (!ZarrGroupBase::IsValidObjectName(osNewName))
+    {
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid array name");
+        return false;
+    }
+
+    auto poParent = m_poGroupWeak.lock();
+    if (poParent)
+    {
+        if (!poParent->CheckArrayOrGroupWithSameNameDoesNotExist(osNewName))
+            return false;
+    }
+
+    const std::string osRootDirectoryName(
+        CPLGetDirname(CPLGetDirname(m_osFilename.c_str())));
+    const std::string osOldDirectoryName =
+        CPLFormFilename(osRootDirectoryName.c_str(), m_osName.c_str(), nullptr);
+    const std::string osNewDirectoryName = CPLFormFilename(
+        osRootDirectoryName.c_str(), osNewName.c_str(), nullptr);
+
+    if (VSIRename(osOldDirectoryName.c_str(), osNewDirectoryName.c_str()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Renaming of %s to %s failed",
+                 osOldDirectoryName.c_str(), osNewDirectoryName.c_str());
+        return false;
+    }
+
+    m_poSharedResource->RenameZMetadataRecursive(osOldDirectoryName,
+                                                 osNewDirectoryName);
+
+    m_osFilename =
+        CPLFormFilename(osNewDirectoryName.c_str(),
+                        CPLGetFilename(m_osFilename.c_str()), nullptr);
+
+    if (poParent)
+    {
+        poParent->NotifyArrayRenamed(m_osName, osNewName);
+    }
+
+    BaseRename(osNewName);
+
+    return true;
+}
+
+/************************************************************************/
+/*                     ParseSpecialAttributes()                         */
+/************************************************************************/
+
+void ZarrArray::ParseSpecialAttributes(CPLJSONObject &oAttributes)
+{
+    const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
+    std::shared_ptr<OGRSpatialReference> poSRS;
+    if (crs.GetType() == CPLJSONObject::Type::Object)
+    {
+        for (const char *key : {"url", "wkt", "projjson"})
+        {
+            const auto item = crs[key];
+            if (item.IsValid())
+            {
+                poSRS = std::make_shared<OGRSpatialReference>();
+                if (poSRS->SetFromUserInput(
+                        item.ToString().c_str(),
+                        OGRSpatialReference::
+                            SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+                    OGRERR_NONE)
+                {
+                    int iDimX = 0;
+                    int iDimY = 0;
+                    int iCount = 1;
+                    for (const auto &poDim : GetDimensions())
+                    {
+                        if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                            iDimX = iCount;
+                        else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                            iDimY = iCount;
+                        iCount++;
+                    }
+                    if ((iDimX == 0 || iDimY == 0) && GetDimensionCount() >= 2)
+                    {
+                        iDimX = static_cast<int>(GetDimensionCount());
+                        iDimY = iDimX - 1;
+                    }
+                    if (iDimX > 0 && iDimY > 0)
+                    {
+                        if (poSRS->GetDataAxisToSRSAxisMapping() ==
+                            std::vector<int>{2, 1})
+                            poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
+                        else if (poSRS->GetDataAxisToSRSAxisMapping() ==
+                                 std::vector<int>{1, 2})
+                            poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
+                    }
+
+                    oAttributes.Delete(CRS_ATTRIBUTE_NAME);
+                    break;
+                }
+                poSRS.reset();
+            }
+        }
+    }
+    SetSRS(poSRS);
+
+    const auto unit = oAttributes[CF_UNITS];
+    if (unit.GetType() == CPLJSONObject::Type::String)
+    {
+        std::string osUnit = unit.ToString();
+        oAttributes.Delete(CF_UNITS);
+        RegisterUnit(osUnit);
+    }
+
+    const auto offset = oAttributes[CF_ADD_OFFSET];
+    const auto offsetType = offset.GetType();
+    if (offsetType == CPLJSONObject::Type::Integer ||
+        offsetType == CPLJSONObject::Type::Long ||
+        offsetType == CPLJSONObject::Type::Double)
+    {
+        double dfOffset = offset.ToDouble();
+        oAttributes.Delete(CF_ADD_OFFSET);
+        RegisterOffset(dfOffset);
+    }
+
+    const auto scale = oAttributes[CF_SCALE_FACTOR];
+    const auto scaleType = scale.GetType();
+    if (scaleType == CPLJSONObject::Type::Integer ||
+        scaleType == CPLJSONObject::Type::Long ||
+        scaleType == CPLJSONObject::Type::Double)
+    {
+        double dfScale = scale.ToDouble();
+        oAttributes.Delete(CF_SCALE_FACTOR);
+        RegisterScale(dfScale);
+    }
 }

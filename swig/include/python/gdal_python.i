@@ -1285,9 +1285,8 @@ def ReleaseResultSet(self, sql_lyr):
              ('i', 4): GDT_Int32,
              ('I', 4): GDT_UInt32,
              ('l', 4): GDT_Int32,
-             # ('l', 8): GDT_Int64,
-             # ('q', 8): GDT_Int64,
-             # ('Q', 8): GDT_UInt64,
+             ('q', 8): GDT_Int64,
+             ('Q', 8): GDT_UInt64,
              ('f', 4): GDT_Float32,
              ('d', 8): GDT_Float64
           }

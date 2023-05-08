@@ -192,12 +192,6 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         return nullptr;
     }
-    if (poOpenInfo->eAccess == GA_Update &&
-        (poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) == 0)
-    {
-        CPLError(CE_Failure, CPLE_NotSupported, "Update not supported");
-        return nullptr;
-    }
 
     CPLString osFilename(poOpenInfo->pszFilename);
     CPLString osArrayOfInterest;
@@ -209,36 +203,27 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         if (aosTokens.size() < 2)
             return nullptr;
         osFilename = aosTokens[1];
-        std::string osErrorMsgSuffix;
+        std::string osErrorMsg;
         if (osFilename == "http" || osFilename == "https")
         {
-            osErrorMsgSuffix = "\nThere is likely a quoting error of the whole "
-                               "connection string, and the filename should "
-                               "likely be prefixed with /vsicurl/";
+            osErrorMsg = "There is likely a quoting error of the whole "
+                         "connection string, and the filename should "
+                         "likely be prefixed with /vsicurl/";
         }
         else if (osFilename == "/vsicurl/http" ||
                  osFilename == "/vsicurl/https")
         {
-            osErrorMsgSuffix = "\nThere is likely a quoting error of the whole "
-                               "connection string.";
+            osErrorMsg = "There is likely a quoting error of the whole "
+                         "connection string.";
         }
-        if (!osErrorMsgSuffix.empty() ||
-            !CheckExistenceOfOneZarrFile(osFilename.c_str()))
+        else if (STARTS_WITH(osFilename.c_str(), "http://") ||
+                 STARTS_WITH(osFilename.c_str(), "https://"))
         {
-            std::string osErrorMsg(
-                "Cannot find any of Zarr metadata files in '");
-            osErrorMsg += osFilename;
-            osErrorMsg += "'.";
-            if (!osErrorMsgSuffix.empty())
-            {
-                osErrorMsg += osErrorMsgSuffix;
-            }
-            else if (STARTS_WITH(osFilename.c_str(), "http://") ||
-                     STARTS_WITH(osFilename.c_str(), "https://"))
-            {
-                osErrorMsg +=
-                    "\nThe filename should likely be prefixed with /vsicurl/";
-            }
+            osErrorMsg =
+                "The filename should likely be prefixed with /vsicurl/";
+        }
+        if (!osErrorMsg.empty())
+        {
             CPLError(CE_Failure, CPLE_AppDefined, "%s", osErrorMsg.c_str());
             return nullptr;
         }
@@ -826,7 +811,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
         ZarrSharedResource::Create(pszFilename, /*bUpdatable=*/true);
     if (EQUAL(pszFormat, "ZARR_V3"))
     {
-        poRG = ZarrGroupV3::CreateOnDisk(poSharedResource, std::string(), "/",
+        poRG = ZarrV3Group::CreateOnDisk(poSharedResource, std::string(), "/",
                                          pszFilename);
     }
     else
@@ -837,7 +822,7 @@ ZarrDataset::CreateMultiDimensional(const char *pszFilename,
         {
             poSharedResource->EnableZMetadata();
         }
-        poRG = ZarrGroupV2::CreateOnDisk(poSharedResource, std::string(), "/",
+        poRG = ZarrV2Group::CreateOnDisk(poSharedResource, std::string(), "/",
                                          pszFilename);
     }
     if (!poRG)
@@ -895,7 +880,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             ZarrSharedResource::Create(pszName, /*bUpdatable=*/true);
         if (EQUAL(pszFormat, "ZARR_V3"))
         {
-            poRG = ZarrGroupV3::CreateOnDisk(poSharedResource, std::string(),
+            poRG = ZarrV3Group::CreateOnDisk(poSharedResource, std::string(),
                                              "/", pszName);
         }
         else
@@ -906,7 +891,7 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
             {
                 poSharedResource->EnableZMetadata();
             }
-            poRG = ZarrGroupV2::CreateOnDisk(poSharedResource, std::string(),
+            poRG = ZarrV2Group::CreateOnDisk(poSharedResource, std::string(),
                                              "/", pszName);
         }
         poSharedResource->SetRootGroup(poRG);

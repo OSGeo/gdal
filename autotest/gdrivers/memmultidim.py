@@ -2567,6 +2567,191 @@ def test_mem_md_resize_dim_referenced_twice_error():
         assert v.Resize([3, 2]) == gdal.CE_Failure
 
 
+@gdaltest.enable_exceptions()
+def test_mem_md_rename_group():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+    group = rg.CreateGroup("group")
+    group_attr = group.CreateAttribute(
+        "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    rg.CreateGroup("other_group")
+    dim = group.CreateDimension("dim0", "unspecified type", "unspecified direction", 2)
+    ar = group.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar_attr = ar.CreateAttribute(
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    subgroup = group.CreateGroup("subgroup")
+    subgroup.CreateGroup("subsubgroup")
+    subgroup_attr = subgroup.CreateAttribute(
+        "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    subgroup_ar = subgroup.CreateMDArray(
+        "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    subgroup_ar_attr = subgroup_ar.CreateAttribute(
+        "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    # Cannot rename root group
+    with pytest.raises(Exception):
+        rg.Rename("foo")
+
+    # Empty name
+    with pytest.raises(Exception):
+        group.Rename("")
+
+    # Existing name
+    with pytest.raises(Exception):
+        group.Rename("other_group")
+
+    # Rename group and test effects
+    group.Rename("group_renamed")
+    assert group.GetName() == "group_renamed"
+    assert group.GetFullName() == "/group_renamed"
+
+    assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+    assert dim.GetName() == "dim0"
+    assert dim.GetFullName() == "/group_renamed/dim0"
+
+    assert group_attr.GetName() == "group_attr"
+    assert group_attr.GetFullName() == "/group_renamed/group_attr"
+
+    assert ar.GetName() == "ar"
+    assert ar.GetFullName() == "/group_renamed/ar"
+
+    assert ar_attr.GetName() == "ar_attr"
+    assert ar_attr.GetFullName() == "/group_renamed/ar/ar_attr"
+
+    assert subgroup.GetName() == "subgroup"
+    assert subgroup.GetFullName() == "/group_renamed/subgroup"
+
+    assert subgroup_attr.GetName() == "subgroup_attr"
+    assert subgroup_attr.GetFullName() == "/group_renamed/subgroup/subgroup_attr"
+
+    assert subgroup_ar.GetName() == "subgroup_ar"
+    assert subgroup_ar.GetFullName() == "/group_renamed/subgroup/subgroup_ar"
+
+    assert subgroup_ar_attr.GetName() == "subgroup_ar_attr"
+    assert (
+        subgroup_ar_attr.GetFullName()
+        == "/group_renamed/subgroup/subgroup_ar/subgroup_ar_attr"
+    )
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_rename_dimension():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+    dim = rg.CreateDimension("dim", "unspecified type", "unspecified direction", 2)
+    rg.CreateDimension("other_dim", "unspecified type", "unspecified direction", 2)
+    ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    # Empty name
+    with pytest.raises(Exception):
+        dim.Rename("")
+
+    # Existing name
+    with pytest.raises(Exception):
+        dim.Rename("other_dim")
+
+    # Rename dimension and test effects
+    dim.Rename("dim_renamed")
+    assert dim.GetName() == "dim_renamed"
+    assert dim.GetFullName() == "/dim_renamed"
+
+    assert set(x.GetFullName() for x in rg.GetDimensions()) == {
+        "/dim_renamed",
+        "/other_dim",
+    }
+
+    assert [x.GetFullName() for x in ar.GetDimensions()] == ["/dim_renamed"]
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_rename_attribute():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+    subg = rg.CreateGroup("group")
+    subg_attr = subg.CreateAttribute(
+        "subg_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    subg.CreateAttribute(
+        "subg_other_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar.CreateAttribute("other_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    # Empty name
+    with pytest.raises(Exception):
+        attr.Rename("")
+
+    # Existing name
+    with pytest.raises(Exception):
+        attr.Rename("other_attr")
+
+    # Rename array attribute and test effects
+    attr.Rename("attr_renamed")
+    assert attr.GetName() == "attr_renamed"
+    assert attr.GetFullName() == "/group/ar/attr_renamed"
+    assert set(x.GetName() for x in ar.GetAttributes()) == {
+        "attr_renamed",
+        "other_attr",
+    }
+
+    # Existing name
+    with pytest.raises(Exception):
+        subg_attr.Rename("subg_other_attr")
+
+    # Rename group attribute and test effects
+    subg_attr.Rename("subg_attr_renamed")
+    assert subg_attr.GetName() == "subg_attr_renamed"
+    assert subg_attr.GetFullName() == "/group/_GLOBAL_/subg_attr_renamed"
+    assert set(x.GetName() for x in subg.GetAttributes()) == {
+        "subg_attr_renamed",
+        "subg_other_attr",
+    }
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_rename_array():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+    subg = rg.CreateGroup("group")
+    ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    subg.CreateMDArray("other_array", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    # Empty name
+    with pytest.raises(Exception):
+        ar.Rename("")
+
+    # Existing name
+    with pytest.raises(Exception):
+        ar.Rename("other_array")
+
+    # Rename array and test effects
+    ar.Rename("ar_renamed")
+    assert ar.GetName() == "ar_renamed"
+    assert ar.GetFullName() == "/group/ar_renamed"
+
+    assert attr.GetName() == "attr"
+    assert attr.GetFullName() == "/group/ar_renamed/attr"
+
+    assert set(subg.GetMDArrayNames()) == {"ar_renamed", "other_array"}
+
+
 def XX_test_all_forever():
     while True:
         test_mem_md_basic()

@@ -1314,6 +1314,59 @@ void GDALGroup::ClearStatistics()
 }
 
 /************************************************************************/
+/*                            Rename()                                  */
+/************************************************************************/
+
+/** Rename the group.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF, ZARR.
+ *
+ * This is the same as the C function GDALGroupRename().
+ *
+ * @param osNewName New name.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALGroup::Rename(CPL_UNUSED const std::string &osNewName)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "Rename() not implemented");
+    return false;
+}
+
+/************************************************************************/
+/*                         BaseRename()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALGroup::BaseRename(const std::string &osNewName)
+{
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+/************************************************************************/
+/*                        ParentRenamed()                               */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALGroup::ParentRenamed(const std::string &osNewParentFullName)
+{
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+/************************************************************************/
 /*                       ~GDALAbstractMDArray()                         */
 /************************************************************************/
 
@@ -1373,6 +1426,30 @@ GDALAbstractMDArray::GDALAbstractMDArray(const std::string &osParentName,
 size_t GDALAbstractMDArray::GetDimensionCount() const
 {
     return GetDimensions().size();
+}
+
+/************************************************************************/
+/*                            Rename()                                  */
+/************************************************************************/
+
+/** Rename the attribute/array.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF, Zarr.
+ *
+ * This is the same as the C functions GDALMDArrayRename() or
+ * GDALAttributeRename().
+ *
+ * @param osNewName New name.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALAbstractMDArray::Rename(CPL_UNUSED const std::string &osNewName)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "Rename() not implemented");
+    return false;
 }
 
 /************************************************************************/
@@ -2187,6 +2264,36 @@ GDALAbstractMDArray::GetProcessingChunkSize(size_t nMaxChunkMemory) const
     }
     return anChunkSize;
 }
+
+/************************************************************************/
+/*                         BaseRename()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALAbstractMDArray::BaseRename(const std::string &osNewName)
+{
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+//! @cond Doxygen_Suppress
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void GDALAbstractMDArray::ParentRenamed(const std::string &osNewParentFullName)
+{
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+
+    NotifyChildrenOfRenaming();
+}
+//! @endcond
 
 /************************************************************************/
 /*                             SetUnit()                                */
@@ -7621,6 +7728,8 @@ class GDALDatasetFromArray final : public GDALDataset
                          size_t iXDim, size_t iYDim)
         : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
     {
+        eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
+
         const auto &dims(m_poArray->GetDimensions());
         const auto nDimCount = dims.size();
         nRasterYSize =
@@ -7696,6 +7805,23 @@ class GDALDatasetFromArray final : public GDALDataset
         }
         if (iDim > 0)
             goto lbl_return_to_caller;
+    }
+
+    ~GDALDatasetFromArray()
+    {
+        GDALDatasetFromArray::Close();
+    }
+
+    CPLErr Close() override
+    {
+        CPLErr eErr = CE_None;
+        if (nOpenFlags != OPEN_FLAGS_CLOSED)
+        {
+            if (GDALDatasetFromArray::FlushCache() != CE_None)
+                eErr = CE_Failure;
+            m_poArray.reset();
+        }
+        return eErr;
     }
 
     CPLErr GetGeoTransform(double *padfGeoTransform) override
@@ -8466,6 +8592,34 @@ GDALExtendedDataType::GDALExtendedDataType(const GDALExtendedDataType &other)
 /*                            operator= ()                              */
 /************************************************************************/
 
+/** Copy assignment. */
+GDALExtendedDataType &
+GDALExtendedDataType::operator=(const GDALExtendedDataType &other)
+{
+    if (this != &other)
+    {
+        m_osName = other.m_osName;
+        m_eClass = other.m_eClass;
+        m_eSubType = other.m_eSubType;
+        m_eNumericDT = other.m_eNumericDT;
+        m_nSize = other.m_nSize;
+        m_nMaxStringLength = other.m_nMaxStringLength;
+        m_aoComponents.clear();
+        if (m_eClass == GEDTC_COMPOUND)
+        {
+            for (const auto &elt : other.m_aoComponents)
+            {
+                m_aoComponents.emplace_back(new GDALEDTComponent(*elt));
+            }
+        }
+    }
+    return *this;
+}
+
+/************************************************************************/
+/*                            operator= ()                              */
+/************************************************************************/
+
 /** Move assignment. */
 GDALExtendedDataType &
 GDALExtendedDataType::operator=(GDALExtendedDataType &&other)
@@ -8838,6 +8992,56 @@ bool GDALDimension::SetIndexingVariable(
              "SetIndexingVariable() not implemented");
     return false;
 }
+
+/************************************************************************/
+/*                            Rename()                                  */
+/************************************************************************/
+
+/** Rename the dimension.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF, ZARR.
+ *
+ * This is the same as the C function GDALDimensionRename().
+ *
+ * @param osNewName New name.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALDimension::Rename(CPL_UNUSED const std::string &osNewName)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "Rename() not implemented");
+    return false;
+}
+
+/************************************************************************/
+/*                         BaseRename()                                 */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALDimension::BaseRename(const std::string &osNewName)
+{
+    m_osFullName.resize(m_osFullName.size() - m_osName.size());
+    m_osFullName += osNewName;
+    m_osName = osNewName;
+}
+//! @endcond
+
+//! @cond Doxygen_Suppress
+/************************************************************************/
+/*                          ParentRenamed()                             */
+/************************************************************************/
+
+void GDALDimension::ParentRenamed(const std::string &osNewParentFullName)
+{
+    m_osFullName = osNewParentFullName;
+    m_osFullName += "/";
+    m_osFullName += m_osName;
+}
+
+//! @endcond
 
 /************************************************************************/
 /************************************************************************/
@@ -9766,6 +9970,28 @@ GDALAttributeH GDALGroupCreateAttribute(GDALGroupH hGroup, const char *pszName,
     if (!ret)
         return nullptr;
     return new GDALAttributeHS(ret);
+}
+
+/************************************************************************/
+/*                          GDALGroupRename()                           */
+/************************************************************************/
+
+/** Rename the group.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C++ method GDALGroup::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALGroupRename(GDALGroupH hGroup, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hGroup, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hGroup->m_poImpl->Rename(pszNewName);
 }
 
 /************************************************************************/
@@ -10936,6 +11162,28 @@ int GDALMDArrayCache(GDALMDArrayH hArray, CSLConstList papszOptions)
 }
 
 /************************************************************************/
+/*                       GDALMDArrayRename()                           */
+/************************************************************************/
+
+/** Rename the array.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF, Zarr.
+ *
+ * This is the same as the C++ method GDALAbstractMDArray::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALMDArrayRename(GDALMDArrayH hArray, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hArray->m_poImpl->Rename(pszNewName);
+}
+
+/************************************************************************/
 /*                        GDALAttributeRelease()                        */
 /************************************************************************/
 
@@ -11381,6 +11629,28 @@ int GDALAttributeWriteDoubleArray(GDALAttributeH hAttr,
 }
 
 /************************************************************************/
+/*                      GDALAttributeRename()                           */
+/************************************************************************/
+
+/** Rename the attribute.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C++ method GDALAbstractMDArray::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALAttributeRename(GDALAttributeH hAttr, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hAttr, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hAttr->m_poImpl->Rename(pszNewName);
+}
+
+/************************************************************************/
 /*                        GDALDimensionRelease()                        */
 /************************************************************************/
 
@@ -11504,6 +11774,28 @@ int GDALDimensionSetIndexingVariable(GDALDimensionH hDim, GDALMDArrayH hArray)
     VALIDATE_POINTER1(hDim, __func__, FALSE);
     return hDim->m_poImpl->SetIndexingVariable(hArray ? hArray->m_poImpl
                                                       : nullptr);
+}
+
+/************************************************************************/
+/*                      GDALDimensionRename()                           */
+/************************************************************************/
+
+/** Rename the dimension.
+ *
+ * This is not implemented by all drivers.
+ *
+ * Drivers known to implement it: MEM, netCDF.
+ *
+ * This is the same as the C++ method GDALDimension::Rename()
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALDimensionRename(GDALDimensionH hDim, const char *pszNewName)
+{
+    VALIDATE_POINTER1(hDim, __func__, false);
+    VALIDATE_POINTER1(pszNewName, __func__, false);
+    return hDim->m_poImpl->Rename(pszNewName);
 }
 
 /************************************************************************/

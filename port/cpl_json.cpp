@@ -470,6 +470,20 @@ CPLJSONObject::CPLJSONObject(const std::string &osName,
 {
 }
 
+CPLJSONObject CPLJSONObject::Clone() const
+{
+    CPLJSONObject oRet;
+    if (IsValid())
+    {
+        CPLJSONDocument oTmpDoc;
+        oTmpDoc.SetRoot(*this);
+        std::string osStr = oTmpDoc.SaveAsString();
+        CPL_IGNORE_RET_VAL(oTmpDoc.LoadMemory(osStr));
+        oRet = oTmpDoc.GetRoot();
+    }
+    return oRet;
+}
+
 CPLJSONObject::~CPLJSONObject()
 {
     // Should delete m_poJsonObject only if CPLJSONObject has no parent

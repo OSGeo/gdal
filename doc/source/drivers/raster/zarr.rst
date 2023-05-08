@@ -20,9 +20,11 @@ for the in-progress Zarr V3 specification.
 
 .. warning::
 
-    The current implementation of Zarr V3 is at time of writing no longer up to
-    date with the latest state of the specification, and is not interoperable
-    with other implementations. Cf https://github.com/OSGeo/gdal/issues/7637
+    The current implementation of Zarr V3 before GDAL 3.8 is incompatible with
+    the latest evolutions of the Zarr V3 specification.
+    GDAL 3.8 is compatible with the Zarr V3 specification at date 2023-May-7,
+    and is not interoperable with Zarr V3 datasets produced by earlier GDAL
+    versions.
 
 Local and cloud storage (see :ref:`virtual_file_systems`) are supported in read and write.
 

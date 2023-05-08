@@ -2997,3 +2997,327 @@ def test_netcdf_multidim_resize_dim_referenced_twice():
     check()
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_rename_dim():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_rename_dim.nc"
+
+    def test():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("dim", None, None, 2)
+        rg.CreateDimension("other_dim", None, None, 2)
+        var = rg.CreateMDArray(
+            "var", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+
+        # Empty name
+        with pytest.raises(Exception):
+            dim.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            dim.Rename("other_dim")
+        assert dim.GetName() == "dim"
+        assert dim.GetFullName() == "/dim"
+
+        dim.Rename("dim_renamed")
+        assert dim.GetName() == "dim_renamed"
+        assert dim.GetFullName() == "/dim_renamed"
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        assert [x.GetName() for x in var.GetDimensions()] == ["dim_renamed"]
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        # Read-only
+        with pytest.raises(Exception):
+            rg.GetDimensions()[0].Rename("dim_renamed2")
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+    try:
+        test()
+        reopen()
+    finally:
+        gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_rename_group():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_rename_group.nc"
+
+    def test():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        rg.CreateGroup("other_group")
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute(
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        subgroup = group.CreateGroup("subgroup")
+        subgroup_attr = subgroup.CreateAttribute(
+            "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        subgroup_ar = subgroup.CreateMDArray(
+            "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        subgroup_ar_attr = subgroup_ar.CreateAttribute(
+            "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        # Cannot rename root group
+        with pytest.raises(Exception):
+            rg.Rename("foo")
+
+        # Empty name
+        with pytest.raises(Exception):
+            group.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            group.Rename("other_group")
+
+        # Rename group and test effects
+        group.Rename("group_renamed")
+        assert group.GetName() == "group_renamed"
+        assert group.GetFullName() == "/group_renamed"
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        assert dim.GetName() == "dim0"
+        assert dim.GetFullName() == "/group_renamed/dim0"
+
+        assert group_attr.GetName() == "group_attr"
+        assert group_attr.GetFullName() == "/group_renamed/group_attr"
+
+        assert ar.GetName() == "ar"
+        assert ar.GetFullName() == "/group_renamed/ar"
+
+        assert attr.GetName() == "attr"
+        assert attr.GetFullName() == "/group_renamed/ar/attr"
+
+        assert subgroup.GetName() == "subgroup"
+        assert subgroup.GetFullName() == "/group_renamed/subgroup"
+
+        assert subgroup_attr.GetName() == "subgroup_attr"
+        assert subgroup_attr.GetFullName() == "/group_renamed/subgroup/subgroup_attr"
+
+        assert subgroup_ar.GetName() == "subgroup_ar"
+        assert subgroup_ar.GetFullName() == "/group_renamed/subgroup/subgroup_ar"
+
+        assert subgroup_ar_attr.GetName() == "subgroup_ar_attr"
+        assert (
+            subgroup_ar_attr.GetFullName()
+            == "/group_renamed/subgroup/subgroup_ar/subgroup_ar_attr"
+        )
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        group = rg.OpenGroup("group_renamed")
+
+        # Read-only
+        with pytest.raises(Exception):
+            group.Rename("group_renamed2")
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+    try:
+        test()
+        reopen()
+    finally:
+        gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_rename_array():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_rename_array.nc"
+
+    def test():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        subg = rg.CreateGroup("group")
+        dim = rg.CreateDimension("dim", None, None, 2)
+        ar = subg.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        subg.CreateMDArray(
+            "other_array", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute(
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        # Empty name
+        with pytest.raises(Exception):
+            ar.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            ar.Rename("other_array")
+
+        assert set(subg.GetMDArrayNames()) == {"ar", "other_array"}
+
+        # Rename array and test effects
+        ar.Rename("ar_renamed")
+        assert ar.GetName() == "ar_renamed"
+        assert ar.GetFullName() == "/group/ar_renamed"
+
+        assert attr.GetName() == "attr"
+        assert attr.GetFullName() == "/group/ar_renamed/attr"
+
+        assert set(subg.GetMDArrayNames()) == {"ar_renamed", "other_array"}
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        subg = rg.OpenGroup("group")
+
+        assert set(subg.GetMDArrayNames()) == {"ar_renamed", "other_array"}
+
+        # Read-only
+        with pytest.raises(Exception):
+            subg.OpenMDArray("ar_renamed").Rename("ar_renamed2")
+
+        assert set(subg.GetMDArrayNames()) == {"ar_renamed", "other_array"}
+
+    try:
+        test()
+        reopen()
+    finally:
+        gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_rename_attribute():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_rename_attribute.nc"
+
+    def test():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        rg = ds.GetRootGroup()
+        subg = rg.CreateGroup("group")
+        subg_attr = subg.CreateAttribute(
+            "subg_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert subg_attr.Write("foo") == gdal.CE_None
+        subg_other_attr = subg.CreateAttribute(
+            "subg_other_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert subg_other_attr.Write("foo") == gdal.CE_None
+        ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        assert attr.Write("foo") == gdal.CE_None
+        other_attr = ar.CreateAttribute(
+            "other_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert other_attr.Write("foo") == gdal.CE_None
+
+        # Empty name
+        with pytest.raises(Exception):
+            attr.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            attr.Rename("other_attr")
+
+        # Rename array attribute and test effects
+        attr.Rename("attr_renamed")
+        assert attr.GetName() == "attr_renamed"
+        assert attr.GetFullName() == "/group/ar/attr_renamed"
+        assert set(x.GetName() for x in ar.GetAttributes()) == {
+            "attr_renamed",
+            "other_attr",
+        }
+
+        # Existing name
+        with pytest.raises(Exception):
+            subg_attr.Rename("subg_other_attr")
+
+        # Rename group attribute and test effects
+        subg_attr.Rename("subg_attr_renamed")
+        assert subg_attr.GetName() == "subg_attr_renamed"
+        assert subg_attr.GetFullName() == "/group/_GLOBAL_/subg_attr_renamed"
+        assert set(x.GetName() for x in subg.GetAttributes()) == {
+            "subg_attr_renamed",
+            "subg_other_attr",
+        }
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        subg = rg.OpenGroup("group")
+        ar = subg.OpenMDArray("ar")
+
+        assert set(x.GetName() for x in ar.GetAttributes()) == {
+            "attr_renamed",
+            "other_attr",
+        }
+        assert set(x.GetName() for x in subg.GetAttributes()) == {
+            "subg_attr_renamed",
+            "subg_other_attr",
+        }
+
+        # Read-only
+        with pytest.raises(Exception):
+            ar.GetAttributes()[0].Rename("another_name")
+
+        assert set(x.GetName() for x in ar.GetAttributes()) == {
+            "attr_renamed",
+            "other_attr",
+        }
+
+    try:
+        test()
+        reopen()
+    finally:
+        gdal.Unlink(filename)

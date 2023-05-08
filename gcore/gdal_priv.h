@@ -2051,6 +2051,7 @@ class CPL_DLL GDALExtendedDataType
 
     GDALExtendedDataType(const GDALExtendedDataType &);
 
+    GDALExtendedDataType &operator=(const GDALExtendedDataType &);
     GDALExtendedDataType &operator=(GDALExtendedDataType &&);
 
     static GDALExtendedDataType Create(GDALDataType eType);
@@ -2281,6 +2282,12 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     GetInnerMostGroup(const std::string &osPathOrArrayOrDim,
                       std::shared_ptr<GDALGroup> &curGroupHolder,
                       std::string &osLastPart) const;
+
+    void BaseRename(const std::string &osNewName);
+
+    virtual void NotifyChildrenOfRenaming()
+    {
+    }
     //! @endcond
 
   public:
@@ -2368,6 +2375,12 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     virtual void ClearStatistics();
 
+    virtual bool Rename(const std::string &osNewName);
+
+    //! @cond Doxygen_Suppress
+    virtual void ParentRenamed(const std::string &osNewParentFullName);
+    //! @endcond
+
     //! @cond Doxygen_Suppress
     static constexpr GUInt64 COPY_COST = 1000;
     //! @endcond
@@ -2422,6 +2435,13 @@ class CPL_DLL GDALAbstractMDArray
            const GInt64 *arrayStep,         // step in elements
            const GPtrDiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer);
+
+    void BaseRename(const std::string &osNewName);
+
+    virtual void NotifyChildrenOfRenaming()
+    {
+    }
+
     //! @endcond
 
   public:
@@ -2508,6 +2528,12 @@ class CPL_DLL GDALAbstractMDArray
           const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer,
           const void *pSrcBufferAllocStart = nullptr,
           size_t nSrcBufferAllocSize = 0);
+
+    virtual bool Rename(const std::string &osNewName);
+
+    //! @cond Doxygen_Suppress
+    virtual void ParentRenamed(const std::string &osNewParentFullName);
+    //! @endcond
 };
 
 /* ******************************************************************** */
@@ -2751,6 +2777,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                                   const GPtrDiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const;
+
     //! @endcond
 
   public:
@@ -3087,6 +3114,12 @@ class CPL_DLL GDALDimension
     virtual bool
     SetIndexingVariable(std::shared_ptr<GDALMDArray> poIndexingVariable);
 
+    virtual bool Rename(const std::string &osNewName);
+
+    //! @cond Doxygen_Suppress
+    virtual void ParentRenamed(const std::string &osNewParentFullName);
+    //! @endcond
+
   protected:
     //! @cond Doxygen_Suppress
     std::string m_osName;
@@ -3094,6 +3127,9 @@ class CPL_DLL GDALDimension
     std::string m_osType;
     std::string m_osDirection;
     GUInt64 m_nSize;
+
+    void BaseRename(const std::string &osNewName);
+
     //! @endcond
 };
 

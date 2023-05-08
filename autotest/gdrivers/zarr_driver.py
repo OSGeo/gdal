@@ -49,68 +49,83 @@ def module_disable_exceptions():
         yield
 
 
+_gdal_data_type_to_array_type = {
+    gdal.GDT_Int8: "b",
+    gdal.GDT_Byte: "B",
+    gdal.GDT_Int16: "h",
+    gdal.GDT_UInt16: "H",
+    gdal.GDT_Int32: "i",
+    gdal.GDT_UInt32: "I",
+    gdal.GDT_Int64: "q",
+    gdal.GDT_UInt64: "Q",
+    gdal.GDT_Float32: "f",
+    gdal.GDT_Float64: "d",
+    gdal.GDT_CFloat32: "f",
+    gdal.GDT_CFloat64: "d",
+}
+
+
 @pytest.mark.parametrize(
-    "dtype,structtype,gdaltype,fill_value,nodata_value",
+    "dtype,gdaltype,fill_value,nodata_value",
     [
-        ["!b1", "B", gdal.GDT_Byte, None, None],
-        ["!i1", "b", gdal.GDT_Int8, None, None],
-        ["!i1", "b", gdal.GDT_Int8, -1, -1],
-        ["!u1", "B", gdal.GDT_Byte, None, None],
+        ["!b1", gdal.GDT_Byte, None, None],
+        ["!i1", gdal.GDT_Int8, None, None],
+        ["!i1", gdal.GDT_Int8, -1, -1],
+        ["!u1", gdal.GDT_Byte, None, None],
         [
             "!u1",
-            "B",
             gdal.GDT_Byte,
             "1",
             1,
         ],  # not really legit to have the fill_value as a str
-        ["<i2", "h", gdal.GDT_Int16, None, None],
-        [">i2", "h", gdal.GDT_Int16, None, None],
-        ["<i4", "i", gdal.GDT_Int32, None, None],
-        [">i4", "i", gdal.GDT_Int32, None, None],
-        ["<i8", "q", gdal.GDT_Int64, None, None],
-        ["<i8", "q", gdal.GDT_Int64, -(1 << 63), -(1 << 63)],
+        ["<i2", gdal.GDT_Int16, None, None],
+        [">i2", gdal.GDT_Int16, None, None],
+        ["<i4", gdal.GDT_Int32, None, None],
+        [">i4", gdal.GDT_Int32, None, None],
+        ["<i8", gdal.GDT_Int64, None, None],
+        ["<i8", gdal.GDT_Int64, -(1 << 63), -(1 << 63)],
         [
             "<i8",
-            "q",
             gdal.GDT_Int64,
             str(-(1 << 63)),
             -(1 << 63),
         ],  # not really legit to have the fill_value as a str
-        [">i8", "q", gdal.GDT_Int64, None, None],
-        ["<u2", "H", gdal.GDT_UInt16, None, None],
-        [">u2", "H", gdal.GDT_UInt16, None, None],
-        ["<u4", "I", gdal.GDT_UInt32, None, None],
-        [">u4", "I", gdal.GDT_UInt32, None, None],
-        ["<u4", "I", gdal.GDT_UInt32, 4000000000, 4000000000],
+        [">i8", gdal.GDT_Int64, None, None],
+        ["<u2", gdal.GDT_UInt16, None, None],
+        [">u2", gdal.GDT_UInt16, None, None],
+        ["<u4", gdal.GDT_UInt32, None, None],
+        [">u4", gdal.GDT_UInt32, None, None],
+        ["<u4", gdal.GDT_UInt32, 4000000000, 4000000000],
         [
             "<u8",
-            "Q",
             gdal.GDT_UInt64,
             str((1 << 64) - 1),
             (1 << 64) - 1,
         ],  # not really legit to have the fill_value as a str, but libjson-c can't support numeric values in int64::max(), uint64::max() range.
-        [">u8", "Q", gdal.GDT_UInt64, None, None],
-        ["<f4", "f", gdal.GDT_Float32, None, None],
-        [">f4", "f", gdal.GDT_Float32, None, None],
-        ["<f4", "f", gdal.GDT_Float32, 1.5, 1.5],
-        ["<f4", "f", gdal.GDT_Float32, "NaN", float("nan")],
-        ["<f4", "f", gdal.GDT_Float32, "Infinity", float("infinity")],
-        ["<f4", "f", gdal.GDT_Float32, "-Infinity", float("-infinity")],
-        ["<f8", "d", gdal.GDT_Float64, None, None],
-        [">f8", "d", gdal.GDT_Float64, None, None],
-        ["<f8", "d", gdal.GDT_Float64, "NaN", float("nan")],
-        ["<f8", "d", gdal.GDT_Float64, "Infinity", float("infinity")],
-        ["<f8", "d", gdal.GDT_Float64, "-Infinity", float("-infinity")],
-        ["<c8", "f", gdal.GDT_CFloat32, None, None],
-        [">c8", "f", gdal.GDT_CFloat32, None, None],
-        ["<c16", "d", gdal.GDT_CFloat64, None, None],
-        [">c16", "d", gdal.GDT_CFloat64, None, None],
+        [">u8", gdal.GDT_UInt64, None, None],
+        ["<f4", gdal.GDT_Float32, None, None],
+        [">f4", gdal.GDT_Float32, None, None],
+        ["<f4", gdal.GDT_Float32, 1.5, 1.5],
+        ["<f4", gdal.GDT_Float32, "NaN", float("nan")],
+        ["<f4", gdal.GDT_Float32, "Infinity", float("infinity")],
+        ["<f4", gdal.GDT_Float32, "-Infinity", float("-infinity")],
+        ["<f8", gdal.GDT_Float64, None, None],
+        [">f8", gdal.GDT_Float64, None, None],
+        ["<f8", gdal.GDT_Float64, "NaN", float("nan")],
+        ["<f8", gdal.GDT_Float64, "Infinity", float("infinity")],
+        ["<f8", gdal.GDT_Float64, "-Infinity", float("-infinity")],
+        ["<c8", gdal.GDT_CFloat32, None, None],
+        [">c8", gdal.GDT_CFloat32, None, None],
+        ["<c16", gdal.GDT_CFloat64, None, None],
+        [">c16", gdal.GDT_CFloat64, None, None],
     ],
 )
 @pytest.mark.parametrize("use_optimized_code_paths", [True, False])
 def test_zarr_basic(
-    dtype, structtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
+    dtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
 ):
+
+    structtype = _gdal_data_type_to_array_type[gdaltype]
 
     j = {
         "chunks": [2, 3],
@@ -855,11 +870,13 @@ def test_zarr_read_group(use_get_names):
         assert subgroup.GetGroupNames() == ["bar"]
     assert subgroup.GetAttributes() == []
     subsubgroup = subgroup.OpenGroup("bar")
+    assert subgroup.GetGroupNames() == ["bar"]
     assert subsubgroup.GetName() == "bar"
     assert subsubgroup.GetFullName() == "/foo/bar"
     if use_get_names:
         assert subsubgroup.GetMDArrayNames() == ["baz"]
     ar = subsubgroup.OpenMDArray("baz")
+    assert subsubgroup.GetMDArrayNames() == ["baz"]
     assert ar is not None
     assert ar.Read() == array.array("i", [1])
     assert subsubgroup.OpenMDArray("not_existing") is None
@@ -885,11 +902,13 @@ def test_zarr_read_group_with_zmetadata():
     assert subgroup.GetGroupNames() == ["bar"]
     assert subgroup.GetAttributes() == []
     subsubgroup = subgroup.OpenGroup("bar")
+    assert subgroup.GetGroupNames() == ["bar"]
     assert subsubgroup.GetName() == "bar"
     assert subsubgroup.GetFullName() == "/foo/bar"
     assert subsubgroup.GetMDArrayNames() == ["baz"]
     assert subsubgroup.GetAttribute("foo") is not None
     ar = subsubgroup.OpenMDArray("baz")
+    assert subsubgroup.GetMDArrayNames() == ["baz"]
     assert ar is not None
     assert ar.Read() == array.array("i", [1])
     assert ar.GetAttribute("bar") is not None
@@ -980,11 +999,7 @@ def test_zarr_read_v3(use_get_names):
     assert subgroup.GetName() == "marvin"
     assert subgroup.GetFullName() == "/marvin"
     if use_get_names:
-        assert rg.GetMDArrayNames() == ["/", "ar"]
-
-    ar = rg.OpenMDArray("/")
-    assert ar
-    assert ar.Read() == array.array("i", [2] + ([1] * (5 * 10 - 1)))
+        assert rg.GetMDArrayNames() == ["ar"]
 
     ar = rg.OpenMDArray("ar")
     assert ar
@@ -1106,14 +1121,10 @@ def test_zarr_read_classic():
     subds = ds.GetSubDatasets()
     assert set(subds) == set(
         [
-            ('ZARR:"data/zarr/v3/test.zr3":/', "Array /"),
             ('ZARR:"data/zarr/v3/test.zr3":/ar', "Array /ar"),
             ('ZARR:"data/zarr/v3/test.zr3":/marvin/android', "Array /marvin/android"),
         ]
     )
-    ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/')
-    assert ds
-    assert ds.ReadRaster() == array.array("i", [2] + ([1] * (10 * 5 - 1)))
     ds = gdal.Open('ZARR:"data/zarr/v3/test.zr3":/ar')
     assert ds
     assert ds.ReadRaster() == array.array("b", [1, 2])
@@ -1129,6 +1140,8 @@ def test_zarr_read_classic_2d():
         ds = gdal.Open("/vsimem/test.zarr")
         assert ds is not None
         assert len(ds.GetSubDatasets()) == 0
+        srs = ds.GetSpatialRef()
+        assert srs.GetDataAxisToSRSAxisMapping() == [1, 2]
         ds = None
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
@@ -1288,6 +1301,7 @@ def test_zarr_create_group(format, create_z_metadata):
                 "str_attr", [], gdal.ExtendedDataType.CreateString()
             )
             assert attr
+            assert attr.GetFullName() == "/_GLOBAL_/str_attr"
             assert attr.Write("my_string") == gdal.CE_None
 
             attr = rg.CreateAttribute(
@@ -1463,20 +1477,32 @@ def test_zarr_create_group(format, create_z_metadata):
 def test_zarr_create_group_errors(group_name, format):
 
     try:
-        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
-            "/vsimem/test.zarr", options=["FORMAT=" + format]
-        )
-        assert ds is not None
-        rg = ds.GetRootGroup()
-        assert rg
-        subgroup = rg.CreateGroup("foo")
-        assert subgroup
-        if format == "ZARR_V2":
+
+        def at_creation():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                "/vsimem/test.zarr", options=["FORMAT=" + format]
+            )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            subgroup = rg.CreateGroup("foo")
+            assert subgroup
             gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-        else:
-            gdal.Mkdir("/vsimem/test.zarr/meta/root/directory_with_that_name", 0)
-        with gdaltest.error_handler():
-            assert rg.CreateGroup(group_name) is None
+            with gdaltest.error_handler():
+                assert rg.CreateGroup(group_name) is None
+
+        at_creation()
+
+        def after_reopen():
+            ds = gdal.OpenEx(
+                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+            )
+            rg = ds.GetRootGroup()
+            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
+            with gdaltest.error_handler():
+                assert rg.CreateGroup(group_name) is None
+
+        after_reopen()
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
@@ -1524,12 +1550,9 @@ def getCompoundDT():
 def test_zarr_create_array(datatype, nodata, format):
 
     error_expected = False
-    if format == "ZARR_V3":
-        if datatype.GetClass() != gdal.GEDTC_NUMERIC or gdal.DataTypeIsComplex(
-            datatype.GetNumericDataType()
-        ):
-            error_expected = True
-    elif datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+    if datatype.GetNumericDataType() in (gdal.GDT_CInt16, gdal.GDT_CInt32):
+        error_expected = True
+    elif format == "ZARR_V3" and datatype.GetClass() != gdal.GEDTC_NUMERIC:
         error_expected = True
 
     try:
@@ -1604,7 +1627,12 @@ def test_zarr_create_array(datatype, nodata, format):
                     got_nodata = ar.GetNoDataValueAsRaw()
                     assert got_nodata == nodata
             else:
-                assert ar.GetNoDataValueAsRaw() is None
+                if format == "ZARR_V3":
+                    assert ar.GetNoDataValueAsRaw() is None or math.isnan(
+                        ar.GetNoDataValueAsDouble()
+                    )
+                else:
+                    assert ar.GetNoDataValueAsRaw() is None
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
@@ -1624,25 +1652,48 @@ def test_zarr_create_array(datatype, nodata, format):
         ".zarray",
     ],
 )
-def test_zarr_create_array_errors(array_name):
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_create_array_errors(array_name, format):
 
     try:
-        ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional("/vsimem/test.zarr")
-        assert ds is not None
-        rg = ds.GetRootGroup()
-        assert rg
-        assert (
-            rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-            is not None
-        )
-        gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
-        with gdaltest.error_handler():
-            assert (
-                rg.CreateMDArray(
-                    array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-                )
-                is None
+
+        def at_creation():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                "/vsimem/test.zarr", options=["FORMAT=" + format]
             )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            assert (
+                rg.CreateMDArray("foo", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+                is not None
+            )
+            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
+            with gdaltest.error_handler():
+                assert (
+                    rg.CreateMDArray(
+                        array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                    )
+                    is None
+                )
+
+        at_creation()
+
+        def after_reopen():
+            ds = gdal.OpenEx(
+                "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+            )
+            rg = ds.GetRootGroup()
+            gdal.Mkdir("/vsimem/test.zarr/directory_with_that_name", 0)
+            with gdaltest.error_handler():
+                assert (
+                    rg.CreateMDArray(
+                        array_name, [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+                    )
+                    is None
+                )
+
+        after_reopen()
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
@@ -1706,10 +1757,48 @@ def test_zarr_create_array_compressor(compressor, options, expected_json):
         [
             "gzip",
             [],
-            {
-                "codec": "https://purl.org/zarr/spec/codec/gzip/1.0",
-                "configuration": {"level": 6},
-            },
+            [{"name": "gzip", "configuration": {"level": 6}}],
+        ],
+        [
+            "gzip",
+            ["GZIP_LEVEL=1"],
+            [{"name": "gzip", "configuration": {"level": 1}}],
+        ],
+        [
+            "blosc",
+            [],
+            [
+                {
+                    "name": "blosc",
+                    "configuration": {
+                        "cname": "lz4",
+                        "clevel": 5,
+                        "shuffle": "shuffle",
+                        "typesize": 1,
+                        "blocksize": 0,
+                    },
+                }
+            ],
+        ],
+        [
+            "blosc",
+            [
+                "BLOSC_CNAME=zlib",
+                "BLOSC_CLEVEL=1",
+                "BLOSC_SHUFFLE=NONE",
+                "BLOSC_BLOCKSIZE=2",
+            ],
+            [
+                {
+                    "name": "blosc",
+                    "configuration": {
+                        "cname": "zlib",
+                        "clevel": 1,
+                        "shuffle": "noshuffle",
+                        "blocksize": 2,
+                    },
+                }
+            ],
         ],
     ],
 )
@@ -1728,28 +1817,465 @@ def test_zarr_create_array_compressor_v3(compressor, options, expected_json):
             assert ds is not None
             rg = ds.GetRootGroup()
             assert rg
-            assert (
-                rg.CreateMDArray(
-                    "test",
-                    [],
-                    gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                    ["COMPRESS=" + compressor] + options,
-                )
-                is not None
+            dim = rg.CreateDimension("dim0", None, None, 2)
+            ar = rg.CreateMDArray(
+                "test",
+                [dim],
+                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
+                ["COMPRESS=" + compressor] + options,
             )
+            assert ar.Write(array.array("b", [1, 2])) == gdal.CE_None
 
         create()
 
-        f = gdal.VSIFOpenL("/vsimem/test.zarr/meta/root/test.array.json", "rb")
+        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/zarr.json", "rb")
         assert f
         data = gdal.VSIFReadL(1, 1000, f)
         gdal.VSIFCloseL(f)
         j = json.loads(data)
         if expected_json is None:
-            assert "compressor" not in j
+            assert "codecs" not in j
         else:
-            assert j["compressor"] == expected_json
+            assert j["codecs"] == expected_json
 
+        def read():
+            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray("test")
+            assert ar.Read() == array.array("b", [1, 2])
+
+        read()
+
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
+    "options,expected_json",
+    [
+        [
+            ["@ENDIAN=little"],
+            [{"configuration": {"endian": "little"}, "name": "endian"}],
+        ],
+        [["@ENDIAN=big"], [{"configuration": {"endian": "big"}, "name": "endian"}]],
+        [
+            ["@ENDIAN=little", "CHUNK_MEMORY_LAYOUT=F"],
+            [
+                {"name": "transpose", "configuration": {"order": "F"}},
+                {"configuration": {"endian": "little"}, "name": "endian"},
+            ],
+        ],
+        [
+            ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F"],
+            [
+                {"name": "transpose", "configuration": {"order": "F"}},
+                {"configuration": {"endian": "big"}, "name": "endian"},
+            ],
+        ],
+        [
+            ["@ENDIAN=big", "CHUNK_MEMORY_LAYOUT=F", "COMPRESS=GZIP"],
+            [
+                {"name": "transpose", "configuration": {"order": "F"}},
+                {"name": "endian", "configuration": {"endian": "big"}},
+                {"name": "gzip", "configuration": {"level": 6}},
+            ],
+        ],
+    ],
+)
+@pytest.mark.parametrize(
+    "gdal_data_type",
+    [
+        gdal.GDT_Int8,
+        gdal.GDT_Byte,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int64,
+        gdal.GDT_UInt64,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+    ],
+)
+def test_zarr_create_array_endian_v3(options, expected_json, gdal_data_type):
+
+    array_type = _gdal_data_type_to_array_type[gdal_data_type]
+
+    try:
+
+        def create():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                "/vsimem/test.zarr", options=["FORMAT=ZARR_V3"]
+            )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+            dim0 = rg.CreateDimension("dim0", None, None, 2)
+            ar = rg.CreateMDArray(
+                "test", [dim0], gdal.ExtendedDataType.Create(gdal_data_type), options
+            )
+            assert ar.Write(array.array(array_type, [1, 2])) == gdal.CE_None
+
+        create()
+
+        f = gdal.VSIFOpenL("/vsimem/test.zarr/test/zarr.json", "rb")
+        assert f
+        data = gdal.VSIFReadL(1, 1000, f)
+        gdal.VSIFCloseL(f)
+        j = json.loads(data)
+        assert j["codecs"] == expected_json
+
+        def read():
+            ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER)
+            rg = ds.GetRootGroup()
+            ar = rg.OpenMDArray("test")
+            assert ar.Read() == array.array(array_type, [1, 2])
+
+        read()
+
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
+    "j, error_msg",
+    [
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "MISSING_shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "shape missing or not an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": "invalid",
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "shape missing or not an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1, 2]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "shape and chunks arrays are of different size",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "MISSING_data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "data_type missing",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8_INVALID",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Invalid or unsupported format for data_type",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "MISSING_chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "chunk_grid missing or not an object",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {"name": "invalid"},
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Only chunk_grid.name = regular supported",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {"name": "regular"},
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "chunk_grid.configuration.chunk_shape missing or not an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "MISSING_chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "chunk_key_encoding missing or not an object",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "invalid"},
+                "fill_value": 0,
+            },
+            "Unsupported chunk_key_encoding.name",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {
+                    "name": "default",
+                    "configuration": {"separator": "invalid"},
+                },
+                "fill_value": 0,
+            },
+            "Separator can only be '/' or '.'",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+                "storage_transformers": [{}],
+            },
+            "storage_transformers are not supported",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "invalid",
+            },
+            "Invalid fill_value",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0",
+                "dimension_names": "invalid",
+            },
+            "dimension_names should be an array",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0",
+                "dimension_names": [],
+            },
+            "Size of dimension_names[] different from the one of shape",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "NaN",
+            },
+            "Invalid fill_value for this data type",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0x00",
+            },
+            "Hexadecimal representation of fill_value no supported for this data type",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": "0b00",
+            },
+            "Binary representation of fill_value no supported for this data type",
+        ],
+    ],
+)
+def test_zarr_read_invalid_zarr_v3(j, error_msg):
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            assert gdal.Open("/vsimem/test.zarr") is None
+        assert error_msg in gdal.GetLastErrorMsg()
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+def test_zarr_read_data_type_fallback_zarr_v3():
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": {
+            "name": "datetime",
+            "configuration": {"unit": "ns"},
+            "fallback": "int64",
+        },
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": 0,
+    }
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+        ds = gdal.Open("/vsimem/test.zarr")
+        assert ds.GetRasterBand(1).DataType == gdal.GDT_Int64
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
+    "data_type,fill_value,nodata",
+    [
+        ("float32", "0x3fc00000", 1.5),
+        ("float32", str(bin(0x3FC00000)), 1.5),
+        ("float64", "0x3ff8000000000000", 1.5),
+        ("float64", str(bin(0x3FF8000000000000)), 1.5),
+    ],
+)
+def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": data_type,
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": fill_value,
+    }
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+        ds = gdal.Open("/vsimem/test.zarr")
+        assert ds.GetRasterBand(1).GetNoDataValue() == nodata
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
@@ -1794,11 +2320,13 @@ def test_zarr_create_array_attributes(format):
                 "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
             )
             assert ar
+            assert ar.GetFullName() == "/test"
 
             attr = ar.CreateAttribute(
                 "str_attr", [], gdal.ExtendedDataType.CreateString()
             )
             assert attr
+            assert attr.GetFullName() == "/test/str_attr"
             assert attr.Write("my_string") == gdal.CE_None
 
             with gdaltest.error_handler():
@@ -1926,47 +2454,49 @@ def test_zarr_create_array_set_dimension_name():
 
 
 @pytest.mark.parametrize(
-    "dtype,structtype,gdaltype,fill_value,nodata_value",
+    "dtype,gdaltype,fill_value,nodata_value",
     [
-        ["!b1", "B", gdal.GDT_Byte, None, None],
-        ["!i1", "b", gdal.GDT_Int16, None, None],
-        ["!i1", "b", gdal.GDT_Int16, -1, -1],
-        ["!u1", "B", gdal.GDT_Byte, None, None],
-        ["!u1", "B", gdal.GDT_Byte, "1", 1],
-        ["<i2", "h", gdal.GDT_Int16, None, None],
-        [">i2", "h", gdal.GDT_Int16, None, None],
-        ["<i4", "i", gdal.GDT_Int32, None, None],
-        [">i4", "i", gdal.GDT_Int32, None, None],
-        ["<i8", "q", gdal.GDT_Float64, None, None],
-        [">i8", "q", gdal.GDT_Float64, None, None],
-        ["<u2", "H", gdal.GDT_UInt16, None, None],
-        [">u2", "H", gdal.GDT_UInt16, None, None],
-        ["<u4", "I", gdal.GDT_UInt32, None, None],
-        [">u4", "I", gdal.GDT_UInt32, None, None],
-        ["<u4", "I", gdal.GDT_UInt32, 4000000000, 4000000000],
-        ["<u8", "Q", gdal.GDT_Float64, 4000000000, 4000000000],
-        [">u8", "Q", gdal.GDT_Float64, None, None],
-        ["<f4", "f", gdal.GDT_Float32, None, None],
-        [">f4", "f", gdal.GDT_Float32, None, None],
-        ["<f4", "f", gdal.GDT_Float32, 1.5, 1.5],
-        ["<f4", "f", gdal.GDT_Float32, "NaN", float("nan")],
-        ["<f4", "f", gdal.GDT_Float32, "Infinity", float("infinity")],
-        ["<f4", "f", gdal.GDT_Float32, "-Infinity", float("-infinity")],
-        ["<f8", "d", gdal.GDT_Float64, None, None],
-        [">f8", "d", gdal.GDT_Float64, None, None],
-        ["<f8", "d", gdal.GDT_Float64, "NaN", float("nan")],
-        ["<f8", "d", gdal.GDT_Float64, "Infinity", float("infinity")],
-        ["<f8", "d", gdal.GDT_Float64, "-Infinity", float("-infinity")],
-        ["<c8", "f", gdal.GDT_CFloat32, None, None],
-        [">c8", "f", gdal.GDT_CFloat32, None, None],
-        ["<c16", "d", gdal.GDT_CFloat64, None, None],
-        [">c16", "d", gdal.GDT_CFloat64, None, None],
+        ["!b1", gdal.GDT_Byte, None, None],
+        ["!i1", gdal.GDT_Int16, None, None],
+        ["!i1", gdal.GDT_Int16, -1, -1],
+        ["!u1", gdal.GDT_Byte, None, None],
+        ["!u1", gdal.GDT_Byte, "1", 1],
+        ["<i2", gdal.GDT_Int16, None, None],
+        [">i2", gdal.GDT_Int16, None, None],
+        ["<i4", gdal.GDT_Int32, None, None],
+        [">i4", gdal.GDT_Int32, None, None],
+        ["<i8", gdal.GDT_Float64, None, None],
+        [">i8", gdal.GDT_Float64, None, None],
+        ["<u2", gdal.GDT_UInt16, None, None],
+        [">u2", gdal.GDT_UInt16, None, None],
+        ["<u4", gdal.GDT_UInt32, None, None],
+        [">u4", gdal.GDT_UInt32, None, None],
+        ["<u4", gdal.GDT_UInt32, 4000000000, 4000000000],
+        ["<u8", gdal.GDT_Float64, 4000000000, 4000000000],
+        [">u8", gdal.GDT_Float64, None, None],
+        ["<f4", gdal.GDT_Float32, None, None],
+        [">f4", gdal.GDT_Float32, None, None],
+        ["<f4", gdal.GDT_Float32, 1.5, 1.5],
+        ["<f4", gdal.GDT_Float32, "NaN", float("nan")],
+        ["<f4", gdal.GDT_Float32, "Infinity", float("infinity")],
+        ["<f4", gdal.GDT_Float32, "-Infinity", float("-infinity")],
+        ["<f8", gdal.GDT_Float64, None, None],
+        [">f8", gdal.GDT_Float64, None, None],
+        ["<f8", gdal.GDT_Float64, "NaN", float("nan")],
+        ["<f8", gdal.GDT_Float64, "Infinity", float("infinity")],
+        ["<f8", gdal.GDT_Float64, "-Infinity", float("-infinity")],
+        ["<c8", gdal.GDT_CFloat32, None, None],
+        [">c8", gdal.GDT_CFloat32, None, None],
+        ["<c16", gdal.GDT_CFloat64, None, None],
+        [">c16", gdal.GDT_CFloat64, None, None],
     ],
 )
 @pytest.mark.parametrize("use_optimized_code_paths", [True, False])
 def test_zarr_write_array_content(
-    dtype, structtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
+    dtype, gdaltype, fill_value, nodata_value, use_optimized_code_paths
 ):
+
+    structtype = _gdal_data_type_to_array_type[gdaltype]
 
     j = {
         "chunks": [2, 3],
@@ -2170,8 +2700,26 @@ def test_zarr_update_array_string(srcfilename):
 
 
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
-def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(format):
+@pytest.mark.parametrize(
+    "gdal_data_type",
+    [
+        gdal.GDT_Int8,
+        gdal.GDT_Byte,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int64,
+        gdal.GDT_UInt64,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+    ],
+)
+def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(
+    format, gdal_data_type
+):
 
+    array_type = _gdal_data_type_to_array_type[gdal_data_type]
     try:
 
         def create():
@@ -2189,11 +2737,11 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(format):
             ar = rg.CreateMDArray(
                 "test",
                 [dim0, dim1, dim2],
-                gdal.ExtendedDataType.Create(gdal.GDT_Byte),
-                ["CHUNK_MEMORY_LAYOUT=F", "COMPRESS=zlib", "DIM_SEPARATOR=/"],
+                gdal.ExtendedDataType.Create(gdal_data_type),
+                ["CHUNK_MEMORY_LAYOUT=F", "COMPRESS=gzip", "DIM_SEPARATOR=/"],
             )
             assert (
-                ar.Write(array.array("b", [i for i in range(2 * 3 * 4)]))
+                ar.Write(array.array(array_type, [i for i in range(2 * 3 * 4)]))
                 == gdal.CE_None
             )
 
@@ -2202,7 +2750,7 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(format):
         if format == "ZARR_V2":
             f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zarray", "rb")
         else:
-            f = gdal.VSIFOpenL("/vsimem/test.zarr/meta/root/test.array.json", "rb")
+            f = gdal.VSIFOpenL("/vsimem/test.zarr/test/zarr.json", "rb")
         assert f
         data = gdal.VSIFReadL(1, 10000, f)
         gdal.VSIFCloseL(f)
@@ -2211,15 +2759,18 @@ def test_zarr_create_fortran_order_3d_and_compression_and_dim_separator(format):
             assert "order" in j
             assert j["order"] == "F"
         else:
-            assert "chunk_memory_layout" in j
-            assert j["chunk_memory_layout"] == "F"
+            assert "codecs" in j
+            assert j["codecs"] == [
+                {"name": "transpose", "configuration": {"order": "F"}},
+                {"name": "gzip", "configuration": {"level": 6}},
+            ]
 
         ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
         assert ds
         rg = ds.GetRootGroup()
         assert rg
         ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
-        assert ar.Read() == array.array("b", [i for i in range(2 * 3 * 4)])
+        assert ar.Read() == array.array(array_type, [i for i in range(2 * 3 * 4)])
 
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
@@ -2841,7 +3392,7 @@ def test_zarr_cache_tile_presence(format):
         if format == "ZARR_V2":
             cache_filename = filename + "/test/.zarray.gmac"
         else:
-            cache_filename = filename + "/meta/root/test.array.json.gmac"
+            cache_filename = filename + "/test/zarr.json.gmac"
         assert gdal.VSIStatL(cache_filename) is not None
 
         # Read content of the array
@@ -2912,8 +3463,9 @@ def test_zarr_cache_tile_presence(format):
         gdal.RmdirRecursive(filename)
 
 
-@pytest.mark.parametrize("compression", ["NONE", "ZLIB"])
-def test_zarr_advise_read(compression):
+@pytest.mark.parametrize("compression", ["NONE", "GZIP"])
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_advise_read(compression, format):
 
     filename = "tmp/test.zarr"
     try:
@@ -2933,7 +3485,9 @@ def test_zarr_advise_read(compression):
         data = array.array("B", data_ar)
 
         def create():
-            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(filename)
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                filename, options=["FORMAT=" + format]
+            )
             assert ds is not None
             rg = ds.GetRootGroup()
             assert rg
@@ -3452,5 +4006,674 @@ def test_zarr_resize_dim_referenced_twice():
 
         check()
 
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_group_at_creation(format, create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def test():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        rg.CreateGroup("other_group")
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute(
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        subgroup = group.CreateGroup("subgroup")
+        subgroup_attr = subgroup.CreateAttribute(
+            "subgroup_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        subgroup_ar = subgroup.CreateMDArray(
+            "subgroup_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        subgroup_ar_attr = subgroup_ar.CreateAttribute(
+            "subgroup_ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        # Cannot rename root group
+        with pytest.raises(Exception):
+            rg.Rename("foo")
+
+        # Empty name
+        with pytest.raises(Exception):
+            group.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            group.Rename("other_group")
+
+        # Existing array name (group and array names share the same namespace)
+        with pytest.raises(Exception):
+            subgroup.Rename("ar")
+
+        # Rename group and test effects
+        group.Rename("group_renamed")
+        assert group.GetName() == "group_renamed"
+        assert group.GetFullName() == "/group_renamed"
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        assert dim.GetName() == "dim0"
+        assert dim.GetFullName() == "/group_renamed/dim0"
+
+        assert group_attr.GetName() == "group_attr"
+        assert group_attr.GetFullName() == "/group_renamed/_GLOBAL_/group_attr"
+
+        assert ar.GetName() == "ar"
+        assert ar.GetFullName() == "/group_renamed/ar"
+
+        assert attr.GetName() == "attr"
+        assert attr.GetFullName() == "/group_renamed/ar/attr"
+
+        assert subgroup.GetName() == "subgroup"
+        assert subgroup.GetFullName() == "/group_renamed/subgroup"
+
+        assert subgroup_attr.GetName() == "subgroup_attr"
+        assert (
+            subgroup_attr.GetFullName()
+            == "/group_renamed/subgroup/_GLOBAL_/subgroup_attr"
+        )
+
+        assert subgroup_ar.GetName() == "subgroup_ar"
+        assert subgroup_ar.GetFullName() == "/group_renamed/subgroup/subgroup_ar"
+
+        assert subgroup_ar_attr.GetName() == "subgroup_ar_attr"
+        assert (
+            subgroup_ar_attr.GetFullName()
+            == "/group_renamed/subgroup/subgroup_ar/subgroup_ar_attr"
+        )
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        group = rg.OpenGroup("group_renamed")
+        assert set([attr.GetName() for attr in group.GetAttributes()]) == {"group_attr"}
+
+        assert group.GetMDArrayNames() == ["ar"]
+
+        # Read-only
+        with pytest.raises(Exception):
+            group.Rename("group_renamed2")
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+    try:
+        test()
+        reopen()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_group_after_reopening(format, create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        group_attr.Write("my_string")
+        rg.CreateGroup("other_group")
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+        attr2 = ar.CreateAttribute("attr2", [], gdal.ExtendedDataType.CreateString())
+        attr2.Write("foo2")
+
+        group.CreateGroup("subgroup")
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Read-only
+        with pytest.raises(Exception):
+            group.Rename("group_renamed2")
+
+        assert set(rg.GetGroupNames()) == {"group", "other_group"}
+
+    def rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Cannot rename root group
+        with pytest.raises(Exception):
+            rg.Rename("foo")
+
+        # Empty name
+        with pytest.raises(Exception):
+            group.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            group.Rename("other_group")
+
+        group_attr = group.GetAttribute("group_attr")
+        ar = group.OpenMDArray("ar")
+        attr = ar.GetAttribute("attr")
+        attr.Write("bar")
+
+        # Rename group and test effects
+        group.Rename("group_renamed")
+        assert group.GetName() == "group_renamed"
+        assert group.GetFullName() == "/group_renamed"
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        assert group_attr.GetFullName() == "/group_renamed/_GLOBAL_/group_attr"
+
+        attr2 = ar.GetAttribute("attr2")
+        attr2.Write("bar2")
+
+    def reopen_after_rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        group = rg.OpenGroup("group_renamed")
+        assert set([attr.GetName() for attr in group.GetAttributes()]) == {"group_attr"}
+
+        assert group.GetMDArrayNames() == ["ar"]
+
+        assert set(rg.GetGroupNames()) == {"group_renamed", "other_group"}
+
+        ar = group.OpenMDArray("ar")
+
+        attr = ar.GetAttribute("attr")
+        assert attr.Read() == "bar"
+
+        attr2 = ar.GetAttribute("attr2")
+        assert attr2.Read() == "bar2"
+
+    try:
+        create()
+        reopen_readonly()
+        rename()
+        reopen_after_rename()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_array_at_creation(format, create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def test():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group.CreateGroup("subgroup")
+
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        group.CreateMDArray(
+            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute(
+            "attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+
+        # Empty name
+        with pytest.raises(Exception):
+            ar.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            ar.Rename("other_ar")
+
+        # Existing subgroup name (group and array names share the same namespace)
+        with pytest.raises(Exception):
+            ar.Rename("subgroup")
+
+        # Rename array and test effects
+        ar.Rename("ar_renamed")
+
+        if format == "ZARR_V2":
+            assert gdal.VSIStatL(filename + "/group/ar/.zarray") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/.zarray") is not None
+        else:
+            assert gdal.VSIStatL(filename + "/group/ar/zarr.json") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/zarr.json") is not None
+
+        assert ar.GetName() == "ar_renamed"
+        assert ar.GetFullName() == "/group/ar_renamed"
+
+        assert set(group.GetMDArrayNames()) == {"ar_renamed", "other_ar"}
+
+        with pytest.raises(Exception):
+            assert group.OpenMDArray("ar") is None
+        assert group.OpenMDArray("ar_renamed") is not None
+
+        assert attr.GetName() == "attr"
+        assert attr.GetFullName() == "/group/ar_renamed/attr"
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        assert set(group.GetMDArrayNames()) == {"ar_renamed", "other_ar"}
+
+        ar_renamed = group.OpenMDArray("ar_renamed")
+        assert set([attr.GetName() for attr in ar_renamed.GetAttributes()]) == {"attr"}
+
+        # Read-only
+        with pytest.raises(Exception):
+            ar_renamed.Rename("ar_renamed2")
+
+        assert set(group.GetMDArrayNames()) == {"ar_renamed", "other_ar"}
+
+    try:
+        test()
+        reopen()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_array_after_reopening(format, create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        group.CreateMDArray(
+            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        assert set(group.GetMDArrayNames()) == {"ar", "other_ar"}
+
+        ar = group.OpenMDArray("ar")
+
+        # Read-only
+        with pytest.raises(Exception):
+            ar.Rename("ar_renamed")
+
+        assert set(group.GetMDArrayNames()) == {"ar", "other_ar"}
+
+    def rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        assert set(group.GetMDArrayNames()) == {"ar", "other_ar"}
+
+        ar = group.OpenMDArray("ar")
+        attr = ar.GetAttribute("attr")
+
+        # Rename array and test effects
+        ar.Rename("ar_renamed")
+
+        if format == "ZARR_V2":
+            assert gdal.VSIStatL(filename + "/group/ar/.zarray") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/.zarray") is not None
+        else:
+            assert gdal.VSIStatL(filename + "/group/ar/zarr.json") is None
+            assert gdal.VSIStatL(filename + "/group/ar_renamed/zarr.json") is not None
+
+        assert ar.GetName() == "ar_renamed"
+        assert ar.GetFullName() == "/group/ar_renamed"
+
+        assert set(group.GetMDArrayNames()) == {"ar_renamed", "other_ar"}
+
+        with pytest.raises(Exception):
+            assert group.OpenMDArray("ar") is None
+        assert group.OpenMDArray("ar_renamed") is not None
+
+        assert attr.GetName() == "attr"
+        assert attr.GetFullName() == "/group/ar_renamed/attr"
+
+        attr.Write("bar")
+
+    def reopen_after_rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        assert set(group.GetMDArrayNames()) == {"ar_renamed", "other_ar"}
+
+        ar = group.OpenMDArray("ar_renamed")
+        attr = ar.GetAttribute("attr")
+        assert attr.Read() == "bar"
+
+    try:
+        create()
+        reopen_readonly()
+        rename()
+        reopen_after_rename()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_attr_after_reopening(format, create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        group_attr.Write("foo")
+
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        group.CreateMDArray(
+            "other_ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+
+    def rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Rename group attribute and test effects
+        group_attr = group.GetAttribute("group_attr")
+        group_attr.Rename("group_attr_renamed")
+
+        assert group_attr.GetName() == "group_attr_renamed"
+        assert group_attr.GetFullName() == "/group/_GLOBAL_/group_attr_renamed"
+
+        group_attr.Write("bar")
+
+        ar = group.OpenMDArray("ar")
+        attr = ar.GetAttribute("attr")
+
+        # Rename attribute and test effects
+        attr.Rename("attr_renamed")
+
+        assert attr.GetName() == "attr_renamed"
+        assert attr.GetFullName() == "/group/ar/attr_renamed"
+
+        attr.Write("bar")
+
+    def reopen_after_rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        group_attr_renamed = group.GetAttribute("group_attr_renamed")
+        assert group_attr_renamed.Read() == "bar"
+
+        ar = group.OpenMDArray("ar")
+        attr_renamed = ar.GetAttribute("attr_renamed")
+        assert attr_renamed.Read() == "bar"
+
+    try:
+        create()
+        rename()
+        reopen_after_rename()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_dim_at_creation(format, create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("dim", None, None, 2)
+        other_dim = rg.CreateDimension("other_dim", None, None, 2)
+        var = rg.CreateMDArray(
+            "var", [dim, other_dim], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+
+        # Empty name
+        with pytest.raises(Exception):
+            dim.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            dim.Rename("other_dim")
+        assert dim.GetName() == "dim"
+        assert dim.GetFullName() == "/dim"
+
+        dim.Rename("dim_renamed")
+        assert dim.GetName() == "dim_renamed"
+        assert dim.GetFullName() == "/dim_renamed"
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        assert [x.GetName() for x in var.GetDimensions()] == [
+            "dim_renamed",
+            "other_dim",
+        ]
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        # Read-only
+        with pytest.raises(Exception):
+            rg.GetDimensions()[0].Rename("dim_renamed2")
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+    try:
+        create()
+        reopen()
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+def test_zarr_multidim_rename_dim_after_reopening(format, create_z_metadata):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        dim = rg.CreateDimension("dim", None, None, 2)
+        other_dim = rg.CreateDimension("other_dim", None, None, 2)
+        rg.CreateMDArray(
+            "var", [dim, other_dim], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+        )
+
+    def rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        dim = list(filter(lambda dim: dim.GetName() == "dim", rg.GetDimensions()))[0]
+
+        # Empty name
+        with pytest.raises(Exception):
+            dim.Rename("")
+
+        # Existing name
+        with pytest.raises(Exception):
+            dim.Rename("other_dim")
+        assert dim.GetName() == "dim"
+        assert dim.GetFullName() == "/dim"
+
+        dim.Rename("dim_renamed")
+        assert dim.GetName() == "dim_renamed"
+        assert dim.GetFullName() == "/dim_renamed"
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+    def reopen_after_rename():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        # Read-only
+        with pytest.raises(Exception):
+            rg.GetDimensions()[0].Rename("dim_renamed2")
+
+        assert set(x.GetName() for x in rg.GetDimensions()) == {
+            "dim_renamed",
+            "other_dim",
+        }
+
+        var = rg.OpenMDArray("var")
+        assert [x.GetName() for x in var.GetDimensions()] == [
+            "dim_renamed",
+            "other_dim",
+        ]
+
+    try:
+        create()
+        rename()
+        reopen_after_rename()
     finally:
         gdal.RmdirRecursive(filename)

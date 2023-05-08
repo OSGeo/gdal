@@ -1,8 +1,15 @@
 add_gdal_driver(
   TARGET gdal_Zarr
   SOURCES zarr_array.cpp
+          zarr_v2_array.cpp
+          zarr_v3_array.cpp
           zarr_attribute.cpp
+          zarr_v3_codec.cpp
+          zarr_dimension.cpp
           zarr_group.cpp
+          zarr_v2_group.cpp
+          zarr_v3_group.cpp
+          zarr_sharedresource.cpp
           zarrdriver.cpp
           STRONG_CXX_WFLAGS
           PLUGIN_CAPABLE
