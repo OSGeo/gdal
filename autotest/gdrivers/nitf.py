@@ -6240,6 +6240,10 @@ def test_nitf_online_23():
 # Test reading ECRG frames
 
 
+@pytest.mark.skipif(
+    not os.path.exists("tmp/cache/ECRG_Sample.zip"),
+    reason="Test data no longer available",
+)
 def test_nitf_online_24():
 
     gdaltest.download_or_skip(

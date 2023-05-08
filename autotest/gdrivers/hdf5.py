@@ -373,8 +373,12 @@ def test_hdf5_12():
 
 def test_hdf5_13():
 
+    # Similar test file is available from
+    # https://oceandata.sci.gsfc.nasa.gov/ob/getfile/AQUA_MODIS.20160929T115000.L2.OC.nc
+    # Download requires NASA EarthData login, not supported by gdaltest
+
     gdaltest.download_or_skip(
-        "http://oceandata.sci.gsfc.nasa.gov/cgi/getfile/A2016273115000.L2_LAC_OC.nc",
+        "http://download.osgeo.org/gdal/data/netcdf/A2016273115000.L2_LAC_OC.nc",
         "A2016273115000.L2_LAC_OC.nc",
     )
 

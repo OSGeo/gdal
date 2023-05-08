@@ -341,6 +341,10 @@ def test_ecrgtoc_4():
 ###############################################################################
 
 
+@pytest.mark.skipif(
+    not os.path.exists("tmp/cache/ECRG_Sample.zip"),
+    reason="Test data no longer available",
+)
 def test_ecrgtoc_online_1():
 
     gdaltest.download_or_skip(
