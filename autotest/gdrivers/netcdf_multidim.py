@@ -833,6 +833,9 @@ def test_netcdf_multidim_create_nc3():
         )
         assert var
         assert var.GetDimensions()[0].GetType() == gdal.DIM_TYPE_HORIZONTAL_Y
+
+        assert var.Write(struct.pack("d" * 6, 1, 2, 3, 4, 5, 6)) == gdal.CE_None
+
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(32631)
         assert var.SetSpatialRef(srs) == gdal.CE_None
