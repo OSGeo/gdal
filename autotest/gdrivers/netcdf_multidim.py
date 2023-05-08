@@ -3321,3 +3321,65 @@ def test_netcdf_multidim_rename_attribute():
         reopen()
     finally:
         gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+def test_netcdf_multidim_copy_group_with_indexing_variable_after_regular_var():
+
+    outfilename = "tmp/out.nc"
+
+    try:
+
+        def create():
+            ds = gdal.GetDriverByName("MEM").CreateMultiDimensional("")
+            rg = ds.GetRootGroup()
+            dim_y = rg.CreateDimension("y", gdal.DIM_TYPE_HORIZONTAL_Y, None, 2)
+            dim_x = rg.CreateDimension("x", gdal.DIM_TYPE_HORIZONTAL_X, None, 2)
+            var = rg.CreateMDArray(
+                "var", [dim_y, dim_x], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+            )
+
+            srs = osr.SpatialReference()
+            srs.ImportFromEPSG(32631)
+            assert var.SetSpatialRef(srs) == gdal.CE_None
+
+            assert var.Write(struct.pack("h" * 4, 1, 2, 3, 4)) == gdal.CE_None
+
+            x = rg.CreateMDArray(
+                "x", [dim_x], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            dim_x.SetIndexingVariable(x)
+            assert x.Write(struct.pack("d" * 2, 1, 2)) == gdal.CE_None
+
+            y = rg.CreateMDArray(
+                "y", [dim_y], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+            )
+            dim_y.SetIndexingVariable(y)
+            assert y.Write(struct.pack("d" * 2, 1, 2)) == gdal.CE_None
+
+            return ds
+
+        def copy(src_ds):
+            rg = src_ds.GetRootGroup()
+            assert rg.GetMDArrayNames() == ["var", "x", "y"]
+
+            gdal.ErrorReset()
+            assert gdal.MultiDimTranslate(outfilename, src_ds)
+            assert gdal.GetLastErrorMsg() == ""
+            src_ds = None
+
+            out_ds = gdal.OpenEx(outfilename, gdal.OF_MULTIDIM_RASTER)
+            rg = out_ds.GetRootGroup()
+            ar = rg.OpenMDArray("var")
+            dim_y = ar.GetDimensions()[0]
+            assert dim_y.GetType() == gdal.DIM_TYPE_HORIZONTAL_Y
+            dim_x = ar.GetDimensions()[1]
+            assert dim_x.GetType() == gdal.DIM_TYPE_HORIZONTAL_X
+
+        copy(create())
+
+    finally:
+        if os.path.exists(outfilename):
+            gdal.Unlink(outfilename)
