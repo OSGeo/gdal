@@ -299,18 +299,18 @@ if test "${RELEASE}" = "yes"; then
        "--label" "org.opencontainers.image.version=${TAG_NAME}" \
     )
 
-    docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
-    docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" "${SCRIPT_DIR}"
+    if test "${DOCKER_BUILDX}" = "buildx" -a "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" --push "${SCRIPT_DIR}"
+    else
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" --target builder -t "${BUILDER_IMAGE_NAME}" "${SCRIPT_DIR}"
+        docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" "${SCRIPT_DIR}"
 
-    if test "${DOCKER_BUILDX}" != "buildx"; then
-        check_image "${REPO_IMAGE_NAME}"
-    fi
+        if test "${DOCKER_BUILDX}" != "buildx"; then
+            check_image "${REPO_IMAGE_NAME}"
+        fi
 
-    if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
-        if test "${DOCKER_BUILDX}" = "buildx"; then
-          docker $(build_cmd) "${BUILD_ARGS[@]}" "${LABEL_ARGS[@]}" -t "${REPO_IMAGE_NAME}" --push "${SCRIPT_DIR}"
-        else
-          docker push "${REPO_IMAGE_NAME}"
+        if test "${PUSH_GDAL_DOCKER_IMAGE}" = "yes"; then
+            docker push "${REPO_IMAGE_NAME}"
         fi
     fi
 
