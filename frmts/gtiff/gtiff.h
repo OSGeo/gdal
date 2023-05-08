@@ -37,6 +37,7 @@
 
 #include "gdal.h"
 #include "tiffio.h"
+#include "tiffvers.h"
 
 CPL_C_START
 void GTiffOneTimeInit();
@@ -53,6 +54,7 @@ void GTIFFSetWebPLossless(GDALDatasetH hGTIFFDS, bool bWebpLossless);
 void GTIFFSetZLevel(GDALDatasetH hGTIFFDS, int nZLevel);
 void GTIFFSetZSTDLevel(GDALDatasetH hGTIFFDS, int nZSTDLevel);
 void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError);
+const char *GTIFFGetCompressionMethodName(int nCompressionCode);
 int GTIFFGetCompressionMethod(const char *pszValue,
                               const char *pszVariableName);
 bool GTIFFSupportsPredictor(int nCompression);
@@ -69,8 +71,6 @@ void GTiffWriteJPEGTables(TIFF *hTIFF, const char *pszPhotometric,
                           const char *pszJPEGTablesMode);
 CPLString GTiffFormatGDALNoDataTagValue(double dfNoData);
 
-const int knGTIFFJpegTablesModeDefault = 1; /* JPEGTABLESMODE_QUANT */
-
 // Note: Was EXTRASAMPLE_ASSOCALPHA in GDAL < 1.10.
 constexpr uint16_t DEFAULT_ALPHA_TYPE = EXTRASAMPLE_UNASSALPHA;
 
@@ -84,6 +84,8 @@ CPLString CPL_DLL GTiffGetCompressValues(bool &bHasLZW, bool &bHasDEFLATE,
                                          bool &bHasLZMA, bool &bHasZSTD,
                                          bool &bHasJPEG, bool &bHasWebP,
                                          bool &bHasLERC, bool bForCOG);
+
+int &GTIFFGetThreadLocalLibtiffError();
 
 #if !defined(TIFFTAG_GDAL_METADATA)
 // The following 5 tags are now defined in tiff.h of libtiff > 4.1.0
@@ -151,5 +153,20 @@ CPLString CPL_DLL GTiffGetCompressValues(bool &bHasLZW, bool &bHasDEFLATE,
 #if !defined(TIFFTAG_WEBP_LOSSLESS)
 #define TIFFTAG_WEBP_LOSSLESS 65569 /* WebP lossless/lossy */
 #endif
+
+// Only libtiff 4.0.4 can handle between 32768 and 65535 directories.
+#if TIFFLIB_VERSION >= 20120922
+#define SUPPORTS_MORE_THAN_32768_DIRECTORIES
+#endif
+
+#if TIFFLIB_VERSION > 20181110  // > 4.0.10
+#define SUPPORTS_GET_OFFSET_BYTECOUNT
+#endif
+
+#if (TIFFLIB_VERSION > 20220520) || defined(INTERNAL_LIBTIFF)  // > 4.4.0
+#define SUPPORTS_LIBTIFF_OPEN_OPTIONS
+#endif
+
+constexpr double DEFAULT_NODATA_VALUE = -9999.0;
 
 #endif  // GTIFF_H_INCLUDED

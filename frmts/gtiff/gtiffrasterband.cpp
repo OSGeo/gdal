@@ -1,0 +1,401 @@
+/******************************************************************************
+ *
+ * Project:  GeoTIFF Driver
+ * Purpose:  General methods of GTiffRasterBand
+ * Author:   Frank Warmerdam, warmerdam@pobox.com
+ *
+ ******************************************************************************
+ * Copyright (c) 1998, 2002, Frank Warmerdam <warmerdam@pobox.com>
+ * Copyright (c) 2007-2015, Even Rouault <even dot rouault at spatialys dot com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ ****************************************************************************/
+
+#include "gtiffrasterband.h"
+#include "gtiffdataset.h"
+
+#include <set>
+
+#include "cpl_vsi_virtual.h"
+#include "tifvsi.h"
+
+/************************************************************************/
+/*                           GTiffRasterBand()                          */
+/************************************************************************/
+
+GTiffRasterBand::GTiffRasterBand(GTiffDataset *poDSIn, int nBandIn)
+    : m_poGDS(poDSIn)
+{
+    poDS = poDSIn;
+    nBand = nBandIn;
+
+    /* -------------------------------------------------------------------- */
+    /*      Get the GDAL data type.                                         */
+    /* -------------------------------------------------------------------- */
+    const uint16_t nBitsPerSample = m_poGDS->m_nBitsPerSample;
+    const uint16_t nSampleFormat = m_poGDS->m_nSampleFormat;
+
+    eDataType = GDT_Unknown;
+
+    if (nBitsPerSample <= 8)
+    {
+        if (nSampleFormat == SAMPLEFORMAT_INT)
+            eDataType = GDT_Int8;
+        else
+            eDataType = GDT_Byte;
+    }
+    else if (nBitsPerSample <= 16)
+    {
+        if (nSampleFormat == SAMPLEFORMAT_INT)
+            eDataType = GDT_Int16;
+        else
+            eDataType = GDT_UInt16;
+    }
+    else if (nBitsPerSample == 32)
+    {
+        if (nSampleFormat == SAMPLEFORMAT_COMPLEXINT)
+            eDataType = GDT_CInt16;
+        else if (nSampleFormat == SAMPLEFORMAT_IEEEFP)
+            eDataType = GDT_Float32;
+        else if (nSampleFormat == SAMPLEFORMAT_INT)
+            eDataType = GDT_Int32;
+        else
+            eDataType = GDT_UInt32;
+    }
+    else if (nBitsPerSample == 64)
+    {
+        if (nSampleFormat == SAMPLEFORMAT_IEEEFP)
+            eDataType = GDT_Float64;
+        else if (nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP)
+            eDataType = GDT_CFloat32;
+        else if (nSampleFormat == SAMPLEFORMAT_COMPLEXINT)
+            eDataType = GDT_CInt32;
+        else if (nSampleFormat == SAMPLEFORMAT_INT)
+            eDataType = GDT_Int64;
+        else
+            eDataType = GDT_UInt64;
+    }
+    else if (nBitsPerSample == 128)
+    {
+        if (nSampleFormat == SAMPLEFORMAT_COMPLEXIEEEFP)
+            eDataType = GDT_CFloat64;
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Try to work out band color interpretation.                      */
+    /* -------------------------------------------------------------------- */
+    bool bLookForExtraSamples = false;
+
+    if (m_poGDS->m_poColorTable != nullptr && nBand == 1)
+    {
+        m_eBandInterp = GCI_PaletteIndex;
+    }
+    else if (m_poGDS->m_nPhotometric == PHOTOMETRIC_RGB ||
+             (m_poGDS->m_nPhotometric == PHOTOMETRIC_YCBCR &&
+              m_poGDS->m_nCompression == COMPRESSION_JPEG &&
+              CPLTestBool(CPLGetConfigOption("CONVERT_YCBCR_TO_RGB", "YES"))))
+    {
+        if (nBand == 1)
+            m_eBandInterp = GCI_RedBand;
+        else if (nBand == 2)
+            m_eBandInterp = GCI_GreenBand;
+        else if (nBand == 3)
+            m_eBandInterp = GCI_BlueBand;
+        else
+            bLookForExtraSamples = true;
+    }
+    else if (m_poGDS->m_nPhotometric == PHOTOMETRIC_YCBCR)
+    {
+        if (nBand == 1)
+            m_eBandInterp = GCI_YCbCr_YBand;
+        else if (nBand == 2)
+            m_eBandInterp = GCI_YCbCr_CbBand;
+        else if (nBand == 3)
+            m_eBandInterp = GCI_YCbCr_CrBand;
+        else
+            bLookForExtraSamples = true;
+    }
+    else if (m_poGDS->m_nPhotometric == PHOTOMETRIC_SEPARATED)
+    {
+        if (nBand == 1)
+            m_eBandInterp = GCI_CyanBand;
+        else if (nBand == 2)
+            m_eBandInterp = GCI_MagentaBand;
+        else if (nBand == 3)
+            m_eBandInterp = GCI_YellowBand;
+        else if (nBand == 4)
+            m_eBandInterp = GCI_BlackBand;
+        else
+            bLookForExtraSamples = true;
+    }
+    else if (m_poGDS->m_nPhotometric == PHOTOMETRIC_MINISBLACK && nBand == 1)
+    {
+        m_eBandInterp = GCI_GrayIndex;
+    }
+    else
+    {
+        bLookForExtraSamples = true;
+    }
+
+    if (bLookForExtraSamples)
+    {
+        uint16_t *v = nullptr;
+        uint16_t count = 0;
+
+        if (TIFFGetField(m_poGDS->m_hTIFF, TIFFTAG_EXTRASAMPLES, &count, &v))
+        {
+            const int nBaseSamples = m_poGDS->m_nSamplesPerPixel - count;
+            const int nExpectedBaseSamples =
+                (m_poGDS->m_nPhotometric == PHOTOMETRIC_MINISBLACK)   ? 1
+                : (m_poGDS->m_nPhotometric == PHOTOMETRIC_MINISWHITE) ? 1
+                : (m_poGDS->m_nPhotometric == PHOTOMETRIC_RGB)        ? 3
+                : (m_poGDS->m_nPhotometric == PHOTOMETRIC_YCBCR)      ? 3
+                : (m_poGDS->m_nPhotometric == PHOTOMETRIC_SEPARATED)  ? 4
+                                                                      : 0;
+
+            if (nExpectedBaseSamples > 0 && nBand == nExpectedBaseSamples + 1 &&
+                nBaseSamples != nExpectedBaseSamples)
+            {
+                ReportError(
+                    CE_Warning, CPLE_AppDefined,
+                    "Wrong number of ExtraSamples : %d. %d were expected",
+                    count, m_poGDS->m_nSamplesPerPixel - nExpectedBaseSamples);
+            }
+
+            if (nBand > nBaseSamples && nBand - nBaseSamples - 1 < count &&
+                (v[nBand - nBaseSamples - 1] == EXTRASAMPLE_ASSOCALPHA ||
+                 v[nBand - nBaseSamples - 1] == EXTRASAMPLE_UNASSALPHA))
+                m_eBandInterp = GCI_AlphaBand;
+            else
+                m_eBandInterp = GCI_Undefined;
+        }
+        else
+        {
+            m_eBandInterp = GCI_Undefined;
+        }
+    }
+
+    /* -------------------------------------------------------------------- */
+    /*      Establish block size for strip or tiles.                        */
+    /* -------------------------------------------------------------------- */
+    nBlockXSize = m_poGDS->m_nBlockXSize;
+    nBlockYSize = m_poGDS->m_nBlockYSize;
+    nRasterXSize = m_poGDS->nRasterXSize;
+    nRasterYSize = m_poGDS->nRasterYSize;
+    nBlocksPerRow = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
+    nBlocksPerColumn = DIV_ROUND_UP(nRasterYSize, nBlockYSize);
+}
+
+/************************************************************************/
+/*                          ~GTiffRasterBand()                          */
+/************************************************************************/
+
+GTiffRasterBand::~GTiffRasterBand()
+{
+    // So that any future DropReferenceVirtualMem() will not try to access the
+    // raster band object, but this would not conform to the advertised
+    // contract.
+    if (!m_aSetPSelf.empty())
+    {
+        ReportError(CE_Warning, CPLE_AppDefined,
+                    "Virtual memory objects still exist at GTiffRasterBand "
+                    "destruction");
+        std::set<GTiffRasterBand **>::iterator oIter = m_aSetPSelf.begin();
+        for (; oIter != m_aSetPSelf.end(); ++oIter)
+            *(*oIter) = nullptr;
+    }
+}
+
+/************************************************************************/
+/*                            IRasterIO()                               */
+/************************************************************************/
+
+CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                  int nXSize, int nYSize, void *pData,
+                                  int nBufXSize, int nBufYSize,
+                                  GDALDataType eBufType, GSpacing nPixelSpace,
+                                  GSpacing nLineSpace,
+                                  GDALRasterIOExtraArg *psExtraArg)
+{
+#if DEBUG_VERBOSE
+    CPLDebug("GTiff", "RasterIO(%d, %d, %d, %d, %d, %d)", nXOff, nYOff, nXSize,
+             nYSize, nBufXSize, nBufYSize);
+#endif
+
+    // Try to pass the request to the most appropriate overview dataset.
+    if (nBufXSize < nXSize && nBufYSize < nYSize)
+    {
+        int bTried = FALSE;
+        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+            ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
+        const CPLErr eErr = TryOverviewRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nPixelSpace, nLineSpace, psExtraArg, &bTried);
+        if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+            --m_poGDS->m_nJPEGOverviewVisibilityCounter;
+        if (bTried)
+            return eErr;
+    }
+
+    if (m_poGDS->m_eVirtualMemIOUsage != GTiffDataset::VirtualMemIOEnum::NO)
+    {
+        const int nErr = m_poGDS->VirtualMemIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, 1, &nBand, nPixelSpace, nLineSpace, 0, psExtraArg);
+        if (nErr >= 0)
+            return static_cast<CPLErr>(nErr);
+    }
+    if (m_poGDS->m_bDirectIO)
+    {
+        int nErr =
+            DirectIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize,
+                     nBufYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg);
+        if (nErr >= 0)
+            return static_cast<CPLErr>(nErr);
+    }
+
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+    bool bCanUseMultiThreadedRead = false;
+    if (eRWFlag == GF_Read && m_poGDS->m_poThreadPool != nullptr &&
+        nXSize == nBufXSize && nYSize == nBufYSize &&
+        m_poGDS->IsMultiThreadedReadCompatible())
+    {
+        const int nBlockX1 = nXOff / nBlockXSize;
+        const int nBlockY1 = nYOff / nBlockYSize;
+        const int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
+        const int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+        const int nXBlocks = nBlockX2 - nBlockX1 + 1;
+        const int nYBlocks = nBlockY2 - nBlockY1 + 1;
+        if (nXBlocks > 1 || nYBlocks > 1)
+        {
+            bCanUseMultiThreadedRead = true;
+        }
+    }
+#endif
+
+    void *pBufferedData = nullptr;
+    if (m_poGDS->eAccess == GA_ReadOnly && eRWFlag == GF_Read &&
+        m_poGDS->HasOptimizedReadMultiRange())
+    {
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+        if (bCanUseMultiThreadedRead &&
+            VSI_TIFFGetVSILFile(TIFFClientdata(m_poGDS->m_hTIFF))->HasPRead())
+        {
+            // use the multi-threaded implementation rather than the multi-range
+            // one
+        }
+        else
+        {
+            bCanUseMultiThreadedRead = false;
+#endif
+            GTiffRasterBand *poBandForCache = this;
+
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+            if (!m_poGDS->m_bStreamingIn && m_poGDS->m_bBlockOrderRowMajor &&
+                m_poGDS->m_bLeaderSizeAsUInt4 &&
+                m_poGDS->m_bMaskInterleavedWithImagery &&
+                m_poGDS->m_poImageryDS)
+            {
+                poBandForCache = cpl::down_cast<GTiffRasterBand *>(
+                    m_poGDS->m_poImageryDS->GetRasterBand(1));
+            }
+#endif
+            pBufferedData = poBandForCache->CacheMultiRange(
+                nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, psExtraArg);
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+        }
+#endif
+    }
+
+    if (eRWFlag == GF_Read && nXSize == nBufXSize && nYSize == nBufYSize)
+    {
+        const int nBlockX1 = nXOff / nBlockXSize;
+        const int nBlockY1 = nYOff / nBlockYSize;
+        const int nBlockX2 = (nXOff + nXSize - 1) / nBlockXSize;
+        const int nBlockY2 = (nYOff + nYSize - 1) / nBlockYSize;
+        const int nXBlocks = nBlockX2 - nBlockX1 + 1;
+        const int nYBlocks = nBlockY2 - nBlockY1 + 1;
+
+#ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
+        if (bCanUseMultiThreadedRead)
+        {
+            return m_poGDS->MultiThreadedRead(nXOff, nYOff, nXSize, nYSize,
+                                              pData, eBufType, 1, &nBand,
+                                              nPixelSpace, nLineSpace, 0);
+        }
+        else
+#endif
+            if (m_poGDS->nBands != 1 &&
+                m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
+        {
+            const GIntBig nRequiredMem =
+                static_cast<GIntBig>(m_poGDS->nBands) * nXBlocks * nYBlocks *
+                nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType);
+            if (nRequiredMem > GDALGetCacheMax64())
+            {
+                if (!m_poGDS->m_bHasWarnedDisableAggressiveBandCaching)
+                {
+                    CPLDebug("GTiff",
+                             "Disable aggressive band caching. "
+                             "Cache not big enough. "
+                             "At least " CPL_FRMT_GIB " bytes necessary",
+                             nRequiredMem);
+                    m_poGDS->m_bHasWarnedDisableAggressiveBandCaching = true;
+                }
+                m_poGDS->m_bLoadingOtherBands = true;
+            }
+        }
+    }
+
+    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+        ++m_poGDS->m_nJPEGOverviewVisibilityCounter;
+    const CPLErr eErr = GDALPamRasterBand::IRasterIO(
+        eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+        eBufType, nPixelSpace, nLineSpace, psExtraArg);
+    if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
+        --m_poGDS->m_nJPEGOverviewVisibilityCounter;
+
+    m_poGDS->m_bLoadingOtherBands = false;
+
+    if (pBufferedData)
+    {
+        VSIFree(pBufferedData);
+        VSI_TIFFSetCachedRanges(TIFFClientdata(m_poGDS->m_hTIFF), 0, nullptr,
+                                nullptr, nullptr);
+    }
+
+    return eErr;
+}
+
+/************************************************************************/
+/*                        ComputeBlockId()                              */
+/************************************************************************/
+
+/** Computes the TIFF block identifier from the tile coordinate, band
+ * number and planar configuration.
+ */
+int GTiffRasterBand::ComputeBlockId(int nBlockXOff, int nBlockYOff) const
+{
+    const int nBlockId = nBlockXOff + nBlockYOff * nBlocksPerRow;
+    if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE)
+    {
+        return nBlockId + (nBand - 1) * m_poGDS->m_nBlocksPerBand;
+    }
+    return nBlockId;
+}
