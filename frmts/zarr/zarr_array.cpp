@@ -3261,31 +3261,6 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
         oAttributes = oTmpDoc.GetRoot();
     }
 
-    const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
-    std::shared_ptr<OGRSpatialReference> poSRS;
-    if (crs.GetType() == CPLJSONObject::Type::Object)
-    {
-        for (const char *key : {"url", "wkt", "projjson"})
-        {
-            const auto item = crs[key];
-            if (item.IsValid())
-            {
-                poSRS = std::make_shared<OGRSpatialReference>();
-                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (poSRS->SetFromUserInput(
-                        item.ToString().c_str(),
-                        OGRSpatialReference::
-                            SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
-                    OGRERR_NONE)
-                {
-                    oAttributes.Delete(CRS_ATTRIBUTE_NAME);
-                    break;
-                }
-                poSRS.reset();
-            }
-        }
-    }
-
     const auto unit = oAttributes[CF_UNITS];
     std::string osUnit;
     if (unit.GetType() == CPLJSONObject::Type::String)
@@ -3619,6 +3594,57 @@ ZarrGroupBase::LoadArray(const std::string &osArrayName,
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Size of _NCZARR_ARRAY.dimrefs different from the one of "
                      "shape");
+        }
+    }
+
+    const auto crs = oAttributes[CRS_ATTRIBUTE_NAME];
+    std::shared_ptr<OGRSpatialReference> poSRS;
+    if (crs.GetType() == CPLJSONObject::Type::Object)
+    {
+        for (const char *key : {"url", "wkt", "projjson"})
+        {
+            const auto item = crs[key];
+            if (item.IsValid())
+            {
+                poSRS = std::make_shared<OGRSpatialReference>();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (poSRS->SetFromUserInput(
+                        item.ToString().c_str(),
+                        OGRSpatialReference::
+                            SET_FROM_USER_INPUT_LIMITATIONS_get()) ==
+                    OGRERR_NONE)
+                {
+                    int iDimX = 0;
+                    int iDimY = 0;
+                    int iCount = 1;
+                    for (const auto &poDim : aoDims)
+                    {
+                        if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                            iDimX = iCount;
+                        else if (poDim->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                            iDimY = iCount;
+                        iCount++;
+                    }
+                    if ((iDimX == 0 || iDimY == 0) && aoDims.size() >= 2)
+                    {
+                        iDimX = static_cast<int>(aoDims.size());
+                        iDimY = iDimX - 1;
+                    }
+                    if (iDimX > 0 && iDimY > 0)
+                    {
+                        if (poSRS->GetDataAxisToSRSAxisMapping() ==
+                            std::vector<int>{2, 1})
+                            poSRS->SetDataAxisToSRSAxisMapping({iDimY, iDimX});
+                        else if (poSRS->GetDataAxisToSRSAxisMapping() ==
+                                 std::vector<int>{1, 2})
+                            poSRS->SetDataAxisToSRSAxisMapping({iDimX, iDimY});
+                    }
+
+                    oAttributes.Delete(CRS_ATTRIBUTE_NAME);
+                    break;
+                }
+                poSRS.reset();
+            }
         }
     }
 
