@@ -50,7 +50,7 @@ wget -q "https://github.com/${GDAL_REPOSITORY}/archive/${GDAL_VERSION}.tar.gz" \
     export JAVA_ARCH=""
     if test "${GCC_ARCH}" = "x86_64"; then
       export JAVA_ARCH="amd64";
-    elif test "${TARGET_ARCH}" = "arm64"; then
+    elif test "${GCC_ARCH}" = "aarch64"; then
       export JAVA_ARCH="arm64";
     fi
     if test "${JAVA_ARCH:-}" != ""; then
