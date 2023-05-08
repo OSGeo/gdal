@@ -4433,6 +4433,13 @@ GDALDataset *JP2OpenJPEGDataset::CreateCopy(
             }
         }
 
+        if (bUseIOThread && eErr == CE_Failure)
+        {
+            // Wait for previous background I/O task to be finished
+            // before freeing buffers (pTempBuffer, etc.)
+            oPool.WaitCompletion();
+        }
+
         VSIFree(pTempBuffer);
         VSIFree(pYUV420Buffer);
 
