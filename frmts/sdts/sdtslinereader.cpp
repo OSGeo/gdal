@@ -269,9 +269,6 @@ void SDTSLineReader::AttachToPolygons(SDTSTransfer *poTransfer,
                                       int iTargetPolyLayer)
 
 {
-    if (!IsIndexed())
-        return;
-
     /* -------------------------------------------------------------------- */
     /*      We force a filling of the index because when we attach the      */
     /*      lines we are just providing a pointer back to the line          */
