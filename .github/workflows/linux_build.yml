@@ -20,17 +20,18 @@ jobs:
     if: "!contains(github.event.head_commit.message, '[ci skip]') && !contains(github.event.head_commit.message, '[skip ci]')"
 
     # Store the components of the container name as environment variables:
-    # ${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER}/${CONTAINER_NAME}
+    # ${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER}/${CONTAINER_NAME}:${CONTAINER_TAG}
     #
-    # Additionally, CACHE_CONTAINER_NAME may be used as as source for the
+    # Additionally, CACHE_CONTAINER_TAG may be used as as source for the
     # Docker build cache. So if the Dockerfile in a feature branch is
     # unchanged relative to master, a full container rebuild should not
     # be required.
     env:
       CONTAINER_REGISTRY: ${{ vars.gdal_container_registry || 'ghcr.io' }}
       CONTAINER_REGISTRY_USER: ${{ vars.gdal_container_registry_user || github.repository_owner }}
-      CONTAINER_NAME: gdal-deps:${{ matrix.container}}-${{ github.base_ref || github.ref_name }}
-      CACHE_CONTAINER_NAME: gdal-deps:${{ matrix.container }}-master
+      CONTAINER_NAME: gdal-deps
+      CONTAINER_TAG: ${{ matrix.container }}-${{ github.base_ref || github.ref_name }}
+      CACHE_CONTAINER_TAG: ${{ matrix.container }}-master
       GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
 
     permissions:
@@ -114,8 +115,11 @@ jobs:
 
     steps:
       - name: Set variables
-        run:
-          echo "CONTAINER_NAME_FULL=${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}" >>${GITHUB_ENV}
+        run: |
+          CONTAINER_TAG_CLEAN=$(echo ${CONTAINER_TAG} | tr -d -c "[:alnum:].-")
+          echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}"
+          echo "CONTAINER_TAG_CLEAN=${CONTAINER_TAG_CLEAN}" >> ${GITHUB_ENV}
+          echo "CONTAINER_NAME_FULL=${CONTAINER_REGISTRY}/${CONTAINER_REGISTRY_USER,,}/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN}"  >>${GITHUB_ENV}
 
       - name: Checkout
         uses: actions/checkout@v3
@@ -135,10 +139,10 @@ jobs:
       - name: Pull build environment
         if: "(github.repository_owner != 'OSGeo' || github.event_name == 'pull_request') && !contains(github.event.head_commit.message, '[skip cache]')"
         run: |
-          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} || true
-          docker pull ${CONTAINER_REGISTRY}/osgeo/${CACHE_CONTAINER_NAME} || true
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} || true
+          docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG} || true
           docker pull ${CONTAINER_NAME_FULL} || true
-          echo "DOCKER_BUILD_CACHE_FROM=--cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CACHE_CONTAINER_NAME} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
+          echo "DOCKER_BUILD_CACHE_FROM=--cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
 
       - name: Prepare build context
         run: |
