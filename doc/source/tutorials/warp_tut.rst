@@ -82,7 +82,7 @@ The GDALWarpOptions structures contains a number of items that can be set to con
 
 - :cpp:member:`GDALWarpOptions::dfWarpMemoryLimit` - Set the maximum amount of memory to be used by the GDALWarpOperation when selecting a size of image chunk to operate on. The value is in bytes, and the default is likely to be conservative (small). Increasing the chunk size can help substantially in some situations but care should be taken to ensure that this size, plus the GDAL cache size plus the working set of GDAL, your application and the operating system are less than the size of RAM or else excessive swapping is likely to interfere with performance. On a system with 256MB of RAM, a value of at least 64MB (roughly 64000000 bytes) is reasonable. Note that this value does not include the memory used by GDAL for low level block caching.
 
-- :cpp:member:`GDALWarpOpations::eResampleAlg` - One of GRA_NearestNeighbour (the default, and fastest), GRA_Bilinear (2x2 bilinear resampling) or GRA_Cubic. The GRA_NearestNeighbour type should generally be used for thematic or color mapped images. The other resampling types may give better results for thematic images, especially when substantially changing resolution.
+- :cpp:member:`GDALWarpOptions::eResampleAlg` - One of GRA_NearestNeighbour (the default, and fastest), GRA_Bilinear (2x2 bilinear resampling) or GRA_Cubic. The GRA_NearestNeighbour type should generally be used for thematic or color mapped images. The other resampling types may give better results for thematic images, especially when substantially changing resolution.
 
 - :cpp:member:`GDALWarpOptions::padfSrcNoDataReal` - This array (one entry per band being processed) may be setup with a "nodata" value for each band if you wish to avoid having pixels of some background value copied to the destination image.
 
@@ -201,7 +201,7 @@ There are a number of things that can be done to optimize the performance of the
 
 - Use the :cpp:func:`GDALWarpOperation::ChunkAndWarpMulti` method instead of :cpp:func:`GDALWarpOperation::ChunkAndWarpImage`. It uses a separate thread for the IO and the actual image warp operation allowing more effective use of CPU and IO bandwidth. For this to work GDAL needs to have been built with multi-threading support (default on Win32, default on Unix, for previous versions -with-threads was required in configure).
 
-- The resampling kernels vary is work required from nearest neighbour being least, then bilinear then cubic. Don't use a more complex resampling kernel than needed.
+- The resampling kernels vary in work required from nearest neighbour being least complex, to more complex with bilinear and then cubic. Don't use a more complex resampling kernel than needed.
 
 - Avoid use of esoteric masking options so that special simplified logic case be used for common special cases. For instance, nearest neighbour resampling with no masking on 8bit data is highly optimized compared to the general case.
 
