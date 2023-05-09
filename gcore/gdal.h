@@ -2120,6 +2120,8 @@ CSLConstList CPL_DLL GDALGroupGetStructuralInfo(GDALGroupH hGroup);
 GDALGroupH CPL_DLL
 GDALGroupCreateGroup(GDALGroupH hGroup, const char *pszSubGroupName,
                      CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+bool CPL_DLL GDALGroupDeleteGroup(GDALGroupH hGroup, const char *pszName,
+                                  CSLConstList papszOptions);
 GDALDimensionH CPL_DLL GDALGroupCreateDimension(
     GDALGroupH hGroup, const char *pszName, const char *pszType,
     const char *pszDirection, GUInt64 nSize,
@@ -2128,10 +2130,14 @@ GDALMDArrayH CPL_DLL GDALGroupCreateMDArray(
     GDALGroupH hGroup, const char *pszName, size_t nDimensions,
     GDALDimensionH *pahDimensions, GDALExtendedDataTypeH hEDT,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+bool CPL_DLL GDALGroupDeleteMDArray(GDALGroupH hGroup, const char *pszName,
+                                    CSLConstList papszOptions);
 GDALAttributeH CPL_DLL GDALGroupCreateAttribute(
     GDALGroupH hGroup, const char *pszName, size_t nDimensions,
     const GUInt64 *panDimensions, GDALExtendedDataTypeH hEDT,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+bool CPL_DLL GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
+                                      CSLConstList papszOptions);
 bool CPL_DLL GDALGroupRename(GDALGroupH hGroup, const char *pszNewName);
 
 void CPL_DLL GDALMDArrayRelease(GDALMDArrayH hMDArray);
@@ -2173,6 +2179,9 @@ GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(
     GDALMDArrayH hArray, const char *pszName, size_t nDimensions,
     const GUInt64 *panDimensions, GDALExtendedDataTypeH hEDT,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
+bool CPL_DLL GDALMDArrayDeleteAttribute(GDALMDArrayH hArray,
+                                        const char *pszName,
+                                        CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayResize(GDALMDArrayH hArray,
                                const GUInt64 *panNewDimSizes,
                                CSLConstList papszOptions);

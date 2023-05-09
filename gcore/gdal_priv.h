@@ -2251,6 +2251,9 @@ class CPL_DLL GDALIHasAttribute
                     const std::vector<GUInt64> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr);
+
+    virtual bool DeleteAttribute(const std::string &osName,
+                                 CSLConstList papszOptions = nullptr);
 };
 
 /* ******************************************************************** */
@@ -2276,6 +2279,9 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     std::string m_osName{};
     std::string m_osFullName{};
 
+    //! Can be set to false by the owing group, when deleting this object
+    bool m_bValid = true;
+
     GDALGroup(const std::string &osParentName, const std::string &osName);
 
     const GDALGroup *
@@ -2285,7 +2291,13 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     void BaseRename(const std::string &osNewName);
 
+    bool CheckValidAndErrorOutIfNot() const;
+
     virtual void NotifyChildrenOfRenaming()
+    {
+    }
+
+    virtual void NotifyChildrenOfDeletion()
     {
     }
     //! @endcond
@@ -2335,6 +2347,9 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
     virtual std::shared_ptr<GDALGroup>
     CreateGroup(const std::string &osName, CSLConstList papszOptions = nullptr);
 
+    virtual bool DeleteGroup(const std::string &osName,
+                             CSLConstList papszOptions = nullptr);
+
     virtual std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
                     const std::string &osDirection, GUInt64 nSize,
@@ -2345,6 +2360,9 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         const GDALExtendedDataType &oDataType,
         CSLConstList papszOptions = nullptr);
+
+    virtual bool DeleteMDArray(const std::string &osName,
+                               CSLConstList papszOptions = nullptr);
 
     GUInt64 GetTotalCopyCost() const;
 
@@ -2379,6 +2397,10 @@ class CPL_DLL GDALGroup : public GDALIHasAttribute
 
     //! @cond Doxygen_Suppress
     virtual void ParentRenamed(const std::string &osNewParentFullName);
+
+    virtual void Deleted();
+
+    virtual void ParentDeleted();
     //! @endcond
 
     //! @cond Doxygen_Suppress
@@ -2403,6 +2425,9 @@ class CPL_DLL GDALAbstractMDArray
     std::string m_osFullName{};
     std::weak_ptr<GDALAbstractMDArray> m_pSelf{};
 
+    //! Can be set to false by the owing object, when deleting this object
+    bool m_bValid = true;
+
     GDALAbstractMDArray(const std::string &osParentName,
                         const std::string &osName);
 
@@ -2410,6 +2435,8 @@ class CPL_DLL GDALAbstractMDArray
     {
         m_pSelf = self;
     }
+
+    bool CheckValidAndErrorOutIfNot() const;
 
     bool CheckReadWriteParams(const GUInt64 *arrayStartIdx, const size_t *count,
                               const GInt64 *&arrayStep,
@@ -2442,6 +2469,9 @@ class CPL_DLL GDALAbstractMDArray
     {
     }
 
+    virtual void NotifyChildrenOfDeletion()
+    {
+    }
     //! @endcond
 
   public:
@@ -2532,6 +2562,10 @@ class CPL_DLL GDALAbstractMDArray
     virtual bool Rename(const std::string &osNewName);
 
     //! @cond Doxygen_Suppress
+    virtual void Deleted();
+
+    virtual void ParentDeleted();
+
     virtual void ParentRenamed(const std::string &osNewParentFullName);
     //! @endcond
 };
@@ -3118,6 +3152,8 @@ class CPL_DLL GDALDimension
 
     //! @cond Doxygen_Suppress
     virtual void ParentRenamed(const std::string &osNewParentFullName);
+
+    virtual void ParentDeleted();
     //! @endcond
 
   protected:
