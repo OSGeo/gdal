@@ -4343,3 +4343,22 @@ def test_ogr_geojson_field_types():
     assert '{ "prop0": { "a": "b" } }' in data
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test openening with non C locale
+
+
+def test_ogr_geojson_open_with_non_C_locale():
+
+    import locale
+
+    original_locale = locale.setlocale(locale.LC_ALL)
+    try:
+        locale.setlocale(locale.LC_ALL, "")
+        if locale.localeconv()["decimal_point"] == ".":
+            pytest.skip("cannot test, as decimal_point is dot")
+
+        test_ogr_geojson_2()
+    finally:
+        locale.setlocale(locale.LC_ALL, original_locale)

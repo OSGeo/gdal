@@ -63,6 +63,17 @@ jobs:
       - name: Detect missing includes
         run: ./scripts/detect_missing_include.sh
 
+      # Helps detecting updates of internal libjson-c where replacement
+      # of strtod() -> CPLStrtod() is missing. The later function is not
+      # locale sensitive. An alternative would be to make sure that HAVE_USELOCALE
+      # or HAVE_SETLOCALE are passed on Windows, but avoiding to mess with
+      # locale seems to be a better option
+      - name: Detect invalid use of atof() or strtod() in internal libjson
+        run: |
+          grep -e "CPLStrtod(" ../ogr/ogrsf_frmts/geojson/libjson/*.c >/dev/null && echo "CPLStrtod() found as expected"
+          if grep -e "strtod(" ogr/ogrsf_frmts/geojson/libjson/*.c; then echo "Unexpected use of strtod(). Use CPLStrtod() instead"; /bin/false; fi
+          if grep -e "atof(" ogr/ogrsf_frmts/geojson/libjson/*.c; then echo "Unexpected use of atof()."; /bin/false; fi
+
       - name: Shellcheck
         run: shellcheck -e SC2086,SC2046,SC2164,SC2054 $(find . -name '*.sh' -a -not -name ltmain.sh -a -not -wholename "./autotest/*" -a -not -wholename "./.github/*")
 
