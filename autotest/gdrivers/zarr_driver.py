@@ -865,7 +865,7 @@ def test_zarr_read_group(use_get_names):
     assert rg.OpenGroup("not_existing") is None
     assert subgroup.GetName() == "foo"
     assert subgroup.GetFullName() == "/foo"
-    assert rg.GetMDArrayNames() is None
+    assert len(rg.GetMDArrayNames()) == 0
     if use_get_names:
         assert subgroup.GetGroupNames() == ["bar"]
     assert subgroup.GetAttributes() == []
@@ -898,7 +898,7 @@ def test_zarr_read_group_with_zmetadata():
     assert rg.OpenGroup("not_existing") is None
     assert subgroup.GetName() == "foo"
     assert subgroup.GetFullName() == "/foo"
-    assert rg.GetMDArrayNames() is None
+    assert len(rg.GetMDArrayNames()) == 0
     assert subgroup.GetGroupNames() == ["bar"]
     assert subgroup.GetAttributes() == []
     subsubgroup = subgroup.OpenGroup("bar")

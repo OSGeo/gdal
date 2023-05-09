@@ -5778,7 +5778,7 @@ def test_netcdf_metadata_sentinel5():
     ds = gdal.OpenEx("data/netcdf/fake_ISO_METADATA.nc", gdal.OF_MULTIDIM_RASTER)
     assert ds is not None
     rg = ds.GetRootGroup()
-    assert rg.GetGroupNames() is None
+    assert len(rg.GetGroupNames()) == 0
     assert "ISO_METADATA" in [attr.GetName() for attr in rg.GetAttributes()]
     attr = rg.GetAttribute("ISO_METADATA")
     assert attr is not None

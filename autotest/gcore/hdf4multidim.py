@@ -225,7 +225,7 @@ def test_hdf4multidim_gdal_sds_2d():
     ds = gdal.OpenEx("data/byte_2.hdf", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
-    assert rg.GetGroupNames() is None
+    assert len(rg.GetGroupNames()) == 0
     assert rg.OpenGroup("scientific_datasets") is None
     assert rg.GetMDArrayNames() == ["Band0", "X", "Y"]
     dims = rg.GetDimensions()
@@ -271,7 +271,7 @@ def test_hdf4multidim_gdal_sds_3d():
     ds = gdal.OpenEx("data/byte_3.hdf", gdal.OF_MULTIDIM_RASTER)
     assert ds
     rg = ds.GetRootGroup()
-    assert rg.GetGroupNames() is None
+    assert len(rg.GetGroupNames()) == 0
     assert rg.OpenGroup("scientific_datasets") is None
     assert rg.GetMDArrayNames() == ["3-dimensional Scientific Dataset", "X", "Y"]
     dims = rg.GetDimensions()

@@ -2723,7 +2723,7 @@ def test_ogr_fgdb_read_layer_hierarchy():
     assert fd1 is not None
     assert fd1.GetVectorLayerNames() == ["fd1_lyr1", "fd1_lyr2"]
     assert fd1.OpenVectorLayer("not_existing") is None
-    assert fd1.GetGroupNames() is None
+    assert len(fd1.GetGroupNames()) == 0
 
     fd1_lyr1 = fd1.OpenVectorLayer("fd1_lyr1")
     assert fd1_lyr1 is not None

@@ -77,7 +77,7 @@ def test_netcdf_multidim_single_group():
     assert rg
     assert rg.GetName() == "/"
     assert rg.GetFullName() == "/"
-    assert rg.GetGroupNames() is None
+    assert len(rg.GetGroupNames()) == 0
     dims = rg.GetDimensions()
     assert len(dims) == 2
     assert dims[0].GetName() == "x"
@@ -149,7 +149,7 @@ def test_netcdf_multidim_multi_group():
     assert subgroup.GetName() == "group"
     assert subgroup.GetFullName() == "/group"
     assert rg.OpenGroup("foo") is None
-    assert subgroup.GetGroupNames() is None
+    assert len(subgroup.GetGroupNames()) == 0
     assert subgroup.GetMDArrayNames() == ["fmul"]
     assert subgroup.OpenGroup("foo") is None
 
@@ -2069,7 +2069,7 @@ def test_netcdf_multidim_group_by_same_dimension():
         gdal.OF_MULTIDIM_RASTER,
     )
     rg = ds.GetRootGroup()
-    assert rg.GetMDArrayNames(["GROUP_BY=SAME_DIMENSION"]) is None
+    assert len(rg.GetMDArrayNames(["GROUP_BY=SAME_DIMENSION"])) == 0
     groups = rg.GetGroupNames(["GROUP_BY=SAME_DIMENSION"])
     assert set(groups) == set(["time_01", "time_20_c", "time_20_ku"])
     g = rg.OpenGroup("time_01", ["GROUP_BY=SAME_DIMENSION"])
