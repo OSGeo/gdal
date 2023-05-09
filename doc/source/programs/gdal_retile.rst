@@ -113,7 +113,7 @@ If your number of input tiles exhausts the command line buffer, use the general
 
     Normally the tiles of the base image are stored as described in :option:`-targetDir`.
     For large images, some file systems have performance problems if the number of files
-    in a directory is to big, causing gdal_retile not to finish in reasonable time.
+    in a directory is too big, causing gdal_retile not to finish in reasonable time.
     Using this parameter creates a different output structure. The tiles of the base image
     are stored in a sub-directory called 0, the pyramids in sub-directories numbered 1,2,....
     Within each of these directories another level of sub-directories is created, numbered from
