@@ -49,9 +49,9 @@ def module_disable_exceptions():
 
 def test_ogr_sdts_1():
 
-    gdaltest.sdts_ds = ogr.Open("data/sdts/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF")
+    ds = ogr.Open("data/sdts/D3607551_rd0s_1_sdts_truncated/TR01CATD.DDF")
 
-    assert gdaltest.sdts_ds is not None
+    assert ds is not None
 
     layers = [
         ("ARDF", 164, ogr.wkbNone, [("ENTITY_LABEL", "1700005")]),
@@ -75,15 +75,16 @@ def test_ogr_sdts_1():
     ]
 
     for layer in layers:
-        lyr = gdaltest.sdts_ds.GetLayerByName(layer[0])
+        lyr = ds.GetLayerByName(layer[0])
         assert lyr is not None, "could not get layer %s" % (layer[0])
-        assert (
-            lyr.GetFeatureCount() == layer[1]
-        ), "wrong number of features for layer %s : %d. %d were expected " % (
-            layer[0],
-            lyr.GetFeatureCount(),
-            layer[1],
-        )
+        with gdaltest.error_handler():
+            assert (
+                lyr.GetFeatureCount() == layer[1]
+            ), "wrong number of features for layer %s : %d. %d were expected " % (
+                layer[0],
+                lyr.GetFeatureCount(),
+                layer[1],
+            )
         assert lyr.GetLayerDefn().GetGeomType() == layer[2]
         feat_read = lyr.GetNextFeature()
         for item in layer[3]:
@@ -92,7 +93,16 @@ def test_ogr_sdts_1():
                 print('"%s"' % (item[1]))
                 pytest.fail('"%s"' % (feat_read.GetField(item[0])))
 
-    gdaltest.sdts_ds = None
+    # Check that we get non-empty polygons
+    lyr = ds.GetLayerByName("PC01")
+    with gdaltest.error_handler():
+        f = lyr.GetNextFeature()
+    g = f.GetGeometryRef()
+    assert g
+    assert g.GetGeometryType() == ogr.wkbPolygon25D
+    assert not g.IsEmpty()
+
+    ds = None
 
 
 ###############################################################################
