@@ -94,6 +94,9 @@ ZarrV2Array::~ZarrV2Array()
 
 void ZarrV2Array::Flush()
 {
+    if (!m_bValid)
+        return;
+
     ZarrV2Array::FlushDirtyTile();
 
     if (m_bDefinitionModified)

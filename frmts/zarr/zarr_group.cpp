@@ -55,6 +55,9 @@ ZarrGroupBase::~ZarrGroupBase()
 
 std::vector<std::string> ZarrGroupBase::GetMDArrayNames(CSLConstList) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return {};
+
     if (!m_bDirectoryExplored)
         ExploreDirectory();
 
@@ -82,10 +85,81 @@ void ZarrGroupBase::RegisterArray(const std::shared_ptr<ZarrArray> &array) const
 
 std::vector<std::string> ZarrGroupBase::GetGroupNames(CSLConstList) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return {};
+
     if (!m_bDirectoryExplored)
         ExploreDirectory();
 
     return m_aosGroups;
+}
+
+/************************************************************************/
+/*                             DeleteGroup()                            */
+/************************************************************************/
+
+bool ZarrGroupBase::DeleteGroup(const std::string &osName,
+                                CSLConstList /*papszOptions*/)
+{
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+
+    GetGroupNames();
+
+    auto oIterNames = std::find(m_aosGroups.begin(), m_aosGroups.end(), osName);
+    if (oIterNames == m_aosGroups.end())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Group %s is not a sub-group of this group", osName.c_str());
+        return false;
+    }
+
+    const std::string osSubDirName =
+        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+    if (VSIRmdirRecursive(osSubDirName.c_str()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot delete %s",
+                 osSubDirName.c_str());
+        return false;
+    }
+
+    m_poSharedResource->DeleteZMetadataItemRecursive(osSubDirName);
+
+    m_aosGroups.erase(oIterNames);
+
+    auto oIter = m_oMapGroups.find(osName);
+    if (oIter != m_oMapGroups.end())
+    {
+        oIter->second->Deleted();
+        m_oMapGroups.erase(oIter);
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                       NotifyChildrenOfDeletion()                     */
+/************************************************************************/
+
+void ZarrGroupBase::NotifyChildrenOfDeletion()
+{
+    for (const auto &oIter : m_oMapGroups)
+        oIter.second->ParentDeleted();
+
+    for (const auto &oIter : m_oMapMDArrays)
+        oIter.second->ParentDeleted();
+
+    m_oAttrGroup.ParentDeleted();
+
+    for (const auto &oIter : m_oMapDimensions)
+        oIter.second->ParentDeleted();
 }
 
 /************************************************************************/
@@ -96,6 +170,9 @@ std::shared_ptr<GDALAttribute> ZarrGroupBase::CreateAttribute(
     const std::string &osName, const std::vector<GUInt64> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -114,12 +191,35 @@ std::shared_ptr<GDALAttribute> ZarrGroupBase::CreateAttribute(
 }
 
 /************************************************************************/
+/*                  ZarrGroupBase::DeleteAttribute()                   */
+/************************************************************************/
+
+bool ZarrGroupBase::DeleteAttribute(const std::string &osName, CSLConstList)
+{
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+
+    LoadAttributes();
+    return m_oAttrGroup.DeleteAttribute(osName);
+}
+
+/************************************************************************/
 /*                            GetDimensions()                           */
 /************************************************************************/
 
 std::vector<std::shared_ptr<GDALDimension>>
 ZarrGroupBase::GetDimensions(CSLConstList) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return {};
+
     if (!m_bReadFromZMetadata && !m_bDimensionsInstantiated)
     {
         m_bDimensionsInstantiated = true;
@@ -140,6 +240,56 @@ ZarrGroupBase::GetDimensions(CSLConstList) const
 }
 
 /************************************************************************/
+/*                            DeleteMDArray()                           */
+/************************************************************************/
+
+bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
+                                  CSLConstList /*papszOptions*/)
+{
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+
+    GetMDArrayNames();
+
+    auto oIterNames = std::find(m_aosArrays.begin(), m_aosArrays.end(), osName);
+    if (oIterNames == m_aosArrays.end())
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Array %s is not an array of this group", osName.c_str());
+        return false;
+    }
+
+    const std::string osSubDirName =
+        CPLFormFilename(m_osDirectoryName.c_str(), osName.c_str(), nullptr);
+    if (VSIRmdirRecursive(osSubDirName.c_str()) != 0)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Cannot delete %s",
+                 osSubDirName.c_str());
+        return false;
+    }
+
+    m_poSharedResource->DeleteZMetadataItemRecursive(osSubDirName);
+
+    m_aosArrays.erase(oIterNames);
+
+    auto oIter = m_oMapMDArrays.find(osName);
+    if (oIter != m_oMapMDArrays.end())
+    {
+        oIter->second->Deleted();
+        m_oMapMDArrays.erase(oIter);
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                             CreateDimension()                        */
 /************************************************************************/
 
@@ -147,6 +297,9 @@ std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(
     const std::string &osName, const std::string &osType,
     const std::string &osDirection, GUInt64 nSize, CSLConstList)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     if (osName.empty())
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -305,6 +458,9 @@ bool ZarrGroupBase::CheckArrayOrGroupWithSameNameDoesNotExist(
 
 bool ZarrGroupBase::Rename(const std::string &osNewName)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
