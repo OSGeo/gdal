@@ -763,12 +763,12 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                 return false;
         }
 
-        auto arrayNames = poSrcGroup->GetMDArrayNames();
-        for (const auto &name : arrayNames)
+        const auto CopyArray =
+            [this, &poSrcDS, &poDstRootGroup, &mapExistingDstDims,
+             &mapSrcVariableNameToIndexedDimName, pfnProgress, pProgressData,
+             papszOptions, bStrict, &nCurCost,
+             nTotalCost](const std::shared_ptr<GDALMDArray> &srcArray)
         {
-            auto srcArray = poSrcGroup->OpenMDArray(name);
-            EXIT_OR_CONTINUE_IF_NULL(srcArray);
-
             // Map source dimensions to target dimensions
             std::vector<std::shared_ptr<GDALDimension>> dstArrayDims;
             const auto &srcArrayDims(srcArray->GetDimensions());
@@ -797,8 +797,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                         }
                         else
                         {
-                            std::string newDimNamePrefix(name + '_' +
-                                                         dim->GetName());
+                            std::string newDimNamePrefix(srcArray->GetName() +
+                                                         '_' + dim->GetName());
                             newDimName = newDimNamePrefix;
                             int nIterCount = 2;
                             while (mapExistingDstDims.find(newDimName) !=
@@ -975,7 +975,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                     CreateMDArray(srcArray->GetName(), dstArrayDims,
                                   GDALExtendedDataType::Create(eAutoScaleType),
                                   aosArrayCO.List());
-                EXIT_OR_CONTINUE_IF_NULL(dstArray);
+                if (!dstArray)
+                    return !bStrict;
 
                 if (srcArray->GetRawNoDataValue() != nullptr)
                 {
@@ -1020,7 +1021,8 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
             {
                 dstArray = CreateMDArray(srcArray->GetName(), dstArrayDims,
                                          srcArrayType, aosArrayCO.List());
-                EXIT_OR_CONTINUE_IF_NULL(dstArray);
+                if (!dstArray)
+                    return !bStrict;
 
                 if (!dstArray->CopyFrom(poSrcDS, srcArray.get(), bStrict,
                                         nCurCost, nTotalCost, pfnProgress,
@@ -1044,9 +1046,43 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                         dstArray);
                 }
             }
+
+            return true;
+        };
+
+        const auto arrayNames = poSrcGroup->GetMDArrayNames();
+
+        // Start by copying arrays that are indexing variables of dimensions
+        for (const auto &name : arrayNames)
+        {
+            auto srcArray = poSrcGroup->OpenMDArray(name);
+            EXIT_OR_CONTINUE_IF_NULL(srcArray);
+
+            const auto oIterDimName =
+                mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
+            if (oIterDimName != mapSrcVariableNameToIndexedDimName.end())
+            {
+                if (!CopyArray(srcArray))
+                    return false;
+            }
         }
 
-        auto groupNames = poSrcGroup->GetGroupNames();
+        // Then copy regular arrays
+        for (const auto &name : arrayNames)
+        {
+            auto srcArray = poSrcGroup->OpenMDArray(name);
+            EXIT_OR_CONTINUE_IF_NULL(srcArray);
+
+            const auto oIterDimName =
+                mapSrcVariableNameToIndexedDimName.find(srcArray->GetName());
+            if (oIterDimName == mapSrcVariableNameToIndexedDimName.end())
+            {
+                if (!CopyArray(srcArray))
+                    return false;
+            }
+        }
+
+        const auto groupNames = poSrcGroup->GetGroupNames();
         for (const auto &name : groupNames)
         {
             auto srcSubGroup = poSrcGroup->OpenGroup(name);
