@@ -1150,16 +1150,6 @@ TABFile::GetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
     }
 
     /*-----------------------------------------------------------------
-     * Collect units definition.
-     *----------------------------------------------------------------*/
-    if (sTABProj.nProjId != 0 && sTABProj.nProjId != 1 &&
-        CPLAtof(pszUnitsConv) != 1)
-    {
-        poSpatialRef->SetTargetLinearUnits(nullptr, pszUnitsName,
-                                           CPLAtof(pszUnitsConv));
-    }
-
-    /*-----------------------------------------------------------------
      * Local (nonearth) coordinate systems have no Geographic relationship
      * so we just return from here.
      *----------------------------------------------------------------*/
@@ -1402,6 +1392,17 @@ TABFile::GetSpatialRefFromTABProj(const TABProjInfo &sTABProj)
                 }
             }
         }
+    }
+
+    /*-----------------------------------------------------------------
+     * Apply linear units. Do that only after all above manipulations of
+     * projection parameters.
+     *----------------------------------------------------------------*/
+    if (sTABProj.nProjId != 0 && sTABProj.nProjId != 1 &&
+        CPLAtof(pszUnitsConv) != 1)
+    {
+        poSpatialRef->SetTargetLinearUnits(nullptr, pszUnitsName,
+                                           CPLAtof(pszUnitsConv));
     }
 
     /*-----------------------------------------------------------------
