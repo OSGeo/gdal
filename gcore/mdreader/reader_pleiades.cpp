@@ -360,26 +360,6 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
         return nullptr;
     }
 
-    // search Image to Ground Validity (since DIMAP v3)
-    CPLXMLNode *pValidityNode =
-        CPLSearchXMLNode(pNode, "=ImagetoGround_Validity_Domain");
-
-    double firstCol = 1.0;
-    if (pValidityNode != nullptr)
-    {
-        char **papszValidity = ReadXMLToList(pValidityNode->psChild, nullptr);
-        if (papszValidity != nullptr)
-        {
-            const char *pszFirstCol =
-                CSLFetchNameValue(papszValidity, "FIRST_COL");
-            if (pszFirstCol != nullptr)
-            {
-                firstCol = CPLAtofM(pszFirstCol);
-            }
-        }
-        CSLDestroy(papszValidity);
-    }
-
     // If we are not the top-left tile, then we must shift LINE_OFF and SAMP_OFF
     int nLineOffShift = 0;
     int nPixelOffShift = 0;
@@ -428,22 +408,45 @@ char **GDALMDReaderPleiades::LoadRPCXmlFile()
         }
     }
 
+    // SPOT and PHR sensors use 1,1 as their upper left corner pixel convention
+    // for RPCs which is non standard. This was fixed with PNEO which correctly
+    // assumes 0,0.
+    // Precompute the offset that will be applied to LINE_OFF and SAMP_OFF
+    // in order to use the RPCs with the standard 0,0 convention
+    double topleftOffset;
+    CPLXMLNode *psDoc = CPLGetXMLNode(pNode, "=Dimap_Document");
+    if (!psDoc)
+        psDoc = CPLGetXMLNode(pNode, "=PHR_DIMAP_Document");
+    const char *pszMetadataProfile = CPLGetXMLValue(
+        psDoc, "Metadata_Identification.METADATA_PROFILE", "PHR_SENSOR");
+    if (EQUAL(pszMetadataProfile, "PHR_SENSOR") ||
+        EQUAL(pszMetadataProfile, "S7_SENSOR") ||
+        EQUAL(pszMetadataProfile, "S6_SENSOR"))
+    {
+        topleftOffset = 1;
+    }
+    else if (EQUAL(pszMetadataProfile, "PNEO_SENSOR"))
+    {
+        topleftOffset = 0;
+    }
+    else
+    {
+        //CPLError(CE_Warning, CPLE_AppDefined,
+        //         "Unknown RPC Metadata Profile: %s. Assuming PHR_SENSOR",
+        //         pszMetadataProfile);
+        topleftOffset = 1;
+    }
+
     // format list
     char **papszRPB = nullptr;
     for (int i = 0; apszRPBMap[i] != nullptr; i += 2)
     {
         const char *pszValue =
             CSLFetchNameValue(papszRawRPCList, apszRPBMap[i + 1]);
-        // Deprecated : Pleiades RPCs use "center of upper left pixel is 1,1"
-        // convention, convert to Digital globe convention of "center of upper
-        // left pixel is 0,0".
-
-        // Since DIMAP v3, the center of upper left pixel can be 0, 0. So now it
-        // is dynamically loaded from the DIMAP.
-        if ((i == 0 || i == 2) && pszValue)
+        if ((i == 0 || i == 2) && pszValue)  //i.e. LINE_OFF or SAMP_OFF
         {
             CPLString osField;
-            double dfVal = CPLAtofM(pszValue) - firstCol;
+            double dfVal = CPLAtofM(pszValue) - topleftOffset;
             if (i == 0)
                 dfVal += nLineOffShift;
             else
