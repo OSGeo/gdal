@@ -3386,3 +3386,72 @@ def test_netcdf_multidim_copy_group_with_indexing_variable_after_regular_var():
     finally:
         if os.path.exists(outfilename):
             gdal.Unlink(outfilename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_delete_attribute():
+
+    drv = gdal.GetDriverByName("netCDF")
+    filename = "tmp/test_netcdf_multidim_delete_attribute.nc"
+
+    def test():
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        rg = ds.GetRootGroup()
+        subg = rg.CreateGroup("group")
+        subg_attr = subg.CreateAttribute(
+            "subg_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert subg_attr.Write("foo") == gdal.CE_None
+        subg_other_attr = subg.CreateAttribute(
+            "subg_other_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert subg_other_attr.Write("foo") == gdal.CE_None
+
+        ar = subg.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        assert attr.Write("foo") == gdal.CE_None
+        other_attr = ar.CreateAttribute(
+            "other_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        assert other_attr.Write("foo") == gdal.CE_None
+
+        with pytest.raises(Exception):
+            ar.DeleteAttribute("not_existing")
+
+        # Delete array attribute and test effects
+        ar.DeleteAttribute("attr")
+
+        assert set(x.GetName() for x in ar.GetAttributes()) == {"other_attr"}
+
+        with pytest.raises(Exception, match="has been deleted"):
+            attr.Rename("foo")
+
+        with pytest.raises(Exception):
+            subg.DeleteAttribute("not_existing")
+
+        # Delete group attribute and test effects
+        subg.DeleteAttribute("subg_attr")
+
+        assert set(x.GetName() for x in subg.GetAttributes()) == {"subg_other_attr"}
+
+        with pytest.raises(Exception, match="has been deleted"):
+            subg_attr.Rename("foo")
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        subg = rg.OpenGroup("group")
+        ar = subg.OpenMDArray("ar")
+
+        assert set(x.GetName() for x in ar.GetAttributes()) == {"other_attr"}
+        assert set(x.GetName() for x in subg.GetAttributes()) == {"subg_other_attr"}
+
+    try:
+        test()
+        reopen()
+    finally:
+        gdal.Unlink(filename)
