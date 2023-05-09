@@ -1069,6 +1069,18 @@ It is used by the internal libtiff library or the :ref:`raster.zarr` driver.
     Control whether to use LibLZMA. Defaults to ON when LibLZMA is found.
 
 
+LibQB3
+******
+
+The `QB3 <https://github.com/lucianpls/QB3>`_ compression, used
+by the :ref:`raster.marfa` driver.
+
+.. option:: GDAL_USE_LIBQB3=ON/OFF
+
+    Control whether to use LibQB3. Defaults to ON when LibQB3 is found.
+
+
+
 LibXml2
 *******
 
@@ -1607,18 +1619,6 @@ PROJ
     ``libproj.so``, ``proj.lib``, or other name. A similar variable
     ``PROJ_LIBRARY_DEBUG`` can also be specified to a similar library for
     building Debug releases.
-
-
-QB3
-*******
-
-The `QB3 <https://github.com/lucianpls/QB3>`_ compression, used
-by the :ref:`raster.marfa` driver.
-
-.. option:: GDAL_USE_QB3=ON/OFF
-
-    Control whether to use QB3. Defaults to ON when QB3 is found.
-
 
 QHULL
 *****
