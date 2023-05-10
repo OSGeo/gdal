@@ -1393,6 +1393,9 @@ void GDALRegister_GTiff()
         "default='PAM,INTERNAL,TABFILE,WORLDFILE,XML'/>"
         "   <Option name='SPARSE_OK' type='boolean' description='Should empty "
         "blocks be omitted on disk?' default='FALSE'/>"
+        "   <Option name='IGNORE_COG_LAYOUT_BREAK' type='boolean' "
+        "description='Allow update mode on files with COG structure' "
+        "default='FALSE'/>"
         "</OpenOptionList>");
     poDriver->SetMetadataItem(GDAL_DMD_SUBDATASETS, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

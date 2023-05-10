@@ -324,6 +324,15 @@ Open options
    blocks never written and save space; however, most non-GDAL packages
    cannot read such files. The default is FALSE.
 
+-  **IGNORE_COG_LAYOUT_BREAK=YES/NO** (GDAL >= 3.8): Updating a COG
+   (Cloud Optimized GeoTIFF) file generally breaks part of the optimizations,
+   but still produces a valid GeoTIFF file.
+   Starting with GDAL 3.8, to avoid undesired loss of the COG characteristics,
+   opening such a file in update mode will be rejected, unless this option is
+   also set to YES (default is NO).
+   This option has only effect on COG files and when opening in update mode,
+   and is ignored on regular (Geo)TIFF files.
+
 Creation Issues
 ---------------
 

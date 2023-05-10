@@ -4100,7 +4100,9 @@ def test_tiff_write_ifd_offsets():
     ds = None
 
     # Test rewriting but without changing strile size
-    ds = gdal.Open(filename, gdal.GA_Update)
+    ds = gdal.OpenEx(
+        filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
+    )
     ds.GetRasterBand(1).Fill(0)
     ds = None
     assert gdal.GetLastErrorMsg() == ""
@@ -4110,7 +4112,9 @@ def test_tiff_write_ifd_offsets():
     assert "KNOWN_INCOMPATIBLE_EDITION=NO\n " in data
 
     # Test rewriting with changing strile size
-    ds = gdal.Open(filename, gdal.GA_Update)
+    ds = gdal.OpenEx(
+        filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
+    )
     ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, "x")
     ds = None
     assert gdal.GetLastErrorMsg() != ""

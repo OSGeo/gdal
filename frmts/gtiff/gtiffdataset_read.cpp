@@ -3785,6 +3785,22 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
                  poDS->m_bLeaderSizeAsUInt4 &&
                  poDS->m_bTrailerRepeatedLast4BytesRepeated)
         {
+            if (poOpenInfo->eAccess == GA_Update &&
+                !CPLTestBool(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions,
+                                                  "IGNORE_COG_LAYOUT_BREAK",
+                                                  "FALSE")))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "File %s has C(loud) O(ptimized) G(eoTIFF) layout. "
+                         "Updating it will generally result in loosing part of "
+                         "the optimizations (but will still produce a valid "
+                         "GeoTIFF file). If this is acceptable, open the file "
+                         "with the IGNORE_COG_LAYOUT_BREAK open option set "
+                         "to YES.",
+                         pszFilename);
+                delete poDS;
+                return nullptr;
+            }
             poDS->m_oGTiffMDMD.SetMetadataItem("LAYOUT", "COG",
                                                "IMAGE_STRUCTURE");
         }
