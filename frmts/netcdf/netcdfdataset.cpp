@@ -9624,15 +9624,28 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                                  szDimName);
                         poDS->papszMetadata = CSLSetNameValue(
                             poDS->papszMetadata, szTemp, szExtraDimDef);
-                        char *pszTemp = nullptr;
-                        if (NCDFGet1DVar(nIdxGroupID, nIdxVarID, &pszTemp) ==
-                            CE_None)
+
+                        // Retrieving data for unlimited dimensions might be
+                        // costly on network storage, so don't do it.
+                        // Each band will capture the value along the extra
+                        // dimension in its NETCDF_DIM_xxxx band metadata item
+                        // Addresses use case of
+                        // https://lists.osgeo.org/pipermail/gdal-dev/2023-May/057209.html
+                        if (VSIIsLocal(osFilenameForNCOpen.c_str()) ||
+                            !NCDFIsUnlimitedDim(poDS->eFormat ==
+                                                    NCDF_FORMAT_NC4,
+                                                cdfid, poDS->m_anDimIds[j]))
                         {
-                            snprintf(szTemp, sizeof(szTemp),
-                                     "NETCDF_DIM_%s_VALUES", szDimName);
-                            poDS->papszMetadata = CSLSetNameValue(
-                                poDS->papszMetadata, szTemp, pszTemp);
-                            CPLFree(pszTemp);
+                            char *pszTemp = nullptr;
+                            if (NCDFGet1DVar(nIdxGroupID, nIdxVarID,
+                                             &pszTemp) == CE_None)
+                            {
+                                snprintf(szTemp, sizeof(szTemp),
+                                         "NETCDF_DIM_%s_VALUES", szDimName);
+                                poDS->papszMetadata = CSLSetNameValue(
+                                    poDS->papszMetadata, szTemp, pszTemp);
+                                CPLFree(pszTemp);
+                            }
                         }
                     }
                 }
