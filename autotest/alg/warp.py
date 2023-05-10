@@ -32,6 +32,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import math
 import os
 import shutil
 import struct
@@ -1659,3 +1660,26 @@ def test_warp_max_downsampling_missed_edges():
 
     ds = gdal.Open("data/bug_6526_warped.vrt")
     assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1, 1)
+
+
+###############################################################################
+# Test bugfix for #7733
+
+
+def test_warp_average_oversampling():
+
+    ds = gdal.Open("data/warp_average_oversampling.vrt")
+    got_data = struct.unpack("d" * (14 * 14), ds.GetRasterBand(1).ReadRaster())
+    # 4 first and last lines are all nan
+    for y in range(4):
+        for x in range(14):
+            assert math.isnan(got_data[y * 14 + x])
+            assert math.isnan(got_data[(14 - 1 - y) * 14 + x])
+
+    # Middle lines start and end with 4 nans, and with 3 at the middle
+    for y in range(6):
+        for x in range(4):
+            assert math.isnan(got_data[(y + 4) * 14 + x])
+            assert math.isnan(got_data[(y + 4) * 14 + (14 - 1 - x)])
+        for x in range(6):
+            assert got_data[(y + 4) * 14 + (x + 4)] == pytest.approx(3)
