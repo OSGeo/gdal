@@ -314,7 +314,7 @@ Update
 ------
 
 Updating a COG file generally breaks part of the optimizations, but still
-produce a valid GeoTIFF file. Starting with GDAL 3.8, to avoid undesired loss
+produces a valid GeoTIFF file. Starting with GDAL 3.8, to avoid undesired loss
 of the COG characteristics, opening such a file in update mode will be rejected,
 unless the IGNORE_COG_LAYOUT_BREAK open option is also explicitly set to YES.
 
