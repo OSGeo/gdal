@@ -47,6 +47,7 @@ class netCDFSharedResources
 
     bool m_bImappIsInElements = true;
     bool m_bReadOnly = true;
+    bool m_bIsNC4 = false;
     int m_cdfid = 0;
 #ifdef ENABLE_NCDUMP
     bool m_bFileToDestroyAtClosing = false;
@@ -175,11 +176,11 @@ int netCDFSharedResources::GetBelongingGroupOfDim(int startgid, int dimid)
 bool netCDFSharedResources::SetDefineMode(bool bNewDefineMode)
 {
     // Do nothing if already in new define mode
-    // or if dataset is in read-only mode.
-    if (m_bDefineMode == bNewDefineMode || m_bReadOnly)
+    // or if dataset is in read-only mode or if dataset is NC4 format.
+    if (m_bDefineMode == bNewDefineMode || m_bReadOnly || m_bIsNC4)
         return true;
 
-    CPLDebug("GDAL_netCDF", "SetDefineMode(%d) old=%d",
+    CPLDebug("GDAL_netCDF", "SetDefineMode(%d) new=%d, old=%d", m_cdfid,
              static_cast<int>(bNewDefineMode), static_cast<int>(m_bDefineMode));
 
     m_bDefineMode = bNewDefineMode;
@@ -2308,6 +2309,9 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
     m_bSRSRead = false;
     m_poSRS.reset();
 
+    CPLMutexHolderD(&hNCMutex);
+    m_poShared->SetDefineMode(true);
+
     if (poSRS == nullptr)
     {
         nc_del_att(m_gid, m_varid, CF_GRD_MAPPING);
@@ -4312,7 +4316,10 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
         }
     }
     else
+    {
         osFilename = poOpenInfo->pszFilename;
+        poDS->eFormat = IdentifyFormat(poOpenInfo, /* bCheckExt = */ true);
+    }
 
     poDS->SetDescription(poOpenInfo->pszFilename);
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
@@ -4445,6 +4452,8 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     }
 #endif
     poSharedResources->m_bReadOnly = nMode == NC_NOWRITE;
+    poSharedResources->m_bIsNC4 =
+        poDS->eFormat == NCDF_FORMAT_NC4 || poDS->eFormat == NCDF_FORMAT_NC4C;
     poSharedResources->m_cdfid = cdfid;
     poSharedResources->m_fpVSIMEM = poDS->fpVSIMEM;
     poDS->fpVSIMEM = nullptr;
@@ -4537,6 +4546,8 @@ netCDFDataset::CreateMultiDimensional(const char *pszFilename,
     poSharedResources->m_cdfid = cdfid;
     poSharedResources->m_bReadOnly = false;
     poSharedResources->m_bDefineMode = true;
+    poSharedResources->m_bIsNC4 =
+        poDS->eFormat == NCDF_FORMAT_NC4 || poDS->eFormat == NCDF_FORMAT_NC4C;
     poDS->m_poRootGroup.reset(new netCDFGroup(poSharedResources, cdfid));
     const char *pszConventions = CSLFetchNameValueDef(
         papszOptions, "CONVENTIONS", NCDF_CONVENTIONS_CF_V1_6);
