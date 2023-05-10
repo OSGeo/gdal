@@ -233,8 +233,11 @@ class netCDFRasterBand final : public GDALPamRasterBand
     CPLString m_osUnitType{};
     bool bSignedData;
     bool bCheckLongitude;
+    bool m_bCreateMetadataFromOtherVarsDone = false;
 
-    CPLErr CreateBandMetadata();
+    void CreateMetadataFromAttributes();
+    void CreateMetadataFromOtherVars();
+
     template <class T>
     void CheckData(void *pImage, void *pImageNC, size_t nTmpBlockXSize,
                    size_t nTmpBlockYSize, bool bCheckIsNan = false);
@@ -292,6 +295,10 @@ class netCDFRasterBand final : public GDALPamRasterBand
     virtual CPLErr SetUnitType(const char *) override;
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
+
+    char **GetMetadata(const char *pszDomain = "") override;
+    const char *GetMetadataItem(const char *pszName,
+                                const char *pszDomain = "") override;
 
     virtual CPLErr SetMetadataItem(const char *pszName, const char *pszValue,
                                    const char *pszDomain = "") override;
@@ -805,8 +812,7 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
         }
     }
 
-    // Create Band Metadata.
-    CreateBandMetadata();
+    CreateMetadataFromAttributes();
 
     // Attempt to fetch the scale_factor and add_offset attributes for the
     // variable and set them.  If these values are not available, set
@@ -857,7 +863,7 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
         NCDFIsVarLongitude(cdfid, nZId, nullptr);
 
     // Attempt to fetch the units attribute for the variable and set it.
-    SetUnitTypeNoUpdate(GetMetadataItem(CF_UNITS));
+    SetUnitTypeNoUpdate(netCDFRasterBand::GetMetadataItem(CF_UNITS));
 
     SetBlockSize();
 }
@@ -930,7 +936,7 @@ netCDFRasterBand::netCDFRasterBand(
     : nc_datatype(NC_NAT), cdfid(poNCDFDS->GetCDFID()), nZId(nZIdIn),
       nZDim(nZDimIn), nLevel(nLevelIn), nBandXPos(1), nBandYPos(0),
       panBandZPos(nullptr), panBandZLev(nullptr), bSignedData(bSigned),
-      bCheckLongitude(false)
+      bCheckLongitude(false), m_bCreateMetadataFromOtherVarsDone(true)
 {
     poDS = poNCDFDS;
     nBand = nBandIn;
@@ -1169,6 +1175,31 @@ netCDFRasterBand::~netCDFRasterBand()
     netCDFRasterBand::FlushCache(true);
     CPLFree(panBandZPos);
     CPLFree(panBandZLev);
+}
+
+/************************************************************************/
+/*                          GetMetadata()                               */
+/************************************************************************/
+
+char **netCDFRasterBand::GetMetadata(const char *pszDomain)
+{
+    if (!m_bCreateMetadataFromOtherVarsDone)
+        CreateMetadataFromOtherVars();
+    return GDALPamRasterBand::GetMetadata(pszDomain);
+}
+
+/************************************************************************/
+/*                        GetMetadataItem()                             */
+/************************************************************************/
+
+const char *netCDFRasterBand::GetMetadataItem(const char *pszName,
+                                              const char *pszDomain)
+{
+    if (!m_bCreateMetadataFromOtherVarsDone &&
+        STARTS_WITH(pszName, "NETCDF_DIM_") &&
+        (!pszDomain || pszDomain[0] == 0))
+        CreateMetadataFromOtherVars();
+    return GDALPamRasterBand::GetMetadataItem(pszName, pszDomain);
 }
 
 /************************************************************************/
@@ -1929,19 +1960,64 @@ static int Get1DVariableIndexedByDimension(int cdfid, int nDimId,
 }
 
 /************************************************************************/
-/*                         CreateBandMetadata()                         */
+/*                      CreateMetadataFromAttributes()                  */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::CreateBandMetadata()
-
+void netCDFRasterBand::CreateMetadataFromAttributes()
 {
-    netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>(poDS);
-
-    // Compute all dimensions from Band number and save in Metadata.
     char szVarName[NC_MAX_NAME + 1] = {};
     int status = nc_inq_varname(cdfid, nZId, szVarName);
     NCDF_ERR(status);
 
+    GDALPamRasterBand::SetMetadataItem("NETCDF_VARNAME", szVarName);
+
+    // Get attribute metadata.
+    int nAtt = 0;
+    nc_inq_varnatts(cdfid, nZId, &nAtt);
+
+    for (int i = 0; i < nAtt; i++)
+    {
+        char szMetaName[NC_MAX_NAME + 1] = {};
+        status = nc_inq_attname(cdfid, nZId, i, szMetaName);
+        if (status != NC_NOERR)
+            continue;
+
+        if (GDALPamRasterBand::GetMetadataItem(szMetaName) != nullptr)
+        {
+            continue;
+        }
+
+        char *pszMetaValue = nullptr;
+        if (NCDFGetAttr(cdfid, nZId, szMetaName, &pszMetaValue) == CE_None)
+        {
+            GDALPamRasterBand::SetMetadataItem(szMetaName, pszMetaValue);
+        }
+        else
+        {
+            CPLDebug("GDAL_netCDF", "invalid Band metadata %s", szMetaName);
+        }
+
+        if (pszMetaValue)
+        {
+            CPLFree(pszMetaValue);
+            pszMetaValue = nullptr;
+        }
+    }
+}
+
+/************************************************************************/
+/*                      CreateMetadataFromOtherVars()                   */
+/************************************************************************/
+
+void netCDFRasterBand::CreateMetadataFromOtherVars()
+
+{
+    CPLAssert(!m_bCreateMetadataFromOtherVarsDone);
+    m_bCreateMetadataFromOtherVarsDone = true;
+
+    netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>(poDS);
+
+    // Compute all dimensions from Band number and save in Metadata.
     int nd = 0;
     nc_inq_varndims(cdfid, nZId, &nd);
     // Compute multidimention band position.
@@ -1953,7 +2029,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata()
     //  BandPos1 = (nBand - BandPos0*(3*4)) / (4)
     //  BandPos2 = (nBand - BandPos0*(3*4)) % (4)
 
-    GDALPamRasterBand::SetMetadataItem("NETCDF_VARNAME", szVarName);
     int Sum = 1;
     if (nd == 3)
     {
@@ -1961,11 +2036,11 @@ CPLErr netCDFRasterBand::CreateBandMetadata()
     }
 
     // Loop over non-spatial dimensions.
-    int result = 0;
     int Taken = 0;
 
     for (int i = 0; i < nd - 2; i++)
     {
+        int result;
         if (i != nd - 2 - 1)
         {
             Sum = 1;
@@ -2112,41 +2187,6 @@ CPLErr netCDFRasterBand::CreateBandMetadata()
 
         Taken += result * Sum;
     }  // End loop non-spatial dimensions.
-
-    // Get all other metadata.
-    int nAtt = 0;
-    nc_inq_varnatts(cdfid, nZId, &nAtt);
-
-    for (int i = 0; i < nAtt; i++)
-    {
-        char szMetaName[NC_MAX_NAME + 1] = {};
-        status = nc_inq_attname(cdfid, nZId, i, szMetaName);
-        if (status != NC_NOERR)
-            continue;
-
-        if (GetMetadataItem(szMetaName) != nullptr)
-        {
-            continue;
-        }
-
-        char *pszMetaValue = nullptr;
-        if (NCDFGetAttr(cdfid, nZId, szMetaName, &pszMetaValue) == CE_None)
-        {
-            GDALPamRasterBand::SetMetadataItem(szMetaName, pszMetaValue);
-        }
-        else
-        {
-            CPLDebug("GDAL_netCDF", "invalid Band metadata %s", szMetaName);
-        }
-
-        if (pszMetaValue)
-        {
-            CPLFree(pszMetaValue);
-            pszMetaValue = nullptr;
-        }
-    }
-
-    return CE_None;
 }
 
 /************************************************************************/
