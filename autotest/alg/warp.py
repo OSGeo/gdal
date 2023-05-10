@@ -1682,4 +1682,4 @@ def test_warp_average_oversampling():
             assert math.isnan(got_data[(y + 4) * 14 + x])
             assert math.isnan(got_data[(y + 4) * 14 + (14 - 1 - x)])
         for x in range(6):
-            assert got_data[(y + 4) * 14 + (x + 4)] == pytest.approx(3)
+            assert got_data[(y + 4) * 14 + (x + 4)] == 3.0

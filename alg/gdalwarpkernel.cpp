@@ -6491,8 +6491,6 @@ static void GWKAverageOrModeThread(void *pData)
                 // poWK->eResample == GRA_Average.
                 if (nAlgo == GWKAOM_Average)
                 {
-                    double dfTotalReal = 0.0;
-                    double dfTotalImag = 0.0;
                     double dfTotalWeight = 0.0;
 
                     // This code adapted from GDALDownsampleChunk32R_AverageT()
@@ -6524,11 +6522,20 @@ static void GWKAverageOrModeThread(void *pData)
                             {
                                 const double dfWeight =
                                     COMPUTE_WEIGHT(iSrcX, dfWeightY);
-                                dfTotalWeight += dfWeight;
-                                dfTotalReal += dfValueRealTmp * dfWeight;
-                                if (bIsComplex)
+                                if (dfWeight > 0)
                                 {
-                                    dfTotalImag += dfValueImagTmp * dfWeight;
+                                    // Weighted incremental algorithm mean
+                                    // Cf https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Weighted_incremental_algorithm
+                                    dfTotalWeight += dfWeight;
+                                    dfValueReal +=
+                                        (dfWeight / dfTotalWeight) *
+                                        (dfValueRealTmp - dfValueReal);
+                                    if (bIsComplex)
+                                    {
+                                        dfValueImag +=
+                                            (dfWeight / dfTotalWeight) *
+                                            (dfValueImagTmp - dfValueImag);
+                                    }
                                 }
                             }
                         }
@@ -6536,8 +6543,6 @@ static void GWKAverageOrModeThread(void *pData)
 
                     if (dfTotalWeight > 0)
                     {
-                        dfValueReal = dfTotalReal / dfTotalWeight;
-
                         if (poWK->bApplyVerticalShift)
                         {
                             if (!std::isfinite(padfZ[iDstX]))
@@ -6550,10 +6555,6 @@ static void GWKAverageOrModeThread(void *pData)
                                     dfMultFactorVerticalShiftPipeline;
                         }
 
-                        if (bIsComplex)
-                        {
-                            dfValueImag = dfTotalImag / dfTotalWeight;
-                        }
                         dfBandDensity = 1;
                         bHasFoundDensity = true;
                     }
