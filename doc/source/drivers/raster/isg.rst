@@ -14,7 +14,7 @@ Supports reading grids in the International Service for the Geoid text format, u
 for number of geoid models at
 http://www.isgeoid.polimi.it/Geoid/reg_list.html
 
-Format specification is at http://www.isgeoid.polimi.it/Geoid/ISG_format_20160121.pdf
+Format specification is at https://www.isgeoid.polimi.it/Geoid/format_specs.html
 
 NOTE: Implemented as ``gdal/frmts/aaigrid/aaigriddataset.cpp``.
 
