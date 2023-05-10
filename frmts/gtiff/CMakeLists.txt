@@ -3,6 +3,26 @@ add_gdal_driver(
   SOURCES cogdriver.cpp
           cogdriver.h
           gtiff.h
+          gtiffbitmapband.h
+          gtiffbitmapband.cpp
+          gtiffdataset.h
+          gtiffdataset.cpp
+          gtiffdataset_read.cpp
+          gtiffdataset_write.cpp
+          gtiffjpegoverviewds.h
+          gtiffjpegoverviewds.cpp
+          gtiffoddbitsband.h
+          gtiffoddbitsband.cpp
+          gtiffrasterband.h
+          gtiffrasterband.cpp
+          gtiffrasterband_read.cpp
+          gtiffrasterband_write.cpp
+          gtiffrgbaband.h
+          gtiffrgbaband.cpp
+          gtiffsplitband.h
+          gtiffsplitband.cpp
+          gtiffsplitbitmapband.h
+          gtiffsplitbitmapband.cpp
           gt_jpeg_copy.h
           gt_citation.h
           gt_overview.h
