@@ -37,6 +37,8 @@
 #include "snprintf_compat.h"
 #include "strdup_compat.h"
 
+#include "cpl_string.h"
+
 #if SIZEOF_LONG_LONG != SIZEOF_INT64_T
 #error "The long long type isn't 64-bits"
 #endif
@@ -1192,7 +1194,7 @@ double json_object_get_double(const struct json_object *jso)
 	case json_type_boolean: return JC_BOOL_C(jso)->c_boolean;
 	case json_type_string:
 		errno = 0;
-		cdouble = strtod(get_string_component(jso), &errPtr);
+		cdouble = CPLStrtod(get_string_component(jso), &errPtr);
 
 		/* if conversion stopped at the first character, return 0.0 */
 		if (errPtr == get_string_component(jso))
