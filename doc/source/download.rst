@@ -13,14 +13,20 @@ Download
 Current Release
 ------------------------------------------------------------------------------
 
+* **2023-05-10** `gdal-3.7.0.tar.gz`_ `3.7.0 Release Notes`_ (`3.7.0 md5`_)
+
+.. _`3.7.0 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.7.0/NEWS.md
+.. _`gdal-3.7.0.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.7.0/gdal-3.7.0.tar.gz
+.. _`3.7.0 md5`: https://github.com/OSGeo/gdal/releases/download/v3.7.0/gdal-3.7.0.tar.gz.md5
+
+Past Releases
+------------------------------------------------------------------------------
+
 * **2023-04-21** `gdal-3.6.4.tar.gz`_ `3.6.4 Release Notes`_ (`3.6.4 md5`_)
 
 .. _`3.6.4 Release Notes`: https://github.com/OSGeo/gdal/blob/v3.6.4/NEWS.md
 .. _`gdal-3.6.4.tar.gz`: https://github.com/OSGeo/gdal/releases/download/v3.6.4/gdal-3.6.4.tar.gz
 .. _`3.6.4 md5`: https://github.com/OSGeo/gdal/releases/download/v3.6.4/gdal-3.6.4.tar.gz.md5
-
-Past Releases
-------------------------------------------------------------------------------
 
 * **2023-03-13** `gdal-3.6.3.tar.gz`_ `3.6.3 Release Notes`_ (`3.6.3 md5`_)
 
