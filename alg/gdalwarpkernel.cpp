@@ -6427,12 +6427,14 @@ static void GWKAverageOrModeThread(void *pData)
             }
 
             const double dfXMin = padfX[iDstX] - poWK->nSrcXOff;
-            int iSrcXMin =
-                static_cast<int>(std::min(std::max(floor(dfXMin + 1e-10), 0.0),
-                                          static_cast<double>(nSrcXSize)));
             const double dfXMax = padfX2[iDstX] - poWK->nSrcXOff;
+            constexpr double EPS = 1e-10;
+            // Check that [dfXMin, dfXMax] intersect with [0,nSrcXSize] with a tolerance
+            if (!(dfXMax > -EPS && dfXMin < nSrcXSize + EPS))
+                continue;
+            int iSrcXMin = static_cast<int>(std::max(floor(dfXMin + EPS), 0.0));
             int iSrcXMax = static_cast<int>(
-                std::min(ceil(dfXMax - 1e-10), static_cast<double>(INT_MAX)));
+                std::min(ceil(dfXMax - EPS), static_cast<double>(INT_MAX)));
             if (!bWrapOverX)
                 iSrcXMax = std::min(iSrcXMax, nSrcXSize);
             if (iSrcXMin == iSrcXMax && iSrcXMax < nSrcXSize)
@@ -6441,12 +6443,13 @@ static void GWKAverageOrModeThread(void *pData)
             if (padfY[iDstX] > padfY2[iDstX])
                 std::swap(padfY[iDstX], padfY2[iDstX]);
             const double dfYMin = padfY[iDstX] - poWK->nSrcYOff;
-            int iSrcYMin =
-                static_cast<int>(std::min(std::max(floor(dfYMin + 1e-10), 0.0),
-                                          static_cast<double>(nSrcYSize)));
             const double dfYMax = padfY2[iDstX] - poWK->nSrcYOff;
-            int iSrcYMax = static_cast<int>(
-                std::min(ceil(dfYMax - 1e-10), static_cast<double>(nSrcYSize)));
+            // Check that [dfYMin, dfYMax] intersect with [0,nSrcYSize] with a tolerance
+            if (!(dfYMax > -EPS && dfYMin < nSrcYSize + EPS))
+                continue;
+            int iSrcYMin = static_cast<int>(std::max(floor(dfYMin + EPS), 0.0));
+            int iSrcYMax =
+                std::min(static_cast<int>(ceil(dfYMax - EPS)), nSrcYSize);
             if (iSrcYMin == iSrcYMax && iSrcYMax < nSrcYSize)
                 iSrcYMax++;
 
