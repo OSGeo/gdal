@@ -1781,6 +1781,7 @@ def test_netcdf_44():
 # Test reading a vector NetCDF 3 file
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_45():
 
     # Test that a vector cannot be opened in raster-only mode
@@ -1853,6 +1854,7 @@ def test_netcdf_46():
 # Test reading a vector NetCDF 4 file
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_47():
 
     if not gdaltest.netcdf_drv_has_nc4:
@@ -1919,6 +1921,7 @@ def test_netcdf_48():
 # Test reading a vector NetCDF 3 file with X,Y,Z vars as float
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_49():
 
     with gdaltest.error_handler():
@@ -2009,6 +2012,7 @@ def test_netcdf_50():
 # Test creating a vector NetCDF 3 file with X,Y,Z fields
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_51():
 
     ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
@@ -2092,6 +2096,7 @@ def test_netcdf_51():
 # Test creating a vector NetCDF 3 file with X,Y,Z fields with WRITE_GDAL_TAGS=NO
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_51_no_gdal_tags():
 
     ds = gdal.OpenEx("data/netcdf/test_ogr_nc3.nc", gdal.OF_VECTOR)
@@ -2148,6 +2153,7 @@ def test_netcdf_51_no_gdal_tags():
 # Test creating a vector NetCDF 4 file with X,Y,Z fields
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_52():
 
     if not gdaltest.netcdf_drv_has_nc4:
@@ -2565,6 +2571,7 @@ def test_netcdf_59():
 # http://cfconventions.org/cf-conventions/v1.6.0/cf-conventions.html#_indexed_ragged_array_representation_of_profiles
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_60():
 
     # Test that a vector cannot be opened in raster-only mode
@@ -2605,6 +2612,7 @@ def test_netcdf_60():
 # Test appending to a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_61():
 
     shutil.copy("data/netcdf/profile.nc", "tmp/netcdf_61.nc")
@@ -2646,6 +2654,7 @@ def test_netcdf_61():
 # Test creating a "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_62():
 
     ds = gdal.VectorTranslate(
@@ -2686,6 +2695,7 @@ def test_netcdf_62():
     gdal.Unlink("/vsimem/netcdf_62.csv")
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_62_ncdump_check():
 
     # get file header with ncdump (if available)
@@ -2708,6 +2718,7 @@ def test_netcdf_62_ncdump_check():
         pytest.skip()
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_62_cf_check():
 
     import netcdf_cf
@@ -2723,6 +2734,7 @@ def test_netcdf_62_cf_check():
 # Test creating a NC4 "Indexed ragged array representation of profiles" v1.6.0 H3.5
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_63():
 
     if not gdaltest.netcdf_drv_has_nc4:
@@ -2767,6 +2779,7 @@ def test_netcdf_63():
     gdal.Unlink("/vsimem/netcdf_63.csv")
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_63_ncdump_check():
 
     if not gdaltest.netcdf_drv_has_nc4:
@@ -2799,6 +2812,7 @@ def test_netcdf_63_ncdump_check():
 # but without a profile field.
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_64():
 
     gdal.VectorTranslate(
@@ -2877,6 +2891,7 @@ def test_netcdf_65():
 # from a config file
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_66():
 
     # First trying with no so good configs
@@ -2999,6 +3014,7 @@ def test_netcdf_66():
     gdal.Unlink("/vsimem/netcdf_66.csv")
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_66_ncdump_check():
 
     # get file header with ncdump (if available)
@@ -3388,6 +3404,7 @@ def test_netcdf_write_rotated_pole_from_method_grib():
 # 1D variable, several corresponding variables)
 
 
+@pytest.mark.require_driver("CSV")
 def test_netcdf_82():
 
     with gdaltest.error_handler():
