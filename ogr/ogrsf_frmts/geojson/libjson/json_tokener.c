@@ -44,6 +44,8 @@
 #include <strings.h>
 #endif /* HAVE_STRINGS_H */
 
+#include "cpl_string.h"
+
 #define jt_hexdigit(x) (((x) <= '9') ? (x) - '0' : ((x)&7) + 9)
 
 #if !HAVE_STRNCASECMP && defined(_MSC_VER)
@@ -1261,7 +1263,7 @@ size_t json_tokener_get_parse_end(struct json_tokener *tok)
 static int json_tokener_parse_double(const char *buf, int len, double *retval)
 {
 	char *end;
-	*retval = strtod(buf, &end);
+	*retval = CPLStrtod(buf, &end);
 	if (buf + len == end)
 		return 0; // It worked
 	return 1;

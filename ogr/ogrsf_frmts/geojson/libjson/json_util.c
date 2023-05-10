@@ -58,6 +58,8 @@
 #include "json_util.h"
 #include "printbuf.h"
 
+#include "cpl_string.h"
+
 static int _json_object_to_fd(int fd, struct json_object *obj, int flags, const char *filename);
 
 static char _last_err[256] = "";
@@ -227,7 +229,7 @@ int json_object_to_file(const char *filename, struct json_object *obj)
 int json_parse_double(const char *buf, double *retval)
 {
 	char *end;
-	*retval = strtod(buf, &end);
+	*retval = CPLStrtod(buf, &end);
 	return end == buf ? 1 : 0;
 }
 
