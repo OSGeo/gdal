@@ -16,7 +16,7 @@ elevation data is returned as Float32.
 `ACE2 product
 overview <http://tethys.eaprs.cse.dmu.ac.uk/ACE2/shared/overview>`__
 
-NOTE: Implemented as ``gdal/frmts/raw/ace2dataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/ace2dataset.cpp`.
 
 
 Driver capabilities

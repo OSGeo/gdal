@@ -40,7 +40,7 @@ eg.
 
 This driver may be sufficient to read GTOPO30 data.
 
-NOTE: Implemented as ``gdal/frmts/raw/ehdrdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/ehdrdataset.cpp`.
 
 Driver capabilities
 -------------------

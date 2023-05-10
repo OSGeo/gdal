@@ -66,5 +66,5 @@ encoders, you cannot use georeference information from them.
 See Also:
 ---------
 
--  Implemented as ``gdal/frmts/mrsid/mrsiddataset.cpp``.
+-  Implemented as :source_file:`frmts/mrsid/mrsiddataset.cpp`.
 -  `Extensis web site <http://www.extensis.com/support/developers>`__

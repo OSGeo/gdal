@@ -20,6 +20,6 @@ Driver capabilities
 See Also:
 ---------
 
--  Implemented as ``gdal/frmts/map/mapdataset.cpp``.
+-  Implemented as :source_file:`frmts/map/mapdataset.cpp`.
 -  `OziExplorer Map File
    Format <http://www.oziexplorer3.com/eng/help/map_file_format.html>`__

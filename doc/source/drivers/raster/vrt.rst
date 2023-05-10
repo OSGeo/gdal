@@ -55,19 +55,25 @@ Creation options
 
 The following creations options are supported:
 
--  **BLOCKXSIZE=n**: (GDAL >= 3.7) Sets block width.
+-  .. oo:: BLOCKXSIZE
+      :since: 3.7
 
--  **BLOCKYSIZE=n**: (GDAL >= 3.7) Sets block height.
+      Sets block width.
 
-Setting explicitly the block size is an advanced setting that should only be
-used, when the user has determined that it is needed. By default the block size
-is set to:
+-  .. oo:: BLOCKYSIZE
+      :since: 3.7
 
-- 128x128 for a source-based VRT raster band. Unless the VRT is made of a single
-  source and this single source is not subsetted, in which case the block size of
-  the unique source will be set as the VRT raster band block size)
+      Sets block height.
 
-- 512x128 for a warped VRT.
+      Setting explicitly the block size is an advanced setting that should only be
+      used when the user has determined that it is needed. By default the block size
+      is set to:
+
+      - 128x128 for a source-based VRT raster band. Unless the VRT is made of a single
+        source and this single source is not subsetted, in which case the block size of
+        the unique source will be set as the VRT raster band block size)
+
+      - 512x128 for a warped VRT.
 
 .vrt Format
 -----------
@@ -147,7 +153,12 @@ The **dataAxisToSRSAxisMapping** attribute is allowed since GDAL 3.0 to describe
   to a lower resolution.
   This element can also be used with an existing VRT dataset by running
   :cpp:func:`GDALDataset::BuildOverviews` or :program:`gdaladdo` with the
-  :decl_configoption:`VRT_VIRTUAL_OVERVIEWS` configuration option set to ``YES``.
+  :config:`VRT_VIRTUAL_OVERVIEWS` configuration option set to ``YES``:
+
+  .. config:: VRT_VIRTUAL_OVERVIEWS
+     :choices: YES, NO
+     :default: NO
+
   Virtual overviews have the least priority compared to the **Overview** element
   at the **VRTRasterBand** level, or to materialized .vrt.ovr files.
 
@@ -1269,12 +1280,22 @@ Security implications
 The ability to run Python code potentially opens the door to many potential
 vulnerabilities if the user of GDAL may process untrusted datasets. To avoid
 such issues, by default, execution of Python pixel function will be disabled.
-The execution policy can be controlled with the :decl_configoption:`GDAL_VRT_ENABLE_PYTHON`
-configuration option, which can accept 3 values:
+The execution policy can be controlled with the following
+configuration options:
 
-- YES: all VRT scripts are considered as trusted and their Python pixel functions will be run when pixel operations are involved.
-- NO: all VRT scripts are considered untrusted, and none Python pixelfunction will be run.
-- TRUSTED_MODULES (default setting): all VRT scripts with inline Python code in their PixelFunctionCode elements will be considered untrusted and will not be run. VRT scripts that use a PixelFunctionType of the form "module_name.function_name" will be considered as trusted, only if "module_name" is allowed in the :decl_configoption:`GDAL_VRT_TRUSTED_MODULES` configuration option. The value of this configuration option is a comma separated listed of trusted module names. The '*' wildcard can be used at the name of a string to match all strings beginning with the substring before the '*' character. For example 'every*' will make 'every.thing' or 'everything' module trusted. '*' can also be used to make all modules to be trusted. The ".*" wildcard can also be used to match exact modules or submodules names. For example 'every.*' will make 'every' and 'every.thing' modules trusted, but not 'everything'.
+-  .. config:: GDAL_VRT_ENABLE_PYTHON
+      :choices: YES, NO, TRUSTED_MODULES
+      :default: TRUSTED_MODULES
+
+      Determine what Python code can be called from GDAL.
+
+      - YES: all VRT scripts are considered as trusted and their Python pixel functions will be run when pixel operations are involved.
+      - NO: all VRT scripts are considered untrusted, and none Python pixelfunction will be run.
+      - TRUSTED_MODULES (default setting): all VRT scripts with inline Python code in their PixelFunctionCode elements will be considered untrusted and will not be run. VRT scripts that use a PixelFunctionType of the form "module_name.function_name" will be considered as trusted, only if "module_name" is allowed in the :config:`GDAL_VRT_TRUSTED_MODULES` configuration option.
+
+-  .. config:: GDAL_VRT_TRUSTED_MODULES
+
+      The value of this configuration option is a comma separated listed of trusted module names. The '*' wildcard can be used at the name of a string to match all strings beginning with the substring before the '*' character. For example 'every*' will make 'every.thing' or 'everything' module trusted. '*' can also be used to make all modules to be trusted. The ".*" wildcard can also be used to match exact modules or submodules names. For example 'every.*' will make 'every' and 'every.thing' modules trusted, but not 'everything'.
 
 .. _linking_mechanism_to_python_interpreter:
 
@@ -1298,7 +1319,7 @@ directories of the PATH and will try to determine the related shared object
 (it will retry with "python3" if no "python" has been found). If the above
 was not successful, then a predefined list of shared objects names
 will be tried. At the time of writing, the order of versions searched is
-3.8, 3.9, 3.10, 3.11, 3.12, 3.7, 3.6, 3.5, 3.4, 3.3, 3.2. Enabling debug information (CPL_DEBUG=ON) will
+3.8, 3.9, 3.10, 3.11, 3.12, 3.7, 3.6, 3.5, 3.4, 3.3, 3.2. Enabling debug information (:config:`CPL_DEBUG=ON`) will
 show which Python version is used.
 
 Just-in-time compilation
@@ -1775,9 +1796,7 @@ gdal_translate and gdalwarp, by default, increase the pool size to 450.
 
 Starting with GDAL 3.7, the :decl_configoption:`GDAL_MAX_DATASET_POOL_RAM_USAGE`
 configuration option to a number of bytes, to limit the RAM usage of opened
-datasets in the pool. The value can also be suffixed with ``MB`` or ``GB`` to
-respectively express it in megabytes or gigabytes. The default value is 25%
-of the usable physical RAM minus the GDAL_CACHEMAX value.
+datasets in the pool.
 
 Driver capabilities
 -------------------

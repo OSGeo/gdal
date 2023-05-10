@@ -6,7 +6,7 @@ BT -- VTP .bt Binary Terrain Format
 
 .. shortname:: BT
 
-.. built_in_by_default:: 
+.. built_in_by_default::
 
 The .bt format is used for elevation data in the VTP software. The
 driver includes support for reading and writing .bt 1.3 format including
@@ -23,7 +23,7 @@ Read/write imagery access with the GDAL .bt driver is terribly slow due
 to a very inefficient access strategy to this column oriented data. This
 could be corrected, but it would be a fair effort.
 
-NOTE: Implemented as ``gdal/frmts/raw/btdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/btdataset.cpp`.
 
 See Also: The `BT file
 format <http://www.vterrain.org/Implementation/Formats/BT.html>`__ is

@@ -18,14 +18,14 @@ These files normally have the extension .nos with associated .geo files
 containing georeferencing ... the .geo files are currently ignored.
 
 This driver is based on work by Mike Higgins. See the
-frmts/bsb/bsb_read.c files for details on patents affecting BSB format.
+:source_file:`frmts/bsb/bsb_read.c` files for details on patents affecting BSB format.
 
 It is possible to select an alternate color
 palette via the BSB_PALETTE configuration option. The default value is
 RGB. Other common values that can be found are : DAY, DSK, NGT, NGR,
 GRY, PRC, PRG...
 
-NOTE: Implemented as ``gdal/frmts/bsb/bsbdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/bsb/bsbdataset.cpp`.
 
 
 Driver capabilities

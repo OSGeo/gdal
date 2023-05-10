@@ -27,7 +27,7 @@ of other raster datasets. Starting with GDAL 3.4.0, when reading such
 files, a transparent conversion of the longitudes to [-180,180] will be
 performed and the data will be rewrapped around the prime meridian -
 the split&swap mode. This behavior can be disabled by setting the
-:decl_configoption:`GRIB_ADJUST_LONGITUDE_RANGE` configuration option to `NO`.
+:config:`GRIB_ADJUST_LONGITUDE_RANGE` configuration option to `NO`.
 
 There are several encoding schemes for raster data in GRIB format. Most
 common ones should be supported including PNG encoding. JPEG2000 encoded
@@ -94,33 +94,52 @@ Configuration options
 This paragraph lists the configuration options that can be set to alter
 the default behavior of the GRIB driver.
 
--  GRIB_NORMALIZE_UNITS=YES/NO : Default to YES. Can be
-   set to NO to avoid gdal to normalize units to metric. By default
-   (GRIB_NORMALIZE_UNITS=YES), temperatures are reported in degree
-   Celsius (°C). With GRIB_NORMALIZE_UNITS=NO, they are reported in
-   degree Kelvin (°K).
+-  .. config:: GRIB_ADJUST_LONGITUDE_RANGE
+      :choices: YES, NO
+      :default: YES
+      :since: 3.4.0
 
--  GRIB_RESOURCE_DIR=path : Path to a directory where grib2_*.csv tables
-   are located. If not specified, the GDAL_DATA configuration option (or hard
-   coded paths) used for all GDAL resources will be used.
+      Convert longitudes from [0, 360] to [-180, 180].
+
+-  .. config:: GRIB_NORMALIZE_UNITS
+      :choices: YES, NO
+      :default: YES
+
+      Can be
+      set to NO to avoid GDAL to normalize units to metric. By default
+      (:config:`GRIB_NORMALIZE_UNITS=YES`), temperatures are reported in degree
+      Celsius (°C). With :config:`GRIB_NORMALIZE_UNITS=NO`, they are reported in
+      Kelvin (K).
+
+-  .. config:: GRIB_RESOURCE_DIR
+      :choices: <path>
+
+      Path to a directory where grib2_*.csv tables
+      are located. If not specified, the :config:`GDAL_DATA` configuration option (or hard
+      coded paths) used for all GDAL resources will be used.
 
 Open options
 ------------
 
--  **USE_IDX=YES/NO**: (From GDAL 3.4) Enable automatic reading
-   of external wgrib2 external index files when available. Default is YES.
-   GDAL will look for a `<GRIB>.idx` in the same place as the dataset.
-   These files when combined with careful usage of the API or the
-   CLI tools allow a GRIBv2 file to be opened without reading all
-   the bands. In particular, this allows an orders of magnitude
-   faster extraction of select bands from large GRIBv2 files on
-   remote storage (like NOMADS on AWS S3).
-   In order to avoid unnecessary I/O only the text
-   description of the bands should be accessed as accessing the
-   metadata will require loading of the band header.
-   gdal_translate is supported but gdalinfo is not.
-   This option is ignored when using the multidimensional API (index is then
-   ignored)
+-  .. oo:: USE_IDX
+      :choices: YES, NO
+      :default: YES
+      :since: 3.4
+
+      Enable automatic reading
+      of external wgrib2 external index files when available.
+      GDAL will look for a `<GRIB>.idx` in the same place as the dataset.
+      These files when combined with careful usage of the API or the
+      CLI tools allow a GRIBv2 file to be opened without reading all
+      the bands. In particular, this allows an orders of magnitude
+      faster extraction of select bands from large GRIBv2 files on
+      remote storage (like NOMADS on AWS S3).
+      In order to avoid unnecessary I/O only the text
+      description of the bands should be accessed as accessing the
+      metadata will require loading of the band header.
+      gdal_translate is supported but gdalinfo is not.
+      This option is ignored when using the multidimensional API (index is then
+      ignored)
 
 
 GRIB2 write support
@@ -159,91 +178,134 @@ with the following creation options. Otherwise, GDAL will fill with
 default values, but readers might have trouble exploiting GRIB2 datasets
 generating with those defaults.
 
--  **DISCIPLINE**\ =integer: sets the Discipline field of Section 0.
-   Valid values are given by `Table
-   0.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table0-0.shtml>`__:
+-  .. co:: DISCIPLINE
+      :choices: <integer>
 
-   -  0: Meteorological Products. Default value
-   -  1: Hydrological Products
-   -  2: Land Surface Products
-   -  3, 4: Space Products
-   -  10: Oceanographic Product
+      sets the Discipline field of Section 0.
+      Valid values are given by `Table
+      0.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table0-0.shtml>`__:
 
--  **IDS**\ =string. String with different elements to fill the fields
-   of the Section 1 / Identification section. The value of that string
-   will typically be retrieved from the GRIB_IDS metadata item of an
-   existing GRIB product. For example "IDS=CENTER=7(US-NCEP) SUBCENTER=0
-   MASTER_TABLE=8 SIGNF_REF_TIME=1(Start_of_Forecast)
-   REF_TIME=2017-10-20T06:00:00Z PROD_STATUS=0(Operational)
-   TYPE=1(Forecast)". More formally, the format of the string is a list
-   of KEY=VALUE items, with space separator. The accepted keys are
-   CENTER, SUBCENTER, MASTER_TABLE, SIGNF_REF_TIME, REF_TIME,
-   PROD_STATUS and TYPE. Only the numerical part of the value is taken
-   into account (the precision between parenthesis will be ignored). It
-   is possible to use both this IDS creation option and a specific
-   IDS_xxx creation option that will override the potential
-   corresponding xxx key of IDS. For example with the previous example,
-   if both "IDS=CENTER=7(US-NCEP)..." and "IDS_CENTER=8" are define, the
-   actual value used with be 8.
--  **IDS_CENTER**\ =integer. Identification of originating/generating
-   center, according to `Table
-   0 <http://www.nco.ncep.noaa.gov/pmb/docs/on388/table0.html>`__.
-   Defaults to 255/Missing
--  **IDS_SUBCENTER**\ =integer. Identification of originating/generating
-   center, according to `Table
-   C <http://www.nco.ncep.noaa.gov/pmb/docs/on388/tablec.html>`__.
-   Defaults to 65535/Missing
--  **IDS_MASTER_TABLE**\ =integer. GRIB master tables version number,
-   according to `Table
-   1.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-0.shtml>`__.
-   Defaults to 2
--  **IDS_SIGNF_REF_TIME**\ =integer. Significance of reference time,
-   according to `Table
-   1.2 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-2.shtml>`__.
-   Defaults to 0/Analysis
--  **IDS_REF_TIME**\ =datetime as YYYY-MM-DD[THH:MM:SSZ]. Reference
-   time. Defaults to 1970-01-01T00:00:00Z
--  **IDS_PROD_STATUS**\ =integer. Production status of processed data,
-   according to `Table
-   1.3 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-3.shtml>`__.
-   Defaults to 255/Missing
--  **IDS_TYPE**\ =integer. Type of processed data, according to `Table
-   1.4 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-4.shtml>`__.
-   Defaults to 255/Missing
--  **PDS_PDTN**\ =integer. Product definition template number, according
-   to `Table
-   4.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-0.shtml>`__.
-   Defaults to 0/Analysis or forecast at a horizontal level or in a
-   horizontal layer at a point in time. If this default template number
-   is used, and none of PDS_TEMPLATE_NUMBERS or
-   PDS_TEMPLATE_ASSEMBLED_VALUES is specified, then a default template
-   definition is also used, with most fields set to Missing.
--  **PDS_TEMPLATE_NUMBERS**\ =string. Product definition template raw
-   numbers. This is a list of byte values (between 0 and 255 each),
-   space separated. The number of values and their semantics depends on
-   the template number specified by PDS_PDTN, and you have to consult
-   the template structures pointed by `Table
-   4.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-0.shtml>`__.
-   It might be easier to use the GRIB_PDS_TEMPLATE_NUMBERS reported by
-   existing GRIB2 products as the value for this item. If the template
-   structure is known by the reading side of the driver, an effort to
-   validate the number of template numbers against the template
-   structure is made (with warnings if more elements than needed are
-   specified, and error if less are specified). It is also possible to
-   define a template that is not or partially implemented by the reading
-   side of the driver.
--  **PDS_TEMPLATE_ASSEMBLED_VALUES**\ =string. Product definition
-   template assembled values. This is a list of values (with the range
-   of signed/unsigned 1, 2 or 4-byte wide integers, depending on the
-   item), space separated. The number of values and their semantics
-   depends on the template number specified by PDS_PDTN, and you have to
-   consult the template structures pointed by `Table
-   4.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-0.shtml>`__.
-   It might be easier to use the GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES
-   reported by existing GRIB2 products as the value for this item.
-   PDS_TEMPLATE_NUMBERS and PDS_TEMPLATE_ASSEMBLED_VALUES are exclusive.
-   To use this creation option, the template structure must be known by
-   the reading side of the driver.
+      -  0: Meteorological Products. Default value
+      -  1: Hydrological Products
+      -  2: Land Surface Products
+      -  3, 4: Space Products
+      -  10: Oceanographic Product
+
+-  .. co:: IDS
+
+      String with different elements to fill the fields
+      of the Section 1 / Identification section. The value of that string
+      will typically be retrieved from the GRIB_IDS metadata item of an
+      existing GRIB product. For example "IDS=CENTER=7(US-NCEP) SUBCENTER=0
+      MASTER_TABLE=8 SIGNF_REF_TIME=1(Start_of_Forecast)
+      REF_TIME=2017-10-20T06:00:00Z PROD_STATUS=0(Operational)
+      TYPE=1(Forecast)". More formally, the format of the string is a list
+      of KEY=VALUE items, with space separator. The accepted keys are
+      CENTER, SUBCENTER, MASTER_TABLE, SIGNF_REF_TIME, REF_TIME,
+      PROD_STATUS and TYPE. Only the numerical part of the value is taken
+      into account (the precision between parenthesis will be ignored). It
+      is possible to use both this IDS creation option and a specific
+      IDS_xxx creation option that will override the potential
+      corresponding xxx key of IDS. For example with the previous example,
+      if both "IDS=CENTER=7(US-NCEP)..." and "IDS_CENTER=8" are define, the
+      actual value used with be 8.
+
+-  .. co:: IDS_CENTER
+      :choices: <integer>
+      :default: 255/Missing
+
+      Identification of originating/generating
+      center, according to `Table
+      0 <http://www.nco.ncep.noaa.gov/pmb/docs/on388/table0.html>`__.
+
+-  .. co:: IDS_SUBCENTER
+      :choices: <integer>
+      :default: 65535/Missing
+
+      Identification of originating/generating
+      center, according to `Table
+      C <http://www.nco.ncep.noaa.gov/pmb/docs/on388/tablec.html>`__.
+
+-  .. co:: IDS_MASTER_TABLE
+      :choices: <integer>
+      :default: 2
+
+      GRIB master tables version number,
+      according to `Table
+      1.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-0.shtml>`__.
+
+-  .. co:: IDS_SIGNF_REF_TIME
+      :choices: <integer>
+      :default: 0/Analysis
+
+      Significance of reference time,
+      according to `Table
+      1.2 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-2.shtml>`__.
+
+-  .. co:: IDS_REF_TIME
+      :choices: <YYYY-MM-DD[THH:MM:SSZ]>
+      :default: 1970-01-01T00:00:00Z
+
+      Reference time.
+
+-  .. co:: IDS_PROD_STATUS
+     :choices: <integer>
+     :default: 255/Missing
+
+     Production status of processed data,
+     according to `Table
+     1.3 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-3.shtml>`__.
+
+-  .. co:: IDS_TYPE
+      :choices: <integer>
+      :default: 255/Missing
+
+      Type of processed data, according to `Table
+      1.4 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table1-4.shtml>`__.
+
+-  .. co:: PDS_PDTN
+      :choices: <integer>
+
+      Product definition template number, according
+      to `Table
+      4.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-0.shtml>`__.
+      Defaults to 0/Analysis or forecast at a horizontal level or in a
+      horizontal layer at a point in time. If this default template number
+      is used, and none of PDS_TEMPLATE_NUMBERS or
+      PDS_TEMPLATE_ASSEMBLED_VALUES is specified, then a default template
+      definition is also used, with most fields set to Missing.
+
+-  .. co:: PDS_TEMPLATE_NUMBERS
+
+      Product definition template raw
+      numbers. This is a list of byte values (between 0 and 255 each),
+      space separated. The number of values and their semantics depends on
+      the template number specified by PDS_PDTN, and you have to consult
+      the template structures pointed by `Table
+      4.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-0.shtml>`__.
+      It might be easier to use the GRIB_PDS_TEMPLATE_NUMBERS reported by
+      existing GRIB2 products as the value for this item. If the template
+      structure is known by the reading side of the driver, an effort to
+      validate the number of template numbers against the template
+      structure is made (with warnings if more elements than needed are
+      specified, and error if less are specified). It is also possible to
+      define a template that is not or partially implemented by the reading
+      side of the driver.
+
+-  .. co:: PDS_TEMPLATE_ASSEMBLED_VALUES
+
+      Product definition
+      template assembled values. This is a list of values (with the range
+      of signed/unsigned 1, 2 or 4-byte wide integers, depending on the
+      item), space separated. The number of values and their semantics
+      depends on the template number specified by PDS_PDTN, and you have to
+      consult the template structures pointed by `Table
+      4.0 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table4-0.shtml>`__.
+      It might be easier to use the GRIB_PDS_TEMPLATE_ASSEMBLED_VALUES
+      reported by existing GRIB2 products as the value for this item.
+      PDS_TEMPLATE_NUMBERS and PDS_TEMPLATE_ASSEMBLED_VALUES are exclusive.
+      To use this creation option, the template structure must be known by
+      the reading side of the driver.
 
 Data encoding
 ~~~~~~~~~~~~~
@@ -252,71 +314,94 @@ In GRIB2, a number of data encoding schemes exist (see `Section 5 /
 "Data representation
 section" <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_sect5.shtml>`__).
 By default, GDAL will select an appropriate data encoding that will
-preserve the range of input data. with the **DATA_ENCODING**, **NBITS**,
-**DECIMAL_SCALE_FACTOR**, **JPEG200_DRIVER**, **COMPRESSION_RATIO** and
-**SPATIAL_DIFFERENCING_ORDER** creation options.
+preserve the range of input data. with the :co:`DATA_ENCODING`, :co:`NBITS`,
+:co:`DECIMAL_SCALE_FACTOR`, :co:`JPEG2000_DRIVER`, :co:`COMPRESSION_RATIO` and
+:co:`SPATIAL_DIFFERENCING_ORDER` creation options.
 
 Users can override those defaults with the following creation options
 are:
 
--  **DATA_ENCODING**\ =AUTO / SIMPLE_PACKING / COMPLEX_PACKING /
-   IEEE_FLOATING_POINT / PNG / JPEG2000: Choice of the `Data
-   representation template number. Defaults to
-   AUTO. <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table5-0.shtml>`__
+-  .. co:: DATA_ENCODING
+      :choices: AUTO, SIMPLE_PACKING, COMPLEX_PACKING, IEEE_FLOATING_POINT, PNG, JPEG2000
+      :default: AUTO
 
-   -  In AUTO mode, COMPLEX_PACKING is selected if input band has a
-      nodata value. Otherwise if input band datatype is Float32 or
-      Float64, IEEE_FLOATING_POINT is selected. Otherwise SIMPLE_PACKING
-      is selected.
-   -  `SIMPLE_PACKING <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-0.shtml>`__:
-      use integer representation internally, with offset and decimal
-      and/or binary scaling. So can be used for any datatype.
-   -  COMPLEX_PACKING: evolution of SIMPLE_PACKING with nodata handling.
-      By default, a `non-spatial differencing encoding is
-      used <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-2.shtml>`__,
-      but if SPATIAL_DIFFERENCING_ORDER=1 or 2, `complex packing with
-      spatial
-      differencing <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-3.shtml>`__
-      is used
-   -  `IEEE_FLOATING_POINT <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-4.shtml>`__:
-      store values as IEEE-754 single or double precision numbers.
-   -  `PNG <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-41.shtml>`__:
-      uses the same preparation steps as SIMPLE_PACKING but with PNG
-      encoding of the integer values.
-   -  `JPEG2000 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-40.shtml>`__:
-      uses the same preparation steps as SIMPLE_PACKING but with
-      JPEG2000 encoding of the integer values.
+      Choice of the `Data representation template number
+      <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_table5-0.shtml>`__.
 
--  **NBITS**\ =integer between 1 to 31. Bit width for each sample value.
-   Might be only loosely honored by some DATA_ENCODING. If not
-   specified, the bit width is computed automatically from the range of
-   input values for integral data types, or default to 8 for
-   Float32/Float64.
--  **DECIMAL_SCALE_FACTOR**\ =integer_value. Input values are multiplied
-   by 10^DECIMAL_SCALE_FACTOR before integer encoding (and automatically
-   divised by this value at decoding, so this only affect precision).
-   For example, if the type of the data is a temperature, with floating
-   point data type, DECIMAL_SCALE_FACTOR=1 can be used to specify that
-   the data has a precision of 1/10 of degree. The default is 0 (no
-   premultiplication)
--  **SPATIAL_DIFFERENCING_ORDER**\ =0/1/2. Only used for
-   COMPLEX_PACKING. Defines the order of the spatial differencing. 0
-   means that the values are encoded independently, 1 means that the
-   difference of consecutive values is encoded and 2 means that the
-   difference of the difference of consecutive values is encoded.
-   Defaults to 0
--  **COMPRESSION_RATIO**\ =integer_value between 1 and 100. Defaults to
-   1 for lossless JPEG2000 encoding. Only used for JPEG2000 encoding. If
-   a value greater than 1 is specified, lossy JPEG2000 compression is
-   used. The value indicates the desired compression factor with
-   respected to uncompressed data. For example a value of 10 means that
-   the desired JPEG2000 codestream should be 10 times smaller than the
-   corresponding uncompressed file (with NBITS bits per pixel).
--  **JPEG2000_DRIVER**\ =JP2KAK/JP2OPENJPEG/JPEG2000/JP2ECW (possible
-   values depend on the actually available JPEG2000 driver in the GDAL
-   build). To specify which JPEG2000 driver should be used. If not
-   specified, drivers are searched in the order given in the
-   enumeration.
+      -  In AUTO mode, COMPLEX_PACKING is selected if input band has a
+         nodata value. Otherwise if input band datatype is Float32 or
+         Float64, IEEE_FLOATING_POINT is selected. Otherwise SIMPLE_PACKING
+         is selected.
+      -  `SIMPLE_PACKING <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-0.shtml>`__:
+         use integer representation internally, with offset and decimal
+         and/or binary scaling. So can be used for any datatype.
+      -  COMPLEX_PACKING: evolution of SIMPLE_PACKING with nodata handling.
+         By default, a `non-spatial differencing encoding is
+         used <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-2.shtml>`__,
+         but if SPATIAL_DIFFERENCING_ORDER=1 or 2, `complex packing with
+         spatial
+         differencing <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-3.shtml>`__
+         is used
+      -  `IEEE_FLOATING_POINT <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-4.shtml>`__:
+         store values as IEEE-754 single or double precision numbers.
+      -  `PNG <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-41.shtml>`__:
+         uses the same preparation steps as SIMPLE_PACKING but with PNG
+         encoding of the integer values.
+      -  `JPEG2000 <http://www.nco.ncep.noaa.gov/pmb/docs/grib2/grib2_doc/grib2_temp5-40.shtml>`__:
+         uses the same preparation steps as SIMPLE_PACKING but with
+         JPEG2000 encoding of the integer values.
+
+-  .. co:: NBITS
+      :choices: 1-31
+
+      Bit width for each sample value.
+      Might be only loosely honored by some :co:`DATA_ENCODING`. If not
+      specified, the bit width is computed automatically from the range of
+      input values for integral data types, or default to 8 for
+      Float32/Float64.
+
+-  .. co:: DECIMAL_SCALE_FACTOR
+      :choices: <integer>
+      :default: 0
+
+      Input values are multiplied
+      by 10^DECIMAL_SCALE_FACTOR before integer encoding (and automatically
+      divised by this value at decoding, so this only affect precision).
+      For example, if the type of the data is a temperature, with floating
+      point data type, DECIMAL_SCALE_FACTOR=1 can be used to specify that
+      the data has a precision of 1/10 of degree. The default is 0 (no
+      premultiplication)
+
+-  .. co:: SPATIAL_DIFFERENCING_ORDER
+      :choices: 0, 1, 2
+      :default: 0
+
+      Only used for
+      :co:`DATA_ENCODING=COMPLEX_PACKING`. Defines the order of the spatial differencing. 0
+      means that the values are encoded independently, 1 means that the
+      difference of consecutive values is encoded and 2 means that the
+      difference of the difference of consecutive values is encoded.
+
+-  .. co:: COMPRESSION_RATIO
+      :choices: 1-100
+      :default: 1
+
+      Defaults to
+      1 for lossless JPEG2000 encoding. Only used for JPEG2000 encoding. If
+      a value greater than 1 is specified, lossy JPEG2000 compression is
+      used. The value indicates the desired compression factor with
+      respected to uncompressed data. For example a value of 10 means that
+      the desired JPEG2000 codestream should be 10 times smaller than the
+      corresponding uncompressed file (with NBITS bits per pixel).
+
+-  .. co:: JPEG2000_DRIVER
+      :choices: JP2KAK, JP2OPENJPEG, JPEG2000, JP2ECW
+
+      (possible
+      values depend on the actually available JPEG2000 driver in the GDAL
+      build). To specify which JPEG2000 driver should be used. If not
+      specified, drivers are searched in the order given in the
+      enumeration.
 
 Data units
 ~~~~~~~~~~
@@ -324,14 +409,20 @@ Data units
 Internally GRIB stores values in the units of the international system
 (ie Metric system). So temperatures must be stored as Kelvin degrees.
 But on the reading side of the driver, fields with temperatures are
-exposed in Celsius degrees (unless the GRIB_NORMALIZE_UNITS
+exposed in Celsius degrees (unless the :config:`GRIB_NORMALIZE_UNITS`
 configuration option is set to NO). For consistency, the writing side of
 the driver also assumed that temperature (detected if the first value of
 a product definition template, ie the *Parameter category* is
 0=Temperature) values in the input dataset will be in Celsius degrees,
 and will automatically offset them to Kelvin degrees. It is possible to
-control that behavior by setting the **INPUT_UNIT** creation option to
-C (for Celsius) or K (for Kelvin). The default is C.
+control that behavior using the :co:`INPUT_UNIT` creation option:
+
+-  .. co:: INPUT_UNIT
+      :choices: C, K
+      :default: C
+
+      Used to specify temperature units when writing:
+      C (for Celsius) or K (for Kelvin).
 
 GRIB2 to GRIB2 conversions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

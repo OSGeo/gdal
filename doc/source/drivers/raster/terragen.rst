@@ -71,7 +71,7 @@ Roundtripping
 See Also
 --------
 
--  Implemented as ``gdal/frmts/terragen/terragendataset.cpp``.
+-  Implemented as :source_file:`frmts/terragen/terragendataset.cpp`.
 -  See `readme.txt <./readme.txt>`__ for installation and support
    information.
 -  `Terragen Terrain File

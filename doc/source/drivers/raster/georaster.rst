@@ -106,22 +106,43 @@ Where clause.
 Creation Options
 ----------------
 
--  **BLOCKXSIZE**: The number of pixel columns on raster block.
--  **BLOCKYSIZE**: The number of pixel rows on raster block.
--  **BLOCKBSIZE**: The number of bands on raster block.
--  **BLOCKING**: Decline the use of blocking (NO) or request an
-   automatic blocking size (OPTIMUM).
--  SRID: Assign a specific EPSG projection/reference system
-   identification to the GeoRaster.
--  **INTERLEAVE**: Band interleaving mode, BAND, LINE, PIXEL (or BSQ,
-   BIL, BIP) for band sequential, Line or Pixel interleaving.
-   Starting with GDAL 3.5, when copying from a source dataset with multiple bands
-   which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
-   is not specified, the source dataset INTERLEAVE will be automatically taken
-   into account, unless the COMPRESS creation option is specified.
--  **DESCRIPTION**: A simple description of a newly created table in SQL
-   syntax. If the table already exist, this create option will be
-   ignored, e.g.:
+-  .. co:: BLOCKXSIZE
+
+      The number of pixel columns on raster block.
+
+-  .. co:: BLOCKYSIZE
+
+      The number of pixel rows on raster block.
+
+-  .. co:: BLOCKBSIZE
+
+      The number of bands on raster block.
+
+-  .. co:: BLOCKING
+
+      Decline the use of blocking (NO) or request an
+      automatic blocking size (OPTIMUM).
+
+-  .. co:: SRID
+
+      Assign a specific EPSG projection/reference system
+      identification to the GeoRaster.
+
+-  .. co:: INTERLEAVE
+      :choices: BAND, LINE, PIXEL
+
+      Band interleaving mode, BAND, LINE, PIXEL (or BSQ,
+      BIL, BIP) for band sequential, Line or Pixel interleaving.
+      Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+      which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+      is not specified, the source dataset INTERLEAVE will be automatically taken
+      into account, unless the COMPRESS creation option is specified.
+
+-  .. co:: DESCRIPTION
+
+      A simple description of a newly created table in SQL
+      syntax. If the table already exist, this create option will be
+      ignored, e.g.:
 
 % gdal_translate -of georaster landsat_823.tif
 geor:scott/tiger@orcl,landsat,raster \\
@@ -129,65 +150,116 @@ geor:scott/tiger@orcl,landsat,raster \\
 MDSYS.SDO_GEORASTER)" \\
   -co INSERT="VALUES (1,'Scene 823',SDO_GEOR.INIT())"
 
--  **INSERT**: A simple SQL insert/values clause to inform the driver
-   what values to fill up when inserting a new row on the table, e.g.:
+-  .. co:: INSERT
+
+      A simple SQL insert/values clause to inform the driver
+      what values to fill up when inserting a new row on the table, e.g.:
 
 | % gdal_translate -of georaster landsat_825.tif
   geor:scott/tiger@orcl,landsat,raster \\
     -co INSERT="(ID, RASTER) VALUES (2,SDO_GEOR.INIT())"
 
--  **COMPRESS**: Compression options, JPEG-F, JP2-F, DEFLATE or NONE.
-   The JPEG-F options is lossy, meaning that the original pixel values
-   are changed. The JP2-F compression is lossless if JP2_QUALITY=100.
--  **GENPYRAMID**: Generate pyramid after a GeoRaster object have been
-   loaded to the database. The content of that parameter must be the
-   resampling method of choice NN (nearest neighbor) , BILINEAR,
-   BIQUADRATIC, CUBIC, AVERAGE4 or AVERAGE16. If GENPYRLEVELS is not
-   informed the PL/SQL function sdo_geor.generatePyramid will calculate
-   the number of levels to generate.
--  **GENPYRLEVELS**: Define the number of pyramid levels to be
-   generated. If GENPYRAMID is not informed the resample method NN
-   (nearest neighbor) will apply.
--  **QUALITY**: Quality compression option for JPEG ranging from 0 to
-   100. The default is 75.
--  **JP2_QUALITY=float_value,float_value,...** Only if COMPRESS=JP2-f :
-   Percentage between 0 and 100. A value of 50 means the file will be
-   half-size in comparison to uncompressed data, 33 means 1/3, etc..
-   Defaults to 25 (unless the dataset is made of a single band with
-   color table, in which case the default quality is 100).
+-  .. co:: COMPRESS
+      :choices: JPEG-F, JP2-F, DEFLATE, NONE
 
--  **JP2_REVERSIBLE=YES/NO** Only if COMPRESS=JP2-f : YES means use of
-   reversible 5x3 integer-only filter, NO use of the irreversible DWT
-   9-7. Defaults to NO (unless the dataset is made of a single band with
-   color table, in which case reversible filter is used).
+      Compression options.
+      The JPEG-F options is lossy, meaning that the original pixel values
+      are changed. The JP2-F compression is lossless if :co:`JP2_QUALITY=100`.
 
--  **JP2_RESOLUTIONS=int_value** Only if COMPRESS=JP2-f : Number of
-   resolution levels. Default value is selected such the smallest
-   overview of a tile is no bigger than 128x128.
+-  .. co:: GENPYRAMID
 
--  **JP2_BLOCKXSIZE=int_value** Only if COMPRESS=JP2-f : Tile width.
-   Defaults to 1024.
+      Generate pyramid after a GeoRaster object have been
+      loaded to the database. The content of that parameter must be the
+      resampling method of choice NN (nearest neighbor) , BILINEAR,
+      BIQUADRATIC, CUBIC, AVERAGE4 or AVERAGE16. If :co:`GENPYRLEVELS` is not
+      informed the PL/SQL function sdo_geor.generatePyramid will calculate
+      the number of levels to generate.
 
--  **JP2_BLOCKYSIZE=int_value** Only if COMPRESS=JP2-f : Tile height.
-   Defaults to 1024.
+-  .. co:: GENPYRLEVELS
 
--  **JP2_PROGRESSION=LRCP/RLCP/RPCL/PCRL/CPRL** Only if COMPRESS=JP2-f :
-   Progression order. Defaults to LRCP.
+      Define the number of pyramid levels to be
+      generated. If :co:`GENPYRAMID` is not informed the resample method NN
+      (nearest neighbor) will apply.
 
--  **NBITS**: Sub byte data type, options: 1, 2 or 4.
--  **SPATIALEXTENT**: Generate Spatial Extents. The default for that
-   options is TRUE, that means that this option only need to be informed
-   to force the Spatial Extent to remain as NULL. If EXTENTSRID is not
-   informed the Spatial Extent geometry will be generated with the same
-   SRID as the GeoRaster object.
--  **EXTENTSRID**: SRID code to be used on the Spatial Extent geometry.
-   If the table/column has already a spatial index, the value informed
-   should be the same as the SRID on the Spatial Extents of the other
-   existing GeoRaster objects, on which the spatial index is built.
--  **OBJECTTABLE**: To create RDT as SDO_RASTER object inform TRUE
-   otherwise, the default is FALSE and the RDT will be created as
-   regular relational tables. That does not apply for Oracle version
-   older than 11.
+-  .. co:: QUALITY
+      :choices: 0-100
+      :default: 75
+
+      Quality compression option for JPEG ranging from 0 to 100.
+
+-  .. co:: JP2_QUALITY
+      :choices: <float_value\,float_value\,...>
+
+      Only if :co:`COMPRESS=JP2-f`.
+      Percentage between 0 and 100. A value of 50 means the file will be
+      half-size in comparison to uncompressed data, 33 means 1/3, etc..
+      Defaults to 25 (unless the dataset is made of a single band with
+      color table, in which case the default quality is 100).
+
+-  .. co:: JP2_REVERSIBLE
+      :choices: YES, NO
+
+      Only if :co:`COMPRESS=JP2-f`. YES means use of
+      reversible 5x3 integer-only filter, NO use of the irreversible DWT
+      9-7. Defaults to NO (unless the dataset is made of a single band with
+      color table, in which case reversible filter is used).
+
+-  .. co:: JP2_RESOLUTIONS
+      :choices: <integer>
+
+      Only if :co:`COMPRESS=JP2-f`. Number of
+      resolution levels. Default value is selected such the smallest
+      overview of a tile is no bigger than 128x128.
+
+-  .. co:: JP2_BLOCKXSIZE
+      :choices: <integer>
+      :default: 1024
+
+      Only if :co:`COMPRESS=JP2-f`. Tile width.
+
+-  .. co:: JP2_BLOCKYSIZE
+      :choices: <integer>
+      :default: 1024
+
+      Only if :co:`COMPRESS=JP2-f`. Tile height.
+
+-  .. co:: JP2_PROGRESSION
+      :choices: LRCP, RLCP, RPCL, PCRL, CPRL
+      :default: LRCP
+
+      Only if :co:`COMPRESS=JP2-f`.
+      Progression order.
+
+-  .. co:: NBITS
+      :choices: 1, 2, 4
+
+      Sub byte data type.
+
+-  .. co:: SPATIALEXTENT
+      :choices: TRUE, FALSE
+      :default: TRUE
+
+      Generate Spatial Extents. The default value
+      is TRUE, which means that this option only need to be set
+      to force the Spatial Extent to remain as NULL. If :co:`EXTENTSRID` is not
+      set the Spatial Extent geometry will be generated with the same
+      SRID as the GeoRaster object.
+
+-  .. co:: EXTENTSRID
+
+      SRID code to be used on the Spatial Extent geometry.
+      If the table/column has already a spatial index, the value specified
+      should be the same as the SRID on the Spatial Extents of the other
+      existing GeoRaster objects, on which the spatial index is built.
+
+-  .. co:: OBJECTTABLE
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      To create RDT as SDO_RASTER object set to TRUE.
+      Otherwise, the RDT will be created as
+      regular relational tables. That does not apply for Oracle version
+      older than 11.
 
 Importing GeoRaster
 -------------------

@@ -8,7 +8,7 @@ NTv2 -- NTv2 Datum Grid Shift
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/raw/ntv2dataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/ntv2dataset.cpp`.
 
 Driver capabilities
 -------------------

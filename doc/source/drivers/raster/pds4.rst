@@ -60,15 +60,31 @@ Open options (vector only)
 When opening a PDS4 vector dataset, the following open options are
 available:
 
--  **LAT**\ =string. Name of a field containing a Latitude value.
-   Defaults to Latitude.
--  **LONG**\ =string. Name of a field containing a Longitude value.
-   Defaults to Longitude.
--  **ALT**\ =string. Name of a field containing a Altitude value.
-   Defaults to Altitude.
--  **WKT**\ =string. Name of a field containing a WKT value.
--  **KEEP_GEOM_COLUMNS**\ =YES/NO. Whether to expose original
-   x/y/geometry columns as regular fields. Defaults to NO.
+-  .. oo:: LAT
+      :default: Latitude
+
+      Name of a field containing a Latitude value.
+
+-  .. oo:: LONG
+      :default: Longitude
+
+      Name of a field containing a Longitude value.
+
+-  .. oo:: ALT
+
+      Name of a field containing a Altitude value.
+      Defaults to Altitude.
+
+-  .. oo:: WKT
+
+      Name of a field containing a WKT value.
+
+-  .. oo:: KEEP_GEOM_COLUMNS
+      :choices: YES, NO
+      :default: NO
+
+      Whether to expose original
+      x/y/geometry columns as regular fields.
 
 Creation support
 ----------------
@@ -78,78 +94,136 @@ new datasets through the CreateCopy() and Create() interfaces.
 
 When using CreateCopy(), gdal_translate or gdalwarp, an effort is made
 to preserve as much as possible of the original label when doing PDS4 to
-PDS4 conversions. This can be disabled with the USE_SRC_LABEL=NO
+PDS4 conversions. This can be disabled with the :co:`USE_SRC_LABEL=NO`
 creation option.
 
 The following dataset creation options are available:
 
 -  Raster only:
 
-   -  **IMAGE_FILENAME**\ =filename. Override default external image
-      filename.
-   -  **IMAGE_EXTENSION**\ =ext. Override default extension of the
-      external image filename. The default is 'img' for IMAGE_FORMAT=RAW
-      or 'tif' for IMAGE_FORMAT=GEOTIFF
-   -  **IMAGE_FORMAT**\ =RAW/GEOTIFF. Format of the image file. If using
-      RAW, the imagery is put in a raw file whose filename is the main
-      filename with a .img extension. If using GEOTIFF, the imagery is
-      put in a separate GeoTIFF file, whose filename is the main
-      filename with a .tif extension. Defaults to RAW
-   -  **INTERLEAVE**\ =BSQ/BIP/BIL. Pixel organization in the image
-      file. BSQ is Band SeQuential, BIP is Band Interleaved per Pixel
-      and BIL is Band Interleave Per Line. The default is BSQ. BIL is
-      not valid for IMAGE_FORMAT=GEOTIFF.
-      Starting with GDAL 3.5, when copying from a source dataset with multiple bands
-      which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
-      is not specified, the source dataset INTERLEAVE will be automatically taken
-      into account.
-   -  **USE_SRC_LABEL**\ =YES/NO. Whether to use the source label in
-      PDS4 to PDS4 conversions. Defaults to YES.
-   -  **ARRAY_TYPE**\ =Array/Array_2D/Array_2D_Image/Array_2D_Map/
-      Array_2D_Spectrum/Array_3D/Array_3D_Image/Array_3D_Movie/Array_3D_Spectrum.
-      To set the XML element that defines the type of array. Defaults to
-      Array_3D_Image. Using a Array_2D\* for a multiband image is not
-      supported. When using a Array_2D\* value, INTERLEAVE will be
-      ignored.
-   -  **ARRAY_IDENTIFIER**\ =string. (GDAL >= 3.0) Identifier to put in
-      the Array element.
-   -  **UNIT**\ =string. (GDAL >= 3.0) Content of the
-      Element_Array.unit. If not provided, the unit of the source band
-      in case of copying from another raster will be used (if present on
-      the source band).
-   -  **CREATE_LABEL_ONLY**\ =YES/NO. (GDAL >= 3.1) If set to YES, and used
-      in a gdal_translate / CreateCopy() context where the source dataset is
-      a ENVI, GeoTIFF, ISIS3, VICAR, FITS or PDS3 dataset, whose layout is
-      compatible of a raw binary format, as supported by PDS4, then only the
-      label XML file will be generated, and it will reference the raw binary
-      file of the source dataset. The IMAGE_FILENAME, IMAGE_FORMAT and
-      INTERLEAVE creation options are ignored in that situation.
+   -  .. co:: APPEND_SUBDATASET
+
+         See `Subdataset / multiple image support`_.
+
+   -  .. co:: IMAGE_FILENAME
+         :choices: <filename>
+
+         Override default external image filename.
+
+   -  .. co:: IMAGE_EXTENSION
+
+         Override default extension of the
+         external image filename. The default is 'img' for :co:`IMAGE_FORMAT=RAW`
+         or 'tif' for :co:`IMAGE_FORMAT=GEOTIFF`.
+
+   -  .. co:: IMAGE_FORMAT
+         :choices: RAW, GEOTIFF
+
+         Format of the image file. If using
+         RAW, the imagery is put in a raw file whose filename is the main
+         filename with a .img extension. If using GEOTIFF, the imagery is
+         put in a separate GeoTIFF file, whose filename is the main
+         filename with a .tif extension. Defaults to RAW
+
+   -  .. co:: INTERLEAVE
+         :choices: BSQ, BIP, BIL
+         :default: BSQ
+
+         Pixel organization in the image
+         file. BSQ is Band SeQuential, BIP is Band Interleaved per Pixel
+         and BIL is Band Interleave Per Line. BIL is not valid for :co:`IMAGE_FORMAT=GEOTIFF`.
+         Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+         which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+         is not specified, the source dataset INTERLEAVE will be automatically taken
+         into account.
+
+   -  .. co:: USE_SRC_LABEL
+         :choices: YES, NO
+         :default: YES
+
+         Whether to use the source label in PDS4 to PDS4 conversions.
+
+   -  .. co:: ARRAY_TYPE
+         :choices: Array, Array_2D, Array_2D_Image, Array_2D_Map, Array_2D_Spectrum, Array_3D, Array_3D_Image, Array_3D_Movie, Array_3D_Spectrum
+         :default: Array_3D_Image
+
+         To set the XML element that defines the type of array.
+         Using a Array_2D\* for a multiband image is not
+         supported. When using a Array_2D\* value, INTERLEAVE will be
+         ignored.
+
+   -  .. co:: ARRAY_IDENTIFIER
+         :choices: <string>
+         :since: 3.0
+
+         Identifier to put in the Array element.
+
+   -  .. co:: UNIT
+         :choices: <string>
+         :since: 3.0
+
+         Content of the
+         Element_Array.unit. If not provided, the unit of the source band
+         in case of copying from another raster will be used (if present on
+         the source band).
+
+   -  .. co:: CREATE_LABEL_ONLY
+         :choices: YES, NO
+         :since: 3.1
+
+         If set to YES, and used
+         in a gdal_translate / CreateCopy() context where the source dataset is
+         a ENVI, GeoTIFF, ISIS3, VICAR, FITS or PDS3 dataset, whose layout is
+         compatible of a raw binary format, as supported by PDS4, then only the
+         label XML file will be generated, and it will reference the raw binary
+         file of the source dataset. The IMAGE_FILENAME, IMAGE_FORMAT and
+         INTERLEAVE creation options are ignored in that situation.
 
 -  Raster and vector:
 
    -  **VAR_\***\ =string. If options like VAR_XXXX=yyyy are specified,
       any {XXXX} string in the template label will be replaced by the
       yyyy value.
-   -  **TEMPLATE**\ =filename. Template label to use. If not specified
-      and not creating from an existing PDS4 file, the
-      data/pds4_template.xml file will be used. For GDAL utilities to
-      find this default PDS4 template, GDAL's data directory should be
-      defined in your environment (typically on Windows builds). Consult
-      the
-      `wiki <https://trac.osgeo.org/gdal/wiki/FAQInstallationAndBuilding#HowtosetGDAL_DATAvariable>`__
-      for more information.
-   -  **LATITUDE_TYPE**\ =Planetocentric/Planetographic. Value of
-      latitude_type. Defaults to Planetocentric.
-   -  **LONGITUDE_DIRECTION**\ =Positive East/Positive West. Value of
-      longitude_direction. Defaults to Positive East.
-   -  **RADII**\ =semi_major_radius,semi_minor_radius. To override the
-      ones of the SRS. Note that the first value (semi_major_radius)
-      will be used to set the <pds:semi_major_radius> and
-      <pds:semi_minor_radius> XML elements, and that second value
-      (semi_minor_radius) will be used to set the <pds:polar_radius> XML
-      element.
-   -  **BOUNDING_DEGREES**\ =west_lon,south_lat,east_lon,north_lat.
-      Manually set bounding box
+
+   -  .. co:: TEMPLATE
+         :choices: <filename>
+
+          Template label to use. If not specified
+          and not creating from an existing PDS4 file, the
+          data/pds4_template.xml file will be used. For GDAL utilities to
+          find this default PDS4 template, GDAL's data directory should be
+          defined in your environment (typically on Windows builds). Consult
+          the
+          `wiki <https://trac.osgeo.org/gdal/wiki/FAQInstallationAndBuilding#HowtosetGDAL_DATAvariable>`__
+          for more information.
+
+   -  .. co:: LATITUDE_TYPE
+         :choices: Planetocentric, Planetographic
+         :default: Planetocentric
+
+
+         Value of latitude_type.
+
+   -  .. co:: LONGITUDE_DIRECTION
+         :choices: Positive East, Positive West.
+         :default: Positive East
+
+         Value of longitude_direction.
+
+   -  .. co:: RADII
+         :choices: semi_major_radius\,semi_minor_radius>
+
+         To override the
+         ones of the SRS. Note that the first value (semi_major_radius)
+         will be used to set the <pds:semi_major_radius> and
+         <pds:semi_minor_radius> XML elements, and that second value
+         (semi_minor_radius) will be used to set the <pds:polar_radius> XML
+         element.
+
+   -  .. co:: BOUNDING_DEGREES
+         :choices: west_lon\,south_lat\,east_lon\,north_lat
+
+         Manually set bounding box
 
 Layer creation options (vector/table datasets)
 ----------------------------------------------
@@ -158,47 +232,82 @@ Layer creation options (vector/table datasets)
 appending a new table to an existing table, the following layer creation
 options are available:
 
--  **TABLE_TYPE**\ =DELIMITED/CHARACTER/BINARY. Determines the type of
-   the PDS4 table to create. DELIMITED is the default and corresponds to
-   a CSV table file (with comma field separator). CHARACTER corresponds
-   to a fixed-width ASCII table. BINARY corresponds to a fixed-width
-   table. For fixed-width table, for String fields, an arbitrary width
-   of 64 bytes is used if there is no explicit field set in the OGR
-   field definition. Only DELIMITED supports arbitrary encoding of
-   geometry as a WKT string. The two other table types only support
-   points for geographic coordinates (LAT, LONG).
--  **LINE_ENDING**\ = CRLF/LF. Determines the line-ending character sequence.
-   Only applies to TABLE_TYPE=DELIMITED or CHARACTER. The default is CRLF
-   (Carriage Return and Line Feed). It can be set to LF for just Line Feed
-   character. (GDAL >= 3.4)
--  **GEOM_COLUMNS**\ =AUTO/WKT/LONG_LAT. Specify how the geometry is
-   encoded. In AUTO mode, for DELIMITED tables, if the input geometry is
-   Point with a geographic CRS attached to the laye, then a LONG and LAT
-   columns will be created to store the point coordinates. For other
-   geometry types, a WKT column is used. The WKT value of this option
-   can also be used to force a WKT column to be created when a LONG and
-   LAT columns would have been possible. For fixed-width table types,
-   only AUTO and LONG_LAT are possible.
--  **CREATE_VRT**\ =YES/NO. Defaults to YES for a DELIMITED table. In
-   that case, a OGR VRT (XML file) will be created along-side the .csv
-   file.
--  **LAT**\ =string. Name of a field containing a Latitude value.
-   Defaults to Latitude. Only used when the geometry comes from a Point
-   layer with geographic CRS
--  **LONG**\ =string. Name of a field containing a Longitude value.
-   Defaults to Longitude. Only used when the geometry comes from a Point
-   layer with geographic CRS
--  **ALT**\ =string. Name of a field containing a Altitude value.
-   Defaults to Altitude. Only used when the geometry comes from a Point
-   layer with geographic CRS
--  **WKT**\ =string. Name of a field containing a WKT value.
--  **SAME_DIRECTORY**\ =YES/NO. Whether table files should be created in
-   the same directory, or in a subdirectory. Defaults to NO, that is
-   that table files will be created in a subdiretory whose name is the
-   basename of the XML file. For example if creating a "foo.xml" PDS4
-   dataset, table files will be created in the "foo" subdirectory by
-   default. If this option is set to YES, they will be created in the
-   same directory as "foo.xml".
+-  .. lco:: TABLE_TYPE
+      :choices: DELIMITED, CHARACTER, BINARY.
+
+      Determines the type of
+      the PDS4 table to create. DELIMITED is the default and corresponds to
+      a CSV table file (with comma field separator). CHARACTER corresponds
+      to a fixed-width ASCII table. BINARY corresponds to a fixed-width
+      table. For fixed-width table, for String fields, an arbitrary width
+      of 64 bytes is used if there is no explicit field set in the OGR
+      field definition. Only DELIMITED supports arbitrary encoding of
+      geometry as a WKT string. The two other table types only support
+      points for geographic coordinates (LAT, LONG).
+
+-  .. lco:: LINE_ENDING
+      :choices: CRLF, LF
+      :default: CRLF
+      :since: 3.4
+
+      Determines the line-ending character sequence.
+      Only applies if :lco:`TABLE_TYPE` is DELIMITED or CHARACTER.
+
+-  .. lco:: GEOM_COLUMNS
+      :choices: AUTO, WKT, LONG_LAT
+
+      Specify how the geometry is
+      encoded. In AUTO mode, for DELIMITED tables, if the input geometry is
+      Point with a geographic CRS attached to the laye, then a LONG and LAT
+      columns will be created to store the point coordinates. For other
+      geometry types, a WKT column is used. The WKT value of this option
+      can also be used to force a WKT column to be created when a LONG and
+      LAT columns would have been possible. For fixed-width table types,
+      only AUTO and LONG_LAT are possible.
+
+-  .. lco:: CREATE_VRT
+      :choices: YES, NO
+
+      Defaults to YES for a DELIMITED table. In
+      that case, a OGR VRT (XML file) will be created along-side the .csv
+      file.
+
+-  .. lco:: LAT
+      :default: Latitude
+
+      Name of a field containing a Latitude value.
+      Only used when the geometry comes from a Point
+      layer with geographic CRS
+
+-  .. lco:: LONG
+      :default: Longitude
+
+      Name of a field containing a Longitude value.
+      Only used when the geometry comes from a Point
+      layer with geographic CRS
+
+-  .. lco:: ALT
+      :default: Altitude
+
+      Name of a field containing a Altitude value.
+      Only used when the geometry comes from a Point
+      layer with geographic CRS
+
+-  .. lco:: WKT
+
+      Name of a field containing a WKT value.
+
+-  .. lco:: SAME_DIRECTORY
+      :choices: YES, NO
+      :default: NO
+
+      Whether table files should be created in
+      the same directory, or in a subdirectory. Defaults to NO, that is
+      that table files will be created in a subdirectory whose name is the
+      basename of the XML file. For example if creating a "foo.xml" PDS4
+      dataset, table files will be created in the "foo" subdirectory by
+      default. If this option is set to YES, they will be created in the
+      same directory as "foo.xml".
 
 Subdataset / multiple image support
 -----------------------------------
@@ -208,13 +317,14 @@ as separate subdatasets (typically the main subdataset is an Array3D,
 and backplanes are represented as Array2D).
 
 Since GDAL 3.0, creation of new datasets with subdatasets is supported
-(through the APPEND_SUBDATASET=YES creation option). One important
+(through the :co:`APPEND_SUBDATASET=YES` creation option). One important
 restriction is that, given that the georeferencing information in the
 PDS4 XML label is global for the whole dataset, all subdatasets must
 share the same georeferencing information: coordinate reference system,
 georegistration and resolution. Appending to both RAW and GEOTIFF raster
 is supported. In append mode, most creation options are ignored, except
-INTERLEAVE (if GeoTIFF output image), ARRAY_TYPE and ARRAY_IDENTIFIER.
+:co:`INTERLEAVE` (if GeoTIFF output image), :co:`ARRAY_TYPE` and
+:co:`ARRAY_IDENTIFIER`.
 
 PDS4 raster examples
 --------------------
@@ -433,7 +543,7 @@ tracker, as explained on the `wiki <https://trac.osgeo.org/gdal/wiki>`__
 See Also:
 ---------
 
--  Implemented as ``gdal/frmts/pds/pds4dataset.cpp``.
+-  Implemented as :source_file:`frmts/pds/pds4dataset.cpp`.
 -  `Official
    documentation <https://pds.nasa.gov/pds4/doc/index.shtml>`__
 -  `Schemas, including the cartography

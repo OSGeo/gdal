@@ -8,7 +8,7 @@ GSC -- GSC Geogrid
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/raw/gscdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/gscdataset.cpp`.
 
 Driver capabilities
 -------------------

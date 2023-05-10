@@ -257,20 +257,26 @@ Open options
 
 The following dataset open options are available:
 
-- **USE_ZMETADATA=YES/NO**: (defaults to YES)
-  Whether to use consolidated metadata from .zmetadata (Zarr V2 only).
+-  .. oo:: USE_ZMETADATA
+      :choices: YES, NO
+      :default: YES
 
-- **CACHE_TILE_PRESENCE=YES/NO**: (defaults to NO)
-  Whether to establish an initial listing of
-  present tiles. This cached listing will be stored in a .gmac file next to the
-  .zarray / .array.json.gmac file if they can be written. Otherwise the
-  :decl_configoption:`GDAL_PAM_PROXY_DIR` config option should be set to an
-  existing directory where those cached files will be stored. Once the cached
-  listing has been established, the open option no longer needs to be specified.
-  Note: the runtime of this option can be in minutes or more for large datasets
-  stored on remote file systems. And for network file systems, this will rarely
-  work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
-  /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
+      Whether to use consolidated metadata from .zmetadata (Zarr V2 only).
+
+-  .. oo:: CACHE_TILE_PRESENCE
+      :choices: YES, NO
+      :default: NO
+
+      Whether to establish an initial listing of
+      present tiles. This cached listing will be stored in a .gmac file next to the
+      .zarray / .array.json.gmac file if they can be written. Otherwise the
+      :config:`GDAL_PAM_PROXY_DIR` config option should be set to an
+      existing directory where those cached files will be stored. Once the cached
+      listing has been established, the open option no longer needs to be specified.
+      Note: the runtime of this option can be in minutes or more for large datasets
+      stored on remote file systems. And for network file systems, this will rarely
+      work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
+      /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
 
 Multi-threaded caching
 ----------------------
@@ -288,7 +294,7 @@ The options that can be passed to the methods are:
   cache size.
 
 - **NUM_THREADS=integer or ALL_CPUS**: Number of threads to use in parallel.
-  If not specified, the :decl_configoption:`GDAL_NUM_THREADS` configuration option
+  If not specified, the :config:`GDAL_NUM_THREADS` configuration option
   will be taken into account.
 
 Creation options
@@ -298,84 +304,152 @@ The following options are creation options of the classic raster API, or
 array-level creation options for the multidimensional API (must be prefixed
 with ``ARRAY:`` using :program:`gdalmdimtranslate`):
 
-- **COMPRESS=[NONE/BLOSC/ZLIB/GZIP/LZMA/ZSTD/LZ4]**: Compression method.
-  Defaults to NONE.
+-  .. co:: COMPRESS
+      :choices: NONE, BLOSC, ZLIB, GZIP, LZMA, ZSTD, LZ4
+      :default: NONE
 
-- **FILTER=[NONE/DELTA]**: Filter method. Only support for FORMAT=ZARR_V2.
-  Defaults to NONE.
+      Compression method.
 
-- **BLOCKSIZE=string**: Comma separated list of chunk size along each dimension.
-  If not specified, the fastest varying 2 dimensions (the last ones) used a
-  block size of 256 samples, and the other ones of 1.
+-  .. co:: FILTER
+      :choices: NONE, DELTA
+      :default: NONE
 
-- **CHUNK_MEMORY_LAYOUT=C/F**: Whether to use C (row-major) order or F (column-major)
-  order in encoded chunks. Only useful when using compression. Defaults to C.
-  Changing to F may improve depending on array content.
+      Filter method. Only support for FORMAT=ZARR_V2.
 
-- **STRING_FORMAT=ASCII/UNICODE**: Whether to use the numpy type for ASCII-only
-  strings or Unicode strings. Unicode strings take 4 byte per character.
-  Defaults to ASCII.
+-  .. co:: BLOCKSIZE
+      :choices: <string>
 
-- **DIM_SEPARATOR=string**: Dimension separator in chunk filenames.
-  Default to decimal point for ZarrV2 and slash for ZarrV3.
+      Comma separated list of chunk size along each dimension.
+      If not specified, the fastest varying 2 dimensions (the last ones) used a
+      block size of 256 samples, and the other ones of 1.
 
-- **BLOSC_CNAME=bloclz/lz4/lz4hc/snappy/zlib/zstd**: Blosc compressor name.
-  Only used when COMPRESS=BLOSC. Defaults to lz4.
+-  .. co:: CHUNK_MEMORY_LAYOUT
+      :choices: C, F
+      :default: C
 
-- **BLOSC_CLEVEL=integer** [1-9]: Blosc compression level. Only used when COMPRESS=BLOSC.
-  Defaults to 5.
+      Whether to use C (row-major) order or F (column-major)
+      order in encoded chunks. Only useful when using compression.
+      Changing to F may improve depending on array content.
 
-- **BLOSC_SHUFFLE=NONE/BYTE/BIT**: Type of shuffle algorithm. Only used when COMPRESS=BLOSC.
-  Defaults to BYTE.
+-  .. co:: STRING_FORMAT
+      :choices: ASCII, UNICODE
+      :default: ASCII
 
-- **BLOSC_BLOCKSIZE=integer**: Blosc block size. Only used when COMPRESS=BLOSC.
-  Defaults to 0.
+      Whether to use the numpy type for ASCII-only
+      strings or Unicode strings. Unicode strings take 4 byte per character.
 
-- **BLOSC_NUM_THREADS=string**: Number of worker threads for compression.
-  Can be set to ``ALL_CPUS``. Only used when COMPRESS=BLOSC. Defaults to 1.
+-  .. co:: DIM_SEPARATOR
+      :choices: <string>
 
-- **ZLIB_LEVEL=integer** [1-9]: ZLib compression level. Only used when COMPRESS=ZLIB.
-  Defaults to 6.
+      Dimension separator in chunk filenames.
+      Default to decimal point for ZarrV2 and slash for ZarrV3.
 
-- **GZIP_LEVEL=integer** [1-9]: GZip compression level. Only used when COMPRESS=GZIP.
-  Defaults to 6.
+-  .. co:: BLOSC_CNAME
+      :choices: bloclz, lz4, lz4hc, snappy, zlib, zstd
+      :default: lz4
 
-- **LZMA_PRESET=integer** [0-9]: LZMA compression level. Only used when COMPRESS=LZMA.
-  Defaults to 6.
+      Blosc compressor name. Only used when :co:`COMPRESS=BLOSC`.
 
-- **LZMA_DELTA=integer** : Delta distance in byte. Only used when COMPRESS=LZMA.
-  Defaults to 1.
+-  .. co:: BLOSC_CLEVEL
+      :choices: 1-9
+      :default: 5
 
-- **ZSTD_LEVEL=integer** [1-22]: ZSTD compression level. Only used when COMPRESS=ZSTD.
-  Defaults to 13.
+      Blosc compression level. Only used when :co:`COMPRESS=BLOSC`.
 
-- **LZ4_ACCELERATION=integer** [1-]: LZ4 acceleration factor.
-  The higher, the less compressed. Only used when COMPRESS=LZ4.
-  Defaults to 1 (the fastest).
+-  .. co:: BLOSC_SHUFFLE
+      :choices: NONE, BYTE, BIT
+      :default: BYTE
 
-- **DELTA_DTYPE=string** [1-]: Data type following NumPy array protocol type
-  string (typestr) format (https://numpy.org/doc/stable/reference/arrays.interface.html#arrays-interface).
-  Only ``u1``, ``i1``, ``u2``, ``i2``, ``u4``, ``i4``, ``u8``, ``i8``, ``f4``, ``f8``,
-  potentially prefixed with the endianness flag (``<`` for little endian, ``>`` for big endian)
-  are supported.
-  Only used when FILTER=DELTA. Defaults to the native data type.
+      Type of shuffle algorithm. Only used when :co:`COMPRESS=BLOSC`.
+
+-  .. co:: BLOSC_BLOCKSIZE
+      :choices: <integer>
+      :default: 0
+
+      Blosc block size. Only used when :co:`COMPRESS=BLOSC`.
+
+-  .. co:: BLOSC_NUM_THREADS
+      :choices: <integer>, ALL_CPUS
+      :default: 1
+
+      Number of worker threads for compression.
+      Only used when :co:`COMPRESS=BLOSC`.
+
+-  .. co:: ZLIB_LEVEL
+      :choices: 1-9
+      :default: 6
+
+      ZLib compression level. Only used when :co:`COMPRESS=ZLIB`.
+
+-  .. co:: GZIP_LEVEL
+      :choices: 1-9
+      :default: 6
+
+      GZip compression level. Only used when :co:`COMPRESS=GZIP`.
+
+-  .. co:: LZMA_PRESET
+      :choices: 0-9
+      :default: 6
+
+      LZMA compression level. Only used when :co:`COMPRESS=LZMA`.
+
+-  .. co:: LZMA_DELTA
+      :choices: <integer>
+      :default: 1
+
+      Delta distance in byte. Only used when :co:`COMPRESS=LZMA`.
+
+-  .. co:: ZSTD_LEVEL
+      :choices: 1-22
+      :default: 13
+
+      ZSTD compression level. Only used when :co:`COMPRESS=ZSTD`.
+
+-  .. co:: LZ4_ACCELERATION
+      :choices: <integer> [1-]
+      :default: 1
+
+      LZ4 acceleration factor.
+      The higher, the less compressed. Only used when :co:`COMPRESS=LZ4`.
+      Defaults to 1 (the fastest).
+
+-  .. co:: DELTA_DTYPE
+      :choices: <string>
+
+      Data type following NumPy array protocol type
+      string (typestr) format (https://numpy.org/doc/stable/reference/arrays.interface.html#arrays-interface).
+      Only ``u1``, ``i1``, ``u2``, ``i2``, ``u4``, ``i4``, ``u8``, ``i8``, ``f4``, ``f8``,
+      potentially prefixed with the endianness flag (``<`` for little endian, ``>`` for big endian)
+      are supported.
+      Only used when :co:`FILTER=DELTA`. Defaults to the native data type.
 
 
 The following options are creation options of the classic raster API, or
 dataset-level creation options for the multidimensional API :
 
-- **FORMAT=[ZARR_V2/ZARR_V3]**: Defaults to ZARR_V2
+-  .. co:: FORMAT
+      :choices: ZARR_V2, ZARR_V3
+      :default: ZARR_V2
 
-- **CREATE_ZMETADATA=[YES/NO]**: Whether to create consolidated metadata into
-  .zmetadata (Zarr V2 only). Defaults to YES.
+-  .. co:: CREATE_ZMETADATA
+      :choices: YES, NO
+      :default: YES
 
+      Whether to create consolidated metadata into
+      .zmetadata (Zarr V2 only).
 
 The following options are creation options of the classic raster API only:
 
-- **ARRAY_NAME=string**: Array name. If not specified, deduced from the filename.
+-  .. co:: ARRAY_NAME
+      :choices: <string>
 
-- **APPEND_SUBDATASET=YES/NO**: Whether to append the new dataset to an existing
-  Zarr hierarchy. Defaults to NO.
+      Array name. If not specified, deduced from the filename.
+
+-  .. co:: APPEND_SUBDATASET
+      :choices: YES, NO
+      :default: NO
+
+      Whether to append the new dataset to an existing Zarr hierarchy.
 
 
 Examples

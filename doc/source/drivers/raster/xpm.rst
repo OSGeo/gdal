@@ -19,7 +19,7 @@ files) nor does it support XPM files with more than one character per
 pixel. New XPM files must be colormapped or greyscale, and colortables
 will be reduced to about 70 colors automatically.
 
-NOTE: Implemented as ``gdal/frmts/xpm/xpmdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/xpm/xpmdataset.cpp`.
 
 Driver capabilities
 -------------------

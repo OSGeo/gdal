@@ -34,21 +34,33 @@ Creation Issues
 
 Creation Options:
 
--  **PIXELTYPE=value**:.By setting this to SIGNEDBYTE, a new Byte file
-   can be forced to be written as signed byte.
-   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
-   be used.
--  **PROJ=name**: Name of the ERS projection string to
-   use. Common examples are NUTM11, or GEODETIC. If defined, this will
-   override the value computed by SetProjection() or SetGCPs().
--  **DATUM=name**: Name of the ERS datum string to use.
-   Common examples are WGS84 or NAD83. If defined, this will override
-   the value computed by SetProjection() or SetGCPs().
--  **UNITS=name**: Name of the ERS projection units to
-   use : METERS (default) or FEET (us-foot). If defined, this will
-   override the value computed by SetProjection() or SetGCPs().
+-  .. co:: PIXELTYPE
+
+      By setting this to SIGNEDBYTE, a new Byte file
+      can be forced to be written as signed byte.
+      Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+      be used.
+
+-  .. co:: PROJ
+
+      Name of the ERS projection string to
+      use. Common examples are NUTM11, or GEODETIC. If defined, this will
+      override the value computed by SetProjection() or SetGCPs().
+
+-  .. co:: DATUM
+
+      Name of the ERS datum string to use.
+      Common examples are WGS84 or NAD83. If defined, this will override
+      the value computed by SetProjection() or SetGCPs().
+
+-  .. co:: UNITS
+      :choices: METERS, FEET
+      :default: METERS
+
+      Name of the ERS projection units to use : METERS (default) or FEET (us-foot). If defined, this will
+      override the value computed by SetProjection() or SetGCPs().
 
 See Also
 --------
 
--  Implemented as ``gdal/frmts/ers/ersdataset.cpp``.
+-  Implemented as :source_file:`frmts/ers/ersdataset.cpp`.

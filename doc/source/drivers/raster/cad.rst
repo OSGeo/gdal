@@ -18,7 +18,7 @@ which exist in DWG file as separate layers. The driver try to get
 spatial reference and other methadata from DWG Image description and set
 it to GDALDataset.
 
-NOTE: Implemented as ``ogr/ogrsf_frmts/cad/gdalcaddataset.cpp``.
+NOTE: Implemented as :source_file:`ogr/ogrsf_frmts/cad/gdalcaddataset.cpp`.
 
 Driver capabilities
 -------------------

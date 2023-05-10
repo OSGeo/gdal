@@ -60,18 +60,25 @@ Open options
 
 .. versionadded:: 3.7
 
-- **VALIDATE=YES/NO**: Whether TRE and DES content should be validated upon
-  dataset opening. If errors are found, CE_Failure errors are emitted, but
-  dataset opening does not fail, unless the FAIL_IF_VALIDATION_ERROR=YES
-  open option is set.
-  Note that validation is partial, and limited to the constraints documented in
-  the nitf_spec.xml configuration file.
-  Details of errors are also logged in ``<error>`` elements in the ``xml:TRE``
-  and ``xml:DES`` metadata domains.
-  Default is NO.
-- **FAIL_IF_VALIDATION_ERROR=YES/NO**: Whether validation errors reported by
-  the VALIDATE=YES open option should prevent the dataset from being opened.
-  Default is NO.
+- .. oo:: VALIDATE
+     :choices: YES, NO
+     :default: NO
+
+     Whether TRE and DES content should be validated upon
+     dataset opening. If errors are found, CE_Failure errors are emitted, but
+     dataset opening does not fail, unless the FAIL_IF_VALIDATION_ERROR=YES
+     open option is set.
+     Note that validation is partial, and limited to the constraints documented in
+     the nitf_spec.xml configuration file.
+     Details of errors are also logged in ``<error>`` elements in the ``xml:TRE``
+     and ``xml:DES`` metadata domains.
+
+- .. oo:: FAIL_IF_VALIDATION_ERROR
+     :choices: YES, NO
+     :default: NO
+
+     Whether validation errors reported by
+     the :oo:`VALIDATE=YES` open option should prevent the dataset from being opened.
 
 Creation Issues
 ---------------
@@ -92,111 +99,199 @@ creation options are supplied.
 
 Creation Options:
 
--  Most file header, imagery header metadata and security fields can be
-   set with appropriate **creation options** (although they are reported
-   as metadata item, but must not be set as metadata). For instance
-   setting
-   `"FTITLE=Image of abandoned missile silo south west of Karsk"` in
-   the creation option list would result in setting of the FTITLE field
-   in the NITF file header. Use the official field names from the NITF
-   specification document; do not put the "NITF\_" prefix that is
-   reported when asking the metadata list.
--  **IC=NC/C3/M3/C8** : Set the compression method.
+Most file header, imagery header metadata and security fields can be
+set with appropriate **creation options** (although they are reported
+as metadata item, but must not be set as metadata). For instance
+setting
+`"FTITLE=Image of abandoned missile silo south west of Karsk"` in
+the creation option list would result in setting of the FTITLE field
+in the NITF file header. Use the official field names from the NITF
+specification document; do not put the "NITF\_" prefix that is
+reported when asking the metadata list.
 
-   -  NC is the default value, and means no compression.
-   -  C3 means JPEG compression and is only available for the
-      CreateCopy() method. The QUALITY and PROGRESSIVE JPEG-specific
-      creation options can be used. See the :ref:`raster.jpeg` driver.
-      Multi-block images can be written.
-   -  M3 is a variation of C3. The only difference is that a block map
-      is written, which allow for fast seeking to any block.
-   -  C8 means JPEG2000 compression (one block) and is available for
-      CreateCopy() and/or Create() methods. See below paragraph for specificities.
+-  .. co:: IC
+      :choices: NC, C3, M3, C8
+      :default: NC
 
--  **NUMI=n** : Number of images. Default = 1.
-   See :ref:`Advanced GDAL NITF Driver Information <raster.nitf_advanced>` for
-   the procedure to follow to write several images in a NITF file.
--  **WRITE_ALL_IMAGES=YES/NO**: (GDAL >= 3.4)
-   (Only taken into account if NUMI > 1, and on a new NITF file).
-   When set to NO (the default), this causes the driver to only write the first
-   image segment and reserve just the space for extra NUMI-1 images in the file header.
-   When WRITE_ALL_IMAGES=YES, the space for all images is allocated, which is
-   only compatible with IC=NC (uncompressed images).
-   (Behavior with GDAL < 3.4 was similar to WRITE_ALL_IMAGES=YES)
--  **ICORDS=G/D/N/S**: Set to "G" to ensure that space will be reserved
-   for geographic corner coordinates (in DMS) to be set later via
-   SetGeoTransform(), set to "D" for geographic coordinates in decimal
-   degrees, set to "N" for UTM WGS84 projection in Northern hemisphere
-   or to "S" for UTM WGS84 projection in southern hemisphere (Only
-   needed for Create() method, not CreateCopy()). If you Create() a new
-   NITF file and have specified "N" or "S" for ICORDS, you need to call
-   later the SetProjection method with a consistent UTM SRS to set the
-   UTM zone number (otherwise it will default to zone 0).
-   Starting with GDAL 3.5.1, when using the CreateCopy() interface with an
-   image whose source SRS is a UTM WGS84 projection and specifying ICORDS=G or D,
-   the NITF driver will reproject the image corner coordinates to longitude-latitude.
-   This can be useful when it is not possible to encode in the IGEOLO field
-   the coordinates of an image in the equatorial zone, whose one of the northing
-   expressed in a UTM northern hemisphere projection is below -1e6.
--  **IGEOLO=string**: (GDAL >= 3.5.1) Image corner coordinates specified as a
-   string of 60 characters (cf MIL-STD-2500C for expected format). Normally
-   automatically set from source geotransform and SRS when using the CreateCopy()
-   interface. If specified, ICORDS must also be specified.
--  **FHDR**: File version can be selected though currently the only two
-   variations supported are "NITF02.10" (the default), and "NSIF01.00".
--  **IREP**: Set to "RGB/LUT" to reserve space for a color table for
-   each output band. (Only needed for Create() method, not
-   CreateCopy()).
--  **IREPBAND**: Comma separated list of band IREPBANDs
-   in band order.
--  **ISUBCAT**: Comma separated list of band ISUBCATs in
-   band order.
--  **LUT_SIZE**: Set to control the size of pseudocolor tables for
-   RGB/LUT bands. A value of 256 assumed if not present. (Only needed
-   for Create() method, not CreateCopy()).
--  **BLOCKXSIZE=n**: Set the block width.
--  **BLOCKYSIZE=n**: Set the block height.
--  **BLOCKA_*=**: If a complete set of BLOCKA options is provided with
-   exactly the same organization as the NITF_BLOCKA metadata reported
-   when reading an NITF file with BLOCKA TREs then a file will be
-   created with BLOCKA TREs.
--  **TRE=tre-name=tre-contents**: One or more TRE creation options may
-   be used provided to write arbitrary user defined TREs to the image
-   header. The tre-name should be at most six characters, and the
-   tre-contents should be "backslash escaped" if it contains backslashes
-   or zero bytes. The argument is the same format as returned in the TRE
-   metadata domain when reading.
--  **FILE_TRE=tre-name=tre-contents**: Similar to above
-   options, except that the TREs are written in the file header, instead
-   of the image header.
--  **RESERVE_SPACE_FOR_TRE_OVERFLOW=YES/NO**: (GDAL >= 3.6)
-   Set to true to reserve space for IXSOFL when writing a TRE_OVERFLOW DES.
--  **DES=des-name=des-contents**: One or more DES creation options may
-   be provided to write arbitrary user defined DESs to the NITF file.
-   The des-name should be at most 25 characters, and the des-contents
-   should be "backslash escaped" if it contains backslashes or zero
-   bytes, as in CPLEscapeString(str, -1, CPLES_BackslashQuotable).
-   The des-contents must contain standard DES fields, starting
-   with DESVER (See MIL-STD-2500C).  DESs are not currently copied in
-   CreateCopy(), but may be explicitly added as with Create().
--  **NUMDES=n**: (GDAL >= 3.4) Number of DES segments. Only to be used on
-   first image segment
--  **SDE_TRE=YES/NO**: Write GEOLOB and GEOPSB TREs to
-   get more precise georeferencing. This is limited to geographic SRS,
-   and to CreateCopy() for now.
--  **RPC00B=YES/NO**: (GDAL >= 2.2.0) Write RPC00B TRE, from a source
-   RPC00B TRE if it exists (NITF to NITF conversion), or from values
-   found in the RPC metadata domain. This is only taken into account by
-   CreateCopy() for now. Note that the NITF RPC00B format uses limited
-   prevision ASCII encoded numbers. Default to YES.
--  **RPCTXT=YES/NO**: (GDAL >= 2.2.0) Whether to write RPC metadata in a
-   external \_rpc.txt file. This may be useful since internal RPC00B TRE
-   have limited precision. This is only taken into account by
-   CreateCopy() for now. Default to NO.
--  **USE_SRC_NITF_METADATA=YES/NO**: (GDAL >= 2.3.0) Whether to use
-   NITF_xxx metadata items and TRE segments from the input dataset. It
-   may needed to set this option to NO if changing the georeferencing of
-   the input file. Default to YES.
+      Set the compression method.
+
+      -  NC is the default value, and means no compression.
+      -  C3 means JPEG compression and is only available for the
+         CreateCopy() method. The QUALITY and PROGRESSIVE JPEG-specific
+         creation options can be used. See the :ref:`raster.jpeg` driver.
+         Multi-block images can be written.
+      -  M3 is a variation of C3. The only difference is that a block map
+         is written, which allow for fast seeking to any block.
+      -  C8 means JPEG2000 compression (one block) and is available for
+         CreateCopy() and/or Create() methods. See below paragraph for specificities.
+
+-  .. co:: NUMI
+      :default: 1
+
+      Number of images.
+      See :ref:`Advanced GDAL NITF Driver Information <raster.nitf_advanced>` for
+      the procedure to follow to write several images in a NITF file.
+
+-  .. co:: WRITE_ALL_IMAGES
+      :choices: YES, NO
+      :default: NO
+      :since: 3.4
+
+      (Only taken into account if NUMI > 1, and on a new NITF file).
+      When set to NO (the default), this causes the driver to only write the first
+      image segment and reserve just the space for extra NUMI-1 images in the file header.
+      When WRITE_ALL_IMAGES=YES, the space for all images is allocated, which is
+      only compatible with IC=NC (uncompressed images).
+      (Behavior with GDAL < 3.4 was similar to WRITE_ALL_IMAGES=YES)
+
+-  .. co:: ICORDS
+      :choices: G, D, N, S
+
+      Set to "G" to ensure that space will be reserved
+      for geographic corner coordinates (in DMS) to be set later via
+      SetGeoTransform(), set to "D" for geographic coordinates in decimal
+      degrees, set to "N" for UTM WGS84 projection in Northern hemisphere
+      or to "S" for UTM WGS84 projection in southern hemisphere (Only
+      needed for Create() method, not CreateCopy()). If you Create() a new
+      NITF file and have specified "N" or "S" for ICORDS, you need to call
+      later the SetProjection method with a consistent UTM SRS to set the
+      UTM zone number (otherwise it will default to zone 0).
+      Starting with GDAL 3.5.1, when using the CreateCopy() interface with an
+      image whose source SRS is a UTM WGS84 projection and specifying ICORDS=G or D,
+      the NITF driver will reproject the image corner coordinates to longitude-latitude.
+      This can be useful when it is not possible to encode in the IGEOLO field
+      the coordinates of an image in the equatorial zone, whose one of the northing
+      expressed in a UTM northern hemisphere projection is below -1e6.
+
+-  .. co:: IGEOLO
+      :since: 3.5.1
+
+      Image corner coordinates specified as a
+      string of 60 characters (cf MIL-STD-2500C for expected format). Normally
+      automatically set from source geotransform and SRS when using the CreateCopy()
+      interface. If specified, ICORDS must also be specified.
+
+-  .. co:: FHDR
+      :choices: NITF02.10, NSIF01.00
+      :default: NITF02.10
+
+      File version can be selected though currently the only two
+      variations supported are "NITF02.10" (the default), and "NSIF01.00".
+
+-  .. co:: IREP
+
+      Set to "RGB/LUT" to reserve space for a color table for
+      each output band. (Only needed for Create() method, not
+      CreateCopy()).
+
+-  .. co:: IREPBAND
+
+      Comma separated list of band IREPBANDs in band order.
+
+-  .. co:: ISUBCAT
+
+      Comma separated list of band ISUBCATs in band order.
+
+-  .. co:: LUT_SIZE
+      :default: 256
+
+      Set to control the size of pseudocolor tables for
+      RGB/LUT bands. (Only needed
+      for Create() method, not CreateCopy()).
+
+-  .. co:: BLOCKXSIZE
+
+      Set the block width.
+
+-  .. co:: BLOCKYSIZE
+
+      Set the block height.
+
+-  .. co:: BLOCKA_*
+
+      If a complete set of BLOCKA options is provided with
+      exactly the same organization as the NITF_BLOCKA metadata reported
+      when reading an NITF file with BLOCKA TREs then a file will be
+      created with BLOCKA TREs.
+
+-  .. co:: TRE
+      :choices: <tre-name=tre-contents>
+
+      One or more TRE creation options may
+      be used provided to write arbitrary user defined TREs to the image
+      header. The tre-name should be at most six characters, and the
+      tre-contents should be "backslash escaped" if it contains backslashes
+      or zero bytes. The argument is the same format as returned in the TRE
+      metadata domain when reading.
+
+-  .. co:: FILE_TRE
+      :choices: <tre-name=tre-contents>
+
+      Similar to above
+      options, except that the TREs are written in the file header, instead
+      of the image header.
+
+-  .. co:: RESERVE_SPACE_FOR_TRE_OVERFLOW
+      :choices: YES, NO
+      :since: 3.6
+
+      Set to true to reserve space for IXSOFL when writing a TRE_OVERFLOW DES.
+
+-  .. co:: DES
+      :choices: <des-name=des-contents>
+
+      One or more DES creation options may
+      be provided to write arbitrary user defined DESs to the NITF file.
+      The des-name should be at most 25 characters, and the des-contents
+      should be "backslash escaped" if it contains backslashes or zero
+      bytes, as in CPLEscapeString(str, -1, CPLES_BackslashQuotable).
+      The des-contents must contain standard DES fields, starting
+      with DESVER (See MIL-STD-2500C).  DESs are not currently copied in
+      CreateCopy(), but may be explicitly added as with Create().
+
+-  .. co:: NUMDES
+      :since: 3.4
+
+      Number of DES segments. Only to be used on
+      first image segment
+
+-  .. co:: SDE_TRE
+      :choices: YES, NO
+
+      Write GEOLOB and GEOPSB TREs to
+      get more precise georeferencing. This is limited to geographic SRS,
+      and to CreateCopy() for now.
+
+-  .. co:: RPC00B
+      :choices: YES, NO
+      :default: YES
+      :since: 2.2.0
+
+      Write RPC00B TRE, from a source
+      RPC00B TRE if it exists (NITF to NITF conversion), or from values
+      found in the RPC metadata domain. This is only taken into account by
+      CreateCopy() for now. Note that the NITF RPC00B format uses limited
+      prevision ASCII encoded numbers.
+
+-  .. co:: RPCTXT
+      :choices: YES, NO
+      :default: NO
+      :since: 2.2.0
+
+      Whether to write RPC metadata in a
+      external \_rpc.txt file. This may be useful since internal RPC00B TRE
+      have limited precision. This is only taken into account by
+      CreateCopy() for now.
+
+-  .. co:: USE_SRC_NITF_METADATA
+      :choices: YES, NO
+      :default: YES
+      :since: 2.3.0
+
+      Whether to use
+      NITF_xxx metadata items and TRE segments from the input dataset. It
+      may needed to set this option to NO if changing the georeferencing of
+      the input file.
 
 JPEG2000 compression (write support)
 ------------------------------------
@@ -209,19 +304,26 @@ They are tried in that order when several ones are available, unless the
 JPEG2000_DRIVER creation option (added in GDAL 3.4) is set to explicitly specify
 the JPEG2000 capable driver to use.
 
-- :ref:`JP2ECW <raster.jp2ecw>`: The TARGET (target size reduction as a
-  percentage of the original) and PROFILE=BASELINE_0/BASELINE_1/BASELINE_2/NPJE/EPJE
+- :ref:`JP2ECW <raster.jp2ecw>`: The :co:`drivers/raster/jp2ecw TARGET` (target size reduction as a
+  percentage of the original) and :co:`drivers/raster/jp2ecw PROFILE`\ =BASELINE_0/BASELINE_1/BASELINE_2/NPJE/EPJE
   JP2ECW-specific creation options can be used. Both CreateCopy()
   and/or Create() methods are available. By default the NPJE
   PROFILE will be used (thus implying BLOCKXSIZE=BLOCKYSIZE=1024).
 
-- :ref:`JP2KAK <raster.jp2kak>`: The QUALITY, BLOCKXSIZE,
-  BLOCKYSIZE, LAYERS, ROI JP2KAK-specific creation options can be
+- :ref:`JP2KAK <raster.jp2kak>`: The
+  :co:`drivers/raster/jp2kak QUALITY`,
+  :co:`drivers/raster/jp2kak BLOCKXSIZE`,
+  :co:`drivers/raster/jp2kak BLOCKYSIZE`,
+  :co:`drivers/raster/jp2kak LAYERS`,
+  :co:`drivers/raster/jp2kak ROI` JP2KAK-specific creation options can be
   used. Only CreateCopy() method is available.
 
 - :ref:`JP2OpenJPEG <raster.jp2openjpeg>`:
-  (only in the CreateCopy() case). The QUALITY, BLOCKXSIZE
-  and BLOCKYSIZE JP2OpenJPEG-specific creation options can be
+  (only in the CreateCopy() case). The
+  :co:`drivers/raster/jp2openjpeg QUALITY`,
+  :co:`drivers/raster/jp2openjpeg BLOCKXSIZE`
+  and
+  :co:`drivers/raster/jp2openjpeg BLOCKYSIZE` JP2OpenJPEG-specific creation options can be
   used. By default BLOCKXSIZE=BLOCKYSIZE=1024 will be used.
 
   Starting with GDAL 3.4.0 and OpenJPEG 2.5, the
@@ -231,7 +333,7 @@ the JPEG2000 capable driver to use.
   For NPJE_VISUALLY_LOSSLESS, the last quality layer defaults to 3.9 bits per
   pixel and per band. It can be adjusted with the QUALITY creation option.
   When those profiles are specified, the J2KLRA TRE will also be written, unless
-  the J2KLRA=NO creation option is specified.
+  the ``J2KLRA=NO`` creation option is specified.
 
 Links
 -----

@@ -9,10 +9,10 @@ LCP -- FARSITE v.4 LCP Format
 .. built_in_by_default::
 
 FARSITE v. 4 landscape file (LCP) is a multi-band raster format used by
-wildland fire behavior and fire effect simulation models such as 
+wildland fire behavior and fire effect simulation models such as
 FlamMap (`firelab.org <https://www.firelab.org/project/flammap>`__). The
 bands of an LCP file store data describing terrain, tree canopy, and
-surface fuel. The `LANDFIRE Program <https://www.landfire.gov/>`__ 
+surface fuel. The `LANDFIRE Program <https://www.landfire.gov/>`__
 provides geospatial data in LCP format to support fire simulation modeling.
 
 An LCP file (.lcp) is basically a raw format with a 7,316-byte header
@@ -20,18 +20,18 @@ described below. The data type for all bands is 16-bit signed integer.
 Bands are interleaved by pixel. Five bands are required: elevation,
 slope, aspect, fuel model, and tree canopy cover. Crown fuel bands
 (canopy height, canopy base height, canopy bulk density), and surface
-fuel bands (duff, coarse woody debris) are optional. The LCP driver reports 
-several band-level metadata items described below. The band names used are: 
-ELEVATION, SLOPE, ASPECT, FUEL_MODEL, CANOPY_COV, CANOPY_HT, CBH, CBD, DUFF 
+fuel bands (duff, coarse woody debris) are optional. The LCP driver reports
+several band-level metadata items described below. The band names used are:
+ELEVATION, SLOPE, ASPECT, FUEL_MODEL, CANOPY_COV, CANOPY_HT, CBH, CBD, DUFF
 and CWD.
 
 
-The LCP driver reads the linear unit, cell size, and extent, but the .lcp 
-file does not specify a projection internally. UTM projections are typical, 
-but other projections are possible. The driver will look for a file with 
+The LCP driver reads the linear unit, cell size, and extent, but the .lcp
+file does not specify a projection internally. UTM projections are typical,
+but other projections are possible. The driver will look for a file with
 .prj extension and read the coordinate system in ESRI pseudo-OGC WKT format.
 
-LCP does not support an inherent no data value, but -9999 is used by 
+LCP does not support an inherent no data value, but -9999 is used by
 convention to mark pixels that are not valid data.
 
 Driver capabilities
@@ -69,8 +69,8 @@ Band
    | <band>_FILE: original input raster file name for the band
 
 **Note:** The LCP driver derives from the RawDataset helper class
-declared in gdal/frmts/raw. It should be implemented as
-gdal/frmts/raw/lcpdataset.cpp.
+declared in `frmts/raw`. It should be implemented as
+:source_file:`frmts/raw/lcpdataset.cpp`.
 
 Creation Options
 ----------------
@@ -79,46 +79,82 @@ The LCP driver supports CreateCopy() and metadata values can be set via
 creation options. Below is a list of options with default values listed
 first.
 
-**ELEVATION_UNIT=[METERS/FEET]**: Vertical unit for elevation band.
+-  .. co:: ELEVATION_UNIT
+      :choices: METERS, FEET
+      :default: METERS
 
-**SLOPE_UNIT=[DEGREES/PERCENT]**
+      Vertical unit for elevation band.
 
-**ASPECT_UNIT=[AZIMUTH_DEGREES/GRASS_CATEGORIES/GRASS_DEGREES]**
+-  .. co:: SLOPE_UNIT
+      :choices: DEGREES, PERCENT
+      :default: DEGREES
 
-**FUEL_MODEL_OPTION=[NO_CUSTOM_AND_NO_FILE/CUSTOM_AND_NO_FILE/
-NO_CUSTOM_AND_FILE/CUSTOM_AND_FILE]**: Specify whether or not custom
-fuel models are used, and if a custom fuel model file is present.
+-  .. co:: ASPECT_UNIT
+      :choices: AZIMUTH_DEGREES, GRASS_CATEGORIES, GRASS_DEGREES
+      :default: AZIMUTH_DEGREES
 
-**CANOPY_COV_UNIT=[PERCENT/CATEGORIES]**
+-  .. co:: FUEL_MODEL_OPTION
+      :choices: NO_CUSTOM_AND_NO_FILE, CUSTOM_AND_NO_FILE, NO_CUSTOM_AND_FILE, CUSTOM_AND_FILE
+      :default: NO_CUSTOM_AND_NO_FILE
 
-**CANOPY_HT_UNIT=[METERS_X_10/FEET/METERS/FEET_X_10]**
+      Specify whether or not custom
+      fuel models are used, and if a custom fuel model file is present.
 
-**CBH_UNIT=[METERS_X_10/METERS/FEET/FEET_X_10]**
+-  .. co:: CANOPY_COV_UNIT
+      :choices: PERCENT, CATEGORIES
+      :default: PERCENT
 
-**CBD_UNIT=[KG_PER_CUBIC_METER_X_100/POUND_PER_CUBIC_FOOT/
-KG_PER_CUBIC_METER/POUND_PER_CUBIC_FOOT_X_1000/TONS_PER_ACRE_X_100]**
+-  .. co:: CANOPY_HT_UNIT
+      :choices: METERS_X_10, FEET, METERS, FEET_X_10
+      :default: METERS_X_10
 
-**DUFF_UNIT=[MG_PER_HECTARE_X_10/TONS_PER_ACRE_X_10]**
+-  .. co:: CBH_UNIT
+      :choices: METERS_X_10, METERS, FEET, FEET_X_10
+      :default: METERS_X_10
 
-**CALCULATE_STATS=[YES/NO]**: Calculate and write the min/max for each
-band and write the appropriate flags and values in the header. This is
-mostly a legacy feature used for creating legends.
+-  .. co:: CBD_UNIT
+      :choices: KG_PER_CUBIC_METER_X_100, POUND_PER_CUBIC_FOOT, KG_PER_CUBIC_METER, POUND_PER_CUBIC_FOOT_X_1000, TONS_PER_ACRE_X_100
+      :default: KG_PER_CUBIC_METER_X_100
 
-**CLASSIFY_DATA=[YES/NO]**: Classify the data into 100 unique values or
-less and write and write the appropriate flags and values in the header.
-This is mostly a legacy feature used for creating legends.
+-  .. co:: DUFF_UNIT
+      :choices: MG_PER_HECTARE_X_10, TONS_PER_ACRE_X_10
+      :default: MG_PER_HECTARE_X_10
 
-**LINEAR_UNIT=[SET_FROM_SRS/METER/FOOT/KILOMETER]**: Set the linear
-unit, overriding (if it can be calculated) the value in the associated
-spatial reference. If no spatial reference is available, it defaults to
-METER.
+-  .. co:: CALCULATE_STATS
+      :choices: YES, NO
+      :default: YES
 
-**LATITUDE=[-90-90]**: Override the latitude from the spatial reference.
-If no spatial reference is available, this should be set, otherwise
-creation will fail.
+      Calculate and write the min/max for each
+      band and write the appropriate flags and values in the header. This is
+      mostly a legacy feature used for creating legends.
 
-**DESCRIPTION=[...]**: A short description(less than 512 characters) of
-the dataset
+-  .. co:: CLASSIFY_DATA
+      :choices: YES, NO
+      :default: YES
+
+      Classify the data into 100 unique values or
+      less and write and write the appropriate flags and values in the header.
+      This is mostly a legacy feature used for creating legends.
+
+-  .. co:: LINEAR_UNIT
+      :choices: SET_FROM_SRS, METER, FOOT, KILOMETER
+      :default: SET_FROM_SRS
+
+      Set the linear
+      unit, overriding (if it can be calculated) the value in the associated
+      spatial reference. If no spatial reference is available, it defaults to
+      METER.
+
+-  .. co:: LATITUDE
+      :choices: -90-90
+
+      Override the latitude from the spatial reference.
+      If no spatial reference is available, this should be set, otherwise
+      creation will fail.
+
+-  .. co:: DESCRIPTION
+
+      A short description(less than 512 characters) of the dataset
 
 Creation options that are units of linear measure are fairly lenient.
 METERS=METER and FOOT=FEET for the most part.

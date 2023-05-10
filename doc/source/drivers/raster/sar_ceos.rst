@@ -62,7 +62,7 @@ the matrix are complex values, while the diagonal values are real
 
 The identities of the bands are also reflected in the metadata.
 
-NOTE: Implemented as ``gdal/frmts/ceos2/sar_ceosdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/ceos2/sar_ceosdataset.cpp`.
 
 Driver capabilities
 -------------------

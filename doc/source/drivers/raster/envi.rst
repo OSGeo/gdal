@@ -27,21 +27,27 @@ header file.
 
 Creation Options:
 
--  **INTERLEAVE=BSQ/BIP/BIL**: Force the generation specified type of
-   interleaving. **BSQ** -- band sequential (default), **BIP** --- data
-   interleaved by pixel, **BIL** -- data interleaved by line.
-   Starting with GDAL 3.5, when copying from a source dataset with multiple bands
-   which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
-   is not specified, the source dataset INTERLEAVE will be automatically taken
-   into account.
+-  .. co:: INTERLEAVE
+      :choices: BSQ, BIP, BIL
 
--  **SUFFIX=REPLACE/ADD**: Force adding ".hdr" suffix to supplied
-   filename, e.g. if user selects "file.bin" name for output dataset,
-   "file.bin.hdr" header file will be created. By default header file
-   suffix replaces the binary file suffix, e.g. for "file.bin" name
-   "file.hdr" header file will be created.
+      Force the generation specified type of
+      interleaving. **BSQ** -- band sequential (default), **BIP** --- data
+      interleaved by pixel, **BIL** -- data interleaved by line.
+      Starting with GDAL 3.5, when copying from a source dataset with multiple bands
+      which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
+      is not specified, the source dataset INTERLEAVE will be automatically taken
+      into account.
 
-NOTE: Implemented as ``gdal/frmts/raw/envidataset.cpp``.
+-  .. co:: SUFFIX
+      :choices: REPLACE, ADD
+
+      Force adding ".hdr" suffix to supplied
+      filename, e.g. if user selects "file.bin" name for output dataset,
+      "file.bin.hdr" header file will be created. By default header file
+      suffix replaces the binary file suffix, e.g. for "file.bin" name
+      "file.hdr" header file will be created.
+
+NOTE: Implemented as :source_file:`frmts/raw/envidataset.cpp`.
 
 Driver capabilities
 -------------------

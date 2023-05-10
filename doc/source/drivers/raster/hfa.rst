@@ -48,29 +48,79 @@ NAD83, and NAD27) may be problematic.
 
 Creation Options:
 
--  **BLOCKSIZE=blocksize**: Tile width/height (32-2048). Default=64
--  **USE_SPILL=YES**: Force the generation of a spill file (by default
-   spill file created for images larger 2GiB only). Default=NO
--  **COMPRESSED=YES**: Create file as compressed. Use of spill file
-   disables compression. Default=NO
--  **NBITS=1/2/4**: Create file with special sub-byte data types.
--  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
-   new Byte file can be forced to be written as signed byte.
-   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
-   be used.
--  **AUX=YES**: To create a .aux file. Default=NO
--  **IGNOREUTM=YES** : Ignore UTM when selecting coordinate system -
-   will use Transverse Mercator. Only used for Create() method.
-   Default=NO
--  **STATISTICS=YES** : To generate statistics and a histogram.
-   Default=NO
--  **DEPENDENT_FILE=filename** : Name of dependent file (must not have
-   absolute path). Optional
--  **FORCETOPESTRING=YES**: Force use of ArcGIS PE String in file
-   instead of Imagine coordinate system format. In some cases this
-   improves ArcGIS coordinate system compatibility. Default is NO.
--  **DISABLEPESTRING=YES**: (GDAL >= 3.7) Disable use of ArcGIS PE String in
-   file. Default is NO (that is ArcGIS PE String may be written if needed).
+-  .. co:: BLOCKSIZE
+      :choices: 32-2048
+      :default: 64
+
+      Tile width/height.
+
+-  .. co:: USE_SPILL
+      :choices: YES, NO
+      :default: NO
+
+      Force the generation of a spill file (by default
+      spill file created for images larger 2GiB only).
+
+-  .. co:: COMPRESSED
+      :choices: YES, NO
+      :default: NO
+
+      Create file as compressed. Use of spill file
+      disables compression.
+
+-  .. co:: NBITS
+      :choices: 1, 2, 4
+
+      Create file with special sub-byte data types.
+
+-  .. co:: PIXELTYPE
+      :choices: DEFAULT, SIGNEDBYTE
+
+      By setting this to SIGNEDBYTE, a
+      new Byte file can be forced to be written as signed byte.
+      Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+      be used.
+
+-  .. co:: AUX
+      :choices: YES, NO
+      :default: NO
+
+      To create a .aux file.
+
+-  .. co:: IGNOREUTM
+      :choices: YES, NO
+      :default: NO
+
+      Ignore UTM when selecting coordinate system -
+      will use Transverse Mercator. Only used for Create() method.
+
+-  .. co:: STATISTICS
+      :choices: YES, NO
+      :default: NO
+
+      To generate statistics and a histogram.
+
+-  .. co:: DEPENDENT_FILE
+      :choices: <filename>
+
+      Name of dependent file (must not have
+      absolute path). Optional
+
+-  .. co:: FORCETOPESTRING
+      :choices: YES, NO
+      :default: NO
+
+      Force use of ArcGIS PE String in file
+      instead of Imagine coordinate system format. In some cases this
+      improves ArcGIS coordinate system compatibility.
+
+-  .. co:: DISABLEPESTRING
+      :choices: YES, NO
+      :default: NO
+      :since: 3.7
+
+      Disable use of ArcGIS PE String in
+      file. Default is NO (that is ArcGIS PE String may be written if needed).
 
 Erdas Imagine supports external creation of overviews (with gdaladdo for
 instance). To force them to be created in an .rrd file (rather than
@@ -92,40 +142,50 @@ Currently three `runtime configuration
 options <http://trac.osgeo.org/gdal/wiki/ConfigOptions>`__ are supported
 by the HFA driver:
 
--  **HFA_USE_RRD=YES/NO** : Whether to force creation of external
-   overviews in Erdas rrd format and with .rrd file name extension
-   (gdaladdo with combination -ro --config USE_RRD YES creates overview
-   file with .aux extension).
--  **HFA_COMPRESS_OVR=YES/NO** : Whether to create
-   compressed overviews. Default is to only create compressed overviews
-   when the file is compressed.
+-  .. config:: HFA_USE_RRD
+      :choices: YES, NO
 
-   This configuration option can be used when building external
-   overviews for a base image that is not in Erdas Imagine format.
-   Resulting overview file will use the rrd structure and have .aux
-   extension.
+      Whether to force creation of external
+      overviews in Erdas rrd format and with .rrd file name extension
+      (gdaladdo with combination -ro --config USE_RRD YES creates overview
+      file with .aux extension).
 
-   ::
+-  .. config:: HFA_COMPRESS_OVR
+      :choices: YES, NO
 
-      gdaladdo out.tif --config USE_RRD YES --config HFA_COMPRESS_OVR YES 2 4 8
+      Whether to create
+      compressed overviews. Default is to only create compressed overviews
+      when the file is compressed.
 
-   Erdas Imagine and older ArcGIS versions may recognize overviews for
-   some image formats only if they have .rrd extension. In this case
-   use:
+      This configuration option can be used when building external
+      overviews for a base image that is not in Erdas Imagine format.
+      Resulting overview file will use the rrd structure and have .aux
+      extension.
 
-   ::
+      ::
 
-      gdaladdo out.tif --config USE_RRD YES --config HFA_USE_RRD YES --config HFA_COMPRESS_OVR YES 2 4 8
+         gdaladdo out.tif --config USE_RRD YES --config HFA_COMPRESS_OVR YES 2 4 8
 
--  (GDAL >= 2.3) The block size (tile width/height) used for overviews
-   can be specified by setting the **GDAL_HFA_OVR_BLOCKSIZE**
-   configuration option to a power- of-two value between 32 and 2048.
-   The default value is 64.
+      Erdas Imagine and older ArcGIS versions may recognize overviews for
+      some image formats only if they have .rrd extension. In this case
+      use:
+
+      ::
+
+         gdaladdo out.tif --config USE_RRD YES --config HFA_USE_RRD YES --config HFA_COMPRESS_OVR YES 2 4 8
+
+-  .. config:: GDAL_HFA_OVR_BLOCKSIZE
+      :default: 64
+      :since: 2.3
+
+      The block size (tile width/height) used for overviews
+      can be specified by setting this
+      configuration option to a power- of-two value between 32 and 2048.
 
 See Also
 --------
 
--  Implemented as ``gdal/frmts/hfa/hfadataset.cpp``.
+-  Implemented as :source_file:`frmts/hfa/hfadataset.cpp`.
 -  More information, and other tools are available on the `Imagine
    (.img)
    Reader <http://web.archive.org/web/20130730133056/http://home.gdal.org/projects/imagine/hfa_index.html>`__

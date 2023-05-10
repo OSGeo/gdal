@@ -20,7 +20,7 @@ The elevation units of DEMs may be feet or meters. The GetType() method
 on a band will attempt to return if the units are Feet ("ft") or Meters
 ("m").
 
-NOTE: Implemented as ``gdal/frmts/sdts/sdtsdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/sdts/sdtsdataset.cpp`.
 
 Driver capabilities
 -------------------

@@ -8,7 +8,7 @@ KMLSuperoverlay -- KMLSuperoverlay
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/kmlsuperoverlay/kmlsuperoverlay.cpp``.
+NOTE: Implemented as :source_file:`frmts/kmlsuperoverlay/kmlsuperoverlaydataset.cpp`.
 
 
 Driver capabilities

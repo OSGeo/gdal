@@ -28,7 +28,7 @@ using the creation option QUALITY.
 More information about `Crunch Lib <https://github.com/BinomialLLC/crunch>`__
 (see below for build instructions of a working fork of that repository)
 
-NOTE: Implemented as ``gdal/frmts/dds/ddsdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/dds/ddsdataset.cpp`.
 
 Driver capabilities
 -------------------

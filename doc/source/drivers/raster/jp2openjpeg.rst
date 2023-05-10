@@ -46,8 +46,8 @@ information is fetched in following order (first listed is the most
 prioritary): PAM, GeoJP2, GMLJP2, WORLDFILE.
 
 Starting with GDAL 2.2, the allowed sources and their priority order can
-be changed with the :decl_configoption:`GDAL_GEOREF_SOURCES` configuration option (or
-GEOREF_SOURCES open option) whose value is a comma-separated list of the
+be changed with the :config:`GDAL_GEOREF_SOURCES` configuration option (or
+:oo:`GEOREF_SOURCES` open option) whose value is a comma-separated list of the
 following keywords : PAM, GEOJP2, GMLJP2, INTERNAL (shortcut for
 GEOJP2,GMLJP2), WORLDFILE, NONE. First mentioned sources are the most
 prioritary over the next ones. A non mentioned source will be ignored.
@@ -63,7 +63,7 @@ Thread support
 By default, if the JPEG2000 file has internal tiling, GDAL will try to
 decode several tiles in multiple threads if the RasterIO() request it
 receives intersect several tiles. This behavior can be controlled with
-the :decl_configoption:`GDAL_NUM_THREADS` configuration option that defaults to ALL_CPUS in
+the :config:`GDAL_NUM_THREADS` configuration option that defaults to ALL_CPUS in
 that context. In case RAM is limited, it can be needed to set this
 configuration option to 1 to disable multi-threading
 
@@ -85,236 +85,362 @@ Open Options
 
 The following open options are available:
 
--  **STRICT=YES/NO**: (GDAL >= 3.5 and OpenJPEG >= 2.5) Whether strict/pedantic
-   decoding mode should be enabled.
-   This can be set to NO to allow decoding (some) broken files, typically
-   truncated single-tiled files . Default to YES (strict mode)
+-  .. oo:: STRICT
+      :choices: YES, NO
+      :default: YES
+      :since: 3.5
 
--  **1BIT_ALPHA_PROMOTION=YES/NO**: Whether a 1-bit alpha channel should
-   be promoted to 8-bit. Defaults to YES.
+      (OpenJPEG >= 2.5) Whether strict/pedantic
+      decoding mode should be enabled.
+      This can be set to NO to allow decoding (some) broken files, typically
+      truncated single-tiled files.
 
--  **GEOREF_SOURCES=string**: (GDAL > 2.2) Define which georeferencing
-   sources are allowed and their priority order. See
-   `Georeferencing <#georeferencing>`__ paragraph.
+-  .. oo:: 1BIT_ALPHA_PROMOTION
+      :choices: YES, NO
+      :default: YES
 
--  **USE_TILE_AS_BLOCK=YES/NO**: (GDAL > 2.2) Whether to always use the
-   JPEG-2000 block size as the GDAL block size Defaults to NO. Setting
-   this option can be useful when doing whole image decompression and
-   the image is single-tiled. Note however that the tile size must not
-   exceed 2 GB since that's the limit supported by GDAL.
+      Whether a 1-bit alpha channel should be promoted to 8-bit.
+
+-  .. oo:: GEOREF_SOURCES
+      :since: 2.2
+
+      Define which georeferencing
+      sources are allowed and their priority order. See
+      `Georeferencing`_ paragraph.
+
+-  .. oo:: USE_TILE_AS_BLOCK
+      :choices: YES, NO
+      :default: NO
+      :since: 2.2
+
+      Whether to always use the JPEG-2000 block size as the GDAL block size. Setting
+      this option can be useful when doing whole image decompression and
+      the image is single-tiled. Note however that the tile size must not
+      exceed 2 GB since that's the limit supported by GDAL.
 
 Creation Options
 ----------------
 
--  **CODEC=JP2/J2K** : JP2 will add JP2 boxes around the codestream
-   data. The value is determined automatically from the file extension.
-   If it is neither JP2 nor J2K, J2K codec is used.
+-  .. co:: CODEC
+      :choices: JP2, J2K
 
--  **GMLJP2=YES/NO**: Indicates whether a GML
-   box conforming to the OGC GML in JPEG2000 specification should be
-   included in the file. Unless GMLJP2V2_DEF is used, the version of the
-   GMLJP2 box will be version 1. Defaults to YES.
--  **GMLJP2V2_DEF=filename**: Indicates whether
-   a GML box conforming to the `OGC GML in JPEG2000, version
-   2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
-   specification should be included in the file. *filename* must point
-   to a file with a JSon content that defines how the GMLJP2 v2 box
-   should be built. See below section for the syntax of the JSon
-   configuration file. It is also possible to directly pass the JSon
-   content inlined as a string. If filename is just set to YES, a
-   minimal instance will be built. Note: GDAL 2.0 and 2.1 use the older
-   `OGC GML in JPEG2000, version
-   2.0 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
-   specification, that differ essentially by the content of the
-   gml:domainSet, gml:rangeSet and gmlcov:rangeType elements of
-   gmljp2:GMLJP2CoverageCollection.
--  **GeoJP2=YES/NO**: Indicates whether a
-   UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000)
-   specification should be included in the file. Defaults to YES.
--  **QUALITY=float_value,float_value,...** : Percentage between 0 and
-   100. A value of 50 means the file will be half-size in comparison to
-   uncompressed data, 33 means 1/3, etc.. Defaults to 25 (unless the
-   dataset is made of a single band with color table, in which case the
-   default quality is 100). It is possible to
-   specify several quality values (comma separated) to ask for several
-   quality layers. Quality values should be increasing.
+      JP2 will add JP2 boxes around the codestream
+      data. The value is determined automatically from the file extension.
+      If it is neither JP2 nor J2K, J2K codec is used.
 
--  **REVERSIBLE=YES/NO** : YES means use of reversible 5x3 integer-only
-   filter, NO use of the irreversible DWT 9-7. Defaults to NO (unless
-   the dataset is made of a single band with color table, in which case
-   reversible filter is used).
+-  .. co:: GMLJP2
+      :choices: YES, NO
+      :default: YES
 
--  **RESOLUTIONS=int_value** : Number of resolution levels. Default
-   value is selected such the smallest overview of a tile is no bigger
-   than 128x128.
+      Indicates whether a GML
+      box conforming to the OGC GML in JPEG2000 specification should be
+      included in the file. Unless GMLJP2V2_DEF is used, the version of the
+      GMLJP2 box will be version 1.
 
--  **BLOCKXSIZE=int_value** : Tile width. Defaults to 1024.
+-  .. co:: GMLJP2V2_DEF
+      :choices: YES, <filename>, <json>
 
--  **BLOCKYSIZE=int_value** : Tile height. Defaults to 1024.
+      Indicates whether
+      a GML box conforming to the `OGC GML in JPEG2000, version
+      2.0.1 <http://docs.opengeospatial.org/is/08-085r5/08-085r5.html>`__
+      specification should be included in the file. *filename* must point
+      to a file with a JSon content that defines how the GMLJP2 v2 box
+      should be built. See below section for the syntax of the JSon
+      configuration file. It is also possible to directly pass the JSon
+      content inlined as a string. If filename is just set to YES, a
+      minimal instance will be built. Note: GDAL 2.0 and 2.1 use the older
+      `OGC GML in JPEG2000, version
+      2.0 <http://docs.opengeospatial.org/is/08-085r4/08-085r4.html>`__
+      specification, that differ essentially by the content of the
+      gml:domainSet, gml:rangeSet and gmlcov:rangeType elements of
+      gmljp2:GMLJP2CoverageCollection.
 
--  **PROGRESSION=LRCP/RLCP/RPCL/PCRL/CPRL** : Progression order. Defaults
-   to LRCP.
+-  .. co:: GeoJP2
+      :choices: YES, NO
+      :default: YES
 
--  **SOP=YES/NO** : YES means generate SOP (Start Of Packet) marker
-   segments. Defaults to NO.
+      Indicates whether a
+      UUID/GeoTIFF box conforming to the GeoJP2 (GeoTIFF in JPEG2000)
+      specification should be included in the file.
 
--  **EPH=YES/NO** : YES means generate EPH (End of Packet Header) marker
-   segments. Defaults to NO.
+-  .. co:: QUALITY
+      :choices: <float_value\,float_value\,...>
 
--  **YCBCR420=YES/NO** : YES if RGB must be resampled to
-   YCbCr 4:2:0. Defaults to NO.
+      Percentage between 0 and
+      100. A value of 50 means the file will be half-size in comparison to
+      uncompressed data, 33 means 1/3, etc.. Defaults to 25 (unless the
+      dataset is made of a single band with color table, in which case the
+      default quality is 100). It is possible to
+      specify several quality values (comma separated) to ask for several
+      quality layers. Quality values should be increasing.
 
--  **YCC=YES/NO** : YES if RGB must be transformed to YCC
-   color space ("MCT transform", i.e. internal transform, without visual
-   degradation). Defaults to YES.
+-  .. co:: REVERSIBLE
+      :choices: YES, NO
 
--  **NBITS=int_value** : Bits (precision) for sub-byte
-   files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).
+      YES means use of reversible 5x3 integer-only
+      filter, NO use of the irreversible DWT 9-7. Defaults to NO (unless
+      the dataset is made of a single band with color table, in which case
+      reversible filter is used).
 
--  **1BIT_ALPHA=YES/NO**: Whether to encode the alpha
-   channel as a 1-bit channel (when there's an alpha channel). Defaults
-   to NO, unless INSPIRE_TG=YES. Enabling this option might cause
-   compatibility problems with some readers. At the time of writing,
-   those based on the MrSID JPEG2000 SDK are unable to open such files.
-   And regarding the ECW JPEG2000 SDK, decoding of 1-bit alpha channel
-   with lossy/irreversible compression gives visual artifacts (OK with
-   lossless encoding).
+-  .. co:: RESOLUTIONS
+      :choices: <integer>
 
--  **ALPHA=YES/NO**: Whether to force encoding last
-   channel as alpha channel. Only useful if the color interpretation of
-   that channel is not already Alpha. Defaults to NO.
+      Number of resolution levels. Default
+      value is selected such the smallest overview of a tile is no bigger
+      than 128x128.
 
--  **PROFILE=AUTO/UNRESTRICTED/PROFILE_1**: Determine
-   which codestream profile to use. UNRESTRICTED corresponds to the
-   "Unrestricted JPEG 2000 Part 1 codestream" (RSIZ=0). PROFILE_1
-   corresponds to the "JPEG 2000 Part 1 Profile 1 codestream" (RSIZ=2),
-   which add constraints on tile dimensions and number of resolutions.
-   In AUTO mode, the driver will determine if the BLOCKXSIZE,
-   BLOCKYSIZE, RESOLUTIONS, CODEBLOCK_WIDTH and CODEBLOCK_HEIGHT values
-   are compatible with PROFILE_1 and advertise it in the relevant case.
-   Note that the default values of those options are compatible with
-   PROFILE_1. Otherwise UNRESTRICTED is advertized. Defaults to AUTO.
+-  .. co:: BLOCKXSIZE
+      :choices: <integer>
+      :default: 1024
 
--  **INSPIRE_TG=YES/NO**: Whether to use JPEG2000 features
-   that comply with `Inspire Orthoimagery Technical
-   Guidelines <http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf>`__.
-   Defaults to NO. When set to YES, implies PROFILE=PROFILE_1,
-   1BIT_ALPHA=YES, GEOBOXES_AFTER_JP2C=YES. The CODEC, BLOCKXSIZE,
-   BLOCKYSIZE, RESOLUTIONS, NBITS, PROFILE, CODEBLOCK_WIDTH and
-   CODEBLOCK_HEIGHT options will be checked against the requirements and
-   recommendations of the Technical Guidelines.
+      Tile width.
 
--  **JPX=YES/NO**: Whether to advertise JPX features, and
-   add a Reader requirement box, when a GMLJP2 box is written. Defaults
-   to YES. This option should not be used unless compatibility problems
-   with a reader occur.
+-  .. co:: BLOCKYSIZE
+      :choices: <integer>
+      :default: 1024
 
--  **GEOBOXES_AFTER_JP2C=YES/NO**: Whether to place
-   GeoJP2/GMLJP2 boxes after the code-stream. Defaults to NO, unless
-   INSPIRE_TG=YES. This option should not be used unless compatibility
-   problems with a reader occur.
+      Tile height.
 
--  **PRECINCTS={prec_w,prec_h},{prec_w,prec_h},...**: A
-   list of {precincts width,precincts height} tuples to specify
-   precincts size. Each value should be a multiple of 2. The maximum
-   number of tuples used will be the number of resolutions. The first
-   tuple corresponds to the higher resolution level, and the following
-   ones to the lower resolution levels. If less tuples are specified,
-   the last one is used by dividing its values by 2 for each extra lower
-   resolution level. The default value used is
-   {512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}.
-   An empty string may be used to disable precincts ( i.e. the default
-   {32767,32767},{32767,32767}, ... will then be used).
+-  .. co:: PROGRESSION
+      :choices: LRCP, RLCP, RPCL, PCRL, CPRL
+      :default: LRCP
 
--  **TILEPARTS=DISABLED/RESOLUTIONS/LAYERS/COMPONENTS**:
-   Whether to generate tile-parts and according to which criterion.
-   Defaults to DISABLED.
+      Progression order.
 
--  **CODEBLOCK_WIDTH=int_value**: Codeblock width: power
-   of two value between 4 and 1024. Defaults to 64. Note that
-   CODEBLOCK_WIDTH \* CODEBLOCK_HEIGHT must not be greater than 4096.
-   For PROFILE_1 compatibility, CODEBLOCK_WIDTH must not be greater than
-   64.
+-  .. co:: SOP
+      :choices: YES, NO
+      :default: NO
 
--  **CODEBLOCK_HEIGHT=int_value**: Codeblock height: power
-   of two value between 4 and 1024. Defaults to 64. Note that
-   CODEBLOCK_WIDTH \* CODEBLOCK_HEIGHT must not be greater than 4096.
-   For PROFILE_1 compatibility, CODEBLOCK_HEIGHT must not be greater
-   than 64.
+      YES means generate SOP (Start Of Packet) marker segments.
 
--  **CODEBLOCK_STYLE=string**: (GDAL >= 2.4 and OpenJPEG >= 2.3.0) Style
-   of the code-block coding passes. The following 6 independent settings
-   can be combined together (values should be comma separated):
+-  .. co:: EPH
+      :choices: YES, NO
+      :default: NO
 
-   -  *BYPASS* (1): enable selective arithmetic coding bypass (can
-      substantially improve coding/decoding speed, at the expense of
-      larger file size)
-   -  *RESET* (2): reset context probabilities on coding pass boundaries
-   -  *TERMALL* (4): enable termination on each coding pass
-   -  *VSC* (8): enable vertically causal context
-   -  *PREDICTABLE* (16): enable predictable termination (helps for
-      error detection)
-   -  *SEGSYM* (32): enable segmentation symbols (helps for error
-      detection)
+      YES means generate EPH (End of Packet Header) marker segments.
 
-   Instead of specifying them by text, it is also possible to give the
-   corresponding numeric value of the global codeblock style, by adding
-   the selected options (for example "BYPASS,TERMALL" is equivalent to
-   "5"=1+4)
+-  .. co:: YCBCR420
+      :choices: YES, NO
+      :default: NO
 
-   By default, none of them are enabled. Enabling them will generally
-   increase codestream size, but improve either coding/decoding speed or
-   resilience/error detection.
+      YES if RGB must be resampled to YCbCr 4:2:0.
 
--  **PLT=YES/NO**: (GDAL >= 3.1.1 and OpenJPEG >= 2.4.0) Whether to write a
-   PLT (Packet Length) marker segment in tile-part headers. Defaults to NO.
+-  .. co:: YCC
+      :choices: YES, NO
+      :default: YES
 
--  **TLM=YES/NO**: (GDAL >= 3.4.0 and OpenJPEG >= 2.5.0) Whether to write a
-   TLM (Tile-part Length) marker segment in main header. Defaults to NO.
+      YES if RGB must be transformed to YCC
+      color space ("MCT transform", i.e. internal transform, without visual
+      degradation).
 
--  **WRITE_METADATA=YES/NO**: Whether metadata should be
-   written, in a dedicated JP2 'xml ' box. Defaults to NO. The content
-   of the 'xml ' box will be like:
+-  .. co:: NBITS
+      :choices: <integer>
 
-   ::
+      Bits (precision) for sub-byte
+      files (1-7), sub-uint16 (9-15), sub-uint32 (17-31).
 
-      <GDALMultiDomainMetadata>
-        <Metadata>
-          <MDI key="foo">bar</MDI>
-        </Metadata>
-        <Metadata domain='aux_domain'>
-          <MDI key="foo">bar</MDI>
-        </Metadata>
-        <Metadata domain='a_xml_domain' format='xml'>
-          <arbitrary_xml_content>
-          </arbitrary_xml_content>
-        </Metadata>
-      </GDALMultiDomainMetadata>
+-  .. co:: 1BIT_ALPHA
+      :choices: YES, NO
 
-   If there are metadata domain whose name starts with "xml:BOX\_", they
-   will be written each as separate JP2 'xml ' box.
+      Whether to encode the alpha
+      channel as a 1-bit channel (when there's an alpha channel). Defaults
+      to NO, unless :co:`INSPIRE_TG=YES`. Enabling this option might cause
+      compatibility problems with some readers. At the time of writing,
+      those based on the MrSID JPEG2000 SDK are unable to open such files.
+      And regarding the ECW JPEG2000 SDK, decoding of 1-bit alpha channel
+      with lossy/irreversible compression gives visual artifacts (OK with
+      lossless encoding).
 
-   If there is a metadata domain whose name is "xml:XMP", its content
-   will be written as a JP2 'uuid' XMP box.
+-  .. co:: ALPHA
+      :choices: YES, NO
+      :default: NO
 
-   If there is a metadata domain whose name is "xml:IPR", its content
-   will be written as a JP2 'jp2i' box.
+      Whether to force encoding last
+      channel as alpha channel. Only useful if the color interpretation of
+      that channel is not already Alpha.
 
--  **MAIN_MD_DOMAIN_ONLY=YES/NO**: (Only if
-   WRITE_METADATA=YES) Whether only metadata from the main domain should
-   be written. Defaults to NO.
+-  .. co:: PROFILE
+      :choices: AUTO, UNRESTRICTED, PROFILE_1
+      :default: AUTO
 
--  **USE_SRC_CODESTREAM=YES/NO**: (EXPERIMENTAL!) When
-   source dataset is JPEG2000, whether to reuse the codestream of the
-   source dataset unmodified. Defaults to NO. Note that enabling that
-   feature might result in inconsistent content of the JP2 boxes w.r.t.
-   to the content of the source codestream. Most other creation options
-   will be ignored in that mode. Can be useful in some use cases when
-   adding/correcting georeferencing, metadata, ... INSPIRE_TG and
-   PROFILE options will be ignored, and the profile of the codestream
-   will be overridden with the one specified/implied by the options
-   (which may be inconsistent with the characteristics of the
-   codestream).
+      Determine
+      which codestream profile to use. UNRESTRICTED corresponds to the
+      "Unrestricted JPEG 2000 Part 1 codestream" (RSIZ=0). PROFILE_1
+      corresponds to the "JPEG 2000 Part 1 Profile 1 codestream" (RSIZ=2),
+      which add constraints on tile dimensions and number of resolutions.
+      In AUTO mode, the driver will determine if the :co:`BLOCKXSIZE`,
+      :co:`BLOCKYSIZE`, :co:`RESOLUTIONS`, :co:`CODEBLOCK_WIDTH` and :co:`CODEBLOCK_HEIGHT` values
+      are compatible with PROFILE_1 and advertise it in the relevant case.
+      Note that the default values of those options are compatible with
+      PROFILE_1. Otherwise UNRESTRICTED is advertised.
+
+-  .. co:: INSPIRE_TG
+      :choices: YES, NO
+      :default: NO
+
+      Whether to use JPEG2000 features
+      that comply with `Inspire Orthoimagery Technical
+      Guidelines <http://inspire.ec.europa.eu/documents/Data_Specifications/INSPIRE_DataSpecification_OI_v3.0.pdf>`__.
+      When set to YES, implies :co:`PROFILE=PROFILE_1`,
+      :co:`1BIT_ALPHA=YES`, :co:`GEOBOXES_AFTER_JP2C=YES`. The :co:`CODEC`, :co:`BLOCKXSIZE`,
+      :co:`BLOCKYSIZE`, :co:`RESOLUTIONS`, :co:`NBITS`, :co:`PROFILE`, :co:`CODEBLOCK_WIDTH` and
+      :co:`CODEBLOCK_HEIGHT` options will be checked against the requirements and
+      recommendations of the Technical Guidelines.
+
+-  .. co:: JPX
+      :choices: YES, NO
+      :default: YES
+
+      Whether to advertise JPX features, and
+      add a Reader requirement box, when a GMLJP2 box is written.
+      This option should not be used unless compatibility problems
+      with a reader occur.
+
+-  .. co:: GEOBOXES_AFTER_JP2C
+      :choices: YES, NO
+
+      Whether to place
+      GeoJP2/GMLJP2 boxes after the code-stream. Defaults to NO, unless
+      :co:`INSPIRE_TG=YES`. This option should not be used unless compatibility
+      problems with a reader occur.
+
+-  .. co:: PRECINCTS
+      :choices: <{prec_w\,prec_h}\,{prec_w\,prec_h},...>
+
+      A list of {precincts width,precincts height} tuples to specify
+      precincts size. Each value should be a multiple of 2. The maximum
+      number of tuples used will be the number of resolutions. The first
+      tuple corresponds to the higher resolution level, and the following
+      ones to the lower resolution levels. If less tuples are specified,
+      the last one is used by dividing its values by 2 for each extra lower
+      resolution level. The default value used is
+      {512,512},{256,512},{128,512},{64,512},{32,512},{16,512},{8,512},{4,512},{2,512}.
+      An empty string may be used to disable precincts ( i.e. the default
+      {32767,32767},{32767,32767}, ... will then be used).
+
+-  .. co:: TILEPARTS
+      :choices: DISABLED, RESOLUTIONS, LAYERS, COMPONENTS
+      :default: DISABLED
+
+      Whether to generate tile-parts and according to which criterion.
+
+-  .. co:: CODEBLOCK_WIDTH
+      :choices: <integer>
+      :default: 64
+
+      Codeblock width: power
+      of two value between 4 and 1024. Note that
+      CODEBLOCK_WIDTH \* CODEBLOCK_HEIGHT must not be greater than 4096.
+      For PROFILE_1 compatibility, CODEBLOCK_WIDTH must not be greater than
+      64.
+
+-  .. co:: CODEBLOCK_HEIGHT
+      :choices: <integer>
+      :default: 64
+
+      Codeblock height: power
+      of two value between 4 and 1024. Note that
+      CODEBLOCK_WIDTH \* CODEBLOCK_HEIGHT must not be greater than 4096.
+      For PROFILE_1 compatibility, CODEBLOCK_HEIGHT must not be greater
+      than 64.
+
+-  ..co:: CODEBLOCK_STYLE
+     :since: 2.4
+
+      (OpenJPEG >= 2.3.0) Style
+      of the code-block coding passes. The following 6 independent settings
+      can be combined together (values should be comma separated):
+
+      -  *BYPASS* (1): enable selective arithmetic coding bypass (can
+         substantially improve coding/decoding speed, at the expense of
+         larger file size)
+      -  *RESET* (2): reset context probabilities on coding pass boundaries
+      -  *TERMALL* (4): enable termination on each coding pass
+      -  *VSC* (8): enable vertically causal context
+      -  *PREDICTABLE* (16): enable predictable termination (helps for
+         error detection)
+      -  *SEGSYM* (32): enable segmentation symbols (helps for error
+         detection)
+
+      Instead of specifying them by text, it is also possible to give the
+      corresponding numeric value of the global codeblock style, by adding
+      the selected options (for example "BYPASS,TERMALL" is equivalent to
+      "5"=1+4)
+
+      By default, none of them are enabled. Enabling them will generally
+      increase codestream size, but improve either coding/decoding speed or
+      resilience/error detection.
+
+-  .. co:: PLT
+      :choices: YES, NO
+      :default: NO
+      :since: 3.1.1
+
+      (OpenJPEG >= 2.4.0) Whether to write a
+      PLT (Packet Length) marker segment in tile-part headers.
+
+-  .. co:: TLM
+      :choices: YES, NO
+      :default: NO
+      :since: 3.4.0
+
+      OpenJPEG >= 2.5.0) Whether to write a
+      TLM (Tile-part Length) marker segment in main header.
+
+-  .. co:: WRITE_METADATA
+      :choices: YES, NO
+      :default: NO
+
+      Whether metadata should be
+      written, in a dedicated JP2 'xml ' box. The content
+      of the 'xml ' box will be like:
+
+      ::
+
+         <GDALMultiDomainMetadata>
+           <Metadata>
+             <MDI key="foo">bar</MDI>
+           </Metadata>
+           <Metadata domain='aux_domain'>
+             <MDI key="foo">bar</MDI>
+           </Metadata>
+           <Metadata domain='a_xml_domain' format='xml'>
+             <arbitrary_xml_content>
+             </arbitrary_xml_content>
+           </Metadata>
+         </GDALMultiDomainMetadata>
+
+      If there are metadata domain whose name starts with "xml:BOX\_", they
+      will be written each as separate JP2 'xml ' box.
+
+      If there is a metadata domain whose name is "xml:XMP", its content
+      will be written as a JP2 'uuid' XMP box.
+
+      If there is a metadata domain whose name is "xml:IPR", its content
+      will be written as a JP2 'jp2i' box.
+
+-  .. co:: MAIN_MD_DOMAIN_ONLY
+      :choices: YES, NO
+      :default: NO
+
+      (Only if :co:`WRITE_METADATA=YES`)
+      Whether only metadata from the main domain should
+      be written.
+
+-  .. co:: USE_SRC_CODESTREAM
+      :Choices: YES, NO
+
+      (EXPERIMENTAL!) When
+      source dataset is JPEG2000, whether to reuse the codestream of the
+      source dataset unmodified. Defaults to NO. Note that enabling that
+      feature might result in inconsistent content of the JP2 boxes w.r.t.
+      to the content of the source codestream. Most other creation options
+      will be ignored in that mode. Can be useful in some use cases when
+      adding/correcting georeferencing, metadata, ... INSPIRE_TG and
+      PROFILE options will be ignored, and the profile of the codestream
+      will be overridden with the one specified/implied by the options
+      (which may be inconsistent with the characteristics of the
+      codestream).
 
 Lossless compression
 ~~~~~~~~~~~~~~~~~~~~
@@ -322,9 +448,9 @@ Lossless compression
 Lossless compression can be achieved if ALL the following creation
 options are defined :
 
--  QUALITY=100
--  REVERSIBLE=YES
--  YCBCR420=NO (which is the default)
+-  :co:`QUALITY=100`
+-  :co:`REVERSIBLE=YES`
+-  :co:`YCBCR420=NO` (which is the default)
 
 .. _gmjp2v2def:
 
@@ -536,7 +662,7 @@ the open option OPEN_REMOTE_GML is set to YES.
 See Also
 ---------
 
--  Implemented as ``gdal/frmts/openjpeg/openjpegdataset.cpp``.
+-  Implemented as :source_file:`frmts/openjpeg/openjpegdataset.cpp`.
 
 -  `Official JPEG-2000 page <http://www.jpeg.org/jpeg2000/index.html>`__
 

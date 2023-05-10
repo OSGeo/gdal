@@ -58,5 +58,5 @@ Driver capabilities
 See Also
 --------
 
--  Implemented as ``gdal/frmts/idrisi/IdrisiDataset.cpp``.
+-  Implemented as :source_file:`frmts/idrisi/IdrisiDataset.cpp`.
 -  `www.idrisi.com <http://www.idrisi.com>`__

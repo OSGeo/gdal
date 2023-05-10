@@ -13,7 +13,7 @@ Driver implementation for a raw format that is used in
 specification <http://geotrellis.io/documentation/0.9.0/geotrellis/io/arg/>`__.
 Format is essentially a raw format, with a companion .JSON file.
 
-NOTE: Implemented as ``gdal/frmts/arg/argdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/arg/argdataset.cpp`.
 
 Driver capabilities
 -------------------

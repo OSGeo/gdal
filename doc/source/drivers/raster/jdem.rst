@@ -18,7 +18,7 @@ the coordinate system (always lat/long on the Tokyo datum).
 
 There is no update or creation support for this format.
 
-NOTE: Implemented as ``gdal/frmts/jdem/jdemdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/jdem/jdemdataset.cpp`.
 
 See Also: `Geographic Survey Institute (GSI) Web
 Site. <http://www.gsi.go.jp/ENGLISH/>`__

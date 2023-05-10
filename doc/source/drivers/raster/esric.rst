@@ -53,7 +53,7 @@ ________________________
    **CacheInfo.TileCacheInfo.TileRows** and
    **CacheInfo.TileCacheInfo.TileCols** elements.
 
--  Tiles in the cache can be in different formats, including JPEG 
+-  Tiles in the cache can be in different formats, including JPEG
    and PNG. The most common are 8 bit color or grayscale JPEG and
    color PNG with or without opacity. These caches will have the
    value **JPEG**, **PNG** or **MIXED** in the
@@ -111,7 +111,7 @@ ________________________
    cache at a given resolution level, even if data does exist at
    other levels at the same location.
 
--  A cache can exceede the maximum size supported by GDAL, which
+-  A cache can exceed the maximum size supported by GDAL, which
    is INT32_MAX, in either dimension. This driver will generate
    an error when opening such caches. Removing the
    **LODInfo** nodes with the highest **LevelID** from the conf.xml
@@ -120,4 +120,4 @@ ________________________
 
 See Also
 --------
--  Implemented as ``gdal/frmts/esric/esric_dataset.cpp``.
+-  Implemented as :source_file:`frmts/esric/esric_dataset.cpp`.

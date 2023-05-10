@@ -15,7 +15,7 @@ auxiliary fields as metadata. This format is the new, labelled DOQ
 
 This driver was implemented by Derrick J Brashear.
 
-NOTE: Implemented as ``gdal/frmts/raw/doq2dataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/doq2dataset.cpp`.
 
 See Also: `USGS DOQ
 Standards <http://rockyweb.cr.usgs.gov/nmpstds/doqstds.html>`__

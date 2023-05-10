@@ -31,7 +31,7 @@ orders. However GDAL honours the new BYTE_ORDER keyword which can take a
 value of LSB (Integer - little endian), and MSB (Motorola - big
 endian). This may be manually added to the .hdr file if required.
 
-NOTE: Implemented as ``gdal/frmts/raw/mffdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/mffdataset.cpp`.
 
 Driver capabilities
 -------------------

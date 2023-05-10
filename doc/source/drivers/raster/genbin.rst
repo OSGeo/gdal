@@ -26,7 +26,7 @@ Pixel data types of U8, U16, S16, F32, F64, and U1 (bit) are supported.
 Georeferencing and coordinate system information should be supported
 when provided.
 
-NOTE: Implemented as ``gdal/frmts/raw/genbindataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/genbindataset.cpp`.
 
 Driver capabilities
 -------------------
