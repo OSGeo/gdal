@@ -234,9 +234,7 @@ class netCDFRasterBand final : public GDALPamRasterBand
     bool bSignedData;
     bool bCheckLongitude;
 
-    CPLErr CreateBandMetadata(const int *paDimIds,
-                              const int *panExtraDimGroupIds,
-                              const int *panExtraDimVarIds);
+    CPLErr CreateBandMetadata();
     template <class T>
     void CheckData(void *pImage, void *pImageNC, size_t nTmpBlockXSize,
                    size_t nTmpBlockYSize, bool bCheckIsNan = false);
@@ -268,10 +266,7 @@ class netCDFRasterBand final : public GDALPamRasterBand
 
     netCDFRasterBand(const CONSTRUCTOR_OPEN &, netCDFDataset *poDS,
                      int nGroupId, int nZId, int nZDim, int nLevel,
-                     const int *panBandZLen, const int *panBandPos,
-                     const int *paDimIds, int nBand,
-                     const int *panExtraDimGroupIds,
-                     const int *panExtraDimVarIds);
+                     const int *panBandZLen, const int *panBandPos, int nBand);
     netCDFRasterBand(const CONSTRUCTOR_CREATE &, netCDFDataset *poDS,
                      GDALDataType eType, int nBand, bool bSigned = true,
                      const char *pszBandName = nullptr,
@@ -308,11 +303,11 @@ class netCDFRasterBand final : public GDALPamRasterBand
 /*                          netCDFRasterBand()                          */
 /************************************************************************/
 
-netCDFRasterBand::netCDFRasterBand(
-    const netCDFRasterBand::CONSTRUCTOR_OPEN &, netCDFDataset *poNCDFDS,
-    int nGroupId, int nZIdIn, int nZDimIn, int nLevelIn,
-    const int *panBandZLevIn, const int *panBandZPosIn, const int *paDimIds,
-    int nBandIn, const int *panExtraDimGroupIds, const int *panExtraDimVarIds)
+netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
+                                   netCDFDataset *poNCDFDS, int nGroupId,
+                                   int nZIdIn, int nZDimIn, int nLevelIn,
+                                   const int *panBandZLevIn,
+                                   const int *panBandZPosIn, int nBandIn)
     : nc_datatype(NC_NAT), cdfid(nGroupId), nZId(nZIdIn), nZDim(nZDimIn),
       nLevel(nLevelIn), nBandXPos(panBandZPosIn[0]),
       nBandYPos(nZDim == 1 ? -1 : panBandZPosIn[1]), panBandZPos(nullptr),
@@ -811,7 +806,7 @@ netCDFRasterBand::netCDFRasterBand(
     }
 
     // Create Band Metadata.
-    CreateBandMetadata(paDimIds, panExtraDimGroupIds, panExtraDimVarIds);
+    CreateBandMetadata();
 
     // Attempt to fetch the scale_factor and add_offset attributes for the
     // variable and set them.  If these values are not available, set
@@ -1835,9 +1830,9 @@ CPLXMLNode *netCDFRasterBand::SerializeToXML(const char * /* pszUnused */)
                                   nullptr};
     for (int i = 0; i < CSLCount(papszMDStats); i++)
     {
-        if (GetMetadataItem(papszMDStats[i]) != nullptr)
-            oMDMDStats.SetMetadataItem(papszMDStats[i],
-                                       GetMetadataItem(papszMDStats[i]));
+        const char *pszMDI = GetMetadataItem(papszMDStats[i]);
+        if (pszMDI)
+            oMDMDStats.SetMetadataItem(papszMDStats[i], pszMDI);
     }
     CPLXMLNode *psMD = oMDMDStats.Serialize();
 
@@ -1937,9 +1932,7 @@ static int Get1DVariableIndexedByDimension(int cdfid, int nDimId,
 /*                         CreateBandMetadata()                         */
 /************************************************************************/
 
-CPLErr netCDFRasterBand::CreateBandMetadata(const int *paDimIds,
-                                            const int *panExtraDimGroupIds,
-                                            const int *panExtraDimVarIds)
+CPLErr netCDFRasterBand::CreateBandMetadata()
 
 {
     netCDFDataset *l_poDS = reinterpret_cast<netCDFDataset *>(poDS);
@@ -1987,14 +1980,15 @@ CPLErr netCDFRasterBand::CreateBandMetadata(const int *paDimIds,
             result = static_cast<int>((nLevel - Taken) % Sum);
         }
 
-        snprintf(szVarName, sizeof(szVarName), "%s",
-                 l_poDS->papszDimName[paDimIds[panBandZPos[i]]]);
+        char szName[NC_MAX_NAME + 1] = {};
+        snprintf(szName, sizeof(szName), "%s",
+                 l_poDS->papszDimName[l_poDS->m_anDimIds[panBandZPos[i]]]);
 
         char szMetaName[NC_MAX_NAME + 1 + 32];
-        snprintf(szMetaName, sizeof(szMetaName), "NETCDF_DIM_%s", szVarName);
+        snprintf(szMetaName, sizeof(szMetaName), "NETCDF_DIM_%s", szName);
 
-        int nGroupID = panExtraDimGroupIds[i];
-        int nVarID = panExtraDimVarIds[i];
+        const int nGroupID = l_poDS->m_anExtraDimGroupIds[i];
+        const int nVarID = l_poDS->m_anExtraDimVarIds[i];
         if (nVarID < 0)
         {
             GDALPamRasterBand::SetMetadataItem(szMetaName,
@@ -9291,20 +9285,18 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     int nd = 0;
     nc_inq_varndims(cdfid, var, &nd);
 
-    int *paDimIds = static_cast<int *>(CPLCalloc(nd, sizeof(int)));
+    poDS->m_anDimIds.resize(nd);
 
     // X, Y, Z position in array
-    int *panBandDimPos = static_cast<int *>(CPLCalloc(nd, sizeof(int)));
+    std::vector<int> anBandDimPos(nd);
 
-    nc_inq_vardimid(cdfid, var, paDimIds);
+    nc_inq_vardimid(cdfid, var, poDS->m_anDimIds.data());
 
     // Check if somebody tried to pass a variable with less than 1D.
     if (nd < 1)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Variable has %d dimension(s) - not supported.", nd);
-        CPLFree(paDimIds);
-        CPLFree(panBandDimPos);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                     // with GDALDataset own mutex.
         delete poDS;
@@ -9332,9 +9324,9 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         char szDimName1[NC_MAX_NAME + 1] = {};
         char szDimName2[NC_MAX_NAME + 1] = {};
-        status = nc_inq_dimname(cdfid, paDimIds[nd - 1], szDimName1);
+        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[nd - 1], szDimName1);
         NCDF_ERR(status);
-        status = nc_inq_dimname(cdfid, paDimIds[nd - 2], szDimName2);
+        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[nd - 2], szDimName2);
         NCDF_ERR(status);
         if (NCDFIsVarLongitude(cdfid, -1, szDimName1) == false &&
             NCDFIsVarProjectionX(cdfid, -1, szDimName1) == false)
@@ -9360,12 +9352,14 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (nd >= 3)
         {
             char szDimName3[NC_MAX_NAME + 1] = {};
-            status = nc_inq_dimname(cdfid, paDimIds[nd - 3], szDimName3);
+            status =
+                nc_inq_dimname(cdfid, poDS->m_anDimIds[nd - 3], szDimName3);
             NCDF_ERR(status);
             if (nd >= 4)
             {
                 char szDimName4[NC_MAX_NAME + 1] = {};
-                status = nc_inq_dimname(cdfid, paDimIds[nd - 4], szDimName4);
+                status =
+                    nc_inq_dimname(cdfid, poDS->m_anDimIds[nd - 4], szDimName4);
                 NCDF_ERR(status);
                 if (NCDFIsVarVerticalCoord(cdfid, -1, szDimName3) == false)
                 {
@@ -9396,14 +9390,14 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // Get X dimensions information.
     size_t xdim;
-    poDS->nXDimID = paDimIds[nd - 1];
+    poDS->nXDimID = poDS->m_anDimIds[nd - 1];
     nc_inq_dimlen(cdfid, poDS->nXDimID, &xdim);
 
     // Get Y dimension information.
     size_t ydim;
     if (nd >= 2)
     {
-        poDS->nYDimID = paDimIds[nd - 2];
+        poDS->nYDimID = poDS->m_anDimIds[nd - 2];
         nc_inq_dimlen(cdfid, poDS->nYDimID, &ydim);
     }
     else
@@ -9417,8 +9411,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid raster dimensions: " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB,
                  static_cast<GUIntBig>(xdim), static_cast<GUIntBig>(ydim));
-        CPLFree(paDimIds);
-        CPLFree(panBandDimPos);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                     // with GDALDataset own mutex.
         delete poDS;
@@ -9432,22 +9424,20 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     unsigned int k = 0;
     for (int j = 0; j < nd; j++)
     {
-        if (paDimIds[j] == poDS->nXDimID)
+        if (poDS->m_anDimIds[j] == poDS->nXDimID)
         {
-            panBandDimPos[0] = j;  // Save Position of XDim
+            anBandDimPos[0] = j;  // Save Position of XDim
             k++;
         }
-        if (paDimIds[j] == poDS->nYDimID)
+        if (poDS->m_anDimIds[j] == poDS->nYDimID)
         {
-            panBandDimPos[1] = j;  // Save Position of YDim
+            anBandDimPos[1] = j;  // Save Position of YDim
             k++;
         }
     }
     // X and Y Dimension Ids were not found!
     if ((nd >= 2 && k != 2) || (nd == 1 && k != 1))
     {
-        CPLFree(paDimIds);
-        CPLFree(panBandDimPos);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                     // with GDALDataset own mutex.
         delete poDS;
@@ -9481,7 +9471,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         std::set<int> oSetDimIdsUsedByVar;
         for (int i = 0; i < nd; i++)
         {
-            oSetDimIdsUsedByVar.insert(paDimIds[i]);
+            oSetDimIdsUsedByVar.insert(poDS->m_anDimIds[i]);
         }
         for (int j = 0; j <= nMaxDimId; j++)
         {
@@ -9493,8 +9483,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 status = nc_inq_dimname(cdfid, j, szTemp);
                 if (status != NC_NOERR)
                 {
-                    CPLFree(paDimIds);
-                    CPLFree(panBandDimPos);
                     CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
                                                 // deadlock with GDALDataset own
                                                 // mutex.
@@ -9549,8 +9537,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     nc_type nType = NC_NAT;
 
     CPLString osExtraDimNames;
-    int anExtraDimVarIds[NC_MAX_NAME] = {-1};
-    int anExtraDimGroupIds[NC_MAX_NAME] = {-1};
 
     if (nd > 2)
     {
@@ -9563,15 +9549,16 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
         for (int j = 0; j < nd; j++)
         {
-            if ((paDimIds[j] != poDS->nXDimID) &&
-                (paDimIds[j] != poDS->nYDimID))
+            if ((poDS->m_anDimIds[j] != poDS->nXDimID) &&
+                (poDS->m_anDimIds[j] != poDS->nYDimID))
             {
-                nc_inq_dimlen(cdfid, paDimIds[j], &lev_count);
+                nc_inq_dimlen(cdfid, poDS->m_anDimIds[j], &lev_count);
                 nTotLevCount *= lev_count;
                 panBandZLev[nDim - 2] = static_cast<int>(lev_count);
-                panBandDimPos[nDim] = j;  // Save Position of ZDim
+                anBandDimPos[nDim] = j;  // Save Position of ZDim
                 // Save non-spatial dimension names.
-                if (nc_inq_dimname(cdfid, paDimIds[j], szDimName) == NC_NOERR)
+                if (nc_inq_dimname(cdfid, poDS->m_anDimIds[j], szDimName) ==
+                    NC_NOERR)
                 {
                     osExtraDimNames += szDimName;
                     if (j < nd - 3)
@@ -9581,9 +9568,10 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     int nIdxGroupID = -1;
                     int nIdxVarID = Get1DVariableIndexedByDimension(
-                        cdfid, paDimIds[j], szDimName, true, &nIdxGroupID);
-                    anExtraDimGroupIds[nDim - 2] = nIdxGroupID;
-                    anExtraDimVarIds[nDim - 2] = nIdxVarID;
+                        cdfid, poDS->m_anDimIds[j], szDimName, true,
+                        &nIdxGroupID);
+                    poDS->m_anExtraDimGroupIds.push_back(nIdxGroupID);
+                    poDS->m_anExtraDimVarIds.push_back(nIdxVarID);
 
                     if (nIdxVarID >= 0)
                     {
@@ -9610,8 +9598,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
                 else
                 {
-                    anExtraDimGroupIds[nDim - 2] = -1;
-                    anExtraDimVarIds[nDim - 2] = -1;
+                    poDS->m_anExtraDimGroupIds.push_back(-1);
+                    poDS->m_anExtraDimVarIds.push_back(-1);
                 }
 
                 nDim++;
@@ -9646,8 +9634,6 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         nTotLevCount = 0;
         if (poDS->GetLayerCount() == 0)
         {
-            CPLFree(paDimIds);
-            CPLFree(panBandDimPos);
             CPLFree(panBandZLev);
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
                                         // deadlock with GDALDataset own mutex.
@@ -9666,8 +9652,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             int bandVarId = listVariables[iBand].second;
             netCDFRasterBand *poBand = new netCDFRasterBand(
                 netCDFRasterBand::CONSTRUCTOR_OPEN(), poDS, bandVarGroupId,
-                bandVarId, nDim, 0, nullptr, panBandDimPos, paDimIds, iBand + 1,
-                anExtraDimGroupIds, anExtraDimVarIds);
+                bandVarId, nDim, 0, nullptr, anBandDimPos.data(), iBand + 1);
             poDS->SetBand(iBand + 1, poBand);
         }
     }
@@ -9677,14 +9662,11 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             netCDFRasterBand *poBand = new netCDFRasterBand(
                 netCDFRasterBand::CONSTRUCTOR_OPEN(), poDS, cdfid, var, nDim,
-                lev, panBandZLev, panBandDimPos, paDimIds, lev + 1,
-                anExtraDimGroupIds, anExtraDimVarIds);
+                lev, panBandZLev, anBandDimPos.data(), lev + 1);
             poDS->SetBand(lev + 1, poBand);
         }
     }
 
-    CPLFree(paDimIds);
-    CPLFree(panBandDimPos);
     if (panBandZLev)
         CPLFree(panBandZLev);
     // Handle angular geographic coordinates here
