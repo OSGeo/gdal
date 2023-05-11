@@ -608,6 +608,7 @@ class GDALTest(object):
         out_bands=1,
         check_minmax=1,
         dest_open_options=None,
+        delete_output_file=True,
     ):
         self.testDriver()
 
@@ -696,7 +697,7 @@ class GDALTest(object):
         assert new_ds.FlushCache() == gdal.CE_None
         new_ds = None
 
-        if gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
+        if delete_output_file and gdal.GetConfigOption("CPL_DEBUG", "OFF") != "ON":
             self.driver.Delete(new_filename)
 
     def testSetGeoTransform(self):
