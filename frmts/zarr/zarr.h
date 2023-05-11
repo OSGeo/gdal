@@ -172,6 +172,16 @@ class ZarrAttributeGroup
         return poAttr;
     }
 
+    bool DeleteAttribute(const std::string &osName)
+    {
+        const bool bOK = m_poGroup->DeleteAttribute(osName, nullptr);
+        if (bOK)
+        {
+            m_bModified = true;
+        }
+        return bOK;
+    }
+
     void SetUpdatable(bool bUpdatable)
     {
         auto attrs = m_poGroup->GetAttributes(nullptr);
@@ -212,6 +222,8 @@ class ZarrAttributeGroup
     CPLJSONObject Serialize() const;
 
     void ParentRenamed(const std::string &osNewParentFullName);
+
+    void ParentDeleted();
 };
 
 /************************************************************************/
@@ -254,7 +266,7 @@ class ZarrSharedResource
     void SetZMetadataItem(const std::string &osFilename,
                           const CPLJSONObject &obj);
 
-    void DeleteZMetadataItem(const std::string &osFilename);
+    void DeleteZMetadataItemRecursive(const std::string &osFilename);
 
     void RenameZMetadataRecursive(const std::string &osOldFilename,
                                   const std::string &osNewFilename);
@@ -339,6 +351,8 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
     void NotifyChildrenOfRenaming() override;
 
+    void NotifyChildrenOfDeletion() override;
+
   public:
     ~ZarrGroupBase() override;
 
@@ -367,6 +381,9 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
 
+    bool DeleteAttribute(const std::string &osName,
+                         CSLConstList papszOptions = nullptr) override;
+
     std::vector<std::shared_ptr<GDALDimension>>
     GetDimensions(CSLConstList papszOptions = nullptr) const override;
 
@@ -393,6 +410,9 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
             OpenZarrGroup(osName, papszOptions));
     }
 
+    bool DeleteGroup(const std::string &osName,
+                     CSLConstList papszOptions = nullptr) override;
+
     std::shared_ptr<GDALMDArray>
     OpenMDArray(const std::string &osName,
                 CSLConstList papszOptions = nullptr) const override
@@ -400,6 +420,9 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
         return std::static_pointer_cast<GDALMDArray>(
             OpenZarrArray(osName, papszOptions));
     }
+
+    bool DeleteMDArray(const std::string &osName,
+                       CSLConstList papszOptions = nullptr) override;
 
     virtual std::shared_ptr<ZarrArray>
     OpenZarrArray(const std::string &osName,
@@ -768,6 +791,8 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     void NotifyChildrenOfRenaming() override;
 
+    void NotifyChildrenOfDeletion() override;
+
     static void EncodeElt(const std::vector<DtypeElt> &elts, const GByte *pSrc,
                           GByte *pDst);
 
@@ -930,6 +955,9 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
                     const std::vector<GUInt64> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
+
+    bool DeleteAttribute(const std::string &osName,
+                         CSLConstList papszOptions = nullptr) override;
 
     std::shared_ptr<OGRSpatialReference> GetSpatialRef() const override;
 

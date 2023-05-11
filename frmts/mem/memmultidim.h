@@ -80,6 +80,8 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
 
     void NotifyChildrenOfRenaming() override;
 
+    void NotifyChildrenOfDeletion() override;
+
   public:
     MEMGroup(const std::string &osParentName, const char *pszName)
         : GDALGroup(osParentName, pszName ? pszName : "")
@@ -111,6 +113,9 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
     std::shared_ptr<GDALGroup> CreateGroup(const std::string &osName,
                                            CSLConstList papszOptions) override;
 
+    bool DeleteGroup(const std::string &osName,
+                     CSLConstList papszOptions) override;
+
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &, const std::string &,
                     const std::string &, GUInt64,
@@ -128,6 +133,9 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
         const GDALExtendedDataType &oDataType, void *pData,
         CSLConstList papszOptions);
 
+    bool DeleteMDArray(const std::string &osName,
+                       CSLConstList papszOptions) override;
+
     std::shared_ptr<GDALAttribute>
     GetAttribute(const std::string &osName) const override;
 
@@ -142,6 +150,9 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
                     const std::vector<GUInt64> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
+
+    bool DeleteAttribute(const std::string &osName,
+                         CSLConstList papszOptions) override;
 
     bool Rename(const std::string &osNewName) override;
 };
@@ -173,7 +184,6 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
 
   protected:
     bool m_bOwnArray = false;
-    bool m_bValid = true;
     bool m_bWritable = true;
     bool m_bModified = false;
     GDALExtendedDataType m_oType;
@@ -272,6 +282,8 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
 
     void NotifyChildrenOfRenaming() override;
 
+    void NotifyChildrenOfDeletion() override;
+
   protected:
     MEMMDArray(const std::string &osParentName, const std::string &osName,
                const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
@@ -322,6 +334,9 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
                     const std::vector<GUInt64> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
+
+    bool DeleteAttribute(const std::string &osName,
+                         CSLConstList papszOptions) override;
 
     const std::string &GetUnit() const override
     {

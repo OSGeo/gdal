@@ -865,7 +865,7 @@ def test_zarr_read_group(use_get_names):
     assert rg.OpenGroup("not_existing") is None
     assert subgroup.GetName() == "foo"
     assert subgroup.GetFullName() == "/foo"
-    assert rg.GetMDArrayNames() is None
+    assert len(rg.GetMDArrayNames()) == 0
     if use_get_names:
         assert subgroup.GetGroupNames() == ["bar"]
     assert subgroup.GetAttributes() == []
@@ -898,7 +898,7 @@ def test_zarr_read_group_with_zmetadata():
     assert rg.OpenGroup("not_existing") is None
     assert subgroup.GetName() == "foo"
     assert subgroup.GetFullName() == "/foo"
-    assert rg.GetMDArrayNames() is None
+    assert len(rg.GetMDArrayNames()) == 0
     assert subgroup.GetGroupNames() == ["bar"]
     assert subgroup.GetAttributes() == []
     subsubgroup = subgroup.OpenGroup("bar")
@@ -4675,5 +4675,330 @@ def test_zarr_multidim_rename_dim_after_reopening(format, create_z_metadata):
         create()
         rename()
         reopen_after_rename()
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+@pytest.mark.parametrize("get_before_delete", [True, False])
+def test_zarr_multidim_delete_group_after_reopening(
+    format, create_z_metadata, get_before_delete
+):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        group_attr.Write("my_string")
+        rg.CreateGroup("other_group")
+        dim = group.CreateDimension(
+            "dim0", "unspecified type", "unspecified direction", 2
+        )
+        ar = group.CreateMDArray(
+            "ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+        )
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+        attr2 = ar.CreateAttribute("attr2", [], gdal.ExtendedDataType.CreateString())
+        attr2.Write("foo")
+
+        group.CreateGroup("subgroup")
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        # Read-only
+        with pytest.raises(Exception, match="not open in update mode"):
+            rg.DeleteGroup("group")
+
+        assert set(rg.GetGroupNames()) == {"group", "other_group"}
+
+        assert rg.OpenGroup("group")
+
+    def delete():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+
+        with pytest.raises(Exception, match="is not a sub-group of this group"):
+            rg.DeleteGroup("non_existing")
+
+        if not get_before_delete:
+            rg.DeleteGroup("group")
+
+            assert set(rg.GetGroupNames()) == {"other_group"}
+
+            with pytest.raises(Exception, match="does not exist"):
+                rg.OpenGroup("group")
+
+        else:
+            group = rg.OpenGroup("group")
+            group_attr = group.GetAttribute("group_attr")
+            ar = group.OpenMDArray("ar")
+            attr = ar.GetAttribute("attr")
+
+            # Delete group and test effects
+            rg.DeleteGroup("group")
+
+            assert set(rg.GetGroupNames()) == {"other_group"}
+
+            with pytest.raises(Exception, match="does not exist"):
+                rg.OpenGroup("group")
+
+            with pytest.raises(Exception, match="has been deleted"):
+                group.Rename("renamed")
+
+            with pytest.raises(Exception, match="has been deleted"):
+                group_attr.Rename("renamed")
+
+            with pytest.raises(Exception, match="has been deleted"):
+                ar.GetAttributes()
+
+            with pytest.raises(Exception, match="has been deleted"):
+                attr.Write("foo2")
+
+            with pytest.raises(Exception, match="has been deleted"):
+                ar.GetAttribute("attr2")
+
+    def reopen_after_delete():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+
+        assert set(rg.GetGroupNames()) == {"other_group"}
+
+    try:
+        create()
+        reopen_readonly()
+        delete()
+        reopen_after_delete()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+@pytest.mark.parametrize("get_before_delete", [True, False])
+def test_zarr_multidim_delete_array_after_reopening(
+    format, create_z_metadata, get_before_delete
+):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+        attr2 = ar.CreateAttribute("attr2", [], gdal.ExtendedDataType.CreateString())
+        attr2.Write("foo")
+
+        group.CreateMDArray("other_ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Read-only
+        with pytest.raises(Exception, match="not open in update mode"):
+            group.DeleteMDArray("ar")
+
+        assert set(group.GetMDArrayNames()) == {"ar", "other_ar"}
+
+        assert group.OpenMDArray("ar")
+
+    def delete():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        with pytest.raises(Exception, match="is not an array of this group"):
+            group.DeleteMDArray("non_existing")
+
+        if not get_before_delete:
+            group.DeleteMDArray("ar")
+
+            assert set(group.GetMDArrayNames()) == {"other_ar"}
+
+            with pytest.raises(Exception, match="does not exist"):
+                group.OpenMDArray("ar")
+
+        else:
+            ar = group.OpenMDArray("ar")
+            attr = ar.GetAttribute("attr")
+
+            # Delete array and test effects
+            group.DeleteMDArray("ar")
+
+            assert set(group.GetMDArrayNames()) == {"other_ar"}
+
+            with pytest.raises(Exception, match="does not exist"):
+                group.OpenMDArray("ar")
+
+            with pytest.raises(Exception, match="has been deleted"):
+                ar.GetAttributes()
+
+            with pytest.raises(Exception, match="has been deleted"):
+                attr.Write("foo2")
+
+    def reopen_after_delete():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        assert set(group.GetMDArrayNames()) == {"other_ar"}
+
+    try:
+        create()
+        reopen_readonly()
+        delete()
+        reopen_after_delete()
+
+    finally:
+        gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize(
+    "format,create_z_metadata",
+    [("ZARR_V2", "YES"), ("ZARR_V2", "NO"), ("ZARR_V3", "NO")],
+)
+@pytest.mark.parametrize("get_before_delete", [True, False])
+def test_zarr_multidim_delete_attribute_after_reopening(
+    format, create_z_metadata, get_before_delete
+):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    def create():
+        ds = drv.CreateMultiDimensional(
+            filename,
+            options=["FORMAT=" + format, "CREATE_ZMETADATA=" + create_z_metadata],
+        )
+        rg = ds.GetRootGroup()
+        group = rg.CreateGroup("group")
+        group_attr = group.CreateAttribute(
+            "group_attr", [], gdal.ExtendedDataType.CreateString()
+        )
+        group_attr.Write("foo")
+        group_attr2 = group.CreateAttribute(
+            "group_attr2", [], gdal.ExtendedDataType.CreateString()
+        )
+        group_attr2.Write("foo")
+
+        ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        attr = ar.CreateAttribute("attr", [], gdal.ExtendedDataType.CreateString())
+        attr.Write("foo")
+        attr2 = ar.CreateAttribute("attr2", [], gdal.ExtendedDataType.CreateString())
+        attr2.Write("foo")
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        # Read-only
+        with pytest.raises(Exception, match="not open in update mode"):
+            group.DeleteAttribute("group_attr")
+
+        assert set(x.GetName() for x in group.GetAttributes()) == {
+            "group_attr",
+            "group_attr2",
+        }
+
+        ar = group.OpenMDArray("ar")
+        with pytest.raises(Exception, match="not open in update mode"):
+            ar.DeleteAttribute("attr")
+
+        assert set(x.GetName() for x in ar.GetAttributes()) == {"attr", "attr2"}
+
+    def delete():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        with pytest.raises(Exception, match="is not an attribute"):
+            group.DeleteAttribute("non_existing")
+
+        ar = group.OpenMDArray("ar")
+        with pytest.raises(Exception, match="is not an attribute"):
+            ar.DeleteAttribute("non_existing")
+
+        if not get_before_delete:
+            group.DeleteAttribute("group_attr")
+
+            assert set(x.GetName() for x in group.GetAttributes()) == {"group_attr2"}
+
+            ar.DeleteAttribute("attr")
+
+            assert set(x.GetName() for x in ar.GetAttributes()) == {"attr2"}
+
+        else:
+            group_attr = group.GetAttribute("group_attr")
+            attr = ar.GetAttribute("attr")
+
+            group.DeleteAttribute("group_attr")
+
+            assert set(x.GetName() for x in group.GetAttributes()) == {"group_attr2"}
+
+            with pytest.raises(Exception, match="has been deleted"):
+                group_attr.Write("foo2")
+
+            ar.DeleteAttribute("attr")
+
+            assert set(x.GetName() for x in ar.GetAttributes()) == {"attr2"}
+
+            with pytest.raises(Exception, match="has been deleted"):
+                attr.Write("foo2")
+
+    def reopen_after_delete():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        group = rg.OpenGroup("group")
+
+        assert set(x.GetName() for x in group.GetAttributes()) == {"group_attr2"}
+
+        ar = group.OpenMDArray("ar")
+        assert set(x.GetName() for x in ar.GetAttributes()) == {"attr2"}
+
+    try:
+        create()
+        reopen_readonly()
+        delete()
+        reopen_after_delete()
+
     finally:
         gdal.RmdirRecursive(filename)

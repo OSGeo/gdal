@@ -595,6 +595,9 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
 
 std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     if (m_poSRS)
         return m_poSRS;
     return GDALPamMDArray::GetSpatialRef();
@@ -606,6 +609,9 @@ std::shared_ptr<OGRSpatialReference> ZarrArray::GetSpatialRef() const
 
 bool ZarrArray::SetRawNoDataValue(const void *pRawNoData)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Array opened in read-only mode");
@@ -882,6 +888,9 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
                                   std::vector<uint64_t> &anReqTilesIndices,
                                   size_t &nReqTiles) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     const size_t nDims = m_aoDims.size();
     anIndicesCur.resize(nDims);
     std::vector<uint64_t> anIndicesMin(nDims);
@@ -1027,6 +1036,9 @@ bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!AllocateWorkingBuffers())
         return false;
 
@@ -1514,6 +1526,9 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                        const GDALExtendedDataType &bufferDataType,
                        const void *pSrcBuffer)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!AllocateWorkingBuffers())
         return false;
 
@@ -2220,6 +2235,9 @@ std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
     const std::string &osName, const std::vector<GUInt64> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -2237,11 +2255,33 @@ std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
 }
 
 /************************************************************************/
+/*                  ZarrGroupBase::DeleteAttribute()                    */
+/************************************************************************/
+
+bool ZarrArray::DeleteAttribute(const std::string &osName, CSLConstList)
+{
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
+    if (!m_bUpdatable)
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Dataset not open in update mode");
+        return false;
+    }
+
+    return m_oAttrGroup.DeleteAttribute(osName);
+}
+
+/************************************************************************/
 /*                      ZarrArray::SetSpatialRef()                      */
 /************************************************************************/
 
 bool ZarrArray::SetSpatialRef(const OGRSpatialReference *poSRS)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!m_bUpdatable)
     {
         return GDALPamMDArray::SetSpatialRef(poSRS);
@@ -2259,6 +2299,9 @@ bool ZarrArray::SetSpatialRef(const OGRSpatialReference *poSRS)
 
 bool ZarrArray::SetUnit(const std::string &osUnit)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -2303,6 +2346,9 @@ double ZarrArray::GetScale(bool *pbHasScale, GDALDataType *peStorageType) const
 
 bool ZarrArray::SetOffset(double dfOffset, GDALDataType /* eStorageType */)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     m_dfOffset = dfOffset;
     m_bHasOffset = true;
     m_bOffsetModified = true;
@@ -2315,6 +2361,9 @@ bool ZarrArray::SetOffset(double dfOffset, GDALDataType /* eStorageType */)
 
 bool ZarrArray::SetScale(double dfScale, GDALDataType /* eStorageType */)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     m_dfScale = dfScale;
     m_bHasScale = true;
     m_bScaleModified = true;
@@ -2393,6 +2442,9 @@ void ZarrArray::GetDimensionTypeDirection(CPLJSONObject &oAttributes,
 std::vector<std::shared_ptr<GDALMDArray>>
 ZarrArray::GetCoordinateVariables() const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return {};
+
     std::vector<std::shared_ptr<GDALMDArray>> ret;
     const auto poCoordinates = GetAttribute("coordinates");
     if (poCoordinates &&
@@ -2443,6 +2495,9 @@ ZarrArray::GetCoordinateVariables() const
 bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
                        CSLConstList /* papszOptions */)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!IsWritable())
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -2545,6 +2600,9 @@ void ZarrArray::ParentRenamed(const std::string &osNewParentFullName)
 
 bool ZarrArray::Rename(const std::string &osNewName)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -2593,6 +2651,15 @@ bool ZarrArray::Rename(const std::string &osNewName)
     BaseRename(osNewName);
 
     return true;
+}
+
+/************************************************************************/
+/*                       NotifyChildrenOfDeletion()                     */
+/************************************************************************/
+
+void ZarrArray::NotifyChildrenOfDeletion()
+{
+    m_oAttrGroup.ParentDeleted();
 }
 
 /************************************************************************/

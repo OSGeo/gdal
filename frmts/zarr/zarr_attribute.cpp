@@ -346,3 +346,12 @@ void ZarrAttributeGroup::ParentRenamed(const std::string &osNewParentFullName)
         attr->ParentRenamed(m_poGroup->GetFullName());
     }
 }
+
+/************************************************************************/
+/*                          ParentDeleted()                             */
+/************************************************************************/
+
+void ZarrAttributeGroup::ParentDeleted()
+{
+    m_poGroup->Deleted();
+}

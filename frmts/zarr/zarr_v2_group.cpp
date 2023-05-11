@@ -56,7 +56,7 @@ ZarrV2Group::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
 
 ZarrV2Group::~ZarrV2Group()
 {
-    if (m_oAttrGroup.IsModified())
+    if (m_bValid && m_oAttrGroup.IsModified())
     {
         CPLJSONDocument oDoc;
         oDoc.SetRoot(m_oAttrGroup.Serialize());
@@ -122,6 +122,9 @@ void ZarrV2Group::ExploreDirectory() const
 std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
                                                       CSLConstList) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     auto oIter = m_oMapMDArrays.find(osName);
     if (oIter != m_oMapMDArrays.end())
         return oIter->second;
@@ -155,6 +158,9 @@ std::shared_ptr<ZarrArray> ZarrV2Group::OpenZarrArray(const std::string &osName,
 std::shared_ptr<ZarrGroupBase>
 ZarrV2Group::OpenZarrGroup(const std::string &osName, CSLConstList) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     auto oIter = m_oMapGroups.find(osName);
     if (oIter != m_oMapGroups.end())
         return oIter->second;
@@ -583,6 +589,9 @@ std::shared_ptr<GDALGroup>
 ZarrV2Group::CreateGroup(const std::string &osName,
                          CSLConstList /* papszOptions */)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -826,6 +835,9 @@ std::shared_ptr<GDALMDArray> ZarrV2Group::CreateMDArray(
     const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return nullptr;
+
     if (!m_bUpdatable)
     {
         CPLError(CE_Failure, CPLE_NotSupported,

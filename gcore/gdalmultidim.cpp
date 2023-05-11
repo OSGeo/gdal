@@ -311,6 +311,37 @@ std::shared_ptr<GDALAttribute> GDALIHasAttribute::CreateAttribute(
 }
 
 /************************************************************************/
+/*                          DeleteAttribute()                           */
+/************************************************************************/
+
+/** Delete an attribute from a GDALMDArray or GDALGroup.
+ *
+ * Optionally implemented.
+ *
+ * After this call, if a previously obtained instance of the deleted object
+ * is still alive, no method other than for freeing it should be invoked.
+ *
+ * Drivers known to implement it: MEM, netCDF
+ *
+ * This is the same as the C function GDALGroupDeleteAttribute() or
+ * GDALMDArrayDeleteAttribute()
+ *
+ * @param osName Attribute name.
+ * @param papszOptions Driver specific options determining how the attribute.
+ * should be deleted.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALIHasAttribute::DeleteAttribute(CPL_UNUSED const std::string &osName,
+                                        CPL_UNUSED CSLConstList papszOptions)
+{
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "DeleteAttribute() not implemented");
+    return false;
+}
+
+/************************************************************************/
 /*                            GDALGroup()                               */
 /************************************************************************/
 
@@ -560,6 +591,35 @@ GDALGroup::CreateGroup(CPL_UNUSED const std::string &osName,
 }
 
 /************************************************************************/
+/*                          DeleteGroup()                               */
+/************************************************************************/
+
+/** Delete a sub-group from a group.
+ *
+ * Optionally implemented.
+ *
+ * After this call, if a previously obtained instance of the deleted object
+ * is still alive, no method other than for freeing it should be invoked.
+ *
+ * Drivers known to implement it: MEM, Zarr
+ *
+ * This is the same as the C function GDALGroupDeleteGroup().
+ *
+ * @param osName Sub-group name.
+ * @param papszOptions Driver specific options determining how the group.
+ * should be deleted.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALGroup::DeleteGroup(CPL_UNUSED const std::string &osName,
+                            CPL_UNUSED CSLConstList papszOptions)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "DeleteGroup() not implemented");
+    return false;
+}
+
+/************************************************************************/
 /*                            CreateDimension()                         */
 /************************************************************************/
 
@@ -632,6 +692,35 @@ std::shared_ptr<GDALMDArray> GDALGroup::CreateMDArray(
 {
     CPLError(CE_Failure, CPLE_NotSupported, "CreateMDArray() not implemented");
     return nullptr;
+}
+
+/************************************************************************/
+/*                          DeleteMDArray()                             */
+/************************************************************************/
+
+/** Delete an array from a group.
+ *
+ * Optionally implemented.
+ *
+ * After this call, if a previously obtained instance of the deleted object
+ * is still alive, no method other than for freeing it should be invoked.
+ *
+ * Drivers known to implement it: MEM, Zarr
+ *
+ * This is the same as the C function GDALGroupDeleteMDArray().
+ *
+ * @param osName Arrayname.
+ * @param papszOptions Driver specific options determining how the array.
+ * should be deleted.
+ *
+ * @return true in case of success
+ * @since GDAL 3.8
+ */
+bool GDALGroup::DeleteMDArray(CPL_UNUSED const std::string &osName,
+                              CPL_UNUSED CSLConstList papszOptions)
+{
+    CPLError(CE_Failure, CPLE_NotSupported, "DeleteMDArray() not implemented");
+    return false;
 }
 
 /************************************************************************/
@@ -1399,6 +1488,46 @@ void GDALGroup::ParentRenamed(const std::string &osNewParentFullName)
     m_osFullName += m_osName;
 
     NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+/************************************************************************/
+/*                             Deleted()                                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALGroup::Deleted()
+{
+    m_bValid = false;
+
+    NotifyChildrenOfDeletion();
+}
+//! @endcond
+
+/************************************************************************/
+/*                        ParentDeleted()                               */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALGroup::ParentDeleted()
+{
+    Deleted();
+}
+//! @endcond
+
+/************************************************************************/
+/*                     CheckValidAndErrorOutIfNot()                     */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALGroup::CheckValidAndErrorOutIfNot() const
+{
+    if (!m_bValid)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This object has been deleted. No action on it is possible");
+    }
+    return m_bValid;
 }
 //! @endcond
 
@@ -2328,6 +2457,46 @@ void GDALAbstractMDArray::ParentRenamed(const std::string &osNewParentFullName)
     m_osFullName += m_osName;
 
     NotifyChildrenOfRenaming();
+}
+//! @endcond
+
+/************************************************************************/
+/*                             Deleted()                                */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALAbstractMDArray::Deleted()
+{
+    m_bValid = false;
+
+    NotifyChildrenOfDeletion();
+}
+//! @endcond
+
+/************************************************************************/
+/*                        ParentDeleted()                               */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALAbstractMDArray::ParentDeleted()
+{
+    Deleted();
+}
+//! @endcond
+
+/************************************************************************/
+/*                     CheckValidAndErrorOutIfNot()                     */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+bool GDALAbstractMDArray::CheckValidAndErrorOutIfNot() const
+{
+    if (!m_bValid)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "This object has been deleted. No action on it is possible");
+    }
+    return m_bValid;
 }
 //! @endcond
 
@@ -9079,6 +9248,17 @@ void GDALDimension::ParentRenamed(const std::string &osNewParentFullName)
 
 //! @endcond
 
+//! @cond Doxygen_Suppress
+/************************************************************************/
+/*                          ParentDeleted()                             */
+/************************************************************************/
+
+void GDALDimension::ParentDeleted()
+{
+}
+
+//! @endcond
+
 /************************************************************************/
 /************************************************************************/
 /************************************************************************/
@@ -9925,6 +10105,29 @@ GDALGroupH GDALGroupCreateGroup(GDALGroupH hGroup, const char *pszSubGroupName,
 }
 
 /************************************************************************/
+/*                         GDALGroupDeleteGroup()                       */
+/************************************************************************/
+
+/** Delete a sub-group from a group.
+ *
+ * After this call, if a previously obtained instance of the deleted object
+ * is still alive, no method other than for freeing it should be invoked.
+ *
+ * This is the same as the C++ method GDALGroup::DeleteGroup().
+ *
+ * @return true in case of success.
+ * @since GDAL 3.8
+ */
+bool GDALGroupDeleteGroup(GDALGroupH hGroup, const char *pszSubGroupName,
+                          CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hGroup, __func__, false);
+    VALIDATE_POINTER1(pszSubGroupName, __func__, false);
+    return hGroup->m_poImpl->DeleteGroup(std::string(pszSubGroupName),
+                                         papszOptions);
+}
+
+/************************************************************************/
 /*                      GDALGroupCreateDimension()                      */
 /************************************************************************/
 
@@ -9980,6 +10183,28 @@ GDALMDArrayH GDALGroupCreateMDArray(GDALGroupH hGroup, const char *pszName,
 }
 
 /************************************************************************/
+/*                         GDALGroupDeleteMDArray()                     */
+/************************************************************************/
+
+/** Delete an array from a group.
+ *
+ * After this call, if a previously obtained instance of the deleted object
+ * is still alive, no method other than for freeing it should be invoked.
+ *
+ * This is the same as the C++ method GDALGroup::DeleteMDArray().
+ *
+ * @return true in case of success.
+ * @since GDAL 3.8
+ */
+bool GDALGroupDeleteMDArray(GDALGroupH hGroup, const char *pszName,
+                            CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hGroup, __func__, false);
+    VALIDATE_POINTER1(pszName, __func__, false);
+    return hGroup->m_poImpl->DeleteMDArray(std::string(pszName), papszOptions);
+}
+
+/************************************************************************/
 /*                      GDALGroupCreateAttribute()                      */
 /************************************************************************/
 
@@ -10006,6 +10231,29 @@ GDALAttributeH GDALGroupCreateAttribute(GDALGroupH hGroup, const char *pszName,
     if (!ret)
         return nullptr;
     return new GDALAttributeHS(ret);
+}
+
+/************************************************************************/
+/*                         GDALGroupDeleteAttribute()                   */
+/************************************************************************/
+
+/** Delete an attribute from a group.
+ *
+ * After this call, if a previously obtained instance of the deleted object
+ * is still alive, no method other than for freeing it should be invoked.
+ *
+ * This is the same as the C++ method GDALGroup::DeleteAttribute().
+ *
+ * @return true in case of success.
+ * @since GDAL 3.8
+ */
+bool GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
+                              CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hGroup, __func__, false);
+    VALIDATE_POINTER1(pszName, __func__, false);
+    return hGroup->m_poImpl->DeleteAttribute(std::string(pszName),
+                                             papszOptions);
 }
 
 /************************************************************************/
@@ -10353,6 +10601,29 @@ GDALAttributeH GDALMDArrayCreateAttribute(GDALMDArrayH hArray,
     if (!ret)
         return nullptr;
     return new GDALAttributeHS(ret);
+}
+
+/************************************************************************/
+/*                       GDALMDArrayDeleteAttribute()                   */
+/************************************************************************/
+
+/** Delete an attribute from an array.
+ *
+ * After this call, if a previously obtained instance of the deleted object
+ * is still alive, no method other than for freeing it should be invoked.
+ *
+ * This is the same as the C++ method GDALMDArray::DeleteAttribute().
+ *
+ * @return true in case of success.
+ * @since GDAL 3.8
+ */
+bool GDALMDArrayDeleteAttribute(GDALMDArrayH hArray, const char *pszName,
+                                CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hArray, __func__, false);
+    VALIDATE_POINTER1(pszName, __func__, false);
+    return hArray->m_poImpl->DeleteAttribute(std::string(pszName),
+                                             papszOptions);
 }
 
 /************************************************************************/

@@ -90,6 +90,9 @@ ZarrV3Array::~ZarrV3Array()
 
 void ZarrV3Array::Flush()
 {
+    if (!m_bValid)
+        return;
+
     ZarrV3Array::FlushDirtyTile();
 
     if (!m_aoDims.empty())

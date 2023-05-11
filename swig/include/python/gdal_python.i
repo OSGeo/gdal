@@ -1191,6 +1191,26 @@ def ReleaseResultSet(self, sql_lyr):
 %}
 }
 
+%extend GDALGroupHS {
+
+%feature("shadow") GetGroupNames %{
+def GetGroupNames(self, options = []) -> "list[str]":
+    ret = $action(self, options)
+    if ret is None:
+        ret = []
+    return ret
+%}
+
+%feature("shadow") GetMDArrayNames %{
+def GetMDArrayNames(self, options = []) -> "list[str]":
+    ret = $action(self, options)
+    if ret is None:
+        ret = []
+    return ret
+%}
+
+}
+
 %extend GDALMDArrayHS {
 %pythoncode %{
   def Read(self,

@@ -247,10 +247,11 @@ void ZarrSharedResource::SetZMetadataItem(const std::string &osFilename,
 }
 
 /************************************************************************/
-/*             ZarrSharedResource::DeleteZMetadataItem()                */
+/*         ZarrSharedResource::DeleteZMetadataItemRecursive()           */
 /************************************************************************/
 
-void ZarrSharedResource::DeleteZMetadataItem(const std::string &osFilename)
+void ZarrSharedResource::DeleteZMetadataItemRecursive(
+    const std::string &osFilename)
 {
     if (m_bZMetadataEnabled)
     {
@@ -261,7 +262,15 @@ void ZarrSharedResource::DeleteZMetadataItem(const std::string &osFilename)
         m_bZMetadataModified = true;
         const char *pszKey =
             osNormalizedFilename.c_str() + m_osRootDirectoryName.size() + 1;
-        m_oObj["metadata"].DeleteNoSplitName(pszKey);
+
+        auto oMetadata = m_oObj["metadata"];
+        for (auto &item : oMetadata.GetChildren())
+        {
+            if (STARTS_WITH(item.GetName().c_str(), pszKey))
+            {
+                oMetadata.DeleteNoSplitName(item.GetName());
+            }
+        }
     }
 }
 

@@ -202,16 +202,16 @@ bool netCDFSharedResources::SetDefineMode(bool bNewDefineMode)
 class netCDFAttributeHolder CPL_NON_FINAL
 {
   protected:
-    std::set<GDALAttribute *> m_oSetAttributes{};
+    std::map<std::string, GDALAttribute *> m_oMapAttributes{};
 
   public:
     void RegisterAttribute(GDALAttribute *poAttr)
     {
-        m_oSetAttributes.insert(poAttr);
+        m_oMapAttributes[poAttr->GetName()] = poAttr;
     }
     void UnRegisterAttribute(GDALAttribute *poAttr)
     {
-        m_oSetAttributes.erase(poAttr);
+        m_oMapAttributes.erase(poAttr->GetName());
     }
 };
 
@@ -319,6 +319,9 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
                     const std::vector<GUInt64> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
+
+    bool DeleteAttribute(const std::string &osName,
+                         CSLConstList papszOptions) override;
 
     CSLConstList GetStructuralInfo() const override;
 
@@ -616,6 +619,9 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
                     const std::vector<GUInt64> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
+
+    bool DeleteAttribute(const std::string &osName,
+                         CSLConstList papszOptions) override;
 
     const void *GetRawNoDataValue() const override;
 
@@ -1175,6 +1181,31 @@ std::shared_ptr<GDALAttribute> netCDFGroup::CreateAttribute(
 }
 
 /************************************************************************/
+/*                         DeleteAttribute()                            */
+/************************************************************************/
+
+bool netCDFGroup::DeleteAttribute(const std::string &osName,
+                                  CSLConstList /*papszOptions*/)
+{
+    CPLMutexHolderD(&hNCMutex);
+    m_poShared->SetDefineMode(true);
+
+    int ret = nc_del_att(m_gid, NC_GLOBAL, osName.c_str());
+    NCDF_ERR(ret);
+    if (ret != NC_NOERR)
+        return false;
+
+    auto it = m_oMapAttributes.find(osName);
+    if (it != m_oMapAttributes.end())
+    {
+        it->second->Deleted();
+        m_oMapAttributes.erase(it);
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                            GetGroupNames()                           */
 /************************************************************************/
 
@@ -1430,8 +1461,8 @@ void netCDFGroup::NotifyChildrenOfRenaming()
     for (const auto poArray : m_oSetArrays)
         poArray->ParentRenamed(m_osFullName);
 
-    for (const auto poAttr : m_oSetAttributes)
-        poAttr->ParentRenamed(m_osFullName);
+    for (const auto &iter : m_oMapAttributes)
+        iter.second->ParentRenamed(m_osFullName);
 }
 
 /************************************************************************/
@@ -3879,6 +3910,31 @@ std::shared_ptr<GDALAttribute> netCDFVariable::CreateAttribute(
 }
 
 /************************************************************************/
+/*                         DeleteAttribute()                            */
+/************************************************************************/
+
+bool netCDFVariable::DeleteAttribute(const std::string &osName,
+                                     CSLConstList /*papszOptions*/)
+{
+    CPLMutexHolderD(&hNCMutex);
+    m_poShared->SetDefineMode(true);
+
+    int ret = nc_del_att(m_gid, m_varid, osName.c_str());
+    NCDF_ERR(ret);
+    if (ret != NC_NOERR)
+        return false;
+
+    auto it = m_oMapAttributes.find(osName);
+    if (it != m_oMapAttributes.end())
+    {
+        it->second->Deleted();
+        m_oMapAttributes.erase(it);
+    }
+
+    return true;
+}
+
+/************************************************************************/
 /*                      GetCoordinateVariables()                        */
 /************************************************************************/
 
@@ -4064,8 +4120,8 @@ bool netCDFVariable::Rename(const std::string &osNewName)
 
 void netCDFVariable::NotifyChildrenOfRenaming()
 {
-    for (const auto poAttr : m_oSetAttributes)
-        poAttr->ParentRenamed(m_osFullName);
+    for (const auto &iter : m_oMapAttributes)
+        iter.second->ParentRenamed(m_osFullName);
 }
 
 /************************************************************************/
@@ -4168,8 +4224,11 @@ netCDFAttribute::netCDFAttribute(
 
 netCDFAttribute::~netCDFAttribute()
 {
-    if (auto poParent = m_poParent.lock())
-        poParent->UnRegisterAttribute(this);
+    if (m_bValid)
+    {
+        if (auto poParent = m_poParent.lock())
+            poParent->UnRegisterAttribute(this);
+    }
 }
 
 /************************************************************************/
@@ -4255,6 +4314,8 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
     CPLMutexHolderD(&hNCMutex);
 
     if (m_nAttType == NC_STRING)
@@ -4422,6 +4483,8 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                              const GDALExtendedDataType &bufferDataType,
                              const void *pSrcBuffer)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
     CPLMutexHolderD(&hNCMutex);
 
     if (m_dims.size() == 1 &&
@@ -4605,6 +4668,8 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 
 bool netCDFAttribute::Rename(const std::string &osNewName)
 {
+    if (!CheckValidAndErrorOutIfNot())
+        return false;
     if (m_poShared->IsReadOnly())
     {
         CPLError(CE_Failure, CPLE_AppDefined,

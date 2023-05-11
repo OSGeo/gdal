@@ -2752,6 +2752,124 @@ def test_mem_md_rename_array():
     assert set(subg.GetMDArrayNames()) == {"ar_renamed", "other_array"}
 
 
+@gdaltest.enable_exceptions()
+def test_mem_md_delete_group():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    group = rg.CreateGroup("group")
+    group_attr = group.CreateAttribute(
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar_attr = ar.CreateAttribute(
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+    subgroup = group.CreateGroup("subgroup")
+
+    with pytest.raises(Exception, match="is not a sub-group"):
+        rg.DeleteGroup("non_existing")
+
+    # Delete group and test effects
+    rg.DeleteGroup("group")
+
+    assert len(rg.GetGroupNames()) == 0
+
+    with pytest.raises(Exception, match="has been deleted"):
+        group.GetMDArrayNames()
+
+    with pytest.raises(Exception, match="has been deleted"):
+        group_attr.Rename("foo")
+
+    with pytest.raises(Exception, match="has been deleted"):
+        subgroup.GetMDArrayNames()
+
+    with pytest.raises(Exception, match="has been deleted"):
+        ar.GetAttributes()
+
+    with pytest.raises(Exception, match="has been deleted"):
+        ar_attr.Rename("foo")
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_delete_array():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    group = rg.CreateGroup("group")
+    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar_attr = ar.CreateAttribute(
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    with pytest.raises(Exception, match="is not an array"):
+        group.DeleteMDArray("non_existing")
+
+    # Delete array and test effects
+    group.DeleteMDArray("ar")
+
+    assert len(rg.GetMDArrayNames()) == 0
+
+    with pytest.raises(Exception, match="has been deleted"):
+        ar.GetAttributes()
+
+    with pytest.raises(Exception, match="has been deleted"):
+        ar_attr.Rename("foo")
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_delete_group_attribute():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    group = rg.CreateGroup("group")
+    group_attr = group.CreateAttribute(
+        "group_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    with pytest.raises(Exception, match="is not an attribute"):
+        group.DeleteAttribute("non_existing")
+
+    # Delete attribute and test effects
+    group.DeleteAttribute("group_attr")
+
+    assert len(group.GetAttributes()) == 0
+
+    with pytest.raises(Exception, match="has been deleted"):
+        group_attr.Rename("foo")
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_delete_array_attribute():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    group = rg.CreateGroup("group")
+    ar = group.CreateMDArray("ar", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+    ar_attr = ar.CreateAttribute(
+        "ar_attr", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+    )
+
+    with pytest.raises(Exception, match="is not an attribute"):
+        ar.DeleteAttribute("non_existing")
+
+    # Delete attribute and test effects
+    ar.DeleteAttribute("ar_attr")
+
+    assert len(ar.GetAttributes()) == 0
+
+    with pytest.raises(Exception, match="has been deleted"):
+        ar_attr.Rename("foo")
+
+
 def XX_test_all_forever():
     while True:
         test_mem_md_basic()
