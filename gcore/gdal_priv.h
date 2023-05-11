@@ -1353,6 +1353,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
 
     void AddBlockToFreeList(GDALRasterBlock *);
 
+    bool HasBlockCache() const
+    {
+        return poBandBlockCache != nullptr;
+    }
+
     bool HasDirtyBlocks() const
     {
         return poBandBlockCache && poBandBlockCache->HasDirtyBlocks();
