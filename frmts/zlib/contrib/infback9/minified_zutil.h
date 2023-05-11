@@ -21,6 +21,12 @@
 
 #include "zlib.h"
 
+// Gentoo and derivatives change the OF() macro from upstream zlib's zconf.h
+// to _Z_OF(), so define OF() if it isn't
+#ifndef OF
+#define OF(args) args
+#endif
+
 #if defined(STDC) && !defined(Z_SOLO)
 #  if !(defined(_WIN32_WCE) && defined(_MSC_VER))
 #    include <stddef.h>
