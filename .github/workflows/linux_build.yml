@@ -95,6 +95,7 @@ jobs:
             build_script: build.sh
             before_test_script: services.sh
             test_script: test.sh
+            travis_branch: ubuntu_1804
 
           - name: Ubuntu 18.04, gcc 32-bit
             id: ubuntu_18.04_32bit
