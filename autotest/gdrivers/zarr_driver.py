@@ -2280,6 +2280,94 @@ def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
 
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("data_type", ["complex128", "complex64"])
+@pytest.mark.parametrize(
+    "fill_value,nodata",
+    [
+        ([1, 2], [1, 2]),
+        ([1.5, "NaN"], [1.5, float("nan")]),
+        ([1234567890123, "Infinity"], [1234567890123, float("inf")]),
+        ([1, "-Infinity"], [1, float("-inf")]),
+        (["NaN", 2.5], [float("nan"), 2.5]),
+        (["Infinity", 2], [float("inf"), 2]),
+        (["-Infinity", 2], [float("-inf"), 2]),
+        (["0x7ff8000000000000", 2], [float("nan"), 2]),
+        # Invalid ones
+        (1, None),
+        ("NaN", None),
+        ([], None),
+        ([1, 2, 3], None),
+        (["invalid", 1], None),
+        ([1, "invalid"], None),
+    ],
+)
+def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata):
+
+    if fill_value and isinstance(fill_value, list):
+        # float32 precision not sufficient to hold 1234567890123
+        if data_type == "complex64" and fill_value[0] == 1234567890123:
+            fill_value[0] = 123456
+            nodata[0] = 123456
+
+        # convert float64 nan hexadecimal representation to float32
+        if data_type == "complex64" and str(fill_value[0]) == "0x7ff8000000000000":
+            fill_value[0] = "0x7fc00000"
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": data_type,
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": fill_value,
+    }
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+
+        if nodata is None:
+            with pytest.raises(Exception):
+                assert gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER) is None
+        else:
+
+            def open_and_modify():
+                ds = gdal.OpenEx(
+                    "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+                )
+                rg = ds.GetRootGroup()
+                ar = rg.OpenMDArray("test")
+                dtype = (
+                    "d"
+                    if ar.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
+                    else "f"
+                )
+                assert ar.GetNoDataValueAsRaw() == bytes(
+                    array.array(dtype, nodata)
+                ), struct.unpack(dtype * 2, ar.GetNoDataValueAsRaw())
+
+                # To force a reserialization of the array
+                attr = ar.CreateAttribute(
+                    "attr", [], gdal.ExtendedDataType.CreateString()
+                )
+                attr.Write("foo")
+
+            open_and_modify()
+
+            if not str(fill_value[0]).startswith("0x"):
+                f = gdal.VSIFOpenL("/vsimem/test.zarr/zarr.json", "rb")
+                assert f
+                data = gdal.VSIFReadL(1, 10000, f)
+                gdal.VSIFCloseL(f)
+                j = json.loads(data)
+                assert j["fill_value"] == fill_value
+
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
 @pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
 def test_zarr_create_array_bad_compressor(format):
 
