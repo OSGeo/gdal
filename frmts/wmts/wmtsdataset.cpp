@@ -622,6 +622,8 @@ int WMTSDataset::ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
                          const CPLString &osMaxTileMatrixIdentifier,
                          int nMaxZoomLevel, WMTSTileMatrixSet &oTMS)
 {
+    bool bHasWarnedAutoSwap = false;
+
     for (CPLXMLNode *psIter = psContents->psChild; psIter != nullptr;
          psIter = psIter->psNext)
     {
@@ -747,12 +749,7 @@ int WMTSDataset::ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
                 oTM.dfPixelSize *= WMTS_WGS84_DEG_PER_METER;
             double dfVal1 = CPLAtof(pszTopLeftCorner);
             double dfVal2 = CPLAtof(strchr(pszTopLeftCorner, ' ') + 1);
-            if (!bSwap ||
-                /* Hack for
-                   http://osm.geobretagne.fr/gwc01/service/wmts?request=getcapabilities
-                 */
-                (STARTS_WITH_CI(l_pszIdentifier, "EPSG:4326:") &&
-                 dfVal1 == -180.0))
+            if (!bSwap)
             {
                 oTM.dfTLX = dfVal1;
                 oTM.dfTLY = dfVal2;
@@ -762,6 +759,38 @@ int WMTSDataset::ReadTMS(CPLXMLNode *psContents, const CPLString &osIdentifier,
                 oTM.dfTLX = dfVal2;
                 oTM.dfTLY = dfVal1;
             }
+
+            // Hack for http://osm.geobretagne.fr/gwc01/service/wmts?request=getcapabilities
+            if (STARTS_WITH_CI(l_pszIdentifier, "EPSG:4326:") &&
+                oTM.dfTLY == -180.0)
+            {
+                if (!bHasWarnedAutoSwap)
+                {
+                    bHasWarnedAutoSwap = true;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Auto-correcting wrongly swapped "
+                             "TileMatrix.TopLeftCorner coordinates. This "
+                             "should be reported to the server administrator.");
+                }
+                std::swap(oTM.dfTLX, oTM.dfTLY);
+            }
+
+            // Hack for "https://t0.tianditu.gov.cn/img_w/wmts?SERVICE=WMTS&REQUEST=GetCapabilities&VERSION=1.0.0&tk=ec899a50c7830ea2416ca182285236f3"
+            // which returns swapped coordinates for WebMercator
+            if (std::fabs(oTM.dfTLX - 20037508.3427892) < 1e-4 &&
+                std::fabs(oTM.dfTLY - (-20037508.3427892)) < 1e-4)
+            {
+                if (!bHasWarnedAutoSwap)
+                {
+                    bHasWarnedAutoSwap = true;
+                    CPLError(CE_Warning, CPLE_AppDefined,
+                             "Auto-correcting wrongly swapped "
+                             "TileMatrix.TopLeftCorner coordinates. This "
+                             "should be reported to the server administrator.");
+                }
+                std::swap(oTM.dfTLX, oTM.dfTLY);
+            }
+
             oTM.nTileWidth = atoi(pszTileWidth);
             oTM.nTileHeight = atoi(pszTileHeight);
             if (oTM.nTileWidth <= 0 || oTM.nTileWidth > 4096 ||
