@@ -310,6 +310,17 @@ Reprojection related creation options
 - **ADD_ALPHA=YES/NO**: Whether an alpha band is added in case of reprojection.
   Defaults to YES.
 
+Update
+------
+
+Updating a COG file generally breaks part of the optimizations, but still
+produces a valid GeoTIFF file. Starting with GDAL 3.8, to avoid undesired loss
+of the COG characteristics, opening such a file in update mode will be rejected,
+unless the IGNORE_COG_LAYOUT_BREAK open option is also explicitly set to YES.
+
+Note that a subset of operations are possible when opening a COG file in
+read-only mode, like metadata edition (including statistics storage), that will
+be stored in a auxiliary .aux.xml side-car file.
 
 File format details
 -------------------

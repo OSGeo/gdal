@@ -749,6 +749,7 @@ def test_cog_overviews_co():
 # Test editing and invalidating a COG file
 
 
+@gdaltest.enable_exceptions()
 def test_cog_invalidation_by_data_change():
 
     filename = "/vsimem/cog.tif"
@@ -758,7 +759,15 @@ def test_cog_invalidation_by_data_change():
     )
     ds = None
 
-    ds = gdal.Open(filename, gdal.GA_Update)
+    with pytest.raises(
+        Exception,
+        match="IGNORE_COG_LAYOUT_BREAK",
+    ):
+        gdal.Open(filename, gdal.GA_Update)
+
+    ds = gdal.OpenEx(
+        filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
+    )
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") == "COG"
     src_ds = gdal.Open("data/byte.tif")
     data = src_ds.ReadRaster()
@@ -794,7 +803,9 @@ def test_cog_invalidation_by_metadata_change():
     )
     ds = None
 
-    ds = gdal.Open(filename, gdal.GA_Update)
+    ds = gdal.OpenEx(
+        filename, gdal.GA_Update, open_options=["IGNORE_COG_LAYOUT_BREAK=YES"]
+    )
     ds.GetRasterBand(1).ComputeStatistics(False)
     ds = None
 
