@@ -1037,6 +1037,9 @@ int CPL_DLL OCTCoordinateTransformationOptionsSetDesiredAccuracy(
 int CPL_DLL OCTCoordinateTransformationOptionsSetBallparkAllowed(
     OGRCoordinateTransformationOptionsH hOptions, int bAllowBallpark);
 
+int CPL_DLL OCTCoordinateTransformationOptionsSetOnlyBest(
+    OGRCoordinateTransformationOptionsH hOptions, bool bOnlyBest);
+
 void CPL_DLL OCTDestroyCoordinateTransformationOptions(
     OGRCoordinateTransformationOptionsH);
 

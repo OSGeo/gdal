@@ -1193,6 +1193,10 @@ public:
   bool SetBallparkAllowed(bool allowBallpark) {
     return OCTCoordinateTransformationOptionsSetBallparkAllowed(self, allowBallpark);
   }
+
+  bool SetOnlyBest(bool onlyBest) {
+    return OCTCoordinateTransformationOptionsSetOnlyBest(self, onlyBest);
+  }
 } /*extend */
 };
 

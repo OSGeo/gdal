@@ -2533,6 +2533,8 @@ int OGRProjCT::TransformWithErrorCodes(int nCount, double *x, double *y,
 
     if (!bTransformDone)
     {
+        const auto nLastErrorCounter = CPLGetErrorCounter();
+
         for (int i = 0; i < nCount; i++)
         {
             PJ_COORD coord;
@@ -2628,7 +2630,13 @@ int OGRProjCT::TransformWithErrorCodes(int nCount, double *x, double *y,
 #endif
                     if (m_bEmitErrors)
                     {
-                        if (pszError == nullptr)
+                        if (nLastErrorCounter != CPLGetErrorCounter() &&
+                            CPLGetLastErrorType() == CE_Failure &&
+                            strstr(CPLGetLastErrorMsg(), "PROJ:"))
+                        {
+                            // do nothing
+                        }
+                        else if (pszError == nullptr)
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Reprojection failed, err = %d", err);
                         else
