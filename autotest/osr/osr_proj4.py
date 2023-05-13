@@ -229,6 +229,11 @@ def test_osr_proj4_10():
         "Unknown based on WGS84 ellipsoid using towgs84=0,0,0,0,0,0,0",
         "Unknown_based_on_WGS84_ellipsoid",
     )
+    # PROJ >= 9.2.1 returns the below
+    wkt = wkt.replace(
+        "Unknown based on WGS 84 ellipsoid using towgs84=0,0,0,0,0,0,0",
+        "Unknown_based_on_WGS84_ellipsoid",
+    )
 
     assert gdaltest.equal_srs_from_wkt(wkt_expected, wkt), "did not get expected wkt."
 
