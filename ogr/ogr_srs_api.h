@@ -31,6 +31,8 @@
 #ifndef OGR_SRS_API_H_INCLUDED
 #define OGR_SRS_API_H_INCLUDED
 
+#include <stdbool.h>
+
 #ifndef SWIG
 #include "ogr_core.h"
 
