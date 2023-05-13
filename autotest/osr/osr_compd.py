@@ -267,6 +267,11 @@ def test_osr_compd_6():
         "Unknown based on GRS80 ellipsoid using towgs84=0,0,0,0,0,0,0",
         "Unknown_based_on_GRS80_ellipsoid",
     )
+    # PROJ >= 9.2.1 returns the below
+    wkt = wkt.replace(
+        "Unknown based on GRS 1980 ellipsoid using towgs84=0,0,0,0,0,0,0",
+        "Unknown_based_on_GRS80_ellipsoid",
+    )
     wkt = wkt.replace(
         "unknown using geoidgrids=g2003conus.gtx,g2003alaska.gtx,g2003h01.gtx,g2003p01.gtx",
         "unknown",
