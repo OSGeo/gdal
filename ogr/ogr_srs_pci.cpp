@@ -164,7 +164,7 @@ OGRErr OSRImportFromPCI(OGRSpatialReferenceH hSRS, const char *pszProj,
  *
  * @param pszProj NULL terminated string containing the definition. Looks
  * like "pppppppppppp Ennn" or "pppppppppppp Dnnn", where "pppppppppppp" is
- * a projection code, "Ennn" is an ellipsoid code, "Dnnn" --- a datum code.
+ * a projection code, "Ennn" is an ellipsoid code, "Dnnn" a datum code.
  *
  * @param pszUnits Grid units code ("DEGREE" or "METRE"). If NULL "METRE" will
  * be used.
