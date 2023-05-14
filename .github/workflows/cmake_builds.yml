@@ -424,7 +424,7 @@ jobs:
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env filelock zlib clcache lxml
+        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env filelock zlib clcache lxml jsonschema
         conda install --yes --quiet --name gdalenv -c conda-forge proj geos hdf4 hdf5 kealib \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
