@@ -639,7 +639,7 @@ void kml2stylestring(StylePtr poKmlStyle, OGRStyleMgr *poOgrSM)
         }
 
         OGRStyleBrush *poOgrStyleBrush =
-            kml2brush(poKmlPolyStyle, (OGRStyleBrush *)poOgrTmpST);
+            kml2brush(std::move(poKmlPolyStyle), (OGRStyleBrush *)poOgrTmpST);
 
         poOgrNewSM->AddPart(poOgrStyleBrush);
 
@@ -943,10 +943,7 @@ void ParseStyles(DocumentPtr poKmlDocument, OGRStyleTable **poStyleTable)
         if (!*poStyleTable)
             *poStyleTable = new OGRStyleTable();
 
-        /***** TODO:: Not sure we need to do this as we seem *****/
-        /***** to cast to element and then back to style.    *****/
-        ElementPtr poKmlElement = AsElement(poKmlStyle);
-        kml2styletable(*poStyleTable, AsStyle(poKmlElement));
+        kml2styletable(*poStyleTable, AsStyle(AsElement(poKmlStyle)));
     }
 
     /***** Now we have to loop back around and get the style maps. We    *****/
@@ -980,10 +977,7 @@ void ParseStyles(DocumentPtr poKmlDocument, OGRStyleTable **poStyleTable)
         }
         char *pszStyleId = CPLStrdup(poKmlStyle->get_id().c_str());
 
-        /***** TODO:: Not sure we need to do this as we seem *****/
-        /***** to cast to element and then back to style.    *****/
-        ElementPtr poKmlElement = AsElement(poKmlStyle);
-        kml2styletable(*poStyleTable, AsStyle(poKmlElement));
+        kml2styletable(*poStyleTable, AsStyle(AsElement(poKmlStyle)));
 
         // Change the name of the new style in the style table
 

@@ -362,9 +362,10 @@ void GDALWMSMetaDataset::AddWMSCSubDataset(WMSCTileSetDesc &oWMSCTileSetDesc,
 /*                             ExploreLayer()                           */
 /************************************************************************/
 
-void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML, CPLString osFormat,
-                                      CPLString osTransparent,
-                                      CPLString osPreferredSRS,
+void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML,
+                                      const CPLString &osFormat,
+                                      const CPLString &osTransparent,
+                                      const CPLString &osPreferredSRS,
                                       const char *pszSRS, const char *pszMinX,
                                       const char *pszMinY, const char *pszMaxX,
                                       const char *pszMaxY)

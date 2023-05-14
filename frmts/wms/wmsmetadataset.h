@@ -75,8 +75,9 @@ class GDALWMSMetaDataset final : public GDALPamDataset
                        CPLString osFormat, CPLString osTransparent);
 
     void
-    ExploreLayer(CPLXMLNode *psXML, CPLString osFormat, CPLString osTransparent,
-                 CPLString osPreferredSRS, const char *pszSRS = nullptr,
+    ExploreLayer(CPLXMLNode *psXML, const CPLString &osFormat,
+                 const CPLString &osTransparent,
+                 const CPLString &osPreferredSRS, const char *pszSRS = nullptr,
                  const char *pszMinX = nullptr, const char *pszMinY = nullptr,
                  const char *pszMaxX = nullptr, const char *pszMaxY = nullptr);
 

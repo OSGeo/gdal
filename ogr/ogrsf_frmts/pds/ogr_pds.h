@@ -76,7 +76,7 @@ class OGRPDSLayer final : public OGRLayer,
 
     FieldDesc *pasFieldDesc;
 
-    void ReadStructure(CPLString osStructureFilename);
+    void ReadStructure(const CPLString &osStructureFilename);
     OGRFeature *GetNextRawFeature();
 
     CPL_DISALLOW_COPY_ASSIGN(OGRPDSLayer)

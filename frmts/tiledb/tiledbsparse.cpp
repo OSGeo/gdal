@@ -1740,12 +1740,19 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
             if (!m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored() &&
                 pszGeomColName)
             {
-                const auto &result =
-                    result_buffer_elements.find(pszGeomColName)->second;
-                nRowCount = std::min(nRowCount, result.first);
-                // For some reason, result.first can be 1, and result.second 0
-                if (!bHitBug && result.second == 0)
-                    nRowCount = 0;
+                auto oIter = result_buffer_elements.find(pszGeomColName);
+                if (oIter != result_buffer_elements.end())
+                {
+                    const auto &result = oIter->second;
+                    nRowCount = std::min(nRowCount, result.first);
+                    // For some reason, result.first can be 1, and result.second 0
+                    if (!bHitBug && result.second == 0)
+                        nRowCount = 0;
+                }
+                else
+                {
+                    CPLAssert(false);
+                }
             }
             for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
             {
@@ -1754,14 +1761,21 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
                 if (!poFieldDefn->IsIgnored())
                 {
                     const char *pszFieldName = poFieldDefn->GetNameRef();
-                    const auto &result =
-                        result_buffer_elements.find(pszFieldName)->second;
-                    if (result.first == 0)
+                    auto oIter = result_buffer_elements.find(pszFieldName);
+                    if (oIter != result_buffer_elements.end())
                     {
-                        nRowCount = std::min(nRowCount, result.second);
+                        const auto &result = oIter->second;
+                        if (result.first == 0)
+                        {
+                            nRowCount = std::min(nRowCount, result.second);
+                        }
+                        else
+                            nRowCount = std::min(nRowCount, result.first);
                     }
                     else
-                        nRowCount = std::min(nRowCount, result.first);
+                    {
+                        CPLAssert(false);
+                    }
                 }
             }
 
@@ -1846,8 +1860,13 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
                 continue;
             const char *pszFieldName = poFieldDefn->GetNameRef();
             auto &anOffsets = *(m_aFieldValueOffsets[i]);
-            const auto &result =
-                result_buffer_elements.find(pszFieldName)->second;
+            auto oIter = result_buffer_elements.find(pszFieldName);
+            if (oIter == result_buffer_elements.end())
+            {
+                CPLAssert(false);
+                continue;
+            }
+            const auto &result = oIter->second;
             if (poFieldDefn->IsNullable())
                 m_aFieldValidity[i].resize(nRowCount);
             auto &fieldValues = m_aFieldValues[i];
@@ -3470,11 +3489,12 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
         {
             auto zdim = tiledb::Dimension::create<double>(
                 *m_ctx, m_osZDim, {m_dfZStart, m_dfZEnd}, m_dfZTileExtent);
-            domain.add_dimensions(xdim, ydim, zdim);
+            domain.add_dimensions(std::move(xdim), std::move(ydim),
+                                  std::move(zdim));
         }
         else
         {
-            domain.add_dimensions(xdim, ydim);
+            domain.add_dimensions(std::move(xdim), std::move(ydim));
         }
 
         m_schema->set_domain(domain);

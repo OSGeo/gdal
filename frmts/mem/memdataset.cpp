@@ -1388,10 +1388,14 @@ bool MEMAttributeHolder::RenameAttribute(const std::string &osOldName,
         return false;
     }
     auto oIter = m_oMapAttributes.find(osOldName);
-    auto poAttr = oIter->second;
-    CPLAssert(oIter != m_oMapAttributes.end());
+    if (oIter == m_oMapAttributes.end())
+    {
+        CPLAssert(false);
+        return false;
+    }
+    auto poAttr = std::move(oIter->second);
     m_oMapAttributes.erase(oIter);
-    m_oMapAttributes[osNewName] = poAttr;
+    m_oMapAttributes[osNewName] = std::move(poAttr);
     return true;
 }
 
@@ -1822,10 +1826,14 @@ bool MEMGroup::RenameDimension(const std::string &osOldName,
         return false;
     }
     auto oIter = m_oMapDimensions.find(osOldName);
-    auto poDim = oIter->second;
-    CPLAssert(oIter != m_oMapDimensions.end());
+    if (oIter == m_oMapDimensions.end())
+    {
+        CPLAssert(false);
+        return false;
+    }
+    auto poDim = std::move(oIter->second);
     m_oMapDimensions.erase(oIter);
-    m_oMapDimensions[osNewName] = poDim;
+    m_oMapDimensions[osNewName] = std::move(poDim);
     return true;
 }
 
@@ -1843,10 +1851,14 @@ bool MEMGroup::RenameArray(const std::string &osOldName,
         return false;
     }
     auto oIter = m_oMapMDArrays.find(osOldName);
-    auto poArray = oIter->second;
-    CPLAssert(oIter != m_oMapMDArrays.end());
+    if (oIter == m_oMapMDArrays.end())
+    {
+        CPLAssert(false);
+        return false;
+    }
+    auto poArray = std::move(oIter->second);
     m_oMapMDArrays.erase(oIter);
-    m_oMapMDArrays[osNewName] = poArray;
+    m_oMapMDArrays[osNewName] = std::move(poArray);
     return true;
 }
 

@@ -429,7 +429,7 @@ Returns:
 
 ******************************************************************************/
 
-static OGRGeometry *kml2geom_rec(GeometryPtr poKmlGeometry,
+static OGRGeometry *kml2geom_rec(const GeometryPtr &poKmlGeometry,
                                  OGRSpatialReference *poOgrSRS)
 {
     /***** ogr geom vars *****/
@@ -676,7 +676,7 @@ static OGRGeometry *kml2geom_rec(GeometryPtr poKmlGeometry,
     return poOgrGeometry;
 }
 
-static OGRGeometry *kml2geom_latlonbox_int(LatLonBoxPtr poKmlLatLonBox,
+static OGRGeometry *kml2geom_latlonbox_int(const LatLonBoxPtr &poKmlLatLonBox,
                                            OGRSpatialReference *poOgrSRS)
 {
     if (!poKmlLatLonBox->has_north() || !poKmlLatLonBox->has_south() ||
@@ -703,8 +703,9 @@ static OGRGeometry *kml2geom_latlonbox_int(LatLonBoxPtr poKmlLatLonBox,
     return poOgrPolygon;
 }
 
-static OGRGeometry *kml2geom_latlonquad_int(GxLatLonQuadPtr poKmlLatLonQuad,
-                                            OGRSpatialReference *poOgrSRS)
+static OGRGeometry *
+kml2geom_latlonquad_int(const GxLatLonQuadPtr &poKmlLatLonQuad,
+                        OGRSpatialReference *poOgrSRS)
 {
     if (!poKmlLatLonQuad->has_coordinates())
         return nullptr;

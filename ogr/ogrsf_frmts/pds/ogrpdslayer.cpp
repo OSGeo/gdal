@@ -128,7 +128,7 @@ OGRPDSLayer::~OGRPDSLayer()
 /*                           ReadStructure()                            */
 /************************************************************************/
 
-void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
+void OGRPDSLayer::ReadStructure(const CPLString &osStructureFilename)
 
 {
     VSILFILE *fpStructure = VSIFOpenL(osStructureFilename, "rb");
