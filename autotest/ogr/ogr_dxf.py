@@ -3611,11 +3611,17 @@ def test_ogr_dxf_49():
     # Inline blocks mode
     ds = ogr.Open("data/dxf/attrib.dxf")
     lyr = ds.GetLayer(0)
-    assert lyr.GetFeatureCount() == 6, (
+    assert lyr.GetFeatureCount() == 8, (
         "Wrong feature count, got %d" % lyr.GetFeatureCount()
     )
 
     f = lyr.GetFeature(1)
+    assert (
+        f.GetStyleString()
+        == 'LABEL(f:"Arial",t:"Constant attribute",p:2,a:8,s:8g,dx:-1g,dy:8g,c:#000000)'
+    ), "Wrong style string on constant attribute on first INSERT"
+
+    f = lyr.GetFeature(2)
     assert (
         f.GetField("Text") == "super test"
     ), "Wrong Text value on first ATTRIB on first INSERT"
@@ -3624,11 +3630,11 @@ def test_ogr_dxf_49():
         == 'LABEL(f:"Arial",t:"super test",p:2,s:8g,w:234.6,dx:30.293g,c:#ff0000)'
     ), "Wrong style string on first ATTRIB on first INSERT"
 
-    f = lyr.GetFeature(4)
+    f = lyr.GetFeature(5)
     geom = f.GetGeometryRef()
     assert geom.GetGeometryType() == ogr.wkbLineString25D, "Expected LINESTRING Z"
 
-    f = lyr.GetFeature(5)
+    f = lyr.GetFeature(7)
     assert f.GetField("Text") == "", "Wrong Text value on ATTRIB on second INSERT"
 
     # No inlining
@@ -3651,6 +3657,8 @@ def test_ogr_dxf_49():
 
     lyr = ds.GetLayerByName("blocks")
 
+    assert lyr.GetFeatureCount() == 4
+
     f = lyr.GetFeature(1)
     assert (
         f.GetField("AttributeTag") == "MYATT1"
@@ -3658,8 +3666,16 @@ def test_ogr_dxf_49():
 
     f = lyr.GetFeature(2)
     assert (
+        f.GetField("AttributeTag") == None
+    ), "Wrong AttributeTag value on second (constant) ATTDEF"
+    assert (
+        f.GetField("Text") == "Constant attribute"
+    ), "Wrong Text value on second (constant) ATTDEF"
+
+    f = lyr.GetFeature(3)
+    assert (
         f.GetField("AttributeTag") == "MYATTMULTI"
-    ), "Wrong AttributeTag value on second ATTDEF"
+    ), "Wrong AttributeTag value on third ATTDEF"
 
 
 ###############################################################################
