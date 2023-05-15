@@ -1647,8 +1647,15 @@ std::shared_ptr<GDALMDArray> MEMGroupCreateMDArray(
     const GDALExtendedDataType &oDataType, void *pData,
     CSLConstList papszOptions)
 {
-    return dynamic_cast<MEMGroup *>(poGroup)->CreateMDArray(
-        osName, aoDimensions, oDataType, pData, papszOptions);
+    auto poMemGroup = dynamic_cast<MEMGroup *>(poGroup);
+    if (!poMemGroup)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "MEMGroupCreateMDArray(): poGroup not of type MEMGroup");
+        return nullptr;
+    }
+    return poMemGroup->CreateMDArray(osName, aoDimensions, oDataType, pData,
+                                     papszOptions);
 }
 
 /************************************************************************/

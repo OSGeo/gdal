@@ -3622,7 +3622,7 @@ OGRErr OGRPGTableLayer::Rename(const char *pszNewName)
 /************************************************************************/
 
 void OGRPGTableLayer::SetDeferredCreation(int bDeferredCreationIn,
-                                          CPLString osCreateTableIn)
+                                          const std::string &osCreateTableIn)
 {
     bDeferredCreation = bDeferredCreationIn;
     osCreateTable = osCreateTableIn;

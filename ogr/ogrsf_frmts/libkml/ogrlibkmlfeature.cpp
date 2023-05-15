@@ -811,7 +811,7 @@ FeaturePtr feat2kml(OGRLIBKMLDataSource *poOgrDS, OGRLIBKMLLayer *poOgrLayer,
 
         ElementPtr poKmlElement = geom2kml(poOgrGeom, -1, poKmlFactory);
 
-        poKmlPlacemark->set_geometry(AsGeometry(poKmlElement));
+        poKmlPlacemark->set_geometry(AsGeometry(std::move(poKmlElement)));
     }
 
     if (!camera)

@@ -53,7 +53,7 @@ namespace PCIDSK
             std::string access, const PCIDSKInterfaces *interfaces, int max_channel_count_allowed );
     public:
 
-        CPCIDSKFile( std::string filename );
+        CPCIDSKFile( const std::string& filename );
         virtual ~CPCIDSKFile();
 
         virtual PCIDSKInterfaces *GetInterfaces() override { return &interfaces; }

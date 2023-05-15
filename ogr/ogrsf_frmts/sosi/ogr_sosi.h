@@ -40,8 +40,8 @@
 /* interpolation of arcs(BUEP) creates # points for a full circle */
 #define ARC_INTERPOLATION_FULL_CIRCLE 36.0
 
-typedef std::map<CPLString, CPLString> S2S;
-typedef std::map<CPLString, unsigned int> S2I;
+typedef std::map<std::string, std::string> S2S;
+typedef std::map<std::string, unsigned int> S2I;
 
 void RegisterOGRSOSI();
 

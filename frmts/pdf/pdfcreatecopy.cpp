@@ -2204,13 +2204,13 @@ bool GDALPDFWriter::WriteOGRDataSource(const char *pszOGRDataSource,
 /*                           StartOGRLayer()                            */
 /************************************************************************/
 
-GDALPDFLayerDesc GDALPDFWriter::StartOGRLayer(CPLString osLayerName,
+GDALPDFLayerDesc GDALPDFWriter::StartOGRLayer(const std::string &osLayerName,
                                               int bWriteOGRAttributes)
 {
     GDALPDFLayerDesc osVectorDesc;
     osVectorDesc.osLayerName = osLayerName;
     osVectorDesc.bWriteOGRAttributes = bWriteOGRAttributes;
-    osVectorDesc.nOCGId = WriteOCG(osLayerName);
+    osVectorDesc.nOCGId = WriteOCG(osLayerName.c_str());
     if (bWriteOGRAttributes)
         osVectorDesc.nFeatureLayerId = AllocNewObject();
 
@@ -2262,8 +2262,8 @@ void GDALPDFWriter::EndOGRLayer(GDALPDFLayerDesc &osVectorDesc)
 int GDALPDFWriter::WriteOGRLayer(OGRDataSourceH hDS, int iLayer,
                                  const char *pszOGRDisplayField,
                                  const char *pszOGRLinkField,
-                                 CPLString osLayerName, int bWriteOGRAttributes,
-                                 int &iObj)
+                                 const std::string &osLayerName,
+                                 int bWriteOGRAttributes, int &iObj)
 {
     GDALDataset *poClippingDS = oPageContext.poClippingDS;
     double adfGeoTransform[6];

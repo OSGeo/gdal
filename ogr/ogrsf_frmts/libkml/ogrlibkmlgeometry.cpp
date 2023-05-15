@@ -402,7 +402,7 @@ ElementPtr geom2kml(OGRGeometry *poOgrGeom, int extra, KmlFactory *poKmlFactory)
                     ElementPtr poKmlTmpGeometry = geom2kml(
                         poOgrMultiGeom->getGeometryRef(i), -1, poKmlFactory);
                     poKmlMultiGeometry->add_geometry(
-                        AsGeometry(poKmlTmpGeometry));
+                        AsGeometry(std::move(poKmlTmpGeometry)));
                 }
             }
 
@@ -750,7 +750,8 @@ Returns:
 OGRGeometry *kml2geom(GeometryPtr poKmlGeometry, OGRSpatialReference *poOgrSRS)
 {
     /***** Get the geometry *****/
-    OGRGeometry *poOgrGeometry = kml2geom_rec(poKmlGeometry, poOgrSRS);
+    OGRGeometry *poOgrGeometry =
+        kml2geom_rec(std::move(poKmlGeometry), poOgrSRS);
 
     /***** Split the geometry at the dateline? *****/
     const char *pszWrap = CPLGetConfigOption("LIBKML_WRAPDATELINE", "no");

@@ -4711,7 +4711,7 @@ class GDALSlicedMDArray final : public GDALPamMDArray
                          ::GetPAM(poParent)),
           m_poParent(std::move(poParent)), m_dims(std::move(dims)),
           m_mapDimIdxToParentDimIdx(std::move(mapDimIdxToParentDimIdx)),
-          m_parentRanges(parentRanges),
+          m_parentRanges(std::move(parentRanges)),
           m_parentStart(m_poParent->GetDimensionCount()),
           m_parentCount(m_poParent->GetDimensionCount(), 1),
           m_parentStep(m_poParent->GetDimensionCount()),

@@ -604,7 +604,7 @@ void kml2stylestring(StylePtr poKmlStyle, OGRStyleMgr *poOgrSM)
         }
 
         OGRStylePen *poOgrStylePen =
-            kml2pen(poKmlLineStyle, (OGRStylePen *)poOgrTmpST);
+            kml2pen(std::move(poKmlLineStyle), (OGRStylePen *)poOgrTmpST);
 
         poOgrNewSM->AddPart(poOgrStylePen);
 
@@ -674,7 +674,7 @@ void kml2stylestring(StylePtr poKmlStyle, OGRStyleMgr *poOgrSM)
         }
 
         OGRStyleSymbol *poOgrStyleSymbol =
-            kml2symbol(poKmlIconStyle, (OGRStyleSymbol *)poOgrTmpST);
+            kml2symbol(std::move(poKmlIconStyle), (OGRStyleSymbol *)poOgrTmpST);
 
         poOgrNewSM->AddPart(poOgrStyleSymbol);
 
@@ -709,7 +709,7 @@ void kml2stylestring(StylePtr poKmlStyle, OGRStyleMgr *poOgrSM)
         }
 
         OGRStyleLabel *poOgrStyleLabel =
-            kml2label(poKmlLabelStyle, (OGRStyleLabel *)poOgrTmpST);
+            kml2label(std::move(poKmlLabelStyle), (OGRStyleLabel *)poOgrTmpST);
 
         poOgrNewSM->AddPart(poOgrStyleLabel);
 

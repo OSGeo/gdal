@@ -3271,12 +3271,12 @@ class OGRMVTWriterDataset final : public GDALDataset
     double m_dfTileDim0 = 0.0;
     bool m_bReuseTempFile = false;  // debug only
 
-    OGRErr
-    PreGenerateForTile(int nZ, int nX, int nY, const CPLString &osTargetName,
-                       bool bIsMaxZoomForLayer,
-                       std::shared_ptr<OGRMVTFeatureContent> poFeatureContent,
-                       GIntBig nSerial, std::shared_ptr<OGRGeometry> poGeom,
-                       const OGREnvelope &sEnvelope) const;
+    OGRErr PreGenerateForTile(
+        int nZ, int nX, int nY, const CPLString &osTargetName,
+        bool bIsMaxZoomForLayer,
+        const std::shared_ptr<OGRMVTFeatureContent> &poFeatureContent,
+        GIntBig nSerial, const std::shared_ptr<OGRGeometry> &poGeom,
+        const OGREnvelope &sEnvelope) const;
 
     static void WriterTaskFunc(void *pParam);
 
@@ -4370,8 +4370,9 @@ void OGRMVTWriterDataset::WriterTaskFunc(void *pParam)
 OGRErr OGRMVTWriterDataset::PreGenerateForTile(
     int nZ, int nTileX, int nTileY, const CPLString &osTargetName,
     bool bIsMaxZoomForLayer,
-    std::shared_ptr<OGRMVTFeatureContent> poFeatureContent, GIntBig nSerial,
-    std::shared_ptr<OGRGeometry> poGeom, const OGREnvelope &sEnvelope) const
+    const std::shared_ptr<OGRMVTFeatureContent> &poFeatureContent,
+    GIntBig nSerial, const std::shared_ptr<OGRGeometry> &poGeom,
+    const OGREnvelope &sEnvelope) const
 {
     if (!m_bThreadPoolOK)
     {

@@ -589,8 +589,8 @@ void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode *psXML)
 /************************************************************************/
 
 GDALDataset *GDALWMSMetaDataset::AnalyzeGetCapabilities(
-    CPLXMLNode *psXML, CPLString osFormat, CPLString osTransparent,
-    CPLString osPreferredSRS)
+    CPLXMLNode *psXML, const std::string &osFormat,
+    const std::string &osTransparent, const std::string &osPreferredSRS)
 {
     const char *pszEncoding = nullptr;
     if (psXML->eType == CXT_Element && strcmp(psXML->pszValue, "?xml") == 0)

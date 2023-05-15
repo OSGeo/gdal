@@ -103,10 +103,11 @@ class GDALWMSMetaDataset final : public GDALPamDataset
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;
 
-    static GDALDataset *AnalyzeGetCapabilities(CPLXMLNode *psXML,
-                                               CPLString osFormat = "",
-                                               CPLString osTransparent = "",
-                                               CPLString osPreferredSRS = "");
+    static GDALDataset *
+    AnalyzeGetCapabilities(CPLXMLNode *psXML,
+                           const std::string &osFormat = std::string(),
+                           const std::string &osTransparent = std::string(),
+                           const std::string &osPreferredSRS = std::string());
     static GDALDataset *AnalyzeTileMapService(CPLXMLNode *psXML);
 
     static GDALDataset *DownloadGetCapabilities(GDALOpenInfo *poOpenInfo);

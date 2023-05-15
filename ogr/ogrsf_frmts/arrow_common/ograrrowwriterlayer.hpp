@@ -392,7 +392,7 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
                            std::abs(nHours), nMinutes);
             auto dt = arrow::timestamp(arrow::TimeUnit::MILLI, osTZ);
             const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-            auto field = arrow::field(poFieldDefn->GetNameRef(), dt,
+            auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
                                       poFieldDefn->IsNullable());
             auto result = m_poSchema->SetField(nArrowIdxFirstField + i, field);
             if (!result.ok())

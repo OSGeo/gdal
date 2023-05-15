@@ -215,8 +215,8 @@ For details on the geosys and params values see the PCIDSKGeoref class.
 @param geosys the usual 16 character coordinate system string.
 @param params additional parameters needed for user parametrized projection.
 */
-        virtual void        SetProjection(std::string geosys,
-                                          std::vector<double> params ) = 0;
+        virtual void        SetProjection(const std::string& geosys,
+                                          const std::vector<double>& params ) = 0;
 
 /**
 \brief Create new attribute field.
@@ -228,9 +228,9 @@ For details on the geosys and params values see the PCIDSKGeoref class.
 @param default_value the default value for this field or NULL for system default.
 */
 
-        virtual void        AddField( std::string name, ShapeFieldType type,
-                                      std::string description,
-                                      std::string format,
+        virtual void        AddField( const std::string& name, ShapeFieldType type,
+                                      const std::string& description,
+                                      const std::string& format,
                                       ShapeField *default_value=nullptr ) = 0;
 
 /**
