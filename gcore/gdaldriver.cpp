@@ -1324,9 +1324,9 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
     }
     else
     {
-        CPLPushErrorHandler(CPLQuietErrorHandler);
+        CPLErrorStateBackuper oBackuper;
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
         poDriver = GDALDriver::FromHandle(GDALIdentifyDriver(pszName, nullptr));
-        CPLPopErrorHandler();
     }
 
     if (poDriver == nullptr)
@@ -1337,15 +1337,15 @@ CPLErr GDALDriver::QuietDelete(const char *pszName,
     const bool bQuiet = !bExists && poDriver->pfnDelete == nullptr &&
                         poDriver->pfnDeleteDataSource == nullptr;
     if (bQuiet)
-        CPLPushErrorHandler(CPLQuietErrorHandler);
-    CPLErr eErr = poDriver->Delete(pszName);
-    if (bQuiet)
     {
-        CPLPopErrorHandler();
-        CPLErrorReset();
-        eErr = CE_None;
+        CPLErrorStateBackuper oBackuper;
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        return poDriver->Delete(pszName);
     }
-    return eErr;
+    else
+    {
+        return poDriver->Delete(pszName);
+    }
 }
 
 /************************************************************************/
@@ -2354,7 +2354,8 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
     CPLAssert(nullptr != poDM);
     GDALOpenInfo oOpenInfo(pszFilename, GA_ReadOnly, papszFileList);
 
-    CPLErrorReset();
+    CPLErrorStateBackuper oBackuper;
+    CPLErrorSetState(CE_None, CPLE_AppDefined, "");
 
     const int nDriverCount = poDM->GetDriverCount();
 
@@ -2445,7 +2446,7 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
                 return GDALDriver::ToHandle(poDriver);
             }
 
-            if (CPLGetLastErrorNo() != 0)
+            if (CPLGetLastErrorType() != CE_None)
                 return nullptr;
         }
         else if (poDriver->pfnOpenWithDriverArg != nullptr)
@@ -2457,7 +2458,7 @@ GDALDriverH CPL_STDCALL GDALIdentifyDriverEx(
                 return GDALDriver::ToHandle(poDriver);
             }
 
-            if (CPLGetLastErrorNo() != 0)
+            if (CPLGetLastErrorType() != CE_None)
                 return nullptr;
         }
     }
