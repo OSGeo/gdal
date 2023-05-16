@@ -855,6 +855,13 @@ int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
         {
             psHooks->Error("Error parsing .shp to restore .shx");
 
+            // Update SHX content size in the SHX header even if an error occurred
+            nRealSHXContentSize /= 2;  // Bytes counted -> WORDs
+            if (!bBigEndian)
+                SwapWord(4, &nRealSHXContentSize);
+            psHooks->FSeek(fpSHX, 24, 0);
+            psHooks->FWrite(&nRealSHXContentSize, 4, 1, fpSHX);
+
             psHooks->FClose(fpSHX);
             psHooks->FClose(fpSHP);
 
