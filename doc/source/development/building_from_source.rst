@@ -59,7 +59,7 @@ paths to the include directory and the library:
 
 .. code-block:: bash
 
-    cmake -DSQLITE3_INCLUDE_DIR=/opt/SQLite/include -DSQLITE3_LIBRARY=/opt/SQLite/lib/libsqlite3.so ..
+    cmake -DSQLite3_INCLUDE_DIR=/opt/SQLite/include -DSQLite3_LIBRARY=/opt/SQLite/lib/libsqlite3.so ..
 
 Alternatively, a custom prefix can be specified:
 
