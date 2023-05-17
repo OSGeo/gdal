@@ -273,6 +273,7 @@ class HDF5Array final : public GDALMDArray
     mutable bool m_bShowAllAttributes = false;
     bool m_bHasVLenMember = false;
     bool m_bHasNonNativeDataType = false;
+    mutable bool m_bWarnedNoData = false;
     mutable std::vector<GByte> m_abyNoData{};
     mutable std::string m_osUnit{};
     mutable bool m_bHasDimensionList = false;
@@ -1358,20 +1359,57 @@ herr_t HDF5Array::GetAttributesCallback(hid_t hArray, const char *pszObjName,
             {
                 // Used by HDF5-EOS products
                 if (EQUAL(pszObjName, "_FillValue") &&
-                    self->GetDataType() == attr->GetDataType() &&
+                    self->GetDataType().GetClass() == GEDTC_NUMERIC &&
+                    attr->GetDataType().GetClass() == GEDTC_NUMERIC &&
                     attr->GetDimensionCount() == 0)
                 {
-                    if (self->GetDataType().GetClass() == GEDTC_NUMERIC)
+                    auto oRawResult(attr->ReadAsRaw());
+                    if (oRawResult.data())
                     {
-                        auto raw(attr->ReadAsRaw());
-                        if (raw.data())
+                        // Round-trip attribute value to target data type and back
+                        // to attribute data type to ensure there is no loss
+                        // Normally _FillValue data type should be the same
+                        // as the array one, but this is not always the case.
+                        // For example NASA GEDI L2B products have Float64
+                        // _FillValue for Float32 variables.
+                        self->m_abyNoData.resize(self->GetDataType().GetSize());
+                        GDALExtendedDataType::CopyValue(
+                            oRawResult.data(), attr->GetDataType(),
+                            self->m_abyNoData.data(), self->GetDataType());
+                        std::vector<GByte> abyTmp(
+                            attr->GetDataType().GetSize());
+                        GDALExtendedDataType::CopyValue(
+                            self->m_abyNoData.data(), self->GetDataType(),
+                            abyTmp.data(), attr->GetDataType());
+                        std::vector<GByte> abyOri;
+                        abyOri.assign(oRawResult.data(),
+                                      oRawResult.data() + oRawResult.size());
+                        if (abyOri == abyTmp)
                         {
-                            self->m_abyNoData.assign(raw.data(),
-                                                     raw.data() + raw.size());
+                            if (!self->m_bShowAllAttributes)
+                                return 0;
+                        }
+                        else
+                        {
+                            self->m_abyNoData.clear();
+                            if (!self->m_bWarnedNoData)
+                            {
+                                self->m_bWarnedNoData = true;
+                                char *pszVal = nullptr;
+                                GDALExtendedDataType::CopyValue(
+                                    oRawResult.data(), attr->GetDataType(),
+                                    &pszVal,
+                                    GDALExtendedDataType::CreateString());
+                                CPLError(CE_Warning, CPLE_AppDefined,
+                                         "%s attribute value (%s) is not in "
+                                         "the range of the "
+                                         "array data type",
+                                         pszObjName,
+                                         pszVal ? pszVal : "(null)");
+                                CPLFree(pszVal);
+                            }
                         }
                     }
-                    if (!self->m_bShowAllAttributes)
-                        return 0;
                 }
 
                 if (EQUAL(pszObjName, "units") &&
