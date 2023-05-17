@@ -499,6 +499,67 @@ def test_hdf5_multidim_nodata_unit():
     assert ar.GetUnit() == "degrees_east"
 
 
+###############################################################################
+
+
+def test_hdf5_multidim_read_missing_value_of_different_type():
+    def create():
+
+        import h5py
+
+        f = h5py.File("data/hdf5/FillValue_of_different_type.h5", "w")
+        dset = f.create_dataset("test", (1,), dtype="f")
+        dset.attrs.create("_FillValue", -9999, dtype="d")
+        f.close()
+
+    # create()
+
+    ds = gdal.OpenEx(
+        "data/hdf5/FillValue_of_different_type.h5",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    rg = ds.GetRootGroup()
+    var = rg.OpenMDArray("test")
+    assert var.GetDataType().GetNumericDataType() == gdal.GDT_Float32
+    assert (
+        var.GetAttribute("_FillValue").GetDataType().GetNumericDataType()
+        == gdal.GDT_Float64
+    )
+    assert var.GetNoDataValue() == -9999.0
+
+
+###############################################################################
+
+
+def test_hdf5_multidim_read_missing_value_of_different_type_not_in_range():
+    def create():
+
+        import h5py
+
+        f = h5py.File("data/hdf5/FillValue_of_different_type_not_in_range.h5", "w")
+        dset = f.create_dataset("test", (1,), dtype="B")
+        dset.attrs.create("_FillValue", -9999, dtype="d")
+        f.close()
+
+    # create()
+
+    ds = gdal.OpenEx(
+        "data/hdf5/FillValue_of_different_type_not_in_range.h5",
+        gdal.OF_MULTIDIM_RASTER,
+    )
+    rg = ds.GetRootGroup()
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        var = rg.OpenMDArray("test")
+        assert gdal.GetLastErrorMsg() != ""
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        assert (
+            var.GetAttribute("_FillValue").GetDataType().GetNumericDataType()
+            == gdal.GDT_Float64
+        )
+        assert var.GetNoDataValue() is None
+
+
 def test_hdf5_multidim_recursive_groups():
 
     # File generated with
