@@ -41,6 +41,7 @@
 #include "gdal_pam.h"
 #include "gdal_utils.h"
 #include "cpl_safemaths.hpp"
+#include "memmultidim.h"
 #include "ogrsf_frmts.h"
 
 #if defined(__clang__) || defined(_MSC_VER)
@@ -3668,6 +3669,13 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
                                           GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 {
+    // Nodata setting must be one of the first things done for TileDB
+    const void *pNoData = poSrcArray->GetRawNoDataValue();
+    if (pNoData && poSrcArray->GetDataType() == GetDataType())
+    {
+        SetRawNoDataValue(pNoData);
+    }
+
     const bool bThisIsUnscaledArray =
         dynamic_cast<GDALMDArrayUnscaled *>(this) != nullptr;
     auto attrs = poSrcArray->GetAttributes();
@@ -3708,12 +3716,6 @@ bool GDALMDArray::CopyFromAllExceptValues(const GDALMDArray *poSrcArray,
     if (srcSRS)
     {
         SetSpatialRef(srcSRS.get());
-    }
-
-    const void *pNoData = poSrcArray->GetRawNoDataValue();
-    if (pNoData && poSrcArray->GetDataType() == GetDataType())
-    {
-        SetRawNoDataValue(pNoData);
     }
 
     const std::string &osUnit(poSrcArray->GetUnit());
@@ -4669,6 +4671,108 @@ bool GDALMDArray::ReadForTransposedRequest(
 
     VSIFree(pTempBuffer);
     return true;
+}
+
+/************************************************************************/
+/*               IsStepOneContiguousRowMajorOrderedSameDataType()       */
+/************************************************************************/
+
+// Returns true if at all following conditions are met:
+// arrayStep[] == 1, bufferDataType == GetDataType() and bufferStride[]
+// defines a row-major ordered contiguous buffer.
+bool GDALMDArray::IsStepOneContiguousRowMajorOrderedSameDataType(
+    const size_t *count, const GInt64 *arrayStep,
+    const GPtrDiff_t *bufferStride,
+    const GDALExtendedDataType &bufferDataType) const
+{
+    if (bufferDataType != GetDataType())
+        return false;
+    size_t nExpectedStride = 1;
+    for (size_t i = GetDimensionCount(); i > 0;)
+    {
+        --i;
+        if (arrayStep[i] != 1 || bufferStride[i] < 0 ||
+            static_cast<size_t>(bufferStride[i]) != nExpectedStride)
+        {
+            return false;
+        }
+        nExpectedStride *= count[i];
+    }
+    return true;
+}
+
+/************************************************************************/
+/*                      ReadUsingContiguousIRead()                      */
+/************************************************************************/
+
+// Used for example by the TileDB driver when requesting it with
+// arrayStep[] != 1, bufferDataType != GetDataType() or bufferStride[]
+// not defining a row-major ordered contiguous buffer.
+// Should only be called when at least one of the above conditions are true,
+// which can be tested with IsStepOneContiguousRowMajorOrderedSameDataType()
+// returning none.
+// This method will call IRead() again with arrayStep[] == 1,
+// bufferDataType == GetDataType() and bufferStride[] defining a row-major
+// ordered contiguous buffer, on a temporary buffer. And it will rearrange the
+// content of that temporary buffer onto pDstBuffer.
+bool GDALMDArray::ReadUsingContiguousIRead(
+    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
+    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
+    void *pDstBuffer) const
+{
+    const size_t nDims(GetDimensionCount());
+    std::vector<GUInt64> anTmpStartIdx(nDims);
+    std::vector<size_t> anTmpCount(nDims);
+    const auto &oType = GetDataType();
+    size_t nMemArraySize = oType.GetSize();
+    std::vector<GPtrDiff_t> anTmpStride(nDims);
+    GPtrDiff_t nStride = 1;
+    for (size_t i = nDims; i > 0;)
+    {
+        --i;
+        if (arrayStep[i] > 0)
+            anTmpStartIdx[i] = arrayStartIdx[i];
+        else
+            anTmpStartIdx[i] = arrayStartIdx[i] + (count[i] - 1) * arrayStep[i];
+        const uint64_t nCount =
+            (count[i] - 1) * static_cast<uint64_t>(std::abs(arrayStep[i])) + 1;
+        if (nCount > std::numeric_limits<size_t>::max() / nMemArraySize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Read() failed due to too large memory requirement");
+            return false;
+        }
+        anTmpCount[i] = static_cast<size_t>(nCount);
+        nMemArraySize *= anTmpCount[i];
+        anTmpStride[i] = nStride;
+        nStride *= anTmpCount[i];
+    }
+    std::unique_ptr<void, decltype(&VSIFree)> pTmpBuffer(
+        VSI_MALLOC_VERBOSE(nMemArraySize), VSIFree);
+    if (!pTmpBuffer)
+        return false;
+    if (!IRead(anTmpStartIdx.data(), anTmpCount.data(),
+               std::vector<GInt64>(nDims, 1).data(),  // steps
+               anTmpStride.data(), oType, pTmpBuffer.get()))
+    {
+        return false;
+    }
+    std::vector<std::shared_ptr<GDALDimension>> apoTmpDims(nDims);
+    for (size_t i = 0; i < nDims; ++i)
+    {
+        if (arrayStep[i] > 0)
+            anTmpStartIdx[i] = 0;
+        else
+            anTmpStartIdx[i] = anTmpCount[i] - 1;
+        apoTmpDims[i] = std::make_shared<GDALDimension>(
+            std::string(), std::string(), std::string(), std::string(),
+            anTmpCount[i]);
+    }
+    auto poMEMArray =
+        MEMMDArray::Create(std::string(), std::string(), apoTmpDims, oType);
+    poMEMArray->Init(static_cast<GByte *>(pTmpBuffer.get()));
+    return poMEMArray->Read(anTmpStartIdx.data(), count, arrayStep,
+                            bufferStride, bufferDataType, pDstBuffer);
 }
 
 //! @endcond
