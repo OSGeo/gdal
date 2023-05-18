@@ -202,7 +202,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool):
     f["datefield"] = "2023-04-08"
     f["timefield"] = "13:34:56.789"
     f["intfieldextra"] = 3
-    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((-1 -2,-1 -3,-4 -3,-1 -2))"))
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((-10 -20,-1 -3,-4 -3,-10 -20))"))
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     assert f.GetFID() == 3
 
@@ -226,7 +226,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
     assert lyr.GetGeomType() == ogr.wkbUnknown
     assert lyr.GetSpatialRef().IsSame(srs)
     assert lyr.GetFeatureCount() == 3
-    assert lyr.GetExtent() == (-4.0, 4.0, -3.0, 3.0)
+    assert lyr.GetExtent() == (-10.0, 4.0, -20.0, 3.0)
     assert lyr.GetLayerDefn().GetFieldCount() == field_count
     for i in range(field_count):
         assert lyr.GetLayerDefn().GetFieldDefn(i).IsNullable() == nullable
@@ -284,7 +284,7 @@ def test_ogr_tiledb_basic(nullable, batch_size):
             assert f["timefield"] == "13:34:56.789"
             assert (
                 f.GetGeometryRef().ExportToWkt()
-                == "POLYGON ((-1 -2,-1 -3,-4 -3,-1 -2))"
+                == "POLYGON ((-10 -20,-1 -3,-4 -3,-10 -20))"
             )
         else:
             assert False
@@ -725,10 +725,10 @@ def test_ogr_tiledb_basic(nullable, batch_size):
         "GeometryType": {"type": "STRING_ASCII", "value": "Unknown"},
         "LAYER_EXTENT_MAXX": {"type": "FLOAT64", "value": 4.0},
         "LAYER_EXTENT_MAXY": {"type": "FLOAT64", "value": 3.0},
-        "LAYER_EXTENT_MINX": {"type": "FLOAT64", "value": -4.0},
-        "LAYER_EXTENT_MINY": {"type": "FLOAT64", "value": -3.0},
-        "PAD_X": {"type": "FLOAT64", "value": 1.5},
-        "PAD_Y": {"type": "FLOAT64", "value": 0.5},
+        "LAYER_EXTENT_MINX": {"type": "FLOAT64", "value": -10.0},
+        "LAYER_EXTENT_MINY": {"type": "FLOAT64", "value": -20.0},
+        "PAD_X": {"type": "FLOAT64", "value": 4.5},
+        "PAD_Y": {"type": "FLOAT64", "value": 8.5},
     }
 
     ds = None
@@ -1329,6 +1329,48 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
 
     for batch in batches:
         check_batch(batch)
+
+    # Test spatial filter that intersects all features
+    minx, maxx, miny, maxy = lyr.GetExtent()
+    lyr.SetSpatialFilterRect(minx + 0.5, miny + 0.5, maxx - 0.5, maxy - 0.5)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fids = []
+    for batch in stream:
+        fids += batch["FID"].tolist()
+        check_batch(batch)
+    assert set(fids) == set([1, 2, 3])
+    lyr.SetSpatialFilter(None)
+
+    # Test spatial filter that intersects 1st and 2nd features only, but given how
+    # spatial filtering works, more intermediate features will be collected
+    # before being discarded
+    lyr.SetSpatialFilterRect(0, 0, 3, 3)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fids = []
+    for batch in stream:
+        fids += batch["FID"].tolist()
+        check_batch(batch)
+    assert set(fids) == set([1, 2])
+    lyr.SetSpatialFilter(None)
+
+    # Test spatial filter that intersects 3rd feature only
+    lyr.SetSpatialFilterRect(-3, -3, 0, 0)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fids = []
+    for batch in stream:
+        fids += batch["FID"].tolist()
+        check_batch(batch)
+    assert set(fids) == set([3])
+    lyr.SetSpatialFilter(None)
+
+    # Test spatial filter that intersects no feature
+    lyr.SetSpatialFilterRect(-0.5, -0.5, 0.5, 0.5)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fids = []
+    for batch in stream:
+        fids += batch["FID"].tolist()
+    assert set(fids) == set()
+    lyr.SetSpatialFilter(None)
 
     stream = lyr.GetArrowStreamAsNumPy(
         options=["USE_MASKED_ARRAYS=NO", "INCLUDE_FID=NO", "MAX_FEATURES_IN_BATCH=1000"]
