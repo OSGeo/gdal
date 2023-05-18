@@ -80,10 +80,27 @@ void OGRMSSQLSpatialLayer::BuildFeatureDefn(const char *pszLayerName,
     bool bShowFidColumn =
         CPLTestBool(CPLGetConfigOption("MSSQLSPATIAL_SHOW_FID_COLUMN", "NO"));
 
-    poFeatureDefn = new OGRFeatureDefn(pszLayerName);
-    nRawColumns = poStmtIn->GetColCount();
+    if (!poFeatureDefn)
+    {
+        poFeatureDefn = new OGRFeatureDefn(pszLayerName);
+        poFeatureDefn->Reference();
+    }
+    else
+    {
+        for (int iFieldIdx = poFeatureDefn->GetFieldCount() - 1; iFieldIdx >= 0;
+             --iFieldIdx)
+        {
+            poFeatureDefn->DeleteFieldDefn(iFieldIdx);
+        }
+        for (int iFieldIdx = poFeatureDefn->GetGeomFieldCount() - 1;
+             iFieldIdx >= 0; --iFieldIdx)
+        {
+            poFeatureDefn->DeleteGeomFieldDefn(iFieldIdx);
+        }
+        poFeatureDefn->SetName(pszLayerName);
+    }
 
-    poFeatureDefn->Reference();
+    nRawColumns = poStmtIn->GetColCount();
 
     CPLFree(panFieldOrdinals);
     panFieldOrdinals = (int *)CPLMalloc(sizeof(int) * nRawColumns);
