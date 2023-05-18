@@ -570,7 +570,7 @@ def test_ogr_mssqlspatial_bulk_insert():
     )
 
     if not use_bcp:
-        pytest.skip()
+        pytest.skip("BCP not available")
 
     gdal.SetConfigOption("MSSQLSPATIAL_BCP_SIZE", "2")
     source_ds = gdal.OpenEx("data/poly.shp", gdal.OF_VECTOR)
