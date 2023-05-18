@@ -32,6 +32,7 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
+#include "ogr_wkb.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -826,256 +827,6 @@ OGRArrowLayer::GetGeometryTypeFromString(const std::string &osType)
         CPLDebug("ARROW", "Unknown geometry type: %s", osType.c_str());
     }
     return eGeomType;
-}
-
-/************************************************************************/
-/*                             ReadWKBUInt32()                          */
-/************************************************************************/
-
-inline uint32_t ReadWKBUInt32(const uint8_t *data, OGRwkbByteOrder eByteOrder,
-                              size_t &iOffset)
-{
-    uint32_t v;
-    memcpy(&v, data + iOffset, sizeof(v));
-    iOffset += sizeof(v);
-    if (OGR_SWAP(eByteOrder))
-    {
-        CPL_SWAP32PTR(&v);
-    }
-    return v;
-}
-
-/************************************************************************/
-/*                         ReadWKBPointSequence()                       */
-/************************************************************************/
-
-inline bool ReadWKBPointSequence(const uint8_t *data, size_t size,
-                                 OGRwkbByteOrder eByteOrder, int nDim,
-                                 size_t &iOffset, OGREnvelope &sEnvelope)
-{
-    const uint32_t nPoints = ReadWKBUInt32(data, eByteOrder, iOffset);
-    if (nPoints > (size - iOffset) / (nDim * sizeof(double)))
-        return false;
-    double dfX = 0;
-    double dfY = 0;
-    for (uint32_t j = 0; j < nPoints; j++)
-    {
-        memcpy(&dfX, data + iOffset, sizeof(double));
-        memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
-        iOffset += nDim * sizeof(double);
-        if (OGR_SWAP(eByteOrder))
-        {
-            CPL_SWAP64PTR(&dfX);
-            CPL_SWAP64PTR(&dfY);
-        }
-        sEnvelope.MinX = std::min(sEnvelope.MinX, dfX);
-        sEnvelope.MinY = std::min(sEnvelope.MinY, dfY);
-        sEnvelope.MaxX = std::max(sEnvelope.MaxX, dfX);
-        sEnvelope.MaxY = std::max(sEnvelope.MaxY, dfY);
-    }
-    return true;
-}
-
-/************************************************************************/
-/*                         ReadWKBRingSequence()                        */
-/************************************************************************/
-
-inline bool ReadWKBRingSequence(const uint8_t *data, size_t size,
-                                OGRwkbByteOrder eByteOrder, int nDim,
-                                size_t &iOffset, OGREnvelope &sEnvelope)
-{
-    const uint32_t nRings = ReadWKBUInt32(data, eByteOrder, iOffset);
-    if (nRings > (size - iOffset) / sizeof(uint32_t))
-        return false;
-    for (uint32_t i = 0; i < nRings; i++)
-    {
-        if (iOffset + sizeof(uint32_t) > size)
-            return false;
-        if (!ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                  sEnvelope))
-            return false;
-    }
-    return true;
-}
-
-/************************************************************************/
-/*                          ReadWKBBoundingBox()                        */
-/************************************************************************/
-
-constexpr uint32_t WKB_PREFIX_SIZE = 1 + sizeof(uint32_t);
-constexpr uint32_t MIN_WKB_SIZE = WKB_PREFIX_SIZE + sizeof(uint32_t);
-
-static bool ReadWKBBoundingBoxInternal(const uint8_t *data, size_t size,
-                                       size_t &iOffset, OGREnvelope &sEnvelope,
-                                       int nRec)
-{
-    if (size - iOffset < MIN_WKB_SIZE)
-        return false;
-    const int nByteOrder = DB2_V72_FIX_BYTE_ORDER(data[iOffset]);
-    if (!(nByteOrder == wkbXDR || nByteOrder == wkbNDR))
-        return false;
-    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(nByteOrder);
-
-    OGRwkbGeometryType eGeometryType = wkbUnknown;
-    OGRReadWKBGeometryType(data + iOffset, wkbVariantIso, &eGeometryType);
-    iOffset += 5;
-    const auto eFlatType = wkbFlatten(eGeometryType);
-    const int nDim = 2 + (OGR_GT_HasZ(eGeometryType) ? 1 : 0) +
-                     (OGR_GT_HasM(eGeometryType) ? 1 : 0);
-
-    if (eFlatType == wkbPoint)
-    {
-        if (size - iOffset < nDim * sizeof(double))
-            return false;
-        double dfX = 0;
-        double dfY = 0;
-        memcpy(&dfX, data + iOffset, sizeof(double));
-        memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
-        iOffset += nDim * sizeof(double);
-        if (OGR_SWAP(eByteOrder))
-        {
-            CPL_SWAP64PTR(&dfX);
-            CPL_SWAP64PTR(&dfY);
-        }
-        sEnvelope.MinX = dfX;
-        sEnvelope.MinY = dfY;
-        sEnvelope.MaxX = dfX;
-        sEnvelope.MaxY = dfY;
-        return true;
-    }
-
-    if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        return ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                    sEnvelope);
-    }
-
-    if (eFlatType == wkbPolygon)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        return ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
-                                   sEnvelope);
-    }
-
-    if (eFlatType == wkbMultiPoint)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts >
-            (size - iOffset) / (WKB_PREFIX_SIZE + nDim * sizeof(double)))
-            return false;
-        double dfX = 0;
-        double dfY = 0;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            iOffset += WKB_PREFIX_SIZE;
-            memcpy(&dfX, data + iOffset, sizeof(double));
-            memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
-            iOffset += nDim * sizeof(double);
-            if (OGR_SWAP(eByteOrder))
-            {
-                CPL_SWAP64PTR(&dfX);
-                CPL_SWAP64PTR(&dfY);
-            }
-            sEnvelope.MinX = std::min(sEnvelope.MinX, dfX);
-            sEnvelope.MinY = std::min(sEnvelope.MinY, dfY);
-            sEnvelope.MaxX = std::max(sEnvelope.MaxX, dfX);
-            sEnvelope.MaxY = std::max(sEnvelope.MaxY, dfY);
-        }
-        return true;
-    }
-
-    if (eFlatType == wkbMultiLineString)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        const uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts > (size - iOffset) / MIN_WKB_SIZE)
-            return false;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (iOffset + MIN_WKB_SIZE > size)
-                return false;
-            iOffset += WKB_PREFIX_SIZE;
-            if (!ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                      sEnvelope))
-                return false;
-        }
-        return true;
-    }
-
-    if (eFlatType == wkbMultiPolygon)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        const uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts > (size - iOffset) / MIN_WKB_SIZE)
-            return false;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (iOffset + MIN_WKB_SIZE > size)
-                return false;
-            CPLAssert(data[iOffset] == eByteOrder);
-            iOffset += WKB_PREFIX_SIZE;
-            if (!ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
-                                     sEnvelope))
-                return false;
-        }
-        return true;
-    }
-
-    if (eFlatType == wkbGeometryCollection || eFlatType == wkbCompoundCurve ||
-        eFlatType == wkbCurvePolygon || eFlatType == wkbMultiCurve ||
-        eFlatType == wkbMultiSurface)
-    {
-        if (nRec == 128)
-            return false;
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        const uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts > (size - iOffset) / MIN_WKB_SIZE)
-            return false;
-        OGREnvelope sEnvelopeSubGeom;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (!ReadWKBBoundingBoxInternal(data, size, iOffset,
-                                            sEnvelopeSubGeom, nRec + 1))
-                return false;
-            sEnvelope.Merge(sEnvelopeSubGeom);
-        }
-        return true;
-    }
-
-    return false;
-}
-
-inline bool OGRArrowLayer::ReadWKBBoundingBox(const uint8_t *data, size_t size,
-                                              OGREnvelope &sEnvelope)
-{
-    size_t iOffset = 0;
-    return ReadWKBBoundingBoxInternal(data, size, iOffset, sEnvelope, 0);
 }
 
 /************************************************************************/
@@ -1973,7 +1724,7 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
 #ifdef DEBUG_ReadWKBBoundingBox
                 OGREnvelope sEnvelopeFromWKB;
                 bool bRet =
-                    ReadWKBBoundingBox(data, out_length, sEnvelopeFromWKB);
+                    OGRWKBGetBoundingBox(data, out_length, sEnvelopeFromWKB);
                 CPLAssert(bRet);
                 OGREnvelope sEnvelopeFromGeom;
                 poGeometry->getEnvelope(&sEnvelopeFromGeom);
@@ -2959,7 +2710,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     int out_length = 0;
                     const uint8_t *data =
                         castArray->GetValue(m_nIdxInBatch, &out_length);
-                    if (ReadWKBBoundingBox(data, out_length, sEnvelope) &&
+                    if (OGRWKBGetBoundingBox(data, out_length, sEnvelope) &&
                         !m_sFilterEnvelope.Intersects(sEnvelope))
                     {
                         bSkipToNextFeature = true;
@@ -3315,7 +3066,7 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 int out_length = 0;
                 const uint8_t *data =
                     castArray->GetValue(m_nIdxInBatch, &out_length);
-                if (ReadWKBBoundingBox(data, out_length, sEnvelope))
+                if (OGRWKBGetBoundingBox(data, out_length, sEnvelope))
                 {
                     psExtent->Merge(sEnvelope);
                 }
