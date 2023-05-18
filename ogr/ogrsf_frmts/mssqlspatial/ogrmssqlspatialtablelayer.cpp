@@ -1562,15 +1562,10 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
             poSession->CommitTransaction(); /* commit creating the table */
 
         /* Get the column definitions for this table. */
-        if (poFeatureDefn && bLayerDefnNeedsRefresh)
-        {
-            GetLayerDefn();
-            bLayerDefnNeedsRefresh = false;
-        }
-        else
-        {
-            GetLayerDefn();
-        }
+        bLayerDefnNeedsRefresh = true;
+        GetLayerDefn();
+        bLayerDefnNeedsRefresh = false;
+
         if (!poFeatureDefn)
             return OGRERR_FAILURE;
 
