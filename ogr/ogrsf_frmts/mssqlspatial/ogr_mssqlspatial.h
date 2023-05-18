@@ -321,7 +321,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     }
     void ClearStatement();
     OGRFeature *GetNextRawFeature();
-    bool bLayerDefnNeedsRefresh = true;
+    bool bLayerDefnNeedsRefresh = false;
 
   public:
     OGRMSSQLSpatialLayer();
