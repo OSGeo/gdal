@@ -389,3 +389,19 @@ def test_openfilegb_raster_rat():
         rat.SetValueAsDouble(0, 2, 1.5)
     with pytest.raises(Exception):
         rat.SetTableType(gdal.GRTT_THEMATIC)
+
+
+###############################################################################
+# Open dataset with block_origin_x != eminx and block_origin_y != emaxy
+
+
+def test_openfilegb_shifted_origin():
+
+    # https://gisdata.mn.gov/dataset/water-lake-bathy-shaded-relief with
+    # all data removed
+    ds = gdal.Open("data/filegdb/water_lake_bathy_shaded_relief_only_metadata.gdb")
+    assert ds
+    assert ds.RasterXSize == 98478
+    assert ds.RasterYSize == 117334
+    assert ds.GetGeoTransform() == (229052.5, 5.0, 0.0, 5404027.5, 0.0, -5.0)
+    assert ds.GetSpatialRef() is None
