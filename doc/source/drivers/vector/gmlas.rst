@@ -84,7 +84,7 @@ Three special layers "_ogr_fields_metadata", "_ogr_layers_metadata",
 information to the basic ones you can get from the OGR data model on OGR
 layers and fields.
 
-Those layers are exposed if the EXPOSE_METADATA_LAYERS open option is
+Those layers are exposed if the :oo:`EXPOSE_METADATA_LAYERS` open option is
 set to YES (or if enabled in the configuration). They can also be
 individually retrieved by specifying their name in calls to
 GetLayerByName(), or on as layer names with the ogrinfo and ogr2ogr
@@ -134,7 +134,7 @@ settings:
    ignored, so as to lighten the number of OGR layers and fields.
 
 This file can be adapted and modified versions can be provided to the
-driver with the CONFIG_FILE open option. None of the elements of the
+driver with the :oo:`CONFIG_FILE` open option. None of the elements of the
 configuration file are required. When they are absent, the default value
 indicated in the schema documentation is used.
 
@@ -142,7 +142,7 @@ Configuration can also be provided through other open options. Note that
 some open options have identical names to settings present in the
 configuration file. When such open option is provided, then its value
 will override the one of the configuration file (either the default one,
-or the one provided through the CONFIG_FILE open option).
+or the one provided through the :oo:`CONFIG_FILE` open option).
 
 Geometry support
 ----------------
@@ -179,50 +179,99 @@ nested elements.
 Open options
 ------------
 
--  **XSD**\ =filename(s): to specify an explicit XSD application schema
-   to use (or a list of filenames, provided they are comma separated).
-   "http://" or "https://" URLs can be used. This option is not required
-   when the XML/GML document has a schemaLocation attribute with valid
-   links in its root element.
--  **CONFIG_FILE**\ =filename or inline XML definition: filename of a
-   XML configuration file conforming to the
-   :source_file:`data/gmlasconf.xsd`
-   schema. It is also possible to provide the XML content directly
-   inlined provided that the very first characters are <Configuration.
--  **EXPOSE_METADATA_LAYERS**\ =YES/NO: whether the metadata layers
-   "_ogr_fields_metadata", "_ogr_layers_metadata",
-   "_ogr_layer_relationships" and "ogr_other_metadata" should be
-   reported by default. Default is NO.
--  **VALIDATE**\ =YES/NO: whether the document should be validated
-   against the schemas. Validation is done at dataset opening. Default
-   is NO.
--  **FAIL_IF_VALIDATION_ERROR**\ =YES/NO: Whether a validation error
-   should cause dataset opening to fail. (only used if VALIDATE=YES)
-   Default is NO.
--  **REFRESH_CACHE**\ =YES/NO: Whether remote schemas and documents
-   pointed by xlink:href links should be downloaded from the server even
-   if already present in the local cache. If the cache is enabled, it
-   will be refreshed with the newly downloaded resources. Default is NO.
--  **SWAP_COORDINATES**\ =AUTO/YES/NO: Whether the order of the x/y or
-   long/lat coordinates should be swapped. In AUTO mode, the driver will
-   determine if swapping must be done from the srsName. If the srsName
-   is urn:ogc:def:crs:EPSG::XXXX and that the order of coordinates in
-   the EPSG database for this SRS is lat,long or northing,easting, then
-   the driver will swap them to the GIS friendly order (long,lat or
-   easting,northing). For other forms of SRS (such as EPSG:XXXX), GIS
-   friendly order is assumed and thus no swapping is done. When
-   SWAP_COORDINATES is set to YES, coordinates will be always swapped
-   regarding the order they appear in the GML, and when it set to NO,
-   they will be kept in the same order. The default is AUTO.
--  **REMOVE_UNUSED_LAYERS**\ =YES/NO: Whether unused layers should be
-   removed from the reported layers. Defaults to NO
--  **REMOVE_UNUSED_FIELDS**\ =YES/NO: Whether unused fields should be
-   removed from the reported layers. Defaults to NO
--  **HANDLE_MULTIPLE_IMPORTS**\ =YES/NO: Whether multiple imports with
-   the same namespace but different schema are allowed. Defaults to NO
--  **SCHEMA_FULL_CHECKING**\ =YES/NO: Whether to be pedantic with XSD
-   checking or to be forgiving e.g. if the invalid part of the schema is
-   not referenced in the main document. Defaults to NO
+-  .. oo:: XSD
+
+      to specify an explicit XSD application schema
+      to use (or a list of filenames, provided they are comma separated).
+      "http://" or "https://" URLs can be used. This option is not required
+      when the XML/GML document has a schemaLocation attribute with valid
+      links in its root element.
+
+-  .. oo:: CONFIG_FILE
+      :choices: <filename>, <xml>
+
+      finition: filename of a
+      XML configuration file conforming to the
+      :source_file:`data/gmlasconf.xsd`
+      schema. It is also possible to provide the XML content directly
+      inlined provided that the very first characters are <Configuration.
+
+-  .. oo:: EXPOSE_METADATA_LAYERS
+      :choices: YES, NO
+      :default: NO
+
+      whether the metadata layers
+      "_ogr_fields_metadata", "_ogr_layers_metadata",
+      "_ogr_layer_relationships" and "ogr_other_metadata" should be
+      reported by default.
+
+-  .. oo:: VALIDATE
+      :choices: YES, NO
+      :default: NO
+
+      whether the document should be validated
+      against the schemas. Validation is done at dataset opening.
+
+-  .. oo:: FAIL_IF_VALIDATION_ERROR
+      :choices: YES, NO
+      :default: NO
+
+      Whether a validation error
+      should cause dataset opening to fail. (only used if :oo:`VALIDATE=YES`)
+
+-  .. oo:: REFRESH_CACHE
+      :choices: YES, NO
+      :default: NO
+
+      Whether remote schemas and documents
+      pointed by xlink:href links should be downloaded from the server even
+      if already present in the local cache. If the cache is enabled, it
+      will be refreshed with the newly downloaded resources.
+
+-  .. oo:: SWAP_COORDINATES
+      :choices: AUTO, YES, NO
+      :default: AUTO
+
+      Whether the order of the x/y or
+      long/lat coordinates should be swapped. In AUTO mode, the driver will
+      determine if swapping must be done from the srsName. If the srsName
+      is urn:ogc:def:crs:EPSG::XXXX and that the order of coordinates in
+      the EPSG database for this SRS is lat,long or northing,easting, then
+      the driver will swap them to the GIS friendly order (long,lat or
+      easting,northing). For other forms of SRS (such as EPSG:XXXX), GIS
+      friendly order is assumed and thus no swapping is done. When
+      SWAP_COORDINATES is set to YES, coordinates will be always swapped
+      regarding the order they appear in the GML, and when it set to NO,
+      they will be kept in the same order.
+
+-  .. oo:: REMOVE_UNUSED_LAYERS
+      :choices: YES, NO
+      :default: NO
+
+       Whether unused layers should be
+       removed from the reported layers.
+
+-  .. oo:: REMOVE_UNUSED_FIELDS
+      :choices: YES, NO
+      :default: NO
+
+      Whether unused fields should be
+      removed from the reported layers.
+
+-  .. oo:: HANDLE_MULTIPLE_IMPORTS
+      :choices: YES, NO
+      :default: NO
+
+      Whether multiple imports with
+      the same namespace but different schema are allowed.
+
+-  .. oo:: SCHEMA_FULL_CHECKING
+      :choices: YES, NO
+      :default: NO
+
+      Whether to be pedantic with XSD
+      checking or to be forgiving e.g. if the invalid part of the schema is
+      not referenced in the main document.
 
 Creation support
 ----------------
@@ -242,9 +291,9 @@ the schemas need to be available. There are two possible ways:
 
 -  either the result of the processing of the schemas was stored as the
    4 \_ogr_\* metadata tables in the source dataset by using the
-   EXPOSE_METADATA_LAYERS=YES open option when converting the source
+   :oo:`EXPOSE_METADATA_LAYERS=YES` open option when converting the source
    .xml),
--  or the schemas can be specified at creation time with the INPUT_XSD
+-  or the schemas can be specified at creation time with the :dsco:`INPUT_XSD`
    creation option.
 
 By default, the driver will "wrap" the features inside a WFS 2.0
@@ -292,57 +341,99 @@ Dataset creation options
 
 The supported dataset creation options are:
 
--  **INPUT_XSD**\ =filename(s): to specify an explicit XSD application
-   schema to use (or a list of filenames, provided they are comma
-   separated). "http://" or "https://" URLs can be used. This option is
-   not required when the source dataset has a \_ogr_other_metadata with
-   schemas and locations filled.
--  **CONFIG_FILE**\ =filename or inline XML definition: filename of a
-   XML configuration file conforming to the
-   :source_file:`data/gmlasconf.xsd`
-   schema. It is also possible to provide the XML content directly
-   inlined provided that the very first characters are <Configuration>.
--  **LAYERS**\ =layers. Comma separated list of layers to export as
-   top-level features. The special value "{SPATIAL_LAYERS}" can also be
-   used to specify all layers that have geometries. When LAYERS is not
-   specified, the driver will identify in the source dataset "top-level"
-   layers, and in those layers will find which features are not
-   referenced by other top-level layers.
--  **SRSNAME_FORMAT**\ =SHORT/OGC_URN/OGC_URL (Only valid for GML 3
-   output) Defaults to OGC_URL. If SHORT, then srsName will be in the
-   form AUTHORITY_NAME:AUTHORITY_CODE If OGC_URN, then srsName will be
-   in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE If
-   OGC_URL, then srsName will be in the form
-   http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE For
-   OGC_URN and OGC_URL, in the case the SRS is a SRS without explicit
-   AXIS order, but that the same SRS authority code imported with
-   ImportFromEPSGA() should be treated as lat/long or northing/easting,
-   then the function will take care of coordinate order swapping.
--  **INDENT_SIZE**\ =[0-8]. Number of spaces for each indentation level.
-   Default is 2.
--  **COMMENT**\ =string. Comment to add at top of generated XML file as
-   a XML comment.
--  **LINEFORMAT**\ =CRLF/LF. End-of-line sequence to use. Defaults to
-   CRLF on Windows and LF on other platforms.
--  **WRAPPING**\ =WFS2_FEATURECOLLECTION/GMLAS_FEATURECOLLECTION.
-   Whether to wrap features in a wfs:FeatureCollection or in a
-   ogr_gmlas:FeatureCollection. Defaults to WFS2_FEATURECOLLECTION.
--  **TIMESTAMP**\ =XML date time. User-specified XML dateTime value for
-   timestamp to use in wfs:FeatureCollection attribute. If not
-   specified, current date time is used. Only valid for
-   WRAPPING=WFS2_FEATURECOLLECTION.
--  **WFS20_SCHEMALOCATION**\ =Path or URL to wfs.xsd. Only valid for
-   WRAPPING=WFS2_FEATURECOLLECTION. Default is
-   "http://schemas.opengis.net/wfs/2.0/wfs.xsd"
--  **GENERATE_XSD**\ =YES/NO. Whether to generate a .xsd file that has
-   the structure of the wrapping ogr_gmlas:FeatureCollection /
-   ogr_gmlas:featureMember elements. Only valid for
-   WRAPPING=GMLAS_FEATURECOLLECTION. Default to YES.
--  **OUTPUT_XSD_FILENAME**\ =string. Wrapping .xsd filename. If not
-   specified, same basename as output file with .xsd extension. Note
-   that it is possible to use this option even if GENERATE_XSD=NO, so
-   that the wrapping .xsd appear in the schemaLocation attribute of the
-   .xml file. Only valid for WRAPPING=GMLAS_FEATURECOLLECTION
+-  .. dsco:: INPUT_XSD
+
+      to specify an explicit XSD application
+      schema to use (or a list of filenames, provided they are comma
+      separated). "http://" or "https://" URLs can be used. This option is
+      not required when the source dataset has a \_ogr_other_metadata with
+      schemas and locations filled.
+
+-  .. dsco:: CONFIG_FILE
+      :choices: <filename>, <xml>
+
+      filename of a
+      XML configuration file conforming to the
+      :source_file:`data/gmlasconf.xsd`
+      schema. It is also possible to provide the XML content directly
+      inlined provided that the very first characters are <Configuration>.
+
+-  .. dsco:: LAYERS
+
+      Comma separated list of layers to export as
+      top-level features. The special value "{SPATIAL_LAYERS}" can also be
+      used to specify all layers that have geometries. When LAYERS is not
+      specified, the driver will identify in the source dataset "top-level"
+      layers, and in those layers will find which features are not
+      referenced by other top-level layers.
+
+-  .. dsco:: SRSNAME_FORMAT
+      :choices: SHORT, OGC_URN, OGC_URL (Only valid for GML 3 output)
+      :default: OGC_URL
+
+      If SHORT, then srsName will be in the
+      form AUTHORITY_NAME:AUTHORITY_CODE If OGC_URN, then srsName will be
+      in the form urn:ogc:def:crs:AUTHORITY_NAME::AUTHORITY_CODE If
+      OGC_URL, then srsName will be in the form
+      http://www.opengis.net/def/crs/AUTHORITY_NAME/0/AUTHORITY_CODE For
+      OGC_URN and OGC_URL, in the case the SRS is a SRS without explicit
+      AXIS order, but that the same SRS authority code imported with
+      ImportFromEPSGA() should be treated as lat/long or northing/easting,
+      then the function will take care of coordinate order swapping.
+
+-  .. dsco:: INDENT_SIZE
+      :choices: [0-8]
+      :default: 2
+
+      Number of spaces for each indentation level.
+
+-  .. dsco:: COMMENT
+
+      Comment to add at top of generated XML file as
+      a XML comment.
+
+-  .. dsco:: LINEFORMAT
+      :choices: CRLF, LF
+
+      End-of-line sequence to use. Defaults to
+      CRLF on Windows and LF on other platforms.
+
+-  .. dsco:: WRAPPING
+      :choices: WFS2_FEATURECOLLECTION, GMLAS_FEATURECOLLECTION
+      :default: WFS2_FEATURECOLLECTION
+
+      Whether to wrap features in a wfs:FeatureCollection or in a
+      ogr_gmlas:FeatureCollection.
+
+-  .. dsco:: TIMESTAMP
+
+      User-specified XML dateTime value for
+      timestamp to use in wfs:FeatureCollection attribute. If not
+      specified, current date time is used. Only valid for
+      :dsco:`WRAPPING=WFS2_FEATURECOLLECTION`.
+
+-  .. dsco:: WFS20_SCHEMALOCATION
+      :default: http://schemas.opengis.net/wfs/2.0/wfs.xsd
+
+      Path or URL to wfs.xsd. Only valid for
+      :dsco:`WRAPPING=WFS2_FEATURECOLLECTION`.
+
+-  .. dsco:: GENERATE_XSD
+      :choices: YES, NO
+      :default: YES
+
+      Whether to generate a .xsd file that has
+      the structure of the wrapping ogr_gmlas:FeatureCollection /
+      ogr_gmlas:featureMember elements. Only valid for
+      :dsco:`WRAPPING=GMLAS_FEATURECOLLECTION`.
+
+-  .. dsco:: OUTPUT_XSD_FILENAME
+
+      Wrapping .xsd filename. If not
+      specified, same basename as output file with .xsd extension. Note
+      that it is possible to use this option even if :dsco:`GENERATE_XSD=NO`, so
+      that the wrapping .xsd appear in the schemaLocation attribute of the
+      .xml file. Only valid for :dsco:`WRAPPING=GMLAS_FEATURECOLLECTION`.
 
 Examples
 --------

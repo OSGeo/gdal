@@ -33,19 +33,24 @@ Driver capabilities
 Open options
 ------------
 
-- **GEOM_POSSIBLE_NAMES=string**: (GDAL >= 3.8)
-  Comma separated list of possible names for geometry column(s). Only used
-  for files without GeoParquet dataset-level metadata. Default value is
-  "geometry,wkb_geometry,wkt_geometry". Columns are recognized as geometry
-  columns only if they are of type binary (they are assumed to contain
-  WKB encoded geometries), or if they are of type string and contain the
-  "wkt" substring in their name (they are then assumed to contain WKT encoded
-  geometries).
+- .. oo:: GEOM_POSSIBLE_NAMES
+     :since: 3.8
+     :default: geometry,wkb_geometry,wkt_geometry
 
-- **CRS=string**: (GDAL >= 3.8).
-  To set or override the CRS of geometry columns.
-  The string is typically formatted as CODE:AUTH (e.g "EPSG:4326"), or can
-  be a PROJ.4 or WKT CRS string.
+     Comma separated list of possible names for geometry column(s). Only used
+     for files without GeoParquet dataset-level metadata.
+     Columns are recognized as geometry
+     columns only if they are of type binary (they are assumed to contain
+     WKB encoded geometries), or if they are of type string and contain the
+     "wkt" substring in their name (they are then assumed to contain WKT encoded
+     geometries).
+
+- .. oo:: CRS
+     :since: 3.8
+
+     To set or override the CRS of geometry columns.
+     The string is typically formatted as CODE:AUTH (e.g "EPSG:4326"), or can
+     be a PROJ.4 or WKT CRS string.
 
 Creation issues
 ---------------
@@ -55,36 +60,61 @@ The driver supports creating only a single layer in a dataset.
 Layer creation options
 ----------------------
 
-- **COMPRESSION=string**: Compression method. Can be one of ``NONE`` (or
-  ``UNCOMPRESSED``), ``SNAPPY``, ``GZIP``, ``BROTLI``, ``ZSTD``, ``LZ4_RAW``,
-  ``LZ4_HADOOP``. Available values depend on how the Parquet library was compiled.
-  Defaults to SNAPPY when available, otherwise NONE.
+- .. lco:: COMPRESSION
+     :choices: NONE, UNCOMPRESSED, SNAPPY, GZIP, BROTLI, ZSTD, LZ4_RAW, LZ4_HADOOP
 
-- **GEOMETRY_ENCODING=WKB/WKT/GEOARROW**: Geometry encoding. Defaults to WKB.
-  Other encodings (WKT and GEOARROW) are *not* allowed by the GeoParquet
-  specification, but are handled as an extension, for symmetry with the Arrow
-  driver.
+      Compression method.
+      Available values depend on how the Parquet library was compiled.
+      Defaults to SNAPPY when available, otherwise NONE.
 
-- **ROW_GROUP_SIZE=integer**: Maximum number of rows per group. Default is 65536.
+- .. lco:: GEOMETRY_ENCODING
+     :choices: WKB, WKT, GEOARROW
+     :default: WKB
 
-- **GEOMETRY_NAME=string**: Name of geometry column. Default is ``geometry``
+     Geometry encoding.
+     Other encodings (WKT and GEOARROW) are *not* allowed by the GeoParquet
+     specification, but are handled as an extension, for symmetry with the Arrow
+     driver.
 
-- **FID=string**: Name of the FID (Feature Identifier) column to create. If
-  none is specified, no FID column is created. Note that if using ogr2ogr with
-  the Parquet driver as the target driver and a source layer that has a named
-  FID column, this FID column name will be automatically used to set the FID
-  layer creation option of the Parquet driver (unless ``-lco FID=`` is used to
-  set an empty name)
+- .. lco:: ROW_GROUP_SIZE
+     :choices: <integer>
+     :default: 65536
 
-- **POLYGON_ORIENTATION=COUNTERCLOCKWISE/UNMODIFIED**: Whether exterior rings
-  of polygons should be counterclockwise oriented (and interior rings clockwise
-  oriented), or left to their original orientation. The default is COUNTERCLOCKWISE.
+     Maximum number of rows per group.
 
-- **EDGES=PLANAR/SPHERICAL**: How to interpret the edges of the geometries: whether
-  the line between two points is a straight cartesian line (PLANAR) or the
-  shortest line on the sphere (geodesic line) (SPHERICAL). The default is PLANAR.
+- .. lco:: GEOMETRY_NAME
+     :default: geometry
 
-- **CREATOR=string**: Name of creating application.
+     Name of geometry column.
+
+- .. lco:: FID
+
+     Name of the FID (Feature Identifier) column to create. If
+     none is specified, no FID column is created. Note that if using ogr2ogr with
+     the Parquet driver as the target driver and a source layer that has a named
+     FID column, this FID column name will be automatically used to set the FID
+     layer creation option of the Parquet driver (unless ``-lco FID=`` is used to
+     set an empty name)
+
+- .. lco:: POLYGON_ORIENTATION
+     :choices: COUNTERCLOCKWISE, UNMODIFIED
+     :default: COUNTERCLOCKWISE
+
+     Whether exterior rings
+     of polygons should be counterclockwise oriented (and interior rings clockwise
+     oriented), or left to their original orientation.
+
+- .. lco:: EDGES
+     :choices: PLANAR, SPHERICAL
+     :default: PLANAR
+
+     How to interpret the edges of the geometries: whether
+     the line between two points is a straight cartesian line (PLANAR) or the
+     shortest line on the sphere (geodesic line) (SPHERICAL).
+
+- .. lco:: CREATOR
+
+     Name of creating application.
 
 SQL support
 -----------
@@ -108,7 +138,7 @@ Multithreading
 Starting with GDAL 3.6.0, the driver will use up to 4 threads for reading (or the
 maximum number of available CPUs returned by :cpp:func:`CPLGetNumCPUs()` if
 it is lower by 4). This number can be configured with the configuration option
-:decl_configoption:`GDAL_NUM_THREADS`, which can be set to an integer value or
+:config:`GDAL_NUM_THREADS`, which can be set to an integer value or
 ``ALL_CPUS``.
 
 Validation script

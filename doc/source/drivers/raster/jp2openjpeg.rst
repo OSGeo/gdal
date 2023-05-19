@@ -76,7 +76,7 @@ numeric value or NUM_CPUS. Its default value is 1. Starting with GDAL
 by GDAL.
 Starting with GDAL 3.0.1 and OpenJPEG 2.3.2, multi-threaded encoding is
 automatically enabled and can be controlled with the OPJ_NUM_THREADS environment
-variable or the GDAL_NUM_THREADS configuration option.
+variable or the :config:`GDAL_NUM_THREADS` configuration option.
 
 Both multi-threading mechanism can be combined together.
 

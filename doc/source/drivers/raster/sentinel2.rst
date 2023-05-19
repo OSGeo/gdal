@@ -166,7 +166,7 @@ using the JP2OpenJPEG driver, the recommended minimum value for the
 multiplied by the number of bands for the default INTERLEAVE=PIXEL
 configuration. The current versions of the OpenJPEG libraries can also
 consume a lot of memory to decode a JPEG2000 tile (up to 600MB), so you
-might want to specify the :decl_configoption:`GDAL_NUM_THREADS` configuration option to a
+might want to specify the :config:`GDAL_NUM_THREADS` configuration option to a
 reasonable number of threads if you are short of memory (the default
 value is the total number of virtual CPUs).
 

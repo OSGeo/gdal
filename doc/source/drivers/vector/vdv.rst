@@ -48,51 +48,103 @@ features have been written.
 
 The following dataset creation options are available:
 
--  **SINGLE_FILE**\ =YES/NO. Whether several layers should be put in the
-   same file. If NO, the name is assumed to be a directory name.
-   Defaults to YES.
+-  .. dsco:: SINGLE_FILE
+      :choices: YES, NO
+      :default: YES
+
+      Whether several layers should be put in the
+      same file. If NO, the name is assumed to be a directory name.
 
 The following layer creation options are available:
 
--  **EXTENSION**\ =string. Extension used when creation files in
-   separate layers, i.e. only for SINGLE_FILE=NO dataset creation
-   option. Defaults to x10.
--  **PROFILE**\ =GENERIC/VDV-452/VDV-452-ENGLISH/VDV-452-GERMAN.
-   Defaults to GENERIC. Describe which profile the writer should conform
-   to. VDV-452 will restrict layer and field names to be the one allowed
-   by the VDV-452 standard (either in English or German).
-   VDV-452-ENGLISH and VDV-452-GERMAN will restrict the VDV-452 to the
-   specified language. The configuration file describing VDV-452 table
-   and field names is
-   :source_file:`data/vdv452.xml`
-   located in the GDAL_DATA directory.
--  **PROFILE_STRICT**\ =YES/NO. Whether checks of profile should be
-   strict. In strict mode, unexpected layer or field names will be
-   rejected. Defaults to NO.
--  **CREATE_ALL_FIELDS**\ =YES/NO. Whether all fields of predefined
-   profiles should be created at layer creation. Defaults to YES.
--  **STANDARD_HEADER**\ =YES/NO. Whether to write standard header fields
-   (i.e mod, src, chs, ver, ifv, dve, fft). If set to NO, only
-   explicitly specified HEADER_xxx fields will be written. Defaults to
-   YES.
--  **HEADER_SRC**\ =string: Value of the src header field. Defaults to
-   UNKNOWN.
--  **HEADER_SRC_DATE**\ =string: Value of the date of the src header
-   field as DD.MM.YYYY. Defaults to current date (in GMT).
--  **HEADER_SRC_TIME**\ =string: Value of the time of the src header
-   field as HH.MM.SS. Defaults to current time (in GMT)
--  **HEADER_CHS**\ =string: Value of the chs header field. Defaults to
-   ISO8859-1.
--  **HEADER_VER**\ =string: Value of the ver header field. Defaults to
-   1.4.
--  **HEADER_IFV**\ =string: Value of the ifv header field. Defaults to
-   1.4.
--  **HEADER_DVE**\ =string: Value of the dve header field. Defaults to
-   1.4.
--  **HEADER_FFT**\ =string: Value of the fft header field. Defaults to
-   '' (empty string).
--  **HEADER\_**\ *xxx*\ =string: Value of the *xxx* (user defined)
-   header field.
+-  .. lco:: EXTENSION
+      :default: x10
+
+      Extension used when creating files in
+      separate layers, i.e. only for :dsco:`SINGLE_FILE=NO` dataset creation
+      option.
+
+-  .. lco:: PROFILE
+      :choices: GENERIC, VDV-452, VDV-452-ENGLISH, VDV-452-GERMAN
+      :default: GENERIC
+
+      Describe which profile the writer should conform
+      to. VDV-452 will restrict layer and field names to be the one allowed
+      by the VDV-452 standard (either in English or German).
+      VDV-452-ENGLISH and VDV-452-GERMAN will restrict the VDV-452 to the
+      specified language. The configuration file describing VDV-452 table
+      and field names is
+      :source_file:`data/vdv452.xml`
+      located in the GDAL_DATA directory.
+
+-  .. lco:: PROFILE_STRICT
+      :choices: YES, NO
+      :default: NO
+
+      Whether checks of profile should be
+      strict. In strict mode, unexpected layer or field names will be
+      rejected.
+
+-  .. lco:: CREATE_ALL_FIELDS
+      :choices: YES, NO
+      :default: YES
+
+      Whether all fields of predefined profiles should be created at layer creation.
+
+-  .. lco:: STANDARD_HEADER
+      :choices: YES, NO
+      :default: YES
+
+      Whether to write standard header fields
+      (i.e mod, src, chs, ver, ifv, dve, fft). If set to NO, only
+      explicitly specified HEADER_xxx fields will be written.
+
+-  .. lco:: HEADER_SRC
+      :default: UNKNOWN
+
+      Value of the src header field.
+
+-  .. lco:: HEADER_SRC_DATE
+      :choices: <DD.MM.YYYY>
+      :default: current date (in GMT)
+
+
+      Value of the date of the src header field as DD.MM.YYYY.
+
+-  .. lco:: HEADER_SRC_TIME
+      :choices: <HH.MM.SS>
+      :default: current time (in GMT)
+
+      Value of the time of the src header field as HH.MM.SS.
+
+-  .. lco:: HEADER_CHS
+      :default: ISO8859-1
+
+      Value of the chs header field.
+
+-  .. lco:: HEADER_VER
+      :default: 1.4
+
+      Value of the ver header field.
+
+-  .. lco:: HEADER_IFV
+      :default: 1.4
+
+      Value of the ifv header field.
+
+-  .. lco:: HEADER_DVE
+      :default: 1.4
+
+      Value of the dve header field.
+
+-  .. lco:: HEADER_FFT
+      :default: '' (empty string)
+
+      Value of the fft header field.
+
+-  .. lco:: HEADER_xxx**
+
+      Value of the *xxx* (user defined) header field.
 
 Links
 -----

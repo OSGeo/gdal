@@ -41,11 +41,25 @@ Driver capabilities
 Environment variables
 ---------------------
 
--  **INFORMIXDIR**: It should be set to Informix client SDK install dir
--  **INFORMIXSERVER**: Default Informix server name
--  **DB_LOCALE**: Locale of Informix database
--  **CLIENT_LOCALE**: Client locale
--  **IDB_OGR_FID**: Set name of primary key instead of 'ogc_fid'.
+-  .. config:: INFORMIXDIR
+
+      It should be set to Informix client SDK install dir
+
+-  .. config:: INFORMIXSERVER
+
+      Default Informix server name
+
+-  .. config:: DB_LOCALE
+
+      Locale of Informix database
+
+-  .. config:: CLIENT_LOCALE
+
+      Client locale
+
+-  .. config:: IDB_OGR_FID
+
+      Set name of primary key instead of 'ogc_fid'.
 
 For more information about Informix variables read documentation of
 Informix Client SDK

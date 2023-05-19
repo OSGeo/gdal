@@ -1307,13 +1307,13 @@ is not explicitly linked at build time to any of the CPython library. When GDAL
 will need to run Python code, it will first determine if the Python interpreter
 is loaded in the current process (which is the case if the program is a Python
 interpreter itself, or if another program, e.g. QGIS, has already loaded the
-CPython library). Otherwise it will look if the :decl_configoption:`PYTHONSO` configuration option is
+CPython library). Otherwise it will look if the :config:`PYTHONSO` configuration option is
 defined. This option can be set to point to the name of the Python library to
 use, either as a shortname like "libpython3.10.so" if it is accessible through
 the Linux dynamic loader (so typically in one of the paths in /etc/ld.so.conf or
 LD_LIBRARY_PATH) or as a full path name like "/usr/lib/x86_64-linux-gnu/libpython3.10.so".
 The same holds on Windows will shortnames like "python310.dll" if accessible through
-the PATH or full path names like "c:\\python310\\python310.dll". If the :decl_configoption:`PYTHONSO`
+the PATH or full path names like "c:\\python310\\python310.dll". If the :config:`PYTHONSO`
 configuration option is not defined, it will look for a "python" binary in the
 directories of the PATH and will try to determine the related shared object
 (it will retry with "python3" if no "python" has been found). If the above
@@ -1558,7 +1558,7 @@ the PansharpeningOptions element may have the following children elements :
 - **Algorithm**: to specify the pansharpening algorithm. Currently, only WeightedBrovey is supported.
 - **AlgorithmOptions**: to specify the options of the pansharpening algorithm. With WeightedBrovey algorithm, the only supported option is a **Weights** child element whose content must be a comma separated list of real values assigning the weight of each of the declared input spectral bands. There must be as many values as declared input spectral bands.
 - **Resampling**: the resampling kernel used to resample the spectral bands to the resolution of the panchromatic band. Can be one of Cubic (default), Average, Near, CubicSpline, Bilinear, Lanczos.
-- **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the :decl_configoption:`GDAL_NUM_THREADS` configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
+- **NumThreads**: Number of worker threads. Integer number or ALL_CPUS. If this option is not set, the :config:`GDAL_NUM_THREADS` configuration option will be queried (its value can also be set to an integer or ALL_CPUS)
 - **BitDepth**: Can be used to specify the bit depth of the panchromatic and spectral bands (e.g. 12). If not specified, the NBITS metadata item from the panchromatic band will be used if it exists.
 - **NoData**: Nodata value to take into account for panchromatic and spectral bands. It will be also used as the output nodata value. If not specified and all input bands have the same nodata value, it will be implicitly used (unless the special None value is put in NoData to prevent that).
 - **SpatialExtentAdjustment**: Can be one of **Union** (default), **Intersection**, **None** or **NoneWithoutWarning**. Controls the behavior when panchromatic and spectral bands have not the same geospatial extent. By default, Union will take the union of all spatial extents. Intersection the intersection of all spatial extents. None will not proceed to any adjustment at all, but will emit a warning. NoneWithoutWarning is the same as None, but in a silent way.
@@ -1751,7 +1751,7 @@ Multi-threading optimizations
 
 Starting with GDAL 3.6, the ComputeStatistics() implementation can benefit from
 multi-threading if the sources are not overlapping and belong to different
-datasets. This can be enabled by setting the :decl_configoption:`GDAL_NUM_THREADS`
+datasets. This can be enabled by setting the :config:`GDAL_NUM_THREADS`
 configuration option to an integer or ``ALL_CPUS``.
 
 Multi-threading issues
@@ -1788,13 +1788,13 @@ of datasets opened by VRT files whose maximum limit is 100 by default. When it
 needs to access a dataset referenced by a VRT, it checks if it is already in
 the pool of open datasets. If not, when the pool has reached its limit, it closes
 the least recently used dataset to be able to open the new one. This maximum
-limit of the pool can be increased by setting the :decl_configoption:`GDAL_MAX_DATASET_POOL_SIZE`
+limit of the pool can be increased by setting the :config:`GDAL_MAX_DATASET_POOL_SIZE`
 configuration option to a bigger value. Note that a typical user process on
 Linux is limited to 1024 simultaneously opened files, and you should let some
 margin for shared libraries, etc...
 gdal_translate and gdalwarp, by default, increase the pool size to 450.
 
-Starting with GDAL 3.7, the :decl_configoption:`GDAL_MAX_DATASET_POOL_RAM_USAGE`
+Starting with GDAL 3.7, the :config:`GDAL_MAX_DATASET_POOL_RAM_USAGE`
 configuration option to a number of bytes, to limit the RAM usage of opened
 datasets in the pool.
 

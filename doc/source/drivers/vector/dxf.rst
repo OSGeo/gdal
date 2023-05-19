@@ -36,11 +36,16 @@ fields:
    belongs.
 -  ExtendedEntity (GDAL <= 2.2.x): The values of extended entity
    attributes all appended to form a single text field, where available.
--  RawCodeValues (GDAL >= 2.3.0): Only available when the configuration
-   option :decl_configoption:`DXF_INCLUDE_RAW_CODE_VALUES` is set to TRUE. A string list
+-  RawCodeValues (GDAL >= 2.3.0): A string list
    containing all group codes and values that are not handled by the DXF
-   reader.
--  Linetype: Where available, the line type used for this entity.
+   reader. Only available when the configuration
+   option :config:`DXF_INCLUDE_RAW_CODE_VALUES=TRUE`.
+
+   .. config:: DXF_INCLUDE_RAW_CODE_VALUES
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+   -  Linetype: Where available, the line type used for this entity.
 -  EntityHandle: The hexadecimal entity handle. A sort of feature id.
 -  Text: The text of labels.
 
@@ -57,8 +62,13 @@ The following entity types are supported:
    exact position would require GDAL to be aware of the font metrics.
    By default, character escapes such as %%p are honored where
    applicable, and MTEXT control sequences like \\Wx.xx; are stripped.
-   To disable this behavior and retrieve the raw text values, set the
-   configuration option :decl_configoption:`DXF_TRANSLATE_ESCAPE_SEQUENCES` to FALSE.
+   To disable this behavior and retrieve the raw text values,
+   set the configuration option :config:`DXF_TRANSLATE_ESCAPE_SEQUENCES=FALSE`.
+
+   .. config:: DXF_TRANSLATE_ESCAPE_SEQUENCES
+      :choices: TRUE, FALSE
+      :default: TRUE
+
 -  LINE, POLYLINE, LWPOLYLINE: Translated as a LINESTRING. Rounded
    polylines (those with their vertices' bulge attributes set) will be
    tessellated. Single-vertex polylines are translated to POINT.
@@ -85,31 +95,44 @@ The following entity types are supported:
    Three configuration options are available to control the behavior of
    INSERT entities:
 
-   -  :decl_configoption:`DXF_MERGE_BLOCK_GEOMETRIES`: To avoid merging blocks into a
-      compound geometry the DXF_MERGE_BLOCK_GEOMETRIES config option may
-      be set to FALSE. Use this option if you need to preserve the
-      styling (such as colors) of individual linework entities within
-      the block.
-   -  :decl_configoption:`DXF_INLINE_BLOCKS`: See below.
-   -  (GDAL >= 2.3.0) :decl_configoption:`DXF_FEATURE_LIMIT_PER_BLOCK`: Maximum number of
-      features inserted from a single block. Set to -1 for no limit.
-      Defaults to 10000.
+   -  .. config:: DXF_MERGE_BLOCK_GEOMETRIES
+         :choices: TRUE, FALSE
+
+         To avoid merging blocks into a
+         compound geometry the :config:`DXF_MERGE_BLOCK_GEOMETRIES` config option may
+         be set to FALSE. Use this option if you need to preserve the
+         styling (such as colors) of individual linework entities within
+         the block.
+
+   -  .. config:: DXF_INLINE_BLOCKS
+
+          See below.
+
+   -  .. config:: DXF_FEATURE_LIMIT_PER_BLOCK
+         :since: 2.3.0
+         :default: 10000
+
+         Maximum number of
+         features inserted from a single block. Set to -1 for no limit.
 
 -  ATTDEF, ATTRIB:
 
    -  (GDAL >= 2.3.0) Attributes (ATTRIB) are treated as TEXT entities,
       and attribute definitions (ATTDEF) inside blocks are ignored. The
-      behavior is different when DXF_INLINE_BLOCKS is false (see below).
+      behavior is different when :config:`DXF_INLINE_BLOCKS` is false (see below).
    -  (GDAL <= 2.2.x) ATTDEF entities are treated as TEXT. ATTRIB
       entities are not supported.
 
 -  HATCH: Line and arc boundaries are collected as a polygon geometry,
    but no effort is currently made to represent the fill style of HATCH
-   entities.
+   entities. Behavior is affected by the following configuration option:
 
-   (GDAL >= 2.3.0) The :decl_configoption:`DXF_HATCH_TOLERANCE` config option determines the
-   tolerance used when looking for the next component to add to the
-   hatch boundary.
+   -  .. config:: DXF_HATCH_TOLERANCE
+         :since: 2.3.0
+
+         Determines the
+         tolerance used when looking for the next component to add to the
+         hatch boundary.
 
    (GDAL <= 2.2.x) Only line and polyline boundary paths are translated
    correctly.
@@ -150,13 +173,9 @@ when translating entities. Currently no effort is made to preserve
 complex line types (those that include text or shapes) or HATCH fill
 styles.
 
-The approximation of arcs, ellipses, circles and rounded polylines as
-linestrings is done by splitting the arcs into subarcs of no more than a
-threshold angle. This angle is set using the :decl_configoption:`OGR_ARC_STEPSIZE`
-configuration option. This defaults to 4 degrees. You can also set the
-:decl_configoption:`OGR_ARC_MAX_GAP` configuration option to enforce a maximum distance
-between adjacent points on the interpolated curve. Setting this option
-to 0 (the default) means no maximum distance applies.
+The :config:`OGR_ARC_STEPSIZE` and :config:`OGR_ARC_MAX_GAP` configurations
+options control the approximation of arcs, ellipses, circles and rounded
+polylines as linestrings.
 
 For splines, the interpolated polyline contains eight vertices for each
 control point.
@@ -171,7 +190,7 @@ DXF_INLINE_BLOCKS
 ~~~~~~~~~~~~~~~~~
 
 The default behavior is for INSERT entities to be exploded with the
-geometry of the BLOCK they reference. However, if the :decl_configoption:`DXF_INLINE_BLOCKS`
+geometry of the BLOCK they reference. However, if the :config:`DXF_INLINE_BLOCKS`
 configuration option is set to the value FALSE, then the behavior is
 different as described here.
 
@@ -201,7 +220,7 @@ different as described here.
 -  INSERT entities will not have block geometry inlined - instead they
    will have a POINT geometry for the insertion point.
 
-The intention is that with DXF_INLINE_BLOCKS disabled, the block
+The intention is that with :config:`DXF_INLINE_BLOCKS` disabled, the block
 references will remain as references and the original block definitions
 will be available via the blocks layer. On export this configuration
 will result in the creation of similar blocks.
@@ -214,14 +233,19 @@ contain 3D modelling data in the proprietary Autodesk ShapeManager (ASM) format,
 a broadly compatible fork of the ACIS format. GDAL cannot transform these
 entities into OGR geometries, so they are skipped by default.
 
-Starting from GDAL 2.3.0, the :decl_configoption:`DXF_3D_EXTENSIBLE_MODE` configuration
-option may be set to TRUE to include these entities with the raw ASM
-data stored in a field, allowing for interoperability with commercial conversion
-tools. This option adds two new fields:
+This behavior can be controlled with the following configuration option:
 
--  ASMData: A binary field that contains the ASM data.
--  ASMTransform: A column-major list of 12 real values indicating the affine
-   transformation to be applied to the entity.
+- .. config:: DXF_3D_EXTENSIBLE_MODE
+     :choices: TRUE, FALSE
+     :since: 2.3.0
+
+     If TRUE, include ASM entities with the raw ASM
+     data stored in a field, allowing for interoperability with commercial conversion
+     tools. This option adds two new fields:
+
+     -  ASMData: A binary field that contains the ASM data.
+     -  ASMTransform: A column-major list of 12 real values indicating the affine
+        transformation to be applied to the entity.
 
 This feature only works for DXF files in AutoCAD 2013 (AC1027) format
 and later.
@@ -238,12 +262,15 @@ code page naming and whether GDAL/OGR is built against the iconv library
 for character recoding.
 
 In some cases the $DWGCODEPAGE setting in a DXF file will be wrong, or
-unrecognised by OGR. It could be edited manually, or the :decl_configoption:`DXF_ENCODING`
-configuration variable can be used to override what id will be used by
-OGR in transcoding. The value of DXF_ENCODING should be an encoding name
-supported by CPLRecode() (i.e. an iconv name), not a DXF $DWGCODEPAGE
-name. Using a DXF_ENCODING name of "UTF-8" will avoid any attempt to
-recode the text as it is read.
+unrecognised by OGR. In this case, :config:`DXF_ENCODING` may be used to
+override what id will be used by OGR in transcoding:
+
+-  .. config:: DXF_ENCODING
+
+      An encoding name
+      supported by :cpp:func:`CPLRecode` (i.e. an iconv name), not a DXF $DWGCODEPAGE
+      name. Using a value "UTF-8" will avoid any attempt to
+      recode the text as it is read.
 
 --------------
 
@@ -265,8 +292,16 @@ file (but many DXF layers can be created - see below).
    written. An effort is made to preserve line width and color.
 -  Polygon, Triangle and MultiPolygon features are written as HATCH
    entities by default. To write these features as LWPOLYLINE/POLYLINE
-   entities instead, set the configuration option :decl_configoption:`DXF_WRITE_HATCH` to
-   FALSE. You may need to do this if your geometries do not have a
+   entities instead, set the configuration option :config:`DXF_WRITE_HATCH=FALSE`:
+
+   -  .. config:: DXF_WRITE_HATCH
+         :choices: TRUE, FALSE
+         :default: TRUE
+
+         If ``TRUE``, write Polygon, Triangle, and MultiPolygon features as
+         ``HATCH`` entities. If false, write them as ``LWPOLYLINE/POLYLINE``.
+
+   You may need to do this if your geometries do not have a
    constant elevation, as the DXF HATCH entity cannot represent such
    geometries.
 
@@ -298,10 +333,17 @@ following style string parameters are understood:
 
 The dataset creation supports the following dataset creation options:
 
--  **HEADER=**\ *filename*: Override the header file used - in place of
-   header.dxf located in the GDAL_DATA directory.
--  **TRAILER=**\ *filename*: Override the trailer file used - in place
-   of trailer.dxf located in the GDAL_DATA directory.
+-  .. dsco:: HEADER
+      :choices: <filename>
+
+      Override the header file used - in place of
+      header.dxf located in the GDAL_DATA directory.
+
+-  .. dsco:: TRAILER
+      :choices: <filename>
+
+      Override the trailer file used - in place
+      of trailer.dxf located in the GDAL_DATA directory.
 
 The header and trailer templates can be
 complete DXF files. The driver will scan them and only extract the
@@ -324,7 +366,7 @@ conditions apply:
 -  Objects to be written as INSERTs in the entities layer should have a
    POINT geometry, and the BlockName field set. You may also set
    BlockAngle, BlockScale, BlockOCSNormal and BlockOCSCoords (see above
-   under DXF_INLINE_BLOCKS for details). If BlockOCSCoords is set to a
+   under :config:`DXF_INLINE_BLOCKS` for details). If BlockOCSCoords is set to a
    list of 3 real numbers, it is used as the location of the block; in
    this situation the position of the POINT geometry is ignored.
 -  If a block (name) is already defined in the template header, that
@@ -332,7 +374,7 @@ conditions apply:
    the blocks layer.
 
 The intention is that a simple translation from DXF to DXF with
-DXF_INLINE_BLOCKS set to FALSE will approximately reproduce the original
+:config:`DXF_INLINE_BLOCKS` set to FALSE will approximately reproduce the original
 blocks and keep INSERT entities as INSERT entities rather than exploding
 them.
 
@@ -388,7 +430,7 @@ variables in the header template.
 See also
 --------
 
-`List of known 
+`List of known
 issues <https://github.com/OSGeo/gdal/blob/master/ogr/ogrsf_frmts/dxf/KNOWN_ISSUES.md>`__
 
 `AutoCAD 2000 DXF

@@ -48,7 +48,7 @@ specification, that is to say the vertices of outer rings should be
 oriented clockwise on the X/Y plane, and those of inner rings
 counterclockwise. If a Shapefile is broken w.r.t. that rule, it is
 possible to define the configuration option
-:decl_configoption:`OGR_ORGANIZE_POLYGONS` to DEFAULT to proceed to
+:config:`OGR_ORGANIZE_POLYGONS` to DEFAULT to proceed to
 a full analysis based on topological relationships of the parts of the
 polygons so that the resulting polygons are correctly defined in the
 OGC Simple Feature convention.
@@ -69,7 +69,7 @@ An attempt is made to read the code page setting in the .cpg file, or as
 a fallback in the LDID/codepage setting from the .dbf file, and use it
 to translate string fields to UTF-8 on read, and back when writing. LDID
 "87 / 0x57" is treated as ISO-8859-1 which may not be appropriate. The
-:decl_configoption:`SHAPE_ENCODING` configuration option may be used to
+:config:`SHAPE_ENCODING` configuration option may be used to
 override the encoding interpretation of the shapefile with any encoding
 supported by CPLRecode or to "" to avoid any recoding.
 
@@ -85,7 +85,7 @@ Starting with GDAL 3.1, the following metadata items are available in the
 -  **ENCODING_FROM_CPG**\ =string: Encoding name deduced from CPG_VALUE. Only
    present if CPG_VALUE is present
 -  **SOURCE_ENCODING**\ =string: Encoding used by GDAL to encode/recode strings.
-   If the user has provided the :decl_configoption:`SHAPE_ENCODING`
+   If the user has provided the :config:`SHAPE_ENCODING`
    configuration option or ``ENCODING`` open option have been provided
    (included to empty value), then their value is used to fill this metadata
    item. Otherwise it is equal to ENCODING_FROM_CPG if it is present.
@@ -261,7 +261,7 @@ However, for compatibility with other software implementation, it is not
 recommended to use a file size over 2GB for both .SHP and .DBF files.
 
 The 2GB_LIMIT=YES layer creation option can be used to strictly enforce that
-limit. For update mode, the :decl_configoption:`SHAPE_2GB_LIMIT`
+limit. For update mode, the :config:`SHAPE_2GB_LIMIT`
 configuration option can be set to YES for similar effect. If nothing is set,
 a warning will be emitted when the 2GB limit is reached.
 
@@ -278,64 +278,63 @@ Open options
 
 The following open options are available.
 
-.. oo:: ENCODING
-   :choices: <encoding_name>, ""
+-  .. oo:: ENCODING
+      :choices: <encoding_name>, ""
 
-   Override the encoding interpretation
-   of the shapefile with any encoding supported by CPLRecode or to "" to
-   avoid any recoding.
+      Override the encoding interpretation
+      of the shapefile with any encoding supported by CPLRecode or to "" to
+      avoid any recoding.
 
-.. oo:: DBF_DATE_LAST_UPDATE
-   :choices: YYYY-MM-DD
+-  .. oo:: DBF_DATE_LAST_UPDATE
+      :choices: YYYY-MM-DD
 
-   Modification date to write
-   in DBF header with year-month-day format. If not specified, current
-   date is used.
+      Modification date to write
+      in DBF header with year-month-day format. If not specified, current
+      date is used.
 
-.. oo:: ADJUST_TYPE
-   :choices: YES, NO
-   :default: NO
+-  .. oo:: ADJUST_TYPE
+      :choices: YES, NO
+      :default: NO
 
-   Set to YES to read the
-   whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer
-   field types when possible. This can be used when field widths are
-   ambiguous and that by default OGR would select the larger data type.
-   For example, a numeric column with 0 decimal figures and with width
-   of 10/11 character may hold Integer or Integer64, and with width
-   19/20 may hold Integer64 or larger integer (hold as Real)
+      Set to YES to read the
+      whole .dbf to adjust Real->Integer/Integer64 or Integer64->Integer
+      field types when possible. This can be used when field widths are
+      ambiguous and that by default OGR would select the larger data type.
+      For example, a numeric column with 0 decimal figures and with width
+      of 10/11 character may hold Integer or Integer64, and with width
+      19/20 may hold Integer64 or larger integer (hold as Real)
+
+-  .. oo:: ADJUST_GEOM_TYPE
+      :choices: NO, FIRST_SHAPE, ALL_SHAPES
+      :default: FIRST_SHAPE
+      :since: 2.1
+
+      Defines how layer geometry type is computed, in particular to
+      distinguish shapefiles that have shapes with significant values in
+      the M dimension from the ones where the M values are set to the
+      nodata value. By default (FIRST_SHAPE), the driver will look at the
+      first shape and if it has M values it will expose the layer as having
+      a M dimension. By specifying ALL_SHAPES, the driver will iterate over
+      features until a shape with a valid M value is found to decide the
+      appropriate layer type.
 
 
-.. oo:: ADJUST_GEOM_TYPE
-   :choices: NO, FIRST_SHAPE, ALL_SHAPES
-   :default: FIRST_SHAPE
-   :since: 2.1
+-  .. oo:: AUTO_REPACK
+      :choices: YES, NO
+      :default: YES
+      :since: 2.2
 
-   Defines how layer geometry type is computed, in particular to
-   distinguish shapefiles that have shapes with significant values in
-   the M dimension from the ones where the M values are set to the
-   nodata value. By default (FIRST_SHAPE), the driver will look at the
-   first shape and if it has M values it will expose the layer as having
-   a M dimension. By specifying ALL_SHAPES, the driver will iterate over
-   features until a shape with a valid M value is found to decide the
-   appropriate layer type.
+      Whether the shapefile should be automatically repacked when needed,
+      at dataset closing or at FlushCache()/SyncToDisk() time.
 
+-  .. oo:: DBF_EOF_CHAR
+      :choices: YES, NO
+      :default: YES
+      :since: 2.2
 
-.. oo:: AUTO_REPACK
-   :choices: YES, NO
-   :default: YES
-   :since: 2.2
-
-   Whether the shapefile should be automatically repacked when needed,
-   at dataset closing or at FlushCache()/SyncToDisk() time.
-
-.. oo:: DBF_EOF_CHAR
-   :choices: YES, NO
-   :default: YES
-   :since: 2.2
-
-   Whether the .DBF should be terminated by a 0x1A end-of-file
-   character, as in the DBF spec and done by other software vendors.
-   Previous GDAL versions did not write one.
+      Whether the .DBF should be terminated by a 0x1A end-of-file
+      character, as in the DBF spec and done by other software vendors.
+      Previous GDAL versions did not write one.
 
 Dataset creation options
 ------------------------
@@ -345,65 +344,65 @@ None
 Layer creation options
 ----------------------
 
-.. lco:: SHPT
-   :choices: <type>
+-  .. lco:: SHPT
+      :choices: <type>
 
-   Override the type of shapefile created. Can be one of
-   NULL for a simple .dbf file with no .shp file, POINT, ARC, POLYGON or
-   MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ, MULTIPOINTZ or MULTIPATCH
-   for 3D; POINTM, ARCM, POLYGONM or MULTIPOINTM for measured
-   geometries; and POINTZM, ARCZM, POLYGONZM or MULTIPOINTZM for 3D
-   measured geometries. The measure support was added in GDAL 2.1.
-   MULTIPATCH files are supported since GDAL 2.2.
+      Override the type of shapefile created. Can be one of
+      NULL for a simple .dbf file with no .shp file, POINT, ARC, POLYGON or
+      MULTIPOINT for 2D; POINTZ, ARCZ, POLYGONZ, MULTIPOINTZ or MULTIPATCH
+      for 3D; POINTM, ARCM, POLYGONM or MULTIPOINTM for measured
+      geometries; and POINTZM, ARCZM, POLYGONZM or MULTIPOINTZM for 3D
+      measured geometries. The measure support was added in GDAL 2.1.
+      MULTIPATCH files are supported since GDAL 2.2.
 
-.. lco:: ENCODING
+-  .. lco:: ENCODING
 
-   Set the encoding value in the DBF file. The
-   default value is "LDID/87". It is not clear what other values may be
-   appropriate.
+      Set the encoding value in the DBF file. The
+      default value is "LDID/87". It is not clear what other values may be
+      appropriate.
 
-.. lco:: RESIZE
-   :choices: YES, NO
-   :default: NO
+-  .. lco:: RESIZE
+      :choices: YES, NO
+      :default: NO
 
-   Set to YES to resize fields to their optimal size. See above "Field sizes" section.
+      Set to YES to resize fields to their optimal size. See above "Field sizes" section.
 
-.. lco:: 2GB_LIMIT
-   :choices: YES, NO
-   :default: NO
+-  .. lco:: 2GB_LIMIT
+      :choices: YES, NO
+      :default: NO
 
-   Set to YES to enforce the 2GB file size for .SHP or .DBF files.
+      Set to YES to enforce the 2GB file size for .SHP or .DBF files.
 
-.. lco:: SPATIAL_INDEX
-   :choices: YES, NO
-   :default: NO
+-  .. lco:: SPATIAL_INDEX
+      :choices: YES, NO
+      :default: NO
 
-   Set to YES to create a spatial index (.qix).
+      Set to YES to create a spatial index (.qix).
 
-.. lco:: DBF_DATE_LAST_UPDATE
-   :choices: <YYYY-MM-DD>
+-  .. lco:: DBF_DATE_LAST_UPDATE
+      :choices: <YYYY-MM-DD>
 
-   Modification
-   date to write in DBF header with year-month-day format. If not
-   specified, current date is used. Note: behavior of past GDAL
-   releases was to write 1995-07-26
+      Modification
+      date to write in DBF header with year-month-day format. If not
+      specified, current date is used. Note: behavior of past GDAL
+      releases was to write 1995-07-26
 
-.. lco:: AUTO_REPACK
-   :choices: YES, NO
-   :default: YES
-   :since: 2.2
+-  .. lco:: AUTO_REPACK
+      :choices: YES, NO
+      :default: YES
+      :since: 2.2
 
-   Whether the shapefile should be automatically repacked when needed,
-   at dataset closing or at FlushCache()/SyncToDisk() time.
+      Whether the shapefile should be automatically repacked when needed,
+      at dataset closing or at FlushCache()/SyncToDisk() time.
 
-.. lco:: DBF_EOF_CHAR
-   :choices: YES, NO
-   :default: YES
-   :since: 2.2
+-  .. lco:: DBF_EOF_CHAR
+      :choices: YES, NO
+      :default: YES
+      :since: 2.2
 
-   Whether the .DBF should be terminated by a 0x1A end-of-file
-   character, as in the DBF spec and done by other software vendors.
-   Previous GDAL versions did not write one.
+      Whether the .DBF should be terminated by a 0x1A end-of-file
+      character, as in the DBF spec and done by other software vendors.
+      Previous GDAL versions did not write one.
 
 Configuration options
 ---------------------
@@ -411,35 +410,50 @@ Configuration options
 The following :ref:`configuration options <configoptions>` are
 available:
 
-- :decl_configoption:`SHAPE_REWIND_ON_WRITE` can be set to NO to prevent the
-  shapefile writer to correct the winding order of exterior/interior rings to
-  be conformant with the one mandated by the Shapefile specification. This can
-  be useful in some situations where a MultiPolygon passed to the shapefile
-  writer is not really a compliant Single Feature polygon, but originates from
-  example from a MultiPatch object (from a Shapefile/FileGDB/PGeo datasource).
+- .. config:: SHAPE_REWIND_ON_WRITE
+     :choices: YES, NO
 
-  Starting with GDAL 3.7, for Polygon/MultiPolygon, the default value is NO,
-  with the effect that the winding order of rings will be determined from the
-  outer/inner rings of the input Polygon/MultiPolygon, and not as a post process
-  topological analysis like done in previous GDAL versions, which could cause
-  troubles for non-planar 3D geometries.
+     can be set to NO to prevent the
+     shapefile writer to correct the winding order of exterior/interior rings to
+     be conformant with the one mandated by the Shapefile specification. This can
+     be useful in some situations where a MultiPolygon passed to the shapefile
+     writer is not really a compliant Single Feature polygon, but originates from
+     example from a MultiPatch object (from a Shapefile/FileGDB/PGeo datasource).
 
-- :decl_configoption:`SHAPE_RESTORE_SHX` (GDAL >= 2.1): can be set to YES
-  (default NO) to restore broken or absent .shx file from associated .shp file
-  during opening.
+     Starting with GDAL 3.7, for Polygon/MultiPolygon, the default value is NO,
+     with the effect that the winding order of rings will be determined from the
+     outer/inner rings of the input Polygon/MultiPolygon, and not as a post process
+     topological analysis like done in previous GDAL versions, which could cause
+     troubles for non-planar 3D geometries.
 
-- :decl_configoption:`SHAPE_2GB_LIMIT` can be set to YES to strictly enforce
-  the 2 GB file size limit when updating a shapefile. If nothing is set, a
-  warning will be emitted when the 2 GB limit is reached.
+- .. config:: SHAPE_RESTORE_SHX
+     :choices: YES, NO
+     :default: NO
+     :since: 2.1
 
-- :decl_configoption:`OGR_ORGANIZE_POLYGONS` can be set to DEFAULT to activate
-  a full analysis based on topological relationships of the parts of the
-  polygons to make sure that the ring ordering of all polygons are correct
-  according to the OGC Simple Feature convention.
+     can be set to YES to restore broken or absent .shx file from associated .shp file
+     during opening.
 
-- :decl_configoption:`SHAPE_ENCODING` may be used to override the encoding
-  interpretation of the shapefile with any encoding supported by CPLRecode
-  or to "" to avoid any recoding.
+- .. config:: SHAPE_2GB_LIMIT
+     :choices: YES
+
+     can be set to YES to strictly enforce
+     the 2 GB file size limit when updating a shapefile. If nothing is set, a
+     warning will be emitted when the 2 GB limit is reached.
+
+- .. config:: OGR_ORGANIZE_POLYGONS
+     :choices: DEFAULT
+
+     can be set to DEFAULT to activate
+     a full analysis based on topological relationships of the parts of the
+     polygons to make sure that the ring ordering of all polygons are correct
+     according to the OGC Simple Feature convention.
+
+- .. config:: SHAPE_ENCODING
+
+     may be used to override the encoding
+     interpretation of the shapefile with any encoding supported by :cpp:func:`CPLRecode`
+     or to "" to avoid any recoding.
 
 Examples
 --------

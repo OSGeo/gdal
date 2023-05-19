@@ -63,12 +63,12 @@ cell is treated as a independent feature.
 User data linkage
 -----------------
 
-A DGN element may have multiple user data linkages. Each linkage has 
-a user id, application id and a number of words of data. The user 
+A DGN element may have multiple user data linkages. Each linkage has
+a user id, application id and a number of words of data. The user
 data linkage output reports the data for each different application id.
 
-For unknown application ids, the raw data is reported as hexadecimal 
-words (16bit). Is up to the user how to decode the user data, depending 
+For unknown application ids, the raw data is reported as hexadecimal
+words (16bit). Is up to the user how to decode the user data, depending
 on the application id.
 
 Styling Information
@@ -116,53 +116,100 @@ DGN files may be written with OGR with limitations:
 Dataset creation options
 ------------------------
 
--  **SEED=**\ *filename*: Specify the seed file to use.
--  **COPY_SEED_FILE_COLOR_TABLE=**\ *YES/NO*: Indicates whether the
-   color table should be copied from the seed file. Only taken into
-   account if SEED is specified. By default this is NO.
--  **COPY_SEED_FILE_MODEL=**\ *YES/NO*: Indicates whether the existing
-   models (without their graphic contents) should be copied from the
-   seed file. This holds as well for the view groups and named views to
-   which they are linked to. Only taken into account if SEED is
-   specified. By default this is YES.
--  **COPY_SEED_FILE_MODEL_CONTROL_ELEMENTS=**\ *YES/NO*: Indicates
-   whether the existing control elements of models should be copied from
-   the seed file. Only taken into account if COPY_SEED_FILE_MODEL=YES.
-   By default this is YES.
--  **APPLICATION=**\ *string*: Set Application field in header. If not
-   specified, derived from seed file when set. Otherwise mentions the
-   version of GDAL and the Teigha library used.
--  **TITLE=**\ *string*: Set Title field in header. If not specified,
-   from the seed file.
--  **SUBJECT=**\ *string*: Set Subject field in header. If not
-   specified, from the seed file.
--  **AUTHOR=**\ *string*: Set Author field in header. If not specified,
-   from the seed file.
--  **KEYWORDS=**\ *string*: Set Keywords field in header. If not
-   specified, from the seed file.
--  **TEMPLATE=**\ *string*: Set Template field in header. If not
-   specified, from the seed file.
--  **COMMENTS=**\ *string*: Set Comments field in header. If not
-   specified, from the seed file.
--  **LAST_SAVED_BY=**\ *string*: Set LastSavedBy field in header. If not
-   specified, from the seed file.
--  **REVISION_NUMBER=**\ *string*: Set RevisionNumber field in header.
-   If not specified, from the seed file.
--  **CATEGORY=**\ *string*: Set Category field in header. If not
-   specified, from the seed file.
--  **MANAGER=**\ *string*: Set Manager field in header. If not
-   specified, from the seed file.
--  **COMPANY=**\ *string*: Set Company field in header. If not
-   specified, from the seed file.
+-  .. dsco:: SEED
+      :choices: <filename>
+
+      Specify the seed file to use.
+
+-  .. dsco:: COPY_SEED_FILE_COLOR_TABLE
+      :choices: YES, NO
+      :default: NO
+
+      Indicates whether the
+      color table should be copied from the seed file. Only taken into
+      account if :dsco:`SEED` is specified.
+
+-  .. dsco:: COPY_SEED_FILE_MODEL
+      :choices: YES, NO
+      :default: YES
+
+      Indicates whether the existing
+      models (without their graphic contents) should be copied from the
+      seed file. This holds as well for the view groups and named views to
+      which they are linked to. Only taken into account if :dsco:`SEED` is
+      specified.
+
+-  .. dsco:: COPY_SEED_FILE_MODEL_CONTROL_ELEMENTS
+      :choices: YES, NO
+      :default: YES
+
+      Indicates
+      whether the existing control elements of models should be copied from
+      the seed file. Only taken into account if :dsco:`COPY_SEED_FILE_MODEL=YES`.
+
+-  .. dsco:: APPLICATION
+
+      Set Application field in header. If not
+      specified, derived from seed file when set. Otherwise mentions the
+      version of GDAL and the Teigha library used.
+
+-  .. dsco:: TITLE
+
+      Set Title field in header. If not specified, from the seed file.
+
+-  .. dsco:: SUBJECT
+
+      Set Subject field in header. If not specified, from the seed file.
+
+-  .. dsco:: AUTHOR
+
+      Set Author field in header. If not specified, from the seed file.
+
+-  .. dsco:: KEYWORDS
+
+      Set Keywords field in header. If not specified, from the seed file.
+
+-  .. dsco:: TEMPLATE
+
+      Set Template field in header. If not specified, from the seed file.
+
+-  .. dsco:: COMMENTS
+
+      Set Comments field in header. If not specified, from the seed file.
+
+-  .. dsco:: LAST_SAVED_BY
+
+      Set LastSavedBy field in header. If not specified, from the seed file.
+
+-  .. dsco:: REVISION_NUMBER
+
+      Set RevisionNumber field in header.  If not specified, from the seed file.
+
+-  .. dsco:: CATEGORY
+
+      Set Category field in header. If not specified, from the seed file.
+
+-  .. dsco:: MANAGER
+
+      Set Manager field in header. If not specified, from the seed file.
+
+-  .. dsco:: COMPANY
+
+      Set Company field in header. If not specified, from the seed file.
 
 Layer creation options
 ----------------------
 
--  **DESCRIPTION=**\ *string*: Description associated with the layer. If
-   not specified, from the seed file.
--  **DIM=**\ *2/3*: Dimension (ie 2D vs 3D) of the layer. By default, 3,
-   unless the model is reused from the seed file.
+-  .. lco:: DESCRIPTION
 
+      Description associated with the layer. If not specified, from the seed file.
+
+-  .. lco:: DIM
+      :choices: 2, 3
+      :default: 3
+
+      Dimension (ie 2D vs 3D) of the layer. By default, 3,
+      unless the model is reused from the seed file.
 
 Building
 --------

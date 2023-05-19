@@ -69,14 +69,14 @@ Layers
 ------
 
 If the user defines the environment variable
-*MSSQLSPATIAL_LIST_ALL_TABLES=YES* (and does not specify Tables= in the
+:config:`MSSQLSPATIAL_LIST_ALL_TABLES=YES` (and does not specify Tables= in the
 connection string), all regular user tables will be treated as layers.
 This option is useful if you want tables with with no spatial data
 
 By default the MSSQL driver will only look for layers that are
 registered in the *geometry_columns* metadata table.
 If the user defines the environment variable
-*MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=NO* then the driver will look for all
+:config:`MSSQLSPATIAL_USE_GEOMETRY_COLUMNS=NO` then the driver will look for all
 user spatial tables found in the system catalog
 
 SQL statements
@@ -105,85 +105,177 @@ does allow creation of new layers within an existing database.
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
--  **GEOM_TYPE**: The GEOM_TYPE layer creation option can be set to one
-   of "geometry" or "geography". If this option is not specified the
-   default value is "geometry". So as to create the geometry column with
-   "geography" type, this parameter should be set "geography". In this
-   case the layer must have a valid spatial reference of one of the
-   geography coordinate systems defined in the
-   **sys.spatial_reference_systems** SQL Server metadata table.
-   Projected coordinate systems are not supported in this case.
--  **OVERWRITE**: This may be "YES" to force an existing layer of the
-   desired name to be destroyed before creating the requested layer.
--  **LAUNDER**: This may be "YES" to force new fields created on this
-   layer to have their field names "laundered" into a form more
-   compatible with MSSQL. This converts to lower case and converts some
-   special characters like "-" and "#" to "_". If "NO" exact names are
-   preserved. The default value is "YES". If enabled the table (layer)
-   name will also be laundered.
--  **PRECISION**: This may be "YES" to force new fields created on this
-   layer to try and represent the width and precision information, if
-   available using numeric(width,precision) or char(width) types. If
-   "NO" then the types float, int and varchar will be used instead. The
-   default is "YES".
--  **DIM={2,3}**: Control the dimension of the layer. Defaults to 3.
--  **GEOMETRY_NAME**: Set the name of geometry column in the new table.
-   If omitted it defaults to *ogr_geometry*.
--  **SCHEMA**: Set name of schema for new table. If this parameter is
-   not supported the default schema "*dbo"* is used.
--  **SRID**: Set the spatial reference id of the new table explicitly.
-   The corresponding entry should already be added to the
-   spatial_ref_sys metadata table. If this parameter is not set the SRID
-   is derived from the authority code of source layer SRS.
--  **SPATIAL_INDEX**: Boolean flag (YES/NO) to
-   enable/disable the automatic creation of a spatial index on the newly
-   created layers (enabled by default).
--  **UPLOAD_GEOM_FORMAT**: Specify the geometry format
-   (wkb or wkt) when creating or modifying features. The default is wkb.
--  **FID**: Name of the FID column to create. Defaults
-   to ogr_fid.
--  **FID64**: Specifies whether to create the FID
-   column with bigint type to handle 64bit wide ids. Default = NO
--  **GEOMETRY_NULLABLE**: Specifies whether the values
-   of the geometry column can be NULL. Default = YES
--  **EXTRACT_SCHEMA_FROM_LAYER_NAME**: (From GDAL 2.3.0) Can be set to
-   NO to avoid considering the dot character as the separator between
-   the schema and the table name. Defaults to YES.
+-  .. lco:: GEOM_TYPE
+      :choices: geometry, geography
+      :default: geometry
+
+      The GEOM_TYPE layer creation option can be set to one
+      of "geometry" or "geography". If this option is not specified the
+      default value is "geometry". So as to create the geometry column with
+      "geography" type, this parameter should be set "geography". In this
+      case the layer must have a valid spatial reference of one of the
+      geography coordinate systems defined in the
+      **sys.spatial_reference_systems** SQL Server metadata table.
+      Projected coordinate systems are not supported in this case.
+
+-  .. lco:: OVERWRITE
+      :choices: YES, NO
+
+      This may be "YES" to force an existing layer of the
+      desired name to be destroyed before creating the requested layer.
+
+-  .. lco:: LAUNDER
+      :choices: YES, NO
+      :default: YES
+
+      This may be "YES" to force new fields created on this
+      layer to have their field names "laundered" into a form more
+      compatible with MSSQL. This converts to lower case and converts some
+      special characters like "-" and "#" to "_". If "NO" exact names are
+      preserved. If enabled the table (layer)
+      name will also be laundered.
+
+-  .. lco:: PRECISION
+      :choices: YES, NO
+      :default: YES
+
+      This may be "YES" to force new fields created on this
+      layer to try and represent the width and precision information, if
+      available using numeric(width,precision) or char(width) types. If
+      "NO" then the types float, int and varchar will be used instead.
+
+-  .. lco:: DIM
+      :choices: 2, 3
+      :default: 3
+
+      Control the dimension of the layer.
+
+-  .. lco:: GEOMETRY_NAME
+      :default: ogr_geometry
+
+      Set the name of geometry column in the new table.
+
+-  .. lco:: SCHEMA
+
+      Set name of schema for new table. If this parameter is
+      not supported the default schema "*dbo"* is used.
+
+-  .. lco:: SRID
+
+      Set the spatial reference id of the new table explicitly.
+      The corresponding entry should already be added to the
+      spatial_ref_sys metadata table. If this parameter is not set the SRID
+      is derived from the authority code of source layer SRS.
+
+-  .. lco:: SPATIAL_INDEX
+      :choices: YES, NO
+      :default: YES
+
+      Boolean flag to
+      enable/disable the automatic creation of a spatial index on the newly
+      created layers.
+
+-  .. lco:: UPLOAD_GEOM_FORMAT
+      :choices: wkb, wkt
+
+      Specify the geometry format
+      (wkb or wkt) when creating or modifying features.
+
+-  .. lco:: FID
+      :choices: ogr_fid
+
+      Name of the FID column to create.
+
+-  .. lco:: FID64
+      :choices: YES, NO
+      :default: NO
+
+      Specifies whether to create the FID
+      column with bigint type to handle 64bit wide ids.
+
+-  .. lco:: GEOMETRY_NULLABLE
+      :choices: YES, NO
+      :default: YES
+
+      Specifies whether the values
+      of the geometry column can be NULL.
+
+-  .. lco:: EXTRACT_SCHEMA_FROM_LAYER_NAME
+      :choices: YES, NO
+      :default: YES
+      :since: 2.3.0
+
+      Can be set to
+      NO to avoid considering the dot character as the separator between
+      the schema and the table name.
 
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`MSSQLSPATIAL_USE_BCP`: (From GDAL 2.1.0) Enable bulk insert when
-   adding features. This option requires to to compile GDAL against a
-   bulk copy enabled ODBC driver like SQL Server Native Client 11.0. To
-   specify a BCP supported driver in the connection string, use the
-   driver parameter, like DRIVER={SQL Server Native Client 11.0}. If
-   GDAL is compiled against SQL Server Native Client 10.0 or 11.0 the
-   driver is selected automatically not requiring to specify that in the
-   connection string. If GDAL is compiled against SQL Server Native
-   Client 10.0 or 11.0 the default setting of this parameter is TRUE,
-   otherwise the parameter is ignored by the driver.
--  :decl_configoption:`MSSQLSPATIAL_BCP_SIZE`: (From GDAL 2.1.0) Specifies the bulk
-   insert batch size. The larger value makes the insert faster, but
-   consumes more memory. Default = 1000.
--  :decl_configoption:`MSSQLSPATIAL_OGR_FID`: Override FID column name. Default =
-   ogr_fid.
--  :decl_configoption:`MSSQLSPATIAL_ALWAYS_OUTPUT_FID`: Always retrieve the FID value of
-   the recently created feature (even if it is not a true IDENTITY
-   column). Default = "NO".
--  :decl_configoption:`MSSQLSPATIAL_SHOW_FID_COLUMN`: Force to display the FID columns as
-   a feature attribute. Default = "NO".
--  :decl_configoption:`MSSQLSPATIAL_USE_GEOMETRY_COLUMNS`: Use/create geometry_columns
-   metadata table in the database. Default = "YES".
--  :decl_configoption:`MSSQLSPATIAL_LIST_ALL_TABLES`: Use mssql catalog to list available
-   layers. Default = "NO".
--  :decl_configoption:`MSSQLSPATIAL_USE_GEOMETRY_VALIDATION`: (From GDAL 3.0) Let the
-   driver detect the geometries which would trigger run time errors at
-   MSSQL server. The driver tries to correct these geometries before
-   submitting that to the server. Default = "YES".
+-  .. config:: MSSQLSPATIAL_USE_BCP
+      :since: 2.1.0
+
+      Enable bulk insert when
+      adding features. This option requires to to compile GDAL against a
+      bulk copy enabled ODBC driver like SQL Server Native Client 11.0. To
+      specify a BCP supported driver in the connection string, use the
+      driver parameter, like DRIVER={SQL Server Native Client 11.0}. If
+      GDAL is compiled against SQL Server Native Client 10.0 or 11.0 the
+      driver is selected automatically not requiring to specify that in the
+      connection string. If GDAL is compiled against SQL Server Native
+      Client 10.0 or 11.0 the default setting of this parameter is TRUE,
+      otherwise the parameter is ignored by the driver.
+
+-  .. config:: MSSQLSPATIAL_BCP_SIZE
+      :default: 1000
+      :since: 2.1.0
+
+      Specifies the bulk
+      insert batch size. The larger value makes the insert faster, but
+      consumes more memory.
+
+-  .. config:: MSSQLSPATIAL_OGR_FID
+      :default: ogr_fid
+
+      Override FID column name.
+
+-  .. config:: MSSQLSPATIAL_ALWAYS_OUTPUT_FID
+      :choices: YES, NO
+      :default: NO
+
+      Always retrieve the FID value of
+      the recently created feature (even if it is not a true IDENTITY
+      column).
+
+-  .. config:: MSSQLSPATIAL_SHOW_FID_COLUMN
+      :choices: YES, NO
+      :default: NO
+
+      Force to display the FID columns as a feature attribute.
+
+-  .. config:: MSSQLSPATIAL_USE_GEOMETRY_COLUMNS
+      :choices: YES, NO
+      :default: YES
+
+      Use/create geometry_columns metadata table in the database.
+
+-  .. config:: MSSQLSPATIAL_LIST_ALL_TABLES
+      :choices: YES, NO
+      :default: NO
+
+      Use mssql catalog to list available layers.
+
+-  .. config:: MSSQLSPATIAL_USE_GEOMETRY_VALIDATION
+      :choices: YES, NO
+      :since: 3.0
+
+      Let the
+      driver detect the geometries which would trigger run time errors at
+      MSSQL server. The driver tries to correct these geometries before
+      submitting that to the server.
 
 Transaction support
 -------------------
@@ -200,25 +292,25 @@ Creating a layer from an OGR data source
       ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=yes" "rivers.tab"
 
       ogr2ogr -overwrite -f MSSQLSpatial "MSSQL:server=127.0.0.1;database=TestDB;UID=SA;PWD=DummyPassw0rd" "rivers.gpkg"
-      
+
 Connecting to a layer and dump the contents
 
    ::
 
       ogrinfo -al "MSSQL:server=.\MSSQLSERVER2008;database=geodb;tables=rivers;trusted_connection=yes"
-      
+
       ogrinfo -al "MSSQL:server=127.0.0.1;database=TestDB;driver=ODBC Driver 17 for SQL Server;UID=SA;PWD=DummyPassw0rd"
 
 Connecting with username/password
 
    ::
-   
+
       ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no;UID=user;PWD=pwd
 
 Connecting with username/password stored in environment variables
 
    ::
-   
+
       export MSSQLSPATIAL_UID=user
       export MSSQLSPATIAL_PWD=pwd
       ogrinfo -al   MSSQL:server=.\MSSQLSERVER2008;database=geodb;trusted_connection=no

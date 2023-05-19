@@ -59,7 +59,7 @@ It is possible to override those bounds through two mechanisms.
 
 -  specify a user-defined file that contain projection definitions with
    bounds. The name of this file must be specified with the
-   MITAB_BOUNDS_FILE configuration option. This allows users to override
+   :config:`MITAB_BOUNDS_FILE` configuration option. This allows users to override
    the default bounds for existing projections, and to define bounds for
    new projections not listed in the hard-coded table in the driver. The
    format of the file is a simple text file with one CoordSys string per
@@ -84,7 +84,7 @@ It is possible to override those bounds through two mechanisms.
       Source      = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49, 700000, 6600000
       Destination = CoordSys Earth Projection 3, 33, "m", 3, 46.5, 44, 49.00000000001, 700000, 6600000 Bounds (-792421, 5278231) (3520778, 9741029)
 
--  use the BOUNDS layer creation option (see below)
+-  use the :lco:`BOUNDS` layer creation option (see below)
 
 If no coordinate system is provided when creating a layer, the
 projection case is used, not geographic, which can result in very low
@@ -105,32 +105,54 @@ MapInfo feature attributes suffer a number of limitations:
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
--  **FORMAT=MIF**: To create MIF/MID instead of TAB files (TAB is the
-   default).
--  **SPATIAL_INDEX_MODE=QUICK/OPTIMIZED**: The default is QUICK force
-   "quick spatial index mode". In this mode writing files can be about 5
-   times faster, but spatial queries can be up to 30 times slower. This
-   can be set to OPTIMIZED to generate optimized spatial index.
--  **BLOCKSIZE=[512,1024,...,32256]** (multiples of 512):
-   Block size for .map files. Defaults to 512.
-   MapInfo 15.2 and above creates .tab files with a blocksize of 16384
-   bytes. Any MapInfo version should be able to handle block sizes from
-   512 to 32256.
+-  .. config:: FORMAT
+      :choices: TAB, MIF
+
+      To create MIF/MID instead of TAB files
+
+-  .. config:: SPATIAL_INDEX_MODE
+      :choices: QUICK, OPTIMIZED
+      :default: QUICK
+
+      In QUICK mode writing files can be about 5
+      times faster, but spatial queries can be up to 30 times slower. This
+      can be set to OPTIMIZED to generate optimized spatial index.
+
+-  .. config:: BLOCKSIZE
+      :choices: 512, 1024, ... , 32256
+      :default: 512
+
+      (multiples of 512)
+      Block size for .map files.
+      MapInfo 15.2 and above creates .tab files with a blocksize of 16384
+      bytes. Any MapInfo version should be able to handle block sizes from
+      512 to 32256.
 
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
--  **BOUNDS=xmin,ymin,xmax,ymax**: Define custom layer
-   bounds to increase the accuracy of the coordinates. Note: the
-   geometry of written features must be within the defined box.
--  **ENCODING=**\ *value*: (GDAL >=2.3) Define the encoding for field
-   names and field values. The encoding name is specified in the format
-   supported by CPLRecode (e.g. ISO-8859-1, CP1251, CP1252 ...) and
-   internally converted to MapInfo charsets names. Default value is ''
-   that equals to 'Neutral' MapInfo charset.
--  **DESCRIPTION=**\ *value*: (GDAL >= 3.1.0) Friendly layer name (only for
-   TAB format). Friendly names can be up to 256 characters long and can include
-   most ASCII characters. Supported by MapInfo Pro v15.0 or higher.
+-  .. lco:: BOUNDS
+      :choices: <xmin\,ymin\,xmax\,ymax>
+
+      Define custom layer
+      bounds to increase the accuracy of the coordinates. Note: the
+      geometry of written features must be within the defined box.
+
+-  .. lco:: ENCODING
+      :since: 2.3
+
+      Define the encoding for field
+      names and field values. The encoding name is specified in the format
+      supported by :cpp:func:`CPLRecode` (e.g. ISO-8859-1, CP1251, CP1252 ...) and
+      internally converted to MapInfo charsets names. Default value is ''
+      that equals to 'Neutral' MapInfo charset.
+
+-  .. lco:: DESCRIPTION
+      :since: 3.1.0
+
+      Friendly layer name (only for
+      TAB format). Friendly names can be up to 256 characters long and can include
+      most ASCII characters. Supported by MapInfo Pro v15.0 or higher.
 
 Configuration options
 ~~~~~~~~~~~~~~~~~~~~~
@@ -138,10 +160,17 @@ Configuration options
 The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`MITAB_SET_TOWGS84_ON_KNOWN_DATUM` =YES/NO:
-   (GDAL >= 3.0.3). The default behavior, starting with GDAL 3.0.3, is NO.
-   That is, the TOWGS84 parameters read from the .tab header will *not* be set
-   on the Datum object of the CRS, when the datum can be inferred.
+-  .. config:: MITAB_BOUNDS_FILE
+
+      See `Creation Issues`_.
+
+-  .. config:: MITAB_SET_TOWGS84_ON_KNOWN_DATUM
+      :choices: YES, NO
+      :since: 3.0.3
+
+      The default behavior, starting with GDAL 3.0.3, is NO.
+      That is, the TOWGS84 parameters read from the .tab header will *not* be set
+      on the Datum object of the CRS, when the datum can be inferred.
 
 See Also
 ~~~~~~~~

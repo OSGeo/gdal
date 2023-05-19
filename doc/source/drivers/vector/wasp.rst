@@ -22,26 +22,41 @@ Driver capabilities
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`WASP_FIELDS`: a comma separated list of fields. 
-   For elevation, the name of the height field. For roughness, the 
-   name of the left and right roughness fields resp.
--  :decl_configoption:`WASP_MERGE`: this may be set to "NO". Used only 
-   when generating roughness from polygons. All polygon boundaries will 
-   be output (including those with the same left and right roughness). 
-   This is useful (along with option -skipfailures) for debugging 
-   incorrect input geometries.
--  :decl_configoption:`WASP_GEOM_FIELD`: in case input has several 
-   geometry columns and the first one (default) is not the right one.
--  :decl_configoption:`WASP_TOLERANCE`: specify a tolerance for line 
-   simplification of output (calls geos).
--  :decl_configoption:`WASP_ADJ_TOLER`: points that are less than 
-   tolerance apart from previous point on x and on y are omitted.
--  :decl_configoption:`WASP_POINT_TO_CIRCLE_RADIUS`: lines that became 
-   points due to simplification are replaces by 8 point circles 
-   (octagons).
+-  .. config:: WASP_FIELDS
+
+      a comma separated list of fields.
+      For elevation, the name of the height field. For roughness, the
+      name of the left and right roughness fields resp.
+
+-  .. config:: WASP_MERGE
+
+      this may be set to "NO". Used only
+      when generating roughness from polygons. All polygon boundaries will
+      be output (including those with the same left and right roughness).
+      This is useful (along with option -skipfailures) for debugging
+      incorrect input geometries.
+
+-  .. config:: WASP_GEOM_FIELD
+
+      in case input has several
+      geometry columns and the first one (default) is not the right one.
+
+-  .. config:: WASP_TOLERANCE
+
+      specify a tolerance for line simplification of output (calls geos).
+
+-  .. config:: WASP_ADJ_TOLER
+
+      points that are less than
+      tolerance apart from previous point on x and on y are omitted.
+
+-  .. config:: WASP_POINT_TO_CIRCLE_RADIUS
+
+      lines that became points due to simplification are replaces by 8 point circles
+      (octagons).
 
 Note that if not option is specified, the layer is assumed to be an
 elevation layer where the elevation is the z-components of the

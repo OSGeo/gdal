@@ -61,12 +61,15 @@ dialect.
 Dataset open options
 --------------------
 
--  **LIST_ALL_TABLES**\ =YES/NO: This may be "YES" to force all tables,
-   including system and internal tables (such as the MSys* tables) to be listed (since GDAL 3.4).
-   Applies to Microsoft Access Databases only. Note that the Windows Microsoft
-   Access ODBC Driver always strips out MSys tables, and accordingly these
-   will not be returned on Windows platforms even if LIST_ALL_TABLES is
-   set to YES.
+-  .. oo:: LIST_ALL_TABLES
+      :choices: YES, NO
+
+      This may be "YES" to force all tables,
+      including system and internal tables (such as the MSys* tables) to be listed (since GDAL 3.4).
+      Applies to Microsoft Access Databases only. Note that the Windows Microsoft
+      Access ODBC Driver always strips out MSys tables, and accordingly these
+      will not be returned on Windows platforms even if LIST_ALL_TABLES is
+      set to YES.
 
 Driver capabilities
 -------------------
