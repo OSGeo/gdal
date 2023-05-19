@@ -481,11 +481,14 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                 const auto psSRTEXT = oTableSRS.GetFieldValue(iSRTEXT);
                 if (psSRTEXT && psSRTEXT->String)
                 {
-                    auto poSRS = BuildSRS(psSRTEXT->String);
-                    if (poSRS)
+                    if (psSRTEXT->String[0] != '{')
                     {
-                        m_oRasterSRS = *poSRS;
-                        poSRS->Release();
+                        auto poSRS = BuildSRS(psSRTEXT->String);
+                        if (poSRS)
+                        {
+                            m_oRasterSRS = *poSRS;
+                            poSRS->Release();
+                        }
                     }
                 }
                 else
