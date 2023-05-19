@@ -240,6 +240,9 @@ def test_gdal_calc_py_4(script_path):
     bnd_count = 3
     for i, checksum in zip(range(bnd_count), (29935, 13128, 59092)):
         check_file(out[1], checksum, 2, bnd_idx=i + 1)
+        # also check NoDataValue
+        ds = gdal.Open(out[1])
+        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 999
 
     # these values were not tested
     test_py_scripts.run_py_script(
@@ -252,6 +255,9 @@ def test_gdal_calc_py_4(script_path):
     bnd_count = 3
     for i, checksum in zip(range(bnd_count), (10025, 62785, 10621)):
         check_file(out[2], checksum, 3, bnd_idx=i + 1)
+        # also check NoDataValue
+        ds = gdal.Open(out[2])
+        assert ds.GetRasterBand(i + 1).GetNoDataValue() == 999
 
 
 def test_gdal_calc_py_5(script_path):
@@ -529,6 +535,25 @@ def test_gdal_calc_py_9(script_path):
         i,
     )
     i += 1
+
+
+def test_gdal_calc_py_10(script_path):
+    """test --NoDataValue=none"""
+
+    infile = get_input_file()
+    test_id, test_count = 10, 4
+    out = make_temp_filename_list(test_id, test_count)
+
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_calc",
+        f"-A {infile} --A_band=1 --NoDataValue=none --calc=A "
+        f"--overwrite --outfile {out[0]}",
+    )
+
+    check_file(out[0], input_checksum[0])
+    ds = gdal.Open(out[0])
+    assert ds.GetRasterBand(1).GetNoDataValue() is None
 
 
 def test_gdal_calc_py_multiple_inputs_same_alpha(script_path):
