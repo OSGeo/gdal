@@ -179,7 +179,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
     mutable std::vector<std::string> m_aosTempStrings{};
     bool PrepareFileGDBFeature(OGRFeature *poFeature,
                                std::vector<OGRField> &fields,
-                               const OGRGeometry *&poGeom);
+                               const OGRGeometry *&poGeom, bool bUpdate);
 
     CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBLayer)
 
