@@ -1116,9 +1116,13 @@ int FileGDBIndexIterator::SetConstraint(int nFieldIdx, FileGDBSQLOp op,
         }
     }
 
-    CPLDebug("OpenFileGDB", "Using index on field %s (%s %s)",
-             poField->GetName().c_str(), FileGDBSQLOpToStr(eOp),
-             FileGDBValueToStr(eOGRFieldType, psValue));
+    // To avoid 'spamming' on huge raster files
+    if (poField->GetName() != "block_key")
+    {
+        CPLDebug("OpenFileGDB", "Using index on field %s (%s %s)",
+                 poField->GetName().c_str(), FileGDBSQLOpToStr(eOp),
+                 FileGDBValueToStr(eOGRFieldType, psValue));
+    }
 
     Reset();
 
