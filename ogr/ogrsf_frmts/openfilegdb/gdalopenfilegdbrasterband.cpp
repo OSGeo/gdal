@@ -373,8 +373,9 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
 
     if (!(dfMaxX > dfMinX && dfMaxY > dfMinY))
     {
-        CPLError(CE_Warning, CPLE_AppDefined,
+        CPLError(CE_Failure, CPLE_AppDefined,
                  "!(dfMaxX > dfMinX && dfMaxY > dfMinY)");
+        return false;
     }
     else if (nWidth == 1 || nHeight == 1)
     {
@@ -388,29 +389,59 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
         const double dfResX = (dfMaxX - dfMinX) / (nWidth - 1);
         const double dfResY = (dfMaxY - dfMinY) / (nHeight - 1);
         m_bHasGeoTransform = true;
-        m_adfGeoTransform[0] = dfBlockOriginX - dfResX / 2;
+        const double dfBlockGeorefWidth = dfResX * nBlockWidth;
+        if (dfMinX != dfBlockOriginX)
+        {
+            // Take into account MinX by making sure the raster origin is
+            // close to it, while being shifted from an integer number of blocks
+            // from BlockOriginX
+            const double dfTmp =
+                std::floor((dfMinX - dfBlockOriginX) / dfBlockGeorefWidth);
+            if (std::fabs(dfTmp) > std::numeric_limits<int>::max())
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Inconsistent eminx=%g and block_origin_x=%g", dfMinX,
+                         dfBlockOriginX);
+                return false;
+            }
+            m_nShiftBlockX = static_cast<int>(dfTmp);
+            CPLDebug("OpenFileGDB", "m_nShiftBlockX = %d", m_nShiftBlockX);
+            const double dfMinXAdjusted =
+                dfBlockOriginX + m_nShiftBlockX * dfBlockGeorefWidth;
+            nWidth = 1 + static_cast<int>(
+                             std::round((dfMaxX - dfMinXAdjusted) / dfResX));
+        }
+        m_adfGeoTransform[0] =
+            (dfBlockOriginX + m_nShiftBlockX * dfBlockGeorefWidth) - dfResX / 2;
         m_adfGeoTransform[1] = dfResX;
         m_adfGeoTransform[2] = 0.0;
-        m_adfGeoTransform[3] = dfBlockOriginY + dfResY / 2;
+        const double dfBlockGeorefHeight = dfResY * nBlockHeight;
+        if (dfMaxY != dfBlockOriginY)
+        {
+            // Take into account MaxY by making sure the raster origin is
+            // close to it, while being shifted from an integer number of blocks
+            // from BlockOriginY
+            const double dfTmp =
+                std::floor((dfBlockOriginY - dfMaxY) / dfBlockGeorefHeight);
+            if (std::fabs(dfTmp) > std::numeric_limits<int>::max())
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Inconsistent emaxy=%g and block_origin_y=%g", dfMaxY,
+                         dfBlockOriginY);
+                return false;
+            }
+            m_nShiftBlockY = static_cast<int>(dfTmp);
+            CPLDebug("OpenFileGDB", "m_nShiftBlockY = %d", m_nShiftBlockY);
+            const double dfMaxYAdjusted =
+                dfBlockOriginY - m_nShiftBlockY * dfBlockGeorefHeight;
+            nHeight = 1 + static_cast<int>(
+                              std::round((dfMaxYAdjusted - dfMinY) / dfResY));
+        }
+        m_adfGeoTransform[3] =
+            (dfBlockOriginY - m_nShiftBlockY * dfBlockGeorefHeight) +
+            dfResY / 2;
         m_adfGeoTransform[4] = 0.0;
         m_adfGeoTransform[5] = -dfResY;
-
-        // If the block origin is within the full raster extent, reduce the
-        // advertized raster width/height
-        if (dfBlockOriginX > dfMinX && dfBlockOriginX < dfMaxX)
-        {
-            const int nWidthDiff = static_cast<int>(
-                std::round((dfMinX - dfBlockOriginX) / dfResX));
-            if (nWidthDiff < nWidth)
-                nWidth -= nWidthDiff;
-        }
-        if (dfBlockOriginY < dfMaxY && dfBlockOriginY > dfMinY)
-        {
-            const int nHeightDiff = static_cast<int>(
-                std::round((dfMaxY - dfBlockOriginY) / dfResY));
-            if (nHeightDiff < nHeight)
-                nHeight -= nHeightDiff;
-        }
     }
 
     // Get SRID, and fetch WKT from GDBSpatialRefs table
@@ -481,11 +512,14 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
                 const auto psSRTEXT = oTableSRS.GetFieldValue(iSRTEXT);
                 if (psSRTEXT && psSRTEXT->String)
                 {
-                    auto poSRS = BuildSRS(psSRTEXT->String);
-                    if (poSRS)
+                    if (psSRTEXT->String[0] != '{')
                     {
-                        m_oRasterSRS = *poSRS;
-                        poSRS->Release();
+                        auto poSRS = BuildSRS(psSRTEXT->String);
+                        if (poSRS)
+                        {
+                            m_oRasterSRS = *poSRS;
+                            poSRS->Release();
+                        }
                     }
                 }
                 else
@@ -541,7 +575,10 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
         if (poFeat)
         {
             const char *pszMaxKey = poFeat->GetFieldAsString(0);
-            if (strlen(pszMaxKey) == strlen("0000BANDOVYYYYXXXX    "))
+            if (strlen(pszMaxKey) == strlen("0000BANDOVYYYYXXXX    ") ||
+                strlen(pszMaxKey) == strlen("0000BANDOV-YYYYXXXX    ") ||
+                strlen(pszMaxKey) == strlen("0000BANDOVYYYY-XXXX    ") ||
+                strlen(pszMaxKey) == strlen("0000BANDOV-YYYY-XXXX    "))
             {
                 char szHex[3] = {0};
                 memcpy(szHex, pszMaxKey + 8, 2);
@@ -1207,8 +1244,28 @@ CPLErr GDALOpenFileGDBRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     nGDBRasterBandId,
                     m_nOverviewLevel, nBlockYOff, nBlockXOff);
     */
-    osFilter.Printf("block_key = '0000%04X%02X%04X%04X'", nGDBRasterBandId,
-                    m_nOverviewLevel, nBlockYOff, nBlockXOff);
+    const int nColNbr = nBlockXOff + poGDS->m_nShiftBlockX;
+    const int nRowNbr = nBlockYOff + poGDS->m_nShiftBlockY;
+    if (nRowNbr >= 0 && nColNbr >= 0)
+    {
+        osFilter.Printf("block_key = '0000%04X%02X%04X%04X'", nGDBRasterBandId,
+                        m_nOverviewLevel, nRowNbr, nColNbr);
+    }
+    else if (nRowNbr < 0 && nColNbr >= 0)
+    {
+        osFilter.Printf("block_key = '0000%04X%02X-%04X%04X'", nGDBRasterBandId,
+                        m_nOverviewLevel, -nRowNbr, nColNbr);
+    }
+    else if (nRowNbr >= 0 && nColNbr < 0)
+    {
+        osFilter.Printf("block_key = '0000%04X%02X%04X-%04X'", nGDBRasterBandId,
+                        m_nOverviewLevel, nRowNbr, -nColNbr);
+    }
+    else /* if( nRowNbr < 0 && nColNbr < 0 ) */
+    {
+        osFilter.Printf("block_key = '0000%04X%02X-%04X-%04X'",
+                        nGDBRasterBandId, m_nOverviewLevel, -nRowNbr, -nColNbr);
+    }
     // CPLDebug("OpenFileGDB", "Request %s", osFilter.c_str());
     poLyr->SetAttributeFilter(osFilter.c_str());
     auto poFeature = std::unique_ptr<OGRFeature>(poLyr->GetNextFeature());

@@ -1960,7 +1960,8 @@ static double GetLength(const OGRMultiSurface *poMS)
 
 bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                                                 std::vector<OGRField> &fields,
-                                                const OGRGeometry *&poGeom)
+                                                const OGRGeometry *&poGeom,
+                                                bool bUpdate)
 {
     // Check geometry type
     poGeom = poFeature->GetGeometryRef();
@@ -2207,17 +2208,36 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
                 break;
             case FGFT_GLOBALID:
             {
-                if (poFeature->GetRawFieldRef(i)->String[0] != '\0' &&
-                    CPLTestBool(CPLGetConfigOption(
-                        "OPENFILEGDB_REGENERATE_GLOBALID", "YES")))
+                if (bUpdate)
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Value found in a GlobalID field. It will be "
-                             "replaced by a "
-                             "newly generated UUID.");
+                    m_aosTempStrings.emplace_back(
+                        poFeature->GetFieldAsString(i));
+                    fields[idxFileGDB].String = &m_aosTempStrings.back()[0];
                 }
-                m_aosTempStrings.emplace_back(OFGDBGenerateUUID());
-                fields[idxFileGDB].String = &m_aosTempStrings.back()[0];
+                else if (poFeature->GetRawFieldRef(i)->String[0] != '\0')
+                {
+                    if (CPLTestBool(CPLGetConfigOption(
+                            "OPENFILEGDB_REGENERATE_GLOBALID", "YES")))
+                    {
+                        CPLError(CE_Warning, CPLE_AppDefined,
+                                 "Value found in a GlobalID field. It will be "
+                                 "replaced by a "
+                                 "newly generated UUID.");
+                        m_aosTempStrings.emplace_back(OFGDBGenerateUUID());
+                        fields[idxFileGDB].String = &m_aosTempStrings.back()[0];
+                    }
+                    else
+                    {
+                        m_aosTempStrings.emplace_back(
+                            poFeature->GetFieldAsString(i));
+                        fields[idxFileGDB].String = &m_aosTempStrings.back()[0];
+                    }
+                }
+                else
+                {
+                    m_aosTempStrings.emplace_back(OFGDBGenerateUUID());
+                    fields[idxFileGDB].String = &m_aosTempStrings.back()[0];
+                }
                 break;
             }
         }
@@ -2347,7 +2367,7 @@ OGRErr OGROpenFileGDBLayer::ICreateFeature(OGRFeature *poFeature)
 
     const OGRGeometry *poGeom = nullptr;
     std::vector<OGRField> fields;
-    if (!PrepareFileGDBFeature(poFeature, fields, poGeom))
+    if (!PrepareFileGDBFeature(poFeature, fields, poGeom, /*bUpdate=*/false))
         return OGRERR_FAILURE;
 
     m_eSpatialIndexState = SPI_INVALID;
@@ -2397,7 +2417,7 @@ OGRErr OGROpenFileGDBLayer::ISetFeature(OGRFeature *poFeature)
 
     const OGRGeometry *poGeom = nullptr;
     std::vector<OGRField> fields;
-    if (!PrepareFileGDBFeature(poFeature, fields, poGeom))
+    if (!PrepareFileGDBFeature(poFeature, fields, poGeom, /*bUpdate=*/true))
         return OGRERR_FAILURE;
 
     m_eSpatialIndexState = SPI_INVALID;

@@ -179,7 +179,7 @@ class OGROpenFileGDBLayer final : public OGRLayer
     mutable std::vector<std::string> m_aosTempStrings{};
     bool PrepareFileGDBFeature(OGRFeature *poFeature,
                                std::vector<OGRField> &fields,
-                               const OGRGeometry *&poGeom);
+                               const OGRGeometry *&poGeom, bool bUpdate);
 
     CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBLayer)
 
@@ -427,6 +427,10 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
     std::map<int, int> m_oMapGDALBandToGDBBandId{};
     bool m_bHasGeoTransform = false;
     std::array<double, 6> m_adfGeoTransform = {{0.0, 1.0, 0, 0.0, 0.0, 1.0}};
+    int m_nShiftBlockX =
+        0;  // Offset to add to FileGDB col_nbr field to convert from GDAL block numbering to FileGDB one
+    int m_nShiftBlockY =
+        0;  // Offset to add to FileGDB row_nbr field to convert from GDAL block numbering to FileGDB one
     OGRSpatialReference m_oRasterSRS{};
     std::unique_ptr<OGRLayer> m_poBlkLayer{};
     enum class Compression
