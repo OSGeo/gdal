@@ -559,6 +559,47 @@ def test_ogr_mssqlspatial_datatypes():
 #
 
 
+def test_ogr_mssqlspatial_bulk_insert():
+    """Test issue GH https://github.com/OSGeo/gdal/issues/7787"""
+
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip()
+
+    use_bcp = "BCP" in gdal.GetDriverByName("MSSQLSpatial").GetMetadataItem(
+        gdal.DMD_LONGNAME
+    )
+
+    if not use_bcp:
+        pytest.skip("BCP not available")
+
+    with gdaltest.config_option("MSSQLSPATIAL_BCP_SIZE", "2"):
+
+        source_ds = gdal.OpenEx("data/poly.shp", gdal.OF_VECTOR)
+
+        assert source_ds
+
+        try:
+            with gdaltest.error_handler():
+                ds = gdal.VectorTranslate(
+                    gdaltest.mssqlspatial_dsname,
+                    "data/poly.shp",
+                    layerCreationOptions=[
+                        "OVERWRITE=YES",
+                    ],
+                )
+
+                lyr = ds.GetLayerByName("poly")
+                assert lyr
+                assert lyr.GetFeatureCount() == 10
+                del lyr
+        finally:
+            gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE poly")
+
+
+###############################################################################
+#
+
+
 def test_ogr_mssqlspatial_cleanup():
 
     if gdaltest.mssqlspatial_ds is None:
