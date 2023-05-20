@@ -754,6 +754,16 @@ class GDALCalc(GDALScript):
             except argparse.ArgumentError:
                 pass
 
+    def float_or_none(self, NoDataValue: str) -> Union[float, str]:
+        if NoDataValue.lower() == "none":
+            return NoDataValue
+
+        try:
+            return float(NoDataValue)
+        except ValueError:
+            msg = f"Invalid float value for NoDataValue: {NoDataValue}"
+            raise argparse.ArgumentTypeError(msg)
+
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser
         parser.add_argument(
@@ -781,7 +791,7 @@ class GDALCalc(GDALScript):
         parser.add_argument(
             "--NoDataValue",
             dest="NoDataValue",
-            type=float,
+            type=self.float_or_none,
             metavar="value",
             help="output nodata value (default datatype specific value)",
         )
