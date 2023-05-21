@@ -128,7 +128,7 @@ The :program:`sozip` utility can be used to:
 Multithreading
 --------------
 
-The :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to
+The :config:`GDAL_NUM_THREADS` configuration option can be set to
 ``ALL_CPUS`` or a integer value to specify the number of threads to use for
 SOZip-compressed files. Defaults to ``ALL_CPUS``.
 
