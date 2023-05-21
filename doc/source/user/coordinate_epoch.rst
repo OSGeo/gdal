@@ -184,7 +184,7 @@ passed per vertex.
 
 It can also take into account the coordinate epoch associated with a dynamic
 CRS, when doing time-dependent transformations between a static and dynamic CRS.
-The :decl_configoption:`OGR_CT_USE_SRS_COORDINATE_EPOCH` configuration option
+The :config:`OGR_CT_USE_SRS_COORDINATE_EPOCH` configuration option
 can be set to ``NO`` to disable using the coordinate epoch associated with the
 source or target CRS.
 
