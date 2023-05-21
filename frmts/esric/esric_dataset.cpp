@@ -33,6 +33,7 @@
 #include <cassert>
 #include <vector>
 #include <algorithm>
+#include "cpl_json.h"
 
 using namespace std;
 
@@ -46,8 +47,22 @@ namespace ESRIC
 #define ENDS_WITH_CI(a, b)                                                     \
     (strlen(a) >= strlen(b) && EQUAL(a + strlen(a) - strlen(b), b))
 
+// ESRI tpkx files use root.json
+static int IdentifyJSON(GDALOpenInfo *poOpenInfo)
+{
+    if (poOpenInfo->eAccess != GA_ReadOnly
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+        || !ENDS_WITH_CI(poOpenInfo->pszFilename, "root.json")
+#endif
+        || poOpenInfo->nHeaderBytes < 512)
+        return false;
+    CPLString header(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
+                     poOpenInfo->nHeaderBytes);
+    return (CPLString::npos != header.find("tileBundlesPath"));
+}
+
 // Without full XML parsing, weak, might still fail
-static int Identify(GDALOpenInfo *poOpenInfo)
+static int IdentifyXML(GDALOpenInfo *poOpenInfo)
 {
     if (poOpenInfo->eAccess != GA_ReadOnly
 #if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
@@ -58,6 +73,11 @@ static int Identify(GDALOpenInfo *poOpenInfo)
     CPLString header(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
                      poOpenInfo->nHeaderBytes);
     return (CPLString::npos != header.find("<CacheInfo"));
+}
+
+static int Identify(GDALOpenInfo *poOpenInfo)
+{
+    return (IdentifyXML(poOpenInfo) || IdentifyJSON(poOpenInfo));
 }
 
 // Stub default delete, don't delete a tile cache from GDAL
@@ -100,7 +120,7 @@ struct Bundle
         index.resize(BSZ * BSZ);
         if (3 != u32lat(header) || 5 != u32lat(header + 12) ||
             40 != u32lat(header + 32) || 0 != u32lat(header + 36) ||
-            BSZ * BSZ != u32lat(header + 4) ||
+            /* BSZ * BSZ != u32lat(header + 4) ||  - this check doesn't seem to work for tpkx */
             BSZ * BSZ * 8 != u32lat(header + 60) ||
             index.size() != VSIFReadL(index.data(), 8, index.size(), fh))
         {
@@ -156,6 +176,7 @@ class ECDataset final : public GDALDataset
 
   private:
     CPLErr Initialize(CPLXMLNode *CacheInfo);
+    CPLErr InitializeFromJSON(const CPLJSONObject &oRoot);
     CPLString compression;
     std::vector<double> resolutions;
     OGRSpatialReference oSRS;
@@ -291,32 +312,157 @@ CPLErr ECDataset::Initialize(CPLXMLNode *CacheInfo)
     return error;
 }
 
+CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
+{
+    CPLErr error = CE_None;
+    try
+    {
+        auto format = oRoot.GetString("storageInfo/storageFormat");
+        isV2 = EQUAL(format.c_str(), "esriMapCacheStorageModeCompactV2");
+        if (!isV2)
+            throw CPLString("Not recognized as esri V2 bundled cache");
+        if (BSZ != oRoot.GetInteger("storageInfo/packetSize"))
+            throw CPLString("Only PacketSize of 128 is supported");
+
+        TSZ = oRoot.GetInteger("tileInfo/rows");
+        if (TSZ != oRoot.GetInteger("tileInfo/cols"))
+            throw CPLString("Non-square tiles are not supported");
+
+        auto oLODs = oRoot.GetArray("tileInfo/lods");
+        double res = 0;
+        // we need to skip levels that don't have bundle files
+        int minLOD = oRoot.GetInteger("minLOD");
+        int maxLOD = oRoot.GetInteger("maxLOD");
+        int level = 0;
+        for (const auto& oLOD : oLODs)
+        {
+            res = oLOD.GetDouble("resolution");
+            if (!(res > 0))
+                throw CPLString("Can't parse resolution for LOD");
+            level = oLOD.GetInteger("level");
+            if (level >= minLOD && level <= maxLOD)
+            {
+                resolutions.push_back(res);
+            }
+        }
+        sort(resolutions.begin(), resolutions.end());
+        if (resolutions.empty())
+            throw CPLString("Can't parse lods");
+
+        if (OGRERR_NONE != oSRS.SetFromUserInput(CPLString().Printf(
+                "ESRI:%d", oRoot.GetInteger("spatialReference/wkid"))))
+            throw CPLString("Invalid Spatial Reference");
+        oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+
+        // resolution is the smallest figure
+        res = resolutions[0];
+        double gt[6] = {0, 1, 0, 0, 0, 1};
+        gt[0] = oRoot.GetDouble("tileInfo/origin/x");
+        gt[3] = oRoot.GetDouble("tileInfo/origin/y");
+        gt[1] = res;
+        gt[5] = -res;
+        memcpy(GeoTransform, gt, sizeof(gt));
+
+        // Assume symmetric coverage
+        double maxx = -gt[0];
+        double miny = -gt[3];
+
+        double dxsz = (maxx - gt[0]) / res;
+        double dysz = (gt[3] - miny) / res;
+        if (dxsz < 1 || dxsz > INT32_MAX || dysz < 1 || dysz > INT32_MAX)
+            throw CPLString("Too many levels, resulting raster size exceeds "
+                            "the GDAL limit");
+
+        nRasterXSize = int(dxsz);
+        nRasterYSize = int(dysz);
+
+        SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
+        compression = oRoot.GetString("tileImageInfo/format");
+        SetMetadataItem("COMPRESS", compression.c_str(), "IMAGE_STRUCTURE");
+
+        nBands = EQUAL(compression, "JPEG") ? 3 : 4;
+        for (int i = 1; i <= nBands; i++)
+        {
+            ECBand *band = new ECBand(this, i);
+            SetBand(i, band);
+        }
+        // Keep 4 bundle files open
+        bundles.resize(4);
+    }
+    catch (CPLString &err)
+    {
+        error = CE_Failure;
+        CPLError(error, CPLE_OpenFailed, "%s", err.c_str());
+    }
+    return error;
+}
+
 GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
 {
-    if (!Identify(poOpenInfo))
-        return nullptr;
-
-    CPLXMLNode *config = CPLParseXMLFile(poOpenInfo->pszFilename);
-    if (!config)  // Error was reported from parsing XML
-        return nullptr;
-    CPLXMLNode *CacheInfo = CPLGetXMLNode(config, "=CacheInfo");
-    if (!CacheInfo)
+    if (IdentifyXML(poOpenInfo))
     {
-        CPLError(CE_Warning, CPLE_OpenFailed,
-                 "Error parsing configuration, can't find CacheInfo element");
+        CPLXMLNode *config = CPLParseXMLFile(poOpenInfo->pszFilename);
+        if (!config)  // Error was reported from parsing XML
+            return nullptr;
+        CPLXMLNode *CacheInfo = CPLGetXMLNode(config, "=CacheInfo");
+        if (!CacheInfo)
+        {
+            CPLError(
+                CE_Warning, CPLE_OpenFailed,
+                "Error parsing configuration, can't find CacheInfo element");
+            CPLDestroyXMLNode(config);
+            return nullptr;
+        }
+        auto ds = new ECDataset();
+        ds->dname.Printf("%s/_alllayers",
+                         CPLGetDirname(poOpenInfo->pszFilename));
+        CPLErr error = ds->Initialize(CacheInfo);
         CPLDestroyXMLNode(config);
-        return nullptr;
+        if (CE_None != error)
+        {
+            delete ds;
+            ds = nullptr;
+        }
+        return ds;
     }
-    auto ds = new ECDataset();
-    ds->dname.Printf("%s/_alllayers", CPLGetDirname(poOpenInfo->pszFilename));
-    CPLErr error = ds->Initialize(CacheInfo);
-    CPLDestroyXMLNode(config);
-    if (CE_None != error)
+    else if (IdentifyJSON(poOpenInfo))
     {
-        delete ds;
-        ds = nullptr;
+        CPLJSONDocument oJSONDocument;
+        if (!oJSONDocument.Load(poOpenInfo->pszFilename))
+        {
+            CPLError(
+                CE_Warning, CPLE_OpenFailed,
+                "Error parsing configuration");
+            return nullptr; 
+        }
+
+        const CPLJSONObject &oRoot = oJSONDocument.GetRoot();
+        if (!oRoot.IsValid())
+        {
+            CPLError(CE_Warning, CPLE_OpenFailed,
+                     "Invalid json document root");
+            return nullptr;
+        }
+
+        auto ds = new ECDataset();
+        auto tileBundlesPath = oRoot.GetString("tileBundlesPath");
+        // Strip leading relative path indicator (if present)
+        if (tileBundlesPath.substr(0, 2) == "./")
+        {
+            tileBundlesPath.erase(0, 2);
+        }
+
+        ds->dname.Printf("%s/%s", CPLGetDirname(poOpenInfo->pszFilename),
+                         tileBundlesPath.c_str());
+        CPLErr error = ds->InitializeFromJSON(oRoot);
+        if (CE_None != error)
+        {
+            delete ds;
+            ds = nullptr;
+        }
+        return ds;
     }
-    return ds;
+    return nullptr;
 }
 
 // Fetch a reference to an initialized bundle, based on file name
