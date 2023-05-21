@@ -334,7 +334,7 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         int minLOD = oRoot.GetInteger("minLOD");
         int maxLOD = oRoot.GetInteger("maxLOD");
         int level = 0;
-        for (const auto& oLOD : oLODs)
+        for (const auto &oLOD : oLODs)
         {
             res = oLOD.GetDouble("resolution");
             if (!(res > 0))
@@ -349,7 +349,8 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         if (resolutions.empty())
             throw CPLString("Can't parse lods");
 
-        if (OGRERR_NONE != oSRS.SetFromUserInput(CPLString().Printf(
+        if (OGRERR_NONE !=
+            oSRS.SetFromUserInput(CPLString().Printf(
                 "ESRI:%d", oRoot.GetInteger("spatialReference/wkid"))))
             throw CPLString("Invalid Spatial Reference");
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -430,17 +431,15 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLJSONDocument oJSONDocument;
         if (!oJSONDocument.Load(poOpenInfo->pszFilename))
         {
-            CPLError(
-                CE_Warning, CPLE_OpenFailed,
-                "Error parsing configuration");
+            CPLError(CE_Warning, CPLE_OpenFailed,
+                     "Error parsing configuration");
             return nullptr; 
         }
 
         const CPLJSONObject &oRoot = oJSONDocument.GetRoot();
         if (!oRoot.IsValid())
         {
-            CPLError(CE_Warning, CPLE_OpenFailed,
-                     "Invalid json document root");
+            CPLError(CE_Warning, CPLE_OpenFailed, "Invalid json document root");
             return nullptr;
         }
 
