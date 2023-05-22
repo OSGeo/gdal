@@ -388,8 +388,9 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
         const size_t nMessageLen = strlen(pszFullname) * 2 + 256;
         char *pszMessage = STATIC_CAST(char *, malloc(nMessageLen));
         pszFullname[nLenWithoutExtension] = 0;
-        snprintf(pszMessage, nMessageLen, "Unable to open %s.shp or %s.SHP.",
-                 pszFullname, pszFullname);
+        snprintf(pszMessage, nMessageLen,
+                 "Unable to open %s.shp or %s.SHP in %s mode.", pszFullname,
+                 pszFullname, pszAccess);
         psHooks->Error(pszMessage);
         free(pszMessage);
 
@@ -1027,7 +1028,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     char *pszFullname = STATIC_CAST(char *, malloc(nLenWithoutExtension + 5));
     memcpy(pszFullname, pszLayer, nLenWithoutExtension);
     memcpy(pszFullname + nLenWithoutExtension, ".shp", 5);
-    SAFile fpSHP = psHooks->FOpen(pszFullname, "wb");
+    SAFile fpSHP = psHooks->FOpen(pszFullname, "w+b");
     if (fpSHP == SHPLIB_NULLPTR)
     {
         char szErrorMsg[200];
@@ -1040,7 +1041,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     }
 
     memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
-    SAFile fpSHX = psHooks->FOpen(pszFullname, "wb");
+    SAFile fpSHX = psHooks->FOpen(pszFullname, "w+b");
     if (fpSHX == SHPLIB_NULLPTR)
     {
         char szErrorMsg[200];
@@ -1127,13 +1128,35 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
         return NULL;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Close the files, and then open them as regular existing files.  */
-    /* -------------------------------------------------------------------- */
-    psHooks->FClose(fpSHP);
-    psHooks->FClose(fpSHX);
+    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(sizeof(SHPInfo), 1));
 
-    return (SHPOpenLL(pszLayer, "r+b", psHooks));
+    psSHP->bUpdated = FALSE;
+    memcpy(&(psSHP->sHooks), psHooks, sizeof(SAHooks));
+
+    psSHP->fpSHP = fpSHP;
+    psSHP->fpSHX = fpSHX;
+    psSHP->nShapeType = nShapeType;
+    psSHP->nFileSize = 100;
+    psSHP->panRecOffset =
+        STATIC_CAST(unsigned int *, malloc(sizeof(unsigned int)));
+    psSHP->panRecSize =
+        STATIC_CAST(unsigned int *, malloc(sizeof(unsigned int)));
+
+    if (psSHP->panRecOffset == SHPLIB_NULLPTR ||
+        psSHP->panRecSize == SHPLIB_NULLPTR)
+    {
+        psSHP->sHooks.Error("Not enough memory to allocate requested memory");
+        psSHP->sHooks.FClose(psSHP->fpSHP);
+        psSHP->sHooks.FClose(psSHP->fpSHX);
+        if (psSHP->panRecOffset)
+            free(psSHP->panRecOffset);
+        if (psSHP->panRecSize)
+            free(psSHP->panRecSize);
+        free(psSHP);
+        return SHPLIB_NULLPTR;
+    }
+
+    return psSHP;
 }
 
 /************************************************************************/

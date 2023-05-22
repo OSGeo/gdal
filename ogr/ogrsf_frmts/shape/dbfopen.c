@@ -680,18 +680,7 @@ DBFHandle SHPAPI_CALL DBFCreateLL(const char *pszFilename,
     /* -------------------------------------------------------------------- */
     /*      Create the file.                                                */
     /* -------------------------------------------------------------------- */
-    SAFile fp = psHooks->FOpen(pszFullname, "wb");
-    if (fp == SHPLIB_NULLPTR)
-    {
-        free(pszFullname);
-        return SHPLIB_NULLPTR;
-    }
-
-    char chZero = '\0';
-    psHooks->FWrite(&chZero, 1, 1, fp);
-    psHooks->FClose(fp);
-
-    fp = psHooks->FOpen(pszFullname, "rb+");
+    SAFile fp = psHooks->FOpen(pszFullname, "wb+");
     if (fp == SHPLIB_NULLPTR)
     {
         free(pszFullname);
