@@ -734,7 +734,8 @@ def test_ogr_mysql_24():
         + "' tpoly"
     )
 
-    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
 
 ###############################################################################

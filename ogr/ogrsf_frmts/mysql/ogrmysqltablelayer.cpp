@@ -373,9 +373,8 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition(const char *pszTable)
     {
         char *pszType = nullptr;
 
-        // set to unknown first
-        poDefn->SetGeomType(wkbUnknown);
-        poDefn->GetGeomFieldDefn(0)->SetName(pszGeomColumn);
+        auto poGeomFieldDefn =
+            cpl::make_unique<OGRMySQLGeomFieldDefn>(poDS, pszGeomColumn);
 
         if (poDS->GetMajorVersion() < 8 || poDS->IsMariaDB())
             osCommand.Printf("SELECT type, coord_dimension FROM "
@@ -406,13 +405,19 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition(const char *pszTable)
                 if (papszRow[1] != nullptr && atoi(papszRow[1]) == 3)
                     l_nGeomType = wkbSetZ(l_nGeomType);
 
-            poDefn->SetGeomType(l_nGeomType);
+            poGeomFieldDefn->SetType(l_nGeomType);
         }
         else if (eForcedGeomType != wkbUnknown)
-            poDefn->SetGeomType(eForcedGeomType);
+            poGeomFieldDefn->SetType(eForcedGeomType);
 
         if (bGeomColumnNotNullable)
-            poDefn->GetGeomFieldDefn(0)->SetNullable(FALSE);
+            poGeomFieldDefn->SetNullable(FALSE);
+
+        // Fetch the SRID for this table now
+        nSRSId = FetchSRSId();
+
+        poGeomFieldDefn->nSRSId = nSRSId;
+        poDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
 
         if (hResult != nullptr)
             mysql_free_result(
@@ -420,8 +425,6 @@ OGRFeatureDefn *OGRMySQLTableLayer::ReadTableDefinition(const char *pszTable)
         hResult = nullptr;
     }
 
-    // Fetch the SRID for this table now
-    nSRSId = FetchSRSId();
     return poDefn;
 }
 

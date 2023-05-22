@@ -362,8 +362,12 @@ int OGRMySQLDataSource::TestCapability(const char *pszCap)
         return TRUE;
     if (EQUAL(pszCap, ODsCRandomLayerWrite))
         return TRUE;
-    else
-        return FALSE;
+    if (EQUAL(pszCap, ODsCMeasuredGeometries))
+        return TRUE;
+    if (EQUAL(pszCap, ODsCZGeometries))
+        return TRUE;
+
+    return FALSE;
 }
 
 /************************************************************************/
