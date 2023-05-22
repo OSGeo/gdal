@@ -1592,9 +1592,9 @@ void CPLVerifyConfiguration()
 
 #ifdef DEBUG_CONFIG_OPTIONS
 
-static void *hRegisterConfigurationOptionMutex = 0;
-static std::set<CPLString> *paoGetKeys = NULL;
-static std::set<CPLString> *paoSetKeys = NULL;
+static CPLMutex *hRegisterConfigurationOptionMutex = nullptr;
+static std::set<CPLString> *paoGetKeys = nullptr;
+static std::set<CPLString> *paoSetKeys = nullptr;
 
 /************************************************************************/
 /*                      CPLShowAccessedOptions()                        */
@@ -1624,8 +1624,8 @@ static void CPLShowAccessedOptions()
 
     delete paoGetKeys;
     delete paoSetKeys;
-    paoGetKeys = NULL;
-    paoSetKeys = NULL;
+    paoGetKeys = nullptr;
+    paoSetKeys = nullptr;
 }
 
 /************************************************************************/
@@ -1635,7 +1635,7 @@ static void CPLShowAccessedOptions()
 static void CPLAccessConfigOption(const char *pszKey, bool bGet)
 {
     CPLMutexHolderD(&hRegisterConfigurationOptionMutex);
-    if (paoGetKeys == NULL)
+    if (paoGetKeys == nullptr)
     {
         paoGetKeys = new std::set<CPLString>;
         paoSetKeys = new std::set<CPLString>;
