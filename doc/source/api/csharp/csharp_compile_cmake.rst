@@ -101,7 +101,7 @@ Once this is done, you add the GDAL packages into your project as normal.
 Building on Mono
 ----------------
 
-If the build environment does not have .NET 5.0 or msbuild installed and GDAL is built, then the c# bindings will be built using Mono by default. Mono building can also be forced 
+If the build environment does not have .NET 5.0 or msbuild installed and GDAL is built, then the c# bindings will be built using Mono by default. Mono building can also be forced
 by setting CSHARP_MONO.
 
 The details of building GDAL are documented elsewhere, but the there are likely to be variants of the following commands run from the root directory of the gdal repository:
@@ -135,7 +135,7 @@ To run one of the prebuilt executables - you can run them with Mono as follows :
 :program:`mono GDALInfo.exe`
 
 Both the managed libraries (i.e. the DLLs) and the unmanaged libraries must be available to Mono.
-This is in more detail in `the Mono documentation <https://www.mono-project.com/docs/advanced/pinvoke/>`__ 
+This is in more detail in `the Mono documentation <https://www.mono-project.com/docs/advanced/pinvoke/>`__
 
 Building Standalone
 +++++++++++++++++++
@@ -165,3 +165,13 @@ As an example:
 
 The output from this build is axactly the same as documented as above, except that the outputs will be in `../build/swig/csharp` and some of the sub folders.
 
+Signing of build artifacts
+++++++++++++++++++++++++++
+
+The CSharp assemblies are strong name signed by default with the provided key file in :source_file:`swig/csharp/gdal.snk`.
+If authenticode signing of the assemblies is wished, it should be done in a post-build
+manual step, for example with:
+
+.. code-block::
+
+    signtool sign /f "path\to\your\certificate.pfx" /p "password" /tr http://timestamp.digicert.com /td sha256 "path\to\your\gdal_csharp.dll"
