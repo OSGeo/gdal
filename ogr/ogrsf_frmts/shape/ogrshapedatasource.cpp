@@ -872,7 +872,7 @@ OGRLayer *OGRShapeDataSource::ICreateLayer(const char *pszLayerName,
     if (hDBF == nullptr)
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
-                 "Failed to open Shape DBF file `%s'.", pszFilename);
+                 "Failed to create Shape DBF file `%s'.", pszFilename);
         CPLFree(pszFilename);
         CPLFree(pszFilenameWithoutExt);
         SHPClose(hSHP);
