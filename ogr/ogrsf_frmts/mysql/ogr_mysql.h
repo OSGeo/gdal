@@ -308,4 +308,6 @@ class OGRMySQLDataSource final : public OGRDataSource
     int GetUnknownSRID() const;
 };
 
+std::string OGRMySQLEscapeLiteral(const char *pszLiteral);
+
 #endif /* ndef OGR_MYSQL_H_INCLUDED */
