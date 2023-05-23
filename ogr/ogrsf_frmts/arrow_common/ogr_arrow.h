@@ -90,6 +90,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void ExploreExprNode(const swq_expr_node *poNode);
     bool UseRecordBatchBaseImplementation() const;
 
+    static struct ArrowArray *
+    CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
+
   protected:
     OGRArrowDataset *m_poArrowDS = nullptr;
     arrow::MemoryPool *m_poMemoryPool = nullptr;
@@ -278,6 +281,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     bool m_bWriteFieldArrowExtensionName = false;
     OGRArrowGeomEncoding m_eGeomEncoding = OGRArrowGeomEncoding::WKB;
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
+    int m_nWKTCoordinatePrecision = -1;
 
     std::string m_osFIDColumn{};
     int64_t m_nFeatureCount = 0;
