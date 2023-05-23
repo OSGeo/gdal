@@ -1210,6 +1210,8 @@ bool NCDFIsVarTimeCoord(int nCdfId, int nVarId, const char *pszVarName);
 
 std::string NCDFReadMetadataAsJson(int cdfid);
 
+char **NCDFTokenizeCoordinatesAttribute(const char *pszCoordinates);
+
 extern CPLMutex *hNCMutex;
 
 #ifdef ENABLE_NCDUMP
