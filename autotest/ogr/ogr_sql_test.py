@@ -123,6 +123,19 @@ def test_ogr_sql_execute_sql(use_gdal):
 
 
 ###############################################################################
+# Test invalid use of ReleaseResultSet()
+
+
+@pytest.mark.parametrize("use_gdal", [True, False])
+def test_ogr_sql_invalid_release_result_set(use_gdal):
+
+    ds = gdal.OpenEx("data/poly.shp") if use_gdal else ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
+    with pytest.raises(Exception):
+        ds.ReleaseResultSet(lyr)
+
+
+###############################################################################
 # Test a simple query with a where clause.
 
 
