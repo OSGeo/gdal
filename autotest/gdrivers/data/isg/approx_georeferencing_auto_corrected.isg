@@ -1,0 +1,16 @@
+begin_of_head ================================================
+model name : GEOIDEAR16
+model type : gravimetric
+units      : meters
+reference  : --
+lat min    =   -57.0091
+lat max    =   -20.0083
+lon min    =   -76.0083
+lon max    =   -52.0079
+delta lat  =     0.0167
+delta lon  =     0.0167
+nrows      =       2220
+ncols      =       1440
+nodata     = -9999.0000
+ISG format =        1.0
+end_of_head ==================================================

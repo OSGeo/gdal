@@ -823,52 +823,70 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
 
     // Correct rounding errors.
 
+    const auto TryRoundTo = [](double &dfDelta, double dfRoundedDelta,
+                               double &dfMin, double &dfMax, int nVals,
+                               double dfRelTol)
+    {
+        double dfMinTry = dfMin;
+        double dfMaxTry = dfMax;
+        double dfDeltaTry = dfDelta;
+        if (dfRoundedDelta != dfDelta &&
+            fabs(fabs(dfMin / dfRoundedDelta) -
+                 (floor(fabs(dfMin / dfRoundedDelta)) + 0.5)) < dfRelTol &&
+            fabs(fabs(dfMax / dfRoundedDelta) -
+                 (floor(fabs(dfMax / dfRoundedDelta)) + 0.5)) < dfRelTol)
+        {
+            {
+                double dfVal = (floor(fabs(dfMin / dfRoundedDelta)) + 0.5) *
+                               dfRoundedDelta;
+                dfMinTry = (dfMin < 0) ? -dfVal : dfVal;
+            }
+            {
+                double dfVal = (floor(fabs(dfMax / dfRoundedDelta)) + 0.5) *
+                               dfRoundedDelta;
+                dfMaxTry = (dfMax < 0) ? -dfVal : dfVal;
+            }
+            dfDeltaTry = dfRoundedDelta;
+        }
+        else if (dfRoundedDelta != dfDelta &&
+                 fabs(fabs(dfMin / dfRoundedDelta) -
+                      (floor(fabs(dfMin / dfRoundedDelta) + 0.5) + 0.)) <
+                     dfRelTol &&
+                 fabs(fabs(dfMax / dfRoundedDelta) -
+                      (floor(fabs(dfMax / dfRoundedDelta) + 0.5) + 0.)) <
+                     dfRelTol)
+        {
+            {
+                double dfVal =
+                    (floor(fabs(dfMin / dfRoundedDelta) + 0.5) + 0.) *
+                    dfRoundedDelta;
+                dfMinTry = (dfMin < 0) ? -dfVal : dfVal;
+            }
+            {
+                double dfVal =
+                    (floor(fabs(dfMax / dfRoundedDelta) + 0.5) + 0.) *
+                    dfRoundedDelta;
+                dfMaxTry = (dfMax < 0) ? -dfVal : dfVal;
+            }
+            dfDeltaTry = dfRoundedDelta;
+        }
+        if (fabs(dfMinTry + dfDeltaTry * nVals - dfMaxTry) <
+            dfRelTol * dfDeltaTry)
+        {
+            dfMin = dfMinTry;
+            dfMax = dfMaxTry;
+            dfDelta = dfDeltaTry;
+            return true;
+        }
+        return false;
+    };
+
     const double dfRoundedDeltaLon =
         (osDeltaLon == "0.0167" ||
          (dfDeltaLon < 1 &&
           fabs(1. / dfDeltaLon - floor(1. / dfDeltaLon + 0.5)) < 0.06))
             ? 1. / floor(1. / dfDeltaLon + 0.5)
             : dfDeltaLon;
-    if (dfRoundedDeltaLon != dfDeltaLon &&
-        fabs(fabs(dfLonMin / dfRoundedDeltaLon) -
-             (floor(fabs(dfLonMin / dfRoundedDeltaLon)) + 0.5)) < 0.02 &&
-        fabs(fabs(dfLonMax / dfRoundedDeltaLon) -
-             (floor(fabs(dfLonMax / dfRoundedDeltaLon)) + 0.5)) < 0.02)
-    {
-        {
-            double dfVal = (floor(fabs(dfLonMin / dfRoundedDeltaLon)) + 0.5) *
-                           dfRoundedDeltaLon;
-            dfLonMin = (dfLonMin < 0) ? -dfVal : dfVal;
-        }
-        {
-            double dfVal = (floor(fabs(dfLonMax / dfRoundedDeltaLon)) + 0.5) *
-                           dfRoundedDeltaLon;
-            dfLonMax = (dfLonMax < 0) ? -dfVal : dfVal;
-        }
-        dfDeltaLon = dfRoundedDeltaLon;
-    }
-    else if (dfRoundedDeltaLon != dfDeltaLon &&
-             fabs(fabs(dfLonMin / dfRoundedDeltaLon) -
-                  (floor(fabs(dfLonMin / dfRoundedDeltaLon) + 0.5) + 0.)) <
-                 0.02 &&
-             fabs(fabs(dfLonMax / dfRoundedDeltaLon) -
-                  (floor(fabs(dfLonMax / dfRoundedDeltaLon) + 0.5) + 0.)) <
-                 0.02)
-    {
-        {
-            double dfVal =
-                (floor(fabs(dfLonMin / dfRoundedDeltaLon) + 0.5) + 0.) *
-                dfRoundedDeltaLon;
-            dfLonMin = (dfLonMin < 0) ? -dfVal : dfVal;
-        }
-        {
-            double dfVal =
-                (floor(fabs(dfLonMax / dfRoundedDeltaLon) + 0.5) + 0.) *
-                dfRoundedDeltaLon;
-            dfLonMax = (dfLonMax < 0) ? -dfVal : dfVal;
-        }
-        dfDeltaLon = dfRoundedDeltaLon;
-    }
 
     const double dfRoundedDeltaLat =
         (osDeltaLat == "0.0167" ||
@@ -876,52 +894,45 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
           fabs(1. / dfDeltaLat - floor(1. / dfDeltaLat + 0.5)) < 0.06))
             ? 1. / floor(1. / dfDeltaLat + 0.5)
             : dfDeltaLat;
-    if (dfRoundedDeltaLat != dfDeltaLat &&
-        fabs(fabs(dfLatMin / dfRoundedDeltaLat) -
-             (floor(fabs(dfLatMin / dfRoundedDeltaLat)) + 0.5)) < 0.02 &&
-        fabs(fabs(dfLatMax / dfRoundedDeltaLat) -
-             (floor(fabs(dfLatMax / dfRoundedDeltaLat)) + 0.5)) < 0.02)
-    {
-        {
-            double dfVal = (floor(fabs(dfLatMin / dfRoundedDeltaLat)) + 0.5) *
-                           dfRoundedDeltaLat;
-            dfLatMin = (dfLatMin < 0) ? -dfVal : dfVal;
-        }
-        {
-            double dfVal = (floor(fabs(dfLatMax / dfRoundedDeltaLat)) + 0.5) *
-                           dfRoundedDeltaLat;
-            dfLatMax = (dfLatMax < 0) ? -dfVal : dfVal;
-        }
-        dfDeltaLat = dfRoundedDeltaLat;
-    }
-    else if (dfRoundedDeltaLat != dfDeltaLat &&
-             fabs(fabs(dfLatMin / dfRoundedDeltaLat) -
-                  (floor(fabs(dfLatMin / dfRoundedDeltaLat) + 0.5) + 0.)) <
-                 0.02 &&
-             fabs(fabs(dfLatMax / dfRoundedDeltaLat) -
-                  (floor(fabs(dfLatMax / dfRoundedDeltaLat) + 0.5) + 0.)) <
-                 0.02)
-    {
-        {
-            double dfVal =
-                (floor(fabs(dfLatMin / dfRoundedDeltaLat) + 0.5) + 0.) *
-                dfRoundedDeltaLat;
-            dfLatMin = (dfLatMin < 0) ? -dfVal : dfVal;
-        }
-        {
-            double dfVal =
-                (floor(fabs(dfLatMax / dfRoundedDeltaLat) + 0.5) + 0.) *
-                dfRoundedDeltaLat;
-            dfLatMax = (dfLatMax < 0) ? -dfVal : dfVal;
-        }
-        dfDeltaLat = dfRoundedDeltaLat;
-    }
 
-    if (!(fabs(dfLatMin + dfDeltaLat * nRows - dfLatMax) < 1e-8 &&
-          fabs(dfLonMin + dfDeltaLon * nCols - dfLonMax) < 1e-8))
+    bool bOK = TryRoundTo(dfDeltaLon, dfRoundedDeltaLon, dfLonMin, dfLonMax,
+                          nCols, 1e-2) &&
+               TryRoundTo(dfDeltaLat, dfRoundedDeltaLat, dfLatMin, dfLatMax,
+                          nRows, 1e-2);
+    if (!bOK && osDeltaLon == "0.0167" && osDeltaLat == "0.0167")
     {
-        CPLDebug("ISG", "Inconsistent extent/resolution/raster dimension");
-        return FALSE;
+        // For https://www.isgeoid.polimi.it/Geoid/America/Argentina/public/GEOIDEAR16_20160419.isg
+        bOK =
+            TryRoundTo(dfDeltaLon, 0.016667, dfLonMin, dfLonMax, nCols, 1e-1) &&
+            TryRoundTo(dfDeltaLat, 0.016667, dfLatMin, dfLatMax, nRows, 1e-1);
+    }
+    if (!bOK)
+    {
+        // 0.005 is what would be needed for the above GEOIDEAR16_20160419.isg
+        // file without the specific fine tuning done.
+        if ((fabs((dfLonMax - dfLonMin) / nCols - dfDeltaLon) <
+                 0.005 * dfDeltaLon &&
+             fabs((dfLatMax - dfLatMin) / nRows - dfDeltaLat) <
+                 0.005 * dfDeltaLat) ||
+            CPLTestBool(
+                CPLGetConfigOption("ISG_SKIP_GEOREF_CONSISTENCY_CHECK", "NO")))
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Georeference might be slightly approximate due to "
+                     "rounding of coordinates and resolution in file header.");
+            dfDeltaLon = (dfLonMax - dfLonMin) / nCols;
+            dfDeltaLat = (dfLatMax - dfLatMin) / nRows;
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Inconsistent extent/resolution/raster dimension, or "
+                     "rounding of coordinates and resolution in file header "
+                     "higher than accepted. You may skip this consistency "
+                     "check by setting the ISG_SKIP_GEOREF_CONSISTENCY_CHECK "
+                     "configuration option to YES.");
+            return false;
+        }
     }
     nRasterXSize = nCols;
     nRasterYSize = nRows;
