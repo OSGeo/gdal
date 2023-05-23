@@ -3047,7 +3047,9 @@ def test_zarr_create_with_filter():
     )
 
     try:
-        ret = tst.testCreate(vsimem=1, new_filename="/vsimem/test.zarr")
+        ret = tst.testCreate(
+            vsimem=1, new_filename="/vsimem/test.zarr", delete_output_file=False
+        )
 
         f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zarray", "rb")
         assert f
@@ -5002,3 +5004,96 @@ def test_zarr_multidim_delete_attribute_after_reopening(
 
     finally:
         gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+# Test GDALDriver::Delete()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_driver_delete(format):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    try:
+        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+
+        assert gdal.Open(filename)
+
+        assert drv.Delete(filename) == gdal.CE_None
+        assert gdal.VSIStatL(filename) is None
+
+        with pytest.raises(Exception):
+            gdal.Open(filename)
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+# Test GDALDriver::Rename()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_driver_rename(format):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+    newfilename = "/vsimem/newtest.zarr"
+
+    try:
+        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+
+        assert gdal.Open(filename)
+
+        assert drv.Rename(newfilename, filename) == gdal.CE_None
+
+        assert gdal.VSIStatL(filename) is None
+        with pytest.raises(Exception):
+            gdal.Open(filename)
+
+        assert gdal.VSIStatL(newfilename)
+        assert gdal.Open(newfilename)
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.RmdirRecursive(filename)
+        if gdal.VSIStatL(newfilename):
+            gdal.RmdirRecursive(newfilename)
+
+
+###############################################################################
+# Test GDALDriver::CopyFiles()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_driver_copy_files(format):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+    newfilename = "/vsimem/newtest.zarr"
+
+    try:
+        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+
+        assert gdal.Open(filename)
+
+        assert drv.CopyFiles(newfilename, filename) == gdal.CE_None
+
+        assert gdal.VSIStatL(filename)
+        assert gdal.Open(filename)
+
+        assert gdal.VSIStatL(newfilename)
+        print(gdal.ReadDirRecursive(newfilename))
+        assert gdal.Open(newfilename)
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.RmdirRecursive(filename)
+        if gdal.VSIStatL(newfilename):
+            gdal.RmdirRecursive(newfilename)
