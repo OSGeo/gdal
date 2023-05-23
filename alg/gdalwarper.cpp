@@ -1166,12 +1166,14 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
  *
  * <li>OPTIMIZE_SIZE: This defaults to FALSE, but may be set to TRUE
  * typically when writing to a compressed dataset (GeoTIFF with
- * COMPRESSED creation option set for example) for achieving a smaller
+ * COMPRESS creation option set for example) for achieving a smaller
  * file size. This is achieved by writing at once data aligned on full
  * blocks of the target dataset, which avoids partial writes of
  * compressed blocks and lost space when they are rewritten at the end
  * of the file. However sticking to target block size may cause major
- * processing slowdown for some particular reprojections.</li>
+ * processing slowdown for some particular reprojections. Starting
+ * with GDAL 3.8, OPTIMIZE_SIZE mode is automatically enabled when it is safe
+ * to do so.</li>
  *
  * <li>NUM_THREADS: (GDAL >= 1.10) Can be set to a numeric value or ALL_CPUS to
  * set the number of threads to use to parallelize the computation part of the

@@ -3387,6 +3387,37 @@ def test_gdalwarp_lib_tr_square():
 
 
 ###############################################################################
+# Test that we auto enable OPTIMIZE_SIZE warping option when it is reasonable
+
+
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+def test_gdalwarp_lib_auto_optimize_size():
+
+    src_ds = gdal.Translate(
+        "", "../gcore/data/byte.tif", options="-f MEM -outsize 1500 1500 -r bilinear"
+    )
+
+    tmpfilename = "/vsimem/test_gdalwarp_lib_auto_optimize_size.tif"
+    # Warp to tiled GeoTIFF with low warp memory and block cache size, to
+    # potentially exhibit we wouldn't write to output tile boundaries.
+    with gdaltest.SetCacheMax(256 * 256):
+        gdal.Warp(tmpfilename, src_ds, options="-co TILED=YES -co COMPRESS=JPEG -wm 1")
+
+    # Warp to MEM and then translate to tiled GeoTIFF
+    ref_ds_src = gdal.Warp("", src_ds, options="-f MEM")
+    tmpfilename2 = "/vsimem/test_gdalwarp_lib_auto_optimize_size2.tif"
+    gdal.Translate(tmpfilename2, ref_ds_src, options="-co TILED=YES -co COMPRESS=JPEG")
+
+    ds = gdal.Open(tmpfilename)
+    ds_ref = gdal.Open(tmpfilename2)
+    try:
+        assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
+    finally:
+        gdal.Unlink(tmpfilename)
+        gdal.Unlink(tmpfilename2)
+
+
+###############################################################################
 # Cleanup
 
 
