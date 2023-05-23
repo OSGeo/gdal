@@ -36,12 +36,15 @@ set(GDAL_PYTHON_CSOURCES
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/gnm.py
       ${CMAKE_CURRENT_BINARY_DIR}/osgeo/ogr.py ${CMAKE_CURRENT_BINARY_DIR}/osgeo/osr.py)
   include(GdalSwigBindings)
+  if( ${SWIG_VERSION} VERSION_LESS "4.1" )
+      set(SWIG_PY3_DEPRECATED "-py3")
+  endif()
   gdal_swig_bindings(
     BINDING
     python
     ARGS
     -I${PROJECT_SOURCE_DIR}/swig/include/python/docs
-    -py3
+    ${SWIG_PY3_DEPRECATED}
     -threads
     -relativeimport
     -outdir
@@ -59,7 +62,7 @@ set(GDAL_PYTHON_CSOURCES
       OUTPUT ${ARRAY_OUTPUT} "${CMAKE_CURRENT_BINARY_DIR}/osgeo/gdal_array.py"
       COMMAND
         ${SWIG_EXECUTABLE} -Wall -I${PROJECT_SOURCE_DIR}/swig/include -I${PROJECT_SOURCE_DIR}/swig/include/python
-        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs -py3 -threads -relativeimport -outdir
+        -I${PROJECT_SOURCE_DIR}/swig/include/python/docs ${SWIG_PY3_DEPRECATED} -threads -relativeimport -outdir
         ${CMAKE_CURRENT_BINARY_DIR}/osgeo ${SWIG_DEFINES} -I${PROJECT_SOURCE_DIR}/gdal -c++ -python -o ${ARRAY_OUTPUT}
         ${ARRAY_INPUT}
       DEPENDS ${ARRAY_INPUT}
