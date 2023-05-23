@@ -1341,7 +1341,7 @@ netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
                 char *pszTemp = nullptr;
                 if (NCDFGetAttr(m_gid, varid, "coordinates", &pszTemp) ==
                     CE_None)
-                    papszTokens = CSLTokenizeString2(pszTemp, " ", 0);
+                    papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
                 CPLFree(pszTemp);
             }
             if (!bBounds)
@@ -1906,7 +1906,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
         // Check that the arrays has as many dimensions as its coordinates
         // attribute
         const CPLStringList aosCoordinates(
-            CSLTokenizeString2(poCoordinates->ReadAsString(), " ", 0));
+            NCDFTokenizeCoordinatesAttribute(poCoordinates->ReadAsString()));
         if (apoArrayDims.size() != static_cast<size_t>(aosCoordinates.size()))
             continue;
 
@@ -3952,7 +3952,7 @@ netCDFVariable::GetCoordinateVariables() const
         if (pszCoordinates)
         {
             const CPLStringList aosNames(
-                CSLTokenizeString2(pszCoordinates, " ", 0));
+                NCDFTokenizeCoordinatesAttribute(pszCoordinates));
             CPLMutexHolderD(&hNCMutex);
             for (int i = 0; i < aosNames.size(); i++)
             {
