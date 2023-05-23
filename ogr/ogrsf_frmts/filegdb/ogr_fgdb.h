@@ -443,13 +443,13 @@ class FGdbDataSource final : public OGRDataSource
 class FGdbDatabaseConnection
 {
   public:
-    FGdbDatabaseConnection(CPLString osName, Geodatabase *pGeodatabase)
+    FGdbDatabaseConnection(const std::string &osName, Geodatabase *pGeodatabase)
         : m_osName(osName), m_pGeodatabase(pGeodatabase), m_nRefCount(1),
           m_bLocked(FALSE), m_bFIDHackInProgress(FALSE)
     {
     }
 
-    CPLString m_osName;
+    std::string m_osName;
     Geodatabase *m_pGeodatabase;
     int m_nRefCount;
     int m_bLocked;

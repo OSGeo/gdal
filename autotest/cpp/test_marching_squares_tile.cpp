@@ -62,8 +62,14 @@ struct Writer
     // check if a segment is in a set of borders
     bool segmentInBorders(int levelIdx, const Segment &segmentToTest) const
     {
-        std::vector<Segment> segments = borders.find(levelIdx)->second;
-        for (Segment &s : segments)
+        const auto iter = borders.find(levelIdx);
+        if (iter == borders.end())
+        {
+            CPLAssert(false);
+            return false;
+        }
+        const auto &segments = iter->second;
+        for (const Segment &s : segments)
         {
             // (A,B) == (A,B) || (A,B) == (B,A)
             if (((coordEquals(s.first.x, segmentToTest.first.x)) &&
@@ -81,8 +87,14 @@ struct Writer
     // check if a segment is in a set of contours
     bool segmentInContours(int levelIdx, const Segment &segmentToTest) const
     {
-        std::vector<Segment> segments = contours.find(levelIdx)->second;
-        for (Segment &s : segments)
+        const auto iter = contours.find(levelIdx);
+        if (iter == contours.end())
+        {
+            CPLAssert(false);
+            return false;
+        }
+        const auto &segments = iter->second;
+        for (const Segment &s : segments)
         {
             // (A,B) == (A,B) || (A,B) == (B,A)
             if (((coordEquals(s.first.x, segmentToTest.first.x)) &&

@@ -336,10 +336,14 @@ bool ZarrGroupBase::RenameDimension(const std::string &osOldName,
         return false;
     }
     auto oIter = m_oMapDimensions.find(osOldName);
-    auto poDim = oIter->second;
-    CPLAssert(oIter != m_oMapDimensions.end());
+    if (oIter == m_oMapDimensions.end())
+    {
+        CPLAssert(false);
+        return false;
+    }
+    auto poDim = std::move(oIter->second);
     m_oMapDimensions.erase(oIter);
-    m_oMapDimensions[osNewName] = poDim;
+    m_oMapDimensions[osNewName] = std::move(poDim);
     return true;
 }
 
@@ -404,9 +408,9 @@ void ZarrGroupBase::NotifyArrayRenamed(const std::string &osOldName,
     auto oIter = m_oMapMDArrays.find(osOldName);
     if (oIter != m_oMapMDArrays.end())
     {
-        auto poArray = oIter->second;
+        auto poArray = std::move(oIter->second);
         m_oMapMDArrays.erase(oIter);
-        m_oMapMDArrays[osNewName] = poArray;
+        m_oMapMDArrays[osNewName] = std::move(poArray);
     }
 }
 

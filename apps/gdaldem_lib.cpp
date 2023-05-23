@@ -1467,7 +1467,6 @@ GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation,
                         pasColorAssociation, (nColorAssociation + nAdded) *
                                                  sizeof(ColorAssociation)));
                 pCurrent = &pasColorAssociation[i];
-                pPrevious = nullptr;
                 pasColorAssociation[nColorAssociation + nAdded - 1] = sPrevious;
                 pasColorAssociation[nColorAssociation + nAdded - 1].dfVal =
                     dfNewValue;
@@ -1489,7 +1488,6 @@ GDALColorReliefProcessColors(ColorAssociation **ppasColorAssociation,
                         pasColorAssociation, (nColorAssociation + nAdded) *
                                                  sizeof(ColorAssociation)));
                 pCurrent = &pasColorAssociation[i];
-                pPrevious = nullptr;
                 pasColorAssociation[nColorAssociation + nAdded - 1] = sCurrent;
                 pasColorAssociation[nColorAssociation + nAdded - 1].dfVal =
                     dfNewValue;

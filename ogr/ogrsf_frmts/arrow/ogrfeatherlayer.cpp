@@ -68,8 +68,8 @@ OGRFeatherLayer::OGRFeatherLayer(
     const arrow::ipc::IpcReadOptions &oOptions,
     std::shared_ptr<arrow::ipc::RecordBatchStreamReader>
         &poRecordBatchStreamReader)
-    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS), m_poFile(poFile),
-      m_bSeekable(bSeekable), m_oOptions(oOptions),
+    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS),
+      m_poFile(std::move(poFile)), m_bSeekable(bSeekable), m_oOptions(oOptions),
       m_poRecordBatchReader(poRecordBatchStreamReader)
 {
     EstablishFeatureDefn();

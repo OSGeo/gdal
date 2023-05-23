@@ -426,6 +426,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
         {
             mysql_free_result(hResult);
             hResult = nullptr;
+            CPL_IGNORE_RET_VAL(hResult);
         }
 
         pszCommand = "DESCRIBE spatial_ref_sys";
@@ -451,6 +452,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
         {
             mysql_free_result(hResult);
             hResult = nullptr;
+            CPL_IGNORE_RET_VAL(hResult);
         }
     }
 

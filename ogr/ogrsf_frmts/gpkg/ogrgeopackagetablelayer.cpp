@@ -1566,7 +1566,7 @@ void OGRGeoPackageTableLayer::InitView()
                 {
                     for (int iCol = 0; iCol < nRawColumns; iCol++)
                     {
-                        CPLString osColName(
+                        const std::string osColName(
                             SQLUnescape(sqlite3_column_name(hStmt, iCol)));
                         const char *pszTableName =
                             sqlite3_column_table_name(hStmt, iCol);

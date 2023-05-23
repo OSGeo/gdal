@@ -1055,11 +1055,10 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                 nRemaining--;
                 returnErrorIf(nRemaining <
                               static_cast<GUInt32>(2 * nCarCount + 1));
-                std::string osRasterColumn(
-                    ReadUTF16String(pabyIter, nCarCount));
+                poRasterField->m_osRasterColumnName =
+                    ReadUTF16String(pabyIter, nCarCount);
                 pabyIter += 2 * nCarCount;
                 nRemaining -= 2 * nCarCount;
-                poRasterField->m_osRasterColumnName = osRasterColumn;
             }
 
             returnErrorIf(nRemaining < 2);
@@ -2122,7 +2121,8 @@ int FileGDBTable::GetIndexCount()
         returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
                                     2 * nIdxNameCarCount,
                                 VSIFree(pabyIdx));
-        std::string osIndexName(ReadUTF16String(pabyCur, nIdxNameCarCount));
+        const std::string osIndexName(
+            ReadUTF16String(pabyCur, nIdxNameCarCount));
         pabyCur += 2 * nIdxNameCarCount;
 
         // Skip magic fields
@@ -2137,7 +2137,8 @@ int FileGDBTable::GetIndexCount()
         returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
                                     2 * nColNameCarCount,
                                 VSIFree(pabyIdx));
-        std::string osExpression(ReadUTF16String(pabyCur, nColNameCarCount));
+        const std::string osExpression(
+            ReadUTF16String(pabyCur, nColNameCarCount));
         pabyCur += 2 * nColNameCarCount;
 
         // Skip magic field

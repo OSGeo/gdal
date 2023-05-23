@@ -2436,7 +2436,7 @@ class CPL_DLL GDALAbstractMDArray
     GDALAbstractMDArray(const std::string &osParentName,
                         const std::string &osName);
 
-    void SetSelf(std::weak_ptr<GDALAbstractMDArray> self)
+    void SetSelf(const std::shared_ptr<GDALAbstractMDArray> &self)
     {
         m_pSelf = self;
     }

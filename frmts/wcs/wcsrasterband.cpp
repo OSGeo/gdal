@@ -180,12 +180,13 @@ CPLErr WCSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     }
 
     if (band_count == 1 &&
-        ((strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1) ||
-         (!strlen(poODS->osBandIdentifier) &&
+        ((!poODS->osBandIdentifier.empty() &&
+          poTileDS->GetRasterCount() != 1) ||
+         (poODS->osBandIdentifier.empty() &&
           poTileDS->GetRasterCount() != poODS->GetRasterCount())))
     {
         CPLString msg;
-        if (strlen(poODS->osBandIdentifier) && poTileDS->GetRasterCount() != 1)
+        if (!poODS->osBandIdentifier.empty() && poTileDS->GetRasterCount() != 1)
         {
             msg.Printf("Got %d bands instead of one although the coverage has "
                        "band range type.\n",
@@ -218,7 +219,7 @@ CPLErr WCSRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         GDALRasterBand *poTileBand = poTileDS->GetRasterBand(iBand + 1);
 
         if (iBand + 1 == GetBand() ||
-            (band_count == 1 && strlen(poODS->osBandIdentifier)))
+            (band_count == 1 && !poODS->osBandIdentifier.empty()))
         {
             eErr = poTileBand->RasterIO(GF_Read, 0, 0, nBlockXSize, nBlockYSize,
                                         pImage, nBlockXSize, nBlockYSize,

@@ -556,8 +556,8 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
             {
                 // The serialized schema is not UTF-8, which is required for
                 // Thrift
-                std::string schema_as_string = (*status)->ToString();
-                std::string schema_base64 =
+                const std::string schema_as_string = (*status)->ToString();
+                const std::string schema_base64 =
                     ::arrow::util::base64_encode(schema_as_string);
                 static const std::string kArrowSchemaKey = "ARROW:schema";
                 const_cast<arrow::KeyValueMetadata *>(
@@ -595,9 +595,9 @@ Open(const ::arrow::Schema &schema, ::arrow::MemoryPool *pool,
     *outMetadata = metadata;
 
     std::unique_ptr<parquet::ParquetFileWriter> base_writer;
-    PARQUET_CATCH_NOT_OK(
-        base_writer = parquet::ParquetFileWriter::Open(
-            std::move(sink), schema_node, std::move(properties), metadata));
+    PARQUET_CATCH_NOT_OK(base_writer = parquet::ParquetFileWriter::Open(
+                             std::move(sink), std::move(schema_node),
+                             std::move(properties), metadata));
 
     auto schema_ptr = std::make_shared<::arrow::Schema>(schema);
     return parquet::arrow::FileWriter::Make(
@@ -655,7 +655,7 @@ void OGRParquetWriterLayer::CreateWriter()
         parquet::ArrowWriterProperties::Builder().store_schema()->build();
     CPL_IGNORE_RET_VAL(Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
                             m_oWriterPropertiesBuilder.build(),
-                            arrowWriterProperties, &m_poFileWriter,
+                            std::move(arrowWriterProperties), &m_poFileWriter,
                             &m_poKeyValueMetadata));
 }
 

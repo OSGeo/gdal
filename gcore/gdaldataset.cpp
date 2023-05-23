@@ -5220,9 +5220,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
     const int nSrcFieldCount = poSrcDefn->GetFieldCount();
 
     // Initialize the index-to-index map to -1's.
-    int *panMap = static_cast<int *>(CPLMalloc(sizeof(int) * nSrcFieldCount));
-    for (int iField = 0; iField < nSrcFieldCount; ++iField)
-        panMap[iField] = -1;
+    std::vector<int> anMap(nSrcFieldCount, -1);
 
     // Caution: At the time of writing, the MapInfo driver
     // returns NULL until a field has been added.
@@ -5239,7 +5237,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
             iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
         if (iDstField >= 0)
         {
-            panMap[iField] = iDstField;
+            anMap[iField] = iDstField;
         }
         else if (poDstLayer->CreateField(&oFieldDefn) == OGRERR_NONE)
         {
@@ -5258,24 +5256,23 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
             }
             else
             {
-                panMap[iField] = nDstFieldCount;
+                anMap[iField] = nDstFieldCount;
                 ++nDstFieldCount;
             }
         }
     }
 
     /* -------------------------------------------------------------------- */
-    OGRCoordinateTransformation *poCT = nullptr;
+    std::unique_ptr<OGRCoordinateTransformation> poCT;
     OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
     if (sourceSRS != nullptr && pszSRSWKT != nullptr && !oDstSpaRef.IsEmpty() &&
         sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
-        poCT = OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
+        poCT.reset(OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef));
         if (nullptr == poCT)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "This input/output spatial reference is not supported.");
-            CPLFree(panMap);
             return nullptr;
         }
     }
@@ -5314,34 +5311,29 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
     /* -------------------------------------------------------------------- */
     /*      Transfer features.                                              */
     /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature = nullptr;
-
     poSrcLayer->ResetReading();
 
     if (nGroupTransactions <= 0)
     {
         while (true)
         {
-            poFeature = poSrcLayer->GetNextFeature();
+            auto poFeature =
+                std::unique_ptr<OGRFeature>(poSrcLayer->GetNextFeature());
 
             if (poFeature == nullptr)
                 break;
 
             CPLErrorReset();
-            OGRFeature *poDstFeature =
-                OGRFeature::CreateFeature(poDstLayer->GetLayerDefn());
+            auto poDstFeature =
+                cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
-            if (poDstFeature->SetFrom(poFeature, panMap, TRUE) != OGRERR_NONE)
+            if (poDstFeature->SetFrom(poFeature.get(), anMap.data(), TRUE) !=
+                OGRERR_NONE)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unable to translate feature " CPL_FRMT_GIB
                          " from layer %s.",
                          poFeature->GetFID(), poSrcDefn->GetName());
-                OGRFeature::DestroyFeature(poFeature);
-                CPLFree(panMap);
-                if (nullptr != poCT)
-                    OCTDestroyCoordinateTransformation(
-                        OGRCoordinateTransformation::ToHandle(poCT));
                 return poDstLayer;
             }
 
@@ -5353,7 +5345,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     if (nullptr == pGeom)
                         continue;
 
-                    const OGRErr eErr = pGeom->transform(poCT);
+                    const OGRErr eErr = pGeom->transform(poCT.get());
                     if (eErr == OGRERR_NONE)
                         continue;
 
@@ -5361,38 +5353,32 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                              "Unable to transform geometry " CPL_FRMT_GIB
                              " from layer %s.",
                              poFeature->GetFID(), poSrcDefn->GetName());
-                    OGRFeature::DestroyFeature(poFeature);
-                    CPLFree(panMap);
-                    OCTDestroyCoordinateTransformation(
-                        OGRCoordinateTransformation::ToHandle(poCT));
                     return poDstLayer;
                 }
             }
 
             poDstFeature->SetFID(poFeature->GetFID());
 
-            OGRFeature::DestroyFeature(poFeature);
-
             CPLErrorReset();
-            if (poDstLayer->CreateFeature(poDstFeature) != OGRERR_NONE)
+            if (poDstLayer->CreateFeature(poDstFeature.get()) != OGRERR_NONE)
             {
-                OGRFeature::DestroyFeature(poDstFeature);
-                CPLFree(panMap);
-                if (nullptr != poCT)
-                    OCTDestroyCoordinateTransformation(
-                        OGRCoordinateTransformation::ToHandle(poCT));
                 return poDstLayer;
             }
-
-            OGRFeature::DestroyFeature(poDstFeature);
         }
     }
     else
     {
-        OGRFeature **papoDstFeature = static_cast<OGRFeature **>(
-            VSI_CALLOC_VERBOSE(sizeof(OGRFeature *), nGroupTransactions));
-
-        bool bStopTransfer = papoDstFeature == nullptr;
+        std::vector<std::unique_ptr<OGRFeature>> apoDstFeatures;
+        try
+        {
+            apoDstFeatures.resize(nGroupTransactions);
+        }
+        catch (const std::exception &e)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return poDstLayer;
+        }
+        bool bStopTransfer = false;
         while (!bStopTransfer)
         {
             /* --------------------------------------------------------------------
@@ -5404,7 +5390,8 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
             int nFeatCount = 0;  // Used after for.
             for (nFeatCount = 0; nFeatCount < nGroupTransactions; ++nFeatCount)
             {
-                poFeature = poSrcLayer->GetNextFeature();
+                auto poFeature =
+                    std::unique_ptr<OGRFeature>(poSrcLayer->GetNextFeature());
 
                 if (poFeature == nullptr)
                 {
@@ -5413,19 +5400,18 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                 }
 
                 CPLErrorReset();
-                papoDstFeature[nFeatCount] =
-                    OGRFeature::CreateFeature(poDstLayer->GetLayerDefn());
+                apoDstFeatures[nFeatCount] =
+                    cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
-                if (papoDstFeature[nFeatCount]->SetFrom(poFeature, panMap,
-                                                        TRUE) != OGRERR_NONE)
+                if (apoDstFeatures[nFeatCount]->SetFrom(
+                        poFeature.get(), anMap.data(), TRUE) != OGRERR_NONE)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Unable to translate feature " CPL_FRMT_GIB
                              " from layer %s.",
                              poFeature->GetFID(), poSrcDefn->GetName());
-                    OGRFeature::DestroyFeature(poFeature);
-                    poFeature = nullptr;
                     bStopTransfer = true;
+                    poFeature.reset();
                     break;
                 }
 
@@ -5434,11 +5420,11 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     for (int iField = 0; iField < nSrcGeomFieldCount; ++iField)
                     {
                         OGRGeometry *pGeom =
-                            papoDstFeature[nFeatCount]->GetGeomFieldRef(iField);
+                            apoDstFeatures[nFeatCount]->GetGeomFieldRef(iField);
                         if (nullptr == pGeom)
                             continue;
 
-                        const OGRErr eErr = pGeom->transform(poCT);
+                        const OGRErr eErr = pGeom->transform(poCT.get());
                         if (eErr == OGRERR_NONE)
                             continue;
 
@@ -5446,18 +5432,15 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                                  "Unable to transform geometry " CPL_FRMT_GIB
                                  " from layer %s.",
                                  poFeature->GetFID(), poSrcDefn->GetName());
-                        OGRFeature::DestroyFeature(poFeature);
                         bStopTransfer = true;
-                        poFeature = nullptr;
+                        poFeature.reset();
                         break;
                     }
                 }
 
                 if (poFeature)
                 {
-                    papoDstFeature[nFeatCount]->SetFID(poFeature->GetFID());
-                    OGRFeature::DestroyFeature(poFeature);
-                    poFeature = nullptr;
+                    apoDstFeatures[nFeatCount]->SetFID(poFeature->GetFID());
                 }
             }
 
@@ -5470,13 +5453,14 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     break;
                 for (int i = 0; i < nFeatCount; ++i)
                 {
-                    if (poDstLayer->CreateFeature(papoDstFeature[i]) !=
+                    if (poDstLayer->CreateFeature(apoDstFeatures[i].get()) !=
                         OGRERR_NONE)
                     {
                         bStopTransfer = true;
                         bStopTransaction = false;
                         break;
                     }
+                    apoDstFeatures[i].reset();
                 }
                 if (bStopTransaction)
                 {
@@ -5488,18 +5472,8 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     poDstLayer->RollbackTransaction();
                 }
             }
-
-            for (int i = 0; i < nFeatCount; ++i)
-                OGRFeature::DestroyFeature(papoDstFeature[i]);
         }
-        CPLFree(papoDstFeature);
     }
-
-    if (nullptr != poCT)
-        OCTDestroyCoordinateTransformation(
-            OGRCoordinateTransformation::ToHandle(poCT));
-
-    CPLFree(panMap);
 
     return poDstLayer;
 }

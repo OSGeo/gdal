@@ -304,8 +304,7 @@ void CPLODBCDriverInstaller::InstallMdbToolsDriver()
                 CPLAssert(!osDriverFile.empty());
                 CPLDebug("ODBC", "MDB Tools driver: %s", osDriverFile.c_str());
 
-                CPLString driverName("Microsoft Access Driver (*.mdb)");
-                CPLString driver(driverName);
+                std::string driver("Microsoft Access Driver (*.mdb)");
                 driver += '\0';
                 driver += "Driver=";
                 driver += osDriverFile;  // Found by FindDriverLib()

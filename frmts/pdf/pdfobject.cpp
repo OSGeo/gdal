@@ -2112,7 +2112,7 @@ class GDALPDFDictionaryPdfium : public GDALPDFDictionary
 
   public:
     GDALPDFDictionaryPdfium(RetainPtr<const CPDF_Dictionary> poDict)
-        : m_poDict(poDict)
+        : m_poDict(std::move(poDict))
     {
     }
     virtual ~GDALPDFDictionaryPdfium();
@@ -2163,7 +2163,7 @@ class GDALPDFStreamPdfium : public GDALPDFStream
 
   public:
     GDALPDFStreamPdfium(RetainPtr<const CPDF_Stream> pStream)
-        : m_pStream(pStream)
+        : m_pStream(std::move(pStream))
     {
     }
     virtual ~GDALPDFStreamPdfium()
@@ -2188,7 +2188,8 @@ class GDALPDFStreamPdfium : public GDALPDFStream
 /************************************************************************/
 
 GDALPDFObjectPdfium::GDALPDFObjectPdfium(RetainPtr<const CPDF_Object> obj)
-    : m_obj(obj), m_poDict(nullptr), m_poArray(nullptr), m_poStream(nullptr)
+    : m_obj(std::move(obj)), m_poDict(nullptr), m_poArray(nullptr),
+      m_poStream(nullptr)
 {
     CPLAssert(m_obj != nullptr);
 }

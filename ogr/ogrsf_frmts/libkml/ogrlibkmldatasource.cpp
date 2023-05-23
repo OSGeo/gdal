@@ -848,8 +848,8 @@ OGRLIBKMLLayer *OGRLIBKMLDataSource::AddLayer(
 
     /***** create the layer *****/
     OGRLIBKMLLayer *poOgrLayer = new OGRLIBKMLLayer(
-        osUniqueLayername, eGType, poSRS, poOgrDS, poKmlRoot, poKmlContainer,
-        m_poKmlUpdate, pszFileName, bNew, bUpdateIn);
+        osUniqueLayername, eGType, poSRS, poOgrDS, std::move(poKmlRoot),
+        std::move(poKmlContainer), m_poKmlUpdate, pszFileName, bNew, bUpdateIn);
 
     /***** add the layer to the array *****/
     const int iLayer = nLayers++;

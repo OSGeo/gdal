@@ -38,8 +38,7 @@
 /************************************************************************/
 
 OGRSOSILayer::OGRSOSILayer(OGRSOSIDataSource *poPar, OGRFeatureDefn *poFeatDefn,
-                           LC_FILADM *poFil,
-                           std::map<CPLString, unsigned int> *poHeadDefn)
+                           LC_FILADM *poFil, S2I *poHeadDefn)
 {
     poParent = poPar;
     poFileadm = poFil;
@@ -500,7 +499,9 @@ OGRFeature *OGRSOSILayer::GetNextFeature()
 
                 if (strcmp(poElements[k].GetName(), "") == 0)
                     continue;
-                int iHNr = poHeaderDefn->find(poElements[k].GetName())->second;
+                const auto oIter = poHeaderDefn->find(poElements[k].GetName());
+                const int iHNr =
+                    oIter == poHeaderDefn->end() ? -1 : oIter->second;
                 if (iHNr == -1)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,

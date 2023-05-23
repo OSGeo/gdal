@@ -248,11 +248,11 @@ class VSIArrowFileSystem final : public arrow::fs::FileSystem
         std::string osPath(path);
         osPath += m_osQueryParameters;
         CPLDebugOnly("PARQUET", "Opening %s", osPath.c_str());
-        VSILFILE *fp = VSIFOpenL(osPath.c_str(), "rb");
+        auto fp = VSIVirtualHandleUniquePtr(VSIFOpenL(osPath.c_str(), "rb"));
         if (fp == nullptr)
             return arrow::Status::IOError("OpenInputFile() failed for " +
                                           osPath);
-        return std::make_shared<OGRArrowRandomAccessFile>(fp);
+        return std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
     }
 
     using arrow::fs::FileSystem::OpenOutputStream;
@@ -363,13 +363,13 @@ static GDALDataset *OpenParquetDatasetWithMetadata(
     arrow::dataset::ParquetFactoryOptions options;
     auto partitioningFactory = arrow::dataset::HivePartitioning::MakeFactory();
     options.partitioning =
-        arrow::dataset::PartitioningOrFactory(partitioningFactory);
+        arrow::dataset::PartitioningOrFactory(std::move(partitioningFactory));
 
     std::shared_ptr<arrow::dataset::DatasetFactory> factory;
     PARQUET_ASSIGN_OR_THROW(
         factory,
         arrow::dataset::ParquetDatasetFactory::Make(
-            osBasePath + '/' + pszMetadataFile, fs,
+            osBasePath + '/' + pszMetadataFile, std::move(fs),
             std::make_shared<arrow::dataset::ParquetFileFormat>(), options));
 
     return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
@@ -390,7 +390,7 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
     arrow::dataset::FileSystemFactoryOptions options;
     auto partitioningFactory = arrow::dataset::HivePartitioning::MakeFactory();
     options.partitioning =
-        arrow::dataset::PartitioningOrFactory(partitioningFactory);
+        arrow::dataset::PartitioningOrFactory(std::move(partitioningFactory));
 
     arrow::fs::FileSelector selector;
     selector.base_dir = osBasePath;
@@ -400,8 +400,8 @@ OpenParquetDatasetWithoutMetadata(const std::string &osBasePathIn,
     PARQUET_ASSIGN_OR_THROW(
         factory,
         arrow::dataset::FileSystemDatasetFactory::Make(
-            fs, selector, std::make_shared<arrow::dataset::ParquetFileFormat>(),
-            options));
+            std::move(fs), selector,
+            std::make_shared<arrow::dataset::ParquetFileFormat>(), options));
 
     return OpenFromDatasetFactory(osBasePath, factory, papszOpenOptions);
 }
@@ -545,15 +545,15 @@ static GDALDataset *OGRParquetDriverOpen(GDALOpenInfo *poOpenInfo)
         if (STARTS_WITH(osFilename.c_str(), "/vsi") ||
             CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_VSI", "NO")))
         {
-            VSILFILE *fp = poOpenInfo->fpL;
+            VSIVirtualHandleUniquePtr fp(poOpenInfo->fpL);
+            poOpenInfo->fpL = nullptr;
             if (fp == nullptr)
             {
-                fp = VSIFOpenL(osFilename.c_str(), "rb");
+                fp.reset(VSIFOpenL(osFilename.c_str(), "rb"));
                 if (fp == nullptr)
                     return nullptr;
             }
-            poOpenInfo->fpL = nullptr;
-            infile = std::make_shared<OGRArrowRandomAccessFile>(fp);
+            infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
         }
         else
         {

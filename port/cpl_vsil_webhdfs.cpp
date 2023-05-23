@@ -634,9 +634,8 @@ char **VSIWebHDFSFSHandler::GetFileList(const char *pszDirname,
     NetworkStatisticsAction oContextAction("ListBucket");
 
     CPLAssert(strlen(pszDirname) >= GetFSPrefix().size());
-    CPLString osDirnameWithoutPrefix = pszDirname + GetFSPrefix().size();
 
-    CPLString osBaseURL = osDirnameWithoutPrefix;
+    CPLString osBaseURL = pszDirname + GetFSPrefix().size();
     if (!osBaseURL.empty() && osBaseURL.back() != '/')
         osBaseURL += '/';
 
