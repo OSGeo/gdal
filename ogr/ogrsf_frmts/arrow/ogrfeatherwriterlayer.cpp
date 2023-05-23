@@ -235,7 +235,7 @@ void OGRFeatherWriterLayer::CreateSchema()
             CPLJSONObject oColumn;
             oColumns.Add(poGeomFieldDefn->GetNameRef(), oColumn);
             oColumn.Add("encoding",
-                        GetGeomEncodingAsString(m_aeGeomEncoding[i]));
+                        GetGeomEncodingAsString(m_aeGeomEncoding[i], true));
 
             const auto poSRS = poGeomFieldDefn->GetSpatialRef();
             if (poSRS)
@@ -393,7 +393,7 @@ void OGRFeatherWriterLayer::PerformStepsBeforeFinalFlushGroup()
             CPLJSONObject oColumn;
             oColumns.Add(poGeomFieldDefn->GetNameRef(), oColumn);
             oColumn.Add("encoding",
-                        GetGeomEncodingAsString(m_aeGeomEncoding[i]));
+                        GetGeomEncodingAsString(m_aeGeomEncoding[i], true));
 
             const auto poSRS = poGeomFieldDefn->GetSpatialRef();
             if (poSRS)

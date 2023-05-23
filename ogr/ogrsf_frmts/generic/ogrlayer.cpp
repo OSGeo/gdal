@@ -5370,8 +5370,11 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
 
 /* static */
 struct ArrowSchema *
-OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn)
+OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
+                                           const char *pszArrowFormat)
 {
+    CPLAssert(strcmp(pszArrowFormat, "z") == 0 ||
+              strcmp(pszArrowFormat, "Z") == 0);
     auto psSchema = static_cast<struct ArrowSchema *>(
         CPLCalloc(1, sizeof(struct ArrowSchema)));
     psSchema->release = OGRLayer::ReleaseSchema;
@@ -5381,7 +5384,7 @@ OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn)
     psSchema->name = CPLStrdup(pszGeomFieldName);
     if (poFieldDefn->IsNullable())
         psSchema->flags = ARROW_FLAG_NULLABLE;
-    psSchema->format = "z";
+    psSchema->format = strcmp(pszArrowFormat, "z") == 0 ? "z" : "Z";
     constexpr const char *ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
     constexpr const char *EXTENSION_NAME = "ogc.wkb";
     char *pszMetadata = static_cast<char *>(CPLMalloc(
