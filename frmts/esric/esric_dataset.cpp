@@ -97,7 +97,7 @@ static inline GUInt32 u32lat(void *data)
 
 struct Bundle
 {
-    Bundle() : fh(nullptr), isV2(true)
+    Bundle() : fh(nullptr), isV2(true), isTpkx(false)
     {
     }
     ~Bundle()
@@ -120,7 +120,7 @@ struct Bundle
         index.resize(BSZ * BSZ);
         if (3 != u32lat(header) || 5 != u32lat(header + 12) ||
             40 != u32lat(header + 32) || 0 != u32lat(header + 36) ||
-            /* BSZ * BSZ != u32lat(header + 4) ||  - this check doesn't seem to work for tpkx */
+            (!isTpkx && BSZ * BSZ != u32lat(header + 4)) || /* skip this check for tpkx */
             BSZ * BSZ * 8 != u32lat(header + 60) ||
             index.size() != VSIFReadL(index.data(), 8, index.size(), fh))
         {
@@ -137,6 +137,7 @@ struct Bundle
     std::vector<GUInt64> index;
     VSILFILE *fh;
     bool isV2;
+    bool isTpkx;
     CPLString name;
     const size_t BSZ = 128;
 };
@@ -389,6 +390,12 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         }
         // Keep 4 bundle files open
         bundles.resize(4);
+        // Set the tile package flag in the bundles
+        for (const auto &bundle : bundles)
+        {
+            bundle.isTpkx = true;
+        }
+
     }
     catch (CPLString &err)
     {
