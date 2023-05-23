@@ -111,6 +111,27 @@ it is lower by 4). This number can be configured with the configuration option
 :decl_configoption:`GDAL_NUM_THREADS`, which can be set to an integer value or
 ``ALL_CPUS``.
 
+Validation script
+-----------------
+
+The :source_file:`swig/python/gdal-utils/osgeo_utils/samples/validate_geoparquet.py`
+Python script can be used to check compliance of a Parquet file against the
+GeoParquet specification.
+
+To validate only metadata:
+
+::
+
+    python3 validate_geoparquet.py my_geo.parquet
+
+
+To validate metadata and check content of geometry column(s):
+
+::
+
+    python3 validate_geoparquet.py --check-data my_geo.parquet
+
+
 Conda-forge package
 -------------------
 

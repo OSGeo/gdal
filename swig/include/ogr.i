@@ -3113,6 +3113,10 @@ public:
     return OGR_G_Area(self);
   }
 
+  bool IsClockwise() {
+    return OGR_G_IsClockwise(self);
+  }
+
   /* old, non-standard API */
   double GetArea() {
     return OGR_G_Area(self);

@@ -358,6 +358,12 @@ static void RemoveIDFromMemberOfEnsembles(CPLJSONObject &obj)
 
 std::string OGRParquetWriterLayer::GetGeoMetadata() const
 {
+    // Just for unit testing purposes
+    const char *pszGeoMetadata =
+        CPLGetConfigOption("OGR_PARQUET_GEO_METADATA", nullptr);
+    if (pszGeoMetadata)
+        return pszGeoMetadata;
+
     if (m_poFeatureDefn->GetGeomFieldCount() != 0 &&
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")))
     {

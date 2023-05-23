@@ -43,6 +43,48 @@ PARQUET_JSON_SCHEMA = "data/parquet/schema.json"
 
 
 ###############################################################################
+# Validate a GeoParquet file
+
+
+def _has_validate():
+    import sys
+
+    from test_py_scripts import samples_path
+
+    try:
+        import jsonschema
+
+        jsonschema.validate
+    except ImportError:
+        print("jsonschema module not available")
+        return False
+
+    path = samples_path
+    if path not in sys.path:
+        sys.path.append(path)
+    try:
+        import validate_geoparquet
+
+        validate_geoparquet.check
+    except ImportError:
+        print("Cannot import validate_geoparquet")
+        return False
+    return True
+
+
+def _validate(filename, check_data=False):
+    if not _has_validate():
+        return
+
+    import validate_geoparquet
+
+    ret = validate_geoparquet.check(
+        filename, check_data=check_data, local_schema=PARQUET_JSON_SCHEMA
+    )
+    assert not ret
+
+
+###############################################################################
 # Read invalid file
 
 
@@ -685,7 +727,6 @@ def test_ogr_parquet_coordinate_epoch(epsg_code):
     assert "geometry" in j["columns"]
     if epsg_code == 4326:
         assert "crs" not in j["columns"]["geometry"]
-        gdaltest.validate_json(j, PARQUET_JSON_SCHEMA)
     else:
         assert "crs" in j["columns"]["geometry"]
         assert j["columns"]["geometry"]["crs"]["type"] == "GeographicCRS"
@@ -697,6 +738,8 @@ def test_ogr_parquet_coordinate_epoch(epsg_code):
     assert srs.GetCoordinateEpoch() == 2022.3
     lyr = None
     ds = None
+
+    _validate(outfilename)
 
     gdal.Unlink(outfilename)
 
@@ -779,14 +822,14 @@ def test_ogr_parquet_crs_identification_on_write(input_definition, expected_crs)
         assert "crs" not in j["columns"]["geometry"]
     else:
         assert "crs" in j["columns"]["geometry"]
-        if expected_crs == "4269":
-            gdaltest.validate_json(j, PARQUET_JSON_SCHEMA)
 
     srs = lyr.GetSpatialRef()
     assert srs is not None
     assert srs.GetAuthorityCode(None) == expected_crs
     lyr = None
     ds = None
+
+    _validate(outfilename)
 
     gdal.Unlink(outfilename)
 
@@ -815,13 +858,9 @@ def test_ogr_parquet_edges(edges):
     else:
         assert lyr.GetMetadataItem("EDGES") is None
 
-    geo = lyr.GetMetadataItem("geo", "_PARQUET_METADATA_")
-    assert geo is not None
-    j = json.loads(geo)
-    assert j is not None
-    gdaltest.validate_json(j, PARQUET_JSON_SCHEMA)
-
     ds = None
+
+    _validate(outfilename)
 
     gdal.Unlink(outfilename)
 
@@ -973,10 +1012,9 @@ def test_ogr_parquet_geometry_types(
         expected_geometry_types
     )
 
-    if expected_geometry_types == ["LineString Z", "MultiLineString"]:
-        gdaltest.validate_json(j, PARQUET_JSON_SCHEMA)
-
     ds = None
+
+    _validate(outfilename)
 
     gdal.Unlink(outfilename)
 
@@ -1037,9 +1075,17 @@ def test_ogr_parquet_polygon_orientation(option_value, written_wkt, expected_wkt
     else:
         assert "orientation" not in j["columns"]["geometry"]
 
-    gdaltest.validate_json(j, PARQUET_JSON_SCHEMA)
-
     ds = None
+
+    try:
+        import numpy
+
+        numpy.zeros
+
+        has_numpy = True
+    except ImportError:
+        has_numpy = False
+    _validate(outfilename, check_data=has_numpy)
 
     gdal.Unlink(outfilename)
 
