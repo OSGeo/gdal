@@ -253,6 +253,7 @@ MAIN_START(argc, argv)
         dfGeoY = CPLAtof(pszLocY);
     }
 
+    int nRetCode = 0;
     while (inputAvailable)
     {
         int iPixel, iLine;
@@ -326,6 +327,7 @@ MAIN_START(argc, argv)
                 printf("\nLocation is off this file! No further details to "
                        "report.\n");
             bPixelReport = false;
+            nRetCode = 1;
         }
 
         /* --------------------------------------------------------------------
@@ -551,6 +553,6 @@ MAIN_START(argc, argv)
 
     CSLDestroy(argv);
 
-    return 0;
+    return nRetCode;
 }
 MAIN_END
