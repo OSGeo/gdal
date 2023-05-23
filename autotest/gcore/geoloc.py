@@ -553,3 +553,68 @@ def test_geoloc_triangles():
     success, pnt = tr.TransformPoint(True, -108376.74703465727, -6257.884312873284)
     assert success
     assert pnt == pytest.approx((6.151710889520756, 7.225915929816924, 0))
+
+
+###############################################################################
+# Test that we emit a warning when inconsistent geoloc vs data sizes are
+# detected
+
+
+@pytest.mark.parametrize(
+    "geoloc_xsize,geoloc_ysize,data_xsize,data_ysize,warning_expected",
+    [
+        (2, 4, 2, 4, False),
+        (2, 4, 2, 5, True),
+        (2, 4, 3, 4, True),
+        (2, 4, 1, 4, False),  # we don't emit warning in that situation. should we?
+        (2, 4, 2, 3, False),  # we don't emit warning in that situation. should we?
+    ],
+)
+def test_geoloc_warnings_inconsistent_size(
+    geoloc_xsize, geoloc_ysize, data_xsize, data_ysize, warning_expected
+):
+
+    geoloc_filename = "/vsimem/test_geoloc_warnings_inconsistent_size_geoloc.tif"
+    geoloc_ds = gdal.GetDriverByName("GTiff").Create(
+        geoloc_filename, geoloc_xsize, geoloc_ysize, 2, gdal.GDT_Float64
+    )
+    x0 = -80
+    y0 = 50
+    for y in range(geoloc_ds.RasterYSize):
+        geoloc_ds.GetRasterBand(1).WriteRaster(
+            0,
+            0,
+            geoloc_ds.RasterXSize,
+            1,
+            array.array("d", [x0 + 0.5 + 1 * x for x in range(geoloc_ds.RasterXSize)]),
+        )
+        geoloc_ds.GetRasterBand(2).WriteRaster(
+            0,
+            0,
+            geoloc_ds.RasterXSize,
+            1,
+            array.array("d", [y0 - 0.5 - 1 * x for x in range(geoloc_ds.RasterXSize)]),
+        )
+    geoloc_ds = None
+    ds = gdal.GetDriverByName("MEM").Create("", data_xsize, data_ysize)
+    md = {
+        "LINE_OFFSET": "0",
+        "LINE_STEP": "1",
+        "PIXEL_OFFSET": "0",
+        "PIXEL_STEP": "1",
+        "X_DATASET": geoloc_filename,
+        "X_BAND": "1",
+        "Y_DATASET": geoloc_filename,
+        "Y_BAND": "2",
+        "SRS": 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]',
+    }
+    ds.SetMetadata(md, "GEOLOCATION")
+
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        tr = gdal.Transformer(ds, None, [])
+        if warning_expected:
+            assert gdal.GetLastErrorMsg() != ""
+        else:
+            assert gdal.GetLastErrorMsg() == ""
+        assert tr

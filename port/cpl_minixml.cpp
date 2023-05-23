@@ -624,7 +624,7 @@ CPLXMLNode *CPLParseXMLString(const char *pszString)
     const CPLString osErrMsg = CPLGetLastErrorMsg();
 
     // Reset it now.
-    CPLErrorReset();
+    CPLErrorSetState(CE_None, CPLE_AppDefined, "");
 
     /* -------------------------------------------------------------------- */
     /*      Check for a UTF-8 BOM and skip if found                         */
