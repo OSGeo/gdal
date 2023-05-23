@@ -431,7 +431,7 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         // Keep 4 bundle files open
         bundles.resize(4);
         // Set the tile package flag in the bundles
-        for (const auto &bundle : bundles)
+        for (auto &bundle : bundles)
         {
             bundle.isTpkx = true;
         }
