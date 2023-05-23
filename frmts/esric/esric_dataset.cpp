@@ -120,7 +120,8 @@ struct Bundle
         index.resize(BSZ * BSZ);
         if (3 != u32lat(header) || 5 != u32lat(header + 12) ||
             40 != u32lat(header + 32) || 0 != u32lat(header + 36) ||
-            (!isTpkx && BSZ * BSZ != u32lat(header + 4)) || /* skip this check for tpkx */
+            (!isTpkx &&
+             BSZ * BSZ != u32lat(header + 4)) || /* skip this check for tpkx */
             BSZ * BSZ * 8 != u32lat(header + 60) ||
             index.size() != VSIFReadL(index.data(), 8, index.size(), fh))
         {
@@ -350,10 +351,49 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         if (resolutions.empty())
             throw CPLString("Can't parse lods");
 
-        if (OGRERR_NONE !=
-            oSRS.SetFromUserInput(CPLString().Printf(
-                "ESRI:%d", oRoot.GetInteger("spatialReference/wkid"))))
+        bool bSuccess = false;
+        const int nCode = oRoot.GetInteger("spatialReference/wkid");
+        // The concept of LatestWKID is explained in
+        // https://support.esri.com/en/technical-article/000013950
+        const int nLatestCode = oRoot.GetInteger("spatialReference/latestWkid");
+
+        // Try first with nLatestWKID as there is a higher chance it is a
+        // EPSG code and not an ESRI one.
+        if (nLatestCode > 0)
+        {
+            if (nLatestCode > 32767)
+            {
+                if (oSRS.SetFromUserInput(CPLSPrintf("ESRI:%d", nLatestCode)) ==
+                    OGRERR_NONE)
+                {
+                    bSuccess = true;
+                }
+            }
+            else if (oSRS.importFromEPSG(nLatestCode) == OGRERR_NONE)
+            {
+                bSuccess = true;
+            }
+        }
+        if (!bSuccess && nCode > 0)
+        {
+            if (nCode > 32767)
+            {
+                if (oSRS.SetFromUserInput(CPLSPrintf("ESRI:%d", nCode)) ==
+                    OGRERR_NONE)
+                {
+                    bSuccess = true;
+                }
+            }
+            else if (oSRS.importFromEPSG(nCode) == OGRERR_NONE)
+            {
+                bSuccess = true;
+            }
+        }
+        if (!bSuccess)
+        {
             throw CPLString("Invalid Spatial Reference");
+        }
+
         oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
         // resolution is the smallest figure
@@ -395,7 +435,6 @@ CPLErr ECDataset::InitializeFromJSON(const CPLJSONObject &oRoot)
         {
             bundle.isTpkx = true;
         }
-
     }
     catch (CPLString &err)
     {
@@ -440,7 +479,7 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLError(CE_Warning, CPLE_OpenFailed,
                      "Error parsing configuration");
-            return nullptr; 
+            return nullptr;
         }
 
         const CPLJSONObject &oRoot = oJSONDocument.GetRoot();
