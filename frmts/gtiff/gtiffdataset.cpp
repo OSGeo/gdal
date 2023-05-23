@@ -523,6 +523,9 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 #endif
 
     void *pBufferedData = nullptr;
+    const auto poFirstBand = cpl::down_cast<GTiffRasterBand *>(papoBands[0]);
+    const auto eDataType = poFirstBand->GetRasterDataType();
+
     if (eAccess == GA_ReadOnly && eRWFlag == GF_Read &&
         (nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG) &&
         HasOptimizedReadMultiRange()
@@ -532,9 +535,8 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 #endif
     )
     {
-        pBufferedData = cpl::down_cast<GTiffRasterBand *>(GetRasterBand(1))
-                            ->CacheMultiRange(nXOff, nYOff, nXSize, nYSize,
-                                              nBufXSize, nBufYSize, psExtraArg);
+        pBufferedData = poFirstBand->CacheMultiRange(
+            nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize, psExtraArg);
     }
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     else if (bCanUseMultiThreadedRead)
@@ -544,6 +546,151 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                  nLineSpace, nBandSpace);
     }
 #endif
+
+    // Write optimization when writing whole blocks, by-passing the block cache.
+    // We require the block cache to be non instanciated to simplify things
+    // (otherwise we might need to evict corresponding existing blocks from the
+    // block cache).
+    else if (eRWFlag == GF_Write && nBands > 1 &&
+             m_nPlanarConfig == PLANARCONFIG_CONTIG &&
+             // Could be extended to "odd bit" case, but more work
+             m_nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+             nXSize == nBufXSize && nYSize == nBufYSize &&
+             nBandCount == nBands && !m_bLoadedBlockDirty &&
+             (nXOff % m_nBlockXSize) == 0 && (nYOff % m_nBlockYSize) == 0 &&
+             (nXOff + nXSize == nRasterXSize ||
+              (nXSize % m_nBlockXSize) == 0) &&
+             (nYOff + nYSize == nRasterYSize || (nYSize % m_nBlockYSize) == 0))
+    {
+        bool bOptimOK = true;
+        bool bOrderedBands = true;
+        for (int i = 0; i < nBands; ++i)
+        {
+            if (panBandMap[i] != i + 1)
+            {
+                bOrderedBands = false;
+            }
+            if (cpl::down_cast<GTiffRasterBand *>(papoBands[panBandMap[i] - 1])
+                    ->HasBlockCache())
+            {
+                bOptimOK = false;
+                break;
+            }
+        }
+        if (bOptimOK)
+        {
+            Crystalize();
+
+            if (m_bDebugDontWriteBlocks)
+                return CE_None;
+
+            const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+            if (bOrderedBands && nXSize == m_nBlockXSize &&
+                nYSize == m_nBlockYSize && eBufType == eDataType &&
+                nBandSpace == nDTSize && nPixelSpace == nDTSize * nBands &&
+                nLineSpace == nPixelSpace * m_nBlockXSize)
+            {
+                // If writing one single block with the right data type and
+                // layout (interleaved per pixel), we don't need a temporary
+                // buffer
+                const int nBlockId = poFirstBand->ComputeBlockId(
+                    nXOff / m_nBlockXSize, nYOff / m_nBlockYSize);
+                return WriteEncodedTileOrStrip(nBlockId, pData,
+                                               /* bPreserveDataBuffer= */ true);
+            }
+
+            // Make sure m_poGDS->m_pabyBlockBuf is allocated.
+            // We could actually use any temporary buffer
+            if (LoadBlockBuf(/* nBlockId = */ -1,
+                             /* bReadFromDisk = */ false) != CE_None)
+            {
+                return CE_Failure;
+            }
+
+            // Iterate over all blocks defined by
+            // [nXOff, nXOff+nXSize[ * [nYOff, nYOff+nYSize[
+            // and write their content as a nBlockXSize x nBlockYSize strile
+            // in a temporary buffer, before calling WriteEncodedTileOrStrip()
+            // on it
+            const int nYBlockStart = nYOff / m_nBlockYSize;
+            const int nYBlockEnd = 1 + (nYOff + nYSize - 1) / m_nBlockYSize;
+            const int nXBlockStart = nXOff / m_nBlockXSize;
+            const int nXBlockEnd = 1 + (nXOff + nXSize - 1) / m_nBlockXSize;
+            for (int nYBlock = nYBlockStart; nYBlock < nYBlockEnd; ++nYBlock)
+            {
+                const int nValidY = std::min(
+                    m_nBlockYSize, nRasterYSize - nYBlock * m_nBlockYSize);
+                for (int nXBlock = nXBlockStart; nXBlock < nXBlockEnd;
+                     ++nXBlock)
+                {
+                    const int nValidX = std::min(
+                        m_nBlockXSize, nRasterXSize - nXBlock * m_nBlockXSize);
+                    if (nValidY < m_nBlockYSize || nValidX < m_nBlockXSize)
+                    {
+                        // Make sure padding bytes at the right/bottom of the
+                        // tile are initialized to zero.
+                        memset(m_pabyBlockBuf, 0,
+                               static_cast<size_t>(m_nBlockXSize) *
+                                   m_nBlockYSize * nBands * nDTSize);
+                    }
+                    const auto nBufDTSize = GDALGetDataTypeSizeBytes(eBufType);
+                    const GByte *pabySrcData =
+                        static_cast<const GByte *>(pData) +
+                        static_cast<size_t>(nYBlock - nYBlockStart) *
+                            m_nBlockYSize * nLineSpace +
+                        static_cast<size_t>(nXBlock - nXBlockStart) *
+                            m_nBlockXSize * nPixelSpace;
+                    if (bOrderedBands && nBandSpace == nBufDTSize &&
+                        nPixelSpace == nBands * nBandSpace)
+                    {
+                        // Input buffer is pixel interleaved
+                        for (int iY = 0; iY < nValidY; ++iY)
+                        {
+                            GDALCopyWords64(
+                                pabySrcData +
+                                    static_cast<size_t>(iY) * nLineSpace,
+                                eBufType, nBufDTSize,
+                                m_pabyBlockBuf + static_cast<size_t>(iY) *
+                                                     m_nBlockXSize * nBands *
+                                                     nDTSize,
+                                eDataType, nDTSize, nValidX * nBands);
+                        }
+                    }
+                    else
+                    {
+                        // "Random" spacing for input buffer
+                        for (int iBand = 0; iBand < nBands; ++iBand)
+                        {
+                            for (int iY = 0; iY < nValidY; ++iY)
+                            {
+                                GDALCopyWords64(
+                                    pabySrcData +
+                                        static_cast<size_t>(iY) * nLineSpace,
+                                    eBufType, static_cast<int>(nPixelSpace),
+                                    m_pabyBlockBuf +
+                                        (panBandMap[iBand] - 1 +
+                                         static_cast<size_t>(iY) *
+                                             m_nBlockXSize * nBands) *
+                                            nDTSize,
+                                    eDataType, nDTSize * nBands, nValidX);
+                            }
+                            pabySrcData += nBandSpace;
+                        }
+                    }
+
+                    const int nBlockId =
+                        poFirstBand->ComputeBlockId(nXBlock, nYBlock);
+                    if (WriteEncodedTileOrStrip(
+                            nBlockId, m_pabyBlockBuf,
+                            /* bPreserveDataBuffer= */ false) != CE_None)
+                    {
+                        return CE_Failure;
+                    }
+                }
+            }
+            return CE_None;
+        }
+    }
 
     if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)
         ++m_nJPEGOverviewVisibilityCounter;

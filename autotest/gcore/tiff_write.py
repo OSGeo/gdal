@@ -27,6 +27,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import array
 import copy
 import math
 import os
@@ -8724,10 +8725,7 @@ def test_tiff_write_lerc_zstd_level(external_ovr):
 
 def test_tiff_write_181_xmp():
 
-    src_ds = gdal.Open("data/utmsmall.tif")
-
-    new_ds = gdaltest.tiff_drv.CreateCopy("tmp/test_181.tif", src_ds)
-    src_ds = None
+    new_ds = gdaltest.tiff_drv.Create("tmp/test_181.tif", 1, 1)
 
     xmp_ds = gdal.Open("../gdrivers/data/gtiff/byte_with_xmp.tif")
     xmp = xmp_ds.GetMetadata("xml:XMP")
@@ -10485,6 +10483,752 @@ def test_tiff_write_lossless_extraction_of_JPEGXL_tile():
 
     gdal.Unlink(tmpfilename_gtiff)
     gdal.Unlink(tmpfilename_jxl)
+
+
+###############################################################################
+# Test band based write block cache by-pass optimization
+
+
+@pytest.mark.parametrize(
+    "xsize,ysize,nbands,dt,interleave,tiled,blockxsize,blockysize,write_dt",
+    [
+        # Raster size multiple of block size
+        (128, 64, 1, gdal.GDT_Byte, "BAND", True, 32, 16, gdal.GDT_Byte),
+        # Write with a different data type
+        (128, 64, 1, gdal.GDT_Byte, "BAND", True, 32, 16, gdal.GDT_UInt16),
+        # Non-byte data type
+        (128, 64, 1, gdal.GDT_UInt16, "BAND", True, 32, 16, gdal.GDT_UInt16),
+        # Raster size is NOT a multiple of block size
+        (130, 65, 1, gdal.GDT_Byte, "BAND", True, 32, 16, gdal.GDT_Byte),
+        # Multiple bands
+        (128, 64, 2, gdal.GDT_Byte, "BAND", True, 32, 16, gdal.GDT_Byte),
+        # Non tiled
+        (128, 64, 1, gdal.GDT_Byte, "BAND", False, 128, 16, gdal.GDT_Byte),
+    ],
+)
+def test_tiff_write_band_block_cache_bypass_optim(
+    xsize, ysize, nbands, dt, interleave, tiled, blockxsize, blockysize, write_dt
+):
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, nbands, dt)
+    if dt == gdal.GDT_Byte:
+        dtype = "B"
+        maxval = 255
+    elif dt == gdal.GDT_UInt16:
+        dtype = "H"
+        maxval = 65535
+    else:
+        assert False, "unhandled case"
+    write_dt_size = gdal.GetDataTypeSize(write_dt) // 8
+
+    tmpfilename = "/vsimem/test_tiff_write_band_block_cache_bypass_optim.tif"
+    options = ["INTERLEAVE=" + interleave]
+    if tiled:
+        options += ["TILED=YES"]
+    options += ["BLOCKXSIZE=" + str(blockxsize)]
+    options += ["BLOCKYSIZE=" + str(blockysize)]
+
+    # Write one non-edge tile
+    if blockxsize < xsize:
+        xoff = blockxsize * 2
+        width = blockxsize
+    else:
+        xoff = 0
+        width = xsize
+    yoff = blockysize * 3
+    height = blockysize
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(xsize * ysize)]),
+    )
+    data = mem_ds.GetRasterBand(1).ReadRaster(
+        xoff, yoff, width, height, buf_type=write_dt
+    )
+    mem_ds.GetRasterBand(1).WriteRaster(
+        0, 0, xsize, ysize, array.array(dtype, [0] * (xsize * ysize))
+    )
+    mem_ds.GetRasterBand(1).WriteRaster(
+        xoff, yoff, width, height, data, buf_type=write_dt
+    )
+    ds.GetRasterBand(1).WriteRaster(xoff, yoff, width, height, data, buf_type=write_dt)
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).ReadRaster() == mem_ds.GetRasterBand(1).ReadRaster()
+    ds = None
+
+    # Same as above, but with non-contiguous buffer spacings (actually transposed buffer)
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(xsize * ysize)]),
+    )
+    data = mem_ds.GetRasterBand(1).ReadRaster(
+        xoff,
+        yoff,
+        width,
+        height,
+        buf_type=write_dt,
+        buf_pixel_space=write_dt_size * height,
+        buf_line_space=write_dt_size,
+    )
+    mem_ds.GetRasterBand(1).WriteRaster(
+        0, 0, xsize, ysize, array.array(dtype, [0] * (xsize * ysize))
+    )
+    mem_ds.GetRasterBand(1).WriteRaster(
+        xoff,
+        yoff,
+        width,
+        height,
+        data,
+        buf_type=write_dt,
+        buf_pixel_space=write_dt_size * height,
+        buf_line_space=write_dt_size,
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        xoff,
+        yoff,
+        width,
+        height,
+        data,
+        buf_type=write_dt,
+        buf_pixel_space=write_dt_size * height,
+        buf_line_space=write_dt_size,
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).ReadRaster() == mem_ds.GetRasterBand(1).ReadRaster()
+    ds = None
+
+    if blockxsize < xsize:
+        # Write one right-most tile
+        xoff = ((xsize - 1) // blockxsize) * blockxsize
+        width = min(blockxsize, xsize - xoff)
+        yoff = blockysize * 3
+        height = blockysize
+        ds = gdal.GetDriverByName("GTiff").Create(
+            tmpfilename, xsize, ysize, nbands, dt, options=options
+        )
+        assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+        mem_ds.GetRasterBand(1).WriteRaster(
+            0,
+            0,
+            xsize,
+            ysize,
+            array.array(dtype, [i % maxval for i in range(xsize * ysize)]),
+        )
+        data = mem_ds.GetRasterBand(1).ReadRaster(
+            xoff, yoff, width, height, buf_type=write_dt
+        )
+        mem_ds.GetRasterBand(1).WriteRaster(
+            0, 0, xsize, ysize, array.array(dtype, [0] * (xsize * ysize))
+        )
+        mem_ds.GetRasterBand(1).WriteRaster(
+            xoff, yoff, width, height, data, buf_type=write_dt
+        )
+        ds.GetRasterBand(1).WriteRaster(
+            xoff, yoff, width, height, data, buf_type=write_dt
+        )
+        assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+        ds = None
+
+        ds = gdal.Open(tmpfilename)
+        assert ds.GetRasterBand(1).ReadRaster() == mem_ds.GetRasterBand(1).ReadRaster()
+        ds = None
+
+    # Write one bottom-most tile
+    if blockxsize < xsize:
+        xoff = blockxsize * 2
+        width = blockxsize
+    else:
+        xoff = 0
+        width = xsize
+    yoff = ((ysize - 1) // blockysize) * blockysize
+    height = min(blockysize, ysize - yoff)
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(xsize * ysize)]),
+    )
+    data = mem_ds.GetRasterBand(1).ReadRaster(
+        xoff, yoff, width, height, buf_type=write_dt
+    )
+    mem_ds.GetRasterBand(1).WriteRaster(
+        0, 0, xsize, ysize, array.array(dtype, [0] * (xsize * ysize))
+    )
+    mem_ds.GetRasterBand(1).WriteRaster(
+        xoff, yoff, width, height, data, buf_type=write_dt
+    )
+    ds.GetRasterBand(1).WriteRaster(xoff, yoff, width, height, data, buf_type=write_dt)
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).ReadRaster() == mem_ds.GetRasterBand(1).ReadRaster()
+    ds = None
+
+    # Whole band writing
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(xsize * ysize)]),
+    )
+    data = mem_ds.GetRasterBand(1).ReadRaster(buf_type=write_dt)
+    ds.GetRasterBand(1).WriteRaster(0, 0, xsize, ysize, data, buf_type=write_dt)
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.GetRasterBand(1).ReadRaster() == mem_ds.GetRasterBand(1).ReadRaster()
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+
+def test_tiff_write_band_block_cache_bypass_optim_non_triggered():
+
+    xsize, ysize, nbands, dt, interleave, tiled, blockxsize, blockysize = (
+        128,
+        64,
+        1,
+        gdal.GDT_Byte,
+        "BAND",
+        True,
+        32,
+        16,
+    )
+    dtype = "B"
+
+    tmpfilename = "/vsimem/test_tiff_write_band_block_cache_bypass_optim.tif"
+    options = ["INTERLEAVE=" + interleave]
+    if tiled:
+        options += ["TILED=YES"]
+    options += ["BLOCKXSIZE=" + str(blockxsize)]
+    options += ["BLOCKYSIZE=" + str(blockysize)]
+
+    # "warm-up": test that optim triggers in situation where it should
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, blockxsize, blockysize, array.array(dtype, [0] * blockxsize * blockysize)
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    # left of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        1, 0, blockxsize, blockysize, array.array(dtype, [0] * blockxsize * blockysize)
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # right of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        blockxsize - 1,
+        blockysize,
+        array.array(dtype, [0] * (blockxsize - 1) * blockysize),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # top of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0, 1, blockxsize, blockysize, array.array(dtype, [0] * blockxsize * blockysize)
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # bottom of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize - 1,
+        array.array(dtype, [0] * blockxsize * (blockysize - 1)),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # read operation involving block cache done before
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).ReadRaster()
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, blockxsize, blockysize, array.array(dtype, [0] * blockxsize * blockysize)
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # write operation involving block cache done before
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).Fill(0)
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, blockxsize, blockysize, array.array(dtype, [0] * blockxsize * blockysize)
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # odd bit case
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options + ["NBITS=7"]
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, blockxsize, blockysize, array.array(dtype, [0] * blockxsize * blockysize)
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # bufxsize != xsize
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * (blockxsize - 1) * blockysize),
+        buf_xsize=blockxsize - 1,
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # bufysize != ysize
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * blockxsize * (blockysize - 1)),
+        buf_ysize=blockysize - 1,
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
+# Test dataset based write block cache by-pass optimization
+
+
+@pytest.mark.parametrize(
+    "xsize,ysize,nbands,dt,interleave,tiled,blockxsize,blockysize,write_dt",
+    [
+        # Raster size multiple of block size
+        (128, 64, 3, gdal.GDT_Byte, "PIXEL", True, 32, 16, gdal.GDT_Byte),
+        # Write with a different data type
+        (128, 64, 3, gdal.GDT_Byte, "PIXEL", True, 32, 16, gdal.GDT_UInt16),
+        # Non-byte data type
+        (128, 64, 3, gdal.GDT_UInt16, "PIXEL", True, 32, 16, gdal.GDT_UInt16),
+        # Raster size is NOT a multiple of block size
+        (130, 65, 3, gdal.GDT_Byte, "PIXEL", True, 32, 16, gdal.GDT_Byte),
+        # Multiple bands
+        (128, 64, 3, gdal.GDT_Byte, "PIXEL", True, 32, 16, gdal.GDT_Byte),
+        # Non tiled
+        (128, 64, 3, gdal.GDT_Byte, "PIXEL", False, 128, 16, gdal.GDT_Byte),
+    ],
+)
+def test_tiff_write_dataset_block_cache_bypass_optim(
+    xsize, ysize, nbands, dt, interleave, tiled, blockxsize, blockysize, write_dt
+):
+
+    mem_ds = gdal.GetDriverByName("MEM").Create("", xsize, ysize, nbands, dt)
+    if dt == gdal.GDT_Byte:
+        dtype = "B"
+        maxval = 255
+    elif dt == gdal.GDT_UInt16:
+        dtype = "H"
+        maxval = 65535
+    else:
+        assert False, "unhandled case"
+    write_dt_size = gdal.GetDataTypeSize(write_dt) // 8
+
+    tmpfilename = "/vsimem/test_tiff_write_band_block_cache_bypass_optim.tif"
+    options = ["INTERLEAVE=" + interleave]
+    if tiled:
+        options += ["TILED=YES"]
+    options += ["BLOCKXSIZE=" + str(blockxsize)]
+    options += ["BLOCKYSIZE=" + str(blockysize)]
+
+    # Write one non-edge tile
+    if blockxsize < xsize:
+        xoff = blockxsize * 2
+        width = blockxsize
+    else:
+        xoff = 0
+        width = xsize
+    yoff = blockysize * 3
+    height = blockysize
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(nbands * xsize * ysize)]),
+    )
+    data = mem_ds.ReadRaster(xoff, yoff, width, height, buf_type=write_dt)
+    mem_ds.WriteRaster(
+        0, 0, xsize, ysize, array.array(dtype, [0] * (nbands * xsize * ysize))
+    )
+    mem_ds.WriteRaster(xoff, yoff, width, height, data, buf_type=write_dt)
+    ds.WriteRaster(xoff, yoff, width, height, data, buf_type=write_dt)
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.ReadRaster() == mem_ds.ReadRaster()
+    ds = None
+
+    # Same as above but using pixel-interleaved buffer
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(nbands * xsize * ysize)]),
+    )
+    buf_pixel_space = nbands * write_dt_size
+    buf_line_space = buf_pixel_space * width
+    data = mem_ds.ReadRaster(
+        xoff,
+        yoff,
+        width,
+        height,
+        buf_type=write_dt,
+        buf_pixel_space=buf_pixel_space,
+        buf_line_space=buf_line_space,
+        buf_band_space=write_dt_size,
+    )
+    mem_ds.WriteRaster(
+        0, 0, xsize, ysize, array.array(dtype, [0] * (nbands * xsize * ysize))
+    )
+    mem_ds.WriteRaster(
+        xoff,
+        yoff,
+        width,
+        height,
+        data,
+        buf_type=write_dt,
+        buf_pixel_space=buf_pixel_space,
+        buf_line_space=buf_line_space,
+        buf_band_space=write_dt_size,
+    )
+    ds.WriteRaster(
+        xoff,
+        yoff,
+        width,
+        height,
+        data,
+        buf_type=write_dt,
+        buf_pixel_space=buf_pixel_space,
+        buf_line_space=buf_line_space,
+        buf_band_space=write_dt_size,
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.ReadRaster() == mem_ds.ReadRaster()
+    ds = None
+
+    # Same as first case but with reversed band order
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(nbands * xsize * ysize)]),
+    )
+    band_list = [i + 1 for i in range(nbands)][::-1]
+    data = mem_ds.ReadRaster(
+        xoff, height, width, blockysize, buf_type=write_dt, band_list=band_list
+    )
+    mem_ds.WriteRaster(
+        0, 0, xsize, ysize, array.array(dtype, [0] * (nbands * xsize * ysize))
+    )
+    mem_ds.WriteRaster(
+        xoff, height, width, blockysize, data, buf_type=write_dt, band_list=band_list
+    )
+    ds.WriteRaster(
+        xoff, height, width, blockysize, data, buf_type=write_dt, band_list=band_list
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.ReadRaster() == mem_ds.ReadRaster()
+    ds = None
+
+    # Whole dataset writing
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    mem_ds.WriteRaster(
+        0,
+        0,
+        xsize,
+        ysize,
+        array.array(dtype, [i % maxval for i in range(nbands * xsize * ysize)]),
+    )
+    data = mem_ds.ReadRaster(buf_type=write_dt)
+    ds.WriteRaster(0, 0, xsize, ysize, data, buf_type=write_dt)
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    ds = gdal.Open(tmpfilename)
+    assert ds.ReadRaster() == mem_ds.ReadRaster()
+    ds = None
+
+    gdal.Unlink(tmpfilename)
+
+
+def test_tiff_write_dataset_block_cache_bypass_optim_non_triggered():
+
+    xsize, ysize, nbands, dt, interleave, tiled, blockxsize, blockysize = (
+        128,
+        64,
+        3,
+        gdal.GDT_Byte,
+        "PIXEL",
+        True,
+        32,
+        16,
+    )
+    dtype = "B"
+
+    tmpfilename = "/vsimem/test_tiff_write_band_block_cache_bypass_optim.tif"
+    options = ["INTERLEAVE=" + interleave]
+    if tiled:
+        options += ["TILED=YES"]
+    options += ["BLOCKXSIZE=" + str(blockxsize)]
+    options += ["BLOCKYSIZE=" + str(blockysize)]
+
+    # "warm-up": test that optim triggers in situation where it should
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * nbands * blockxsize * blockysize),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "0"
+    ds = None
+
+    # left of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        1,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * nbands * blockxsize * blockysize),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # right of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        0,
+        0,
+        blockxsize - 1,
+        blockysize,
+        array.array(dtype, [0] * nbands * (blockxsize - 1) * blockysize),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # top of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        0,
+        1,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * nbands * blockxsize * blockysize),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # bottom of window not aligned on block boundaries
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize - 1,
+        array.array(dtype, [0] * nbands * blockxsize * (blockysize - 1)),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # read operation involving block cache done before
+    for i in range(nbands):
+        ds = gdal.GetDriverByName("GTiff").Create(
+            tmpfilename, xsize, ysize, nbands, dt, options=options
+        )
+        ds.GetRasterBand(i + 1).ReadRaster()
+        ds.WriteRaster(
+            0,
+            0,
+            blockxsize,
+            blockysize,
+            array.array(dtype, [0] * nbands * blockxsize * blockysize),
+        )
+        assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+        ds = None
+
+    # write operation involving block cache done before
+    for i in range(nbands):
+        ds = gdal.GetDriverByName("GTiff").Create(
+            tmpfilename, xsize, ysize, nbands, dt, options=options
+        )
+        ds.GetRasterBand(i + 1).Fill(0)
+        ds.WriteRaster(
+            0,
+            0,
+            blockxsize,
+            blockysize,
+            array.array(dtype, [0] * nbands * blockxsize * blockysize),
+        )
+        assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+        ds = None
+
+    # odd bit case
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options + ["NBITS=7"]
+    )
+    ds.WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * nbands * blockxsize * blockysize),
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # bufxsize != xsize
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * nbands * (blockxsize - 1) * blockysize),
+        buf_xsize=blockxsize - 1,
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # bufysize != ysize
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * nbands * blockxsize * (blockysize - 1)),
+        buf_ysize=blockysize - 1,
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    # bandscount != bands
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tmpfilename, xsize, ysize, nbands, dt, options=options
+    )
+    ds.WriteRaster(
+        0,
+        0,
+        blockxsize,
+        blockysize,
+        array.array(dtype, [0] * (nbands - 1) * blockxsize * blockysize),
+        band_list=[i + 1 for i in range(nbands - 1)],
+        buf_ysize=blockysize - 1,
+    )
+    assert ds.GetRasterBand(1).GetMetadataItem("HAS_BLOCK_CACHE", "_DEBUG_") == "1"
+    ds = None
+
+    gdal.Unlink(tmpfilename)
 
 
 def test_tiff_write_cleanup():
