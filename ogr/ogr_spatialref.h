@@ -981,6 +981,7 @@ struct CPL_DLL OGRCoordinateTransformationOptions
                            double dfNorthLatitudeDeg);
     bool SetDesiredAccuracy(double dfAccuracy);
     bool SetBallparkAllowed(bool bAllowBallpark);
+    bool SetOnlyBest(bool bOnlyBest);
 
     bool SetCoordinateOperation(const char *pszCT, bool bReverseCT);
     /*! @cond Doxygen_Suppress */

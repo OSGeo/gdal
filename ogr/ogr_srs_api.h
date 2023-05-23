@@ -31,6 +31,8 @@
 #ifndef OGR_SRS_API_H_INCLUDED
 #define OGR_SRS_API_H_INCLUDED
 
+#include <stdbool.h>
+
 #ifndef SWIG
 #include "ogr_core.h"
 
@@ -1036,6 +1038,9 @@ int CPL_DLL OCTCoordinateTransformationOptionsSetDesiredAccuracy(
 
 int CPL_DLL OCTCoordinateTransformationOptionsSetBallparkAllowed(
     OGRCoordinateTransformationOptionsH hOptions, int bAllowBallpark);
+
+int CPL_DLL OCTCoordinateTransformationOptionsSetOnlyBest(
+    OGRCoordinateTransformationOptionsH hOptions, bool bOnlyBest);
 
 void CPL_DLL OCTDestroyCoordinateTransformationOptions(
     OGRCoordinateTransformationOptionsH);
