@@ -1360,6 +1360,9 @@ static int OJPEGWriteHeaderInfo(TIFF *tif)
         {
             assert(sp->subsampling_convert_ycbcrbuf == 0);
             assert(sp->subsampling_convert_ycbcrimage == 0);
+            /* Check for division by zero. */
+            if (sp->subsampling_hor == 0 || sp->subsampling_ver == 0)
+                return (0);
             sp->subsampling_convert_ylinelen =
                 ((sp->strile_width + sp->subsampling_hor * 8 - 1) /
                  (sp->subsampling_hor * 8) * sp->subsampling_hor * 8);
