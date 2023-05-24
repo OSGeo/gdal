@@ -2670,7 +2670,10 @@ def test_netcdf_read_missing_value_text_non_numeric():
     )
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("Band1")
-    assert var.GetNoDataValue() is None
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert var.GetNoDataValue() is None
+        assert gdal.GetLastErrorMsg() != ""
 
 
 ###############################################################################
@@ -2684,7 +2687,89 @@ def test_netcdf_read_missing_value_text_numeric_not_in_range():
     )
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("Band1")
-    assert var.GetNoDataValue() is None
+    with gdaltest.error_handler():
+        gdal.ErrorReset()
+        assert var.GetNoDataValue() is None
+        assert gdal.GetLastErrorMsg() != ""
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_of_different_type():
+
+    filename = "tmp/test_netcdf_read_missing_value_of_different_type.nc"
+
+    def create():
+        ds = gdal.GetDriverByName("netCDF").CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        ar = rg.CreateMDArray(
+            "test", [], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+        )
+        attr = ar.CreateAttribute(
+            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        attr.Write(-9999.0)
+
+    def check():
+        ds = gdal.OpenEx(
+            filename,
+            gdal.OF_MULTIDIM_RASTER,
+        )
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Float32
+        assert (
+            var.GetAttribute("missing_value").GetDataType().GetNumericDataType()
+            == gdal.GDT_Float64
+        )
+        assert var.GetNoDataValue() == -9999.0
+
+    try:
+        create()
+        check()
+    finally:
+        os.unlink(filename)
+
+
+###############################################################################
+
+
+def test_netcdf_read_missing_value_of_different_type_not_in_range():
+
+    filename = "tmp/test_netcdf_read_missing_value_of_different_type_not_in_range.nc"
+
+    def create():
+        ds = gdal.GetDriverByName("netCDF").CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        ar = rg.CreateMDArray("test", [], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
+        attr = ar.CreateAttribute(
+            "missing_value", [], gdal.ExtendedDataType.Create(gdal.GDT_Float64)
+        )
+        attr.Write(-9999.0)
+
+    def check():
+        ds = gdal.OpenEx(
+            filename,
+            gdal.OF_MULTIDIM_RASTER,
+        )
+        rg = ds.GetRootGroup()
+        var = rg.OpenMDArray("test")
+        assert var.GetDataType().GetNumericDataType() == gdal.GDT_Byte
+        assert (
+            var.GetAttribute("missing_value").GetDataType().GetNumericDataType()
+            == gdal.GDT_Float64
+        )
+        with gdaltest.error_handler():
+            gdal.ErrorReset()
+            assert var.GetNoDataValue() is None
+            assert gdal.GetLastErrorMsg() != ""
+
+    try:
+        create()
+        check()
+    finally:
+        os.unlink(filename)
 
 
 ###############################################################################
