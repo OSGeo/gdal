@@ -363,8 +363,8 @@ Layer Creation options
 -  **WRITE_BOM**\ =YES/NO: Write a UTF-8 Byte
    Order Mark (BOM) at the start of the file. Default value : NO
 -  **GEOMETRY_NAME**\ =name (Starting with GDAL 2.1): Name of geometry
-   column. Only used if GEOMETRY=AS_WKT and CREATE_CSVT=YES. Defaults to
-   WKT
+   column. Only used if GEOMETRY=AS_WKT (and CREATE_CSVT=YES before GDAL 3.7.1).
+   Defaults to WKT
 -  **STRING_QUOTING**\ =IF_NEEDED/IF_AMBIGUOUS/ALWAYS (Starting with
    GDAL 2.3): whether to double-quote strings. IF_AMBIGUOUS means that
    string values that look like numbers will be quoted (it also implies
