@@ -345,16 +345,25 @@ class OGRTileDBLayer final : public OGRLayer,
         const swq_expr_node *poValue, bool &bAlwaysTrue, bool &bAlwaysFalse);
 
     static void ReleaseArrowArray(struct ArrowArray *array);
-    void FillBoolArray(struct ArrowArray *psChild, int iField);
-    void SetNullBuffer(struct ArrowArray *psChild, int iField);
+    void FillBoolArray(struct ArrowArray *psChild, int iField,
+                       const std::vector<bool> &abyValidityFromFilters);
+    void SetNullBuffer(struct ArrowArray *psChild, int iField,
+                       const std::vector<bool> &abyValidityFromFilters);
     template <typename T>
-    void FillPrimitiveArray(struct ArrowArray *psChild, int iField);
-    void FillBoolListArray(struct ArrowArray *psChild, int iField);
+    void FillPrimitiveArray(struct ArrowArray *psChild, int iField,
+                            const std::vector<bool> &abyValidityFromFilters);
+    void FillBoolListArray(struct ArrowArray *psChild, int iField,
+                           const std::vector<bool> &abyValidityFromFilters);
     template <typename T>
-    void FillPrimitiveListArray(struct ArrowArray *psChild, int iField);
+    void
+    FillPrimitiveListArray(struct ArrowArray *psChild, int iField,
+                           const std::vector<bool> &abyValidityFromFilters);
     template <typename T>
-    void FillStringOrBinaryArray(struct ArrowArray *psChild, int iField);
-    void FillTimeOrDateArray(struct ArrowArray *psChild, int iField);
+    void
+    FillStringOrBinaryArray(struct ArrowArray *psChild, int iField,
+                            const std::vector<bool> &abyValidityFromFilters);
+    void FillTimeOrDateArray(struct ArrowArray *psChild, int iField,
+                             const std::vector<bool> &abyValidityFromFilters);
     int GetArrowSchema(struct ArrowArrayStream *,
                        struct ArrowSchema *out_schema) override;
     int GetNextArrowArray(struct ArrowArrayStream *,
