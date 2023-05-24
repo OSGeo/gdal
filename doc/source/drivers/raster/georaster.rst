@@ -69,39 +69,42 @@ listing the existing rasters stored on the server:
 To list all the GeoRaster table on the server that belongs to that user
 name and database:
 
-% gdalinfo georaster:scott/tiger@db1
+.. code-block:: bash
 
-| To list all the GeoRaster type columns that exist in that table:
+   gdalinfo georaster:scott/tiger@db1
 
-.. container::
+To list all the GeoRaster type columns that exist in that table:
 
-   % gdalinfo georaster:scott/tiger@db1,table_name
+.. code-block:: bash
+
+   gdalinfo georaster:scott/tiger@db1,table_name
 
 That will list all the GeoRaster objects stored in that table.
 
-.. container::
+.. code-block:: bash
 
-   % gdalinfo georaster:scott/tiger@db1,table_name,georaster_column
+   gdalinfo georaster:scott/tiger@db1,table_name,georaster_column
 
 That will list all the GeoRaster existing on that table according to a
 Where clause.
 
-.. container::
+.. code-block:: bash
 
-   % gdalinfo
-   georaster:scott/tiger@db1,table_name,georaster_column,city='Brasilia'
+   gdalinfo georaster:scott/tiger@db1,table_name,georaster_column,city='Brasilia'
 
-|
-| Note that the result of those queries are returned as GDAL metadata
-  sub-datasets, e.g.:
 
-| % gdalinfo georaster:scott/tiger
-| Driver: GeoRaster/Oracle Spatial GeoRaster
-| Subdatasets:
-| SUBDATASET_1_NAME=georaster:scott,tiger,,LANDSAT
-  SUBDATASET_1_DESC=Table:LANDSAT
-  SUBDATASET_2_NAME=georaster:scott,tiger,,GDAL_IMPORT
-  SUBDATASET_2_DESC=Table:GDAL_IMPORT
+Note that the result of those queries are returned as GDAL metadata
+sub-datasets, e.g.:
+
+.. code-block:: bash
+
+  gdalinfo georaster:scott/tiger
+  # Driver: GeoRaster/Oracle Spatial GeoRaster
+  # Subdatasets:
+  # SUBDATASET_1_NAME=georaster:scott,tiger,,LANDSAT
+  # SUBDATASET_1_DESC=Table:LANDSAT
+  # SUBDATASET_2_NAME=georaster:scott,tiger,,GDAL_IMPORT
+  # SUBDATASET_2_DESC=Table:GDAL_IMPORT
 
 Creation Options
 ----------------
@@ -144,20 +147,21 @@ Creation Options
       syntax. If the table already exist, this create option will be
       ignored, e.g.:
 
-% gdal_translate -of georaster landsat_823.tif
-geor:scott/tiger@orcl,landsat,raster \\
-  -co DESCRIPTION="(ID NUMBER, NAME VARCHAR2(40), RASTER
-MDSYS.SDO_GEORASTER)" \\
-  -co INSERT="VALUES (1,'Scene 823',SDO_GEOR.INIT())"
+      .. code-block:: bash
+
+         gdal_translate -of georaster landsat_823.tif geor:scott/tiger@orcl,landsat,raster \
+           -co DESCRIPTION="(ID NUMBER, NAME VARCHAR2(40), RASTER MDSYS.SDO_GEORASTER)" \
+           -co INSERT="VALUES (1,'Scene 823',SDO_GEOR.INIT())"
 
 -  .. co:: INSERT
 
       A simple SQL insert/values clause to inform the driver
       what values to fill up when inserting a new row on the table, e.g.:
 
-| % gdal_translate -of georaster landsat_825.tif
-  geor:scott/tiger@orcl,landsat,raster \\
-    -co INSERT="(ID, RASTER) VALUES (2,SDO_GEOR.INIT())"
+      .. code-block:: bash
+
+         gdal_translate -of georaster landsat_825.tif geor:scott/tiger@orcl,landsat,raster \
+           -co INSERT="(ID, RASTER) VALUES (2,SDO_GEOR.INIT())"
 
 -  .. co:: COMPRESS
       :choices: JPEG-F, JP2-F, DEFLATE, NONE
@@ -270,22 +274,22 @@ insert/values clause to inform the driver about the table to be created
 and the values to be added to the newly created row. The following
 example does that:
 
-| % gdal_translate -of georaster
-  Newpor.tif georaster:scott/tiger,,landsat,scene \\
-|   -co "DESCRIPTION=(ID NUMBER, SITE VARCHAR2(45), SCENE
-  MDSYS.SDO_GEORASTER)" \\
-|   -co "INSERT=VALUES(1,'West fields', SDO_GEOR.INIT())" \\
-|   -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -co "BLOCKBSIZE=3" \\
-|   -co "INTERLEAVE=PIXEL" -co "COMPRESS=JPEG-F"
+.. code-block:: bash
+
+    gdal_translate -of georaster Newpor.tif georaster:scott/tiger,,landsat,scene \
+      -co "DESCRIPTION=(ID NUMBER, SITE VARCHAR2(45), SCENE MDSYS.SDO_GEORASTER)" \
+      -co "INSERT=VALUES(1,'West fields', SDO_GEOR.INIT())" \
+      -co "BLOCKXSIZE=512" -co "BLOCKYSIZE=512" -co "BLOCKBSIZE=3" \
+      -co "INTERLEAVE=PIXEL" -co "COMPRESS=JPEG-F"
 
 Note that the create option DESCRIPTION requires to inform table name
 (in bold). And column name (underlined) should match the description:
 
-| % gdal_translate -of georaster
-  landsat_1.tif georaster:scott/tiger,,landsat,scene \\
-|   -co "DESCRIPTION=(ID NUMBER, SITE VARCHAR2(45), SCENE
-  MDSYS.SDO_GEORASTER)" \\
-|   -co "INSERT=VALUES(1,'West fields', SDO_GEOR.INIT())"
+.. code-block:: bash
+
+    gdal_translate -of georaster landsat_1.tif georaster:scott/tiger,,landsat,scene \
+      -co "DESCRIPTION=(ID NUMBER, SITE VARCHAR2(45), SCENE MDSYS.SDO_GEORASTER)" \
+      -co "INSERT=VALUES(1,'West fields', SDO_GEOR.INIT())"
 
 If the table "landsat" exist, the option "DESCRIPTION" is ignored. The
 driver can only update one GeoRaster column per run of
@@ -293,56 +297,71 @@ gdal_translate. Oracle create default names and values for RDT and RID
 during the initialization of the SDO_GEORASTER object but user are also
 able to specify a name and value of their choice.
 
-| % gdal_translate -of georaster
-  landsat_1.tif georaster:scott/tiger,,landsat,scene \\
-|   -co "INSERT=VALUES(10,'Main building', SDO_GEOR.INIT('RDT', 10))"
+.. code-block:: bash
+
+   gdal_translate -of georaster landsat_1.tif georaster:scott/tiger,,landsat,scene \
+     -co "INSERT=VALUES(10,'Main building', SDO_GEOR.INIT('RDT', 10))"
 
 If no information is given about where to store the raster the driver
 will create (if doesn't exist already) a default table named GDAL_IMPORT
 with just one GeoRaster column named RASTER and a table GDAL_RDT as the
 RDT, the RID will be given automatically by the server, example:
 
-| % gdal_translate -of georaster input.tif “geor:scott/tiger@dbdemo”
+.. code-block:: bash
+
+   gdal_translate -of georaster input.tif “geor:scott/tiger@dbdemo”
 
 Exporting GeoRaster
 -------------------
 
-| A GeoRaster can be identified by a Where clause or by a pair of RDT &
-  RID:
-| % gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54
-  output.tif
-  % gdal_translate -of gtiff geor:scott/tiger@dbdemo,st_rdt_1,130
-  output.tif
+A GeoRaster can be identified by a Where clause or by a pair of RDT & RID:
+
+.. code-block:: bash
+
+   gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54 output.tif
+   gdal_translate -of gtiff geor:scott/tiger@dbdemo,st_rdt_1,130 output.tif
 
 Cross schema access
 -------------------
 
-| As long as the user was granted full access the GeoRaster table and
-  the Raster Data Table, e.g.:
-| % sqlplus scott/tiger
-  SQL> grant select,insert,update,delete on gdal_import to spock;
-  SQL> grant select,insert,update,delete on gdal_rdt to spock;
-| It is possible to an user access to extract and load GeoRaster from
-  another user/schema by informing the schema name as showed here:
-| Browsing:
-| % gdalinfo geor:spock/lion@orcl,scott.
-  %gdalinfo
-  geor:spock/lion@orcl,scott.gdal_import,raster,"t.raster.rasterid >
-  100"
-| %gdalinfo
-  geor:spock/lion@orcl,scott.gdal_import,raster,t.raster.rasterid=101
-  Extracting:
-| %
-  gdal_translate geor:spock/lion@orcl,scott.gdal_import,raster,t.raster.rasterid=101out.tif
-  % gdal_translate geor:spock/lion@orcl,gdal_rdt,101 out.tif
-  Note: On the above example that accessing by RDT/RID doesn't need
-  schame name as long as the users is granted full access to both
-  tables.
-| Loading:
-| % gdal_translate -of georaster input.tifgeor:spock/lion@orcl,scott.
-  % gdal_translate -of georaster input.tif
-  geor:spock/lion@orcl,scott.cities,image \\
-    -co INSERT="(1,'Rio de Janeiro',sdo_geor.init('cities_rdt'))"
+As long as the user was granted full access the GeoRaster table and
+the Raster Data Table, e.g.:
+
+::
+
+    % sqlplus scott/tiger
+    SQL> grant select,insert,update,delete on gdal_import to spock;
+    SQL> grant select,insert,update,delete on gdal_rdt to spock;
+
+It is possible to an user access to extract and load GeoRaster from
+another user/schema by informing the schema name as showed here:
+
+Browsing:
+
+.. code-block:: bash
+
+   gdalinfo geor:spock/lion@orcl,scott.
+   gdalinfo geor:spock/lion@orcl,scott.gdal_import,raster,"t.raster.rasterid > 100"
+   gdalinfo geor:spock/lion@orcl,scott.gdal_import,raster,t.raster.rasterid=101
+
+Extracting:
+
+.. code-block:: bash
+
+   gdal_translate geor:spock/lion@orcl,scott.gdal_import,raster,t.raster.rasterid=101out.tif
+   gdal_translate geor:spock/lion@orcl,gdal_rdt,101 out.tif
+
+Note: On the above example that accessing by RDT/RID doesn't need
+schame name as long as the users is granted full access to both
+tables.
+
+Loading:
+
+.. code-block:: bash
+
+    gdal_translate -of georaster input.tif geor:spock/lion@orcl,scott.
+    gdal_translate -of georaster input.tif geor:spock/lion@orcl,scott.cities,image \
+      -co INSERT="(1,'Rio de Janeiro',sdo_geor.init('cities_rdt'))"
 
 General use of GeoRaster
 ------------------------
