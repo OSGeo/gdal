@@ -597,17 +597,6 @@ option_classes = {
     "oo": OpenOption,
 }
 
-### decl_configoption (to be removed)
-
-
-def decl_configoption(pattern):
-    def role(name, rawtext, text, lineno, inliner, options={}, content=[]):
-        children = [nodes.Text(text, text)]
-        node = nodes.literal(rawtext, "", *children, role=name.lower(), classes=[name])
-        return [node], []
-
-    return role
-
 
 def setup(app):
     app.add_node(
@@ -637,7 +626,5 @@ def setup(app):
     app.add_post_transform(WriteOptionDefinitions)
 
     app.connect("env-updated", log_options)
-
-    app.add_role("decl_configoption", decl_configoption("%s"))
 
     return {"version": "0.1", "parallel_read_safe": True, "parallel_write_safe": True}

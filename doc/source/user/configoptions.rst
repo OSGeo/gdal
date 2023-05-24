@@ -773,6 +773,13 @@ Other global options
 
    Controls whether curved geometries should be approximated by linear geometries.
 
+.. config:: OGR_SQL_LIKE_AS_ILIKE
+   :choices: YES, NO
+   :default: NO
+   :since: 3.1
+
+   If ``YES``, the LIKE operator in the OGR SQL dialect will be case-insensitive (ILIKE), as was the case for GDAL versions prior to 3.1.
+
 .. config:: OGR_FORCE_ASCII
    :choices: YES, NO
    :default: YES

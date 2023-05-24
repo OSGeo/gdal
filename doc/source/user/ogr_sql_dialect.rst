@@ -272,11 +272,11 @@ The available logical operators are
 ``IN``.
 Most of the operators are self explanatory, but it is worth noting that ``!=``
 is the same as ``<>``, the string equality is
-case insensitive, but the ``<``, ``>``, ``<=`` and ``>=`` operators *are* case sensitive. 
+case insensitive, but the ``<``, ``>``, ``<=`` and ``>=`` operators *are* case sensitive.
 
 Starting with GDAL 3.1, LIKE is case sensitive, and ILIKE is case insensitive.
 In previous versions, LIKE was also case insensitive. If the old behavior is
-wished in GDAL 3.1, the :decl_configoption:`OGR_SQL_LIKE_AS_ILIKE` can be set to ``YES``.
+wished in GDAL 3.1, the :config:`OGR_SQL_LIKE_AS_ILIKE` can be set to ``YES``.
 
 The value argument to the ``LIKE`` and ``ILIKE`` operators is a pattern against which
 the value string is matched.  In this pattern percent (%) matches any number of
@@ -553,7 +553,7 @@ and the final SELECT statement could look like:
 .. code-block::
 
     SELECT "_ogr_geometry_" FROM nation
-    
+
 OGR_GEOMETRY
 ++++++++++++
 
