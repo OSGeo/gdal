@@ -196,19 +196,84 @@ Logging
    on bigger or faster drives (SSD).
 
 
+Performance and caching
+^^^^^^^^^^^^^^^^^^^^^^^
 
-General options
-^^^^^^^^^^^^^^^
+.. config:: GDAL_NUM_THREADS
+   :choices: ALL_CPUS, <integer>
+   :default: ALL_CPUS
 
-.. config:: CPL_VSIL_ZIP_ALLOWED_EXTENSIONS
-   :choices: <comma-separated list>
+   Sets the number of worker threads to be used by GDAL operations that support
+   multithreading.
 
-   Add to zip FS handler default extensions array (zip, kmz, dwf, ods, xlsx)
-   additional extensions listed in ``CPL_VSIL_ZIP_ALLOWED_EXTENSIONS`` config
-   option.
+.. config:: GDAL_CACHEMAX
+   :choices: <size>
+   :default: 5%
 
-.. config:: CPL_VSIL_DEFLATE_CHUNK_SIZE
-   :default: 1 M
+   This option controls the default GDAL raster block cache size. If its value
+   is small (less than 100000), it is assumed to be measured in megabytes,
+   otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%
+   of the usable physical RAM. Note that this value is only consulted the first
+   time the cache size is requested.  To change this value programmatically
+   during operation of the program it is better to use
+   :cpp:func:`GDALSetCacheMax` (always in bytes) or or
+   :cpp:func:`GDALSetCacheMax64`. The maximum practical value on 32 bit OS is
+   between 2 and 4 GB. It is the responsibility of the user to set a consistent
+   value.
+
+.. config:: GDAL_FORCE_CACHING
+   :choices: YES, NO
+   :default: NO
+
+   When set to YES, :cpp:func:`GDALDataset::RasterIO` and :cpp:func:`GDALRasterBand::RasterIO`
+   will use cached IO (access block by block through
+   :cpp:func:`GDALRasterBand::IReadBlock` API) instead of a potential driver-specific
+   implementation of IRasterIO(). This will only have an effect on drivers that
+   specialize IRasterIO() at the dataset or raster band level, for example
+   JP2KAK, NITF, HFA, WCS, ECW, MrSID, and JPEG.
+
+.. config:: GDAL_MAX_DATASET_POOL_SIZE
+   :default: 100
+
+    Used by :source_file:`gcore/gdalproxypool.cpp`
+
+    Number of datasets that can be opened simultaneously by the GDALProxyPool
+    mechanism (used by VRT for example). Can be increased to get better random I/O
+    performance with VRT mosaics made of numerous underlying raster files. Be
+    careful : on Linux systems, the number of file handles that can be opened by a
+    process is generally limited to 1024.
+
+.. config:: GDAL_MAX_DATASET_POOL_RAM_USAGE
+   :since: 3.7
+
+   Limit the RAM usage of opened datasets in the GDALProxyPool.
+
+   The value can also be suffixed with ``MB`` or ``GB`` to
+   respectively express it in megabytes or gigabytes. The default value is 25%
+   of the usable physical RAM minus the :config:`GDAL_CACHEMAX` value.
+
+.. config:: GDAL_SWATH_SIZE
+   :default: 1/4 of the maximum block cache size (GDAL_CACHEMAX)
+
+    Used by :source_file:`gcore/rasterio.cpp`
+
+    Size of the swath when copying raster data from one dataset to another one (in
+    bytes). Should not be smaller than :config:`GDAL_CACHEMAX`.
+
+
+.. config:: GDAL_DISABLE_READDIR_ON_OPEN
+    :choices: TRUE, FALSE, EMPTY_DIR
+    :default: FALSE
+
+    By default (FALSE), GDAL establishes a list of all the files in the directory
+    of the file passed to :cpp:func:`GDALOpen`. This can result in speed-ups in some use
+    cases, but also to major slow downs when the directory contains thousands of
+    other files. When set to TRUE, GDAL will not try to establish the list of
+    files.
+
+    If set to EMPTY_DIR, only the file that is being opened will be seen when a
+    GDAL driver will request sibling files, so this is a way to disable loading
+    side-car/auxiliary files.
 
 .. config:: VSI_CACHE
    :choices: TRUE, FALSE
@@ -229,99 +294,8 @@ General options
    ``VSI_CACHE_SIZE`` when opening VRT datasources containing many source
    rasters, as this is a per-file cache.
 
-.. config:: CPL_VSIL_CURL_CACHE_SIZE
-   :choices: <bytes>
-   :default: 16 MB
-   :since: 2.3
-
-   Size of global least-recently-used (LRU) cache shared among all downloaded
-   content.
-
-.. config:: CPL_VSIL_CURL_USE_HEAD
-   :choices: YES, NO
-   :default: YES
-
-   Controls whether to use a HEAD request when opening a remote URL.
-
-.. config:: CPL_VSIL_CURL_USE_S3_REDIRECT
-   :choices: YES, NO
-   :default: YES
-   :since: 2.1
-
-   Try to query quietly redirected URLs to Amazon S3 signed URLs during their
-   validity period, so as to minimize round-trips.
-
-.. config:: GDAL_DATA
-   :choices: <path>
-
-   Path to directory containing various GDAL data files (EPSG CSV files, S-57
-   definition files, DXF header and footer files, ...).
-
-   This option is read by the GDAL and OGR driver registration functions. It is
-   used to expand EPSG codes into their description in the OSR model (WKT
-   based).
-
-   On some builds (Unix), the value can be hard-coded at compilation time to
-   point to the path after installation (/usr/share/gdal/data for example). On
-   Windows platform, this option must be generally declared.
-
-.. config:: GDAL_DISABLE_CPLLOCALEC
-    :choices: YES, NO
-    :default: NO
-
-    If set to YES (default is NO) this option will disable the normal behavior of
-    the CPLLocaleC class which forces the numeric locale to "C" for selected chunks
-    of code using the setlocale() call. Behavior of setlocale() in multi-threaded
-    applications may be undependable but use of this option may result in problem
-    formatting and interpreting numbers properly.
-
-.. config:: GDAL_FILENAME_IS_UTF8
-    :choices: YES, NO
-    :default: YES
-
-    This option only has an effect on Windows systems (using
-    cpl_vsil_win32.cpp). If set to "NO" then filenames passed
-    to functions like :cpp:func:`VSIFOpenL` will be passed on directly to CreateFile()
-    instead of being converted from UTF-8 to wchar_t and passed to
-    CreateFileW(). This effectively restores the pre-GDAL1.8 behavior for
-    handling filenames on Windows and might be appropriate for applications that
-    treat filenames as being in the local encoding.
-
-.. config:: GDAL_DISABLE_READDIR_ON_OPEN
-    :choices: TRUE, FALSE, EMPTY_DIR
-    :default: FALSE
-
-    By default (FALSE), GDAL establishes a list of all the files in the directory
-    of the file passed to :cpp:func:`GDALOpen`. This can result in speed-ups in some use
-    cases, but also to major slow downs when the directory contains thousands of
-    other files. When set to TRUE, GDAL will not try to establish the list of
-    files.
-
-    If set to EMPTY_DIR, only the file that is being opened will be seen when a
-    GDAL driver will request sibling files, so this is a way to disable loading
-    side-car/auxiliary files.
-
-.. config:: GDAL_CACHEMAX
-   :choices: <size>
-   :default: 5%
-
-   This option controls the default GDAL raster block cache size. If its value
-   is small (less than 100000), it is assumed to be measured in megabytes,
-   otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%
-   of the usable physical RAM. Note that this value is only consulted the first
-   time the cache size is requested.  To change this value programmatically
-   during operation of the program it is better to use
-   :cpp:func:`GDALSetCacheMax` (always in bytes) or or
-   :cpp:func:`GDALSetCacheMax64`. The maximum practical value on 32 bit OS is
-   between 2 and 4 GB. It is the responsibility of the user to set a consistent
-   value.
-
-.. config:: GDAL_NUM_THREADS
-   :choices: ALL_CPUS, <integer>
-   :default: ALL_CPUS
-
-   Sets the number of worker threads to be used by GDAL operations that support
-   multithreading.
+Driver management
+^^^^^^^^^^^^^^^^^
 
 .. config:: GDAL_SKIP
    :choices: space-separated list
@@ -369,45 +343,99 @@ General options
    This option must be set before calling :cpp:func:`GDALAllRegister`, or an explicit call
    to :cpp:func:`GDALDriverManager::AutoLoadDrivers` will be required.
 
-.. config:: GDAL_FORCE_CACHING
+General options
+^^^^^^^^^^^^^^^
+
+.. config:: GDAL_DATA
+   :choices: <path>
+
+   Path to directory containing various GDAL data files (EPSG CSV files, S-57
+   definition files, DXF header and footer files, ...).
+
+   This option is read by the GDAL and OGR driver registration functions. It is
+   used to expand EPSG codes into their description in the OSR model (WKT
+   based).
+
+   On some builds (Unix), the value can be hard-coded at compilation time to
+   point to the path after installation (/usr/share/gdal/data for example). On
+   Windows platform, this option must be generally declared.
+
+.. config:: OGR_ARC_STEPSIZE
+   :choices: <degrees>
+   :default: 4
+   :since: 1.8.0
+
+    Used by :cpp:func:`OGR_G_CreateFromGML` (for gml:Arc and gml:Circle) and
+    :cpp:func:`OGRGeometryFactory::approximateArcAngles` to stroke arc to linestrings.
+
+    The approximation of arcs as linestrings is done by splitting the arcs into
+    subarcs of no more than the angle specified by this option.
+
+.. config:: OGR_ARC_MAX_GAP
+   :default: 0
+
+   Arcs will be approximated while enforcing a maximum distance
+   between adjacent points on the interpolated curve. Setting this option
+   to 0 (the default) means no maximum distance applies.
+
+.. config:: OGR_STROKE_CURVE
+   :choices: TRUE, FALSE
+   :default: FALSE
+
+   Controls whether curved geometries should be approximated by linear geometries.
+
+.. config:: OGR_SQL_LIKE_AS_ILIKE
    :choices: YES, NO
    :default: NO
+   :since: 3.1
 
-   When set to YES, :cpp:func:`GDALDataset::RasterIO` and :cpp:func:`GDALRasterBand::RasterIO`
-   will use cached IO (access block by block through
-   :cpp:func:`GDALRasterBand::IReadBlock` API) instead of a potential driver-specific
-   implementation of IRasterIO(). This will only have an effect on drivers that
-   specialize IRasterIO() at the dataset or raster band level, for example
-   JP2KAK, NITF, HFA, WCS, ECW, MrSID, and JPEG.
+   If ``YES``, the LIKE operator in the OGR SQL dialect will be case-insensitive (ILIKE), as was the case for GDAL versions prior to 3.1.
 
-.. config:: GDAL_MAX_DATASET_POOL_SIZE
-   :default: 100
+.. config:: OGR_FORCE_ASCII
+   :choices: YES, NO
+   :default: YES
 
-    Used by :source_file:`gcore/gdalproxypool.cpp`
+    Used by :cpp:func:`OGRGetXML_UTF8_EscapedString` function and by GPX, KML,
+    GeoRSS and GML drivers.
 
-    Number of datasets that can be opened simultaneously by the GDALProxyPool
-    mechanism (used by VRT for example). Can be increased to get better random I/O
-    performance with VRT mosaics made of numerous underlying raster files. Be
-    careful : on Linux systems, the number of file handles that can be opened by a
-    process is generally limited to 1024.
+    Those XML based drivers should write UTF8 content. If they are provided with non
+    UTF8 content, they will replace each non-ASCII character by '?' when
+    OGR_FORCE_ASCII=YES.
 
-.. config:: GDAL_MAX_DATASET_POOL_RAM_USAGE
-   :since: 3.7
+    Set to NO to preserve the content, but beware that the resulting XML file will
+    not be valid and will require manual edition of the encoding in the XML header.
 
-   Limit the RAM usage of opened datasets in the GDALProxyPool.
+.. config:: CPL_VSIL_ZIP_ALLOWED_EXTENSIONS
+   :choices: <comma-separated list>
 
-   The value can also be suffixed with ``MB`` or ``GB`` to
-   respectively express it in megabytes or gigabytes. The default value is 25%
-   of the usable physical RAM minus the :config:`GDAL_CACHEMAX` value.
+   Add to zip FS handler default extensions array (zip, kmz, dwf, ods, xlsx)
+   additional extensions listed in ``CPL_VSIL_ZIP_ALLOWED_EXTENSIONS`` config
+   option.
 
+.. config:: CPL_VSIL_DEFLATE_CHUNK_SIZE
+   :default: 1 M
 
-.. config:: GDAL_SWATH_SIZE
-   :default: 1/4 of the maximum block cache size (GDAL_CACHEMAX)
+.. config:: GDAL_DISABLE_CPLLOCALEC
+    :choices: YES, NO
+    :default: NO
 
-    Used by :source_file:`gcore/rasterio.cpp`
+    If set to YES (default is NO) this option will disable the normal behavior of
+    the CPLLocaleC class which forces the numeric locale to "C" for selected chunks
+    of code using the setlocale() call. Behavior of setlocale() in multi-threaded
+    applications may be undependable but use of this option may result in problem
+    formatting and interpreting numbers properly.
 
-    Size of the swath when copying raster data from one dataset to another one (in
-    bytes). Should not be smaller than :config:`GDAL_CACHEMAX`.
+.. config:: GDAL_FILENAME_IS_UTF8
+    :choices: YES, NO
+    :default: YES
+
+    This option only has an effect on Windows systems (using
+    cpl_vsil_win32.cpp). If set to "NO" then filenames passed
+    to functions like :cpp:func:`VSIFOpenL` will be passed on directly to CreateFile()
+    instead of being converted from UTF-8 to wchar_t and passed to
+    CreateFileW(). This effectively restores the pre-GDAL1.8 behavior for
+    handling filenames on Windows and might be appropriate for applications that
+    treat filenames as being in the local encoding.
 
 .. config:: GDAL_XML_VALIDATION
    :choices: YES, NO
@@ -450,6 +478,28 @@ Networking options
    .. code-block::
 
       gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS "".tif" /vsicurl/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
+
+.. config:: CPL_VSIL_CURL_CACHE_SIZE
+   :choices: <bytes>
+   :default: 16 MB
+   :since: 2.3
+
+   Size of global least-recently-used (LRU) cache shared among all downloaded
+   content.
+
+.. config:: CPL_VSIL_CURL_USE_HEAD
+   :choices: YES, NO
+   :default: YES
+
+   Controls whether to use a HEAD request when opening a remote URL.
+
+.. config:: CPL_VSIL_CURL_USE_S3_REDIRECT
+   :choices: YES, NO
+   :default: YES
+   :since: 2.1
+
+   Try to query quietly redirected URLs to Amazon S3 signed URLs during their
+   validity period, so as to minimize round-trips.
 
 .. config:: CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE
    :choices: YES, NO
@@ -745,54 +795,6 @@ PROJ options
 
    If ``NO``, disables the coordinate epoch associated with the target or
    source CRS when transforming between a static and dynamic CRS.
-
-Other global options
-^^^^^^^^^^^^^^^^^^^^
-
-.. config:: OGR_ARC_STEPSIZE
-   :choices: <degrees>
-   :default: 4
-   :since: 1.8.0
-
-    Used by :cpp:func:`OGR_G_CreateFromGML` (for gml:Arc and gml:Circle) and
-    :cpp:func:`OGRGeometryFactory::approximateArcAngles` to stroke arc to linestrings.
-
-    The approximation of arcs as linestrings is done by splitting the arcs into
-    subarcs of no more than the angle specified by this option.
-
-.. config:: OGR_ARC_MAX_GAP
-   :default: 0
-
-   Arcs will be approximated while enforcing a maximum distance
-   between adjacent points on the interpolated curve. Setting this option
-   to 0 (the default) means no maximum distance applies.
-
-.. config:: OGR_STROKE_CURVE
-   :choices: TRUE, FALSE
-   :default: FALSE
-
-   Controls whether curved geometries should be approximated by linear geometries.
-
-.. config:: OGR_SQL_LIKE_AS_ILIKE
-   :choices: YES, NO
-   :default: NO
-   :since: 3.1
-
-   If ``YES``, the LIKE operator in the OGR SQL dialect will be case-insensitive (ILIKE), as was the case for GDAL versions prior to 3.1.
-
-.. config:: OGR_FORCE_ASCII
-   :choices: YES, NO
-   :default: YES
-
-    Used by :cpp:func:`OGRGetXML_UTF8_EscapedString` function and by GPX, KML,
-    GeoRSS and GML drivers.
-
-    Those XML based drivers should write UTF8 content. If they are provided with non
-    UTF8 content, they will replace each non-ASCII character by '?' when
-    OGR_FORCE_ASCII=YES.
-
-    Set to NO to preserve the content, but beware that the resulting XML file will
-    not be valid and will require manual edition of the encoding in the XML header.
 
 
 .. _list_config_options:
