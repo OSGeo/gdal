@@ -1225,3 +1225,52 @@ def test_tiff_srs_projected_GTCitationGeoKey_with_underscore_and_GeogTOWGS84GeoK
     assert "+proj=tmerc" in srs.ExportToProj4()
     if osr.GetPROJVersionMajor() >= 9:  # not necessarily the minimum version
         assert srs.GetName() == "Israel 1993 / Israeli TM Grid"
+
+
+def test_tiff_srs_write_compound_with_non_epsg_vert_crs():
+
+    """Test bugfix for https://github.com/OSGeo/gdal/issues/7833"""
+
+    filename = "/vsimem/test_tiff_srs_write_compound_with_non_epsg_vert_crs.tif"
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput(
+        """COMPD_CS["TestMS",
+    GEOGCS["NAD83(2011)",
+        DATUM["NAD83_National_Spatial_Reference_System_2011",
+            SPHEROID["GRS 1980",6378137,298.257222101,
+                AUTHORITY["EPSG","7019"]],
+            AUTHORITY["EPSG","1116"]],
+        PRIMEM["Greenwich",0,
+            AUTHORITY["EPSG","8901"]],
+        UNIT["degree",0.0174532925199433,
+            AUTHORITY["EPSG","9122"]],
+        AXIS["Latitude",NORTH],
+        AXIS["Longitude",EAST],
+        AUTHORITY["EPSG","6318"]],
+    VERT_CS["Mississippi_River_ERTDM_TCARI_MLLW_Riley2023",
+        VERT_DATUM["MLLW_Riley2023",2005,
+            AUTHORITY["NOAA","799"]],
+        UNIT["metre",1,
+            AUTHORITY["EPSG","9001"]],
+        AXIS["Gravity-related height",UP],
+        AUTHORITY["NOAA","800"]],
+    AUTHORITY["NOAA","2000"]]"""
+    )
+
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    gdal.ErrorReset()
+    ds = None
+    assert gdal.GetLastErrorMsg() == ""
+
+    ds = gdal.Open(filename)
+    srs = ds.GetSpatialRef()
+    wkt = srs.ExportToWkt()
+    assert gdal.GetLastErrorMsg() == ""
+
+    gdal.Unlink(filename)
+
+    assert (
+        wkt
+        == """COMPD_CS["TestMS",GEOGCS["NAD83(2011)",DATUM["NAD83_National_Spatial_Reference_System_2011",SPHEROID["GRS 1980",6378137,298.257222101004,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","1116"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","6318"]],VERT_CS["Mississippi_River_ERTDM_TCARI_MLLW_Riley2023",VERT_DATUM["unknown",2005],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Up",UP]]]"""
+    )

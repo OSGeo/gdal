@@ -3264,12 +3264,20 @@ int GTIFSetFromOGISDefnEx(GTIF *psGTIF, OGRSpatialReferenceH hSRS,
     if (poSRS->GetAttrValue("COMPD_CS|VERT_CS") != nullptr)
     {
         bool bGotVertCSCode = false;
-        const char *pszValue = poSRS->GetAuthorityCode("COMPD_CS|VERT_CS");
-        if (pszValue && atoi(pszValue))
+        const char *pszVertCSCode = poSRS->GetAuthorityCode("COMPD_CS|VERT_CS");
+        const char *pszVertCSAuthName =
+            poSRS->GetAuthorityName("COMPD_CS|VERT_CS");
+        if (pszVertCSCode && pszVertCSAuthName && atoi(pszVertCSCode) &&
+            EQUAL(pszVertCSAuthName, "EPSG"))
         {
             bGotVertCSCode = true;
             GTIFKeySet(psGTIF, VerticalCSTypeGeoKey, TYPE_SHORT, 1,
-                       atoi(pszValue));
+                       atoi(pszVertCSCode));
+        }
+        else if (eVersion >= GEOTIFF_VERSION_1_1)
+        {
+            GTIFKeySet(psGTIF, VerticalCSTypeGeoKey, TYPE_SHORT, 1,
+                       KvUserDefined);
         }
 
         if (eVersion == GEOTIFF_VERSION_1_0 || !bGotVertCSCode)
@@ -3277,15 +3285,37 @@ int GTIFSetFromOGISDefnEx(GTIF *psGTIF, OGRSpatialReferenceH hSRS,
             oMapAsciiKeys[VerticalCitationGeoKey] =
                 poSRS->GetAttrValue("COMPD_CS|VERT_CS");
 
-            pszValue = poSRS->GetAuthorityCode("COMPD_CS|VERT_CS|VERT_DATUM");
-            if (pszValue && atoi(pszValue))
+            const char *pszVertDatumCode =
+                poSRS->GetAuthorityCode("COMPD_CS|VERT_CS|VERT_DATUM");
+            const char *pszVertDatumAuthName =
+                poSRS->GetAuthorityName("COMPD_CS|VERT_CS|VERT_DATUM");
+            if (pszVertDatumCode && pszVertDatumAuthName &&
+                atoi(pszVertDatumCode) && EQUAL(pszVertDatumAuthName, "EPSG"))
+            {
                 GTIFKeySet(psGTIF, VerticalDatumGeoKey, TYPE_SHORT, 1,
-                           atoi(pszValue));
+                           atoi(pszVertDatumCode));
+            }
+            else if (eVersion >= GEOTIFF_VERSION_1_1)
+            {
+                GTIFKeySet(psGTIF, VerticalDatumGeoKey, TYPE_SHORT, 1,
+                           KvUserDefined);
+            }
 
-            pszValue = poSRS->GetAuthorityCode("COMPD_CS|VERT_CS|UNIT");
-            if (pszValue && atoi(pszValue))
+            const char *pszVertUnitCode =
+                poSRS->GetAuthorityCode("COMPD_CS|VERT_CS|UNIT");
+            const char *pszVertUnitAuthName =
+                poSRS->GetAuthorityName("COMPD_CS|VERT_CS|UNIT");
+            if (pszVertUnitCode && pszVertUnitAuthName &&
+                atoi(pszVertUnitCode) && EQUAL(pszVertUnitAuthName, "EPSG"))
+            {
                 GTIFKeySet(psGTIF, VerticalUnitsGeoKey, TYPE_SHORT, 1,
-                           atoi(pszValue));
+                           atoi(pszVertUnitCode));
+            }
+            else if (eVersion >= GEOTIFF_VERSION_1_1)
+            {
+                GTIFKeySet(psGTIF, VerticalUnitsGeoKey, TYPE_SHORT, 1,
+                           KvUserDefined);
+            }
         }
     }
     else if (eVersion >= GEOTIFF_VERSION_1_1 && nVerticalCSKeyValue != 0)
