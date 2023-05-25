@@ -2032,6 +2032,19 @@ The following options are available to select a subset of drivers:
         The following GDAL drivers cannot be disabled: VRT, DERIVED, GTiff, COG, HFA, MEM.
         The following OGR drivers cannot be disabled: "ESRI Shapefile", "MapInfo File", OGR_VRT, Memory, KML, GeoJSON, GeoJSONSeq, ESRIJSON, TopoJSON.
 
+    .. note::
+
+        Disabling all OGR/vector drivers with -DOGR_BUILD_OPTIONAL_DRIVERS=OFF may affect
+        the ability to enable some GDAL/raster drivers that require some vector
+        drivers to be enabled (and reciprocally with some GDAL/raster drivers depending
+        on vector drivers).
+        When such dependencies are not met, a CMake error will be emitted with a hint
+        for the way to resolve the issue.
+        It is also possible to anticipate such errors by looking at files
+        :source_file:`frmts/CMakeLists.txt` for dependencies of raster drivers
+        and :source_file:`ogr/ogrsf_frmts/CMakeLists.txt` for dependencies of vector drivers.
+
+
 Example of minimal build with the JP2OpenJPEG and SVG drivers enabled::
 
     cmake .. -UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_* \
@@ -2078,7 +2091,6 @@ a driver:
     Note that changing the value of GDAL_ENABLE_PLUGINS after a first
     run of CMake does not change the activation of the plugin status of individual drivers.
     It might be needed to pass ``-UGDAL_ENABLE_DRIVER_* -UOGR_ENABLE_DRIVER_*`` to reset their state.
-
 
 Example of build with all potential drivers as plugins, except the JP2OpenJPEG one::
 
