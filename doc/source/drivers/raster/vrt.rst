@@ -1291,9 +1291,9 @@ configuration options:
 
       - YES: all VRT scripts are considered as trusted and their Python pixel functions will be run when pixel operations are involved.
       - NO: all VRT scripts are considered untrusted, and none Python pixelfunction will be run.
-      - TRUSTED_MODULES (default setting): all VRT scripts with inline Python code in their PixelFunctionCode elements will be considered untrusted and will not be run. VRT scripts that use a PixelFunctionType of the form "module_name.function_name" will be considered as trusted, only if "module_name" is allowed in the :config:`GDAL_VRT_TRUSTED_MODULES` configuration option.
+      - TRUSTED_MODULES (default setting): all VRT scripts with inline Python code in their PixelFunctionCode elements will be considered untrusted and will not be run. VRT scripts that use a PixelFunctionType of the form "module_name.function_name" will be considered as trusted, only if "module_name" is allowed in the :config:`GDAL_VRT_PYTHON_TRUSTED_MODULES` configuration option.
 
--  .. config:: GDAL_VRT_TRUSTED_MODULES
+-  .. config:: GDAL_VRT_PYTHON_TRUSTED_MODULES
 
       The value of this configuration option is a comma separated listed of trusted module names. The '*' wildcard can be used at the name of a string to match all strings beginning with the substring before the '*' character. For example 'every*' will make 'every.thing' or 'everything' module trusted. '*' can also be used to make all modules to be trusted. The ".*" wildcard can also be used to match exact modules or submodules names. For example 'every.*' will make 'every' and 'every.thing' modules trusted, but not 'everything'.
 
