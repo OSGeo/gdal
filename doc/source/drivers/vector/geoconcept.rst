@@ -157,9 +157,9 @@ Layer Creation Options
       type section. The ``SUBTYPE`` corresponds to one of the ``Name`` found
       in the GCT file for a sub-type section within the previous type section.
 
-      At the present moment, coordinates are written with 2 decimals for
-      Cartesian spatial reference systems (including height) or with 9
-      decimals for geographical spatial reference systems.
+At the present moment, coordinates are written with 2 decimals for
+Cartesian spatial reference systems (including height) or with 9
+decimals for geographical spatial reference systems.
 
 Examples
 ~~~~~~~~
