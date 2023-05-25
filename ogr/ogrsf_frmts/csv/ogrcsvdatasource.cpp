@@ -792,78 +792,80 @@ bool OGRCSVDataSource::OpenTable(const char *pszFilename,
         }
         osLine = pszLine;
     }
-    char chDelimiter = CSVDetectSeperator(osLine.c_str());
-    if (chDelimiter != '\t' && osLine.find('\t') != std::string::npos)
+
+    char chDelimiter = ',';
+    const char *pszDelimiter =
+        CSLFetchNameValueDef(papszOpenOptionsIn, "SEPARATOR", "AUTO");
+    if (EQUAL(pszDelimiter, "AUTO"))
     {
-        // Force the delimiter to be TAB for a .tsv file that has a tabulation
-        // in its first line */
-        if (EQUAL(osExt, "tsv"))
+        chDelimiter = CSVDetectSeperator(osLine.c_str());
+        if (chDelimiter != '\t' && osLine.find('\t') != std::string::npos)
         {
-            chDelimiter = '\t';
-        }
-        else
-        {
-            for (int nDontHonourStrings = 0; nDontHonourStrings <= 1;
-                 nDontHonourStrings++)
+            // Force the delimiter to be TAB for a .tsv file that has a tabulation
+            // in its first line */
+            if (EQUAL(osExt, "tsv"))
             {
-                const bool bHonourStrings = !CPL_TO_BOOL(nDontHonourStrings);
-                // Read the first 2 lines to see if they have the same number
-                // of fields, if using tabulation.
-                VSIRewindL(fp);
-                char **papszTokens = CSVReadParseLine3L(
-                    fp, nMaxLineSizeAsSize_t, "\t", bHonourStrings,
-                    false,  // bKeepLeadingAndClosingQuotes
-                    false,  // bMergeDelimiter
-                    true    // bSkipBOM
-                );
-                const int nTokens1 = CSLCount(papszTokens);
-                CSLDestroy(papszTokens);
-                papszTokens = CSVReadParseLine3L(
-                    fp, nMaxLineSizeAsSize_t, "\t", bHonourStrings,
-                    false,  // bKeepLeadingAndClosingQuotes
-                    false,  // bMergeDelimiter
-                    true    // bSkipBOM
-                );
-                const int nTokens2 = CSLCount(papszTokens);
-                CSLDestroy(papszTokens);
-                if (nTokens1 >= 2 && nTokens1 == nTokens2)
+                chDelimiter = '\t';
+            }
+            else
+            {
+                for (int nDontHonourStrings = 0; nDontHonourStrings <= 1;
+                     nDontHonourStrings++)
                 {
-                    chDelimiter = '\t';
-                    break;
+                    const bool bHonourStrings =
+                        !CPL_TO_BOOL(nDontHonourStrings);
+                    // Read the first 2 lines to see if they have the same number
+                    // of fields, if using tabulation.
+                    VSIRewindL(fp);
+                    char **papszTokens = CSVReadParseLine3L(
+                        fp, nMaxLineSizeAsSize_t, "\t", bHonourStrings,
+                        false,  // bKeepLeadingAndClosingQuotes
+                        false,  // bMergeDelimiter
+                        true    // bSkipBOM
+                    );
+                    const int nTokens1 = CSLCount(papszTokens);
+                    CSLDestroy(papszTokens);
+                    papszTokens = CSVReadParseLine3L(
+                        fp, nMaxLineSizeAsSize_t, "\t", bHonourStrings,
+                        false,  // bKeepLeadingAndClosingQuotes
+                        false,  // bMergeDelimiter
+                        true    // bSkipBOM
+                    );
+                    const int nTokens2 = CSLCount(papszTokens);
+                    CSLDestroy(papszTokens);
+                    if (nTokens1 >= 2 && nTokens1 == nTokens2)
+                    {
+                        chDelimiter = '\t';
+                        break;
+                    }
                 }
             }
         }
+
+        // GNIS specific.
+        if (pszGeonamesGeomFieldPrefix != nullptr &&
+            osLine.find('|') != std::string::npos)
+            chDelimiter = '|';
+    }
+    else if (EQUAL(pszDelimiter, "COMMA"))
+        chDelimiter = ',';
+    else if (EQUAL(pszDelimiter, "SEMICOLON"))
+        chDelimiter = ';';
+    else if (EQUAL(pszDelimiter, "TAB"))
+        chDelimiter = '\t';
+    else if (EQUAL(pszDelimiter, "SPACE"))
+        chDelimiter = ' ';
+    else if (EQUAL(pszDelimiter, "PIPE"))
+        chDelimiter = '|';
+    else
+    {
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "SEPARATOR=%s not understood, use one of COMMA, "
+                 "SEMICOLON, TAB, SPACE or PIPE",
+                 pszDelimiter);
     }
 
     VSIRewindL(fp);
-
-#if 0
-    const char *pszDelimiter = CSLFetchNameValueDef(papszOpenOptionsIn,
-                                                    "SEPARATOR", "AUTO");
-    if( !EQUAL(pszDelimiter, "AUTO") )
-    {
-        if (EQUAL(pszDelimiter, "COMMA"))
-            chDelimiter = ',';
-        else if (EQUAL(pszDelimiter, "SEMICOLON"))
-            chDelimiter = ';';
-        else if (EQUAL(pszDelimiter, "TAB"))
-            chDelimiter = '\t';
-        else if (EQUAL(pszDelimiter, "SPACE"))
-            chDelimiter = ' ';
-        else
-        {
-            CPLError(CE_Warning, CPLE_AppDefined,
-                     "SEPARATOR=%s not understood, use one of COMMA, "
-                     "SEMICOLON, SPACE or TAB.",
-                     pszDelimiter);
-        }
-    }
-#endif
-
-    // GNIS specific.
-    if (pszGeonamesGeomFieldPrefix != nullptr &&
-        osLine.find('|') != std::string::npos)
-        chDelimiter = '|';
 
     // Create a layer.
     nLayers++;
