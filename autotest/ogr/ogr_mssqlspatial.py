@@ -606,7 +606,7 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order():
     if gdaltest.mssqlspatial_ds is None:
         pytest.skip()
 
-    source_ds = gdal.OpenEx("data/poly.shp", gdal.OF_VECTOR)
+    source_ds = gdal.OpenEx("data/shp/testpoly.shp", gdal.OF_VECTOR)
 
     assert source_ds
 
@@ -614,16 +614,29 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order():
         with gdaltest.error_handler():
             ds = gdal.VectorTranslate(
                 gdaltest.mssqlspatial_dsname,
-                "data/poly.shp",
-                options="-nln poly_vertex_order -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY",
+                "data/shp/testpoly.shp",
+                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY",
             )
 
             lyr = ds.GetLayerByName("poly_vertex_order")
             assert lyr
+
+            # Simple polygon, no inner rings
             feature = lyr.GetFeature(1)
             geometry = feature.GetGeometryRef()
             boundary = geometry.GetBoundary()
+            # Outer ring
             assert not boundary.IsClockwise()
+
+            # Inner ring
+            feature = lyr.GetFeature(13)
+            geometry = feature.GetGeometryRef()
+            boundary = geometry.GetBoundary()
+            # Outer ring
+            assert not boundary.GetGeometryRef(0).IsClockwise()
+            # Inner ring
+            assert boundary.GetGeometryRef(1).IsClockwise()
+
             del lyr
     finally:
         gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE poly_vertex_order")
