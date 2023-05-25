@@ -648,6 +648,8 @@ and should be preferred (see above):
       creation option should be used instead.
 
 -  .. config:: ES_OVERWRITE
+      :choices: YES, NO
+      :default: NO
 
       Overwrites the current index by deleting an
       existing one. Starting with GDAL 2.1, the :lco:`OVERWRITE` layer
