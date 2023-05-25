@@ -66,7 +66,7 @@ available:
 
 -  :copy-config:`EEDA_BEARER`
 
--  :copy-config:`EF EEDA_BEARER_FILE`
+-  :copy-config:`EEDA_BEARER_FILE`
 
 -  :copy-config:`GOOGLE_APPLICATION_CREDENTIALS`
 
