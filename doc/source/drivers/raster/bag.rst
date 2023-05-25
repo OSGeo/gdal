@@ -80,7 +80,7 @@ MODE open option:
 
    Driver mode.
 
-   -  MODE=LOW_RES_GRID: this is the default mode. The driver will expose
+   -  MODE=LOW_RES_GRID: this is the default mode (unless opening a supergrid). The driver will expose
       the low resolution grid, and indicate in the dataset metadata if the
       dataset has supergrids (HAS_SUPERGRIDS=TRUE), as well as the minimum
       and maximum resolution of those grids.
