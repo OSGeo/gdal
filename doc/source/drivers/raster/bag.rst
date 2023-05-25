@@ -305,7 +305,7 @@ options are:
       Value to fill
       metadataConstraints/MD_SecurityConstraints/classification/MD_ClassificationCode.
 
--  .. co:: AR_SECURITY_USER_NOTE
+-  .. co:: VAR_SECURITY_USER_NOTE
       :default: none
 
       String to fill metadataConstraints/MD_SecurityConstraints/userNote.
