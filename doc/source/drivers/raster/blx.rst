@@ -63,5 +63,6 @@ Creation Options:
       individual pixels.
 
 -  .. co:: FILLUNDEFVAL
+      :choices: <integer>
 
       See :co:`FILLUNDEF`.
