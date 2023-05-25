@@ -64,23 +64,37 @@ if identifier is resource group. In other case this will be a separate layer.
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`NGW_USERPWD`: User name and password separated with colon.
-   Optional and can be set using open options.
--  :decl_configoption:`NGW_BATCH_SIZE`: Size of feature insert and update operations
-   cache before send to server. If batch size is -1 batch mode is
-   disabled. Delete operation will execute immediately.
--  :decl_configoption:`NGW_PAGE_SIZE`: If supported by server, fetch features from remote
-   server will use paging. The -1 value disables paging even it
-   supported by server.
--  :decl_configoption:`NGW_NATIVE_DATA`: Whether to store the json *extensions* key in
-   feature native data.
--  :decl_configoption:`NGW_JSON_DEPTH`: The depth of json response that can be parsed. If
-   depth is greater than this value, parse error occurs.
--  :decl_configoption:`NGW_EXTENSIONS`: Comma separated extensions list. Available values are 
-   `description` and `attachment`. This needed to fill native data.
+-  :copy-config:`NGW_USERPWD`
+
+-  .. config:: NGW_BATCH_SIZE
+
+      Size of feature insert and update operations
+      cache before send to server. If batch size is -1 batch mode is
+      disabled. Delete operation will execute immediately.
+
+-  .. config:: NGW_PAGE_SIZE
+
+      If supported by server, fetch features from remote
+      server will use paging. The -1 value disables paging even it
+      supported by server.
+
+-  .. config:: NGW_NATIVE_DATA
+
+      Whether to store the json *extensions* key in
+      feature native data.
+
+-  :copy-config:`NGW_JSON_DEPTH`
+
+      The depth of json response that can be parsed. If
+      depth is greater than this value, parse error occurs.
+
+-  .. config:: NGW_EXTENSIONS
+
+      Comma separated extensions list. Available values are
+      `description` and `attachment`. This needed to fill native data.
 
 Authentication
 --------------
@@ -93,7 +107,7 @@ options.
 Feature
 -------
 
-If the NATIVE_DATA open option is set to YES, the *extensions* json
+If the :oo:`NATIVE_DATA` open option is set to YES, the *extensions* json
 object will store as a serialized json object in the NativeData
 property of the OGRFeature object (and "application/json" in the
 NativeMediaType property). If writing OGRFeature has NativeMediaType property
@@ -137,7 +151,7 @@ Paging
 
 Features can retrieved from NextGIS Web by chunks if supported by server
 (available since NextGIS Web 3.1). The chunk size can be altered with
-the :decl_configoption:`NGW_PAGE_SIZE` configuration option or PAGE_SIZE 
+the :config:`NGW_PAGE_SIZE` configuration option or :oo:`PAGE_SIZE`
 open option.
 
 Write support
@@ -146,7 +160,7 @@ Write support
 Datasource and layers creation and deletion is possible. Write support
 is only enabled when the datasource is opened in update mode and user
 has appropriate permissions. Vector and PostGIS layers insert and update operations
-are cached if BATCH_SIZE is greater 0. Delete operation executes
+are cached if :oo:`BATCH_SIZE` is greater 0. Delete operation executes
 immediately.
 
 Open options
@@ -154,52 +168,109 @@ Open options
 
 The following open options are available:
 
--  USERPWD - Username and password, separated by colon.
--  PAGE_SIZE=-1 - Limit feature count while fetching from server.
-   Default value is -1 - no limit.
--  BATCH_SIZE=-1 - Size of feature insert and update operations cache
-   before send to server. If batch size is -1 batch mode is disabled.
-   Default value is -1.
--  NATIVE_DATA=NO - Whether to store the json *extensions* key in
-   feature native data. Default value is NO.
--  JSON_DEPTH=32 - The depth of json response that can be parsed. If
-   depth is greater than this value, parse error occurs.
--  EXTENSIONS - Comma separated extensions list. Available values are 
-   `description` and `attachment`. This needed to fill native data.
+-  .. oo:: USERPWD
+
+      Username and password, separated by colon.
+
+-  .. oo:: PAGE_SIZE
+      :default: -1
+
+      Limit feature count while fetching from server.
+      Default value is -1 - no limit.
+
+-  .. oo:: BATCH_SIZE
+      :default: -1
+
+      Size of feature insert and update operations cache
+      before send to server. If batch size is -1 batch mode is disabled.
+
+-  .. oo:: NATIVE_DATA
+      :choices: YES, NO
+      :default: NO
+
+      Whether to store the json *extensions* key in
+      feature native data.
+
+-  .. oo:: JSON_DEPTH
+      :default: 32
+
+      The depth of json response that can be parsed. If
+      depth is greater than this value, parse error occurs.
+
+-  .. oo:: EXTENSIONS
+
+      Comma separated extensions list. Available values are
+      `description` and `attachment`. This needed to fill native data.
 
 Dataset creation options
 ------------------------
 
 The following dataset/datasource creation options are available:
 
--  KEY - Key value. Must be unique in whole NextGIS Web instance.
-   Optional.
--  DESCRIPTION - Resource description. Optional.
--  USERPWD - Username and password, separated by colon.
--  PAGE_SIZE=-1 - Limit feature count while fetching from server.
-   Default value is -1 - no limit.
--  BATCH_SIZE=-1 - Size of feature insert and update operations cache
-   before send to server. If batch size is -1 batch mode is disable.
-   Default value is -1.
--  NATIVE_DATA=NO - Whether to store the json *extensions* key in
-   feature native data. Default value is NO.
--  JSON_DEPTH=32 - The depth of json response that can be parsed. If
-   depth is greater than this value, parse error occurs.
--  EXTENSIONS - Comma separated extensions list. Available values are 
-   `description` and `attachment`. This needed to fill native data.
+-  .. dsco:: KEY
+
+      Key value. Must be unique in whole NextGIS Web instance.
+      Optional.
+
+-  .. dsco:: DESCRIPTION
+
+      Resource description. Optional.
+
+-  .. dsco:: USERPWD
+
+      Username and password, separated by colon.
+
+-  .. dsco:: PAGE_SIZE
+      :default: -1
+
+      Limit feature count while fetching from server.
+      Default value is -1 - no limit.
+
+-  .. dsco:: BATCH_SIZE
+      :default: -1
+
+      Size of feature insert and update operations cache
+      before send to server. If batch size is -1 batch mode is disable.
+
+-  .. dsco:: NATIVE_DATA
+      :choices: YES, NO
+      :default: NO
+
+       Whether to store the json *extensions* key in
+       feature native data.
+
+-  .. dsco:: JSON_DEPTH
+      :default: 32
+
+      The depth of json response that can be parsed. If
+      depth is greater than this value, parse error occurs.
+
+-  .. dsco:: EXTENSIONS
+
+      Comma separated extensions list. Available values are
+      `description` and `attachment`. This needed to fill native data.
 
 Layer creation options
 ----------------------
 
 The following layer creation options are available:
 
--  OVERWRITE - Whether to overwrite an existing table with the layer
-   name to be created. The resource will delete and new one will
-   created. This leads that resource identifier will change. Defaults to
-   NO. Optional.
--  KEY - Key value. Must be unique in whole NextGIS Web instance.
-   Optional.
--  DESCRIPTION - Resource description. Optional.
+-  .. lco:: OVERWRITE
+      :choices: YES, NO
+      :default: NO
+
+      Whether to overwrite an existing table with the layer
+      name to be created. The resource will delete and new one will
+      created. This leads that resource identifier will change. Defaults to
+
+-  .. lco:: KEY
+
+      Key value. Must be unique in whole NextGIS Web instance.
+      Optional.
+
+-  .. lco:: DESCRIPTION
+
+      Resource description. Optional.
 
 Metadata
 --------

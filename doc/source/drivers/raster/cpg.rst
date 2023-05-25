@@ -8,7 +8,7 @@ CPG -- Convair PolGASP data
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/raw/cpgdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/cpgdataset.cpp`.
 
 Driver capabilities
 -------------------

@@ -75,8 +75,8 @@ optionally set.
    is enabled (0 or 1). See "Request paging" section.
 -  **COOKIE**: HTTP cookies that are passed in HTTP requests, formatted
    as COOKIE1=VALUE1; COOKIE2=VALUE2... Starting with GDAL 2.3, additional
-   HTTP headers can be sent by setting the 
-   :decl_configoption:`GDAL_HTTP_HEADER_FILE` configuration option to 
+   HTTP headers can be sent by setting the
+   :config:`GDAL_HTTP_HEADER_FILE` configuration option to
    point to a filename of a text file with “key: value” HTTP headers.
 
 Request paging
@@ -85,14 +85,14 @@ Request paging
 The WFS driver will read the GML content as a
 stream instead as a whole file, which will improve interactivity and
 help when the content cannot fit into memory. This can be turned off by
-setting the :decl_configoption:`OGR_WFS_USE_STREAMING` configuration 
+setting the :config:`OGR_WFS_USE_STREAMING` configuration
 option to NO if this is
 not desirable (for example, when iterating several times on a layer that
 can fit into memory). When streaming is enabled, GZip compression is
 also requested. It has been observed that some WFS servers, that cannot
 do on-the-fly compression, will cache on their side the whole content to
 be sent before sending the first bytes on the wire. To avoid this, you
-can set the :decl_configoption:`CPL_CURL_GZIP` configuration option to NO.
+can set the :config:`CPL_CURL_GZIP` configuration option to NO.
 
 Paging with WFS 2.0
 +++++++++++++++++++
@@ -100,12 +100,12 @@ Paging with WFS 2.0
 The WFS driver will automatically detect if server supports paging, when
 requesting a WFS 2.0 server. The page size (number of features fetched in a
 single request) is limited to 100 by default when not declared by the server.
-It can be changed by setting the :decl_configoption:`OGR_WFS_PAGE_SIZE` 
+It can be changed by setting the :config:`OGR_WFS_PAGE_SIZE`
 configuration option, or by
 specifying COUNT as a query parameter in the URL of the connection string.
 
 If only the N first features must be downloaded and paging through the whole
-layer is not desirable, the :decl_configoption:`OGR_WFS_PAGING_ALLOWED` 
+layer is not desirable, the :config:`OGR_WFS_PAGING_ALLOWED`
 configuration option should be set to OFF.
 
 Paging with WFS 1.0 or 1.1
@@ -116,29 +116,29 @@ that allows doing the requests per "page", and thus to avoid
 downloading the whole content of the layer in a single request. Paging
 was introduced in WFS 2.0.0 but servers may support it as an vendor
 specific option also with WFS 1.0.0 and 1.1.0. The OGR WFS client will
-use paging when the :decl_configoption:`OGR_WFS_PAGING_ALLOWED` 
-configuration option is explicitly set to ON. 
+use paging when the :config:`OGR_WFS_PAGING_ALLOWED`
+configuration option is explicitly set to ON.
 The page size (number of features fetched in a single request)
 is limited to 100 by default when not declared by the server.
-It can be changed by setting the :decl_configoption:`OGR_WFS_PAGE_SIZE` 
+It can be changed by setting the :config:`OGR_WFS_PAGE_SIZE`
 configuration option.
 
 WFS 2.0.2 specification has clarified that the first feature in paging
 is at index 0. But some server implementations of WFS paging have
 considered that it was at index 1 (including MapServer <= 6.2).
 The default base start index is 0, as mandated
-by the specification. The :decl_configoption:`OGR_WFS_BASE_START_INDEX` 
-configuration option can however be set to 1 to be compatible with the 
-server implementations that considered the first feature to be at 
+by the specification. The :config:`OGR_WFS_BASE_START_INDEX`
+configuration option can however be set to 1 to be compatible with the
+server implementations that considered the first feature to be at
 index 1.
 
 Paging options
 ++++++++++++++
 
-Those 3 options (:decl_configoption:`OGR_WFS_PAGING_ALLOWED`, 
-:decl_configoption:`OGR_WFS_PAGE_SIZE`, 
-:decl_configoption:`OGR_WFS_BASE_START_INDEX`) can also be set in 
-a WFS XML description file with the elements of similar names 
+Those 3 options (:config:`OGR_WFS_PAGING_ALLOWED`,
+:config:`OGR_WFS_PAGE_SIZE`,
+:config:`OGR_WFS_BASE_START_INDEX`) can also be set in
+a WFS XML description file with the elements of similar names
 (PagingAllowed, PageSize, BaseStartIndex).
 
 Filtering
@@ -302,27 +302,77 @@ Open options
 
 The following options are available:
 
--  **URL**\ =url: URL to the WFS server endpoint. Required when using
-   the "WFS:" string as the connection string.
--  **TRUST_CAPABILITIES_BOUNDS**\ =YES/NO: Whether to trust layer bounds
-   declared in GetCapabilities response, for faster GetExtent() runtime.
-   Defaults to NO
--  **EMPTY_AS_NULL=YES/NO**: By default
-   (EMPTY_AS_NULL=YES), fields with empty content will be reported as
-   being NULL, instead of being an empty string. This is the historic
-   behavior. However this will prevent such fields to be declared as
-   not-nullable if the application schema declared them as mandatory. So
-   this option can be set to NO to have both empty strings being report
-   as such, and mandatory fields being reported as not nullable.
--  **INVERT_AXIS_ORDER_IF_LAT_LONG=YES/NO**: Whether to
-   present SRS and coordinate ordering in traditional GIS order.
-   Defaults to YES.
--  **CONSIDER_EPSG_AS_URN=YES/NO/AUTO**: Whether to
-   consider srsName like EPSG:XXXX as respecting EPSG axis order.
-   Defaults to AUTO.
--  **EXPOSE_GML_ID=YES/NO**: Whether to expose the gml:id
-   attribute of a GML feature as the gml_id OGR field. Note that hiding
-   gml_id will prevent WFS-T from working. Defaults to YES.
+-  .. oo:: URL
+
+      URL to the WFS server endpoint. Required when using
+      the "WFS:" string as the connection string.
+
+-  .. oo:: TRUST_CAPABILITIES_BOUNDS
+      :choices: YES, NO
+      :default: NO
+
+      Whether to trust layer bounds
+      declared in GetCapabilities response, for faster GetExtent() runtime.
+
+-  .. oo:: EMPTY_AS_NULL
+      :choices: YES, NO
+      :default: YES
+
+      By default
+      (:oo:`EMPTY_AS_NULL=YES`), fields with empty content will be reported as
+      being NULL, instead of being an empty string. This is the historic
+      behavior. However this will prevent such fields to be declared as
+      not-nullable if the application schema declared them as mandatory. So
+      this option can be set to NO to have both empty strings being report
+      as such, and mandatory fields being reported as not nullable.
+
+-  .. oo:: INVERT_AXIS_ORDER_IF_LAT_LONG
+      :choices: YES, NO
+      :default: YES
+
+      Whether to
+      present SRS and coordinate ordering in traditional GIS order.
+
+-  .. oo:: CONSIDER_EPSG_AS_URN
+      :choices: YES, NO, AUTO
+      :default: AUTO
+
+      Whether to
+      consider srsName like EPSG:XXXX as respecting EPSG axis order.
+
+-  .. oo:: EXPOSE_GML_ID
+      :choices: YES, NO
+      :default: YES
+
+      Whether to expose the gml:id
+      attribute of a GML feature as the gml_id OGR field. Note that hiding
+      gml_id will prevent WFS-T from working.
+
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+-  .. config:: OGR_WFS_USE_STREAMING
+      :choices: YES, NO
+      :default: YES
+
+      Set to ``NO`` to disable streaming. See `Request paging`_.
+
+-  .. config:: OGR_WFS_PAGE_SIZE
+
+      Control the number of features fetched in a single request.
+
+-  .. config:: OGR_WFS_PAGING_ALLOWED
+      :choices: ON, OFF
+
+      Set to ``NO`` to prevent paging through the whole layer.
+
+-  .. config:: OGR_WFS_BASE_START_INDEX
+      :choices: <integer>
+
+      Sets the index of the first feature in paging.
 
 Examples
 --------

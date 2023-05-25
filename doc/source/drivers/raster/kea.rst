@@ -52,47 +52,80 @@ The following creation options are available. Some are rather esoteric
 and should rarely be specified, unless the user has good knowledge of
 the working of the underlying HDF5 format.
 
--  **IMAGEBLOCKSIZE**\ =integer_value: The size of each block for image
-   data. Defaults to 256
+-  .. co:: IMAGEBLOCKSIZE
+      :choices: <integer>
+      :default: 256
 
--  **ATTBLOCKSIZE**\ =integer_value: The size of each block for
-   attribute data. Defaults to 1000
+      The size of each block for image data.
 
--  **MDC_NELMTS**\ =integer_value: Number of elements in the meta data
-   cache. Defaults to 0. See the `Data
-   caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
-   page of HDF5 documentation.
+-  .. co:: ATTBLOCKSIZE
+      :choices: <integer>
+      :default: 1000
 
--  **RDCC_NELMTS**\ =integer_value: Number of elements in the raw data
-   chunk cache. Defaults to 512. See the `Data
-   caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
-   page of HDF5 documentation.
+      The size of each block for attribute data.
 
--  **RDCC_NBYTES**\ =integer_value: Total size of the raw data chunk
-   cache, in bytes. Defaults to 1048576. See the `Data
-   caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
-   page of HDF5 documentation.
+-  .. co:: MDC_NELMTS
+      :choices: <integer>
+      :default: 0
 
--  **RDCC_W0**\ =floating_point_value between 0 and 1: Preemption
-   policy. Defaults to 0.75. See the `Data
-   caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
-   page of HDF5 documentation.
+      Number of elements in the meta data
+      cache. Defaults to 0. See the `Data
+      caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
+      page of HDF5 documentation.
 
--  **SIEVE_BUF**\ =integer_value: Sets the maximum size of the data
-   sieve buffer. Defaults to 65536. See
-   `H5Pset_sieve_buf_size() <http://www.hdfgroup.org/HDF5/doc/RM/RM_H5P.html#Property-SetSieveBufSize>`__
-   documentation
+-  .. co:: RDCC_NELMTS
+      :choices: <integer>
+      :default: 512
 
--  **META_BLOCKSIZE**\ =integer_value: Sets the minimum size of metadata
-   block allocations. Defaults to 2048. See
-   `H5Pset_meta_block_size() <http://www.hdfgroup.org/HDF5/doc/RM/RM_H5P.html#Property-SetMetaBlockSize>`__
-   documentation
+      Number of elements in the raw data
+      chunk cache. See the `Data
+      caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
+      page of HDF5 documentation.
 
--  **DEFLATE**\ =integer_value: Compression level between 0 (no
-   compression) to 9 (max compression). Defaults to 1
+-  .. co:: RDCC_NBYTES
+      :choices: <bytes>
+      :default: 1048576
 
--  **THEMATIC**\ =YES/NO: If YES then all bands are set to thematic.
-   Defaults to NO
+      Total size of the raw data chunk cache, in bytes. See the `Data
+      caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
+      page of HDF5 documentation.
+
+-  .. co:: RDCC_W0
+      :choices: <floating_point_value between 0 and 1>
+      :default: 0.75
+
+      Preemption policy. See the `Data
+      caching <http://www.hdfgroup.org/HDF5/doc/H5.user/Caching.html>`__
+      page of HDF5 documentation.
+
+-  .. co:: SIEVE_BUF
+      :choices: <integer>
+      :default: 65536
+
+      Sets the maximum size of the data sieve buffer. See
+      `H5Pset_sieve_buf_size() <http://www.hdfgroup.org/HDF5/doc/RM/RM_H5P.html#Property-SetSieveBufSize>`__
+      documentation
+
+-  .. co:: META_BLOCKSIZE
+      :choices: <integer>
+      :default: 2048
+
+      Sets the minimum size of metadata block allocations. See
+      `H5Pset_meta_block_size() <http://www.hdfgroup.org/HDF5/doc/RM/RM_H5P.html#Property-SetMetaBlockSize>`__
+      documentation
+
+-  .. co:: DEFLATE
+      :choices: [0-9]
+      :default: 1
+
+      Compression level between 0 (no
+      compression) to 9 (max compression).
+
+-  .. co:: THEMATIC
+      :choices: YES, NO
+      :default: NO
+
+      If YES then all bands are set to thematic.
 
 See Also
 --------

@@ -70,32 +70,59 @@ is already considered to be optimized for "arbitrary overviews".
 Creation Options:
 -----------------
 
--  **LARGE_OK=YES**: *(v3.x SDK only)* Allow compressing files larger
-   than 500MB in accordance with EULA terms. Deprecated since v4.x and
-   replaced by ECW_ENCODE_KEY & ECW_ENCODE_COMPANY.
--  **ECW_ENCODE_KEY=key**: *(v4.x SDK or higher)* Provide the OEM
-   encoding key to unlock encoding capability up to the licensed
-   gigapixel limit. The key is approximately 129 hex digits long. The
-   Company and Key must match and must be re-generated with each minor
-   release of the SDK. It may also be provided globally as a
-   configuration option.
--  **ECW_ENCODE_COMPANY=name**: *(v4.x SDK or higher)* Provide the name
-   of the company in the issued OEM key (see ECW_ENCODE_KEY). The
-   Company and Key must match and must be re-generated with each minor
-   release of the SDK. It may also be provided globally as a
-   configuration option.
--  **TARGET=percent**: Set the target size reduction as a percentage of
-   the original. If not provided defaults to 90% for greyscale images,
-   and 95% for RGB images.
--  **PROJ=name**: Name of the ECW projection string to use. Common
-   examples are NUTM11, or GEODETIC.
--  **DATUM=name**: Name of the ECW datum string to use. Common examples
-   are WGS84 or NAD83.
--  **UNITS=name**: Name of the ECW projection units to
-   use : METERS (default) or FEET (us-foot).
--  **ECW_FORMAT_VERSION=2/3**: When build with the ECW
-   5.x SDK this option can be set to allow ECW Version 3 files to be
-   created. Default, 2 to retain widest compatibility.
+-  .. co:: LARGE_OK
+      :choices: YES, NO
+
+      *(v3.x SDK only)* Allow compressing files larger
+      than 500MB in accordance with EULA terms. Deprecated since v4.x and
+      replaced by :co:`ECW_ENCODE_KEY` & :co:`ECW_ENCODE_COMPANY`.
+
+-  .. co:: ECW_ENCODE_KEY
+
+      *(v4.x SDK or higher)* Provide the OEM
+      encoding key to unlock encoding capability up to the licensed
+      gigapixel limit. The key is approximately 129 hex digits long. The
+      Company and Key must match and must be re-generated with each minor
+      release of the SDK. It may also be provided globally as a
+      configuration option.
+
+-  .. co:: ECW_ENCODE_COMPANY
+
+      *(v4.x SDK or higher)* Provide the name
+      of the company in the issued OEM key (see :co:`ECW_ENCODE_KEY`). The
+      Company and Key must match and must be re-generated with each minor
+      release of the SDK. It may also be provided globally as a
+      configuration option.
+
+-  .. co:: TARGET
+
+      Set the target size reduction as a percentage of
+      the original. If not provided defaults to 90% for greyscale images,
+      and 95% for RGB images.
+
+-  .. co:: PROJ
+
+      Name of the ECW projection string to use. Common
+      examples are NUTM11, or GEODETIC.
+
+-  .. co:: DATUM
+
+      Name of the ECW datum string to use. Common examples
+      are WGS84 or NAD83.
+
+-  .. co:: UNITS
+      :choices: METERS, FEET
+      :default: METERS
+
+      Name of the ECW projection units to use : METERS (default) or FEET (us-foot).
+
+-  .. co:: ECW_FORMAT_VERSION
+      :choices: 2, 3
+      :default: 2
+
+      When building with the ECW
+      5.x SDK this option can be set to allow ECW Version 3 files to be
+      created. Default, 2 to retain widest compatibility.
 
 Configuration Options
 ---------------------
@@ -106,43 +133,85 @@ various features. Most of these are exposed as GDAL configuration
 options. See the ECW SDK documentation for full details on the meaning
 of these options.
 
--  **ECW_CACHE_MAXMEM=bytes**: maximum bytes of RAM used for in-memory
-   caching. If not set, up to one quarter of physical RAM will be used
-   by the SDK for in-memory caching.
--  **ECWP_CACHE_LOCATION=path**: Path to a directory to use for caching
-   ECWP results. If unset ECWP caching will not be enabled.
--  **ECWP_CACHE_SIZE_MB=number_of_megabytes**: The maximum number of
-   megabytes of space in the ECWP_CACHE_LOCATION to be used for caching
-   ECWP results.
--  **ECWP_BLOCKING_TIME_MS**: time an ecwp:// blocking read will wait
-   before returning - default 10000 ms.
--  **ECWP_REFRESH_TIME_MS**: time delay between blocks arriving and the
-   next refresh callback - default 10000 ms. For the purposes of GDAL
-   this is the amount of time the driver will wait for more data on an
-   ecwp connection for which the final result has not yet been returned.
-   If set small then RasterIO() requests will often produce low
-   resolution results.
--  **ECW_TEXTURE_DITHER=TRUE/FALSE**: This may be set to FALSE to
-   disable dithering when decompressing ECW files. Defaults to TRUE.
--  **ECW_FORCE_FILE_REOPEN=TRUE/FALSE**: This may be set to TRUE to
-   force open a file handle for each file for each connection made.
-   Defaults to FALSE.
--  **ECW_CACHE_MAXOPEN=number**: The maximum number of files to keep
-   open for ECW file handle caching. Defaults to unlimited.
--  **ECW_RESILIENT_DECODING=TRUE/FALSE**: Controls whether the reader
-   should be forgiving of errors in a file, trying to return as much
-   data as is available. Defaults to TRUE. If set to FALSE an invalid
-   file will result in an error.
+-  .. config:: ECW_CACHE_MAXMEM
+      :choices: <bytes>
+
+      maximum bytes of RAM used for in-memory
+      caching. If not set, up to one quarter of physical RAM will be used
+      by the SDK for in-memory caching.
+
+-  .. config:: ECWP_CACHE_LOCATION
+      :choices: <path>
+
+      Path to a directory to use for caching
+      ECWP results. If unset ECWP caching will not be enabled.
+
+-  .. config:: ECWP_CACHE_SIZE_MB
+      :choices: <megabytes>
+
+      The maximum number of
+      megabytes of space in the :config:`ECWP_CACHE_LOCATION` to be used for caching
+      ECWP results.
+
+-  .. config:: ECWP_BLOCKING_TIME_MS
+      :choices: <milliseconds>
+      :default: 10000
+
+      time an ecwp:// blocking read will wait before returning.
+
+-  .. config:: ECWP_REFRESH_TIME_MS
+      :choices: <milliseconds>
+      :default: 10000
+
+      time delay between blocks arriving and the
+      next refresh callback. For the purposes of GDAL
+      this is the amount of time the driver will wait for more data on an
+      ecwp connection for which the final result has not yet been returned.
+      If set small then RasterIO() requests will often produce low
+      resolution results.
+
+-  .. config:: ECW_TEXTURE_DITHER
+      :choices: TRUE, FALSE
+      :default: TRUE
+
+      This may be set to FALSE to
+      disable dithering when decompressing ECW files.
+
+-  .. config:: ECW_FORCE_FILE_REOPEN
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      This may be set to TRUE to
+      force open a file handle for each file for each connection made.
+
+-  .. config:: ECW_CACHE_MAXOPEN
+      :choices: <integer>
+
+      The maximum number of files to keep
+      open for ECW file handle caching. Defaults to unlimited.
+
+-  .. config:: ECW_RESILIENT_DECODING
+      :choices: TRUE, FALSE
+      :default: TRUE
+
+      Controls whether the reader
+      should be forgiving of errors in a file, trying to return as much
+      data as is available. If set to FALSE an invalid
+      file will result in an error.
 
 The GDAL-specific options:
 
--  **ECW_ALWAYS_UPWARD=TRUE/FALSE**: If TRUE, the driver sets negative
-   Y-resolution and assumes an image always has the "Upward" orientation
-   (Y coordinates increase upward). This may be set to FALSE to let the
-   driver rely on the actual image orientation, using Y-resolution value
-   (sign) of an image, to allow correct processing of rare images with
-   "Downward" orientation (Y coordinates increase "Downward" and
-   Y-resolution is positive). Defaults to TRUE.
+-  .. config:: ECW_ALWAYS_UPWARD
+      :choices: TRUE, FALSE
+      :default: TRUE
+
+      If TRUE, the driver sets negative
+      Y-resolution and assumes an image always has the "Upward" orientation
+      (Y coordinates increase upward). This may be set to FALSE to let the
+      driver rely on the actual image orientation, using Y-resolution value
+      (sign) of an image, to allow correct processing of rare images with
+      "Downward" orientation (Y coordinates increase "Downward" and
+      Y-resolution is positive). Defaults to TRUE.
 
 ECW Version 3 Files
 ~~~~~~~~~~~~~~~~~~~
@@ -223,7 +292,7 @@ File Metadata Keys:
 See Also
 --------
 
--  Implemented as ``gdal/frmts/ecw/ecwdataset.cpp``.
+-  Implemented as :source_file:`frmts/ecw/ecwdataset.cpp`.
 -  ERDAS ECW/JP2 SDK Read-Only Redistributable available at
    `www.hexagongeospatial.com <https://supportsi.hexagon.com/help/s/article/ERDAS-ECW-JP2-SDK-Read-Only-Redistributable-download>`__
 -  Further product information available in the `User

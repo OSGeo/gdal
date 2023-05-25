@@ -25,7 +25,7 @@ The projections support (read if a prj.adf file is available) is quite
 limited. Additional sample prj.adf files may be sent to the maintainer,
 warmerdam@pobox.com.
 
-NOTE: Implemented as ``gdal/frmts/aigrid/aigdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/aigrid/aigdataset.cpp`.
 
 Driver capabilities
 -------------------

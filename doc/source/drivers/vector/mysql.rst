@@ -54,8 +54,8 @@ Caveats
    AUTO_INCREMENT** field. This appears to implicitly create an index on
    the field.
 -  The geometry column, which defaults to *SHAPE* and can be overridden
-   with the GEOMETRY_NAME layer creation option, is created as a **NOT
-   NULL** column in unless SPATIAL_INDEX is disabled. By default a
+   with the :lco:`GEOMETRY_NAME` layer creation option, is created as a **NOT
+   NULL** column in unless :lco:`SPATIAL_INDEX` is disabled. By default a
    spatial index is created at the point the table is created.
 -  SRS information is stored using the OGC Simple Features for SQL
    layout, with *geometry_columns* and *spatial_ref_sys* metadata tables
@@ -103,28 +103,60 @@ The MySQL driver is not transactional at this time.
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
--  **OVERWRITE**: This may be "YES" to force an existing layer of the
-   desired name to be destroyed before creating the requested layer.
--  **LAUNDER**: This may be "YES" to force new fields created on this
-   layer to have their field names "laundered" into a form more
-   compatible with MySQL. This converts to lower case and converts some
-   special characters like "-" and "#" to "_". If "NO" exact names are
-   preserved. The default value is "YES".
--  **PRECISION**: This may be "TRUE" to attempt to preserve field widths
-   and precisions for the creation and reading of MySQL layers. The
-   default value is "TRUE".
--  **GEOMETRY_NAME**: This option specifies the name of the geometry
-   column. The default value is "SHAPE".
--  **FID**: This option specifies the name of the FID column. The
-   default value is "OGR_FID". Note: option was called MYSQL_FID in
-   releases before GDAL 2
--  **FID64**: This may be "TRUE" to create a FID column
-   that can support 64 bit identifiers. The default value is "FALSE".
--  **SPATIAL_INDEX**: May be "NO" to stop automatic creation of a
-   spatial index on the geometry column, allowing NULL geometries and
-   possibly faster loading.
--  **ENGINE**: Optionally specify database engine to use. In MySQL 4.x
-   this must be set to MyISAM for spatial tables.
+-  .. lco:: OVERWRITE
+      :choices: YES, NO
+
+      This may be "YES" to force an existing layer of the
+      desired name to be destroyed before creating the requested layer.
+
+-  .. lco:: LAUNDER
+      :choices: YES, NO
+      :default: YES
+
+      This may be "YES" to force new fields created on this
+      layer to have their field names "laundered" into a form more
+      compatible with MySQL. This converts to lower case and converts some
+      special characters like "-" and "#" to "_". If "NO" exact names are
+      preserved.
+
+-  .. lco:: PRECISION
+      :choices: TRUE, FALSE
+      :default: TRUE
+
+      This may be "TRUE" to attempt to preserve field widths
+      and precisions for the creation and reading of MySQL layers.
+
+-  .. lco:: GEOMETRY_NAME
+      :default: SHAPE
+
+      This option specifies the name of the geometry
+      column.
+
+-  .. lco:: FID
+      :default: OGR_FID
+
+      This option specifies the name of the FID column.
+      Note: option was called MYSQL_FID in
+      releases before GDAL 2
+
+-  .. lco:: FID64
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      This may be "TRUE" to create a FID column
+      that can support 64 bit identifiers.
+
+-  .. lco:: SPATIAL_INDEX
+      :choices: YES, NO
+
+      May be "NO" to stop automatic creation of a
+      spatial index on the geometry column, allowing NULL geometries and
+      possibly faster loading.
+
+-  .. lco:: ENGINE
+
+      Optionally specify database engine to use. In MySQL 4.x
+      this must be set to MyISAM for spatial tables.
 
 The following example datasource name opens the database schema
 *westholland* with password *psv9570* for userid *root* on the port

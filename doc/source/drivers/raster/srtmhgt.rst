@@ -28,7 +28,7 @@ See Also:
 -  `SRTM FAQ <http://www2.jpl.nasa.gov/srtm/faq.html>`__
 -  `SRTM data <http://dds.cr.usgs.gov/srtm/version2_1/>`__
 
-NOTE: Implemented as ``gdal/frmts/srtmhgt/srtmhgtdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/srtmhgt/srtmhgtdataset.cpp`.
 
 Driver capabilities
 -------------------

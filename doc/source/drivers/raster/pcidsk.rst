@@ -31,14 +31,25 @@ Creation Options
 Note that PCIDSK files are always produced pixel interleaved, even
 though other organizations are supported for read.
 
--  **INTERLEAVING=PIXEL/BAND/FILE/TILED**: sets the interleaving for the
-   file raster data.
--  **COMPRESSION=NONE/RLE/JPEG**: Sets the compression to use. Values
-   other than NONE (the default) may only be used with TILED
-   interleaving. If JPEG is select it may include a quality value
-   between 1 and 100 - eg. COMPRESSION=JPEG40.
--  **TILESIZE=n**: When INTERLEAVING is TILED, the tilesize may be
-   selected with this parameter - the default is 127 for 127x127.
+-  .. co:: INTERLEAVING
+      :choices: PIXEL, BAND, FILE, TILED
+
+      sets the interleaving for the file raster data.
+
+-  .. co:: COMPRESSION
+      :choices: NONE, RLE, JPEG
+      :default: NONE
+
+      Sets the compression to use. Values
+      other than NONE may only be used with TILED
+      interleaving. If JPEG is select it may include a quality value
+      between 1 and 100 - eg. COMPRESSION=JPEG40.
+
+-  .. co:: TILESIZE
+      :default: 127
+
+      When INTERLEAVING is TILED, the tilesize may be
+      selected with this parameter - the default is 127 for 127x127.
 
 Driver capabilities
 -------------------
@@ -54,5 +65,5 @@ Driver capabilities
 See Also:
 ---------
 
--  Implemented as ``gdal/frmts/pcidsk/pcidskdataset2.cpp``.
+-  Implemented as :source_file:`frmts/pcidsk/pcidskdataset2.cpp`.
 -  `PCIDSK SDK <https://web.archive.org/web/20130730111701/http://home.gdal.org/projects/pcidsk/index.html>`__

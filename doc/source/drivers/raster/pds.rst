@@ -26,7 +26,7 @@ Geological Survey.
 .. note::
     PDS3 datasets can incorporate a VICAR header. By default, GDAL will use the
     PDS driver in that situation. Starting with GDAL 3.1, if the
-    :decl_configoption:`GDAL_TRY_PDS3_WITH_VICAR` configuration option is set
+    :config:`GDAL_TRY_PDS3_WITH_VICAR` configuration option is set
     to YES, the dataset will be opened by the :ref:`VICAR <raster.vicar>` driver.
 
 Driver capabilities
@@ -35,6 +35,17 @@ Driver capabilities
 .. supports_georeferencing::
 
 .. supports_virtualio::
+
+Configuration options
+---------------------
+
+-  .. config:: GDAL_TRY_PDS3_WITH_VICAR
+      :choices: YES, NO
+      :default: NO
+      :since: 3.1
+
+      If ``YES``, open the dataset with the :ref:`VICAR <raster.vicar>` driver instead.
+
 
 Georeferencing
 --------------
@@ -104,7 +115,7 @@ PDS is part of a family of related formats including ISIS2 and ISIS3.
 See Also
 --------
 
--  Implemented as ``gdal/frmts/pds/pdsdataset.cpp``.
+-  Implemented as :source_file:`frmts/pds/pdsdataset.cpp`.
 -  `NASA Planetary Data System <http://pds.nasa.gov/>`__
 -  :ref:`raster.isis2` driver.
 -  :ref:`raster.isis3` driver.

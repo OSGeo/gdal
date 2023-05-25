@@ -328,16 +328,19 @@ Datasource creation options
 Datasource creation options can be specified with the "``-dsco``" flag
 in ogr2ogr.
 
-TITLE
-   Title of the datasource, stored in the Selafin file. The title must
-   not hold more than 72 characters. If it is longer, it will be
-   truncated to fit in the file.
-DATE
-   Starting date of the simulation. Each layer in a Selafin file is
-   characterized by a date, counted in seconds since a reference date.
-   This option allows providing the reference date. The format of this
-   field must be YYYY-MM-DD_hh:mm:ss. The format does not mention the
-   time zone.
+- .. dsco:: TITLE
+
+     Title of the datasource, stored in the Selafin file. The title must
+     not hold more than 72 characters. If it is longer, it will be
+     truncated to fit in the file.
+
+- .. dsco:: DATE
+
+     Starting date of the simulation. Each layer in a Selafin file is
+     characterized by a date, counted in seconds since a reference date.
+     This option allows providing the reference date. The format of this
+     field must be YYYY-MM-DD_hh:mm:ss. The format does not mention the
+     time zone.
 
 An example of datasource creation option is:
 ``-dsco TITLE="My simulation" -dsco DATE=2014-05-01_10:00:00``.
@@ -348,11 +351,12 @@ Layer creation options
 Layer creation options can be specified with the "``-lco``" flag in
 ogr2ogr.
 
-DATE
-   Date of the time step relative to the starting date of the simulation
-   (see `Datasource creation options <#DCO>`__). This is a single
-   floating-point value giving the number of seconds since the starting
-   date.
+- .. lco:: DATE
+
+     Date of the time step relative to the starting date of the simulation
+     (see `Datasource creation options <#DCO>`__). This is a single
+     floating-point value giving the number of seconds since the starting
+     date.
 
 An example of datasource creation option is: ``-lco DATE=24000``.
 

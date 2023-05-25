@@ -204,6 +204,6 @@ the images.
 See Also
 --------
 
--  Implemented as ``gdal/frmts/msg/msgdataset.cpp``.
+-  Implemented as :source_file:`frmts/msg/msgdataset.cpp`.
 -  http://www.eumetsat.int - European Organisation for the Exploitation
    of Meteorological Satellites

@@ -41,13 +41,28 @@ Creation Issues
 
 Creation Options:
 
--  **ZSCALE=1**: Set the desired quantization increment for write
-   access. A higher value will result in better compression and lower
-   vertical resolution.
--  **BIGENDIAN=YES**: If BIGENDIAN is defined, the output file will be
-   in XLB format (big endian blx).
--  **FILLUNDEF=YES**: If FILLUNDEF is yes the value of FILLUNDEFVAL will
-   be used instead of -32768 for non-empty tiles. This is needed since
-   the BLX format only support undefined values for full tiles, not
-   individual pixels.
--  **FILLUNDEFVAL=0**: See FILLUNDEF
+-  .. co:: ZSCALE
+      :default: 1
+
+      Set the desired quantization increment for write
+      access. A higher value will result in better compression and lower
+      vertical resolution.
+
+-  .. co:: BIGENDIAN
+      :choices: YES, NO
+
+      If BIGENDIAN is defined, the output file will be
+      in XLB format (big endian blx).
+
+-  .. co:: FILLUNDEF
+      :choices: YES, NO
+
+      If FILLUNDEF is yes the value of :co:`FILLUNDEFVAL` will
+      be used instead of -32768 for non-empty tiles. This is needed since
+      the BLX format only support undefined values for full tiles, not
+      individual pixels.
+
+-  .. co:: FILLUNDEFVAL
+      :choices: <integer>
+
+      See :co:`FILLUNDEF`.

@@ -31,51 +31,59 @@ size and orientation via OGR feature styling information when
 translating elements. Currently no effort is made to preserve fill
 styles or complex line style attributes.
 
+The :config:`OGR_ARC_STEPSIZE` and :config:`OGR_ARC_MAX_GAP` configurations
+options control the approximation of arcs, ellipses, circles and rounded
+polylines as linestrings.
+
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
-- :decl_configoption:`OGR_ARC_STEPSIZE`: The approximation of arcs, 
-  ellipses, circles and rounded polylines as linestrings is done by 
-  splitting the arcs into subarcs of no more than a threshold angle. 
-  This angle is the OGR_ARC_STEPSIZE. This defaults to four degrees, 
-  but may be overridden by setting the configuration variable.
+- .. config:: DWG_INLINE_BLOCKS
+     :choices: TRUE, FALSE
 
-- :decl_configoption:`DWG_INLINE_BLOCKS`: The default behavior is for 
-  block references to be expanded with the geometry of the block they 
-  reference. However, if the :decl_configoption:`DWG_INLINE_BLOCKS` 
-  configuration option is set to the value FALSE, then the behavior is 
-  different as described here:
+     The default behavior is for
+     block references to be expanded with the geometry of the block they
+     reference. However, if the :config:`DWG_INLINE_BLOCKS`
+     configuration option is set to the value FALSE, then the behavior is
+     different as described here:
 
-  - A new layer will be available called blocks. It will contain one or
-    more features for each block defined in the file. In addition to the
-    usual attributes, they will also have a BlockName attribute indicate
-    what block they are part of.
-  - The entities layer will have new attributes BlockName, BlockScale, 
-    BlockAngle and BlockAttributes.
-  - BlockAttributes will be a list of (tag x value) pairs of all 
-    visible attributes (JSON encoded).
-  - block referenced will populate these new fields with the
-    corresponding information (they are null for all other entities).
-  - block references will not have block geometry inlined - instead they
-    will have a point geometry for the insertion point.
+     - A new layer will be available called blocks. It will contain one or
+       more features for each block defined in the file. In addition to the
+       usual attributes, they will also have a BlockName attribute indicate
+       what block they are part of.
+     - The entities layer will have new attributes BlockName, BlockScale,
+       BlockAngle and BlockAttributes.
+     - BlockAttributes will be a list of (tag x value) pairs of all
+       visible attributes (JSON encoded).
+     - block referenced will populate these new fields with the
+       corresponding information (they are null for all other entities).
+     - block references will not have block geometry inlined - instead they
+       will have a point geometry for the insertion point.
 
-  The intention is that with :decl_configoption:`DWG_INLINE_BLOCKS` 
-  disabled, the block references will remain as references and the 
-  original block definitions will be available via the blocks layer.
+     The intention is that with :config:`DWG_INLINE_BLOCKS`
+     disabled, the block references will remain as references and the
+     original block definitions will be available via the blocks layer.
 
-- :decl_configoption:`DWG_ATTRIBUTES`: If option is set to TRUE value, 
-  then block attributes are treated as feature attributes, one feature 
-  attribute for each tag. This option allow conversion to rows and 
-  columns data such as database tables.
+- .. config:: DWG_ATTRIBUTES
+     :choices: TRUE, FALSE
 
-- :decl_configoption:`DWG_ALL_ATTRIBUTES`: If option is set to FALSE value, 
-  then block attributes are ignored if the visible property of the tag 
-  attribute is false. To see all attributes set 
-  :decl_configoption:`DWG_ALL_ATTRIBUTES` to TRUE value (this is the 
-  default value).
+     If option is set to TRUE value,
+     then block attributes are treated as feature attributes, one feature
+     attribute for each tag. This option allow conversion to rows and
+     columns data such as database tables.
+
+- .. config:: DWG_ALL_ATTRIBUTES
+     :choices: TRUE, FALSE
+     :default: TRUE
+
+     If option is set to FALSE value,
+     then block attributes are ignored if the visible property of the tag
+     attribute is false. To see all attributes set
+     :config:`DWG_ALL_ATTRIBUTES` to TRUE value (this is the
+     default value).
 
 Building
 --------

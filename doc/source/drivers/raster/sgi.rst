@@ -25,7 +25,7 @@ See Also:
 -  `SGI Image File Format
    Document <ftp://ftp.sgi.com/graphics/SGIIMAGESPEC>`__
 
-NOTE: Implemented as ``gdal/frmts/sgi/sgidataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/sgi/sgidataset.cpp`.
 
 Driver capabilities
 -------------------

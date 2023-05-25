@@ -21,7 +21,7 @@ When creating files, you have to be able to specify the right data type
 corresponding to the file type (slc, int, etc), else the driver will
 output an error.
 
-NOTE: Implemented as ``gdal/frmts/raw/roipacdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/roipacdataset.cpp`.
 
 Driver capabilities
 -------------------

@@ -19,7 +19,7 @@ explicitly specify the datatype by setting the GRASSASCIIGRID_DATATYPE
 configuration option (Int32, Float32 and Float64 values are supported
 currently)
 
-NOTE: Implemented as ``gdal/frmts/aaigrid/aaigriddataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/aaigrid/aaigriddataset.cpp`.
 
 Driver capabilities
 -------------------

@@ -70,7 +70,9 @@ Configuration options
 
 The following configuration options are available :
 
--  **PL_API_KEY**\ =value: To specify the Planet API key.
+.. config:: PL_API_KEY
+
+   To specify the Planet API key.
 
 Location information
 --------------------

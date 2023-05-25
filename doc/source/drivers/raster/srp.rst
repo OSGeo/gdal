@@ -23,7 +23,7 @@ used as an input to GDAL. If the THF references more than one image,
 GDAL will report the images it is composed of as subdatasets. If the THF
 references just one image, GDAL will open it directly.
 
-NOTE: Implemented as ``gdal/frmts/adrg/srpdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/adrg/srpdataset.cpp`.
 
 Driver capabilities
 -------------------

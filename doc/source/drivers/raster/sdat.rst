@@ -29,7 +29,7 @@ and DOUBLE (GDT_Float64).
 Currently the driver does not support zFactors other than 1 and reading
 SAGA grids which are written TOPTOBOTTOM.
 
-NOTE: Implemented as ``gdal/frmts/saga/sagadataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/saga/sagadataset.cpp`.
 
 Driver capabilities
 -------------------

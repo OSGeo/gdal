@@ -20,7 +20,7 @@ with valid linear units but no other meaningful information.
 
 The .TRL, .PRO and worldfiles are ignored at this time.
 
-NOTE: Implemented as ``gdal/frmts/raw/landataset.cpp``
+NOTE: Implemented as :source_file:`frmts/raw/landataset.cpp`
 
 Development of this driver was financially supported by Kevin Flanders
 of (`PeopleGIS <http://www.peoplegis.com>`__).

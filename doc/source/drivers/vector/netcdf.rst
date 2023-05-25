@@ -146,14 +146,14 @@ a CF-1.8 compliant netCDF file, all geometry containers within the netCDF file
 will be present in the opened dataset as separate layers. Similarly, when writing to
 a CF-1.8 dataset, each layer will be written to a geometry container whose variable
 name is that of the source layer. When writing to a CF-1.8 dataset specifically, multiple layers are always
-enabled and are always in a single netCDF file, regardless of the `MULTIPLE_LAYERS <#MULTIPLE_LAYERS>`__ option.
+enabled and are always in a single netCDF file, regardless of the :dsco:`MULTIPLE_LAYERS` option.
 
 When working with files made with older versions of the driver (pre CF-1.8),
 a single netCDF file generally corresponds to a single OGR layer,
 provided that it contains only mono-dimensional variables,
 indexed by the same dimension (or bi-dimensional variables of type char).
 For netCDF v4 files with multiple groups, each group may be seen as a separate OGR
-layer. On writing, the `MULTIPLE_LAYERS <#MULTIPLE_LAYERS>`__ dataset creation
+layer. On writing, the :dsco:`MULTIPLE_LAYERS` dataset creation
 option can be used to control whether multiple layers is disabled, or if
 multiple layers should go in separate files, or separate groups.
 
@@ -266,93 +266,155 @@ format, the profile dimension is of unlimited size by default.
 Dataset creation options
 ------------------------
 
--  **GEOMETRY_ENCODING**\ =CF_1.8/WKT: Chooses which geometry encoding to use
-   when creating new layers within the dataset. Default is CF_1.8.
--  **FORMAT**\ =NC/NC2/NC4/NC4C: netCDF format. NC is the classic netCDF
-   format (compatible of netCDF v3.X and 4.X libraries). NC2 is the
-   extension of NC for files larger than 4 GB. NC4 is the netCDF v4
-   format, using a HDF5 container, offering new capabilities (new types,
-   concept of groups, etc...) only available in netCDF v4 library. NC4C
-   is a restriction of the NC4 format to the concepts supported by the
-   classic netCDF format. Default is NC.
--  **WRITE_GDAL_TAGS**\ =YES/NO: Whether to write GDAL specific
-   information as netCDF attributes. Default is YES.
--  **CONFIG_FILE**\ =string. Path to a `XML configuration
-   file <#xml-configuration-file>`__ (or its content inlined) for precise control of
-   the output.
+-  .. dsco:: GEOMETRY_ENCODING
+      :choices: CF_1.8, WKT
+      :default: CF_1.8
 
-The following option will only have effect when simultaneously specifying GEOMETRY_ENCODING=WKT:
+      Chooses which geometry encoding to use
+      when creating new layers within the dataset.
 
--  **MULTIPLE_LAYERS**\ =NO/SEPARATE_FILES/SEPARATE_GROUPS. Default is
-   NO, i.e a dataset can contain only a single OGR layer. SEPARATE_FILES
-   can be used to put the content of each OGR layer in a single netCDF
-   file, in which case the name passed at dataset creation is used as
-   the directory, and the layer name is used as the basename of the
-   netCDF file. SEPARATE_GROUPS may be used when FORMAT=NC4 to put each
-   OGR layer in a separate netCDF group, inside the same file.
+-  .. dsco:: FORMAT
+      :choices: NC, NC2, NC4, NC4C
+      :default: Nc
+
+      netCDF format. NC is the classic netCDF
+      format (compatible of netCDF v3.X and 4.X libraries). NC2 is the
+      extension of NC for files larger than 4 GB. NC4 is the netCDF v4
+      format, using a HDF5 container, offering new capabilities (new types,
+      concept of groups, etc...) only available in netCDF v4 library. NC4C
+      is a restriction of the NC4 format to the concepts supported by the
+      classic netCDF format.
+
+-  .. dsco:: WRITE_GDAL_TAGS
+      :choices: YES, NO
+      :default: YES
+
+       Whether to write GDAL specific information as netCDF attributes.
+
+-  .. dsco:: CONFIG_FILE
+      :choices: <filename>, <xml>
+
+      Path to a `XML configuration
+      file <#xml-configuration-file>`__ (or its content inlined) for precise control of
+      the output.
+
+The following option will only have effect when simultaneously specifying :dsco:`GEOMETRY_ENCODING=WKT`:
+
+-  .. dsco:: MULTIPLE_LAYERS
+      :choices: NO, SEPARATE_FILES, SEPARATE_GROUPS
+      :default: NO
+
+      Default is
+      NO, i.e a dataset can contain only a single OGR layer. SEPARATE_FILES
+      can be used to put the content of each OGR layer in a single netCDF
+      file, in which case the name passed at dataset creation is used as
+      the directory, and the layer name is used as the basename of the
+      netCDF file. SEPARATE_GROUPS may be used when :dsco:`FORMAT=NC4` to put each
+      OGR layer in a separate netCDF group, inside the same file.
 
 Layer creation options
 ----------------------
 
 The following option applies to both dataset types:
 
--  **USE_STRING_IN_NC4**\ =YES/NO. Whether to use NetCDF string type for
-   strings in NC4 format. If NO, bidimensional char variable are used.
-   Default to YES when FORMAT=NC4.
+-  .. lco:: USE_STRING_IN_NC4
+      :choices: YES, NO
 
-The following options require a dataset with GEOMETRY_ENCODING=WKT:
+      Whether to use NetCDF string type for
+      strings in NC4 format. If NO, bidimensional char variable are used.
+      Default to YES when :dsco:`FORMAT=NC4`.
 
--  **RECORD_DIM_NAME**\ =string. Name of the unlimited dimension that
-   index features. Defaults to "record".
--  **STRING_DEFAULT_WIDTH**\ =int. Default width of strings (when using
-   bi-dimensional char variables). Default is 10 in autogrow mode, 80
-   otherwise.
--  **WKT_DEFAULT_WIDTH**\ =int. Default width of WKT strings (when using
-   bi-dimensional char variables). Default is 1000 in autogrow mode,
-   10000 otherwise.
--  **AUTOGROW_STRINGS**\ =YES/NO. Whether to auto-grow string fields of
-   non-fixed width, or ogc_wkt special field, when serialized as
-   bidimensional char variables. Default is YES. When set to NO, if the
-   string is larger than its maximum initial width (set by
-   STRING_DEFAULT_WIDTH), it is truncated. For a geometry, it is
-   completely discarded.
--  **FEATURE_TYPE**\ =AUTO/POINT/PROFILE. Select the CF FeatureType.
-   Defaults to AUTO where FeatureType=Point is selected if the layer
-   geometry type is Point, otherwise the custom approach involving the
-   "ogc_wkt" field is used. Can be set to `PROFILE <#profile>`__ so as
-   to select the creation of an indexed ragged array representation of
-   profiles.
--  **PROFILE_DIM_NAME**\ =string. Name of the profile dimension and
-   variable. Defaults to "profile". Only used when FEATURE_TYPE=PROFILE.
--  **PROFILE_DIM_INIT_SIZE**\ =int or string. Initial size of profile
-   dimension, or UNLIMITED for NC4 files. Defaults to 100 when FORMAT !=
-   NC4 and to UNLIMITED when FORMAT = NC4. Only used when
-   FEATURE_TYPE=PROFILE.
--  **PROFILE_VARIABLES**\ =string. Comma separated list of field names
-   that must be indexed by the profile dimension. Only used when
-   FEATURE_TYPE=PROFILE.
+The following options require a dataset with :dsco:`GEOMETRY_ENCODING=WKT`:
+
+-  .. lco:: RECORD_DIM_NAME
+      :default: record
+
+      Name of the unlimited dimension that index features.
+
+-  .. lco:: STRING_DEFAULT_WIDTH
+      :choices: <integer>
+
+      Default width of strings (when using
+      bi-dimensional char variables). Default is 10 in autogrow mode, 80
+      otherwise.
+
+-  .. lco:: WKT_DEFAULT_WIDTH
+      :choices: <integer>
+
+      Default width of WKT strings (when using
+      bi-dimensional char variables). Default is 1000 in autogrow mode,
+      10000 otherwise.
+
+-  .. lco:: AUTOGROW_STRINGS
+      :choices: YES,NO
+      :default: YES
+
+      Whether to auto-grow string fields of
+      non-fixed width, or ogc_wkt special field, when serialized as
+      bidimensional char variables. When set to NO, if the
+      string is larger than its maximum initial width (set by
+      STRING_DEFAULT_WIDTH), it is truncated. For a geometry, it is
+      completely discarded.
+
+-  .. lco:: FEATURE_TYPE
+      :choices: AUTO, POINT, PROFILE
+      :default: AUTO
+
+      Select the CF FeatureType.
+      Defaults to AUTO where FeatureType=Point is selected if the layer
+      geometry type is Point, otherwise the custom approach involving the
+      "ogc_wkt" field is used. Can be set to `PROFILE <#profile>`__ so as
+      to select the creation of an indexed ragged array representation of
+      profiles.
+
+-  .. lco:: PROFILE_DIM_NAME
+      :default: profile
+
+      Name of the profile dimension and
+      variable. Only used when :lco:`FEATURE_TYPE=PROFILE`.
+
+-  .. lco:: PROFILE_DIM_INIT_SIZE
+
+      Initial size of profile
+      dimension, or UNLIMITED for NC4 files. Defaults to 100 when FORMAT !=
+      NC4 and to UNLIMITED when FORMAT = NC4. Only used when
+      :lco:`FEATURE_TYPE=PROFILE`.
+
+-  .. lco:: PROFILE_VARIABLES
+
+      Comma separated list of field names
+      that must be indexed by the profile dimension. Only used when
+      :lco:`FEATURE_TYPE=PROFILE`.
 
 The following option requires a dataset with GEOMETRY_ENCODING=CF_1.8:
 
--  **BUFFER_SIZE**\ =int. The soft limit of the write buffer in bytes. Larger
-   values generally imply better performance, but values should be comfortably
-   less than that of available physical memory or else thrashing can occur.
-   By default, this value is set at 20% of usable physical memory (usable meaning
-   total physical RAM considering limitations of virtual address space size).
-   Buffer contents are committed between translating features, but not *during*
-   translating a feature, so this limit does not apply to a single feature. The minimum
-   acceptable size is 4096. If a value lower than this is specified the default will
-   be used.
--  **GROUPLESS_WRITE_BACK**\ =YES/NO. In order to reduce time used to write data to the target
-   netCDF file, data is often grouped together in arrays and written all at once.
-   Each of these arrays is associated with a variable in the target dataset.
-   Arrays are destroyed as soon as the associated data is written to the netCDF file
-   which in turn occurs as soon as a complete data array for a variable is assembled in memory.
-   For machines with small memory sizes, this optimization may cause issues
-   when writing large datasets with large layers. Turning this option on by specifying "YES" disables array writing
-   and causes data to be written one datum at a time. It is strongly recommended to keep this option off
-   unless out of memory errors or performance issues occur. In the general case,
-   this technique greatly improves translation efficiency. The default value is NO.
+-  .. lco:: BUFFER_SIZE
+      :choices: <bytes>
+
+      The soft limit of the write buffer in bytes. Larger
+      values generally imply better performance, but values should be comfortably
+      less than that of available physical memory or else thrashing can occur.
+      By default, this value is set at 20% of usable physical memory (usable meaning
+      total physical RAM considering limitations of virtual address space size).
+      Buffer contents are committed between translating features, but not *during*
+      translating a feature, so this limit does not apply to a single feature. The minimum
+      acceptable size is 4096. If a value lower than this is specified the default will
+      be used.
+
+-  .. lco:: GROUPLESS_WRITE_BACK
+      :choices: YES, NO
+      :default: NO
+
+      In order to reduce time used to write data to the target
+      netCDF file, data is often grouped together in arrays and written all at once.
+      Each of these arrays is associated with a variable in the target dataset.
+      Arrays are destroyed as soon as the associated data is written to the netCDF file
+      which in turn occurs as soon as a complete data array for a variable is assembled in memory.
+      For machines with small memory sizes, this optimization may cause issues
+      when writing large datasets with large layers. Turning this option on by specifying "YES" disables array writing
+      and causes data to be written one datum at a time. It is strongly recommended to keep this option off
+      unless out of memory errors or performance issues occur. In the general case,
+      this technique greatly improves translation efficiency.
 
 XML configuration file
 ----------------------

@@ -49,18 +49,24 @@ contains several raster layers, a list of subdatasets is returned by the driver
 Open options
 -------------
 
--  **NODATA_OR_MASK**\ = ``AUTO``, ``MASK``, ``NONE`` or numeric nodata value.
+-  .. oo:: NODATA_OR_MASK
+      :choices: AUTO, MASK, NONE, numeric nodata value
 
-   + In AUTO mode, the driver will expose a dataset nodata mask band, unless the
-     band data type is Float32 or Float64, in which case a nodata value is used.
-   + In MASK mode, the driver will expose a dataset nodata mask band for all
-     data types.
-   + In NONE mode, the driver will not expose a nodata mask band or a
-     nodata value.
-   + When specifying a numeric nodata value (``nan`` accepted for Float32 or
-     Float64), it is used as the band nodata value. The nodata value should be
-     selected outside the range of valid values (but within the range of the
-     data type).
+      Control nodata handling.
+
+      - In AUTO mode, the driver will expose a dataset nodata mask band, unless the
+        band data type is Float32 or Float64, in which case a nodata value is used.
+
+      - In MASK mode, the driver will expose a dataset nodata mask band for all
+        data types.
+
+      - In NONE mode, the driver will not expose a nodata mask band or a
+        nodata value.
+
+      - When specifying a numeric nodata value (``nan`` accepted for Float32 or
+        Float64), it is used as the band nodata value. The nodata value should be
+        selected outside the range of valid values (but within the range of the
+        data type).
 
 Metadata
 --------

@@ -8,7 +8,7 @@ DIPEx -- ELAS DIPEx
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/raw/dipxdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/dipxdataset.cpp`.
 
 Driver capabilities
 -------------------

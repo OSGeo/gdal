@@ -37,57 +37,98 @@ Open options
 
 The following open options are available :
 
--  **ASSET**\ =string: To specify the asset if not specified in the
-   connection string.
--  **BANDS**\ =bandname1[,bandnameX]*: Comma separated list of band
-   names.
--  **PIXEL_ENCODING**\ =AUTO/PNG/JPEG/AUTO_JPEG_PNG/GEO_TIFF/NPY: Format
-   in which to request pixels.
--  **BLOCK_SIZE**\ =integer: Size of a GDAL block, which is the minimum
-   unit to query pixels. Default is 256.
+-  .. oo:: ASSET
+      :choices: <string>
+
+      To specify the asset if not specified in the
+      connection string.
+
+-  .. oo:: BANDS
+
+      Comma separated list of band names.
+
+-  .. oo:: PIXEL_ENCODING
+      :choices: AUTO, PNG, JPEG, AUTO_JPEG_PNG, GEO_TIFF, NPY
+
+      Format in which to request pixels.
+
+-  .. oo:: BLOCK_SIZE
+      :choices: <integer>
+      :default: 256
+
+      Size of a GDAL block, which is the minimum
+      unit to query pixels.
 
 Authentication methods
 ----------------------
 
 The following authentication methods can be used:
 
--  Authentication Bearer header passed through the EEDA_BEARER or
-   EEDA_BEARER_FILE configuration options.
+-  Authentication Bearer header passed through the :config:`EEDA_BEARER` or
+   :config:`EEDA_BEARER_FILE` configuration options.
 -  Service account private key file, through the
-   GOOGLE_APPLICATION_CREDENTIALS configuration option.
--  OAuth2 Service Account authentication through the EEDA_PRIVATE_KEY/
-   EEDA_PRIVATE_KEY_FILE + EEDA_CLIENT_EMAIL configuration options.
+   :config:`GOOGLE_APPLICATION_CREDENTIALS` configuration option.
+-  OAuth2 Service Account authentication through the :config:`EEDA_PRIVATE_KEY`/
+   :config:`EEDA_PRIVATE_KEY_FILE` + :config:`EEDA_CLIENT_EMAIL` configuration options.
 -  Finally if none of the above method succeeds, the code will check if
    the current machine is a Google Compute Engine instance, and if so
    will use the permissions associated to it (using the default service
    account associated with the VM). To force a machine to be detected as
    a GCE instance (for example for code running in a container with no
-   access to the boot logs), you can set CPL_MACHINE_IS_GCE to YES.
+   access to the boot logs), you can set :config:`CPL_MACHINE_IS_GCE=YES`.
 
 Configuration options
 ---------------------
 
 The following configuration options are available :
 
--  **EEDA_BEARER**\ =value: Authentication Bearer value to pass to the
-   API. This option is only useful when the token is computed by
-   external code. The bearer validity is typically one hour from the
-   time where it as been requested.
--  **EEDA_BEARER_FILE**\ =filename: Similar to EEDA_BEARER option,
-   except than instead of passing the value directly, it is the filename
-   where the value should be read.
--  **GOOGLE_APPLICATION_CREDENTIALS**\ =file.json: Service account
-   private key file that contains a private key and client email
--  **EEDA_PRIVATE_KEY**\ =string: RSA private key encoded as a PKCS#8
-   PEM file, with its header and footer. Used together with
-   EEDA_CLIENT_EMAIL to use OAuth2 Service Account authentication.
-   Requires GDAL to be built against libcrypto++ or libssl.
--  **EEDA_PRIVATE_KEY_FILE**\ =filename: Similar to EEDA_PRIVATE_KEY
-   option, except than instead of passing the value directly, it is the
-   filename where the key should be read.
--  **EEDA_CLIENT_EMAIL**\ =string: email to be specified together with
-   EEDA_PRIVATE_KEY/EEDA_PRIVATE_KEY_FILE to use OAuth2 Service Account
-   authentication.
+-  .. config:: EEDA_BEARER
+
+      Authentication Bearer value to pass to the
+      API. This option is only useful when the token is computed by
+      external code. The bearer validity is typically one hour from the
+      time where it as been requested.
+
+-  .. config:: EEDA_BEARER_FILE
+      :choices: <filename>
+
+      Similar to :config:`EEDA_BEARER` option,
+      except than instead of passing the value directly, it is the filename
+      where the value should be read.
+
+-  .. config:: GOOGLE_APPLICATION_CREDENTIALS
+      :choices: <file.json>
+
+      Service account
+      private key file that contains a private key and client email
+
+-  .. config:: EEDA_PRIVATE_KEY
+
+      RSA private key encoded as a PKCS#8
+      PEM file, with its header and footer. Used together with
+      :config:`EEDA_CLIENT_EMAIL` to use OAuth2 Service Account authentication.
+      Requires GDAL to be built against libcrypto++ or libssl.
+
+-  .. config:: EEDA_PRIVATE_KEY_FILE
+      :choices: <filename>
+
+      Similar to :config:`EEDA_PRIVATE_KEY`
+      option, except than instead of passing the value directly, it is the
+      filename where the key should be read.
+
+-  .. config:: EEDA_CLIENT_EMAIL
+
+      email to be specified together with
+      :config:`EEDA_PRIVATE_KEY`/:config:`EEDA_PRIVATE_KEY_FILE` to use OAuth2 Service Account
+      authentication.
+
+-  .. config:: CPL_MACHINE_IS_GCE
+      :choices: YES, NO
+      :default: NO
+
+      If ``YES``, forces GDAL to consider the current machine to be a
+      a Google Compute Engine instance. May be needed for code running
+      in a container with no access to the boot logs.
 
 Overviews
 ---------
@@ -112,7 +153,7 @@ dataset-level or band-level metadata.
 Pixel encoding
 --------------
 
-By default (PIXEL_ENCODING=AUTO), the driver will request pixels in a
+By default (:oo:`PIXEL_ENCODING=AUTO`), the driver will request pixels in a
 format compatible of the number and data types of the bands. The PNG,
 JPEG and AUTO_JPEG_PNG can only be used with bands of type Byte.
 

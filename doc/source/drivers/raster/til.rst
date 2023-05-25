@@ -8,7 +8,7 @@ TIL -- EarthWatch/DigitalGlobe .TIL
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/til/tildataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/til/tildataset.cpp`.
 
 Driver capabilities
 -------------------

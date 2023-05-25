@@ -73,6 +73,6 @@ Header information is written out on the first call to
 See Also:
 ---------
 
--  Implemented as ``gdal/frmts/leveller/levellerdataset.cpp``.
+-  Implemented as :source_file:`frmts/leveller/levellerdataset.cpp`.
 -  Visit `Daylon Graphics <http://www.daylongraphics.com>`__ for the
    Leveller SDK, which documents the Leveller format.

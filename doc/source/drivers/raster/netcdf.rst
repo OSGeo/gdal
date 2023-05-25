@@ -16,7 +16,7 @@ array-oriented data access and is used for representing scientific data.
 The fill value metadata or missing_value backward compatibility is
 preserved as NODATA value when available.
 
-NOTE: Implemented as ``gdal/frmts/netcdf/netcdfdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/netcdf/netcdfdataset.cpp`.
 
 Driver capabilities
 -------------------
@@ -177,7 +177,7 @@ driver. This driver is intended only for importing remote sensing and
 geospatial datasets in form of raster images. If you want explore all
 data contained in NetCDF file you should use another tools.
 
-Starting with GDAL 3.5, the **VARIABLES_AS_BANDS=YES** open option can be
+Starting with GDAL 3.5, the :oo:`VARIABLES_AS_BANDS=YES` open option can be
 used to indicate to the driver that if the netCDF file only contains
 2D variables of the same type and indexed by the same dimensions, then they
 should be reported as multiple bands of a same dataset.
@@ -270,24 +270,44 @@ Open options
 
 The following open options are available:
 
--  **HONOUR_VALID_RANGE**\ =YES/NO: (GDAL > 2.2) Whether to set to
-   nodata pixel values outside of the validity range indicated by
-   valid_min, valid_max or valid_range attributes. Default is YES.
+-  .. oo:: HONOUR_VALID_RANGE
+      :choices: YES, NO
+      :since: 2.2
+      :default: YES
 
--  **IGNORE_XY_AXIS_NAME_CHECKS**\ =YES/NO: (GDAL >= 3.4.2) Whether X/Y dimensions
-   should be always considered as geospatial axis, even if the lack
-   conventional attributes confirming it. Default is NO.
+      Whether to set to
+      nodata pixel values outside of the validity range indicated by
+      valid_min, valid_max or valid_range attributes.
 
--  **VARIABLES_AS_BANDS**\ =YES/NO: (GDAL >= 3.5) If set to YES, and if the
-   netCDF file only contains 2D variables of the same type and indexed by the
-   same dimensions, then they should be reported as multiple bands of a same dataset.
-   Default is NO (that is each variable will be reported as a separate
-   subdataset)
-   
--  **ASSUME_LONGLAT=[YES/NO]** : (GDAL >= 3.7) Whether a Geographic CRS should
-   be assumed and applied when, none has otherwise been found, a meaningful 
-   geotransform has been found, and that geotransform is within the bounds 
-   -180,360 -90,90, if YES assume OGC:CRS84. Default is NO.
+-  .. oo:: IGNORE_XY_AXIS_NAME_CHECKS
+      :choices: YES, NOA
+      :default: NO
+      :since: 3.4.2
+
+      Whether X/Y dimensions
+      should be always considered as geospatial axis, even if the lack
+      conventional attributes confirming it.
+
+-  .. oo:: VARIABLES_AS_BANDS
+      :choices: YES, NO
+      :default: NO
+      :since: 3.5
+
+      If set to YES, and if the
+      netCDF file only contains 2D variables of the same type and indexed by the
+      same dimensions, then they should be reported as multiple bands of a same dataset.
+      Default is NO (that is each variable will be reported as a separate
+      subdataset)
+
+-  .. oo:: ASSUME_LONGLAT
+      :choices: YES, NO
+      :default: NO
+      :since: 3.7
+
+      Whether a Geographic CRS should
+      be assumed and applied when, none has otherwise been found, a meaningful
+      geotransform has been found, and that geotransform is within the bounds
+      -180,360 -90,90, if YES assume OGC:CRS84.
 
 
 Creation Issues
@@ -391,62 +411,97 @@ Can be discovered for example with:
 Creation Options
 ----------------
 
--  **FORMAT=[NC/NC2/NC4/NC4C]**: Set the NetCDF file format to use, NC
-   is the default. NC2 is normally supported by recent NetCDF
-   installations, but NC4 and NC4C are available if NetCDF was compiled
-   with NetCDF-4 (and HDF5) support.
--  **COMPRESS=[NONE/DEFLATE]**: Set the compression to use. DEFLATE is
-   only available if NetCDF has been compiled with NetCDF-4 support.
-   NC4C format is the default if DEFLATE compression is used.
+-  .. co:: FORMAT
+      :choices: NC, NC2, NC4, NC4C
+      :default: NC
 
--  **ZLEVEL=[1-9]**: Set the level of compression when using DEFLATE
-   compression. A value of 9 is best, and 1 is least compression. The
-   default is 1, which offers the best time/compression ratio.
+      Set the NetCDF file format to use.
+      NC2 is normally supported by recent NetCDF
+      installations, but NC4 and NC4C are available if NetCDF was compiled
+      with NetCDF-4 (and HDF5) support.
 
--  **WRITE_BOTTOMUP=[YES/NO]**: Set the y-axis order for export,
-   overriding the order detected by the driver. NetCDF files are usually
-   assumed "bottom-up", contrary to GDAL's model which is "north up".
-   This normally does not create a problem in the y-axis order, unless
-   there is no y axis geo-referencing. The default for this setting is
-   YES, so files will be exported in the NetCDF default "bottom-up"
-   order. For import see Configuration Option GDAL_NETCDF_BOTTOMUP
-   below.
+-  .. co:: COMPRESS
+      :choices: NONE, DEFLATE
 
--  **WRITE_GDAL_TAGS=[YES/NO]**: Define if GDAL tags used for
-   georeferencing (spatial_ref and GeoTransform) should be exported, in
-   addition to CF tags. Not all information is stored in the CF tags
-   (such as named datums and EPSG codes), therefore the driver exports
-   these variables by default. In import the CF "grid_mapping" variable
-   takes precedence and the GDAL tags are used if they do not conflict
-   with CF metadata. In GDAL 4, spatial_ref will not be exported. The
-   crs_wkt CF metatata attribute will be used instead.
+      Set the compression to use. DEFLATE is
+      only available if NetCDF has been compiled with NetCDF-4 support.
+      NC4C format is the default if DEFLATE compression is used.
 
--  **WRITE_LONLAT=[YES/NO/IF_NEEDED]**: Define if CF lon/lat variables
-   are written to file. Default is YES for geographic SRS and NO for
-   projected SRS. This is normally not necessary for projected SRS as
-   GDAL and many applications use the X/Y dimension variables and CF
-   projection information. Use of IF_NEEDED option creates lon/lat
-   variables if the projection is not part of the CF-1.5 standard.
+-  .. co:: ZLEVEL
+      :choices: 1-9
+      :default: 1
 
--  **TYPE_LONLAT=[float/double]**: Set the variable type to use for
-   lon/lat variables. Default is double for geographic SRS and float for
-   projected SRS. If lon/lat variables are written for a projected SRS,
-   the file is considerably large (each variable uses X*Y space),
-   therefore TYPE_LONLAT=float and COMPRESS=DEFLATE are advisable in
-   order to save space.
+      Set the level of compression when using DEFLATE
+      compression. A value of 9 is best, and 1 is least compression. The
+      default is 1, which offers the best time/compression ratio.
 
--  **PIXELTYPE=[DEFAULT/SIGNEDBYTE]**: By setting this to SIGNEDBYTE, a
-   new Byte file can be forced to be written as signed byte.
-   Starting with GDAL 3.7, this option is deprecated and Int8 should rather
-   be used.
+-  .. co:: WRITE_BOTTOMUP
+      :choices: YES, NO
+      :default: YES
 
--  **WRITE_GDAL_VERSION=[YES/NO]**: (GDAL >= 3.5.0)
-   Define if a "GDAL" text global attribute should be added on file creation
-   with the GDAL version. Defaults to YES
+      Set the y-axis order for export,
+      overriding the order detected by the driver. NetCDF files are usually
+      assumed "bottom-up", contrary to GDAL's model which is "north up".
+      This normally does not create a problem in the y-axis order, unless
+      there is no y axis geo-referencing. The default for this setting is
+      YES, so files will be exported in the NetCDF default "bottom-up"
+      order. For import see :config:`GDAL_NETCDF_BOTTOMUP` below.
 
--  **WRITE_GDAL_HISTORY=[YES/NO]**: (GDAL >= 3.5.0)
-   Define if the "history" global attribute should be prepended with a date/time
-   and GDAL information. Defaults to YES.
+-  .. co:: WRITE_GDAL_TAGS
+      :choices: YES, NO
+
+      Define if GDAL tags used for
+      georeferencing (spatial_ref and GeoTransform) should be exported, in
+      addition to CF tags. Not all information is stored in the CF tags
+      (such as named datums and EPSG codes), therefore the driver exports
+      these variables by default. In import the CF "grid_mapping" variable
+      takes precedence and the GDAL tags are used if they do not conflict
+      with CF metadata. In GDAL 4, spatial_ref will not be exported. The
+      crs_wkt CF metatata attribute will be used instead.
+
+-  .. co:: WRITE_LONLAT
+      :choices: YES, NO, IF_NEEDED
+
+      Define if CF lon/lat variables
+      are written to file. Default is YES for geographic SRS and NO for
+      projected SRS. This is normally not necessary for projected SRS as
+      GDAL and many applications use the X/Y dimension variables and CF
+      projection information. Use of IF_NEEDED option creates lon/lat
+      variables if the projection is not part of the CF-1.5 standard.
+
+-  .. co:: TYPE_LONLAT
+      :choices: float, double
+
+      Set the variable type to use for
+      lon/lat variables. Default is double for geographic SRS and float for
+      projected SRS. If lon/lat variables are written for a projected SRS,
+      the file is considerably large (each variable uses X*Y space),
+      therefore :co:`TYPE_LONLAT=float` and :co:`COMPRESS=DEFLATE` are advisable in
+      order to save space.
+
+-  .. co:: PIXELTYPE
+      :choices: DEFAULT, SIGNEDBYTE
+
+      By setting this to SIGNEDBYTE, a
+      new Byte file can be forced to be written as signed byte.
+      Starting with GDAL 3.7, this option is deprecated and Int8 should rather
+      be used.
+
+-  .. co:: WRITE_GDAL_VERSION
+      :choices: YES, NO
+      :default: YES
+      :since: 3.5.0
+
+      Define if a "GDAL" text global attribute should be added on file creation
+      with the GDAL version
+
+-  .. co:: WRITE_GDAL_HISTORY
+      :choices: YES, NO
+      :default: YES
+      :since: 3.5.0
+
+      Define if the "history" global attribute should be prepended with a date/time
+      and GDAL information.
 
 Creation of multidimensional files with CreateCopy() 2D raster API
 ------------------------------------------------------------------
@@ -503,24 +558,40 @@ Example of creation of a Time,Z,Y,X 4D file in Python:
 Configuration Options
 ---------------------
 
--  **GDAL_NETCDF_BOTTOMUP=[YES/NO]** : Set the y-axis order for import,
-   overriding the order detected by the driver. This option is usually
-   not needed unless a specific dataset is causing problems (which
-   should be reported on `GitHub <https://github.com/osgeo/GDAL/issues>`_).
+-  .. config:: GDAL_NETCDF_BOTTOMUP
+      :choices: YES, NO
 
--  **GDAL_NETCDF_VERIFY_DIMS=[YES/STRICT]** : Try to guess which dimensions
-   represent the latitude and longitude only by their attributes (STRICT)
-   or also by guessing the name (YES), default is YES.
+      Set the y-axis order for import,
+      overriding the order detected by the driver. This option is usually
+      not needed unless a specific dataset is causing problems (which
+      should be reported on `GitHub <https://github.com/osgeo/GDAL/issues>`_).
 
--  **GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS=[YES/NO]** : Whether X/Y dimensions
-   should be always considered as geospatial axis, even if the lack
-   conventional attributes confirming it. Default is NO.
+-  .. config:: GDAL_NETCDF_VERIFY_DIMS
+      :choices: YES, STRICT
+      :default: YES
 
--  **GDAL_NETCDF_ASSUME_LONGLAT=[YES/NO]** : (GDAL >= 3.7) Whether a Geographic CRS should
-   be assumed and applied when, none has otherwise been found, a meaningful 
-   geotransform has been found, and that geotransform is within the bounds 
-   -180,360 -90,90, if YES assume OGC:CRS84. Default is NO.
-    
+      Try to guess which dimensions
+      represent the latitude and longitude only by their attributes (STRICT)
+      or also by guessing the name (YES).
+
+-  .. config:: GDAL_NETCDF_IGNORE_XY_AXIS_NAME_CHECKS
+      :choices: YES, NO
+      :default: NO
+
+      Whether X/Y dimensions
+      should be always considered as geospatial axis, even if the lack
+      conventional attributes confirming it.
+
+-  .. config:: GDAL_NETCDF_ASSUME_LONGLAT
+      :choices: YES, NO
+      :default: NO
+      :since: 3.7
+
+      Whether a Geographic CRS should
+      be assumed and applied when, none has otherwise been found, a meaningful
+      geotransform has been found, and that geotransform is within the bounds
+      -180,360 -90,90, if YES assume OGC:CRS84.
+
 VSI Virtual File System API support
 -----------------------------------
 

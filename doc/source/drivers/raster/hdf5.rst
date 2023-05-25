@@ -231,8 +231,8 @@ download source code NCSA HDF Home Page (see links below).
 See Also
 --------
 
-Implemented as ``gdal/frmts/hdf5/hdf5dataset.cpp`` and
-``gdal/frmts/hdf5/hdf5imagedataset.cpp``.
+Implemented as :source_file:`frmts/hdf5/hdf5dataset.cpp` and
+:source_file:`frmts/hdf5/hdf5imagedataset.cpp`.
 
 `The NCSA HDF5 Download
 Page <http://hdf.ncsa.uiuc.edu/HDF5/release/obtain5.html>`__ at the

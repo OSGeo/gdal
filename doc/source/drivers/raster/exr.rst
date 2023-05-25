@@ -21,48 +21,82 @@ EXR header metadata.
 Creation Options
 ----------------
 
--  **COMPRESS=[NONE/RLE/ZIPS/ZIP/PIZ/PXR24/B44/B44A/DWAA/DWAB]**: Compression method.
-   Defaults to ZIP.
-   Details on the format `Wikipedia page <https://en.wikipedia.org/wiki/OpenEXR#Compression_methods>`_
+-  .. co:: COMPRESS
+      :choices: NONE, RLE, ZIPS, ZIP, PIZ, PXR24, B44, B44A, DWAA, DWAB
+      :default: ZIP
 
--  **PIXEL_TYPE=HALF/FLOAT/UINT**: Pixel type used for encoding.
+      Compression method.
+      Details on the format `Wikipedia page <https://en.wikipedia.org/wiki/OpenEXR#Compression_methods>`_
 
-   - ``HALF`` corresponds to a IEEE-754 16-bit floating point value.
-   - ``FLOAT`` corresponds to a IEEE-754 32-bit floating point value.
-   - ``UINT`` corresponds to a 32-bit unsigned integer value.
+-  .. co:: PIXEL_TYPE
+      :choices: HALF, FLOAT, UINT
 
-   If not specified, the following GDAL data types will be mapped as following:
+      Pixel type used for encoding.
 
-   - ``Byte`` ==> HALF
-   - ``Int16`` ==> HALF (potentially lossy)
-   - ``UInt16`` ==> HALF (potentially lossy)
-   - ``Int32`` ==> FLOAT (potentially lossy)
-   - ``UInt32`` ==> UINT
-   - ``Float32`` ==> FLOAT
-   - ``Float64`` ==> FLOAT (generally lossy)
+      - ``HALF`` corresponds to a IEEE-754 16-bit floating point value.
+      - ``FLOAT`` corresponds to a IEEE-754 32-bit floating point value.
+      - ``UINT`` corresponds to a 32-bit unsigned integer value.
 
--  **TILED=YES/NO**: By default tiled files will be created, unless this option
-   is set to NO. In Create() mode, setting TILED=NO is not possible.
+      If not specified, the following GDAL data types will be mapped as following:
 
--  **BLOCKXSIZE=n**: Sets tile width, defaults to 256.
+      - ``Byte`` ==> HALF
+      - ``Int16`` ==> HALF (potentially lossy)
+      - ``UInt16`` ==> HALF (potentially lossy)
+      - ``Int32`` ==> FLOAT (potentially lossy)
+      - ``UInt32`` ==> UINT
+      - ``Float32`` ==> FLOAT
+      - ``Float64`` ==> FLOAT (generally lossy)
 
--  **BLOCKYSIZE=n**: Sets tile height, defaults to 256.
+-  .. co:: TILED
+      :choices: YES, NO
+      :default: NO
 
--  **OVERVIEWS=YES/NO**: Whether to create overviews. Default to NO. Only
-   compatible of CreateCopy() mode.
+      By default tiled files will be created, unless this option
+      is set to NO. In Create() mode, setting TILED=NO is not possible.
 
--  **OVERVIEW_RESAMPLING=NEAR/AVERAGE/CUBIC/...**: Resampling method to use for
-   overview creation. Defaults to CUBIC.
+-  .. co:: BLOCKXSIZE
+      :choices: <integer>
+      :default: 256
 
--  **PREVIEW=YES/NO**: Whether to create a preview. Default to NO. Only
-   compatible of CreateCopy() mode, and with RGB(A) data of type Byte.
+      Sets tile width.
 
--  **AUTO_RESCALE=YES/NO**: Whether to rescale Byte RGB(A) values from 0-255 to
-   the 0-1 range usually used in EXR ecosystem.
+-  .. co:: BLOCKYSIZE
+      :choices: <integer>
+      :default: 256
 
--  **DWA_COMPRESSION_LEVEL=n**: DWA compression level. The higher, the more
-   compressed the image will be (and the more artifacts). Defaults to 45
-   for OpenEXR 2.4
+      Sets tile height.
+
+-  .. co:: OVERVIEWS
+      :choices: YES, NO
+      :default: NO
+
+      Whether to create overviews. Only compatible with CreateCopy() mode.
+
+-  .. co:: OVERVIEW_RESAMPLING
+      :choices: NEAR, AVERAGE, CUBIC, ...
+      :default: CUBIC
+
+      Resampling method to use for overview creation.
+
+-  .. co:: PREVIEW
+      :choices: YES, NO
+      :default: NO
+
+      Whether to create a preview. Only
+      compatible with CreateCopy() mode, and with RGB(A) data of type Byte.
+
+-  .. co:: AUTO_RESCALE
+      :choices: YES, NO
+
+      Whether to rescale Byte RGB(A) values from 0-255 to
+      the 0-1 range usually used in EXR ecosystem.
+
+-  .. co:: DWA_COMPRESSION_LEVEL
+      :choices: <integer>
+
+      DWA compression level. The higher, the more
+      compressed the image will be (and the more artifacts). Defaults to 45
+      for OpenEXR 2.4
 
 Driver capabilities
 -------------------
