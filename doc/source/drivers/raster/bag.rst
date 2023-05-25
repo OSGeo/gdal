@@ -75,8 +75,8 @@ The driver has different modes of working which can be controlled by the
 MODE open option:
 
 .. oo:: MODE
-   :choices: LOW_RES_GRID, LIST_SUPERGRIDS, RESAMPLED_GRID, <dataset>
-   :default: LOW_RES_GRID
+   :choices: LOW_RES_GRID, LIST_SUPERGRIDS, RESAMPLED_GRID, AUTO
+   :default: AUTO
 
    Driver mode.
 
