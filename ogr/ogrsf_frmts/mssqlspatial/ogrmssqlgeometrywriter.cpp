@@ -253,6 +253,11 @@ void OGRMSSQLGeometryWriter::WritePoint(double x, double y, double z, double m)
 void OGRMSSQLGeometryWriter::WriteSimpleCurve(OGRSimpleCurve *poGeom,
                                               int iStartIndex, int nCount)
 {
+    if (nColType == MSSQLCOLTYPE_GEOGRAPHY && poGeom->isClockwise())
+    {
+        poGeom->reversePoints();
+    }
+
     if ((chProps & SP_HASZVALUES) && (chProps & SP_HASMVALUES))
     {
         for (int i = iStartIndex; i < iStartIndex + nCount; i++)
