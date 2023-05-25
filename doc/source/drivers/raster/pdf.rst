@@ -72,7 +72,7 @@ Configuration options
       Best Practice). This defaults to "Map Layers" for USGS Topo PDF. If
       not found, the neatline that covers the largest area.
 
--  .. config:: GDAL_USER_PWD
+-  .. config:: PDF_USER_PWD
 
       User password for protected PDFs.
 
@@ -130,7 +130,7 @@ Above configuration options are also available as open options.
 
 -  .. oo:: USER_PWD
 
-      Equivalent of :config:`GDAL_USER_PWD` configuration option
+      Equivalent of :config:`PDF_USER_PWD` configuration option
 
 -  .. oo:: PDF_LIB
       :choices: POPPLER, PODOFO, PDFIUM
