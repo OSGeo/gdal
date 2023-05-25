@@ -244,7 +244,7 @@ The following :ref:`configuration options <configoptions>` are
 available:
 
 - .. config:: FGDB_BULK_LOAD
-     :choices: yeS, NO
+     :choices: YES, NO
 
      Can be set to YES to speed-up
      feature insertion (or sometimes solve problems when inserting a lot of

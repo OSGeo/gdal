@@ -67,7 +67,7 @@ Creation Options:
       minute tile (though wider in longitude in far north areas).
 
 -  .. co:: TOPLEFT
-      :choices: long, lat
+      :choices: <long\,lat>
 
       For CDED50K products, this is used to specify
       the top left corner of the tile to be generated. It should be on a 15

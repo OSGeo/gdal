@@ -112,7 +112,7 @@ The following open options are available:
      the available tile matrix sets.
      TILEMATRIXSET and PREFERRED_TILEMATRIXSET options are mutually exclusive.
 
-- .. oo:: PREFERRED_TILEMATRIXSET=
+- .. oo:: PREFERRED_TILEMATRIXSET
      :choices: <id>
 
      Identifier of the preferred tile matrix set. Only used with the tiles API.

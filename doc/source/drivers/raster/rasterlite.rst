@@ -113,6 +113,7 @@ Creation options
       driver to use for storing tiles.
 
 -  .. co:: COMPRESS
+      :choices: LZW, JPEG, DEFLATE, ...
 
       (GTiff driver) name of the
       compression method

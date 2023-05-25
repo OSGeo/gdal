@@ -657,7 +657,7 @@ Dataset creation options
       the GML file.
 
 -  .. dsco:: TARGET_NAMESPACE
-      :default: 'http://ogr.maptools.org/'
+      :default: http://ogr.maptools.org/
 
       This is the application target namespace.
 

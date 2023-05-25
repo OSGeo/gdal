@@ -84,6 +84,7 @@ Creation options
       the output file is used.
 
 -  .. co:: COMPRESS
+      :choices: NONE, DEFLATE, LZMA, PNG, CCITTFAX4, JPEG, WEBP, CHARS, JPEG2000
       :default: NONE
 
       Compression method. See the `information about
@@ -93,6 +94,7 @@ Creation options
       librasterlite2 has been built.
 
 -  .. co:: QUALITY
+      :choices: [0-100]
 
       Image quality for JPEG, WEBP and JPEG2000
       compressions. Exact meaning depends on the compression method. For
@@ -100,6 +102,7 @@ Creation options
       variants.
 
 -  .. co:: PIXEL_TYPE
+      :choices: MONOCHROME, PALETTE, GRAYSCALE, RGB, MULTIBAND, DATAGRID
 
       Raster pixel type. Determines the photometric interpretation. See the
       `information about supported pixel

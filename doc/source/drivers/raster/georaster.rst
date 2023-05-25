@@ -111,15 +111,15 @@ Creation Options
 
 -  .. co:: BLOCKXSIZE
 
-      The number of pixel columns on raster block.
+      The number of pixel columns per raster block.
 
 -  .. co:: BLOCKYSIZE
 
-      The number of pixel rows on raster block.
+      The number of pixel rows per raster block.
 
 -  .. co:: BLOCKBSIZE
 
-      The number of bands on raster block.
+      The number of bands per raster block.
 
 -  .. co:: BLOCKING
 
@@ -139,7 +139,7 @@ Creation Options
       Starting with GDAL 3.5, when copying from a source dataset with multiple bands
       which advertises a INTERLEAVE metadata item, if the INTERLEAVE creation option
       is not specified, the source dataset INTERLEAVE will be automatically taken
-      into account, unless the COMPRESS creation option is specified.
+      into account, unless the :co:`COMPRESS` creation option is specified.
 
 -  .. co:: DESCRIPTION
 
