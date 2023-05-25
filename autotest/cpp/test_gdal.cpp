@@ -3313,4 +3313,55 @@ TEST_F(test_gdal, jpegxl_jpeg_compatible_ReadCompressedData)
     }
 }
 
+// Test GDAL_OF_SHARED flag and open options
+TEST_F(test_gdal, open_shared_open_options)
+{
+    const char *const apszOpenOptions[] = {"OVERVIEW_LEVEL=NONE", nullptr};
+    {
+        GDALDataset *poDS1 =
+            GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
+                              nullptr, apszOpenOptions);
+        GDALDataset *poDS2 =
+            GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
+                              nullptr, apszOpenOptions);
+        EXPECT_NE(poDS1, nullptr);
+        EXPECT_NE(poDS2, nullptr);
+        EXPECT_EQ(poDS1, poDS2);
+        GDALClose(poDS1);
+        GDALClose(poDS2);
+    }
+    {
+        GDALDataset *poDS1 =
+            GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
+                              nullptr, apszOpenOptions);
+        GDALDataset *poDS2 = GDALDataset::Open(
+            GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED, nullptr, nullptr);
+        GDALDataset *poDS3 =
+            GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
+                              nullptr, apszOpenOptions);
+        EXPECT_NE(poDS1, nullptr);
+        EXPECT_NE(poDS2, nullptr);
+        EXPECT_NE(poDS3, nullptr);
+        EXPECT_NE(poDS1, poDS2);
+        EXPECT_EQ(poDS1, poDS3);
+        GDALClose(poDS1);
+        GDALClose(poDS2);
+        GDALClose(poDS3);
+    }
+    {
+        GDALDataset *poDS1 = GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif",
+                                               GDAL_OF_SHARED | GDAL_OF_UPDATE,
+                                               nullptr, apszOpenOptions);
+        // We allow to re-use a shared dataset in update mode when requesting it in read-only
+        GDALDataset *poDS2 =
+            GDALDataset::Open(GCORE_DATA_DIR "rgbsmall.tif", GDAL_OF_SHARED,
+                              nullptr, apszOpenOptions);
+        EXPECT_NE(poDS1, nullptr);
+        EXPECT_NE(poDS2, nullptr);
+        EXPECT_EQ(poDS1, poDS2);
+        GDALClose(poDS1);
+        GDALClose(poDS2);
+    }
+}
+
 }  // namespace
