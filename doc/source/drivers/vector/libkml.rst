@@ -561,7 +561,7 @@ except for some special fields as noted below.
    `<Data> <https://developers.google.com/kml/documentation/kmlreference#data>`__
    elements using the following configuration option:
 
-  .. config:: LIBKML_USE_SCHEMADATA
+  .. config:: LIBKML_USE_SIMPLEFIELD
      :choices: YES, NO
 
      If ``NO``, export fields as <Data>.
@@ -824,7 +824,7 @@ tag in KML, you can set a configuration option.
       of a
       `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
 
--  .. config:: LIBKML_BOTTOMTFOV_FIELD
+-  .. config:: LIBKML_BOTTOMFOV_FIELD
       :default: bottomfov
 
       Name of the real field that maps to to kml tag
@@ -840,7 +840,7 @@ tag in KML, you can set a configuration option.
       of a
       `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
 
--  .. config:: LIBKML_NEAR_FIELD
+-  .. config:: LIBKML_NEARFOV_FIELD
       :default: near
 
       Name of the real field that maps to to kml tag
@@ -848,7 +848,7 @@ tag in KML, you can set a configuration option.
       of a
       `<PhotoOverlay> <https://developers.google.com/kml/documentation/kmlreference#photooverlay>`__.
 
--  .. config:: LIBKML_SHAPE_FIELD
+-  .. config:: LIBKML_PHOTOOVERLAY_SHAPE_FIELD
       :default: shape
 
       Name of the string field that maps to to kml tag
