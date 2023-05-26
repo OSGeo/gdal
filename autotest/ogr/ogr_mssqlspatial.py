@@ -624,18 +624,19 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order():
             # Simple polygon, no inner rings
             feature = lyr.GetFeature(1)
             geometry = feature.GetGeometryRef()
-            boundary = geometry.GetBoundary()
+            boundary = geometry.GetGeometryRef(0)
             # Outer ring
             assert not boundary.IsClockwise()
 
             # Inner ring
             feature = lyr.GetFeature(13)
             geometry = feature.GetGeometryRef()
-            boundary = geometry.GetBoundary()
+            boundary = geometry.GetGeometryRef(0)
             # Outer ring
-            assert not boundary.GetGeometryRef(0).IsClockwise()
+            assert not boundary.IsClockwise()
             # Inner ring
-            assert boundary.GetGeometryRef(1).IsClockwise()
+            inner_ring = geometry.GetGeometryRef(1)
+            assert inner_ring.IsClockwise()
 
             del lyr
     finally:
