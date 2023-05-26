@@ -596,9 +596,9 @@ Metadata
 --------
 
 GDAL uses the standardized
-```gpkg_metadata`` <http://www.geopackage.org/spec/#_metadata_table>`__
+`gpkg_metadata <http://www.geopackage.org/spec/#_metadata_table>`__
 and
-```gpkg_metadata_reference`` <http://www.geopackage.org/spec/#_metadata_reference_table>`__
+`gpkg_metadata_reference <http://www.geopackage.org/spec/#_metadata_reference_table>`__
 tables to read and write metadata.
 
 GDAL metadata, from the default metadata domain and possibly other
@@ -636,7 +636,7 @@ IMAGE_STRUCTURE metadata item
 
 Starting with GDAL 3.6.1, the following optional metadata items can be read and
 write into the ``IMAGE_STRUCTURE`` metadata domain, in the
-``<GDALMultiDomainMetadata>``` XML element:
+``<GDALMultiDomainMetadata>`` XML element:
 
 - BAND_COUNT=1, 2, 3 or 4. Applies only for Byte data. Set when creating a
   dataset so that GDAL knows the number of bands when reopening it.
