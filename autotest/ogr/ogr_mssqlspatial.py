@@ -656,17 +656,21 @@ def test_binary_field_bcp():
     ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
     src_lyr = ds.CreateLayer("test_binary_field", geom_type=ogr.wkbPoint)
     src_lyr.CreateField(ogr.FieldDefn("binfield", ogr.OFTBinary))
+    src_lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     f.SetFieldBinaryFromHexString("binfield", "007FFF007FFF")
+    f["strfield"] = "some text"
     src_lyr.CreateFeature(f)
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
-    f.SetFieldBinaryFromHexString("binfield", "7FFF007FFF00")
+    f.SetFieldBinaryFromHexString("binfield", "")
+    f["strfield"] = ""
     src_lyr.CreateFeature(f)
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
     f.SetFieldBinaryFromHexString("binfield", "FF007FFF007F")
+    f["strfield"] = "some text"
     src_lyr.CreateFeature(f)
 
     with gdaltest.config_option("MSSQLSPATIAL_USE_BCP", "TRUE"):
@@ -686,10 +690,13 @@ def test_binary_field_bcp():
 
             f = lyr.GetFeature(1)
             assert f.GetFieldAsBinary("binfield") == b"\x00\x7f\xff\x00\x7f\xff"
+            assert f.GetFieldAsString("strfield") == "some text"
             f = lyr.GetFeature(2)
-            assert f.GetFieldAsBinary("binfield") == b"\x7f\xff\x00\x7f\xff\x00"
+            assert f.GetFieldAsBinary("binfield") == b""
+            assert f.GetFieldAsString("strfield") == ""
             f = lyr.GetFeature(3)
             assert f.GetFieldAsBinary("binfield") == b"\xff\x00\x7f\xff\x00\x7f"
+            assert f.GetFieldAsString("strfield") == "some text"
 
         finally:
             gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE test_binary_field")
