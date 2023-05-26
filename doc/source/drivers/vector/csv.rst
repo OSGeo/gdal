@@ -82,9 +82,9 @@ Unix (LF) style line terminators. Each record should have the same
 number of fields. The driver will also accept a semicolon, a tabulation,
 a pipe, or a space character as field separator.
 Starting with GDAL 3.7.1, the autodection will select the separator with the
-most occurences if there are several candidates  on the first line of the CSV
-file (and warn about that). The SEPARATOR open option may also be set to
-define the wished separator.
+most occurrences if there are several candidates  on the first line of the CSV
+file (and warn about that). The :oo:`SEPARATOR` open option may also be set to
+define the desired separator.
 Previous versions select comma by default when there are several potential
 separators.
 

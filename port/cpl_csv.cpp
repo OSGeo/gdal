@@ -532,7 +532,7 @@ static void CSVIngest(const char *pszFilename)
  *
  * Currently, it can detect comma, semicolon, space, tabulation or pipe.
  * In case of ambiguity, starting with GDAL 3.7.1, the separator with the
- * most occurences will be selected (and a warning emitted).
+ * most occurrences will be selected (and a warning emitted).
  * If no separator found, comma will be considered as the separator.
  *
  * @return ',', ';', ' ', tabulation character or '|'.
