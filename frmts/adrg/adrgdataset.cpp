@@ -328,14 +328,15 @@ static unsigned int WriteSubFieldStr(VSILFILE *fd, const char *pszStr,
 {
     char *str = (char *)CPLMalloc(size + 1);
     memset(str, ' ', size);
-    if (strlen(pszStr) > size)
+    str[size] = 0;
+    const size_t nStrLen = strlen(pszStr);
+    if (nStrLen > size)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "strlen(pszStr) > size");
         CPLFree(str);
         return size;
     }
-    strcpy(str, pszStr);
-    str[strlen(pszStr)] = ' ';
+    memcpy(str, pszStr, nStrLen);
     VSIFWriteL(str, 1, size, fd);
     CPLFree(str);
     return size;
