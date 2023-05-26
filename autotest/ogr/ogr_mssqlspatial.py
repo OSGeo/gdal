@@ -648,7 +648,6 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order():
 
 
 @pytest.mark.require_driver("GPKG")
-@pytest.mark.require_driver("MSSQLSpatial")
 def test_binary_field_bcp():
     """Test for issue GH #3040 MSSQLSpatial: Cannot write binary field with MSSQLSPATIAL_USE_BCP = TRUE"""
 
