@@ -600,6 +600,53 @@ def test_ogr_mssqlspatial_bulk_insert():
 #
 
 
+def test_ogr_mssqlspatial_geography_polygon_vertex_order():
+    """Test issue GH https://github.com/OSGeo/gdal/issues/1128"""
+
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip()
+
+    source_ds = gdal.OpenEx("data/shp/testpoly.shp", gdal.OF_VECTOR)
+
+    assert source_ds
+
+    try:
+        with gdaltest.error_handler():
+            ds = gdal.VectorTranslate(
+                gdaltest.mssqlspatial_dsname,
+                "data/shp/testpoly.shp",
+                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY",
+            )
+
+            lyr = ds.GetLayerByName("poly_vertex_order")
+            assert lyr
+
+            # Simple polygon, no inner rings
+            feature = lyr.GetFeature(1)
+            geometry = feature.GetGeometryRef()
+            boundary = geometry.GetGeometryRef(0)
+            # Outer ring
+            assert not boundary.IsClockwise()
+
+            # Inner ring
+            feature = lyr.GetFeature(13)
+            geometry = feature.GetGeometryRef()
+            boundary = geometry.GetGeometryRef(0)
+            # Outer ring
+            assert not boundary.IsClockwise()
+            # Inner ring
+            inner_ring = geometry.GetGeometryRef(1)
+            assert inner_ring.IsClockwise()
+
+            del lyr
+    finally:
+        gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE poly_vertex_order")
+
+
+###############################################################################
+#
+
+
 def test_ogr_mssqlspatial_cleanup():
 
     if gdaltest.mssqlspatial_ds is None:
