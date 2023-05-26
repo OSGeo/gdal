@@ -1702,7 +1702,7 @@ The effect of the ``a_ullr`` option (added in GDAL 3.7) is to assign (override) 
 bounds of the source in the same way as (:ref:`gdal_translate`). The value consists of four numeric
 values separated by commas, in the order 'xmin,ymax,xmax,ymin' (upper left x,y, lower right x,y).
 
-The effect of the ``ovr``` option (added in GDAL 3.7) is to specify which overview
+The effect of the ``ovr`` option (added in GDAL 3.7) is to specify which overview
 level of source file must be used, with the first overview level being 0 (:ref:`gdal_translate`).
 
 The effect of the ``expand`` option (added in GDAL 3.7) is to expose a dataset with 1 band with
