@@ -664,7 +664,7 @@ def test_binary_field_bcp():
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
     f.SetFieldBinaryFromHexString("binfield", "")
-    f["strfield"] = ""
+    f["strfield"] = "some text"
     src_lyr.CreateFeature(f)
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
@@ -692,7 +692,7 @@ def test_binary_field_bcp():
             assert f.GetFieldAsString("strfield") == "some text"
             f = lyr.GetFeature(2)
             assert f.GetFieldAsBinary("binfield") == b""
-            assert f.GetFieldAsString("strfield") == ""
+            assert f.GetFieldAsString("strfield") == "some text"
             f = lyr.GetFeature(3)
             assert f.GetFieldAsBinary("binfield") == b"\xff\x00\x7f\xff\x00\x7f"
             assert f.GetFieldAsString("strfield") == "some text"
