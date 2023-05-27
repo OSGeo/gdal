@@ -1138,6 +1138,15 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         {
             nType = GPkgFieldToOGR(osType.c_str(), eSubType, nMaxWidth);
         }
+        else
+        {
+            // For a view, if the geometry column is computed, we don't
+            // get a type, so trust the one from gpkg_geometry_columns
+            if (EQUAL(osGeomColumnName, pszName))
+            {
+                osType = osGeomColsType;
+            }
+        }
 
         /* Not a standard field type... */
         if (!osType.empty() && !EQUAL(pszName, "OGC_FID") &&
