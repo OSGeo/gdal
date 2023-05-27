@@ -651,6 +651,9 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order():
 def test_binary_field_bcp():
     """Test for issue GH #3040 MSSQLSpatial: Cannot write binary field with MSSQLSPATIAL_USE_BCP = TRUE"""
 
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip()
+
     filename = "/vsimem/test_binary_field.gpkg"
     ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
     src_lyr = ds.CreateLayer("test_binary_field", geom_type=ogr.wkbPoint)
