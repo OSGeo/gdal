@@ -30,6 +30,7 @@
 #include "ogr_api.h"
 #include "ogr_recordbatch.h"
 #include "ograrrowarrayhelper.h"
+#include "ogr_wkb.h"
 
 #include "cpl_time.h"
 #include <cassert>
@@ -1985,4 +1986,527 @@ bool OGR_L_GetArrowStream(OGRLayerH hLayer, struct ArrowArrayStream *out_stream,
 
     return OGRLayer::FromHandle(hLayer)->GetArrowStream(out_stream,
                                                         papszOptions);
+}
+
+/************************************************************************/
+/*                       ParseArrowMetadata()                           */
+/************************************************************************/
+
+static std::map<std::string, std::string>
+ParseArrowMetadata(const char *pabyMetadata)
+{
+    std::map<std::string, std::string> oMetadata;
+    int32_t nKVP;
+    memcpy(&nKVP, pabyMetadata, sizeof(int32_t));
+    pabyMetadata += sizeof(int32_t);
+    for (int i = 0; i < nKVP; ++i)
+    {
+        int32_t nSizeKey;
+        memcpy(&nSizeKey, pabyMetadata, sizeof(int32_t));
+        pabyMetadata += sizeof(int32_t);
+        std::string osKey;
+        osKey.assign(pabyMetadata, nSizeKey);
+        pabyMetadata += nSizeKey;
+
+        int32_t nSizeValue;
+        memcpy(&nSizeValue, pabyMetadata, sizeof(int32_t));
+        pabyMetadata += sizeof(int32_t);
+        std::string osValue;
+        osValue.assign(pabyMetadata, nSizeValue);
+        pabyMetadata += nSizeValue;
+
+        oMetadata[osKey] = osValue;
+    }
+
+    return oMetadata;
+}
+
+/************************************************************************/
+/*                  OGRLayer::CanPostFilterArrowArray()                 */
+/************************************************************************/
+
+/** Whether the PostFilterArrowArray() can work on the schema to remove
+ * rows that aren't selected by the spatial or attribute filter.
+ *
+ * Note: only spatial filter implemented for now.
+ */
+bool OGRLayer::CanPostFilterArrowArray(const struct ArrowSchema *schema) const
+{
+    if (m_poAttrQuery)
+    {
+        CPLDebug("OGR",
+                 "Cannot post filter ArrowArray with attribute filter set");
+        return false;
+    }
+
+    if (strcmp(schema->format, "+s") != 0)
+    {
+        CPLDebug("OGR", "Unexpected top level schema->format = %s",
+                 schema->format);
+        return false;
+    }
+
+    const char *const apszHandledFormats[] = {
+        "b",  // boolean
+        "c",  // int8
+        "C",  // uint8
+        "s",  // int16
+        "S",  // uint16
+        "i",  // int32
+        "I",  // uint32
+        "l",  // int64
+        "L",  // uint64
+        "e",  // float16
+        "f",  // float32
+        "g",  // float64,
+        "z",  // binary
+        "Z",  // large binary
+        "u",  // UTF-8 string
+        "U",  // large UTF-8 string
+        // "d:xxxxx"  // decimal128, decimal256
+        // "w:xxxxx"  // fixed width binary
+        "tdD",  // date32[days]
+        "tdm",  // date64[milliseconds]
+        "tts",  //time32 [seconds]
+        "ttm",  //time32 [milliseconds]
+        "ttu",  //time64 [microseconds]
+        "ttn",  //time64 [nanoseconds]
+    };
+
+    const char *const apszHandledFormatsPrefix[] = {
+        "tss:",  // timestamp [seconds] with timezone
+        "tsm:",  // timestamp [milliseconds] with timezone
+        "tsu:",  // timestamp [microseconds] with timezone
+        "tsn:",  // timestamp [nanoseconds] with timezone
+    };
+
+    for (int64_t i = 0; i < schema->n_children; ++i)
+    {
+        const auto fieldSchema = schema->children[i];
+        bool bFound = false;
+        for (const char *pszHandledFormat : apszHandledFormats)
+        {
+            if (strcmp(fieldSchema->format, pszHandledFormat) == 0)
+            {
+                bFound = true;
+                break;
+            }
+        }
+        if (!bFound)
+        {
+            for (const char *pszHandledFormat : apszHandledFormatsPrefix)
+            {
+                if (strncmp(fieldSchema->format, pszHandledFormat,
+                            strlen(pszHandledFormat)) == 0)
+                {
+                    bFound = true;
+                    break;
+                }
+            }
+        }
+        if (!bFound)
+        {
+            CPLDebug("OGR", "Field %s has unhandled format '%s'",
+                     fieldSchema->name, fieldSchema->format);
+            return false;
+        }
+    }
+
+    if (m_poFilterGeom)
+    {
+        bool bFound = false;
+        const char *pszGeomFieldName =
+            const_cast<OGRLayer *>(this)
+                ->GetLayerDefn()
+                ->GetGeomFieldDefn(m_iGeomFieldFilter)
+                ->GetNameRef();
+        for (int64_t i = 0; i < schema->n_children; ++i)
+        {
+            const auto fieldSchema = schema->children[i];
+            if (strcmp(fieldSchema->name, pszGeomFieldName) == 0)
+            {
+                if (strcmp(fieldSchema->format, "z") != 0 &&
+                    strcmp(fieldSchema->format, "Z") != 0)
+                {
+                    CPLDebug("OGR", "Geometry field %s has handled format '%s'",
+                             fieldSchema->name, fieldSchema->format);
+                    return false;
+                }
+
+                // Check if ARROW:extension:name = ogc.wkb
+                const char *pabyMetadata = fieldSchema->metadata;
+                if (!pabyMetadata)
+                {
+                    CPLDebug(
+                        "OGR",
+                        "Geometry field %s lacks metadata in its schema field",
+                        fieldSchema->name);
+                    return false;
+                }
+
+                const auto oMetadata = ParseArrowMetadata(pabyMetadata);
+                auto oIter = oMetadata.find(ARROW_EXTENSION_NAME_KEY);
+                if (oIter == oMetadata.end())
+                {
+                    CPLDebug("OGR",
+                             "Geometry field %s lacks "
+                             "%s metadata "
+                             "in its schema field",
+                             fieldSchema->name, ARROW_EXTENSION_NAME_KEY);
+                    return false;
+                }
+                if (oIter->second != EXTENSION_NAME)
+                {
+                    CPLDebug("OGR",
+                             "Geometry field %s has unexpected "
+                             "%s = '%s' metadata "
+                             "in its schema field",
+                             fieldSchema->name, ARROW_EXTENSION_NAME_KEY,
+                             oIter->second.c_str());
+                    return false;
+                }
+
+                bFound = true;
+                break;
+            }
+        }
+        if (!bFound)
+        {
+            CPLDebug("OGR", "Cannot find geometry field %s in schema",
+                     pszGeomFieldName);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                            TestBit()                                 */
+/************************************************************************/
+
+inline bool TestBit(const uint8_t *pabyData, size_t nIdx)
+{
+    return (pabyData[nIdx / 8] & (1 << (nIdx % 8))) != 0;
+}
+
+/************************************************************************/
+/*                            SetBit()                                  */
+/************************************************************************/
+
+inline void SetBit(uint8_t *pabyData, size_t nIdx)
+{
+    pabyData[nIdx / 8] |= (1 << (nIdx % 8));
+}
+
+/************************************************************************/
+/*                           UnsetBit()                                 */
+/************************************************************************/
+
+inline void UnsetBit(uint8_t *pabyData, size_t nIdx)
+{
+    pabyData[nIdx / 8] &= uint8_t(~(1 << (nIdx % 8)));
+}
+
+/************************************************************************/
+/*                    CompactValidityBuffer()                           */
+/************************************************************************/
+
+static void
+CompactValidityBuffer(struct ArrowArray *array,
+                      const std::vector<bool> &abyValidityFromFilters)
+{
+    if (array->null_count == 0)
+        return;
+    uint8_t *pabyValidity =
+        static_cast<uint8_t *>(const_cast<void *>(array->buffers[0]));
+    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    for (size_t i = 0, j = 0; i < nLength; ++i)
+    {
+        if (abyValidityFromFilters[i])
+        {
+            if (TestBit(pabyValidity, i + nOffset))
+                SetBit(pabyValidity, j + nOffset);
+            else
+                UnsetBit(pabyValidity, j + nOffset);
+
+            ++j;
+        }
+    }
+}
+
+/************************************************************************/
+/*                       CompactBoolArray()                             */
+/************************************************************************/
+
+static void CompactBoolArray(struct ArrowArray *array,
+                             const std::vector<bool> &abyValidityFromFilters)
+{
+    CPLAssert(array->n_children == 0);
+    CPLAssert(array->n_buffers == 2);
+    CPLAssert(static_cast<size_t>(array->length) ==
+              abyValidityFromFilters.size());
+
+    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    uint8_t *pabyData =
+        static_cast<uint8_t *>(const_cast<void *>(array->buffers[1]));
+    size_t j = 0;
+    for (size_t i = 0; i < nLength; ++i)
+    {
+        if (abyValidityFromFilters[i])
+        {
+            if (TestBit(pabyData, i + nOffset))
+                SetBit(pabyData, j + nOffset);
+            else
+                UnsetBit(pabyData, j + nOffset);
+
+            ++j;
+        }
+    }
+
+    CompactValidityBuffer(array, abyValidityFromFilters);
+    array->length = j;
+}
+
+/************************************************************************/
+/*                       CompactPrimitiveArray()                        */
+/************************************************************************/
+
+template <class T>
+static void
+CompactPrimitiveArray(struct ArrowArray *array,
+                      const std::vector<bool> &abyValidityFromFilters)
+{
+    CPLAssert(array->n_children == 0);
+    CPLAssert(array->n_buffers == 2);
+    CPLAssert(static_cast<size_t>(array->length) ==
+              abyValidityFromFilters.size());
+
+    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    T *paData =
+        static_cast<T *>(const_cast<void *>(array->buffers[1])) + nOffset;
+    size_t j = 0;
+    for (size_t i = 0; i < nLength; ++i)
+    {
+        if (abyValidityFromFilters[i])
+        {
+            paData[j] = paData[i];
+            ++j;
+        }
+    }
+
+    CompactValidityBuffer(array, abyValidityFromFilters);
+    array->length = j;
+}
+
+/************************************************************************/
+/*                    CompactStringOrBinaryArray()                      */
+/************************************************************************/
+
+template <class OffsetType>
+static void
+CompactStringOrBinaryArray(struct ArrowArray *array,
+                           const std::vector<bool> &abyValidityFromFilters)
+{
+    CPLAssert(array->n_children == 0);
+    CPLAssert(array->n_buffers == 3);
+    CPLAssert(static_cast<size_t>(array->length) ==
+              abyValidityFromFilters.size());
+
+    const size_t nLength = static_cast<size_t>(array->length);
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    OffsetType *panOffsets =
+        static_cast<OffsetType *>(const_cast<void *>(array->buffers[1])) +
+        nOffset;
+    GByte *pabyData =
+        static_cast<GByte *>(const_cast<void *>(array->buffers[2]));
+    size_t j = 0;
+    OffsetType nCurOffset = panOffsets[0];
+    for (size_t i = 0; i < nLength; ++i)
+    {
+        if (abyValidityFromFilters[i])
+        {
+            const auto nStartOffset = panOffsets[i];
+            const auto nEndOffset = panOffsets[i + 1];
+            panOffsets[j] = nCurOffset;
+            const auto nSize = static_cast<size_t>(nEndOffset - nStartOffset);
+            if (nSize)
+            {
+                if (nCurOffset < nStartOffset)
+                {
+                    memmove(pabyData + nCurOffset, pabyData + nStartOffset,
+                            nSize);
+                }
+                nCurOffset += static_cast<OffsetType>(nSize);
+            }
+            ++j;
+        }
+    }
+    panOffsets[j] = nCurOffset;
+
+    CompactValidityBuffer(array, abyValidityFromFilters);
+    array->length = j;
+}
+
+/************************************************************************/
+/*                  FillValidityArrayFromWKBArray()                     */
+/************************************************************************/
+
+template <class OffsetType>
+static size_t
+FillValidityArrayFromWKBArray(struct ArrowArray *array,
+                              const OGREnvelope &sFilterEnvelope,
+                              std::vector<bool> &abyValidityFromFilters)
+{
+    const size_t nLength = static_cast<size_t>(array->length);
+    const uint8_t *pabyValidity =
+        array->null_count == 0
+            ? nullptr
+            : static_cast<const uint8_t *>(array->buffers[0]);
+    const size_t nOffset = static_cast<size_t>(array->offset);
+    const OffsetType *panOffsets =
+        static_cast<const OffsetType *>(array->buffers[1]) + nOffset;
+    const GByte *pabyData = static_cast<const GByte *>(array->buffers[2]);
+    OGREnvelope sEnvelope;
+    abyValidityFromFilters.resize(nLength);
+    size_t nCountIntersecting = 0;
+    for (size_t i = 0; i < nLength; ++i)
+    {
+        if (!pabyValidity || TestBit(pabyValidity, i + nOffset))
+        {
+            if (OGRWKBGetBoundingBox(
+                    pabyData + panOffsets[i],
+                    static_cast<size_t>(panOffsets[i + 1] - panOffsets[i]),
+                    sEnvelope) &&
+                sFilterEnvelope.Intersects(sEnvelope))
+            {
+                abyValidityFromFilters[i] = true;
+                nCountIntersecting++;
+            }
+        }
+    }
+    return nCountIntersecting;
+}
+
+/************************************************************************/
+/*                  OGRLayer::PostFilterArrowArray()                    */
+/************************************************************************/
+
+/** Remove rows that aren't selected by the spatial or attribute filter.
+ *
+ * Assumes that CanPostFilterArrowArray() has been called and returned true.
+ *
+ * Note: only spatial filter implemented for now.
+ */
+void OGRLayer::PostFilterArrowArray(const struct ArrowSchema *schema,
+                                    struct ArrowArray *array) const
+{
+    if (!m_poFilterGeom)
+        return;
+
+    CPLAssert(schema->n_children == array->n_children);
+
+    const char *pszGeomFieldName = const_cast<OGRLayer *>(this)
+                                       ->GetLayerDefn()
+                                       ->GetGeomFieldDefn(m_iGeomFieldFilter)
+                                       ->GetNameRef();
+    int64_t iGeomField = -1;
+    for (int64_t iField = 0; iField < schema->n_children; ++iField)
+    {
+        const auto fieldSchema = schema->children[iField];
+        if (strcmp(fieldSchema->name, pszGeomFieldName) == 0)
+        {
+            iGeomField = iField;
+            break;
+        }
+        CPLAssert(array->children[iField]->length ==
+                  array->children[0]->length);
+    }
+    // Guaranteed if CanPostFilterArrowArray() returned true
+    CPLAssert(iGeomField >= 0);
+    CPLAssert(strcmp(schema->children[iGeomField]->format, "z") == 0 ||
+              strcmp(schema->children[iGeomField]->format, "Z") == 0);
+
+    CPLAssert(array->children[iGeomField]->n_buffers == 3);
+
+    std::vector<bool> abyValidityFromFilters;
+    const size_t nCountIntersecting =
+        strcmp(schema->children[iGeomField]->format, "z") == 0
+            ? FillValidityArrayFromWKBArray<uint32_t>(
+                  array->children[iGeomField], m_sFilterEnvelope,
+                  abyValidityFromFilters)
+            : FillValidityArrayFromWKBArray<uint64_t>(
+                  array->children[iGeomField], m_sFilterEnvelope,
+                  abyValidityFromFilters);
+    const size_t nLength =
+        static_cast<size_t>(array->children[iGeomField]->length);
+    // Nothing to do ?
+    if (nCountIntersecting == nLength)
+    {
+        // CPLDebug("OGR", "All rows match filter");
+        return;
+    }
+
+    array->length = nCountIntersecting;
+
+    for (int64_t iField = 0; iField < array->n_children; ++iField)
+    {
+        const auto psSchemaField = schema->children[iField];
+        const auto psArray = array->children[iField];
+        const char *format = psSchemaField->format;
+
+        if (strcmp(format, "b") == 0)
+        {
+            CompactBoolArray(psArray, abyValidityFromFilters);
+        }
+        else if (strcmp(format, "c") == 0 || strcmp(format, "C") == 0)
+        {
+            CompactPrimitiveArray<uint8_t>(psArray, abyValidityFromFilters);
+        }
+        else if (strcmp(format, "s") == 0 || strcmp(format, "S") == 0 ||
+                 strcmp(format, "e") == 0)
+        {
+            CompactPrimitiveArray<uint16_t>(psArray, abyValidityFromFilters);
+        }
+        else if (strcmp(format, "i") == 0 || strcmp(format, "I") == 0 ||
+                 strcmp(format, "f") == 0 || strcmp(format, "tdD") == 0 ||
+                 strcmp(format, "tts") == 0 || strcmp(format, "ttm") == 0)
+        {
+            CompactPrimitiveArray<uint32_t>(psArray, abyValidityFromFilters);
+        }
+        else if (strcmp(format, "l") == 0 || strcmp(format, "L") == 0 ||
+                 strcmp(format, "g") == 0 || strcmp(format, "tdm") == 0 ||
+                 strcmp(format, "ttu") == 0 || strcmp(format, "ttn") == 0 ||
+                 strncmp(format, "ts", 2) == 0)
+        {
+            CompactPrimitiveArray<uint64_t>(psArray, abyValidityFromFilters);
+        }
+        else if (strcmp(format, "z") == 0 || strcmp(format, "u") == 0)
+        {
+            CompactStringOrBinaryArray<uint32_t>(psArray,
+                                                 abyValidityFromFilters);
+        }
+        else if (strcmp(format, "Z") == 0 || strcmp(format, "U") == 0)
+        {
+            CompactStringOrBinaryArray<uint64_t>(psArray,
+                                                 abyValidityFromFilters);
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Unexpected error in PostFilterArrowArray(): unhandled "
+                     "field format: %s",
+                     format);
+
+            array->release(array);
+            memset(array, 0, sizeof(*array));
+
+            break;
+        }
+
+        CPLAssert(psArray->length == array->length);
+    }
 }

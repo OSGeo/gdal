@@ -1639,6 +1639,89 @@ def test_ogr_parquet_arrow_stream_numpy():
 
 
 ###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
+    pytest.importorskip("osgeo.gdal_array")
+    numpy = pytest.importorskip("numpy")
+    import datetime
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    ignored_fields = ["decimal128", "decimal256", "time64_ns"]
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        fld_defn = lyr_defn.GetFieldDefn(i)
+        if (
+            fld_defn.GetName().startswith("map_")
+            or fld_defn.GetName().startswith("struct_")
+            or fld_defn.GetName().startswith("fixed_size_")
+            or fld_defn.GetType()
+            not in (
+                ogr.OFTInteger,
+                ogr.OFTInteger64,
+                ogr.OFTReal,
+                ogr.OFTString,
+                ogr.OFTBinary,
+                ogr.OFTTime,
+                ogr.OFTDate,
+                ogr.OFTDateTime,
+            )
+        ):
+            ignored_fields.append(fld_defn.GetNameRef())
+    lyr.SetIgnoredFields(ignored_fields)
+    lyr.SetSpatialFilterRect(-10, -10, 10, 10)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fc = 0
+    for batch in stream:
+        fc += len(batch["uint8"])
+    assert fc == 4
+
+    lyr.SetSpatialFilterRect(3, 2, 3, 2)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert len(batches) == 1
+    batch = batches[0]
+    assert len(batch["geometry"]) == 1
+    assert batch["boolean"][0] == False
+    assert batch["uint8"][0] == 4
+    assert batch["int8"][0] == 1
+    assert batch["uint16"][0] == 30001
+    assert batch["int16"][0] == 10000
+    assert batch["uint32"][0] == 3000000001
+    assert batch["int32"][0] == 1000000000
+    assert batch["uint64"][0] == 300000000001
+    assert batch["int64"][0] == 100000000000
+    assert batch["int64"][0] == 100000000000
+    assert batch["float32"][0] == 4.5
+    assert batch["float64"][0] == 4.5
+    assert batch["string"][0] == b"c"
+    assert batch["large_string"][0] == b"c"
+    assert batch["timestamp_ms_gmt"][0] == numpy.datetime64("2019-01-01T14:00:00.000")
+    assert batch["time32_s"][0] == datetime.time(0, 0, 4)
+    assert batch["time32_ms"][0] == datetime.time(0, 0, 0, 4000)
+    assert batch["time64_us"][0] == datetime.time(0, 0, 0, 4)
+    assert batch["date32"][0] == numpy.datetime64("1970-01-05")
+    assert batch["date64"][0] == numpy.datetime64("1970-01-01")
+    assert bytes(batch["binary"][0]) == b"\00\01"
+    assert bytes(batch["large_binary"][0]) == b"\00\01"
+    assert (
+        ogr.CreateGeometryFromWkb(batch["geometry"][0]).ExportToWkt() == "POINT (3 2)"
+    )
+
+    lyr.SetSpatialFilterRect(1, 1, 1, 1)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    batches = [batch for batch in stream]
+    assert len(batches) == 0
+
+
+###############################################################################
 # Test bbox
 
 
