@@ -600,6 +600,70 @@ def test_ogr_mssqlspatial_bulk_insert():
 #
 
 
+@pytest.mark.require_driver("GPKG")
+def test_binary_field_bcp():
+    """Test for issue GH #3040 MSSQLSpatial: Cannot write binary field with MSSQLSPATIAL_USE_BCP = TRUE"""
+
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip()
+
+    filename = "/vsimem/test_binary_field.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    src_lyr = ds.CreateLayer("test_binary_field", geom_type=ogr.wkbPoint)
+    src_lyr.CreateField(ogr.FieldDefn("binfield", ogr.OFTBinary))
+    src_lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    f.SetFieldBinaryFromHexString("binfield", "007FFF007FFF")
+    f["strfield"] = "some text"
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    f.SetFieldBinaryFromHexString("binfield", "")
+    f["strfield"] = "some text"
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    f.SetFieldBinaryFromHexString("binfield", "FF007FFF007F")
+    f["strfield"] = "some text"
+    src_lyr.CreateFeature(f)
+
+    with gdaltest.config_option("MSSQLSPATIAL_USE_BCP", "TRUE"):
+
+        try:
+            res_ds = gdal.VectorTranslate(
+                gdaltest.mssqlspatial_dsname,
+                filename,
+                options=["-nln", "test_binary_field", "-lco", "OVERWRITE=YES"],
+            )
+
+            assert res_ds is not None
+
+            lyr = res_ds.GetLayerByName("test_binary_field")
+
+            assert lyr is not None
+
+            f = lyr.GetFeature(1)
+            assert f.GetFieldAsBinary("binfield") == b"\x00\x7f\xff\x00\x7f\xff"
+            assert f.GetFieldAsString("strfield") == "some text"
+            f = lyr.GetFeature(2)
+            assert f.GetFieldAsBinary("binfield") == b""
+            assert f.GetFieldAsString("strfield") == "some text"
+            f = lyr.GetFeature(3)
+            assert f.GetFieldAsBinary("binfield") == b"\xff\x00\x7f\xff\x00\x7f"
+            assert f.GetFieldAsString("strfield") == "some text"
+
+        finally:
+            gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE test_binary_field")
+            gdaltest.mssqlspatial_ds.ExecuteSQL(
+                "DELETE from geometry_columns WHERE f_table_name = 'test_binary_field'"
+            )
+
+
+###############################################################################
+#
+
+
 def test_ogr_mssqlspatial_cleanup():
 
     if gdaltest.mssqlspatial_ds is None:
