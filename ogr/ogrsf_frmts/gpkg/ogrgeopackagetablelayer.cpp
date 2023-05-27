@@ -1110,7 +1110,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
         OGRFieldSubType eSubType = OFSTNone;
         int nMaxWidth = 0;
-        OGRFieldType oType = static_cast<OGRFieldType>(OFTMaxType + 1);
+        int nType = OFTMaxType + 1;
 
         // SQLite 3.31 has a " GENERATED ALWAYS" suffix in the type column,
         // but more recent versions no longer have it.
@@ -1136,17 +1136,17 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
         if (!osType.empty() || m_bIsTable)
         {
-            oType = GPkgFieldToOGR(osType.c_str(), eSubType, nMaxWidth);
+            nType = GPkgFieldToOGR(osType.c_str(), eSubType, nMaxWidth);
         }
 
         /* Not a standard field type... */
         if (!osType.empty() && !EQUAL(pszName, "OGC_FID") &&
-            ((oType > OFTMaxType && !osGeomColsType.empty()) ||
+            ((nType > OFTMaxType && !osGeomColsType.empty()) ||
              EQUAL(osGeomColumnName, pszName)))
         {
             /* Maybe it is a geometry type? */
             OGRwkbGeometryType oGeomType;
-            if (oType > OFTMaxType)
+            if (nType > OFTMaxType)
                 oGeomType = GPkgGeometryTypeToWKB(osType.c_str(), bHasZ, bHasM);
             else
                 oGeomType = wkbUnknown;
@@ -1213,24 +1213,24 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         }
         else
         {
-            if (oType > OFTMaxType)
+            if (nType > OFTMaxType)
             {
                 CPLDebug("GPKG",
                          "For table %s, unrecognized type name %s for "
                          "column %s. Using string type",
                          m_pszTableName, osType.c_str(), pszName);
-                oType = OFTString;
+                nType = OFTString;
             }
 
             /* Is this the FID column? */
             if (nPKIDIndex > 0 && nCountPKIDColumns == 1 &&
-                (oType == OFTInteger || oType == OFTInteger64))
+                (nType == OFTInteger || nType == OFTInteger64))
             {
                 m_pszFidColumn = CPLStrdup(pszName);
             }
             else
             {
-                OGRFieldDefn oField(pszName, oType);
+                OGRFieldDefn oField(pszName, static_cast<OGRFieldType>(nType));
                 oField.SetSubType(eSubType);
                 oField.SetWidth(nMaxWidth);
                 if (bNotNull)
@@ -1264,7 +1264,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                         osDefault += "'";
                         oField.SetDefault(osDefault);
                     }
-                    else if (oType == OFTDateTime &&
+                    else if (nType == OFTDateTime &&
                              sscanf(pszDefault, "'%d-%d-%dT%d:%d:%fZ'", &nYear,
                                     &nMonth, &nDay, &nHour, &nMinute,
                                     &fSecond) == 6)
