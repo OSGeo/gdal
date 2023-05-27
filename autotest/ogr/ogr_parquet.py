@@ -1836,6 +1836,31 @@ def test_ogr_parquet_read_wkt_as_wkt_arrow_array(
 
 
 ###############################################################################
+# Test reading a parquet file with WKT content as WKB through ArrowArray
+# interface
+
+
+def test_ogr_parquet_read_wkt_with_dict_as_wkt_arrow_array():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.Open("data/parquet/wkt_with_dict.parquet")
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsNumPy(
+        options=["USE_MASKED_ARRAYS=NO", "GEOMETRY_ENCODING=WKB"]
+    )
+    geoms = []
+    for batch in stream:
+        for wkb in batch["geometry"]:
+            if wkb:
+                geoms.append(ogr.CreateGeometryFromWkb(wkb).ExportToWkt())
+            else:
+                geoms.append(None)
+    assert geoms == ["POINT (1 2)", "POINT (3 4)", None, "POINT (7 8)", "POINT (9 10)"]
+
+
+###############################################################################
 # Check that GetArrowStream interface always returns
 # ARROW:extension:name = ogc.wkb as a field schema metadata.
 
