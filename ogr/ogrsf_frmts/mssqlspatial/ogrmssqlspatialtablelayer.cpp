@@ -2217,8 +2217,9 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
                         {
                         }
                     }
-                    if (Failed2(bcp_moretext(hDBCBCP, 0, nullptr)))
+                    else
                     {
+                        Failed2(bcp_moretext(hDBCBCP, 0, nullptr));
                     }
                 }
                 else
