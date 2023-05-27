@@ -7222,23 +7222,51 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         if (nSqlite3ColType == SQLITE_BLOB)
         {
             const GByte *pabyWkb = nullptr;
-            const int iGpkgSize = sqlite3_value_bytes(argv[iCol]);
+            const int nBlobSize = sqlite3_value_bytes(argv[iCol]);
             // coverity[tainted_data_return]
-            const GByte *pabyGpkg =
+            const GByte *pabyBlob =
                 static_cast<const GByte *>(sqlite3_value_blob(argv[iCol]));
-            if (iGpkgSize >= 8 && pabyGpkg && pabyGpkg[0] == 'G' &&
-                pabyGpkg[1] == 'P')
+            GByte *pabyWkbToFree = nullptr;
+            if (nBlobSize >= 8 && pabyBlob && pabyBlob[0] == 'G' &&
+                pabyBlob[1] == 'P')
             {
                 GPkgHeader oHeader;
 
                 /* Read header */
-                OGRErr err = GPkgHeaderFromWKB(pabyGpkg, iGpkgSize, &oHeader);
+                OGRErr err = GPkgHeaderFromWKB(pabyBlob, nBlobSize, &oHeader);
                 if (err == OGRERR_NONE)
                 {
                     /* WKB pointer */
-                    pabyWkb = pabyGpkg + oHeader.nHeaderLen;
-                    nWKBSize = iGpkgSize - oHeader.nHeaderLen;
+                    pabyWkb = pabyBlob + oHeader.nHeaderLen;
+                    nWKBSize = nBlobSize - oHeader.nHeaderLen;
                 }
+            }
+            else if (nBlobSize > 0)
+            {
+                // Try also spatialite geometry blobs, although that is
+                // not really expected...
+                OGRGeometry *poGeomPtr = nullptr;
+                if (OGRSQLiteImportSpatiaLiteGeometry(
+                        pabyBlob, nBlobSize, &poGeomPtr) != OGRERR_NONE)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unable to read geometry");
+                }
+                else
+                {
+                    nWKBSize = poGeomPtr->WkbSize();
+                    pabyWkbToFree = static_cast<GByte *>(CPLMalloc(nWKBSize));
+                    if (poGeomPtr->exportToWkb(wkbNDR, pabyWkbToFree,
+                                               wkbVariantIso) != OGRERR_NONE)
+                    {
+                        nWKBSize = 0;
+                    }
+                    else
+                    {
+                        pabyWkb = pabyWkbToFree;
+                    }
+                }
+                delete poGeomPtr;
             }
 
             if (nWKBSize != 0)
@@ -7255,6 +7283,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
             {
                 psHelper->SetEmptyStringOrBinary(psArray, iFeat);
             }
+            CPLFree(pabyWkbToFree);
         }
 
         if (nWKBSize == 0)
