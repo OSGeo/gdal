@@ -1017,6 +1017,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                 arrowType[1] == '\0' )
             {
                 typenum = MapArrowTypeToNumpyType[j].numpyType;
+                sizeOfType = MapArrowTypeToNumpyType[j].sizeOfType;
                 break;
             }
             else if( (bIsList || bIsLargeList || bIsFixedSizeList) &&
