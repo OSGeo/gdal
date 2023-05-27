@@ -1576,7 +1576,13 @@ def test_ogr_parquet_arrow_stream_numpy():
     assert batches[1]["boolean"][0] == False
     assert batches[1]["boolean"][1] == True
     assert batch["uint8"][0] == 1
+    assert batches[1]["uint8"][0] == 4
     assert batch["int8"][0] == -2
+    assert batch["string"][0] == b"abcd"
+    assert batch["string"][1] == b""
+    assert batch["string"][2] == b""
+    assert batches[1]["string"][0] == b"c"
+    assert batches[1]["string"][1] == b"d"
     assert numpy.array_equal(batch["list_boolean"][0], numpy.array([]))
     assert numpy.array_equal(batch["list_boolean"][1], numpy.array([False]))
     assert numpy.array_equal(
