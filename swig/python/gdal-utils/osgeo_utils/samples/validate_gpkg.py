@@ -113,6 +113,8 @@ class GPKGChecker(object):
         warning_as_error=False,
     ):
         self.filename = filename
+        self.conn = None
+        self.has_tried_spatialite = False
         self.extended_pragma_info = False
         self.abort_at_first_error = abort_at_first_error
         self.extra_checks = extra_checks
@@ -669,31 +671,64 @@ class GPKGChecker(object):
         geometry_type_name = rows_gpkg_geometry_columns[0][3]
         srs_id = rows_gpkg_geometry_columns[0][4]
 
-        c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
+        c.execute(
+            "SELECT 1 FROM sqlite_master WHERE name = ? and type = 'view'",
+            (table_name,),
+        )
+        is_view = c.fetchone() is not None
+        is_spatialite_computed_column = False
+        if is_view:
+            c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
+            if c.fetchone() is not None:
+                c.execute(
+                    "SELECT 1 FROM gpkg_extensions WHERE table_name = ? AND column_name = ? AND extension_name = 'gdal_spatialite_computed_geom_column'",
+                    (table_name, geom_column_name),
+                )
+                if c.fetchone() is not None:
+                    is_spatialite_computed_column = True
+
+        try:
+            c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
+        except sqlite3.OperationalError as e:
+            if not self.has_tried_spatialite:
+                self.has_tried_spatialite = True
+                spatialite_loaded = False
+                try:
+                    self.conn.enable_load_extension(True)
+                    self.conn.execute('SELECT load_extension("mod_spatialite")')
+                    spatialite_loaded = True
+                except Exception:
+                    pass
+                if not spatialite_loaded:
+                    raise e
+                c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
+
         cols = c.fetchall()
+
         found_geom = False
         count_pkid = 0
         pkid_column_name = None
         for (_, name, typ, notnull, default, pk) in cols:
             if name.lower() == geom_column_name.lower():
                 found_geom = True
-                self._assert(
-                    typ in GPKGChecker.BASE_GEOM_TYPES
-                    or typ in GPKGChecker.EXT_GEOM_TYPES,
-                    25,
-                    ("invalid type (%s) for geometry " + "column of table %s")
-                    % (typ, table_name),
-                )
-                self._assert(
-                    typ == geometry_type_name,
-                    31,
-                    (
-                        "table %s has geometry column of type %s in "
-                        + "SQL and %s in geometry_type_name of "
-                        + "gpkg_geometry_columns"
+                if not is_spatialite_computed_column:
+                    self._assert(
+                        typ in GPKGChecker.BASE_GEOM_TYPES
+                        or typ in GPKGChecker.EXT_GEOM_TYPES,
+                        25,
+                        ("invalid type (%s) for geometry " + "column of table %s")
+                        % (typ, table_name),
                     )
-                    % (table_name, typ, geometry_type_name),
-                )
+                    self._assert(
+                        typ == geometry_type_name,
+                        31,
+                        (
+                            "table %s has geometry column of type %s in "
+                            + "SQL and %s in geometry_type_name of "
+                            + "gpkg_geometry_columns"
+                        )
+                        % (table_name, typ, geometry_type_name),
+                    )
 
             elif pk == 1:
                 if pkid_column_name is None:
@@ -2818,6 +2853,7 @@ class GPKGChecker(object):
         conn.close()
 
         conn = sqlite3.connect(self.filename)
+        self.conn = conn
         c = conn.cursor()
         try:
             try:

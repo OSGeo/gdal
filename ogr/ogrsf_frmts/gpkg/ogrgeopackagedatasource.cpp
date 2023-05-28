@@ -1210,7 +1210,11 @@ GDALGeoPackageDataset::GetUnknownExtensionsTableSpecific()
         "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', "
         "'gpkg_srs_id_trigger', "
         "'gpkg_crs_wkt', 'gpkg_crs_wkt_1_1', 'gpkg_schema', "
-        "'gpkg_related_tables', 'related_tables')");
+        "'gpkg_related_tables', 'related_tables'"
+#ifdef HAVE_SPATIALITE
+        ", 'gdal_spatialite_computed_geom_column'"
+#endif
+        ")");
     const int nTableLimit = GetOGRTableLimit();
     if (nTableLimit > 0)
     {
