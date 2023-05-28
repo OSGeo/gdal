@@ -4954,8 +4954,8 @@ void OGRTileDBLayer::FillPrimitiveListArray(
                 offsets.push_back(nAccLen);
                 if (nItemLen && nAccLen < nSrcOffset)
                 {
-                    memmove(v_source->data() + nAccLen * sizeof(T),
-                            v_source->data() + nSrcOffset * sizeof(T),
+                    memmove(v_source->data() + nAccLen,
+                            v_source->data() + nSrcOffset,
                             nItemLen * sizeof(T));
                 }
                 nAccLen += nItemLen;
@@ -5045,7 +5045,7 @@ void OGRTileDBLayer::FillBoolListArray(
     }
     else
     {
-        offsetsPtr->resize(offsetsPtr->size() + 1);
+        CPLAssert(offsetsPtr->size() > static_cast<size_t>(psChild->length));
 
         auto &offsets = *offsetsPtr;
         const size_t nSrcVals = offsets.size();
