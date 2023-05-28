@@ -464,17 +464,36 @@ really a primary key.
 
 For example:
 
-::
+.. code-block:: sql
 
-   CREATE VIEW my_view AS SELECT foo.fid AS OGC_FID, foo.geom, ... FROM foo JOIN another_table ON foo.some_id = another_table.other_id
-   INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 4326)
-   INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 4326, 0, 0)
+   CREATE VIEW my_view AS SELECT foo.fid AS OGC_FID, foo.geom FROM foo JOIN another_table ON foo.some_id = another_table.other_id;
+   INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'my_view', 'my_view', 'features', 4326);
+   INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('my_view', 'my_geom', 'GEOMETRY', 4326, 0, 0);
 
 This requires GDAL to be compiled with the SQLITE_HAS_COLUMN_METADATA
 option and SQLite3 with the SQLITE_ENABLE_COLUMN_METADATA option.
 Starting with GDAL 2.3, this can be easily verified if the
 SQLITE_HAS_COLUMN_METADATA=YES driver metadata item is declared (for
 example with "ogrinfo --format GPKG").
+
+Starting with GDAL 3.7.1, it is possible to define a geometry column as the
+result of a Spatialite spatial function. Note however that this is an extension
+likely to be non-interoperable with other software that does not activate Spatialite
+for the SQLite3 database connection. Such geometry column should be registered
+into the ``gpkg_extensions`` using the ``gdal_spatialite_computed_geom_column``
+extension name (cf :ref:`vector.gpkg_spatialite_computed_geom_column`), like below:
+
+.. code-block:: sql
+
+   CREATE VIEW my_view AS SELECT foo.fid AS OGC_FID, AsGBP(ST_Multi(foo.geom)) FROM foo;
+   INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES (
+       'my_view', 'my_view', 'features', 4326);
+   INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) VALUES (
+       'my_view', 'my_geom', 'MULTIPOLYGON', 4326, 0, 0);
+   INSERT INTO gpkg_extensions (table_name, column_name, extension_name, definition, scope) VALUES (
+       'my_view', 'my_geom', 'gdal_spatialite_computed_geom_column',
+       'https://gdal.org/drivers/vector/gpkg_spatialite_computed_geom_column.html', 'read-write');
+
 
 Coordinate Reference Systems
 ----------------------------
@@ -520,6 +539,9 @@ Level of support of GeoPackage Extensions
    * - :ref:`vector.geopackage_aspatial`
      - No
      - Yes. Deprecated in GDAL 2.2 for the *attributes* official data_type
+   * - :ref:`vector.gpkg_spatialite_computed_geom_column`
+     - No
+     - Yes, starting with GDAL 3.7.1
 
 Compressed files
 ----------------
@@ -607,3 +629,4 @@ See Also
    :hidden:
 
    geopackage_aspatial
+   gpkg_spatialite_computed_geom_column
