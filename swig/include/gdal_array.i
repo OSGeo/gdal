@@ -1093,6 +1093,16 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             }
             const int32_t* offsets = bIsList ? (const int32_t*)arrayField->buffers[1] + arrayField->offset : NULL;
             const int64_t* largeOffsets = bIsLargeList ? (const int64_t*)arrayField->buffers[1] + arrayField->offset : NULL;
+            if( arrayField->children[0]->length < (offsets ? offsets[arrayField->length] : largeOffsets[arrayField->length]) )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->length (=%d) < offsets[arrayField->length] (=%d)",
+                         schemaField->name,
+                         int(arrayField->children[0]->length),
+                         int(offsets ? offsets[arrayField->length] : largeOffsets[arrayField->length]));
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
             numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
             for( npy_intp j = 0; j < dims; j++ )
             {
@@ -1153,6 +1163,14 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                 Py_RETURN_NONE;
             }
             const int nLength = atoi(arrowType + strlen("+w:"));
+            if( arrayField->children[0]->length < nLength * arrayField->length )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->length < nLength * arrayField->length",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
             numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
             for( npy_intp j = 0; j < dims; j++ )
             {
@@ -1485,6 +1503,16 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
                 Py_RETURN_NONE;
             }
             const int32_t* offsets = (const int32_t*)arrayField->buffers[1] + static_cast<size_t>(arrayField->offset);
+            if( arrayField->children[0]->length < offsets[arrayField->length] )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->length = (%d) < offsets[arrayField->length] (=%d)",
+                         schemaField->name,
+                         int(arrayField->children[0]->length),
+                         int(offsets[arrayField->length]));
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
             const int32_t* offsetsToBytes = (const int32_t*)arrayField->children[0]->buffers[1] + static_cast<size_t>(arrayField->children[0]->offset);
             const char* bytes = (const char*)arrayField->children[0]->buffers[2] + static_cast<size_t>(arrayField->children[0]->offset);
             numpyArray = PyArray_SimpleNew(1, &dims, NPY_OBJECT);
@@ -1555,6 +1583,14 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Field %s: arrayField->children[0]->n_buffers != 3",
+                         schemaField->name);
+                Py_DECREF(dict);
+                Py_RETURN_NONE;
+            }
+            if( arrayField->children[0]->length < nStrings * arrayField->length )
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Field %s: arrayField->children[0]->length < nStrings * arrayField->length",
                          schemaField->name);
                 Py_DECREF(dict);
                 Py_RETURN_NONE;
