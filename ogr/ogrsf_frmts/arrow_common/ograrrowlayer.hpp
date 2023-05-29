@@ -3571,6 +3571,8 @@ OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
     // Allocate validity map buffer if needed
     const auto sourceNull =
         static_cast<const uint8_t *>(sourceArray->buffers[0]);
+    const size_t nOffset = static_cast<size_t>(sourceArray->offset);
+    uint8_t *targetNull = nullptr;
     if (sourceArray->null_count && sourceNull)
     {
         targetArray->buffers[0] =
@@ -3578,8 +3580,22 @@ OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
         if (targetArray->buffers[0])
         {
             targetArray->null_count = sourceArray->null_count;
-            memcpy(const_cast<void *>(targetArray->buffers[0]), sourceNull,
-                   (nLength + 7) / 8);
+            targetNull = static_cast<uint8_t *>(
+                const_cast<void *>(targetArray->buffers[0]));
+            if (nOffset == 0)
+            {
+                memcpy(targetNull, sourceNull, (nLength + 7) / 8);
+            }
+            else
+            {
+                memset(targetNull, 0, (nLength + 7) / 8);
+                for (size_t i = 0; i < nLength; ++i)
+                {
+                    if ((sourceNull[(i + nOffset) / 8] >> ((i + nOffset) % 8)) &
+                        1)
+                        targetNull[i / 8] |= (1 << (i % 8));
+                }
+            }
         }
     }
 
@@ -3594,7 +3610,7 @@ OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
     targetArray->buffers[2] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nInitialCapacity);
 
     // Check buffers have been allocated
-    if ((sourceNull && targetArray->buffers[0] == nullptr) ||
+    if ((sourceArray->null_count && sourceNull && !targetNull) ||
         targetArray->buffers[1] == nullptr ||
         targetArray->buffers[2] == nullptr)
     {
@@ -3606,7 +3622,7 @@ OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
     OGRWKTToWKBTranslator oTranslator(oOGRAppendBuffer);
 
     const auto sourceOffsets =
-        static_cast<const uint32_t *>(sourceArray->buffers[1]);
+        static_cast<const uint32_t *>(sourceArray->buffers[1]) + nOffset;
     auto sourceBytes =
         static_cast<char *>(const_cast<void *>(sourceArray->buffers[2]));
     auto targetOffsets =
@@ -3615,8 +3631,7 @@ OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
     {
         targetOffsets[i] = static_cast<uint32_t>(oOGRAppendBuffer.GetSize());
 
-        if (sourceArray->null_count && sourceNull &&
-            ((sourceNull[i / 8] >> (i % 8)) & 1) == 0)
+        if (targetNull && ((targetNull[i / 8] >> (i % 8)) & 1) == 0)
         {
             continue;
         }
