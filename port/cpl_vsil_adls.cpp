@@ -2220,6 +2220,7 @@ VSIADLSHandle::VSIADLSHandle(VSIADLSFSHandler *poFSIn, const char *pszFilename,
     : VSICurlHandle(poFSIn, pszFilename, poHandleHelper->GetURLNoKVP()),
       m_poHandleHelper(poHandleHelper)
 {
+    m_osQueryString = poHandleHelper->GetSASQueryString();
 }
 
 /************************************************************************/
