@@ -360,6 +360,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPL_INTERNAL void AddToDatasetOpenList();
 
+    CPL_INTERNAL void UnregisterFromSharedDataset();
+
     CPL_INTERNAL static void ReportErrorV(const char *pszDSName,
                                           CPLErr eErrClass, CPLErrorNum err_no,
                                           const char *fmt, va_list args);

@@ -130,7 +130,8 @@ struct SharedDatasetCtxt
     // This may not be the actual PID, but the responsiblePID.
     GIntBig nPID;
     char *pszDescription;
-    GDALAccess eAccess;
+    char *pszConcatenatedOpenOptions;
+    int nOpenFlags;
 
     GDALDataset *poDS;
 };
@@ -157,8 +158,9 @@ static unsigned long GDALSharedDatasetHashFunc(const void *elt)
     const SharedDatasetCtxt *psStruct =
         static_cast<const SharedDatasetCtxt *>(elt);
     return static_cast<unsigned long>(
-        CPLHashSetHashStr(psStruct->pszDescription) ^ psStruct->eAccess ^
-        psStruct->nPID);
+        CPLHashSetHashStr(psStruct->pszDescription) ^
+        CPLHashSetHashStr(psStruct->pszConcatenatedOpenOptions) ^
+        psStruct->nOpenFlags ^ psStruct->nPID);
 }
 
 static int GDALSharedDatasetEqualFunc(const void *elt1, const void *elt2)
@@ -168,15 +170,28 @@ static int GDALSharedDatasetEqualFunc(const void *elt1, const void *elt2)
     const SharedDatasetCtxt *psStruct2 =
         static_cast<const SharedDatasetCtxt *>(elt2);
     return strcmp(psStruct1->pszDescription, psStruct2->pszDescription) == 0 &&
+           strcmp(psStruct1->pszConcatenatedOpenOptions,
+                  psStruct2->pszConcatenatedOpenOptions) == 0 &&
            psStruct1->nPID == psStruct2->nPID &&
-           psStruct1->eAccess == psStruct2->eAccess;
+           psStruct1->nOpenFlags == psStruct2->nOpenFlags;
 }
 
 static void GDALSharedDatasetFreeFunc(void *elt)
 {
     SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(elt);
     CPLFree(psStruct->pszDescription);
+    CPLFree(psStruct->pszConcatenatedOpenOptions);
     CPLFree(psStruct);
+}
+
+static std::string
+GDALSharedDatasetConcatenateOpenOptions(CSLConstList papszOpenOptions)
+{
+    std::string osStr;
+    for (CSLConstList papszIter = papszOpenOptions; papszIter && *papszIter;
+         ++papszIter)
+        osStr += *papszIter;
+    return osStr;
 }
 
 /************************************************************************/
@@ -310,30 +325,10 @@ GDALDataset::~GDALDataset()
             std::map<GDALDataset *, GIntBig>::iterator oIter =
                 poAllDatasetMap->find(this);
             CPLAssert(oIter != poAllDatasetMap->end());
-            GIntBig nPIDCreatorForShared = oIter->second;
-            poAllDatasetMap->erase(oIter);
 
-            if (bShared && phSharedDatasetSet != nullptr)
-            {
-                SharedDatasetCtxt sStruct;
-                sStruct.nPID = nPIDCreatorForShared;
-                sStruct.eAccess = eAccess;
-                sStruct.pszDescription = const_cast<char *>(GetDescription());
-                sStruct.poDS = nullptr;
-                SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
-                    CPLHashSetLookup(phSharedDatasetSet, &sStruct));
-                if (psStruct && psStruct->poDS == this)
-                {
-                    CPLHashSetRemove(phSharedDatasetSet, psStruct);
-                }
-                else
-                {
-                    CPLDebug("GDAL",
-                             "Should not happen. Cannot find %s, "
-                             "this=%p in phSharedDatasetSet",
-                             GetDescription(), this);
-                }
-            }
+            UnregisterFromSharedDataset();
+
+            poAllDatasetMap->erase(oIter);
 
             if (poAllDatasetMap->empty())
             {
@@ -468,8 +463,50 @@ GDALDataset::~GDALDataset()
  */
 CPLErr GDALDataset::Close()
 {
+    // Call UnregisterFromSharedDataset() before altering nOpenFlags
+    UnregisterFromSharedDataset();
+
     nOpenFlags = OPEN_FLAGS_CLOSED;
     return CE_None;
+}
+
+/************************************************************************/
+/*                UnregisterFromSharedDataset()                         */
+/************************************************************************/
+
+void GDALDataset::UnregisterFromSharedDataset()
+{
+    if (!(!bIsInternal && bShared && poAllDatasetMap && phSharedDatasetSet))
+        return;
+
+    CPLMutexHolderD(&hDLMutex);
+
+    std::map<GDALDataset *, GIntBig>::iterator oIter =
+        poAllDatasetMap->find(this);
+    CPLAssert(oIter != poAllDatasetMap->end());
+    const GIntBig nPIDCreatorForShared = oIter->second;
+    bShared = false;
+    SharedDatasetCtxt sStruct;
+    sStruct.nPID = nPIDCreatorForShared;
+    sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
+    sStruct.pszDescription = const_cast<char *>(GetDescription());
+    std::string osConcatenatedOpenOptions =
+        GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+    sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
+    sStruct.poDS = nullptr;
+    SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
+        CPLHashSetLookup(phSharedDatasetSet, &sStruct));
+    if (psStruct && psStruct->poDS == this)
+    {
+        CPLHashSetRemove(phSharedDatasetSet, psStruct);
+    }
+    else
+    {
+        CPLDebug("GDAL",
+                 "Should not happen. Cannot find %s, "
+                 "this=%p in phSharedDatasetSet",
+                 GetDescription(), this);
+    }
 }
 
 /************************************************************************/
@@ -1562,12 +1599,15 @@ void GDALDataset::MarkAsShared()
         static_cast<SharedDatasetCtxt *>(CPLMalloc(sizeof(SharedDatasetCtxt)));
     psStruct->poDS = this;
     psStruct->nPID = nPID;
-    psStruct->eAccess = eAccess;
+    psStruct->nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
     psStruct->pszDescription = CPLStrdup(GetDescription());
+    std::string osConcatenatedOpenOptions =
+        GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+    psStruct->pszConcatenatedOpenOptions =
+        CPLStrdup(osConcatenatedOpenOptions.c_str());
     if (CPLHashSetLookup(phSharedDatasetSet, psStruct) != nullptr)
     {
-        CPLFree(psStruct->pszDescription);
-        CPLFree(psStruct);
+        GDALSharedDatasetFreeFunc(psStruct);
         ReportError(CE_Failure, CPLE_AppDefined,
                     "An existing shared dataset already has this description. "
                     "This should not happen.");
@@ -3374,6 +3414,11 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                                     const char *const *papszSiblingFiles)
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", nullptr);
+
+    // If no driver kind is specified, assume all are to be probed.
+    if ((nOpenFlags & GDAL_OF_KIND_MASK) == 0)
+        nOpenFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
+
     /* -------------------------------------------------------------------- */
     /*      In case of shared dataset, first scan the existing list to see  */
     /*      if it could already contain the requested dataset.              */
@@ -3396,14 +3441,16 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 
             sStruct.nPID = nThisPID;
             sStruct.pszDescription = const_cast<char *>(pszFilename);
-            sStruct.eAccess =
-                (nOpenFlags & GDAL_OF_UPDATE) ? GA_Update : GA_ReadOnly;
+            sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
+            std::string osConcatenatedOpenOptions =
+                GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+            sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
             sStruct.poDS = nullptr;
             SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
                 CPLHashSetLookup(phSharedDatasetSet, &sStruct));
             if (psStruct == nullptr && (nOpenFlags & GDAL_OF_UPDATE) == 0)
             {
-                sStruct.eAccess = GA_Update;
+                sStruct.nOpenFlags |= GDAL_OF_UPDATE;
                 psStruct = static_cast<SharedDatasetCtxt *>(
                     CPLHashSetLookup(phSharedDatasetSet, &sStruct));
             }
@@ -3414,10 +3461,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             }
         }
     }
-
-    // If no driver kind is specified, assume all are to be probed.
-    if ((nOpenFlags & GDAL_OF_KIND_MASK) == 0)
-        nOpenFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
 
     GDALDriverManager *poDM = GetGDALDriverManager();
     // CPLLocaleC  oLocaleForcer;
@@ -3602,22 +3645,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                 poDS->AddToDatasetOpenList();
             }
 
-            if (nOpenFlags & GDAL_OF_SHARED)
-            {
-                if (strcmp(pszFilename, poDS->GetDescription()) != 0)
-                {
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                             "A dataset opened by GDALOpenShared should have "
-                             "the same filename (%s) "
-                             "and description (%s)",
-                             pszFilename, poDS->GetDescription());
-                }
-                else
-                {
-                    poDS->MarkAsShared();
-                }
-            }
-
             // Deal with generic OVERVIEW_LEVEL open option, unless it is
             // driver specific.
             if (CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL") !=
@@ -3634,6 +3661,26 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                     nOvrLevel == -1 || osVal.ifind("only") != std::string::npos;
                 GDALDataset *poOvrDS =
                     GDALCreateOverviewDataset(poDS, nOvrLevel, bThisLevelOnly);
+                if (poOvrDS && (nOpenFlags & GDAL_OF_SHARED) != 0)
+                {
+                    if (strcmp(pszFilename, poDS->GetDescription()) != 0)
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_NotSupported,
+                            "A dataset opened by GDALOpenShared should have "
+                            "the same filename (%s) "
+                            "and description (%s)",
+                            pszFilename, poDS->GetDescription());
+                    }
+                    else
+                    {
+                        CSLDestroy(poDS->papszOpenOptions);
+                        poDS->papszOpenOptions = CSLDuplicate(papszOpenOptions);
+                        poDS->papszOpenOptions = CSLSetNameValue(
+                            poDS->papszOpenOptions, "OVERVIEW_LEVEL", nullptr);
+                        poDS->MarkAsShared();
+                    }
+                }
                 poDS->ReleaseRef();
                 poDS = poOvrDS;
                 if (poDS == nullptr)
@@ -3645,7 +3692,37 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                                  nOvrLevel, pszFilename);
                     }
                 }
+                else
+                {
+                    if (!(nOpenFlags & GDAL_OF_INTERNAL))
+                    {
+                        poDS->AddToDatasetOpenList();
+                    }
+                    if (nOpenFlags & GDAL_OF_SHARED)
+                    {
+                        CSLDestroy(poDS->papszOpenOptions);
+                        poDS->papszOpenOptions = CSLDuplicate(papszOpenOptions);
+                        poDS->nOpenFlags = nOpenFlags;
+                        poDS->MarkAsShared();
+                    }
+                }
             }
+            else if (nOpenFlags & GDAL_OF_SHARED)
+            {
+                if (strcmp(pszFilename, poDS->GetDescription()) != 0)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "A dataset opened by GDALOpenShared should have "
+                             "the same filename (%s) "
+                             "and description (%s)",
+                             pszFilename, poDS->GetDescription());
+                }
+                else
+                {
+                    poDS->MarkAsShared();
+                }
+            }
+
             VSIErrorReset();
 
             CSLDestroy(papszOpenOptionsCleaned);
