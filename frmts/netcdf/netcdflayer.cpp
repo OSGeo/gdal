@@ -2350,7 +2350,6 @@ bool netCDFLayer::AddField(int nVarID)
             eSubType = OFSTBoolean;
     }
     CPLFree(pszValue);
-    pszValue = nullptr;
 
     if (NCDFGetAttr(m_nLayerCDFId, nVarID, "units", &pszValue) == CE_None)
     {
@@ -2372,7 +2371,6 @@ bool netCDFLayer::AddField(int nVarID)
         }
     }
     CPLFree(pszValue);
-    pszValue = nullptr;
 
     if (NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_name", &pszValue) ==
         CE_None)
@@ -2380,7 +2378,6 @@ bool netCDFLayer::AddField(int nVarID)
         snprintf(szName, sizeof(szName), "%s", pszValue);
     }
     CPLFree(pszValue);
-    pszValue = nullptr;
 
     if (NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_width", &pszValue) ==
         CE_None)
@@ -2388,7 +2385,6 @@ bool netCDFLayer::AddField(int nVarID)
         nWidth = atoi(pszValue);
     }
     CPLFree(pszValue);
-    pszValue = nullptr;
 
     int nPrecision = 0;
     if (NCDFGetAttr(m_nLayerCDFId, nVarID, "ogr_field_precision", &pszValue) ==
@@ -2397,7 +2393,6 @@ bool netCDFLayer::AddField(int nVarID)
         nPrecision = atoi(pszValue);
     }
     CPLFree(pszValue);
-    /* pszValue = NULL; */
 
     OGRFieldDefn oFieldDefn(szName, eType);
     oFieldDefn.SetSubType(eSubType);
@@ -2410,7 +2405,6 @@ bool netCDFLayer::AddField(int nVarID)
         oFieldDefn.SetComment(pszValue);
     }
     CPLFree(pszValue);
-    pszValue = nullptr;
 
     if (NCDFGetAttr(m_nLayerCDFId, nVarID, CF_STD_NAME, &pszValue) == CE_None &&
         strcmp(pszValue, szName) != 0)
@@ -2418,7 +2412,6 @@ bool netCDFLayer::AddField(int nVarID)
         oFieldDefn.SetAlternativeName(pszValue);
     }
     CPLFree(pszValue);
-    pszValue = nullptr;
 
     FieldDesc fieldDesc;
     fieldDesc.uNoData = nodata;
