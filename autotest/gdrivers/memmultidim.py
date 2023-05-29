@@ -2106,6 +2106,153 @@ def test_mem_md_array_get_mask():
         ] == expected, myarray.GetName()
 
 
+@gdaltest.enable_exceptions()
+def test_mem_md_array_get_mask_unmask_flags_option_flag_values_only():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    myarray = rg.CreateMDArray(
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+
+    with pytest.raises(Exception, match="no flag_meanings attribute"):
+        myarray.GetMask(["UNMASK_FLAGS=bar"])
+
+    flag_meanings = myarray.CreateAttribute(
+        "flag_meanings", [], gdal.ExtendedDataType.CreateString()
+    )
+
+    with pytest.raises(Exception, match="Cannot read flag_meanings attribute"):
+        myarray.GetMask(["UNMASK_FLAGS=bar"])
+
+    flag_meanings.Write("one two _255")
+    with pytest.raises(
+        Exception, match="Cannot find flag_values and/or flag_masks attribute"
+    ):
+        myarray.GetMask(["UNMASK_FLAGS=one"])
+
+    flag_values = myarray.CreateAttribute(
+        "flag_values", [1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    with pytest.raises(
+        Exception,
+        match="Number of values in flag_values attribute is different from the one in flag_meanings",
+    ):
+        myarray.GetMask(["UNMASK_FLAGS=one"])
+
+    myarray.DeleteAttribute("flag_values")
+    flag_values = myarray.CreateAttribute(
+        "flag_values", [3], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_values.Write(array.array("h", [1, 2, 255]))
+
+    with pytest.raises(Exception, match="Cannot fing flag three in flag_meanings"):
+        myarray.GetMask(["UNMASK_FLAGS=three"])
+
+    data = array.array("h", list(range(2 * 3))).tobytes()
+    assert myarray.Write(data) == gdal.CE_None
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=two"])
+    assert array.array("B", mask.Read()).tolist() == [0, 0, 1, 0, 0, 0]
+    assert array.array(
+        "h", mask.Read(buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Int16))
+    ).tolist() == [0, 0, 1, 0, 0, 0]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=two,one"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 1, 0, 0, 0]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=_255"])
+    assert array.array("B", mask.Read()).tolist() == [0, 0, 0, 0, 0, 0]
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_array_get_mask_unmask_flags_option_flag_masks_only():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    myarray = rg.CreateMDArray(
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+
+    flag_meanings = myarray.CreateAttribute(
+        "flag_meanings", [], gdal.ExtendedDataType.CreateString()
+    )
+    flag_meanings.Write("bit_0 bit_1 bit_7")
+
+    flag_masks = myarray.CreateAttribute(
+        "flag_masks", [1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    with pytest.raises(
+        Exception,
+        match="Number of values in flag_masks attribute is different from the one in flag_meanings",
+    ):
+        myarray.GetMask(["UNMASK_FLAGS=one"])
+
+    myarray.DeleteAttribute("flag_masks")
+    flag_masks = myarray.CreateAttribute(
+        "flag_masks", [3], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_masks.Write(array.array("h", [1 << 0, 1 << 1, 1 << 7]))
+
+    data = array.array("h", list(range(2 * 3))).tobytes()
+    assert myarray.Write(data) == gdal.CE_None
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=bit_0"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 0, 1, 0, 1]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=bit_1"])
+    assert array.array("B", mask.Read()).tolist() == [0, 0, 1, 1, 0, 0]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=bit_1,bit_0"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 1, 1, 0, 1]
+
+
+@gdaltest.enable_exceptions()
+def test_mem_md_array_get_mask_unmask_flags_option_flag_values_and_masks():
+
+    drv = gdal.GetDriverByName("MEM")
+    ds = drv.CreateMultiDimensional("myds")
+    rg = ds.GetRootGroup()
+
+    dim0 = rg.CreateDimension("dim0", None, None, 2)
+    dim1 = rg.CreateDimension("dim1", None, None, 3)
+    myarray = rg.CreateMDArray(
+        "myarray", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+
+    flag_meanings = myarray.CreateAttribute(
+        "flag_meanings", [], gdal.ExtendedDataType.CreateString()
+    )
+    flag_meanings.Write("valid invalid_1 invalid_2 invalid_3")
+
+    flag_values = myarray.CreateAttribute(
+        "flag_values", [4], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_values.Write(array.array("h", [1, (1 << 1), (2 << 1), (3 << 1)]))
+
+    flag_masks = myarray.CreateAttribute(
+        "flag_masks", [4], gdal.ExtendedDataType.Create(gdal.GDT_Int16)
+    )
+    flag_masks.Write(array.array("h", [1, 6, 6, 6]))
+
+    data = array.array("h", [1, (1 << 1), (2 << 1), (3 << 1), 1, 1]).tobytes()
+    assert myarray.Write(data) == gdal.CE_None
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=valid"])
+    assert array.array("B", mask.Read()).tolist() == [1, 0, 0, 0, 1, 1]
+
+    mask = myarray.GetMask(["UNMASK_FLAGS=invalid_1"])
+    assert array.array("B", mask.Read()).tolist() == [0, 1, 0, 0, 0, 0]
+
+
 def test_mem_md_array_resolvemdarray():
 
     drv = gdal.GetDriverByName("MEM")
