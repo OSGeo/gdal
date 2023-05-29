@@ -1978,6 +1978,7 @@ def test_mem_md_array_get_mask():
 
     # Test no data value
     myarray.SetNoDataValueDouble(10)
+    mask = myarray.GetMask()
     expected_data = [1] * 24
     expected_data[10] = 0
     assert [x for x in struct.unpack("B" * 24, mask.Read())] == expected_data
@@ -2025,6 +2026,7 @@ def test_mem_md_array_get_mask():
     assert attr.Write(2) == gdal.CE_None
     attr = myarray.CreateAttribute("valid_max", [1], bytedt)
     assert attr.Write(22) == gdal.CE_None
+    mask = myarray.GetMask()
     expected_data = [1] * 24
     expected_data[0] = 0
     expected_data[1] = 0
