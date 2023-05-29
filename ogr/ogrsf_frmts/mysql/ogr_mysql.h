@@ -70,19 +70,46 @@
 
 #include "ogrsf_frmts.h"
 
+class OGRMySQLDataSource;
+
+/************************************************************************/
+/*                      OGRMySQLGeomFieldDefn                           */
+/************************************************************************/
+
+class OGRMySQLGeomFieldDefn final : public OGRGeomFieldDefn
+{
+    OGRMySQLGeomFieldDefn(const OGRMySQLGeomFieldDefn &) = delete;
+    OGRMySQLGeomFieldDefn &operator=(const OGRMySQLGeomFieldDefn &) = delete;
+
+  protected:
+    OGRMySQLDataSource *poDS;
+
+  public:
+    OGRMySQLGeomFieldDefn(OGRMySQLDataSource *poDSIn, const char *pszFieldName)
+        : OGRGeomFieldDefn(pszFieldName, wkbUnknown), poDS(poDSIn)
+    {
+    }
+
+    virtual const OGRSpatialReference *GetSpatialRef() const override;
+
+    void UnsetDataSource()
+    {
+        poDS = nullptr;
+    }
+
+    mutable int nSRSId = -1;
+};
+
 /************************************************************************/
 /*                            OGRMySQLLayer                             */
 /************************************************************************/
-
-class OGRMySQLDataSource;
 
 class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
 {
   protected:
     OGRFeatureDefn *poFeatureDefn;
 
-    // Layer spatial reference system, and srid.
-    OGRSpatialReference *poSRS;
+    // Layer srid.
     int nSRSId;
 
     GIntBig iNextShapeId;
@@ -119,8 +146,6 @@ class OGRMySQLLayer CPL_NON_FINAL : public OGRLayer
     {
         return poFeatureDefn;
     }
-
-    virtual OGRSpatialReference *GetSpatialRef() override;
 
     virtual const char *GetFIDColumn() override;
 
