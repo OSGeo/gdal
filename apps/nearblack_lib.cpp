@@ -52,23 +52,23 @@ typedef std::vector<Color> Colors;
 struct GDALNearblackOptions
 {
     /*! output format. Use the short format name. */
-    char *pszFormat;
+    std::string osFormat{};
 
     /*! the progress function to use */
-    GDALProgressFunc pfnProgress;
+    GDALProgressFunc pfnProgress = GDALDummyProgress;
 
     /*! pointer to the progress data variable */
-    void *pProgressData;
+    void *pProgressData = nullptr;
 
-    int nMaxNonBlack;
-    int nNearDist;
-    bool bNearWhite;
-    bool bSetAlpha;
-    bool bSetMask;
+    int nMaxNonBlack = 2;
+    int nNearDist = 15;
+    bool bNearWhite = false;
+    bool bSetAlpha = false;
+    bool bSetMask = false;
 
-    Colors oColors;
+    Colors oColors{};
 
-    char **papszCreationOptions;
+    CPLStringList aosCreationOptions{};
 };
 
 static bool TwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
@@ -140,16 +140,13 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         return nullptr;
     }
 
-    GDALNearblackOptions *psOptionsToFree = nullptr;
-    const GDALNearblackOptions *psOptions;
-    if (psOptionsIn)
+    // to keep in that scope
+    std::unique_ptr<GDALNearblackOptions> psTmpOptions;
+    const GDALNearblackOptions *psOptions = psOptionsIn;
+    if (!psOptionsIn)
     {
-        psOptions = psOptionsIn;
-    }
-    else
-    {
-        psOptionsToFree = GDALNearblackOptionsNew(nullptr, nullptr);
-        psOptions = psOptionsToFree;
+        psTmpOptions = cpl::make_unique<GDALNearblackOptions>();
+        psOptions = psTmpOptions.get();
     }
 
     const bool bCloseOutDSOnError = hDstDS == nullptr;
@@ -173,24 +170,22 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     if (hDstDS == nullptr)
     {
         CPLString osFormat;
-        if (psOptions->pszFormat == nullptr)
+        if (psOptions->osFormat.empty())
         {
             osFormat = GetOutputDriverForRaster(pszDest);
             if (osFormat.empty())
             {
-                GDALNearblackOptionsFree(psOptionsToFree);
                 return nullptr;
             }
         }
         else
         {
-            osFormat = psOptions->pszFormat;
+            osFormat = psOptions->osFormat;
         }
 
         GDALDriverH hDriver = GDALGetDriverByName(osFormat);
         if (hDriver == nullptr)
         {
-            GDALNearblackOptionsFree(psOptionsToFree);
             return nullptr;
         }
 
@@ -214,10 +209,9 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         }
 
         hDstDS = GDALCreate(hDriver, pszDest, nXSize, nYSize, nDstBands,
-                            GDT_Byte, psOptions->papszCreationOptions);
+                            GDT_Byte, psOptions->aosCreationOptions.List());
         if (hDstDS == nullptr)
         {
-            GDALNearblackOptionsFree(psOptionsToFree);
             return nullptr;
         }
 
@@ -231,7 +225,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     }
     else
     {
-        if (psOptions->papszCreationOptions != nullptr)
+        if (!psOptions->aosCreationOptions.empty())
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Warning: creation options are ignored when writing to "
@@ -245,7 +239,6 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "The dimensions of the output dataset don't match "
                      "the dimensions of the input dataset.");
-            GDALNearblackOptionsFree(psOptionsToFree);
             return nullptr;
         }
 
@@ -258,7 +251,6 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Last band is not an alpha band.");
-                GDALNearblackOptionsFree(psOptionsToFree);
                 return nullptr;
             }
 
@@ -300,7 +292,6 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         CPLError(CE_Failure, CPLE_AppDefined,
                  "-color args must have the same number of values as "
                  "the non alpha input band count.\n");
-        GDALNearblackOptionsFree(psOptionsToFree);
         if (bCloseOutDSOnError)
             GDALClose(hDstDS);
         return nullptr;
@@ -355,8 +346,6 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             GDALClose(hDstDS);
         hDstDS = nullptr;
     }
-
-    GDALNearblackOptionsFree(psOptionsToFree);
 
     return hDstDS;
 }
@@ -796,17 +785,7 @@ GDALNearblackOptions *
 GDALNearblackOptionsNew(char **papszArgv,
                         GDALNearblackOptionsForBinary *psOptionsForBinary)
 {
-    GDALNearblackOptions *psOptions = new GDALNearblackOptions;
-
-    psOptions->pszFormat = nullptr;
-    psOptions->pfnProgress = GDALDummyProgress;
-    psOptions->pProgressData = nullptr;
-    psOptions->papszCreationOptions = nullptr;
-    psOptions->nMaxNonBlack = 2;
-    psOptions->nNearDist = 15;
-    psOptions->bNearWhite = false;
-    psOptions->bSetAlpha = false;
-    psOptions->bSetMask = false;
+    auto psOptions = cpl::make_unique<GDALNearblackOptions>();
 
     /* -------------------------------------------------------------------- */
     /*      Handle command line arguments.                                  */
@@ -818,8 +797,7 @@ GDALNearblackOptionsNew(char **papszArgv,
             (EQUAL(papszArgv[i], "-of") || EQUAL(papszArgv[i], "-f")))
         {
             ++i;
-            CPLFree(psOptions->pszFormat);
-            psOptions->pszFormat = CPLStrdup(papszArgv[i]);
+            psOptions->osFormat = papszArgv[i];
         }
 
         else if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
@@ -829,8 +807,7 @@ GDALNearblackOptionsNew(char **papszArgv,
         }
         else if (i + 1 < argc && EQUAL(papszArgv[i], "-co"))
         {
-            psOptions->papszCreationOptions =
-                CSLAddString(psOptions->papszCreationOptions, papszArgv[++i]);
+            psOptions->aosCreationOptions.AddString(papszArgv[++i]);
         }
         else if (i + 1 < argc && EQUAL(papszArgv[i], "-o"))
         {
@@ -854,31 +831,27 @@ GDALNearblackOptionsNew(char **papszArgv,
 
             /***** tokenize the arg on , *****/
 
-            char **papszTokens = CSLTokenizeString2(papszArgv[++i], ",", 0);
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(papszArgv[++i], ",", 0));
 
             /***** loop over the tokens *****/
 
-            for (int iToken = 0; papszTokens && papszTokens[iToken]; iToken++)
+            for (int iToken = 0; iToken < aosTokens.size(); iToken++)
             {
 
                 /***** ensure the token is an int and add it to the color *****/
 
-                if (IsInt(papszTokens[iToken]))
+                if (IsInt(aosTokens[iToken]))
                 {
-                    oColor.push_back(atoi(papszTokens[iToken]));
+                    oColor.push_back(atoi(aosTokens[iToken]));
                 }
                 else
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Colors must be valid integers.");
-                    CSLDestroy(papszTokens);
-
-                    GDALNearblackOptionsFree(psOptions);
                     return nullptr;
                 }
             }
-
-            CSLDestroy(papszTokens);
 
             /***** check if the number of bands is consistent *****/
 
@@ -888,7 +861,6 @@ GDALNearblackOptionsNew(char **papszArgv,
                 CPLError(
                     CE_Failure, CPLE_AppDefined,
                     "all -color args must have the same number of values.\n");
-                GDALNearblackOptionsFree(psOptions);
                 return nullptr;
             }
 
@@ -916,7 +888,6 @@ GDALNearblackOptionsNew(char **papszArgv,
         {
             CPLError(CE_Failure, CPLE_NotSupported, "Unknown option name '%s'",
                      papszArgv[i]);
-            GDALNearblackOptionsFree(psOptions);
             return nullptr;
         }
         else if (psOptionsForBinary && psOptionsForBinary->pszInFile == nullptr)
@@ -927,12 +898,11 @@ GDALNearblackOptionsNew(char **papszArgv,
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Too many command options '%s'", papszArgv[i]);
-            GDALNearblackOptionsFree(psOptions);
             return nullptr;
         }
     }
 
-    return psOptions;
+    return psOptions.release();
 }
 
 /************************************************************************/
@@ -949,12 +919,6 @@ GDALNearblackOptionsNew(char **papszArgv,
 
 void GDALNearblackOptionsFree(GDALNearblackOptions *psOptions)
 {
-    if (psOptions == nullptr)
-        return;
-
-    CPLFree(psOptions->pszFormat);
-    CSLDestroy(psOptions->papszCreationOptions);
-
     delete psOptions;
 }
 
