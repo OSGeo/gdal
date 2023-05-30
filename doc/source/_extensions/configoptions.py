@@ -2,6 +2,7 @@ import re
 
 from docutils import nodes
 from sphinx.addnodes import pending_xref
+from sphinx.errors import NoUri
 from sphinx.transforms.post_transforms import SphinxPostTransform
 from sphinx.util import logging
 from sphinx.util.docutils import SphinxDirective
@@ -485,20 +486,26 @@ def create_config_index(app, doctree, fromdocname):
                 for ref_doc in ref_docs:
                     ref_title = str(env.titles[ref_doc].children[0])
 
-                    ref_node = nodes.reference(
-                        "",
-                        ref_title,
-                        refuri=app.builder.get_relative_uri(fromdocname, ref_doc),
-                        internal=True,
-                    )
+                    try:
+                        ref_node = nodes.reference(
+                            "",
+                            ref_title,
+                            refuri=app.builder.get_relative_uri(fromdocname, ref_doc),
+                            internal=True,
+                        )
 
-                    if bullets_for_references:
-                        ref_para = nodes.paragraph()
-                        ref_para += ref_node
-                        ref_li = nodes.list_item("", ref_para)
-                        ref_node_parent.append(ref_li)
-                    else:
-                        ref_node_parent.append(ref_node)
+                        if bullets_for_references:
+                            ref_para = nodes.paragraph()
+                            ref_para += ref_node
+                            ref_li = nodes.list_item("", ref_para)
+                            ref_node_parent.append(ref_li)
+                        else:
+                            ref_node_parent.append(ref_node)
+                    except NoUri:
+                        # this is thrown when linking to a document that is not
+                        # included in output for a certain format, e.g. RFC
+                        # documents not included in the PDF build.
+                        pass
 
                 li_node = nodes.list_item("", para)
                 list_node.append(li_node)
