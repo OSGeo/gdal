@@ -426,6 +426,12 @@ available:
      all tables (not just the tables listed in the geometry_columns table). This
      can also be done using the :oo:`LIST_ALL_TABLES` open option.
 
+- .. config:: OGR_PROMOTE_TO_INTEGER64
+     :choices: YES, NO
+     :default: NO
+
+     Whether to read fields with type ``INTEGER`` as 64-bit integers.
+
 - .. config:: OGR_SQLITE_LIST_VIRTUAL_OGR
      :choices: YES, NO
      :default: NO
