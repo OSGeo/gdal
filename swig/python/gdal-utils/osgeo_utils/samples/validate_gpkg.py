@@ -1017,16 +1017,28 @@ class GPKGChecker(object):
                 c.fetchone() is not None, 75, "%s_insert trigger missing" % rtree_name
             )
 
-            for i in range(4):
-                c.execute(
-                    "SELECT 1 FROM sqlite_master WHERE "
-                    + "type = 'trigger' "
-                    + "AND name = '%s_update%d'" % (_esc_literal(rtree_name), i + 1)
-                )
+            if self.version < (1, 4):
+                expected_update_triggers_numbers = (1, 2, 3, 4)
+            else:
+                expected_update_triggers_numbers = (2, 4, 5, 6, 7)
+
+            c.execute(
+                "SELECT name FROM sqlite_master WHERE "
+                + "type = 'trigger' "
+                + "AND name LIKE '%s_update%%'" % (_esc_literal(rtree_name))
+            )
+            trigger_names = c.fetchall()
+            found_numbers = set()
+            for (name,) in trigger_names:
+                number = int(name[len(_esc_literal(rtree_name)) + len("_update") :])
+                if number not in expected_update_triggers_numbers:
+                    self._assert(False, 75, f"{name} trigger unexpected")
+                found_numbers.add(number)
+            for expected_number in expected_update_triggers_numbers:
                 self._assert(
-                    c.fetchone() is not None,
+                    expected_number in found_numbers,
                     75,
-                    "%s_update%d trigger missing" % (rtree_name, i + 1),
+                    "%s_update%d trigger missing" % (rtree_name, expected_number),
                 )
 
             c.execute(
@@ -2797,10 +2809,12 @@ class GPKGChecker(object):
                     % (user_version, expected_version),
                 )
                 self.version = (
-                    expected_version // 10000,
-                    (expected_version % 10000) // 100,
-                    expected_version % 100,
+                    user_version // 10000,
+                    (user_version % 10000) // 100,
+                    user_version % 100,
                 )
+                if self.version >= (1, 5, 0):
+                    self._warn(f"Version {self.version} not handled by this script")
             else:
                 self.version = (99, 99)
 
