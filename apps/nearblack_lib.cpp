@@ -71,10 +71,16 @@ struct GDALNearblackOptions
     char **papszCreationOptions;
 };
 
+static bool TwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
+                               GDALDatasetH hSrcDataset, GDALDatasetH hDstDS,
+                               GDALRasterBandH hMaskBand, int nBands,
+                               int nDstBands, bool bSetMask,
+                               const Colors &oColors);
+
 static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int nSrcBands, int nDstBands, int nNearDist,
                         int nMaxNonBlack, bool bNearWhite,
-                        const Colors *poColors, int *panLastLineCounts,
+                        const Colors &oColors, int *panLastLineCounts,
                         bool bDoHorizontalCheck, bool bDoVerticalCheck,
                         bool bBottomUp, int iLineFromTopOrBottom);
 
@@ -155,8 +161,6 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     int nBands = GDALGetRasterCount(hSrcDataset);
     int nDstBands = nBands;
 
-    const int nMaxNonBlack = psOptions->nMaxNonBlack;
-    const int nNearDist = psOptions->nNearDist;
     const bool bNearWhite = psOptions->bNearWhite;
     const bool bSetAlpha = psOptions->bSetAlpha;
     bool bSetMask = psOptions->bSetMask;
@@ -344,17 +348,56 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
+    if (!TwoPassesAlgorithm(psOptions, hSrcDataset, hDstDS, hMaskBand, nBands,
+                            nDstBands, bSetMask, oColors))
+    {
+        if (bCloseOutDSOnError)
+            GDALClose(hDstDS);
+        hDstDS = nullptr;
+    }
+
+    GDALNearblackOptionsFree(psOptionsToFree);
+
+    return hDstDS;
+}
+
+/************************************************************************/
+/*                       TwoPassesAlgorithm()                           */
+/*                                                                      */
+/* Do a top-to-bottom pass, followed by a bottom-to-top one.            */
+/************************************************************************/
+
+static bool TwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
+                               GDALDatasetH hSrcDataset, GDALDatasetH hDstDS,
+                               GDALRasterBandH hMaskBand, int nBands,
+                               int nDstBands, bool bSetMask,
+                               const Colors &oColors)
+{
+    const int nXSize = GDALGetRasterXSize(hSrcDataset);
+    const int nYSize = GDALGetRasterYSize(hSrcDataset);
+
+    const int nMaxNonBlack = psOptions->nMaxNonBlack;
+    const int nNearDist = psOptions->nNearDist;
+    const bool bNearWhite = psOptions->bNearWhite;
+    const bool bSetAlpha = psOptions->bSetAlpha;
+
     /* -------------------------------------------------------------------- */
     /*      Allocate a line buffer.                                         */
     /* -------------------------------------------------------------------- */
 
-    GByte *pabyLine = static_cast<GByte *>(CPLMalloc(nXSize * nDstBands));
+    std::vector<GByte> abyLine(nXSize * nDstBands);
+    GByte *pabyLine = abyLine.data();
 
+    std::vector<GByte> abyMask;
     GByte *pabyMask = nullptr;
     if (bSetMask)
-        pabyMask = static_cast<GByte *>(CPLMalloc(nXSize));
+    {
+        abyMask.resize(nXSize);
+        pabyMask = abyMask.data();
+    }
 
-    int *panLastLineCounts = static_cast<int *>(CPLCalloc(sizeof(int), nXSize));
+    std::vector<int> anLastLineCounts(nXSize);
+    int *panLastLineCounts = anLastLineCounts.data();
 
     /* -------------------------------------------------------------------- */
     /*      Processing data one line at a time.                             */
@@ -368,10 +411,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             GDT_Byte, nBands, nullptr, nDstBands, nXSize * nDstBands, 1);
         if (eErr != CE_None)
         {
-            if (bCloseOutDSOnError)
-                GDALClose(hDstDS);
-            hDstDS = nullptr;
-            break;
+            return false;
         }
 
         if (bSetAlpha)
@@ -391,14 +431,14 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         }
 
         ProcessLine(pabyLine, pabyMask, 0, nXSize - 1, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
                     panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     true,   // bDoVerticalCheck
                     false,  // bBottomUp
                     iLine);
         ProcessLine(pabyLine, pabyMask, nXSize - 1, 0, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
                     panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     false,  // bDoVerticalCheck
@@ -411,10 +451,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
 
         if (eErr != CE_None)
         {
-            if (bCloseOutDSOnError)
-                GDALClose(hDstDS);
-            hDstDS = nullptr;
-            break;
+            return false;
         }
 
         /***** write out the mask band line *****/
@@ -427,10 +464,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "ERROR writing out line to mask band.");
-                if (bCloseOutDSOnError)
-                    GDALClose(hDstDS);
-                hDstDS = nullptr;
-                break;
+                return false;
             }
         }
 
@@ -438,10 +472,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
                 0.5 * ((iLine + 1) / static_cast<double>(nYSize)), nullptr,
                 psOptions->pProgressData)))
         {
-            if (bCloseOutDSOnError)
-                GDALClose(hDstDS);
-            hDstDS = nullptr;
-            break;
+            return false;
         }
     }
 
@@ -457,10 +488,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
             nDstBands, nullptr, nDstBands, nXSize * nDstBands, 1);
         if (eErr != CE_None)
         {
-            if (bCloseOutDSOnError)
-                GDALClose(hDstDS);
-            hDstDS = nullptr;
-            break;
+            return false;
         }
 
         /***** read the mask band line back in *****/
@@ -471,22 +499,19 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
                                 pabyMask, nXSize, 1, GDT_Byte, 0, 0);
             if (eErr != CE_None)
             {
-                if (bCloseOutDSOnError)
-                    GDALClose(hDstDS);
-                hDstDS = nullptr;
-                break;
+                return false;
             }
         }
 
         ProcessLine(pabyLine, pabyMask, 0, nXSize - 1, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
                     panLastLineCounts,
                     true,  // bDoHorizontalCheck
                     true,  // bDoVerticalCheck
                     true,  // bBottomUp
                     nYSize - 1 - iLine);
         ProcessLine(pabyLine, pabyMask, nXSize - 1, 0, nBands, nDstBands,
-                    nNearDist, nMaxNonBlack, bNearWhite, &oColors,
+                    nNearDist, nMaxNonBlack, bNearWhite, oColors,
                     panLastLineCounts,
                     true,   // bDoHorizontalCheck
                     false,  // bDoVerticalCheck
@@ -498,10 +523,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
                                    nullptr, nDstBands, nXSize * nDstBands, 1);
         if (eErr != CE_None)
         {
-            if (bCloseOutDSOnError)
-                GDALClose(hDstDS);
-            hDstDS = nullptr;
-            break;
+            return false;
         }
 
         /***** write out the mask band line *****/
@@ -512,10 +534,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
                                 pabyMask, nXSize, 1, GDT_Byte, 0, 0);
             if (eErr != CE_None)
             {
-                if (bCloseOutDSOnError)
-                    GDALClose(hDstDS);
-                hDstDS = nullptr;
-                break;
+                return false;
             }
         }
 
@@ -523,21 +542,11 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
                                                static_cast<double>(nYSize),
                                      nullptr, psOptions->pProgressData)))
         {
-            if (bCloseOutDSOnError)
-                GDALClose(hDstDS);
-            hDstDS = nullptr;
-            break;
+            return false;
         }
     }
 
-    CPLFree(pabyLine);
-    if (bSetMask)
-        CPLFree(pabyMask);
-
-    CPLFree(panLastLineCounts);
-    GDALNearblackOptionsFree(psOptionsToFree);
-
-    return hDstDS;
+    return true;
 }
 
 /************************************************************************/
@@ -549,7 +558,7 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
 static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int nSrcBands, int nDstBands, int nNearDist,
                         int nMaxNonBlack, bool bNearWhite,
-                        const Colors *poColors, int *panLastLineCounts,
+                        const Colors &oColors, int *panLastLineCounts,
                         bool bDoHorizontalCheck, bool bDoVerticalCheck,
                         bool bBottomUp, int iLineFromTopOrBottom)
 {
@@ -575,11 +584,11 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
 
             /***** loop over the colors *****/
 
-            for (int iColor = 0; iColor < static_cast<int>(poColors->size());
+            for (int iColor = 0; iColor < static_cast<int>(oColors.size());
                  iColor++)
             {
 
-                Color oColor = (*poColors)[iColor];
+                const Color &oColor = oColors[iColor];
 
                 bIsNonBlack = false;
 
@@ -662,11 +671,11 @@ static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
 
                 /***** loop over the colors *****/
 
-                for (int iColor = 0;
-                     iColor < static_cast<int>(poColors->size()); iColor++)
+                for (int iColor = 0; iColor < static_cast<int>(oColors.size());
+                     iColor++)
                 {
 
-                    Color oColor = (*poColors)[iColor];
+                    const Color &oColor = oColors[iColor];
 
                     bIsNonBlack = false;
 
