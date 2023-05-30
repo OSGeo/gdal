@@ -11578,6 +11578,9 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
     nc_type nAttrType = NC_NAT;
     size_t nAttrLen = 0;
 
+    if (ppszValue)
+        *ppszValue = nullptr;
+
     int status = nc_inq_att(nCdfId, nVarId, pszAttrName, &nAttrType, &nAttrLen);
     if (status != NC_NOERR)
         return CE_Failure;
