@@ -3418,6 +3418,33 @@ def test_gdalwarp_lib_auto_optimize_size():
 
 
 ###############################################################################
+# Test proper computation of working data type
+
+
+def test_gdalwarp_lib_working_data_type_with_source_dataset_of_different_types():
+
+    int16_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int16)
+    int16_ds.GetRasterBand(1).Fill(1)
+    int16_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+    float32_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float32)
+    nd_value = struct.unpack("f", struct.pack("f", -3.4028235e38))[0]
+    float32_ds.GetRasterBand(1).Fill(nd_value)
+    float32_ds.GetRasterBand(1).SetNoDataValue(nd_value)
+    float32_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+    out_ds = gdal.Warp("", [int16_ds, float32_ds], options="-f MEM -dstnodata -32768")
+    minval, maxval = out_ds.GetRasterBand(1).ComputeRasterMinMax()
+    assert minval == 1
+    assert maxval == 1
+
+    out_ds = gdal.Warp("", [float32_ds, int16_ds], options="-f MEM -dstnodata -32768")
+    minval, maxval = out_ds.GetRasterBand(1).ComputeRasterMinMax()
+    assert minval == 1
+    assert maxval == 1
+
+
+###############################################################################
 # Cleanup
 
 
