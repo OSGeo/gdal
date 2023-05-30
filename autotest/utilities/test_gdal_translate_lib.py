@@ -1040,6 +1040,26 @@ def test_gdal_translate_lib_no_input_band():
 
 
 ###############################################################################
+# Test -scale and -unscape
+
+
+@gdaltest.enable_exceptions()
+def test_gdal_translate_lib_scale_and_unscale_incompatible():
+
+    with pytest.raises(
+        Exception, match=r"-scale and -unscale cannot be used as the same time"
+    ):
+        gdal.Translate(
+            "",
+            gdal.Open("../gcore/data/byte.tif"),
+            format="MEM",
+            scaleParams=[[0, 255, 0, 65535]],
+            unscale=True,
+            outputType=gdal.GDT_UInt16,
+        )
+
+
+###############################################################################
 # Cleanup
 
 
