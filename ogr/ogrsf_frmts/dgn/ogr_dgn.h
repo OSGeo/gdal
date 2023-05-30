@@ -53,14 +53,14 @@ class OGRDGNLayer final : public OGRLayer
     void ConsiderBrush(DGNElemCore *, const char *pszPen,
                        OGRFeature *poFeature);
 
-    DGNElemCore **LineStringToElementGroup(OGRLineString *, int);
+    DGNElemCore **LineStringToElementGroup(const OGRLineString *, int);
     DGNElemCore **TranslateLabel(OGRFeature *);
 
     // Unused:
     // int                 bHaveSimpleQuery;
     OGRFeature *poEvalFeature;
 
-    OGRErr CreateFeatureWithGeom(OGRFeature *, OGRGeometry *);
+    OGRErr CreateFeatureWithGeom(OGRFeature *, const OGRGeometry *);
 
   public:
     OGRDGNLayer(const char *pszName, DGNHandle hDGN, int bUpdate);
