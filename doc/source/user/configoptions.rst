@@ -446,6 +446,12 @@ General options
       handling filenames on Windows and might be appropriate for applications that
       treat filenames as being in the local encoding.
 
+-  .. config:: GDAL_MAX_BAND_COUNT
+      :choices: <integer>
+      :default: 65536
+
+      Defines the maximum number of bands to read from a single dataset.
+
 -  .. config:: GDAL_XML_VALIDATION
       :choices: YES, NO
       :default: YES
