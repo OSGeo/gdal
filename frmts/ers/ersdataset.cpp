@@ -1066,7 +1066,8 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
             if (nBands > knIntMax / iWordSize ||
                 poDS->nRasterXSize > knIntMax / (nBands * iWordSize))
             {
-                CPLError(CE_Failure, CPLE_AppDefined, "int overflow");
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "int overflow: too large nBands and/or nRasterXSize");
                 return nullptr;
             }
 
@@ -1076,6 +1077,14 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
                     nHeaderOffset, iWordSize * poDS->nRasterXSize,
                     poDS->fpImage))
             {
+                return nullptr;
+            }
+            if (nHeaderOffset >
+                std::numeric_limits<GIntBig>::max() -
+                    (nBands - 1) * iWordSize * poDS->nRasterXSize)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "int overflow: too large nHeaderOffset");
                 return nullptr;
             }
 

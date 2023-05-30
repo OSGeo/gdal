@@ -1183,8 +1183,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     GDALCopyWords(
                         pabyData, eDataType, nPixelOffset,
-                        static_cast<GByte *>(pData) +
-                            static_cast<vsi_l_offset>(iLine) * nLineSpace,
+                        static_cast<GByte *>(pData) + iLine * nLineSpace,
                         eBufType, static_cast<int>(nPixelSpace), nXSize);
                 }
                 else
@@ -1196,9 +1195,8 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                            iPixel * dfSrcXInc + EPS) *
                                            nPixelOffset,
                             eDataType, nPixelOffset,
-                            static_cast<GByte *>(pData) +
-                                static_cast<vsi_l_offset>(iLine) * nLineSpace +
-                                static_cast<vsi_l_offset>(iPixel) * nPixelSpace,
+                            static_cast<GByte *>(pData) + iLine * nLineSpace +
+                                iPixel * nPixelSpace,
                             eBufType, static_cast<int>(nPixelSpace), 1);
                     }
                 }
@@ -1311,8 +1309,7 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 if (nXSize == nBufXSize && nYSize == nBufYSize)
                 {
                     GDALCopyWords(static_cast<GByte *>(pData) +
-                                      static_cast<vsi_l_offset>(iLine) *
-                                          nLineSpace,
+                                      iLine * nLineSpace,
                                   eBufType, static_cast<int>(nPixelSpace),
                                   pabyData, eDataType, nPixelOffset, nXSize);
                 }
@@ -1320,15 +1317,14 @@ CPLErr RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 {
                     for (int iPixel = 0; iPixel < nBufXSize; iPixel++)
                     {
-                        GDALCopyWords(
-                            static_cast<GByte *>(pData) +
-                                static_cast<vsi_l_offset>(iLine) * nLineSpace +
-                                static_cast<vsi_l_offset>(iPixel) * nPixelSpace,
-                            eBufType, static_cast<int>(nPixelSpace),
-                            pabyData + static_cast<vsi_l_offset>(
-                                           iPixel * dfSrcXInc + EPS) *
-                                           nPixelOffset,
-                            eDataType, nPixelOffset, 1);
+                        GDALCopyWords(static_cast<GByte *>(pData) +
+                                          iLine * nLineSpace +
+                                          iPixel * nPixelSpace,
+                                      eBufType, static_cast<int>(nPixelSpace),
+                                      pabyData + static_cast<vsi_l_offset>(
+                                                     iPixel * dfSrcXInc + EPS) *
+                                                     nPixelOffset,
+                                      eDataType, nPixelOffset, 1);
                     }
                 }
 

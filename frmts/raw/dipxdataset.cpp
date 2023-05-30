@@ -153,7 +153,7 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Create a corresponding GDALDataset.                             */
     /* -------------------------------------------------------------------- */
-    DIPExDataset *poDS = new DIPExDataset();
+    auto poDS = cpl::make_unique<DIPExDataset>();
 
     poDS->eAccess = poOpenInfo->eAccess;
     poDS->fp = poOpenInfo->fpL;
@@ -167,7 +167,6 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError(CE_Failure, CPLE_FileIO,
                  "Attempt to read 1024 byte header filed on file %s\n",
                  poOpenInfo->pszFilename);
-        delete poDS;
         return nullptr;
     }
 
@@ -192,7 +191,6 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     GIntBig nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
     if (nDiff <= 0 || nDiff > INT_MAX)
     {
-        delete poDS;
         return nullptr;
     }
     poDS->nRasterYSize = static_cast<int>(nDiff);
@@ -202,7 +200,6 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
     if (nDiff <= 0 || nDiff > INT_MAX)
     {
-        delete poDS;
         return nullptr;
     }
     poDS->nRasterXSize = static_cast<int>(nDiff);
@@ -212,7 +209,6 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
         !GDALCheckBandCount(nBands, FALSE))
     {
-        delete poDS;
         return nullptr;
     }
 
@@ -229,7 +225,6 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->eRasterDataType = GDT_Float64;
     else
     {
-        delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Unrecognized image data type %d, with BytesPerSample=%d.",
                  nDIPExDataType, nBytesPerSample);
@@ -238,7 +233,6 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (nLineOffset <= 0 || nLineOffset > INT_MAX / nBands)
     {
-        delete poDS;
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid values: nLineOffset = %d, nBands = %d.", nLineOffset,
                  nBands);
@@ -252,7 +246,7 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     for (int iBand = 0; iBand < nBands; iBand++)
     {
         auto poBand = RawRasterBand::Create(
-            poDS, iBand + 1, poDS->fp, 1024 + iBand * nLineOffset,
+            poDS.get(), iBand + 1, poDS->fp, 1024 + iBand * nLineOffset,
             nBytesPerSample, nLineOffset * nBands, poDS->eRasterDataType,
             RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN,
             RawRasterBand::OwnFP::NO);
@@ -315,10 +309,10 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Check for external overviews.                                   */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename,
+    poDS->oOvManager.Initialize(poDS.get(), poOpenInfo->pszFilename,
                                 poOpenInfo->GetSiblingFiles());
 
-    return poDS;
+    return poDS.release();
 }
 
 /************************************************************************/
