@@ -253,13 +253,14 @@ The following creation options (specific to vector, or common with
 raster) are available:
 
 -  .. dsco:: VERSION
-      :choices: AUTO, 1.0, 1.1, 1.2, 1.3
+      :choices: AUTO, 1.0, 1.1, 1.2, 1.3, 1.4
       :Since: 2.2
 
       Set GeoPackage version
       (for application_id and user_version fields). In AUTO mode, this will
       be equivalent to 1.2 starting with GDAL 2.3.
       1.3 is available starting with GDAL 3.3
+      1.4 is available starting with GDAL 3.7.1
 
 -  .. dsco:: ADD_GPKG_OGR_CONTENTS
       :choices: YES, NO
