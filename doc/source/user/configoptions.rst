@@ -227,6 +227,14 @@ Performance and caching
       specialize IRasterIO() at the dataset or raster band level, for example
       JP2KAK, NITF, HFA, WCS, ECW, MrSID, and JPEG.
 
+-  .. config:: GDAL_BAND_BLOCK_CACHE
+      :choices: AUTO, ARRAY, HASHSET
+      :default: AUTO
+
+      Controls whether the block cache should be backed by an array or a hashset.
+      By default (``AUTO``) the implementation will be selected based on the
+      number of blocks in the dataset. See :ref:`rfc-26` for more information.
+
 -  .. config:: GDAL_MAX_DATASET_POOL_SIZE
       :default: 100
 
