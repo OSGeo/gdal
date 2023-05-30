@@ -572,6 +572,26 @@ def test_pam_esri_GeodataXform_gcp():
 
 
 ###############################################################################
+# Test that we can retrieve geotransform from xml:ESRI domain
+# (use case of https://github.com/qgis/QGIS/issues/53125)
+
+
+def test_pam_esri_GeodataXform_geotransform():
+
+    ds = gdal.Open("data/arcgis_geodataxform_coeffx_coeffy.tif")
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            102628.65660518478,
+            0.6905638991215965,
+            -0.024369509776131858,
+            900995.5960716272,
+            -0.024369509776131858,
+            -0.6905638991215965,
+        )
+    )
+
+
+###############################################################################
 
 
 @pytest.mark.require_driver("PNM")
