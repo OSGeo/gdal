@@ -718,9 +718,12 @@ struct curl_slist *VSIAzureBlobHandleHelper::GetCurlHeaders(
         }
 
         struct curl_slist *headers = nullptr;
-        headers =
-            curl_slist_append(headers, CPLSPrintf("Authorization: Bearer %s",
-                                                  osAccessToken.c_str()));
+
+        // Do not use CPLSPrintf() as we could get over the 8K character limit
+        // with very large SAS tokens
+        std::string osAuthorization = "Authorization: Bearer ";
+        osAuthorization += osAccessToken;
+        headers = curl_slist_append(headers, osAuthorization.c_str());
         headers = curl_slist_append(headers, "x-ms-version: 2019-12-12");
         return headers;
     }
