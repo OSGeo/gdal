@@ -74,7 +74,7 @@ predefined files.
 The following locations are tried by :cpp:func:`CPLLoadConfigOptionsFromPredefinedFiles`:
 
  - the location pointed by the environment variable (or configuration option)
-   GDAL_CONFIG_FILE is attempted first. If it set, the next steps are not
+   :config:`GDAL_CONFIG_FILE` is attempted first. If it set, the next steps are not
    attempted
 
  - for Unix builds, the location pointed by ${sysconfdir}/gdal/gdalrc is first
@@ -361,6 +361,11 @@ General options
       On some builds (Unix), the value can be hard-coded at compilation time to
       point to the path after installation (/usr/share/gdal/data for example). On
       Windows platform, this option must be generally declared.
+
+-  .. config:: GDAL_CONFIG_FILE
+      :since: 3.3
+
+      The location of the GDAL config file (see :ref:`gdal_configuration_file`).
 
 -  .. config:: CPL_TMPDIR
       :choices: <dirname>
