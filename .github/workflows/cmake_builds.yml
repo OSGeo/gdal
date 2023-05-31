@@ -417,43 +417,23 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: gdalenv
-        python-version: 3.9
-        channels: conda-forge
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        use-mamba: true
+        auto-update-conda: true
+        use-only-tar-bz2: false
     - run: |
         cmake --version
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv curl libiconv icu python=3.9 swig numpy pytest pytest-env filelock zlib clcache lxml jsonschema
-        conda install --yes --quiet --name gdalenv -c conda-forge proj geos hdf4 hdf5 kealib \
+        conda install --yes --quiet curl libiconv icu python=3.10 swig numpy pytest pytest-env filelock zlib lxml jsonschema
+        conda install --yes --quiet proj geos hdf4 hdf5 kealib \
             libnetcdf openjpeg poppler libtiff libpng xerces-c expat libxml2 kealib json-c \
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
-            "arrow-cpp>=7.0.0" "pyarrow>=7.0.0"
-    - name: Setup cache
-      uses: actions/cache@v3
-      id: cache
-      with:
-          path: ${{ github.workspace }}\.clcache
-          key: ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}${{ github.ref_name }}-${{ github.run_id }}
-          restore-keys: |
-            ${{ runner.os }}-${{ env.cache-name }}-${{ github.base_ref }}
-            ${{ runner.os }}-${{ env.cache-name }}
-    - name: Configure ccache (Part 1)
-      shell: cmd
-      run: |
-          set CLCACHE_DIR=%CD%\.clcache
-          echo CLCACHE_DIR=%CLCACHE_DIR%>> %GITHUB_ENV%
-    - name: Configure ccache (Part 2)
-      shell: bash -l {0}
-      run: |
-          ${CONDA_PREFIX}/Scripts/clcache -z
-          ${CONDA_PREFIX}/Scripts/clcache -M 250000000
-          ${CONDA_PREFIX}/Scripts/clcache -s
-          # Otherwise cmake can find link.exe from Conda instead of MSVC
-          rm /usr/bin/link
-
+            arrow-cpp pyarrow
     - name: Install pdfium
       shell: bash -l {0}
       run: |
@@ -503,10 +483,6 @@ jobs:
         gdalinfo --version
         python -VV
         PYTHONPATH=$GITHUB_WORKSPACE/install-gdal/lib/site-packages python -c "from osgeo import gdal;print(gdal.VersionInfo(None))"
-    - name: clcache statistics
-      shell: bash -l {0}
-      run:
-        ${CONDA_PREFIX}/Scripts/clcache -s
     - name: Show gdal.pc
       shell: bash -l {0}
       run: cat $GITHUB_WORKSPACE/build/gdal.pc
@@ -527,19 +503,22 @@ jobs:
     - uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: gdalenv
-        python-version: 3.9
-        channels: conda-forge
+        miniforge-variant: Mambaforge
+        miniforge-version: latest
+        use-mamba: true
+        auto-update-conda: true
+        use-only-tar-bz2: false
     - run: |
         cmake --version
     - name: Install dependency
       shell: bash -l {0}
       run: |
-        conda install --yes --quiet --name gdalenv -c conda-forge proj clcache pytest pytest-env filelock lxml
+        conda install --yes --quiet proj pytest pytest-env filelock lxml
     - name: Configure
       shell: bash -l {0}
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
@@ -547,12 +526,12 @@ jobs:
       shell: bash -l {0}
       run: |
         rm -f build/CMakeCache.txt
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Configure with even less dependencies, and disabling all optional drivers
       shell: bash -l {0}
       run: |
         rm -f build/CMakeCache.txt
-        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_C_COMPILER_LAUNCHER=clcache" "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DWERROR_DEV_FLAG="-Werror=dev"
+        cmake -A ${architecture} -G "${generator}" -Werror=dev "-DCMAKE_CXX_COMPILER_LAUNCHER=clcache" -DCMAKE_UNITY_BUILD=${CMAKE_UNITY_BUILD} -S "$GITHUB_WORKSPACE" -B "$GITHUB_WORKSPACE/build" -DCMAKE_C_FLAGS=" /WX" -DCMAKE_CXX_FLAGS=" /WX" -DGDAL_USE_EXTERNAL_LIBS:BOOL=OFF -DGDAL_USE_PNG_INTERNAL=OFF -DGDAL_USE_JPEG_INTERNAL=OFF -DGDAL_USE_JPEG12_INTERNAL=OFF -DGDAL_USE_GIF_INTERNAL=OFF -DGDAL_USE_LERC_INTERNAL=OFF -DGDAL_USE_LERCV1_INTERNAL=OFF -DGDAL_USE_QHULL_INTERNAL=OFF -DGDAL_USE_OPENCAD_INTERNAL=OFF -DGDAL_BUILD_OPTIONAL_DRIVERS=OFF -DOGR_BUILD_OPTIONAL_DRIVERS=OFF -DWERROR_DEV_FLAG="-Werror=dev"
     - name: Build
       shell: bash -l {0}
       run: cmake --build $GITHUB_WORKSPACE/build --config RelWithDebInfo -j 2
