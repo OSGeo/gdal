@@ -743,36 +743,22 @@ def test_geometry_column_identification():
     if gdaltest.mssqlspatial_ds is None:
         pytest.skip("MSSQLSpatial driver not available")
 
-    # once
-    try:
-        gdaltest.mssqlspatial_ds.ExecuteSQL("ALTER TABLE dbo.tpoly ADD shape GEOMETRY")
-        gdaltest.mssqlspatial_ds.ExecuteSQL(
-            "UPDATE tpoly SET shape = ogr_geometry.STCentroid()"
-        )
-    except Exception:
-        pass
-
-    options = [
-        "-nln",
-        "test_geometry_column_identification",
-        "-f",
-        "ESRI Shapefile",
-        "-sql",
-        "SELECT eas_id, shape FROM tpoly",
-    ]
-
-    ds = gdal.VectorTranslate(
-        "/vsimem/test_geometry_column_identification.shp",
-        gdaltest.mssqlspatial_dsname,
-        options=options,
+    gdaltest.mssqlspatial_ds.ExecuteSQL(
+        "SELECT *, ogr_geometry.STCentroid() AS shape INTO dbo.poly_shape FROM dbo.tpoly"
     )
-    lyr = ds.GetLayerByName("test_geometry_column_identification")
-    assert lyr
-    f = lyr.GetFeature(1)
-    geom = f.GetGeometryRef()
-    assert geom is not None
-    assert geom.GetGeometryName() == "POINT"
-    assert f.GetFieldCount() == 1
+
+    try:
+        ds = ogr.Open(gdaltest.mssqlspatial_dsname)
+        lyr = ds.ExecuteSQL("SELECT eas_id, shape FROM poly_shape")
+        assert lyr
+        f = lyr.GetFeature(1)
+        geom = f.GetGeometryRef()
+        assert geom is not None
+        assert geom.GetGeometryName() == "POINT"
+        assert f.GetFieldCount() == 1
+
+    finally:
+        gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE poly_shape")
 
 
 ###############################################################################
