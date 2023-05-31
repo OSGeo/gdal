@@ -1518,7 +1518,8 @@ void CPL_STDCALL GDALWarpResolveWorkingDataType(GDALWarpOptions *psOptions)
                                       GDALGetRasterDataType(hDstBand));
             }
         }
-        else if (psOptions->hSrcDS != nullptr)
+
+        if (psOptions->hSrcDS != nullptr)
         {
             GDALRasterBandH hSrcBand = GDALGetRasterBand(
                 psOptions->hSrcDS, psOptions->panSrcBands[iBand]);
