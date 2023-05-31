@@ -345,6 +345,12 @@ Driver management
       This option must be set before calling :cpp:func:`GDALAllRegister`, or an explicit call
       to :cpp:func:`GDALDriverManager::AutoLoadDrivers` will be required.
 
+-  .. config:: GDAL_PYTHON_DRIVER_PATH
+
+      A list of directories to search for ``.py`` files implementing GDAL drivers.
+      Like :config:`GDAL_DRIVER_PATH`, directory names should be separated by colons
+      on Unix or semi-colons on Windows. For more information, see :ref:`rfc-76`.
+
 General options
 ^^^^^^^^^^^^^^^
 
