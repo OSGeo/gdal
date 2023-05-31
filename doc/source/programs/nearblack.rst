@@ -99,7 +99,8 @@ if either alpha band or mask band is not set.
 
     ``floodfill`` (added in GDAL 3.8) uses the `Flood Fill <https://en.wikipedia.org/wiki/Flood_fill#Span_filling>`_
     algorithm and will work with concave areas. It requires creating a temporary
-    dataset and is slower than ``twopasses``.
+    dataset and is slower than ``twopasses``. When a non-zero value for :option:`-nb`
+    is used, ``twopasses`` is actually called as an initial step of ``floodfill``.
 
 .. option:: -q
 

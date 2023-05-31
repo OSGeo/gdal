@@ -346,7 +346,6 @@ bool GDALNearblackFloodFillAlg::Set(int iX, int iY)
  * with the following enhancements:
  * - extra bound checking to avoid calling MustSet() outside the raster
  * - extra bound checking to avoid pushing spans outside the raster
- * - taking into accout nMaxNonBlack in the horizontal direction
  *
  * Returns true if no error.
  */
@@ -355,7 +354,6 @@ bool GDALNearblackFloodFillAlg::Fill(int iXInit, int iYInit)
 {
     const int nXSize = m_poSrcDataset->GetRasterXSize();
     const int nYSize = m_poSrcDataset->GetRasterYSize();
-    const int nMaxNonBlack = m_psOptions->nMaxNonBlack;
 
     struct Span
     {
@@ -411,19 +409,8 @@ bool GDALNearblackFloodFillAlg::Fill(int iXInit, int iYInit)
 
         if (iX > 0 && MustSet(iX, iY))
         {
-            int nNonBlackPixels = 0;
-            while (true)
+            while (MustSet(iX - 1, iY))
             {
-                if (!MustSet(iX - 1, iY))
-                {
-                    nNonBlackPixels++;
-                    if (nNonBlackPixels > nMaxNonBlack)
-                        break;
-                }
-                else
-                {
-                    nNonBlackPixels = 0;
-                }
                 if (!Set(iX - 1, iY))
                     return false;
                 iX--;
@@ -439,29 +426,13 @@ bool GDALNearblackFloodFillAlg::Fill(int iXInit, int iYInit)
         const int iX2 = s.x2;
         while (iX1 <= iX2)
         {
-            if (MustSet(iX1, iY))
+            while (MustSet(iX1, iY))
             {
                 if (!Set(iX1, iY))
                     return false;
                 iX1++;
-
-                int nNonBlackPixels = 0;
-                while (iX1 < nXSize)
-                {
-                    if (!MustSet(iX1, iY))
-                    {
-                        nNonBlackPixels++;
-                        if (nNonBlackPixels > nMaxNonBlack)
-                            break;
-                    }
-                    else
-                    {
-                        nNonBlackPixels = 0;
-                    }
-                    if (!Set(iX1, iY))
-                        return false;
-                    iX1++;
-                }
+                if (iX1 == nXSize)
+                    break;
             }
             if (iX <= iX1 - 1 && iY + s.dy >= 0 && iY + s.dy < nYSize)
             {
@@ -503,8 +474,16 @@ bool GDALNearblackFloodFillAlg::Process()
         if (m_bSetMask)
             m_abyMask.resize(nXSize);
 
-        m_abLineLoadedOnce.resize(nYSize);
-        m_abLineSavedOnce.resize(nYSize);
+        if (m_psOptions->nMaxNonBlack > 0)
+        {
+            m_abLineLoadedOnce.resize(nYSize, true);
+            m_abLineSavedOnce.resize(nYSize, true);
+        }
+        else
+        {
+            m_abLineLoadedOnce.resize(nYSize);
+            m_abLineSavedOnce.resize(nYSize);
+        }
     }
     catch (const std::exception &e)
     {
@@ -631,5 +610,31 @@ bool GDALNearblackFloodFill(const GDALNearblackOptions *psOptions,
     alg.m_oColors = oColors;
     alg.m_nReplacevalue = psOptions->bNearWhite ? 255 : 0;
 
-    return alg.Process();
+    if (psOptions->nMaxNonBlack > 0)
+    {
+        // First pass: use the TwoPasses algorithm to deal with nMaxNonBlack
+        GDALNearblackOptions sOptionsTmp(*psOptions);
+        sOptionsTmp.pProgressData = GDALCreateScaledProgress(
+            0, 0.5, psOptions->pfnProgress, psOptions->pProgressData);
+        sOptionsTmp.pfnProgress = GDALScaledProgress;
+        bool bRet = GDALNearblackTwoPassesAlgorithm(
+            &sOptionsTmp, hSrcDataset, hDstDS, hMaskBand, nSrcBands, nDstBands,
+            bSetMask, oColors);
+        GDALDestroyScaledProgress(sOptionsTmp.pProgressData);
+        if (!bRet)
+            return false;
+
+        // Second pass: use flood fill
+        sOptionsTmp.pProgressData = GDALCreateScaledProgress(
+            0.5, 1, psOptions->pfnProgress, psOptions->pProgressData);
+        sOptionsTmp.pfnProgress = GDALScaledProgress;
+        alg.m_psOptions = &sOptionsTmp;
+        bRet = alg.Process();
+        GDALDestroyScaledProgress(sOptionsTmp.pProgressData);
+        return bRet;
+    }
+    else
+    {
+        return alg.Process();
+    }
 }

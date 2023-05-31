@@ -65,6 +65,13 @@ struct GDALNearblackOptions
     CPLStringList aosCreationOptions{};
 };
 
+bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
+                                     GDALDatasetH hSrcDataset,
+                                     GDALDatasetH hDstDS,
+                                     GDALRasterBandH hMaskBand, int nBands,
+                                     int nDstBands, bool bSetMask,
+                                     const Colors &oColors);
+
 bool GDALNearblackFloodFill(const GDALNearblackOptions *psOptions,
                             GDALDatasetH hSrcDataset, GDALDatasetH hDstDS,
                             GDALRasterBandH hMaskBand, int nSrcBands,

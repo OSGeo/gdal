@@ -49,12 +49,6 @@
 
 #include "nearblack_lib.h"
 
-static bool TwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
-                               GDALDatasetH hSrcDataset, GDALDatasetH hDstDS,
-                               GDALRasterBandH hMaskBand, int nBands,
-                               int nDstBands, bool bSetMask,
-                               const Colors &oColors);
-
 static void ProcessLine(GByte *pabyLine, GByte *pabyMask, int iStart, int iEnd,
                         int nSrcBands, int nDstBands, int nNearDist,
                         int nMaxNonBlack, bool bNearWhite,
@@ -325,8 +319,9 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
     }
     else
     {
-        bRet = TwoPassesAlgorithm(psOptions, hSrcDataset, hDstDS, hMaskBand,
-                                  nBands, nDstBands, bSetMask, oColors);
+        bRet = GDALNearblackTwoPassesAlgorithm(psOptions, hSrcDataset, hDstDS,
+                                               hMaskBand, nBands, nDstBands,
+                                               bSetMask, oColors);
     }
     if (!bRet)
     {
@@ -339,16 +334,17 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
 }
 
 /************************************************************************/
-/*                       TwoPassesAlgorithm()                           */
+/*                   GDALNearblackTwoPassesAlgorithm()                  */
 /*                                                                      */
 /* Do a top-to-bottom pass, followed by a bottom-to-top one.            */
 /************************************************************************/
 
-static bool TwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
-                               GDALDatasetH hSrcDataset, GDALDatasetH hDstDS,
-                               GDALRasterBandH hMaskBand, int nBands,
-                               int nDstBands, bool bSetMask,
-                               const Colors &oColors)
+bool GDALNearblackTwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
+                                     GDALDatasetH hSrcDataset,
+                                     GDALDatasetH hDstDS,
+                                     GDALRasterBandH hMaskBand, int nBands,
+                                     int nDstBands, bool bSetMask,
+                                     const Colors &oColors)
 {
     const int nXSize = GDALGetRasterXSize(hSrcDataset);
     const int nYSize = GDALGetRasterYSize(hSrcDataset);

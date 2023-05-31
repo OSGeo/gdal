@@ -368,7 +368,8 @@ def test_nearblack_lib_erosion_from_right(alg):
     )
 
 
-def test_nearblack_lib_erosion_from_top():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_top(alg):
 
     # erosion from the top
     _test_nearblack(
@@ -387,10 +388,12 @@ def test_nearblack_lib_erosion_from_top():
             [255, 255, 255, 255, 255],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
 
 
-def test_nearblack_lib_erosion_from_bottom():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_bottom(alg):
 
     # erosion from the bottom
     _test_nearblack(
@@ -409,10 +412,12 @@ def test_nearblack_lib_erosion_from_bottom():
             [255, 0, 0, 0, 255],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
 
 
-def test_nearblack_lib_erosion_from_top_and_bottom():
+@pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
+def test_nearblack_lib_erosion_from_top_and_bottom(alg):
 
     # Maybe erosion is a bit too greedy due to top-bottom + bottom-top passes
     _test_nearblack(
@@ -435,6 +440,7 @@ def test_nearblack_lib_erosion_from_top_and_bottom():
             [0, 0, 0, 0, 0, 0, 0],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
 
     # Maybe erosion is a bit too greedy due to top-bottom + bottom-top passes
@@ -454,6 +460,7 @@ def test_nearblack_lib_erosion_from_top_and_bottom():
             [0, 0, 0, 0, 0],
         ],
         maxNonBlack=1,
+        alg=alg,
     )
 
 
@@ -525,5 +532,30 @@ def test_nearblack_lib_floodfill_concave_from_bottom():
         input_ar,
         input_ar,
         maxNonBlack=0,
+        alg="floodfill",
+    )
+
+
+def test_nearblack_lib_floodfill_concave_from_bottom_non_black():
+
+    XXX = 0
+    input_ar = [
+        [255, 255, 255, 255, 255],
+        [255, XXX, XXX, XXX, 255],
+        [255, 255, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+    ]
+    output_ar = [
+        [255, 255, 255, 255, 255],
+        [255, XXX, XXX, XXX, 255],
+        [255, XXX, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+        [255, XXX, 255, 255, 255],
+    ]
+    _test_nearblack(
+        input_ar,
+        output_ar,
+        maxNonBlack=1,
         alg="floodfill",
     )
