@@ -44,7 +44,7 @@ pytestmark = pytest.mark.require_driver("TileDB")
 ###############################################################################
 
 
-def create_tiledb_dataset(nullable, batch_size, include_bool):
+def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=False):
 
     ds = ogr.GetDriverByName("TileDB").CreateDataSource("tmp/test.tiledb")
     srs = osr.SpatialReference()
@@ -205,6 +205,34 @@ def create_tiledb_dataset(nullable, batch_size, include_bool):
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((-10 -20,-1 -3,-4 -3,-10 -20))"))
     assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     assert f.GetFID() == 3
+
+    if extra_feature:
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["strfield"] = "something"
+        f["intfield"] = 8765432
+        f["int16field"] = 32767
+        if include_bool:
+            f["boolfield"] = False
+        f["uint8field"] = 255
+        f["uint16field"] = 65535
+        f["int64field"] = 9876543210123456
+        f["doublefield"] = -1.2345
+        f["floatfield"] = -1.5
+        f.SetFieldBinaryFromHexString("binaryfield", "DEAFBEEF")
+        f["intlistfield"] = [-123456789, -123]
+        f["int16listfield"] = [32767, -32768]
+        if include_bool:
+            f["boollistfield"] = [False, True]
+        f["doublelistfield"] = [-1.2345, 1.2345]
+        f["floatlistfield"] = [0.0, -1.5, 1.5]
+        # Will be transformed to "2023/04/07 10:19:56.789+00"
+        f["datetimefield"] = "2023-04-07T12:34:56.789+0215"
+        f["datefield"] = "2023-04-08"
+        f["timefield"] = "13:34:56.789"
+        f["intfieldextra"] = 4
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (-0.9 -0.9)"))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert f.GetFID() == 4
 
     ds = None
     return field_count, srs, options
@@ -1220,7 +1248,9 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
         shutil.rmtree("tmp/test.tiledb")
 
     include_bool = True
-    _, _, options = create_tiledb_dataset(nullable, batch_size, include_bool)
+    _, _, options = create_tiledb_dataset(
+        nullable, batch_size, include_bool, extra_feature=True
+    )
 
     ds = gdal.OpenEx("tmp/test.tiledb", open_options=options)
     lyr = ds.GetLayer(0)
@@ -1338,7 +1368,19 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
     for batch in stream:
         fids += batch["FID"].tolist()
         check_batch(batch)
-    assert set(fids) == set([1, 2, 3])
+    assert set(fids) == set([1, 2, 3, 4])
+    lyr.SetSpatialFilter(None)
+
+    # Test spatial filter that intersects 1st, 2nd and 4th features only, but given how
+    # spatial filtering works, more intermediate features will be collected
+    # before being discarded
+    lyr.SetSpatialFilterRect(-0.99, -2.99, 3, 3)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fids = []
+    for batch in stream:
+        fids += batch["FID"].tolist()
+        check_batch(batch)
+    assert set(fids) == set([1, 2, 4])
     lyr.SetSpatialFilter(None)
 
     # Test spatial filter that intersects 1st and 2nd features only, but given how
@@ -1354,13 +1396,23 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
     lyr.SetSpatialFilter(None)
 
     # Test spatial filter that intersects 3rd feature only
-    lyr.SetSpatialFilterRect(-3, -3, 0, 0)
+    lyr.SetSpatialFilterRect(-3, -3, -0.95, -0.95)
     stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
     fids = []
     for batch in stream:
         fids += batch["FID"].tolist()
         check_batch(batch)
     assert set(fids) == set([3])
+    lyr.SetSpatialFilter(None)
+
+    # Test spatial filter that intersects 4th feature only
+    lyr.SetSpatialFilterRect(-0.95, -0.95, -0.85, -0.85)
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fids = []
+    for batch in stream:
+        fids += batch["FID"].tolist()
+        check_batch(batch)
+    assert set(fids) == set([4])
     lyr.SetSpatialFilter(None)
 
     # Test spatial filter that intersects no feature
@@ -1394,7 +1446,9 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
     batch = batches[0]
     assert "strfield" not in batch.keys()
     assert "intfield" in batch.keys()
-    assert set([x for x in batch["intfield"]]) == set([-123456789, 0, 123456789])
+    assert set([x for x in batch["intfield"]]) == set(
+        [-123456789, 0, 123456789, 8765432]
+    )
 
     lyr.SetIgnoredFields(["wkb_geometry"])
     stream = lyr.GetArrowStreamAsNumPy(
@@ -1405,7 +1459,9 @@ def test_ogr_tiledb_arrow_stream_numpy(nullable, batch_size):
     batch = batches[0]
     assert "wkb_geometry" not in batch.keys()
     assert "intfield" in batch.keys()
-    assert set([x for x in batch["intfield"]]) == set([-123456789, 0, 123456789])
+    assert set([x for x in batch["intfield"]]) == set(
+        [-123456789, 0, 123456789, 8765432]
+    )
 
     ds = None
 
