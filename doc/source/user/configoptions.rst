@@ -561,6 +561,68 @@ Networking options
 
       Filename of a text file with "key: value" HTTP headers.
 
+-  .. config:: GDAL_HTTP_CONNECTTIMEOUT
+      :choices: <seconds>
+      :since: 2.2
+
+      Maximum delay for connection to be established before being aborted.
+
+-  .. config:: GDAL_HTTP_COOKIE
+      :since: 2.0
+
+      Cookie(s) to send. See https://curl.se/libcurl/c/CURLOPT_COOKIE.html
+
+-  .. config:: GDAL_HTTP_COOKIEFILE
+      :since: 2.4.0
+
+      File name to read cookies from. See https://curl.se/libcurl/c/CURLOPT_COOKIEFILE.html
+
+-  .. config:: GDAL_HTTP_COOKIEJAR
+      :since: 2.4.0
+
+      File to which cookies should be written. See https://curl.se/libcurl/c/CURLOPT_COOKIEJAR.html
+
+-  .. config:: GDAL_HTTP_NETRC
+      :choices: YES, NO
+      :default: YES
+      :since: 1.11.0
+
+      Controls if an available ``.netrc`` file is used.
+
+-  .. config:: GDAL_HTTP_NETRC_FILE
+      :choices: <filename>
+      :since: 3.7.0
+
+      Sets the location of a ``.netrc`` file.
+
+-  .. config:: GDAL_HTTP_LOW_SPEED_LIMIT
+      :choices: <bytes/s>
+      :default: 0
+      :since: 2.1.0
+
+      Sets the transfer speed, averaged over :config:`GDAL_HTTP_LOW_SPEED_TIME`, below which a request should be cancelled.
+
+-  .. config:: GDAL_HTTP_LOW_SPEED_TIME
+      :choices: <seconds>
+      :default: 0
+      :since: 2.1.0
+
+      Sets the time window over which :config:`GDAL_HTTP_LOW_SPEED_LIMIT` should be evaluated.
+
+-  .. config:: GDAL_HTTP_SSL_VERIFYSTATUS
+      :choices: YES, NO
+      :default: NO
+      :since: 2.3.0
+
+      Whether to verify the status of SSL certificates. See https://curl.se/libcurl/c/CURLOPT_SSL_VERIFYSTATUS.html
+
+-  .. config:: GDAL_HTTP_USE_CAPI_STORE
+      :choices: YES, NO
+      :default: NO
+      :since: 2.3.0
+
+      (Windows only). Whether to use certificates from the Windows certificate store.
+
 -  .. config:: GDAL_HTTP_HEADERS
       :since: 3.6
 
