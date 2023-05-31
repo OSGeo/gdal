@@ -70,9 +70,9 @@ class OGRArrowLayer CPL_NON_FINAL
             Real,
             String,
         };
-        int iField{};
-        int iArrayIdx{};
-        int nOperation{};
+        int iField = -1;      // index to a OGRFeatureDefn OGRField
+        int iArrayIdx = -1;   // index to m_poBatchColumns
+        int nOperation = -1;  // SWQ_xxxx
         Type eType{};
         OGRField sValue{};
         std::string osValue{};
@@ -175,6 +175,9 @@ class OGRArrowLayer CPL_NON_FINAL
         m_poBatch = poBatch;
         m_poBatchColumns = m_poBatch->columns();
     }
+
+    // Refreshes Constraint.iArrayIdx from iField. To be called by SetIgnoredFields()
+    void ComputeConstraintsArrayIdx();
 
     virtual bool GetFastExtent(int iGeomField, OGREnvelope *psExtent) const;
     static OGRErr GetExtentFromMetadata(const CPLJSONObject &oJSONDef,

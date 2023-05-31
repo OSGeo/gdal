@@ -1308,6 +1308,49 @@ def test_ogr_parquet_attribute_filter(filter):
     assert lyr.GetFeatureCount() == ref_fc
 
 
+def test_ogr_parquet_attribute_filter_and_then_ignored_fields():
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+
+    assert lyr.SetAttributeFilter("string = 'd'") == ogr.OGRERR_NONE
+
+    ignored_fields = []
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        name = lyr_defn.GetFieldDefn(i).GetName()
+        if name != "string":
+            ignored_fields.append(name)
+    assert lyr.SetIgnoredFields(ignored_fields) == ogr.OGRERR_NONE
+
+    assert lyr.GetFeatureCount() == 1
+
+    with pytest.raises(
+        Exception,
+        match=r"Constraint on field string cannot be applied due to it being ignored",
+    ):
+        lyr.SetIgnoredFields(["string"])
+    assert lyr.GetFeatureCount() == 0
+
+
+def test_ogr_parquet_ignored_fields_and_then_attribute_filter():
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+
+    ignored_fields = []
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        name = lyr_defn.GetFieldDefn(i).GetName()
+        if name != "string":
+            ignored_fields.append(name)
+    assert lyr.SetIgnoredFields(ignored_fields) == ogr.OGRERR_NONE
+
+    assert lyr.SetAttributeFilter("string = 'd'") == ogr.OGRERR_NONE
+
+    assert lyr.GetFeatureCount() == 1
+
+
 def test_ogr_parquet_attribute_filter_and_spatial_filter():
 
     filter = "int8 != 0"

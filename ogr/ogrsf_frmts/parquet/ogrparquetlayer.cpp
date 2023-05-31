@@ -1139,6 +1139,8 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
         }
     }
 
+    ComputeConstraintsArrayIdx();
+
     // Full invalidation
     m_iRecordBatch = -1;
     m_bSingleBatch = false;
