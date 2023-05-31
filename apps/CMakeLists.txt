@@ -16,6 +16,7 @@ add_library(
   ogr2ogr_lib.cpp
   gdaldem_lib.cpp
   nearblack_lib.cpp
+  nearblack_lib_floodfill.cpp
   gdalmdiminfo_lib.cpp
   gdalmdimtranslate_lib.cpp)
 add_dependencies(appslib generate_gdal_version_h)

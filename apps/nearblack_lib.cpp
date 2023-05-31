@@ -45,31 +45,9 @@
 #include "cpl_progress.h"
 #include "cpl_string.h"
 #include "gdal.h"
+#include "gdal_priv.h"
 
-typedef std::vector<int> Color;
-typedef std::vector<Color> Colors;
-
-struct GDALNearblackOptions
-{
-    /*! output format. Use the short format name. */
-    std::string osFormat{};
-
-    /*! the progress function to use */
-    GDALProgressFunc pfnProgress = GDALDummyProgress;
-
-    /*! pointer to the progress data variable */
-    void *pProgressData = nullptr;
-
-    int nMaxNonBlack = 2;
-    int nNearDist = 15;
-    bool bNearWhite = false;
-    bool bSetAlpha = false;
-    bool bSetMask = false;
-
-    Colors oColors{};
-
-    CPLStringList aosCreationOptions{};
-};
+#include "nearblack_lib.h"
 
 static bool TwoPassesAlgorithm(const GDALNearblackOptions *psOptions,
                                GDALDatasetH hSrcDataset, GDALDatasetH hDstDS,
@@ -339,8 +317,18 @@ GDALDatasetH CPL_DLL GDALNearblack(const char *pszDest, GDALDatasetH hDstDS,
         }
     }
 
-    if (!TwoPassesAlgorithm(psOptions, hSrcDataset, hDstDS, hMaskBand, nBands,
-                            nDstBands, bSetMask, oColors))
+    bool bRet;
+    if (psOptions->bFloodFill)
+    {
+        bRet = GDALNearblackFloodFill(psOptions, hSrcDataset, hDstDS, hMaskBand,
+                                      nBands, nDstBands, bSetMask, oColors);
+    }
+    else
+    {
+        bRet = TwoPassesAlgorithm(psOptions, hSrcDataset, hDstDS, hMaskBand,
+                                  nBands, nDstBands, bSetMask, oColors);
+    }
+    if (!bRet)
     {
         if (bCloseOutDSOnError)
             GDALClose(hDstDS);
@@ -883,6 +871,20 @@ GDALNearblackOptionsNew(char **papszArgv,
         else if (EQUAL(papszArgv[i], "-setmask"))
         {
             psOptions->bSetMask = true;
+        }
+        else if (i + 1 < argc && EQUAL(papszArgv[i], "-alg"))
+        {
+            const char *pszAlg = papszArgv[++i];
+            if (EQUAL(pszAlg, "floodfill"))
+                psOptions->bFloodFill = true;
+            else if (EQUAL(pszAlg, "twopasses"))
+                psOptions->bFloodFill = false;
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported algorithm '%s'", papszArgv[i]);
+                return nullptr;
+            }
         }
         else if (papszArgv[i][0] == '-')
         {

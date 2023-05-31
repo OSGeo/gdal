@@ -2796,6 +2796,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
 def NearblackOptions(options=None, format=None,
          creationOptions=None, white = False, colors=None,
          maxNonBlack=None, nearDist=None, setAlpha = False, setMask = False,
+         alg=None,
          callback=None, callback_data=None):
     """Create a NearblackOptions() object that can be passed to gdal.Nearblack()
 
@@ -2819,6 +2820,8 @@ def NearblackOptions(options=None, format=None,
         adds an alpha band to the output file.
     setMask:
         adds a mask band to the output file.
+    alg:
+        "twopasses" (default), or "floodfill"
     callback:
         callback method
     callback_data:
@@ -2853,6 +2856,8 @@ def NearblackOptions(options=None, format=None,
             new_options += ['-setalpha']
         if setMask:
             new_options += ['-setmask']
+        if alg:
+            new_options += ['-alg', alg]
 
     return (GDALNearblackOptions(new_options), callback, callback_data)
 
