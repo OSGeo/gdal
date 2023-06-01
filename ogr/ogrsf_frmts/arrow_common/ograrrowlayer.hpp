@@ -2156,28 +2156,42 @@ static bool FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
 }
 
 /***********************************************************************/
-/*                     ExploreExprNode()                               */
+/*                  ComputeConstraintsArrayIdx()                       */
 /***********************************************************************/
 
-inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node *poNode)
+inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
 {
-    const auto AddConstraint = [this](Constraint &constraint)
+    for (auto &constraint : m_asAttributeFilterConstraints)
     {
         if (m_bIgnoredFields)
         {
             constraint.iArrayIdx =
                 m_anMapFieldIndexToArrayIndex[constraint.iField];
             if (constraint.iArrayIdx < 0)
-                return;
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Constraint on field %s cannot be applied due to "
+                         "it being ignored",
+                         m_poFeatureDefn->GetFieldDefn(constraint.iField)
+                             ->GetNameRef());
+            }
         }
         else
         {
             constraint.iArrayIdx =
                 m_anMapFieldIndexToArrowColumn[constraint.iField][0];
         }
+    }
+}
 
-        m_asAttributeFilterConstraints.emplace_back(constraint);
-    };
+/***********************************************************************/
+/*                     ExploreExprNode()                               */
+/***********************************************************************/
+
+inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node *poNode)
+{
+    const auto AddConstraint = [this](Constraint &constraint)
+    { m_asAttributeFilterConstraints.emplace_back(constraint); };
 
     if (poNode->eNodeType == SNT_OPERATION && poNode->nOperation == SWQ_AND &&
         poNode->nSubExprCount == 2)
@@ -2299,6 +2313,7 @@ inline OGRErr OGRArrowLayer::SetAttributeFilter(const char *pszFilter)
                 static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
             poNode->ReplaceBetweenByGEAndLERecurse();
             ExploreExprNode(poNode);
+            ComputeConstraintsArrayIdx();
         }
     }
 
@@ -2445,6 +2460,14 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
 {
     for (const auto &constraint : m_asAttributeFilterConstraints)
     {
+        if (constraint.iArrayIdx < 0)
+        {
+            // can happen if ignoring a field that is needed by the
+            // attribute filter. ComputeConstraintsArrayIdx() will have
+            // warned about that
+            continue;
+        }
+
         const arrow::Array *array =
             m_poBatchColumns[constraint.iArrayIdx].get();
 
