@@ -444,9 +444,55 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
         m_adfGeoTransform[5] = -dfResY;
     }
 
-    // Get SRID, and fetch WKT from GDBSpatialRefs table
+    // Two cases:
+    // - osDefinition is empty (that is FileGDB v9): find the SRS by looking
+    //   at the SRS attached to the RASTER field definition of the .gdbtable
+    //   file of the main table of the raster (that is the one without fras_XXX
+    //   prefixes)
+    // - or osDefinition is not empty (that is FileGDB v10): get SRID from the
+    //   "srid" field of the _fras_bnd table, and use that has the key to
+    //   lookup the corresponding WKT from the GDBSpatialRefs table.
+    //   In some cases srid might be 0 (invalid), then we try to get it from
+    //   Definition column of the GDB_Items table, stored in osDefinition
     psField = oTable.GetFieldValue(i_srid);
-    if (!psField)
+    if (osDefinition.empty())
+    {
+        // osDefinition empty for FileGDB v9
+        const auto oIter2 = m_osMapNameToIdx.find(osLayerName);
+        if (oIter2 != m_osMapNameToIdx.end())
+        {
+            const int nTableIdx = oIter2->second;
+
+            FileGDBTable oTableMain;
+
+            const CPLString osTableMain(CPLFormFilename(
+                m_osDirName, CPLSPrintf("a%08x.gdbtable", nTableIdx), nullptr));
+            if (oTableMain.Open(osTableMain, false))
+            {
+                const int iRasterFieldIdx = oTableMain.GetFieldIdx("RASTER");
+                if (iRasterFieldIdx >= 0)
+                {
+                    const auto poField = oTableMain.GetField(iRasterFieldIdx);
+                    if (poField->GetType() == FGFT_RASTER)
+                    {
+                        const auto poFieldRaster =
+                            static_cast<FileGDBRasterField *>(poField);
+                        const auto osWKT = poFieldRaster->GetWKT();
+                        if (!osWKT.empty() && osWKT[0] != '{')
+                        {
+                            auto poSRS = BuildSRS(osWKT.c_str());
+                            if (poSRS)
+                            {
+                                m_oRasterSRS = *poSRS;
+                                poSRS->Release();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else if (!psField)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Cannot read field %s in %s table", "srid",
@@ -458,6 +504,7 @@ bool OGROpenFileGDBDataSource::OpenRaster(const GDALOpenInfo *poOpenInfo,
     }
     else
     {
+        // FileGDB v10 case
         const int nSRID = psField->Integer;
         FileGDBTable oTableSRS;
         if (oTableSRS.Open(m_osGDBSpatialRefsFilename.c_str(), false))

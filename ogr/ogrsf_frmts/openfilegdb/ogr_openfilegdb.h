@@ -470,7 +470,9 @@ class OGROpenFileGDBDataSource final : public OGRDataSource
                         const std::string &osRasterLayerName,
                         std::set<int> &oSetIgnoredRasterLayerTableNum);
     int OpenFileGDBv9(int iGDBFeatureClasses, int iGDBObjectClasses,
-                      int nInterestTable);
+                      int nInterestTable, const GDALOpenInfo *poOpenInfo,
+                      const std::string &osRasterLayerName,
+                      std::set<int> &oSetIgnoredRasterLayerTableNum);
     bool OpenRaster(const GDALOpenInfo *poOpenInfo,
                     const std::string &osLayerName,
                     const std::string &osDefinition,

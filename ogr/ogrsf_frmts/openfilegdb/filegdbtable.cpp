@@ -829,6 +829,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                  nVersion);
         return false;
     }
+    m_bIsV9 = (nVersion == 3);
 
     returnErrorIf(m_nOffsetFieldDesc >
                   std::numeric_limits<GUIntBig>::max() - m_nFieldDescLength);
@@ -2101,8 +2102,27 @@ int FileGDBTable::GetIndexCount()
     // FileGDB v9 indexes structure not handled yet. Start with 13 98 85 03
     if (nIndexCount == 0x03859813)
     {
-        CPLDebug("OpenFileGDB", ".gdbindexes v9 not handled yet");
         VSIFree(pabyIdx);
+
+        // Hard code detection of blk_key_index on raster layers
+        const int iBlockKeyFieldIdx = GetFieldIdx("block_key");
+        if (iBlockKeyFieldIdx >= 0)
+        {
+            std::string osAtxFilename =
+                CPLResetExtension(m_osFilename.c_str(), "blk_key_index.atx");
+            if (VSIStatExL(osAtxFilename.c_str(), &sStat,
+                           VSI_STAT_EXISTS_FLAG) == 0)
+            {
+                auto poIndex = cpl::make_unique<FileGDBIndex>();
+                poIndex->m_osIndexName = "blk_key_index";
+                poIndex->m_osExpression = "block_key";
+                m_apoFields[iBlockKeyFieldIdx]->m_poIndex = poIndex.get();
+                m_apoIndexes.push_back(std::move(poIndex));
+                return 1;
+            }
+        }
+
+        CPLDebug("OpenFileGDB", ".gdbindexes v9 not handled yet");
         return 0;
     }
     returnErrorAndCleanupIf(nIndexCount >=
