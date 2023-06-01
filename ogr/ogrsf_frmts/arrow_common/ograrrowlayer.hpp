@@ -3628,7 +3628,7 @@ OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
 
     // Allocate data (WKB) buffer
     constexpr size_t DEFAULT_WKB_SIZE = 100;
-    uint32_t nInitialCapacity = static_cast<uint32_t>(std::max<size_t>(
+    uint32_t nInitialCapacity = static_cast<uint32_t>(std::min<size_t>(
         std::numeric_limits<int32_t>::max(), DEFAULT_WKB_SIZE * nLength));
     targetArray->buffers[2] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nInitialCapacity);
 
