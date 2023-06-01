@@ -403,7 +403,7 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
         }
 
         int bRet = OpenFileGDBv9(iGDBFeatureClasses, iGDBObjectClasses,
-                                 nInterestTable);
+                                 nInterestTable, poOpenInfo, osRasterLayerName);
         if (!bRet)
             return false;
     }
@@ -928,7 +928,8 @@ bool OGROpenFileGDBDataSource::OpenFileGDBv10(
 
 int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
                                             int iGDBObjectClasses,
-                                            int nInterestTable)
+                                            int nInterestTable,
+                                            const GDALOpenInfo *poOpenInfo, const std::string &osRasterLayerName)
 {
     auto poTable = cpl::make_unique<FileGDBTable>();
 
@@ -1053,6 +1054,11 @@ int OGROpenFileGDBDataSource::OpenFileGDBv9(int iGDBFeatureClasses,
             const std::string osName(aosName[idx - 1]);
             AddLayer(osName, nInterestTable, nCandidateLayers, nLayersSDCOrCDF,
                      "", "", eGeomType, std::string());
+
+            if (!osRasterLayerName.empty() && osRasterLayerName == osName)
+            {
+                OpenRaster(poOpenInfo, osName, "", "");
+            }
         }
     }
 
