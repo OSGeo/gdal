@@ -205,8 +205,16 @@ Performance and caching
       :choices: <size>
       :default: 5%
 
-      This option controls the default GDAL raster block cache size. If its value
-      is small (less than 100000), it is assumed to be measured in megabytes,
+      Controls the default GDAL raster block cache size. When
+      blocks are read from disk, or written to disk, they are cached in a
+      global block cache by the :cpp:class:`GDALRasterBlock` class. Once this
+      cache exceeds :config:`GDAL_CACHEMAX` old blocks are flushed from the
+      cache.
+      This cache is mostly beneficial when needing to read or write blocks
+      several times. This could occur, for instance, in a scanline oriented
+      input file which is processed in multiple chunks (horizontally) by
+      :program:`gdalwarp`.
+      If its value is small (less than 100000), it is assumed to be measured in megabytes,
       otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%
       of the usable physical RAM. Note that this value is only consulted the first
       time the cache size is requested.  To change this value programmatically
