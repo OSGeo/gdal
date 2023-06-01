@@ -196,10 +196,9 @@ Performance and caching
 
 -  .. config:: GDAL_NUM_THREADS
       :choices: ALL_CPUS, <integer>
-      :default: ALL_CPUS
 
       Sets the number of worker threads to be used by GDAL operations that support
-      multithreading.
+      multithreading. The default value depends on the context in which it is used.
 
 -  .. config:: GDAL_CACHEMAX
       :choices: <size>
