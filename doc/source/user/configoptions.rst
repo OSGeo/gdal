@@ -212,7 +212,7 @@ Performance and caching
       cache.
       This cache is mostly beneficial when needing to read or write blocks
       several times. This could occur, for instance, in a scanline oriented
-      input file which is processed in multiple chunks (horizontally) by
+      input file which is processed in multiple rectangular chunks by
       :program:`gdalwarp`.
       If its value is small (less than 100000), it is assumed to be measured in megabytes,
       otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%

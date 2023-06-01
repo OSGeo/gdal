@@ -225,8 +225,7 @@ resampling, and rescaling pixels in the process.
 .. option:: -a_srs <srs_def>
 
     Override the projection for the output file. Can be used with
-    :option:`-a_ullr` to specify the pixel coordinate and size in this
-    projection.
+    :option:`-a_ullr` to specify the extent in this projection.
 
     .. include:: options/srs_def.rst
 
