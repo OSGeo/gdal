@@ -10,9 +10,8 @@ ESRI File Geodatabase raster (OpenFileGDB)
 .. built_in_by_default::
 
 The OpenFileGDB driver provides read access to raster layers of File
-Geodatabases (.gdb directories) created by ArcGIS 10 and above. The
-dataset name must be the directory/folder name, and it must end with the
-.gdb extension.
+Geodatabases (.gdb directories). The dataset name must be the directory/folder
+name, and it must end with the .gdb extension.
 
 It can also read directly zipped .gdb directories (with .gdb.zip
 extension), provided they contain a .gdb directory at their first level.
@@ -25,6 +24,9 @@ The driver supports:
 - exposing nodata mask band or nodata value
 - uncompressed, LZ77, JPEG and JPEG2000 compression methods.
 - exposing value attribute tables as GDAL Raster attribute tables.
+
+Support for FileGDB created by ArcGIS v10 has been added in GDAL 3.7
+Support for FileGDB created by ArcGIS v9 has been added in GDAL 3.8
 
 Driver capabilities
 -------------------
