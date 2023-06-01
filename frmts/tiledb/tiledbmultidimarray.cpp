@@ -1361,7 +1361,7 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
         }
 
         auto attr = std::make_unique<tiledb::Attribute>(
-            tiledb::Attribute::create(ctx, TILEDB_VALUES, tiledb_dt));
+            tiledb::Attribute::create(ctx, osName, tiledb_dt));
         if (GDALDataTypeIsComplex(oDataType.GetNumericDataType()))
             attr->set_cell_val_num(2);
         attr->set_filter_list(filterList);
