@@ -534,6 +534,14 @@ in a layer:
 
 Example of updating a value of an attribute in a shapefile with SQL by using the SQLite dialect:
 
-.. code-block::
+.. code-block:: bash
 
-    ogrinfo test.shp -dialect sqlite -sql "update test set attr='bar' where attr='foo'"
+   ogrinfo test.shp -dialect sqlite -sql "update test set attr='bar' where attr='foo'"
+
+Adding a column to an input file:
+
+.. code-block:: bash
+
+   ogrinfo input.shp -sql "ALTER TABLE input ADD fieldX float"
+
+

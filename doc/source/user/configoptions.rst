@@ -196,17 +196,24 @@ Performance and caching
 
 -  .. config:: GDAL_NUM_THREADS
       :choices: ALL_CPUS, <integer>
-      :default: ALL_CPUS
 
       Sets the number of worker threads to be used by GDAL operations that support
-      multithreading.
+      multithreading. The default value depends on the context in which it is used.
 
 -  .. config:: GDAL_CACHEMAX
       :choices: <size>
       :default: 5%
 
-      This option controls the default GDAL raster block cache size. If its value
-      is small (less than 100000), it is assumed to be measured in megabytes,
+      Controls the default GDAL raster block cache size. When
+      blocks are read from disk, or written to disk, they are cached in a
+      global block cache by the :cpp:class:`GDALRasterBlock` class. Once this
+      cache exceeds :config:`GDAL_CACHEMAX` old blocks are flushed from the
+      cache.
+      This cache is mostly beneficial when needing to read or write blocks
+      several times. This could occur, for instance, in a scanline oriented
+      input file which is processed in multiple rectangular chunks by
+      :program:`gdalwarp`.
+      If its value is small (less than 100000), it is assumed to be measured in megabytes,
       otherwise in bytes. Alternatively, the value can be set to "X%" to mean X%
       of the usable physical RAM. Note that this value is only consulted the first
       time the cache size is requested.  To change this value programmatically
