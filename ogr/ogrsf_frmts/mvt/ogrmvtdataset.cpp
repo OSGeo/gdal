@@ -3764,6 +3764,10 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                                         bool bCanRecurse, int &nLastX,
                                         int &nLastY, double &dfArea) const
 {
+#ifdef HAVE_MAKE_VALID
+    CPL_IGNORE_RET_VAL(bCanRecurse);
+#endif
+
     dfArea = 0;
     auto poOutOuterRing = cpl::make_unique<OGRLinearRing>();
     for (int i = 0; i < 1 + poPoly->getNumInteriorRings(); i++)
@@ -3788,9 +3792,11 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         OGRLinearRing *poOutRing =
             poOutInnerRing.get() ? poOutInnerRing.get() : poOutOuterRing.get();
 
+#ifndef HAVE_MAKE_VALID
         const GUInt32 nInitialSize = poGPBFeature->getGeometryCount();
         const int nLastXOri = nLastX;
         const int nLastYOri = nLastY;
+#endif
         bool bSuccess = EncodeLineString(
             poGPBFeature, poRing, poOutRing, bWriteLastPoint, bReverseOrder,
             nMinLineTo, dfTopX, dfTopY, dfTileDim, nLastX, nLastY);
@@ -3808,6 +3814,14 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
         }
 
         poOutRing->closeRings();
+
+#ifdef HAVE_MAKE_VALID
+        poOutPoly->addRing(poOutRing);
+        if (i > 0)
+            dfArea -= poOutRing->get_Area();
+        else
+            dfArea = poOutRing->get_Area();
+#else
         OGRPolygon oOutPoly;
         oOutPoly.addRing(poOutOuterRing.get());
         if (i > 0)
@@ -3869,7 +3883,6 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
             poGPBFeature->resizeGeometryArray(nInitialSize);
             nLastX = nLastXOri;
             nLastY = nLastYOri;
-#if !defined(HAVE_MAKE_VALID)
             if (i == 0)
             {
 #ifdef nodef
@@ -3918,12 +3931,13 @@ bool OGRMVTWriterDataset::EncodePolygon(MVTTileLayerFeature *poGPBFeature,
                     return false;
                 }
             }
-#endif
             continue;
         }
+#endif
 
         poGPBFeature->addGeometry(GetCmdCountCombined(knCMD_CLOSEPATH, 1));
     }
+
     return true;
 }
 
