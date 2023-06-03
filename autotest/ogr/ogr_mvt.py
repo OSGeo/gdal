@@ -42,6 +42,17 @@ pytestmark = pytest.mark.require_driver("MVT")
 ###############################################################################
 
 
+@pytest.fixture
+def has_make_valid():
+    # Check if MakeValid() is available
+    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
+        return g.MakeValid() is not None
+
+
+###############################################################################
+
+
 def test_ogr_mvt_datatypes():
 
     # With metadata.json
@@ -908,7 +919,7 @@ def test_ogr_mvt_http_stop():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_one_layer():
+def test_ogr_mvt_write_one_layer(has_make_valid):
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
@@ -1100,11 +1111,30 @@ def test_ogr_mvt_write_one_layer():
 
     out_f = out_lyr.GetNextFeature()
     if (
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126)))",
+        (
+            (not has_make_valid)
+            and ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126)))",
+            )
+            != 0
         )
-        != 0
+        # Below is what we get with MakeValid() available
+        or (
+            # GEOS > 3.8 (not sure which minimum version)
+            has_make_valid
+            and ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((-508764.860266134 1007745.78091176,-508764.860266134 997961.84129126,-498980.920645632 997961.84129126,-508764.860266134 1007745.78091176)),((508764.860266134 1007745.78091176,498980.920645632 997961.84129126,508764.860266134 997961.84129126,508764.860266134 1007745.78091176)))",
+            )
+            != 0
+            # Below result with GEOS 3.8
+            and ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 997961.84129126,508764.860266134 1007745.78091176,498980.920645632 997961.84129126)),((-508764.860266134 997961.84129126,-498980.920645632 997961.84129126,-508764.860266134 1007745.78091176,-508764.860266134 997961.84129126)))",
+            )
+            != 0
+        )
     ):
         out_f.DumpReadable()
         pytest.fail()
@@ -1560,7 +1590,7 @@ def test_ogr_mvt_write_polygon_repaired():
 
 @pytest.mark.require_driver("SQLite")
 @pytest.mark.require_geos
-def test_ogr_mvt_write_conflicting_innner_ring():
+def test_ogr_mvt_write_conflicting_innner_ring(has_make_valid):
 
     src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
     lyr = src_ds.CreateLayer("mylayer")
@@ -1584,11 +1614,23 @@ def test_ogr_mvt_write_conflicting_innner_ring():
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
     if (
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))",
+        (
+            (not has_make_valid)
+            and ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))",
+            )
+            != 0
         )
-        != 0
+        # Below is what we get with MakeValid() available
+        or (
+            has_make_valid
+            and ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1009886.01770375,-509987.852718695 1000102.07808325,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1000713.57430953,-509070.608379273 1001019.32242267,-509070.608379273 1008357.27713804,-502038.401777037 1001019.32242267)))",
+            )
+            != 0
+        )
     ):
         out_f.DumpReadable()
         pytest.fail()
