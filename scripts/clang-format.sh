@@ -50,6 +50,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*ogr/ogrsf_frmts/flatgeobuf/flatbuffers/*)
+	  continue
+	  ;;
+
 	*ogr/ogrsf_frmts/geojson/libjson*)
 	  continue
 	  ;;
