@@ -1598,6 +1598,8 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     auto poArray =
         ZarrV3Array::Create(m_poSharedResource, GetFullName(), osArrayName,
                             aoDims, oType, aoDtypeElts, anBlockSize);
+    if (!poArray)
+        return nullptr;
     poArray->SetUpdatable(m_bUpdatable);  // must be set before SetAttributes()
     poArray->SetFilename(osZarrayFilename);
     poArray->SetIsV2ChunkKeyEncoding(bV2ChunkKeyEncoding);

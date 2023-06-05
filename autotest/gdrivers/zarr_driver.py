@@ -2210,6 +2210,36 @@ def test_zarr_create_array_endian_v3(options, expected_json, gdal_data_type):
             },
             "Binary representation of fill_value no supported for this data type",
         ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1 << 40, 1 << 40],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1 << 40, 1 << 40]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Too large chunks",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1 << 30, 1 << 30, 1 << 30],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1, 1, 1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Array test has more than 2^64 tiles. This is not supported.",
+        ],
     ],
 )
 def test_zarr_read_invalid_zarr_v3(j, error_msg):
