@@ -1511,7 +1511,11 @@ CPLErr GDALDriver::DefaultRename(const char *pszNewName, const char *pszOldName)
             eErr = CE_Failure;
             // Try to put the ones we moved back.
             for (--i; i >= 0; i--)
-                CPLMoveFile(papszFileList[i], papszNewFileList[i]);
+            {
+                // Nothing we can do if the moving back doesn't work...
+                CPL_IGNORE_RET_VAL(
+                    CPLMoveFile(papszFileList[i], papszNewFileList[i]));
+            }
             break;
         }
     }
