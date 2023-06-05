@@ -241,6 +241,9 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 if (hRawDS)
                 {
                     nSimultaneousBands = GDALGetRasterCount(hRawDS);
+                    // shouldn't happen, but will make Coverity Scan happy
+                    if (nSimultaneousBands == 0)
+                        nSimultaneousBands = 1;
                     GDALClose(hRawDS);
                 }
             }
