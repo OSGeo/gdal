@@ -242,6 +242,10 @@ CPLString BuildConnectionString(char **openOptions)
                     "SPLITBATCHCOMMANDS");
     addParameter("CHAR_AS_UTF8", "1");
 
+    CPLString appName;
+    appName.Printf("GDAL %s", GDALVersionInfo("RELEASE_NAME"));
+    addParameter("sessionVariable:APPLICATION", appName.c_str());
+
     return isValid ? JoinStrings(params, ";") : "";
 }
 
