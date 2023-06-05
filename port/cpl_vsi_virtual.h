@@ -40,6 +40,7 @@
 #include "cpl_multiproc.h"
 
 #include <map>
+#include <memory>
 #include <vector>
 #include <string>
 
