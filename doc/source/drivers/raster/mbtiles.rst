@@ -29,8 +29,8 @@ projection.
 Starting with GDAL 2.3, the driver will open a dataset as RGBA. For
 previous versions, the driver will try to determine the number of bands
 by probing the content of one tile. It is possible to alter this
-behavior by defining the MBTILES_BAND_COUNT configuration option (or
-starting with GDAL 2.1, the BAND_COUNT open option) to the number of
+behavior by defining the :config:`MBTILES_BAND_COUNT` configuration option (or
+starting with GDAL 2.1, the :oo:`BAND_COUNT` open option) to the number of
 bands. The values supported are 1, 2, 3 or 4. Four band
 (Red,Green,Blue,Alpha) dataset gives the maximum compatibility with the
 various encodings of tiles that can be stored.
@@ -39,7 +39,7 @@ The driver will use the 'bounds' metadata in the metadata table and do
 necessary tile clipping, if needed, to respect that extent. However that
 information being optional, if omitted, the driver will use the extent
 of the tiles at the maximum zoom level. The user can also specify the
-USE_BOUNDS=NO open option to force the use of the actual extent of tiles
+:oo:`USE_BOUNDS=NO` open option to force the use of the actual extent of tiles
 at the maximum zoom level. Or it can specify any of MINX/MINY/MAXX/MAXY
 to have a custom extent.
 
@@ -60,52 +60,119 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Configuration options
+---------------------
+
+The following open options are available:
+
+-  .. config:: MBTILES_BAND_COUNT
+
+      Equivalent of :oo:`BAND_COUNT` open option.
+
+
 Opening options
 ---------------
 
-Starting with GDAL 2.1, the following open options are available:
+The following open options are available:
 
 -  Raster and vector:
 
-   -  **ZOOM_LEVEL**\ =value: Integer value between 0 and the maximum
-      filled in the *tiles* table. By default, the driver will select
-      the maximum zoom level, such as at least one tile at that zoom
-      level is found in the 'tiles' table.
-   -  **USE_BOUNDS**\ =YES/NO: Whether to use the 'bounds' metadata,
-      when available, to determine the AOI. Defaults to YES.
-   -  **MINX**\ =value: Minimum easting (in EPSG:3857) of the area of
-      interest.
-   -  **MINY**\ =value: Minimum northing (in EPSG:3857) of the area of
-      interest.
-   -  **MAXX**\ =value: Maximum easting (in EPSG:3857) of the area of
-      interest.
-   -  **MAXY**\ =value: Maximum northing (in EPSG:3857) of the area of
-      interest.
+   -  .. oo:: ZOOM_LEVEL
+         :since: 2.1
+
+         Integer value between 0 and the maximum
+         filled in the *tiles* table. By default, the driver will select
+         the maximum zoom level, such as at least one tile at that zoom
+         level is found in the 'tiles' table.
+
+   -  .. oo:: USE_BOUNDS
+         :choices: YES, NO
+         :default: YES
+         :since: 2.1
+
+         Whether to use the 'bounds' metadata,
+         when available, to determine the AOI.
+
+   -  .. oo:: MINX
+         :since: 2.1
+
+         Minimum easting (in EPSG:3857) of the area of interest.
+
+   -  .. oo:: MINY
+         :since: 2.1
+
+         Minimum northing (in EPSG:3857) of the area of interest.
+
+   -  .. oo:: MAXX
+         :since: 2.1
+
+         Maximum easting (in EPSG:3857) of the area of interest.
+
+   -  .. oo:: MAXY
+         :since: 2.1
+
+         Maximum northing (in EPSG:3857) of the area of interest.
 
 -  Raster only:
 
-   -  **BAND_COUNT**\ =AUTO/1/2/3/4: Number of bands of the dataset
-      exposed after opening. Some conversions will be done when possible
-      and implemented, but this might fail in some cases, depending on
-      the BAND_COUNT value and the number of bands of the tile. Defaults
-      to AUTO.
-   -  **TILE_FORMAT**\ =PNG/PNG8/JPEG: Format used to store tiles. See
-      `Tile formats <#tile_formats>`__ section. Only used in update
-      mode. Defaults to PNG.
-   -  **QUALITY**\ =1-100: Quality setting for JPEG compression. Only
-      used in update mode. Default to 75.
-   -  **ZLEVEL**\ =1-9: DEFLATE compression level for PNG tiles. Only
-      used in update mode. Default to 6.
-   -  **DITHER**\ =YES/NO: Whether to use Floyd-Steinberg dithering (for
-      TILE_FORMAT=PNG8). Only used in update mode. Defaults to NO.
+   -  .. oo:: BAND_COUNT
+         :choices: AUTO, 1, 2, 3, 4
+         :default: AUTO
+         :since: 2.1
 
--  Vector only (GDAL >= 2.3):
+         Number of bands of the dataset
+         exposed after opening. Some conversions will be done when possible
+         and implemented, but this might fail in some cases, depending on
+         the BAND_COUNT value and the number of bands of the tile.
 
-   -  **CLIP**\ =YES/NO: Whether to clip geometries of vector features
-      to tile extent. Defaults to YES.
-   -  **ZOOM_LEVEL_AUTO**\ =YES/NO: Whether to auto-select the zoom
-      level for vector layers according to the spatial filter extent.
-      Only for display purpose. Defaults to NO.
+   -  .. oo:: TILE_FORMAT
+         :choices: PNG, PNG8, JPEG
+         :default: PNG
+         :since: 2.1
+
+         Format used to store tiles. See
+         `Tile formats <#tile_formats>`__ section. Only used in update
+         mode.
+
+   -  .. oo:: QUALITY
+         :choices: 1-100
+         :default: 75
+
+         Quality setting for JPEG compression. Only
+         used in update mode.
+
+   -  .. oo:: ZLEVEL
+         :choices: 1-9
+         :default: 6
+
+         DEFLATE compression level for PNG tiles. Only
+         used in update mode.
+
+   -  .. oo:: DITHER
+         :choices: YES, NO
+         :default: NO
+
+         Whether to use Floyd-Steinberg dithering (for
+         :oo:`TILE_FORMAT=PNG8`). Only used in update mode.
+
+-  Vector only:
+
+   -  .. oo:: CLIP
+         :choices: YES, NO
+         :default: YES
+         :since: 2.3
+
+         Whether to clip geometries of vector features
+         to tile extent.
+
+   -  .. oo:: ZOOM_LEVEL_AUTO
+         :choices: YES, NO
+         :default: NO
+         :since: 2.3
+
+         Whether to auto-select the zoom
+         level for vector layers according to the spatial filter extent.
+         Only for display purpose.
 
 Raster creation issues
 ----------------------
@@ -180,7 +247,7 @@ that existing vector layers can't be edited.
 
 Part of the conversion is multi-threaded by default, using as many
 threads as there are cores. The number of threads used can be controlled
-with the :decl_configoption:`GDAL_NUM_THREADS` configuration option.
+with the :config:`GDAL_NUM_THREADS` configuration option.
 
 Creation options
 ----------------
@@ -189,82 +256,184 @@ The following creation options are available:
 
 -  Raster and vector:
 
-   -  **NAME**\ =string. Tileset name, used to set the 'name' metadata
-      item. If not specified, the basename of the filename will be used.
-   -  **DESCRIPTION**\ =string. A description of the layer, used to set
-      the 'description' metadata item. If not specified, the basename of
-      the filename will be used.
-   -  **TYPE**\ =overlay/baselayer. The layer type, used to set the
-      'type' metadata item. Default to 'overlay'.
+   -  .. co:: NAME
+
+         Tileset name, used to set the 'name' metadata
+         item. If not specified, the basename of the filename will be used.
+
+   -  .. co:: DESCRIPTION
+
+         A description of the layer, used to set
+         the 'description' metadata item. If not specified, the basename of
+         the filename will be used.
+
+   -  .. co:: TYPE
+         :choices: overlay, baselayer
+         :default: overlay
+
+         The layer type, used to set the 'type' metadata item.
 
 -  Raster only:
 
-   -  **VERSION**\ =string. The version of the tileset, as a plain
-      number, used to set the 'version' metadata item. Default to '1.1'.
-   -  **BLOCKSIZE**\ =integer. (GDAL >= 2.3) Block/tile size in width
-      and height in pixels. Defaults to 256. Maximum supported is 4096.
-   -  **TILE_FORMAT**\ =PNG/PNG8/JPEG: Format used to store tiles. See
-      `Tile formats <#tile_formats>`__ section. Defaults to PNG.
-   -  **QUALITY**\ =1-100: Quality setting for JPEG compression. Default
-      to 75.
-   -  **ZLEVEL**\ =1-9: DEFLATE compression level for PNG tiles. Default
-      to 6.
-   -  **DITHER**\ =YES/NO: Whether to use Floyd-Steinberg dithering (for
-      TILE_FORMAT=PNG8). Defaults to NO.
-   -  **ZOOM_LEVEL_STRATEGY**\ =AUTO/LOWER/UPPER. Strategy to determine
-      zoom level. LOWER will select the zoom level immediately below the
-      theoretical computed non-integral zoom level, leading to
-      subsampling. On the contrary, UPPER will select the immediately
-      above zoom level, leading to oversampling. Defaults to AUTO which
-      selects the closest zoom level.
-   -  **RESAMPLING**\ =NEAREST/BILINEAR/CUBIC/CUBICSPLINE/LANCZOS/MODE/AVERAGE.
-      Resampling algorithm. Defaults to BILINEAR.
-   -  **WRITE_BOUNDS**\ =YES/NO: Whether to write the bounds 'metadata'
-      item. Defaults to YES.
+   -  .. co:: VERSION
+         :default: 1.1
+
+         The version of the tileset, as a plain
+         number, used to set the 'version' metadata item.
+
+   -  .. co:: BLOCKSIZE
+         :choices: <integer>
+         :default: 256
+         :since: 2.3
+
+         Block/tile size in width
+         and height in pixels. Maximum supported is 4096.
+
+   -  .. co:: TILE_FORMAT
+         :choices: PNG, PNG8, JPEG
+         :default: PNG
+
+         Format used to store tiles. See
+         `Tile formats <#tile_formats>`__ section.
+
+   -  .. co:: QUALITY
+         :choices: 1-100
+         :default: 75
+
+         Quality setting for JPEG compression.
+
+   -  .. co:: ZLEVEL
+         :choices: 1-9
+         :default: 6
+
+         DEFLATE compression level for PNG tiles.
+
+   -  .. co:: DITHER
+         :choices: YES, NO
+         :default: NO
+
+         Whether to use Floyd-Steinberg dithering (for
+         :co:`TILE_FORMAT=PNG8`).
+
+   -  .. co:: ZOOM_LEVEL_STRATEGY
+         :choices: AUTO, LOWER, UPPER
+         :default: AUTO
+
+         Strategy to determine
+         zoom level. LOWER will select the zoom level immediately below the
+         theoretical computed non-integral zoom level, leading to
+         subsampling. On the contrary, UPPER will select the immediately
+         above zoom level, leading to oversampling. Defaults to AUTO which
+         selects the closest zoom level.
+
+   -  .. co:: RESAMPLING
+         :choices: NEAREST, BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, MODE, AVERAGE
+         :default: BILINEAR
+
+         Resampling algorithm.
+
+   -  .. co:: WRITE_BOUNDS
+         :choices: YES, NO
+         :default: YES
+
+         Whether to write the bounds 'metadata' item.
 
 -  Vector only (GDAL >= 2.3):
 
-   -  **MINZOOM**\ =integer: Minimum zoom level at which tiles are
-      generated. Defaults to 0.
-   -  **MAXZOOM**\ =integer: Maximum zoom level at which tiles are
-      generated. Defaults to 5. Maximum supported value is 22
-   -  **CONF**\ =string: Layer configuration as a JSon serialized
-      string.
-   -  **SIMPLIFICATION**\ =float: Simplification factor for linear or
-      polygonal geometries. The unit is the integer unit of tiles after
-      quantification of geometry coordinates to tile coordinates.
-      Applies to all zoom levels, unless SIMPLIFICATION_MAX_ZOOM is also
-      defined.
-   -  **SIMPLIFICATION_MAX_ZOOM**\ =float: Simplification factor for
-      linear or polygonal geometries, that applies only for the maximum
-      zoom level.
-   -  **EXTENT**\ =positive_integer. Number of units in a tile. The
-      greater, the more accurate geometry coordinates (at the expense of
-      tile byte size). Defaults to 4096
-   -  **BUFFER**\ =positive_integer. Number of units for geometry
-      buffering. This value corresponds to a buffer around each side of
-      a tile into which geometries are fetched and clipped. This is used
-      for proper rendering of geometries that spread over tile
-      boundaries by some rendering clients. Defaults to 80 if
-      EXTENT=4096.
-   -  **COMPRESS**\ =YES/NO. Whether to compress tiles with the
-      Deflate/GZip algorithm. Defaults to YES. Should be left to YES for
-      FORMAT=MBTILES.
-   -  **TEMPORARY_DB**\ =string. Filename with path for the temporary
-      database used for tile generation. By default, this will be a file
-      in the same directory as the output file/directory.
-   -  **MAX_SIZE**\ =integer. Maximum size of a tile in bytes (after
-      compression). Defaults to 500 000. If a tile is greater than this
-      threshold, features will be written with reduced precision, or
-      discarded.
-   -  **MAX_FEATURES**\ =integer. Maximum number of features per tile.
-      Defaults to 200 000.
-   -  **BOUNDS**\ =min_long,min_lat,max_long,max_lat. Override default
-      value for bounds metadata item which is computed from the extent
-      of features written.
-   -  **CENTER**\ =long,lat,zoom_level. Override default value for
-      center metadata item, which is the center of BOUNDS at minimum
-      zoom level.
+   -  .. co:: MINZOOM
+         :choices: <integer>
+         :default: 0
+
+         Minimum zoom level at which tiles are generated.
+
+   -  .. co:: MAXZOOM
+         :choices: <integer>
+         :default: 5
+
+         Maximum zoom level at which tiles are
+         generated. Maximum supported value is 22
+
+   -  .. co:: CONF
+
+         Layer configuration as a JSon serialized string.
+
+   -  .. co:: SIMPLIFICATION
+         :choices: <float>
+
+         Simplification factor for linear or
+         polygonal geometries. The unit is the integer unit of tiles after
+         quantification of geometry coordinates to tile coordinates.
+         Applies to all zoom levels, unless :co:`SIMPLIFICATION_MAX_ZOOM` is also
+         defined.
+
+   -  .. co:: SIMPLIFICATION_MAX_ZOOM
+         :choices: <float>
+
+         Simplification factor for
+         linear or polygonal geometries, that applies only for the maximum
+         zoom level.
+
+   -  .. co:: EXTENT
+         :choices: <integer>
+         :default: 4096
+
+         Number of units in a tile. The
+         greater, the more accurate geometry coordinates (at the expense of
+         tile byte size).
+
+   -  .. co:: BUFFER
+         :choices: <integer>
+
+         Number of units for geometry
+         buffering. This value corresponds to a buffer around each side of
+         a tile into which geometries are fetched and clipped. This is used
+         for proper rendering of geometries that spread over tile
+         boundaries by some rendering clients. Defaults to 80 if
+         :co:`EXTENT=4096`.
+
+   -  .. co:: COMPRESS
+         :choices: YES, NO
+         :default: YES
+
+         Whether to compress tiles with the
+         Deflate/GZip algorithm. Defaults to YES. Should be left to YES for
+         FORMAT=MBTILES.
+
+   -  .. co:: TEMPORARY_DB
+         :choices: <filename>
+
+         Filename with path for the temporary
+         database used for tile generation. By default, this will be a file
+         in the same directory as the output file/directory.
+
+   -  .. co:: MAX_SIZE
+         :choices: <bytes>
+         :default: 500000
+
+         Maximum size of a tile in bytes (after
+         compression). If a tile is greater than this
+         threshold, features will be written with reduced precision, or
+         discarded.
+
+   -  .. co:: MAX_FEATURES
+         :choices: <integer>
+         :default: 200000
+
+         Maximum number of features per tile.
+
+   -  .. co:: BOUNDS
+         :choices: <min_long\,min_lat\,max_long\,max_lat>
+
+         Override default
+         value for bounds metadata item which is computed from the extent
+         of features written.
+
+   -  .. co:: CENTER
+         :choices: <long\,lat\,zoom_level>
+
+         Override default value for
+         center metadata item, which is the center of :co:`BOUNDS` at minimum
+         zoom level.
 
 Layer configuration (vector)
 ----------------------------
@@ -299,16 +468,29 @@ case.
 Layer creation options (vector)
 -------------------------------
 
--  **MINZOOM**\ =integer: Minimum zoom level at which tiles are
-   generated. Defaults to the dataset creation option MINZOOM value.
--  **MAXZOOM**\ =integer: Maximum zoom level at which tiles are
-   generated. Defaults to the dataset creation option MAXZOOM value.
-   Maximum supported value is 22
--  **NAME**\ =string: Target layer name. Defaults to the layer name, but
-   can be overridden so that several OGR layers map to a single target
-   MVT layer. The typical use case is to have different OGR layers for
-   mutually exclusive zoom level ranges.
--  **DESCRIPTION**\ =string: A description of the layer.
+-  .. lco:: MINZOOM
+      :choices: <integer>
+
+      Minimum zoom level at which tiles are
+      generated. Defaults to the dataset creation option MINZOOM value.
+
+-  .. lco:: MAXZOOM
+      :choices: <integer>
+
+      Maximum zoom level at which tiles are
+      generated. Defaults to the dataset creation option MAXZOOM value.
+      Maximum supported value is 22
+
+-  .. lco:: NAME
+
+      Target layer name. Defaults to the layer name, but
+      can be overridden so that several OGR layers map to a single target
+      MVT layer. The typical use case is to have different OGR layers for
+      mutually exclusive zoom level ranges.
+
+-  .. lco:: DESCRIPTION
+
+      A description of the layer.
 
 Overviews (raster)
 ------------------

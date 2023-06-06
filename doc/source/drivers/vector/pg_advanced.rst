@@ -60,12 +60,7 @@ Layers
 ------
 
 Even when PostGIS is enabled, if the user
-defines the environment variable
-
-::
-
-   PG_LIST_ALL_TABLES=YES
-
+defines the environment variable :config:`PG_LIST_ALL_TABLES=YES`
 (and does not specify tables=), all regular user tables and named views
 will be treated as layers. However, tables with multiple geometry column
 will only be reported once in that mode. So this variable is mainly
@@ -158,7 +153,7 @@ or :
            print('The feature has been assigned FID %d' % feat.GetFID())
 
 Old GDAL behavior can be obtained by setting the configuration
-option :decl_configoption:`OGR_PG_RETRIEVE_FID` to FALSE.
+option :config:`OGR_PG_RETRIEVE_FID` to FALSE.
 
 Issues with transactions
 ------------------------
@@ -330,7 +325,7 @@ Advanced Examples
 -  This example shows how to convert all the tables inside the schema
    apt200810 as a set of shapefiles inside the apt200810 directory. Note
    that the layer names will not be prefixed by apt200810 as only one
-   schema is listed 
+   schema is listed
 
    ::
 

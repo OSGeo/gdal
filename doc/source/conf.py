@@ -46,6 +46,10 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["programs/options/*.rst", "api/python/modules.rst"]
 
+# Prevents double hyphen (--) to be replaced by Unicode long dash character
+# Cf https://stackoverflow.com/questions/15258831/how-to-handle-two-dashes-in-rest
+smartquotes = False
+
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -456,6 +460,9 @@ primary_domain = "cpp"
 
 source_file_root = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
 source_file_url_template = "https://github.com/OSGeo/gdal/blob/master/{}"
+
+# -- GDAL Config option listing ------------------------------------------
+options_since_ignore_before = "3.0"
 
 # -- Redirects --------------------------------------------------
 

@@ -2210,6 +2210,36 @@ def test_zarr_create_array_endian_v3(options, expected_json, gdal_data_type):
             },
             "Binary representation of fill_value no supported for this data type",
         ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1 << 40, 1 << 40],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1 << 40, 1 << 40]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Too large chunks",
+        ],
+        [
+            {
+                "zarr_format": 3,
+                "node_type": "array",
+                "shape": [1 << 30, 1 << 30, 1 << 30],
+                "data_type": "uint8",
+                "chunk_grid": {
+                    "name": "regular",
+                    "configuration": {"chunk_shape": [1, 1, 1]},
+                },
+                "chunk_key_encoding": {"name": "default"},
+                "fill_value": 0,
+            },
+            "Array test has more than 2^64 tiles. This is not supported.",
+        ],
     ],
 )
 def test_zarr_read_invalid_zarr_v3(j, error_msg):
@@ -2276,6 +2306,94 @@ def test_zarr_read_fill_value_v3(data_type, fill_value, nodata):
         gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
         ds = gdal.Open("/vsimem/test.zarr")
         assert ds.GetRasterBand(1).GetNoDataValue() == nodata
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("data_type", ["complex128", "complex64"])
+@pytest.mark.parametrize(
+    "fill_value,nodata",
+    [
+        ([1, 2], [1, 2]),
+        ([1.5, "NaN"], [1.5, float("nan")]),
+        ([1234567890123, "Infinity"], [1234567890123, float("inf")]),
+        ([1, "-Infinity"], [1, float("-inf")]),
+        (["NaN", 2.5], [float("nan"), 2.5]),
+        (["Infinity", 2], [float("inf"), 2]),
+        (["-Infinity", 2], [float("-inf"), 2]),
+        (["0x7ff8000000000000", 2], [float("nan"), 2]),
+        # Invalid ones
+        (1, None),
+        ("NaN", None),
+        ([], None),
+        ([1, 2, 3], None),
+        (["invalid", 1], None),
+        ([1, "invalid"], None),
+    ],
+)
+def test_zarr_read_fill_value_complex_datatype_v3(data_type, fill_value, nodata):
+
+    if fill_value and isinstance(fill_value, list):
+        # float32 precision not sufficient to hold 1234567890123
+        if data_type == "complex64" and fill_value[0] == 1234567890123:
+            fill_value[0] = 123456
+            nodata[0] = 123456
+
+        # convert float64 nan hexadecimal representation to float32
+        if data_type == "complex64" and str(fill_value[0]) == "0x7ff8000000000000":
+            fill_value[0] = "0x7fc00000"
+
+    j = {
+        "zarr_format": 3,
+        "node_type": "array",
+        "shape": [1],
+        "data_type": data_type,
+        "chunk_grid": {"name": "regular", "configuration": {"chunk_shape": [1]}},
+        "chunk_key_encoding": {"name": "default"},
+        "fill_value": fill_value,
+    }
+
+    try:
+        gdal.Mkdir("/vsimem/test.zarr", 0)
+        gdal.FileFromMemBuffer("/vsimem/test.zarr/zarr.json", json.dumps(j))
+
+        if nodata is None:
+            with pytest.raises(Exception):
+                assert gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER) is None
+        else:
+
+            def open_and_modify():
+                ds = gdal.OpenEx(
+                    "/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE
+                )
+                rg = ds.GetRootGroup()
+                ar = rg.OpenMDArray("test")
+                dtype = (
+                    "d"
+                    if ar.GetDataType().GetNumericDataType() == gdal.GDT_CFloat64
+                    else "f"
+                )
+                assert ar.GetNoDataValueAsRaw() == bytes(
+                    array.array(dtype, nodata)
+                ), struct.unpack(dtype * 2, ar.GetNoDataValueAsRaw())
+
+                # To force a reserialization of the array
+                attr = ar.CreateAttribute(
+                    "attr", [], gdal.ExtendedDataType.CreateString()
+                )
+                attr.Write("foo")
+
+            open_and_modify()
+
+            if not str(fill_value[0]).startswith("0x"):
+                f = gdal.VSIFOpenL("/vsimem/test.zarr/zarr.json", "rb")
+                assert f
+                data = gdal.VSIFReadL(1, 10000, f)
+                gdal.VSIFCloseL(f)
+                j = json.loads(data)
+                assert j["fill_value"] == fill_value
+
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
@@ -3047,7 +3165,9 @@ def test_zarr_create_with_filter():
     )
 
     try:
-        ret = tst.testCreate(vsimem=1, new_filename="/vsimem/test.zarr")
+        ret = tst.testCreate(
+            vsimem=1, new_filename="/vsimem/test.zarr", delete_output_file=False
+        )
 
         f = gdal.VSIFOpenL("/vsimem/test.zarr/test/.zarray", "rb")
         assert f
@@ -5002,3 +5122,96 @@ def test_zarr_multidim_delete_attribute_after_reopening(
 
     finally:
         gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+# Test GDALDriver::Delete()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_driver_delete(format):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+
+    try:
+        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+
+        assert gdal.Open(filename)
+
+        assert drv.Delete(filename) == gdal.CE_None
+        assert gdal.VSIStatL(filename) is None
+
+        with pytest.raises(Exception):
+            gdal.Open(filename)
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.RmdirRecursive(filename)
+
+
+###############################################################################
+# Test GDALDriver::Rename()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_driver_rename(format):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+    newfilename = "/vsimem/newtest.zarr"
+
+    try:
+        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+
+        assert gdal.Open(filename)
+
+        assert drv.Rename(newfilename, filename) == gdal.CE_None
+
+        assert gdal.VSIStatL(filename) is None
+        with pytest.raises(Exception):
+            gdal.Open(filename)
+
+        assert gdal.VSIStatL(newfilename)
+        assert gdal.Open(newfilename)
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.RmdirRecursive(filename)
+        if gdal.VSIStatL(newfilename):
+            gdal.RmdirRecursive(newfilename)
+
+
+###############################################################################
+# Test GDALDriver::CopyFiles()
+
+
+@gdaltest.enable_exceptions()
+@pytest.mark.parametrize("format", ["ZARR_V2", "ZARR_V3"])
+def test_zarr_driver_copy_files(format):
+
+    drv = gdal.GetDriverByName("ZARR")
+    filename = "/vsimem/test.zarr"
+    newfilename = "/vsimem/newtest.zarr"
+
+    try:
+        drv.Create(filename, 1, 1, options=["FORMAT=" + format])
+
+        assert gdal.Open(filename)
+
+        assert drv.CopyFiles(newfilename, filename) == gdal.CE_None
+
+        assert gdal.VSIStatL(filename)
+        assert gdal.Open(filename)
+
+        assert gdal.VSIStatL(newfilename)
+        print(gdal.ReadDirRecursive(newfilename))
+        assert gdal.Open(newfilename)
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.RmdirRecursive(filename)
+        if gdal.VSIStatL(newfilename):
+            gdal.RmdirRecursive(newfilename)

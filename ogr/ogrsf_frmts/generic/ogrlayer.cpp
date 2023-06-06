@@ -5350,43 +5350,61 @@ int OGRLayer::GetArrowSchema(struct ArrowArrayStream *,
             continue;
         }
 
-        out_schema->children[iSchemaChild] = static_cast<struct ArrowSchema *>(
-            CPLCalloc(1, sizeof(struct ArrowSchema)));
-        auto psChild = out_schema->children[iSchemaChild];
+        out_schema->children[iSchemaChild] =
+            CreateSchemaForWKBGeometryColumn(poFieldDefn);
         ++iSchemaChild;
-        psChild->release = OGRLayer::ReleaseSchema;
-        const char *pszGeomFieldName = poFieldDefn->GetNameRef();
-        if (pszGeomFieldName[0] == '\0')
-            pszGeomFieldName = "wkb_geometry";
-        psChild->name = CPLStrdup(pszGeomFieldName);
-        if (poFieldDefn->IsNullable())
-            psChild->flags = ARROW_FLAG_NULLABLE;
-        psChild->format = "z";
-        constexpr const char *ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
-        constexpr const char *EXTENSION_NAME = "ogc.wkb";
-        char *pszMetadata = static_cast<char *>(
-            CPLMalloc(sizeof(int32_t) + sizeof(int32_t) +
-                      strlen(ARROW_EXTENSION_NAME_KEY) + sizeof(int32_t) +
-                      strlen(EXTENSION_NAME)));
-        psChild->metadata = pszMetadata;
-        int offsetMD = 0;
-        *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) = 1;
-        offsetMD += sizeof(int32_t);
-        *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
-            static_cast<int32_t>(strlen(ARROW_EXTENSION_NAME_KEY));
-        offsetMD += sizeof(int32_t);
-        memcpy(pszMetadata + offsetMD, ARROW_EXTENSION_NAME_KEY,
-               strlen(ARROW_EXTENSION_NAME_KEY));
-        offsetMD += static_cast<int>(strlen(ARROW_EXTENSION_NAME_KEY));
-        *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
-            static_cast<int32_t>(strlen(EXTENSION_NAME));
-        offsetMD += sizeof(int32_t);
-        memcpy(pszMetadata + offsetMD, EXTENSION_NAME, strlen(EXTENSION_NAME));
     }
 
     out_schema->n_children = iSchemaChild;
     out_schema->release = OGRLayer::ReleaseSchema;
     return 0;
+}
+
+/************************************************************************/
+/*                  CreateSchemaForWKBGeometryColumn()                  */
+/************************************************************************/
+
+/** Return a ArrowSchema* corresponding to the WKB encoding of a geometry
+ * column.
+ */
+
+/* static */
+struct ArrowSchema *
+OGRLayer::CreateSchemaForWKBGeometryColumn(const OGRGeomFieldDefn *poFieldDefn,
+                                           const char *pszArrowFormat)
+{
+    CPLAssert(strcmp(pszArrowFormat, "z") == 0 ||
+              strcmp(pszArrowFormat, "Z") == 0);
+    auto psSchema = static_cast<struct ArrowSchema *>(
+        CPLCalloc(1, sizeof(struct ArrowSchema)));
+    psSchema->release = OGRLayer::ReleaseSchema;
+    const char *pszGeomFieldName = poFieldDefn->GetNameRef();
+    if (pszGeomFieldName[0] == '\0')
+        pszGeomFieldName = "wkb_geometry";
+    psSchema->name = CPLStrdup(pszGeomFieldName);
+    if (poFieldDefn->IsNullable())
+        psSchema->flags = ARROW_FLAG_NULLABLE;
+    psSchema->format = strcmp(pszArrowFormat, "z") == 0 ? "z" : "Z";
+    constexpr const char *ARROW_EXTENSION_NAME_KEY = "ARROW:extension:name";
+    constexpr const char *EXTENSION_NAME = "ogc.wkb";
+    char *pszMetadata = static_cast<char *>(CPLMalloc(
+        sizeof(int32_t) + sizeof(int32_t) + strlen(ARROW_EXTENSION_NAME_KEY) +
+        sizeof(int32_t) + strlen(EXTENSION_NAME)));
+    psSchema->metadata = pszMetadata;
+    int offsetMD = 0;
+    *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) = 1;
+    offsetMD += sizeof(int32_t);
+    *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+        static_cast<int32_t>(strlen(ARROW_EXTENSION_NAME_KEY));
+    offsetMD += sizeof(int32_t);
+    memcpy(pszMetadata + offsetMD, ARROW_EXTENSION_NAME_KEY,
+           strlen(ARROW_EXTENSION_NAME_KEY));
+    offsetMD += static_cast<int>(strlen(ARROW_EXTENSION_NAME_KEY));
+    *reinterpret_cast<int32_t *>(pszMetadata + offsetMD) =
+        static_cast<int32_t>(strlen(EXTENSION_NAME));
+    offsetMD += sizeof(int32_t);
+    memcpy(pszMetadata + offsetMD, EXTENSION_NAME, strlen(EXTENSION_NAME));
+    return psSchema;
 }
 
 /************************************************************************/

@@ -32,7 +32,7 @@ spec), or retrieve only vector geometries for other vector PDF files.
 
 If there is no such logical structure, the driver will not try to
 interpret the vector content of the PDF, unless you defined the
-:decl_configoption:`OGR_PDF_READ_NON_STRUCTURED` configuration option to YES.
+:config:`OGR_PDF_READ_NON_STRUCTURED` configuration option to YES.
 
 Feature style support
 ---------------------
@@ -86,6 +86,19 @@ A font name starting with "Times" or containing the string "Serif" (case
 sensitive) will be treated as Times. A font name starting with "Courier"
 or containing the string "Mono" (case sensitive) will be treated as
 Courier. All other font names will be treated as Helvetica.
+
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+-  .. config:: OGR_PDF_READ_NON_STRUCTURED
+      :choices: YES, NO
+      :default: NO
+
+      Attempt to read vector content even if no logical structure is
+      present. See `Vector support`_.
 
 See Also
 --------

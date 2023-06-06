@@ -27,7 +27,7 @@ Most of the metadata is read.
 Vaisala provides information about the format and software at
 http://www.vaisala.com/en/defense/products/weatherradar/Pages/IRIS.aspx.
 
-NOTE: Implemented as ``gdal/frmts/iris/irisdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/iris/irisdataset.cpp`.
 
 Driver capabilities
 -------------------

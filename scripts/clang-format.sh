@@ -46,11 +46,19 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/pcidsk/sdk/*)
+	  continue
+	  ;;
+
 	*ogr/ogrsf_frmts/geojson/libjson*)
 	  continue
 	  ;;
 
 	*swig/*)
+	  continue
+	  ;;
+
+	*third_party/*)
 	  continue
 	  ;;
 

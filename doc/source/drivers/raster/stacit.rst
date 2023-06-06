@@ -38,15 +38,29 @@ Open options
 
 The following open options are supported:
 
-* ``MAX_ITEMS`` = number. Maximum number of items fetched. 0=unlimited. Default is 1000.
+-  .. oo:: MAX_ITEMS
+      :choices: <integer>
+      :default: 1000
 
-* ``COLLECTION`` = string. Name of collection to filter items.
+      Maximum number of items fetched. 0=unlimited.
 
-* ``CRS`` = string. Name of CRS to filter items.
+-  .. oo:: COLLECTION
 
-* ``ASSET`` = string. Name of asset to read.
+      Name of collection to filter items.
 
-* ``RESOLUTION`` = AVERAGE/HIGHEST/LOWEST. Strategy to use to determine dataset resolution. Default is AVERAGE.
+-  .. oo:: CRS
+
+      Name of CRS to filter items.
+
+-  .. oo:: ASSET
+
+      Name of asset to read.
+
+-  .. oo:: RESOLUTION
+      :choices: AVERAGE, HIGHEST, LOWEST
+      :default: AVERAGE
+
+      Strategy to use to determine dataset resolution.
 
 Subdatasets
 -----------

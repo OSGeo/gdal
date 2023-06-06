@@ -822,6 +822,14 @@ bool FileGDBIndexIteratorBase::ReadTrailer(const std::string &osFilename)
     /* nValueCountInIdx is 11 which is not the number of non-null values */
     else if (nValueCountInIdx < nMaxPerPages && nIndexDepth > 1)
     {
+        if (nValueCountInIdx > 0 && poParent->IsFileGDBV9() &&
+            strstr(osFilename.c_str(), "blk_key_index.atx"))
+        {
+            // nValueCountInIdx not reliable in FileGDB v9 .blk_key_index.atx
+            // but index seems to be OK
+            return true;
+        }
+
         CPLDebugOnly("OpenFileGDB",
                      "nValueCountInIdx=%u < nMaxPerPages=%u, nIndexDepth=%u",
                      nValueCountInIdx, nMaxPerPages, nIndexDepth);

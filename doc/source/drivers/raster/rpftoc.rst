@@ -57,7 +57,7 @@ See Also:
 -  `MIL-PRF-89038 <http://www.everyspec.com/MIL-PRF/MIL-PRF+%28080000+-+99999%29/MIL-PRF-89038_25371/>`__
    : specification of RPF, CADRG, CIB products
 
-NOTE: Implemented as ``gdal/frmts/nitf/rpftocdataset.cpp``
+NOTE: Implemented as :source_file:`frmts/nitf/rpftocdataset.cpp`
 
 Driver capabilities
 -------------------

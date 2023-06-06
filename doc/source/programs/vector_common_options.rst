@@ -40,8 +40,8 @@ All GDAL OGR command line programs support the following common options.
 
     Sets the named configuration keyword to the given value, as opposed to
     setting them as environment variables. Some common configuration keywords
-    are SHAPE_ENCODING (force shapefile driver to read DBF files with the given
-    character encoding) and CPL_TEMPDIR (define the location of temporary files).
+    are :config:`SHAPE_ENCODING` (force shapefile driver to read DBF files with the given
+    character encoding) and :config:`CPL_TMPDIR` (define the location of temporary files).
     Individual drivers may be influenced by other :ref:`configuration options <list_config_options>`.
 
 .. option:: --debug <value>

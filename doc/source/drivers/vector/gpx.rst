@@ -16,8 +16,7 @@ support) and writing.
 
 Version supported are GPX 1.0 and 1.1 for reading, GPX 1.1 for writing.
 
-The OGR driver supports reading and writing of all the GPX feature types
-:
+The OGR driver supports reading and writing of all the GPX feature types:
 
 -  *waypoints* : layer of features of OGR type wkbPoint
 -  *routes* : layer of features of OGR type wkbLineString
@@ -34,16 +33,8 @@ can be used by OGR.
   *track_seg_point_id*. All coordinates are relative to the WGS84 datum
   (EPSG:4326).
 
-If the environment variable GPX_ELE_AS_25D is set to YES, the elevation
-element will be used to set the Z coordinates of waypoints, route points
-and track points.
-
 The OGR/GPX reads and writes the GPX attributes for the waypoints,
 routes and tracks.
-
-By default, up to 2 *<link>* elements can be taken into account by
-feature. This default number can be changed with the GPX_N_MAX_LINKS
-environment variable.
 
 Starting with GDAL 3.7, metadata from the top <metadata> element is reported
 at dataset level.
@@ -56,6 +47,43 @@ Driver capabilities
 .. supports_georeferencing::
 
 .. supports_virtualio::
+
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+-  .. config:: GPX_USE_EXTENSIONS
+
+      See `Extensions element reading`_.
+
+-  .. config:: GPX_SHORT_NAMES
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      If ``TRUE``, the following fields will be renamed:
+
+      - "track_seg_id" to "trksegid"
+      - "track_seg_point_id" to  "trksegptid"
+      - "route_point_id" to "rteptid"
+
+      But note that
+      no particular processing will be done for any extension field names.
+
+-  .. config:: GPX_ELE_AS_25D
+      :choices: YES, NO
+      :default: NO
+
+      If ``YES``, the elevation
+      element will be used to set the Z coordinates of waypoints, route points
+      and track points.
+
+-  .. config:: GPX_N_MAX_LINKS
+      :default: 2
+
+      Determines the number of *<link>* elements can be taken into account by
+      feature.
 
 Encoding issues
 ---------------
@@ -121,8 +149,9 @@ will be interpreted in the OGR SF model as :
 | Note : the GPX driver will output content of the extensions element
   only if it is found in the first records of the GPX file. If
   extensions appear later, you can force an explicit parsing of the
-  whole file with the :decl_configoption:`GPX_USE_EXTENSIONS` configuration
+  whole file with the :config:`GPX_USE_EXTENSIONS` configuration
   option.
+
 
 Creation Issues
 ---------------
@@ -164,54 +193,100 @@ first track point to fill the <name> element of the route.
 Layer creation options
 ----------------------
 
--  **FORCE_GPX_TRACK**: By default when writing a layer whose features
-   are of type wkbLineString, the GPX driver chooses to write them as
-   routes.
-   If FORCE_GPX_TRACK=YES is specified, they will be written as tracks.
--  **FORCE_GPX_ROUTE**: By default when writing a layer whose features
-   are of type wkbMultiLineString, the GPX driver chooses to write them
-   as tracks.
-   If FORCE_GPX_ROUTE=YES is specified, they will be written as routes,
-   provided that the multilines are composed of only one single line.
+-  .. lco:: FORCE_GPX_TRACK
+      :choices: YES, NO
+      :default: NO
+
+      By default when writing a layer whose features
+      are of type wkbLineString, the GPX driver chooses to write them as
+      routes. If YES is specified, they will be written as tracks.
+
+-  .. lco:: FORCE_GPX_ROUTE
+      :choices: YES, NO
+      :default: NO
+
+      By default when writing a layer whose features
+      are of type wkbMultiLineString, the GPX driver chooses to write them
+      as tracks.
+      If YES is specified, they will be written as routes,
+      provided that the multilines are composed of only one single line.
 
 Dataset creation options
 ------------------------
 
--  **GPX_USE_EXTENSIONS**: By default, the GPX driver will discard
-   attribute fields that do not match the GPX XML definition (name, cmt,
-   etc...).
-   If GPX_USE_EXTENSIONS=YES is specified, extra fields will be written
-   inside the\ *<extensions>* tag.
--  **GPX_EXTENSIONS_NS**: Only used if GPX_USE_EXTENSIONS=YES and
-   GPX_EXTENSIONS_NS_URL is set.
-   The namespace value used for extension tags. By default, "ogr".
--  **GPX_EXTENSIONS_NS_URL**: Only used if GPX_USE_EXTENSIONS=YES and
-   GPX_EXTENSIONS_NS is set.
-   The namespace URI. By default, "http://osgeo.org/gdal".
--  **LINEFORMAT**: By default files are created with
-   the line termination conventions of the local platform (CR/LF on
-   win32 or LF on all other systems). This may be overridden through use
-   of the LINEFORMAT layer creation option which may have a value of
-   **CRLF** (DOS format) or **LF** (Unix format).
+-  .. dsco:: GPX_USE_EXTENSIONS
+      :choices: YES, NO
+      :default: NO
+
+      By default, the GPX driver will discard
+      attribute fields that do not match the GPX XML definition (name, cmt,
+      etc...).
+      If :dsco:`GPX_USE_EXTENSIONS=YES` is specified, extra fields will be written
+      inside the\ *<extensions>* tag.
+
+-  .. dsco:: GPX_EXTENSIONS_NS
+      :default: ogr
+
+      The namespace value used for extension tags.
+      Only used if :dsco:`GPX_USE_EXTENSIONS=YES` and
+      :dsco:`GPX_EXTENSIONS_NS_URL` is set.
+
+-  .. dsco:: GPX_EXTENSIONS_NS_URL
+      :default: "http://osgeo.org/gdal"
+
+      The namespace URI.
+      Only used if :dsco:`GPX_USE_EXTENSIONS=YES` and
+      :dsco:`GPX_EXTENSIONS_NS` is set.
+
+-  .. dsco:: LINEFORMAT
+      :choices: CRLF, LF
+
+      By default files are created with
+      the line termination conventions of the local platform (CR/LF on
+      win32 or LF on all other systems). This may be overridden through use
+      of this option.
 
 Dataset creation options to fill the top <metadata> element have been added in
 GDAL 3.7:
 
-- **METADATA_AUTHOR_EMAIL**
-- **METADATA_AUTHOR_NAME**
-- **METADATA_AUTHOR_LINK_HREF**
-- **METADATA_AUTHOR_LINK_TEXT**
-- **METADATA_AUTHOR_LINK_TYPE**
-- **METADATA_COPYRIGHT_AUTHOR**
-- **METADATA_COPYRIGHT_LICENSE**
-- **METADATA_COPYRIGHT_YEAR**
-- **METADATA_DESCRIPTION**
-- **METADATA_KEYWORDS**
-- **METADATA_LINK_*_HREF**: where * should be substituted with a serial number (1, 2, ...)
-- **METADATA_LINK_*_TEXT**: where * should be substituted with a serial number (1, 2, ...)
-- **METADATA_LINK_*_TYPE**: where * should be substituted with a serial number (1, 2, ...)
-- **METADATA_NAME**
-- **METADATA_TIME**
+- .. dsco:: METADATA_AUTHOR_EMAIL
+     :since: 3.7
+- .. dsco:: METADATA_AUTHOR_NAME
+     :since: 3.7
+- .. dsco:: METADATA_AUTHOR_LINK_HREF
+     :since: 3.7
+- .. dsco:: METADATA_AUTHOR_LINK_TEXT
+     :since: 3.7
+- .. dsco:: METADATA_AUTHOR_LINK_TYPE
+     :since: 3.7
+- .. dsco:: METADATA_COPYRIGHT_AUTHOR
+     :since: 3.7
+- .. dsco:: METADATA_COPYRIGHT_LICENSE
+     :since: 3.7
+- .. dsco:: METADATA_COPYRIGHT_YEAR
+     :since: 3.7
+- .. dsco:: METADATA_DESCRIPTION
+     :since: 3.7
+- .. dsco:: METADATA_KEYWORDS
+     :since: 3.7
+- .. dsco:: METADATA_LINK_{N}_HREF
+     :since: 3.7
+
+     where {N} should be substituted with a serial number (1, 2, ...)
+
+- .. dsco:: METADATA_LINK_{N}_TEXT
+     :since: 3.7
+
+     where {N} should be substituted with a serial number (1, 2, ...)
+- .. dsco:: METADATA_LINK_{N}_TYPE
+     :since: 3.7
+
+     where {N} should be substituted with a serial number (1, 2, ...)
+
+- .. dsco:: METADATA_NAME
+     :since: 3.7
+- .. dsco:: METADATA_TIME
+     :since: 3.7
 
 
 Waypoints, routes and tracks must be written into that order to be valid
@@ -231,12 +306,7 @@ Issues when translating to Shapefile
    characters in the .DBF file, thus leading to duplicate names.
 
    To avoid this, you can define the
-   :decl_configoption:`GPX_SHORT_NAMES` configuration option to TRUE to
-   make them be reported
-   respectively as "trksegid" and "trksegptid", which will allow them to
-   be unique once translated to DBF. The "route_point_id" field of
-   *route_points* layer will also be renamed to "rteptid". But note that
-   no particular processing will be done for any extension field names.
+   :config:`GPX_SHORT_NAMES` configuration option to TRUE.
 
    To translate the track_points layer of a GPX file to a set of
    shapefiles :
@@ -282,8 +352,6 @@ The ogrinfo utility can be used to dump the content of a GPX datafile :
 ::
 
    ogrinfo -ro -al input.gpx
-
-|
 
 The ogr2ogr utility can be used to do GPX to GPX translation :
 

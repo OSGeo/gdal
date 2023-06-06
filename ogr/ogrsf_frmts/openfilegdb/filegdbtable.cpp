@@ -829,6 +829,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                  nVersion);
         return false;
     }
+    m_bIsV9 = (nVersion == 3);
 
     returnErrorIf(m_nOffsetFieldDesc >
                   std::numeric_limits<GUIntBig>::max() - m_nFieldDescLength);
@@ -1055,11 +1056,10 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
                 nRemaining--;
                 returnErrorIf(nRemaining <
                               static_cast<GUInt32>(2 * nCarCount + 1));
-                std::string osRasterColumn(
-                    ReadUTF16String(pabyIter, nCarCount));
+                poRasterField->m_osRasterColumnName =
+                    ReadUTF16String(pabyIter, nCarCount);
                 pabyIter += 2 * nCarCount;
                 nRemaining -= 2 * nCarCount;
-                poRasterField->m_osRasterColumnName = osRasterColumn;
             }
 
             returnErrorIf(nRemaining < 2);
@@ -2102,8 +2102,27 @@ int FileGDBTable::GetIndexCount()
     // FileGDB v9 indexes structure not handled yet. Start with 13 98 85 03
     if (nIndexCount == 0x03859813)
     {
-        CPLDebug("OpenFileGDB", ".gdbindexes v9 not handled yet");
         VSIFree(pabyIdx);
+
+        // Hard code detection of blk_key_index on raster layers
+        const int iBlockKeyFieldIdx = GetFieldIdx("block_key");
+        if (iBlockKeyFieldIdx >= 0)
+        {
+            std::string osAtxFilename =
+                CPLResetExtension(m_osFilename.c_str(), "blk_key_index.atx");
+            if (VSIStatExL(osAtxFilename.c_str(), &sStat,
+                           VSI_STAT_EXISTS_FLAG) == 0)
+            {
+                auto poIndex = cpl::make_unique<FileGDBIndex>();
+                poIndex->m_osIndexName = "blk_key_index";
+                poIndex->m_osExpression = "block_key";
+                m_apoFields[iBlockKeyFieldIdx]->m_poIndex = poIndex.get();
+                m_apoIndexes.push_back(std::move(poIndex));
+                return 1;
+            }
+        }
+
+        CPLDebug("OpenFileGDB", ".gdbindexes v9 not handled yet");
         return 0;
     }
     returnErrorAndCleanupIf(nIndexCount >=
@@ -2122,7 +2141,8 @@ int FileGDBTable::GetIndexCount()
         returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
                                     2 * nIdxNameCarCount,
                                 VSIFree(pabyIdx));
-        std::string osIndexName(ReadUTF16String(pabyCur, nIdxNameCarCount));
+        const std::string osIndexName(
+            ReadUTF16String(pabyCur, nIdxNameCarCount));
         pabyCur += 2 * nIdxNameCarCount;
 
         // Skip magic fields
@@ -2137,7 +2157,8 @@ int FileGDBTable::GetIndexCount()
         returnErrorAndCleanupIf(static_cast<GUInt32>(pabyEnd - pabyCur) <
                                     2 * nColNameCarCount,
                                 VSIFree(pabyIdx));
-        std::string osExpression(ReadUTF16String(pabyCur, nColNameCarCount));
+        const std::string osExpression(
+            ReadUTF16String(pabyCur, nColNameCarCount));
         pabyCur += 2 * nColNameCarCount;
 
         // Skip magic field

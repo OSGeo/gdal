@@ -51,9 +51,14 @@ For open options specific to variable resolution, see following chapter.
 
 Other open options are:
 
-- REPORT_VERTCRS=YES/NO (starting with GDAL 3.2). Defaults to YES. To report
-  the vertical CRS from BAG XML metadata as the vertical component of a
-  compound CRS. If set to NO, only the horizontal part will be reported.
+- .. oo:: REPORT_VERTCRS
+     :choices: YES, NO
+     :default: YES
+     :since: 3.2
+
+     To report
+     the vertical CRS from BAG XML metadata as the vertical component of a
+     compound CRS. If set to NO, only the horizontal part will be reported.
 
 Variable resolution (VR) grid support
 -------------------------------------
@@ -69,110 +74,122 @@ resolution grids are dubbed "supergrids" in GDAL.
 The driver has different modes of working which can be controlled by the
 MODE open option:
 
--  MODE=LOW_RES_GRID: this is the default mode. The driver will expose
-   the low resolution grid, and indicate in the dataset metadata if the
-   dataset has supergrids (HAS_SUPERGRIDS=TRUE), as well as the minimum
-   and maximum resolution of those grids.
--  MODE=LIST_SUPERGRIDS: in this mode, the driver will report the
-   various supergrids in the subdataset list. It is possible to apply in
-   this mode additional open options to restrict the search
+.. oo:: MODE
+   :choices: LOW_RES_GRID, LIST_SUPERGRIDS, RESAMPLED_GRID, AUTO
+   :default: AUTO
 
-   -  SUPERGRIDS_INDICES=(y1,x1),(y2,x2),...: Tuple or list of tuples,
-      of supergrids described by their y,x indices (starting from 0, y
-      from the south of the grid, x from the west o the grid).
-   -  MINX=value: Minimum georeferenced X value to use as a filter for
-      the supergrids to list.
-   -  MINY=value: Minimum georeferenced Y value to use as a filter for
-      the supergrids to list.
-   -  MAXX=value: Maximum georeferenced X value to use as a filter for
-      the supergrids to list.
-   -  MAXY=value: Maximum georeferenced Y value to use as a filter for
-      the supergrids to list.
-   -  RES_FILTER_MIN=value: Minimum resolution of supergrids to take
-      into account (excluded bound)
-   -  RES_FILTER_MAX=value: Maximum resolution of supergrids to take
-      into account (included bound)
+   Driver mode.
 
--  Opening a supergrid. This mode is triggered by using as a dataset
-   name a string formatted like BAG:my.bag:supergrid:{y}:{x}, which is
-   the value of the SUBDATASET_x_NAME metadata items reported by the
-   above described mode. {y} is the index (starting from 0, from the
-   south of the grid), and {x} is the index (starting from 0, from the
-   west of the grid) of the supergrid to open.
--  MODE=RESAMPLED_GRID: in this mode, the user specify the extent and
-   resolution of a target grid, and for each cell of this target grid,
-   the driver will find the nodes of the supergrids that fall into that
-   cell. By default, it will select the node with the maximum elevation
-   value to populate the cell value. Or if no node of any supergrid are
-   found, the cell value will be set to the nodata value.
-   Overviews are reported: note that, those
-   overviews correspond to resampled grids computed with different
-   values of the RESX and RESY parameters, but using the same value
-   population rules (and not nearest neighbour resampling of the full
-   resolution resampled grid).
+   -  MODE=LOW_RES_GRID: this is the default mode (unless opening a supergrid). The driver will expose
+      the low resolution grid, and indicate in the dataset metadata if the
+      dataset has supergrids (HAS_SUPERGRIDS=TRUE), as well as the minimum
+      and maximum resolution of those grids.
 
-   The available open options in this mode are:
+   -  MODE=LIST_SUPERGRIDS: in this mode, the driver will report the
+      various supergrids in the subdataset list. It is possible to apply in
+      this mode additional open options to restrict the search
 
-   -  MINX=value: Minimum georeferenced X value for the resampled grid.
-      By default, the corresponding value of the low resolution grid.
-   -  MINY=value: Minimum georeferenced Y value for the resampled grid.
-      By default, the corresponding value of the low resolution grid.
-   -  MAXX=value: Maximum georeferenced X value for the resampled grid.
-      By default, the corresponding value of the low resolution grid.
-   -  MAXY=value: Maximum georeferenced Y value for the resampled grid.
-      By default, the corresponding value of the low resolution grid.
-   -  RESX=value: Horizontal resolution. By default, and if RES_STRATEGY
-      is set to AUTO, this will be the minimum resolution among all the
-      supergrids.
-   -  RESY=value: Vertical resolution (positive value). By default, and
-      if RES_STRATEGY is set to AUTO, this will be the minimum
-      resolution among all the supergrids.
-   -  RES_STRATEGY=AUTO/MIN/MAX/MEAN: Which strategy to apply to set the
-      resampled grid resolution. By default, if none of RESX, RESY,
-      RES_FILTER_MIN and RES_FILTER_MAX is specified, the AUTO strategy
-      will correspond to the MIN strategy: that is the minimum
-      resolution among all the supergrids is used. If MAX is specified,
-      the maximum resolution among all the supergrids is used. If MEAN
-      is specified, the mean resolution among all the supergrids is
-      used. RESX and RESY, if defined, will override the resolution
-      determined by RES_STRATEGY.
-   -  RES_FILTER_MIN=value: Minimum resolution of supergrids to take
-      into account (excluded bound, except if it is the minimum
-      resolution of supergrids). By default, the minimum resolution of
-      supergrids available. If this value is specified and none of
-      RES_STRATEGY, RES_FILTER_MAX, RESX or RESY is specified, the
-      maximum resolution among all the supergrids will be used as the
-      resolution for the resampled grid.
-   -  RES_FILTER_MAX=value: Maximum resolution of supergrids to take
-      into account (included bound). By default, the maximum resolution
-      of supergrids available. If this value is specified and none of
-      RES_STRATEGY, RESX or RESY is specified, this will also be used as
-      the resolution for the resampled grid.
-   -  VALUE_POPULATION=MIN/MAX/MEAN/COUNT: Which value population strategy to
-      apply to compute the resampled cell values. This default to MAX:
-      the elevation value of a target cell is the maximum elevation of
-      all supergrid nodes (potentially filtered with RES_FILTER_MIN
-      and/or RES_FILTER_MAX) that fall into this cell; the corresponding
-      uncertainty will be the uncertainty of the source node where this
-      maximum elevation si reached. If no supergrid node fall into the
-      target cell, the nodata value is set. The MIN strategy is similar,
-      except that this is the minimum elevation value among intersecting
-      nodes that is selected. The MEAN strategy uses the mean value of
-      the elevation of intersecting nodes, and the maximum uncertainty
-      of those nodes.
-      The COUNT strategy (GDAL >= 3.2) exposes one single UInt32 band where
-      each target cell contains the count of supergrid nodes that fall into it.
-   -  SUPERGRIDS_MASK=YES/NO. Default to NO. If set to YES, instead of
-      the elevation and uncertainty band, the dataset contains a single
-      Byte band which is boolean valued. For a target cell, if at least
-      one supergrids nodes (potentially filtered with RES_FILTER_MIN
-      and/or RES_FILTER_MAX) falls into the cell, the cell value is set
-      at 255. Otherwise it is set at 0. This can be used to distinguish
-      if elevation values at nodata are due to no source supergrid node
-      falling into them, or if that/those supergrid nodes were
-      themselves at the nodata value.
-   -  NODATA_VALUE=value. Override the default value, which is usually
-      1000000.
+      -  .. oo:: SUPERGRIDS_INDICES
+            :choices: <(y1\,x1)\,(y2\,x2)\,...>
+
+            Tuple or list of tuples,
+            of supergrids described by their y,x indices (starting from 0, y
+            from the south of the grid, x from the west o the grid).
+
+      -  MINX=value: Minimum georeferenced X value to use as a filter for
+         the supergrids to list.
+      -  MINY=value: Minimum georeferenced Y value to use as a filter for
+         the supergrids to list.
+      -  MAXX=value: Maximum georeferenced X value to use as a filter for
+         the supergrids to list.
+      -  MAXY=value: Maximum georeferenced Y value to use as a filter for
+         the supergrids to list.
+      -  RES_FILTER_MIN=value: Minimum resolution of supergrids to take
+         into account (excluded bound)
+      -  RES_FILTER_MAX=value: Maximum resolution of supergrids to take
+         into account (included bound)
+
+   -  Opening a supergrid. This mode is triggered by using as a dataset
+      name a string formatted like BAG:my.bag:supergrid:{y}:{x}, which is
+      the value of the SUBDATASET_x_NAME metadata items reported by the
+      above described mode. {y} is the index (starting from 0, from the
+      south of the grid), and {x} is the index (starting from 0, from the
+      west of the grid) of the supergrid to open.
+
+   -  MODE=RESAMPLED_GRID: in this mode, the user specify the extent and
+      resolution of a target grid, and for each cell of this target grid,
+      the driver will find the nodes of the supergrids that fall into that
+      cell. By default, it will select the node with the maximum elevation
+      value to populate the cell value. Or if no node of any supergrid are
+      found, the cell value will be set to the nodata value.
+      Overviews are reported: note that, those
+      overviews correspond to resampled grids computed with different
+      values of the RESX and RESY parameters, but using the same value
+      population rules (and not nearest neighbour resampling of the full
+      resolution resampled grid).
+
+      The available open options in this mode are:
+
+      -  MINX=value: Minimum georeferenced X value for the resampled grid.
+         By default, the corresponding value of the low resolution grid.
+      -  MINY=value: Minimum georeferenced Y value for the resampled grid.
+         By default, the corresponding value of the low resolution grid.
+      -  MAXX=value: Maximum georeferenced X value for the resampled grid.
+         By default, the corresponding value of the low resolution grid.
+      -  MAXY=value: Maximum georeferenced Y value for the resampled grid.
+         By default, the corresponding value of the low resolution grid.
+      -  RESX=value: Horizontal resolution. By default, and if RES_STRATEGY
+         is set to AUTO, this will be the minimum resolution among all the
+         supergrids.
+      -  RESY=value: Vertical resolution (positive value). By default, and
+         if RES_STRATEGY is set to AUTO, this will be the minimum
+         resolution among all the supergrids.
+      -  RES_STRATEGY=AUTO/MIN/MAX/MEAN: Which strategy to apply to set the
+         resampled grid resolution. By default, if none of RESX, RESY,
+         RES_FILTER_MIN and RES_FILTER_MAX is specified, the AUTO strategy
+         will correspond to the MIN strategy: that is the minimum
+         resolution among all the supergrids is used. If MAX is specified,
+         the maximum resolution among all the supergrids is used. If MEAN
+         is specified, the mean resolution among all the supergrids is
+         used. RESX and RESY, if defined, will override the resolution
+         determined by RES_STRATEGY.
+      -  RES_FILTER_MIN=value: Minimum resolution of supergrids to take
+         into account (excluded bound, except if it is the minimum
+         resolution of supergrids). By default, the minimum resolution of
+         supergrids available. If this value is specified and none of
+         RES_STRATEGY, RES_FILTER_MAX, RESX or RESY is specified, the
+         maximum resolution among all the supergrids will be used as the
+         resolution for the resampled grid.
+      -  RES_FILTER_MAX=value: Maximum resolution of supergrids to take
+         into account (included bound). By default, the maximum resolution
+         of supergrids available. If this value is specified and none of
+         RES_STRATEGY, RESX or RESY is specified, this will also be used as
+         the resolution for the resampled grid.
+      -  VALUE_POPULATION=MIN/MAX/MEAN/COUNT: Which value population strategy to
+         apply to compute the resampled cell values. This default to MAX:
+         the elevation value of a target cell is the maximum elevation of
+         all supergrid nodes (potentially filtered with RES_FILTER_MIN
+         and/or RES_FILTER_MAX) that fall into this cell; the corresponding
+         uncertainty will be the uncertainty of the source node where this
+         maximum elevation si reached. If no supergrid node fall into the
+         target cell, the nodata value is set. The MIN strategy is similar,
+         except that this is the minimum elevation value among intersecting
+         nodes that is selected. The MEAN strategy uses the mean value of
+         the elevation of intersecting nodes, and the maximum uncertainty
+         of those nodes.
+         The COUNT strategy (GDAL >= 3.2) exposes one single UInt32 band where
+         each target cell contains the count of supergrid nodes that fall into it.
+      -  SUPERGRIDS_MASK=YES/NO. Default to NO. If set to YES, instead of
+         the elevation and uncertainty band, the dataset contains a single
+         Byte band which is boolean valued. For a target cell, if at least
+         one supergrids nodes (potentially filtered with RES_FILTER_MIN
+         and/or RES_FILTER_MAX) falls into the cell, the cell value is set
+         at 255. Otherwise it is set at 0. This can be used to distinguish
+         if elevation values at nodata are due to no source supergrid node
+         falling into them, or if that/those supergrid nodes were
+         themselves at the nodata value.
+      -  NODATA_VALUE=value. Override the default value, which is usually
+         1000000.
 
 Spatial metadata support
 ------------------------
@@ -223,42 +240,75 @@ file, that can be substituted by providing a creation option whose name
 is the VAR\_ string prefixed to the key name. Currently those creation
 options are:
 
--  VAR_INDIVIDUAL_NAME=string: to fill
-   contact/CI_ResponsibleParty/individualName. If not provided, default
-   to "unknown".
--  VAR_ORGANISATION_NAME=string: to fill
-   contact/CI_ResponsibleParty/organisationName. If not provided,
-   default to "unknown".
--  VAR_POSITION_NAME=string: to fill
-   contact/CI_ResponsibleParty/positionName. If not provided, default to
-   "unknown".
--  VAR_DATE=YYYY-MM-DD: to fill dateStamp/Date. If not provided, default
-   to current date.
--  VAR_VERT_WKT=wkt_string: to fill
-   referenceSystemInfo/MD_ReferenceSystem/referenceSystemIdentifier/RS_Identifier/code
-   for the vertical coordinate reference system. If not provided, and if
-   the input CRS is not a compound CRS, default to VERT_CS["unknown",
-   VERT_DATUM["unknown", 2000]].
--  VAR_ABSTRACT=string: to fill identificationInfo/abstract. If not
-   provided, default to empty string
--  VAR_PROCESS_STEP_DESCRIPTION=string: to fill
-   dataQualityInfo/lineage/LI_Lineage/processStep/LI_ProcessStep/description.
-   If not provided, default to "Generated by GDAL x.y.z".
--  VAR_DATETIME=YYYY-MM-DDTHH:MM:SS : to fill
-   dataQualityInfo/lineage/LI_Lineage/processStep/LI_ProcessStep/dateTime/DateTime.
-   If not provided, default to current datetime.
--  VAR_RESTRICTION_CODE=enumerated_value: to fill
-   metadataConstraints/MD_LegalConstraints/useConstraints/MD_RestrictionCode.
-   If not provided, default to "otherRestrictions".
--  VAR_OTHER_CONSTRAINTS=string: to fill
-   metadataConstraints/MD_LegalConstraints/otherConstraints. If not
-   provided, default to "unknown".
--  VAR_CLASSIFICATION=enumerated_value: to fill
-   metadataConstraints/MD_SecurityConstraints/classification/MD_ClassificationCode.
-   If not provided, default to "unclassified".
--  VAR_SECURITY_USER_NOTE=string: to fill
-   metadataConstraints/MD_SecurityConstraints/userNote. If not provided,
-   default to "none".
+-  .. co:: VAR_INDIVIDUAL_NAME
+      :default: unknown
+
+      String to fill contact/CI_ResponsibleParty/individualName.
+
+-  .. co:: VAR_ORGANISATION_NAME
+      :default: unknown
+
+      String to fill contact/CI_ResponsibleParty/organisationName.
+
+-  .. co:: VAR_POSITION_NAME
+      :default: unknown
+
+      String to fill contact/CI_ResponsibleParty/positionName.
+
+-  .. co:: VAR_DATE
+      :choices: <YYYY-MM-DD>
+      :default: current date
+
+      Value to fill dateStamp/Date.
+
+-  .. co:: VAR_VERT_WKT
+
+      WKT string to fill
+      referenceSystemInfo/MD_ReferenceSystem/referenceSystemIdentifier/RS_Identifier/code
+      for the vertical coordinate reference system. If not provided, and if
+      the input CRS is not a compound CRS, default to VERT_CS["unknown",
+      VERT_DATUM["unknown", 2000]].
+
+-  .. co:: VAR_ABSTRACT
+      :default: <empty string>
+
+      String to fill identificationInfo/abstract.
+
+-  .. co:: VAR_PROCESS_STEP_DESCRIPTION
+      :default: Generated by GDAL x.y.z
+
+      String to fill dataQualityInfo/lineage/LI_Lineage/processStep/LI_ProcessStep/description.
+
+-  .. co:: VAR_DATETIME
+      :choices: <YYYY-MM-DDTHH:MM:SS>
+      :default: current datetime
+
+      Value to fill
+      dataQualityInfo/lineage/LI_Lineage/processStep/LI_ProcessStep/dateTime/DateTime.
+
+-  .. co:: VAR_RESTRICTION_CODE
+      :choices: <enumerated_value>
+      :default: otherRestrictions
+
+      Value to fill
+      metadataConstraints/MD_LegalConstraints/useConstraints/MD_RestrictionCode.
+
+-  .. co:: VAR_OTHER_CONSTRAINTS
+      :default: unknown
+
+      String to fill metadataConstraints/MD_LegalConstraints/otherConstraints.
+
+-  .. co:: VAR_CLASSIFICATION
+      :choices: <enumerated_value>
+      :default: unclassified
+
+      Value to fill
+      metadataConstraints/MD_SecurityConstraints/classification/MD_ClassificationCode.
+
+-  .. co:: VAR_SECURITY_USER_NOTE
+      :default: none
+
+      String to fill metadataConstraints/MD_SecurityConstraints/userNote.
 
 Other required variables found in the template, such as RES, RESX, RESY,
 RES_UNIT, HEIGHT, WIDTH, CORNER_POINTS and HORIZ_WKT will be
@@ -266,19 +316,41 @@ automatically filled from the input dataset metadata.
 
 The other following creation options are available:
 
--  TEMPLATE=filename: Path to a XML file that can serve as a template.
-   This will typically be a customized version of the base
-   bag_template.xml file. The file can contain other substituable
-   variables than the ones mentioned above by using a similar syntax.
--  VAR_xxxx=value: Substitute variable ${xxxx} in the template XML value
-   by the provided value.
--  BAG_VERSION=string: Value to write in the /BAG_root/BAG Version
-   attribute. Default to 1.6.2.
--  COMPRESS=NONE/DEFLATE: Compression for elevation and uncertainty
-   grids. Default to DEFLATE.
--  ZLEVEL=[1-9]: Deflate compression level. Defaults to 6.
--  BLOCK_SIZE=value_in_pixel: Chunking size of the HDF5 arrays. Default
-   to 100, or the maximum dimension of the raster if smaller than 100.
+-  .. co:: TEMPLATE
+      :choices: <filename>
+
+      Path to a XML file that can serve as a template.
+      This will typically be a customized version of the base
+      bag_template.xml file. The file can contain other substituable
+      variables than the ones mentioned above by using a similar syntax.
+
+-  .. co:: VAR_xxxx
+
+      Substitute variable ${xxxx} in the template XML value
+      by the provided value.
+
+-  .. co:: BAG_VERSION
+      :default: 1.6.2
+
+      Value to write in the /BAG_root/BAG Version attribute.
+
+-  .. co:: COMPRESS
+      :choices: NONE, DEFLATE
+      :default: DEFLATE
+
+      Compression for elevation and uncertainty grids.
+
+-  .. co:: ZLEVEL
+      :choices: 1-9
+      :default: 6
+
+      Deflate compression level.
+
+-  .. co:: BLOCK_SIZE
+      :choices: <integer>
+
+      Chunking size of the HDF5 arrays. Default
+      to 100, or the maximum dimension of the raster if smaller than 100.
 
 Usage examples
 --------------
@@ -375,7 +447,7 @@ Usage examples
 See Also
 --------
 
--  Implemented as ``gdal/frmts/hdf5/bagdataset.cpp``.
+-  Implemented as :source_file:`frmts/hdf5/bagdataset.cpp`.
 -  `The Open Navigation Surface Project <http://www.opennavsurf.org>`__
 -  `Description of Bathymetric Attributed Grid Object (BAG) Version
    1.6 <https://github.com/OpenNavigationSurface/BAG/raw/master/docs/BAG_FSD_Release_1.6.3.doc>`__

@@ -405,3 +405,42 @@ def test_openfilegb_shifted_origin():
     assert ds.RasterYSize == 117334
     assert ds.GetGeoTransform() == (229052.5, 5.0, 0.0, 5404027.5, 0.0, -5.0)
     assert ds.GetSpatialRef() is None
+
+
+###############################################################################
+# Test opening a FileGDB v9 raster
+
+
+@pytest.mark.require_curl()
+def test_openfilegb_v9():
+
+    filename = "/vsicurl/https://resources.gisdata.mn.gov/pub/data/elevation/lidar/county/washington/geodatabase/3542-23-32.gdb.zip"
+    if gdal.VSIStatL(filename) is None:
+        pytest.skip(f"cannot access {filename}")
+
+    filename = "/vsizip/" + filename
+    gdal.ErrorReset()
+    ds = gdal.Open(filename)
+    assert ds
+    assert gdal.GetLastErrorMsg() == ""
+    assert ds.RasterXSize == 2552
+    assert ds.RasterYSize == 3612
+    assert ds.GetGeoTransform() == (497481, 1, 0, 5017752, 0, -1)
+    srs = ds.GetSpatialRef()
+    assert "NAD83 / UTM zone 15N" in srs.GetName()
+
+    ds = gdal.Open(f'OpenFileGDB:"{filename}":dem_1m_m')
+    assert ds.RasterXSize == 2552
+    assert ds.RasterYSize == 3612
+
+    ds = gdal.OpenEx(filename, gdal.OF_VECTOR)
+    assert set([ds.GetLayer(i).GetName() for i in range(ds.GetLayerCount())]) == set(
+        [
+            "contour_10f_3m",
+            "building_loc_py",
+            "bare_earth_pt",
+            "contour_50f_3m",
+            "contour_2f_3m",
+            "brkln_hydro_py",
+        ]
+    )

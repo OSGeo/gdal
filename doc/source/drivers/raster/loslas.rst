@@ -11,7 +11,7 @@ LOSLAS -- NADCON .los/.las Datum Grid Shift
 Starting with GDAL 3.1, can also open geoid models of extension .geo such as
 https://geodesy.noaa.gov/GEOID/MEXICO97/
 
-NOTE: Implemented as ``gdal/frmts/raw/loaslasdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/loslasdataset.cpp`.
 
 Driver capabilities
 -------------------

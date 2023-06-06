@@ -146,46 +146,84 @@ Other type of geometries are not supported and will be silently ignored.
 Dataset creation options
 ------------------------
 
--  **FORMAT**\ =RSS|ATOM: whether the document must be in RSS 2.0 or
-   Atom 1.0 format. Default value : RSS
--  **GEOM_DIALECT**\ =SIMPLE|GML|W3C_GEO (RSS or ATOM document): the
-   encoding of location information. Default value : SIMPLE
-   W3C_GEO only supports point geometries.
-   SIMPLE or W3C_GEO only support geometries in geographic WGS84
-   coordinates.
--  **USE_EXTENSIONS**\ =YES|NO. Default value : NO. If defined to YES,
-   extension fields (that is to say fields not in the base schema of RSS
-   or Atom documents) will be written. If the field name not found in
-   the base schema matches the foo_bar pattern, foo will be considered
-   as the namespace of the element, and a <foo:bar> element will be
-   written. Otherwise, elements will be written in the <ogr:> namespace.
--  **WRITE_HEADER_AND_FOOTER**\ =YES|NO. Default value : YES. If defined
-   to NO, only <entry> or <item> elements will be written. The user will
-   have to provide the appropriate header and footer of the document.
-   Following options are not relevant in that case.
--  **HEADER** (RSS or Atom document): XML content that will be put
-   between the <channel> element and the first <item> element for a RSS
-   document, or between the xml tag and the first <entry> element for an
-   Atom document. If it is specified, it will overload the following
-   options.
--  **TITLE** (RSS or Atom document): value put inside the <title>
-   element in the header. If not provided, a dummy value will be used as
-   that element is compulsory.
--  **DESCRIPTION** (RSS document): value put inside the <description>
-   element in the header. If not provided, a dummy value will be used as
-   that element is compulsory.
--  **LINK** (RSS document): value put inside the <link> element in the
-   header. If not provided, a dummy value will be used as that element
-   is compulsory.
--  **UPDATED** (Atom document): value put inside the <updated> element
-   in the header. Should be formatted as a XML datetime. If not
-   provided, a dummy value will be used as that element is compulsory.
--  **AUTHOR_NAME** (Atom document): value put inside the <author><name>
-   element in the header. If not provided, a dummy value will be used as
-   that element is compulsory.
--  **ID** (Atom document): value put inside the <id> element in the
-   header. If not provided, a dummy value will be used as that element
-   is compulsory.
+-  .. dsco:: FORMAT
+      :choices: RSS, ATOM
+      :default: RSS
+
+      whether the document must be in RSS 2.0 or Atom 1.0 format.
+
+-  .. dsco:: GEOM_DIALECT
+      :choices: SIMPLE, GML, W3C_GEO
+      :default: simple
+
+      the encoding of location information.
+      W3C_GEO only supports point geometries.
+      SIMPLE or W3C_GEO only support geometries in geographic WGS84
+      coordinates.
+
+-  .. dsco:: USE_EXTENSIONS
+      :choices: YES, NO
+      :default: NO
+
+      If defined to YES,
+      extension fields (that is to say fields not in the base schema of RSS
+      or Atom documents) will be written. If the field name not found in
+      the base schema matches the foo_bar pattern, foo will be considered
+      as the namespace of the element, and a <foo:bar> element will be
+      written. Otherwise, elements will be written in the <ogr:> namespace.
+
+-  .. dsco:: WRITE_HEADER_AND_FOOTER
+      :choices: YES, NO
+      :default: YES
+
+      If defined
+      to NO, only <entry> or <item> elements will be written. The user will
+      have to provide the appropriate header and footer of the document.
+      Following options are not relevant in that case.
+
+-  .. dsco:: HEADER
+
+      (RSS or Atom document): XML content that will be put
+      between the <channel> element and the first <item> element for a RSS
+      document, or between the xml tag and the first <entry> element for an
+      Atom document. If it is specified, it will overload the following
+      options.
+
+-  .. dsco:: TITLE
+
+      (RSS or Atom document): value put inside the <title>
+      element in the header. If not provided, a dummy value will be used as
+      that element is compulsory.
+
+-  .. dsco:: DESCRIPTION
+
+      (RSS document): value put inside the <description>
+      element in the header. If not provided, a dummy value will be used as
+      that element is compulsory.
+
+-  .. dsco:: LINK
+
+      (RSS document): value put inside the <link> element in the
+      header. If not provided, a dummy value will be used as that element
+      is compulsory.
+
+-  .. dsco:: UPDATED
+
+      (Atom document): value put inside the <updated> element
+      in the header. Should be formatted as a XML datetime. If not
+      provided, a dummy value will be used as that element is compulsory.
+
+-  .. dsco:: AUTHOR_NAME
+
+      (Atom document): value put inside the <author><name>
+      element in the header. If not provided, a dummy value will be used as
+      that element is compulsory.
+
+-  .. dsco:: ID
+
+      (Atom document): value put inside the <id> element in the
+      header. If not provided, a dummy value will be used as that element
+      is compulsory.
 
 When translating from a source dataset, it may be necessary to rename
 the field names from the source dataset to the expected RSS or ATOM
@@ -213,7 +251,7 @@ The ogrinfo utility can be used to dump the content of a GeoRSS datafile
 
    ogrinfo -ro -al input.xml
 
-| 
+|
 
 The ogr2ogr utility can be used to do GeoRSS to GeoRSS translation. For
 example, to translate a Atom document into a RSS document
@@ -222,11 +260,11 @@ example, to translate a Atom document into a RSS document
 
    ogr2ogr -f GeoRSS output.xml input.xml "select link_href as link, title, content as description, author_name as author, id as guid from georss"
 
-| 
+|
 | Note : in this example we map equivalent fields, from the source name
   to the expected name of the destination format.
 
-| 
+|
 
 The following Python script shows how to read the content of a online
 GeoRSS feed

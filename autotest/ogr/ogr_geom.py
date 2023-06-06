@@ -4064,3 +4064,23 @@ def test_ogr_geom_point_nan():
     geom = ogr.Geometry(type=ogr.wkbPoint)
     geom.AddPoint_2D(float("nan"), float("nan"))
     assert geom.IsEmpty()
+
+
+###############################################################################
+# Test ogr.Geometry.IsClockwise
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_isclockwise():
+
+    geom = ogr.Geometry(type=ogr.wkbPoint)
+    with pytest.raises(Exception, match="Incompatible geometry for operation"):
+        assert not geom.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,0 0))")
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,1 0,1 1,0 0))")
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()

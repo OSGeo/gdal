@@ -162,24 +162,52 @@ Opening options
 
 The following open options are available:
 
--  **X**\ =int_value: X coordinate of the EPSG:3857 tile.
--  **Y**\ =int_value: Y coordinate of the EPSG:3857 tile.
--  **Z**\ =int_value: Z coordinate of the EPSG:3857 tile.
--  **METADATA_FILE**\ =filename: Filename of a metadata.json-like file.
-   If opening a /path/to/{Z}/{X}/{Y}.pbf file, the driver will by
-   default try to find /path/to/metadata.json. Setting the value to the
-   empty string is a way of avoid the metadata.json file to be used.
--  **CLIP**\ =YES/NO: Whether to clip geometries of vector features to
-   tile extent. Generators of vector tiles will typically create
-   geometries with a small buffer beyond the tile extent so that
-   geometries intersecting several tiles can be unioned back. Defaults
-   to YES so that that buffer is removed and geometries are clipped
-   exactly to the tile extent.
--  **TILE_EXTENSION**\ =string: For tilesets, extension of tiles.
-   Defaults to pbf.
--  **TILE_COUNT_TO_ESTABLISH_FEATURE_DEFN**\ =int_value: For tilesets
-   without metadata file, maximum number of tiles to use to establish
-   the layer schemas. Defaults to 1000.
+-  .. oo:: X
+      :choices: <integer>
+
+      X coordinate of the EPSG:3857 tile.
+
+-  .. oo:: Y
+      :choices: <integer>
+
+      Y coordinate of the EPSG:3857 tile.
+
+-  .. oo:: Z
+      :choices: <integer>
+
+      Z coordinate of the EPSG:3857 tile.
+
+-  .. oo:: METADATA_FILE
+      :choices: <filename>
+
+      Filename of a metadata.json-like file.
+      If opening a /path/to/{Z}/{X}/{Y}.pbf file, the driver will by
+      default try to find /path/to/metadata.json. Setting the value to the
+      empty string is a way of avoid the metadata.json file to be used.
+
+-  .. oo:: CLIP
+      :choices: YES, NO
+      :default: YES
+
+      Whether to clip geometries of vector features to
+      tile extent. Generators of vector tiles will typically create
+      geometries with a small buffer beyond the tile extent so that
+      geometries intersecting several tiles can be unioned back. Defaults
+      to YES so that that buffer is removed and geometries are clipped
+      exactly to the tile extent.
+
+-  .. oo:: TILE_EXTENSION
+      :default: pbf
+
+      For tilesets, extension of tiles.
+
+-  .. oo:: TILE_COUNT_TO_ESTABLISH_FEATURE_DEFN
+      :choices: <integer>
+      :default: 1000
+
+      For tilesets
+      without metadata file, maximum number of tiles to use to establish
+      the layer schemas.
 
 Creation issues
 ---------------
@@ -191,74 +219,148 @@ level ranges a given layer is written.
 
 Part of the conversion is multi-threaded by default, using as many
 threads as there are cores. The number of threads used can be controlled
-with the :decl_configoption:`GDAL_NUM_THREADS` configuration option.
+with the :config:`GDAL_NUM_THREADS` configuration option.
 
 Dataset creation options
 ------------------------
 
--  **NAME**\ =string: Tileset name. Defaults to the basename of the
-   output file/directory. Used to fill metadata records.
--  **DESCRIPTION**\ =string: A description of the tileset. Used to fill
-   metadata records.
--  **TYPE**\ =overlay/baselayer: Layer type. Used to fill metadata
-   records.
--  **FORMAT**\ =DIRECTORY/MBTILES: Format into which tiles are written.
-   DIRECTORY means that tiles are written in a hierarchy like
-   out_dir/{z}/{x}/{y}.pbf. MBTILES is for a MBTILES container. Defaults
-   to DIRECTORY, unless the output filename has a .mbtiles extension
--  **TILE_EXTENSION**\ =string: For tilesets as directories of files,
-   extension of tiles. Defaults to pbf.
--  **MINZOOM**\ =integer: Minimum zoom level at which tiles are
-   generated. Defaults to 0.
--  **MAXZOOM**\ =integer: Maximum zoom level at which tiles are
-   generated. Defaults to 5. Maximum supported value is 22
--  **CONF**\ =string: Layer configuration as a JSon serialized string.
-   Or, starting with GDAL 3.0.1, filename containing the configuration as JSon.
--  **SIMPLIFICATION**\ =float: Simplification factor for linear or
-   polygonal geometries. The unit is the integer unit of tiles after
-   quantification of geometry coordinates to tile coordinates. Applies
-   to all zoom levels, unless SIMPLIFICATION_MAX_ZOOM is also defined.
--  **SIMPLIFICATION_MAX_ZOOM**\ =float: Simplification factor for linear
-   or polygonal geometries, that applies only for the maximum zoom
-   level.
--  **EXTENT**\ =positive_integer. Number of units in a tile. The
-   greater, the more accurate geometry coordinates (at the expense of
-   tile byte size). Defaults to 4096
--  **BUFFER**\ =positive_integer. Number of units for geometry
-   buffering. This value corresponds to a buffer around each side of a
-   tile into which geometries are fetched and clipped. This is used for
-   proper rendering of geometries that spread over tile boundaries by
-   some rendering clients. Defaults to 80 if EXTENT=4096.
--  **COMPRESS**\ =YES/NO. Whether to compress tiles with the
-   Deflate/GZip algorithm. Defaults to YES. Should be left to YES for
-   FORMAT=MBTILES.
--  **TEMPORARY_DB**\ =string. Filename with path for the temporary
-   database used for tile generation. By default, this will be a file in
-   the same directory as the output file/directory.
--  **MAX_SIZE**\ =integer. Maximum size of a tile in bytes (after
-   compression). Defaults to 500 000. If a tile is greater than this
-   threshold, features will be written with reduced precision, or
-   discarded.
--  **MAX_FEATURES**\ =integer. Maximum number of features per tile.
-   Defaults to 200 000.
--  **BOUNDS**\ =min_long,min_lat,max_long,max_lat. Override default
-   value for bounds metadata item which is computed from the extent of
-   features written.
--  **CENTER**\ =long,lat,zoom_level. Override default value for center
-   metadata item, which is the center of BOUNDS at minimum zoom level.
--  **TILING_SCHEME**\ =crs,tile_origin_upper_left_x,tile_origin_upper_left_y,
-   tile_dimension_zoom_0: Define a custom tiling scheme with a CRS
-   (typically given as EPSG:XXXX), the coordinates of the upper-left
-   corner of the upper-left tile (0,0) in the CRS, and the dimension of
-   the tile at zoom level 0. Only available for FORMAT=DIRECTORY. The
-   standard WebMercator tiling scheme would be defined by
-   "EPSG:3857,-20037508.343,20037508.343,40075016.686". A tiling scheme
-   for WGS84 geodetic could be "EPSG:4326,-180,180,360". The tiling
-   scheme for Finnish ETRS-TM35FIN (EPSG:3067) is
-   "EPSG:3067,-548576,8388608,2097152". When using such as custom tiling
-   scheme, the 'crs', 'tile_origin_upper_left_x',
-   'tile_origin_upper_left_y' and 'tile_dimension_zoom_0' entries are
-   added to the metadata.json, and are honoured by the OGR MVT reader.
+-  .. co:: NAME
+
+      Tileset name. Defaults to the basename of the
+      output file/directory. Used to fill metadata records.
+
+-  .. co:: DESCRIPTION
+
+      A description of the tileset. Used to fill metadata records.
+
+-  .. co:: TYPE
+      :choices: overlay, baselayer
+
+      Layer type. Used to fill metadata records.
+
+-  .. co:: FORMAT
+      :choices: DIRECTORY, MBTILES
+
+      Format into which tiles are written.
+      DIRECTORY means that tiles are written in a hierarchy like
+      out_dir/{z}/{x}/{y}.pbf. MBTILES is for a MBTILES container. Defaults
+      to DIRECTORY, unless the output filename has a .mbtiles extension
+
+-  .. co:: TILE_EXTENSION
+      :default: pbf
+
+      For tilesets as directories of files,
+      extension of tiles.
+
+-  .. co:: MINZOOM
+      :choices: <integer>
+      :default: 0
+
+      Minimum zoom level at which tiles are generated.
+
+-  .. co:: MAXZOOM
+      :choices: <integer>
+      :default: 5
+
+       Maximum zoom level at which tiles are
+       generated. Maximum supported value is 22.
+
+-  .. co:: CONF
+      :choices: <json>, <filename>
+
+      Layer configuration as a JSon serialized string.
+      Or, starting with GDAL 3.0.1, filename containing the configuration as JSon.
+
+-  .. co:: SIMPLIFICATION
+      :choices: float
+
+      Simplification factor for linear or
+      polygonal geometries. The unit is the integer unit of tiles after
+      quantification of geometry coordinates to tile coordinates. Applies
+      to all zoom levels, unless :co:`SIMPLIFICATION_MAX_ZOOM` is also defined.
+
+-  .. co:: SIMPLIFICATION_MAX_ZOOM
+      :choices: <float>
+
+      Simplification factor for linear
+      or polygonal geometries, that applies only for the maximum zoom
+      level.
+
+-  .. co:: EXTENT
+      :choices: <positive integer>
+      :default: 4096
+
+      Number of units in a tile. The
+      greater, the more accurate geometry coordinates (at the expense of
+      tile byte size).
+
+-  .. co:: BUFFER
+      :choices: <positive integer>
+
+      Number of units for geometry
+      buffering. This value corresponds to a buffer around each side of a
+      tile into which geometries are fetched and clipped. This is used for
+      proper rendering of geometries that spread over tile boundaries by
+      some rendering clients. Defaults to 80 if :co:`EXTENT=4096`.
+
+-  .. co:: COMPRESS
+      :choices: YES, NO
+      :default: YES
+
+      Whether to compress tiles with the
+      Deflate/GZip algorithm. Should be left to YES for
+      :co:`FORMAT=MBTILES`.
+
+-  .. co:: TEMPORARY_DB
+      :choices: <filename>
+
+      Filename with path for the temporary
+      database used for tile generation. By default, this will be a file in
+      the same directory as the output file/directory.
+
+-  .. co:: MAX_SIZE
+      :choices: <integer>
+      :default: 500000
+
+      Maximum size of a tile in bytes (after
+      compression). If a tile is greater than this
+      threshold, features will be written with reduced precision, or
+      discarded.
+
+-  .. co:: MAX_FEATURES
+      :choices: <integer>
+      :default: 200000
+
+      Maximum number of features per tile.
+
+-  .. co:: BOUNDS
+      :choices: <min_long\,min_lat\,max_long\,max_lat>
+
+      Override default
+      value for bounds metadata item which is computed from the extent of
+      features written.
+
+-  .. co:: CENTER
+      :choices: <long\,lat\,zoom_level>
+
+      Override default value for center
+      metadata item, which is the center of :co:`BOUNDS` at minimum zoom level.
+
+-  .. co:: TILING_SCHEME
+      :choices: <crs\,tile_origin_upper_left_x\,tile_origin_upper_left_y\,tile_dimension_zoom_0>
+
+      Define a custom tiling scheme with a CRS
+      (typically given as EPSG:XXXX), the coordinates of the upper-left
+      corner of the upper-left tile (0,0) in the CRS, and the dimension of
+      the tile at zoom level 0. Only available for :co:`FORMAT=DIRECTORY`. The
+      standard WebMercator tiling scheme would be defined by
+      "EPSG:3857,-20037508.343,20037508.343,40075016.686". A tiling scheme
+      for WGS84 geodetic could be "EPSG:4326,-180,180,360". The tiling
+      scheme for Finnish ETRS-TM35FIN (EPSG:3067) is
+      "EPSG:3067,-548576,8388608,2097152". When using such as custom tiling
+      scheme, the 'crs', 'tile_origin_upper_left_x',
+      'tile_origin_upper_left_y' and 'tile_dimension_zoom_0' entries are
+      added to the metadata.json, and are honoured by the OGR MVT reader.
 
 Layer configuration
 -------------------
@@ -293,16 +395,29 @@ case.
 Layer creation options
 ----------------------
 
--  **MINZOOM**\ =integer: Minimum zoom level at which tiles are
-   generated. Defaults to the dataset creation option MINZOOM value.
--  **MAXZOOM**\ =integer: Minimum zoom level at which tiles are
-   generated. Defaults to the dataset creation option MAXZOOM value.
-   Maximum supported value is 22
--  **NAME**\ =string: Target layer name. Defaults to the layer name, but
-   can be overridden so that several OGR layers map to a single target
-   MVT layer. The typical use case is to have different OGR layers for
-   mutually exclusive zoom level ranges.
--  **DESCRIPTION**\ =string: A description of the layer.
+-  .. lco:: MINZOOM
+      :choices: <integer>
+
+      Minimum zoom level at which tiles are
+      generated. Defaults to the dataset creation option :co:`MINZOOM` value.
+
+-  .. lco:: MAXZOOM
+      :choices: <integer>
+
+      Maximum zoom level at which tiles are
+      generated. Defaults to the dataset creation option :co:`MAXZOOM` value.
+      Maximum supported value is 22.
+
+-  .. lco:: NAME
+
+      Target layer name. Defaults to the layer name, but
+      can be overridden so that several OGR layers map to a single target
+      MVT layer. The typical use case is to have different OGR layers for
+      mutually exclusive zoom level ranges.
+
+-  .. lco:: DESCRIPTION
+
+      A description of the layer.
 
 Examples
 --------

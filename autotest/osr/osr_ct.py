@@ -571,6 +571,34 @@ def test_osr_ct_options_ballpark_disallowed():
 
 
 ###############################################################################
+# Test CoordinateTransformationOptions.SetOnlyBest
+
+
+@pytest.mark.require_proj(9, 2)
+def test_osr_ct_options_only_best_enabled():
+
+    s = osr.SpatialReference()
+    s.SetFromUserInput("EPSG:4746")  # PD/83
+    t = osr.SpatialReference()
+    t.SetFromUserInput("EPSG:4326")  # WGS 84
+
+    # Best operation normally uses the BETA2007 grid
+    options = osr.CoordinateTransformationOptions()
+    options.SetOnlyBest(True)
+    ct = osr.CoordinateTransformation(s, t, options)
+    with pytest.raises(Exception, match=r"Grid de_adv_BETA2007.tif is not available"):
+        ct.TransformPoint(50.5, 10, 0)
+
+    options = osr.CoordinateTransformationOptions()
+    options.SetOnlyBest(False)
+    ct = osr.CoordinateTransformation(s, t, options)
+    # Ballpark operation
+    assert ct.TransformPoint(50.5, 10, 0) == pytest.approx(
+        (50.498804120408145, 9.99880336687919, 0.0)
+    )
+
+
+###############################################################################
 # Test that we pass a neutral time when not explicitly specified
 
 

@@ -16,11 +16,14 @@ Netpbm files can be created with a type of PNM.
 
 Creation Options:
 
--  **MAXVAL=n**: Force setting the maximum color value to **n** in the
-   output PNM file. May be useful if you planning to use the output
-   files with software which is not liberal to this value.
+-  .. co:: MAXVAL
+      :choices: <n>
 
-NOTE: Implemented as ``gdal/frmts/raw/pnmdataset.cpp``.
+      Force setting the maximum color value to **n** in the
+      output PNM file. May be useful if you planning to use the output
+      files with software which is not liberal to this value.
+
+NOTE: Implemented as :source_file:`frmts/raw/pnmdataset.cpp`.
 
 Driver capabilities
 -------------------

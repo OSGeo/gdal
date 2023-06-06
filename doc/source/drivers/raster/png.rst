@@ -30,7 +30,7 @@ images are preserved when the color table is read.
 PNG files can be created with a type of PNG, using the CreateCopy()
 method, requiring a prototype to read from. Writing includes support for
 the various image types, and will preserve transparency/nodata values.
-Georeferencing .wld files are written if option WORLDFILE is set. All
+Georeferencing .wld files are written if creation option :co:`WORLDFILE` is set. All
 pixel types other than 16bit unsigned will be written as eight bit.
 
 XMP metadata can be extracted from the file,
@@ -69,21 +69,51 @@ All these metadata tags can be used as creation options.
 
 Creation Options:
 
--  **WORLDFILE=YES**: Force the generation of an associated ESRI world
-   file (with the extension .wld). See `World File <#WLD>`__ section for
-   details.
--  **ZLEVEL=n**: Set the amount of time to spend on compression. The
-   default is 6. A value of 1 is fast but does no compression, and a
-   value of 9 is slow but does the best compression.
--  **TITLE=value**: Title, written in a TEXT or iTXt chunk
--  **DESCRIPTION=value**: Description, written in a TEXT or iTXt chunk
--  **COPYRIGHT=value**: Copyright, written in a TEXT or iTXt chunk
--  **COMMENT=value**: Comment, written in a TEXT or iTXt chunk
--  **WRITE_METADATA_AS_TEXT=YES/NO**: Whether to write source dataset
-   metadata in TEXT chunks
--  **NBITS=1/2/4**: Force number of output bits (GDAL >= 2.1)
+-  .. co:: WORLDFILE
+      :choices: YES, NO
+      :default: NO
 
-NOTE: Implemented as ``gdal/frmts/png/pngdataset.cpp``.
+      Force the generation of an associated ESRI world
+      file (with the extension .wld). See `World File <#WLD>`__ section for
+      details.
+
+-  .. co:: ZLEVEL=n
+      :choices: [1-9]
+      :default: 6
+
+      Set the amount of time to spend on compression.
+      A value of 1 is fast but does no compression, and a
+      value of 9 is slow but does the best compression.
+
+-  .. co:: TITLE
+
+      Title, written in a TEXT or iTXt chunk
+
+-  .. co:: DESCRIPTION
+
+      Description, written in a TEXT or iTXt chunk
+
+-  .. co:: COPYRIGHT
+
+      Copyright, written in a TEXT or iTXt chunk
+
+-  .. co:: COMMENT
+
+      Comment, written in a TEXT or iTXt chunk
+
+-  .. co:: WRITE_METADATA_AS_TEXT
+      :choices: YES, NO
+
+      Whether to write source dataset
+      metadata in TEXT chunks
+
+-  .. co:: NBITS
+      :choices: 1, 2, 4
+      :since: 2.1
+
+      Force number of output bits
+
+NOTE: Implemented as :source_file:`frmts/png/pngdataset.cpp`.
 
 PNG support is implemented based on the libpng reference library. More
 information is available at http://www.libpng.org/pub/png.

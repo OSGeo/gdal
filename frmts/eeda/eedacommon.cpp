@@ -234,7 +234,7 @@ BuildBandDescArray(json_object *poBands,
         oDesc.osName = pszBandId;
         oDesc.osWKT = osWKT;
         oDesc.eDT = eDT;
-        oDesc.adfGeoTransform = adfGeoTransform;
+        oDesc.adfGeoTransform = std::move(adfGeoTransform);
         oDesc.nWidth = nWidth;
         oDesc.nHeight = nHeight;
         aoBandDesc.push_back(oDesc);

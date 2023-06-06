@@ -489,7 +489,8 @@ class OGRPGTableLayer final : public OGRPGLayer
         bUseCopyByDefault = TRUE;
     }
 
-    void SetDeferredCreation(int bDeferredCreationIn, CPLString osCreateTable);
+    void SetDeferredCreation(int bDeferredCreationIn,
+                             const std::string &osCreateTable);
     OGRErr RunDeferredCreationIfNecessary();
 
     virtual void ResolveSRID(const OGRPGGeomFieldDefn *poGFldDefn) override;

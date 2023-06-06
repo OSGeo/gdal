@@ -734,7 +734,8 @@ def test_ogr_mysql_24():
         + "' tpoly"
     )
 
-    assert ret.find("INFO") != -1 and ret.find("ERROR") == -1
+    assert "INFO" in ret
+    assert "ERROR" not in ret
 
 
 ###############################################################################
@@ -1107,6 +1108,34 @@ def test_ogr_mysql_29():
         feat = layer.GetNextFeature()
         assert feat is not None
         feat = None
+
+
+###############################################################################
+# Test registering a new SRS
+
+
+def test_ogr_mysql_create_new_srs():
+
+    if gdaltest.mysql_ds is None:
+        pytest.skip()
+
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("+proj=merc +datum=WGS84")
+    try:
+        lyr = gdaltest.mysql_ds.CreateLayer("test_new_srs", srs=srs)
+        assert lyr
+        lyr = gdaltest.mysql_ds.CreateLayer("test_new_srs2", srs=srs)
+        assert lyr
+
+        gdaltest.mysql_ds = None
+        gdaltest.mysql_ds = ogr.Open(gdaltest.mysql_connection_string, update=1)
+
+        lyr = gdaltest.mysql_ds.GetLayerByName("test_new_srs")
+        assert lyr.GetSpatialRef().ExportToProj4().startswith("+proj=merc")
+
+    finally:
+        gdaltest.mysql_ds.ExecuteSQL("DROP TABLE test_new_srs")
+        gdaltest.mysql_ds.ExecuteSQL("DROP TABLE test_new_srs2")
 
 
 ###############################################################################

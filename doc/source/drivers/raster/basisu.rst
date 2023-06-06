@@ -52,44 +52,76 @@ modes and their options.
 
 The following creation options are available:
 
-- **COMPRESSION**\=ETC1S/UASTC. Defaults to ETC1S.
+- .. co:: COMPRESSION
+     :choices: ETC1S, UASTC
+     :default: ETC1S
 
-- **UASTC_LEVEL**\=integer in [0,4] range. Defaults to 2. The higher value,
-  the higher the quality but the slower computing time. 4 is impractically slow.
-  Only valid when COMPRESSION=UASTC.
+- .. co:: UASTC_LEVEL
+     :choices: 0, 1, 2, 3, 4
+     :default: 2
 
-- **UASTC_RDO_LEVEL**\=float. Rate distortion optimization level. The lower value,
-  the higher the quality, but the larger the file size.
-  Usual range is [0.2,3]. Default is 1. Only valid when COMPRESSION=UASTC.
+     The higher value,
+     the higher the quality but the slower computing time. 4 is impractically slow.
+     Only valid when :co:`COMPRESSION=UASTC`.
 
-- **ETC1S_LEVEL**\=integer in [0,6] range. Defaults to 1. The higher value,
-  the higher the quality but the slower computing time.
-  Only valid when COMPRESSION=ETC1S.
+- .. co:: UASTC_RDO_LEVEL
+     :choices: <float>
+     :default: 1.0
 
-- **ETC1S_QUALITY_LEVEL**\=integer in [1,255] range. Defaults to 128. The higher
-  value, the higher the quality, but the larger the file size.
-  Only valid when COMPRESSION=ETC1S.
+     Rate distortion optimization level. The lower value,
+     the higher the quality, but the larger the file size.
+     Usual range is [0.2,3]. Only valid when :co:`COMPRESSION=UASTC`.
 
-- **ETC1S_MAX_ENDPOINTS_CLUSTERS**\=integer in [1,16128] range.
-  Maximum number of endpoint clusters.
-  When set, ETC1S_MAX_SELECTOR_CLUSTERS must also be set.
-  Mutually exclusive with ETC1S_QUALITY_LEVEL.
-  Only valid when COMPRESSION=ETC1S.
+- .. co:: ETC1S_LEVEL
+     :choices: 0, 1, 2, 3, 4, 5, 6
+     :default: 1
 
-- **ETC1S_MAX_SELECTOR_CLUSTERS**\=integer in [1,16128] range.
-  Maximum number of selector clusters.
-  When set, ETC1S_MAX_ENDPOINTS_CLUSTERS must also be set.
-  Mutually exclusive with ETC1S_QUALITY_LEVEL.
-  Only valid when COMPRESSION=ETC1S.
+     The higher value,
+     the higher the quality but the slower computing time.
+     Only valid when :co:`COMPRESSION=ETC1S`.
 
-- **NUM_THREADS**\=integer. Defaults to the maximum number of virtual CPUs
-  available. Can also be controlled with the :decl_configoption:`GDAL_NUM_THREADS`
-  configuration option
+- .. co:: ETC1S_QUALITY_LEVEL
+     :choices: <integer in [1,255] range>
+     :default: 128
 
-- **MIPMAP**\=YES/NO. Whether to enable MIPMAP generation. Defaults to NO.
+     The higher
+     value, the higher the quality, but the larger the file size.
+     Only valid when :co:`COMPRESSION=ETC1S`.
 
-- **COLORSPACE**\=PERCEPTUAL_SRGB/LINEAR. Defaults to PERCEPTUAL_SRGB.
-  For non-photometric input, use LINEAR to avoid unnecessary artifacts.
+- .. co:: ETC1S_MAX_ENDPOINTS_CLUSTERS
+     :choices: <integer in [1,16128] range>
+
+     Maximum number of endpoint clusters.
+     When set, :co:`ETC1S_MAX_SELECTOR_CLUSTERS` must also be set.
+     Mutually exclusive with :co:`ETC1S_QUALITY_LEVEL`.
+     Only valid when :co:`COMPRESSION=ETC1S`.
+
+- .. co:: ETC1S_MAX_SELECTOR_CLUSTERS
+     :choices: <integer in [1,16128] range>
+
+     Maximum number of selector clusters.
+     When set, :co:`ETC1S_MAX_ENDPOINTS_CLUSTERS` must also be set.
+     Mutually exclusive with :co:`ETC1S_QUALITY_LEVEL`.
+     Only valid when :co:`COMPRESSION=ETC1S`.
+
+- .. co:: NUM_THREADS
+     :choices: <integer>
+
+      Defaults to the maximum number of virtual CPUs
+      available. Can also be controlled with the :config:`GDAL_NUM_THREADS`
+      configuration option.
+
+- .. co:: MIPMAP
+     :choices: YES, NO
+     :default: NO
+
+      Whether to enable MIPMAP generation.
+
+- .. co:: COLORSPACE
+     :choices: PERCEPTUAL_SRGB, LINEAR
+     :default: PERCEPTUAL_SRGB
+
+     For non-photometric input, use LINEAR to avoid unnecessary artifacts.
 
 
 Build instructions

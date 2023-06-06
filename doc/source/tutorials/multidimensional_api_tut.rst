@@ -154,8 +154,9 @@ Other examples
 
 Test scripts from the GDAL autotest suite
 
-  - https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/memmultidim.py
-  - https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/netcdf_multidim.py
-  - https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/gdrivers/vrtmultidim.py
-  - https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/utilities/test_gdalmdiminfo_lib.py
-  - https://raw.githubusercontent.com/OSGeo/gdal/master/autotest/utilities/test_gdalmdimtranslate_lib.py
+  - :ref:`MEM <raster.mem>` driver: :source_file:`autotest/gdrivers/memmultidim.py`
+  - :ref:`netCDF <raster.netcdf>` driver: :source_file:`autotest/gdrivers/netcdf_multidim.py`
+  - :ref:`HDF5 <raster.hdf5>` driver: :source_file:`autotest/gdrivers/hdf5multidim.py`
+  - :ref:`VRT <raster.vrt>` driver: :source_file:`autotest/gdrivers/vrtmultidim.py`
+  - :ref:`gdalmdiminfo` tests: :source_file:`autotest/utilities/test_gdalmdiminfo_lib.py`
+  - :ref:`gdalmdimtranslate` tests: :source_file:`autotest/utilities/test_gdalmdimtranslate_lib.py`

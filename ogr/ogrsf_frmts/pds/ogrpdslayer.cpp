@@ -41,9 +41,10 @@ namespace OGRPDS
 /*                           OGRPDSLayer()                              */
 /************************************************************************/
 
-OGRPDSLayer::OGRPDSLayer(CPLString osTableIDIn, const char *pszLayerName,
-                         VSILFILE *fp, CPLString osLabelFilename,
-                         CPLString osStructureFilename, int nRecordsIn,
+OGRPDSLayer::OGRPDSLayer(const std::string &osTableIDIn,
+                         const char *pszLayerName, VSILFILE *fp,
+                         const std::string &osLabelFilename,
+                         const std::string &osStructureFilename, int nRecordsIn,
                          int nStartBytesIn, int nRecordSizeIn,
                          GByte *pabyRecordIn, bool bIsASCII)
     : poFeatureDefn(new OGRFeatureDefn(pszLayerName)), osTableID(osTableIDIn),
@@ -128,10 +129,10 @@ OGRPDSLayer::~OGRPDSLayer()
 /*                           ReadStructure()                            */
 /************************************************************************/
 
-void OGRPDSLayer::ReadStructure(CPLString osStructureFilename)
+void OGRPDSLayer::ReadStructure(const std::string &osStructureFilename)
 
 {
-    VSILFILE *fpStructure = VSIFOpenL(osStructureFilename, "rb");
+    VSILFILE *fpStructure = VSIFOpenL(osStructureFilename.c_str(), "rb");
     if (fpStructure == nullptr)
         return;
 

@@ -20,9 +20,9 @@ AZURE_STORAGE_CONNECTION_STRING=${AZURITE_STORAGE_CONNECTION_STRING} python3 -c 
 (cd autotest/gcore && AZURE_STORAGE_CONNECTION_STRING=${AZURITE_STORAGE_CONNECTION_STRING} AZ_RESOURCE=mycontainer $PYTEST vsiaz_real_instance_manual.py)
 
 # MySQL 8
-(cd autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33060,host=$IP $PYTEST ogr_mysql.py -k "not mysql_24")
+(cd autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33060,host=$IP $PYTEST ogr_mysql.py)
 # MariaDB 10.3.9
-(cd autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33061,host=$IP $PYTEST ogr_mysql.py -k "not mysql_24")
+(cd autotest/ogr && OGR_MYSQL_CONNECTION_STRING=mysql:test,user=root,password=passwd,port=33061,host=$IP $PYTEST ogr_mysql.py)
 
 # PostGIS tests
 (cd autotest/ogr && OGR_PG_CONNECTION_STRING="host=$IP port=25432 dbname=autotest user=docker password=docker" $PYTEST --capture=no -ra ogr_pg.py)

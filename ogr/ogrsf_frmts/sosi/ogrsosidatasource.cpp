@@ -389,12 +389,9 @@ int OGRSOSIDataSource::Open(const char *pszFilename, int bUpdate)
                 strstr(pszUTFLineIter, " "); /* Split header and value */
             if (pszPos2 != nullptr)
             {
-                CPLString osKey = CPLString(std::string(
-                    pszUTFLineIter,
-                    pszPos2)); /* FIXME: clean instantiation of CPLString? */
-                CPLString osValue = CPLString(pszPos2 + 1);
-
-                oHeaders[osKey] = osValue; /* Add to header map */
+                const std::string osKey(pszUTFLineIter, pszPos2);
+                oHeaders[osKey] =
+                    CPLString(pszPos2 + 1); /* Add to header map */
                 switch (nName)
                 { /* Add to header list for the corresponding layer, if it is
                      not */

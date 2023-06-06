@@ -5,7 +5,7 @@ GPSBabel
 
 .. shortname:: GPSBabel
 
-.. build_dependencies:: (read support needs GPX driver and libexpat) 
+.. build_dependencies:: (read support needs GPX driver and libexpat)
 
 The GPSBabel driver for now that relies on the
 `GPSBabel <http://www.gpsbabel.org>`__ utility to access various GPS
@@ -66,7 +66,7 @@ filename might be sufficient. The list includes for now :
 -  ozi
 -  igc
 
-The :decl_configoption:`USE_TEMPFILE` =YES configuration option can be used to create an
+The :config:`USE_TEMPFILE=YES` configuration option can be used to create an
 on-disk temporary GPX file instead of a in-memory one, when reading big
 amount of data.
 
@@ -96,9 +96,16 @@ Alternatively, you can just pass a filename as output datasource name
 and specify the dataset creation option
 GPSBABEL_DRIVER=gpsbabel_file_format[,gpsbabel_format_option]\*
 
-The :decl_configoption:`USE_TEMPFILE` =YES configuration option can be used to create an
-on-disk temporary GPX file instead of a in-memory one, when writing big
-amount of data.
+When writing large datasets, the :config:`USE_TEMPFILE` configuration
+option may be used:
+
+-  .. config:: USE_TEMPFILE
+      :choices: YES, NO
+      :default: NO
+
+      If ``YES``, create an on-disk temporary GPX file instead of a in-memory
+      one, when writing big amount of data.
+
 
 Examples
 ~~~~~~~~

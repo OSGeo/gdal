@@ -2979,7 +2979,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
     ManagePlanetaryComputerSigning();
 
     bool bHasExpired = false;
-    CPLString osURL(GetRedirectURLIfValid(bHasExpired));
+    const std::string l_osURL(GetRedirectURLIfValid(bHasExpired));
     if (bHasExpired)
     {
         return;
@@ -3046,7 +3046,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
              static_cast<unsigned>(m_aoAdviseReadRanges.size()));
 #endif
 
-    const auto task = [this, osURL]()
+    const auto task = [this](const std::string &osURL)
     {
         CURLM *hMultiHandle = curl_multi_init();
 
@@ -3093,8 +3093,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             // need to wait as we already know if pipelining is possible
             // unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_PIPEWAIT, 1);
 
-            struct curl_slist *headers =
-                VSICurlSetOptions(hCurlHandle, osURL, m_papszHTTPOptions);
+            struct curl_slist *headers = VSICurlSetOptions(
+                hCurlHandle, osURL.c_str(), m_papszHTTPOptions);
 
             VSICURLInitWriteFuncStruct(&asWriteFuncData[i], this, pfnReadCbk,
                                        pReadCbkUserData);
@@ -3266,7 +3266,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
 
         curl_multi_cleanup(hMultiHandle);
     };
-    m_oThreadAdviseRead = std::thread(task);
+    m_oThreadAdviseRead = std::thread(task, l_osURL);
 }
 
 /************************************************************************/

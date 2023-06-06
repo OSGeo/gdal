@@ -130,7 +130,8 @@ struct SharedDatasetCtxt
     // This may not be the actual PID, but the responsiblePID.
     GIntBig nPID;
     char *pszDescription;
-    GDALAccess eAccess;
+    char *pszConcatenatedOpenOptions;
+    int nOpenFlags;
 
     GDALDataset *poDS;
 };
@@ -157,8 +158,9 @@ static unsigned long GDALSharedDatasetHashFunc(const void *elt)
     const SharedDatasetCtxt *psStruct =
         static_cast<const SharedDatasetCtxt *>(elt);
     return static_cast<unsigned long>(
-        CPLHashSetHashStr(psStruct->pszDescription) ^ psStruct->eAccess ^
-        psStruct->nPID);
+        CPLHashSetHashStr(psStruct->pszDescription) ^
+        CPLHashSetHashStr(psStruct->pszConcatenatedOpenOptions) ^
+        psStruct->nOpenFlags ^ psStruct->nPID);
 }
 
 static int GDALSharedDatasetEqualFunc(const void *elt1, const void *elt2)
@@ -168,15 +170,28 @@ static int GDALSharedDatasetEqualFunc(const void *elt1, const void *elt2)
     const SharedDatasetCtxt *psStruct2 =
         static_cast<const SharedDatasetCtxt *>(elt2);
     return strcmp(psStruct1->pszDescription, psStruct2->pszDescription) == 0 &&
+           strcmp(psStruct1->pszConcatenatedOpenOptions,
+                  psStruct2->pszConcatenatedOpenOptions) == 0 &&
            psStruct1->nPID == psStruct2->nPID &&
-           psStruct1->eAccess == psStruct2->eAccess;
+           psStruct1->nOpenFlags == psStruct2->nOpenFlags;
 }
 
 static void GDALSharedDatasetFreeFunc(void *elt)
 {
     SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(elt);
     CPLFree(psStruct->pszDescription);
+    CPLFree(psStruct->pszConcatenatedOpenOptions);
     CPLFree(psStruct);
+}
+
+static std::string
+GDALSharedDatasetConcatenateOpenOptions(CSLConstList papszOpenOptions)
+{
+    std::string osStr;
+    for (CSLConstList papszIter = papszOpenOptions; papszIter && *papszIter;
+         ++papszIter)
+        osStr += *papszIter;
+    return osStr;
 }
 
 /************************************************************************/
@@ -310,30 +325,10 @@ GDALDataset::~GDALDataset()
             std::map<GDALDataset *, GIntBig>::iterator oIter =
                 poAllDatasetMap->find(this);
             CPLAssert(oIter != poAllDatasetMap->end());
-            GIntBig nPIDCreatorForShared = oIter->second;
-            poAllDatasetMap->erase(oIter);
 
-            if (bShared && phSharedDatasetSet != nullptr)
-            {
-                SharedDatasetCtxt sStruct;
-                sStruct.nPID = nPIDCreatorForShared;
-                sStruct.eAccess = eAccess;
-                sStruct.pszDescription = const_cast<char *>(GetDescription());
-                sStruct.poDS = nullptr;
-                SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
-                    CPLHashSetLookup(phSharedDatasetSet, &sStruct));
-                if (psStruct && psStruct->poDS == this)
-                {
-                    CPLHashSetRemove(phSharedDatasetSet, psStruct);
-                }
-                else
-                {
-                    CPLDebug("GDAL",
-                             "Should not happen. Cannot find %s, "
-                             "this=%p in phSharedDatasetSet",
-                             GetDescription(), this);
-                }
-            }
+            UnregisterFromSharedDataset();
+
+            poAllDatasetMap->erase(oIter);
 
             if (poAllDatasetMap->empty())
             {
@@ -468,8 +463,50 @@ GDALDataset::~GDALDataset()
  */
 CPLErr GDALDataset::Close()
 {
+    // Call UnregisterFromSharedDataset() before altering nOpenFlags
+    UnregisterFromSharedDataset();
+
     nOpenFlags = OPEN_FLAGS_CLOSED;
     return CE_None;
+}
+
+/************************************************************************/
+/*                UnregisterFromSharedDataset()                         */
+/************************************************************************/
+
+void GDALDataset::UnregisterFromSharedDataset()
+{
+    if (!(!bIsInternal && bShared && poAllDatasetMap && phSharedDatasetSet))
+        return;
+
+    CPLMutexHolderD(&hDLMutex);
+
+    std::map<GDALDataset *, GIntBig>::iterator oIter =
+        poAllDatasetMap->find(this);
+    CPLAssert(oIter != poAllDatasetMap->end());
+    const GIntBig nPIDCreatorForShared = oIter->second;
+    bShared = false;
+    SharedDatasetCtxt sStruct;
+    sStruct.nPID = nPIDCreatorForShared;
+    sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
+    sStruct.pszDescription = const_cast<char *>(GetDescription());
+    std::string osConcatenatedOpenOptions =
+        GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+    sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
+    sStruct.poDS = nullptr;
+    SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
+        CPLHashSetLookup(phSharedDatasetSet, &sStruct));
+    if (psStruct && psStruct->poDS == this)
+    {
+        CPLHashSetRemove(phSharedDatasetSet, psStruct);
+    }
+    else
+    {
+        CPLDebug("GDAL",
+                 "Should not happen. Cannot find %s, "
+                 "this=%p in phSharedDatasetSet",
+                 GetDescription(), this);
+    }
 }
 
 /************************************************************************/
@@ -1562,12 +1599,15 @@ void GDALDataset::MarkAsShared()
         static_cast<SharedDatasetCtxt *>(CPLMalloc(sizeof(SharedDatasetCtxt)));
     psStruct->poDS = this;
     psStruct->nPID = nPID;
-    psStruct->eAccess = eAccess;
+    psStruct->nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
     psStruct->pszDescription = CPLStrdup(GetDescription());
+    std::string osConcatenatedOpenOptions =
+        GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+    psStruct->pszConcatenatedOpenOptions =
+        CPLStrdup(osConcatenatedOpenOptions.c_str());
     if (CPLHashSetLookup(phSharedDatasetSet, psStruct) != nullptr)
     {
-        CPLFree(psStruct->pszDescription);
-        CPLFree(psStruct);
+        GDALSharedDatasetFreeFunc(psStruct);
         ReportError(CE_Failure, CPLE_AppDefined,
                     "An existing shared dataset already has this description. "
                     "This should not happen.");
@@ -3374,6 +3414,11 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                                     const char *const *papszSiblingFiles)
 {
     VALIDATE_POINTER1(pszFilename, "GDALOpen", nullptr);
+
+    // If no driver kind is specified, assume all are to be probed.
+    if ((nOpenFlags & GDAL_OF_KIND_MASK) == 0)
+        nOpenFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
+
     /* -------------------------------------------------------------------- */
     /*      In case of shared dataset, first scan the existing list to see  */
     /*      if it could already contain the requested dataset.              */
@@ -3396,14 +3441,16 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 
             sStruct.nPID = nThisPID;
             sStruct.pszDescription = const_cast<char *>(pszFilename);
-            sStruct.eAccess =
-                (nOpenFlags & GDAL_OF_UPDATE) ? GA_Update : GA_ReadOnly;
+            sStruct.nOpenFlags = nOpenFlags & ~GDAL_OF_SHARED;
+            std::string osConcatenatedOpenOptions =
+                GDALSharedDatasetConcatenateOpenOptions(papszOpenOptions);
+            sStruct.pszConcatenatedOpenOptions = &osConcatenatedOpenOptions[0];
             sStruct.poDS = nullptr;
             SharedDatasetCtxt *psStruct = static_cast<SharedDatasetCtxt *>(
                 CPLHashSetLookup(phSharedDatasetSet, &sStruct));
             if (psStruct == nullptr && (nOpenFlags & GDAL_OF_UPDATE) == 0)
             {
-                sStruct.eAccess = GA_Update;
+                sStruct.nOpenFlags |= GDAL_OF_UPDATE;
                 psStruct = static_cast<SharedDatasetCtxt *>(
                     CPLHashSetLookup(phSharedDatasetSet, &sStruct));
             }
@@ -3414,10 +3461,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
             }
         }
     }
-
-    // If no driver kind is specified, assume all are to be probed.
-    if ((nOpenFlags & GDAL_OF_KIND_MASK) == 0)
-        nOpenFlags |= GDAL_OF_KIND_MASK & ~GDAL_OF_MULTIDIM_RASTER;
 
     GDALDriverManager *poDM = GetGDALDriverManager();
     // CPLLocaleC  oLocaleForcer;
@@ -3602,22 +3645,6 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                 poDS->AddToDatasetOpenList();
             }
 
-            if (nOpenFlags & GDAL_OF_SHARED)
-            {
-                if (strcmp(pszFilename, poDS->GetDescription()) != 0)
-                {
-                    CPLError(CE_Warning, CPLE_NotSupported,
-                             "A dataset opened by GDALOpenShared should have "
-                             "the same filename (%s) "
-                             "and description (%s)",
-                             pszFilename, poDS->GetDescription());
-                }
-                else
-                {
-                    poDS->MarkAsShared();
-                }
-            }
-
             // Deal with generic OVERVIEW_LEVEL open option, unless it is
             // driver specific.
             if (CSLFetchNameValue(papszOpenOptions, "OVERVIEW_LEVEL") !=
@@ -3634,6 +3661,26 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                     nOvrLevel == -1 || osVal.ifind("only") != std::string::npos;
                 GDALDataset *poOvrDS =
                     GDALCreateOverviewDataset(poDS, nOvrLevel, bThisLevelOnly);
+                if (poOvrDS && (nOpenFlags & GDAL_OF_SHARED) != 0)
+                {
+                    if (strcmp(pszFilename, poDS->GetDescription()) != 0)
+                    {
+                        CPLError(
+                            CE_Warning, CPLE_NotSupported,
+                            "A dataset opened by GDALOpenShared should have "
+                            "the same filename (%s) "
+                            "and description (%s)",
+                            pszFilename, poDS->GetDescription());
+                    }
+                    else
+                    {
+                        CSLDestroy(poDS->papszOpenOptions);
+                        poDS->papszOpenOptions = CSLDuplicate(papszOpenOptions);
+                        poDS->papszOpenOptions = CSLSetNameValue(
+                            poDS->papszOpenOptions, "OVERVIEW_LEVEL", nullptr);
+                        poDS->MarkAsShared();
+                    }
+                }
                 poDS->ReleaseRef();
                 poDS = poOvrDS;
                 if (poDS == nullptr)
@@ -3645,7 +3692,37 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
                                  nOvrLevel, pszFilename);
                     }
                 }
+                else
+                {
+                    if (!(nOpenFlags & GDAL_OF_INTERNAL))
+                    {
+                        poDS->AddToDatasetOpenList();
+                    }
+                    if (nOpenFlags & GDAL_OF_SHARED)
+                    {
+                        CSLDestroy(poDS->papszOpenOptions);
+                        poDS->papszOpenOptions = CSLDuplicate(papszOpenOptions);
+                        poDS->nOpenFlags = nOpenFlags;
+                        poDS->MarkAsShared();
+                    }
+                }
             }
+            else if (nOpenFlags & GDAL_OF_SHARED)
+            {
+                if (strcmp(pszFilename, poDS->GetDescription()) != 0)
+                {
+                    CPLError(CE_Warning, CPLE_NotSupported,
+                             "A dataset opened by GDALOpenShared should have "
+                             "the same filename (%s) "
+                             "and description (%s)",
+                             pszFilename, poDS->GetDescription());
+                }
+                else
+                {
+                    poDS->MarkAsShared();
+                }
+            }
+
             VSIErrorReset();
 
             CSLDestroy(papszOpenOptionsCleaned);
@@ -5220,9 +5297,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
     const int nSrcFieldCount = poSrcDefn->GetFieldCount();
 
     // Initialize the index-to-index map to -1's.
-    int *panMap = static_cast<int *>(CPLMalloc(sizeof(int) * nSrcFieldCount));
-    for (int iField = 0; iField < nSrcFieldCount; ++iField)
-        panMap[iField] = -1;
+    std::vector<int> anMap(nSrcFieldCount, -1);
 
     // Caution: At the time of writing, the MapInfo driver
     // returns NULL until a field has been added.
@@ -5239,7 +5314,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
             iDstField = poDstFDefn->GetFieldIndex(oFieldDefn.GetNameRef());
         if (iDstField >= 0)
         {
-            panMap[iField] = iDstField;
+            anMap[iField] = iDstField;
         }
         else if (poDstLayer->CreateField(&oFieldDefn) == OGRERR_NONE)
         {
@@ -5258,24 +5333,23 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
             }
             else
             {
-                panMap[iField] = nDstFieldCount;
+                anMap[iField] = nDstFieldCount;
                 ++nDstFieldCount;
             }
         }
     }
 
     /* -------------------------------------------------------------------- */
-    OGRCoordinateTransformation *poCT = nullptr;
+    std::unique_ptr<OGRCoordinateTransformation> poCT;
     OGRSpatialReference *sourceSRS = poSrcLayer->GetSpatialRef();
     if (sourceSRS != nullptr && pszSRSWKT != nullptr && !oDstSpaRef.IsEmpty() &&
         sourceSRS->IsSame(&oDstSpaRef) == FALSE)
     {
-        poCT = OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef);
+        poCT.reset(OGRCreateCoordinateTransformation(sourceSRS, &oDstSpaRef));
         if (nullptr == poCT)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "This input/output spatial reference is not supported.");
-            CPLFree(panMap);
             return nullptr;
         }
     }
@@ -5314,34 +5388,29 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
     /* -------------------------------------------------------------------- */
     /*      Transfer features.                                              */
     /* -------------------------------------------------------------------- */
-    OGRFeature *poFeature = nullptr;
-
     poSrcLayer->ResetReading();
 
     if (nGroupTransactions <= 0)
     {
         while (true)
         {
-            poFeature = poSrcLayer->GetNextFeature();
+            auto poFeature =
+                std::unique_ptr<OGRFeature>(poSrcLayer->GetNextFeature());
 
             if (poFeature == nullptr)
                 break;
 
             CPLErrorReset();
-            OGRFeature *poDstFeature =
-                OGRFeature::CreateFeature(poDstLayer->GetLayerDefn());
+            auto poDstFeature =
+                cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
-            if (poDstFeature->SetFrom(poFeature, panMap, TRUE) != OGRERR_NONE)
+            if (poDstFeature->SetFrom(poFeature.get(), anMap.data(), TRUE) !=
+                OGRERR_NONE)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Unable to translate feature " CPL_FRMT_GIB
                          " from layer %s.",
                          poFeature->GetFID(), poSrcDefn->GetName());
-                OGRFeature::DestroyFeature(poFeature);
-                CPLFree(panMap);
-                if (nullptr != poCT)
-                    OCTDestroyCoordinateTransformation(
-                        OGRCoordinateTransformation::ToHandle(poCT));
                 return poDstLayer;
             }
 
@@ -5353,7 +5422,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     if (nullptr == pGeom)
                         continue;
 
-                    const OGRErr eErr = pGeom->transform(poCT);
+                    const OGRErr eErr = pGeom->transform(poCT.get());
                     if (eErr == OGRERR_NONE)
                         continue;
 
@@ -5361,38 +5430,32 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                              "Unable to transform geometry " CPL_FRMT_GIB
                              " from layer %s.",
                              poFeature->GetFID(), poSrcDefn->GetName());
-                    OGRFeature::DestroyFeature(poFeature);
-                    CPLFree(panMap);
-                    OCTDestroyCoordinateTransformation(
-                        OGRCoordinateTransformation::ToHandle(poCT));
                     return poDstLayer;
                 }
             }
 
             poDstFeature->SetFID(poFeature->GetFID());
 
-            OGRFeature::DestroyFeature(poFeature);
-
             CPLErrorReset();
-            if (poDstLayer->CreateFeature(poDstFeature) != OGRERR_NONE)
+            if (poDstLayer->CreateFeature(poDstFeature.get()) != OGRERR_NONE)
             {
-                OGRFeature::DestroyFeature(poDstFeature);
-                CPLFree(panMap);
-                if (nullptr != poCT)
-                    OCTDestroyCoordinateTransformation(
-                        OGRCoordinateTransformation::ToHandle(poCT));
                 return poDstLayer;
             }
-
-            OGRFeature::DestroyFeature(poDstFeature);
         }
     }
     else
     {
-        OGRFeature **papoDstFeature = static_cast<OGRFeature **>(
-            VSI_CALLOC_VERBOSE(sizeof(OGRFeature *), nGroupTransactions));
-
-        bool bStopTransfer = papoDstFeature == nullptr;
+        std::vector<std::unique_ptr<OGRFeature>> apoDstFeatures;
+        try
+        {
+            apoDstFeatures.resize(nGroupTransactions);
+        }
+        catch (const std::exception &e)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
+            return poDstLayer;
+        }
+        bool bStopTransfer = false;
         while (!bStopTransfer)
         {
             /* --------------------------------------------------------------------
@@ -5404,7 +5467,8 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
             int nFeatCount = 0;  // Used after for.
             for (nFeatCount = 0; nFeatCount < nGroupTransactions; ++nFeatCount)
             {
-                poFeature = poSrcLayer->GetNextFeature();
+                auto poFeature =
+                    std::unique_ptr<OGRFeature>(poSrcLayer->GetNextFeature());
 
                 if (poFeature == nullptr)
                 {
@@ -5413,19 +5477,18 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                 }
 
                 CPLErrorReset();
-                papoDstFeature[nFeatCount] =
-                    OGRFeature::CreateFeature(poDstLayer->GetLayerDefn());
+                apoDstFeatures[nFeatCount] =
+                    cpl::make_unique<OGRFeature>(poDstLayer->GetLayerDefn());
 
-                if (papoDstFeature[nFeatCount]->SetFrom(poFeature, panMap,
-                                                        TRUE) != OGRERR_NONE)
+                if (apoDstFeatures[nFeatCount]->SetFrom(
+                        poFeature.get(), anMap.data(), TRUE) != OGRERR_NONE)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Unable to translate feature " CPL_FRMT_GIB
                              " from layer %s.",
                              poFeature->GetFID(), poSrcDefn->GetName());
-                    OGRFeature::DestroyFeature(poFeature);
-                    poFeature = nullptr;
                     bStopTransfer = true;
+                    poFeature.reset();
                     break;
                 }
 
@@ -5434,11 +5497,11 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     for (int iField = 0; iField < nSrcGeomFieldCount; ++iField)
                     {
                         OGRGeometry *pGeom =
-                            papoDstFeature[nFeatCount]->GetGeomFieldRef(iField);
+                            apoDstFeatures[nFeatCount]->GetGeomFieldRef(iField);
                         if (nullptr == pGeom)
                             continue;
 
-                        const OGRErr eErr = pGeom->transform(poCT);
+                        const OGRErr eErr = pGeom->transform(poCT.get());
                         if (eErr == OGRERR_NONE)
                             continue;
 
@@ -5446,18 +5509,15 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                                  "Unable to transform geometry " CPL_FRMT_GIB
                                  " from layer %s.",
                                  poFeature->GetFID(), poSrcDefn->GetName());
-                        OGRFeature::DestroyFeature(poFeature);
                         bStopTransfer = true;
-                        poFeature = nullptr;
+                        poFeature.reset();
                         break;
                     }
                 }
 
                 if (poFeature)
                 {
-                    papoDstFeature[nFeatCount]->SetFID(poFeature->GetFID());
-                    OGRFeature::DestroyFeature(poFeature);
-                    poFeature = nullptr;
+                    apoDstFeatures[nFeatCount]->SetFID(poFeature->GetFID());
                 }
             }
 
@@ -5470,13 +5530,14 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     break;
                 for (int i = 0; i < nFeatCount; ++i)
                 {
-                    if (poDstLayer->CreateFeature(papoDstFeature[i]) !=
+                    if (poDstLayer->CreateFeature(apoDstFeatures[i].get()) !=
                         OGRERR_NONE)
                     {
                         bStopTransfer = true;
                         bStopTransaction = false;
                         break;
                     }
+                    apoDstFeatures[i].reset();
                 }
                 if (bStopTransaction)
                 {
@@ -5488,18 +5549,8 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                     poDstLayer->RollbackTransaction();
                 }
             }
-
-            for (int i = 0; i < nFeatCount; ++i)
-                OGRFeature::DestroyFeature(papoDstFeature[i]);
         }
-        CPLFree(papoDstFeature);
     }
-
-    if (nullptr != poCT)
-        OCTDestroyCoordinateTransformation(
-            OGRCoordinateTransformation::ToHandle(poCT));
-
-    CPLFree(panMap);
 
     return poDstLayer;
 }

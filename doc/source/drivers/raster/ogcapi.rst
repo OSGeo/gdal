@@ -35,7 +35,7 @@ The driver supports opening by:
   the following, specifying a deferred processing
 
   .. code-block:: json
- 
+
    {
        "process" : "https://maps.ecere.com/ogcapi/processes/RenderMap",
        "inputs" : {
@@ -70,51 +70,84 @@ Open options
 
 The following open options are available:
 
-- **API=AUTO/MAPS/TILES/COVERAGE/ITEMS**: Which API to use for data acquisition. Default is
-  AUTO. In AUTO mode, for raster access, coverage is used if available, and
-  fallback first to tiles and finally maps otherwise.
-  In AUTO mode, for vector access, tiles is used if available, and fallback to
-  GeoJSON items otherwise.
+- .. oo:: API
+     :choices: AUTO, MAPS, TILES, COVERAGE, ITEMS
+     :default: AUTO
 
-- **IMAGE_FORMAT=AUTO/PNG/PNG_PREFERRED/JPEG/JPEG_PREFERRED**:
-  Which format to use for pixel acquisition, for tiles or map API.
-  Defaults to AUTO, which means
-  that PNG will be used if available, and fallback to JPEG otherwise.
-  If specifying PNG or JPEG, they must be available, otherwise the driver will
-  return an error. If specifying the one of the PNG_PREFERRED or JPEG_PREFERRED
-  value, the specified format will be used if available, and the driver will
-  fallback to the other format otherwise.
+     Which API to use for data acquisition.
+     In AUTO mode, for raster access, coverage is used if available, and
+     fallback first to tiles and finally maps otherwise.
+     In AUTO mode, for vector access, tiles is used if available, and fallback to
+     GeoJSON items otherwise.
 
-- **VECTOR_FORMAT=AUTO/GEOJSON/GEOJSON_PREFERRED/MVT/MVT_PREFERRED**:
-  Which format to use for vector data acquisition. Defaults to AUTO, which means
-  that MVT (Mapbox Vector Tiles) will be used if available, and fallback to GEOJSON otherwise.
-  If specifying MVT or GEOJSON, they must be available, otherwise the driver will
-  return an error. If specifying the one of the MVT_PREFERRED or GEOJSON_PREFERRED
-  value, the specified format will be used if available, and the driver will
-  fallback to the other format otherwise.
+- .. oo:: IMAGE_FORMAT
+     :choices: AUTO, PNG, PNG_PREFERRED, JPEG, JPEG_PREFERRED
+     :default: AUTO
 
-- **TILEMATRIXSET=id**:
-  Identifier of the required tile matrix set. Only used with the tiles API.
-  If this tile matrix set is not available, the driver will fail.
-  If this option is not specified, the driver will automatically select one of
-  the available tile matrix sets.
-  TILEMATRIXSET and PREFERRED_TILEMATRIXSET options are mutually exclusive.
+     Which format to use for pixel acquisition, for tiles or map API.
+     Defaults to AUTO, which means
+     that PNG will be used if available, and fallback to JPEG otherwise.
+     If specifying PNG or JPEG, they must be available, otherwise the driver will
+     return an error. If specifying the one of the PNG_PREFERRED or JPEG_PREFERRED
+     value, the specified format will be used if available, and the driver will
+     fallback to the other format otherwise.
 
-- **PREFERRED_TILEMATRIXSET=id**:
-  Identifier of the preferred tile matrix set. Only used with the tiles API.
-  If this tile matrix set is not available, or if this option is not specified,
-  the driver will automatically select one of the available tile matrix sets.
-  TILEMATRIXSET and PREFERRED_TILEMATRIXSET options are mutually exclusive.
+- .. oo:: VECTOR_FORMAT
+     :choices: AUTO, GEOJSON, GEOJSON_PREFERRED, MVT, MVT_PREFERRED
+     :default: AUTO
 
-- **TILEMATRIX=id**: Identifier of a particular tile matrix (zoom level) of
-  the select tile matrix set. If not specified, all available tile matrix are
-  returned as overviews (for raster data), or layers (for vector data)
-  
-- **CACHE=YES/NO**: Whether to enable block/tile caching. Only for tiles API,
-  and with raster data. Defaults to YES.
-  
-- **MAX_CONNECTIONS=number**: Maximum number of connections for parallel tile
-  downloading. Only for tiles API, and with raster data. Defaults to 5.
-  
-- **MINX/MINY/MAXX/MAXY=number**: Bounds in SRS of TileMatrixSet to which to
-  restrict the exposed dataset/layers.
+     Which format to use for vector data acquisition. Defaults to AUTO, which means
+     that MVT (Mapbox Vector Tiles) will be used if available, and fallback to GEOJSON otherwise.
+     If specifying MVT or GEOJSON, they must be available, otherwise the driver will
+     return an error. If specifying the one of the MVT_PREFERRED or GEOJSON_PREFERRED
+     value, the specified format will be used if available, and the driver will
+     fallback to the other format otherwise.
+
+- .. oo:: TILEMATRIXSET
+     :choices: <id>
+
+     Identifier of the required tile matrix set. Only used with the tiles API.
+     If this tile matrix set is not available, the driver will fail.
+     If this option is not specified, the driver will automatically select one of
+     the available tile matrix sets.
+     TILEMATRIXSET and PREFERRED_TILEMATRIXSET options are mutually exclusive.
+
+- .. oo:: PREFERRED_TILEMATRIXSET
+     :choices: <id>
+
+     Identifier of the preferred tile matrix set. Only used with the tiles API.
+     If this tile matrix set is not available, or if this option is not specified,
+     the driver will automatically select one of the available tile matrix sets.
+     TILEMATRIXSET and PREFERRED_TILEMATRIXSET options are mutually exclusive.
+
+- .. oo:: TILEMATRIX
+     :choices: <id>
+
+     Identifier of a particular tile matrix (zoom level) of
+     the select tile matrix set. If not specified, all available tile matrix are
+     returned as overviews (for raster data), or layers (for vector data)
+
+- .. oo:: CACHE
+     :choices: YES, NO
+     :default: YES
+
+     Whether to enable block/tile caching. Only for tiles API,
+     and with raster data.
+
+- .. oo:: MAX_CONNECTIONS
+     :choices: <int>
+     :default: 5
+
+     Maximum number of connections for parallel tile
+     downloading. Only for tiles API, and with raster data.
+
+- .. oo:: MINX
+
+- .. oo:: MINY
+
+- .. oo:: MAXX
+
+- .. oo:: MAXY
+
+     Bounds in SRS of TileMatrixSet to which to
+     restrict the exposed dataset/layers.

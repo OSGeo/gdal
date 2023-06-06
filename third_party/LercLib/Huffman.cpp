@@ -267,10 +267,13 @@ bool Huffman::BuildTreeFromCodes(int& numBitsLUT)
     {
       code <<= (numBitsLUT - len);
       unsigned int numEntries = 1 << (numBitsLUT - len);
-      pair<short, short> entry((short)len, (short)k);
 
       for (unsigned int j = 0; j < numEntries; j++)
-        m_decodeLUT[code | j] = entry;    // add the duplicates
+      {
+        auto& entry = m_decodeLUT[code | j];
+        entry.first = (short)len;    // add the duplicates
+        entry.second = (short)k;    // add the duplicates
+      }
     }
     else    // for the codes too long for the LUT, count how many leading bits are 0
     {

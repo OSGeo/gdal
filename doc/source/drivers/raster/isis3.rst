@@ -164,71 +164,145 @@ creation option.
 
 The available creation options are:
 
--  **DATA_LOCATION**\ =LABEL/EXTERNAL/GEOTIFF. To specify the location
-   of pixel data. The default value is LABEL, ie imagery immediately
-   follows the label. If using EXTERNAL, the imagery is put in a raw
-   file whose filename is the main filename with a .cub extension. If
-   using GEOTIFF, the imagery is put in a separate GeoTIFF file, whose
-   filename is the main filename with a .tif extension.
--  **GEOTIFF_AS_REGULAR_EXTERNAL**\ =YES/NO. Whether the GeoTIFF file,
-   if uncompressed, should be registered as a regular raw file. Defaults
-   to YES, so as to maximize the compatibility with earlier version of
-   the ISIS3 driver.
--  **GEOTIFF_OPTIONS**\ =string. Comma separated list of KEY=VALUE
-   tuples to forward to the GeoTIFF driver. e.g.
-   GEOTIFF_OPTIONS=COMPRESS=LZW.
--  **EXTERNAL_FILENAME**\ =filename. Override default external filename.
-   Only for DATA_LOCATION=EXTERNAL or GEOTIFF.
--  **TILED**\ =YES/NO. Whether the pixel data should be tiled. Default
-   is NO (ie band sequential organization).
--  **BLOCKXSIZE**\ =int_value. Tile width in pixels. Only used if
-   TILED=YES. Defaults to 256.
--  **BLOCKYSIZE**\ =int_value. Tile height in pixels. Only used if
-   TILED=YES. Defaults to 256.
--  **COMMENT**\ =string. Comment to add into the label.
--  **LATITUDE_TYPE**\ =Planetocentric/Planetographic. Value of
-   Mapping.LatitudeType. Defaults to Planetocentric. If specified, and
-   USE_SRC_MAPPING is in effect, this will be taken into account to
-   override the source LatitudeType.
--  **LONGITUDE_DIRECTION**\ =PositiveEast/PositiveWest. Value of
-   Mapping.LongitudeDirection. Defaults to PositiveEast. If specified,
-   and USE_SRC_MAPPING is in effect, this will be taken into account to
-   override the source LongitudeDirection.
--  **TARGET_NAME**\ =string. Value of Mapping.TargetName. This is
-   normally deduced from the SRS datum name. If specified, and
-   USE_SRC_MAPPING is in effect, this will be taken into account to
-   override the source TargetName.
--  **FORCE_360**\ =YES/NO. Whether to force longitudes in the [0, 360]
-   range. Defaults to NO.
--  **WRITE_BOUNDING_DEGREES**\ =YES/NO. Whether to write
-   Min/MaximumLong/ Latitude values. Defaults to YES.
--  **BOUNDING_DEGREES**\ =min_long,min_lat,max_long,max_lat. Manually
-   set bounding box (values will not be modified by LONGITUDE_DIRECTION
-   or FORCE_360 options).
--  **USE_SRC_LABEL**\ =YES/NO. Whether to use source label in ISIS3 to
-   ISIS3 conversions. Defaults to YES.
--  **USE_SRC_MAPPING**\ =YES/NO. Whether to use Mapping group from
-   source label in ISIS3 to ISIS3 conversions. Defaults to NO (that is
-   to say that the content of Mapping group will be created from new
-   dataset geotransform and projection). Only used if USE_SRC_LABEL=YES
--  **USE_SRC_HISTORY**\ =YES/NO. Whether to use the content pointed by
-   the source History object in ISIS3 to ISIS3 conversions, and write it
-   to the new dataset. Defaults to YES. Only used if USE_SRC_LABEL=YES.
-   If ADD_GDAL_HISTORY and USE_SRC_HISTORY are set to YES (or
-   unspecified), a new history section will be appended to the existing
-   history.
--  **ADD_GDAL_HISTORY**\ =YES/NO. Whether to add GDAL specific history
-   in the content pointed by the History object in ISIS3 to ISIS3
-   conversions. Defaults to YES. Only used if USE_SRC_LABEL=YES. If
-   ADD_GDAL_HISTORY and USE_SRC_HISTORY are set to YES (or unspecified),
-   a new history section will be appended to the existing history. When
-   ADD_GDAL_HISTORY=YES, the history is normally composed from current
-   GDAL version, binary name and path, host name, user name and source
-   and target filenames. It is possible to completely override it by
-   specifying the GDAL_HISTORY option.
--  **GDAL_HISTORY**\ =string. Manually defined GDAL history. Must be
-   formatted as ISIS3 PDL. If not specified, it is automatically
-   composed. Only used if ADD_GDAL_HISTORY=YES (or unspecified).
+-  .. co:: DATA_LOCATION
+      :choices: LABEL, EXTERNAL, GEOTIFF.
+      :default: LABEL
+
+      To specify the location
+      of pixel data. The default value is LABEL, ie imagery immediately
+      follows the label. If using EXTERNAL, the imagery is put in a raw
+      file whose filename is the main filename with a .cub extension. If
+      using GEOTIFF, the imagery is put in a separate GeoTIFF file, whose
+      filename is the main filename with a .tif extension.
+
+-  .. co:: GEOTIFF_AS_REGULAR_EXTERNAL
+      :choices: YES, NO
+      :default: YES
+
+      Whether the GeoTIFF file,
+      if uncompressed, should be registered as a regular raw file. Defaults
+      to YES, so as to maximize the compatibility with earlier version of
+      the ISIS3 driver.
+
+-  .. co:: GEOTIFF_OPTIONS
+
+      Comma separated list of KEY=VALUE
+      tuples to forward to the GeoTIFF driver. e.g.
+      ``GEOTIFF_OPTIONS=COMPRESS=LZW``.
+
+-  .. co:: EXTERNAL_FILENAME
+      :choices: <filena,e>
+
+      Override default external filename.
+      Only for DATA_LOCATION=EXTERNAL or GEOTIFF.
+
+-  .. co:: TILED
+      :choices: YES, NO
+      :default: NO
+
+      Whether the pixel data should be tiled. Default
+      is NO (ie band sequential organization).
+
+-  .. co:: BLOCKXSIZE
+      :default: 256
+
+      Tile width in pixels. Only used if :co:`TILED=YES`.
+
+-  .. co:: BLOCKYSIZE
+      :default: 256
+
+      Tile height in pixels. Only used if :co:`TILED=YES`.
+
+-  .. co:: COMMENT
+
+      Comment to add into the label.
+
+-  .. co:: LATITUDE_TYPE
+      :choices: Planetocentric, Planetographic
+      :default: Planetocentric
+
+      Value of Mapping.LatitudeType. If specified, and
+      :co:`USE_SRC_MAPPING` is in effect, this will be taken into account to
+      override the source LatitudeType.
+
+-  .. co:: LONGITUDE_DIRECTION
+      :choices: PositiveEast, PositiveWest
+      :default: PositiveEast
+
+      Value of Mapping.LongitudeDirection. If specified,
+      and :co:`USE_SRC_MAPPING` is in effect, this will be taken into account to
+      override the source LongitudeDirection.
+
+-  .. co:: TARGET_NAME
+
+      Value of Mapping.TargetName. This is
+      normally deduced from the SRS datum name. If specified, and
+      :co:`USE_SRC_MAPPING` is in effect, this will be taken into account to
+      override the source TargetName.
+
+-  .. co:: FORCE_360
+      :choices: YES, NO
+      :default: NO
+
+      Whether to force longitudes in the [0, 360] range.
+
+-  .. co:: WRITE_BOUNDING_DEGREES
+      :choices: YES, NO
+      :default: YES
+
+      Whether to write Min/MaximumLong/ Latitude values.
+
+-  .. co:: BOUNDING_DEGREES
+      :choices: <min_long\,min_lat\,max_long\,max_lat>
+
+      Manually set bounding box (values will not be modified by
+      :co:`LONGITUDE_DIRECTION` or :co:`FORCE_360` options).
+
+-  .. co:: USE_SRC_LABEL
+      :choices: YES, NO
+      :default: YES
+
+      Whether to use source label in ISIS3 to ISIS3 conversions.
+
+-  .. co:: USE_SRC_MAPPING
+      :choices: YES, NO
+      :default: NO
+
+      Whether to use Mapping group from
+      source label in ISIS3 to ISIS3 conversions. Defaults to NO (that is
+      to say that the content of Mapping group will be created from new
+      dataset geotransform and projection). Only used if :co:`USE_SRC_LABEL=YES`
+
+-  .. co:: USE_SRC_HISTORY
+      :choices: YES, NO
+      :default: YES
+
+      Whether to use the content pointed by
+      the source History object in ISIS3 to ISIS3 conversions, and write it
+      to the new dataset. Only used if :co:`USE_SRC_LABEL=YES`.
+      If :co:`ADD_GDAL_HISTORY` and :co:`USE_SRC_HISTORY` are set to YES (or
+      unspecified), a new history section will be appended to the existing
+      history.
+
+-  .. co:: ADD_GDAL_HISTORY
+      :choices: YES, NO
+      :default: YES
+
+      Whether to add GDAL specific history
+      in the content pointed by the History object in ISIS3 to ISIS3
+      conversions. Only used if :co:`USE_SRC_LABEL=YES`. If
+      :co:`ADD_GDAL_HISTORY` and :co:`USE_SRC_HISTORY` are set to YES (or unspecified),
+      a new history section will be appended to the existing history. When
+      :co:`ADD_GDAL_HISTORY=YES`, the history is normally composed from current
+      GDAL version, binary name and path, host name, user name and source
+      and target filenames. It is possible to completely override it by
+      specifying the :co:`GDAL_HISTORY` option.
+
+-  .. co:: GDAL_HISTORY
+
+      Manually defined GDAL history. Must be
+      formatted as ISIS3 PDL. If not specified, it is automatically
+      composed. Only used if :co:`ADD_GDAL_HISTORY=YES` (or unspecified).
 
 Examples
 --------
@@ -274,6 +348,6 @@ Python :
 See Also
 --------
 
--  Implemented as ``gdal/frmts/pds/isis3dataset.cpp``.
+-  Implemented as :source_file:`frmts/pds/isis3dataset.cpp`.
 -  :ref:`GDAL PDS Driver <raster.pds>`
 -  :ref:`GDAL ISIS2 Driver <raster.isis2>`

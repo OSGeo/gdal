@@ -189,7 +189,32 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
     }
     else
     {
-        SerializeNumericNoData(oRoot);
+        if (m_oType.GetNumericDataType() == GDT_CFloat32 ||
+            m_oType.GetNumericDataType() == GDT_CFloat64)
+        {
+            double adfNoDataValue[2];
+            GDALCopyWords(m_pabyNoData, m_oType.GetNumericDataType(), 0,
+                          adfNoDataValue, GDT_CFloat64, 0, 1);
+            CPLJSONArray oArray;
+            for (int i = 0; i < 2; ++i)
+            {
+                if (std::isnan(adfNoDataValue[i]))
+                    oArray.Add("NaN");
+                else if (adfNoDataValue[i] ==
+                         std::numeric_limits<double>::infinity())
+                    oArray.Add("Infinity");
+                else if (adfNoDataValue[i] ==
+                         -std::numeric_limits<double>::infinity())
+                    oArray.Add("-Infinity");
+                else
+                    oArray.Add(adfNoDataValue[i]);
+            }
+            oRoot.Add("fill_value", oArray);
+        }
+        else
+        {
+            SerializeNumericNoData(oRoot);
+        }
     }
 
     if (m_poCodecs)
@@ -969,6 +994,75 @@ static GDALExtendedDataType ParseDtype(const CPLJSONObject &obj,
 }
 
 /************************************************************************/
+/*                    ParseNoDataStringAsDouble()                       */
+/************************************************************************/
+
+static double ParseNoDataStringAsDouble(const std::string &osVal, bool &bOK)
+{
+    double dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
+    if (osVal == "NaN")
+    {
+        // initialized above
+    }
+    else if (osVal == "Infinity" || osVal == "+Infinity")
+    {
+        dfNoDataValue = std::numeric_limits<double>::infinity();
+    }
+    else if (osVal == "-Infinity")
+    {
+        dfNoDataValue = -std::numeric_limits<double>::infinity();
+    }
+    else
+    {
+        bOK = false;
+    }
+    return dfNoDataValue;
+}
+
+/************************************************************************/
+/*                     ParseNoDataComponent()                           */
+/************************************************************************/
+
+template <typename T, typename Tint>
+static T ParseNoDataComponent(const CPLJSONObject &oObj, bool &bOK)
+{
+    if (oObj.GetType() == CPLJSONObject::Type::Integer ||
+        oObj.GetType() == CPLJSONObject::Type::Long ||
+        oObj.GetType() == CPLJSONObject::Type::Double)
+    {
+        return static_cast<T>(oObj.ToDouble());
+    }
+    else if (oObj.GetType() == CPLJSONObject::Type::String)
+    {
+        const auto osVal = oObj.ToString();
+        if (STARTS_WITH(osVal.c_str(), "0x"))
+        {
+            if (osVal.size() > 2 + 2 * sizeof(T))
+            {
+                bOK = false;
+                return 0;
+            }
+            Tint nVal = static_cast<Tint>(
+                std::strtoull(osVal.c_str() + 2, nullptr, 16));
+            T fVal;
+            static_assert(sizeof(nVal) == sizeof(fVal),
+                          "sizeof(nVal) == sizeof(dfVal)");
+            memcpy(&fVal, &nVal, sizeof(nVal));
+            return fVal;
+        }
+        else
+        {
+            return static_cast<T>(ParseNoDataStringAsDouble(osVal, bOK));
+        }
+    }
+    else
+    {
+        bOK = false;
+        return 0;
+    }
+}
+
+/************************************************************************/
 /*                     ZarrV3Group::LoadArray()                         */
 /************************************************************************/
 
@@ -1302,44 +1396,16 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     {
         CPLError(CE_Warning, CPLE_AppDefined, "fill_value = null is invalid");
     }
+    else if (GDALDataTypeIsComplex(oType.GetNumericDataType()) &&
+             eFillValueType != CPLJSONObject::Type::Array)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+        return nullptr;
+    }
     else if (eFillValueType == CPLJSONObject::Type::String)
     {
         const auto osFillValue = oFillValue.ToString();
-        if (osFillValue == "NaN" || osFillValue == "Infinity" ||
-            osFillValue == "-Infinity")
-        {
-            double dfNoDataValue = std::numeric_limits<double>::quiet_NaN();
-            if (osFillValue == "NaN")
-            {
-                // initialized above
-            }
-            else if (osFillValue == "Infinity")
-            {
-                dfNoDataValue = std::numeric_limits<double>::infinity();
-            }
-            else /* if (osFillValue == "-Infinity") */
-            {
-                dfNoDataValue = -std::numeric_limits<double>::infinity();
-            }
-            if (oType.GetNumericDataType() == GDT_Float32)
-            {
-                const float fNoDataValue = static_cast<float>(dfNoDataValue);
-                abyNoData.resize(sizeof(fNoDataValue));
-                memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
-            }
-            else if (oType.GetNumericDataType() == GDT_Float64)
-            {
-                abyNoData.resize(sizeof(dfNoDataValue));
-                memcpy(&abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue));
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid fill_value for this data type");
-                return nullptr;
-            }
-        }
-        else if (STARTS_WITH(osFillValue.c_str(), "0x"))
+        if (STARTS_WITH(osFillValue.c_str(), "0x"))
         {
             if (osFillValue.size() > 2 + 2 * oType.GetSize())
             {
@@ -1397,8 +1463,30 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
         else
         {
-            CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
-            return nullptr;
+            bool bOK = true;
+            double dfNoDataValue = ParseNoDataStringAsDouble(osFillValue, bOK);
+            if (!bOK)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                return nullptr;
+            }
+            else if (oType.GetNumericDataType() == GDT_Float32)
+            {
+                const float fNoDataValue = static_cast<float>(dfNoDataValue);
+                abyNoData.resize(sizeof(fNoDataValue));
+                memcpy(&abyNoData[0], &fNoDataValue, sizeof(fNoDataValue));
+            }
+            else if (oType.GetNumericDataType() == GDT_Float64)
+            {
+                abyNoData.resize(sizeof(dfNoDataValue));
+                memcpy(&abyNoData[0], &dfNoDataValue, sizeof(dfNoDataValue));
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid fill_value for this data type");
+                return nullptr;
+            }
         }
     }
     else if (eFillValueType == CPLJSONObject::Type::Boolean ||
@@ -1433,6 +1521,57 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
                           oType.GetNumericDataType(), 0, 1);
         }
     }
+    else if (eFillValueType == CPLJSONObject::Type::Array)
+    {
+        const auto oFillValueArray = oFillValue.ToArray();
+        if (oFillValueArray.Size() == 2 &&
+            GDALDataTypeIsComplex(oType.GetNumericDataType()))
+        {
+            if (oType.GetNumericDataType() == GDT_CFloat64)
+            {
+                bool bOK = true;
+                const double adfNoDataValue[2] = {
+                    ParseNoDataComponent<double, uint64_t>(oFillValueArray[0],
+                                                           bOK),
+                    ParseNoDataComponent<double, uint64_t>(oFillValueArray[1],
+                                                           bOK),
+                };
+                if (!bOK)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                    return nullptr;
+                }
+                abyNoData.resize(oType.GetSize());
+                CPLAssert(sizeof(adfNoDataValue) == oType.GetSize());
+                memcpy(abyNoData.data(), adfNoDataValue,
+                       sizeof(adfNoDataValue));
+            }
+            else
+            {
+                CPLAssert(oType.GetNumericDataType() == GDT_CFloat32);
+                bool bOK = true;
+                const float afNoDataValue[2] = {
+                    ParseNoDataComponent<float, uint32_t>(oFillValueArray[0],
+                                                          bOK),
+                    ParseNoDataComponent<float, uint32_t>(oFillValueArray[1],
+                                                          bOK),
+                };
+                if (!bOK)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+                    return nullptr;
+                }
+                abyNoData.resize(oType.GetSize());
+                CPLAssert(sizeof(afNoDataValue) == oType.GetSize());
+                memcpy(abyNoData.data(), afNoDataValue, sizeof(afNoDataValue));
+            }
+        }
+        else
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
+            return nullptr;
+        }
+    }
     else
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid fill_value");
@@ -1459,6 +1598,8 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     auto poArray =
         ZarrV3Array::Create(m_poSharedResource, GetFullName(), osArrayName,
                             aoDims, oType, aoDtypeElts, anBlockSize);
+    if (!poArray)
+        return nullptr;
     poArray->SetUpdatable(m_bUpdatable);  // must be set before SetAttributes()
     poArray->SetFilename(osZarrayFilename);
     poArray->SetIsV2ChunkKeyEncoding(bV2ChunkKeyEncoding);

@@ -937,10 +937,23 @@ OGRLayer *OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
         return nullptr;
     }
 
+    const bool bCreateCSVT =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "CREATE_CSVT", "NO"));
+
     // What filename would we use?
     CPLString osFilename;
 
-    if (osDefaultCSVName != "")
+    if (strcmp(pszName, "/vsistdout/") == 0)
+    {
+        osFilename = pszName;
+        if (bCreateCSVT)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "CREATE_CSVT is not compatible with /vsistdout/ output");
+            return nullptr;
+        }
+    }
+    else if (osDefaultCSVName != "")
     {
         osFilename = CPLFormFilename(pszName, osDefaultCSVName, nullptr);
         osDefaultCSVName = "";
@@ -1067,13 +1080,12 @@ OGRLayer *OGRCSVDataSource::ICreateLayer(const char *pszLayerName,
     }
 
     // Should we create a CSVT file?
-    const char *pszCreateCSVT = CSLFetchNameValue(papszOptions, "CREATE_CSVT");
-    if (pszCreateCSVT && CPLTestBool(pszCreateCSVT))
+    if (bCreateCSVT)
     {
         poCSVLayer->SetCreateCSVT(true);
 
         // Create .prj file.
-        if (poSpatialRef != nullptr && osFilename != "/vsistdout/")
+        if (poSpatialRef != nullptr)
         {
             char *pszWKT = nullptr;
             poSpatialRef->exportToWkt(&pszWKT);

@@ -478,6 +478,59 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
+/*                       ZarrDatasetDelete()                            */
+/************************************************************************/
+
+static CPLErr ZarrDatasetDelete(const char *pszFilename)
+{
+    if (STARTS_WITH(pszFilename, "ZARR:"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Delete() only supported on ZARR connection names "
+                 "not starting with the ZARR: prefix");
+        return CE_Failure;
+    }
+    return VSIRmdirRecursive(pszFilename) == 0 ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                       ZarrDatasetRename()                            */
+/************************************************************************/
+
+static CPLErr ZarrDatasetRename(const char *pszNewName, const char *pszOldName)
+{
+    if (STARTS_WITH(pszNewName, "ZARR:") || STARTS_WITH(pszOldName, "ZARR:"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "Rename() only supported on ZARR connection names "
+                 "not starting with the ZARR: prefix");
+        return CE_Failure;
+    }
+    return VSIRename(pszOldName, pszNewName) == 0 ? CE_None : CE_Failure;
+}
+
+/************************************************************************/
+/*                       ZarrDatasetCopyFiles()                         */
+/************************************************************************/
+
+static CPLErr ZarrDatasetCopyFiles(const char *pszNewName,
+                                   const char *pszOldName)
+{
+    if (STARTS_WITH(pszNewName, "ZARR:") || STARTS_WITH(pszOldName, "ZARR:"))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "CopyFiles() only supported on ZARR connection names "
+                 "not starting with the ZARR: prefix");
+        return CE_Failure;
+    }
+    // VSISync() returns true in case of success
+    return VSISync((std::string(pszOldName) + '/').c_str(), pszNewName, nullptr,
+                   nullptr, nullptr, nullptr)
+               ? CE_None
+               : CE_Failure;
+}
+
+/************************************************************************/
 /*                           ZarrDriver()                               */
 /************************************************************************/
 
@@ -1408,6 +1461,9 @@ void GDALRegister_Zarr()
     poDriver->pfnOpen = ZarrDataset::Open;
     poDriver->pfnCreateMultiDimensional = ZarrDataset::CreateMultiDimensional;
     poDriver->pfnCreate = ZarrDataset::Create;
+    poDriver->pfnDelete = ZarrDatasetDelete;
+    poDriver->pfnRename = ZarrDatasetRename;
+    poDriver->pfnCopyFiles = ZarrDatasetCopyFiles;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

@@ -4428,6 +4428,17 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         bool bFinished = false;
         std::mutex mutex{};
         std::condition_variable cv{};
+
+        void SetSrcMaskBufferHolder(
+            const std::shared_ptr<PointerHolder> &oSrcMaskBufferHolderIn)
+        {
+            oSrcMaskBufferHolder = oSrcMaskBufferHolderIn;
+        }
+        void SetSrcBufferHolder(
+            const std::shared_ptr<PointerHolder> &oSrcBufferHolderIn)
+        {
+            oSrcBufferHolder = oSrcBufferHolderIn;
+        }
     };
 
     // Thread function to resample
@@ -4457,7 +4468,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
                 &(poJob->eDstBufferDataType), poJob->pszResampling);
         }
 
-        poJob->oDstBufferHolder.reset(new PointerHolder(poJob->pDstBuffer));
+        poJob->oDstBufferHolder =
+            cpl::make_unique<PointerHolder>(poJob->pDstBuffer);
 
         {
             std::lock_guard<std::mutex> guard(poJob->mutex);
@@ -4692,10 +4704,10 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             }
         }
 
-        std::shared_ptr<PointerHolder> oSrcBufferHolder(
-            new PointerHolder(poJobQueue ? pChunk : nullptr));
-        std::shared_ptr<PointerHolder> oSrcMaskBufferHolder(
-            new PointerHolder(poJobQueue ? pabyChunkNodataMask : nullptr));
+        auto oSrcBufferHolder =
+            std::make_shared<PointerHolder>(poJobQueue ? pChunk : nullptr);
+        auto oSrcMaskBufferHolder = std::make_shared<PointerHolder>(
+            poJobQueue ? pabyChunkNodataMask : nullptr);
 
         for (int iOverview = 0; iOverview < nOverviewCount && eErr == CE_None;
              ++iOverview)
@@ -4759,8 +4771,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
 
             if (poJobQueue)
             {
-                poJob->oSrcMaskBufferHolder = oSrcMaskBufferHolder;
-                poJob->oSrcBufferHolder = oSrcBufferHolder;
+                poJob->SetSrcMaskBufferHolder(oSrcMaskBufferHolder);
+                poJob->SetSrcBufferHolder(oSrcBufferHolder);
                 poJobQueue->SubmitJob(JobResampleFunc, poJob.get());
                 jobList.emplace_back(std::move(poJob));
             }

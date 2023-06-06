@@ -48,16 +48,32 @@ Float32.
 Creation options
 ----------------
 
--  **COLUMN_SEPARATOR=**\ a_value : where a_value is a string used to
-   separate the values of the X,Y and Z columns. Defaults to one space
-   character
--  **ADD_HEADER_LINE=**\ YES/NO : whether an header line must be written
-   (content is X <col_sep> Y <col_sep> Z) . Defaults to NO
--  **SIGNIFICANT_DIGITS=**\ a_value : where a_value specifies the number
-   of significant digits to output (%g format; is defaults with 18)
--  **DECIMAL_PRECISION=**\ a_value : where a_value specifies the number
-   of decimal places to output when writing floating-point numbers (%f
-   format; alternative to SIGNIFICANT_DIGITS).
+-  .. co:: COLUMN_SEPARATOR
+      :choices: <string>
+
+      String used to
+      separate the values of the X,Y and Z columns. Defaults to one space
+      character
+
+-  .. co:: ADD_HEADER_LINE
+      :choices: YES, NO
+      :default: NO
+
+      Whether an header line must be written
+      (content is X <col_sep> Y <col_sep> Z).
+
+-  .. co:: SIGNIFICANT_DIGITS
+      :choices: <integer>
+      :default: 18
+
+      Specifies the number of significant digits to output (%g format)
+
+-  .. co:: DECIMAL_PRECISION
+      :choices: <integer>
+
+      Specifies the number
+      of decimal places to output when writing floating-point numbers (%f
+      format; alternative to :co:`SIGNIFICANT_DIGITS`).
 
 Driver capabilities
 -------------------

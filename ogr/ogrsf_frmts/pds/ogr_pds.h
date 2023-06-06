@@ -64,7 +64,7 @@ class OGRPDSLayer final : public OGRLayer,
 {
     OGRFeatureDefn *poFeatureDefn;
 
-    CPLString osTableID;
+    std::string osTableID;
     VSILFILE *fpPDS;
     int nRecords;
     int nStartBytes;
@@ -76,16 +76,17 @@ class OGRPDSLayer final : public OGRLayer,
 
     FieldDesc *pasFieldDesc;
 
-    void ReadStructure(CPLString osStructureFilename);
+    void ReadStructure(const std::string &osStructureFilename);
     OGRFeature *GetNextRawFeature();
 
     CPL_DISALLOW_COPY_ASSIGN(OGRPDSLayer)
 
   public:
-    OGRPDSLayer(CPLString osTableID, const char *pszLayerName, VSILFILE *fp,
-                CPLString osLabelFilename, CPLString osStructureFilename,
-                int nRecords, int nStartBytes, int nRecordSize,
-                GByte *pabyRecord, bool bIsASCII);
+    OGRPDSLayer(const std::string &osTableID, const char *pszLayerName,
+                VSILFILE *fp, const std::string &osLabelFilename,
+                const std::string &osStructureFilename, int nRecords,
+                int nStartBytes, int nRecordSize, GByte *pabyRecord,
+                bool bIsASCII);
     virtual ~OGRPDSLayer();
 
     virtual void ResetReading() override;

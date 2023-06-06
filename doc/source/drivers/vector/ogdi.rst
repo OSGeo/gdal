@@ -26,11 +26,7 @@ For drivers such as VRF this can result in a lot of layers. Each of the
 layers has an OGR name based on the OGDI name plus an underscore and the
 family name. For instance a layer might be called
 **watrcrsl@hydro(*)_line** if coming out of the VRF driver.
-
-Setting the :decl_configoption:`OGR_OGDI_LAUNDER_LAYER_NAMES`
-configuration option (or environment variable) to YES causes the layer
-names to be simplified. For example : *watrcrsl_hydro* instead of
-'watrcrsl@hydro(*)_line'
+(layer names can be simplified with :config:`OGR_OGDI_LAUNDER_LAYER_NAMES=YES`)
 
 Alternatively to accessing all the layers in a datastore, it is possible
 to open a particular layer using a customized filename consisting of the
@@ -67,6 +63,20 @@ emitted as regular GDAL errors.
 
 Note: be aware that this is a work in progress. Not all recoverable
 errors can be recovered, and some errors might be recovered silently.
+
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+-  .. config:: OGR_OGDI_LAUNDER_LAYER_NAMES
+      :choices: YES, NO
+      :default: NO
+
+      If ``YES``, simplify layer names. For example : *watrcrsl_hydro* instead
+      of 'watrcrsl@hydro(*)_line'
+
 
 Examples
 --------

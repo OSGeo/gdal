@@ -32,7 +32,7 @@ grid_cell2.gz on the USGS site.
 -  `USGS LULC data at 250K and
    100K <http://edcftp.cr.usgs.gov/pub/data/LULC>`__
 
-NOTE: Implemented as ``gdal/frmts/ctg/ctgdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/ctg/ctgdataset.cpp`.
 
 Driver capabilities
 -------------------

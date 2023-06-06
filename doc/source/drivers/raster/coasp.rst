@@ -8,5 +8,5 @@ COASP --  DRDC COASP SAR Processor Raster
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/coasp/coasp_dataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/coasp/coasp_dataset.cpp`.
 

@@ -67,7 +67,7 @@ Paging
 ------
 
 Features are retrieved from the server by chunks of 500 by default. This
-number can be altered with the :decl_configoption:`CARTO_PAGE_SIZE` configuration option.
+number can be altered with the :config:`CARTO_PAGE_SIZE` configuration option.
 
 Write support
 -------------
@@ -96,9 +96,9 @@ of commands due to many client/server exchanges.
 
 So, on a newly created layer, the ``INSERT`` of
 :cpp:func:`OGRFeature::CreateFeature` operations are grouped together in chunks
-until they reach 15 MB (can be changed with the CARTO_MAX_CHUNK_SIZE
+until they reach 15 MB (can be changed with the :config:`CARTO_MAX_CHUNK_SIZE`
 configuration option, with a value in MB), at which point they are transferred
-to the server. By setting CARTO_MAX_CHUNK_SIZE to 0, immediate transfer occurs.
+to the server. By setting :config:`CARTO_MAX_CHUNK_SIZE` to 0, immediate transfer occurs.
 
 .. warning::
 
@@ -119,50 +119,90 @@ Open options
 
 The following open options are available:
 
--  **BATCH_INSERT**\ =YES/NO: Whether to group feature insertions in a
-   batch. Defaults to YES. Only apply in creation or update mode.
--  **COPY_MODE**\ =YES/NO: Using COPY for insertions and reads can
-   result in a performance improvement. Defaults to YES.
+-  .. oo:: BATCH_INSERT
+      :choices: YES, NO
+      :default: YES
+
+      Whether to group feature insertions in a
+      batch. Only apply in creation or update mode.
+
+-  .. oo:: COPY_MODE
+      :choices: YES, NO
+      :default: YES
+
+      Using COPY for insertions and reads can
+      result in a performance improvement.
 
 Layer creation options
 ----------------------
 
 The following layer creation options are available:
 
--  **OVERWRITE**\ =YES/NO: Whether to overwrite an existing table with
-   the layer name to be created. Defaults to NO.
--  **GEOMETRY_NULLABLE**\ =YES/NO: Whether the values of the geometry
-   column can be NULL. Defaults to YES.
--  **CARTODBFY**\ =YES/NO: Whether the created layer should be
-   "Cartodbifi'ed" (i.e. registered in dashboard). Defaults to YES.
-   Requires:
+-  .. lco:: OVERWRITE
+      :choices: YES, NO
+      :default: NO
+
+      Whether to overwrite an existing table with
+      the layer name to be created.
+
+-  .. lco:: GEOMETRY_NULLABLE
+      :choices: YES, NO
+      :default: YES
+
+      Whether the values of the geometry column can be NULL.
+
+-  .. lco:: CARTODBFY
+      :choices: YES, NO
+      :default: YES
+
+      Whether the created layer should be
+      "Cartodbifi'ed" (i.e. registered in dashboard).
+      Requires:
 
    -  **SRS**: Output SRS must be EPSG:4326. You can use ``-a_srs`` or
       ``-t_srs`` to assign or transform to 4326 before importing.
    -  **Geometry type**: Must be different than NONE. You can set to
       something generic with ``-nlt GEOMETRY``.
 
--  **LAUNDER**\ =YES/NO: This may be "YES" to force new fields created
-   on this layer to have their field names "laundered" into a form more
-   compatible with PostgreSQL. This converts to lower case and converts
-   some special characters like "-" and "#" to "_". If "NO" exact names
-   are preserved. The default value is "YES". If enabled the table
-   (layer) name will also be laundered.
+-  .. lco:: LAUNDER
+      :choices: YES, NO
+      :default: YES
+
+      This may be "YES" to force new fields created
+      on this layer to have their field names "laundered" into a form more
+      compatible with PostgreSQL. This converts to lower case and converts
+      some special characters like "-" and "#" to "_". If "NO" exact names
+      are preserved. If enabled the table (layer) name will also be laundered.
 
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`CARTO_API_URL`: defaults to https://[account_name].carto.com/api/v2/sql.
-   Can be used to point to another server.
--  :decl_configoption:`CARTO_HTTPS`: can be set to NO to use http:// protocol instead of
-   https:// (only if CARTO_API_URL is not defined).
--  :decl_configoption:`CARTO_API_KEY`: see following paragraph.
--  :decl_configoption:`CARTO_PAGE_SIZE`: features are retrieved from the server by chunks 
-   of 500 by default. This number can be altered with the configuration option.
-   
+-  .. config:: CARTO_API_URL
+      :default: https://[account_name].carto.com/api/v2/sql
+
+      Can be used to point to another server.
+
+-  .. config:: CARTO_HTTPS
+      :choices: YES, NO
+
+      can be set to NO to use http:// protocol instead of
+      https:// (only if :config:`CARTO_API_URL` is not defined).
+
+-  .. config:: CARTO_MAX_CHUNK_SIZE
+
+-  .. config:: CARTO_API_KEY
+
+      see following paragraph.
+
+-  .. config:: CARTO_PAGE_SIZE
+      :default: 500
+
+      features are retrieved from the server by chunks
+      of 500 by default. This number can be altered with the configuration option.
+
 Examples
 --------
 

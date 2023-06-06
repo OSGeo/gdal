@@ -5,7 +5,7 @@ KML - Keyhole Markup Language
 
 .. shortname:: KML
 
-.. build_dependencies:: (read support needs libexpat) 
+.. build_dependencies:: (read support needs libexpat)
 
 Keyhole Markup Language (KML) is an XML-based language for managing the
 display of 3D geospatial data. KML has been accepted as an OGC standard,
@@ -93,23 +93,35 @@ Creation Options
 
 The following dataset creation options are supported:
 
--  **NameField**: Allows you to specify the field to use for the KML
-   <name> element. Default value : 'Name'
--  **DescriptionField**: Allows you to specify the field to use for the
-   KML <description> element. Default value : 'Description'
--  **AltitudeMode**: Allows you to specify the AltitudeMode to use for
-   KML geometries. This will only affect 3D geometries and must be one
-   of the valid KML options. See the `relevant KML reference
-   material <http://code.google.com/apis/kml/documentation/kml_tags_21.html#altitudemode>`__
-   for further information.
+-  .. dsco:: NameField
+      :default: Name
 
-   ::
+      Allows you to specify the field to use for the KML
+      <name> element.
 
-      ogr2ogr -f KML output.kml input.shp -dsco AltitudeMode=absolute
+-  .. dsco:: DescriptionField
+      :default: Description
 
--  **DOCUMENT_ID**\ =string: Starting with GDAL 2.2, the DOCUMENT_ID
-   datasource creation option can be used to specified the id of the
-   root <Document> node. The default value is root_doc.
+      Allows you to specify the field to use for the
+      KML <description> element.
+
+-  .. dsco:: AltitudeMode
+
+      Allows you to specify the AltitudeMode to use for
+      KML geometries. This will only affect 3D geometries and must be one
+      of the valid KML options. See the `relevant KML reference
+      material <http://code.google.com/apis/kml/documentation/kml_tags_21.html#altitudemode>`__
+      for further information.
+
+      ::
+
+         ogr2ogr -f KML output.kml input.shp -dsco AltitudeMode=absolute
+
+-  .. dsco:: DOCUMENT_ID
+      :default: root_doc
+      :since: 2.2
+
+      Specifies the id of the root <Document> node.
 
 VSI Virtual File System API support
 -----------------------------------

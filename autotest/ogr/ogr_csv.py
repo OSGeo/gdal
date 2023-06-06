@@ -28,6 +28,11 @@
 ###############################################################################
 
 import os
+import sys
+
+# Needed since this script is forked by test_ogr_csv_write_to_stdout() and
+# run through regular python3
+sys.path.append("../pymod")
 
 import gdaltest
 import ogrtest
@@ -732,10 +737,28 @@ def test_ogr_csv_17():
 # Write to /vsistdout/
 
 
-def test_ogr_csv_18():
+def test_ogr_csv_write_to_stdout():
 
+    python_exe = sys.executable
+    if sys.platform == "win32":
+        python_exe = python_exe.replace("\\", "/")
+
+    ret = gdaltest.runexternal(python_exe + " ogr_csv.py ogr_csv_write_to_stdout")
+    assert (
+        ret.replace("\r\n", "\n")
+        == """my_geom,foo,bar
+"POINT (0 1)",bar,baz
+"""
+    )
+
+
+def ogr_csv_write_to_stdout():
     ds = ogr.GetDriverByName("CSV").CreateDataSource("/vsistdout/")
-    lyr = ds.CreateLayer("foo", options=["GEOMETRY=AS_WKT"])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer(
+        "foo", srs=srs, options=["GEOMETRY=AS_WKT", "GEOMETRY_NAME=my_geom"]
+    )
     lyr.CreateField(ogr.FieldDefn("foo"))
     lyr.CreateField(ogr.FieldDefn("bar"))
     feat = ogr.Feature(feature_def=lyr.GetLayerDefn())
@@ -2853,3 +2876,19 @@ def test_ogr_csv_single_column():
     f = lyr.GetNextFeature()
     assert f["WKT"] == "POINT (1 2)"
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
+
+
+if __name__ == "__main__":
+    gdal.UseExceptions()
+    if len(sys.argv) != 2:
+        print("python ogr_csv.py name_of_test")
+        sys.exit(1)
+    if sys.argv[1] == "ogr_csv_write_to_stdout":
+        ogr_csv_write_to_stdout()
+        sys.exit(0)
+
+    print("Unknown test name")
+    sys.exit(1)

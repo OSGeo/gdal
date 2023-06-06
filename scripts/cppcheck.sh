@@ -95,6 +95,8 @@ for dirname in alg port gcore ogr frmts gnm apps fuzzers; do
         -DINT_MIN=-2147483648 \
         -DINT_MAX=2147483647 \
         -DUINT_MAX=4294967295U \
+        -D__x86_64__ \
+        -DFLT_EVAL_METHOD \
         -DKDU_HAS_ROI_RECT \
         --include="${CPL_CONFIG_H}" \
         --include=port/cpl_port.h \
@@ -131,6 +133,10 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # I don't want to care about flatbuffers
 grep -v -e "ogr/ogrsf_frmts/flatgeobuf/flatbuffers" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
+# Ignore third_party/fast_float
+grep -v -e "third_party/fast_float" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
 # False positive deallocuse

@@ -444,7 +444,7 @@ def test_tiff_ovr_10(both_endian):
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    ds = gdaltest.tiff_drv.CreateCopy(
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
         "tmp/ovr10.tif", src_ds, options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR"]
     )
     src_ds = None
@@ -463,9 +463,8 @@ def test_tiff_ovr_10(both_endian):
     ds = None
 
     assert cs in (
-        5562,
-        5635,
-        5601,  # libjpeg 9e
+        5879,
+        6050,  # libjpeg 9e
     )
 
 
@@ -942,7 +941,7 @@ def test_tiff_ovr_25(both_endian):
 
 def test_tiff_ovr_26(both_endian):
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr26.tif", 100, 100, 1)
+    ds = gdal.GetDriverByName("GTiff").Create("tmp/ovr26.tif", 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
     ds.BuildOverviews("NEAR", overviewlist=[2])

@@ -818,9 +818,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
             return false;
         }
 
-        CPLString osValue = szLineBuf;
-
-        oHeaderVariables[l_osName] = osValue;
+        oHeaderVariables[l_osName] = szLineBuf;
     }
     if (nCode < 0)
     {
@@ -856,9 +854,7 @@ bool OGRDXFDataSource::ReadHeaderSection()
                 return false;
             }
 
-            CPLString osValue = szLineBuf;
-
-            oHeaderVariables[l_osName] = osValue;
+            oHeaderVariables[l_osName] = szLineBuf;
         }
         if (nCode < 0)
         {

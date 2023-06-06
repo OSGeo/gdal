@@ -27,7 +27,7 @@ Supported datasets
 
 The driver can read TileDB sparse arrays that contain at least 2 dimensions
 of type Float64. By default dimensions names ``_X`` and ``_Y`` are looked up,
-but this can be customized with the ``DIM_X`` and ``DIM_Y`` open options.
+but this can be customized with the :oo:`DIM_X` and :oo:`DIM_Y` open options.
 
 Attributes (or extra dimensions) of the following TileDB data types are
 recognized as OGR fields: Bool, Int16, Int32, Int64, Float32, Float64,
@@ -88,7 +88,7 @@ array at the location of the dataset connection string. Consequently only one
 OGR layer can be created in that mode. If several layers need to be created
 and accessible through a OGR dataset connection, a TileDB group needs to be
 created to point to the different arrays (layers), by specifying the
-CREATE_GROUP=YES dataset creation option.
+:dsco:`CREATE_GROUP=YES` dataset creation option.
 
 The driver supports appending features to exiting layers.
 
@@ -100,74 +100,136 @@ Open options
 
 The following open options are available:
 
-- **TILEDB_CONFIG=config**: A local file with TileDB configuration
-  `options <https://docs.tiledb.io/en/stable/tutorials/config.html>`__
+- .. oo:: TILEDB_CONFIG
+     :choices: <filename>
 
-- **TILEDB_TIMESTAMP=integer**: Open array at this timestamp. The timestamp
-  should be greater than 0.
+     A local file with TileDB configuration
+     `options <https://docs.tiledb.io/en/stable/tutorials/config.html>`__
 
-- **BATCH_SIZE=integer**: Number of features to fetch/write at once.
-  Default is 500,000.
+- .. oo:: TILEDB_TIMESTAMP
+     :choices: <integer>
 
-- **DIM_X=string**: Name of the X dimension. Default is ``_X``.
+     Open array at this timestamp. The timestamp
+     should be greater than 0.
 
-- **DIM_Y=string**: Name of the Y dimension. Default is ``_Y``.
+- .. oo:: BATCH_SIZE
+     :choices: <integer>
+     :default: 500000
 
-- **DIM_Z=string**: Name of the Z dimension. Default is ``_Z``.
+     Number of features to fetch/write at once.
+
+- .. oo:: DIM_X
+     :default: _X
+
+     Name of the X dimension.
+
+- .. oo:: DIM_Y
+     :default: _Y
+
+     Name of the Y dimension.
+
+- .. oo:: DIM_Z
+     :default: _Z
+
+     Name of the Z dimension.
 
 Dataset creation options
 ------------------------
 
 The following dataset creation options are available:
 
-- **TILEDB_CONFIG=config**: A local file with TileDB configuration
-  `options <https://docs.tiledb.io/en/stable/tutorials/config.html>`__
+- .. dsco:: TILEDB_CONFIG
+     :choices: <filename>
 
-- **CREATE_GROUP=YES/NO**: (TileDB >= 2.9) Whether to create a group for
-  multiple layer support. Default is NO.
-  When set to YES, a TileDB group will be created in
-  the directory of the dataset name, and layers will be created as members of the
-  group, and written in subdirectories of a ``layers`` subdirectory.
+     A local file with TileDB configuration
+     `options <https://docs.tiledb.io/en/stable/tutorials/config.html>`__
+
+- .. dsco:: CREATE_GROUP
+     :choices: YES, NO
+     :default: NO
+
+     (TileDB >= 2.9) Whether to create a group for
+     multiple layer support.
+     When set to YES, a TileDB group will be created in
+     the directory of the dataset name, and layers will be created as members of the
+     group, and written in subdirectories of a ``layers`` subdirectory.
 
 Layer creation options
 ----------------------
 
 The following layer options are available:
 
-- **COMPRESSION=NONE/GZIP/ZSTD/LZ4/RLE/BZIP2/DOUBLE-DELTA/POSITIVE_DELTA**:
-  compression method for dimensions and attributes. Default is NONE.
+- .. lco:: COMPRESSION
+     :choices: NONE, GZIP, ZSTD, LZ4, RLE, BZIP2, DOUBLE-DELTA, POSITIVE_DELTA
+     :default: NONE
 
-- **COMPRESSION_LEVEL=integer**: compression level
+     compression method for dimensions and attributes.
 
-- **BATCH_SIZE=integer**: Number of features to write at once. Default is 500,000.
+- .. lco:: COMPRESSION_LEVEL
+     :choices: <integer>
 
-- **TILE_CAPACITY=integer**: Number of non-empty cells stored in a data tile. Default is 10,000.
+     compression level
 
-- **TILE_EXTENT=float**: The square TileDB tile extents in the X and Y dimensions. Default is auto-calculated.
+- .. lco:: BATCH_SIZE
+     :choices: <integer>
+     :default: 500000
 
-- **TILE_Z_EXTENT=float**: The TIleDB tile extent in the Z dimension. Default is auto-calculated.
+     Number of features to write at once.
 
-- **BOUNDS=minx,miny,[minz,]maxx,maxy[, maxz]**: Specify bounds for sparse array.
-  If not specified, the CRS passed at layer creation will be used to infer
-  default values for bounds.
+- .. lco:: TILE_CAPACITY
+     :choices: <integer>
+     :default: 10000
 
-- **ADD_Z_DIM=AUTO/YES/NO**: Whether to add a Z dimension. In the default AUTO
-  mode, a Z dimension is only added if the layer geometry type has a Z component
-  or is unknown. Setting it to YES or NO explicitly force or disable creation of
-  a Z dimension.
+     Number of non-empty cells stored in a data tile.
 
-- **FID=string**: Feature id column name. Set to empty to disable its creation.
-  Default value is ``FID``.
+- .. lco:: TILE_EXTENT
+     :choices: <float>
 
-- **GEOMETRY_NAME=string**: Name of the geometry column that will receive WKB
-  encoded geometries. Set to empty to disable its creation (only for point).
-  Default value is ``wkb_geometry``.
+     The square TileDB tile extents in the X and Y dimensions. Default is auto-calculated.
 
-- **TILEDB_TIMESTAMP=integer**: Timestamp at which to create the array.
-  The timestamp should be greater than 0.
+- .. lco:: TILE_Z_EXTENT
+     :choices: <float>
 
-- **TILEDB_STRING_TYPE=UTF8/ASCII**: Which TileDB type to create string attributes.
-  Default is UTF8 starting with TileDB 2.14 (ASCII for earlier versions)
+     The TIleDB tile extent in the Z dimension. Default is auto-calculated.
+
+- .. lco:: BOUNDS
+     :choices: <minx\,miny\,[minz\,]maxx\,maxy[\, maxz]>
+
+     Specify bounds for sparse array.
+     If not specified, the CRS passed at layer creation will be used to infer
+     default values for bounds.
+
+- .. lco:: ADD_Z_DIM
+     :choices: AUTO, YES, NO
+     :default: AUTO
+
+     Whether to add a Z dimension. In the default AUTO
+     mode, a Z dimension is only added if the layer geometry type has a Z component
+     or is unknown. Setting it to YES or NO explicitly force or disable creation of
+     a Z dimension.
+
+- .. lco:: FID
+     :default: FID
+
+     Feature id column name. Set to empty to disable its creation.
+
+- .. lco:: GEOMETRY_NAME
+     :default: wkb_geometry
+
+     Name of the geometry column that will receive WKB
+     encoded geometries. Set to empty to disable its creation (only for point).
+
+- .. lco:: TILEDB_TIMESTAMP
+     :choices: <integer>
+
+     Timestamp at which to create the array.
+     The timestamp should be greater than 0.
+
+- .. lco:: TILEDB_STRING_TYPE
+     :choices: UTF8, ASCII
+
+     Which TileDB type to create string attributes.
+     Default is UTF8 starting with TileDB 2.14 (ASCII for earlier versions)
 
 See Also
 --------

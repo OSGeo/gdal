@@ -70,9 +70,9 @@ class OGRArrowLayer CPL_NON_FINAL
             Real,
             String,
         };
-        int iField{};
-        int iArrayIdx{};
-        int nOperation{};
+        int iField = -1;      // index to a OGRFeatureDefn OGRField
+        int iArrayIdx = -1;   // index to m_poBatchColumns
+        int nOperation = -1;  // SWQ_xxxx
         Type eType{};
         OGRField sValue{};
         std::string osValue{};
@@ -89,6 +89,9 @@ class OGRArrowLayer CPL_NON_FINAL
     bool SkipToNextFeatureDueToAttributeFilter() const;
     void ExploreExprNode(const swq_expr_node *poNode);
     bool UseRecordBatchBaseImplementation() const;
+
+    static struct ArrowArray *
+    CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
 
   protected:
     OGRArrowDataset *m_poArrowDS = nullptr;
@@ -175,6 +178,9 @@ class OGRArrowLayer CPL_NON_FINAL
         m_poBatch = poBatch;
         m_poBatchColumns = m_poBatch->columns();
     }
+
+    // Refreshes Constraint.iArrayIdx from iField. To be called by SetIgnoredFields()
+    void ComputeConstraintsArrayIdx();
 
     virtual bool GetFastExtent(int iGeomField, OGREnvelope *psExtent) const;
     static OGRErr GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
@@ -278,6 +284,7 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     bool m_bWriteFieldArrowExtensionName = false;
     OGRArrowGeomEncoding m_eGeomEncoding = OGRArrowGeomEncoding::WKB;
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
+    int m_nWKTCoordinatePrecision = -1;
 
     std::string m_osFIDColumn{};
     int64_t m_nFeatureCount = 0;
@@ -297,7 +304,8 @@ class OGRArrowWriterLayer CPL_NON_FINAL : public OGRLayer
     static OGRArrowGeomEncoding
     GetPreciseArrowGeomEncoding(OGRwkbGeometryType eGType);
     static const char *
-    GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding);
+    GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
+                            bool bForParquetGeo);
 
     virtual bool IsSupportedGeometryType(OGRwkbGeometryType eGType) const = 0;
 

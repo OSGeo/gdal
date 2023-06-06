@@ -11,7 +11,7 @@ OGR optionally supports reading ESRI Personal GeoDatabase .mdb files via
 ODBC. Personal GeoDatabase is a Microsoft Access database with a set of
 tables defined by ESRI for holding geodatabase metadata, and with
 geometry for features held in a BLOB column in a custom format
-(essentially Shapefile geometry fragments). This drivers accesses the
+(essentially Shapefile geometry fragments). This driver accesses the
 personal geodatabase via ODBC but does not depend on any ESRI
 middle-ware.
 
@@ -19,8 +19,8 @@ Personal Geodatabases are accessed by passing the file name of the .mdb
 file to be accessed as the data source name.
 
 In order to facilitate compatibility with different configurations, the
-:decl_configoption:`PGEO_DRIVER_TEMPLATE` config Option was added to 
-provide a way to programmatically set the DSN programmatically with the 
+:config:`PGEO_DRIVER_TEMPLATE` config option was added to
+provide a way to programmatically set the DSN with the
 filename as an
 argument. In cases where the driver name is known, this allows for the
 construction of the DSN based on that information in a manner similar to
@@ -55,11 +55,26 @@ Special SQL requests
 can be used as special SQL requests to get respectively the definition
 and metadata of a Personal GeoDatabase table as XML content.
 
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+-  .. config:: PGEO_DRIVER_TEMPLATE
+
+      Allows setting the DSN with the filename as an argument, e.g.
+      ``DRIVER=Microsoft Access Driver (*.mdb, *.accdb);DBQ=%s``.
+
 Dataset open options
 --------------------
 
--  **LIST_ALL_TABLES**\ =YES/NO: This may be "YES" to force all tables,
-   including system and internal tables (such as the GDB_* tables) to be listed (since GDAL 3.4)
+-  .. oo:: LIST_ALL_TABLES
+      :choices: YES, NO
+      :since: 3.4
+
+      This may be "YES" to force all tables,
+      including system and internal tables (such as the GDB_* tables) to be listed
 
 Driver capabilities
 -------------------

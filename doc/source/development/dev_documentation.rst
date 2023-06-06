@@ -290,12 +290,53 @@ To reference a method or function::
   :cpp:func:`MyClass::MyMethod`
   :cpp:func:`MyFunction`
 
-Reference configuration options
--------------------------------
+.. _config_option_syntax:
 
-To reference a configuration option, such as **GDAL_CACHEMAX**, use::
+Define and reference configuration options
+------------------------------------------
 
-  :decl_configoption:`OPTION_NAME`
+To define a configuration option, use::
+
+   .. config:: OPTION_NAME
+      :choices: COMMA, SEPARATED, LIST
+      :default: DEFAULT_VALUE
+      :since: GDAL.MIN.VERSION
+
+      Narrative about the option.
+
+Similar syntax can be used to define opening options (``.. oo::``),
+creation options (``.. co::``), dataset creation options (``.. dsco::``), or layer creation options
+(``.. lco::``).
+
+To reference a configuration option, such as **GDAL_CACHEMAX**,
+use the syntax in the table below.
+
+.. list-table::
+   :header-rows: 1
+
+   * - Option type
+     - Syntax
+   * - Configuration option
+     - ::
+
+       :config:`option_name`
+   * - Creation option
+     - ::
+
+       :co:`option_name`
+   * - Open option
+     - ::
+
+       :oo:`option_name`
+   * - Dataset creation option
+     - ::
+
+       :dsco:`option_name`
+   * - Layer creation option
+     - ::
+
+       :lco:`option_name`
+
 
 Reference commands
 ------------------

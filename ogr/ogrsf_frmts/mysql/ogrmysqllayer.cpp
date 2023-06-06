@@ -36,7 +36,7 @@
 /************************************************************************/
 
 OGRMySQLLayer::OGRMySQLLayer()
-    : poFeatureDefn(nullptr), poSRS(nullptr),
+    : poFeatureDefn(nullptr),
       nSRSId(-2),  // we haven't even queried the database for it yet.
       iNextShapeId(0), poDS(nullptr), pszQueryStatement(nullptr),
       nResultOffset(0), pszGeomColumn(nullptr), pszGeomColumnTable(nullptr),
@@ -57,15 +57,20 @@ OGRMySQLLayer::~OGRMySQLLayer()
                  (int)m_nFeaturesRead, poFeatureDefn->GetName());
     }
 
+    if (poFeatureDefn && poFeatureDefn->GetGeomFieldCount() > 0)
+    {
+        auto poGeomFieldDefn = dynamic_cast<OGRMySQLGeomFieldDefn *>(
+            poFeatureDefn->GetGeomFieldDefn(0));
+        if (poGeomFieldDefn)
+            poGeomFieldDefn->UnsetDataSource();
+    }
+
     OGRMySQLLayer::ResetReading();
 
     CPLFree(pszGeomColumn);
     CPLFree(pszGeomColumnTable);
     CPLFree(pszFIDColumn);
     CPLFree(pszQueryStatement);
-
-    if (poSRS != nullptr)
-        poSRS->Release();
 
     if (poFeatureDefn)
         poFeatureDefn->Release();
@@ -351,14 +356,17 @@ int OGRMySQLLayer::FetchSRSId()
 /*                           GetSpatialRef()                            */
 /************************************************************************/
 
-OGRSpatialReference *OGRMySQLLayer::GetSpatialRef()
+const OGRSpatialReference *OGRMySQLGeomFieldDefn::GetSpatialRef() const
 
 {
+    if (!poDS)
+        return poSRS;
+
     if (poSRS == nullptr && nSRSId > -1)
     {
         poSRS = poDS->FetchSRS(nSRSId);
         if (poSRS != nullptr)
-            poSRS->Reference();
+            const_cast<OGRSpatialReference *>(poSRS)->Reference();
         else
             nSRSId = poDS->GetUnknownSRID();
     }

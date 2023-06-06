@@ -577,8 +577,15 @@ if (GDAL_USE_LIBKML)
   string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(LibKML COMPONENTS DOM ENGINE)\n")
 endif ()
 
-# CXX is only needed for KEA driver
-gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
+define_find_package2(KEA libkea/KEACommon.h kea;libkea)
+gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
+
+if(HAVE_KEA)
+    # CXX is only needed for KEA driver
+    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" "CXX" CAN_DISABLE)
+else()
+    gdal_check_package(HDF5 "Enable HDF5" COMPONENTS "C" CAN_DISABLE)
+endif()
 
 gdal_check_package(WebP "WebP compression" CAN_DISABLE)
 gdal_check_package(FreeXL "Enable XLS driver" CAN_DISABLE)
@@ -683,9 +690,6 @@ gdal_check_package(GEOS "Geometry Engine - Open Source (GDAL core dependency)" R
   TARGETS GEOS::geos_c GEOS::GEOS
 )
 gdal_check_package(HDF4 "Enable HDF4 driver" CAN_DISABLE)
-
-define_find_package2(KEA libkea/KEACommon.h kea;libkea)
-gdal_check_package(KEA "Enable KEA driver" CAN_DISABLE)
 
 gdal_check_package(ECW "Enable ECW driver" CAN_DISABLE)
 gdal_check_package(NetCDF "Enable netCDF driver" CAN_DISABLE

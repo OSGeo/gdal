@@ -52,7 +52,8 @@ class TileDBRasterBand final : public GDALPamRasterBand
     CPLString osAttrName;
 
   public:
-    TileDBRasterBand(TileDBRasterDataset *, int, CPLString = TILEDB_VALUES);
+    TileDBRasterBand(TileDBRasterDataset *, int,
+                     const std::string &osAttr = TILEDB_VALUES);
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
@@ -227,7 +228,7 @@ static CPLErr SetBuffer(tiledb::Query *poQuery, GDALDataType eType,
 /************************************************************************/
 
 TileDBRasterBand::TileDBRasterBand(TileDBRasterDataset *poDSIn, int nBandIn,
-                                   CPLString osAttr)
+                                   const std::string &osAttr)
     : poGDS(poDSIn), bStats(poDSIn->bStats), osAttrName(osAttr)
 {
     poDS = poDSIn;

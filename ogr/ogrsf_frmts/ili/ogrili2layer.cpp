@@ -145,7 +145,8 @@ static void AppendCoordinateList(const OGRLineString *poLine, VSILFILE *fp)
 }
 
 static int OGR2ILIGeometryAppend(const OGRGeometry *poGeometry, VSILFILE *fp,
-                                 const char *attrname, CPLString iliGeomType)
+                                 const char *attrname,
+                                 const CPLString &iliGeomType)
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("OGR_ILI",

@@ -49,10 +49,13 @@ class OGRParquetLayerBase CPL_NON_FINAL : public OGRArrowLayer
     OGRParquetLayerBase &operator=(const OGRParquetLayerBase &) = delete;
 
   protected:
-    OGRParquetLayerBase(OGRParquetDataset *poDS, const char *pszLayerName);
+    OGRParquetLayerBase(OGRParquetDataset *poDS, const char *pszLayerName,
+                        CSLConstList papszOpenOptions);
 
     OGRParquetDataset *m_poDS = nullptr;
     std::shared_ptr<arrow::RecordBatchReader> m_poRecordBatchReader{};
+    CPLStringList m_aosGeomPossibleNames{};
+    std::string m_osCRS{};
 
     void LoadGeoMetadata(
         const std::shared_ptr<const arrow::KeyValueMetadata> &kv_metadata);
@@ -111,7 +114,8 @@ class OGRParquetLayer final : public OGRParquetLayerBase
 
   public:
     OGRParquetLayer(OGRParquetDataset *poDS, const char *pszLayerName,
-                    std::unique_ptr<parquet::arrow::FileReader> &&arrow_reader);
+                    std::unique_ptr<parquet::arrow::FileReader> &&arrow_reader,
+                    CSLConstList papszOpenOptions);
 
     void ResetReading() override;
     OGRFeature *GetFeature(GIntBig nFID) override;
@@ -169,7 +173,8 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
     OGRParquetDatasetLayer(
         OGRParquetDataset *poDS, const char *pszLayerName,
         const std::shared_ptr<arrow::dataset::Scanner> &scanner,
-        const std::shared_ptr<arrow::Schema> &schema);
+        const std::shared_ptr<arrow::Schema> &schema,
+        CSLConstList papszOpenOptions);
 
     void ResetReading() override;
     GIntBig GetFeatureCount(int bForce) override;

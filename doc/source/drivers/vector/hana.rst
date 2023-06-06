@@ -27,11 +27,11 @@ Connecting to a database
    ::
 
       HANA:"DRIVER=HDBODBC;DATABASE=HAN;HOST=localhost;PORT=30015;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
-     
-   In this syntax each parameter setting is in the form keyword = value. 
-   Spaces around the equal sign are optional. To write an empty value, or a 
-   value containing spaces, surround it with single quotes, e.g., 
-   keyword = 'a value'. Single quotes and backslashes within the value must 
+
+   In this syntax each parameter setting is in the form keyword = value.
+   Spaces around the equal sign are optional. To write an empty value, or a
+   value containing spaces, surround it with single quotes, e.g.,
+   keyword = 'a value'. Single quotes and backslashes within the value must
    be escaped with a backslash, i.e., \' and \\.
 
 
@@ -60,40 +60,107 @@ does allow creation of new layers (tables) within an existing schema.
 Dataset Open options
 ~~~~~~~~~~~~~~~~~~~~
 
--  **DSN**\ =string: Data source name.
--  **DRIVER**\ =string:  Name or a path to a driver. For example,
-   DRIVER=HDBODBC (Windows) or DRIVER=/usr/sap/hdbclient/libodbcHDB.so
-   (Linux/MacOS).
--  **HOST**\ =string: Server host name. 
--  **PORT**\ =integer: Port number.
--  **USER**\ =string: User name.
--  **PASSWORD**\ =string: User password.
--  **DATABASE**\ =string: Database name.
--  **SCHEMA**\ =string: Specifies schema used for tables listed in TABLES
-   option.
--  **TABLES**\ =string: Restricted set of tables to list (comma separated).
--  **ENCRYPT**\ =boolean: Enables or disables TLS/SSL encryption. The default
-   value is "NO".
--  **SSL_CRYPTO_PROVIDER**\ =string: Cryptographic library provider used for
-   SSL communication (commoncrypto| sapcrypto | openssl).
--  **SSL_KEY_STORE**\ =string: Path to the keystore file that contains the
-   server's private key.
--  **SSL_TRUST_STORE**\ =string: Path to trust store file that contains the
-   server's public certificate(s) (OpenSSL only).
--  **SSL_VALIDATE_CERTIFICATE**\ =string: If set to true, the server's
-   certificate is validated. The default value is "YES".
--  **SSL_HOST_NAME_IN_CERTIFICATE**\ =string: Host name used to verify server's
-   identity validated.
--  **CONNECTION_TIMEOUT**\ =integer: Connection timeout measured in
-   milliseconds. The default value is 0 (disabled).
--  **PACKET_SIZE**\ =integer: Sets the maximum size of a request packet sent
-   from the client to the server, in bytes. The minimum is 1 MB. The default
-   value is 1 MB.
--  **SPLIT_BATCH_COMMANDS**\ =boolean: Allows split and parallel execution of
-   batch commands on partitioned tables. The default value is "YES".
--  **DETECT_GEOMETRY_TYPE**\ =boolean: Specifies whether to detect the type of
-   geometry columns. Note, the detection may take a significant amount of time
-   for large tables. The default value is "YES".
+-  .. oo:: DSN
+
+      Data source name.
+
+-  .. oo:: DRIVER
+
+      Name or a path to a driver. For example,
+      :oo:`DRIVER=HDBODBC` (Windows) or :oo:`DRIVER=/usr/sap/hdbclient/libodbcHDB.so`
+      (Linux/MacOS).
+
+-  .. oo:: HOST
+
+      Server host name.
+
+-  .. oo:: PORT
+
+      Port number.
+
+-  .. oo:: USER
+
+      User name.
+
+-  .. oo:: PASSWORD
+
+      User password.
+
+-  .. oo:: DATABASE
+
+      Database name.
+
+-  .. oo:: SCHEMA
+
+      Specifies schema used for tables listed in :oo:`TABLES`
+      option.
+
+-  .. oo:: TABLES
+
+      Restricted set of tables to list (comma separated).
+
+-  .. oo:: ENCRYPT
+      :choices: YES, NO
+      :default: NO
+
+      Enables or disables TLS/SSL encryption.
+
+-  .. oo:: SSL_CRYPTO_PROVIDER
+      :choices: commoncrypto, sapcrypto, openssl
+
+      Cryptographic library provider used for
+      SSL communication.
+
+-  .. oo:: SSL_KEY_STORE
+
+      Path to the keystore file that contains the
+      server's private key.
+
+-  .. oo:: SSL_TRUST_STORE
+
+      Path to trust store file that contains the
+      server's public certificate(s) (OpenSSL only).
+
+-  .. oo:: SSL_VALIDATE_CERTIFICATE
+      :choices: YES, NO
+      :default: YES
+
+      If set to true, the server's
+      certificate is validated.
+
+-  .. oo:: SSL_HOST_NAME_IN_CERTIFICATE
+
+      Host name used to verify server's
+      identity validated.
+
+-  .. oo:: CONNECTION_TIMEOUT
+      :choices: <milliseconds>
+      :default: 0
+
+      Connection timeout measured in
+      milliseconds. The default value is 0 (disabled).
+
+-  .. oo:: PACKET_SIZE
+      :choices: <bytes>
+      :default: 1 MB
+
+      Sets the maximum size of a request packet sent
+      from the client to the server, in bytes. The minimum is 1 MB.
+
+-  .. oo:: SPLIT_BATCH_COMMANDS
+      :choices: YES, NO
+      :default: YES
+
+      Allows split and parallel execution of
+      batch commands on partitioned tables.
+
+-  .. oo:: DETECT_GEOMETRY_TYPE
+      :choices: YES, NO
+      :default: YES
+
+      Specifies whether to detect the type of
+      geometry columns. Note, the detection may take a significant amount of time
+      for large tables.
 
 Dataset Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -103,35 +170,77 @@ None
 Layer Creation Options
 ~~~~~~~~~~~~~~~~~~~~~~
 
--  **OVERWRITE**: This may be "YES" to force an existing layer of the
-   desired name to be destroyed before creating the requested layer.
-   The default value is "NO".
--  **LAUNDER**: This may be "YES" to force new fields created on this
-   layer to have their field names "laundered" into a form more
-   compatible with HANA. This converts to upper case and converts
-   some special characters like "-" and "#" to "_". If "NO" exact names
-   are preserved. The default value is "YES". If enabled the table
-   (layer) name will also be laundered.
--  **PRECISION**: This may be "YES" to force new fields created on this
-   layer to try and represent the width and precision information, if
-   available using DECIMAL(width,precision) or CHAR(width) types. If
-   "NO" then the types REAL, INTEGER and VARCHAR will be used instead.
-   The default is "YES".
--  **DEFAULT_STRING_SIZE**: Specifies default string column size. The
-   default value is 256.
--  **GEOMETRY_NAME**: Specifies the name of the geometry column in new
-   table. If omitted it defaults to *GEOMETRY*.
--  **GEOMETRY_NULLABLE**: Specifies whether the values of the geometry
-   column can be NULL or not. The default value is "YES".
--  **SRID**: Specifies the SRID of the layer.
--  **FID**: Specifies the name of the FID column to create. The default
-   value is 'OGR_FID'.
--  **FID64**: Specifies whether to create the FID column with BIGINT
-   type to handle 64bit wide ids. The default value is NO.
--  **COLUMN_TYPES**: Specifies a comma-separated list of strings in 
-   the format field_name=hana_field_type that define column types.
--  **BATCH_SIZE**: Specifies the number of bytes to be written per one
-   batch. The default value is 4194304 (4MB).
+-  .. lco:: OVERWRITE
+      :choices: YES, NO
+      :default: NO
+
+      This may be "YES" to force an existing layer of the
+      desired name to be destroyed before creating the requested layer.
+
+-  .. lco:: LAUNDER
+      :choices: YES, NO
+      :default: YES
+
+      This may be "YES" to force new fields created on this
+      layer to have their field names "laundered" into a form more
+      compatible with HANA. This converts to upper case and converts
+      some special characters like "-" and "#" to "_". If "NO" exact names
+      are preserved. If enabled the table
+      (layer) name will also be laundered.
+
+-  .. lco:: PRECISION
+      :choices: YES, NO
+      :default: YES
+
+      This may be "YES" to force new fields created on this
+      layer to try and represent the width and precision information, if
+      available using DECIMAL(width,precision) or CHAR(width) types. If
+      "NO" then the types REAL, INTEGER and VARCHAR will be used instead.
+
+-  .. lco:: DEFAULT_STRING_SIZE
+      :default: 256
+
+      Specifies default string column size.
+
+-  .. lco:: GEOMETRY_NAME
+      :default: GEOMETRY
+
+      Specifies the name of the geometry column in new table.
+
+-  .. lco:: GEOMETRY_NULLABLE
+      :choices: YES, NO
+      :default: YES
+
+      Specifies whether the values of the geometry
+      column can be NULL or not.
+
+-  .. lco:: SRID
+
+      Specifies the SRID of the layer.
+
+-  .. lco:: FID
+      :default: OGR_FID
+
+      Specifies the name of the FID column to create.
+
+-  .. lco:: FID64
+      :choices: YES, NO
+      :default: NO
+
+      Specifies whether to create the FID column with BIGINT
+      type to handle 64bit wide ids.
+
+-  .. lco:: COLUMN_TYPES
+
+      Specifies a comma-separated list of strings in
+      the format field_name=hana_field_type that define column types.
+
+-  .. lco:: BATCH_SIZE
+      :choices: <bytes>
+      :default: 4194304 (4MB)
+
+      Specifies the number of bytes to be written per one
+      batch.
 
 Multitenant Database Containers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

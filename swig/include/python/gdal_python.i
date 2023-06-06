@@ -1128,6 +1128,7 @@ def ExecuteSQL(self, statement, spatialFilter=None, dialect="", keep_ref_on_ds=F
     sql_lyr = $action(self, statement, spatialFilter, dialect)
     if sql_lyr:
         import weakref
+        sql_lyr._to_release = True
         sql_lyr._dataset_weak_ref = weakref.ref(self)
         if keep_ref_on_ds:
             sql_lyr._dataset_strong_ref = self
@@ -1148,6 +1149,8 @@ def ReleaseResultSet(self, sql_lyr):
         ogr.Layer got with ExecuteSQL()
     """
 
+    if sql_lyr and not hasattr(sql_lyr, "_to_release"):
+        raise Exception("This layer was not returned by ExecuteSQL() and should not be released with ReleaseResultSet()")
     $action(self, sql_lyr)
     # Invalidates the layer
     if sql_lyr:

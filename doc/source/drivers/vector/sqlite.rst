@@ -44,7 +44,7 @@ engine. It's also possible to request the driver to handle SQL commands
 with :ref:`OGR SQL <ogr_sql_dialect>` engine, by passing **"OGRSQL"** string
 to the ExecuteSQL() method, as name of the SQL dialect.
 
-The :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration option
+The :config:`OGR_SQLITE_SYNCHRONOUS` configuration option
 has been added. When set to OFF, this issues a 'PRAGMA synchronous =
 OFF' command to the SQLite database. This has the advantage of
 speeding-up some write operations (e.g. on EXT4 filesystems), but at the
@@ -54,7 +54,7 @@ documentation <http://www.sqlite.org/pragma.html#pragma_synchronous>`__.
 
 Any SQLite
 `pragma <http://www.sqlite.org/pragma.html>`__ can be specified with the
-:decl_configoption:`OGR_SQLITE_PRAGMA` configuration option. The syntax is
+:config:`OGR_SQLITE_PRAGMA` configuration option. The syntax is
 ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
 
 Driver capabilities
@@ -240,173 +240,249 @@ Relationship creation is supported since GDAL 3.7, for one-to-many relationships
 Dataset open options
 ~~~~~~~~~~~~~~~~~~~~
 
--  **LIST_ALL_TABLES**\ =YES/NO: This may be "YES" to force all tables,
-   including non-spatial ones, to be listed.
--  **LIST_VIRTUAL_OGR**\ =YES/NO: This may be "YES" to force VirtualOGR
-   virtual tables to be listed. This should only be enabled on trusted
-   datasources to avoid potential safety issues.
--  **PRELUDE_STATEMENTS**\ =string (GDAL >= 3.2). SQL statement(s) to
-   send on the SQLite3 connection before any other ones. In
-   case of several statements, they must be separated with the
-   semi-column (;) sign. This option may be useful
-   to `attach another database <https://www.sqlite.org/lang_attach.html>`__
-   to the current one and issue cross-database requests.
+-  .. oo:: LIST_ALL_TABLES
+      :choices: YES, NO
 
-   .. note::
-        The other database must be of a type recognized by this driver, so
-        its geometry blobs are properly recognized (so typically not a GeoPackage one)
+      This may be "YES" to force all tables,
+      including non-spatial ones, to be listed.
+
+-  .. oo:: LIST_VIRTUAL_OGR
+      :choices: YES, NO
+
+      This may be "YES" to force VirtualOGR
+      virtual tables to be listed. This should only be enabled on trusted
+      datasources to avoid potential safety issues.
+
+-  .. oo:: PRELUDE_STATEMENTS
+      :since: 3.2
+
+      SQL statement(s) to
+      send on the SQLite3 connection before any other ones. In
+      case of several statements, they must be separated with the
+      semi-column (;) sign. This option may be useful
+      to `attach another database <https://www.sqlite.org/lang_attach.html>`__
+      to the current one and issue cross-database requests.
+
+      .. note::
+           The other database must be of a type recognized by this driver, so
+           its geometry blobs are properly recognized (so typically not a GeoPackage one)
 
 Database creation options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
--  **METADATA=YES/NO**: This can be used to avoid creating the
-   geometry_columns and spatial_ref_sys tables in a new database. By
-   default these metadata tables are created when a new database is
-   created.
+-  .. dsco:: METADATA
+      :choices: YES, NO
 
--  | **SPATIALITE=YES/NO**: Create the
-     SpatiaLite flavor of the metadata tables, which are a bit differ
-     from the metadata used by this OGR driver and from OGC
-     specifications. Implies **METADATA=YES**.
-   | Please note: OGR must be linked against
-     *libspatialite* in order to support insert/write on SpatiaLite; if
-     not, *read-only* mode is enforced.
-   | Attempting to perform any insert/write on SpatiaLite skipping the
-     appropriate library support simply produces broken (corrupted)
-     DB-files.
-   | Important notice: when the underlying *libspatialite* is v.2.3.1
-     (or any previous version) any Geometry will be casted to 2D [XY],
-     because earlier versions of this library are simply able to support
-     2D [XY] dimensions. Version 2.4.0 (or any subsequent) is required
-     in order to support 2.5D [XYZ].
+      This can be used to avoid creating the
+      geometry_columns and spatial_ref_sys tables in a new database. By
+      default these metadata tables are created when a new database is
+      created.
 
--  | **INIT_WITH_EPSG=YES/NO**: Insert the
-     content of the EPSG CSV files into the spatial_ref_sys table.
-     Defaults to NO for regular SQLite databases.
-   | Please note: if **SPATIALITE=YES** and the underlying
-     *libspatialite* is v2.4 or v3.X, **INIT_WITH_EPSG** is ignored;
-     those library versions will unconditionally load the EPSG dataset
-     into the spatial_ref_sys table when creating a new DB
-     (*self-initialization*). Starting with libspatialite 4.0,
-     INIT_WITH_EPSG defaults to YES, but can be set to NO.
+-  .. dsco:: SPATIALITE
+      :choices: YES, NO
+
+      Create the
+      SpatiaLite flavor of the metadata tables, which are a bit differ
+      from the metadata used by this OGR driver and from OGC
+      specifications. Implies :dsco:`METADATA=YES`.
+
+      Please note: OGR must be linked against
+      *libspatialite* in order to support insert/write on SpatiaLite; if
+      not, *read-only* mode is enforced.
+
+      Attempting to perform any insert/write on SpatiaLite skipping the
+      appropriate library support simply produces broken (corrupted)
+      DB-files.
+
+      Important notice: when the underlying *libspatialite* is v.2.3.1
+      (or any previous version) any Geometry will be casted to 2D [XY],
+      because earlier versions of this library are simply able to support
+      2D [XY] dimensions. Version 2.4.0 (or any subsequent) is required
+      in order to support 2.5D [XYZ].
+
+-  .. dsco:: INIT_WITH_EPSG
+      :choices: YES, NO
+
+      Insert the
+      content of the EPSG CSV files into the spatial_ref_sys table.
+      Defaults to NO for regular SQLite databases.
+      Please note: if :dsco:`SPATIALITE=YES` and the underlying
+      *libspatialite* is v2.4 or v3.X, :dsco:`INIT_WITH_EPSG` is ignored;
+      those library versions will unconditionally load the EPSG dataset
+      into the spatial_ref_sys table when creating a new DB
+      (*self-initialization*). Starting with libspatialite 4.0,
+      :dsco:`INIT_WITH_EPSG` defaults to YES, but can be set to NO.
 
 Layer creation options
 ~~~~~~~~~~~~~~~~~~~~~~
 
--  **FORMAT=WKB/WKT/SPATIALITE**: Controls the format used for the
-   geometry column. By default WKB (Well Known Binary) is used. This is
-   generally more space and processing efficient, but harder to inspect
-   or use in simple applications than WKT (Well Known Text). SpatiaLite
-   extension uses its own binary format to store geometries and you can
-   choose it as well. It will be selected automatically when SpatiaLite
-   database is opened or created with **SPATIALITE=YES** option.
-   SPATIALITE value is available.
+-  .. lco:: FORMAT
+      :choices: WKB, WKT, SPATIALITE
+      :default: WKB
 
--  **GEOMETRY_NAME**: By default OGR creates
-   new tables with the geometry column named GEOMETRY (or WKT_GEOMETRY
-   if FORMAT=WKT). If you wish to use a different name, it can be
-   supplied with the GEOMETRY_NAME layer creation option.
+      Controls the format used for the
+      geometry column. By default WKB (Well Known Binary) is used. This is
+      generally more space and processing efficient, but harder to inspect
+      or use in simple applications than WKT (Well Known Text). SpatiaLite
+      extension uses its own binary format to store geometries and you can
+      choose it as well. It will be selected automatically when SpatiaLite
+      database is opened or created with :dsco:`SPATIALITE=YES` option.
+      SPATIALITE value is available.
 
--  **LAUNDER=YES/NO**: Controls whether layer and field names will be
-   laundered for easier use in SQLite. Laundered names will be converted
-   to lower case and some special characters(' - #) will be changed to
-   underscores. Default to YES.
+-  .. lco:: GEOMETRY_NAME
 
--  **SPATIAL_INDEX=YES/NO**: If the database
-   is of the SpatiaLite flavor, and if OGR is linked against
-   libspatialite, this option can be used to control if a spatial index
-   must be created. Default to YES.
+      By default OGR creates
+      new tables with the geometry column named GEOMETRY (or WKT_GEOMETRY
+      if :lco:`FORMAT=WKT`). If you wish to use a different name, it can be
+      supplied with the :lco:`GEOMETRY_NAME` layer creation option.
 
--  **COMPRESS_GEOM=YES/NO**: If the format of
-   the geometry BLOB is of the SpatiaLite flavor, this option can be
-   used to control if the compressed format for geometries (LINESTRINGs,
-   POLYGONs) must be used. This format is understood by Spatialite v2.4
-   (or any subsequent version). Default to NO. Note: when updating an
-   existing Spatialite DB, the :decl_configoption:`COMPRESS_GEOM` 
-   configuration option can be set to produce similar results for 
-   appended/overwritten features.
+-  .. lco:: LAUNDER
+      :choices: YES, NO
+      :default: YES
 
--  **SRID=srid**: Used to force the SRID
-   number of the SRS associated with the layer. When this option isn't
-   specified and that a SRS is associated with the layer, a search is
-   made in the spatial_ref_sys to find a match for the SRS, and, if
-   there is no match, a new entry is inserted for the SRS in the
-   spatial_ref_sys table. When the SRID option is specified, this search
-   (and the eventual insertion of a new entry) will not be done : the
-   specified SRID is used as such.
+      Controls whether layer and field names will be
+      laundered for easier use in SQLite. Laundered names will be converted
+      to lower case and some special characters(' - #) will be changed to
+      underscores.
 
--  **COMPRESS_COLUMNS=column_name1[,column_name2, ...]**:
-   A list of (String) columns that must be compressed with
-   ZLib DEFLATE algorithm. This might be beneficial for databases that
-   have big string blobs. However, use with care, since the value of
-   such columns will be seen as compressed binary content with other
-   SQLite utilities (or previous OGR versions). With OGR, when
-   inserting, modifying or querying compressed columns,
-   compression/decompression is done transparently. However, such
-   columns cannot be (easily) queried with an attribute filter or WHERE
-   clause. Note: in table definition, such columns have the
-   "VARCHAR_deflate" declaration type.
+-  .. lco:: SPATIAL_INDEX
+      :choices: YES, NO
+      :default: YES
 
--  **FID=fid_name**: Name of the FID column to create.
-   Defaults to OGC_FID.
+      If the database
+      is of the SpatiaLite flavor, and if OGR is linked against
+      libspatialite, this option can be used to control if a spatial index
+      must be created.
 
--  **STRICT=YES/NO**: (SQLite >= 3.37 and GDAL >= 3.35). Defaults to NO.
-   Whether the table should be created as a `strict table <https://sqlite.org/stricttables.html>`__,
-   that is strong column type checking. This normally has little influence when
-   operating only through OGR, since it has typed columns, but can help to
-   strengthen database integrity when the database might be edited by external
-   tools.
-   Note that databases that contain STRICT tables can only be read by SQLite >= 3.37.
-   The set of column data types supported in STRICT mode is: Integer, Integer64, Real,
-   String, DateTime, Date and Time. The COMPRESS_COLUMNS option is ignored in
-   strict mode.
+-  .. lco:: COMPRESS_GEOM
+      :choices: YES, NO
+
+      If the format of
+      the geometry BLOB is of the SpatiaLite flavor, this option can be
+      used to control if the compressed format for geometries (LINESTRINGs,
+      POLYGONs) must be used. This format is understood by Spatialite v2.4
+      (or any subsequent version). Default to NO. Note: when updating an
+      existing Spatialite DB, the ``COMPRESS_GEOM``
+      configuration option can be set to produce similar results for
+      appended/overwritten features.
+
+-  .. lco:: SRID
+
+      Used to force the SRID
+      number of the SRS associated with the layer. When this option isn't
+      specified and that a SRS is associated with the layer, a search is
+      made in the spatial_ref_sys to find a match for the SRS, and, if
+      there is no match, a new entry is inserted for the SRS in the
+      spatial_ref_sys table. When the SRID option is specified, this search
+      (and the eventual insertion of a new entry) will not be done : the
+      specified SRID is used as such.
+
+-  .. lco:: COMPRESS_COLUMNS
+      :choices: <column_name1[\,column_name2\, ...]>
+
+      A list of (String) columns that must be compressed with
+      ZLib DEFLATE algorithm. This might be beneficial for databases that
+      have big string blobs. However, use with care, since the value of
+      such columns will be seen as compressed binary content with other
+      SQLite utilities (or previous OGR versions). With OGR, when
+      inserting, modifying or querying compressed columns,
+      compression/decompression is done transparently. However, such
+      columns cannot be (easily) queried with an attribute filter or WHERE
+      clause. Note: in table definition, such columns have the
+      "VARCHAR_deflate" declaration type.
+
+-  .. lco:: FID
+      :default: OGC_FID
+
+      Name of the FID column to create.
+
+-  .. lco:: STRICT
+      :choices: YES, NO
+      :default: NO
+      :since: 3.3.5
+
+      (SQLite >= 3.37)
+      Whether the table should be created as a `strict table <https://sqlite.org/stricttables.html>`__,
+      that is strong column type checking. This normally has little influence when
+      operating only through OGR, since it has typed columns, but can help to
+      strengthen database integrity when the database might be edited by external
+      tools.
+      Note that databases that contain STRICT tables can only be read by SQLite >= 3.37.
+      The set of column data types supported in STRICT mode is: Integer, Integer64, Real,
+      String, DateTime, Date and Time. The :lco:`COMPRESS_COLUMNS` option is ignored in
+      strict mode.
 
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
-- :decl_configoption:`SQLITE_LIST_ALL_TABLES` =YES/NO: Set to "YES" to list 
-  all tables (not just the tables listed in the geometry_columns table). This 
-  can also be done using the LIST_ALL_TABLES open option. Default is NO.
+- .. config:: SQLITE_LIST_ALL_TABLES
+     :choices: YES, NO
+     :default: NO
 
-- :decl_configoption:`OGR_SQLITE_LIST_VIRTUAL_OGR` =YES/NO* Set to "YES" to 
-  list VirtualOGR layers. Defaults to "NO" as there might be some security 
-  implications if a user is provided with a file and doesn't know that there 
-  are virtual OGR tables in it.
+     Set to "YES" to list
+     all tables (not just the tables listed in the geometry_columns table). This
+     can also be done using the :oo:`LIST_ALL_TABLES` open option.
 
-- :decl_configoption:`OGR_SQLITE_JOURNAL` can be used to set the journal mode 
-  of the SQLite file, see also 
-  https://www.sqlite.org/pragma.html#pragma_journal_mode.
+- .. config:: OGR_PROMOTE_TO_INTEGER64
+     :choices: YES, NO
+     :default: NO
 
-- :decl_configoption:`OGR_SQLITE_CACHE`: see 
-  :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+     Whether to read fields with type ``INTEGER`` as 64-bit integers.
 
-- :decl_configoption:`OGR_SQLITE_SYNCHRONOUS`: see 
-  :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+- .. config:: OGR_SQLITE_LIST_VIRTUAL_OGR
+     :choices: YES, NO
+     :default: NO
 
-- :decl_configoption:`OGR_SQLITE_LOAD_EXTENSIONS` =extension1,...,extensionN,ENABLE_SQL_LOAD_EXTENSION:
-  (GDAL >= 3.5.0). Comma separated list of names of shared libraries containing
-  extensions to load at database opening.
-  If a file cannot be loaded directly, attempts are made to load with various
-  operating-system specific extensions added. So
-  for example, if "samplelib" cannot be loaded, then names like "samplelib.so"
-  or "samplelib.dylib" or "samplelib.dll" might be tried also.
-  The special value ``ENABLE_SQL_LOAD_EXTENSION`` can be used to enable the use of
-  the SQL ``load_extension()`` function, which is normally disabled in standard
-  builds of sqlite3.
-  Loading extensions as a potential security impact if they are untrusted.
+     Set to "YES" to
+     list VirtualOGR layers. Defaults to "NO" as there might be some security
+     implications if a user is provided with a file and doesn't know that there
+     are virtual OGR tables in it.
 
-- :decl_configoption:`OGR_SQLITE_PRAGMA`: with this option any SQLite
-  `pragma <http://www.sqlite.org/pragma.html>`__ can be specified. The syntax is
-  ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
+- .. config:: OGR_SQLITE_JOURNAL
 
-- :decl_configoption:`SQLITE_USE_OGR_VFS` =YES enables extra buffering/caching 
-  by the GDAL/OGR I/O layer and can speed up I/O. More information 
-  :ref:`here <target_user_virtual_file_systems_file_caching>`.
-  Be aware that no file locking will occur if this option is activated, so 
-  concurrent edits may lead to database corruption.
+     can be used to set the journal mode of the SQLite file, see also
+     https://www.sqlite.org/pragma.html#pragma_journal_mode.
+
+- .. config:: OGR_SQLITE_CACHE
+
+     see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+
+- .. config:: OGR_SQLITE_SYNCHRONOUS
+
+     see :ref:`Performance hints <target_drivers_vector_sqlite_performance_hints>`.
+
+- .. config:: OGR_SQLITE_LOAD_EXTENSIONS
+     :choices: <extension1\,...\,extensionN>, ENABLE_SQL_LOAD_EXTENSION
+     :since: 3.5.0
+
+     Comma separated list of names of shared libraries containing
+     extensions to load at database opening.
+     If a file cannot be loaded directly, attempts are made to load with various
+     operating-system specific extensions added. So
+     for example, if "samplelib" cannot be loaded, then names like "samplelib.so"
+     or "samplelib.dylib" or "samplelib.dll" might be tried also.
+     The special value ``ENABLE_SQL_LOAD_EXTENSION`` can be used to enable the use of
+     the SQL ``load_extension()`` function, which is normally disabled in standard
+     builds of sqlite3.
+     Loading extensions as a potential security impact if they are untrusted.
+
+- .. config:: OGR_SQLITE_PRAGMA
+
+     with this option any SQLite
+     `pragma <http://www.sqlite.org/pragma.html>`__ can be specified. The syntax is
+     ``OGR_SQLITE_PRAGMA = "pragma_name=pragma_value[,pragma_name2=pragma_value2]*"``.
+
+- .. config:: SQLITE_USE_OGR_VFS
+     :choices: YES, NO
+
+     YES enables extra buffering/caching
+     by the GDAL/OGR I/O layer and can speed up I/O. More information
+     :ref:`here <target_user_virtual_file_systems_file_caching>`.
+     Be aware that no file locking will occur if this option is activated, so
+     concurrent edits may lead to database corruption.
 
 .. _target_drivers_vector_sqlite_performance_hints:
 
@@ -433,19 +509,19 @@ related to a corresponding Spatial Index. Explicitly setting a much more
 generously dimensioned internal Page Cache may often help to get a
 noticeably better performance. You can
 explicitly set the internal Page Cache size using the configuration
-option :decl_configoption:`OGR_SQLITE_CACHE` *value* [*value* being 
-measured in MB]; if your HW has enough available RAM, defining a Cache 
-size as big as 512MB (or even 1024MB) may sometimes help a lot in order 
+option :config:`OGR_SQLITE_CACHE` *value* [*value* being
+measured in MB]; if your HW has enough available RAM, defining a Cache
+size as big as 512MB (or even 1024MB) may sometimes help a lot in order
 to get better performance.
 
-Setting the :decl_configoption:`OGR_SQLITE_SYNCHRONOUS` configuration 
-option to *OFF* might also increase performance when creating SQLite 
-databases (although at the expense of integrity in case of 
+Setting the :config:`OGR_SQLITE_SYNCHRONOUS` configuration
+option to *OFF* might also increase performance when creating SQLite
+databases (although at the expense of integrity in case of
 interruption/crash ).
 
 If many source files will be collected into the same Spatialite table,
 it can be much faster to initialize the table without a spatial index by
-using -lco SPATIAL_INDEX=NO and to create spatial index with a separate
+using -lco :lco:`SPATIAL_INDEX=NO` and to create spatial index with a separate
 command after all the data are appended. Spatial index can be created
 with ogrinfo command
 

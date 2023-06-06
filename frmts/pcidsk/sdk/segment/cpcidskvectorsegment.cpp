@@ -713,8 +713,8 @@ std::vector<double> CPCIDSKVectorSegment::GetProjection( std::string &geosys )
 /*                           SetProjection()                            */
 /************************************************************************/
 
-void CPCIDSKVectorSegment::SetProjection( std::string geosys,
-                                          std::vector<double> params )
+void CPCIDSKVectorSegment::SetProjection( const std::string& geosys,
+                                          const std::vector<double>& params )
 
 {
     LoadHeader();
@@ -1182,9 +1182,9 @@ void CPCIDSKVectorSegment::GetFields( ShapeId id,
 /*                              AddField()                              */
 /************************************************************************/
 
-void CPCIDSKVectorSegment::AddField( std::string name, ShapeFieldType type,
-                                     std::string description,
-                                     std::string format,
+void CPCIDSKVectorSegment::AddField( const std::string& name, ShapeFieldType type,
+                                     const std::string& description,
+                                     const std::string& format,
                                      ShapeField *default_value )
 
 {

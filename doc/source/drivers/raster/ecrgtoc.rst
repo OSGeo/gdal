@@ -40,4 +40,4 @@ See Also
 -  `MIL-PRF-32283 <http://www.everyspec.com/MIL-PRF/MIL-PRF+%28030000+-+79999%29/MIL-PRF-32283_26022/>`__
    : specification of ECRG products
 
-NOTE: Implemented as ``gdal/frmts/nitf/ecrgtocdataset.cpp``
+NOTE: Implemented as :source_file:`frmts/nitf/ecrgtocdataset.cpp`

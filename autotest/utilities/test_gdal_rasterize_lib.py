@@ -587,3 +587,57 @@ def test_gdal_rasterize_lib_int64_attribute():
     assert target_ds is not None
     assert target_ds.GetRasterBand(1).DataType == gdal.GDT_Int64
     assert struct.unpack("Q" * 4, target_ds.ReadRaster())[0] == val
+
+
+###############################################################################
+# Test invalid layer name
+
+
+def test_gdal_rasterize_lib_invalid_layers():
+
+    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    layer = vector_ds.CreateLayer("layer")
+    layer.CreateField(ogr.FieldDefn("val", ogr.OFTInteger64))
+
+    with pytest.raises(Exception, match="Unable to find layer"):
+        gdal.Rasterize(
+            "", vector_ds, format="MEM", layers=["invalid"], width=2, height=2
+        )
+
+
+###############################################################################
+# Test rasterizing empty layer
+
+
+def test_gdal_rasterize_lib_empty_layer():
+
+    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    layer = vector_ds.CreateLayer("layer")
+    layer.CreateField(ogr.FieldDefn("val", ogr.OFTInteger64))
+
+    with pytest.raises(Exception, match="Cannot get layer extent"):
+        gdal.Rasterize("", vector_ds, format="MEM", width=2, height=2)
+
+
+###############################################################################
+# Test too small target resolution
+
+
+def test_gdal_rasterize_lib_too_small_resolution():
+
+    vector_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0)
+    layer = vector_ds.CreateLayer("layer")
+    layer.CreateField(ogr.FieldDefn("val", ogr.OFTInteger64))
+
+    feature = ogr.Feature(layer.GetLayerDefn())
+    feature.SetGeometryDirectly(
+        ogr.CreateGeometryFromWkt("POLYGON ((0 0,0 1,1 1,1 0,0 0))")
+    )
+    feature["val"] = 0
+    layer.CreateFeature(feature)
+
+    with pytest.raises(Exception, match="Invalid computed output raster size"):
+        gdal.Rasterize("", vector_ds, format="MEM", xRes=1e-20, yRes=1)
+
+    with pytest.raises(Exception, match="Invalid computed output raster size"):
+        gdal.Rasterize("", vector_ds, format="MEM", xRes=1, yRes=1e-20)

@@ -16,9 +16,9 @@ intended for HDF4 file formats importing. NASA's Earth Observing System
 (EOS) maintains its own HDF modification called HDF-EOS. This
 modification is suited for use with remote sensing data and fully
 compatible with underlying HDF. This driver can import HDF4-EOS files.
-Currently EOS use HDF4-EOS for data storing (telemetry form \`Terra' and
-\`Aqua' satellites). In the future they will switch to HDF5-EOS format,
-which will be used for telemetry from \`Aura' satellite.
+Currently EOS use HDF4-EOS for data storing (telemetry from "Terra" and
+"Aqua" satellites). In the future they will switch to HDF5-EOS format,
+which will be used for telemetry from "Aura" satellite.
 
 Driver capabilities
 -------------------
@@ -207,7 +207,11 @@ transformation matrix restored back.
 
 Creation Options:
 
--  **RANK=n**: Create **n**-dimensional SDS. Currently only 2D and 3D
+.. co:: RANK
+   :choices: 2, 3
+   :default: 3
+
+   Create **n**-dimensional SDS. Currently only 2D and 3D
    datasets supported. By default a 3-dimensional dataset will be
    created.
 
@@ -223,7 +227,11 @@ Open options
 
 The following open option is supported:
 
-- **LIST_SDS=AUTO/YES/NO**: (GDAL >= 3.2) Whether to report Scientific Data Sets (SDS).
+.. oo:: LIST_SDS
+  :choices: AUTO, YES, NO
+  :since: 3.2
+
+  Whether to report Scientific Data Sets (SDS).
   By default, when a HDF file contains EOS_SWATH or EOS_GRID, SDS will not be
   listed as GDAL subdatasets (as this would cause them to be reported twice).
   Listing them can be forced by setting LIST_SDS to YES.
@@ -260,11 +268,10 @@ libraries).
 See Also
 --------
 
--  Implemented as ``gdal/frmts/hdf4/hdf4dataset.cpp`` and
-   ``gdal/frmts/hdf4/hdf4imagedataset.cpp``.
+-  Implemented as :source_file:`frmts/hdf4/hdf4dataset.cpp` and
+   :source_file:`frmts/hdf4/hdf4imagedataset.cpp`.
 -  `The HDF Group <http://www.hdfgroup.org/>`__
 -  Sources of the data in HDF4 and HDF4-EOS formats:
-
    `Earth Observing System Data
    Gateway <http://edcimswww.cr.usgs.gov/pub/imswelcome/>`__
 

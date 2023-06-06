@@ -321,7 +321,7 @@ void kml2featurestyle(FeaturePtr poKmlFeature, OGRLIBKMLDataSource *poOgrDS,
             }
 
             /***** read the style *****/
-            kml2stylestring(poKmlStyle, poOgrSM);
+            kml2stylestring(std::move(poKmlStyle), poOgrSM);
 
             /***** add the style to the feature *****/
             poOgrFeat->SetStyleString(poOgrSM->GetStyleString(nullptr));

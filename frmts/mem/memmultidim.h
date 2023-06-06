@@ -318,7 +318,7 @@ class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
         return m_osFilename;
     }
 
-    void RegisterGroup(std::weak_ptr<GDALGroup> group)
+    void RegisterGroup(const std::weak_ptr<GDALGroup> &group)
     {
         m_poGroupWeak = group;
     }

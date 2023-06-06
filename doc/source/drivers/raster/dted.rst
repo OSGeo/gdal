@@ -22,6 +22,44 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Configuration options
+~~~~~~~~~~~~~~~~~~~~~
+
+This paragraph lists the configuration options that can be set to alter
+the default behavior of the DTED driver.
+
+-  .. config:: GDAL_DTED_SINGLE_BLOCK
+      :choices: TRUE, FALSE
+      :default: FALSE
+
+      Determines whether to read the entire file as a single block. See
+      `Read speed`_.
+
+-  .. config:: REPORT_COMPD_CS
+      :choices: TRUE, FALSE
+      :default: FALSE
+      :since: 2.2.2
+
+      Can be set to TRUE to avoid
+      stripping the vertical CS of compound CS when reading the SRS of a
+      file.
+
+-  .. config:: DTED_VERIFY_CHECKSUM
+      :choices: YES, NO
+      :default: NO
+
+      Determine whether to issue an error/warning if the checksum written
+      do the DTED file does not match its contents. See `Checksum Issues`_.
+
+-  .. config:: DTED_APPLY_PIXEL_IS_POINT
+      :choices: TRUE, FALSE
+      :default: FALSE
+      :since: 3.1
+
+      If ``TRUE``, apply a pixel-is-point interpretation to the data when
+      reading the geotransform.
+
+
 Read Issues
 -----------
 
@@ -31,7 +69,7 @@ Read speed
 Elevation data in DTED files are organized per columns. This data
 organization doesn't fit very well with some scanline oriented
 algorithms and can cause slowdowns, especially for DTED Level 2
-datasets. By defining GDAL_DTED_SINGLE_BLOCK=TRUE, a whole DTED dataset
+datasets. By defining :config:`GDAL_DTED_SINGLE_BLOCK=TRUE`, a whole DTED dataset
 will be considered as a single block. The first access to the file will
 be slow, but further accesses will be much quicker. Only use that option
 if you need to do processing on a whole file.
@@ -55,18 +93,6 @@ Georeferencing Issues
    nor WGS72, the DTED driver will report WGS 84 as SRS and issue a
    warning.
 
-Configuration options
-~~~~~~~~~~~~~~~~~~~~~
-
-This paragraph lists the configuration options that can be set to alter
-the default behavior of the DTED driver.
-
--  REPORT_COMPD_CS: (GDAL >= 2.2.2). Can be set to TRUE to avoid
-   stripping the vertical CS of compound CS when reading the SRS of a
-   file. Default value : FALSE
-
-
-
 Checksum Issues
 ~~~~~~~~~~~~~~~
 
@@ -85,15 +111,7 @@ The DTED driver does support creating new files, but the input data must
 be exactly formatted as a Level 0, 1 or 2 cell. That is the size, and
 bounds must be appropriate for a cell.
 
-
-GeoTransform
-------------
-
-The ``DTED_APPLY_PIXEL_IS_POINT=TRUE`` environment variable can be set (GDAL >=
-3.1) to apply a pixel-is-point interpretation to the data when reading
-the geotransform.
-
 See Also
 --------
 
--  Implemented as ``gdal/frmts/dted/dteddataset.cpp``.
+-  Implemented as :source_file:`frmts/dted/dteddataset.cpp`.

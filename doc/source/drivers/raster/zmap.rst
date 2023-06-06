@@ -26,7 +26,7 @@ left of the values that appear in the file).
 Informal specification given in this `GDAL-dev mailing list
 thread <http://lists.osgeo.org/pipermail/gdal-dev/2011-June/029173.html>`__
 
-NOTE: Implemented as ``gdal/frmts/zmap/zmapdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/zmap/zmapdataset.cpp`.
 
 Driver capabilities
 -------------------

@@ -24,7 +24,7 @@ The ACCESS_MODE property is not currently honored.
 The only creation option currently is SCHEME, which value (BIL, BIP,
 BSQ) determine the interleaving (default is BIP).
 
-NOTE: Implemented as ``gdal/frmts/raw/iscedataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/iscedataset.cpp`.
 
 Driver capabilities
 -------------------

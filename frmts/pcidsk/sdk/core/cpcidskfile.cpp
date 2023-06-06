@@ -95,7 +95,7 @@ using namespace PCIDSK;
 /*                             CPCIDSKFile()                             */
 /************************************************************************/
 
-CPCIDSKFile::CPCIDSKFile( std::string filename )
+CPCIDSKFile::CPCIDSKFile( const std::string& filename )
 
 {
     io_handle = nullptr;

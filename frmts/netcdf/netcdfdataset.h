@@ -817,6 +817,13 @@ class netCDFDataset final : public GDALPamDataset
     int nCreateMode;
     bool bSignedData;
 
+    // IDs of the dimensions of the variables
+    std::vector<int> m_anDimIds{};
+
+    // Extra dimension info (size of those arrays is m_anDimIds.size() - 2)
+    std::vector<int> m_anExtraDimVarIds{};
+    std::vector<int> m_anExtraDimGroupIds{};
+
     std::vector<std::shared_ptr<OGRLayer>> papoLayers;
 
     netCDFWriterConfiguration oWriterConfig;
@@ -1209,6 +1216,8 @@ bool NCDFIsVarVerticalCoord(int nCdfId, int nVarId, const char *pszVarName);
 bool NCDFIsVarTimeCoord(int nCdfId, int nVarId, const char *pszVarName);
 
 std::string NCDFReadMetadataAsJson(int cdfid);
+
+char **NCDFTokenizeCoordinatesAttribute(const char *pszCoordinates);
 
 extern CPLMutex *hNCMutex;
 

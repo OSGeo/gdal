@@ -144,6 +144,9 @@ static void TIFFReadDirEntryCheckedFloat(TIFF *tif, TIFFDirEntry *direntry,
                                          float *value);
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckedDouble(TIFF *tif, TIFFDirEntry *direntry, double *value);
+static enum TIFFReadDirEntryErr
+TIFFReadDirEntryCheckedRationalDirect(TIFF *tif, TIFFDirEntry *direntry,
+                                      TIFFRational_t *value);
 
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeByteSbyte(int8_t value);
@@ -3469,6 +3472,47 @@ TIFFReadDirEntryCheckedSrational(TIFF *tif, TIFFDirEntry *direntry,
     return (TIFFReadDirEntryErrOk);
 }
 
+static enum TIFFReadDirEntryErr
+TIFFReadDirEntryCheckedRationalDirect(TIFF *tif, TIFFDirEntry *direntry,
+                                      TIFFRational_t *value)
+{ /*--: SetGetRATIONAL_directly:_CustomTag: Read rational (and signed rationals)
+     directly --*/
+    UInt64Aligned_t m;
+
+    assert(sizeof(double) == 8);
+    assert(sizeof(uint64_t) == 8);
+    assert(sizeof(uint32_t) == 4);
+
+    if (direntry->tdir_count != 1)
+        return (TIFFReadDirEntryErrCount);
+
+    if (direntry->tdir_type != TIFF_RATIONAL &&
+        direntry->tdir_type != TIFF_SRATIONAL)
+        return (TIFFReadDirEntryErrType);
+
+    if (!(tif->tif_flags & TIFF_BIGTIFF))
+    {
+        enum TIFFReadDirEntryErr err;
+        uint32_t offset = direntry->tdir_offset.toff_long;
+        if (tif->tif_flags & TIFF_SWAB)
+            TIFFSwabLong(&offset);
+        err = TIFFReadDirEntryData(tif, offset, 8, m.i);
+        if (err != TIFFReadDirEntryErrOk)
+            return (err);
+    }
+    else
+    {
+        m.l = direntry->tdir_offset.toff_long8;
+    }
+
+    if (tif->tif_flags & TIFF_SWAB)
+        TIFFSwabArrayOfLong(m.i, 2);
+
+    value->uNum = m.i[0];
+    value->uDenom = m.i[1];
+    return (TIFFReadDirEntryErrOk);
+} /*-- TIFFReadDirEntryCheckedRationalDirect() --*/
+
 static void TIFFReadDirEntryCheckedFloat(TIFF *tif, TIFFDirEntry *direntry,
                                          float *value)
 {
@@ -4526,6 +4570,49 @@ int TIFFReadDirectory(TIFF *tif)
                 }
                 break;
                     /* END REV 4.0 COMPATIBILITY */
+                case TIFFTAG_EP_BATTERYLEVEL:
+                    /* TIFFTAG_EP_BATTERYLEVEL can be RATIONAL or ASCII.
+                     * LibTiff defines it as ASCII and converts RATIONAL to an
+                     * ASCII string. */
+                    switch (dp->tdir_type)
+                    {
+                        case TIFF_RATIONAL:
+                        {
+                            /* Read rational and convert to ASCII*/
+                            enum TIFFReadDirEntryErr err;
+                            TIFFRational_t rValue;
+                            err = TIFFReadDirEntryCheckedRationalDirect(
+                                tif, dp, &rValue);
+                            if (err != TIFFReadDirEntryErrOk)
+                            {
+                                fip = TIFFFieldWithTag(tif, dp->tdir_tag);
+                                TIFFReadDirEntryOutputErr(
+                                    tif, err, module,
+                                    fip ? fip->field_name : "unknown tagname",
+                                    1);
+                            }
+                            else
+                            {
+                                char szAux[32];
+                                snprintf(szAux, sizeof(szAux) - 1, "%d/%d",
+                                         rValue.uNum, rValue.uDenom);
+                                TIFFSetField(tif, dp->tdir_tag, szAux);
+                            }
+                        }
+                        break;
+                        case TIFF_ASCII:
+                            (void)TIFFFetchNormalTag(tif, dp, TRUE);
+                            break;
+                        default:
+                            fip = TIFFFieldWithTag(tif, dp->tdir_tag);
+                            TIFFWarningExtR(tif, module,
+                                            "Invalid data type for tag %s. "
+                                            "ASCII or RATIONAL expected",
+                                            fip ? fip->field_name
+                                                : "unknown tagname");
+                            break;
+                    }
+                    break;
                 default:
                     (void)TIFFFetchNormalTag(tif, dp, TRUE);
                     break;

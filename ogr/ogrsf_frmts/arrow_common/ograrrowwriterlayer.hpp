@@ -314,8 +314,9 @@ inline void OGRArrowWriterLayer::CreateSchemaCommon()
             auto kvMetadata = field->metadata()
                                   ? field->metadata()->Copy()
                                   : std::make_shared<arrow::KeyValueMetadata>();
-            kvMetadata->Append("ARROW:extension:name",
-                               GetGeomEncodingAsString(m_aeGeomEncoding[i]));
+            kvMetadata->Append(
+                "ARROW:extension:name",
+                GetGeomEncodingAsString(m_aeGeomEncoding[i], false));
             field = field->WithMetadata(kvMetadata);
         }
 
@@ -392,7 +393,7 @@ inline void OGRArrowWriterLayer::FinalizeSchema()
                            std::abs(nHours), nMinutes);
             auto dt = arrow::timestamp(arrow::TimeUnit::MILLI, osTZ);
             const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
-            auto field = arrow::field(poFieldDefn->GetNameRef(), dt,
+            auto field = arrow::field(poFieldDefn->GetNameRef(), std::move(dt),
                                       poFieldDefn->IsNullable());
             auto result = m_poSchema->SetField(nArrowIdxFirstField + i, field);
             if (!result.ok())
@@ -560,18 +561,19 @@ OGRArrowWriterLayer::GetPreciseArrowGeomEncoding(OGRwkbGeometryType eGType)
 }
 
 /************************************************************************/
-/*                        GetGeomEncodingAsString()                   */
+/*                        GetGeomEncodingAsString()                     */
 /************************************************************************/
 
 inline const char *
-OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding)
+OGRArrowWriterLayer::GetGeomEncodingAsString(OGRArrowGeomEncoding eGeomEncoding,
+                                             bool bForParquetGeo)
 {
     switch (eGeomEncoding)
     {
         case OGRArrowGeomEncoding::WKB:
-            return "WKB";
+            return bForParquetGeo ? "WKB" : "ogc.wkb";
         case OGRArrowGeomEncoding::WKT:
-            return "WKT";
+            return bForParquetGeo ? "WKT" : "ogc.wkt";
         case OGRArrowGeomEncoding::GEOARROW_GENERIC:
             CPLAssert(false);
             break;
@@ -1302,6 +1304,11 @@ inline OGRErr OGRArrowWriterLayer::ICreateFeature(OGRFeature *poFeature)
         {
             OGRWktOptions options;
             options.variant = wkbVariantIso;
+            if (m_nWKTCoordinatePrecision >= 0)
+            {
+                options.format = OGRWktFormat::F;
+                options.precision = m_nWKTCoordinatePrecision;
+            }
             OGR_ARROW_RETURN_OGRERR_NOT_OK(
                 static_cast<arrow::StringBuilder *>(poBuilder)->Append(
                     poGeom->exportToWkt(options)));

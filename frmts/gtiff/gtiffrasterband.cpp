@@ -30,6 +30,7 @@
 #include "gtiffrasterband.h"
 #include "gtiffdataset.h"
 
+#include <algorithm>
 #include <set>
 
 #include "cpl_vsi_virtual.h"
@@ -361,6 +362,99 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 m_poGDS->m_bLoadingOtherBands = true;
             }
         }
+    }
+
+    // Write optimization when writing whole blocks, by-passing the block cache.
+    // We require the block cache to be non instanciated to simplify things
+    // (otherwise we might need to evict corresponding existing blocks from the
+    // block cache).
+    else if (eRWFlag == GF_Write &&
+             // Could be extended to "odd bit" case, but more work
+             m_poGDS->m_nBitsPerSample == GDALGetDataTypeSize(eDataType) &&
+             nXSize == nBufXSize && nYSize == nBufYSize && !HasBlockCache() &&
+             !m_poGDS->m_bLoadedBlockDirty &&
+             (m_poGDS->nBands == 1 ||
+              m_poGDS->m_nPlanarConfig == PLANARCONFIG_SEPARATE) &&
+             (nXOff % nBlockXSize) == 0 && (nYOff % nBlockYSize) == 0 &&
+             (nXOff + nXSize == nRasterXSize || (nXSize % nBlockXSize) == 0) &&
+             (nYOff + nYSize == nRasterYSize || (nYSize % nBlockYSize) == 0))
+    {
+        m_poGDS->Crystalize();
+
+        if (m_poGDS->m_bDebugDontWriteBlocks)
+            return CE_None;
+
+        const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+        if (nXSize == nBlockXSize && nYSize == nBlockYSize &&
+            eBufType == eDataType && nPixelSpace == nDTSize &&
+            nLineSpace == nPixelSpace * nBlockXSize)
+        {
+            // If writing one single block with the right data type and layout,
+            // we don't need a temporary buffer
+            const int nBlockId =
+                ComputeBlockId(nXOff / nBlockXSize, nYOff / nBlockYSize);
+            return m_poGDS->WriteEncodedTileOrStrip(
+                nBlockId, pData, /* bPreserveDataBuffer= */ true);
+        }
+
+        // Make sure m_poGDS->m_pabyBlockBuf is allocated.
+        // We could actually use any temporary buffer
+        if (m_poGDS->LoadBlockBuf(/* nBlockId = */ -1,
+                                  /* bReadFromDisk = */ false) != CE_None)
+        {
+            return CE_Failure;
+        }
+
+        // Iterate over all blocks defined by
+        // [nXOff, nXOff+nXSize[ * [nYOff, nYOff+nYSize[
+        // and write their content as a nBlockXSize x nBlockYSize strile
+        // in a temporary buffer, before calling WriteEncodedTileOrStrip()
+        // on it
+        const int nYBlockStart = nYOff / nBlockYSize;
+        const int nYBlockEnd = 1 + (nYOff + nYSize - 1) / nBlockYSize;
+        const int nXBlockStart = nXOff / nBlockXSize;
+        const int nXBlockEnd = 1 + (nXOff + nXSize - 1) / nBlockXSize;
+        for (int nYBlock = nYBlockStart; nYBlock < nYBlockEnd; ++nYBlock)
+        {
+            const int nValidY =
+                std::min(nBlockYSize, nRasterYSize - nYBlock * nBlockYSize);
+            for (int nXBlock = nXBlockStart; nXBlock < nXBlockEnd; ++nXBlock)
+            {
+                const int nValidX =
+                    std::min(nBlockXSize, nRasterXSize - nXBlock * nBlockXSize);
+                if (nValidY < nBlockYSize || nValidX < nBlockXSize)
+                {
+                    // Make sure padding bytes at the right/bottom of the
+                    // tile are initialized to zero.
+                    memset(m_poGDS->m_pabyBlockBuf, 0,
+                           static_cast<size_t>(nBlockXSize) * nBlockYSize *
+                               nDTSize);
+                }
+                const GByte *pabySrcData =
+                    static_cast<const GByte *>(pData) +
+                    static_cast<size_t>(nYBlock - nYBlockStart) * nBlockYSize *
+                        nLineSpace +
+                    static_cast<size_t>(nXBlock - nXBlockStart) * nBlockXSize *
+                        nPixelSpace;
+                for (int iY = 0; iY < nValidY; ++iY)
+                {
+                    GDALCopyWords64(
+                        pabySrcData + static_cast<size_t>(iY) * nLineSpace,
+                        eBufType, static_cast<int>(nPixelSpace),
+                        m_poGDS->m_pabyBlockBuf +
+                            static_cast<size_t>(iY) * nBlockXSize * nDTSize,
+                        eDataType, nDTSize, nValidX);
+                }
+                const int nBlockId = ComputeBlockId(nXBlock, nYBlock);
+                if (m_poGDS->WriteEncodedTileOrStrip(
+                        nBlockId, m_poGDS->m_pabyBlockBuf,
+                        /* bPreserveDataBuffer= */ false) != CE_None)
+                {
+                    return CE_Failure;
+                }
+            }
+        }
+        return CE_None;
     }
 
     if (psExtraArg->eResampleAlg == GRIORA_NearestNeighbour)

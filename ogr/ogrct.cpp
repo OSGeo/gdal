@@ -110,6 +110,9 @@ struct OGRCoordinateTransformationOptions::Private
     bool bAllowBallpark = true;
     double dfAccuracy = -1;  // no constraint
 
+    bool bOnlyBest = false;
+    bool bOnlyBestOptionSet = false;
+
     bool bHasSourceCenterLong = false;
     double dfSourceCenterLong = 0.0;
 
@@ -153,6 +156,8 @@ std::string OGRCoordinateTransformationOptions::Private::GetKey() const
     ret += std::to_string(static_cast<int>(bReverseCO));
     ret += std::to_string(static_cast<int>(bAllowBallpark));
     ret += std::to_string(dfAccuracy);
+    ret += std::to_string(static_cast<int>(bOnlyBestOptionSet));
+    ret += std::to_string(static_cast<int>(bOnlyBest));
     ret += std::to_string(static_cast<int>(bHasSourceCenterLong));
     ret += std::to_string(dfSourceCenterLong);
     ret += std::to_string(static_cast<int>(bHasTargetCenterLong));
@@ -586,6 +591,59 @@ int OCTCoordinateTransformationOptionsSetBallparkAllowed(
     OGRCoordinateTransformationOptionsH hOptions, int bAllowBallpark)
 {
     return hOptions->SetBallparkAllowed(CPL_TO_BOOL(bAllowBallpark));
+}
+
+/************************************************************************/
+/*                         SetOnlyBest()                                */
+/************************************************************************/
+
+/** \brief Sets whether only the "best" operation should be used.
+ *
+ * By default (at least in the PROJ 9.x series), PROJ may use coordinate
+ * operations that are not the "best" if resources (typically grids) needed
+ * to use them are missing. It will then fallback to other coordinate operations
+ * that have a lesser accuracy, for example using Helmert transformations,
+ * or in the absence of such operations, to ones with potential very rought
+ * accuracy, using "ballpark" transformations
+ * (see https://proj.org/glossary.html).
+ *
+ * When calling this method with bOnlyBest = true, PROJ will only consider the
+ * "best" operation, and error out (at Transform() time) if they cannot be
+ * used.
+ * This method may be used together with SetBallparkAllowed(false) to
+ * only allow best operations that have a known accuracy.
+ *
+ * Note that this method has no effect on PROJ versions before 9.2.
+ *
+ * The default value for this option can be also set with the
+ * PROJ_ONLY_BEST_DEFAULT environment variable, or with the "only_best_default"
+ * setting of proj.ini. Calling SetOnlyBest() overrides such default value.
+ *
+ * @param bOnlyBest set to true to ask PROJ to use only the best operation(s)
+ *
+ * @since GDAL 3.8 and PROJ 9.2
+ */
+bool OGRCoordinateTransformationOptions::SetOnlyBest(bool bOnlyBest)
+{
+    d->bOnlyBest = bOnlyBest;
+    d->bOnlyBestOptionSet = true;
+    return true;
+}
+
+/************************************************************************/
+/*        OCTCoordinateTransformationOptionsSetOnlyBest()               */
+/************************************************************************/
+
+/** \brief Sets whether only the "best" operation(s) should be used.
+ *
+ * See OGRCoordinateTransformationOptions::SetOnlyBest()
+ *
+ * @since GDAL 3.8 and PROJ 9.2
+ */
+int OCTCoordinateTransformationOptionsSetOnlyBest(
+    OGRCoordinateTransformationOptionsH hOptions, bool bOnlyBest)
+{
+    return hOptions->SetOnlyBest(bOnlyBest);
 }
 
 /************************************************************************/
@@ -1589,6 +1647,14 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
                     "ACCURACY", CPLSPrintf("%.18g", options.d->dfAccuracy));
             if (!options.d->bAllowBallpark)
                 aosOptions.SetNameValue("ALLOW_BALLPARK", "NO");
+#if PROJ_VERSION_MAJOR > 9 ||                                                  \
+    (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR >= 2)
+            if (options.d->bOnlyBestOptionSet)
+            {
+                aosOptions.SetNameValue("ONLY_BEST",
+                                        options.d->bOnlyBest ? "YES" : "NO");
+            }
+#endif
             m_pj = proj_create_crs_to_crs_from_pj(ctx, srcCRS, targetCRS, area,
                                                   aosOptions.List());
             proj_destroy(srcCRS);
@@ -2533,6 +2599,8 @@ int OGRProjCT::TransformWithErrorCodes(int nCount, double *x, double *y,
 
     if (!bTransformDone)
     {
+        const auto nLastErrorCounter = CPLGetErrorCounter();
+
         for (int i = 0; i < nCount; i++)
         {
             PJ_COORD coord;
@@ -2628,7 +2696,13 @@ int OGRProjCT::TransformWithErrorCodes(int nCount, double *x, double *y,
 #endif
                     if (m_bEmitErrors)
                     {
-                        if (pszError == nullptr)
+                        if (nLastErrorCounter != CPLGetErrorCounter() &&
+                            CPLGetLastErrorType() == CE_Failure &&
+                            strstr(CPLGetLastErrorMsg(), "PROJ:"))
+                        {
+                            // do nothing
+                        }
+                        else if (pszError == nullptr)
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Reprojection failed, err = %d", err);
                         else

@@ -49,19 +49,26 @@ None
 Layer Creation Options
 ----------------------
 
--  **SPATIAL_INDEX=**\ *YES/NO*: Set to YES to create a
-   spatial index. Defaults to YES.
--  **TEMPORARY_DIR=**\ path: Path to an existing directory where temporary
-   files should be created. Only used if SPATIAL_INDEX=YES. If not specified,
-   the directory of the output file will be used for regular filenames. For
-   other VSI file systems, the temporary directory will be the one decided by
-   the :cpp:func:`CPLGenerateTempFilename` function.
-   "/vsimem/" can be used for in-memory temporary files.
+-  .. lco:: SPATIAL_INDEX
+      :choices: YES, NO
+      :default: YES
+
+      Set to YES to create a spatial index.
+
+-  .. lco:: TEMPORARY_DIR
+      :choices: <path>
+
+      Path to an existing directory where temporary
+      files should be created. Only used if :lco:`SPATIAL_INDEX=YES`. If not specified,
+      the directory of the output file will be used for regular filenames. For
+      other VSI file systems, the temporary directory will be the one decided by
+      the :cpp:func:`CPLGenerateTempFilename` function.
+      "/vsimem/" can be used for in-memory temporary files.
 
 Creation Issues
 ---------------
 
-Currently, NULL geometries are not supported with SPATIAL_INDEX=YES.
+Currently, NULL geometries are not supported with :lco:`SPATIAL_INDEX=YES`.
 
 `More background and dicussion on this issue at <https://github.com/flatgeobuf/flatgeobuf/discussions/260>`__
 

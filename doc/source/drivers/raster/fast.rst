@@ -117,7 +117,7 @@ Calibration coefficients for each band reported as metadata items.
 See Also
 --------
 
-Implemented as ``gdal/frmts/raw/fastdataset.cpp``.
+Implemented as :source_file:`frmts/raw/fastdataset.cpp`.
 
 Landsat FAST L7A format description available from
 http://ltpwww.gsfc.nasa.gov/IAS/htmls/l7_review.html (see `ESDIS Level 1

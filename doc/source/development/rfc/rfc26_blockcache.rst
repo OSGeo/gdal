@@ -92,7 +92,7 @@ than 1 million blocks, the hashset based implementation is used,
 otherwise the array based implementation is used. The new
 GDAL_OF_ARRAY_BLOCK_ACCESS and GDAL_OF_HASHSET_BLOCK_ACCESS open flags
 can also be passed to GDALOpenEx() to override this choice. The
-GDAL_BAND_BLOCK_CACHE configuration option can also be set to ARRAY or
+:config:`GDAL_BAND_BLOCK_CACHE` configuration option can also be set to ARRAY or
 HASHSET.
 
 The hashset based implementation could potentially be the default
@@ -198,7 +198,7 @@ Testing
 -------
 
 The autotest/cpp/testblockcache utility is now run by the "quick_test"
-target of autotest/cpp/Makefile with GDAL_BAND_BLOCK_CACHE=HASHSET in
+target of autotest/cpp/Makefile with :config:`GDAL_BAND_BLOCK_CACHE=HASHSET` in
 additions to the array based implementation.
 
 A new autotest/cpp/testblockcachelimits utility has been developed to

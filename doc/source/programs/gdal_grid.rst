@@ -36,7 +36,7 @@ This program creates regular grid (raster) from the scattered data read from
 the OGR datasource. Input data will be interpolated to fill grid nodes with
 values, you can choose from various interpolation methods.
 
-It is possible to set the :decl_configoption:`GDAL_NUM_THREADS`
+It is possible to set the :config:`GDAL_NUM_THREADS`
 configuration option to parallelize the processing. The value to specify is
 the number of worker threads, or ``ALL_CPUS`` to use all the cores/CPUs of the
 computer.
@@ -478,7 +478,7 @@ The next command does the same thing as the previous one, but reads values to
 interpolate from the attribute field specified with **-zfield** option
 instead of geometry record. So in this case X and Y coordinates are being
 taken from geometry and Z is being taken from the *"Elevation"* field.
-The GDAL_NUM_THREADS is also set to parallelize the computation.
+The :config:`GDAL_NUM_THREADS` is also set to parallelize the computation.
 
 ::
 

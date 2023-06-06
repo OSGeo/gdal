@@ -84,17 +84,31 @@ Configuration options
 
 The following configuration options are available:
 
--  **NGW_USERPWD**: User name and password separated with colon.
-   Optional and can be set using open options.
--  **NGW_CACHE_EXPIRES**: Time in seconds cached files will stay valid.
-   If cached file expires it is deleted when maximum size of cache is
-   reached. Also expired file can be overwritten by the new one from
-   web. Defaults to 604800 (7 days).
--  **NGW_CACHE_MAX_SIZE**: The cache maximum size in bytes. If cache
-   reached maximum size, expired cached files will be deleted. Defaults
-   to 67108864 (64Mb).
--  **NGW_JSON_DEPTH**: The depth of json response that can be parsed. If
-   depth is greater than this value, parse error occurs.
+-  .. config:: NGW_USERPWD
+
+      User name and password separated with colon.
+      Optional and can be set using open options.
+
+-  .. config:: NGW_CACHE_EXPIRES
+      :choices: <seconds>
+      :default: 604800 (7 days)
+
+      Time in seconds cached files will stay valid.
+      If cached file expires it is deleted when maximum size of cache is
+      reached. Also expired file can be overwritten by the new one from
+      web.
+
+-  .. config:: NGW_CACHE_MAX_SIZE
+      :choices: <bytes>
+      :default: 67108864 (64 Mb)
+
+      The cache maximum size in bytes. If cache
+      reached maximum size, expired cached files will be deleted.
+
+-  .. config:: NGW_JSON_DEPTH
+
+      The depth of json response that can be parsed. If
+      depth is greater than this value, parse error occurs.
 
 Authentication
 --------------
@@ -109,16 +123,30 @@ Open options
 
 The following open options are available:
 
--  USERPWD - Username and password, separated by colon.
--  CACHE_EXPIRES=604800 - Time in seconds cached files will stay valid.
-   If cached file expires it is deleted when maximum size of cache is
-   reached. Also expired file can be overwritten by the new one from
-   web. Defaults to 604800 (7 days).
--  CACHE_MAX_SIZE=67108864 - The cache maximum size in bytes. If cache
-   reached maximum size, expired cached files will be deleted. Defaults
-   to 67108864 (64Mb).
--  JSON_DEPTH=32 - The depth of json response that can be parsed. If
-   depth is greater than this value, parse error occurs.
+-  .. oo:: USERPWD
+
+      Username and password, separated by colon.
+
+-  .. oo:: CACHE_EXPIRES
+      :choices: <seconds>
+      :default: 604800 (7 days)
+
+      Time in seconds cached files will stay valid.
+      If cached file expires it is deleted when maximum size of cache is
+      reached. Also expired file can be overwritten by the new one from
+      web.
+
+-  .. oo:: CACHE_MAX_SIZE
+      :choices: <bytes>
+      :default: 67108864 (64 Mb)
+
+      The cache maximum size in bytes. If cache
+      reached maximum size, expired cached files will be deleted.
+-  .. oo:: JSON_DEPTH
+      :default: 32
+
+      The depth of json response that can be parsed. If
+      depth is greater than this value, parse error occurs.
 
 Create copy options
 -------------------

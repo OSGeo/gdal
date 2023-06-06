@@ -75,7 +75,7 @@ other content before the ``<GDAL_WMS>`` element.
 <CleanTimeout>120</CleanTimeout>                                           Clean Thread Run Timeout in seconds. How often to run the clean thread, which finds and deletes expired cached files. Default value is 120s. Use value of 0 to disable the Clean Thread (effectively unlimited cache size). If you intend to use very large cache size you might want to disable the cache clean or to use a much longer timeout as the time that takes to scan the cache files for expired cache files might be long. ("disabled" was the only option for GDAL <= 2.2; "120s" was the only option for 2.3 <= GDAL <= 3.1).
 <Unique>True</Unique>                                                      If set to true the path will appended with md5 hash of ServerURL. Default value is true.
 </Cache>
-<MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2). Can also be set with the :decl_configoption:`GDAL_MAX_CONNECTIONS` configuration option (GDAL >= 3.2)
+<MaxConnections>2</MaxConnections>                                         Maximum number of simultaneous connections. (optional, defaults to 2). Can also be set with the :config:`GDAL_MAX_CONNECTIONS` configuration option (GDAL >= 3.2)
 <Timeout>300</Timeout>                                                     Connection timeout in seconds. (optional, defaults to 300)
 <OfflineMode>true</OfflineMode>                                            Do not download any new images, use only what is in cache. Useful only with cache enabled. (optional, defaults to false)
 <AdviseRead>true</AdviseRead>                                              Enable AdviseRead API call - download images into cache. (optional, defaults to false)
@@ -309,6 +309,19 @@ the full resolution dimension and the number of resolutions.
 
 The XML definition can then be generated with "gdal_translate
 IIP:http://foo.com/FIF=image_name out.xml -of WMS"
+
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+- .. config:: GDAL_MAX_CONNECTIONS
+     :choices: <integer>
+     :default: 2
+     :since: 3.2
+
+     Set the maximum number of simultaneous connections.
 
 Examples
 --------

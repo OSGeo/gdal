@@ -255,11 +255,13 @@ class OGRMSSQLGeometryWriter
     void WritePoint(double x, double y);
     void WritePoint(double x, double y, double z);
     void WritePoint(double x, double y, double z, double m);
-    void WriteSimpleCurve(OGRSimpleCurve *poGeom);
-    void WriteSimpleCurve(OGRSimpleCurve *poGeom, int iStartIndex);
-    void WriteSimpleCurve(OGRSimpleCurve *poGeom, int iStartIndex, int nCount);
+    void WriteSimpleCurve(OGRSimpleCurve *poGeom, bool bReversePoints);
+    void WriteSimpleCurve(OGRSimpleCurve *poGeom, int iStartIndex,
+                          bool bReversePoints);
+    void WriteSimpleCurve(OGRSimpleCurve *poGeom, int iStartIndex, int nCount,
+                          bool bReversePoints);
     void WriteCompoundCurve(OGRCompoundCurve *poGeom);
-    void WriteCurve(OGRCurve *poGeom);
+    void WriteCurve(OGRCurve *poGeom, bool bReversePoints);
     void WritePolygon(OGRPolygon *poGeom);
     void WriteCurvePolygon(OGRCurvePolygon *poGeom);
     void WriteGeometryCollection(OGRGeometryCollection *poGeom, int iParent);

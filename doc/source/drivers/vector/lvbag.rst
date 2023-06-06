@@ -35,10 +35,19 @@ Open options
 The following open options can be specified
 (typically with the **-oo**\  name=value parameters of ogrinfo or ogr2ogr):
 
--  **AUTOCORRECT_INVALID_DATA**\ =YES/NO (defaults to NO). Whether or not the driver must
-   try to adjust the data if a feature contains invalid or corrupted data. This typically
-   includes fixing invalid geometries (with GEOS >= 3.8.0), dates, object status etc.
--  **LEGACY_ID**\ =YES/NO (defaults to NO). Format the BAG identifiers compatible with BAG 1.0.
+-  .. oo:: AUTOCORRECT_INVALID_DATA
+      :choices: YES, NO
+      :default: NO
+
+      Whether or not the driver must
+      try to adjust the data if a feature contains invalid or corrupted data. This typically
+      includes fixing invalid geometries (with GEOS >= 3.8.0), dates, object status etc.
+
+-  .. oo:: LEGACY_ID
+      :choices: YES, NO
+      :default: NO
+
+      Format the BAG identifiers compatible with BAG 1.0.
 
 VSI Virtual File System API support
 -----------------------------------

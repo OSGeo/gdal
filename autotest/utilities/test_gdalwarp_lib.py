@@ -3387,6 +3387,64 @@ def test_gdalwarp_lib_tr_square():
 
 
 ###############################################################################
+# Test that we auto enable OPTIMIZE_SIZE warping option when it is reasonable
+
+
+@pytest.mark.require_creation_option("GTiff", "JPEG")
+def test_gdalwarp_lib_auto_optimize_size():
+
+    src_ds = gdal.Translate(
+        "", "../gcore/data/byte.tif", options="-f MEM -outsize 1500 1500 -r bilinear"
+    )
+
+    tmpfilename = "/vsimem/test_gdalwarp_lib_auto_optimize_size.tif"
+    # Warp to tiled GeoTIFF with low warp memory and block cache size, to
+    # potentially exhibit we wouldn't write to output tile boundaries.
+    with gdaltest.SetCacheMax(256 * 256):
+        gdal.Warp(tmpfilename, src_ds, options="-co TILED=YES -co COMPRESS=JPEG -wm 1")
+
+    # Warp to MEM and then translate to tiled GeoTIFF
+    ref_ds_src = gdal.Warp("", src_ds, options="-f MEM")
+    tmpfilename2 = "/vsimem/test_gdalwarp_lib_auto_optimize_size2.tif"
+    gdal.Translate(tmpfilename2, ref_ds_src, options="-co TILED=YES -co COMPRESS=JPEG")
+
+    ds = gdal.Open(tmpfilename)
+    ds_ref = gdal.Open(tmpfilename2)
+    try:
+        assert ds.GetRasterBand(1).Checksum() == ds_ref.GetRasterBand(1).Checksum()
+    finally:
+        gdal.Unlink(tmpfilename)
+        gdal.Unlink(tmpfilename2)
+
+
+###############################################################################
+# Test proper computation of working data type
+
+
+def test_gdalwarp_lib_working_data_type_with_source_dataset_of_different_types():
+
+    int16_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Int16)
+    int16_ds.GetRasterBand(1).Fill(1)
+    int16_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+    float32_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_Float32)
+    nd_value = struct.unpack("f", struct.pack("f", -3.4028235e38))[0]
+    float32_ds.GetRasterBand(1).Fill(nd_value)
+    float32_ds.GetRasterBand(1).SetNoDataValue(nd_value)
+    float32_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+
+    out_ds = gdal.Warp("", [int16_ds, float32_ds], options="-f MEM -dstnodata -32768")
+    minval, maxval = out_ds.GetRasterBand(1).ComputeRasterMinMax()
+    assert minval == 1
+    assert maxval == 1
+
+    out_ds = gdal.Warp("", [float32_ds, int16_ds], options="-f MEM -dstnodata -32768")
+    minval, maxval = out_ds.GetRasterBand(1).ComputeRasterMinMax()
+    assert minval == 1
+    assert maxval == 1
+
+
+###############################################################################
 # Cleanup
 
 

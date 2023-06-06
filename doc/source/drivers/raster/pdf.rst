@@ -55,63 +55,103 @@ content in the EMBEDDED_METADATA metadata domain.
 Configuration options
 ---------------------
 
--  :decl_configoption:`GDAL_PDF_DPI` : To control the dimensions of the raster by
-   specifying the DPI of the rasterization with the Its default value is
-   150. The driver will make some effort to
-   guess the DPI value either from a specific metadata item contained in
-   some PDF files, or from the raster images inside the PDF (in simple
-   cases).
--  :decl_configoption:`GDAL_PDF_NEATLINE` : The name of the neatline to
-   select (only available for geospatial PDF, encoded according to OGC
-   Best Practice). This defaults to "Map Layers" for USGS Topo PDF. If
-   not found, the neatline that covers the largest area.
--  :decl_configoption:`GDAL_USER_PWD` : User password for protected PDFs.
--  :decl_configoption:`GDAL_PDF_RENDERING_OPTIONS` : a combination of VECTOR, RASTER and
-   TEXT separated by comma, to select whether vector, raster or text
-   features should be rendered. If the option is not specified, all
-   features are rendered (Poppler and PDFium).
--  :decl_configoption:`GDAL_PDF_BANDS` = 3 or 4 : whether the PDF should be rendered as a
-   RGB (3) or RGBA (4) image. The default value will depend on the PDF rendering
-   used (Poppler vs PDFium) and on the content found in the PDF file (if an
-   image with transparency is recognized, then 4 will be used). When 3 bands
-   is selected, a white background is used.
--  :decl_configoption:`GDAL_PDF_LAYERS` = list of layers (comma separated) to turn ON (or
-   "ALL" to turn all layers ON). The layer names can be obtained by
-   querying the LAYERS metadata domain. When this option is specified,
-   layers not explicitly listed will be turned off (Poppler and PDFium).
--  :decl_configoption:`GDAL_PDF_LAYERS_OFF` = list of layers (comma separated) to turn OFF.
-   The layer names can be obtained by querying the LAYERS metadata
-   domain (Poppler and PDFium).
--  :decl_configoption:`GDAL_PDF_LAUNDER_LAYER_NAMES` = YES/NO: (GDAL >= 3.1) Can be set to NO
-   to avoid the layer names reported in the LAYERS metadata domain or as OGR
-   layers for the vector part to be "laundered".
+-  .. config:: GDAL_PDF_DPI
+      :default: 150
+
+      To control the dimensions of the raster by
+      specifying the DPI of the rasterization.
+      The driver will make some effort to
+      guess the DPI value either from a specific metadata item contained in
+      some PDF files, or from the raster images inside the PDF (in simple
+      cases).
+
+-  .. config:: GDAL_PDF_NEATLINE
+
+      The name of the neatline to
+      select (only available for geospatial PDF, encoded according to OGC
+      Best Practice). This defaults to "Map Layers" for USGS Topo PDF. If
+      not found, the neatline that covers the largest area.
+
+-  .. config:: PDF_USER_PWD
+
+      User password for protected PDFs.
+
+-  .. config:: GDAL_PDF_RENDERING_OPTIONS
+      :choices: RASTER\,VECTOR\,TEXT, RASTER\,VECTOR, RASTER\,TEXT, RASTER, VECTOR\,TEXT, VECTOR, TEXT
+
+      a combination of VECTOR, RASTER and
+      TEXT separated by comma, to select whether vector, raster or text
+      features should be rendered. If the option is not specified, all
+      features are rendered (Poppler and PDFium).
+
+-  .. config:: GDAL_PDF_BANDS
+      :choices: 3, 4
+
+      whether the PDF should be rendered as a
+      RGB (3) or RGBA (4) image. The default value will depend on the PDF rendering
+      used (Poppler vs PDFium) and on the content found in the PDF file (if an
+      image with transparency is recognized, then 4 will be used). When 3 bands
+      is selected, a white background is used.
+
+-  .. config:: GDAL_PDF_LAYERS
+
+      list of layers (comma separated) to turn ON (or
+      "ALL" to turn all layers ON). The layer names can be obtained by
+      querying the LAYERS metadata domain. When this option is specified,
+      layers not explicitly listed will be turned off (Poppler and PDFium).
+
+-  .. config:: GDAL_PDF_LAYERS_OFF
+
+      list of layers (comma separated) to turn OFF.
+      The layer names can be obtained by querying the LAYERS metadata
+      domain (Poppler and PDFium).
+
+-  .. config:: GDAL_PDF_LAUNDER_LAYER_NAMES
+      :choices: YES, NO
+      :since: 3.1
+
+      Can be set to NO
+      to avoid the layer names reported in the LAYERS metadata domain or as OGR
+      layers for the vector part to be "laundered".
 
 Open Options
 ~~~~~~~~~~~~
 
 Above configuration options are also available as open options.
 
--  **RENDERING_OPTIONS**\ =[RASTER,VECTOR,TEXT / RASTER,VECTOR /
-   RASTER,TEXT / RASTER / VECTOR,TEXT / VECTOR / TEXT]: same as
-   GDAL_PDF_RENDERING_OPTIONS configuration option
+-  .. oo:: RENDERING_OPTIONS
+      :choices: RASTER\,VECTOR\,TEXT, RASTER\,VECTOR, RASTER\,TEXT, RASTER, VECTOR\,TEXT, VECTOR, TEXT
 
--  **DPI**\ =value: same as GDAL_PDF_DPI configuration option
+      Equivalent of :config:`GDAL_PDF_RENDERING_OPTIONS` configuration option.
 
--  **USER_PWD**\ =password: same as GDAL_USER_PWD configuration option
+-  .. oo:: DPI
 
--  **PDF_LIB**\ =[POPPLER/PODOFO/PDFIUM]: only available for builds with
-   multiple backends.
+      Equivalent of :config:`GDAL_PDF_DPI` configuration option
 
--  **LAYERS**\ =string: list of layers (comma separated) to turn ON.
-   Same as GDAL_PDF_LAYERS configuration option
+-  .. oo:: USER_PWD
 
--  **GDAL_PDF_LAYERS_OFF**\ =string: list of layers (comma separated) to
-   turn OFF. Same as GDAL_PDF_LAYERS_OFF configuration option
+      Equivalent of :config:`PDF_USER_PWD` configuration option
 
--  **BANDS**\ =3 or 4. Same as GDAL_PDF_BANDS configuration option
+-  .. oo:: PDF_LIB
+      :choices: POPPLER, PODOFO, PDFIUM
 
--  **NEATLINE**\ =name of neatline. Same as GDAL_PDF_NEATLINE
-   configuration option
+      only available for builds with multiple backends.
+
+-  .. oo:: LAYERS
+
+      Equivalent of :config:`GDAL_PDF_LAYERS` configuration option
+
+-  .. oo:: LAYERS_OFF
+
+      Equivalent of :config:`GDAL_PDF_LAYERS_OFF` configuration option
+
+-  .. oo:: BANDS
+
+      Equivalent of :config:`GDAL_PDF_BANDS` configuration option
+
+-  .. oo:: NEATLINE
+
+      Equivalent of as :config:`GDAL_PDF_NEATLINE` configuration option
 
 LAYERS Metadata domain
 ----------------------
@@ -119,7 +159,7 @@ LAYERS Metadata domain
 When GDAL is compiled against Poppler
 or PDFium, the LAYERS metadata domain can be queried to retrieve layer
 names that can be turned ON or OFF. This is useful to know which values
-to specify for the *GDAL_PDF_LAYERS* or *GDAL_PDF_LAYERS_OFF*
+to specify for the :config:`GDAL_PDF_LAYERS` or :config:`GDAL_PDF_LAYERS_OFF`
 configuration options.
 
 For example :
@@ -176,170 +216,301 @@ Note: PDF write support does not require linking to any backend.
 Creation Options
 ~~~~~~~~~~~~~~~~
 
--  **COMPRESS=[NONE/DEFLATE/JPEG/JPEG2000]**: Set the compression to use
-   for raster data. DEFLATE is the default.
+-  .. co:: COMPRESS
+      :choices: NONE, DEFLATE, JPEG, JPEG2000
+      :default: DEFLATE
 
--  **STREAM_COMPRESS=[NONE/DEFLATE]**: Set the compression to use for
-   stream objects (vector geometries, JavaScript content). DEFLATE is
-   the default.
+      Set the compression to use for raster data.
 
--  **DPI=value**: Set the DPI to use. Default to 72. May be
-   automatically adjusted to higher value so that page dimension does
-   not exceed the 14400 maximum value (in user units) allowed by
-   Acrobat.
+-  .. co:: STREAM_COMPRESS
+      :choices: NONE, DEFLATE
+      :default: DEFLATE
 
--  **WRITE_USERUNIT=YES/NO**: (GDAL >= 2.2) Whether the UserUnit setting
-   computed from the DPI (UserUnit = DPI / 72.0) should be recorded in
-   the file. When UserUnit is recorded, the raster size in pixels
-   recognized by GDAL on reading remains identical to the source raster.
-   When UserUnit is not recorded, the printed size will depends on the
-   DPI value. If this parameter is not set, but DPI is specified, then
-   it will default to NO (so that the printed size depends on the DPI
-   value). If this parameter is not set and DPI is not specified, then
-   UserUnit will be recorded (so that the raster size in pixels
-   recognized by GDAL on reading remain identical to the source raster).
+      Set the compression to use for
+      stream objects (vector geometries, JavaScript content).
 
--  **PREDICTOR=[1/2]**: Only for DEFLATE compression. Might be set to 2
-   to use horizontal predictor that can make files smaller (but not
-   always!). 1 is the default.
+-  .. co:: DPI
+      :default: 72
 
--  **JPEG_QUALITY=[1-100]**: Set the JPEG quality when using JPEG
-   compression. A value of 100 is best quality (least compression), and
-   1 is worst quality (best compression). The default is 75.
+      Set the DPI to use. May be
+      automatically adjusted to higher value so that page dimension does
+      not exceed the 14400 maximum value (in user units) allowed by
+      Acrobat.
 
--  **JPEG2000_DRIVER=[JP2KAK/JP2ECW/JP2OpenJPEG/JPEG2000]**: Set the
-   JPEG2000 driver to use. If not specified, it will be searched in the
-   previous list.
+-  .. co:: WRITE_USERUNIT
+      :choices: YES, NO
+      :since: 2.2
 
--  **TILED=YES**: By default monoblock files are created. This option
-   can be used to force creation of tiled PDF files.
+      Whether the UserUnit setting
+      computed from the DPI (UserUnit = DPI / 72.0) should be recorded in
+      the file. When UserUnit is recorded, the raster size in pixels
+      recognized by GDAL on reading remains identical to the source raster.
+      When UserUnit is not recorded, the printed size will depends on the
+      DPI value. If this parameter is not set, but DPI is specified, then
+      it will default to NO (so that the printed size depends on the DPI
+      value). If this parameter is not set and DPI is not specified, then
+      UserUnit will be recorded (so that the raster size in pixels
+      recognized by GDAL on reading remain identical to the source raster).
 
--  **BLOCKXSIZE=n**: Sets tile width, defaults to 256.
+-  .. co:: PREDICTOR
+      :choices: 1, 2
+      :default: 1
 
--  **BLOCKYSIZE=n**: Set tile height, defaults to 256.
+      Only for DEFLATE compression. Might be set to 2
+      to use horizontal predictor that can make files smaller (but not
+      always!).
 
--  **CLIPPING_EXTENT=xmin,ymin,xmax,ymax**: Set the clipping extent for
-   the main source dataset and for the optional extra rasters. The
-   coordinates are expressed in the units of the SRS of the dataset. If
-   not specified, the clipping extent is set to the extent of the main
-   source dataset.
+-  .. co:: JPEG_QUALITY
+      :choices: 1-100
+      :default: 75
 
--  **LAYER_NAME=name**: Name for layer where the raster is placed. If
-   specified, the raster will be be placed into a layer that can be
-   toggled/un-toggled in the "Layer tree" of the PDF reader.
+      Set the JPEG quality when using JPEG
+      compression. A value of 100 is best quality (least compression), and
+      1 is worst quality (best compression).
 
--  **EXTRA_RASTERS=dataset_ids**: Comma separated list of georeferenced
-   rasters to insert into the page. Those rasters are displayed on top
-   of the main source raster. They must be georeferenced in the same
-   projection, and they will be clipped to CLIPPING_EXTENT if it is
-   specified (otherwise to the extent of the main source raster).
+-  .. co:: JPEG2000_DRIVER
+      :choices: JP2KAK, JP2ECW, JP2OpenJPEG, JPEG2000
 
--  **EXTRA_RASTERS_LAYER_NAME=dataset_names**: Comma separated list of
-   name for each raster specified in EXTRA_RASTERS. If specified, each
-   extra raster will be be placed into a layer, named with the specified
-   value, that can be toggled/un-toggled in the "Layer tree" of the PDF
-   reader. If not specified, all the extra rasters will be placed in the
-   default layer.
+      Set the
+      JPEG2000 driver to use. If not specified, it will be searched in the
+      previous list.
 
--  **EXTRA_STREAM=content**: A PDF content stream to draw after the
-   imagery, typically to add some text. It may refer to any of the 14
-   standard PDF Type 1 fonts (omitting hyphens), as /FTimesRoman,
-   /FTimesBold, /FHelvetica, /FCourierOblique, ... , in which case the
-   required resource dictionary will be inserted.
+-  .. co:: TILED
+      :choices: YES, NO
+      :default: NO
 
--  **EXTRA_IMAGES=image_file_name,x,y,scale[,link=some_url] (possibly
-   repeated)**: A list of (ungeoreferenced) images to insert into the
-   page as extra content. This is useful to insert logos, legends,
-   etc... x and y are in user units from the lower left corner of the
-   page, and the anchor point is the lower left pixel of the image.
-   scale is a magnifying ratio (use 1 if unsure). If link=some_url is
-   specified, the image will be selectable and its selection will cause
-   a web browser to be opened on the specified URL.
+      By default monoblock files are created. This option
+      can be used to force creation of tiled PDF files.
 
--  **EXTRA_LAYER_NAME=name**: Name for layer where the extra content
-   specified with EXTRA_STREAM or EXTRA_IMAGES is placed. If specified,
-   the extra content will be be placed into a layer that can be
-   toggled/un-toggled in the "Layer tree" of the PDF reader.
+-  .. co:: BLOCKXSIZE
+      :default: 256
 
--  **MARGIN/LEFT_MARGIN/RIGHT_MARGIN/TOP_MARGIN/BOTTOM_MARGIN=value**:
-   Margin around image in user units.
+      Sets tile width.
 
--  **GEO_ENCODING=[NONE/ISO32000/OGC_BP/BOTH]**: Set the Geo encoding
-   method to use. ISO32000 is the default.
+-  .. co:: BLOCKYSIZE
+      :default: 256
 
--  **NEATLINE=polygon_definition_in_wkt**: Set the NEATLINE to use.
+      Set tile height.
 
--  **XMP=[NONE/xml_xmp_content]**: By default, if the source dataset has
-   data in the 'xml:XMP' metadata domain, this data will be copied to
-   the output PDF, unless this option is set to NONE. The XMP xml string
-   can also be directly set to this option.
+-  .. co:: CLIPPING_EXTENT
+      :choices: xmin\,ymin\,xmax\,ymax
 
--  **WRITE_INFO=[YES/NO]**: By default, the AUTHOR, CREATOR,
-   CREATION_DATE, KEYWORDS, PRODUCER, SUBJECT and TITLE information will
-   be written into the PDF Info block from the corresponding metadata
-   item from the source dataset, or if not set, from the corresponding
-   creation option. If this option is set to NO, no information will be
-   written.
+      Set the clipping extent for
+      the main source dataset and for the optional extra rasters. The
+      coordinates are expressed in the units of the SRS of the dataset. If
+      not specified, the clipping extent is set to the extent of the main
+      source dataset.
 
--  **AUTHOR**, **CREATOR**, **CREATION_DATE**, **KEYWORDS**,
-   **PRODUCER**, **SUBJECT**, **TITLE** : metadata that can be written
-   into the PDF Info block. Note: the format of the value for
-   CREATION_DATE must be D:YYYYMMDDHHmmSSOHH'mm' (e.g.
-   D:20121122132447+02'00' for 22 nov 2012 13:24:47 GMT+02) (see `PDF
-   Reference, version
-   1.7 <http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf>`__,
-   page 160)
+-  .. co:: LAYER_NAME
 
--  **OGR_DATASOURCE=name** : Name of the OGR datasource to display on
-   top of the raster layer.
+      Name for layer where the raster is placed. If
+      specified, the raster will be be placed into a layer that can be
+      toggled/un-toggled in the "Layer tree" of the PDF reader.
 
--  **OGR_DISPLAY_FIELD=name** : Name of the field (matching the name of
-   a field from the OGR layer definition) to use to build the label of
-   features that appear in the "Model Tree" UI component of a well-known
-   PDF viewer. For example, if the OGR layer has a field called "ID",
-   this can be used as the value for that option : features in the
-   "Model Tree" will be labelled from their value for the "ID" field. If
-   not specified, sequential generic labels will be used ("feature1",
-   "feature2", etc... ).
+-  .. co:: EXTRA_RASTERS
+      :choices: <dataset_ids>
 
--  **OGR_DISPLAY_LAYER_NAMES=names** : Comma separated list of names to
-   display for the OGR layers in the "Model Tree". This option is useful
-   to provide custom names, instead of OGR layer name that are used when
-   this option is not specified. When specified, the number of names
-   should be the same as the number of OGR layers in the datasource (and
-   in the order they appear when listed by ogrinfo for example).
+      Comma separated list of georeferenced
+      rasters to insert into the page. Those rasters are displayed on top
+      of the main source raster. They must be georeferenced in the same
+      projection, and they will be clipped to CLIPPING_EXTENT if it is
+      specified (otherwise to the extent of the main source raster).
 
--  **OGR_WRITE_ATTRIBUTES=YES/NO** : Whether to write attributes of OGR
-   features. Defaults to YES
+-  .. co:: EXTRA_RASTERS_LAYER_NAME
+      :choices: <dataset_names>
 
--  **OGR_LINK_FIELD=name** : Name of the field (matching the name of a
-   field from the OGR layer definition) to use to cause clicks on OGR
-   features to open a web browser on the URL specified by the field
-   value.
+      Comma separated list of
+      name for each raster specified in EXTRA_RASTERS. If specified, each
+      extra raster will be be placed into a layer, named with the specified
+      value, that can be toggled/un-toggled in the "Layer tree" of the PDF
+      reader. If not specified, all the extra rasters will be placed in the
+      default layer.
 
--  **OFF_LAYERS=names**: Comma separated list of layer names that should
-   be initially hidden. By default, all layers are visible. The layer
-   names can come from LAYER_NAME (main raster layer name),
-   EXTRA_RASTERS_LAYER_NAME, EXTRA_LAYER_NAME and
-   OGR_DISPLAY_LAYER_NAMES.
+-  .. co:: EXTRA_STREAM
+      :choices: <content>
 
--  **EXCLUSIVE_LAYERS=names**: Comma separated list of layer names, such
-   that only one of those layers can be visible at a time. This is the
-   behavior of radio-buttons in a graphical user interface. The layer
-   names can come from LAYER_NAME (main raster layer name),
-   EXTRA_RASTERS_LAYER_NAME, EXTRA_LAYER_NAME and
-   OGR_DISPLAY_LAYER_NAMES.
+      A PDF content stream to draw after the
+      imagery, typically to add some text. It may refer to any of the 14
+      standard PDF Type 1 fonts (omitting hyphens), as /FTimesRoman,
+      /FTimesBold, /FHelvetica, /FCourierOblique, ... , in which case the
+      required resource dictionary will be inserted.
 
--  **JAVASCRIPT=script**: Javascript content to run at document opening.
-   See `Acrobat(R) JavaScript Scripting
-   Reference <http://partners.adobe.com/public/developer/en/acrobat/sdk/AcroJS.pdf>`__.
+-  .. co:: EXTRA_IMAGES
+      :choices: <image_file_name\,x\,y\,scale[\,link=some_url]> (possibly repeated)
 
--  **JAVASCRIPT_FILE=script_filename**: Name of Javascript file to embed
-   and run at document opening. See `Acrobat(R) JavaScript Scripting
-   Reference <http://partners.adobe.com/public/developer/en/acrobat/sdk/AcroJS.pdf>`__.
+      A list of (ungeoreferenced) images to insert into the
+      page as extra content. This is useful to insert logos, legends,
+      etc... x and y are in user units from the lower left corner of the
+      page, and the anchor point is the lower left pixel of the image.
+      scale is a magnifying ratio (use 1 if unsure). If link=some_url is
+      specified, the image will be selectable and its selection will cause
+      a web browser to be opened on the specified URL.
 
--  **COMPOSITION_FILE=xml_filename**: (GDAL >= 3.0) See below
-   paragraph "Creation of PDF file from a XML composition file"
+-  .. co:: EXTRA_LAYER_NAME
+
+      Name for layer where the extra content
+      specified with EXTRA_STREAM or EXTRA_IMAGES is placed. If specified,
+      the extra content will be be placed into a layer that can be
+      toggled/un-toggled in the "Layer tree" of the PDF reader.
+
+-  .. co:: MARGIN
+
+      Margin around image in user units.
+
+-  .. co:: LEFT_MARGIN
+
+      Margin left of image in user units.
+
+-  .. co:: RIGHT_MARGIN
+
+      Margin right of image in user units.
+
+-  .. co:: TOP_MARGIN
+
+      Margin above image in user units.
+
+-  .. co:: BOTTOM_MARGIN
+
+      Margin below image in user units.
+
+-  .. co:: GEO_ENCODING
+      :choices: NONE, ISO32000, OGC_BP, BOTH
+      :default: ISO32000
+
+      Set the Geo encoding method to use.
+
+-  .. co:: NEATLINE
+      :choices: <polygon_definition_in_wkt>
+
+      Set the NEATLINE to use.
+
+-  .. co:: XMP
+      :choices: NONE, <xml_xmp_content>
+
+      By default, if the source dataset has
+      data in the 'xml:XMP' metadata domain, this data will be copied to
+      the output PDF, unless this option is set to NONE. The XMP xml string
+      can also be directly set to this option.
+
+-  .. co:: WRITE_INFO
+      :choices: YES, NO
+      :default: YES
+
+      By default, the AUTHOR, CREATOR,
+      CREATION_DATE, KEYWORDS, PRODUCER, SUBJECT and TITLE information will
+      be written into the PDF Info block from the corresponding metadata
+      item from the source dataset, or if not set, from the corresponding
+      creation option. If this option is set to NO, no information will be
+      written.
+
+-  .. co:: AUTHOR
+
+      Author metadata to write into the PDF Info block.
+
+-  .. co:: CREATOR
+
+      Creator metadata to write into the PDF Info block.
+
+-  .. co:: CREATION_DATE
+
+      Create date metadata to write into the PDF Info block. The format of
+      the value must be D:YYYYMMDDHHmmSSOHH'mm' (e.g.
+      D:20121122132447+02'00' for 22 nov 2012 13:24:47 GMT+02) (see `PDF
+      Reference, version
+      1.7 <http://www.adobe.com/devnet/acrobat/pdfs/pdf_reference_1-7.pdf>`__,
+      page 160)
+
+-  .. co:: KEYWORDS
+
+      Keywords metadata to write into the PDF Info block.
+
+-  .. co:: PRODUCER
+
+      Producer metadata to write into the PDF Info block.
+
+-  .. co:: SUBJECT
+
+      Subject metadata to write into the PDF Info block.
+
+-  .. co:: TITLE
+
+      Title metadata to write into the PDF Info block.
+
+-  .. co:: OGR_DATASOURCE
+
+      Name of the OGR datasource to display on
+      top of the raster layer.
+
+-  .. co:: OGR_DISPLAY_FIELD
+
+      Name of the field (matching the name of
+      a field from the OGR layer definition) to use to build the label of
+      features that appear in the "Model Tree" UI component of a well-known
+      PDF viewer. For example, if the OGR layer has a field called "ID",
+      this can be used as the value for that option : features in the
+      "Model Tree" will be labelled from their value for the "ID" field. If
+      not specified, sequential generic labels will be used ("feature1",
+      "feature2", etc... ).
+
+-  .. co:: OGR_DISPLAY_LAYER_NAMES
+
+      Comma separated list of names to
+      display for the OGR layers in the "Model Tree". This option is useful
+      to provide custom names, instead of OGR layer name that are used when
+      this option is not specified. When specified, the number of names
+      should be the same as the number of OGR layers in the datasource (and
+      in the order they appear when listed by ogrinfo for example).
+
+-  .. co:: OGR_WRITE_ATTRIBUTES
+      :choices: YES, NO
+      :default: YES
+
+      Whether to write attributes of OGR features.
+
+-  .. co:: OGR_LINK_FIELD
+
+      Name of the field (matching the name of a
+      field from the OGR layer definition) to use to cause clicks on OGR
+      features to open a web browser on the URL specified by the field
+      value.
+
+-  .. co:: OFF_LAYERS
+
+      Comma separated list of layer names that should
+      be initially hidden. By default, all layers are visible. The layer
+      names can come from LAYER_NAME (main raster layer name),
+      EXTRA_RASTERS_LAYER_NAME, EXTRA_LAYER_NAME and
+      OGR_DISPLAY_LAYER_NAMES.
+
+-  .. co:: EXCLUSIVE_LAYERS
+
+      Comma separated list of layer names, such
+      that only one of those layers can be visible at a time. This is the
+      behavior of radio-buttons in a graphical user interface. The layer
+      names can come from LAYER_NAME (main raster layer name),
+      EXTRA_RASTERS_LAYER_NAME, EXTRA_LAYER_NAME and
+      OGR_DISPLAY_LAYER_NAMES.
+
+-  .. co:: JAVASCRIPT
+      :choices: <script>
+
+      Javascript content to run at document opening.
+      See `Acrobat(R) JavaScript Scripting
+      Reference <http://partners.adobe.com/public/developer/en/acrobat/sdk/AcroJS.pdf>`__.
+
+-  .. co:: JAVASCRIPT_FILE
+      :choices: <filename>
+
+      Name of Javascript file to embed
+      and run at document opening. See `Acrobat(R) JavaScript Scripting
+      Reference <http://partners.adobe.com/public/developer/en/acrobat/sdk/AcroJS.pdf>`__.
+
+-  .. co:: COMPOSITION_FILE
+      :choices: <xml_filename>
+      :since: 3.0
+
+      See below
+      paragraph "Creation of PDF file from a XML composition file"
 
 Update of existing files
 ------------------------
@@ -376,7 +547,7 @@ composition of the PDF:
 -  page content made of rasters, vectors or labels
 
 The GDALCreate() API must be used with width = height = bands = 0 and
-datatype = GDT_Unknown and COMPOSITION_FILE must be the single creation
+datatype = GDT_Unknown and :co:`COMPOSITION_FILE` must be the single creation
 option.
 
 The XML schema against which the composition file must validate is
@@ -533,7 +704,7 @@ the georeferencing and vector information. However, for getting the
 imagery, the pdftoppm utility that comes with the poppler distribution
 must be available in the system PATH. A temporary file will be generated
 in a directory determined by the following configuration options :
-CPL_TMPDIR, TMPDIR or TEMP (in that order). If none are defined, the
+:config:`CPL_TMPDIR`, ``TMPDIR`` or ``TEMP`` (in that order). If none are defined, the
 current directory will be used. Successfully tested versions are
 libpodofo 0.8.4, 0.9.1 and 0.9.3. Important note: using PoDoFo 0.9.0 is
 strongly discouraged, as it could cause crashes in GDAL due to a bug in

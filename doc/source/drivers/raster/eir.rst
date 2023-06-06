@@ -18,7 +18,7 @@ call the header file the "raw" file and it may have the extension .raw
 while the image file that contains the actual raw data may have the
 extension .bl.
 
-NOTE: Implemented as ``gdal/frmts/raw/eirdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/eirdataset.cpp`.
 
 
 Driver capabilities
