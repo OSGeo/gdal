@@ -860,19 +860,19 @@ def test_wms_18():
 
 def test_wms_19():
 
+    if (
+        gdaltest.gdalurlopen(
+            "http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif&obj=Basic-Info",
+            timeout=5,
+        )
+        is None
+    ):
+        pytest.skip("Server not reachable")
+
     ds = gdal.Open(
         "IIP:http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif"
     )
-
-    if ds is None:
-        if (
-            gdaltest.gdalurlopen(
-                "http://merovingio.c2rmf.cnrs.fr/fcgi-bin/iipsrv.fcgi?FIF=globe.256x256.tif&obj=Basic-Info"
-            )
-            is None
-        ):
-            pytest.skip()
-        pytest.fail("open failed.")
+    assert ds
 
     assert (
         ds.RasterXSize == 86400 and ds.RasterYSize == 43200 and ds.RasterCount == 3

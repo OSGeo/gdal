@@ -65,37 +65,77 @@ coverage.
 Creation options
 ----------------
 
--  **APPEND_SUBDATASET**\ =YES/NO: Whether to add the raster to the
-   existing file. If set to YES, COVERAGE must be specified. Default is
-   NO (ie overwrite existing file)
--  **COVERAGE**\ =string: Coverage name. If not specified, the basename
-   of the output file is used.
--  **SECTION**\ =string: Section name. If not specified, the basename of
-   the output file is used.
--  **COMPRESS**\ =NONE/DEFLATE/LZMA/PNG/CCITTFAX4/JPEG/WEBP/CHARS/JPEG2000:
-   Compression method. Default is NONE. See the `information about
-   supported
-   codecs <https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=codecs>`__.
-   Note that some codecs may not be available depending on how
-   librasterlite2 has been built.
--  **QUALITY**\ =0 to 100: Image quality for JPEG, WEBP and JPEG2000
-   compressions. Exact meaning depends on the compression method. For
-   WEBP and JPEG2000, the value 100 triggers the use of their lossless
-   variants.
--  **PIXEL_TYPE**\ =MONOCHROME/PALETTE/GRAYSCALE/RGB/MULTIBAND/DATAGRID:
-   Raster pixel type. Determines the photometric interpretation. See the
-   `information about supported pixel
-   types <https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=reference_table>`__.
-   The driver will automatically determine an appropriate pixel type
-   given the band characteristics.
--  **BLOCKXSIZE**\ =int_value. Block width. Defaults to 512.
--  **BLOCKYSIZE**\ =int_value. Block height. Defaults to 512.
--  **NBITS**\ =1/2/4. Force bit width. This will be by default gotten
-   from the NBITS metadata item in the IMAGE_STRUCTURE metadata domain
-   of the source raster band.
--  **PYRAMIDIZE**\ =YES/NO. Whether to build automatically build
-   relevant pyramids/overviews. Defaults to NO. Pyramids can be built
-   with the BuildOverviews() / gdaladdo.
+-  .. co:: APPEND_SUBDATASET
+      :choices: YES, NO
+      :default: NO
+
+      Whether to add the raster to the
+      existing file. If set to YES, COVERAGE must be specified. Default is
+      NO (ie overwrite existing file)
+
+-  .. co:: COVERAGE
+
+      Coverage name. If not specified, the basename
+      of the output file is used.
+
+-  .. co:: SECTION
+
+      Section name. If not specified, the basename of
+      the output file is used.
+
+-  .. co:: COMPRESS
+      :choices: NONE, DEFLATE, LZMA, PNG, CCITTFAX4, JPEG, WEBP, CHARS, JPEG2000
+      :default: NONE
+
+      Compression method. See the `information about
+      supported
+      codecs <https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=codecs>`__.
+      Note that some codecs may not be available depending on how
+      librasterlite2 has been built.
+
+-  .. co:: QUALITY
+      :choices: [0-100]
+
+      Image quality for JPEG, WEBP and JPEG2000
+      compressions. Exact meaning depends on the compression method. For
+      WEBP and JPEG2000, the value 100 triggers the use of their lossless
+      variants.
+
+-  .. co:: PIXEL_TYPE
+      :choices: MONOCHROME, PALETTE, GRAYSCALE, RGB, MULTIBAND, DATAGRID
+
+      Raster pixel type. Determines the photometric interpretation. See the
+      `information about supported pixel
+      types <https://www.gaia-gis.it/fossil/librasterlite2/wiki?name=reference_table>`__.
+      The driver will automatically determine an appropriate pixel type
+      given the band characteristics.
+
+-  .. co:: BLOCKXSIZE
+      :choices: <int>
+      :default: 512
+
+      Block width.
+
+-  .. co:: BLOCKYSIZE
+      :choices: <int>
+      :default: 512
+
+      Block height.
+
+-  .. co:: NBITS
+      :choices: 1, 2, 4
+
+      Force bit width. This will be by default gotten
+      from the NBITS metadata item in the IMAGE_STRUCTURE metadata domain
+      of the source raster band.
+
+-  .. co:: PYRAMIDIZE
+      :choices: YES, NO
+      :default: NO
+
+      Whether to build automatically build
+      relevant pyramids/overviews. Pyramids can be built
+      with the BuildOverviews() / gdaladdo.
 
 Examples
 --------

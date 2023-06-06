@@ -8,7 +8,7 @@ TSX --  TerraSAR-X Product
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/tsx/tsxdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/tsx/tsxdataset.cpp`.
 
 
 Driver capabilities

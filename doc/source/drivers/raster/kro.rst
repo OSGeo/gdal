@@ -17,7 +17,7 @@ except the limitation of the file system.
 `Specification of the
 format <http://www.autopano.net/wiki-en/Format_KRO>`__
 
-NOTE: Implemented as ``gdal/frmts/raw/krodataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/krodataset.cpp`.
 
 
 Driver capabilities

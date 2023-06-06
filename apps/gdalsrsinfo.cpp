@@ -101,7 +101,7 @@ MAIN_START(argc, argv)
     bool bPretty = true;
     bool bValidate = false;
     bool bFindEPSG = false;
-    int nEPSGCode = -1;
+    std::string osIdentifiedCode = "EPSG:-1";
     const char *pszInput = nullptr;
     const char *pszOutputType = "default";
     OGRSpatialReference oSRS;
@@ -216,9 +216,14 @@ MAIN_START(argc, argv)
                            panConfidence[i]);
                 }
 
+                const char *pszAuthorityName = oSRS.GetAuthorityName(nullptr);
                 const char *pszAuthorityCode = oSRS.GetAuthorityCode(nullptr);
-                if (pszAuthorityCode)
-                    nEPSGCode = atoi(pszAuthorityCode);
+                if (pszAuthorityName && pszAuthorityCode)
+                {
+                    osIdentifiedCode = pszAuthorityName;
+                    osIdentifiedCode += ':';
+                    osIdentifiedCode += pszAuthorityCode;
+                }
             }
 
             /* Validate - not well tested!*/
@@ -243,13 +248,13 @@ MAIN_START(argc, argv)
             {
                 const char *papszOutputTypes[] = {"proj4", "wkt2", nullptr};
                 if (bFindEPSG)
-                    printf("\nEPSG:%d\n", nEPSGCode);
+                    printf("\n%s\n", osIdentifiedCode.c_str());
                 PrintSRSOutputTypes(oSRS, papszOutputTypes, bPretty);
             }
             else if (EQUAL("all", pszOutputType))
             {
                 if (bFindEPSG)
-                    printf("\nEPSG:%d\n\n", nEPSGCode);
+                    printf("\n%s\n", osIdentifiedCode.c_str());
                 const char *papszOutputTypes[] = {
                     "proj4",
                     "wkt1",
@@ -279,7 +284,7 @@ MAIN_START(argc, argv)
                 if (bPretty)
                     printf("\n");
                 if (EQUAL(pszOutputType, "epsg"))
-                    printf("EPSG:%d\n", nEPSGCode);
+                    printf("\n%s\n", osIdentifiedCode.c_str());
                 else
                     PrintSRS(oSRS, pszOutputType, bPretty, FALSE);
                 if (bPretty)

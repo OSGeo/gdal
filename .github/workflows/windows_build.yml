@@ -127,13 +127,6 @@ jobs:
             Install-Module VSSetup -Scope CurrentUser
             # Install SWIG by Choco
             exec { cinst -y --no-progress swig }
-            if($env:VS_VER -eq "2019")
-            {
-            }
-            else
-            {
-                Import-VisualStudioVars -VisualStudioVersion $env:VS_VER -Architecture $env:ARCHITECTURE
-            }
             exec { pip install numpy }
             $env:SDK_ZIP="$env:SDK"+"-dev.zip"
             $env:SDK_URL="http://download.gisinternals.com/sdk/downloads/$env:SDK_ZIP"
@@ -144,8 +137,8 @@ jobs:
             if(-Not (Test-Path -Path $env:LIBZSTD_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBZSTD_URL" -OutFile "$env:LIBZSTD_ZIP" }
             $env:LIBWEBP_ZIP="libwebp.zip"
             if(-Not (Test-Path -Path $env:LIBWEBP_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBWEBP_URL" -OutFile "$env:LIBWEBP_ZIP" }
-            $env:LIBDEFLATE_ZIP="libdeflate.zip"
-            if(-Not (Test-Path -Path $env:LIBDEFLATE_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBDEFLATE_URL" -OutFile "$env:LIBDEFLATE_ZIP" }
+            # $env:LIBDEFLATE_ZIP="libdeflate.zip"
+            # if(-Not (Test-Path -Path $env:LIBDEFLATE_ZIP -PathType Leaf)) { Invoke-WebRequest "$env:LIBDEFLATE_URL" -OutFile "$env:LIBDEFLATE_ZIP" }
             cd ..
             mkdir sdk
             cd sdk
@@ -153,7 +146,7 @@ jobs:
             cd $env:SDK
             #exec { 7z x ..\..\downloads\$env:LIBZSTD_ZIP }
             exec { 7z x ..\..\downloads\$env:LIBWEBP_ZIP }
-            exec { 7z x -y ..\..\downloads\$env:LIBDEFLATE_ZIP }
+            # exec { 7z x -y ..\..\downloads\$env:LIBDEFLATE_ZIP }
             cd ..
             $env:SDK_PREFIX="$env:GITHUB_WORKSPACE\sdk\$env:SDK"
             $env:SDK_LIB="$env:SDK_PREFIX\lib"

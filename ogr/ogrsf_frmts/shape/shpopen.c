@@ -388,8 +388,9 @@ SHPHandle SHPAPI_CALL SHPOpenLL(const char *pszLayer, const char *pszAccess,
         const size_t nMessageLen = strlen(pszFullname) * 2 + 256;
         char *pszMessage = STATIC_CAST(char *, malloc(nMessageLen));
         pszFullname[nLenWithoutExtension] = 0;
-        snprintf(pszMessage, nMessageLen, "Unable to open %s.shp or %s.SHP.",
-                 pszFullname, pszFullname);
+        snprintf(pszMessage, nMessageLen,
+                 "Unable to open %s.shp or %s.SHP in %s mode.", pszFullname,
+                 pszFullname, pszAccess);
         psHooks->Error(pszMessage);
         free(pszMessage);
 
@@ -823,27 +824,72 @@ int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
     // unsigned int nCurrentRecordOffset = 0;
     unsigned int nCurrentSHPOffset = 100;
     unsigned int nRealSHXContentSize = 100;
-    unsigned int niRecord = 0;
-    unsigned int nRecordLength = 0;
+    int nRetCode = TRUE;
     unsigned int nRecordOffset = 50;
-    char abyReadRecord[8];
 
     while (nCurrentSHPOffset < nSHPFilesize)
     {
+        unsigned int niRecord = 0;
+        unsigned int nRecordLength = 0;
+        int nSHPType;
+
         if (psHooks->FRead(&niRecord, 4, 1, fpSHP) == 1 &&
-            psHooks->FRead(&nRecordLength, 4, 1, fpSHP) == 1)
+            psHooks->FRead(&nRecordLength, 4, 1, fpSHP) == 1 &&
+            psHooks->FRead(&nSHPType, 4, 1, fpSHP) == 1)
         {
+            char abyReadRecord[8];
+            unsigned int nRecordOffsetBE = nRecordOffset;
+
             if (!bBigEndian)
-                SwapWord(4, &nRecordOffset);
-            memcpy(abyReadRecord, &nRecordOffset, 4);
+                SwapWord(4, &nRecordOffsetBE);
+            memcpy(abyReadRecord, &nRecordOffsetBE, 4);
             memcpy(abyReadRecord + 4, &nRecordLength, 4);
+
+            if (!bBigEndian)
+                SwapWord(4, &nRecordLength);
+
+            if (bBigEndian)
+                SwapWord(4, &nSHPType);
+
+            // Sanity check on record length
+            if (nRecordLength < 1 ||
+                nRecordLength > (nSHPFilesize - (nCurrentSHPOffset + 8)) / 2)
+            {
+                char szErrorMsg[200];
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Error parsing .shp to restore .shx. "
+                         "Invalid record length = %u at record starting at "
+                         "offset %u",
+                         nSHPType, nCurrentSHPOffset);
+                psHooks->Error(szErrorMsg);
+
+                nRetCode = FALSE;
+                break;
+            }
+
+            // Sanity check on record type
+            if (nSHPType != SHPT_NULL && nSHPType != SHPT_POINT &&
+                nSHPType != SHPT_ARC && nSHPType != SHPT_POLYGON &&
+                nSHPType != SHPT_MULTIPOINT && nSHPType != SHPT_POINTZ &&
+                nSHPType != SHPT_ARCZ && nSHPType != SHPT_POLYGONZ &&
+                nSHPType != SHPT_MULTIPOINTZ && nSHPType != SHPT_POINTM &&
+                nSHPType != SHPT_ARCM && nSHPType != SHPT_POLYGONM &&
+                nSHPType != SHPT_MULTIPOINTM && nSHPType != SHPT_MULTIPATCH)
+            {
+                char szErrorMsg[200];
+                snprintf(szErrorMsg, sizeof(szErrorMsg),
+                         "Error parsing .shp to restore .shx. "
+                         "Invalid shape type = %d at record starting at "
+                         "offset %u",
+                         nSHPType, nCurrentSHPOffset);
+                psHooks->Error(szErrorMsg);
+
+                nRetCode = FALSE;
+                break;
+            }
 
             psHooks->FWrite(abyReadRecord, 8, 1, fpSHX);
 
-            if (!bBigEndian)
-                SwapWord(4, &nRecordOffset);
-            if (!bBigEndian)
-                SwapWord(4, &nRecordLength);
             nRecordOffset += nRecordLength + 4;
             // nCurrentRecordOffset += 8;
             nCurrentSHPOffset += 8 + nRecordLength * 2;
@@ -853,23 +899,24 @@ int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
         }
         else
         {
-            psHooks->Error("Error parsing .shp to restore .shx");
+            char szErrorMsg[200];
+            snprintf(szErrorMsg, sizeof(szErrorMsg),
+                     "Error parsing .shp to restore .shx. "
+                     "Cannot read first bytes of record starting at "
+                     "offset %u",
+                     nCurrentSHPOffset);
+            psHooks->Error(szErrorMsg);
 
-            // Update SHX content size in the SHX header even if an error occurred
-            nRealSHXContentSize /= 2;  // Bytes counted -> WORDs
-            if (!bBigEndian)
-                SwapWord(4, &nRealSHXContentSize);
-            psHooks->FSeek(fpSHX, 24, 0);
-            psHooks->FWrite(&nRealSHXContentSize, 4, 1, fpSHX);
-
-            psHooks->FClose(fpSHX);
-            psHooks->FClose(fpSHP);
-
-            free(pabySHXHeader);
-            free(pszFullname);
-
-            return (0);
+            nRetCode = FALSE;
+            break;
         }
+    }
+    if (nRetCode && nCurrentSHPOffset != nSHPFilesize)
+    {
+        psHooks->Error("Error parsing .shp to restore .shx. "
+                       "Not expected number of bytes");
+
+        nRetCode = FALSE;
     }
 
     nRealSHXContentSize /= 2;  // Bytes counted -> WORDs
@@ -884,7 +931,7 @@ int SHPAPI_CALL SHPRestoreSHX(const char *pszLayer, const char *pszAccess,
     free(pszFullname);
     free(pabySHXHeader);
 
-    return (1);
+    return nRetCode;
 }
 
 /************************************************************************/
@@ -1027,7 +1074,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     char *pszFullname = STATIC_CAST(char *, malloc(nLenWithoutExtension + 5));
     memcpy(pszFullname, pszLayer, nLenWithoutExtension);
     memcpy(pszFullname + nLenWithoutExtension, ".shp", 5);
-    SAFile fpSHP = psHooks->FOpen(pszFullname, "wb");
+    SAFile fpSHP = psHooks->FOpen(pszFullname, "w+b");
     if (fpSHP == SHPLIB_NULLPTR)
     {
         char szErrorMsg[200];
@@ -1040,7 +1087,7 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
     }
 
     memcpy(pszFullname + nLenWithoutExtension, ".shx", 5);
-    SAFile fpSHX = psHooks->FOpen(pszFullname, "wb");
+    SAFile fpSHX = psHooks->FOpen(pszFullname, "w+b");
     if (fpSHX == SHPLIB_NULLPTR)
     {
         char szErrorMsg[200];
@@ -1127,13 +1174,35 @@ SHPHandle SHPAPI_CALL SHPCreateLL(const char *pszLayer, int nShapeType,
         return NULL;
     }
 
-    /* -------------------------------------------------------------------- */
-    /*      Close the files, and then open them as regular existing files.  */
-    /* -------------------------------------------------------------------- */
-    psHooks->FClose(fpSHP);
-    psHooks->FClose(fpSHX);
+    SHPHandle psSHP = STATIC_CAST(SHPHandle, calloc(sizeof(SHPInfo), 1));
 
-    return (SHPOpenLL(pszLayer, "r+b", psHooks));
+    psSHP->bUpdated = FALSE;
+    memcpy(&(psSHP->sHooks), psHooks, sizeof(SAHooks));
+
+    psSHP->fpSHP = fpSHP;
+    psSHP->fpSHX = fpSHX;
+    psSHP->nShapeType = nShapeType;
+    psSHP->nFileSize = 100;
+    psSHP->panRecOffset =
+        STATIC_CAST(unsigned int *, malloc(sizeof(unsigned int)));
+    psSHP->panRecSize =
+        STATIC_CAST(unsigned int *, malloc(sizeof(unsigned int)));
+
+    if (psSHP->panRecOffset == SHPLIB_NULLPTR ||
+        psSHP->panRecSize == SHPLIB_NULLPTR)
+    {
+        psSHP->sHooks.Error("Not enough memory to allocate requested memory");
+        psSHP->sHooks.FClose(psSHP->fpSHP);
+        psSHP->sHooks.FClose(psSHP->fpSHX);
+        if (psSHP->panRecOffset)
+            free(psSHP->panRecOffset);
+        if (psSHP->panRecSize)
+            free(psSHP->panRecSize);
+        free(psSHP);
+        return SHPLIB_NULLPTR;
+    }
+
+    return psSHP;
 }
 
 /************************************************************************/

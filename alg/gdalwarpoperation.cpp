@@ -1385,9 +1385,26 @@ CPLErr GDALWarpOperation::CollectChunkListInternal(int nDstXOff, int nDstYOff,
     {
         int bStreamableOutput = CPLFetchBool(psOptions->papszWarpOptions,
                                              "STREAMABLE_OUTPUT", false);
+        const char *pszOptimizeSize =
+            CSLFetchNameValue(psOptions->papszWarpOptions, "OPTIMIZE_SIZE");
+        const bool bOptimizeSizeAuto =
+            !pszOptimizeSize || EQUAL(pszOptimizeSize, "AUTO");
         const bool bOptimizeSize =
             !bStreamableOutput &&
-            CPLFetchBool(psOptions->papszWarpOptions, "OPTIMIZE_SIZE", false);
+            ((pszOptimizeSize && !bOptimizeSizeAuto &&
+              CPLTestBool(pszOptimizeSize)) ||
+             // Auto-enable optimize-size mode if output region is at least
+             // 2x2 blocks large and the shapes of the source and target regions
+             // are not excessively different. All those thresholds are a bit
+             // arbitrary
+             (bOptimizeSizeAuto &&
+              (nDstXSize > nDstYSize ? fabs(double(nDstXSize) / nDstYSize -
+                                            double(nSrcXSize) / nSrcYSize) <
+                                           5 * double(nDstXSize) / nDstYSize
+                                     : fabs(double(nDstYSize) / nDstXSize -
+                                            double(nSrcYSize) / nSrcXSize) <
+                                           5 * double(nDstYSize) / nDstXSize) &&
+              nDstXSize / 2 >= nBlockXSize && nDstYSize / 2 >= nBlockYSize));
 
         // If the region width is greater than the region height,
         // cut in half in the width. When we want to optimize the size

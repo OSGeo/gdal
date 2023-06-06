@@ -30,7 +30,7 @@ Limitations:
 -  ILWIS domain (.dom) and representation (.rpr) files are currently
    ignored.
 
-NOTE: Implemented in ``gdal/frmts/ilwis``.
+NOTE: Implemented in :source_file:`frmts/ilwis`.
 
 See Also: http://www.itc.nl/ilwis/default.asp .
 

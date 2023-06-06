@@ -8,7 +8,7 @@ FIT -- FIT
 
 .. built_in_by_default::
 
-NOTE: Implemented as ``gdal/frmts/fit/fitdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/fit/fitdataset.cpp`.
 
 Driver capabilities
 -------------------

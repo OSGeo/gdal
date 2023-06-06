@@ -1,5 +1,10 @@
 FROM fedora:rawhide
 
+# To be removed
+# Workaround a bug where the initial /etc/dnf/dnf.conf file contains
+# just the "tsflags=nodocs" line
+RUN printf '[main]\ngpgcheck=True\ninstallonly_limit=3\nclean_requirements_on_remove=True\nbest=False\nskip_if_unavailable=True\ntsflags=nodocs' > /etc/dnf/dnf.conf
+
 RUN dnf upgrade -y
 RUN dnf install -y --setopt=install_weak_deps=False proj-devel
 RUN dnf install -y clang make diffutils ccache cmake \

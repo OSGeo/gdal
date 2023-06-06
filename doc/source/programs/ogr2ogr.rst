@@ -539,7 +539,7 @@ specified with the -gt option. For example, for SQLite, explicitly defining -gt
 hundreds of thousands or millions of rows. However, note that -skipfailures
 overrides -gt and sets the size of transactions to 1.
 
-For PostgreSQL, the PG_USE_COPY config option can be set to YES for a
+For PostgreSQL, the :config:`PG_USE_COPY` config option can be set to YES for a
 significant insertion performance boost. See the PG driver documentation page.
 
 More generally, consult the documentation page of the input and output drivers

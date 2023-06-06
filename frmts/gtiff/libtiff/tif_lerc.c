@@ -517,7 +517,7 @@ static int LERCPreDecode(TIFF *tif, uint16_t s)
     {
         const unsigned nb_pixels = sp->segment_width * sp->segment_height;
         unsigned i;
-#if HOST_BIGENDIAN
+#if WORDS_BIGENDIAN
         const unsigned char nan_bytes[] = {0x7f, 0xc0, 0, 0};
 #else
         const unsigned char nan_bytes[] = {0, 0, 0xc0, 0x7f};

@@ -224,9 +224,8 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
         CPLString osCommand;
         char **papszRow;
 
-        // set to unknown first
-        poDefn->SetGeomType(wkbUnknown);
-        poDefn->GetGeomFieldDefn(0)->SetName(pszGeomColumn);
+        auto poGeomFieldDefn =
+            cpl::make_unique<OGRMySQLGeomFieldDefn>(poDS, pszGeomColumn);
 
         if (poDS->GetMajorVersion() < 8 || poDS->IsMariaDB())
         {
@@ -259,10 +258,13 @@ OGRFeatureDefn *OGRMySQLResultLayer::ReadResultDefinition()
 
             OGRwkbGeometryType l_nGeomType = OGRFromOGCGeomType(pszType);
 
-            poDefn->SetGeomType(l_nGeomType);
+            poGeomFieldDefn->SetType(l_nGeomType);
         }
 
         nSRSId = FetchSRSId();
+
+        poGeomFieldDefn->nSRSId = nSRSId;
+        poDefn->AddGeomFieldDefn(std::move(poGeomFieldDefn));
     }
 
     return poDefn;

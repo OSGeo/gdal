@@ -83,10 +83,11 @@ static bool IsArrowIPCStream(GDALOpenInfo *poOpenInfo)
 
             const std::string osTmpFilename(
                 CPLSPrintf("/vsimem/_arrow/%p", poOpenInfo));
-            VSILFILE *fp = VSIFileFromMemBuffer(osTmpFilename.c_str(),
-                                                poOpenInfo->pabyHeader,
-                                                nSizeToRead, false);
-            auto infile = std::make_shared<OGRArrowRandomAccessFile>(fp);
+            auto fp = VSIVirtualHandleUniquePtr(VSIFileFromMemBuffer(
+                osTmpFilename.c_str(), poOpenInfo->pabyHeader, nSizeToRead,
+                false));
+            auto infile =
+                std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
             auto options = arrow::ipc::IpcReadOptions::Defaults();
             auto result =
                 arrow::ipc::RecordBatchStreamReader::Open(infile, options);
@@ -187,21 +188,22 @@ static GDALDataset *OGRFeatherDriverOpen(GDALOpenInfo *poOpenInfo)
     {
         const std::string osFilename(poOpenInfo->pszFilename +
                                      strlen("ARROW_IPC_STREAM:"));
-        VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb");
+        auto fp =
+            VSIVirtualHandleUniquePtr(VSIFOpenL(osFilename.c_str(), "rb"));
         if (fp == nullptr)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Cannot open %s",
                      osFilename.c_str());
             return nullptr;
         }
-        infile = std::make_shared<OGRArrowRandomAccessFile>(fp);
+        infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
     }
     else if (STARTS_WITH(poOpenInfo->pszFilename, "/vsi") ||
              CPLTestBool(CPLGetConfigOption("OGR_ARROW_USE_VSI", "NO")))
     {
-        VSILFILE *fp = poOpenInfo->fpL;
+        VSIVirtualHandleUniquePtr fp(poOpenInfo->fpL);
         poOpenInfo->fpL = nullptr;
-        infile = std::make_shared<OGRArrowRandomAccessFile>(fp);
+        infile = std::make_shared<OGRArrowRandomAccessFile>(std::move(fp));
     }
     else
     {

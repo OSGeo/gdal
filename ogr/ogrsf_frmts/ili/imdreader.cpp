@@ -143,7 +143,7 @@ class IliClass
         return false;
     }
     // Add additional Geometry table for Interlis 1
-    void AddGeomTable(CPLString layerName, const char *psFieldName,
+    void AddGeomTable(const CPLString &layerName, const char *psFieldName,
                       OGRwkbGeometryType eType, bool bRefTIDField = false)
     {
         OGRFeatureDefn *poGeomTableDefn = new OGRFeatureDefn(layerName);

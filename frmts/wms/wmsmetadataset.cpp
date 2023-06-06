@@ -362,9 +362,10 @@ void GDALWMSMetaDataset::AddWMSCSubDataset(WMSCTileSetDesc &oWMSCTileSetDesc,
 /*                             ExploreLayer()                           */
 /************************************************************************/
 
-void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML, CPLString osFormat,
-                                      CPLString osTransparent,
-                                      CPLString osPreferredSRS,
+void GDALWMSMetaDataset::ExploreLayer(CPLXMLNode *psXML,
+                                      const CPLString &osFormat,
+                                      const CPLString &osTransparent,
+                                      const CPLString &osPreferredSRS,
                                       const char *pszSRS, const char *pszMinX,
                                       const char *pszMinY, const char *pszMaxX,
                                       const char *pszMaxY)
@@ -588,8 +589,8 @@ void GDALWMSMetaDataset::ParseWMSCTileSets(CPLXMLNode *psXML)
 /************************************************************************/
 
 GDALDataset *GDALWMSMetaDataset::AnalyzeGetCapabilities(
-    CPLXMLNode *psXML, CPLString osFormat, CPLString osTransparent,
-    CPLString osPreferredSRS)
+    CPLXMLNode *psXML, const std::string &osFormat,
+    const std::string &osTransparent, const std::string &osPreferredSRS)
 {
     const char *pszEncoding = nullptr;
     if (psXML->eType == CXT_Element && strcmp(psXML->pszValue, "?xml") == 0)

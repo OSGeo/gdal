@@ -62,7 +62,7 @@ and expect spatial filters, in the "GIS-friendly" order,
 with longitude/easting first (X component), latitude/northing second (Y component),
 potentially overriding the axis order of the authority.
 
-The CRS of layers can also be controlled with the CRS or PREFERRED_CRS open
+The CRS of layers can also be controlled with the :oo:`CRS` or :oo:`PREFERRED_CRS` open
 options documented below.
 
 Open options
@@ -70,29 +70,55 @@ Open options
 
 The following options are available:
 
--  **URL**\ =url: URL to the OGC API - Features server landing page, or to a given collection.
-   Required when using the "OAPIF:" string as the connection string.
--  **PAGE_SIZE**\ =integer: Number of features to retrieve per request.
-   Defaults to 10. Minimum is 1, maximum 10000.
--  **USERPWD**: May be supplied with *userid:password* to pass a userid
-   and password to the remote server.
--  **IGNORE_SCHEMA**\ = YES/NO. (GDAL >= 3.1) Set to YES to ignore the XML
-   Schema or JSON schema that may be offered by the server.
--  **CRS** = string. (GDAL >= 3.7) Set to a CRS identifier, e.g ``EPSG:3067``
-   or ``http://www.opengis.net/def/crs/EPSG/0/3067``, to use as the layer CRS.
-   That CRS must be listed in the lists of CRS supported by the layers of the
-   dataset, otherwise layers not listing it cannot be opened.
--  **PREFERRED_CRS** = string. (GDAL >= 3.7) Identical to the CRS option, except
-   that if a layer does not list the PREFERRED_CRS in its list of supported CRS,
-   the default CRS (storageCRS when present, otherwise EPSG:4326) will be used.
-   CRS and PREFERRED_CRS option are mutually exclusive.
--  **SERVER_FEATURE_AXIS_ORDER** = AUTHORITY_COMPLIANT/GIS_FRIENDLY.
-   AUTHORITY_COMPLIANT is the default.
-   This option can be set to GIS_FRIENDLY if axis order issue are noticed in
-   features received from the server, indicating that the server does not return
-   them in the axis order mandated by the CRS authority, but in a more traditional
-   "GIS friendly" order, with longitude/easting first, latitude/northing second.
-   Do not set this option unless actual problems arise.
+-  .. oo:: URL
+
+      URL to the OGC API - Features server landing page, or to a given collection.
+      Required when using the "OAPIF:" string as the connection string.
+
+-  .. oo:: PAGE_SIZE
+      :choices: <integer>
+      :default: 10
+
+      Number of features to retrieve per request.
+      Minimum is 1, maximum 10000.
+
+-  .. oo:: USERPWD
+
+      May be supplied with *userid:password* to pass a userid
+      and password to the remote server.
+
+-  .. oo:: IGNORE_SCHEMA
+      :choices: YES, NO
+      :since: 3.1
+
+       Set to YES to ignore the XML
+       Schema or JSON schema that may be offered by the server.
+
+-  .. oo:: CRS
+      :since: 3.7
+
+      Set to a CRS identifier, e.g ``EPSG:3067``
+      or ``http://www.opengis.net/def/crs/EPSG/0/3067``, to use as the layer CRS.
+      That CRS must be listed in the lists of CRS supported by the layers of the
+      dataset, otherwise layers not listing it cannot be opened.
+
+-  .. oo:: PREFERRED_CRS
+      :since: 3.7
+
+      Identical to the :oo:`CRS` option, except
+      that if a layer does not list the PREFERRED_CRS in its list of supported CRS,
+      the default CRS (storageCRS when present, otherwise EPSG:4326) will be used.
+      :oo:`CRS` and :oo:`PREFERRED_CRS` option are mutually exclusive.
+
+-  .. oo:: SERVER_FEATURE_AXIS_ORDER
+      :choices: AUTHORITY_COMPLIANT, GIS_FRIENDLY
+      :default: AUTHORITY_COMPLIANT
+
+      This option can be set to GIS_FRIENDLY if axis order issue are noticed in
+      features received from the server, indicating that the server does not return
+      them in the axis order mandated by the CRS authority, but in a more traditional
+      "GIS friendly" order, with longitude/easting first, latitude/northing second.
+      Do not set this option unless actual problems arise.
 
 Examples
 --------

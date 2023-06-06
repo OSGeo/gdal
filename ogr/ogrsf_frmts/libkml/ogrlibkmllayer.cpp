@@ -116,9 +116,10 @@ OGRLIBKMLLayer::OGRLIBKMLLayer(
     const char *pszFileName, int bNew, int bUpdateIn)
     : bUpdate(CPL_TO_BOOL(bUpdateIn)), nFeatures(0), iFeature(0), nFID(1),
       m_pszName(CPLStrdup(pszLayerName)), m_pszFileName(CPLStrdup(pszFileName)),
-      m_poKmlLayer(poKmlContainer),  // Store the layers container.
-      m_poKmlLayerRoot(poKmlRoot),   // Store the root element pointer.
-      m_poKmlUpdate(poKmlUpdate), m_poOgrDS(poOgrDS),
+      m_poKmlLayer(std::move(poKmlContainer)),  // Store the layers container.
+      m_poKmlLayerRoot(
+          std::move(poKmlRoot)),  // Store the root element pointer.
+      m_poKmlUpdate(std::move(poKmlUpdate)), m_poOgrDS(poOgrDS),
       m_poOgrFeatureDefn(new OGRFeatureDefn(pszLayerName)),
       m_poKmlSchema(nullptr), m_poOgrSRS(new OGRSpatialReference(nullptr)),
       m_bReadGroundOverlay(
@@ -1084,8 +1085,9 @@ void OGRLIBKMLLayer::Finalize(DocumentPtr poKmlDocument)
         m_poKmlLayer->set_region(region);
     }
 
-    createkmlliststyle(poKmlFactory, GetName(), m_poKmlLayer, poKmlDocument,
-                       osListStyleType, osListStyleIconHref);
+    createkmlliststyle(poKmlFactory, GetName(), m_poKmlLayer,
+                       std::move(poKmlDocument), osListStyleType,
+                       osListStyleIconHref);
 }
 
 /************************************************************************/

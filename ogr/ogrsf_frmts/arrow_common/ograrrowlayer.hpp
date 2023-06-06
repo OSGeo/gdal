@@ -32,6 +32,7 @@
 #include "cpl_time.h"
 #include "ogr_p.h"
 #include "ogr_swq.h"
+#include "ogr_wkb.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -670,7 +671,10 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
 
     eGeomTypeOut = wkbUnknown;
 
-    if (osEncoding == "WKT")
+    if (osEncoding == "WKT" ||  // As used in Parquet geo metadata
+        osEncoding ==
+            "ogc.wkt"  // As used in ARROW:extension:name field metadata
+    )
     {
         if (fieldTypeId != arrow::Type::STRING)
         {
@@ -684,7 +688,10 @@ inline bool OGRArrowLayer::IsValidGeometryEncoding(
         return true;
     }
 
-    if (osEncoding == "WKB")
+    if (osEncoding == "WKB" ||  // As used in Parquet geo metadata
+        osEncoding ==
+            "ogc.wkb"  // As used in ARROW:extension:name field metadata
+    )
     {
         if (fieldTypeId != arrow::Type::BINARY)
         {
@@ -826,256 +833,6 @@ OGRArrowLayer::GetGeometryTypeFromString(const std::string &osType)
         CPLDebug("ARROW", "Unknown geometry type: %s", osType.c_str());
     }
     return eGeomType;
-}
-
-/************************************************************************/
-/*                             ReadWKBUInt32()                          */
-/************************************************************************/
-
-inline uint32_t ReadWKBUInt32(const uint8_t *data, OGRwkbByteOrder eByteOrder,
-                              size_t &iOffset)
-{
-    uint32_t v;
-    memcpy(&v, data + iOffset, sizeof(v));
-    iOffset += sizeof(v);
-    if (OGR_SWAP(eByteOrder))
-    {
-        CPL_SWAP32PTR(&v);
-    }
-    return v;
-}
-
-/************************************************************************/
-/*                         ReadWKBPointSequence()                       */
-/************************************************************************/
-
-inline bool ReadWKBPointSequence(const uint8_t *data, size_t size,
-                                 OGRwkbByteOrder eByteOrder, int nDim,
-                                 size_t &iOffset, OGREnvelope &sEnvelope)
-{
-    const uint32_t nPoints = ReadWKBUInt32(data, eByteOrder, iOffset);
-    if (nPoints > (size - iOffset) / (nDim * sizeof(double)))
-        return false;
-    double dfX = 0;
-    double dfY = 0;
-    for (uint32_t j = 0; j < nPoints; j++)
-    {
-        memcpy(&dfX, data + iOffset, sizeof(double));
-        memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
-        iOffset += nDim * sizeof(double);
-        if (OGR_SWAP(eByteOrder))
-        {
-            CPL_SWAP64PTR(&dfX);
-            CPL_SWAP64PTR(&dfY);
-        }
-        sEnvelope.MinX = std::min(sEnvelope.MinX, dfX);
-        sEnvelope.MinY = std::min(sEnvelope.MinY, dfY);
-        sEnvelope.MaxX = std::max(sEnvelope.MaxX, dfX);
-        sEnvelope.MaxY = std::max(sEnvelope.MaxY, dfY);
-    }
-    return true;
-}
-
-/************************************************************************/
-/*                         ReadWKBRingSequence()                        */
-/************************************************************************/
-
-inline bool ReadWKBRingSequence(const uint8_t *data, size_t size,
-                                OGRwkbByteOrder eByteOrder, int nDim,
-                                size_t &iOffset, OGREnvelope &sEnvelope)
-{
-    const uint32_t nRings = ReadWKBUInt32(data, eByteOrder, iOffset);
-    if (nRings > (size - iOffset) / sizeof(uint32_t))
-        return false;
-    for (uint32_t i = 0; i < nRings; i++)
-    {
-        if (iOffset + sizeof(uint32_t) > size)
-            return false;
-        if (!ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                  sEnvelope))
-            return false;
-    }
-    return true;
-}
-
-/************************************************************************/
-/*                          ReadWKBBoundingBox()                        */
-/************************************************************************/
-
-constexpr uint32_t WKB_PREFIX_SIZE = 1 + sizeof(uint32_t);
-constexpr uint32_t MIN_WKB_SIZE = WKB_PREFIX_SIZE + sizeof(uint32_t);
-
-static bool ReadWKBBoundingBoxInternal(const uint8_t *data, size_t size,
-                                       size_t &iOffset, OGREnvelope &sEnvelope,
-                                       int nRec)
-{
-    if (size - iOffset < MIN_WKB_SIZE)
-        return false;
-    const int nByteOrder = DB2_V72_FIX_BYTE_ORDER(data[iOffset]);
-    if (!(nByteOrder == wkbXDR || nByteOrder == wkbNDR))
-        return false;
-    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(nByteOrder);
-
-    OGRwkbGeometryType eGeometryType = wkbUnknown;
-    OGRReadWKBGeometryType(data + iOffset, wkbVariantIso, &eGeometryType);
-    iOffset += 5;
-    const auto eFlatType = wkbFlatten(eGeometryType);
-    const int nDim = 2 + (OGR_GT_HasZ(eGeometryType) ? 1 : 0) +
-                     (OGR_GT_HasM(eGeometryType) ? 1 : 0);
-
-    if (eFlatType == wkbPoint)
-    {
-        if (size - iOffset < nDim * sizeof(double))
-            return false;
-        double dfX = 0;
-        double dfY = 0;
-        memcpy(&dfX, data + iOffset, sizeof(double));
-        memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
-        iOffset += nDim * sizeof(double);
-        if (OGR_SWAP(eByteOrder))
-        {
-            CPL_SWAP64PTR(&dfX);
-            CPL_SWAP64PTR(&dfY);
-        }
-        sEnvelope.MinX = dfX;
-        sEnvelope.MinY = dfY;
-        sEnvelope.MaxX = dfX;
-        sEnvelope.MaxY = dfY;
-        return true;
-    }
-
-    if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        return ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                    sEnvelope);
-    }
-
-    if (eFlatType == wkbPolygon)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        return ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
-                                   sEnvelope);
-    }
-
-    if (eFlatType == wkbMultiPoint)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts >
-            (size - iOffset) / (WKB_PREFIX_SIZE + nDim * sizeof(double)))
-            return false;
-        double dfX = 0;
-        double dfY = 0;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            iOffset += WKB_PREFIX_SIZE;
-            memcpy(&dfX, data + iOffset, sizeof(double));
-            memcpy(&dfY, data + iOffset + sizeof(double), sizeof(double));
-            iOffset += nDim * sizeof(double);
-            if (OGR_SWAP(eByteOrder))
-            {
-                CPL_SWAP64PTR(&dfX);
-                CPL_SWAP64PTR(&dfY);
-            }
-            sEnvelope.MinX = std::min(sEnvelope.MinX, dfX);
-            sEnvelope.MinY = std::min(sEnvelope.MinY, dfY);
-            sEnvelope.MaxX = std::max(sEnvelope.MaxX, dfX);
-            sEnvelope.MaxY = std::max(sEnvelope.MaxY, dfY);
-        }
-        return true;
-    }
-
-    if (eFlatType == wkbMultiLineString)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        const uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts > (size - iOffset) / MIN_WKB_SIZE)
-            return false;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (iOffset + MIN_WKB_SIZE > size)
-                return false;
-            iOffset += WKB_PREFIX_SIZE;
-            if (!ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
-                                      sEnvelope))
-                return false;
-        }
-        return true;
-    }
-
-    if (eFlatType == wkbMultiPolygon)
-    {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        const uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts > (size - iOffset) / MIN_WKB_SIZE)
-            return false;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (iOffset + MIN_WKB_SIZE > size)
-                return false;
-            CPLAssert(data[iOffset] == eByteOrder);
-            iOffset += WKB_PREFIX_SIZE;
-            if (!ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
-                                     sEnvelope))
-                return false;
-        }
-        return true;
-    }
-
-    if (eFlatType == wkbGeometryCollection || eFlatType == wkbCompoundCurve ||
-        eFlatType == wkbCurvePolygon || eFlatType == wkbMultiCurve ||
-        eFlatType == wkbMultiSurface)
-    {
-        if (nRec == 128)
-            return false;
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
-
-        const uint32_t nParts = ReadWKBUInt32(data, eByteOrder, iOffset);
-        if (nParts > (size - iOffset) / MIN_WKB_SIZE)
-            return false;
-        OGREnvelope sEnvelopeSubGeom;
-        for (uint32_t k = 0; k < nParts; k++)
-        {
-            if (!ReadWKBBoundingBoxInternal(data, size, iOffset,
-                                            sEnvelopeSubGeom, nRec + 1))
-                return false;
-            sEnvelope.Merge(sEnvelopeSubGeom);
-        }
-        return true;
-    }
-
-    return false;
-}
-
-inline bool OGRArrowLayer::ReadWKBBoundingBox(const uint8_t *data, size_t size,
-                                              OGREnvelope &sEnvelope)
-{
-    size_t iOffset = 0;
-    return ReadWKBBoundingBoxInternal(data, size, iOffset, sEnvelope, 0);
 }
 
 /************************************************************************/
@@ -1973,7 +1730,7 @@ inline OGRGeometry *OGRArrowLayer::ReadGeometry(int iGeomField,
 #ifdef DEBUG_ReadWKBBoundingBox
                 OGREnvelope sEnvelopeFromWKB;
                 bool bRet =
-                    ReadWKBBoundingBox(data, out_length, sEnvelopeFromWKB);
+                    OGRWKBGetBoundingBox(data, out_length, sEnvelopeFromWKB);
                 CPLAssert(bRet);
                 OGREnvelope sEnvelopeFromGeom;
                 poGeometry->getEnvelope(&sEnvelopeFromGeom);
@@ -2399,28 +2156,42 @@ static bool FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
 }
 
 /***********************************************************************/
-/*                     ExploreExprNode()                               */
+/*                  ComputeConstraintsArrayIdx()                       */
 /***********************************************************************/
 
-inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node *poNode)
+inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
 {
-    const auto AddConstraint = [this](Constraint &constraint)
+    for (auto &constraint : m_asAttributeFilterConstraints)
     {
         if (m_bIgnoredFields)
         {
             constraint.iArrayIdx =
                 m_anMapFieldIndexToArrayIndex[constraint.iField];
             if (constraint.iArrayIdx < 0)
-                return;
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Constraint on field %s cannot be applied due to "
+                         "it being ignored",
+                         m_poFeatureDefn->GetFieldDefn(constraint.iField)
+                             ->GetNameRef());
+            }
         }
         else
         {
             constraint.iArrayIdx =
                 m_anMapFieldIndexToArrowColumn[constraint.iField][0];
         }
+    }
+}
 
-        m_asAttributeFilterConstraints.emplace_back(constraint);
-    };
+/***********************************************************************/
+/*                     ExploreExprNode()                               */
+/***********************************************************************/
+
+inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node *poNode)
+{
+    const auto AddConstraint = [this](Constraint &constraint)
+    { m_asAttributeFilterConstraints.emplace_back(constraint); };
 
     if (poNode->eNodeType == SNT_OPERATION && poNode->nOperation == SWQ_AND &&
         poNode->nSubExprCount == 2)
@@ -2542,6 +2313,7 @@ inline OGRErr OGRArrowLayer::SetAttributeFilter(const char *pszFilter)
                 static_cast<swq_expr_node *>(m_poAttrQuery->GetSWQExpr());
             poNode->ReplaceBetweenByGEAndLERecurse();
             ExploreExprNode(poNode);
+            ComputeConstraintsArrayIdx();
         }
     }
 
@@ -2688,6 +2460,14 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
 {
     for (const auto &constraint : m_asAttributeFilterConstraints)
     {
+        if (constraint.iArrayIdx < 0)
+        {
+            // can happen if ignoring a field that is needed by the
+            // attribute filter. ComputeConstraintsArrayIdx() will have
+            // warned about that
+            continue;
+        }
+
         const arrow::Array *array =
             m_poBatchColumns[constraint.iArrayIdx].get();
 
@@ -2959,7 +2739,7 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     int out_length = 0;
                     const uint8_t *data =
                         castArray->GetValue(m_nIdxInBatch, &out_length);
-                    if (ReadWKBBoundingBox(data, out_length, sEnvelope) &&
+                    if (OGRWKBGetBoundingBox(data, out_length, sEnvelope) &&
                         !m_sFilterEnvelope.Intersects(sEnvelope))
                     {
                         bSkipToNextFeature = true;
@@ -3315,7 +3095,7 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
                 int out_length = 0;
                 const uint8_t *data =
                     castArray->GetValue(m_nIdxInBatch, &out_length);
-                if (ReadWKBBoundingBox(data, out_length, sEnvelope))
+                if (OGRWKBGetBoundingBox(data, out_length, sEnvelope))
                 {
                     psExtent->Merge(sEnvelope);
                 }
@@ -3493,8 +3273,12 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
         const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
         for (int i = 0; i < nGeomFieldCount; i++)
         {
-            if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+            if (!m_poFeatureDefn->GetGeomFieldDefn(i)->IsIgnored() &&
+                m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB &&
+                m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKT)
+            {
                 return true;
+            }
         }
     }
 
@@ -3547,58 +3331,108 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
 
     CPLAssert(out_schema->n_children == m_poSchema->num_fields());
 
-    if (m_bIgnoredFields)
-    {
-        // Remove ignored fields from the ArrowSchema.
+    // Remove ignored fields from the ArrowSchema.
 
-        struct FieldDesc
+    struct FieldDesc
+    {
+        bool bIsRegularField =
+            false;  // true = attribute field, false = geometry field
+        int nIdx = -1;
+    };
+    // cppcheck-suppress unreadVariable
+    std::vector<FieldDesc> fieldDesc(out_schema->n_children);
+    for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)
+    {
+        const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
+        if (fieldDesc[nArrowCol].nIdx < 0)
         {
-            bool bIsRegularField =
-                false;  // true = attribute field, false = geometry field
-            int nIdx = -1;
-        };
-        // cppcheck-suppress unreadVariable
-        std::vector<FieldDesc> fieldDesc(out_schema->n_children);
-        for (size_t i = 0; i < m_anMapFieldIndexToArrowColumn.size(); i++)
-        {
-            const int nArrowCol = m_anMapFieldIndexToArrowColumn[i][0];
-            if (fieldDesc[nArrowCol].nIdx < 0)
-            {
-                fieldDesc[nArrowCol].bIsRegularField = true;
-                fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
-            }
-        }
-        for (size_t i = 0; i < m_anMapGeomFieldIndexToArrowColumn.size(); i++)
-        {
-            const int nArrowCol = m_anMapGeomFieldIndexToArrowColumn[i];
-            CPLAssert(fieldDesc[nArrowCol].nIdx < 0);
-            fieldDesc[nArrowCol].bIsRegularField = false;
+            fieldDesc[nArrowCol].bIsRegularField = true;
             fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
         }
+    }
+    for (size_t i = 0; i < m_anMapGeomFieldIndexToArrowColumn.size(); i++)
+    {
+        const int nArrowCol = m_anMapGeomFieldIndexToArrowColumn[i];
+        CPLAssert(fieldDesc[nArrowCol].nIdx < 0);
+        fieldDesc[nArrowCol].bIsRegularField = false;
+        fieldDesc[nArrowCol].nIdx = static_cast<int>(i);
+    }
 
-        int j = 0;
-        for (int i = 0; i < out_schema->n_children; ++i)
+    int j = 0;
+    const char *pszReqGeomEncoding =
+        m_aosArrowArrayStreamOptions.FetchNameValueDef("GEOMETRY_ENCODING", "");
+    for (int i = 0; i < out_schema->n_children; ++i)
+    {
+        const auto bIsIgnored =
+            fieldDesc[i].bIsRegularField
+                ? m_poFeatureDefn->GetFieldDefn(fieldDesc[i].nIdx)->IsIgnored()
+                : m_poFeatureDefn->GetGeomFieldDefn(fieldDesc[i].nIdx)
+                      ->IsIgnored();
+        if (bIsIgnored)
         {
-            const auto bIsIgnored =
-                fieldDesc[i].bIsRegularField
-                    ? m_poFeatureDefn->GetFieldDefn(fieldDesc[i].nIdx)
-                          ->IsIgnored()
-                    : m_poFeatureDefn->GetGeomFieldDefn(fieldDesc[i].nIdx)
-                          ->IsIgnored();
-            if (bIsIgnored)
+            out_schema->children[i]->release(out_schema->children[i]);
+        }
+        else
+        {
+            if (!fieldDesc[i].bIsRegularField &&
+                EQUAL(pszReqGeomEncoding, "WKB"))
             {
-                out_schema->children[i]->release(out_schema->children[i]);
+                const int iGeomField = fieldDesc[i].nIdx;
+                if (m_aeGeomEncoding[iGeomField] == OGRArrowGeomEncoding::WKT)
+                {
+                    const auto poGeomFieldDefn =
+                        m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
+                    CPLAssert(strcmp(out_schema->children[i]->name,
+                                     poGeomFieldDefn->GetNameRef()) == 0);
+                    out_schema->children[i]->release(out_schema->children[i]);
+                    out_schema->children[j] =
+                        CreateSchemaForWKBGeometryColumn(poGeomFieldDefn);
+                }
+                else if (m_aeGeomEncoding[iGeomField] !=
+                         OGRArrowGeomEncoding::WKB)
+                {
+                    // Shouldn't happen if UseRecordBatchBaseImplementation()
+                    // is up to date
+                    CPLAssert(false);
+                }
+                else
+                {
+                    out_schema->children[j] = out_schema->children[i];
+                }
             }
             else
             {
                 out_schema->children[j] = out_schema->children[i];
-                ++j;
             }
+
+            if (!fieldDesc[i].bIsRegularField &&
+                (EQUAL(pszReqGeomEncoding, "WKB") ||
+                 EQUAL(pszReqGeomEncoding, "")))
+            {
+                const int iGeomField = fieldDesc[i].nIdx;
+                const char *pszFormat = out_schema->children[j]->format;
+                if (m_aeGeomEncoding[iGeomField] == OGRArrowGeomEncoding::WKB &&
+                    !out_schema->children[j]->metadata &&
+                    (strcmp(pszFormat, "z") == 0 ||
+                     strcmp(pszFormat, "Z") == 0))
+                {
+                    const auto poGeomFieldDefn =
+                        m_poFeatureDefn->GetGeomFieldDefn(iGeomField);
+                    // Set ARROW:extension:name = ogc:wkb
+                    auto poSchema = CreateSchemaForWKBGeometryColumn(
+                        poGeomFieldDefn, pszFormat);
+                    out_schema->children[j]->release(out_schema->children[j]);
+                    out_schema->children[j] = poSchema;
+                }
+            }
+
+            ++j;
         }
-        out_schema->n_children = j;
     }
+    out_schema->n_children = j;
 
     OverrideArrowRelease(m_poArrowDS, out_schema);
+
     return 0;
 }
 
@@ -3638,9 +3472,206 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         return EIO;
     }
 
+    if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(
+                  "GEOMETRY_ENCODING", ""),
+              "WKB"))
+    {
+        const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+        for (int i = 0; i < nGeomFieldCount; i++)
+        {
+            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
+            if (!poGeomFieldDefn->IsIgnored())
+            {
+                if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKT)
+                {
+                    const int nArrayIdx =
+                        m_bIgnoredFields
+                            ? m_anMapGeomFieldIndexToArrayIndex[i]
+                            : m_anMapGeomFieldIndexToArrowColumn[i];
+                    auto sourceArray = out_array->children[nArrayIdx];
+                    auto targetArray = CreateWKTArrayFromWKBArray(sourceArray);
+                    if (targetArray)
+                    {
+                        sourceArray->release(sourceArray);
+                        out_array->children[nArrayIdx] = targetArray;
+                    }
+                    else
+                    {
+                        out_array->release(out_array);
+                        memset(out_array, 0, sizeof(*out_array));
+                        return ENOMEM;
+                    }
+                }
+                else if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
+                {
+                    // Shouldn't happen if UseRecordBatchBaseImplementation()
+                    // is up to date
+                    CPLAssert(false);
+                }
+            }
+        }
+    }
+
     OverrideArrowRelease(m_poArrowDS, out_array);
 
     return 0;
+}
+
+/************************************************************************/
+/*                    OGRArrowLayerAppendBuffer                         */
+/************************************************************************/
+
+class OGRArrowLayerAppendBuffer : public OGRAppendBuffer
+{
+  public:
+    OGRArrowLayerAppendBuffer(struct ArrowArray *targetArrayIn,
+                              size_t nInitialCapacityIn)
+        : m_psTargetArray(targetArrayIn)
+    {
+        m_nCapacity = nInitialCapacityIn;
+        m_pRawBuffer = const_cast<void *>(m_psTargetArray->buffers[2]);
+    }
+
+  protected:
+    bool Grow(size_t nItemSize) override
+    {
+        constexpr uint32_t MAX_SIZE_SINT32 =
+            static_cast<uint32_t>(std::numeric_limits<int32_t>::max());
+        if (nItemSize > MAX_SIZE_SINT32 - m_nSize)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "Too large WKT content");
+            return false;
+        }
+        size_t nNewCapacity = m_nSize + nItemSize;
+        CPLAssert(m_nCapacity <= MAX_SIZE_SINT32);
+        const size_t nDoubleCapacity =
+            std::min<size_t>(MAX_SIZE_SINT32, 2 * m_nCapacity);
+        if (nNewCapacity < nDoubleCapacity)
+            nNewCapacity = nDoubleCapacity;
+        CPLAssert(nNewCapacity <= MAX_SIZE_SINT32);
+        void *newBuffer = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nNewCapacity);
+        if (newBuffer == nullptr)
+        {
+            return false;
+        }
+        m_nCapacity = nNewCapacity;
+        memcpy(newBuffer, m_pRawBuffer, m_nSize);
+        VSIFreeAligned(m_pRawBuffer);
+        m_pRawBuffer = newBuffer;
+        m_psTargetArray->buffers[2] = m_pRawBuffer;
+        return true;
+    }
+
+  private:
+    struct ArrowArray *m_psTargetArray;
+
+    OGRArrowLayerAppendBuffer(const OGRArrowLayerAppendBuffer &) = delete;
+    OGRArrowLayerAppendBuffer &
+    operator=(const OGRArrowLayerAppendBuffer &) = delete;
+};
+
+/************************************************************************/
+/*                    CreateWKTArrayFromWKBArray()                      */
+/************************************************************************/
+
+inline struct ArrowArray *
+OGRArrowLayer::CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray)
+{
+    CPLAssert(sourceArray->n_buffers == 3);
+    CPLAssert(sourceArray->buffers[1] != nullptr);
+    CPLAssert(sourceArray->buffers[2] != nullptr);
+
+    const size_t nLength = static_cast<size_t>(sourceArray->length);
+    auto targetArray = static_cast<struct ArrowArray *>(
+        CPLCalloc(1, sizeof(struct ArrowArray)));
+    targetArray->release = OGRLayer::ReleaseArray;
+    targetArray->length = nLength;
+
+    targetArray->n_buffers = 3;
+    targetArray->buffers =
+        static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
+
+    // Allocate validity map buffer if needed
+    const auto sourceNull =
+        static_cast<const uint8_t *>(sourceArray->buffers[0]);
+    const size_t nOffset = static_cast<size_t>(sourceArray->offset);
+    uint8_t *targetNull = nullptr;
+    if (sourceArray->null_count && sourceNull)
+    {
+        targetArray->buffers[0] =
+            VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nLength + 7) / 8);
+        if (targetArray->buffers[0])
+        {
+            targetArray->null_count = sourceArray->null_count;
+            targetNull = static_cast<uint8_t *>(
+                const_cast<void *>(targetArray->buffers[0]));
+            if (nOffset == 0)
+            {
+                memcpy(targetNull, sourceNull, (nLength + 7) / 8);
+            }
+            else
+            {
+                memset(targetNull, 0, (nLength + 7) / 8);
+                for (size_t i = 0; i < nLength; ++i)
+                {
+                    if ((sourceNull[(i + nOffset) / 8] >> ((i + nOffset) % 8)) &
+                        1)
+                        targetNull[i / 8] |= (1 << (i % 8));
+                }
+            }
+        }
+    }
+
+    // Allocate offset buffer
+    targetArray->buffers[1] =
+        VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(uint32_t) * (1 + nLength));
+
+    // Allocate data (WKB) buffer
+    constexpr size_t DEFAULT_WKB_SIZE = 100;
+    uint32_t nInitialCapacity = static_cast<uint32_t>(std::min<size_t>(
+        std::numeric_limits<int32_t>::max(), DEFAULT_WKB_SIZE * nLength));
+    targetArray->buffers[2] = VSI_MALLOC_ALIGNED_AUTO_VERBOSE(nInitialCapacity);
+
+    // Check buffers have been allocated
+    if ((sourceArray->null_count && sourceNull && !targetNull) ||
+        targetArray->buffers[1] == nullptr ||
+        targetArray->buffers[2] == nullptr)
+    {
+        targetArray->release(targetArray);
+        return nullptr;
+    }
+
+    OGRArrowLayerAppendBuffer oOGRAppendBuffer(targetArray, nInitialCapacity);
+    OGRWKTToWKBTranslator oTranslator(oOGRAppendBuffer);
+
+    const auto sourceOffsets =
+        static_cast<const uint32_t *>(sourceArray->buffers[1]) + nOffset;
+    auto sourceBytes =
+        static_cast<char *>(const_cast<void *>(sourceArray->buffers[2]));
+    auto targetOffsets =
+        static_cast<uint32_t *>(const_cast<void *>(targetArray->buffers[1]));
+    for (size_t i = 0; i < nLength; ++i)
+    {
+        targetOffsets[i] = static_cast<uint32_t>(oOGRAppendBuffer.GetSize());
+
+        if (targetNull && ((targetNull[i / 8] >> (i % 8)) & 1) == 0)
+        {
+            continue;
+        }
+
+        const size_t nWKBSize = oTranslator.TranslateWKT(
+            sourceBytes + sourceOffsets[i],
+            sourceOffsets[i + 1] - sourceOffsets[i],
+            sourceOffsets[i + 1] < sourceOffsets[nLength]);
+        if (nWKBSize == static_cast<size_t>(-1))
+        {
+            targetArray->release(targetArray);
+            return nullptr;
+        }
+    }
+    targetOffsets[nLength] = static_cast<uint32_t>(oOGRAppendBuffer.GetSize());
+
+    return targetArray;
 }
 
 /************************************************************************/

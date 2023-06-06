@@ -4210,9 +4210,6 @@ def test_ogr_shape_97():
 
 def test_ogr_shape_98():
 
-    if gdaltest.shape_ds is None:
-        pytest.skip()
-
     with gdaltest.config_option("SHAPE_RESTORE_SHX", "TRUE"):
         shutil.copy("data/shp/can_caps.shp", "tmp/can_caps.shp")
 
@@ -4231,6 +4228,63 @@ def test_ogr_shape_98():
     os.remove("tmp/can_caps.shx")
 
     assert ref_shx == got_shx, "Rebuilt shx is different from original shx."
+
+
+###############################################################################
+# Test restore function when .shx file is missing
+
+
+@pytest.mark.parametrize(
+    "geom_type,wkt",
+    [
+        (ogr.wkbPoint, "POINT (0 1)"),
+        (ogr.wkbLineString, "LINESTRING (0 1,2 3)"),
+        (ogr.wkbPolygon, "POLYGON ((0 0,0 1,1 1,0 0))"),
+        (ogr.wkbMultiPoint, "MULTIPOINT (0 1,2 3)"),
+        (ogr.wkbMultiLineString, "MULTILINESTRING ((0 1,2 3))"),
+        (ogr.wkbMultiPolygon, "MULTIPOLYGON (((0 0,0 1,1 1,0 0)))"),
+        (ogr.wkbPointM, "POINT M (0 1 2)"),
+        (ogr.wkbPoint25D, "POINT Z (0 1 2)"),
+        (ogr.wkbPointZM, "POINT ZM (0 1 2 3)"),
+        (ogr.wkbLineStringM, "LINESTRING M (0 1 10,2 3 10)"),
+        (ogr.wkbLineString25D, "LINESTRING Z (0 1 10,2 3 10)"),
+        (ogr.wkbLineStringZM, "LINESTRING ZM (0 1 10 20,2 3 10 20)"),
+        (ogr.wkbPolygonM, "POLYGON M ((0 0 10,0 1 10,1 1 10,0 0 10))"),
+        (ogr.wkbPolygon25D, "POLYGON Z ((0 0 10,0 1 10,1 1 10,0 0 10))"),
+        (ogr.wkbPolygonZM, "POLYGON ZM ((0 0 10 20,0 1 10 20,1 1 10 20,0 0 10 20))"),
+        (ogr.wkbMultiPointM, "MULTIPOINT M (0 1 10,2 3 10)"),
+        (ogr.wkbMultiPoint25D, "MULTIPOINT Z (0 1 10,2 3 10)"),
+        (ogr.wkbMultiPointZM, "MULTIPOINT ZM (0 1 10 20,2 3 10 20)"),
+        (ogr.wkbTINZ, "TIN Z (((0 0 0,0 1 2,1 1 3,0 0 0)))"),
+    ],
+)
+def test_ogr_shape_restore_shx(geom_type, wkt):
+
+    filename = "/vsimem/test_ogr_shape_restore_shx.shp"
+    with ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(filename) as ds:
+        lyr = ds.CreateLayer("test_ogr_shape_restore_shx", geom_type=geom_type)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+
+    shx_filename = filename[0:-3] + "shx"
+
+    f = gdal.VSIFOpenL(shx_filename, "rb")
+    expected_data = gdal.VSIFReadL(1, 1000, f)
+    gdal.VSIFCloseL(f)
+
+    gdal.Unlink(shx_filename)
+
+    with gdaltest.config_option("SHAPE_RESTORE_SHX", "TRUE"):
+        ogr.Open(filename, update=1)
+
+    f = gdal.VSIFOpenL(shx_filename, "rb")
+    got_data = gdal.VSIFReadL(1, 1000, f)
+    gdal.VSIFCloseL(f)
+
+    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filename)
+
+    assert got_data == expected_data
 
 
 ###############################################################################

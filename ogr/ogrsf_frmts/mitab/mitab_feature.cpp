@@ -2150,7 +2150,6 @@ int TABPolyline::ReadGeometryFromMAPFile(
     double dXMax = 0.0;
     double dYMax = 0.0;
     OGRGeometry *poGeometry = nullptr;
-    OGRLineString *poLine = nullptr;
     GBool bComprCoord = poObjHdr->IsCompressedType();
     TABMAPCoordBlock *poCoordBlock = nullptr;
 
@@ -2168,7 +2167,7 @@ int TABPolyline::ReadGeometryFromMAPFile(
 
         m_bSmooth = FALSE;
 
-        poLine = new OGRLineString();
+        auto poLine = new OGRLineString();
         poGeometry = poLine;
         poLine->setNumPoints(2);
 
@@ -2250,7 +2249,7 @@ int TABPolyline::ReadGeometryFromMAPFile(
 
         poCoordBlock->SetComprCoordOrigin(m_nComprOrgX, m_nComprOrgY);
 
-        poLine = new OGRLineString();
+        auto poLine = new OGRLineString();
         poGeometry = poLine;
         poLine->setNumPoints(numPoints);
 
@@ -2403,7 +2402,7 @@ int TABPolyline::ReadGeometryFromMAPFile(
             const int numSectionVertices = pasSecHdrs[iSection].numVertices;
             GInt32 *pnXYPtr = panXY + (pasSecHdrs[iSection].nVertexOffset * 2);
 
-            poLine = new OGRLineString();
+            auto poLine = new OGRLineString();
             poLine->setNumPoints(numSectionVertices);
 
             for (int i = 0; i < numSectionVertices; i++)
@@ -2419,7 +2418,6 @@ int TABPolyline::ReadGeometryFromMAPFile(
             {
                 CPLAssert(false);  // Just in case lower-level lib is modified
             }
-            poLine = nullptr;
         }
 
         CPLFree(pasSecHdrs);

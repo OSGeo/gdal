@@ -30,7 +30,7 @@ to 0.0,102.0 by multiplying by 0.4. Unscaled values above 250 have
 specific meanings, 251 is Circular mask used in the Arctic, 252 is Unused, 253
 is Coastlines, 254 is Superimposed land mask, 255 is Missing data.
 
-NOTE: Implemented as ``frmts/raw/nsidcbindataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/nsidcbindataset.cpp`.
 
 Driver capabilities
 -------------------

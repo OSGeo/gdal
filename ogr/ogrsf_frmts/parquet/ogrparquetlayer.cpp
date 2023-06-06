@@ -50,8 +50,14 @@
 /************************************************************************/
 
 OGRParquetLayerBase::OGRParquetLayerBase(OGRParquetDataset *poDS,
-                                         const char *pszLayerName)
-    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS)
+                                         const char *pszLayerName,
+                                         CSLConstList papszOpenOptions)
+    : OGRArrowLayer(poDS, pszLayerName), m_poDS(poDS),
+      m_aosGeomPossibleNames(CSLTokenizeString2(
+          CSLFetchNameValueDef(papszOpenOptions, "GEOM_POSSIBLE_NAMES",
+                               "geometry,wkb_geometry,wkt_geometry"),
+          ",", 0)),
+      m_osCRS(CSLFetchNameValueDef(papszOpenOptions, "CRS", ""))
 {
 }
 
@@ -142,6 +148,7 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
     {
         auto oIter = m_oMapGeometryColumns.find(field->name());
         if (oIter != m_oMapGeometryColumns.end() ||
+            STARTS_WITH(osExtensionName.c_str(), "ogc.") ||
             STARTS_WITH(osExtensionName.c_str(), "geoarrow."))
         {
             CPLJSONObject oJSONDef;
@@ -163,10 +170,14 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
                 OGRSpatialReference *poSRS = nullptr;
                 if (!oCRS.IsValid())
                 {
-                    // WGS 84 is implied if no crs member is found.
-                    poSRS = new OGRSpatialReference();
-                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                    poSRS->importFromEPSG(4326);
+                    if (!m_oMapGeometryColumns.empty())
+                    {
+                        // WGS 84 is implied if no crs member is found.
+                        poSRS = new OGRSpatialReference();
+                        poSRS->SetAxisMappingStrategy(
+                            OAMS_TRADITIONAL_GIS_ORDER);
+                        poSRS->importFromEPSG(4326);
+                    }
                 }
                 else if (oCRS.GetType() == CPLJSONObject::Type::String)
                 {
@@ -212,6 +223,17 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
 
                     oField.SetSpatialRef(poSRS);
 
+                    poSRS->Release();
+                }
+
+                if (!m_osCRS.empty())
+                {
+                    poSRS = new OGRSpatialReference();
+                    poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                    if (poSRS->SetFromUserInput(m_osCRS.c_str()) == OGRERR_NONE)
+                    {
+                        oField.SetSpatialRef(poSRS);
+                    }
                     poSRS->Release();
                 }
 
@@ -313,6 +335,53 @@ bool OGRParquetLayerBase::DealWithGeometryColumn(
             }
         }
     }
+
+    // Try to autodetect a (WKB) geometry column from the GEOM_POSSIBLE_NAMES
+    // open option
+    if (osExtensionName.empty() && m_oMapGeometryColumns.empty() &&
+        m_aosGeomPossibleNames.FindString(field->name().c_str()) >= 0)
+    {
+        std::shared_ptr<arrow::DataType> fieldType = field->type();
+        auto fieldTypeId = fieldType->id();
+        if (fieldTypeId == arrow::Type::BINARY)
+        {
+            CPLDebug("PARQUET",
+                     "Field %s detected as likely WKB geometry field",
+                     field->name().c_str());
+            bRegularField = false;
+            m_aeGeomEncoding.push_back(OGRArrowGeomEncoding::WKB);
+        }
+        else if (fieldTypeId == arrow::Type::STRING &&
+                 (field->name().find("wkt") != std::string::npos ||
+                  field->name().find("WKT") != std::string::npos))
+        {
+            CPLDebug("PARQUET",
+                     "Field %s detected as likely WKT geometry field",
+                     field->name().c_str());
+            bRegularField = false;
+            m_aeGeomEncoding.push_back(OGRArrowGeomEncoding::WKT);
+        }
+        if (!bRegularField)
+        {
+            OGRGeomFieldDefn oField(field->name().c_str(), wkbUnknown);
+            oField.SetNullable(field->nullable());
+
+            if (!m_osCRS.empty())
+            {
+                auto poSRS = new OGRSpatialReference();
+                poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (poSRS->SetFromUserInput(m_osCRS.c_str()) == OGRERR_NONE)
+                {
+                    oField.SetSpatialRef(poSRS);
+                }
+                poSRS->Release();
+            }
+
+            m_poFeatureDefn->AddGeomFieldDefn(&oField);
+            m_anMapGeomFieldIndexToArrowColumn.push_back(iFieldIdx);
+        }
+    }
+
     return !bRegularField;
 }
 
@@ -360,8 +429,9 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap)
 
 OGRParquetLayer::OGRParquetLayer(
     OGRParquetDataset *poDS, const char *pszLayerName,
-    std::unique_ptr<parquet::arrow::FileReader> &&arrow_reader)
-    : OGRParquetLayerBase(poDS, pszLayerName),
+    std::unique_ptr<parquet::arrow::FileReader> &&arrow_reader,
+    CSLConstList papszOpenOptions)
+    : OGRParquetLayerBase(poDS, pszLayerName, papszOpenOptions),
       m_poArrowReader(std::move(arrow_reader))
 {
     const char *pszParquetBatchSize =
@@ -1138,6 +1208,8 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
 #endif
         }
     }
+
+    ComputeConstraintsArrayIdx();
 
     // Full invalidation
     m_iRecordBatch = -1;

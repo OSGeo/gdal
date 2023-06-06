@@ -37,12 +37,15 @@ Driver capabilities
 Creation Options
 ----------------
 
--  **WORLDFILE=YES**: Force the generation of an associated ESRI world
-   file (with the extension .wld).
+-  .. co:: WORLDFILE
+      :choices: YES
+
+      Force the generation of an associated ESRI world
+      file (with the extension .wld).
 
 See Also
 --------
 
--  Implemented as ``gdal/frmts/bmp/bmpdataset.cpp``.
+-  Implemented as :source_file:`frmts/bmp/bmpdataset.cpp`.
 -  `Wikipedia BMP file
    format <https://en.wikipedia.org/wiki/BMP_file_format>`__

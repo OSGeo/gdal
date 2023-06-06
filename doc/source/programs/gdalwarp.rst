@@ -364,6 +364,15 @@ with control information.
     in megabytes if the value is less than 10000. For values >=10000, this is
     interpreted as bytes.
 
+    The warper will total up the memory required to hold the input and output
+    image arrays and any auxilary masking arrays and if they are larger than
+    the "warp memory" allowed it will subdivide the chunk into smaller chunks
+    and try again.
+
+    If the -wm value is very small there is some extra overhead in doing many
+    small chunks so setting it larger is better but it is a matter of
+    diminishing returns.
+
 .. option:: -multi
 
     Use multithreaded warping implementation.
@@ -481,7 +490,7 @@ The details of how it is taken into account depends on the resampling kernel:
 
 - for bilinear, cubic, cubicspline and lanczos, for each target pixel, the
   coordinate of its center is projected back to source coordinates and a
-  correspond source pixel is identified. If this source pixel is invalid, the
+  corresponding source pixel is identified. If this source pixel is invalid, the
   target pixel is considered as nodata.
   Given that those resampling kernels have a non-null kernel radius, this source
   pixel is just one among other several source pixels, and it might be possible
@@ -492,6 +501,138 @@ The details of how it is taken into account depends on the resampling kernel:
 - for the other resampling methods, source pixels contributing to the target pixel
   are ignored if invalid. Only the valid ones are taken into account. If there are
   none, the target pixel is considered as nodata.
+
+If using :option:`-srcnodata` for multiple images with different invalid
+values, you need to either (a) pre-process them to have the same to-be-ignored
+value, or (b) set the nodata flag for each file. Use (b) if you need to preserve
+the original values for some reason, for example:
+
+.. code-block:: bash
+
+   # for this image we want to ignore black (0)
+   gdalwarp -srcnodata 0 -dstnodata 0 orig-ignore-black.tif black-nodata.tif
+
+   # and now we want to ignore white (0)
+   gdalwarp -srcnodata 255 -dstnodata 255 orig-ignore-white.tif white-nodata.tif
+
+   # and finally ignore a particular blue-grey (RGB 125 125 150)
+   gdalwarp -srcnodata "125 125 150" -dstnodata "125 125 150" orig-ignore-grey.tif grey-nodata.tif
+
+   # now we can mosaic them all and not worry about nodata parameters
+   gdalwarp black-nodata.tif grey-nodata.tif white-nodata.tif final-mosaic.tif
+
+
+Approximate transformation
+--------------------------
+
+By default :program:`gdalwarp` uses a linear approximator for the
+transformations with a permitted error of 0.125 pixels. The approximator
+basically transforms three points on a scanline: the start, end and middle.
+Then it compares the linear approximation of the center based on the end points
+to the real thing and checks the error. If the error is less than the error
+threshold then the remaining points are approximated (in two chunks utilizing
+the center point). If the error exceeds the threshold, the scanline is split
+into two sections, and the approximator is recursively applied to each section
+until the error is less than the threshold or all points have been exactly
+computed.
+
+The error threshold (in pixels) can be controlled with the gdalwarp
+:option:`-et` switch. If you want to compare a true pixel-by-pixel reprojection
+use :option:`-et 0` which disables this approximator entirely.
+
+
+Memory usage
+------------
+
+Adding RAM will almost certainly increase the speed of :program:`gdalwarp`.
+That's not at all the same as saying that it is worth it, or that the speed
+increase will be significant. Disks are the slowest part of the process.  By
+default :program:`gdalwarp` won't take much advantage of RAM. Using the flag
+:option:`-wm 500` will operate on 500MB chunks at a time which is better than
+the default. The warp memory specified by :option:`-wm` is shared among all
+threads, so it is especially beneficial to increase this value when running
+:program:`gdalwarp` with :option:`-wo NUM_THREADS` (or its equivalent
+:config:`GDAL_NUM_THREADS`) greater than 1.
+
+Increasing the I/O block cache size may also help. This can be done by
+setting the :config:`GDAL_CACHEMAX` configuration like:
+
+.. code-block:: bash
+
+   gdalwarp --config GDAL_CACHEMAX 500 -wm 500 ...
+
+This uses 500MB of RAM for read/write caching, and 500MB of RAM for working
+buffers during the warp. Beyond that it is doubtful more memory will make a
+substantial difference.
+
+Check CPU usage while :program:`gdalwarp` is running. If it is substantially
+less than 100% then you know things are IO bound. Otherwise they are CPU bound.
+The ``--debug`` option may also provide useful information. For instance, after
+running the following:
+
+.. code-block::
+
+   gdalwarp --debug on abc.tif def.tif
+
+a message like the following will be output:
+
+::
+
+  GDAL: 224 block reads on 32 block band 1 of utm.tif
+
+In this case it is saying that band 1 of :file:`utm.tif` has 32 blocks, but
+that 224 block reads were done, implying that lots of data was having to be
+re-read, presumably because of a limited IO cache. You will also see messages
+like:
+
+::
+
+   GDAL: GDALWarpKernel()::GWKNearestNoMasksByte()
+   Src=0,0,512x512 Dst=0,0,512x512
+
+The Src/Dst windows show you the "chunk size" being used. In this case my whole
+image which is very small. If you find things are being broken into a lot of
+chunks increasing :option:`-wm` may help somewhat.
+
+But far more important than memory are ensuring you are going through an
+optimized path in the warper. If you ever see it reporting
+``GDALWarpKernel()::GWKGeneralCase()`` you know things will be relatively slow.
+Basically, the fastest situations are nearest neighbour resampling on 8bit data
+without nodata or alpha masking in effect.
+
+
+Compressed output
+-----------------
+
+In some cases, the output of :program:`gdalwarp` may be much larger than the
+original, even if the same compression algorithm is used. By default,
+:program:`gdalwarp` operates on chunks that are not necessarily aligned with
+the boundaries of the blocks/tiles/strips of the output format, so this might
+cause repeated compression/decompression of partial blocks, leading to lost
+space in the output format.
+
+The situation can be improved by using the ``OPTIMIZE_SIZE`` warping option
+(:option:`-wo OPTIMIZE_SIZE=YES`), but note that depending on the source and
+target projections, it might also significantly slow down the warping process.
+
+Another possibility is to use :program:`gdalwarp` without compression and then
+follow up with :program:`gdal_translate` with compression:
+
+.. code-block:: bash
+
+   gdalwarp infile tempfile.tif ...options...
+   gdal_translate tempfile.tif outfile.tif -co compress=lzw ...etc.
+
+Alternatively, you can use a VRT file as the output format of :program:`gdalwarp`. The
+VRT file is just an XML file that will be created immediately. The
+:program:`gdal_translate` operations will be of course a bit slower as it will do the
+real warping operation.
+
+.. code-block:: bash
+
+   gdalwarp -of VRT infile tempfile.vrt ...options...
+   gdal_translate tempfile.vrt outfile.tif -co compress=lzw ...etc.
+
 
 Examples
 --------

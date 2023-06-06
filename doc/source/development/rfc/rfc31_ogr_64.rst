@@ -252,7 +252,7 @@ list of changes is :
    considered as Integer64. However it might be possible that databases
    produced by other tools are created with "INTEGER" and hold 64 bit
    values, in which case OGR will not be able to detect it. The
-   OGR_PROMOTE_TO_INTEGER64=YES configuration option can then be passed
+   :config:`OGR_PROMOTE_TO_INTEGER64=YES` configuration option can then be passed
    to workaround that issue. OLMD_FID64 = "YES" advertized as soon as
    MAX(fid_column) is 64 bit. GetFeatureCount() modified to return 64
    bit values.

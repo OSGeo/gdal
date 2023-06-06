@@ -24,7 +24,7 @@ http://www.sandia.gov/radar/complex-data/.
 
 The extension for GFF formats is .gff.
 
-NOTE: Implemented as ``gdal/frmts/gff/gff_dataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/gff/gff_dataset.cpp`.
 
 Driver capabilities
 -------------------

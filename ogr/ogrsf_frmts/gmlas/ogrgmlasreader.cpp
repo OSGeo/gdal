@@ -2033,7 +2033,7 @@ void GMLASReader::ProcessAttributes(const Attributes &attrs)
 
                     if (m_oCurCtxt.m_poLayer->IsGeneratedIDField())
                     {
-                        CPLString osFeaturePKID(
+                        const std::string osFeaturePKID(
                             m_oCurCtxt.m_poFeature->GetFieldAsString(
                                 m_oCurCtxt.m_poLayer->GetIDFieldIdx()));
                         m_oMapElementIdToPKID[osAttrValue] = osFeaturePKID;
@@ -2620,8 +2620,7 @@ void GMLASReader::endElement(const XMLCh *const uri,
     while (!m_aoStackContext.empty() &&
            m_aoStackContext.back().m_nLevel >= m_nLevel)
     {
-        std::map<OGRLayer *, int> oMapCounter =
-            m_aoStackContext.back().m_oMapCounter;
+        auto oMapCounter = m_aoStackContext.back().m_oMapCounter;
         if (!m_aoStackContext.back().m_osCurSubXPath.empty())
         {
 #ifdef DEBUG_VERBOSE
@@ -2682,7 +2681,7 @@ void GMLASReader::endElement(const XMLCh *const uri,
             }
             m_nCurFieldIdx = -1;
         }
-        m_oCurCtxt.m_oMapCounter = oMapCounter;
+        m_oCurCtxt.m_oMapCounter = std::move(oMapCounter);
 
 #ifdef DEBUG_VERBOSE
         CPLDebug("GMLAS", "m_oCurCtxt = ");

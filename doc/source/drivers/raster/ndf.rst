@@ -19,7 +19,7 @@ The NDF driver only supports 8bit data. The only supported projection is
 UTM. NDF version 1 (NDF_VERSION=0.00) and NDF version 2 are both
 supported.
 
-NOTE: Implemented as ``gdal/frmts/raw/ndfdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/ndfdataset.cpp`.
 
 See Also: `NLAPS Data Format
 Specification <http://landsat.usgs.gov/documents/NLAPSII.pdf>`__.

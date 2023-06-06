@@ -879,7 +879,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         m_osUnit = osUnit;
     }
 
-    void RegisterGroup(std::weak_ptr<ZarrGroupBase> group)
+    void RegisterGroup(const std::weak_ptr<ZarrGroupBase> &group)
     {
         m_poGroupWeak = group;
     }

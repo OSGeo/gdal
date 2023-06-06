@@ -543,6 +543,50 @@ def generate_all_geoms_parquet():
     )
 
 
+def generate_parquet_wkt_with_dict():
+    import json
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    geometry = pa.array(
+        ["POINT (1 2)", "POINT (3 4)", None, "POINT (7 8)", "POINT (9 10)"],
+        type=pa.string(),
+    )
+
+    indices = pa.array([0, 1, 2, None, 2])
+    dictionary = pa.array(["foo", "bar", "baz"])
+    dict = pa.DictionaryArray.from_arrays(indices, dictionary)
+
+    names = ["geometry", "dict"]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    my_schema = table.schema.with_metadata(
+        {
+            "geo": json.dumps(
+                {
+                    "version": "0.1.0",
+                    "primary_column": "geometry",
+                    "columns": {"geometry": {"encoding": "WKT"}},
+                }
+            )
+        }
+    )
+
+    table = table.cast(my_schema)
+    HERE = pathlib.Path(__file__).parent
+    pq.write_table(
+        table,
+        HERE / "ogr/data/parquet/wkt_with_dict.parquet",
+        compression="NONE",
+        row_group_size=3,
+    )
+
+
 if __name__ == "__main__":
     generate_test_parquet()
     generate_all_geoms_parquet()
+    generate_parquet_wkt_with_dict()

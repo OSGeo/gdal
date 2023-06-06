@@ -2291,7 +2291,7 @@ CPLErr NITFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     /* To recompute the zone */
     OGRSpatialReference oSRSBackup = m_oSRS;
     CPLErr eErr = SetSpatialRef(&m_oGCPSRS);
-    m_oSRS = oSRSBackup;
+    m_oSRS = std::move(oSRSBackup);
 
     if (eErr != CE_None)
         return eErr;

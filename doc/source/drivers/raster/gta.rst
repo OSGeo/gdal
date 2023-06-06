@@ -25,9 +25,12 @@ Driver capabilities
 Creation options
 ----------------
 
--  **COMPRESS=method** Set the GTA compression method: NONE (default) or
-   one of BZIP2, XZ, ZLIB, ZLIB1, ZLIB2, ZLIB3, ZLIB4, ZLIB5, ZLIB6,
-   ZLIB7, ZLIB8, ZLIB9.
+-  .. co:: COMPRESS
+      :choices: NONE, BZIP2, XZ, ZLIB, ZLIB1, ZLIB2, ZLIB3, ZLIB4, ZLIB5, ZLIB6, ZLIB7, ZLIB8, ZLIB9
+      :default: NONE
+
+      Set the GTA compression method.
+
 
 See Also
 --------

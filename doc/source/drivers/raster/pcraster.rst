@@ -54,7 +54,7 @@ which are used as CR_INT2 (GDT_Int16).
 Although the de-facto file extension of a PCRaster raster file is .map,
 the PCRaster software does not require a standardized file extension.
 
-NOTE: Implemented as ``gdal/frmts/pcraster/pcrasterdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/pcraster/pcrasterdataset.cpp`.
 
 See also: `PCRaster website at Utrecht
 University <http://pcraster.geo.uu.nl>`__.

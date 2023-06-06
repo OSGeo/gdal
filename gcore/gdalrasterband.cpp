@@ -1015,7 +1015,7 @@ int GDALRasterBand::InitBlockInfo()
     const char *pszBlockStrategy =
         CPLGetConfigOption("GDAL_BAND_BLOCK_CACHE", nullptr);
     bool bUseArray = true;
-    if (pszBlockStrategy == nullptr)
+    if (pszBlockStrategy == nullptr || EQUAL(pszBlockStrategy, "AUTO"))
     {
         if (poDS == nullptr || (poDS->nOpenFlags & GDAL_OF_BLOCK_ACCESS_MASK) ==
                                    GDAL_OF_DEFAULT_BLOCK_ACCESS)
@@ -1034,6 +1034,10 @@ int GDALRasterBand::InitBlockInfo()
     }
     else if (EQUAL(pszBlockStrategy, "HASHSET"))
         bUseArray = false;
+    else if (!EQUAL(pszBlockStrategy, "ARRAY"))
+        CPLError(CE_Warning, CPLE_AppDefined, "Unknown block cache method: %s",
+                 pszBlockStrategy);
+
     if (bUseArray)
         poBandBlockCache = GDALArrayBandBlockCacheCreate(this);
     else

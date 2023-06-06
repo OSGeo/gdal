@@ -75,8 +75,9 @@ class GDALWMSMetaDataset final : public GDALPamDataset
                        CPLString osFormat, CPLString osTransparent);
 
     void
-    ExploreLayer(CPLXMLNode *psXML, CPLString osFormat, CPLString osTransparent,
-                 CPLString osPreferredSRS, const char *pszSRS = nullptr,
+    ExploreLayer(CPLXMLNode *psXML, const CPLString &osFormat,
+                 const CPLString &osTransparent,
+                 const CPLString &osPreferredSRS, const char *pszSRS = nullptr,
                  const char *pszMinX = nullptr, const char *pszMinY = nullptr,
                  const char *pszMaxX = nullptr, const char *pszMaxY = nullptr);
 
@@ -102,10 +103,11 @@ class GDALWMSMetaDataset final : public GDALPamDataset
     virtual char **GetMetadataDomainList() override;
     virtual char **GetMetadata(const char *pszDomain = "") override;
 
-    static GDALDataset *AnalyzeGetCapabilities(CPLXMLNode *psXML,
-                                               CPLString osFormat = "",
-                                               CPLString osTransparent = "",
-                                               CPLString osPreferredSRS = "");
+    static GDALDataset *
+    AnalyzeGetCapabilities(CPLXMLNode *psXML,
+                           const std::string &osFormat = std::string(),
+                           const std::string &osTransparent = std::string(),
+                           const std::string &osPreferredSRS = std::string());
     static GDALDataset *AnalyzeTileMapService(CPLXMLNode *psXML);
 
     static GDALDataset *DownloadGetCapabilities(GDALOpenInfo *poOpenInfo);

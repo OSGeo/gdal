@@ -33,6 +33,7 @@
 #include "ogr_p.h"
 #include "ogr_recordbatch.h"
 #include "ogr_swq.h"
+#include "ogr_wkb.h"
 
 #include <algorithm>
 #include <limits>
@@ -1740,12 +1741,19 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
             if (!m_poFeatureDefn->GetGeomFieldDefn(0)->IsIgnored() &&
                 pszGeomColName)
             {
-                const auto &result =
-                    result_buffer_elements.find(pszGeomColName)->second;
-                nRowCount = std::min(nRowCount, result.first);
-                // For some reason, result.first can be 1, and result.second 0
-                if (!bHitBug && result.second == 0)
-                    nRowCount = 0;
+                auto oIter = result_buffer_elements.find(pszGeomColName);
+                if (oIter != result_buffer_elements.end())
+                {
+                    const auto &result = oIter->second;
+                    nRowCount = std::min(nRowCount, result.first);
+                    // For some reason, result.first can be 1, and result.second 0
+                    if (!bHitBug && result.second == 0)
+                        nRowCount = 0;
+                }
+                else
+                {
+                    CPLAssert(false);
+                }
             }
             for (int i = 0; i < m_poFeatureDefn->GetFieldCount(); ++i)
             {
@@ -1754,14 +1762,21 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
                 if (!poFieldDefn->IsIgnored())
                 {
                     const char *pszFieldName = poFieldDefn->GetNameRef();
-                    const auto &result =
-                        result_buffer_elements.find(pszFieldName)->second;
-                    if (result.first == 0)
+                    auto oIter = result_buffer_elements.find(pszFieldName);
+                    if (oIter != result_buffer_elements.end())
                     {
-                        nRowCount = std::min(nRowCount, result.second);
+                        const auto &result = oIter->second;
+                        if (result.first == 0)
+                        {
+                            nRowCount = std::min(nRowCount, result.second);
+                        }
+                        else
+                            nRowCount = std::min(nRowCount, result.first);
                     }
                     else
-                        nRowCount = std::min(nRowCount, result.first);
+                    {
+                        CPLAssert(false);
+                    }
                 }
             }
 
@@ -1846,8 +1861,13 @@ bool OGRTileDBLayer::SetupQuery(tiledb::QueryCondition *queryCondition)
                 continue;
             const char *pszFieldName = poFieldDefn->GetNameRef();
             auto &anOffsets = *(m_aFieldValueOffsets[i]);
-            const auto &result =
-                result_buffer_elements.find(pszFieldName)->second;
+            auto oIter = result_buffer_elements.find(pszFieldName);
+            if (oIter == result_buffer_elements.end())
+            {
+                CPLAssert(false);
+                continue;
+            }
+            const auto &result = oIter->second;
             if (poFieldDefn->IsNullable())
                 m_aFieldValidity[i].resize(nRowCount);
             auto &fieldValues = m_aFieldValues[i];
@@ -3470,11 +3490,12 @@ void OGRTileDBLayer::InitializeSchemaAndArray()
         {
             auto zdim = tiledb::Dimension::create<double>(
                 *m_ctx, m_osZDim, {m_dfZStart, m_dfZEnd}, m_dfZTileExtent);
-            domain.add_dimensions(xdim, ydim, zdim);
+            domain.add_dimensions(std::move(xdim), std::move(ydim),
+                                  std::move(zdim));
         }
         else
         {
-            domain.add_dimensions(xdim, ydim);
+            domain.add_dimensions(std::move(xdim), std::move(ydim));
         }
 
         m_schema->set_domain(domain);
@@ -4619,7 +4640,9 @@ void OGRTileDBLayer::ReleaseArrowArray(struct ArrowArray *array)
 /*                            SetNullBuffer()                           */
 /************************************************************************/
 
-void OGRTileDBLayer::SetNullBuffer(struct ArrowArray *psChild, int iField)
+void OGRTileDBLayer::SetNullBuffer(
+    struct ArrowArray *psChild, int iField,
+    const std::vector<bool> &abyValidityFromFilters)
 {
     if (m_poFeatureDefn->GetFieldDefn(iField)->IsNullable())
     {
@@ -4630,22 +4653,50 @@ void OGRTileDBLayer::SetNullBuffer(struct ArrowArray *psChild, int iField)
                 psChild->private_data);
         const auto &v_validity = m_aFieldValidity[iField];
         uint8_t *pabyNull = nullptr;
-        const size_t nSize = static_cast<size_t>(psChild->length);
-        for (size_t iFeat = 0; iFeat < nSize; ++iFeat)
+        const size_t nSrcSize = static_cast<size_t>(m_nRowCountInResultSet);
+        if (abyValidityFromFilters.empty())
         {
-            if (!v_validity[iFeat])
+            for (size_t i = 0; i < nSrcSize; ++i)
             {
-                ++psChild->null_count;
-                if (pabyNull == nullptr)
+                if (!v_validity[i])
                 {
-                    psPrivateData->nullHolder =
-                        std::make_shared<std::vector<uint8_t>>((nSize + 7) / 8,
-                                                               0xFF);
-                    pabyNull = psPrivateData->nullHolder->data();
-                    psChild->buffers[0] = pabyNull;
+                    ++psChild->null_count;
+                    if (pabyNull == nullptr)
+                    {
+                        psPrivateData->nullHolder =
+                            std::make_shared<std::vector<uint8_t>>(
+                                (nSrcSize + 7) / 8, 0xFF);
+                        pabyNull = psPrivateData->nullHolder->data();
+                        psChild->buffers[0] = pabyNull;
+                    }
+                    pabyNull[i / 8] &= static_cast<uint8_t>(~(1 << (i % 8)));
                 }
-                pabyNull[iFeat / 8] &=
-                    static_cast<uint8_t>(~(1 << (iFeat % 8)));
+            }
+        }
+        else
+        {
+            for (size_t i = 0, j = 0; i < nSrcSize; ++i)
+            {
+                if (abyValidityFromFilters[i])
+                {
+                    if (!v_validity[i])
+                    {
+                        ++psChild->null_count;
+                        if (pabyNull == nullptr)
+                        {
+                            const size_t nDstSize =
+                                static_cast<size_t>(psChild->length);
+                            psPrivateData->nullHolder =
+                                std::make_shared<std::vector<uint8_t>>(
+                                    (nDstSize + 7) / 8, 0xFF);
+                            pabyNull = psPrivateData->nullHolder->data();
+                            psChild->buffers[0] = pabyNull;
+                        }
+                        pabyNull[j / 8] &=
+                            static_cast<uint8_t>(~(1 << (j % 8)));
+                    }
+                    ++j;
+                }
             }
         }
     }
@@ -4655,7 +4706,9 @@ void OGRTileDBLayer::SetNullBuffer(struct ArrowArray *psChild, int iField)
 /*                           FillBoolArray()                            */
 /************************************************************************/
 
-void OGRTileDBLayer::FillBoolArray(struct ArrowArray *psChild, int iField)
+void OGRTileDBLayer::FillBoolArray(
+    struct ArrowArray *psChild, int iField,
+    const std::vector<bool> &abyValidityFromFilters)
 {
     OGRTileDBArrowArrayPrivateData *psPrivateData =
         new OGRTileDBArrowArrayPrivateData;
@@ -4667,18 +4720,40 @@ void OGRTileDBLayer::FillBoolArray(struct ArrowArray *psChild, int iField)
     // whereas Arrow uses a ~ std::vector<bool> with 8 elements per byte
     const auto &v_source = *(std::get<std::shared_ptr<std::vector<uint8_t>>>(
         m_aFieldValues[iField]));
+    const size_t nDstSize = abyValidityFromFilters.empty()
+                                ? v_source.size()
+                                : static_cast<size_t>(psChild->length);
     auto arrayValues =
-        std::make_shared<std::vector<uint8_t>>((v_source.size() + 7) / 8);
+        std::make_shared<std::vector<uint8_t>>((nDstSize + 7) / 8);
     psPrivateData->valueHolder = arrayValues;
     auto panValues = arrayValues->data();
     psChild->buffers[1] = panValues;
-    for (size_t iFeat = 0; iFeat < v_source.size(); ++iFeat)
+    if (abyValidityFromFilters.empty())
     {
-        if (v_source[iFeat])
-            panValues[iFeat / 8] |= static_cast<uint8_t>(1 << (iFeat % 8));
+        for (size_t i = 0; i < v_source.size(); ++i)
+        {
+            if (v_source[i])
+            {
+                panValues[i / 8] |= static_cast<uint8_t>(1 << (i % 8));
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0, j = 0; i < v_source.size(); ++i)
+        {
+            if (abyValidityFromFilters[i])
+            {
+                if (v_source[i])
+                {
+                    panValues[j / 8] |= static_cast<uint8_t>(1 << (j % 8));
+                }
+                ++j;
+            }
+        }
     }
 
-    SetNullBuffer(psChild, iField);
+    SetNullBuffer(psChild, iField, abyValidityFromFilters);
 }
 
 /************************************************************************/
@@ -4686,7 +4761,9 @@ void OGRTileDBLayer::FillBoolArray(struct ArrowArray *psChild, int iField)
 /************************************************************************/
 
 template <typename T>
-void OGRTileDBLayer::FillPrimitiveArray(struct ArrowArray *psChild, int iField)
+void OGRTileDBLayer::FillPrimitiveArray(
+    struct ArrowArray *psChild, int iField,
+    const std::vector<bool> &abyValidityFromFilters)
 {
     OGRTileDBArrowArrayPrivateData *psPrivateData =
         new OGRTileDBArrowArrayPrivateData;
@@ -4699,7 +4776,20 @@ void OGRTileDBLayer::FillPrimitiveArray(struct ArrowArray *psChild, int iField)
     psPrivateData->valueHolder = v_source;
     psChild->buffers[1] = v_source->data();
 
-    SetNullBuffer(psChild, iField);
+    if (!abyValidityFromFilters.empty())
+    {
+        const size_t nSrcSize = static_cast<size_t>(m_nRowCountInResultSet);
+        for (size_t i = 0, j = 0; i < nSrcSize; ++i)
+        {
+            if (abyValidityFromFilters[i])
+            {
+                (*v_source)[j] = (*v_source)[i];
+                ++j;
+            }
+        }
+    }
+
+    SetNullBuffer(psChild, iField, abyValidityFromFilters);
 }
 
 /************************************************************************/
@@ -4707,8 +4797,9 @@ void OGRTileDBLayer::FillPrimitiveArray(struct ArrowArray *psChild, int iField)
 /************************************************************************/
 
 template <typename T>
-void OGRTileDBLayer::FillStringOrBinaryArray(struct ArrowArray *psChild,
-                                             int iField)
+void OGRTileDBLayer::FillStringOrBinaryArray(
+    struct ArrowArray *psChild, int iField,
+    const std::vector<bool> &abyValidityFromFilters)
 {
     OGRTileDBArrowArrayPrivateData *psPrivateData =
         new OGRTileDBArrowArrayPrivateData;
@@ -4728,14 +4819,43 @@ void OGRTileDBLayer::FillStringOrBinaryArray(struct ArrowArray *psChild,
     psPrivateData->valueHolder = v_source;
     psChild->buffers[2] = v_source->data();
 
-    SetNullBuffer(psChild, iField);
+    if (!abyValidityFromFilters.empty())
+    {
+        const size_t nSrcSize = static_cast<size_t>(m_nRowCountInResultSet);
+        size_t nAccLen = 0;
+        for (size_t i = 0, j = 0; i < nSrcSize; ++i)
+        {
+            if (abyValidityFromFilters[i])
+            {
+                const size_t nSrcOffset =
+                    static_cast<size_t>((*psPrivateData->offsetHolder)[i]);
+                const size_t nNextOffset =
+                    static_cast<size_t>((*psPrivateData->offsetHolder)[i + 1]);
+                const size_t nItemLen = nNextOffset - nSrcOffset;
+                (*psPrivateData->offsetHolder)[j] = nAccLen;
+                if (nItemLen && nAccLen < nSrcOffset)
+                {
+                    memmove(v_source->data() + nAccLen,
+                            v_source->data() + nSrcOffset, nItemLen);
+                }
+                nAccLen += nItemLen;
+                ++j;
+            }
+        }
+        (*psPrivateData->offsetHolder)[static_cast<size_t>(psChild->length)] =
+            nAccLen;
+    }
+
+    SetNullBuffer(psChild, iField, abyValidityFromFilters);
 }
 
 /************************************************************************/
 /*                      FillTimeOrDateArray()                           */
 /************************************************************************/
 
-void OGRTileDBLayer::FillTimeOrDateArray(struct ArrowArray *psChild, int iField)
+void OGRTileDBLayer::FillTimeOrDateArray(
+    struct ArrowArray *psChild, int iField,
+    const std::vector<bool> &abyValidityFromFilters)
 {
     // TileDB uses 64-bit for time[ms], whereas Arrow uses 32-bit
     // Idem for date[day]
@@ -4748,17 +4868,34 @@ void OGRTileDBLayer::FillTimeOrDateArray(struct ArrowArray *psChild, int iField)
 
     const auto &v_source = *(std::get<std::shared_ptr<std::vector<int64_t>>>(
         m_aFieldValues[iField]));
-    auto newValuesPtr = std::make_shared<std::vector<int32_t>>(v_source.size());
+    const size_t nDstSize = abyValidityFromFilters.empty()
+                                ? v_source.size()
+                                : static_cast<size_t>(psChild->length);
+    auto newValuesPtr = std::make_shared<std::vector<int32_t>>(nDstSize);
     psPrivateData->valueHolder = newValuesPtr;
     auto &newValues = *newValuesPtr;
 
-    for (size_t i = 0; i < v_source.size(); ++i)
+    if (abyValidityFromFilters.empty())
     {
-        newValues[i] = static_cast<int32_t>(v_source[i]);
+        for (size_t i = 0; i < v_source.size(); ++i)
+        {
+            newValues[i] = static_cast<int32_t>(v_source[i]);
+        }
+    }
+    else
+    {
+        for (size_t i = 0, j = 0; i < v_source.size(); ++i)
+        {
+            if (abyValidityFromFilters[i])
+            {
+                newValues[j] = static_cast<int32_t>(v_source[i]);
+                ++j;
+            }
+        }
     }
     psChild->buffers[1] = newValuesPtr->data();
 
-    SetNullBuffer(psChild, iField);
+    SetNullBuffer(psChild, iField, abyValidityFromFilters);
 }
 
 /************************************************************************/
@@ -4766,8 +4903,9 @@ void OGRTileDBLayer::FillTimeOrDateArray(struct ArrowArray *psChild, int iField)
 /************************************************************************/
 
 template <typename T>
-void OGRTileDBLayer::FillPrimitiveListArray(struct ArrowArray *psChild,
-                                            int iField)
+void OGRTileDBLayer::FillPrimitiveListArray(
+    struct ArrowArray *psChild, int iField,
+    const std::vector<bool> &abyValidityFromFilters)
 {
     OGRTileDBArrowArrayPrivateData *psPrivateData =
         new OGRTileDBArrowArrayPrivateData;
@@ -4779,19 +4917,56 @@ void OGRTileDBLayer::FillPrimitiveListArray(struct ArrowArray *psChild,
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
     auto offsetsPtr = std::make_shared<std::vector<uint64_t>>();
     const auto &offsetsSrc = *(m_aFieldValueOffsets[iField]);
-    const size_t nVals = offsetsSrc.size();
-    offsetsPtr->reserve(nVals + 1);
+    const size_t nSrcVals = offsetsSrc.size();
+    if (abyValidityFromFilters.empty())
+    {
+        offsetsPtr->reserve(nSrcVals + 1);
+    }
+    else
+    {
+        offsetsPtr->reserve(static_cast<size_t>(psChild->length) + 1);
+    }
     psPrivateData->offsetHolder = offsetsPtr;
     auto &offsets = *offsetsPtr;
-    for (size_t i = 0; i < nVals; ++i)
-        offsets.push_back(offsetsSrc[i] / sizeof(T));
-
     auto &v_source =
         std::get<std::shared_ptr<std::vector<T>>>(m_aFieldValues[iField]);
-    offsets.push_back(v_source->size());
+
+    if (abyValidityFromFilters.empty())
+    {
+        for (size_t i = 0; i < nSrcVals; ++i)
+            offsets.push_back(offsetsSrc[i] / sizeof(T));
+        offsets.push_back(v_source->size());
+    }
+    else
+    {
+        size_t nAccLen = 0;
+        for (size_t i = 0; i < nSrcVals; ++i)
+        {
+            if (abyValidityFromFilters[i])
+            {
+                const auto nSrcOffset =
+                    static_cast<size_t>(offsetsSrc[i] / sizeof(T));
+                const auto nNextOffset = i + 1 < nSrcVals
+                                             ? offsetsSrc[i + 1] / sizeof(T)
+                                             : v_source->size();
+                const size_t nItemLen =
+                    static_cast<size_t>(nNextOffset - nSrcOffset);
+                offsets.push_back(nAccLen);
+                if (nItemLen && nAccLen < nSrcOffset)
+                {
+                    memmove(v_source->data() + nAccLen,
+                            v_source->data() + nSrcOffset,
+                            nItemLen * sizeof(T));
+                }
+                nAccLen += nItemLen;
+            }
+        }
+        offsets.push_back(nAccLen);
+    }
+
     psChild->buffers[1] = offsetsPtr->data();
 
-    SetNullBuffer(psChild, iField);
+    SetNullBuffer(psChild, iField, abyValidityFromFilters);
 
     psChild->n_children = 1;
     psChild->children = static_cast<struct ArrowArray **>(
@@ -4805,7 +4980,7 @@ void OGRTileDBLayer::FillPrimitiveListArray(struct ArrowArray *psChild,
     psValueChild->n_buffers = 2;
     psValueChild->buffers =
         static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    psValueChild->length = v_source->size();
+    psValueChild->length = offsets.back();
 
     psPrivateData = new OGRTileDBArrowArrayPrivateData;
     psValueChild->private_data = psPrivateData;
@@ -4817,7 +4992,9 @@ void OGRTileDBLayer::FillPrimitiveListArray(struct ArrowArray *psChild,
 /*                        FillBoolListArray()                           */
 /************************************************************************/
 
-void OGRTileDBLayer::FillBoolListArray(struct ArrowArray *psChild, int iField)
+void OGRTileDBLayer::FillBoolListArray(
+    struct ArrowArray *psChild, int iField,
+    const std::vector<bool> &abyValidityFromFilters)
 {
     OGRTileDBArrowArrayPrivateData *psPrivateData =
         new OGRTileDBArrowArrayPrivateData;
@@ -4829,10 +5006,6 @@ void OGRTileDBLayer::FillBoolListArray(struct ArrowArray *psChild, int iField)
     psPrivateData->offsetHolder = offsetsPtr;
     auto &v_source = *(std::get<std::shared_ptr<std::vector<uint8_t>>>(
         m_aFieldValues[iField]));
-    offsetsPtr->push_back(v_source.size());
-    psChild->buffers[1] = offsetsPtr->data();
-
-    SetNullBuffer(psChild, iField);
 
     psChild->n_children = 1;
     psChild->children = static_cast<struct ArrowArray **>(
@@ -4846,7 +5019,6 @@ void OGRTileDBLayer::FillBoolListArray(struct ArrowArray *psChild, int iField)
     psValueChild->n_buffers = 2;
     psValueChild->buffers =
         static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    psValueChild->length = v_source.size();
 
     psPrivateData = new OGRTileDBArrowArrayPrivateData;
     psValueChild->private_data = psPrivateData;
@@ -4858,11 +5030,56 @@ void OGRTileDBLayer::FillBoolListArray(struct ArrowArray *psChild, int iField)
     psPrivateData->valueHolder = arrayValues;
     auto panValues = arrayValues->data();
     psValueChild->buffers[1] = panValues;
-    for (size_t iFeat = 0; iFeat < v_source.size(); ++iFeat)
+
+    if (abyValidityFromFilters.empty())
     {
-        if (v_source[iFeat])
-            panValues[iFeat / 8] |= static_cast<uint8_t>(1 << (iFeat % 8));
+        offsetsPtr->push_back(v_source.size());
+
+        for (size_t iFeat = 0; iFeat < v_source.size(); ++iFeat)
+        {
+            if (v_source[iFeat])
+                panValues[iFeat / 8] |= static_cast<uint8_t>(1 << (iFeat % 8));
+        }
+
+        psValueChild->length = v_source.size();
     }
+    else
+    {
+        CPLAssert(offsetsPtr->size() > static_cast<size_t>(psChild->length));
+
+        auto &offsets = *offsetsPtr;
+        const size_t nSrcVals = offsets.size();
+        size_t nAccLen = 0;
+        for (size_t i = 0, j = 0; i < nSrcVals; ++i)
+        {
+            if (abyValidityFromFilters[i])
+            {
+                const auto nSrcOffset = static_cast<size_t>(offsets[i]);
+                const auto nNextOffset =
+                    i + 1 < nSrcVals ? offsets[i + 1] : v_source.size();
+                const size_t nItemLen =
+                    static_cast<size_t>(nNextOffset - nSrcOffset);
+                offsets[j] = nAccLen;
+                for (size_t k = 0; k < nItemLen; ++k)
+                {
+                    if (v_source[nSrcOffset + k])
+                    {
+                        panValues[(nAccLen + k) / 8] |=
+                            static_cast<uint8_t>(1 << ((nAccLen + k) % 8));
+                    }
+                }
+                ++j;
+                nAccLen += nItemLen;
+            }
+        }
+        offsets[static_cast<size_t>(psChild->length)] = nAccLen;
+
+        psValueChild->length = nAccLen;
+    }
+
+    psChild->buffers[1] = offsetsPtr->data();
+
+    SetNullBuffer(psChild, iField, abyValidityFromFilters);
 }
 
 /************************************************************************/
@@ -4941,6 +5158,56 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
     }
     out_array->release = OGRTileDBLayer::ReleaseArrowArray;
 
+    std::vector<bool> abyValidityFromFilters;
+    size_t nCountIntersecting = 0;
+    if (!m_anGeometryOffsets->empty())
+    {
+        // Add back extra offset
+        m_anGeometryOffsets->push_back(m_abyGeometries->size());
+
+        // Given that the TileDB filtering is based only on the center point
+        // of geometries, we need to refine it a bit from the actual WKB we get
+        if (m_poFilterGeom && (m_dfPadX > 0 || m_dfPadY > 0))
+        {
+            const size_t nSrcVals = static_cast<size_t>(m_nRowCountInResultSet);
+            abyValidityFromFilters.resize(nSrcVals);
+            OGREnvelope sEnvelope;
+            size_t nAccLen = 0;
+            for (size_t i = 0; i < nSrcVals; ++i)
+            {
+                const auto nSrcOffset =
+                    static_cast<size_t>((*m_anGeometryOffsets)[i]);
+                const auto nNextOffset =
+                    static_cast<size_t>((*m_anGeometryOffsets)[i + 1]);
+                const auto nItemLen = nNextOffset - nSrcOffset;
+                if (OGRWKBGetBoundingBox(m_abyGeometries->data() + nSrcOffset,
+                                         nItemLen, sEnvelope) &&
+                    m_sFilterEnvelope.Intersects(sEnvelope))
+                {
+                    abyValidityFromFilters[i] = true;
+                    (*m_anGeometryOffsets)[nCountIntersecting] = nAccLen;
+                    if (nItemLen && nAccLen < nSrcOffset)
+                    {
+                        memmove(m_abyGeometries->data() + nAccLen,
+                                m_abyGeometries->data() + nSrcOffset, nItemLen);
+                    }
+                    nAccLen += nItemLen;
+                    nCountIntersecting++;
+                }
+            }
+            (*m_anGeometryOffsets)[nCountIntersecting] = nAccLen;
+
+            if (nCountIntersecting == m_nRowCountInResultSet)
+            {
+                abyValidityFromFilters.clear();
+            }
+            else
+            {
+                out_array->length = nCountIntersecting;
+            }
+        }
+    }
+
     int iSchemaChild = 0;
     if (bIncludeFID)
     {
@@ -4957,6 +5224,17 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
         psChild->n_buffers = 2;
         psChild->buffers =
             static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
+        if (!abyValidityFromFilters.empty())
+        {
+            for (size_t i = 0, j = 0; i < m_nRowCountInResultSet; ++i)
+            {
+                if (abyValidityFromFilters[i])
+                {
+                    (*m_anFIDs)[j] = (*m_anFIDs)[i];
+                    ++j;
+                }
+            }
+        }
         psChild->buffers[1] = m_anFIDs->data();
     }
 
@@ -4985,25 +5263,29 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
 #ifdef HAS_TILEDB_BOOL
                     if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     {
-                        FillBoolArray(psChild, i);
+                        FillBoolArray(psChild, i, abyValidityFromFilters);
                     }
                     else
 #endif
                         if (m_aeFieldTypes[i] == TILEDB_INT16)
                     {
-                        FillPrimitiveArray<int16_t>(psChild, i);
+                        FillPrimitiveArray<int16_t>(psChild, i,
+                                                    abyValidityFromFilters);
                     }
                     else if (m_aeFieldTypes[i] == TILEDB_INT32)
                     {
-                        FillPrimitiveArray<int32_t>(psChild, i);
+                        FillPrimitiveArray<int32_t>(psChild, i,
+                                                    abyValidityFromFilters);
                     }
                     else if (m_aeFieldTypes[i] == TILEDB_UINT8)
                     {
-                        FillPrimitiveArray<uint8_t>(psChild, i);
+                        FillPrimitiveArray<uint8_t>(psChild, i,
+                                                    abyValidityFromFilters);
                     }
                     else if (m_aeFieldTypes[i] == TILEDB_UINT16)
                     {
-                        FillPrimitiveArray<uint16_t>(psChild, i);
+                        FillPrimitiveArray<uint16_t>(psChild, i,
+                                                     abyValidityFromFilters);
                     }
                     else
                     {
@@ -5017,25 +5299,29 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
 #ifdef HAS_TILEDB_BOOL
                     if (m_aeFieldTypes[i] == TILEDB_BOOL)
                     {
-                        FillBoolListArray(psChild, i);
+                        FillBoolListArray(psChild, i, abyValidityFromFilters);
                     }
                     else
 #endif
                         if (m_aeFieldTypes[i] == TILEDB_INT16)
                     {
-                        FillPrimitiveListArray<int16_t>(psChild, i);
+                        FillPrimitiveListArray<int16_t>(psChild, i,
+                                                        abyValidityFromFilters);
                     }
                     else if (m_aeFieldTypes[i] == TILEDB_INT32)
                     {
-                        FillPrimitiveListArray<int32_t>(psChild, i);
+                        FillPrimitiveListArray<int32_t>(psChild, i,
+                                                        abyValidityFromFilters);
                     }
                     else if (m_aeFieldTypes[i] == TILEDB_UINT8)
                     {
-                        FillPrimitiveListArray<uint8_t>(psChild, i);
+                        FillPrimitiveListArray<uint8_t>(psChild, i,
+                                                        abyValidityFromFilters);
                     }
                     else if (m_aeFieldTypes[i] == TILEDB_UINT16)
                     {
-                        FillPrimitiveListArray<uint16_t>(psChild, i);
+                        FillPrimitiveListArray<uint16_t>(
+                            psChild, i, abyValidityFromFilters);
                     }
                     else
                     {
@@ -5047,13 +5333,15 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
                 case OFTInteger64:
                 case OFTDateTime:
                 {
-                    FillPrimitiveArray<int64_t>(psChild, i);
+                    FillPrimitiveArray<int64_t>(psChild, i,
+                                                abyValidityFromFilters);
                     break;
                 }
 
                 case OFTInteger64List:
                 {
-                    FillPrimitiveListArray<int64_t>(psChild, i);
+                    FillPrimitiveListArray<int64_t>(psChild, i,
+                                                    abyValidityFromFilters);
                     break;
                 }
 
@@ -5061,11 +5349,13 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
                 {
                     if (eSubType == OFSTFloat32)
                     {
-                        FillPrimitiveArray<float>(psChild, i);
+                        FillPrimitiveArray<float>(psChild, i,
+                                                  abyValidityFromFilters);
                     }
                     else
                     {
-                        FillPrimitiveArray<double>(psChild, i);
+                        FillPrimitiveArray<double>(psChild, i,
+                                                   abyValidityFromFilters);
                     }
                     break;
                 }
@@ -5074,31 +5364,35 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
                 {
                     if (eSubType == OFSTFloat32)
                     {
-                        FillPrimitiveListArray<float>(psChild, i);
+                        FillPrimitiveListArray<float>(psChild, i,
+                                                      abyValidityFromFilters);
                     }
                     else
                     {
-                        FillPrimitiveListArray<double>(psChild, i);
+                        FillPrimitiveListArray<double>(psChild, i,
+                                                       abyValidityFromFilters);
                     }
                     break;
                 }
 
                 case OFTString:
                 {
-                    FillStringOrBinaryArray<std::string>(psChild, i);
+                    FillStringOrBinaryArray<std::string>(
+                        psChild, i, abyValidityFromFilters);
                     break;
                 }
 
                 case OFTBinary:
                 {
-                    FillStringOrBinaryArray<std::vector<uint8_t>>(psChild, i);
+                    FillStringOrBinaryArray<std::vector<uint8_t>>(
+                        psChild, i, abyValidityFromFilters);
                     break;
                 }
 
                 case OFTTime:
                 case OFTDate:
                 {
-                    FillTimeOrDateArray(psChild, i);
+                    FillTimeOrDateArray(psChild, i, abyValidityFromFilters);
                     break;
                 }
 
@@ -5129,10 +5423,6 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
 
             if (!m_anGeometryOffsets->empty() || m_adfXs->empty())
             {
-                // Add back extra offset
-                if (!m_anGeometryOffsets->empty())
-                    m_anGeometryOffsets->push_back(m_abyGeometries->size());
-
                 psPrivateData->offsetHolder = m_anGeometryOffsets;
                 psChild->buffers[1] = m_anGeometryOffsets->data();
 

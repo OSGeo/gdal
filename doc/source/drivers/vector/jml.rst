@@ -5,7 +5,7 @@ JML: OpenJUMP JML format
 
 .. shortname:: JML
 
-.. build_dependencies:: (read support needs libexpat) 
+.. build_dependencies:: (read support needs libexpat)
 
 OGR has support for reading and writing .JML files used by the OpenJUMP
 software. Read support is only available if GDAL is built with *expat*
@@ -69,11 +69,20 @@ Creation Issues
 
 The JML writer supports the following *layer* creation options:
 
--  **CREATE_R_G_B_FIELD**\ =YES/NO: whether the create a R_G_B field
-   that will contain the color of the PEN tool or the forecolor of the
-   BRUSH tool of the OGR Feature Style string. Default value : YES
--  **CREATE_OGR_STYLE_FIELD**\ =YES/NO: whether the create a OGR_STYLE
-   field that will contain the Feature Style string. Default value : NO
+-  .. lco:: CREATE_R_G_B_FIELD
+      :choices: YES, NO
+      :default: YES
+
+      whether the create a R_G_B field
+      that will contain the color of the PEN tool or the forecolor of the
+      BRUSH tool of the OGR Feature Style string.
+
+-  .. lco:: CREATE_OGR_STYLE_FIELD
+      :choices: YES, NO
+      :default: NO
+
+      whether the create a OGR_STYLE
+      field that will contain the Feature Style string.
 
 See Also
 --------

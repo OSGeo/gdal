@@ -387,6 +387,7 @@ class FileGDBTable
     bool m_bUpdate = false;
 
     std::string m_osFilename{};
+    bool m_bIsV9 = false;
     std::vector<std::unique_ptr<FileGDBField>> m_apoFields{};
     int m_iObjectIdField = -1;
 
@@ -551,6 +552,11 @@ class FileGDBTable
 
     //! Object should no longer be used after Close()
     void Close();
+
+    bool IsFileGDBV9() const
+    {
+        return m_bIsV9;
+    }
 
     const std::string &GetFilename() const
     {

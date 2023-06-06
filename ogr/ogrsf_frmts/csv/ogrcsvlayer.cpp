@@ -2014,9 +2014,7 @@ OGRErr OGRCSVLayer::WriteHeader()
             if (fpCSV)
             {
                 const char *pszColName =
-                    bCreateCSVT
-                        ? poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef()
-                        : "WKT";
+                    poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
                 bOK &= VSIFPrintfL(fpCSV, "%s", pszColName) >= 0;
             }
             if (fpCSVT)

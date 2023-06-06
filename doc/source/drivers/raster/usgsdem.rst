@@ -58,41 +58,89 @@ CDED50K production).
 
 Creation Options:
 
--  **PRODUCT=DEFAULT/CDED50K**: When CDED50K is specified, the output
-   file will be forced to adhere to CDED 50K product specifications. The
-   output will always be 1201x1201 and generally a 15 minute by 15
-   minute tile (though wider in longitude in far north areas).
--  **TOPLEFT=long,lat**: For CDED50K products, this is used to specify
-   the top left corner of the tile to be generated. It should be on a 15
-   minute boundary and can be given in decimal degrees or degrees and
-   minutes (eg. TOPLEFT=117d15w,52d30n).
--  **RESAMPLE=Nearest/Bilinear/Cubic/CubicSpline**: Set the resampling
-   kernel used for resampling the data to the target grid. Only has an
-   effect when particular products like CDED50K are being produced.
-   Defaults to Bilinear.
--  **DEMLevelCode=integer** DEM Level (1, 2 or 3 if set). Defaults to 1.
--  **DataSpecVersion=integer** :Data and Specification version/revision
-   (eg. 1020)
--  **PRODUCER=text**: Up to 60 characters to be put into the producer
-   field of the generated file .
--  **OriginCode=text**: Up to 4 characters to be put into the origin
-   code field of the generated file (YT for Yukon).
--  **ProcessCode=code**: One character to be put into the process code
-   field of the generated file (8=ANUDEM, 9=FME, A=TopoGrid).
--  **TEMPLATE=filename**: For any output file, a template file can be
-   specified. A number of fields (including the Data Producer) will be
-   copied from the template file if provided, and are otherwise left
-   blank.
--  **ZRESOLUTION=float**: DEM's store elevation information as positive
-   integers, and these integers are scaled using the "z resolution." By
-   default, this resolution is written as 1.0. However, you may specify
-   a different resolution here, if you would like your integers to be
-   scaled into floating point numbers.
--  **NTS=name**: NTS Mapsheet name, used to derive TOPLEFT. Only has an
-   effect when particular products like CDED50K are being produced.
--  **INTERNALNAME=name**: Dataset name written into file header. Only
-   has an effect when particular products like CDED50K are being
-   produced.
+-  .. co:: PRODUCT
+      :choices: DEFAULT, CDED50K
+
+      When CDED50K is specified, the output
+      file will be forced to adhere to CDED 50K product specifications. The
+      output will always be 1201x1201 and generally a 15 minute by 15
+      minute tile (though wider in longitude in far north areas).
+
+-  .. co:: TOPLEFT
+      :choices: <long\,lat>
+
+      For CDED50K products, this is used to specify
+      the top left corner of the tile to be generated. It should be on a 15
+      minute boundary and can be given in decimal degrees or degrees and
+      minutes (eg. TOPLEFT=117d15w,52d30n).
+
+-  .. co:: RESAMPLE
+      :choices: Nearest, Bilinear, Cubic, CubicSpline
+      :default: Bilinear
+
+      Set the resampling
+      kernel used for resampling the data to the target grid. Only has an
+      effect when particular products like CDED50K are being produced.
+
+-  .. co:: DEMLevelCode
+      :choices: 1, 2, 3
+      :default: 1
+
+      DEM Level (1, 2 or 3 if set).
+
+-  .. co:: DataSpecVersion
+      :choices: <integer>
+
+      Data and Specification version/revision
+      (eg. 1020)
+
+-  .. co:: PRODUCER
+      :choices: <text>
+
+      Up to 60 characters to be put into the producer
+      field of the generated file.
+
+-  .. co:: OriginCode
+      :choices: <text>
+
+      Up to 4 characters to be put into the origin
+      code field of the generated file (YT for Yukon).
+
+-  .. co:: ProcessCode
+      :choices: <character>
+
+      One character to be put into the process code
+      field of the generated file (8=ANUDEM, 9=FME, A=TopoGrid).
+
+-  .. co:: TEMPLATE
+      :choices: <filename>
+
+      For any output file, a template file can be
+      specified. A number of fields (including the Data Producer) will be
+      copied from the template file if provided, and are otherwise left
+      blank.
+
+-  .. co:: ZRESOLUTION
+      :default: 1.0
+
+      DEM's store elevation information as positive
+      integers, and these integers are scaled using the "z resolution." By
+      default, this resolution is written as 1.0. However, you may specify
+      a different resolution here, if you would like your integers to be
+      scaled into floating point numbers.
+
+-  .. co:: NTS
+      :choices: <name>
+
+      NTS Mapsheet name, used to derive TOPLEFT. Only has an
+      effect when particular products like CDED50K are being produced.
+
+-  .. co:: INTERNALNAME
+      :choices: <name>
+
+      Dataset name written into file header. Only
+      has an effect when particular products like CDED50K are being
+      produced.
 
 Example: The following would generate a single CDED50K tile, extracting
 from the larger DEM coverage yk_3arcsec for a tile with the top left
@@ -107,7 +155,7 @@ fields.
 
 --------------
 
-NOTE: Implemented as ``gdal/frmts/usgsdem/usgsdemdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/usgsdem/usgsdemdataset.cpp`.
 
 The USGS DEM reading code in GDAL was derived from the importer in the
 `VTP <http://www.vterrain.org/>`__ software. The export capability was

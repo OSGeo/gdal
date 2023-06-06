@@ -41,9 +41,9 @@ Driver registration
 The driver registration mechanism is extended to look for .py scripts in a
 dedicated directory:
 
-* the directory pointed by the ``GDAL_PYTHON_DRIVER_PATH`` configuration option
+* the directory pointed by the :config:`GDAL_PYTHON_DRIVER_PATH` configuration option
   (there may be several paths separated by `:` on Unix or `;` on Windows)
-* if not defined, the directory pointed by the ``GDAL_DRIVER_PATH`` configuration
+* if not defined, the directory pointed by the :config:`GDAL_DRIVER_PATH` configuration
   option.
 * if not defined, in the directory (hardcoded at compilation time on Unix builds)
   where native plugins are located.
@@ -365,11 +365,11 @@ Limitations and scope
 
 - Vector and read-only for now. This could later be extended of course.
 
-- No connection between the Python code of the plugin and the OGR Python API 
-  that is built on top of SWIG. This does not appear to be doable in a 
-  reasonable way. Nothing prevents people from using the GDAL/OGR/OSR Python 
+- No connection between the Python code of the plugin and the OGR Python API
+  that is built on top of SWIG. This does not appear to be doable in a
+  reasonable way. Nothing prevents people from using the GDAL/OGR/OSR Python
   API but the objects exchanged between the OGR core and the Python code will
-  not be OGR Python SWIG objects. A 
+  not be OGR Python SWIG objects. A
   typical example is that a plugin will return its CRS as a string (WKT, PROJSON,
   or deprecated PROJ.4 string), but not as a osgeo.osr.SpatialReference object.
   But it is possible to use the osgeo.osr.SpatialReference API to generate this
@@ -382,7 +382,7 @@ Limitations and scope
 - The Python "Global Interpreter Lock" is held in the Python drivers, as required
   for safe use of Python. Consequently scaling of such drivers is limited.
 
-- Given the above restrictions, this will remain an "experimental" feature 
+- Given the above restrictions, this will remain an "experimental" feature
   and the GDAL project will not accept such Python drivers to be included in
   the GDAL repository. This is similar to the situation of the QGIS project
   that allows Python plugins outside of the main QGIS repository. If a QGIS plugin
@@ -415,7 +415,7 @@ they will be executed.
 However, opening a .py file with GDALOpen() or similar mechanisms will not
 lead to its execution, so this is safe for normal GDAL usage.
 
-The GDAL_NO_AUTOLOAD compile time #define, already used to disable loading 
+The GDAL_NO_AUTOLOAD compile time #define, already used to disable loading
 of native plugins, is also honoured to disable the loading of Python plugins.
 
 Performance impact

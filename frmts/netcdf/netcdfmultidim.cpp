@@ -1341,7 +1341,7 @@ netCDFGroup::GetMDArrayNames(CSLConstList papszOptions) const
                 char *pszTemp = nullptr;
                 if (NCDFGetAttr(m_gid, varid, "coordinates", &pszTemp) ==
                     CE_None)
-                    papszTokens = CSLTokenizeString2(pszTemp, " ", 0);
+                    papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
                 CPLFree(pszTemp);
             }
             if (!bBounds)
@@ -1906,7 +1906,7 @@ std::shared_ptr<GDALMDArray> netCDFDimension::GetIndexingVariable() const
         // Check that the arrays has as many dimensions as its coordinates
         // attribute
         const CPLStringList aosCoordinates(
-            CSLTokenizeString2(poCoordinates->ReadAsString(), " ", 0));
+            NCDFTokenizeCoordinatesAttribute(poCoordinates->ReadAsString()));
         if (apoArrayDims.size() != static_cast<size_t>(aosCoordinates.size()))
             continue;
 
@@ -3566,7 +3566,7 @@ bool netCDFVariable::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 const void *netCDFVariable::GetRawNoDataValue() const
 {
     const auto &dt = GetDataType();
-    if (m_nVarType == NC_STRING)
+    if (dt.GetClass() != GEDTC_NUMERIC)
         return nullptr;
 
     if (m_bGetRawNoDataValueHasRun)
@@ -3575,90 +3575,111 @@ const void *netCDFVariable::GetRawNoDataValue() const
     }
 
     m_bGetRawNoDataValueHasRun = true;
-    CPLMutexHolderD(&hNCMutex);
-    std::vector<GByte> abyTmp(std::max(
-        dt.GetSize(), GetNCTypeSize(dt, m_bPerfectDataTypeMatch, m_nVarType)));
-    int ret = nc_get_att(m_gid, m_varid, _FillValue, &abyTmp[0]);
-    if (ret != NC_NOERR)
+
+    const char *pszAttrName = _FillValue;
+    auto poAttr = GetAttribute(pszAttrName);
+    if (!poAttr)
     {
-        m_abyNoData.clear();
-        char *pszValue = nullptr;
-        if (dt.GetClass() == GEDTC_NUMERIC &&
-            NCDFGetAttr(m_gid, m_varid, "missing_value", &pszValue) ==
-                CE_None &&
-            CPLGetValueType(pszValue) != CPL_VALUE_STRING)
-        {
-            m_abyNoData.resize(dt.GetSize());
-            const auto eDT = dt.GetNumericDataType();
-            if (eDT == GDT_Int64)
-            {
-                int64_t nVal =
-                    static_cast<int64_t>(std::strtoll(pszValue, nullptr, 10));
-                memcpy(&m_abyNoData[0], &nVal, sizeof(nVal));
-            }
-            else if (eDT == GDT_UInt64)
-            {
-                uint64_t nVal =
-                    static_cast<uint64_t>(std::strtoull(pszValue, nullptr, 10));
-                memcpy(&m_abyNoData[0], &nVal, sizeof(nVal));
-            }
-            else
-            {
-                double dfVal = CPLAtof(pszValue);
-                GDALCopyWords(&dfVal, GDT_Float64, 0, &m_abyNoData[0], eDT, 0,
-                              1);
-                if (eDT != GDT_Float32 && eDT != GDT_Float64)
-                {
-                    // Check the value is in the range of the data type
-                    double dfValCheck = 0;
-                    GDALCopyWords(&m_abyNoData[0], eDT, 0, &dfValCheck,
-                                  GDT_Float64, 0, 1);
-                    if (!(dfVal == dfValCheck))
-                    {
-                        m_abyNoData.clear();
-                    }
-                }
-            }
-        }
-        CPLFree(pszValue);
-
-        if (m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
-            (m_nVarType == NC_SHORT || m_nVarType == NC_USHORT ||
-             m_nVarType == NC_INT || m_nVarType == NC_UINT ||
-             m_nVarType == NC_FLOAT || m_nVarType == NC_DOUBLE))
-        {
-            bool bGotNoData = false;
-            double dfNoData = NCDFGetDefaultNoDataValue(m_gid, m_varid,
-                                                        m_nVarType, bGotNoData);
-            m_abyNoData.resize(dt.GetSize());
-            GDALCopyWords(&dfNoData, GDT_Float64, 0, &m_abyNoData[0],
-                          dt.GetNumericDataType(), 0, 1);
-        }
-        else if (m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
-                 m_nVarType == NC_INT64)
-        {
-            bool bGotNoData = false;
-            const auto nNoData =
-                NCDFGetDefaultNoDataValueAsInt64(m_gid, m_varid, bGotNoData);
-            m_abyNoData.resize(dt.GetSize());
-            memcpy(&m_abyNoData[0], &nNoData, sizeof(nNoData));
-        }
-        else if (m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
-                 m_nVarType == NC_UINT64)
-        {
-            bool bGotNoData = false;
-            const auto nNoData =
-                NCDFGetDefaultNoDataValueAsUInt64(m_gid, m_varid, bGotNoData);
-            m_abyNoData.resize(dt.GetSize());
-            memcpy(&m_abyNoData[0], &nNoData, sizeof(nNoData));
-        }
-
-        return m_abyNoData.empty() ? nullptr : m_abyNoData.data();
+        pszAttrName = "missing_value";
+        poAttr = GetAttribute(pszAttrName);
     }
-    ConvertNCToGDAL(&abyTmp[0]);
-    m_abyNoData.resize(dt.GetSize());
-    memcpy(&m_abyNoData[0], &abyTmp[0], m_abyNoData.size());
-    return m_abyNoData.data();
+    if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
+    {
+        auto oRawResult = poAttr->ReadAsRaw();
+        if (oRawResult.data())
+        {
+            // Round-trip attribute value to target data type and back
+            // to attribute data type to ensure there is no loss
+            // Normally _FillValue data type should be the same
+            // as the array one, but this is not always the case.
+            // For example NASA GEDI L2B products have Float64
+            // _FillValue for Float32 variables.
+            m_abyNoData.resize(dt.GetSize());
+            GDALExtendedDataType::CopyValue(oRawResult.data(),
+                                            poAttr->GetDataType(),
+                                            m_abyNoData.data(), dt);
+            std::vector<GByte> abyTmp(poAttr->GetDataType().GetSize());
+            GDALExtendedDataType::CopyValue(
+                m_abyNoData.data(), dt, abyTmp.data(), poAttr->GetDataType());
+            std::vector<GByte> abyOri;
+            abyOri.assign(oRawResult.data(),
+                          oRawResult.data() + oRawResult.size());
+            if (abyOri == abyTmp)
+                return m_abyNoData.data();
+            m_abyNoData.clear();
+            char *pszVal = nullptr;
+            GDALExtendedDataType::CopyValue(
+                oRawResult.data(), poAttr->GetDataType(), &pszVal,
+                GDALExtendedDataType::CreateString());
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "%s attribute value (%s) is not in the range of the "
+                     "variable data type",
+                     pszAttrName, pszVal ? pszVal : "(null)");
+            CPLFree(pszVal);
+            return nullptr;
+        }
+    }
+    else if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_STRING)
+    {
+        const char *pszVal = poAttr->ReadAsString();
+        if (pszVal)
+        {
+            // Round-trip attribute value to target data type and back
+            // to attribute data type to ensure there is no loss
+            m_abyNoData.resize(dt.GetSize());
+            GDALExtendedDataType::CopyValue(&pszVal, poAttr->GetDataType(),
+                                            m_abyNoData.data(), dt);
+            char *pszTmpVal = nullptr;
+            GDALExtendedDataType::CopyValue(m_abyNoData.data(), dt, &pszTmpVal,
+                                            poAttr->GetDataType());
+            if (pszTmpVal)
+            {
+                const bool bSame = strcmp(pszVal, pszTmpVal) == 0;
+                CPLFree(pszTmpVal);
+                if (bSame)
+                    return m_abyNoData.data();
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "%s attribute value ('%s') is not in the range of the "
+                         "variable data type",
+                         pszAttrName, pszVal);
+                m_abyNoData.clear();
+                return nullptr;
+            }
+        }
+    }
+
+    if (m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
+        (m_nVarType == NC_SHORT || m_nVarType == NC_USHORT ||
+         m_nVarType == NC_INT || m_nVarType == NC_UINT ||
+         m_nVarType == NC_FLOAT || m_nVarType == NC_DOUBLE))
+    {
+        bool bGotNoData = false;
+        double dfNoData =
+            NCDFGetDefaultNoDataValue(m_gid, m_varid, m_nVarType, bGotNoData);
+        m_abyNoData.resize(dt.GetSize());
+        GDALCopyWords(&dfNoData, GDT_Float64, 0, &m_abyNoData[0],
+                      dt.GetNumericDataType(), 0, 1);
+    }
+    else if (m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
+             m_nVarType == NC_INT64)
+    {
+        bool bGotNoData = false;
+        const auto nNoData =
+            NCDFGetDefaultNoDataValueAsInt64(m_gid, m_varid, bGotNoData);
+        m_abyNoData.resize(dt.GetSize());
+        memcpy(&m_abyNoData[0], &nNoData, sizeof(nNoData));
+    }
+    else if (m_bUseDefaultFillAsNoData && m_abyNoData.empty() &&
+             m_nVarType == NC_UINT64)
+    {
+        bool bGotNoData = false;
+        const auto nNoData =
+            NCDFGetDefaultNoDataValueAsUInt64(m_gid, m_varid, bGotNoData);
+        m_abyNoData.resize(dt.GetSize());
+        memcpy(&m_abyNoData[0], &nNoData, sizeof(nNoData));
+    }
+
+    return m_abyNoData.empty() ? nullptr : m_abyNoData.data();
 }
 
 /************************************************************************/
@@ -3952,7 +3973,7 @@ netCDFVariable::GetCoordinateVariables() const
         if (pszCoordinates)
         {
             const CPLStringList aosNames(
-                CSLTokenizeString2(pszCoordinates, " ", 0));
+                NCDFTokenizeCoordinatesAttribute(pszCoordinates));
             CPLMutexHolderD(&hNCMutex);
             for (int i = 0; i < aosNames.size(); i++)
             {

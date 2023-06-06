@@ -508,7 +508,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
          STARTS_WITH_CI(pszJustFilename, "S2B_USER_PRD_MSI")) &&
         EQUAL(CPLGetExtension(pszJustFilename), "zip"))
     {
-        CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasename(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osMTD(osBasename);
         // Normally given above constraints, osMTD.size() should be >= 16
@@ -534,7 +534,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
               STARTS_WITH_CI(pszJustFilename, "S2B_MSIL1C_")) &&
              EQUAL(CPLGetExtension(pszJustFilename), "zip"))
     {
-        CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasename(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osSAFE(osBasename);
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip
@@ -553,7 +553,7 @@ GDALDataset *SENTINEL2Dataset::Open(GDALOpenInfo *poOpenInfo)
               STARTS_WITH_CI(pszJustFilename, "S2B_MSIL2A_")) &&
              EQUAL(CPLGetExtension(pszJustFilename), "zip"))
     {
-        CPLString osBasename(CPLGetBasename(pszJustFilename));
+        const CPLString osBasename(CPLGetBasename(pszJustFilename));
         CPLString osFilename(poOpenInfo->pszFilename);
         CPLString osSAFE(osBasename);
         // S2B_MSIL1C_20171004T233419_N0206_R001_T54DWM_20171005T001811.SAFE.zip

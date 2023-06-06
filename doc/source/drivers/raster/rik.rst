@@ -15,7 +15,7 @@ the RIK format, but only 8 bits per pixel.
 This driver is based on the work done in the
 `TRikPanel <http://sourceforge.net/projects/trikpanel/>`__ project.
 
-NOTE: Implemented as ``gdal/frmts/rik/rikdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/rik/rikdataset.cpp`.
 
 Driver capabilities
 -------------------

@@ -33,15 +33,23 @@ Driver capabilities
 Creation options
 ----------------
 
--  **COMPRESS=**\ YES/NO : whether the file must be compressed with GZip
-   or no. Defaults to NO
--  **BLOCKSIZE=**\ block_size : internal tile size. Must be >= 8.
-   Defaults to 256
--  **VERTICAL_PRECISION=**\ vertical_precision : Must be > 0. Defaults
-   to 0.01
+-  .. co:: COMPRESS
+      :choices: YES, NO
+      :default: NO
 
-Increasing the vertical precision decreases the file size, especially
-with COMPRESS=YES, but at the loss of accuracy.
+      Whether the file must be compressed with GZip.
+
+-  .. co:: BLOCKSIZE
+      :default: 256
+
+      Internal tile size. Must be >= 8.
+
+-  .. co:: VERTICAL_PRECISION
+      :default: 0.01
+
+      Vertical precision. Must be > 0.
+      Increasing the vertical precision decreases the file size, especially
+      with :co:`COMPRESS=YES`, but at the loss of accuracy.
 
 See also
 --------

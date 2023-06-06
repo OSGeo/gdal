@@ -85,10 +85,13 @@ void GNMGraph::AddEdge(GNMGFID nConFID, GNMGFID nSrcFID, GNMGFID nTgtFID,
     AddVertex(nSrcFID);
     AddVertex(nTgtFID);
 
-    std::map<GNMGFID, GNMStdVertex>::iterator itSrs =
-        m_mstVertices.find(nSrcFID);
-    std::map<GNMGFID, GNMStdVertex>::iterator itTgt =
-        m_mstVertices.find(nTgtFID);
+    auto itSrs = m_mstVertices.find(nSrcFID);
+    auto itTgt = m_mstVertices.find(nTgtFID);
+    if (itSrs == m_mstVertices.end() || itTgt == m_mstVertices.end())
+    {
+        CPLAssert(false);
+        return;
+    }
 
     // Insert edge to the array of edges.
     GNMStdEdge stEdge;
@@ -117,13 +120,12 @@ void GNMGraph::DeleteEdge(GNMGFID nConFID)
     m_mstEdges.erase(nConFID);
 
     // remove edge from all vertices anOutEdgeFIDs
-    for (std::map<GNMGFID, GNMStdVertex>::iterator it = m_mstVertices.begin();
-         it != m_mstVertices.end(); ++it)
+    for (auto &it : m_mstVertices)
     {
-        it->second.anOutEdgeFIDs.erase(
-            std::remove(it->second.anOutEdgeFIDs.begin(),
-                        it->second.anOutEdgeFIDs.end(), nConFID),
-            it->second.anOutEdgeFIDs.end());
+        it.second.anOutEdgeFIDs.erase(
+            std::remove(it.second.anOutEdgeFIDs.begin(),
+                        it.second.anOutEdgeFIDs.end(), nConFID),
+            it.second.anOutEdgeFIDs.end());
     }
 }
 

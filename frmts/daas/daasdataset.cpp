@@ -1192,7 +1192,7 @@ bool GDALDAASDataset::SetupServerSideReprojection(const char *pszTargetSRS)
     std::copy_n(adfGeoTransform, 6, m_adfGeoTransform.begin());
     m_bRequestInGeoreferencedCoordinates = true;
     m_osSRSType = "epsg";
-    m_osSRSValue = osTargetEPSGCode;
+    m_osSRSValue = std::move(osTargetEPSGCode);
     m_oSRS = oSRS;
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;

@@ -600,6 +600,117 @@ def test_ogr_mssqlspatial_bulk_insert():
 #
 
 
+def test_ogr_mssqlspatial_geography_polygon_vertex_order():
+    """Test issue GH https://github.com/OSGeo/gdal/issues/1128"""
+
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip()
+
+    source_ds = gdal.OpenEx("data/shp/testpoly.shp", gdal.OF_VECTOR)
+
+    assert source_ds
+
+    try:
+        with gdaltest.error_handler():
+            ds = gdal.VectorTranslate(
+                gdaltest.mssqlspatial_dsname,
+                "data/shp/testpoly.shp",
+                options="-nln poly_vertex_order -s_srs EPSG:32632 -t_srs EPSG:4326 -lco OVERWRITE=YES -lco GEOM_TYPE=GEOGRAPHY",
+            )
+
+            lyr = ds.GetLayerByName("poly_vertex_order")
+            assert lyr
+
+            # Simple polygon, no inner rings
+            feature = lyr.GetFeature(1)
+            geometry = feature.GetGeometryRef()
+            boundary = geometry.GetGeometryRef(0)
+            # Outer ring
+            assert not boundary.IsClockwise()
+
+            # Inner ring
+            feature = lyr.GetFeature(13)
+            geometry = feature.GetGeometryRef()
+            boundary = geometry.GetGeometryRef(0)
+            # Outer ring
+            assert not boundary.IsClockwise()
+            # Inner ring
+            inner_ring = geometry.GetGeometryRef(1)
+            assert inner_ring.IsClockwise()
+
+            del lyr
+    finally:
+        gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE poly_vertex_order")
+
+
+###############################################################################
+#
+
+
+@pytest.mark.require_driver("GPKG")
+def test_binary_field_bcp():
+    """Test for issue GH #3040 MSSQLSpatial: Cannot write binary field with MSSQLSPATIAL_USE_BCP = TRUE"""
+
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip()
+
+    filename = "/vsimem/test_binary_field.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    src_lyr = ds.CreateLayer("test_binary_field", geom_type=ogr.wkbPoint)
+    src_lyr.CreateField(ogr.FieldDefn("binfield", ogr.OFTBinary))
+    src_lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    f.SetFieldBinaryFromHexString("binfield", "007FFF007FFF")
+    f["strfield"] = "some text"
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
+    f.SetFieldBinaryFromHexString("binfield", "")
+    f["strfield"] = "some text"
+    src_lyr.CreateFeature(f)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
+    f.SetFieldBinaryFromHexString("binfield", "FF007FFF007F")
+    f["strfield"] = "some text"
+    src_lyr.CreateFeature(f)
+
+    with gdaltest.config_option("MSSQLSPATIAL_USE_BCP", "TRUE"):
+
+        try:
+            res_ds = gdal.VectorTranslate(
+                gdaltest.mssqlspatial_dsname,
+                filename,
+                options=["-nln", "test_binary_field", "-lco", "OVERWRITE=YES"],
+            )
+
+            assert res_ds is not None
+
+            lyr = res_ds.GetLayerByName("test_binary_field")
+
+            assert lyr is not None
+
+            f = lyr.GetFeature(1)
+            assert f.GetFieldAsBinary("binfield") == b"\x00\x7f\xff\x00\x7f\xff"
+            assert f.GetFieldAsString("strfield") == "some text"
+            f = lyr.GetFeature(2)
+            assert f.GetFieldAsBinary("binfield") == b""
+            assert f.GetFieldAsString("strfield") == "some text"
+            f = lyr.GetFeature(3)
+            assert f.GetFieldAsBinary("binfield") == b"\xff\x00\x7f\xff\x00\x7f"
+            assert f.GetFieldAsString("strfield") == "some text"
+
+        finally:
+            gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE test_binary_field")
+            gdaltest.mssqlspatial_ds.ExecuteSQL(
+                "DELETE from geometry_columns WHERE f_table_name = 'test_binary_field'"
+            )
+
+
+###############################################################################
+#
+
+
 def test_ogr_mssqlspatial_cleanup():
 
     if gdaltest.mssqlspatial_ds is None:

@@ -24,7 +24,7 @@ way of getting this information.
 
 For multi-component products, each component will be exposed in a subdataset.
 
-NOTE: Implemented as ``gdal/frmts/dimap/dimapdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/dimap/dimapdataset.cpp`.
 
 Driver capabilities
 -------------------

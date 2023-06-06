@@ -30,7 +30,7 @@ Currently the following one is supported :
 -  **version**\ =data_v1: To specify the API version to request.
 -  **api_key**\ =value: To specify the Planet API KEY. It is mandatory,
    unless it is supplied through the open option API_KEY, or the
-   configuration option :decl_configoption:`PL_API_KEY`.
+   configuration option :config:`PL_API_KEY`.
 -  **follow_links**\ =YES/NO: Whether assets links should be followed
    for each scene (vector). Getting assets links require a HTTP request
    per scene, which might be costly when enumerating through a lot of
@@ -38,7 +38,7 @@ Currently the following one is supported :
 -  **scene**\ =scene_id: To specify the scene ID, when accessing raster
    data. Optional for vector layer access.
 -  **itemtypes**\ =name: To specify the item types name. Optional for
-   vector layer access. Mandatory for raster accessI.
+   vector layer access. Mandatory for raster access.
 -  **asset**\ =value: To specify the asset type (for raster fetching).
    Default is "visual". Optional for vector layer access. If the option
    is not specified and the 'visual' asset category does not exist for
@@ -55,37 +55,79 @@ Open options
 
 The following open options are available :
 
--  **VERSION**\ =data_v1: To specify the API version to request.
--  **API_KEY**\ =value: To specify the Planet API KEY.
--  **FOLLOW_LINKS**\ =YES/NO: Whether assets links should be followed
-   for each scene (vector). Getting assets links require a HTTP request
-   per scene, which might be costly when enumerating through a lot of
-   products. Defaults to NO.
--  **SCENE**\ =scene_id: To specify the scene ID, when accessing raster
-   data. Optional for vector layer access.
--  **ITEMTYPES**\ =name: To specify the item types name. Optional for
-   vector layer access. Mandatory for raster access.
--  **ASSET**\ =value: To specify the asset type (for raster fetching).
-   Default is "visual". Optional for vector layer access. If the option
-   is not specified and the 'visual' asset category does not exist for
-   the scene (or if the value is set to 'list'), the returned dataset
-   will have subdatasets for the available asset categories.
--  **RANDOM_ACCESS**\ =YES/NO: Whether raster should be accessed in
-   random access mode (but with potentially not optimal throughput). If
-   NO, in-memory ingestion is done. Default is YES.
--  **ACTIVATION_TIMEOUT**\ =int: Number of seconds during which to wait
-   for asset activation (raster). Default is 3600.
--  **METADATA**\ =YES/NO: (Raster only) Whether scene metadata should be
-   fetched from the API and attached to the raster dataset. Defaults to
-   YES.
+-  .. oo:: VERSION
+      :default: DATA_V1
+
+      To specify the API version to request.
+
+-  .. oo:: API_KEY
+
+      To specify the Planet API KEY.
+
+-  .. oo:: FOLLOW_LINKS
+      :choices: YES, NO
+      :default: NO
+
+      Whether assets links should be followed
+      for each scene (vector). Getting assets links require a HTTP request
+      per scene, which might be costly when enumerating through a lot of
+      products.
+
+-  .. oo:: SCENE
+      :choices: <scene_id>
+
+      To specify the scene ID, when accessing raster
+      data. Optional for vector layer access.
+
+-  .. oo:: ITEMTYPES
+      :choices: <name>
+
+      To specify the item types name. Optional for
+      vector layer access. Mandatory for raster access.
+
+-  .. oo:: ASSET
+      :default: visual
+
+      To specify the asset type (for raster fetching).
+      Optional for vector layer access. If the option
+      is not specified and the 'visual' asset category does not exist for
+      the scene (or if the value is set to 'list'), the returned dataset
+      will have subdatasets for the available asset categories.
+
+-  .. oo:: RANDOM_ACCESS
+      :choices: YES, NO
+      :default: YES
+
+      Whether raster should be accessed in
+      random access mode (but with potentially not optimal throughput). If
+      NO, in-memory ingestion is done.
+
+-  .. oo:: ACTIVATION_TIMEOUT
+      :choices: seconds
+      :default: 3600
+
+      Number of seconds during which to wait
+      for asset activation (raster).
+
+-  .. oo:: METADATA
+      :choices: YES, NO
+      :default: YES
+
+      (Raster only) Whether scene metadata should be
+      fetched from the API and attached to the raster dataset.
 
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`PL_API_KEY` =value: To specify the Planet API KEY.
+-  :copy-config:`PL_API_KEY`
+
+-  .. config:: PLSCENES_PAGE_SIZE
+      :default: 250
+
+      Chunk size for fetching features. Maximum value is 250.
 
 Attributes
 ----------
@@ -117,7 +159,7 @@ Paging
 
 Features are retrieved from the server by chunks of 250 by default (and
 this is the maximum value accepted by the server). This number can be
-altered with the :decl_configoption:`PLSCENES_PAGE_SIZE` configuration 
+altered with the :config:`PLSCENES_PAGE_SIZE` configuration
 option.
 
 Vector layer (scene metadata) examples
@@ -171,15 +213,15 @@ Raster access
 -------------
 
 Scenes can be accessed as raster datasets, provided that the scene ID is
-specified with the 'scene' parameter / SCENE open option. The
-'itemtypes' parameter / ITEMTYPES open option must also be specified.
+specified with the 'scene' parameter / :oo:`SCENE` open option. The
+'itemtypes' parameter / :oo:`ITEMTYPES` open option must also be specified.
 The asset type (visual, analytic, ...) can be specified with the 'asset'
-parameter / ASSET open option. The scene id is the content of the value
+parameter / :oo:`ASSET` open option. The scene id is the content of the value
 of the 'id' field of the features.
 
 If the product is not already generated on the server, it will be
 activated, and the driver will wait for it to be available. The length
-of this retry can be configured with the ACTIVATION_TIMEOUT open option.
+of this retry can be configured with the :oo:`ACTIVATION_TIMEOUT` open option.
 
 Raster access examples
 ~~~~~~~~~~~~~~~~~~~~~~

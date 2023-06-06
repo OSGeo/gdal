@@ -30,6 +30,7 @@
 #define OGR_ARROW_RANDOM_ACCESS_FILE_H
 
 #include "cpl_vsi.h"
+#include "cpl_vsi_virtual.h"
 
 #include "arrow/buffer.h"
 #include "arrow/io/file.h"
@@ -50,8 +51,13 @@ class OGRArrowRandomAccessFile final : public arrow::io::RandomAccessFile
     operator=(const OGRArrowRandomAccessFile &) = delete;
 
   public:
-    explicit OGRArrowRandomAccessFile(VSILFILE *fp, bool bOwnFP = true)
+    explicit OGRArrowRandomAccessFile(VSILFILE *fp, bool bOwnFP)
         : m_fp(fp), m_bOwnFP(bOwnFP)
+    {
+    }
+
+    explicit OGRArrowRandomAccessFile(VSIVirtualHandleUniquePtr &&fp)
+        : m_fp(fp.release()), m_bOwnFP(true)
     {
     }
 

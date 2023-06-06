@@ -45,8 +45,9 @@
 OGRParquetDatasetLayer::OGRParquetDatasetLayer(
     OGRParquetDataset *poDS, const char *pszLayerName,
     const std::shared_ptr<arrow::dataset::Scanner> &scanner,
-    const std::shared_ptr<arrow::Schema> &schema)
-    : OGRParquetLayerBase(poDS, pszLayerName), m_poScanner(scanner)
+    const std::shared_ptr<arrow::Schema> &schema, CSLConstList papszOpenOptions)
+    : OGRParquetLayerBase(poDS, pszLayerName, papszOpenOptions),
+      m_poScanner(scanner)
 {
     EstablishFeatureDefn(schema);
     CPLAssert(static_cast<int>(m_aeGeomEncoding.size()) ==

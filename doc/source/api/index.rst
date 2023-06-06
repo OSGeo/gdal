@@ -104,7 +104,7 @@ API
        csharp/index
        java/index
 
-   There are also other bindings that are developed outside of the GDAL source tree (**note**: those offer APIs not strictly coupled the GDAL/OGR C/C++ API). These include bindings for
+   There are also other bindings that are developed outside of the GDAL source tree (**note**: those offer APIs not strictly coupled to the GDAL/OGR C/C++ API). These include bindings for
 
       .. toctree::
        :maxdepth: 1
@@ -116,13 +116,11 @@ API
        Node.js fork with full Promise-based async and TypeScript support <https://www.npmjs.com/package/gdal-async>
        Perl <https://metacpan.org/release/Geo-GDAL-FFI>
        PHP <http://dl.maptools.org/dl/php_ogr/php_ogr_documentation.html>
-       R <http://cran.r-project.org/web/packages/rgdal/index.html>
+       R <https://cran.r-project.org/web/packages/gdalraster/index.html>
        Rust <https://github.com/georust/gdal>
 
     .. warning::
         For Perl, since GDAL 3.5 the link `Perl <https://trac.osgeo.org/gdal/wiki/GdalOgrInPerl>`__ is deprecated, use above link instead.
-
-        For R, rgdal in SourceForge is out of date.
 
 
 

@@ -1603,6 +1603,11 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
             return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nByteCount));
         }
     }
+    else if (pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_"))
+    {
+        if (EQUAL(pszName, "HAS_BLOCK_CACHE"))
+            return HasBlockCache() ? "1" : "0";
+    }
 
     const char *pszRet = m_oGTiffMDMD.GetMetadataItem(pszName, pszDomain);
 

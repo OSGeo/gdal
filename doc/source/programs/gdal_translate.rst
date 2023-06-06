@@ -224,7 +224,8 @@ resampling, and rescaling pixels in the process.
 
 .. option:: -a_srs <srs_def>
 
-    Override the projection for the output file.
+    Override the projection for the output file. Can be used with
+    :option:`-a_ullr` to specify the extent in this projection.
 
     .. include:: options/srs_def.rst
 
@@ -367,3 +368,9 @@ To create a RGBA dataset from a RGB dataset with a mask
 
     gdal_translate withmask.tif rgba.tif -b 1 -b 2 -b 3 -b mask
 
+
+Subsetting using :option:`-projwin` and :option:`-outsize`:
+
+.. code-block:: bash
+
+   gdal_translate -projwin -20037500 10037500 0 0 -outsize 100 100 frmt_wms_googlemaps_tms.xml junk.png

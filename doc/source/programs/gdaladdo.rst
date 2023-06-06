@@ -115,21 +115,21 @@ in TIFF format.  By default, the GeoTIFF driver stores overviews internally to t
 operated on (if it is writable), unless the -ro flag is specified.
 
 Most drivers also support an alternate overview format using Erdas Imagine
-format.  To trigger this use the :decl_configoption:`USE_RRD` =YES configuration option.  This will
+format.  To trigger this use the :config:`USE_RRD=YES` configuration option.  This will
 place the overviews in an associated .aux file suitable for direct use with
 Imagine or ArcGIS as well as GDAL applications.  (e.g. --config USE_RRD YES)
 
 External overviews in GeoTIFF format
 ------------------------------------
 
-External overviews created in TIFF format may be compressed using the :decl_configoption:`COMPRESS_OVERVIEW`
+External overviews created in TIFF format may be compressed using the :config:`COMPRESS_OVERVIEW`
 configuration option.  All compression methods, supported by the GeoTIFF
 driver, are available here. (e.g. ``--config COMPRESS_OVERVIEW DEFLATE``).
-The photometric interpretation can be set with the :decl_configoption:`PHOTOMETRIC_OVERVIEW`
+The photometric interpretation can be set with the :config:`PHOTOMETRIC_OVERVIEW`
 =RGB/YCBCR/... configuration option,
-and the interleaving with the :decl_configoption:`INTERLEAVE_OVERVIEW` =PIXEL/BAND configuration option.
+and the interleaving with the :config:`INTERLEAVE_OVERVIEW` =PIXEL/BAND configuration option.
 
-Since GDAL 3.6, :decl_configoption:`COMPRESS_OVERVIEW` and decl_configoption:`INTERLEAVE_OVERVIEW`
+Since GDAL 3.6, :config:`COMPRESS_OVERVIEW` and :config:`INTERLEAVE_OVERVIEW`
 are honoured when creating internal overviews of TIFF files.
 
 For JPEG compressed external and internal overviews, the JPEG quality can be set with
@@ -160,7 +160,7 @@ To produce the smallest possible JPEG-In-TIFF overviews, you should use:
     --config COMPRESS_OVERVIEW JPEG --config PHOTOMETRIC_OVERVIEW YCBCR --config INTERLEAVE_OVERVIEW PIXEL
 
 External overviews can be created in the BigTIFF format by using
-the :decl_configoption:`BIGTIFF_OVERVIEW` configuration option:
+the :config:`BIGTIFF_OVERVIEW` configuration option:
 ``--config BIGTIFF_OVERVIEW {IF_NEEDED|IF_SAFER|YES|NO}``.
 
 The default value is IF_SAFER starting with GDAL 2.3.0 (previously was IF_NEEDED).
@@ -204,7 +204,7 @@ Multithreading
 
 .. versionadded:: 3.2
 
-The :decl_configoption:`GDAL_NUM_THREADS` configuration option can be set to
+The :config:`GDAL_NUM_THREADS` configuration option can be set to
 ``ALL_CPUS`` or a integer value to specify the number of threads to use for
 overview computation.
 

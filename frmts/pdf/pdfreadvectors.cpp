@@ -247,7 +247,7 @@ int PDFDataset::GetLayerCount()
 /************************************************************************/
 
 void PDFDataset::ExploreTree(GDALPDFObject *poObj,
-                             std::set<std::pair<int, int>> aoSetAlreadyVisited,
+                             std::set<std::pair<int, int>> &aoSetAlreadyVisited,
                              int nRecLevel)
 {
     if (nRecLevel == 16)

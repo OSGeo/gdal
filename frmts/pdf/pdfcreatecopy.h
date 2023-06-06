@@ -369,14 +369,15 @@ class GDALPDFWriter final : public GDALPDFBaseWriter
                             const char *pszOGRLinkField,
                             int bWriteOGRAttributes);
 
-    GDALPDFLayerDesc StartOGRLayer(CPLString osLayerName,
+    GDALPDFLayerDesc StartOGRLayer(const std::string &osLayerName,
                                    int bWriteOGRAttributes);
     void EndOGRLayer(GDALPDFLayerDesc &osVectorDesc);
 
     int WriteOGRLayer(OGRDataSourceH hDS, int iLayer,
                       const char *pszOGRDisplayField,
-                      const char *pszOGRLinkField, CPLString osLayerName,
-                      int bWriteOGRAttributes, int &iObj);
+                      const char *pszOGRLinkField,
+                      const std::string &osLayerName, int bWriteOGRAttributes,
+                      int &iObj);
 
     int WriteOGRFeature(GDALPDFLayerDesc &osVectorDesc, OGRFeatureH hFeat,
                         OGRCoordinateTransformationH hCT,

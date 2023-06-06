@@ -35,6 +35,23 @@ Driver capabilities
 
 .. supports_virtualio::
 
+Configuration options
+---------------------
+
+The following :ref:`configuration options <configoptions>` are
+available:
+
+-  .. config:: OGR_EDIGEO_FONT_SIZE_FACTOR
+      :default: 2
+
+      See `Labels`_.
+
+-  .. config:: OGR_EDIGEO_CREATE_LABEL_LAYERS
+      :choices: YES, NO
+      :default: YES
+
+      See `Labels`_.
+
 Labels
 ------
 
@@ -50,8 +67,7 @@ It will also add the following fields :
 -  OGR_ANGLE: the rotation angle in degrees (0 = horizontal,
    counter-clock-wise oriented)
 -  OGR_FONT_SIZE: the value of the HEI attribute multiplied by the value
-   of the configuration option :decl_configoption:`OGR_EDIGEO_FONT_SIZE_FACTOR`
-   that defaults to 2.
+   of the configuration option :config:`OGR_EDIGEO_FONT_SIZE_FACTOR`.
 
 Combined with the FON (font family) attributes, they can be used to
 define the styling in QGIS for example.
@@ -59,7 +75,7 @@ define the styling in QGIS for example.
 By default, OGR will create specific layers (xxx_LABEL) to dispatch into
 the various labels of the ID_S_OBJ_Z_1_2_2 layer according to the value
 of xxx=OBJ_OBJ_LNK_LAYER. This can be disabled by setting
-OGR_EDIGEO_CREATE_LABEL_LAYERS to NO.
+:config:`OGR_EDIGEO_CREATE_LABEL_LAYERS` to NO.
 
 See Also
 --------

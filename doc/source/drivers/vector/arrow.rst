@@ -53,26 +53,45 @@ The driver supports creating only a single layer in a dataset.
 Layer creation options
 ----------------------
 
-- **COMPRESSION=string**: Compression method. Can be one of ``NONE``, ``ZSTD``
-  or ``LZ4``. Available values depend on how the Arrow library was compiled.
-  Defaults to LZ4 when available, otherwise NONE.
+- .. lco:: COMPRESSION
+     :choices: NONE, ZSTD, LZ4
 
-- **FORMAT=FILE/STREAM**: Variant of the file format. See introduction paragraph
-  for the difference between both. Defaults to FILE, unless the filename is
-  "/vsistdout/" or its extension is ".arrows", in which case STREAM is used.
+     Compression method.
+     Available values depend on how the Arrow library was compiled.
+     Defaults to LZ4 when available, otherwise NONE.
 
-- **GEOMETRY_ENCODING=GEOARROW/WKB/WKT**: Geometry encoding. Defaults to GEOARROW.
+- .. lco:: FORMAT
+     :choices: FILE, STREAM
 
-- **BATCH_SIZE=integer**: Maximum number of rows per record batch. Default is 65536.
+     Variant of the file format. See introduction paragraph
+     for the difference between both. Defaults to FILE, unless the filename is
+     "/vsistdout/" or its extension is ".arrows", in which case STREAM is used.
 
-- **GEOMETRY_NAME=string**: Name of geometry column. Default is ``geometry``
+- .. lco:: GEOMETRY_ENCODING
+     :choices: GEOARROW, WKB, WKT
+     :default: GEOARROW
 
-- **FID=string**: Name of the FID (Feature Identifier) column to create. If
-  none is specified, no FID column is created. Note that if using ogr2ogr with
-  the Arrow driver as the target driver and a source layer that has a named
-  FID column, this FID column name will be automatically used to set the FID
-  layer creation option of the Arrow driver (unless ``-lco FID=`` is used to
-  set an empty name)
+     Geometry encoding.
+
+- .. lco:: BATCH_SIZE
+     :choices: <integer>
+     :default: 65536
+
+     Maximum number of rows per record batch.
+
+- .. lco:: GEOMETRY_NAME
+     :default: geometry
+
+     Name of geometry column.
+
+- .. lco:: FID
+
+     Name of the FID (Feature Identifier) column to create. If
+     none is specified, no FID column is created. Note that if using ogr2ogr with
+     the Arrow driver as the target driver and a source layer that has a named
+     FID column, this FID column name will be automatically used to set the FID
+     layer creation option of the Arrow driver (unless ``-lco FID=`` is used to
+     set an empty name)
 
 Conda-forge package
 -------------------

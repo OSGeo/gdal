@@ -43,39 +43,52 @@ Issues
 
 Some servers do not respect EPSG axis order, in particular latitude,
 longitude order for WGS 84 geodetic coordinates, so it might be needed
-to specify the :decl_configoption:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO` 
+to specify the :config:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO`
 configuration option in those cases.
 
 Open options
 ------------
 
--  **URL**: URL to the CSW server endpoint (if not specified in the
-   connection string already)
--  **ELEMENTSETNAME**\ =brief/summary/full: Level of details of
-   properties. Defaults to *full*.
--  **FULL_EXTENT_RECORDS_AS_NON_SPATIAL**\ =YES/NO: Whether records with
-   (-180,-90,180,90) extent should be considered non-spatial. Defaults
-   to NO.
--  **OUTPUT_SCHEMA**\ =URL : Value of outputSchema parameter, in the
-   restricted set supported by the serve. Special value *gmd* can be
-   used as a shortcut for http://www.isotc211.org/2005/gmd, *csw* for
-   http://www.opengis.net/cat/csw/2.0.2. When this open option is set, a
-   *raw_xml* field will be filled with the XML content of each record.
-   Other metadata fields will remain empty.
--  **MAX_RECORDS**\ =value : Maximum number of records to retrieve in a
-   single time. Defaults to 500. Servers might have a lower accepted
-   value.
+-  .. oo:: URL
+
+      URL to the CSW server endpoint (if not specified in the
+      connection string already)
+
+-  .. oo:: ELEMENTSETNAME
+      :choices: brief, summary, full
+      :default: full
+
+      Level of details of properties.
+
+-  .. oo:: FULL_EXTENT_RECORDS_AS_NON_SPATIAL
+      :choices: YES, NO
+      :default: NO
+
+      Whether records with
+      (-180,-90,180,90) extent should be considered non-spatial.
+
+-  .. oo:: OUTPUT_SCHEMA
+
+      Value of outputSchema parameter, in the
+      restricted set supported by the serve. Special value *gmd* can be
+      used as a shortcut for http://www.isotc211.org/2005/gmd, *csw* for
+      http://www.opengis.net/cat/csw/2.0.2. When this open option is set, a
+      *raw_xml* field will be filled with the XML content of each record.
+      Other metadata fields will remain empty.
+
+-  .. oo:: MAX_RECORDS
+      :default: 500
+
+      Maximum number of records to retrieve in a
+      single time. Servers might have a lower accepted value.
 
 Configuration options
 ---------------------
 
-The following :ref:`configuration options <configoptions>` are 
+The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG=NO`: Some servers 
-   do not respect EPSG axis order, in particular latitude,
-   longitude order for WGS 84 geodetic coordinates, so it might be needed
-   to specify the  configuration option in those cases.
+-  :copy-config:`GML_INVERT_AXIS_ORDER_IF_LAT_LONG`
 
 Examples
 --------

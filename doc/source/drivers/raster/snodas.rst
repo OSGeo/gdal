@@ -15,7 +15,7 @@ is the .Hdr file.
 `Snow Data Assimilation System (SNODAS) Data Products at
 NSIDC <http://nsidc.org/data/docs/noaa/g02158_snodas_snow_cover_model/index.html>`__
 
-NOTE: Implemented as ``gdal/frmts/raw/snodasdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/snodasdataset.cpp`.
 
 Driver capabilities
 -------------------

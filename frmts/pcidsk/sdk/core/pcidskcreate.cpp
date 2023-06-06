@@ -105,7 +105,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     int  tilesize = PCIDSK_DEFAULT_TILE_SIZE;
     std::string oLinkFilename;
 
-    std::string oOrigOptions = options;
+    const std::string oOrigOptions = options;
     UCaseStr( options );
     for(auto & c : options)
     {

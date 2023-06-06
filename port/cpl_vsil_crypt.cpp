@@ -1734,7 +1734,7 @@ VSICryptFilesystemHandler::Open(const char *pszFilename, const char *pszAccess,
         poHeader->eAlg = eAlg;
         poHeader->eMode = eMode;
         poHeader->nSectorSize = static_cast<GUInt16>(nSectorSize);
-        poHeader->osFreeText = osFreeText;
+        poHeader->osFreeText = std::move(osFreeText);
         poHeader->bAddKeyCheck = bAddKeyCheck;
 
         VSICryptFileHandle *poHandle = new VSICryptFileHandle(

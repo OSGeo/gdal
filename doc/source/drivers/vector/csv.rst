@@ -100,7 +100,7 @@ modified via the HEADERS open option.
 
 All CSV files are treated as UTF-8 encoded. A
 Byte Order Mark (BOM) at the beginning of the file will be parsed
-correctly. The option WRITE_BOM can be used to create a file
+correctly. The layer creation option :lco:`WRITE_BOM` can be used to create a file
 with a Byte Order Mark, which can improve compatibility with some
 software (particularly Excel).
 
@@ -143,7 +143,7 @@ Consider the following CSV file (test.csv):
 
 Starting with GDAL 2.1, it is possible to directly specify the potential
 names of the columns that can contain X/longitude and Y/latitude with
-the X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES open option.
+the :oo:`X_POSSIBLE_NAMES` and :oo:`Y_POSSIBLE_NAMES` open option.
 
 *ogrinfo -ro -al test.csv -oo X_POSSIBLE_NAMES=Lon\* -oo
 Y_POSSIBLE_NAMES=Lat\* -oo KEEP_GEOM_COLUMNS=NO* will return :
@@ -174,7 +174,7 @@ encoded as WKT, WKB (encoded in hexadecimal) or GeoJSON (in which case
 the GeoJSON content must be formatted to follow CSV rules, that is to
 say it must be surrounded by double-quotes, and double-quotes inside the
 string must be repeated for proper escaping), the name of such column(s)
-the GEOM_POSSIBLE_NAMES open option.
+the :oo:`GEOM_POSSIBLE_NAMES` open option.
 
 For older versions, it is possible to extract spatial information
 (points) from a CSV file which has columns for the X and Y coordinates,
@@ -258,73 +258,143 @@ Open options
 The following open options can be specified
 (typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
 
--  **MERGE_SEPARATOR**\ =YES/NO (defaults to NO). Setting it to YES will
-   enable merging consecutive separators. Mostly useful when it is the
-   space character.
--  **AUTODETECT_TYPE**\ =YES/NO (defaults to NO). Setting it to YES will
-   enable auto-detection of field data types. If while reading the
-   records (beyond the records used for autodetection), a value is found
-   to not correspond to the autodetected data type, a warning will be
-   emitted and the field will be emptied.
--  **KEEP_SOURCE_COLUMNS**\ =YES/NO (default NO) keep a copy of the
-   original columns where the guessing is active, and the guessed type
-   is different from string. The name of the original columns will be
-   suffixed with "_original". This flag should be used only when
-   AUTODETECT_TYPE=YES.
--  **AUTODETECT_WIDTH**\ =YES/NO/STRING_ONLY (defaults to NO). Setting
-   it to YES to detect the width of string and integer fields, and the
-   width and precision of real fields. Setting it to STRING_ONLY
-   restricts to string fields. Setting it to NO select default size and
-   width. If while reading the records (beyond the records used for
-   autodetection), a value is found to not correspond to the
-   autodetected width/precision, a warning will be emitted and the field
-   will be emptied.
--  **AUTODETECT_SIZE_LIMIT**\ =size to specify the number of bytes to
-   inspect to determine the data type and width/precision. The default
-   will be 1 000 000. Setting 0 means inspecting the whole file. Note:
-   when reading from standard input, this will be limited to 1 MB, due to
-   how /vsistdin/ is implemented..
--  **QUOTED_FIELDS_AS_STRING**\ =YES/NO (default NO). Only used if
-   AUTODETECT_TYPE=YES. Whether to enforce quoted fields as string
-   fields when set to YES. Otherwise, by default, the content of quoted
-   fields will be tested for real, integer, etc... data types.
--  **X_POSSIBLE_NAMES**\ =list_of_names. (GDAL >= 2.1) Comma separated
-   list of possible names for X/longitude coordinate of a point. Each
-   name might be a pattern using the star character in starting and/or
-   ending position. E.g.: prefix*, \*suffix or \*middle*. The values in
-   the column must be floating point values. X_POSSIBLE_NAMES and
-   Y_POSSIBLE_NAMES must be both specified and a matching for each must
-   be found in the columns of the CSV file. Only one geometry column per
-   layer might be built when using X_POSSIBLE_NAMES/Y_POSSIBLE_NAMES.
--  **Y_POSSIBLE_NAMES**\ =list_of_names. (GDAL >= 2.1) Comma separated
-   list of possible names for Y/latitude coordinate of a point. Each
-   name might be a pattern using the star character in starting and/or
-   ending position. E.g.: prefix*, \*suffix or \*middle*. The values in
-   the column must be floating point values. X_POSSIBLE_NAMES and
-   Y_POSSIBLE_NAMES must be both specified and a matching for each must
-   be found in the columns of the CSV file.
--  **Z_POSSIBLE_NAMES**\ =list_of_names. (GDAL >= 2.1) Comma separated
-   list of possible names for Z/elevation coordinate of a point. Each
-   name might be a pattern using the star character in starting and/or
-   ending position. E.g.: prefix*, \*suffix or \*middle*. The values in
-   the column must be floating point values. Only taken into account in
-   combination with X_POSSIBLE_NAMES and Y_POSSIBLE_NAMES.
--  **GEOM_POSSIBLE_NAMES**\ =list_of_names. (GDAL >= 2.1) Comma
-   separated list of possible names for geometry columns that contain
-   geometry definitions encoded as WKT, WKB (in hexadecimal form,
-   potentially in PostGIS 2.0 extended WKB) or GeoJSON. Each name might
-   be a pattern using the star character in starting and/or ending
-   position. E.g.: prefix*, \*suffix or \*middle\*
--  **KEEP_GEOM_COLUMNS**\ =YES/NO (default YES) Expose the detected
-   X,Y,Z or geometry columns as regular attribute fields.
--  **HEADERS**\ =YES/NO/AUTO (default AUTO) (GDAL >= 2.1) Whether the
-   first line of the file contains column names or not. When set to
-   AUTO, GDAL will assume the first line is column names if none of the
-   values are strictly numeric.
--  **EMPTY_STRING_AS_NULL**\ =YES/NO (default NO) (GDAL >= 2.1) Whether
-   to consider empty strings as null fields on reading'.
--  **MAX_LINE_SIZE**\ =integer (default 10000000) (GDAL >= 3.5.3) Maximum number
-   of bytes for a line (-1=unlimited).
+-  .. oo:: MERGE_SEPARATOR
+      :choices: YES, NO
+      :default: NO
+
+      Setting it to YES will
+      enable merging consecutive separators. Mostly useful when it is the
+      space character.
+
+-  .. oo:: AUTODETECT_TYPE
+      :choices: YES, NO
+      :default: NO
+
+      Setting it to YES will
+      enable auto-detection of field data types. If while reading the
+      records (beyond the records used for autodetection), a value is found
+      to not correspond to the autodetected data type, a warning will be
+      emitted and the field will be emptied.
+
+-  .. oo:: KEEP_SOURCE_COLUMNS
+      :choices: YES, NO
+      :default: NO
+
+      keep a copy of the
+      original columns where the guessing is active, and the guessed type
+      is different from string. The name of the original columns will be
+      suffixed with "_original". This flag should be used only when
+      ..oo::`AUTODETECT_TYPE=YES`.
+
+-  .. oo:: AUTODETECT_WIDTH
+      :choices: YES, NO, STRING_ONLY
+      :default: NO
+
+      Setting
+      it to YES to detect the width of string and integer fields, and the
+      width and precision of real fields. Setting it to STRING_ONLY
+      restricts to string fields. Setting it to NO select default size and
+      width. If while reading the records (beyond the records used for
+      autodetection), a value is found to not correspond to the
+      autodetected width/precision, a warning will be emitted and the field
+      will be emptied.
+
+-  .. oo:: AUTODETECT_SIZE_LIMIT
+      :choices: <bytes>
+      :default: 1000000
+
+      size to specify the number of bytes to
+      inspect to determine the data type and width/precision. The default
+      will be 1 000 000. Setting 0 means inspecting the whole file. Note:
+      when reading from standard input, this will be limited to 1 MB, due to
+      how /vsistdin/ is implemented..
+
+-  .. oo:: QUOTED_FIELDS_AS_STRING
+      :choices: YES, NO
+      :default: NO
+
+      Only used if
+      :oo:`AUTODETECT_TYPE=YES`. Whether to enforce quoted fields as string
+      fields when set to YES. Otherwise, by default, the content of quoted
+      fields will be tested for real, integer, etc... data types.
+
+-  .. oo:: X_POSSIBLE_NAMES
+      :choices: <list_of_names>
+      :since: 2.1
+
+      Comma separated
+      list of possible names for X/longitude coordinate of a point. Each
+      name might be a pattern using the star character in starting and/or
+      ending position. E.g.: prefix*, \*suffix or \*middle*. The values in
+      the column must be floating point values. :oo:`X_POSSIBLE_NAMES` and
+      Y_POSSIBLE_NAMES must be both specified and a matching for each must
+      be found in the columns of the CSV file. Only one geometry column per
+      layer might be built when using :oo:`X_POSSIBLE_NAMES`/:oo:`Y_POSSIBLE_NAMES`.
+
+-  .. oo:: Y_POSSIBLE_NAMES
+      :choices: <list_of_names>
+      :since: 2.1
+
+      Comma separated
+      list of possible names for Y/latitude coordinate of a point. Each
+      name might be a pattern using the star character in starting and/or
+      ending position. E.g.: prefix*, \*suffix or \*middle*. The values in
+      the column must be floating point values. :oo:`X_POSSIBLE_NAMES` and
+      :oo:`Y_POSSIBLE_NAMES` must be both specified and a matching for each must
+      be found in the columns of the CSV file.
+
+-  .. oo:: Z_POSSIBLE_NAMES
+      :choices: <list_of_names>
+      :since: 2.1
+
+      Comma separated
+      list of possible names for Z/elevation coordinate of a point. Each
+      name might be a pattern using the star character in starting and/or
+      ending position. E.g.: prefix*, \*suffix or \*middle*. The values in
+      the column must be floating point values. Only taken into account in
+      combination with :oo:`X_POSSIBLE_NAMES` and :oo:`Y_POSSIBLE_NAMES`.
+
+-  .. oo:: GEOM_POSSIBLE_NAMES
+      :choices: <list_of_names>
+      :since: 2.1
+
+      Comma
+      separated list of possible names for geometry columns that contain
+      geometry definitions encoded as WKT, WKB (in hexadecimal form,
+      potentially in PostGIS 2.0 extended WKB) or GeoJSON. Each name might
+      be a pattern using the star character in starting and/or ending
+      position. E.g.: prefix*, \*suffix or \*middle\*
+
+-  .. oo:: KEEP_GEOM_COLUMNS
+      :choices: YES, NO
+      :default: YES
+
+      Expose the detected
+      X,Y,Z or geometry columns as regular attribute fields.
+
+-  .. oo:: HEADERS
+      :choices: YES, NO, AUTO
+      :default: AUTO
+      :since: 2.1
+
+      Whether the
+      first line of the file contains column names or not. When set to
+      AUTO, GDAL will assume the first line is column names if none of the
+      values are strictly numeric.
+
+-  .. oo:: EMPTY_STRING_AS_NULL
+      :choices: YES, NO
+      :default: NO
+      :since: 2.1
+
+      Whether to consider empty strings as null fields on reading'.
+
+-  .. oo:: MAX_LINE_SIZE
+      :choices: <integer>
+      :default: 10000000
+      :since: 3.5.3
+
+      Maximum number of bytes for a line (-1=unlimited).
 
 Creation Issues
 ---------------
@@ -339,37 +409,65 @@ be stored in RAM temporarily before flushing to disk.
 Layer Creation options
 ----------------------
 
--  **LINEFORMAT**: By default when creating new .csv files they are
-   created with the line termination conventions of the local platform
-   (CR/LF on win32 or LF on all other systems). This may be overridden
-   through use of the LINEFORMAT layer creation option which may have a
-   value of **CRLF** (DOS format) or **LF** (Unix format).
--  **GEOMETRY**: By default, the geometry of
-   a feature written to a .csv file is discarded. It is possible to
-   export the geometry in its WKT representation by specifying
-   GEOMETRY=\ **AS_WKT**. It is also possible to export point geometries
-   into their X,Y,Z components (different columns in the csv file) by
-   specifying GEOMETRY=\ **AS_XYZ**, GEOMETRY=\ **AS_XY** or
-   GEOMETRY=\ **AS_YX**. The geometry column(s) will be prepended to the
-   columns with the attributes values. It is also possible to export
-   geometries in GeoJSON representation using SQLite SQL dialect query,
-   see example below.
--  **CREATE_CSVT**\ =YES/NO: Create the
-   associated .csvt file (see above paragraph) to describe the type of
-   each column of the layer and its optional width and precision.
-   Default value : NO
--  **SEPARATOR**\ =COMMA/SEMICOLON/TAB/SPACE:
-   Field separator character. Default value : COMMA
--  **WRITE_BOM**\ =YES/NO: Write a UTF-8 Byte
-   Order Mark (BOM) at the start of the file. Default value : NO
--  **GEOMETRY_NAME**\ =name (Starting with GDAL 2.1): Name of geometry
-   column. Only used if GEOMETRY=AS_WKT and CREATE_CSVT=YES. Defaults to
-   WKT
--  **STRING_QUOTING**\ =IF_NEEDED/IF_AMBIGUOUS/ALWAYS (Starting with
-   GDAL 2.3): whether to double-quote strings. IF_AMBIGUOUS means that
-   string values that look like numbers will be quoted (it also implies
-   IF_NEEDED). Defaults to IF_AMBIGUOUS (behavior in older versions was
-   IF_NEEDED)
+-  .. lco:: LINEFORMAT
+      :choices: CRLF, LF
+
+      By default when creating new .csv files they are
+      created with the line termination conventions of the local platform
+      (CR/LF on win32 or LF on all other systems). This may be overridden
+      through use of the :lco:`LINEFORMAT` layer creation option which may have a
+      value of **CRLF** (DOS format) or **LF** (Unix format).
+
+-  .. lco:: GEOMETRY
+      :choices: AS_WKT, AS_XYZ, AS_XY, AS_YZ
+
+      By default, the geometry of
+      a feature written to a .csv file is discarded. It is possible to
+      export the geometry in its WKT representation by specifying
+      GEOMETRY=\ **AS_WKT**. It is also possible to export point geometries
+      into their X,Y,Z components (different columns in the csv file) by
+      specifying GEOMETRY=\ **AS_XYZ**, GEOMETRY=\ **AS_XY** or
+      GEOMETRY=\ **AS_YX**. The geometry column(s) will be prepended to the
+      columns with the attributes values. It is also possible to export
+      geometries in GeoJSON representation using SQLite SQL dialect query,
+      see example below.
+
+-  .. lco:: CREATE_CSVT
+      :choices: YES, NO
+      :default: NO
+
+      Create the
+      associated .csvt file (see above paragraph) to describe the type of
+      each column of the layer and its optional width and precision.
+
+-  .. lco:: SEPARATOR
+      :choices: COMMA, SEMICOLON, TAB, SPACE
+      :default: COMMA
+
+      Field separator character.
+
+-  .. lco:: WRITE_BOM
+      :choices: YES, NO
+      :default: NO
+
+      Write a UTF-8 Byte Order Mark (BOM) at the start of the file.
+
+-  .. lco:: GEOMETRY_NAME
+      :since: 2.1
+      :default: WKT
+
+      Name of geometry column. Only used if :lco:`GEOMETRY=AS_WKT` (and
+      :lco:`CREATE_CSVT=YES` before GDAL 3.7.1).
+
+-  .. lco:: STRING_QUOTING
+      :choices: IF_NEEDED, IF_AMBIGUOUS, ALWAYS
+      :since: 2.3
+      :default: IF_AMBIGUOUS
+
+      whether to double-quote strings. IF_AMBIGUOUS means that
+      string values that look like numbers will be quoted (it also implies
+      IF_NEEDED). Defaults to IF_AMBIGUOUS (behavior in older versions was
+      IF_NEEDED)
 
 Configuration options
 ---------------------
@@ -377,13 +475,23 @@ Configuration options
 The following :ref:`configuration options <configoptions>` are
 available:
 
--  :decl_configoption:`OGR_WKT_PRECISION` =int: Number of decimals for coordinate
-   values. Default to 15. A heuristics is used to remove insignificant
-   trailing 00000x or 99999x that can appear when formatting decimal
-   numbers.
--  :decl_configoption:`OGR_WKT_ROUND` =YES/NO: (GDAL >= 2.3) Whether to enable the above
-   mentioned heuristics to remove insignificant trailing 00000x or
-   99999x. Default to YES.
+-  .. config:: OGR_WKT_PRECISION
+      :choices: <integer>
+      :default: 15
+
+      Number of decimals for coordinate
+      values. A heuristic is used to remove insignificant
+      trailing 00000x or 99999x that can appear when formatting decimal
+      numbers.
+
+-  .. config:: OGR_WKT_ROUND
+      :choices: YES, NO
+      :default: YES
+      :since: 2.3
+
+      Whether to enable the above
+      mentioned heuristics to remove insignificant trailing 00000x or
+      99999x.
 
 Examples
 ~~~~~~~~

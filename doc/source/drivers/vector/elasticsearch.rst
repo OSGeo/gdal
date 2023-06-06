@@ -37,47 +37,108 @@ a dataset:
 Layer open options
 ------------------
 
--  **HOST**\ =hostname: Server hostname. Default to localhost.
--  **PORT**\ =port. Server port. Default to 9200.
--  **USERPWD**\ =user:password. (GDAL >=2.4) Basic authentication as
-   username:password.
--  **LAYER**\ =name. (GDAL >=2.4) Index name or index_mapping to use for
-   restricting layer listing.
--  **BATCH_SIZE**\ =number. Number of features to retrieve per batch.
-   Default is 100.
--  **FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN**\ =number. Number of
-   features to retrieve to establish feature definition. -1 = unlimited.
-   Defaults to 100.
--  **SINGLE_QUERY_TIMEOUT**\ =number. (GDAL >= 3.2.1)
-   Timeout in second (as floating point number) for requests such as
-   GetFeatureCount() or GetExtent(). Defaults to unlimited.
--  **SINGLE_QUERY_TERMINATE_AFTER**\ =number. (GDAL >= 3.2.1)
-   Maximum number of documents to collect for requests such as
-   GetFeatureCount() or GetExtent(). Defaults to unlimited.
--  **FEATURE_ITERATION_TIMEOUT**\ =number. (GDAL >= 3.2.1)
-   Timeout in second (as floating point number) for feature iteration,
-   starting from the time of ResetReading(). Defaults to unlimited.
--  **FEATURE_ITERATION_TERMINATE_AFTER**\ =number. (GDAL >= 3.2.1)
-   Maximum number of documents to collect for feature iteration.
-   Defaults to unlimited.
--  **JSON_FIELD**\ =YES/NO. Whether to include a field called "_json"
-   with the full document as JSON. Defaults to NO.
--  **FLATTEN_NESTED_ATTRIBUTE**\ =YES/NO. Whether to recursively explore
-   nested objects and produce flatten OGR attributes. Defaults to YES.
--  **FID**\ =string. Field name, with integer values, to use as FID.
-   Defaults to 'ogc_fid'
--  **FORWARD_HTTP_HEADERS_FROM_ENV**\ =string. (GDAL >= 3.1)
-   Can be used to specify HTTP headers,
-   typically for authentication purposes, that must be passed to Elasticsearch.
-   The value of string is a comma separated list of http_header_name=env_variable_name,
-   where http_header_name is the name of a HTTP header and env_variable_name
-   the name of the environment variable / configuration option from which th value
-   of the HTTP header should be retrieved. This is intended for a use case where
-   the OGR Elasticsearch driver is invoked from a web server that stores the HTTP
-   headers of incoming request into environment variables.
-   The ES_FORWARD_HTTP_HEADERS_FROM_ENV configuration option can also be used.
--  **AGGREGATION**\ = string (GDAL >= 3.5). JSON-serialized definition of an
-   :ref:`aggregation <vector.elasticsearch.aggregations>`.
+-  .. oo:: HOST
+     :choices: <hostname>
+     :default: localhost
+
+     Server hostname.
+
+-  .. oo:: PORT
+      :choices: <port>
+      :default: 9200
+
+      Server port.
+
+-  .. oo:: USERPWD
+      :choices: <user:password>
+      :since: 2.4
+
+      Basic authentication as username:password.
+
+-  .. oo:: LAYER
+      :choices: <name>
+      :since: 2.4
+
+      Index name or index_mapping to use for restricting layer listing.
+
+-  .. oo:: BATCH_SIZE
+      :choices: <integer>
+      :default: 100
+
+      Number of features to retrieve per batch.
+
+-  .. oo:: FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN
+      :choices: <integer>
+      :default: 100
+
+      Number of features to retrieve to establish feature definition.
+      -1 = unlimited.
+
+-  .. oo:: SINGLE_QUERY_TIMEOUT
+      :choices: <seconds>
+      :default: unlimited
+      :since: 3.2.1
+
+      Timeout in second (as floating point number) for requests such as
+      GetFeatureCount() or GetExtent().
+
+-  .. oo:: SINGLE_QUERY_TERMINATE_AFTER
+      :choices: <integer>
+      :default: unlimited
+      :since: 3.2.1
+
+      Maximum number of documents to collect for requests such as
+      GetFeatureCount() or GetExtent().
+
+-  .. oo:: FEATURE_ITERATION_TIMEOUT
+      :choices: <seconds>
+      :default: unlimited
+      :since: 3.2.1
+
+      Timeout in seconds (as floating point number) for feature iteration,
+      starting from the time of ResetReading().
+
+-  .. oo:: FEATURE_ITERATION_TERMINATE_AFTER
+      :choices: <integer>
+      :default: unlimited
+      :since: 3.2.1
+
+      Maximum number of documents to collect for feature iteration.
+
+-  .. oo:: JSON_FIELD
+      :choices: YES, NO
+      :default: NO
+
+      Whether to include a field called "_json" with the full document as JSON.
+
+-  .. oo:: FLATTEN_NESTED_ATTRIBUTE
+      :choices: YES, NO
+      :default: YES
+
+      Whether to recursively explore nested objects and produce flatten OGR attributes.
+
+-  .. oo:: FID
+      :default: ogc_fid
+
+      Field name, with integer values, to use as FID.
+
+-  .. oo:: FORWARD_HTTP_HEADERS_FROM_ENV
+      :since: 3.1
+
+      Can be used to specify HTTP headers,
+      typically for authentication purposes, that must be passed to Elasticsearch.
+      The value of string is a comma separated list of http_header_name=env_variable_name,
+      where http_header_name is the name of a HTTP header and env_variable_name
+      the name of the environment variable / configuration option from which th value
+      of the HTTP header should be retrieved. This is intended for a use case where
+      the OGR Elasticsearch driver is invoked from a web server that stores the HTTP
+      headers of incoming request into environment variables.
+      The ES_FORWARD_HTTP_HEADERS_FROM_ENV configuration option can also be used.
+
+-  .. oo:: AGGREGATION
+      :since: 3.5
+
+      JSON-serialized definition of an :ref:`aggregation <vector.elasticsearch.aggregations>`.
 
 Elasticsearch vs OGR concepts
 -----------------------------
@@ -155,10 +216,10 @@ of attribute and geometry fields, since OGR has a fixed schema concept.
 
 In the general case, OGR will read the mapping definition and the first
 100 documents (can be altered with the
-FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN open option) of the index/type
+:oo:`FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN` open option) of the index/type
 and build the schema that best fit to the found fields and values.
 
-It is also possible to set the JSON_FIELD=YES open option so that a
+It is also possible to set the :oo:`JSON_FIELD=YES` open option so that a
 \_json special field is added to the OGR schema. When reading Elastic
 Search documents as OGR features, the full JSon version of the document
 will be stored in the \_json field. This might be useful in case of
@@ -192,7 +253,7 @@ filter <https://www.elastic.co/guide/en/elasticsearch/reference/current/query-ds
 can be passed. The search will be done on all indices and types, unless
 the filter itself restricts the search. The returned layer will be a
 union of the types returned by the
-FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN first documents. It will also
+:oo:`FEATURE_COUNT_TO_ESTABLISH_FEATURE_DEFN` first documents. It will also
 contain the \_index and \_type special fields to indicate the provenance
 of the features.
 
@@ -251,7 +312,7 @@ aggregations can potentially be rather complex, so the driver currently limits
 to geohash grid based spatial aggegrations, with additional fields with
 statistical indicators (min, max, average, .), which can be used for example
 to generate heatmaps. The specification of the aggegation is done through
-the ``AGGREGATION`` open option, whose value is a JSON serialized object whose
+the :oo:`AGGREGATION` open option, whose value is a JSON serialized object whose
 members are:
 
 - ``index`` (required): the name of the index to query.
@@ -303,11 +364,11 @@ members are:
   When using a GeoJSON mapping, the path to an index property is typically
   ``property.some_name``.
 
-When specifying the AGGREGATION open option, a single read-only layer called
+When specifying the :oo:`AGGREGATION` open option, a single read-only layer called
 ``aggregation`` will be returned. A spatial filter can be set on it using the
 standard OGR SetSpatialFilter() API: it is applied prior to aggregation.
 
-An example of a potential value for the AGGREGATION open option can be:
+An example of a potential value for the :oo:`AGGREGATION` open option can be:
 
 .. code-block:: json
 
@@ -385,120 +446,214 @@ Layer creation options
 Starting with GDAL 2.1, the driver supports the following layer creation
 options:
 
--  **INDEX_NAME**\ =name. Name of the index to create (or reuse). By
-   default the index name is the layer name.
--  **INDEX_DEFINITION**\ =filename or JSon. (GDAL >= 2.4) Filename from
-   which to read a user-defined index definition, or inlined index
-   definition as serialized JSon.
--  **MAPPING_NAME=**\ =name. (Elasticsearch < 7) Name of the mapping type within the index.
-   By default, the mapping name is "FeatureCollection" and the documents
-   will be written as GeoJSON Feature objects. If another mapping name
-   is chosen, a more "flat" structure will be used.  This option is
-   ignored when converting to Elasticsearch >=7 (see `Removal of mapping types <https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html>`__).
-   With Elasticsearch 7 or later, a "flat" structure is always used.
--  **MAPPING**\ =filename or JSon. Filename from which to read a
-   user-defined mapping, or mapping as serialized JSon.
--  **WRITE_MAPPING**\ =filename. Creates a mapping file that can be
-   modified by the user prior to insert in to the index. No feature will
-   be written. This option is exclusive with MAPPING.
--  **OVERWRITE**\ =YES/NO. Whether to overwrite an existing type mapping
-   with the layer name to be created. Defaults to NO.
--  **OVERWRITE_INDEX**\ =YES/NO. (GDAL >= 2.2) Whether to overwrite the
-   whole index to which the layer belongs to. Defaults to NO. This
-   option is stronger than OVERWRITE. OVERWRITE will only proceed if the
-   type mapping corresponding to the layer is the single type mapping of
-   the index. In case there are several type mappings, the whole index
-   need to be destroyed (it is unsafe to destroy a mapping and the
-   documents that use it, since they might be used by other mappings.
-   This was possible in Elasticsearch 1.X, but no longer in later
-   versions).
--  **GEOMETRY_NAME**\ =name. Name of geometry column. Defaults to
-   'geometry'.
--  **GEOM_MAPPING_TYPE**\ =AUTO/GEO_POINT/GEO_SHAPE. Mapping type for
-   geometry fields. Defaults to AUTO. GEO_POINT uses the
-   `geo_point <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html>`__
-   mapping type. If used, the "centroid" of the geometry is used. This
-   is the behavior of GDAL < 2.1. GEO_SHAPE uses the
-   `geo_shape <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html>`__
-   mapping type, compatible of all geometry types. When using AUTO, for
-   geometry fields of type Point, a geo_point is used. In other cases,
-   geo_shape is used.
--  **GEO_SHAPE_ENCODING**\ =GeoJSON/WKT. (GDAL >= 3.2.1)
-   Encoding for geo_shape geometry fields. Defaults to GeoJSON. WKT is possible
-   since Elasticsearch 6.2
--  **GEOM_PRECISION**\ ={value}{unit}'. Desired geometry precision.
-   Number followed by unit. For example 1m. For a geo_point geometry
-   field, this causes a compressed geometry format to be used. This
-   option is without effect if MAPPING is specified.
--  **STORE_FIELDS**\ =YES/NO. Whether fields should be stored in the
-   index. Setting to YES sets the `"store"
-   property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
-   of the field mapping to "true" for all fields. Defaults to NO. (Note:
-   prior to GDAL 2.1, the default behavior was to store fields) This
-   option is without effect if MAPPING is specified.
--  **STORED_FIELDS**\ =List of comma separated field names that should
-   be stored in the index. Those fields will have their `"store"
-   property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
-   of the field mapping set to "true". If all fields must be stored,
-   then using STORE_FIELDS=YES is a shortcut. This option is without
-   effect if MAPPING is specified.
--  **NOT_ANALYZED_FIELDS**\ =List of comma separated field names that
-   should not be analyzed during indexing. Those fields will have their
-   `"index"
-   property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
-   of the field mapping set to "not_analyzed" (the default in
-   Elasticsearch is "analyzed"). A same field should not be specified
-   both in NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS. Starting with
-   GDAL 2.2, the {ALL} value can be used to designate all fields. This
-   option is without effect if MAPPING is specified.
--  **NOT_INDEXED_FIELDS**\ =List of comma separated field names that
-   should not be indexed. Those fields will have their `"index"
-   property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
-   of the field mapping set to "no" (the default in Elasticsearch is
-   "analyzed"). A same field should not be specified both in
-   NOT_ANALYZED_FIELDS and NOT_INDEXED_FIELDS. This option is without
-   effect if MAPPING is specified.
--  **FIELDS_WITH_RAW_VALUE**\ =(GDAL > 2.2) List of comma separated
-   field names (of type string) that should be created with an
-   additional raw/not_analyzed sub-field, or {ALL} to designate all
-   string analyzed fields. This is needed for sorting on those columns,
-   and can improve performance when filtering with SQL operators. This
-   option is without effect if MAPPING is specified.
--  **BULK_INSERT**\ =YES/NO. Whether to use bulk insert for feature
-   creation. Defaults to YES.
--  **BULK_SIZE**\ =value. Size in bytes of the buffer for bulk upload.
-   Defaults to 1000000 (1 million).
--  **FID**\ =string. Field name, with integer values, to use as FID. Can
-   be set to empty to disable the writing of the FID value. Defaults to
-   'ogc_fid'
--  **DOT_AS_NESTED_FIELD**\ =YES/NO. Whether to consider dot character
-   in field name as sub-document. Defaults to YES.
--  **IGNORE_SOURCE_ID**\ =YES/NO. Whether to ignore \_id field in
-   features passed to CreateFeature(). Defaults to NO.
+-  .. lco:: INDEX_NAME
+
+      Name of the index to create (or reuse). By default the index name is the layer name.
+
+-  .. lco:: INDEX_DEFINITION
+      :choices: <filename>, <json>
+      :since: 2.4
+
+      Filename from which to read a user-defined index definition, or inlined index
+      definition as serialized JSon.
+
+-  .. lco:: MAPPING_NAME
+
+      (Elasticsearch < 7) Name of the mapping type within the index.
+      By default, the mapping name is "FeatureCollection" and the documents
+      will be written as GeoJSON Feature objects. If another mapping name
+      is chosen, a more "flat" structure will be used.  This option is
+      ignored when converting to Elasticsearch >=7 (see `Removal of mapping types <https://www.elastic.co/guide/en/elasticsearch/reference/current/removal-of-types.html>`__).
+      With Elasticsearch 7 or later, a "flat" structure is always used.
+
+-  .. lco:: MAPPING
+      :choices: <filename>, <json>
+
+      Filename from which to read a user-defined mapping, or mapping as serialized JSon.
+
+-  .. lco:: WRITE_MAPPING
+      :choices: <filename>
+
+      Creates a mapping file that can be
+      modified by the user prior to insert in to the index. No feature will
+      be written. This option is exclusive with :lco:`MAPPING`.
+
+-  .. lco:: OVERWRITE
+      :choices: YES, NO
+      :default: NO
+
+      Whether to overwrite an existing type mapping with the layer name to be created.
+
+-  .. lco:: OVERWRITE_INDEX
+      :choices: YES, NO
+      :default: NO
+      :since: 2.2
+
+      Whether to overwrite the whole index to which the layer belongs to. This
+      option is stronger than :lco:`OVERWRITE`. :lco:`OVERWRITE` will only proceed if the
+      type mapping corresponding to the layer is the single type mapping of
+      the index. In case there are several type mappings, the whole index
+      need to be destroyed (it is unsafe to destroy a mapping and the
+      documents that use it, since they might be used by other mappings.
+      This was possible in Elasticsearch 1.X, but no longer in later
+      versions).
+
+-  .. lco:: GEOMETRY_NAME
+      :default: geometry
+
+      Name of geometry column.
+
+-  .. lco:: GEOM_MAPPING_TYPE
+      :choices: AUTO, GEO_POINT, GEO_SHAPE
+      :default: AUTO
+
+      Mapping type for geometry fields. GEO_POINT uses the
+      `geo_point <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-point-type.html>`__
+      mapping type. If used, the "centroid" of the geometry is used. This
+      is the behavior of GDAL < 2.1. GEO_SHAPE uses the
+      `geo_shape <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-geo-shape-type.html>`__
+      mapping type, compatible of all geometry types. When using AUTO, for
+      geometry fields of type Point, a geo_point is used. In other cases,
+      geo_shape is used.
+
+-  .. lco:: GEO_SHAPE_ENCODING
+      :choices: <GeoJSON>, <WKT>
+      :since: 3.2.1
+
+      Encoding for geo_shape geometry fields. Defaults to GeoJSON. WKT is possible
+      since Elasticsearch 6.2
+
+-  .. lco:: GEOM_PRECISION
+      :choices: <value><unit>
+
+      Desired geometry precision.
+      Number followed by unit. For example 1m. For a geo_point geometry
+      field, this causes a compressed geometry format to be used. This
+      option is without effect if :lco:`MAPPING` is specified.
+
+-  .. lco:: STORE_FIELDS
+      :choices: YES, NO
+      :default: NO
+
+      Whether fields should be stored in the
+      index. Setting to YES sets the `"store"
+      property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
+      of the field mapping to "true" for all fields. (Note:
+      prior to GDAL 2.1, the default behavior was to store fields) This
+      option is without effect if :lco:`MAPPING` is specified.
+
+-  .. lco:: STORED_FIELDS
+
+      List of comma separated field names that should
+      be stored in the index. Those fields will have their `"store"
+      property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
+      of the field mapping set to "true". If all fields must be stored,
+      then using STORE_FIELDS=YES is a shortcut. This option is without
+      effect if :lco:`MAPPING` is specified.
+
+-  .. lco:: NOT_ANALYZED_FIELDS
+
+      List of comma separated field names that
+      should not be analyzed during indexing. Those fields will have their
+      `"index"
+      property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
+      of the field mapping set to "not_analyzed" (the default in
+      Elasticsearch is "analyzed"). A same field should not be specified
+      both in :lco:`NOT_ANALYZED_FIELDS` and ::lco:`NOT_INDEXED_FIELDS`. Starting with
+      GDAL 2.2, the {ALL} value can be used to designate all fields. This
+      option is without effect if :lco:`MAPPING` is specified.
+
+-  .. lco:: NOT_INDEXED_FIELDS
+
+      List of comma separated field names that
+      should not be indexed. Those fields will have their `"index"
+      property <https://www.elastic.co/guide/en/elasticsearch/reference/current/mapping-core-types.html>`__
+      of the field mapping set to "no" (the default in Elasticsearch is
+      "analyzed"). A same field should not be specified both in
+      :lco:`NOT_ANALYZED_FIELDS` and :lco:`NOT_INDEXED_FIELDS`. This option is without
+      effect if :lco:`MAPPING` is specified.
+
+-  .. lco:: FIELDS_WITH_RAW_VALUE
+      :since: 2.2
+
+      List of comma separated
+      field names (of type string) that should be created with an
+      additional raw/not_analyzed sub-field, or {ALL} to designate all
+      string analyzed fields. This is needed for sorting on those columns,
+      and can improve performance when filtering with SQL operators. This
+      option is without effect if :lco:`MAPPING` is specified.
+
+-  .. lco:: BULK_INSERT
+      :choices: YES, NO
+      :default: YES
+
+      Whether to use bulk insert for feature creation.
+
+-  .. lco:: BULK_SIZE
+      :choices: <bytes>
+      :default: 1000000
+
+      Size in bytes of the buffer for bulk upload.
+
+-  .. lco:: FID
+      :default: ogc_fid
+
+      Field name, with integer values, to use as FID. Can
+      be set to empty to disable the writing of the FID value.
+
+-  .. lco:: DOT_AS_NESTED_FIELD
+      :choices: YES, NO
+      :default: YES
+
+      Whether to consider dot character
+      in field name as sub-document.
+
+-  .. lco:: IGNORE_SOURCE_ID
+      :choices: YES, NO
+      :default: NO
+
+      Whether to ignore \_id field in features passed to CreateFeature().
 
 Configuration options
 ---------------------
 
-The following (deprecated) :ref:`configuration options <configoptions>` are 
-available. Starting with GDAL 2.1, layer creation options are also available 
+The following (deprecated) :ref:`configuration options <configoptions>` are
+available. Starting with GDAL 2.1, layer creation options are also available
 and should be preferred (see above):
 
--  :decl_configoption:`ES_WRITEMAP` =/path/to/mapfile.txt. Creates a mapping file that
-   can be modified by the user prior to insert in to the index. No
-   feature will be written. Note that this will properly work only if
-   only one single layer is created. Starting with GDAL 2.1, the
-   **WRITE_MAPPING** layer creation option should rather be used.
--  :decl_configoption:`ES_META` =/path/to/mapfile.txt. Tells the driver to the
-   user-defined field mappings. Starting with GDAL 2.1, the **MAPPING**
-   layer creation option should rather be used.
--  :decl_configoption:`ES_BULK` =5000000. Identifies the maximum size in bytes of the
-   buffer to store documents to be inserted at a time. Lower record
-   counts help with memory consumption within Elasticsearch but take
-   longer to insert. Starting with GDAL 2.1, the **BULK_SIZE** layer
-   creation option should rather be used.
--  :decl_configoption:`ES_OVERWRITE` =1. Overwrites the current index by deleting an
-   existing one. Starting with GDAL 2.1, the **OVERWRITE** layer
-   creation option should rather be used.
+-  .. config:: ES_WRITEMAP
+      :choices: <filename>
+
+      Creates a mapping file that
+      can be modified by the user prior to insert in to the index. No
+      feature will be written. Note that this will properly work only if
+      only one single layer is created. Starting with GDAL 2.1, the
+      :lco:`WRITE_MAPPING` layer creation option should be used instead.
+
+-  .. config:: ES_META
+      :choices: <filename>
+
+      Tells the driver to the
+      user-defined field mappings. Starting with GDAL 2.1, the lco:`MAPPING`
+      layer creation option should be used instead.
+
+-  .. config:: ES_BULK
+      :choices: <bytes>
+      :default: 5000000
+
+      Identifies the maximum size in bytes of the
+      buffer to store documents to be inserted at a time. Lower record
+      counts help with memory consumption within Elasticsearch but take
+      longer to insert. Starting with GDAL 2.1, the :lco:`BULK_SIZE` layer
+      creation option should be used instead.
+
+-  .. config:: ES_OVERWRITE
+      :choices: YES, NO
+      :default: NO
+
+      Overwrites the current index by deleting an
+      existing one. Starting with GDAL 2.1, the :lco:`OVERWRITE` layer
+      creation option should be used instead.
 
 Examples
 --------

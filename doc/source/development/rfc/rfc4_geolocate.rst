@@ -8,7 +8,7 @@ Author: Frank Warmerdam
 
 Contact: warmerdam@pobox.com
 
-Status: Development
+Status: Adopted, implemented
 
 Summary
 -------

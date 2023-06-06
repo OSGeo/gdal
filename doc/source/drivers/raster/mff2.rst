@@ -33,7 +33,7 @@ before setting the geotransform (this is necessary because the
 geotransform is stored internally as 5 latitude-longitude ground control
 points, and the projection is needed to do the conversion).
 
-NOTE: Implemented as ``gdal/frmts/raw/hkvdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/raw/hkvdataset.cpp`.
 
 Driver capabilities
 -------------------

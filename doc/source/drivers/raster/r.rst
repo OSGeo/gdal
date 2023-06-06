@@ -28,10 +28,19 @@ Driver capabilities
 Creation Options
 ----------------
 
--  **ASCII=YES/NO**: Produce an ASCII formatted file, instead of binary,
-   if set to YES. Default is NO.
--  **COMPRESS=YES/NO**: Produces a compressed file if YES, otherwise an
-   uncompressed file. Default is YES.
+-  .. oo:: ASCII
+      :choices: YES, NO
+      :default: NO
+
+      Produce an ASCII formatted file, instead of binary,
+      if set to YES.
+
+-  .. oo:: COMPRESS
+      :choices: YES, NO
+      :default: YES
+
+      Produces a compressed file if YES, otherwise an
+      uncompressed file.
 
 See Also:
 

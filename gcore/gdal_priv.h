@@ -360,6 +360,8 @@ class CPL_DLL GDALDataset : public GDALMajorObject
 
     CPL_INTERNAL void AddToDatasetOpenList();
 
+    CPL_INTERNAL void UnregisterFromSharedDataset();
+
     CPL_INTERNAL static void ReportErrorV(const char *pszDSName,
                                           CPLErr eErrClass, CPLErrorNum err_no,
                                           const char *fmt, va_list args);
@@ -1352,6 +1354,11 @@ class CPL_DLL GDALRasterBand : public GDALMajorObject
     int InitBlockInfo();
 
     void AddBlockToFreeList(GDALRasterBlock *);
+
+    bool HasBlockCache() const
+    {
+        return poBandBlockCache != nullptr;
+    }
 
     bool HasDirtyBlocks() const
     {
@@ -2431,7 +2438,7 @@ class CPL_DLL GDALAbstractMDArray
     GDALAbstractMDArray(const std::string &osParentName,
                         const std::string &osName);
 
-    void SetSelf(std::weak_ptr<GDALAbstractMDArray> self)
+    void SetSelf(const std::shared_ptr<GDALAbstractMDArray> &self)
     {
         m_pSelf = self;
     }

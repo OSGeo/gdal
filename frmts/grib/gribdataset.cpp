@@ -2461,12 +2461,45 @@ void GRIBDataset::SetGribMetaData(grib_MetaData *meta)
     }
 
     const bool bHaveEarthModel =
-        meta->gds.majEarth != 0.0 || meta->gds.minEarth != 0.0;
+        meta->gds.majEarth > 0.0 && meta->gds.minEarth > 0.0;
     // In meters.
-    const double a = bHaveEarthModel ? meta->gds.majEarth * 1.0e3 : 6377563.396;
-    const double b = bHaveEarthModel ? meta->gds.minEarth * 1.0e3 : 6356256.910;
+    const double a = bHaveEarthModel
+                         ? meta->gds.majEarth * 1.0e3
+                         : CPLAtof(CPLGetConfigOption("GRIB_DEFAULT_SEMI_MAJOR",
+                                                      "6377563.396"));
+    const double b =
+        bHaveEarthModel
+            ? meta->gds.minEarth * 1.0e3
+            : (meta->gds.f_sphere
+                   ? a
+                   : CPLAtof(CPLGetConfigOption("GRIB_DEFAULT_SEMI_MINOR",
+                                                "6356256.910")));
+    if (meta->gds.majEarth == 0 || meta->gds.minEarth == 0)
+    {
+        CPLDebug("GRIB", "No earth model. Assuming a=%f and b=%f", a, b);
+    }
+    else if (meta->gds.majEarth < 0 || meta->gds.minEarth < 0)
+    {
+        const char *pszUseDefaultSpheroid =
+            CPLGetConfigOption("GRIB_USE_DEFAULT_SPHEROID", nullptr);
+        if (!pszUseDefaultSpheroid)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "The GRIB file contains invalid values for the spheroid. "
+                     "You may set the GRIB_USE_DEFAULT_SPHEROID configuration "
+                     "option to YES to use a default spheroid with "
+                     "a=%f and b=%f",
+                     a, b);
+            return;
+        }
+        else if (!CPLTestBool(pszUseDefaultSpheroid))
+        {
+            return;
+        }
+        CPLDebug("GRIB", "Invalid earth model. Assuming a=%f and b=%f", a, b);
+    }
 
-    if (meta->gds.f_sphere)
+    if (meta->gds.f_sphere || (a == b))
     {
         oSRS.SetGeogCS("Coordinate System imported from GRIB file", nullptr,
                        "Sphere", a, 0.0);

@@ -799,81 +799,161 @@ TEST_F(test_cpl, VSIMalloc)
     CPLPushErrorHandler(CPLQuietErrorHandler);
 
     // The following tests will fail because of overflows
-    CPLErrorReset();
-    ASSERT_TRUE(VSIMalloc2(~(size_t)0, ~(size_t)0) == nullptr);
-    ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
 
-    CPLErrorReset();
-    ASSERT_TRUE(VSIMalloc3(1, ~(size_t)0, ~(size_t)0) == nullptr);
-    ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+    {
+        CPLErrorReset();
+        void *ptr = VSIMalloc2(~(size_t)0, ~(size_t)0);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+        EXPECT_NE(CPLGetLastErrorType(), CE_None);
+    }
 
-    CPLErrorReset();
-    ASSERT_TRUE(VSIMalloc3(~(size_t)0, 1, ~(size_t)0) == nullptr);
-    ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+    {
+        CPLErrorReset();
+        void *ptr = VSIMalloc3(1, ~(size_t)0, ~(size_t)0);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+        EXPECT_NE(CPLGetLastErrorType(), CE_None);
+    }
 
-    CPLErrorReset();
-    ASSERT_TRUE(VSIMalloc3(~(size_t)0, ~(size_t)0, 1) == nullptr);
-    ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+    {
+        CPLErrorReset();
+        void *ptr = VSIMalloc3(~(size_t)0, 1, ~(size_t)0);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+        EXPECT_NE(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+        CPLErrorReset();
+        void *ptr = VSIMalloc3(~(size_t)0, ~(size_t)0, 1);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+        EXPECT_NE(CPLGetLastErrorType(), CE_None);
+    }
 
     if (!CSLTestBoolean(CPLGetConfigOption("SKIP_MEM_INTENSIVE_TEST", "NO")))
     {
         // The following tests will fail because such allocations cannot succeed
 #if SIZEOF_VOIDP == 8
-        CPLErrorReset();
-        ASSERT_TRUE(VSIMalloc(~(size_t)0) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() == CE_None); /* no error reported */
+        {
+            CPLErrorReset();
+            void *ptr = VSIMalloc(~(size_t)0);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_EQ(CPLGetLastErrorType(), CE_None); /* no error reported */
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSIMalloc2(~(size_t)0, 1) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+        {
+            CPLErrorReset();
+            void *ptr = VSIMalloc2(~(size_t)0, 1);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_NE(CPLGetLastErrorType(), CE_None);
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSIMalloc3(~(size_t)0, 1, 1) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+        {
+            CPLErrorReset();
+            void *ptr = VSIMalloc3(~(size_t)0, 1, 1);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_NE(CPLGetLastErrorType(), CE_None);
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSICalloc(~(size_t)0, 1) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() == CE_None); /* no error reported */
+        {
+            CPLErrorReset();
+            void *ptr = VSICalloc(~(size_t)0, 1);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_EQ(CPLGetLastErrorType(), CE_None); /* no error reported */
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSIRealloc(nullptr, ~(size_t)0) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() == CE_None); /* no error reported */
+        {
+            CPLErrorReset();
+            void *ptr = VSIRealloc(nullptr, ~(size_t)0);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_EQ(CPLGetLastErrorType(), CE_None); /* no error reported */
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSI_MALLOC_VERBOSE(~(size_t)0) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+        {
+            CPLErrorReset();
+            void *ptr = VSI_MALLOC_VERBOSE(~(size_t)0);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_NE(CPLGetLastErrorType(), CE_None);
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSI_MALLOC2_VERBOSE(~(size_t)0, 1) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+        {
+            CPLErrorReset();
+            void *ptr = VSI_MALLOC2_VERBOSE(~(size_t)0, 1);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_NE(CPLGetLastErrorType(), CE_None);
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSI_MALLOC3_VERBOSE(~(size_t)0, 1, 1) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+        {
+            CPLErrorReset();
+            void *ptr = VSI_MALLOC3_VERBOSE(~(size_t)0, 1, 1);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_NE(CPLGetLastErrorType(), CE_None);
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSI_CALLOC_VERBOSE(~(size_t)0, 1) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+        {
+            CPLErrorReset();
+            void *ptr = VSI_CALLOC_VERBOSE(~(size_t)0, 1);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_NE(CPLGetLastErrorType(), CE_None);
+        }
 
-        CPLErrorReset();
-        ASSERT_TRUE(VSI_REALLOC_VERBOSE(nullptr, ~(size_t)0) == nullptr);
-        ASSERT_TRUE(CPLGetLastErrorType() != CE_None);
+        {
+            CPLErrorReset();
+            void *ptr = VSI_REALLOC_VERBOSE(nullptr, ~(size_t)0);
+            EXPECT_EQ(ptr, nullptr);
+            VSIFree(ptr);
+            EXPECT_NE(CPLGetLastErrorType(), CE_None);
+        }
 #endif
     }
 
     CPLPopErrorHandler();
 
     // The following allocs will return NULL because of 0 byte alloc
-    CPLErrorReset();
-    ASSERT_TRUE(VSIMalloc2(0, 1) == nullptr);
-    ASSERT_TRUE(CPLGetLastErrorType() == CE_None);
-    ASSERT_TRUE(VSIMalloc2(1, 0) == nullptr);
+    {
+        CPLErrorReset();
+        void *ptr = VSIMalloc2(0, 1);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
 
-    CPLErrorReset();
-    ASSERT_TRUE(VSIMalloc3(0, 1, 1) == nullptr);
-    ASSERT_TRUE(CPLGetLastErrorType() == CE_None);
-    ASSERT_TRUE(VSIMalloc3(1, 0, 1) == nullptr);
-    ASSERT_TRUE(VSIMalloc3(1, 1, 0) == nullptr);
+    {
+        void *ptr = VSIMalloc2(1, 0);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+    }
+
+    {
+        CPLErrorReset();
+        void *ptr = VSIMalloc3(0, 1, 1);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+        EXPECT_EQ(CPLGetLastErrorType(), CE_None);
+    }
+
+    {
+        void *ptr = VSIMalloc3(1, 0, 1);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+    }
+
+    {
+        void *ptr = VSIMalloc3(1, 1, 0);
+        EXPECT_EQ(ptr, nullptr);
+        VSIFree(ptr);
+    }
 }
 
 TEST_F(test_cpl, CPLFormFilename)

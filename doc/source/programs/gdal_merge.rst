@@ -102,19 +102,72 @@ target pixel in the resulting raster nor will it overwrite a valid pixel value.
     gdal_merge.py is a Python script, and will only work if GDAL was built
     with Python support.
 
-Example
--------
+Examples
+--------
 
-Create an image with the pixels in all bands initialized to 255.
+Creating an image with the pixels in all bands initialized to 255
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ::
 
     gdal_merge.py -init 255 -o out.tif in1.tif in2.tif
 
 
-Create an RGB image that shows blue in pixels with no data. The first two bands
-will be initialized to 0 and the third band will be initialized to 255.
+Creating an RGB image that shows blue in pixels with no data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The first two bands will be initialized to 0 and the third band will be
+initialized to 255.
 
 ::
 
     gdal_merge.py -init "0 0 255" -o out.tif in1.tif in2.tif
+
+
+Passing a large list of files to :program:`gdal_merge`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A large list of files can be passed to :program:`gdal_merge` by
+listing them in a text file using:
+
+.. code-block:: bash
+
+   ls -1 *.tif > tiff_list.txt
+
+on Linux, or
+
+.. code-block:: doscon
+
+   dir /b /s *.tif > tiff_list.txt
+
+on Windows. The text file can then be passed to :program:`gdal_merge`
+using `--optfile`:
+
+::
+
+   gdal_merge.py -o mosaic.tif --optfile tiff_list.txt
+
+Creating an RGB image by merging 3 different greyscale bands
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Conduct "merging by stacking" with the :option:`-separate` flag. Given three
+greyscale files that cover the same area, you can run:
+
+.. code-block:: bash
+
+   gdal_merge.py -separate 1.tif 2.tif 3.tif -o rgb.tif
+
+This maps :file:`1.tif` to red, :file:`2.tif` to green and :file:`3.tif` to blue.
+
+Specifying overlap precedence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The last image in the input line comes out on top of the finished image stack.
+You might also need to use :option:`-n` to note which value should not be
+copied into the destination image if it is not already defined as nodata.
+
+
+.. code-block:: bash
+
+   gdal_merge.py -o merge.tif -n 0 image1.tif image2.tif image3.tif image4.tif
+

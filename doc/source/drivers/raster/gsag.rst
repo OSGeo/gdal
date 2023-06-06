@@ -14,7 +14,7 @@ This format is supported for both reading and writing (including create,
 delete, and copy). Currently the associated formats for color, metadata,
 and shapes are not supported.
 
-NOTE: Implemented as ``gdal/frmts/gsg/gsagdataset.cpp``.
+NOTE: Implemented as :source_file:`frmts/gsg/gsagdataset.cpp`.
 
 Driver capabilities
 -------------------

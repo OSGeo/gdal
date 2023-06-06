@@ -36,6 +36,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+#include <limits>
 #include <vector>
 
 #include "commonutils.h"
@@ -262,8 +263,7 @@ static CPLErr ProcessLayer(OGRLayerH hSrcLayer, bool bSRSIsSet,
         if (iBurnField == -1)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Failed to find field %s on layer %s, skipping.",
-                     pszBurnAttribute,
+                     "Failed to find field %s on layer %s.", pszBurnAttribute,
                      OGR_FD_GetName(OGR_L_GetLayerDefn(hSrcLayer)));
             if (hCT != nullptr)
                 OCTDestroyCoordinateTransformation(hCT);
@@ -482,6 +482,7 @@ static GDALDatasetH CreateOutputDataset(
 
             if (bFirstLayer)
             {
+                bGotBounds = true;
                 sEnvelop.MinX = sLayerEnvelop.MinX;
                 sEnvelop.MinY = sLayerEnvelop.MinY;
                 sEnvelop.MaxX = sLayerEnvelop.MaxX;
@@ -512,6 +513,12 @@ static GDALDatasetH CreateOutputDataset(
         }
     }
 
+    if (!bGotBounds)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "Could not determine bounds");
+        return nullptr;
+    }
+
     if (dfXRes == 0 && dfYRes == 0)
     {
         if (nXSize == 0 || nYSize == 0)
@@ -536,10 +543,20 @@ static GDALDatasetH CreateOutputDataset(
 
     if (nXSize == 0 && nYSize == 0)
     {
-        nXSize =
-            static_cast<int>(0.5 + (sEnvelop.MaxX - sEnvelop.MinX) / dfXRes);
-        nYSize =
-            static_cast<int>(0.5 + (sEnvelop.MaxY - sEnvelop.MinY) / dfYRes);
+        const double dfXSize = 0.5 + (sEnvelop.MaxX - sEnvelop.MinX) / dfXRes;
+        const double dfYSize = 0.5 + (sEnvelop.MaxY - sEnvelop.MinY) / dfYRes;
+        if (dfXSize > std::numeric_limits<int>::max() ||
+            dfXSize < std::numeric_limits<int>::min() ||
+            dfYSize > std::numeric_limits<int>::max() ||
+            dfYSize < std::numeric_limits<int>::min())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid computed output raster size: %f x %f", dfXSize,
+                     dfYSize);
+            return nullptr;
+        }
+        nXSize = static_cast<int>(dfXSize);
+        nYSize = static_cast<int>(dfYSize);
     }
 
     GDALDatasetH hDstDS =
@@ -848,7 +865,11 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                 hLayer = GDALDatasetGetLayer(hSrcDataset, 0);
             if (hLayer == nullptr)
             {
-                continue;
+                CPLError(
+                    CE_Failure, CPLE_AppDefined, "Unable to find layer \"%s\".",
+                    psOptions->papszLayers ? psOptions->papszLayers[i] : "0");
+                GDALRasterizeOptionsFree(psOptionsToFree);
+                return nullptr;
             }
             if (eOutputType == GDT_Unknown &&
                 psOptions->pszBurnAttribute != nullptr)
@@ -902,16 +923,20 @@ GDALDatasetH GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
         if (hLayer == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Unable to find layer \"%s\", skipping.",
+                     "Unable to find layer \"%s\".",
                      psOptions->papszLayers ? psOptions->papszLayers[i] : "0");
-            continue;
+            eErr = CE_Failure;
+            break;
         }
 
         if (psOptions->pszWHERE)
         {
             if (OGR_L_SetAttributeFilter(hLayer, psOptions->pszWHERE) !=
                 OGRERR_NONE)
+            {
+                eErr = CE_Failure;
                 break;
+            }
         }
 
         void *pScaledProgress = GDALCreateScaledProgress(

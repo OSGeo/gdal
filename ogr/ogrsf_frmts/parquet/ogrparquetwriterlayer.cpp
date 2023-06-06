@@ -43,6 +43,8 @@ OGRParquetWriterLayer::OGRParquetWriterLayer(
     const char *pszLayerName)
     : OGRArrowWriterLayer(poMemoryPool, poOutputStream, pszLayerName)
 {
+    m_bWriteFieldArrowExtensionName = CPLTestBool(
+        CPLGetConfigOption("OGR_PARQUET_WRITE_ARROW_EXTENSION_NAME", "NO"));
 }
 
 /************************************************************************/
@@ -108,6 +110,11 @@ bool OGRParquetWriterLayer::SetOptions(CSLConstList papszOptions,
             return false;
         }
     }
+
+    const char *pszCoordPrecision =
+        CSLFetchNameValue(papszOptions, "COORDINATE_PRECISION");
+    if (pszCoordPrecision)
+        m_nWKTCoordinatePrecision = atoi(pszCoordPrecision);
 
     m_bForceCounterClockwiseOrientation =
         EQUAL(CSLFetchNameValueDef(papszOptions, "POLYGON_ORIENTATION",
@@ -351,6 +358,12 @@ static void RemoveIDFromMemberOfEnsembles(CPLJSONObject &obj)
 
 std::string OGRParquetWriterLayer::GetGeoMetadata() const
 {
+    // Just for unit testing purposes
+    const char *pszGeoMetadata =
+        CPLGetConfigOption("OGR_PARQUET_GEO_METADATA", nullptr);
+    if (pszGeoMetadata)
+        return pszGeoMetadata;
+
     if (m_poFeatureDefn->GetGeomFieldCount() != 0 &&
         CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_GEO", "YES")))
     {
@@ -366,7 +379,7 @@ std::string OGRParquetWriterLayer::GetGeoMetadata() const
             CPLJSONObject oColumn;
             oColumns.Add(poGeomFieldDefn->GetNameRef(), oColumn);
             oColumn.Add("encoding",
-                        GetGeomEncodingAsString(m_aeGeomEncoding[i]));
+                        GetGeomEncodingAsString(m_aeGeomEncoding[i], true));
 
             if (CPLTestBool(CPLGetConfigOption("OGR_PARQUET_WRITE_CRS", "YES")))
             {
@@ -543,8 +556,8 @@ void OGRParquetWriterLayer::PerformStepsBeforeFinalFlushGroup()
             {
                 // The serialized schema is not UTF-8, which is required for
                 // Thrift
-                std::string schema_as_string = (*status)->ToString();
-                std::string schema_base64 =
+                const std::string schema_as_string = (*status)->ToString();
+                const std::string schema_base64 =
                     ::arrow::util::base64_encode(schema_as_string);
                 static const std::string kArrowSchemaKey = "ARROW:schema";
                 const_cast<arrow::KeyValueMetadata *>(
@@ -582,9 +595,9 @@ Open(const ::arrow::Schema &schema, ::arrow::MemoryPool *pool,
     *outMetadata = metadata;
 
     std::unique_ptr<parquet::ParquetFileWriter> base_writer;
-    PARQUET_CATCH_NOT_OK(
-        base_writer = parquet::ParquetFileWriter::Open(
-            std::move(sink), schema_node, std::move(properties), metadata));
+    PARQUET_CATCH_NOT_OK(base_writer = parquet::ParquetFileWriter::Open(
+                             std::move(sink), std::move(schema_node),
+                             std::move(properties), metadata));
 
     auto schema_ptr = std::make_shared<::arrow::Schema>(schema);
     return parquet::arrow::FileWriter::Make(
@@ -642,7 +655,7 @@ void OGRParquetWriterLayer::CreateWriter()
         parquet::ArrowWriterProperties::Builder().store_schema()->build();
     CPL_IGNORE_RET_VAL(Open(*m_poSchema, m_poMemoryPool, m_poOutputStream,
                             m_oWriterPropertiesBuilder.build(),
-                            arrowWriterProperties, &m_poFileWriter,
+                            std::move(arrowWriterProperties), &m_poFileWriter,
                             &m_poKeyValueMetadata));
 }
 
