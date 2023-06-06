@@ -702,7 +702,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
 
             if (parent->nBands == 4)
             {
-                for (int i = 0; i < nBytes; i++)
+                for (size_t i = 0; i < nBytes; i++)
                 {
                     const GByte byVal = pabyTileData[4 * i];
                     pabyTileData[4 * i] = abyCT[4 * byVal];
@@ -713,7 +713,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
             }
             else if (parent->nBands == 3)
             {
-                for (int i = 0; i < nBytes; i++)
+                for (size_t i = 0; i < nBytes; i++)
                 {
                     const GByte byVal = pabyTileData[3 * i];
                     pabyTileData[3 * i] = abyCT[4 * byVal];
@@ -724,7 +724,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
             else
             {
                 // Assuming grayscale output
-                for (int i = 0; i < nBytes; i++)
+                for (size_t i = 0; i < nBytes; i++)
                 {
                     const GByte byVal = pabyTileData[i];
                     pabyTileData[i] = abyCT[4 * byVal];
