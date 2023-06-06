@@ -254,6 +254,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
 {
     if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
         (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
+        (gdal_type == GDT_Int64 && buf_type != GDT_Int64 && buf_type != GDT_UInt64) ||
         (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
         (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
   {
@@ -304,12 +305,14 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
 %apply (char *regularArrayOut, long nRegularArraySizeOut) { (char *regularArrayOut, long nRegularArraySizeOut) };
 %apply (short *regularArrayOut, long nRegularArraySizeOut) { (short *regularArrayOut, long nRegularArraySizeOut) };
 %apply (int *regularArrayOut, long nRegularArraySizeOut) { (int *regularArrayOut, long nRegularArraySizeOut) };
+%apply (int64_t *regularArrayOut, long nRegularArraySizeOut) { (int64_t *regularArrayOut, long nRegularArraySizeOut) };
 %apply (float *regularArrayOut, long nRegularArraySizeOut) { (float *regularArrayOut, long nRegularArraySizeOut) };
 %apply (double *regularArrayOut, long nRegularArraySizeOut) { (double *regularArrayOut, long nRegularArraySizeOut) };
 
 %apply (char *regularArrayIn, long nRegularArraySizeIn) { (char *regularArrayIn, long nRegularArraySizeIn) };
 %apply (short *regularArrayIn, long nRegularArraySizeIn) { (short *regularArrayIn, long nRegularArraySizeIn) };
 %apply (int *regularArrayIn, long nRegularArraySizeIn) { (int *regularArrayIn, long nRegularArraySizeIn) };
+%apply (int64_t *regularArrayIn, long nRegularArraySizeIn) { (int64_t *regularArrayIn, long nRegularArraySizeIn) };
 %apply (float *regularArrayIn, long nRegularArraySizeIn) { (float *regularArrayIn, long nRegularArraySizeIn) };
 %apply (double *regularArrayIn, long nRegularArraySizeIn) { (double *regularArrayIn, long nRegularArraySizeIn) };
 
@@ -353,6 +356,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
   DEFINE_DS_READ_RASTER(char, GDT_Byte)
   DEFINE_DS_READ_RASTER(short, GDT_Int16)
   DEFINE_DS_READ_RASTER(int, GDT_Int32)
+  DEFINE_DS_READ_RASTER(int64_t, GDT_Int64)
   DEFINE_DS_READ_RASTER(float, GDT_Float32)
   DEFINE_DS_READ_RASTER(double, GDT_Float64)
 
@@ -396,6 +400,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
   DEFINE_DS_WRITE_RASTER(char, GDT_Byte)
   DEFINE_DS_WRITE_RASTER(short, GDT_Int16)
   DEFINE_DS_WRITE_RASTER(int, GDT_Int32)
+  DEFINE_DS_WRITE_RASTER(int64_t, GDT_Int64)
   DEFINE_DS_WRITE_RASTER(float, GDT_Float32)
   DEFINE_DS_WRITE_RASTER(double, GDT_Float64)
 
@@ -420,6 +425,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 {
     if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
         (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
+        (gdal_type == GDT_Int64 && buf_type != GDT_Int64 && buf_type != GDT_UInt64) ||
         (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
         (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
     {
@@ -488,6 +494,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
   DEFINE_READ_RASTER(char, GDT_Byte)
   DEFINE_READ_RASTER(short, GDT_Int16)
   DEFINE_READ_RASTER(int, GDT_Int32)
+  DEFINE_READ_RASTER(int64_t, GDT_Int64)
   DEFINE_READ_RASTER(float, GDT_Float32)
   DEFINE_READ_RASTER(double, GDT_Float64)
 
@@ -526,6 +533,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
   DEFINE_WRITE_RASTER(char, GDT_Byte)
   DEFINE_WRITE_RASTER(short, GDT_Int16)
   DEFINE_WRITE_RASTER(int, GDT_Int32)
+  DEFINE_WRITE_RASTER(int64_t, GDT_Int64)
   DEFINE_WRITE_RASTER(float, GDT_Float32)
   DEFINE_WRITE_RASTER(double, GDT_Float64)
 
@@ -549,12 +557,14 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 %clear (char *regularArrayOut, long nRegularArraySizeOut);
 %clear (short *regularArrayOut, long nRegularArraySizeOut);
 %clear (int *regularArrayOut, long nRegularArraySizeOut);
+%clear (int64_t *regularArrayOut, long nRegularArraySizeOut);
 %clear (float *regularArrayOut, long nRegularArraySizeOut);
 %clear (double *regularArrayOut, long nRegularArraySizeOut);
 
 %clear (char *regularArrayIn, long nRegularArraySizeIn);
 %clear (short *regularArrayIn, long nRegularArraySizeIn);
 %clear (int *regularArrayIn, long nRegularArraySizeIn);
+%clear (int64_t *regularArrayIn, long nRegularArraySizeIn);
 %clear (float *regularArrayIn, long nRegularArraySizeIn);
 %clear (double *regularArrayIn, long nRegularArraySizeIn);
 
@@ -801,6 +811,14 @@ import org.gdal.gdalconst.gdalconstConstants;
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int32, array);
    }
 
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, long[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+
+   public int ReadRaster(int xoff, int yoff, int xsize, int ysize, long[] array) {
+       return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int64, array);
+   }
+
    public int ReadRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array) {
        return ReadRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
    }
@@ -854,6 +872,14 @@ import org.gdal.gdalconst.gdalconstConstants;
 
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int[] array) {
        return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int32, array);
+   }
+
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, long[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, buf_type, array);
+   }
+
+   public int WriteRaster(int xoff, int yoff, int xsize, int ysize, long[] array) {
+       return WriteRaster(xoff, yoff, xsize, ysize, xsize, ysize, gdalconstConstants.GDT_Int64, array);
    }
 
    public int WriteRaster(int xoff, int yoff, int xsize, int ysize, int buf_type, float[] array) {

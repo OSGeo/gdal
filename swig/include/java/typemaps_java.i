@@ -1571,6 +1571,11 @@ DEFINE_REGULAR_ARRAY_OUT(int, jint, SetIntArrayRegion);
 %typemap(jtype) (int *regularArrayOut, long nRegularArraySizeOut)  "int[]"
 %typemap(jstype) (int *regularArrayOut, long nRegularArraySizeOut)  "int[]"
 
+DEFINE_REGULAR_ARRAY_OUT(int64_t, jlong, SetLongArrayRegion);
+%typemap(jni) (int64_t *regularArrayOut, long nRegularArraySizeOut)  "jlongArray"
+%typemap(jtype) (int64_t *regularArrayOut, long nRegularArraySizeOut)  "long[]"
+%typemap(jstype) (int64_t *regularArrayOut, long nRegularArraySizeOut)  "long[]"
+
 DEFINE_REGULAR_ARRAY_OUT(float, jfloat, SetFloatArrayRegion);
 %typemap(jni) (float *regularArrayOut, long nRegularArraySizeOut)  "jfloatArray"
 %typemap(jtype) (float *regularArrayOut, long nRegularArraySizeOut)  "float[]"
@@ -1634,6 +1639,11 @@ DEFINE_REGULAR_ARRAY_IN(int, jint, GetIntArrayElements, ReleaseIntArrayElements)
 %typemap(jni) (int *regularArrayIn, long nRegularArraySizeIn)  "jintArray"
 %typemap(jtype) (int *regularArrayIn, long nRegularArraySizeIn)  "int[]"
 %typemap(jstype) (int *regularArrayIn, long nRegularArraySizeIn)  "int[]"
+
+DEFINE_REGULAR_ARRAY_IN(int64_t, jlong, GetLongArrayElements, ReleaseLongArrayElements);
+%typemap(jni) (int64_t *regularArrayIn, long nRegularArraySizeIn)  "jlongArray"
+%typemap(jtype) (int64_t *regularArrayIn, long nRegularArraySizeIn)  "long[]"
+%typemap(jstype) (int64_t *regularArrayIn, long nRegularArraySizeIn)  "long[]"
 
 DEFINE_REGULAR_ARRAY_IN(float, jfloat, GetFloatArrayElements, ReleaseFloatArrayElements);
 %typemap(jni) (float *regularArrayIn, long nRegularArraySizeIn)  "jfloatArray"

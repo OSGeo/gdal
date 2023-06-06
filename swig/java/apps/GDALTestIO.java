@@ -163,6 +163,8 @@ public class GDALTestIO implements Runnable
     {
         gdal.AllRegister();
 
+        testInt64();
+        
         int nbIters = 50;
 
         method = METHOD_JAVA_ARRAYS;
@@ -200,4 +202,32 @@ public class GDALTestIO implements Runnable
 
         System.out.println("Success !");
     }
+    
+    private static void testInt64() {
+		
+		long[] data1;
+		long[] data2;
+		
+		int xSz = 5;
+		int ySz = 2;
+		int nBands = 1;
+        Driver driver = gdal.GetDriverByName("MEM");
+        Dataset dataset = driver.Create("fred", xSz, ySz, nBands, gdalconst.GDT_Int64);
+        data1 = new long[]{1,43L*Integer.MAX_VALUE,3,4,5,6,7,8,9,10};
+        data2 = new long[data1.length];
+        dataset.WriteRaster(0, 0, xSz, ySz, xSz, ySz, gdalconst.GDT_Int64, data1, new int[]{1});
+        dataset.ReadRaster(0, 0, xSz, ySz, xSz, ySz, gdalconst.GDT_Int64, data2, new int[]{1});
+        for (int i = 0; i < data1.length; i++) {
+			if (data1[i] != data2[i])
+                throw new RuntimeException("int64 write and read values are not the same "+data1[i]+" "+data2[i]);
+		}
+        data1 = new long[data2.length];
+        data2 = new long[]{10,9,8,7,6,5,4,3,2,1};
+        dataset.GetRasterBand(1).WriteRaster(0, 0, xSz, ySz, xSz, ySz, gdalconst.GDT_Int64, data1);
+        dataset.GetRasterBand(1).ReadRaster(0, 0, xSz, ySz, xSz, ySz, gdalconst.GDT_Int64, data2);
+        for (int i = 0; i < data1.length; i++) {
+			if (data1[i] != data2[i])
+                throw new RuntimeException("int64 write and read values are not the same "+data1[i]+" "+data2[i]);
+		}
+	}
 }
