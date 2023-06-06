@@ -585,6 +585,8 @@ jobs:
         brew install ccache swig
         # gdal is automatically installed as a dependency for postgis
         brew uninstall --ignore-dependencies gdal
+        # Remove broken Arrow as it causes CMake detection issue
+        rm -rf /usr/local/lib/cmake/Arrow
     - name: Configure ccache
       run: |
           echo CCACHE_BASEDIR=$PWD >> ${GITHUB_ENV}
