@@ -441,14 +441,6 @@ available:
      the 2 GB file size limit when updating a shapefile. If nothing is set, a
      warning will be emitted when the 2 GB limit is reached.
 
-- .. config:: OGR_ORGANIZE_POLYGONS
-     :choices: DEFAULT
-
-     can be set to DEFAULT to activate
-     a full analysis based on topological relationships of the parts of the
-     polygons to make sure that the ring ordering of all polygons are correct
-     according to the OGC Simple Feature convention.
-
 - .. config:: SHAPE_ENCODING
 
      may be used to override the encoding
