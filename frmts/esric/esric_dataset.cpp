@@ -647,6 +647,7 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
     int ubands[4] = {1, 1, 1, 1};
     int *usebands = nullptr;
     int bandcount = parent->nBands;
+    GDALColorTableH hCT = nullptr;
     if (inbands != bandcount)
     {
         // Opaque if output expects alpha channel
@@ -666,12 +667,77 @@ CPLErr ECBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
         {
             // Grayscale, expecting color
             usebands = ubands;
+            // Check for the color table of 1 band rasters
+            hCT = GDALGetRasterColorTable(GDALGetRasterBand(inds, 1));
         }
     }
 
-    auto errcode = GDALDatasetRasterIO(
-        inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte,
-        bandcount, usebands, parent->nBands, parent->nBands * TSZ, 1);
+    auto errcode = CE_None;
+    if (nullptr != hCT)
+    {
+        // Expand color indexed to RGB(A)
+        errcode = GDALDatasetRasterIO(
+            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte, 1,
+            usebands, parent->nBands, parent->nBands * TSZ, 1);
+        if (CE_None == errcode)
+        {
+            GByte abyCT[4 * 256];
+            GByte *pabyTileData = buffer.data();
+            const int nEntries = std::min(256, GDALGetColorEntryCount(hCT));
+            for (int i = 0; i < nEntries; i++)
+            {
+                const GDALColorEntry *psEntry = GDALGetColorEntry(hCT, i);
+                abyCT[4 * i] = static_cast<GByte>(psEntry->c1);
+                abyCT[4 * i + 1] = static_cast<GByte>(psEntry->c2);
+                abyCT[4 * i + 2] = static_cast<GByte>(psEntry->c3);
+                abyCT[4 * i + 3] = static_cast<GByte>(psEntry->c4);
+            }
+            for (int i = nEntries; i < 256; i++)
+            {
+                abyCT[4 * i] = 0;
+                abyCT[4 * i + 1] = 0;
+                abyCT[4 * i + 2] = 0;
+                abyCT[4 * i + 3] = 0;
+            }
+
+            if (parent->nBands == 4)
+            {
+                for (int i = 0; i < nBytes; i++)
+                {
+                    const GByte byVal = pabyTileData[4 * i];
+                    pabyTileData[4 * i] = abyCT[4 * byVal];
+                    pabyTileData[4 * i + 1] = abyCT[4 * byVal + 1];
+                    pabyTileData[4 * i + 2] = abyCT[4 * byVal + 2];
+                    pabyTileData[4 * i + 3] = abyCT[4 * byVal + 3];
+                }
+            }
+            else if (parent->nBands == 3)
+            {
+                for (int i = 0; i < nBytes; i++)
+                {
+                    const GByte byVal = pabyTileData[3 * i];
+                    pabyTileData[3 * i] = abyCT[4 * byVal];
+                    pabyTileData[3 * i + 1] = abyCT[4 * byVal + 1];
+                    pabyTileData[3 * i + 2] = abyCT[4 * byVal + 2];
+                }
+            }
+            else
+            {
+                // Assuming grayscale output
+                for (int i = 0; i < nBytes; i++)
+                {
+                    const GByte byVal = pabyTileData[i];
+                    pabyTileData[i] = abyCT[4 * byVal];
+                }
+            }
+        }
+    }
+    else
+    {
+        errcode = GDALDatasetRasterIO(
+            inds, GF_Read, 0, 0, TSZ, TSZ, buffer.data(), TSZ, TSZ, GDT_Byte,
+            bandcount, usebands, parent->nBands, parent->nBands * TSZ, 1);
+    }
     GDALClose(inds);
     VSIUnlink(magic.c_str());
     // Error while unpacking tile
