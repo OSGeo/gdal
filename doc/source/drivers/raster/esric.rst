@@ -31,6 +31,21 @@ folder of the cache.  The exact content of this XML file is not fully
 documented by Esri, and is subject to change. This driver uses only
 a few of the XML fields, as necessary to read the raster.
 
+Esri Tile Package (.tpkx)
+---------------------
+
+Starting from GDAL 3.8, the driver supports reading the `Esri
+Tile
+Package
+Specification <https://github.com/Esri/tile-package-spec>`__.
+A tile package is a compressed file with ".tpkx" extension. 
+It has a simplified structure, containing image tiles stored in 
+Compact Cache V2 storage format and tiling scheme and other 
+metadata stored in a JSON file.
+Note: Tile packages with ".tpk" extension, use compact storage V1 
+format for cache tiles. The spec for this package type is not 
+available and it is not supported by GDAL.
+
 Usage examples
 ______________
 
@@ -39,6 +54,17 @@ the normal Web Mercator tile grid, this command will copy the level 2
 content into a TIF file.
 
 ``gdal_translate -outsize 1024 1024 path/Layers/conf.xml output.tif``
+
+When reading the .tpkx format, the content can either be extracted
+into a directory (for example into path/Layers) and the 
+full path to the root.json file can be specified.
+
+``gdal_translate -outsize 1024 1024 path/Layers/root.json output.tif``
+
+Alternatively, the /vsizip/ option can be utilized ed to read the 
+contents of the .tpkx file without extracting that into a directory.
+
+``gdal_translate -outsize 1024 1024 "/vsizip/{path to tpkx}/root.json" output.tif``
 
 Features and Limitations
 ________________________
@@ -110,6 +136,10 @@ ________________________
    opaque black when reading areas which do not have tiles in the
    cache at a given resolution level, even if data does exist at
    other levels at the same location.
+
+-  Starting from GDAL 3.8, the driver can automatically expand
+   the paletted images to RGBA. The same cache may contain tiles with
+   different color representations.
 
 -  A cache can exceede the maximum size supported by GDAL, which
    is INT32_MAX, in either dimension. This driver will generate
