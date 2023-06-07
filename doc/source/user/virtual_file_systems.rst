@@ -263,6 +263,8 @@ Note that random seeking within a large compressed file will be inefficient when
 backward seeking is needed (decompression will be restarted from the start of the
 file). Performance will be the best in sequential reading.
 
+.. _network_based_file_systems:
+
 Network based file systems
 --------------------------
 

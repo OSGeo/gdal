@@ -3735,7 +3735,7 @@ void GDALRegister_MBTiles()
         "description='Whether to auto-select the zoom level for vector layers "
         "according to spatial filter extent. Only for display purpose' "
         "default='NO'/>"
-        "  <Option name='JSON_FIELD' scope='vector' type='string' "
+        "  <Option name='JSON_FIELD' scope='vector' type='boolean' "
         "description='For vector layers, "
         "whether to put all attributes as a serialized JSon dictionary'/>"
         "</OpenOptionList>");

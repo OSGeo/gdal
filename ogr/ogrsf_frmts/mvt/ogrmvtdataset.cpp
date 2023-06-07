@@ -6298,7 +6298,7 @@ void RegisterOGRMVT()
         "'For tilesets without metadata file, maximum number of tiles to use "
         "to "
         "establish the layer schemas' default='1000'/>"
-        "  <Option name='JSON_FIELD' type='string' description='For tilesets, "
+        "  <Option name='JSON_FIELD' type='boolean' description='For tilesets, "
         "whether to put all attributes as a serialized JSon dictionary'/>"
         "</OpenOptionList>");
 
