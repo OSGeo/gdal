@@ -104,6 +104,7 @@ class OpenOptionsConstants
     static constexpr const char *DATABASE = "DATABASE";
     static constexpr const char *USER = "USER";
     static constexpr const char *PASSWORD = "PASSWORD";
+    static constexpr const char *USER_STORE_KEY = "USER_STORE_KEY";
     static constexpr const char *SCHEMA = "SCHEMA";
     static constexpr const char *TABLES = "TABLES";
 
@@ -133,6 +134,7 @@ class OpenOptionsConstants
                "  <Option name='DATABASE' type='string' description='Specifies the name of the database to connect to' required='true'/>"
                "  <Option name='USER' type='string' description='Specifies the user name' required='true'/>"
                "  <Option name='PASSWORD' type='string' description='Specifies the user password' required='true'/>"
+               "  <Option name='USER_STORE_KEY' type='string' description='Specifies whether a connection is made using a key defined in the SAP HANA user store (hdbuserstore)' required='false'/>"
                "  <Option name='SCHEMA' type='string' description='Specifies the schema used for tables listed in TABLES option' required='true'/>"
                "  <Option name='TABLES' type='string' description='Restricted set of tables to list (comma separated)'/>"
                "  <Option name='ENCRYPT' type='boolean' description='Enables or disables TLS/SSL encryption' default='NO'/>"
@@ -197,10 +199,39 @@ CPLString BuildConnectionString(char **openOptions)
         addParameter(paramName, paramValue);
     };
 
-    const char *paramDSN = getOptValue(OpenOptionsConstants::DSN);
-    if (paramDSN != nullptr)
+    auto checkIgnoredOptParameter = [&](const char *optionName)
+    {
+        if (getOptValue(optionName))
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Connection parameter '%s' is ignored in the current "
+                     "combination.",
+                     optionName);
+    };
+
+    if (const char *paramUserStoreKey =
+            getOptValue(OpenOptionsConstants::USER_STORE_KEY))
+    {
+        addOptParameter(OpenOptionsConstants::DRIVER, "DRIVER", true);
+        CPLString node = CPLString().Printf("@%s", paramUserStoreKey);
+        addParameter("SERVERNODE", node.c_str());
+
+        checkIgnoredOptParameter(OpenOptionsConstants::DSN);
+        checkIgnoredOptParameter(OpenOptionsConstants::HOST);
+        checkIgnoredOptParameter(OpenOptionsConstants::PORT);
+        checkIgnoredOptParameter(OpenOptionsConstants::DATABASE);
+        checkIgnoredOptParameter(OpenOptionsConstants::USER);
+        checkIgnoredOptParameter(OpenOptionsConstants::PASSWORD);
+    }
+    else if (const char *paramDSN = getOptValue(OpenOptionsConstants::DSN))
     {
         addParameter(OpenOptionsConstants::DSN, paramDSN);
+        addOptParameter(OpenOptionsConstants::USER, "UID", true);
+        addOptParameter(OpenOptionsConstants::PASSWORD, "PWD", true);
+
+        checkIgnoredOptParameter(OpenOptionsConstants::DRIVER);
+        checkIgnoredOptParameter(OpenOptionsConstants::HOST);
+        checkIgnoredOptParameter(OpenOptionsConstants::PORT);
+        checkIgnoredOptParameter(OpenOptionsConstants::DATABASE);
     }
     else
     {
@@ -212,13 +243,13 @@ CPLString BuildConnectionString(char **openOptions)
             CPLString node = CPLString().Printf("%s:%s", paramHost, paramPort);
             addParameter("SERVERNODE", node.c_str());
         }
+        addOptParameter(OpenOptionsConstants::USER, "UID", true);
+        addOptParameter(OpenOptionsConstants::PASSWORD, "PWD", true);
         addOptParameter(OpenOptionsConstants::DATABASE, "DATABASENAME");
     }
 
-    addOptParameter(OpenOptionsConstants::USER, "UID", true);
-    addOptParameter(OpenOptionsConstants::PASSWORD, "PWD", true);
-    const char *paramSchema = getOptValue(OpenOptionsConstants::SCHEMA, true);
-    if (paramSchema != nullptr)
+    if (const char *paramSchema =
+            getOptValue(OpenOptionsConstants::SCHEMA, true))
     {
         CPLString schema = CPLString().Printf("\"%s\"", paramSchema);
         addParameter("CURRENTSCHEMA", schema.c_str());
