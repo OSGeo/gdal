@@ -32,7 +32,7 @@ documented by Esri, and is subject to change. This driver uses only
 a few of the XML fields, as necessary to read the raster.
 
 Esri Tile Package (.tpkx)
----------------------
+-------------------------
 
 Starting from GDAL 3.8, the driver supports reading the `Esri
 Tile
