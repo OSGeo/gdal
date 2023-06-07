@@ -114,15 +114,6 @@
 /*      MinGW stuff                                                     */
 /* ==================================================================== */
 
-/* We need __MSVCRT_VERSION__ >= 0x0700 to have "_aligned_malloc" */
-/* Latest versions of mingw32 define it, but with older ones, */
-/* we need to define it manually */
-#if defined(__MINGW32__)
-#ifndef __MSVCRT_VERSION__
-#define __MSVCRT_VERSION__ 0x0700
-#endif
-#endif
-
 /* Needed for std=c11 on Solaris to have strcasecmp() */
 #if defined(GDAL_COMPILATION) && defined(__sun__) &&                           \
     (__STDC_VERSION__ + 0) >= 201112L && (_XOPEN_SOURCE + 0) < 600
