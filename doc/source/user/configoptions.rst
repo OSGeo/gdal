@@ -411,6 +411,38 @@ General options
 
       Controls whether curved geometries should be approximated by linear geometries.
 
+- .. config:: OGR_ORGANIZE_POLYGONS
+     :choices: DEFAULT, SKIP, ONLY_CCW, CCW_INNER_JUST_AFTER_CW_OUTER
+
+     Defines the method used to classify polygon rings as holes or shells.
+     Although one of the options is named ``DEFAULT``, some drivers may default
+     to a different method to reduce processing by taking advantage of a
+     format's constraints. The following methods are available, in order of
+     decreasing expected runtime:
+
+     - ``DEFAULT``: perform a full analysis of the topological relationships
+       between all rings, classifying them as shells or holes and associating
+       them according to the OGC Simple Features convention. If the topological
+       analysis determines that a valid geometry cannot be constructed, the
+       result will be the same as with :config:`OGR_ORGANIZE_POLYGONS=SKIP`.
+
+     - ``ONLY_CCW``: assume that rings with clockwise orientation represent
+       shells and rings with counterclockwise orientation represent holes.
+       Perform a limited topological analysis to determine which shell contains
+       each hole. The Shapefile driver defaults to this method.
+
+     - ``CCW_INNER_JUST_AFTER_CW_OUTER``: assume that rings with clockwise
+       orientation represent shells and rings with counterclockwise orientation
+       represent holes and immediately follow the outer ring with which they are
+       associated.
+
+     - ``SKIP``: avoid attempting to classify rings as shells or holes. A
+       single geometry (Polygon/MultiPolygon/CurvePolygon/MultiSurface) will be
+       returned with all polygons as top-level polygons. If non-polygonal elements
+       are present, a GeometryCollection will be returned.
+
+
+
 -  .. config:: OGR_SQL_LIKE_AS_ILIKE
       :choices: YES, NO
       :default: NO
