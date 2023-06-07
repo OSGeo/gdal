@@ -548,7 +548,7 @@ CPLErr GTiffDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 #endif
 
     // Write optimization when writing whole blocks, by-passing the block cache.
-    // We require the block cache to be non instanciated to simplify things
+    // We require the block cache to be non instantiated to simplify things
     // (otherwise we might need to evict corresponding existing blocks from the
     // block cache).
     else if (eRWFlag == GF_Write && nBands > 1 &&

@@ -365,7 +365,7 @@ with control information.
     interpreted as bytes.
 
     The warper will total up the memory required to hold the input and output
-    image arrays and any auxilary masking arrays and if they are larger than
+    image arrays and any auxiliary masking arrays and if they are larger than
     the "warp memory" allowed it will subdivide the chunk into smaller chunks
     and try again.
 

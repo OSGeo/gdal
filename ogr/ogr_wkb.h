@@ -119,7 +119,7 @@ class CPL_DLL OGRWKTToWKBTranslator
     bool m_bCanUseStrtod = false;
 
   public:
-    /** Construtor */
+    /** Constructor */
     explicit OGRWKTToWKBTranslator(OGRAppendBuffer &oAppendBuffer);
 
     /** Translate the WKT geometry starting at pabyWKTStart and of length nLength.

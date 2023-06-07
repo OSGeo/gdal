@@ -3792,7 +3792,7 @@ GDALDataset *GTiffDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "File %s has C(loud) O(ptimized) G(eoTIFF) layout. "
-                         "Updating it will generally result in loosing part of "
+                         "Updating it will generally result in losing part of "
                          "the optimizations (but will still produce a valid "
                          "GeoTIFF file). If this is acceptable, open the file "
                          "with the IGNORE_COG_LAYOUT_BREAK open option set "

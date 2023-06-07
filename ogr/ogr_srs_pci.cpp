@@ -214,10 +214,10 @@ OGRErr OGRSpatialReference::importFromPCI(const char *pszProj,
     /* -------------------------------------------------------------------- */
     /*      Use safe defaults if projection parameters are not supplied.    */
     /* -------------------------------------------------------------------- */
-    static const double adfZeroedPrjParms[17] = {0};
+    static const double adfZeroedPrjParams[17] = {0};
     if (padfPrjParams == nullptr)
     {
-        padfPrjParams = adfZeroedPrjParms;
+        padfPrjParams = adfZeroedPrjParams;
     }
 
     /* -------------------------------------------------------------------- */

@@ -202,7 +202,7 @@ std::shared_ptr<ZarrGroupBase> ZarrSharedResource::OpenRootGroup()
         }
     }
 
-    // No explict zarr.json in root directory ? Then recurse until we find
+    // No explicit zarr.json in root directory ? Then recurse until we find
     // one.
     auto psDir = VSIOpenDir(m_osRootDirectoryName.c_str(), -1, nullptr);
     if (!psDir)

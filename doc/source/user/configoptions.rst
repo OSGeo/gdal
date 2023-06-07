@@ -650,7 +650,7 @@ Networking options
       :default: 0
       :since: 2.1.0
 
-      Sets the transfer speed, averaged over :config:`GDAL_HTTP_LOW_SPEED_TIME`, below which a request should be cancelled.
+      Sets the transfer speed, averaged over :config:`GDAL_HTTP_LOW_SPEED_TIME`, below which a request should be canceled.
 
 -  .. config:: GDAL_HTTP_LOW_SPEED_TIME
       :choices: <seconds>
@@ -862,7 +862,7 @@ Persistent Auxiliary Metadata (PAM) options
       PAM support can be enabled (resp. disabled) in GDAL by setting the
       GDAL_PAM_ENABLED configuration option (via CPLSetConfigOption(), or the
       environment) to the value of YES (resp. NO). Note: The default value is build
-      dependant and defaults to YES in Windows and Unix builds. See GDALPamDataset
+      dependent and defaults to YES in Windows and Unix builds. See GDALPamDataset
       for more information. Note that setting this option to OFF may have
       subtle/silent side-effects on various drivers that rely on PAM functionality.
 
@@ -880,7 +880,7 @@ PROJ options
 
       Used by :source_file:`ogr/ogrct.cpp` and :source_file:`apps/gdalwarp_lib.cpp`.
 
-      This option can be used to control the behaviour of gdalwarp when warping global
+      This option can be used to control the behavior of gdalwarp when warping global
       datasets or when transforming from/to polar projections, which causes
       coordinates discontinuities. See http://trac.osgeo.org/gdal/ticket/2305.
 
@@ -895,7 +895,7 @@ PROJ options
       setting :config:`CHECK_WITH_INVERT_PROJ=TRUE` that forces ogrct.cpp to check the
       consistency of each requested projection result with the invert projection.
 
-      If set to NO, gdalwarp wil not attempt to use the invert projection.
+      If set to NO, gdalwarp will not attempt to use the invert projection.
 
 -  .. config:: THRESHOLD
       :since: 1.7.0

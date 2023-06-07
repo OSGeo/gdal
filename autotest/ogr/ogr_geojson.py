@@ -4346,7 +4346,7 @@ def test_ogr_geojson_field_types():
 
 
 ###############################################################################
-# Test openening with non C locale
+# Test opening with non C locale
 
 
 def test_ogr_geojson_open_with_non_C_locale():
