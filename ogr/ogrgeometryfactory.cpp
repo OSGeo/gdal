@@ -1630,8 +1630,11 @@ OGRGeometry *OGRGeometryFactory::organizePolygons(OGRGeometry **papoPolygons,
     {
         asPolyEx[i].nInitialIndex = i;
         asPolyEx[i].poGeometry = papoPolygons[i];
-        asPolyEx[i].poPolygon = papoPolygons[i]->toCurvePolygon();
-        papoPolygons[i]->getEnvelope(&asPolyEx[i].sEnvelope);
+        if (papoPolygons[i]->getDimension() == 2)
+        {
+            asPolyEx[i].poPolygon = papoPolygons[i]->toCurvePolygon();
+            papoPolygons[i]->getEnvelope(&asPolyEx[i].sEnvelope);
+        }
 
         OGRwkbGeometryType eType =
             wkbFlatten(papoPolygons[i]->getGeometryType());
