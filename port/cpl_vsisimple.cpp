@@ -34,6 +34,17 @@
  *
  ****************************************************************************/
 
+// Must be done before including cpl_port.h
+// We need __MSVCRT_VERSION__ >= 0x0700 to have "_aligned_malloc"
+// Latest versions of mingw32 define it, but with older ones,
+// we need to define it manually.
+#if defined(__MINGW32__)
+#include <windows.h>
+#ifndef __MSVCRT_VERSION__
+#define __MSVCRT_VERSION__ 0x0700
+#endif
+#endif
+
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
