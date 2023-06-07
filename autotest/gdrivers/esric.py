@@ -123,22 +123,17 @@ def test_esric_4():
 # Open the tpkx dataset
 
 
-def test_tpkx_1():
-
-    gdaltest.tpkx_ds = gdal.Open("/vsizip/{data/esric/Usa.tpkx}/root.json")
-    assert gdaltest.tpkx_ds is not None, "open failed"
+@pytest.fixture
+def tpkx_ds():
+    return gdal.Open("/vsizip/{data/esric/Usa.tpkx}/root.json")
 
 
 ###############################################################################
 # Check that the configuration was read as expected
 
 
-def test_tpkx_2():
-
-    if gdaltest.tpkx_ds is None:
-        pytest.skip()
-
-    ds = gdaltest.tpkx_ds
+def test_tpkx_2(tpkx_ds):
+    ds = tpkx_ds
     b1 = ds.GetRasterBand(1)
 
     assert (
@@ -162,12 +157,8 @@ def test_tpkx_2():
 # Check that the raster returns right checksums
 
 
-def test_tpkx_3():
-
-    if gdaltest.tpkx_ds is None:
-        pytest.skip()
-
-    ds = gdaltest.tpkx_ds
+def test_tpkx_3(tpkx_ds):
+    ds = tpkx_ds
     # There are no tiles at this level, driver will return black
     b1 = ds.GetRasterBand(1)
     b2 = ds.GetRasterBand(2)
@@ -187,16 +178,9 @@ def test_tpkx_3():
 # Check that the read of PNG tiles returns the right checksum
 
 
-def test_tpkx_4():
-
-    if gdaltest.tpkx_ds is None:
-        pytest.skip()
-
-    # Check that the PNG driver is available
-    if not gdal.GetDriverByName("PNG"):
-        pytest.skip()
-
-    ds = gdaltest.tpkx_ds
+@pytest.mark.require_driver("PNG")
+def test_tpkx_4(tpkx_ds):
+    ds = tpkx_ds
 
     # Read from level 1, band 2, where we have data
     # Overviews are counted from zero, in reverse order from levels
@@ -214,4 +198,3 @@ def test_tpkx_4():
 def test_esric_cleanup():
 
     gdaltest.esric_ds = None
-    gdaltest.tpkx_ds = None
