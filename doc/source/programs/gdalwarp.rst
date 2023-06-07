@@ -238,7 +238,9 @@ with control information.
 
     (target aligned pixels) align the coordinates of the extent of the output
     file to the values of the :option:`-tr`, such that the aligned extent
-    includes the minimum extent. Alignment means that xmin / resx, ymin / resy,
+    includes the minimum extent (edges lines/columns that are detected as
+    blank, before actual warping, will be removed starting with GDAL 3.8).
+    Alignment means that xmin / resx, ymin / resy,
     xmax / resx and ymax / resy are integer values.
 
 .. option:: -ts <width> <height>
