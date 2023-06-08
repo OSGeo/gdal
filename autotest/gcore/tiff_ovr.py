@@ -464,6 +464,7 @@ def test_tiff_ovr_10(both_endian):
 
     assert cs in (
         5879,
+        5992,  # GISInternals build
         6050,  # libjpeg 9e
     )
 
