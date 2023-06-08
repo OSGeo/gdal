@@ -72,11 +72,15 @@
     "description='Maximum number of features per tile'/>"
 
 void OGRMVTInitFields(OGRFeatureDefn *poFeatureDefn,
-                      const CPLJSONObject &oFields);
+                      const CPLJSONObject &oFields,
+                      const CPLJSONArray &oAttributesFromTileStats);
 
 OGRwkbGeometryType
 OGRMVTFindGeomTypeFromTileStat(const CPLJSONArray &oTileStatLayers,
                                const char *pszLayerName);
+CPLJSONArray
+OGRMVTFindAttributesFromTileStat(const CPLJSONArray &oTileStatLayers,
+                                 const char *pszLayerName);
 
 OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
                                     OGRFeatureDefn *poTargetFeatureDefn,
