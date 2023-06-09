@@ -23,8 +23,8 @@ write support requires GDAL to be built with GEOS.
 GDAL/OGR must be compiled with OGR SQLite driver support, and JPEG and
 PNG drivers.
 
-The SRS is always the Pseudo-Mercator (a.k.a Google Mercator)
-projection.
+The SRS is always the `Pseudo-Mercator <https://en.wikipedia.org/wiki/Web_Mercator_projection>`__
+(a.k.a Google Mercator) projection, EPSG:3857.
 
 Starting with GDAL 2.3, the driver will open a dataset as RGBA. For
 previous versions, the driver will try to determine the number of bands
@@ -180,8 +180,8 @@ Raster creation issues
 Depending of the number of bands of the input dataset and the tile
 format selected, the driver will do the necessary conversions to be
 compatible with the tile format. When using the CreateCopy() API (such
-as with gdal_translate), automatic reprojection of the input dataset to
-EPSG:3857 (WebMercator) will be done, with selection of the appropriate
+as with :ref:`gdal_translate`), automatic reprojection of the input dataset to
+EPSG:3857 (Pseudo-Mercator) will be done, with selection of the appropriate
 zoom level.
 
 Fully transparent tiles will not be written to the database, as allowed
