@@ -212,6 +212,9 @@ static const TIFFField tiffFields[] = {
     {TIFFTAG_CURRENTICCPROFILE, -1, -1, TIFF_UNDEFINED, 0, TIFF_SETGET_C16_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "CurrentICCProfile", NULL},
     {TIFFTAG_CURRENTPREPROFILEMATRIX, -1, -1, TIFF_SRATIONAL, 0, TIFF_SETGET_C16_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "CurrentPreProfileMatrix", NULL},
     {TIFFTAG_PERSAMPLE, 0, 0, TIFF_SHORT, 0, TIFF_SETGET_UNDEFINED, TIFF_SETGET_UNDEFINED, FIELD_PSEUDO, TRUE, FALSE, "PerSample", NULL},
+#if 0
+    /* TODO: revert above #if 0 for TIFF 4.6.0 */
+
     /* begin DNG 1.2.0.0 tags */
     {TIFFTAG_COLORIMETRICREFERENCE, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "ColorimetricReference", NULL},
     {TIFFTAG_CAMERACALIBRATIONSIGNATURE, -1, -1, TIFF_BYTE, 0, TIFF_SETGET_C16_UINT8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "CameraCalibrationSignature", NULL},
@@ -323,6 +326,7 @@ static const TIFFField tiffFields[] = {
     {TIFFTAG_EP_FOCALLENGTH, -1, -1, TIFF_RATIONAL, 0, TIFF_SETGET_C16_FLOAT, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "EP FocalLength", NULL},
     {TIFFTAG_EP_SUBJECTLOCATION, -1, -1, TIFF_SHORT, 0, TIFF_SETGET_C16_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 1, "EP SubjectLocation", NULL},
     /* end TIFF/EP tags */
+#endif
     /* begin TIFF/FX tags */
     {TIFFTAG_INDEXED, 1, 1, TIFF_SHORT, 0, TIFF_SETGET_UINT16, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "Indexed", NULL},
     {TIFFTAG_GLOBALPARAMETERSIFD, 1, 1, TIFF_IFD8, 0, TIFF_SETGET_IFD8, TIFF_SETGET_UNDEFINED, FIELD_CUSTOM, 1, 0, "GlobalParametersIFD", NULL},
@@ -842,8 +846,8 @@ const TIFFField *TIFFFieldWithTag(TIFF *tif, uint32_t tag)
     const TIFFField *fip = TIFFFindField(tif, tag, TIFF_ANY);
     if (!fip)
     {
-        TIFFErrorExtR(tif, "TIFFFieldWithTag",
-                      "Internal error, unknown tag 0x%x", (unsigned int)tag);
+        TIFFWarningExtR(tif, "TIFFFieldWithTag", "Warning, unknown tag 0x%x",
+                        (unsigned int)tag);
     }
     return (fip);
 }
@@ -853,8 +857,8 @@ const TIFFField *TIFFFieldWithName(TIFF *tif, const char *field_name)
     const TIFFField *fip = _TIFFFindFieldByName(tif, field_name, TIFF_ANY);
     if (!fip)
     {
-        TIFFErrorExtR(tif, "TIFFFieldWithName",
-                      "Internal error, unknown tag %s", field_name);
+        TIFFWarningExtR(tif, "TIFFFieldWithName", "Warning, unknown tag %s",
+                        field_name);
     }
     return (fip);
 }
