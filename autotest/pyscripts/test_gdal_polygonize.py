@@ -275,3 +275,58 @@ def test_gdal_polygonize_minus_8(script_path):
     ds = None
 
     os.unlink(outfilename)
+
+
+###############################################################################
+# Test --overwrite
+
+
+@pytest.mark.parametrize("format", ["geojson", "gpkg"])
+def test_gdal_polygonize_overwrite(script_path, format):
+
+    if gdal.GetDriverByName(format) is None:
+        pytest.skip(f"driver {format} not available")
+
+    try:
+        outfilename = "tmp/out." + format
+        test_py_scripts.run_py_script(
+            script_path,
+            "gdal_polygonize",
+            test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
+        )
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        initial_value = lyr.GetFeatureCount()
+        ds = None
+
+        # Append behavior by default
+        test_py_scripts.run_py_script(
+            script_path,
+            "gdal_polygonize",
+            test_py_scripts.get_data_path("gcore") + "byte.tif " + outfilename,
+        )
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == initial_value * 2
+        ds = None
+
+        # Let's overwrite
+        test_py_scripts.run_py_script(
+            script_path,
+            "gdal_polygonize",
+            " -overwrite "
+            + test_py_scripts.get_data_path("gcore")
+            + "byte.tif "
+            + outfilename,
+        )
+
+        ds = gdal.OpenEx(outfilename)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == initial_value
+        ds = None
+
+    finally:
+        if os.path.exists(outfilename):
+            os.unlink(outfilename)
