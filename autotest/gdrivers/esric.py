@@ -125,7 +125,7 @@ def test_esric_4():
 
 @pytest.fixture
 def tpkx_ds():
-    return gdal.Open("/vsizip/{data/esric/Usa.tpkx}/root.json")
+    return gdal.Open("data/esric/Usa.tpkx")
 
 
 ###############################################################################
