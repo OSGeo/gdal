@@ -741,7 +741,29 @@ The following configuration options are specific to the /vsiaz/ handler:
 
      Shared Access Signature.
 
+- .. config:: AZURE_IMDS_OBJECT_ID
+     :since: 3.8
 
+     object_id of the managed identity you would like the token for, when using
+     Azure Instance Metadata Service (IMDS) authentication in a Azure
+     Virtual Matchine. Required if your VM has multiple user-assigned managed identities.
+     This option may be set as a path-specific option with :cpp:func:`VSISetPathSpecificOption`
+
+- .. config:: AZURE_IMDS_CLIENT_ID
+     :since: 3.8
+
+     client_id of the managed identity you would like the token for, when using
+     Azure Instance Metadata Service (IMDS) authentication in a Azure
+     Virtual Matchine. Required if your VM has multiple user-assigned managed identities.
+     This option may be set as a path-specific option with :cpp:func:`VSISetPathSpecificOption`
+
+- .. config:: AZURE_IMDS_MSI_RES_ID
+     :since: 3.8
+
+     msi_res_id (Azure Resource ID) of the managed identity you would like the token for, when using
+     Azure Instance Metadata Service (IMDS) authentication in a Azure
+     Virtual Matchine. Required if your VM has multiple user-assigned managed identities.
+     This option may be set as a path-specific option with :cpp:func:`VSISetPathSpecificOption`
 
 Several authentication methods are possible, and are attempted in the following order:
 

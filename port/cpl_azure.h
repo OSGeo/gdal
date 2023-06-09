@@ -39,6 +39,7 @@
 
 class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
 {
+    std::string m_osPathForOption;
     CPLString m_osURL;
     CPLString m_osEndpoint;
     CPLString m_osBucket;
@@ -73,10 +74,11 @@ class VSIAzureBlobHandleHelper final : public IVSIS3LikeHandleHelper
 
   public:
     VSIAzureBlobHandleHelper(
-        const CPLString &osEndpoint, const CPLString &osBucket,
-        const CPLString &osObjectKey, const CPLString &osStorageAccount,
-        const CPLString &osStorageKey, const CPLString &osSAS,
-        const CPLString &osAccessToken, bool bFromManagedIdentities);
+        const std::string &osPathForOption, const CPLString &osEndpoint,
+        const CPLString &osBucket, const CPLString &osObjectKey,
+        const CPLString &osStorageAccount, const CPLString &osStorageKey,
+        const CPLString &osSAS, const CPLString &osAccessToken,
+        bool bFromManagedIdentities);
     ~VSIAzureBlobHandleHelper();
 
     static VSIAzureBlobHandleHelper *
