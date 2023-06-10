@@ -108,6 +108,7 @@ class CPL_DLL CPLJSONObject
     void Add(const std::string &osName, double dfValue);
     void Add(const std::string &osName, int nValue);
     void Add(const std::string &osName, GInt64 nValue);
+    void Add(const std::string &osName, uint64_t nValue);
     void Add(const std::string &osName, const CPLJSONArray &oValue);
     void Add(const std::string &osName, const CPLJSONObject &oValue);
     void AddNoSplitName(const std::string &osName, const CPLJSONObject &oValue);
@@ -119,6 +120,7 @@ class CPL_DLL CPLJSONObject
     void Set(const std::string &osName, double dfValue);
     void Set(const std::string &osName, int nValue);
     void Set(const std::string &osName, GInt64 nValue);
+    void Set(const std::string &osName, uint64_t nValue);
     void Set(const std::string &osName, bool bValue);
     void SetNull(const std::string &osName);
 
@@ -231,6 +233,7 @@ class CPL_DLL CPLJSONArray : public CPLJSONObject
     void Add(double dfValue);
     void Add(int nValue);
     void Add(GInt64 nValue);
+    void Add(uint64_t nValue);
     void Add(bool bValue);
     CPLJSONObject operator[](int nIndex);
     const CPLJSONObject operator[](int nIndex) const;
