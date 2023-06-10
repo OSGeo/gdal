@@ -144,10 +144,11 @@ static void TIFFReadDirEntryCheckedFloat(TIFF *tif, TIFFDirEntry *direntry,
                                          float *value);
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckedDouble(TIFF *tif, TIFFDirEntry *direntry, double *value);
+#if 0
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckedRationalDirect(TIFF *tif, TIFFDirEntry *direntry,
                                       TIFFRational_t *value);
-
+#endif
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckRangeByteSbyte(int8_t value);
 static enum TIFFReadDirEntryErr
@@ -3472,6 +3473,7 @@ TIFFReadDirEntryCheckedSrational(TIFF *tif, TIFFDirEntry *direntry,
     return (TIFFReadDirEntryErrOk);
 }
 
+#if 0
 static enum TIFFReadDirEntryErr
 TIFFReadDirEntryCheckedRationalDirect(TIFF *tif, TIFFDirEntry *direntry,
                                       TIFFRational_t *value)
@@ -3512,6 +3514,7 @@ TIFFReadDirEntryCheckedRationalDirect(TIFF *tif, TIFFDirEntry *direntry,
     value->uDenom = m.i[1];
     return (TIFFReadDirEntryErrOk);
 } /*-- TIFFReadDirEntryCheckedRationalDirect() --*/
+#endif
 
 static void TIFFReadDirEntryCheckedFloat(TIFF *tif, TIFFDirEntry *direntry,
                                          float *value)
@@ -4569,7 +4572,8 @@ int TIFFReadDirectory(TIFF *tif)
                     }
                 }
                 break;
-                    /* END REV 4.0 COMPATIBILITY */
+                /* END REV 4.0 COMPATIBILITY */
+#if 0
                 case TIFFTAG_EP_BATTERYLEVEL:
                     /* TIFFTAG_EP_BATTERYLEVEL can be RATIONAL or ASCII.
                      * LibTiff defines it as ASCII and converts RATIONAL to an
@@ -4613,6 +4617,7 @@ int TIFFReadDirectory(TIFF *tif)
                             break;
                     }
                     break;
+#endif
                 default:
                     (void)TIFFFetchNormalTag(tif, dp, TRUE);
                     break;
