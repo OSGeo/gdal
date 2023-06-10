@@ -1214,8 +1214,11 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                                   &sContext.nYCrbCrSubSampling1);
         }
     }
-    TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sContext.nExtraSampleCount,
-                 &sContext.pExtraSamples);
+    if (m_nPlanarConfig == PLANARCONFIG_CONTIG)
+    {
+        TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sContext.nExtraSampleCount,
+                     &sContext.pExtraSamples);
+    }
 
     // Create one job per tile/strip
     vsi_l_offset nFileSize = 0;
