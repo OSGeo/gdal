@@ -356,7 +356,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
   public:
     ~ZarrGroupBase() override;
 
-    void SetSelf(std::weak_ptr<ZarrGroupBase> self)
+    void SetSelf(const std::weak_ptr<ZarrGroupBase> &self)
     {
         m_pSelf = self;
     }

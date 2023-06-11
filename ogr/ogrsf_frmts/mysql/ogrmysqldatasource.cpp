@@ -35,6 +35,19 @@
 #include "cpl_string.h"
 
 /************************************************************************/
+/*                       FreeResultAndNullify()                         */
+/************************************************************************/
+
+inline void FreeResultAndNullify(MYSQL_RES *&hResult)
+{
+    if (hResult)
+    {
+        mysql_free_result(hResult);
+        hResult = nullptr;
+    }
+}
+
+/************************************************************************/
 /*                         OGRMySQLDataSource()                         */
 /************************************************************************/
 
@@ -301,7 +314,7 @@ int OGRMySQLDataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
             papszTableNames = CSLAddString(papszTableNames, papszRow[0]);
         }
 
-        mysql_free_result(hResultSet);
+        FreeResultAndNullify(hResultSet);
     }
 
     /* -------------------------------------------------------------------- */
@@ -426,12 +439,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 
         // make sure to attempt to free results of successful queries
         hResult = mysql_store_result(GetConn());
-        if (hResult != nullptr)
-        {
-            mysql_free_result(hResult);
-            hResult = nullptr;
-            CPL_IGNORE_RET_VAL(hResult);
-        }
+        FreeResultAndNullify(hResult);
 
         pszCommand = "DESCRIBE spatial_ref_sys";
         if (mysql_query(GetConn(), pszCommand))
@@ -452,12 +460,7 @@ OGRErr OGRMySQLDataSource::InitializeMetadataTables()
 
         // make sure to attempt to free results of successful queries
         hResult = mysql_store_result(GetConn());
-        if (hResult != nullptr)
-        {
-            mysql_free_result(hResult);
-            hResult = nullptr;
-            CPL_IGNORE_RET_VAL(hResult);
-        }
+        FreeResultAndNullify(hResult);
     }
 
     return eErr;
@@ -496,9 +499,7 @@ OGRErr OGRMySQLDataSource::UpdateMetadataTables(const char *pszLayerName,
 
         // make sure to attempt to free results of successful queries
         hResult = mysql_store_result(GetConn());
-        if (hResult != nullptr)
-            mysql_free_result(hResult);
-        hResult = nullptr;
+        FreeResultAndNullify(hResult);
 
         /* --------------------------------------------------------------------
          */
@@ -540,9 +541,7 @@ OGRErr OGRMySQLDataSource::UpdateMetadataTables(const char *pszLayerName,
 
             // make sure to attempt to free results of successful queries
             hResult = mysql_store_result(GetConn());
-            if (hResult != nullptr)
-                mysql_free_result(hResult);
-            hResult = nullptr;
+            FreeResultAndNullify(hResult);
         }
     }
     return OGRERR_NONE;
@@ -576,9 +575,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
 
     // make sure to attempt to free any old results
     MYSQL_RES *hResult = mysql_store_result(GetConn());
-    if (hResult != nullptr)
-        mysql_free_result(hResult);
-    hResult = nullptr;
+    FreeResultAndNullify(hResult);
 
     char szCommand[128] = {};
     if (GetMajorVersion() < 8 || IsMariaDB())
@@ -609,9 +606,7 @@ OGRSpatialReference *OGRMySQLDataSource::FetchSRS(int nId)
         pszWKT = CPLStrdup(papszRow[0]);
     }
 
-    if (hResult != nullptr)
-        mysql_free_result(hResult);
-    hResult = nullptr;
+    FreeResultAndNullify(hResult);
 
     poSRS = new OGRSpatialReference();
     poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
@@ -740,8 +735,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
                 CPLDebug("MYSQL",
                          "No rows exist currently exist in %s for %s:%d",
                          pszTableName, pszAuthorityName, nAuthorityCode);
-                mysql_free_result(hResult);
-                hResult = nullptr;
+                FreeResultAndNullify(hResult);
             }
             char **papszRow = nullptr;
             if (hResult != nullptr)
@@ -750,16 +744,13 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
             if (papszRow != nullptr && papszRow[0] != nullptr)
             {
                 const int nSRSId = atoi(papszRow[0]);
-                if (hResult != nullptr)
-                    mysql_free_result(hResult);
-                hResult = nullptr;
+                FreeResultAndNullify(hResult);
                 return nSRSId;
             }
 
             // make sure to attempt to free results of successful queries
             hResult = mysql_store_result(GetConn());
-            if (hResult != nullptr)
-                mysql_free_result(hResult);
+            FreeResultAndNullify(hResult);
         }
     }
 
@@ -827,8 +818,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
     {
         CPLDebug("MYSQL", "No rows exist currently exist in %s with WKT = %s",
                  pszTableName, pszWKT);
-        mysql_free_result(hResult);
-        hResult = nullptr;
+        FreeResultAndNullify(hResult);
     }
     char **papszRow = nullptr;
     if (hResult != nullptr)
@@ -837,18 +827,14 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
     if (papszRow != nullptr && papszRow[0] != nullptr)
     {
         const int nSRSId = atoi(papszRow[0]);
-        if (hResult != nullptr)
-            mysql_free_result(hResult);
-        hResult = nullptr;
+        FreeResultAndNullify(hResult);
         CPLFree(pszWKT);
         return nSRSId;
     }
 
     // make sure to attempt to free results of successful queries
     hResult = mysql_store_result(GetConn());
-    if (hResult != nullptr)
-        mysql_free_result(hResult);
-    hResult = nullptr;
+    FreeResultAndNullify(hResult);
 
     if (GetMajorVersion() >= 8 && !IsMariaDB())
     {
@@ -874,9 +860,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
                     // we can use it
                     nSRSId = nAuthorityCode;
                 }
-                if (hResult != nullptr)
-                    mysql_free_result(hResult);
-                hResult = nullptr;
+                FreeResultAndNullify(hResult);
             }
         }
         if (nSRSId < 0)
@@ -896,9 +880,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
                 {
                     nSRSId = atoi(papszRow[0]) + 1;
                 }
-                if (hResult != nullptr)
-                    mysql_free_result(hResult);
-                hResult = nullptr;
+                FreeResultAndNullify(hResult);
             }
         }
         else
@@ -923,9 +905,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
             {
                 osName += CPLSPrintf("_srid_%d", nSRSId);
             }
-            if (hResult != nullptr)
-                mysql_free_result(hResult);
-            hResult = nullptr;
+            FreeResultAndNullify(hResult);
         }
 
         /* ----------------------------------------------------------------- */
@@ -958,8 +938,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
         }
 
         hResult = mysql_store_result(GetConn());
-        if (hResult != nullptr)
-            mysql_free_result(hResult);
+        FreeResultAndNullify(hResult);
 
         CPLFree(pszWKT);
         return nSRSId;
@@ -979,9 +958,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
                      ? atoi(papszRow[0]) + 1
                      : 1;
 
-    if (hResult != nullptr)
-        mysql_free_result(hResult);
-    hResult = nullptr;
+    FreeResultAndNullify(hResult);
 
     /* -------------------------------------------------------------------- */
     /*      Try adding the SRS to the SRS table.                            */
@@ -998,9 +975,7 @@ int OGRMySQLDataSource::FetchSRSId(OGRSpatialReference *poSRSIn)
 
     // make sure to attempt to free results of successful queries
     hResult = mysql_store_result(GetConn());
-    if (hResult != nullptr)
-        mysql_free_result(hResult);
-    hResult = nullptr;
+    FreeResultAndNullify(hResult);
 
     CPLFree(pszWKT);
 
@@ -1333,9 +1308,7 @@ OGRLayer *OGRMySQLDataSource::ICreateLayer(const char *pszLayerNameIn,
 
     // make sure to attempt to free results of successful queries
     hResult = mysql_store_result(GetConn());
-    if (hResult != nullptr)
-        mysql_free_result(hResult);
-    hResult = nullptr;
+    FreeResultAndNullify(hResult);
 
     if (UpdateMetadataTables(pszLayerName, eType, pszGeomColumnName, nSRSId) !=
         OGRERR_NONE)
@@ -1360,9 +1333,7 @@ OGRLayer *OGRMySQLDataSource::ICreateLayer(const char *pszLayerNameIn,
 
         // make sure to attempt to free results of successful queries
         hResult = mysql_store_result(GetConn());
-        if (hResult != nullptr)
-            mysql_free_result(hResult);
-        hResult = nullptr;
+        FreeResultAndNullify(hResult);
     }
 
     /* -------------------------------------------------------------------- */
