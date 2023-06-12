@@ -6397,17 +6397,24 @@ class GDALMDArrayMask final : public GDALPamMDArray
   private:
     std::shared_ptr<GDALMDArray> m_poParent{};
     GDALExtendedDataType m_dt{GDALExtendedDataType::Create(GDT_Byte)};
+    double m_dfMissingValue = 0.0;
+    bool m_bHasMissingValue = false;
+    double m_dfFillValue = 0.0;
+    bool m_bHasFillValue = false;
+    double m_dfValidMin = 0.0;
+    bool m_bHasValidMin = false;
+    double m_dfValidMax = 0.0;
+    bool m_bHasValidMax = false;
+    std::vector<uint32_t> m_anValidFlagMasks{};
+    std::vector<uint32_t> m_anValidFlagValues{};
 
     template <typename Type>
-    void ReadInternal(const size_t *count, const GPtrDiff_t *bufferStride,
-                      const GDALExtendedDataType &bufferDataType,
-                      void *pDstBuffer, const void *pTempBuffer,
-                      const GDALExtendedDataType &oTmpBufferDT,
-                      const std::vector<GPtrDiff_t> &tmpBufferStrideVector,
-                      bool bHasMissingValue, double dfMissingValue,
-                      bool bHasFillValue, double dfFillValue, bool bHasValidMin,
-                      double dfValidMin, bool bHasValidMax,
-                      double dfValidMax) const;
+    void
+    ReadInternal(const size_t *count, const GPtrDiff_t *bufferStride,
+                 const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
+                 const void *pTempBuffer,
+                 const GDALExtendedDataType &oTmpBufferDT,
+                 const std::vector<GPtrDiff_t> &tmpBufferStrideVector) const;
 
   protected:
     explicit GDALMDArrayMask(const std::shared_ptr<GDALMDArray> &poParent)
@@ -6432,13 +6439,8 @@ class GDALMDArrayMask final : public GDALPamMDArray
 
   public:
     static std::shared_ptr<GDALMDArrayMask>
-    Create(const std::shared_ptr<GDALMDArray> &poParent)
-    {
-        auto newAr(
-            std::shared_ptr<GDALMDArrayMask>(new GDALMDArrayMask(poParent)));
-        newAr->SetSelf(newAr);
-        return newAr;
-    }
+    Create(const std::shared_ptr<GDALMDArray> &poParent,
+           CSLConstList papszOptions);
 
     bool IsWritable() const override
     {
@@ -6473,6 +6475,213 @@ class GDALMDArrayMask final : public GDALPamMDArray
 };
 
 /************************************************************************/
+/*                    GDALMDArrayMask::Create()                         */
+/************************************************************************/
+
+/* static */ std::shared_ptr<GDALMDArrayMask>
+GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
+                        CSLConstList papszOptions)
+{
+    auto newAr(std::shared_ptr<GDALMDArrayMask>(new GDALMDArrayMask(poParent)));
+    newAr->SetSelf(newAr);
+
+    const auto GetSingleValNumericAttr =
+        [&poParent](const char *pszAttrName, bool &bHasVal, double &dfVal)
+    {
+        auto poAttr = poParent->GetAttribute(pszAttrName);
+        if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            const auto anDimSizes = poAttr->GetDimensionsSize();
+            if (anDimSizes.empty() ||
+                (anDimSizes.size() == 1 && anDimSizes[0] == 1))
+            {
+                bHasVal = true;
+                dfVal = poAttr->ReadAsDouble();
+            }
+        }
+    };
+
+    GetSingleValNumericAttr("missing_value", newAr->m_bHasMissingValue,
+                            newAr->m_dfMissingValue);
+    GetSingleValNumericAttr("_FillValue", newAr->m_bHasFillValue,
+                            newAr->m_dfFillValue);
+    GetSingleValNumericAttr("valid_min", newAr->m_bHasValidMin,
+                            newAr->m_dfValidMin);
+    GetSingleValNumericAttr("valid_max", newAr->m_bHasValidMax,
+                            newAr->m_dfValidMax);
+
+    {
+        auto poValidRange = poParent->GetAttribute("valid_range");
+        if (poValidRange && poValidRange->GetDimensionsSize().size() == 1 &&
+            poValidRange->GetDimensionsSize()[0] == 2 &&
+            poValidRange->GetDataType().GetClass() == GEDTC_NUMERIC)
+        {
+            newAr->m_bHasValidMin = true;
+            newAr->m_bHasValidMax = true;
+            auto vals = poValidRange->ReadAsDoubleArray();
+            CPLAssert(vals.size() == 2);
+            newAr->m_dfValidMin = vals[0];
+            newAr->m_dfValidMax = vals[1];
+        }
+    }
+
+    // Take into account
+    // https://cfconventions.org/cf-conventions/cf-conventions.html#flags
+    // Cf GDALMDArray::GetMask() for semantics of UNMASK_FLAGS
+    const char *pszUnmaskFlags =
+        CSLFetchNameValue(papszOptions, "UNMASK_FLAGS");
+    if (pszUnmaskFlags)
+    {
+        const auto IsScalarStringAttr =
+            [](const std::shared_ptr<GDALAttribute> &poAttr)
+        {
+            return poAttr->GetDataType().GetClass() == GEDTC_STRING &&
+                   (poAttr->GetDimensionsSize().empty() ||
+                    (poAttr->GetDimensionsSize().size() == 1 &&
+                     poAttr->GetDimensionsSize()[0] == 1));
+        };
+
+        auto poFlagMeanings = poParent->GetAttribute("flag_meanings");
+        if (!(poFlagMeanings && IsScalarStringAttr(poFlagMeanings)))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "UNMASK_FLAGS option specified but array has no "
+                     "flag_meanings attribute");
+            return nullptr;
+        }
+        const char *pszFlagMeanings = poFlagMeanings->ReadAsString();
+        if (!pszFlagMeanings)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot read flag_meanings attribute");
+            return nullptr;
+        }
+
+        const auto IsSingleDimNumericAttr =
+            [](const std::shared_ptr<GDALAttribute> &poAttr)
+        {
+            return poAttr->GetDataType().GetClass() == GEDTC_NUMERIC &&
+                   poAttr->GetDimensionsSize().size() == 1;
+        };
+
+        auto poFlagValues = poParent->GetAttribute("flag_values");
+        const bool bHasFlagValues =
+            poFlagValues && IsSingleDimNumericAttr(poFlagValues);
+
+        auto poFlagMasks = poParent->GetAttribute("flag_masks");
+        const bool bHasFlagMasks =
+            poFlagMasks && IsSingleDimNumericAttr(poFlagMasks);
+
+        if (!bHasFlagValues && !bHasFlagMasks)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot find flag_values and/or flag_masks attribute");
+            return nullptr;
+        }
+
+        const CPLStringList aosUnmaskFlags(
+            CSLTokenizeString2(pszUnmaskFlags, ",", 0));
+        const CPLStringList aosFlagMeanings(
+            CSLTokenizeString2(pszFlagMeanings, " ", 0));
+
+        if (bHasFlagValues)
+        {
+            const auto eType = poFlagValues->GetDataType().GetNumericDataType();
+            // We could support Int64 or UInt64, but more work...
+            if (eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_UInt16 &&
+                eType != GDT_Int16 && eType != GDT_UInt32 && eType != GDT_Int32)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported data type for flag_values attribute: %s",
+                         GDALGetDataTypeName(eType));
+                return nullptr;
+            }
+        }
+
+        if (bHasFlagMasks)
+        {
+            const auto eType = poFlagMasks->GetDataType().GetNumericDataType();
+            // We could support Int64 or UInt64, but more work...
+            if (eType != GDT_Byte && eType != GDT_Int8 && eType != GDT_UInt16 &&
+                eType != GDT_Int16 && eType != GDT_UInt32 && eType != GDT_Int32)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Unsupported data type for flag_masks attribute: %s",
+                         GDALGetDataTypeName(eType));
+                return nullptr;
+            }
+        }
+
+        const auto adfValues = bHasFlagValues
+                                   ? poFlagValues->ReadAsDoubleArray()
+                                   : std::vector<double>();
+        const auto adfMasks = bHasFlagMasks ? poFlagMasks->ReadAsDoubleArray()
+                                            : std::vector<double>();
+
+        if (bHasFlagValues &&
+            adfValues.size() != static_cast<size_t>(aosFlagMeanings.size()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Number of values in flag_values attribute is different "
+                     "from the one in flag_meanings");
+            return nullptr;
+        }
+
+        if (bHasFlagMasks &&
+            adfMasks.size() != static_cast<size_t>(aosFlagMeanings.size()))
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Number of values in flag_masks attribute is different "
+                     "from the one in flag_meanings");
+            return nullptr;
+        }
+
+        for (int i = 0; i < aosUnmaskFlags.size(); ++i)
+        {
+            const int nIdxFlag = aosFlagMeanings.FindString(aosUnmaskFlags[i]);
+            if (nIdxFlag < 0)
+            {
+                CPLError(
+                    CE_Failure, CPLE_AppDefined,
+                    "Cannot fing flag %s in flag_meanings = '%s' attribute",
+                    aosUnmaskFlags[i], pszFlagMeanings);
+                return nullptr;
+            }
+
+            if (bHasFlagValues && adfValues[nIdxFlag] < 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid value in flag_values[%d] = %f", nIdxFlag,
+                         adfValues[nIdxFlag]);
+                return nullptr;
+            }
+
+            if (bHasFlagMasks && adfMasks[nIdxFlag] < 0)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Invalid value in flag_masks[%d] = %f", nIdxFlag,
+                         adfMasks[nIdxFlag]);
+                return nullptr;
+            }
+
+            if (bHasFlagValues)
+            {
+                newAr->m_anValidFlagValues.push_back(
+                    static_cast<uint32_t>(adfValues[nIdxFlag]));
+            }
+
+            if (bHasFlagMasks)
+            {
+                newAr->m_anValidFlagMasks.push_back(
+                    static_cast<uint32_t>(adfMasks[nIdxFlag]));
+            }
+        }
+    }
+
+    return newAr;
+}
+
+/************************************************************************/
 /*                             IRead()                                  */
 /************************************************************************/
 
@@ -6498,57 +6707,12 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         }
     }
 
-    const auto GetSingleValNumericAttr =
-        [this](const char *pszAttrName, bool &bHasVal, double &dfVal)
-    {
-        auto poAttr = m_poParent->GetAttribute(pszAttrName);
-        if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
-        {
-            const auto anDimSizes = poAttr->GetDimensionsSize();
-            if (anDimSizes.empty() ||
-                (anDimSizes.size() == 1 && anDimSizes[0] == 1))
-            {
-                bHasVal = true;
-                dfVal = poAttr->ReadAsDouble();
-            }
-        }
-    };
-
-    double dfMissingValue = 0.0;
-    bool bHasMissingValue = false;
-    GetSingleValNumericAttr("missing_value", bHasMissingValue, dfMissingValue);
-
-    double dfFillValue = 0.0;
-    bool bHasFillValue = false;
-    GetSingleValNumericAttr("_FillValue", bHasFillValue, dfFillValue);
-
-    double dfValidMin = 0.0;
-    bool bHasValidMin = false;
-    GetSingleValNumericAttr("valid_min", bHasValidMin, dfValidMin);
-
-    double dfValidMax = 0.0;
-    bool bHasValidMax = false;
-    GetSingleValNumericAttr("valid_max", bHasValidMax, dfValidMax);
-
-    {
-        auto poValidRange = m_poParent->GetAttribute("valid_range");
-        if (poValidRange && poValidRange->GetDimensionsSize().size() == 1 &&
-            poValidRange->GetDimensionsSize()[0] == 2 &&
-            poValidRange->GetDataType().GetClass() == GEDTC_NUMERIC)
-        {
-            bHasValidMin = true;
-            bHasValidMax = true;
-            auto vals = poValidRange->ReadAsDoubleArray();
-            CPLAssert(vals.size() == 2);
-            dfValidMin = vals[0];
-            dfValidMax = vals[1];
-        }
-    }
-
     /* Optimized case: if we are an integer data type and that there is no */
     /* attribute that can be used to set mask = 0, then fill the mask buffer */
     /* directly */
-    if (!bHasMissingValue && !bHasFillValue && !bHasValidMin && !bHasValidMax &&
+    if (!m_bHasMissingValue && !m_bHasFillValue && !m_bHasValidMin &&
+        !m_bHasValidMax && m_anValidFlagValues.empty() &&
+        m_anValidFlagMasks.empty() &&
         m_poParent->GetRawNoDataValue() == nullptr &&
         GDALDataTypeIsInteger(m_poParent->GetDataType().GetNumericDataType()))
     {
@@ -6658,83 +6822,63 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     switch (oTmpBufferDT.GetNumericDataType())
     {
         case GDT_Byte:
-            ReadInternal<GByte>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<GByte>(count, bufferStride, bufferDataType, pDstBuffer,
+                                pTempBuffer, oTmpBufferDT,
+                                tmpBufferStrideVector);
             break;
 
         case GDT_Int8:
-            ReadInternal<GInt8>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<GInt8>(count, bufferStride, bufferDataType, pDstBuffer,
+                                pTempBuffer, oTmpBufferDT,
+                                tmpBufferStrideVector);
             break;
 
         case GDT_UInt16:
-            ReadInternal<GUInt16>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<GUInt16>(count, bufferStride, bufferDataType,
+                                  pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                  tmpBufferStrideVector);
             break;
 
         case GDT_Int16:
-            ReadInternal<GInt16>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<GInt16>(count, bufferStride, bufferDataType,
+                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                 tmpBufferStrideVector);
             break;
 
         case GDT_UInt32:
-            ReadInternal<GUInt32>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<GUInt32>(count, bufferStride, bufferDataType,
+                                  pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                  tmpBufferStrideVector);
             break;
 
         case GDT_Int32:
-            ReadInternal<GInt32>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<GInt32>(count, bufferStride, bufferDataType,
+                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                 tmpBufferStrideVector);
             break;
 
         case GDT_UInt64:
-            ReadInternal<std::uint64_t>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<std::uint64_t>(count, bufferStride, bufferDataType,
+                                        pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                        tmpBufferStrideVector);
             break;
 
         case GDT_Int64:
-            ReadInternal<std::int64_t>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<std::int64_t>(count, bufferStride, bufferDataType,
+                                       pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                       tmpBufferStrideVector);
             break;
 
         case GDT_Float32:
-            ReadInternal<float>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<float>(count, bufferStride, bufferDataType, pDstBuffer,
+                                pTempBuffer, oTmpBufferDT,
+                                tmpBufferStrideVector);
             break;
 
         case GDT_Float64:
-            ReadInternal<double>(
-                count, bufferStride, bufferDataType, pDstBuffer, pTempBuffer,
-                oTmpBufferDT, tmpBufferStrideVector, bHasMissingValue,
-                dfMissingValue, bHasFillValue, dfFillValue, bHasValidMin,
-                dfValidMin, bHasValidMax, dfValidMax);
+            ReadInternal<double>(count, bufferStride, bufferDataType,
+                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                 tmpBufferStrideVector);
             break;
         case GDT_Unknown:
         case GDT_CInt16:
@@ -6799,10 +6943,7 @@ void GDALMDArrayMask::ReadInternal(
     const size_t *count, const GPtrDiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
     const void *pTempBuffer, const GDALExtendedDataType &oTmpBufferDT,
-    const std::vector<GPtrDiff_t> &tmpBufferStrideVector, bool bHasMissingValue,
-    double dfMissingValue, bool bHasFillValue, double dfFillValue,
-    bool bHasValidMin, double dfValidMin, bool bHasValidMax,
-    double dfValidMax) const
+    const std::vector<GPtrDiff_t> &tmpBufferStrideVector) const
 {
     const size_t nDims = GetDimensionCount();
 
@@ -6826,17 +6967,60 @@ void GDALMDArrayMask::ReadInternal(
     bool bHasNodataValue = pSrcRawNoDataValue != nullptr;
     const Type nNoDataValue =
         castValue(bHasNodataValue, m_poParent->GetNoDataValueAsDouble());
-    const Type nMissingValue = castValue(bHasMissingValue, dfMissingValue);
-    const Type nFillValue = castValue(bHasFillValue, dfFillValue);
-    const Type nValidMin = castValue(bHasValidMin, dfValidMin);
-    const Type nValidMax = castValue(bHasValidMax, dfValidMax);
+    bool bHasMissingValue = m_bHasMissingValue;
+    const Type nMissingValue = castValue(bHasMissingValue, m_dfMissingValue);
+    bool bHasFillValue = m_bHasFillValue;
+    const Type nFillValue = castValue(bHasFillValue, m_dfFillValue);
+    bool bHasValidMin = m_bHasValidMin;
+    const Type nValidMin = castValue(bHasValidMin, m_dfValidMin);
+    bool bHasValidMax = m_bHasValidMax;
+    const Type nValidMax = castValue(bHasValidMax, m_dfValidMax);
+    const bool bHasValidFlags =
+        !m_anValidFlagValues.empty() || !m_anValidFlagMasks.empty();
+
+    const auto IsValidFlag = [this](Type v)
+    {
+        if (!m_anValidFlagValues.empty() && !m_anValidFlagMasks.empty())
+        {
+            for (size_t i = 0; i < m_anValidFlagValues.size(); ++i)
+            {
+                if ((static_cast<uint32_t>(v) & m_anValidFlagMasks[i]) ==
+                    m_anValidFlagValues[i])
+                {
+                    return true;
+                }
+            }
+        }
+        else if (!m_anValidFlagValues.empty())
+        {
+            for (size_t i = 0; i < m_anValidFlagValues.size(); ++i)
+            {
+                if (static_cast<uint32_t>(v) == m_anValidFlagValues[i])
+                {
+                    return true;
+                }
+            }
+        }
+        else /* if( !m_anValidFlagMasks.empty() ) */
+        {
+            for (size_t i = 0; i < m_anValidFlagMasks.size(); ++i)
+            {
+                if ((static_cast<uint32_t>(v) & m_anValidFlagMasks[i]) != 0)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
 
 #define GET_MASK_FOR_SAMPLE(v)                                                 \
     static_cast<GByte>(!IsNan(v) && !(bHasNodataValue && v == nNoDataValue) && \
                        !(bHasMissingValue && v == nMissingValue) &&            \
                        !(bHasFillValue && v == nFillValue) &&                  \
                        !(bHasValidMin && v < nValidMin) &&                     \
-                       !(bHasValidMax && v > nValidMax))
+                       !(bHasValidMax && v > nValidMax) &&                     \
+                       (!bHasValidFlags || IsValidFlag(v)));
 
     const bool bBufferDataTypeIsByte = bufferDataType == m_dt;
     /* Optimized case: Byte output and output buffer is contiguous */
@@ -6953,23 +7137,43 @@ lbl_next_depth:
 /************************************************************************/
 
 /** Return an array that is a mask for the current array
- *
- * This array will be of type Byte, with values set to 0 to indicate invalid
- * pixels of the current array, and values set to 1 to indicate valid pixels.
- *
- * The generic implementation honours the NoDataValue, as well as various
- * netCDF CF attributes: missing_value, _FillValue, valid_min, valid_max
- * and valid_range.
- *
- * This is the same as the C function GDALMDArrayGetMask().
- *
- * @param papszOptions NULL-terminated list of options, or NULL.
- *
- * @return a new array, that holds a reference to the original one, and thus is
- * a view of it (not a copy), or nullptr in case of error.
- */
+
+ This array will be of type Byte, with values set to 0 to indicate invalid
+ pixels of the current array, and values set to 1 to indicate valid pixels.
+
+ The generic implementation honours the NoDataValue, as well as various
+ netCDF CF attributes: missing_value, _FillValue, valid_min, valid_max
+ and valid_range.
+
+ Starting with GDAL 3.8, option UNMASK_FLAGS=flag_meaning_1[,flag_meaning_2,...]
+ can be used to specify strings of the "flag_meanings" attribute
+ (cf https://cfconventions.org/cf-conventions/cf-conventions.html#flags)
+ for which pixels matching any of those flags will be set at 1 in the mask array,
+ and pixels matching none of those flags will be set at 0.
+ For example, let's consider the following netCDF variable defined with:
+ \verbatim
+ l2p_flags:valid_min = 0s ;
+ l2p_flags:valid_max = 256s ;
+ l2p_flags:flag_meanings = "microwave land ice lake river reserved_for_future_use unused_currently unused_currently unused_currently" ;
+ l2p_flags:flag_masks = 1s, 2s, 4s, 8s, 16s, 32s, 64s, 128s, 256s ;
+ \endverbatim
+
+ GetMask(["UNMASK_FLAGS=microwave,land"]) will return an array such that:
+ - for pixel values *outside* valid_range [0,256], the mask value will be 0.
+ - for a pixel value with bit 0 or bit 1 at 1 within [0,256], the mask value
+   will be 1.
+ - for a pixel value with bit 0 and bit 1 at 0 within [0,256], the mask value
+   will be 0.
+
+ This is the same as the C function GDALMDArrayGetMask().
+
+ @param papszOptions NULL-terminated list of options, or NULL.
+
+ @return a new array, that holds a reference to the original one, and thus is
+ a view of it (not a copy), or nullptr in case of error.
+*/
 std::shared_ptr<GDALMDArray>
-GDALMDArray::GetMask(CPL_UNUSED CSLConstList papszOptions) const
+GDALMDArray::GetMask(CSLConstList papszOptions) const
 {
     auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
     if (!self)
@@ -6984,7 +7188,7 @@ GDALMDArray::GetMask(CPL_UNUSED CSLConstList papszOptions) const
                  "GetMask() only supports numeric data type");
         return nullptr;
     }
-    return GDALMDArrayMask::Create(self);
+    return GDALMDArrayMask::Create(self, papszOptions);
 }
 
 /************************************************************************/
