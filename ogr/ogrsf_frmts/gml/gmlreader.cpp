@@ -1359,9 +1359,13 @@ bool GMLReader::PrescanForSchema(bool bGetExtents, bool bOnlyDetectSRS)
         {
             if (poClass->GetGeometryPropertyCount() == 0)
             {
-                std::string osPath(m_osSingleGeomElemPath);
-                if (osPath.empty() && psBoundedByGeometry)
+                std::string osPath(poClass->GetSingleGeomElemPath());
+                if (osPath.empty() &&
+                    poClass->IsConsistentSingleGeomElemPath() &&
+                    papsGeometry[0] == psBoundedByGeometry)
+                {
                     osPath = "boundedBy";
+                }
                 std::string osGeomName(osPath);
                 const auto nPos = osGeomName.rfind('|');
                 if (nPos != std::string::npos)
