@@ -749,9 +749,8 @@ def test_geometry_column_identification():
 
     try:
         ds = ogr.Open(gdaltest.mssqlspatial_dsname)
-        lyr = ds.ExecuteSQL("SELECT eas_id, shape FROM poly_shape")
-        assert lyr
-        f = lyr.GetFeature(1)
+        with ds.ExecuteSQL("SELECT eas_id, shape FROM poly_shape") as lyr:
+            f = lyr.GetFeature(1)
         geom = f.GetGeometryRef()
         assert geom is not None
         assert geom.GetGeometryName() == "POINT"
