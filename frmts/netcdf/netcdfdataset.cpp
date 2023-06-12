@@ -5144,7 +5144,7 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
     if (NCDFGetAttr(nGroupId, nVarId, "coordinates", &pszTemp) == CE_None)
     {
         // Get X and Y geolocation names from coordinates attribute.
-        char **papszTokens = CSLTokenizeString2(pszTemp, " ", 0);
+        char **papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
         if (CSLCount(papszTokens) >= 2)
         {
             char szGeolocXName[NC_MAX_NAME + 1];
@@ -13590,7 +13590,7 @@ CPLErr netCDFDataset::CreateGrpVectorLayers(
     if (NCDFGetAttr(nCdfId, nFirstVarId, "coordinates", &pszCoordinates) ==
         CE_None)
     {
-        char **papszTokens = CSLTokenizeString2(pszCoordinates, " ", 0);
+        char **papszTokens = NCDFTokenizeCoordinatesAttribute(pszCFCoordinates);
         for (int i = 0; papszTokens != nullptr && papszTokens[i] != nullptr;
              i++)
         {
@@ -13753,7 +13753,7 @@ static CPLErr NCDFGetCoordAndBoundVarFullNames(int nCdfId, char ***ppapszVars)
         char *pszTemp = nullptr;
         char **papszTokens = nullptr;
         if (NCDFGetAttr(nCdfId, v, "coordinates", &pszTemp) == CE_None)
-            papszTokens = CSLTokenizeString2(pszTemp, " ", 0);
+            papszTokens = NCDFTokenizeCoordinatesAttribute(pszTemp);
         CPLFree(pszTemp);
         pszTemp = nullptr;
         if (NCDFGetAttr(nCdfId, v, "bounds", &pszTemp) == CE_None &&
@@ -13824,4 +13824,13 @@ bool NCDFIsUserDefinedType(int ncid, int type)
 #else
     return false;
 #endif
+}
+
+char **NCDFTokenizeCoordinatesAttribute(const char *pszCoordinates)
+{
+    // CF conventions use space as the separator for variable names in the
+    // coordinates attribute, but some products such as
+    // https://sentinel.esa.int/web/sentinel/technical-guides/sentinel-3-synergy/products-algorithms/level-2-aod-algorithms-and-products/level-2-aod-products-description
+    // use comma.
+    return CSLTokenizeString2(pszCoordinates, ", ", 0);
 }
