@@ -1,0 +1,71 @@
+HTTP/2 200 OK
+Access-Control-Allow-Origin: *
+Content-Language: en-US
+Content-Length: 2101
+Content-Type: application/json
+Date: Mon, 12 Jun 2023 15:39:48 GMT
+Server: gunicorn
+X-Powered-By: pygeoapi 0.15.0
+
+{
+    "links":[
+        {
+            "rel":"self",
+            "type":"application/json",
+            "title":"This document as JSON",
+            "href":"http://127.0.0.1:8080/fakeogcapi?f=json"
+        },
+        {
+            "rel":"alternate",
+            "type":"application/ld+json",
+            "title":"This document as RDF (JSON-LD)",
+            "href":"http://127.0.0.1:8080/fakeogcapi?f=jsonld"
+        },
+        {
+            "rel":"alternate",
+            "type":"text/html",
+            "title":"This document as HTML",
+            "href":"http://127.0.0.1:8080/fakeogcapi?f=html",
+            "hreflang":"en-US"
+        },
+        {
+            "rel":"service-desc",
+            "type":"application/vnd.oai.openapi+json;version=3.0",
+            "title":"The OpenAPI definition as JSON",
+            "href":"http://127.0.0.1:8080/fakeogcapi/openapi"
+        },
+        {
+            "rel":"service-doc",
+            "type":"text/html",
+            "title":"The OpenAPI definition as HTML",
+            "href":"http://127.0.0.1:8080/fakeogcapi/openapi?f=html",
+            "hreflang":"en-US"
+        },
+        {
+            "rel":"conformance",
+            "type":"application/json",
+            "title":"Conformance",
+            "href":"http://127.0.0.1:8080/fakeogcapi/conformance"
+        },
+        {
+            "rel":"data",
+            "type":"application/json",
+            "title":"Collections",
+            "href":"http://127.0.0.1:8080/fakeogcapi/collections"
+        },
+        {
+            "rel":"http://www.opengis.net/def/rel/ogc/1.0/processes",
+            "type":"application/json",
+            "title":"Processes",
+            "href":"http://127.0.0.1:8080/fakeogcapi/processes"
+        },
+        {
+            "rel":"http://www.opengis.net/def/rel/ogc/1.0/job-list",
+            "type":"application/json",
+            "title":"Jobs",
+            "href":"http://127.0.0.1:8080/fakeogcapi/jobs"
+        }
+    ],
+    "title":"pygeoapi Demo instance - running latest stable 0.15.0 pygeoapi version",
+    "description":"pygeoapi provides an API to geospatial data"
+}
