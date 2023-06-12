@@ -880,6 +880,20 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
+
+    if (!psOptions->bQuiet && (psOptions->bSetScale || psOptions->bSetOffset) &&
+        psOptions->bUnscale)
+    {
+        // Cf https://github.com/OSGeo/gdal/issues/7863
+        CPLError(CE_Warning, CPLE_AppDefined,
+                 "-a_scale/-a_offset are not applied by -unscale, but are set "
+                 "after it, and -unscale uses the original source band "
+                 "scale/offset values. "
+                 "You may want to use -scale 0 1 %.16g %.16g instead. "
+                 "This warning will not appear if -q is specified.",
+                 psOptions->dfOffset, psOptions->dfOffset + psOptions->dfScale);
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Compute the source window from the projected source window      */
     /*      if the projected coordinates were provided.  Note that the      */
@@ -3319,6 +3333,14 @@ GDALTranslateOptionsNew(char **papszArgv,
     {
         CPLError(CE_Failure, CPLE_NotSupported, "-outsize %d %d invalid.",
                  psOptions->nOXSizePixel, psOptions->nOYSizePixel);
+        GDALTranslateOptionsFree(psOptions);
+        return nullptr;
+    }
+
+    if (!psOptions->asScaleParams.empty() && psOptions->bUnscale)
+    {
+        CPLError(CE_Failure, CPLE_IllegalArg,
+                 "-scale and -unscale cannot be used as the same time");
         GDALTranslateOptionsFree(psOptions);
         return nullptr;
     }
