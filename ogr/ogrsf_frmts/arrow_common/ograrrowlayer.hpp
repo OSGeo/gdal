@@ -60,6 +60,9 @@ inline OGRArrowLayer::OGRArrowLayer(OGRArrowDataset *poDS,
 
 inline OGRArrowLayer::~OGRArrowLayer()
 {
+    if (m_sCachedSchema.release)
+        m_sCachedSchema.release(&m_sCachedSchema);
+
     CPLDebug("ARROW", "Memory pool: bytes_allocated = %" PRId64,
              m_poMemoryPool->bytes_allocated());
     CPLDebug("ARROW", "Memory pool: max_memory = %" PRId64,
@@ -3260,7 +3263,7 @@ static void OverrideArrowRelease(OGRArrowDataset *poDS, T *obj)
 
 inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
 {
-    if (m_poAttrQuery != nullptr || m_poFilterGeom != nullptr ||
+    if (m_poAttrQuery != nullptr ||
         CPLTestBool(CPLGetConfigOption("OGR_ARROW_STREAM_BASE_IMPL", "NO")))
     {
         return true;
@@ -3277,6 +3280,8 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
                 m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB &&
                 m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKT)
             {
+                CPLDebug("ARROW", "Geometry encoding not compatible of fast "
+                                  "Arrow implementation");
                 return true;
             }
         }
@@ -3302,13 +3307,42 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
                 // struct fields will point to the same arrow column
                 if (ignoredState[nArrowCol] != static_cast<int>(bIsIgnored))
                 {
+                    CPLDebug("ARROW",
+                             "Inconsistent ignore state for Arrow Columns");
                     return true;
                 }
             }
         }
     }
 
+    if (m_poFilterGeom)
+    {
+        struct ArrowSchema *psSchema = &m_sCachedSchema;
+        if (psSchema->release)
+            psSchema->release(psSchema);
+        memset(psSchema, 0, sizeof(*psSchema));
+
+        const bool bCanPostFilter = GetArrowSchemaInternal(psSchema) == 0 &&
+                                    CanPostFilterArrowArray(psSchema);
+        if (!bCanPostFilter)
+            return true;
+    }
+
     return false;
+}
+
+/************************************************************************/
+/*                          GetArrowStream()                            */
+/************************************************************************/
+
+inline bool OGRArrowLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
+                                          CSLConstList papszOptions)
+{
+    if (!OGRLayer::GetArrowStream(out_stream, papszOptions))
+        return false;
+
+    m_bUseRecordBatchBaseImplementation = UseRecordBatchBaseImplementation();
+    return true;
 }
 
 /************************************************************************/
@@ -3318,9 +3352,19 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
 inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
                                          struct ArrowSchema *out_schema)
 {
-    if (UseRecordBatchBaseImplementation())
+    if (m_bUseRecordBatchBaseImplementation)
         return OGRLayer::GetArrowSchema(stream, out_schema);
 
+    return GetArrowSchemaInternal(out_schema);
+}
+
+/************************************************************************/
+/*                     GetArrowSchemaInternal()                         */
+/************************************************************************/
+
+inline int
+OGRArrowLayer::GetArrowSchemaInternal(struct ArrowSchema *out_schema) const
+{
     auto status = arrow::ExportSchema(*m_poSchema, out_schema);
     if (!status.ok())
     {
@@ -3443,76 +3487,93 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
 inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                                             struct ArrowArray *out_array)
 {
-    if (UseRecordBatchBaseImplementation())
+    if (m_bUseRecordBatchBaseImplementation)
         return OGRLayer::GetNextArrowArray(stream, out_array);
 
-    if (m_bEOF)
+    while (true)
     {
-        memset(out_array, 0, sizeof(*out_array));
-        return 0;
-    }
-
-    if (m_poBatch == nullptr || m_nIdxInBatch == m_poBatch->num_rows())
-    {
-        m_bEOF = !ReadNextBatch();
         if (m_bEOF)
         {
             memset(out_array, 0, sizeof(*out_array));
             return 0;
         }
-    }
 
-    auto status = arrow::ExportRecordBatch(*m_poBatch, out_array, nullptr);
-    m_nIdxInBatch = m_poBatch->num_rows();
-    if (!status.ok())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "ExportRecordBatch() failed with %s",
-                 status.message().c_str());
-        return EIO;
-    }
-
-    if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(
-                  "GEOMETRY_ENCODING", ""),
-              "WKB"))
-    {
-        const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
-        for (int i = 0; i < nGeomFieldCount; i++)
+        if (m_poBatch == nullptr || m_nIdxInBatch == m_poBatch->num_rows())
         {
-            const auto poGeomFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(i);
-            if (!poGeomFieldDefn->IsIgnored())
+            m_bEOF = !ReadNextBatch();
+            if (m_bEOF)
             {
-                if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKT)
+                memset(out_array, 0, sizeof(*out_array));
+                return 0;
+            }
+        }
+
+        auto status = arrow::ExportRecordBatch(*m_poBatch, out_array, nullptr);
+        m_nIdxInBatch = m_poBatch->num_rows();
+        if (!status.ok())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ExportRecordBatch() failed with %s",
+                     status.message().c_str());
+            return EIO;
+        }
+
+        if (EQUAL(m_aosArrowArrayStreamOptions.FetchNameValueDef(
+                      "GEOMETRY_ENCODING", ""),
+                  "WKB"))
+        {
+            const int nGeomFieldCount = m_poFeatureDefn->GetGeomFieldCount();
+            for (int i = 0; i < nGeomFieldCount; i++)
+            {
+                const auto poGeomFieldDefn =
+                    m_poFeatureDefn->GetGeomFieldDefn(i);
+                if (!poGeomFieldDefn->IsIgnored())
                 {
-                    const int nArrayIdx =
-                        m_bIgnoredFields
-                            ? m_anMapGeomFieldIndexToArrayIndex[i]
-                            : m_anMapGeomFieldIndexToArrowColumn[i];
-                    auto sourceArray = out_array->children[nArrayIdx];
-                    auto targetArray = CreateWKTArrayFromWKBArray(sourceArray);
-                    if (targetArray)
+                    if (m_aeGeomEncoding[i] == OGRArrowGeomEncoding::WKT)
                     {
-                        sourceArray->release(sourceArray);
-                        out_array->children[nArrayIdx] = targetArray;
+                        const int nArrayIdx =
+                            m_bIgnoredFields
+                                ? m_anMapGeomFieldIndexToArrayIndex[i]
+                                : m_anMapGeomFieldIndexToArrowColumn[i];
+                        auto sourceArray = out_array->children[nArrayIdx];
+                        auto targetArray =
+                            CreateWKTArrayFromWKBArray(sourceArray);
+                        if (targetArray)
+                        {
+                            sourceArray->release(sourceArray);
+                            out_array->children[nArrayIdx] = targetArray;
+                        }
+                        else
+                        {
+                            out_array->release(out_array);
+                            memset(out_array, 0, sizeof(*out_array));
+                            return ENOMEM;
+                        }
                     }
-                    else
+                    else if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
                     {
-                        out_array->release(out_array);
-                        memset(out_array, 0, sizeof(*out_array));
-                        return ENOMEM;
+                        // Shouldn't happen if UseRecordBatchBaseImplementation()
+                        // is up to date
+                        CPLAssert(false);
                     }
-                }
-                else if (m_aeGeomEncoding[i] != OGRArrowGeomEncoding::WKB)
-                {
-                    // Shouldn't happen if UseRecordBatchBaseImplementation()
-                    // is up to date
-                    CPLAssert(false);
                 }
             }
         }
-    }
 
-    OverrideArrowRelease(m_poArrowDS, out_array);
+        OverrideArrowRelease(m_poArrowDS, out_array);
+
+        if (m_poFilterGeom)
+        {
+            PostFilterArrowArray(&m_sCachedSchema, out_array);
+            if (out_array->length == 0)
+            {
+                // If there are no records after filtering, start again
+                // with a new batch
+                continue;
+            }
+        }
+        break;
+    }
 
     return 0;
 }

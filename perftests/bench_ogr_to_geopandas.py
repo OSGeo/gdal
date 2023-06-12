@@ -7,6 +7,8 @@ import pyarrow as pa
 
 from osgeo import ogr
 
+ogr.UseExceptions()
+
 
 def layer_as_geopandas(lyr):
 
@@ -75,7 +77,49 @@ def layer_as_geopandas(lyr):
         return df
 
 
+def Usage():
+    print("bench_ogr_to_geopandas.py [-spat xmin ymin xmax ymax] [-where cond]")
+    print("                          filename [layer_name]")
+    sys.exit(1)
+
+
 if __name__ == "__main__":
-    ds = ogr.Open(sys.argv[1])
-    lyr = ds.GetLayer(0)
+
+    i = 1
+    filename = None
+    where = None
+    minx = None
+    miny = None
+    maxx = None
+    maxy = None
+    layer_name = None
+    while i < len(sys.argv):
+        if sys.argv[i] == "-spat":
+            minx = float(sys.argv[i + 1])
+            miny = float(sys.argv[i + 2])
+            maxx = float(sys.argv[i + 3])
+            maxy = float(sys.argv[i + 4])
+            i += 4
+        elif sys.argv[i] == "-where":
+            where = sys.argv[i + 1]
+            i += 1
+        elif sys.argv[i][0] == "-":
+            Usage()
+        elif filename is None:
+            filename = sys.argv[i]
+        elif layer_name is None:
+            layer_name = sys.argv[i]
+        else:
+            Usage()
+        i += 1
+
+    if not filename:
+        Usage()
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(layer_name if layer_name else 0)
+    if minx:
+        lyr.SetSpatialFilterRect(minx, miny, maxx, maxy)
+    if where:
+        lyr.SetAttributeFilter(where)
     print(layer_as_geopandas(lyr))
