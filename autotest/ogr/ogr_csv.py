@@ -2881,6 +2881,126 @@ def test_ogr_csv_single_column():
 ###############################################################################
 
 
+@pytest.mark.parametrize("sep", [",", ";", "\t", "|"])
+def test_ogr_csv_separator_single_occurence_no_space(sep):
+
+    gdal.FileFromMemBuffer("/vsimem/test.csv", f"foo{sep}bar{sep}baz\n1{sep}2{sep}3\n")
+
+    gdal.ErrorReset()
+    ds = ogr.Open("/vsimem/test.csv")
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f["bar"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("sep", [",", ";", "\t", "|"])
+def test_ogr_csv_separator_single_occurence_space(sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv", f"foo {sep} bar {sep} baz\n1{sep}2{sep}3\n"
+    )
+
+    gdal.ErrorReset()
+    ds = ogr.Open("/vsimem/test.csv")
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f["bar"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "sep,other_sep", [(",", ";"), (";", ","), ("\t", ","), ("|", ",")]
+)
+def test_ogr_csv_separator_with_other_sep_in_string(sep, other_sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv",
+        f'foo{sep}"bar{other_sep}{other_sep}{other_sep}{other_sep}rr"{sep}baz\n1{sep}2{sep}3\n',
+    )
+
+    gdal.ErrorReset()
+    ds = ogr.Open("/vsimem/test.csv")
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f[f"bar{other_sep}{other_sep}{other_sep}{other_sep}rr"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "sep,other_sep", [(",", ";"), (";", ","), ("\t", ","), ("|", ",")]
+)
+def test_ogr_csv_separator_with_other_sep(sep, other_sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv", f"foo{sep}bar{other_sep}rr{sep}baz\n1{sep}2{sep}3\n"
+    )
+
+    with gdaltest.error_handler():
+        ds = ogr.Open("/vsimem/test.csv")
+        assert "other candidate separator" in gdal.GetLastErrorMsg()
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f[f"bar{other_sep}rr"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "sep,sep_opt_value,other_sep",
+    [
+        (",", "COMMA", ";"),
+        (";", "SEMICOLON", ","),
+        ("\t", "TAB", ","),
+        ("|", "PIPE", ","),
+        (" ", "SPACE", ","),
+    ],
+)
+def test_ogr_csv_separator_open_option(sep, sep_opt_value, other_sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv",
+        f"foo{sep}bar{other_sep}{other_sep}{other_sep}{other_sep}rr{sep}baz\n1{sep}2{sep}3\n",
+    )
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        "/vsimem/test.csv", gdal.OF_VECTOR, open_options=["SEPARATOR=" + sep_opt_value]
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f[f"bar{other_sep}{other_sep}{other_sep}{other_sep}rr"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
 if __name__ == "__main__":
     gdal.UseExceptions()
     if len(sys.argv) != 2:
