@@ -33,27 +33,16 @@
 
 #include <vector>
 
-struct OrganizeResult
-{
-    std::unique_ptr<OGRGeometry> geom;
-    bool isValid;
-};
-
-static OrganizeResult organizePolygons(std::vector<OGRGeometry *> &polygons,
-                                       const std::string &method)
+static std::unique_ptr<OGRGeometry>
+organizePolygons(std::vector<OGRGeometry *> &polygons,
+                 const std::string &method)
 {
     CPLStringList options;
     options.AddNameValue("METHOD", method.c_str());
 
-    int isValid;
-
-    OrganizeResult ret;
-    ret.geom.reset(OGRGeometryFactory::organizePolygons(
-        polygons.data(), static_cast<int>(polygons.size()), &isValid,
+    return std::unique_ptr<OGRGeometry>(OGRGeometryFactory::organizePolygons(
+        polygons.data(), static_cast<int>(polygons.size()), nullptr,
         (const char **)options.List()));
-    ret.isValid = CPL_TO_BOOL(isValid);
-
-    return ret;
 }
 
 static OGRGeometry *readWKT(const std::string &wkt)
@@ -86,10 +75,9 @@ TEST_P(OrganizePolygonsTest, EmptyInputVector)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
-    ASSERT_EQ(result.geom->getGeometryType(), wkbPolygon);
-    ASSERT_TRUE(result.geom->IsEmpty());
-    ASSERT_TRUE(result.isValid);
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->getGeometryType(), wkbPolygon);
+    ASSERT_TRUE(result->IsEmpty());
 }
 
 TEST_P(OrganizePolygonsTest, SinglePolygonInput)
@@ -102,10 +90,9 @@ TEST_P(OrganizePolygonsTest, SinglePolygonInput)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
-    ASSERT_EQ(result.geom->getGeometryType(), wkbPolygon);
-    ASSERT_TRUE(result.geom->Equals(expected.get()));
-    ASSERT_TRUE(result.isValid);
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->getGeometryType(), wkbPolygon);
+    ASSERT_TRUE(result->Equals(expected.get()));
 }
 
 TEST_P(OrganizePolygonsTest, SingleCurvePolygonInput)
@@ -118,10 +105,9 @@ TEST_P(OrganizePolygonsTest, SingleCurvePolygonInput)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
-    ASSERT_EQ(result.geom->getGeometryType(), wkbCurvePolygon);
-    ASSERT_TRUE(result.geom->Equals(expected.get()));
-    ASSERT_TRUE(result.isValid);
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->getGeometryType(), wkbCurvePolygon);
+    ASSERT_TRUE(result->Equals(expected.get()));
 }
 
 TEST_P(OrganizePolygonsTest, SinglePointInput)
@@ -132,8 +118,9 @@ TEST_P(OrganizePolygonsTest, SinglePointInput)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
-    //ASSERT_EQ(result.geom->getGeometryType(), wkbGeometryCollection);
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->getGeometryType(), wkbPolygon);
+    ASSERT_TRUE(result->IsEmpty());
 }
 
 TEST_P(OrganizePolygonsTest, MixedPolygonCurvePolygonInput)
@@ -146,24 +133,15 @@ TEST_P(OrganizePolygonsTest, MixedPolygonCurvePolygonInput)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
-    ASSERT_EQ(result.geom->getGeometryType(), wkbMultiSurface);
+    ASSERT_NE(result, nullptr);
+    ASSERT_EQ(result->getGeometryType(), wkbMultiSurface);
 
     std::unique_ptr<OGRGeometry> expected(
         readWKT("MULTISURFACE ("
                 "POLYGON ((10 10, 20 10, 20 20, 20 10, 10 10)),"
                 "CURVEPOLYGON ((0 0, 1 0, 1 1, 0 0)))"));
 
-    ASSERT_TRUE(result.geom->Equals(expected.get()));
-
-    if (method == "SKIP")
-    {
-        //ASSERT_FALSE(result.isValid);
-    }
-    else
-    {
-        ASSERT_TRUE(result.isValid);
-    }
+    ASSERT_TRUE(result->Equals(expected.get()));
 }
 
 TEST_P(OrganizePolygonsTest, MixedPolygonPointInput)
@@ -172,12 +150,13 @@ TEST_P(OrganizePolygonsTest, MixedPolygonPointInput)
     polygons.push_back(readWKT("POLYGON ((0 0, 1 0, 1 1, 0 0))"));
     polygons.push_back(readWKT("POINT (2 2)"));
 
+    std::unique_ptr<OGRGeometry> expected(polygons[0]->clone());
+
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
-    ASSERT_EQ(result.geom->getGeometryType(), wkbGeometryCollection);
-    ASSERT_FALSE(result.isValid);
+    ASSERT_NE(result, nullptr);
+    ASSERT_TRUE(result->Equals(expected.get()));
 }
 
 TEST_P(OrganizePolygonsTest, CWPolygonCCWHole)
@@ -189,7 +168,7 @@ TEST_P(OrganizePolygonsTest, CWPolygonCCWHole)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
+    ASSERT_NE(result, nullptr);
 
     std::unique_ptr<OGRGeometry> expected;
     if (method == "SKIP")
@@ -203,16 +182,7 @@ TEST_P(OrganizePolygonsTest, CWPolygonCCWHole)
                                "2 1, 2 2, 1 2, 1 1))"));
     }
 
-    ASSERT_TRUE(result.geom->Equals(expected.get()));
-
-    if (method == "SKIP")
-    {
-        //ASSERT_FALSE(result.isValid);
-    }
-    else
-    {
-        ASSERT_TRUE(result.isValid);
-    }
+    ASSERT_TRUE(result->Equals(expected.get()));
 }
 
 TEST_P(OrganizePolygonsTest, CWPolygonCCWLakeCWIslandInLake)
@@ -228,7 +198,7 @@ TEST_P(OrganizePolygonsTest, CWPolygonCCWLakeCWIslandInLake)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
+    ASSERT_NE(result, nullptr);
 
     if (method != "SKIP")
     {
@@ -237,8 +207,7 @@ TEST_P(OrganizePolygonsTest, CWPolygonCCWLakeCWIslandInLake)
                     "((0 0, 0 100, 100 100, 100 0, 0 0), (10 10, 20 10, 20 20, "
                     "10 20, 10 10)),"
                     "((15 15, 15 16, 16 16, 16 15, 15 15)))"));
-        ASSERT_TRUE(result.geom->Equals(expected.get()));
-        ASSERT_TRUE(result.isValid);
+        ASSERT_TRUE(result->Equals(expected.get()));
     }
 }
 
@@ -251,14 +220,13 @@ TEST_P(OrganizePolygonsTest, AdjacentCCWPolygons)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
+    ASSERT_NE(result, nullptr);
 
     std::unique_ptr<OGRGeometry> expected(
         readWKT("MULTIPOLYGON("
                 "((0 0, 1 0, 1 1, 0 1, 0 0)), "
                 "((1 0, 2 0, 2 1, 1 1, 1 0)))"));
-    ASSERT_TRUE(result.geom->Equals(expected.get()));
-    //ASSERT_FALSE(result.isValid);
+    ASSERT_TRUE(result->Equals(expected.get()));
 }
 
 TEST_P(OrganizePolygonsTest, HoleAlongEdge)
@@ -271,7 +239,7 @@ TEST_P(OrganizePolygonsTest, HoleAlongEdge)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
+    ASSERT_NE(result, nullptr);
 
     if (method != "SKIP")
     {
@@ -279,8 +247,7 @@ TEST_P(OrganizePolygonsTest, HoleAlongEdge)
             readWKT("POLYGON("
                     "(0 0, 0 10, 10 10, 10 0, 0 0), "
                     "(0 2, 1 2, 1 3, 0 3, 0 2))"));
-        ASSERT_TRUE(result.geom->Equals(expected.get()));
-        //ASSERT_FALSE(result.isValid);
+        ASSERT_TRUE(result->Equals(expected.get()));
     }
 }
 
@@ -293,12 +260,11 @@ TEST_P(OrganizePolygonsTest, CrossingCCWPolygons)
     auto method = GetParam();
     auto result = organizePolygons(polygons, method);
 
-    ASSERT_NE(result.geom, nullptr);
+    ASSERT_NE(result, nullptr);
 
     std::unique_ptr<OGRGeometry> expected(
         readWKT("MULTIPOLYGON("
                 "((0 0, 10 0, 10 10, 0 10, 0 0)), "
                 "((5 5, 15 5, 15 15, 5 15, 5 5)))"));
-    ASSERT_TRUE(result.geom->Equals(expected.get()));
-    //ASSERT_FALSE(result.isValid);
+    ASSERT_TRUE(result->Equals(expected.get()));
 }
