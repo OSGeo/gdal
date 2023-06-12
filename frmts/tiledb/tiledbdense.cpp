@@ -614,7 +614,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
 #if TILEDB_VERSION_MAJOR == 1 && TILEDB_VERSION_MINOR < 7
             vfs.remove_file(psPam->pszPamFilename);
 #else
-            m_array->delete_metadata("_gdal");
+            m_array->delete_metadata(GDAL_ATTRIBUTE_NAME);
 #endif
             return CE_None;
         }
@@ -696,7 +696,7 @@ CPLErr TileDBRasterDataset::TrySaveXML()
             {
                 auto oMeta = std::unique_ptr<tiledb::Array>(new tiledb::Array(
                     *m_ctx, m_array->uri(), TILEDB_WRITE, nTimestamp));
-                oMeta->put_metadata("_gdal", TILEDB_UINT8,
+                oMeta->put_metadata(GDAL_ATTRIBUTE_NAME, TILEDB_UINT8,
                                     static_cast<int>(strlen(pszTree)), pszTree);
                 oMeta->close();
             }
@@ -704,14 +704,14 @@ CPLErr TileDBRasterDataset::TrySaveXML()
             {
                 auto oMeta = std::unique_ptr<tiledb::Array>(
                     new tiledb::Array(*m_ctx, m_array->uri(), TILEDB_WRITE));
-                oMeta->put_metadata("_gdal", TILEDB_UINT8,
+                oMeta->put_metadata(GDAL_ATTRIBUTE_NAME, TILEDB_UINT8,
                                     static_cast<int>(strlen(pszTree)), pszTree);
                 oMeta->close();
             }
         }
         else
         {
-            m_array->put_metadata("_gdal", TILEDB_UINT8,
+            m_array->put_metadata(GDAL_ATTRIBUTE_NAME, TILEDB_UINT8,
                                   static_cast<int>(strlen(pszTree)), pszTree);
         }
 
@@ -860,7 +860,8 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
                 uint32_t v_num = 0;
                 if ((eAccess == GA_Update) && (m_roArray))
                 {
-                    m_roArray->get_metadata("_gdal", &v_type, &v_num, &v_r);
+                    m_roArray->get_metadata(GDAL_ATTRIBUTE_NAME, &v_type,
+                                            &v_num, &v_r);
                     if (v_r)
                     {
                         osMetaDoc =
@@ -869,7 +870,8 @@ CPLErr TileDBRasterDataset::TryLoadCachedXML(char ** /*papszSiblingFiles*/,
                 }
                 else
                 {
-                    m_array->get_metadata("_gdal", &v_type, &v_num, &v_r);
+                    m_array->get_metadata(GDAL_ATTRIBUTE_NAME, &v_type, &v_num,
+                                          &v_r);
 
                     if (v_r)
                     {

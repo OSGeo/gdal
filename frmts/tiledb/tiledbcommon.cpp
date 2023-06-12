@@ -146,11 +146,23 @@ int TileDBDataset::Identify(GDALOpenInfo *poOpenInfo)
 #ifdef HAS_TILEDB_GROUP
             if ((poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0)
             {
-                return eType == tiledb::Object::Type::Array ||
-                       eType == tiledb::Object::Type::Group;
+                if (eType == tiledb::Object::Type::Array ||
+                    eType == tiledb::Object::Type::Group)
+                    return true;
             }
 #endif
-            return eType == tiledb::Object::Type::Array;
+#ifdef HAS_TILEDB_MULTIDIM
+            if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
+            {
+                if (eType == tiledb::Object::Type::Array ||
+                    eType == tiledb::Object::Type::Group)
+                    return true;
+            }
+#endif
+            if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
+            {
+                return eType == tiledb::Object::Type::Array;
+            }
         }
 
         return FALSE;
@@ -209,6 +221,13 @@ GDALDataset *TileDBDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
+#ifdef HAS_TILEDB_MULTIDIM
+            if ((poOpenInfo->nOpenFlags & GDAL_OF_MULTIDIM_RASTER) != 0)
+            {
+                return TileDBDataset::OpenMultiDimensional(poOpenInfo);
+            }
+#endif
+
             const char *pszConfig = CSLFetchNameValue(
                 poOpenInfo->papszOpenOptions, "TILEDB_CONFIG");
             tiledb::Context oCtx;
@@ -287,6 +306,19 @@ GDALDataset *TileDBDataset::CreateCopy(const char *pszFilename,
                                        void *pProgressData)
 
 {
+#ifdef HAS_TILEDB_MULTIDIM
+    if (poSrcDS->GetRootGroup())
+    {
+        auto poDrv = GDALDriver::FromHandle(GDALGetDriverByName("TileDB"));
+        if (poDrv)
+        {
+            return poDrv->DefaultCreateCopy(pszFilename, poSrcDS, bStrict,
+                                            papszOptions, pfnProgress,
+                                            pProgressData);
+        }
+    }
+#endif
+
     try
     {
         if (poSrcDS->GetRasterCount() > 0 ||
@@ -483,6 +515,55 @@ void GDALRegister_TileDB()
     poDriver->pfnCreate = TileDBDataset::Create;
     poDriver->pfnCreateCopy = TileDBDataset::CreateCopy;
     poDriver->pfnDelete = TileDBDataset::Delete;
+#ifdef HAS_TILEDB_MULTIDIM
+    poDriver->SetMetadataItem(GDAL_DCAP_MULTIDIM_RASTER, "YES");
+    poDriver->pfnCreateMultiDimensional = TileDBDataset::CreateMultiDimensional;
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_DATASET_CREATIONOPTIONLIST,
+        "<MultiDimDatasetCreationOptionList>"
+        "   <Option name='TILEDB_CONFIG' type='string' description='location "
+        "of configuration file for TileDB'/>"
+        "   <Option name='TILEDB_TIMESTAMP' type='int' description='Create "
+        "arrays at this timestamp, the timestamp should be > 0'/>"
+        "   <Option name='STATS' type='boolean' default='false' "
+        "description='Dump TileDB stats'/>"
+        "</MultiDimDatasetCreationOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_ARRAY_OPENOPTIONLIST,
+        "<MultiDimArrayOpenOptionList>"
+        "   <Option name='TILEDB_TIMESTAMP' type='int' description='Open "
+        "array at this timestamp, the timestamp should be > 0'/>"
+        "</MultiDimArrayOpenOptionList>");
+
+    poDriver->SetMetadataItem(
+        GDAL_DMD_MULTIDIM_ARRAY_CREATIONOPTIONLIST,
+        "<MultiDimArrayCreationOptionList>"
+        "   <Option name='TILEDB_TIMESTAMP' type='int' description='Create "
+        "array at this timestamp, the timestamp should be > 0'/>"
+        "   <Option name='BLOCKSIZE' type='int' description='Block size in "
+        "pixels'/>"
+        "   <Option name='COMPRESSION' type='string-select' description='"
+        "Compression to use' default='NONE'>\n"
+        "       <Value>NONE</Value>\n"
+        "       <Value>GZIP</Value>\n"
+        "       <Value>ZSTD</Value>\n"
+        "       <Value>LZ4</Value>\n"
+        "       <Value>RLE</Value>\n"
+        "       <Value>BZIP2</Value>\n"
+        "       <Value>DOUBLE-DELTA</Value>\n"
+        "       <Value>POSITIVE-DELTA</Value>\n"
+        "   </Option>\n"
+        "   <Option name='COMPRESSION_LEVEL' type='int' "
+        "description='Compression level'/>\n"
+        "   <Option name='STATS' type='boolean' default='false' "
+        "description='Dump TileDB stats'/>"
+        "   <Option name='IN_MEMORY'  type='boolean' default='false' "
+        "description='Whether the array should be only in-memory. Useful to "
+        "create an indexing variable that is serialized as a dimension label'/>"
+        "</MultiDimArrayCreationOptionList>");
+#endif
 
 #if !defined(HAS_TILEDB_WORKING_UTF8_STRING_FILTER)
     poDriver->SetMetadataItem("HAS_TILEDB_WORKING_UTF8_STRING_FILTER", "NO");
