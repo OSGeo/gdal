@@ -6318,6 +6318,70 @@ def test_ogr_gpkg_views():
 
 
 ###############################################################################
+# Test a spatial view where the geometry column is computed with a
+# Spatialite function
+
+
+def test_ogr_gpkg_spatial_view_computed_geom_column():
+
+    filename = "/vsimem/test_ogr_gpkg_spatial_view_computed_geom_column.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+
+    if not _has_spatialite_4_3_or_later(ds):
+        ds = None
+        gdal.Unlink(filename)
+        pytest.skip("spatialite missing")
+
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+
+    ds.ExecuteSQL(
+        "CREATE VIEW geom_view AS SELECT fid AS my_fid, AsGPB(ST_Multi(geom)) AS my_geom FROM foo"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'geom_view', 'geom_view', 'features', 4326 )"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('geom_view', 'my_geom', 'MULTIPOINT', 4326, 0, 0)"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_extensions VALUES('geom_view', 'my_geom', 'gdal_spatialite_computed_geom_column', 'https://gdal.org/drivers/vector/gpkg_spatialite_computed_column.html', 'read-write')"
+    )
+
+    ds = None
+
+    import sqlite3
+
+    conn = sqlite3.connect(":memory:")
+    can_use_validate = False
+    try:
+        conn.enable_load_extension(True)
+        conn.execute('SELECT load_extension("mod_spatialite")')
+        can_use_validate = True
+    except Exception:
+        pass
+    conn.close()
+    if can_use_validate:
+        assert validate(filename), "validation failed"
+    else:
+        print("Cannot validate() due to mod_spatialite not being loadable")
+
+    ds = ogr.Open(filename)
+
+    lyr = ds.GetLayerByName("geom_view")
+    assert lyr.GetGeomType() == ogr.wkbMultiPoint
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "MULTIPOINT (1 2)"
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test read support for legacy gdal_aspatial extension
 
 
