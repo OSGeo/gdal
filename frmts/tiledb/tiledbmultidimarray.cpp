@@ -1306,9 +1306,11 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid dim size: 0");
                 return nullptr;
             }
+            std::string osDimName(poDim->GetName());
+            if (poDim->GetName() == osName)
+                osDimName += "_dim";
             auto dim = tiledb::Dimension::create<uint64_t>(
-                ctx, poDim->GetName(), {0, poDim->GetSize() - 1},
-                anBlockSize[i]);
+                ctx, osDimName, {0, poDim->GetSize() - 1}, anBlockSize[i]);
             domain.add_dimension(std::move(dim));
         }
 

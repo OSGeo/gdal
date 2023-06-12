@@ -433,6 +433,37 @@ def test_tiledb_multidim_array_compression():
 ###############################################################################
 
 
+def test_tiledb_multidim_array_same_name_as_dim():
+
+    filename = "tmp/test_tiledb_multidim_array_same_name_as_dim.tiledb"
+
+    def test():
+
+        drv = gdal.GetDriverByName("TileDB")
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim0 = rg.CreateDimension("t", None, None, 3)
+        rg.CreateMDArray("t", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Float64))
+
+    def reopen_readonly():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("t")
+        assert ar.GetDimensions()[0].GetName() == "t_dim"
+
+    if os.path.exists(filename):
+        shutil.rmtree(filename)
+    try:
+        test()
+        reopen_readonly()
+    finally:
+        if os.path.exists(filename):
+            shutil.rmtree(filename)
+
+
+###############################################################################
+
+
 def test_tiledb_multidim_array_read_write():
 
     filename = "tmp/test_tiledb_multidim_array_read_write.tiledb"
