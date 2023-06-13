@@ -138,6 +138,10 @@ struct CopyableGCPs
  */
 struct GDALVectorTranslateOptions
 {
+    // All arguments passed to GDALVectorTranslate() except the positional
+    // ones (that is dataset names and layer names)
+    CPLStringList aosArguments{};
+
     /*! continue after a failure, skipping the failed feature */
     bool bSkipFailures = false;
 
@@ -2468,6 +2472,14 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                      "%s driver has no vector capabilities.",
                      psOptions->osFormat.c_str());
             return nullptr;
+        }
+
+        if (poDriver->CanVectorTranslateFrom(
+                pszDest, poDS, psOptions->aosArguments.List(), nullptr))
+        {
+            return poDriver->VectorTranslateFrom(
+                pszDest, poDS, psOptions->aosArguments.List(),
+                psOptions->pfnProgress, psOptions->pProgressData);
         }
 
         if (!CPLTestBool(
@@ -6000,6 +6012,8 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
     int nArgc = CSLCount(papszArgv);
     for (int i = 0; papszArgv != nullptr && i < nArgc; i++)
     {
+        int iArgStart = i;
+
         if (EQUAL(papszArgv[i], "-q") || EQUAL(papszArgv[i], "-quiet"))
         {
             psOptions->bQuiet = true;
@@ -6737,12 +6751,29 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
         }
         else if (psOptionsForBinary &&
                  psOptionsForBinary->pszDestDataSource == nullptr)
+        {
+            iArgStart = -1;
             psOptionsForBinary->pszDestDataSource = CPLStrdup(papszArgv[i]);
+        }
         else if (psOptionsForBinary &&
                  psOptionsForBinary->pszDataSource == nullptr)
+        {
+            iArgStart = -1;
             psOptionsForBinary->pszDataSource = CPLStrdup(papszArgv[i]);
+        }
         else
+        {
+            iArgStart = -1;
             psOptions->aosLayers.AddString(papszArgv[i]);
+        }
+
+        if (iArgStart >= 0)
+        {
+            for (int j = iArgStart; j <= i; ++j)
+            {
+                psOptions->aosArguments.AddString(papszArgv[j]);
+            }
+        }
     }
 
     if (psOptionsForBinary)

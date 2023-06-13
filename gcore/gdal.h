@@ -518,6 +518,12 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_CREATECOPY "DCAP_CREATECOPY"
 
+/** Capability set by a driver that implements the VectorTranslateFrom() API.
+ *
+ * @since GDAL 3.8
+ */
+#define GDAL_DCAP_VECTOR_TRANSLATE_FROM "DCAP_VECTOR_TRANSLATE_FROM"
+
 /** Capability set by a driver that implements the CreateCopy() API, but with
  * multidimensional raster as input and output.
  *
