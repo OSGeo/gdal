@@ -103,6 +103,14 @@ def netcdf_setup():
         + str(gdaltest.netcdf_drv_has_nc4)
     )
 
+    # find out if we have ncdump
+    try:
+        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h")
+    except OSError:
+        err = None
+
+    gdaltest.netcdf_have_ncdump = err is not None and "netcdf library version" in err
+
     gdaltest.count_opened_files = len(gdaltest.get_opened_files())
 
 
@@ -251,6 +259,30 @@ def netcdf_check_vars(ifile, vals_global=None, vals_band=None):
             str(mk),
             str(k),
             str(v),
+        )
+
+
+def netcdf_ncdump(fname):
+
+    (out, err) = gdaltest.runexternal_out_and_err(f"ncdump -h {fname}")
+
+    return out
+
+
+def netcdf_write_multiple_layers(output_fname, inputs, options=None):
+
+    for i, input_fname in enumerate(inputs):
+        src = gdal.OpenEx(input_fname, gdal.OF_VECTOR)
+        assert src is not None
+
+        mode = "update" if i > 0 else None
+
+        gdal.VectorTranslate(
+            output_fname,
+            src,
+            format="netCDF",
+            accessMode=mode,
+            datasetCreationOptions=options if i == 0 else None,
         )
 
 
@@ -1145,14 +1177,9 @@ def netcdf_test_4dfile(ofile):
     ds = None
 
     # get file header with ncdump (if available)
-    try:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h")
-    except OSError:
-        print("NOTICE: ncdump not found")
+    if not gdaltest.netcdf_have_ncdump:
         return
-    if err is None or "netcdf library version" not in err:
-        print("NOTICE: ncdump not found")
-        return
+
     (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h " + ofile)
     assert ret != "" and err == "", "ncdump failed"
 
@@ -2694,32 +2721,15 @@ def test_netcdf_62():
 
     gdal.Unlink("/vsimem/netcdf_62.csv")
 
-
-@pytest.mark.require_driver("CSV")
-def test_netcdf_62_ncdump_check():
-
-    # get file header with ncdump (if available)
-    try:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h")
-    except OSError:
-        err = None
-    if err is not None and "netcdf library version" in err:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h tmp/netcdf_62.nc")
-        assert (
-            "profile = 2" in ret
-            and "record = UNLIMITED" in ret
-            and 'profile:cf_role = "profile_id"' in ret
-            and 'parentIndex:instance_dimension = "profile"' in ret
-            and ':featureType = "profile"' in ret
-            and "char station(profile" in ret
-            and "char foo(record" in ret
-        )
-    else:
-        pytest.skip()
-
-
-@pytest.mark.require_driver("CSV")
-def test_netcdf_62_cf_check():
+    if gdaltest.netcdf_have_ncdump:
+        hdr = netcdf_ncdump("tmp/netcdf_62.nc")
+        assert "profile = 2" in hdr
+        assert "record = UNLIMITED" in hdr
+        assert 'profile:cf_role = "profile_id"' in hdr
+        assert 'parentIndex:instance_dimension = "profile"' in hdr
+        assert ':featureType = "profile"' in hdr
+        assert "char station(profile" in hdr
+        assert "char foo(record" in hdr
 
     import netcdf_cf
 
@@ -2727,7 +2737,7 @@ def test_netcdf_62_cf_check():
     if gdaltest.netcdf_cf_method is not None:
         netcdf_cf.netcdf_cf_check_file("tmp/netcdf_62.nc", "auto", False)
 
-    gdal.Unlink("/vsimem/netcdf_62.nc")
+    gdal.Unlink("tmp/netcdf_62.nc")
 
 
 ###############################################################################
@@ -2778,31 +2788,16 @@ def test_netcdf_63():
 
     gdal.Unlink("/vsimem/netcdf_63.csv")
 
+    del ds
 
-@pytest.mark.require_driver("CSV")
-def test_netcdf_63_ncdump_check():
-
-    if not gdaltest.netcdf_drv_has_nc4:
-        pytest.skip()
-
-    # get file header with ncdump (if available)
-    try:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h")
-    except OSError:
-        err = None
-    if err is not None and "netcdf library version" in err:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h tmp/netcdf_63.nc")
-        assert (
-            "profile = UNLIMITED" in ret
-            and "record = UNLIMITED" in ret
-            and 'profile:cf_role = "profile_id"' in ret
-            and 'parentIndex:instance_dimension = "profile"' in ret
-            and ':featureType = "profile"' in ret
-            and "char station(record" in ret
-        )
-    else:
-        gdal.Unlink("/vsimem/netcdf_63.nc")
-        pytest.skip()
+    if gdaltest.netcdf_drv_has_nc4 and gdaltest.netcdf_have_ncdump:
+        hdr = netcdf_ncdump("tmp/netcdf_63.nc")
+        assert "profile = UNLIMITED" in hdr
+        assert "record = UNLIMITED" in hdr
+        assert 'profile:cf_role = "profile_id"' in hdr
+        assert 'parentIndex:instance_dimension = "profile"' in hdr
+        assert ':featureType = "profile"' in hdr
+        assert "char station(record" in hdr
 
     gdal.Unlink("/vsimem/netcdf_63.nc")
 
@@ -3013,32 +3008,18 @@ def test_netcdf_66():
 
     gdal.Unlink("/vsimem/netcdf_66.csv")
 
+    if gdaltest.netcdf_have_ncdump:
+        hdr = netcdf_ncdump("tmp/netcdf_66.nc")
+        assert "char my_station(obs, my_station_max_width)" in hdr
+        assert 'my_station:long_name = "my station attribute"' in hdr
+        assert 'lon:my_extra_lon_attribute = "foo"' in hdr
+        assert "lat:long_name" not in hdr
+        assert "id:my_extra_attribute = 5.23" in hdr
+        assert 'profile:cf_role = "profile_id"' in hdr
+        assert 'parentIndex:instance_dimension = "profile"' in hdr
+        assert ':featureType = "profile"' in hdr
 
-@pytest.mark.require_driver("CSV")
-def test_netcdf_66_ncdump_check():
-
-    # get file header with ncdump (if available)
-    try:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h")
-    except OSError:
-        err = None
-    if err is not None and "netcdf library version" in err:
-        (ret, err) = gdaltest.runexternal_out_and_err("ncdump -h tmp/netcdf_66.nc")
-        assert (
-            "char my_station(obs, my_station_max_width)" in ret
-            and 'my_station:long_name = "my station attribute"' in ret
-            and 'lon:my_extra_lon_attribute = "foo"' in ret
-            and "lat:long_name" not in ret
-            and "id:my_extra_attribute = 5.23" in ret
-            and 'profile:cf_role = "profile_id"' in ret
-            and 'parentIndex:instance_dimension = "profile"' in ret
-            and ':featureType = "profile"' in ret
-        )
-    else:
-        gdal.Unlink("/vsimem/netcdf_66.nc")
-        pytest.skip()
-
-    gdal.Unlink("/vsimem/netcdf_66.nc")
+    gdal.Unlink("tmp/netcdf_66.nc")
 
 
 ###############################################################################
@@ -5206,17 +5187,13 @@ def test_write_multiple_layers_one_nc():
     # each geometry container a layer
     # this also tests "update mode" for CF-1.8
 
-    src = gdal.OpenEx(
-        "data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json", gdal.OF_VECTOR
+    netcdf_write_multiple_layers(
+        "tmp/mlnc.nc",
+        inputs=(
+            "data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json",
+            "data/netcdf-sg/write-tests/point3D_write_test.json",
+        ),
     )
-    assert src is not None
-    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF")
-
-    src = gdal.OpenEx(
-        "data/netcdf-sg/write-tests/point3D_write_test.json", gdal.OF_VECTOR
-    )
-    assert src is not None
-    gdal.VectorTranslate("tmp/mlnc.nc", src, format="netCDF", accessMode="update")
 
     nc_tsrc = ogr.Open("tmp/mlnc.nc")
     assert nc_tsrc.GetLayerCount() == 2
@@ -5281,6 +5258,14 @@ def test_write_multiple_layers_one_nc_NC4():
     # nearly identical to previous test except that
     # it writes to NC4, not NC3 (changing a file from NC3 to NC4)
     # and it writes them all at once (non update)
+
+    netcdf_write_multiple_layers(
+        "tmp/mlnc.nc",
+        inputs=(
+            "data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json",
+            "data/netcdf-sg/write-tests/point3D_write_test.json",
+        ),
+    )
 
     src = gdal.OpenEx("tmp/mlnc.nc", gdal.OF_VECTOR)
     assert src is not None
@@ -5352,6 +5337,15 @@ def test_write_multiple_layers_one_nc_back_to_NC3():
     # it writes to from NC4 to NC3
     # and it writes them all at once (non update)
     # test_write_multiple_layers_one_nc writes one and then another in update mode
+
+    netcdf_write_multiple_layers(
+        "tmp/mlnc4.nc4",
+        inputs=(
+            "data/netcdf-sg/write-tests/multipolygon_no_ir_write_test.json",
+            "data/netcdf-sg/write-tests/point3D_write_test.json",
+        ),
+        options=["FORMAT=NC4"],
+    )
 
     src = gdal.OpenEx("tmp/mlnc4.nc4", gdal.OF_VECTOR)
     assert src is not None
@@ -5563,6 +5557,13 @@ def test_states_full_layer_buffer_restrict_correctness_single_datum():
     src = gdal.OpenEx("data/netcdf-sg/write-tests/cf1.8_states.json")
     assert src is not None
     assert src.GetLayerCount() == 1
+
+    gdal.VectorTranslate(
+        "tmp/states_4K_restrict.nc",
+        src,
+        format="netCDF",
+        layerCreationOptions=["BUFFER_SIZE=4096"],
+    )
 
     gdal.VectorTranslate(
         "tmp/states_4K_restrict_sd.nc",
