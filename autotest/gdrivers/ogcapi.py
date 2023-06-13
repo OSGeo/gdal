@@ -35,14 +35,20 @@ from http.server import BaseHTTPRequestHandler
 import gdaltest
 import ogrtest
 import pytest
-import requests
 import webserver
 
-from osgeo import gdal, ogr
+from osgeo import gdal
+
+# Source of test data
+TEST_DATA_SOURCE_ENDPOINT = b"https://demo.pygeoapi.io/stable"
 
 # Set RECORD to TRUE to recreate test data from the https://demo.pygeoapi.io/stable server
 RECORD = False
+
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
+
+if RECORD:
+    import requests
 
 
 def sanitize_url(url):
@@ -69,12 +75,12 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
 
                 with open(request_data_path, "wb+") as fd:
                     response = requests.get(
-                        "https://demo.pygeoapi.io/stable"
+                        TEST_DATA_SOURCE_ENDPOINT
                         + self.path.replace("/fakeogcapi", ""),
                         stream=True,
                     )
                     content = response.content.replace(
-                        b"https://demo.pygeoapi.io/stable",
+                        TEST_DATA_SOURCE_ENDPOINT,
                         (
                             "http://"
                             + self.address_string()
@@ -122,25 +128,41 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
 pytestmark = pytest.mark.require_driver("OGCAPI")
 
 
+###############################################################################
+# Init
+#
+
+
+@pytest.fixture(scope="module", autouse=True)
+def init():
+
+    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
+        handler=OGCAPIHTTPHandler
+    )
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+    yield
+
+    webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
+
+
 def test_ogr_ogcapi_fake_ogcapi_server():
 
-    (process, port) = webserver.launch(handler=OGCAPIHTTPHandler)
-    if port == 0:
-        pytest.skip()
+    ds = gdal.OpenEx("OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port)
 
-    ds = gdal.OpenEx("OGCAPI:http://127.0.0.1:%d/fakeogcapi" % port)
-    if ds is None:
-        pytest.fail("did not manage to open OGCAPI datastore")
+    assert ds is not None
 
     sub_ds_uri = [
         v[0] for v in ds.GetSubDatasets() if v[1] == "Collection Large Lakes"
     ][0]
+
     del ds
 
     ds = gdal.OpenEx(sub_ds_uri)
     assert ds is not None
 
     lyr = ds.GetLayerByName("lakes")
+    assert lyr is not None
 
     assert lyr.GetName() == "lakes"
 
@@ -164,4 +186,3 @@ def test_ogr_ogcapi_fake_ogcapi_server():
 
     del lyr
     del ds
-    webserver.server_stop(process, port)
