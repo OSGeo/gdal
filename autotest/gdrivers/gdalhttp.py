@@ -64,6 +64,8 @@ def set_http_timeout():
 
 
 def skip_if_unreachable(url, try_read=False):
+    __tracebackhide__ = True
+
     conn = gdaltest.gdalurlopen(url, timeout=4)
     if conn is None:
         pytest.skip("cannot open URL")
@@ -79,6 +81,7 @@ def skip_if_unreachable(url, try_read=False):
 # Verify we have the driver.
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=2)
 def test_http_1():
     url = "http://gdal.org/gdalicon.png"
     tst = gdaltest.GDALTest("PNG", url, 1, 7617, filename_absolute=1)

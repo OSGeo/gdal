@@ -1,6 +1,11 @@
+# NOTE: when adding dependencies to this file it may also be necessary
+# to add them to CI configurations that use conda rather than pip,
+# such as .github/workflows/cmake_builds.yml
+
 pytest>=6.0.0
 pytest-sugar<=0.9.6; python_version < '3.7'
 pytest-sugar; python_version >= '3.7'
+pytest-rerunfailures
 pytest-env
 lxml
 jsonschema

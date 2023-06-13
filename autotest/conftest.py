@@ -210,6 +210,11 @@ def pytest_collection_modifyitems(config, items):
             if not gdaltest.built_against_curl():
                 item.add_marker(pytest.mark.skip("curl support not available"))
 
+        for mark in item.iter_markers("flaky"):
+            # validate arguments for "flaky" marker from pytest-rerunfailures
+            for arg in mark.kwargs:
+                assert arg in {"reruns", "reruns_delay", "condition"}
+
 
 def pytest_addoption(parser):
     parser.addini("gdal_version", "GDAL version for which pytest.ini was generated")

@@ -41,6 +41,7 @@ pytestmark = pytest.mark.require_curl()
 #
 
 
+@pytest.mark.flaky(reruns=5, reruns_delay=2)
 def test_vsicurl_streaming_1():
 
     with gdal.config_option("GDAL_HTTP_CONNECTTIMEOUT", "5"):
