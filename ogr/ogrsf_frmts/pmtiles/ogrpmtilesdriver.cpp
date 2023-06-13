@@ -30,6 +30,8 @@
 
 #include "vsipmtiles.h"
 
+#include "ogrpmtilesfrommbtiles.h"
+
 /************************************************************************/
 /*                     OGRPMTilesDriverIdentify()                       */
 /************************************************************************/
@@ -53,6 +55,74 @@ static GDALDataset *OGRPMTilesDriverOpen(GDALOpenInfo *poOpenInfo)
     if (!poDS->Open(poOpenInfo))
         return nullptr;
     return poDS.release();
+}
+
+/************************************************************************/
+/*                   OGRPMTilesDriverCanVectorTranslateFrom()           */
+/************************************************************************/
+
+static bool OGRPMTilesDriverCanVectorTranslateFrom(
+    const char * /*pszDestName*/, GDALDataset *poSourceDS,
+    CSLConstList papszVectorTranslateArguments, char ***ppapszFailureReasons)
+{
+    auto poSrcDriver = poSourceDS->GetDriver();
+    if (!(poSrcDriver && EQUAL(poSrcDriver->GetDescription(), "MBTiles")))
+    {
+        if (ppapszFailureReasons)
+            *ppapszFailureReasons = CSLAddString(
+                *ppapszFailureReasons, "Source driver is not MBTiles");
+        return false;
+    }
+
+    if (papszVectorTranslateArguments)
+    {
+        const int nArgs = CSLCount(papszVectorTranslateArguments);
+        for (int i = 0; i < nArgs; ++i)
+        {
+            if (i + 1 < nArgs &&
+                (strcmp(papszVectorTranslateArguments[i], "-f") == 0 ||
+                 strcmp(papszVectorTranslateArguments[i], "-of") == 0))
+            {
+                ++i;
+            }
+            else
+            {
+                if (ppapszFailureReasons)
+                    *ppapszFailureReasons =
+                        CSLAddString(*ppapszFailureReasons,
+                                     "Direct copy from MBTiles does not "
+                                     "support GDALVectorTranslate() options");
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+/************************************************************************/
+/*                   OGRPMTilesDriverVectorTranslateFrom()              */
+/************************************************************************/
+
+static GDALDataset *OGRPMTilesDriverVectorTranslateFrom(
+    const char *pszDestName, GDALDataset *poSourceDS,
+    CSLConstList papszVectorTranslateArguments,
+    GDALProgressFunc /* pfnProgress */, void * /* pProgressData */)
+{
+    if (!OGRPMTilesDriverCanVectorTranslateFrom(
+            pszDestName, poSourceDS, papszVectorTranslateArguments, nullptr))
+    {
+        return nullptr;
+    }
+
+    if (!OGRPMTilesConvertFromMBTiles(pszDestName,
+                                      poSourceDS->GetDescription()))
+    {
+        return nullptr;
+    }
+
+    GDALOpenInfo oOpenInfo(pszDestName, GA_ReadOnly);
+    return OGRPMTilesDriverOpen(&oOpenInfo);
 }
 
 /************************************************************************/
@@ -97,6 +167,9 @@ void RegisterOGRPMTiles()
 
     poDriver->pfnOpen = OGRPMTilesDriverOpen;
     poDriver->pfnIdentify = OGRPMTilesDriverIdentify;
+    poDriver->pfnCanVectorTranslateFrom =
+        OGRPMTilesDriverCanVectorTranslateFrom;
+    poDriver->pfnVectorTranslateFrom = OGRPMTilesDriverVectorTranslateFrom;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

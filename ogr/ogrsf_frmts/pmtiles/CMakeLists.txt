@@ -5,6 +5,7 @@ add_gdal_driver(TARGET ogr_PMTiles
                   ogrpmtilesdataset.cpp
                   ogrpmtilesvectorlayer.cpp
                   ogrpmtilestileiterator.cpp
+                  ogrpmtilesfrommbtiles.cpp
                   vsipmtiles.cpp
                 BUILTIN
                 STRONG_CXX_WFLAGS)

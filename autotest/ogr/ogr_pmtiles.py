@@ -374,3 +374,175 @@ def test_ogr_pmtiles_vsipmtiles():
     ds = ogr.Open("/vsipmtiles/" + filename + "/3/4/2.mvt")
     assert ds.GetLayerCount() == 1
     ds = None
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("MBTiles")
+# MBTiles vector writing mode requires SQLite and GEOS
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+def test_ogr_pmtiles_write_from_mbtiles():
+
+    try:
+        mbtiles_filename = "/vsimem/test.mbtiles"
+        gdal.VectorTranslate(
+            mbtiles_filename,
+            "data/poly.shp",
+            options="-s_srs EPSG:32631 -t_srs EPSG:3857",
+        )
+        pmtiles_filename = "/vsimem/test.pmtiles"
+
+        # Tolerate -f/-of option
+        out_ds = gdal.VectorTranslate(
+            "/vsimem/test.pmtiles", mbtiles_filename, options="-f PMTiles"
+        )
+        assert out_ds
+
+        src_ds = ogr.Open(mbtiles_filename)
+        expected_md = src_ds.GetMetadata()
+        expected_md["scheme"] = "xyz"
+        assert expected_md == out_ds.GetMetadata()
+        out_ds = None
+
+        src_ds_sqlite3 = gdal.OpenEx(mbtiles_filename, allowed_drivers=["SQLite"])
+        with src_ds_sqlite3.ExecuteSQL(
+            "SELECT zoom_level, tile_column, tile_row, tile_data FROM tiles"
+        ) as lyr:
+            for f in lyr:
+                z = f["zoom_level"]
+                x = f["tile_column"]
+                # MBTiles y=0 origin is bottom-most tile, whereas PMTiles is top-most
+                y = (1 << z) - 1 - f["tile_row"]
+                tile_data = f.GetFieldAsBinary("tile_data")
+                assert gdal.VSIStatL(
+                    f"/vsipmtiles/{pmtiles_filename}/{z}/{x}/{y}.mvt"
+                ).size == len(tile_data)
+        src_ds_sqlite3 = None
+
+        f = gdal.VSIFOpenL(f"/vsipmtiles/{pmtiles_filename}/pmtiles_header.json", "rb")
+        assert f
+        try:
+            data = gdal.VSIFReadL(1, 10000, f)
+        finally:
+            gdal.VSIFCloseL(f)
+        got = json.loads(data)
+
+        # Do not checks items whose value might depend on the gzip implementation
+        expected = {
+            "addressed_tiles_count": 5,
+            "center_lat_e7": 430306306,
+            "center_lon_e7": 27542428,
+            "center_zoom": 0,
+            "clustered": True,
+            "internal_compression": 2,
+            "internal_compression_str": "gzip",
+            #'json_metadata_bytes': 545,
+            #'json_metadata_offset': 171,
+            "leaf_dirs_bytes": 0,
+            #'leaf_dirs_offset': 716,
+            "max_lat_e7": 430429264,
+            "max_lat_e7_float": 43.0429264,
+            "max_lon_e7": 27746819,
+            "max_lon_e7_float": 2.7746819,
+            "max_zoom": 5,
+            "min_lat_e7": 430183348,
+            "min_lat_e7_float": 43.0183348,
+            "min_lon_e7": 27338036,
+            "min_lon_e7_float": 2.7338036,
+            "min_zoom": 0,
+            "root_dir_offset": 127,
+            "tile_compression": 2,
+            "tile_compression_str": "gzip",
+            "tile_contents_count": 5,
+            # "tile_data_bytes": 1236,
+            #'tile_data_offset': 716,
+            "tile_entries_count": 5,
+            "tile_type": 1,
+            "tile_type_str": "MVT",
+        }
+
+        # For some reason do not pass on those older platforms. Perhaps GEOS
+        # version?
+        if not (
+            gdaltest.is_travis_branch("ubuntu_1804")
+            or gdaltest.is_travis_branch("ubuntu_1804_32bit")
+            or gdaltest.skip_on_travis()
+        ):
+            for key in expected:
+                assert got[key] == expected[key], (key, got)
+
+    finally:
+        if gdal.VSIStatL(mbtiles_filename):
+            gdal.Unlink(mbtiles_filename)
+        if gdal.VSIStatL(pmtiles_filename):
+            gdal.Unlink(pmtiles_filename)
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("MBTiles")
+# MBTiles vector writing mode requires SQLite and GEOS
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+def test_ogr_pmtiles_write_from_mbtiles_deduplication():
+
+    try:
+        mbtiles_filename = "/vsimem/test.mbtiles"
+        ds = ogr.GetDriverByName("MBTiles").CreateDataSource(
+            mbtiles_filename, options=["MINZOOM=2", "MAXZOOM=2"]
+        )
+        lyr = ds.CreateLayer("test")
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(
+            ogr.CreateGeometryFromWkt(
+                "POLYGON((-20000000 -20000000,-20000000 20000000,20000000 20000000,20000000 -20000000,-20000000 -20000000))"
+            )
+        )
+        lyr.CreateFeature(f)
+        ds = None
+
+        pmtiles_filename = "/vsimem/test.pmtiles"
+        out_ds = gdal.VectorTranslate("/vsimem/test.pmtiles", mbtiles_filename)
+        assert out_ds
+        out_ds = None
+
+        f = gdal.VSIFOpenL(f"/vsipmtiles/{pmtiles_filename}/pmtiles_header.json", "rb")
+        assert f
+        try:
+            data = gdal.VSIFReadL(1, 10000, f)
+        finally:
+            gdal.VSIFCloseL(f)
+        got = json.loads(data)
+
+        expected = {
+            "addressed_tiles_count": 16,
+            "tile_contents_count": 9,
+            "tile_entries_count": 13,
+        }
+
+        for key in expected:
+            assert got[key] == expected[key], (key, got)
+
+        src_ds_sqlite3 = gdal.OpenEx(mbtiles_filename, allowed_drivers=["SQLite"])
+        with src_ds_sqlite3.ExecuteSQL(
+            "SELECT zoom_level, tile_column, tile_row, tile_data FROM tiles"
+        ) as lyr:
+            for f in lyr:
+                z = f["zoom_level"]
+                x = f["tile_column"]
+                # MBTiles y=0 origin is bottom-most tile, whereas PMTiles is top-most
+                y = (1 << z) - 1 - f["tile_row"]
+                tile_data = f.GetFieldAsBinary("tile_data")
+                assert gdal.VSIStatL(
+                    f"/vsipmtiles/{pmtiles_filename}/{z}/{x}/{y}.mvt"
+                ).size == len(tile_data)
+        src_ds_sqlite3 = None
+
+    finally:
+        if gdal.VSIStatL(mbtiles_filename):
+            gdal.Unlink(mbtiles_filename)
+        if gdal.VSIStatL(pmtiles_filename):
+            gdal.Unlink(pmtiles_filename)
