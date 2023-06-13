@@ -121,21 +121,8 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
 
 pytestmark = pytest.mark.require_driver("OGCAPI")
 
-###############################################################################
-@pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
-    with gdaltest.disable_exceptions():
-        yield
-
-
-@pytest.fixture(autouse=True, scope="module")
-def ogr_ogcapi_init():
-    gdaltest.ogcapi_drv = ogr.GetDriverByName("OGCAPI")
-
 
 def test_ogr_ogcapi_fake_ogcapi_server():
-    if gdaltest.ogcapi_drv is None:
-        pytest.skip()
 
     (process, port) = webserver.launch(handler=OGCAPIHTTPHandler)
     if port == 0:
@@ -143,7 +130,6 @@ def test_ogr_ogcapi_fake_ogcapi_server():
 
     ds = gdal.OpenEx("OGCAPI:http://127.0.0.1:%d/fakeogcapi" % port)
     if ds is None:
-        webserver.server_stop(process, port)
         pytest.fail("did not manage to open OGCAPI datastore")
 
     sub_ds_uri = [
@@ -156,10 +142,7 @@ def test_ogr_ogcapi_fake_ogcapi_server():
 
     lyr = ds.GetLayerByName("lakes")
 
-    if lyr.GetName() != "lakes":
-        print(lyr.GetName())
-        webserver.server_stop(process, port)
-        pytest.fail("did not get expected layer name")
+    assert lyr.GetName() == "lakes"
 
     feat = lyr.GetNextFeature()
     fdef = feat.GetDefnRef()
@@ -177,7 +160,6 @@ def test_ogr_ogcapi_fake_ogcapi_server():
         != 0
     ):
         feat.DumpReadable()
-        webserver.server_stop(process, port)
         pytest.fail("did not get expected feature")
 
     del lyr
