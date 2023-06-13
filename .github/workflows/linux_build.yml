@@ -240,7 +240,7 @@ jobs:
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"; then
             TEST_CMD="${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
           else
-            TEST_CMD="ctest -V"
+            TEST_CMD="ctest -V -j $(nproc)"
           fi
 
           docker run \
