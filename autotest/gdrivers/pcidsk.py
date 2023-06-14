@@ -118,9 +118,8 @@ def test_pcidsk_5():
 
     # Check metadata.
     mddef = gdaltest.pcidsk_ds.GetMetadata()
-    if mddef["GHI"] != "JKL" or mddef["XXX"] != "YYY":
-        print(mddef)
-        gdaltest.post_reason("file default domain metadata broken. ")
+    assert mddef["GHI"] == "JKL", "file default domain metadata broken. "
+    assert mddef["XXX"] == "YYY", "file default domain metadata broken. "
 
     assert gdaltest.pcidsk_ds.GetMetadataItem("GHI") == "JKL"
     assert gdaltest.pcidsk_ds.GetMetadataItem("GHI") == "JKL"
@@ -130,9 +129,7 @@ def test_pcidsk_5():
     assert gdaltest.pcidsk_ds.GetMetadataItem("I_DONT_EXIST") is None
 
     mdalt = gdaltest.pcidsk_ds.GetMetadata("AltDomain")
-    if mdalt["XYZ"] != "123":
-        print(mdalt)
-        gdaltest.post_reason("file alt domain metadata broken. ")
+    assert mdalt["XYZ"] == "123", "file alt domain metadata broken."
 
 
 ###############################################################################
@@ -157,9 +154,8 @@ def test_pcidsk_6():
     # Check metadata.
     band = gdaltest.pcidsk_ds.GetRasterBand(1)
     mddef = band.GetMetadata()
-    if mddef["GHI"] != "JKL" or mddef["XXX"] != "YYY":
-        print(mddef)
-        gdaltest.post_reason("channel default domain metadata broken. ")
+    assert mddef["GHI"] == "JKL", "channel default domain metadata broken. "
+    assert mddef["XXX"] == "YYY", "channel default domain metadata broken. "
 
     assert band.GetMetadataItem("GHI") == "JKL"
     assert band.GetMetadataItem("GHI") == "JKL"
@@ -169,9 +165,7 @@ def test_pcidsk_6():
     assert band.GetMetadataItem("I_DONT_EXIST") is None
 
     mdalt = band.GetMetadata("AltDomain")
-    if mdalt["XYZ"] != "123":
-        print(mdalt)
-        gdaltest.post_reason("channel alt domain metadata broken. ")
+    assert mdalt["XYZ"] == "123", "channel alt domain metadata broken."
 
 
 ###############################################################################
@@ -651,10 +645,7 @@ def test_pcidsk_online_1():
         "Glaciers",
     ]
 
-    if names != exp_names:
-        print(names)
-        gdaltest.post_reason("did not get expected category names.")
-        return "false"
+    assert names == exp_names, "did not get expected category names."
 
     band = ds.GetRasterBand(20)
     assert (

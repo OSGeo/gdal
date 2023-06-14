@@ -110,19 +110,6 @@ def get_lineno_2framesback(frames):
 ###############################################################################
 
 
-def post_reason(msg, frames=2):
-    lineno = get_lineno_2framesback(frames)
-    global reason
-
-    if lineno >= 0:
-        reason = "line %d: %s" % (lineno, msg)
-    else:
-        reason = msg
-
-
-###############################################################################
-
-
 def clean_tmp():
     all_files = os.listdir("tmp")
     for filename in all_files:
@@ -1411,17 +1398,16 @@ def filesystem_supports_sparse_files(path):
         return False
 
     if err != "":
-        post_reason("Cannot determine if filesystem supports sparse files")
+        print("Cannot determine if filesystem supports sparse files")
         return False
 
-    if ret.find("fat32") != -1:
-        post_reason("File system does not support sparse files")
+    if "fat32" in ret:
+        print("File system does not support sparse files")
         return False
 
-    if (
-        ret.find("wslfs") != -1 or ret.find("0x53464846") != -1
-    ):  # wslfs for older stat versions
-        post_reason(
+    if "wslfs" in ret or "0x53464846" in ret:
+        # wslfs for older stat versions
+        print(
             "Windows Subsystem for Linux FS is at the time of "
             + "writing not known to support sparse files"
         )
@@ -1429,19 +1415,22 @@ def filesystem_supports_sparse_files(path):
 
     # Add here any missing filesystem supporting sparse files
     # See http://en.wikipedia.org/wiki/Comparison_of_file_systems
-    if (
-        ret.find("ext3") == -1
-        and ret.find("ext4") == -1
-        and ret.find("reiser") == -1
-        and ret.find("xfs") == -1
-        and ret.find("jfs") == -1
-        and ret.find("zfs") == -1
-        and ret.find("ntfs") == -1
-    ):
-        post_reason("Filesystem %s is not believed to support sparse files" % ret)
-        return False
+    filesystems_supporting_sparse_files = {
+        "ext3",
+        "ext4",
+        "reiser",
+        "xfs",
+        "jfs",
+        "zfs",
+        "ntfs",
+    }
 
-    return True
+    for fs in filesystems_supporting_sparse_files:
+        if fs in ret:
+            return True
+
+    print("Filesystem %s is not believed to support sparse files" % ret)
+    return False
 
 
 ###############################################################################

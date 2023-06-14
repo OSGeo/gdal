@@ -94,8 +94,8 @@ def test_grib_read_different_sizes_messages():
         result = tst.testOpen()
 
     msg = gdal.GetLastErrorMsg()
-    if msg.find("data access may be incomplete") == -1 or gdal.GetLastErrorType() != 2:
-        gdaltest.post_reason("did not get expected warning.")
+    assert "data access may be incomplete" in msg, "did not get expected warning."
+    assert gdal.GetLastErrorType() == 2, "did not get expected warning."
 
     return result
 
@@ -622,9 +622,7 @@ def test_grib_grib2_read_spatial_differencing_order_1():
 
     ds = gdal.Open("data/grib/spatial_differencing_order_1.grb2")
     cs = ds.GetRasterBand(1).Checksum()
-    if cs != 46650:
-        gdaltest.post_reason("Did not get expected checksum")
-        print(cs)
+    assert cs == 46650, "Did not get expected checksum"
 
 
 ###############################################################################
@@ -1515,11 +1513,9 @@ def test_grib_grib2_write_data_encodings():
         cs = out_ds.GetRasterBand(1).Checksum()
         out_ds = None
         gdal.Unlink(tmpfilename)
-        if cs == 0 or cs == 50235:  # 50235: lossless checksum
-            gdaltest.post_reason(
-                "did not get expected checksum for lossy JPEG2000 with " + drvname
-            )
-            print(cs)
+        assert (
+            cs != 0 and cs != 50235
+        ), f"did not get expected checksum for lossy JPEG2000 with {drvname}"  # 50235: lossless checksum
 
 
 ###############################################################################

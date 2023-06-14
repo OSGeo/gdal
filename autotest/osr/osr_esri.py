@@ -32,7 +32,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdaltest
 import pytest
 
 from osgeo import osr
@@ -353,10 +352,9 @@ def test_osr_esri_12():
         "standard_parallel_1"
     )
 
-    if srs.GetAttrValue("DATUM") != "North_American_Datum_1983":
-        gdaltest.post_reason(
-            "Got wrong DATUM name (%s) after ESRI morph." % srs.GetAttrValue("DATUM")
-        )
+    assert (
+        srs.GetAttrValue("DATUM") == "North_American_Datum_1983"
+    ), "Got wrong DATUM name (%s) after ESRI morph." % srs.GetAttrValue("DATUM")
 
     assert (
         srs.GetAttrValue("UNIT") == "metre"
@@ -387,10 +385,9 @@ def test_osr_esri_13():
         "standard_parallel_1"
     )
 
-    if srs.GetAttrValue("DATUM") != "North_American_Datum_1983":
-        gdaltest.post_reason(
-            "Got wrong DATUM name (%s) after ESRI morph." % srs.GetAttrValue("DATUM")
-        )
+    assert (
+        srs.GetAttrValue("DATUM") == "North_American_Datum_1983"
+    ), "Got wrong DATUM name (%s) after ESRI morph." % srs.GetAttrValue("DATUM")
 
     assert (
         srs.GetAttrValue("UNIT") == "metre"

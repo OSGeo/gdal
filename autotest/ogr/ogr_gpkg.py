@@ -460,8 +460,7 @@ def test_ogr_gpkg_7():
     ), "Expected failure of DeleteFeature()."
 
     # Delete the layer
-    if gpkg_ds.DeleteLayer("field_test_layer") != 0:
-        gdaltest.post_reason("got error code from DeleteLayer(field_test_layer)")
+    assert gpkg_ds.DeleteLayer("field_test_layer") == ogr.OGRERR_NONE
 
 
 ###############################################################################
