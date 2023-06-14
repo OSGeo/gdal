@@ -656,20 +656,34 @@ def test_binary_field_bcp():
     src_lyr = ds.CreateLayer("test_binary_field", geom_type=ogr.wkbPoint)
     src_lyr.CreateField(ogr.FieldDefn("binfield", ogr.OFTBinary))
     src_lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
+    src_lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
+
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     f.SetFieldBinaryFromHexString("binfield", "007FFF007FFF")
     f["strfield"] = "some text"
+    f["intfield"] = 1
     src_lyr.CreateFeature(f)
+
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(2 3)"))
     f.SetFieldBinaryFromHexString("binfield", "")
     f["strfield"] = "some text"
+    # leave int undefined
     src_lyr.CreateFeature(f)
+
     f = ogr.Feature(src_lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(3 4)"))
     f.SetFieldBinaryFromHexString("binfield", "FF007FFF007F")
     f["strfield"] = "some text"
+    f["intfield"] = 3
+    src_lyr.CreateFeature(f)
+
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(4 5)"))
+    f.SetFieldBinaryFromHexString("binfield", "007FFF007FFF")
+    # leave str undefined
+    f["intfield"] = 4
     src_lyr.CreateFeature(f)
 
     with gdaltest.config_option("MSSQLSPATIAL_USE_BCP", "TRUE"):
@@ -690,18 +704,57 @@ def test_binary_field_bcp():
             f = lyr.GetFeature(1)
             assert f.GetFieldAsBinary("binfield") == b"\x00\x7f\xff\x00\x7f\xff"
             assert f.GetFieldAsString("strfield") == "some text"
+            assert f.GetFieldAsInteger("intfield") == 1
+
             f = lyr.GetFeature(2)
             assert f.GetFieldAsBinary("binfield") == b""
             assert f.GetFieldAsString("strfield") == "some text"
+            # undefined
+            assert f.GetFieldAsInteger("intfield") == 0
+
             f = lyr.GetFeature(3)
             assert f.GetFieldAsBinary("binfield") == b"\xff\x00\x7f\xff\x00\x7f"
             assert f.GetFieldAsString("strfield") == "some text"
+            assert f.GetFieldAsInteger("intfield") == 3
+
+            f = lyr.GetFeature(4)
+            assert f.GetFieldAsBinary("binfield") == b"\x00\x7f\xff\x00\x7f\xff"
+            assert f.GetFieldAsString("strfield") == ""
+            assert f.GetFieldAsInteger("intfield") == 4
 
         finally:
             gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE test_binary_field")
             gdaltest.mssqlspatial_ds.ExecuteSQL(
                 "DELETE from geometry_columns WHERE f_table_name = 'test_binary_field'"
             )
+
+
+###############################################################################
+#
+
+
+def test_geometry_column_identification():
+    """Test for issue GH #1190
+    SQL Server data source: geometry column not identified by ogr2ogr"""
+
+    if gdaltest.mssqlspatial_ds is None:
+        pytest.skip("MSSQLSpatial driver not available")
+
+    gdaltest.mssqlspatial_ds.ExecuteSQL(
+        "SELECT *, ogr_geometry.STCentroid() AS shape INTO dbo.poly_shape FROM dbo.tpoly"
+    )
+
+    try:
+        ds = ogr.Open(gdaltest.mssqlspatial_dsname)
+        with ds.ExecuteSQL("SELECT eas_id, shape FROM poly_shape") as lyr:
+            f = lyr.GetFeature(1)
+        geom = f.GetGeometryRef()
+        assert geom is not None
+        assert geom.GetGeometryName() == "POINT"
+        assert f.GetFieldCount() == 1
+
+    finally:
+        gdaltest.mssqlspatial_ds.ExecuteSQL("DROP TABLE poly_shape")
 
 
 ###############################################################################
