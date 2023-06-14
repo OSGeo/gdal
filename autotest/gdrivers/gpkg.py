@@ -58,8 +58,24 @@ def setup_and_cleanup():
         "GPKG_DEBUG": "ON",
     }
 
+    gdaltest.gpkg_dr = gdal.GetDriverByName("GPKG")
+    gdaltest.png_dr = gdal.GetDriverByName("PNG")
+    gdaltest.jpeg_dr = gdal.GetDriverByName("JPEG")
+    gdaltest.webp_dr = gdal.GetDriverByName("WEBP")
+    gdaltest.webp_supports_rgba = False
+    if (
+        gdaltest.webp_dr is not None
+        and gdal.GetConfigOption("GPKG_SIMUL_WEBP_3BAND") is None
+    ):
+        md = gdaltest.webp_dr.GetMetadata()
+        if md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") >= 0:
+            gdaltest.webp_supports_rgba = True
+
     with gdaltest.disable_exceptions(), gdal.config_options(options):
         yield
+
+        gdal.Unlink("/vsimem/tmp.gpkg")
+        gdal.Unlink("/vsimem/tmp.gpkg.aux.xml")
 
 
 ###############################################################################
@@ -97,31 +113,6 @@ def validate(filename, quiet=False):
         if my_filename != filename:
             os.unlink(my_filename)
     return True
-
-
-###############################################################################
-# Test if GPKG and tile drivers are available
-
-
-def test_gpkg_init():
-
-    gdaltest.gpkg_dr = None
-
-    gdaltest.gpkg_dr = gdal.GetDriverByName("GPKG")
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
-    gdaltest.png_dr = gdal.GetDriverByName("PNG")
-    gdaltest.jpeg_dr = gdal.GetDriverByName("JPEG")
-    gdaltest.webp_dr = gdal.GetDriverByName("WEBP")
-    gdaltest.webp_supports_rgba = False
-    if (
-        gdaltest.webp_dr is not None
-        and gdal.GetConfigOption("GPKG_SIMUL_WEBP_3BAND") is None
-    ):
-        md = gdaltest.webp_dr.GetMetadata()
-        if md["DMD_CREATIONOPTIONLIST"].find("LOSSLESS") >= 0:
-            gdaltest.webp_supports_rgba = True
 
 
 ###############################################################################
@@ -244,12 +235,8 @@ def check_tile_format(
 # Single band, PNG
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_1():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -349,12 +336,8 @@ def test_gpkg_1():
 # Single band, JPEG
 
 
+@pytest.mark.require_driver("JPEG")
 def test_gpkg_2():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.jpeg_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -441,12 +424,8 @@ def test_gpkg_2():
 # Single band, WEBP
 
 
+@pytest.mark.require_driver("WEBP")
 def test_gpkg_3():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.webp_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -555,13 +534,12 @@ def test_gpkg_3():
 
 
 ###############################################################################
-# Three band, PNG
+# Three band
 
 
-def test_gpkg_4(tile_drv_name="PNG"):
+@pytest.mark.parametrize("tile_drv_name", ["PNG", "JPEG", "WEBP"])
+def test_gpkg_4(tile_drv_name):
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
     if tile_drv_name == "PNG":
         tile_drv = gdaltest.png_dr
         working_bands = 4
@@ -575,7 +553,7 @@ def test_gpkg_4(tile_drv_name="PNG"):
         else:
             working_bands = 3
     if tile_drv is None:
-        pytest.skip()
+        pytest.skip(f"Driver {tile_drv} not available.")
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -636,23 +614,7 @@ def test_gpkg_4(tile_drv_name="PNG"):
 
 
 ###############################################################################
-# Three band, JPEG
-
-
-def test_gpkg_5():
-    return test_gpkg_4(tile_drv_name="JPEG")
-
-
-###############################################################################
-# Three band, WEBP
-
-
-def test_gpkg_6():
-    return test_gpkg_4(tile_drv_name="WEBP")
-
-
-###############################################################################
-# 4 band, PNG
+# 4 band
 
 
 def get_georeferenced_rgba_ds(alpha_fully_transparent=False, alpha_fully_opaque=False):
@@ -676,7 +638,8 @@ def get_georeferenced_rgba_ds(alpha_fully_transparent=False, alpha_fully_opaque=
     return tmp_ds
 
 
-def test_gpkg_7(tile_drv_name="PNG"):
+@pytest.mark.parametrize("tile_drv_name", ["PNG", "JPEG", "WEBP"])
+def test_gpkg_7(tile_drv_name):
 
     if gdaltest.gpkg_dr is None:
         pytest.skip()
@@ -693,7 +656,7 @@ def test_gpkg_7(tile_drv_name="PNG"):
         else:
             working_bands = 3
     if tile_drv is None:
-        pytest.skip()
+        pytest.skip(f"Driver {tile_drv} not available.")
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -769,22 +732,6 @@ def test_gpkg_7(tile_drv_name="PNG"):
 
 
 ###############################################################################
-# 4 band, JPEG
-
-
-def test_gpkg_8():
-    return test_gpkg_7(tile_drv_name="JPEG")
-
-
-###############################################################################
-# 4 band, WEBP
-
-
-def test_gpkg_9():
-    return test_gpkg_7(tile_drv_name="WEBP")
-
-
-###############################################################################
 #
 
 
@@ -809,12 +756,8 @@ def get_georeferenced_ds_with_pct32():
 # Single band with 32 bit color table, PNG
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_10():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -904,10 +847,11 @@ def test_gpkg_10():
 
 
 ###############################################################################
-# Single band with 32 bit color table, JPEG
+# Single band with 32 bit color table
 
 
-def test_gpkg_11(tile_drv_name="JPEG"):
+@pytest.mark.parametrize("tile_drv_name", ["JPEG", "WEBP"])
+def test_gpkg_11(tile_drv_name):
 
     if gdaltest.gpkg_dr is None:
         pytest.skip()
@@ -921,7 +865,7 @@ def test_gpkg_11(tile_drv_name="JPEG"):
         else:
             working_bands = 3
     if tile_drv is None:
-        pytest.skip()
+        pytest.skip(f"Driver {tile_drv} not available.")
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -961,23 +905,11 @@ def test_gpkg_11(tile_drv_name="JPEG"):
 
 
 ###############################################################################
-# Single band with 32 bit color table, WEBP
-
-
-def test_gpkg_12():
-    return test_gpkg_11(tile_drv_name="WEBP")
-
-
-###############################################################################
 # Single band with 24 bit color table, PNG
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_13():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1037,12 +969,8 @@ def test_gpkg_13():
 # Test creation and opening options
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_14():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1408,9 +1336,6 @@ def test_gpkg_14():
 
 def test_gpkg_15():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     gdal.Unlink("/vsimem/tmp.gpkg")
 
     # SetGeoTransform() and SetProjection() on a non-raster GPKG
@@ -1517,12 +1442,8 @@ def test_gpkg_15():
 # Test block/tile caching
 
 
+@pytest.mark.require_driver("JPEG")
 def test_gpkg_16():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.jpeg_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1555,12 +1476,8 @@ def test_gpkg_16():
 # Test overviews with single band dataset
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_17():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1693,12 +1610,9 @@ def test_gpkg_17():
 # Test overviews with 3 band dataset
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_18():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
     gdal.Unlink("/vsimem/tmp.gpkg")
 
     # Without padding, immediately after create copy
@@ -1810,12 +1724,8 @@ def test_gpkg_18():
 # Test overviews with 24-bit color palette single band dataset
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_19():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1860,12 +1770,8 @@ def test_gpkg_19():
 # Test PNG8
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_20():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -1959,12 +1865,8 @@ def test_gpkg_20():
 # Test metadata
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_21():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2242,12 +2144,8 @@ def test_gpkg_21():
 # Test metadata in PAM
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_metadata_PAM():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2295,10 +2193,9 @@ def get_georeferenced_greyalpha_ds():
     return tmp_ds
 
 
-def test_gpkg_22(tile_drv_name="PNG"):
+@pytest.mark.parametrize("tile_drv_name", ["PNG", "JPEG", "WEBP", None])
+def test_gpkg_22(tile_drv_name):
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
     if tile_drv_name is None:
         tile_drv = gdaltest.png_dr
         if gdaltest.jpeg_dr is None:
@@ -2322,7 +2219,7 @@ def test_gpkg_22(tile_drv_name="PNG"):
             expected_cs = [13112, 32706]
             clamped_expected_cs = [13380, 13380, 13380, 32744]
     if tile_drv is None:
-        pytest.skip()
+        pytest.skip(f"Driver {tile_drv} not available.")
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2376,39 +2273,11 @@ def test_gpkg_22(tile_drv_name="PNG"):
 
 
 ###############################################################################
-# Two band, JPEG
-
-
-def test_gpkg_23():
-    return test_gpkg_22(tile_drv_name="JPEG")
-
-
-###############################################################################
-# Two band, WEBP
-
-
-def test_gpkg_24():
-    return test_gpkg_22(tile_drv_name="WEBP")
-
-
-###############################################################################
-# Two band, mixed
-
-
-def test_gpkg_25():
-    return test_gpkg_22(tile_drv_name=None)
-
-
-###############################################################################
 # Test TILING_SCHEME
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_26():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2572,12 +2441,8 @@ def test_gpkg_26():
 # Test behaviour with low block cache max
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_27():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2599,12 +2464,8 @@ def test_gpkg_27():
 # block that would have gone through the GPKG in-memory cache
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_28():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2641,14 +2502,12 @@ def test_gpkg_28():
 
 ###############################################################################
 # Variation of gpkg_28 with 2 blocks
+# When x=200, the read is done in another block
 
 
-def test_gpkg_29(x=0):
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
+@pytest.mark.require_driver("PNG")
+@pytest.mark.parametrize("x", [0, 200])
+def test_gpkg_29(x):
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2686,24 +2545,11 @@ def test_gpkg_29(x=0):
 
 
 ###############################################################################
-# Variation of gpkg_29 where the read is done in another block
-
-
-def test_gpkg_30():
-
-    return test_gpkg_29(x=200)
-
-
-###############################################################################
 # 1 band to RGBA
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_31():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2727,12 +2573,8 @@ def test_gpkg_31():
 # grey-alpha to RGBA
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_32():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2761,12 +2603,8 @@ def test_gpkg_32():
 # Single band with 32 bit color table -> RGBA
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_33():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2790,12 +2628,8 @@ def test_gpkg_33():
 # Test partial tiles with overviews (#6335)
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_34():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2829,12 +2663,8 @@ def test_gpkg_34():
 # Test dirty block flushing while reading block (#6365)
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_35():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -2886,12 +2716,8 @@ def test_gpkg_35():
 # Single band with 24 bit color table, PNG, GoogleMapsCompatible
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_36():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     src_ds = gdal.Open("data/small_world_pct.tif")
     out_ds = gdaltest.gpkg_dr.CreateCopy(
@@ -2925,9 +2751,6 @@ def test_gpkg_36():
 
 def test_gpkg_37():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdal.GetDriverByName("GPKG").Create("/vsimem/gpkg_37.gpkg", 205000, 200000)
     ds.SetGeoTransform([100, 0.000001, 0, 100, 0, -0.000001])
     ds = None
@@ -2945,9 +2768,6 @@ def test_gpkg_37():
 
 
 def test_gpkg_38():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     # Without padding, immediately after create copy
     src_ds = gdal.Open("data/small_world.tif")
@@ -2987,9 +2807,6 @@ def test_gpkg_38():
 
 
 def test_gpkg_39():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     src_ds = gdal.Open("data/int16.tif")
     gdal.Translate("/vsimem/gpkg_39.gpkg", src_ds, format="GPKG")
@@ -3531,9 +3348,6 @@ def test_gpkg_statistics_stored_in_pam(source_filename):
 
 def test_gpkg_40():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     src_ds = gdal.Open("data/byte.tif")
     # Should default to 1.2
     gdal.Translate("/vsimem/gpkg_40.gpkg", src_ds, format="GPKG")
@@ -3647,9 +3461,6 @@ def test_gpkg_41():
 
 def test_gpkg_42():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     with gdal.config_option("CREATE_GEOMETRY_COLUMNS", "NO"):
         gdal.Translate("/vsimem/gpkg_42.gpkg", "data/byte.tif", format="GPKG")
 
@@ -3674,9 +3485,6 @@ def test_gpkg_42():
 
 
 def test_gpkg_43():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     with gdal.config_option("CREATE_RASTER_TABLES", "NO"):
         ds = gdaltest.gpkg_dr.Create("/vsimem/gpkg_43.gpkg", 0, 0, 0, gdal.GDT_Unknown)
@@ -3714,9 +3522,6 @@ def test_gpkg_43():
 
 def test_gpkg_44():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     if gdaltest.gpkg_dr.GetMetadataItem("ENABLE_SQL_GPKG_FORMAT") != "YES":
         pytest.skip()
 
@@ -3730,9 +3535,6 @@ def test_gpkg_44():
 
 def test_gpkg_45():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     ds = gdal.Open("data/gpkg/byte.gpkg")
     assert ds.GetRasterBand(1).Checksum() == 4672, "validation failed"
 
@@ -3742,9 +3544,6 @@ def test_gpkg_45():
 
 
 def test_gpkg_46():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     ds = gdaltest.gpkg_dr.Create(
         "/vsimem/gpkg_46.gpkg",
@@ -3790,9 +3589,6 @@ def test_gpkg_46():
 
 def test_gpkg_47():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     tmpfile = "/vsimem/gpkg_47.gpkg"
     ds = gdaltest.gpkg_dr.CreateCopy(tmpfile, gdal.Open("data/byte.tif"))
     ds.ExecuteSQL("UPDATE gpkg_contents SET min_x = 1, max_x = 0")
@@ -3811,9 +3607,6 @@ def test_gpkg_47():
 
 
 def test_gpkg_48():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     if sys.platform == "win32":
         filename = os.path.join(os.getcwd(), "tmp", "byte.gpkg")
@@ -3849,9 +3642,6 @@ def test_gpkg_48():
 
 def test_gpkg_delete_raster_layer():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     filename = "/vsimem/byte.gpkg"
     gdal.Translate(
         filename, "data/byte.tif", format="GPKG", creationOptions=["RASTER_TABLE=foo"]
@@ -3881,9 +3671,6 @@ def test_gpkg_delete_raster_layer():
 
 def test_gpkg_delete_gridded_coverage_raster_layer():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     filename = "/vsimem/float32.gpkg"
     gdal.Translate(
         filename,
@@ -3909,9 +3696,6 @@ def test_gpkg_delete_gridded_coverage_raster_layer():
 ###############################################################################
 def test_gpkg_open_old_gpkg_elevation_tiles_extension():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     gdal.ErrorReset()
     ds = gdal.Open("data/gpkg/uint16-old-elevation-extension.gpkg")
     assert gdal.GetLastErrorMsg() == ""
@@ -3923,9 +3707,6 @@ def test_gpkg_open_old_gpkg_elevation_tiles_extension():
 
 
 def test_gpkg_GeneralCmdLineProcessor():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     import test_cli_utilities
 
@@ -3952,9 +3733,6 @@ def test_gpkg_GeneralCmdLineProcessor():
 
 def test_gpkg_match_overview_factor():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
     gdal.FileFromMemBuffer(
         "/vsimem/gpkg_match_overview_factor.gpkg",
         open("data/gpkg/test_match_overview_factor.gpkg", "rb").read(),
@@ -3972,9 +3750,6 @@ def test_gpkg_match_overview_factor():
 
 
 def test_gpkg_wkt2():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
 
     # WKT2-only compatible SRS with EPSG code
     filename = "/vsimem/test_gpkg_wkt2.gpkg"
@@ -4080,8 +3855,6 @@ def test_gpkg_wkt2():
 @pytest.mark.slow()
 def test_gpkg_50000_25000_uint16():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
     if sys.maxsize < 2**32:
         pytest.skip("Test not available on 32 bit")
 
@@ -4112,8 +3885,6 @@ def test_gpkg_50000_25000_uint16():
 @pytest.mark.slow()
 def test_gpkg_50000_50000_uint16():
 
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
     if sys.maxsize < 2**32:
         pytest.skip("Test not available on 32 bit")
 
@@ -4141,12 +3912,8 @@ def test_gpkg_50000_50000_uint16():
 # Test writing PNG tiles with negative values
 
 
+@pytest.mark.require_driver("PNG")
 def test_gpkg_float32_png_negative_values():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     gdal.Unlink("/vsimem/tmp.gpkg")
 
@@ -4293,12 +4060,8 @@ def test_gpkg_uint16_tiling_scheme_nodata_overview():
 
 
 @pytest.mark.parametrize("band_count", [1, 2])
+@pytest.mark.require_driver("PNG")
 def test_gpkg_byte_nodata_value(band_count):
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-    if gdaltest.png_dr is None:
-        pytest.skip()
 
     filename = "/vsimem/tmp.gpkg"
     gdal.Unlink(filename)
@@ -4433,19 +4196,3 @@ def test_gpkg_sql_gdal_get_layer_pixel_value():
         assert f[0] is None
 
     gdal.Unlink(filename)
-
-
-###############################################################################
-#
-
-
-def test_gpkg_cleanup():
-
-    if gdaltest.gpkg_dr is None:
-        pytest.skip()
-
-    gdal.Unlink("/vsimem/tmp.gpkg")
-    gdal.Unlink("/vsimem/tmp.gpkg.aux.xml")
-
-
-###############################################################################
