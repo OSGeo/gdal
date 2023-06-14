@@ -546,3 +546,40 @@ def test_ogr_pmtiles_write_from_mbtiles_deduplication():
             gdal.Unlink(mbtiles_filename)
         if gdal.VSIStatL(pmtiles_filename):
             gdal.Unlink(pmtiles_filename)
+
+
+###############################################################################
+
+
+@pytest.mark.require_driver("MBTiles")
+# MBTiles vector writing mode requires SQLite and GEOS
+@pytest.mark.require_driver("SQLite")
+@pytest.mark.require_geos
+def test_ogr_pmtiles_write():
+
+    try:
+        filename = "/vsimem/test.pmtiles"
+        gdal.VectorTranslate(
+            filename,
+            "data/poly.shp",
+            options="-s_srs EPSG:32631 -t_srs EPSG:3857",
+        )
+
+        ds = ogr.Open(filename)
+        assert ds.GetLayerCount() == 1
+        assert ds.GetMetadata() == {
+            "description": "",
+            "format": "pbf",
+            "maxzoom": "5",
+            "minzoom": "0",
+            "name": "test",
+            "scheme": "xyz",
+            "type": "overlay",
+            "version": "2",
+            "ZOOM_LEVEL": "5",
+            "bounds": "2.7338036,43.0183348,2.7746819,43.0429264",
+            "center": "2.7542428,43.0306306,0",
+        }
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.Unlink(filename)

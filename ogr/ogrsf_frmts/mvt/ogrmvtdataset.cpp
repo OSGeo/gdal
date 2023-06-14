@@ -3353,6 +3353,8 @@ class OGRMVTWriterDataset final : public GDALDataset
     OGRMVTWriterDataset();
     ~OGRMVTWriterDataset();
 
+    CPLErr Close() override;
+
     OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
@@ -3506,27 +3508,7 @@ OGRMVTWriterDataset::OGRMVTWriterDataset()
 
 OGRMVTWriterDataset::~OGRMVTWriterDataset()
 {
-    if (GetDescription()[0] != '\0')
-    {
-        CreateOutput();
-    }
-    if (m_hInsertStmt != nullptr)
-    {
-        sqlite3_finalize(m_hInsertStmt);
-    }
-    if (m_hDB)
-    {
-        sqlite3_close(m_hDB);
-    }
-    if (m_hDBMBTILES)
-    {
-        sqlite3_close(m_hDBMBTILES);
-    }
-    if (!m_osTempDB.empty() && !m_bReuseTempFile &&
-        CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")))
-    {
-        VSIUnlink(m_osTempDB);
-    }
+    OGRMVTWriterDataset::Close();
 
     if (m_pMyVFS)
     {
@@ -3534,7 +3516,46 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
         CPLFree(m_pMyVFS->pAppData);
         CPLFree(m_pMyVFS);
     }
+
     m_poSRS->Release();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr OGRMVTWriterDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (GetDescription()[0] != '\0')
+        {
+            if (!CreateOutput())
+                eErr = CE_Failure;
+        }
+        if (m_hInsertStmt != nullptr)
+        {
+            sqlite3_finalize(m_hInsertStmt);
+        }
+        if (m_hDB)
+        {
+            sqlite3_close(m_hDB);
+        }
+        if (m_hDBMBTILES)
+        {
+            sqlite3_close(m_hDBMBTILES);
+        }
+        if (!m_osTempDB.empty() && !m_bReuseTempFile &&
+            CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")))
+        {
+            VSIUnlink(m_osTempDB);
+        }
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/

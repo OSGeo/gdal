@@ -8,7 +8,7 @@ PMTiles -- ProtoMaps Tiles
 
 .. shortname:: PMTiles
 
-This driver supports reading `PMTiles <https://github.com/protomaps/PMTiles>`__
+This driver supports reading and writing `PMTiles <https://github.com/protomaps/PMTiles>`__
 datasets containing vector tiles, encoded in the MapVector Tiles (MVT) format.
 
 PMTiles is a single-file archive format for tiled data. A PMTiles archive can
@@ -35,6 +35,8 @@ to hide those discontinuities.
 
 Driver capabilities
 -------------------
+
+.. supports_create::
 
 .. supports_georeferencing::
 
@@ -77,6 +79,163 @@ The following open options are available:
 
      Whether tile attributes should be serialized in a single ``json`` field
      as JSON. This may be useful if tiles may have different attribute schemas.
+
+Creation issues
+---------------
+
+Tiles are generated with WebMercator (EPSG:3857) projection.
+Several layers can be written. It is possible to decide at which zoom
+level ranges a given layer is written.
+
+Part of the conversion is multi-threaded by default, using as many
+threads as there are cores. The number of threads used can be controlled
+with the :config:`GDAL_NUM_THREADS` configuration option.
+
+The driver implements also a direct translation mode when using :program:`ogr2ogr`
+with a MBTiles vector dataset as input and a PMTiles output dataset, without
+any argument: ``ogr2ogr out.pmtiles in.mbtiles``. In that mode, existing MVT
+tiles from the MBTiles files are used as such, contrary to the general writing
+mode that will involve computing them by discretizing geometry coordinates.
+
+Dataset creation options
+------------------------
+
+-  .. co:: NAME
+
+      Tileset name. Defaults to the basename of the
+      output file/directory. Used to fill metadata records.
+
+-  .. co:: DESCRIPTION
+
+      A description of the tileset. Used to fill metadata records.
+
+-  .. co:: TYPE
+      :choices: overlay, baselayer
+
+      Layer type. Used to fill metadata records.
+
+-  .. co:: MINZOOM
+      :choices: <integer>
+      :default: 0
+
+      Minimum zoom level at which tiles are generated.
+
+-  .. co:: MAXZOOM
+      :choices: <integer>
+      :default: 5
+
+       Maximum zoom level at which tiles are
+       generated. Maximum supported value is 22.
+
+-  .. co:: CONF
+      :choices: <json>, <filename>
+
+      Layer configuration as a JSon serialized string.
+      Or filename containing the configuration as JSon.
+
+-  .. co:: SIMPLIFICATION
+      :choices: float
+
+      Simplification factor for linear or
+      polygonal geometries. The unit is the integer unit of tiles after
+      quantification of geometry coordinates to tile coordinates. Applies
+      to all zoom levels, unless :co:`SIMPLIFICATION_MAX_ZOOM` is also defined.
+
+-  .. co:: SIMPLIFICATION_MAX_ZOOM
+      :choices: <float>
+
+      Simplification factor for linear
+      or polygonal geometries, that applies only for the maximum zoom
+      level.
+
+-  .. co:: EXTENT
+      :choices: <positive integer>
+      :default: 4096
+
+      Number of units in a tile. The
+      greater, the more accurate geometry coordinates (at the expense of
+      tile byte size).
+
+-  .. co:: BUFFER
+      :choices: <positive integer>
+
+      Number of units for geometry
+      buffering. This value corresponds to a buffer around each side of a
+      tile into which geometries are fetched and clipped. This is used for
+      proper rendering of geometries that spread over tile boundaries by
+      some rendering clients. Defaults to 80 if :co:`EXTENT=4096`.
+
+-  .. co:: MAX_SIZE
+      :choices: <integer>
+      :default: 500000
+
+      Maximum size of a tile in bytes (after
+      compression). If a tile is greater than this
+      threshold, features will be written with reduced precision, or
+      discarded.
+
+-  .. co:: MAX_FEATURES
+      :choices: <integer>
+      :default: 200000
+
+      Maximum number of features per tile.
+
+Layer configuration
+-------------------
+
+The above mentioned CONF dataset creation option can be set to a string
+whose value is a JSon serialized document such as the below one:
+
+.. code-block:: json
+
+           {
+               "boundaries_lod0": {
+                   "target_name": "boundaries",
+                   "description": "Country boundaries",
+                   "minzoom": 0,
+                   "maxzoom": 2
+               },
+               "boundaries_lod1": {
+                   "target_name": "boundaries",
+                   "minzoom": 3,
+                   "maxzoom": 5
+               }
+           }
+
+*boundaries_lod0* and *boundaries_lod1* are the name of the OGR layers
+that are created into the target MVT dataset. They are mapped to the MVT
+target layer *boundaries*.
+
+It is also possible to get the same behavior with the below layer
+creation options, although that is not convenient in the ogr2ogr use
+case.
+
+Layer creation options
+----------------------
+
+-  .. lco:: MINZOOM
+      :choices: <integer>
+
+      Minimum zoom level at which tiles are
+      generated. Defaults to the dataset creation option :co:`MINZOOM` value.
+
+-  .. lco:: MAXZOOM
+      :choices: <integer>
+
+      Maximum zoom level at which tiles are
+      generated. Defaults to the dataset creation option :co:`MAXZOOM` value.
+      Maximum supported value is 22.
+
+-  .. lco:: NAME
+
+      Target layer name. Defaults to the layer name, but
+      can be overridden so that several OGR layers map to a single target
+      layer. The typical use case is to have different OGR layers for
+      mutually exclusive zoom level ranges.
+
+-  .. lco:: DESCRIPTION
+
+      A description of the layer.
 
 /vsipmtiles/ virtual file system
 --------------------------------

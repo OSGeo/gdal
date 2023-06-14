@@ -46,6 +46,11 @@
 #define SPHERICAL_RADIUS 6378137.0
 #define MAX_GM (SPHERICAL_RADIUS * M_PI)  // 20037508.342789244
 
+#if defined(HAVE_SQLITE) && defined(HAVE_GEOS)
+// Needed by mvtutils.h
+#define HAVE_MVT_WRITE_SUPPORT
+#endif
+
 /************************************************************************/
 /*                          OGRPMTilesDataset                           */
 /************************************************************************/
@@ -339,5 +344,32 @@ class OGRPMTilesVectorLayer final
 
     CPL_DISALLOW_COPY_ASSIGN(OGRPMTilesVectorLayer)
 };
+
+#ifdef HAVE_MVT_WRITE_SUPPORT
+
+/************************************************************************/
+/*                     OGRPMTilesWriterDataset                          */
+/************************************************************************/
+
+class OGRPMTilesWriterDataset final : public GDALDataset
+{
+    std::unique_ptr<GDALDataset> m_poMBTilesWriterDataset{};
+
+  public:
+    OGRPMTilesWriterDataset() = default;
+
+    ~OGRPMTilesWriterDataset() override;
+
+    bool Create(const char *pszFilename, CSLConstList papszOptions);
+
+    CPLErr Close() override;
+
+    OGRLayer *ICreateLayer(const char *, OGRSpatialReference *,
+                           OGRwkbGeometryType, char **) override;
+
+    int TestCapability(const char *) override;
+};
+
+#endif  // HAVE_MVT_WRITE_SUPPORT
 
 #endif  // OGR_PMTILES_H_INCLUDED

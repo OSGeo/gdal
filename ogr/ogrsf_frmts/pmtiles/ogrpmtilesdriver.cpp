@@ -32,6 +32,10 @@
 
 #include "ogrpmtilesfrommbtiles.h"
 
+#ifdef HAVE_MVT_WRITE_SUPPORT
+#include "mvtutils.h"
+#endif
+
 /************************************************************************/
 /*                     OGRPMTilesDriverIdentify()                       */
 /************************************************************************/
@@ -125,6 +129,27 @@ static GDALDataset *OGRPMTilesDriverVectorTranslateFrom(
     return OGRPMTilesDriverOpen(&oOpenInfo);
 }
 
+#ifdef HAVE_MVT_WRITE_SUPPORT
+/************************************************************************/
+/*                                Create()                              */
+/************************************************************************/
+
+static GDALDataset *OGRPMTilesDriverCreate(const char *pszFilename, int nXSize,
+                                           int nYSize, int nBandsIn,
+                                           GDALDataType eDT,
+                                           char **papszOptions)
+{
+    if (nXSize == 0 && nYSize == 0 && nBandsIn == 0 && eDT == GDT_Unknown)
+    {
+        auto poDS = cpl::make_unique<OGRPMTilesWriterDataset>();
+        if (!poDS->Create(pszFilename, papszOptions))
+            return nullptr;
+        return poDS.release();
+    }
+    return nullptr;
+}
+#endif
+
 /************************************************************************/
 /*                          RegisterOGRPMTiles()                        */
 /************************************************************************/
@@ -170,6 +195,32 @@ void RegisterOGRPMTiles()
     poDriver->pfnCanVectorTranslateFrom =
         OGRPMTilesDriverCanVectorTranslateFrom;
     poDriver->pfnVectorTranslateFrom = OGRPMTilesDriverVectorTranslateFrom;
+
+#ifdef HAVE_MVT_WRITE_SUPPORT
+    poDriver->SetMetadataItem(
+        GDAL_DMD_CREATIONOPTIONLIST,
+        "<CreationOptionList>"
+        "  <Option name='NAME' scope='raster,vector' type='string' "
+        "description='Tileset name'/>"
+        "  <Option name='DESCRIPTION' scope='raster,vector' type='string' "
+        "description='A description of the layer'/>"
+        "  <Option name='TYPE' scope='raster,vector' type='string-select' "
+        "description='Layer type' default='overlay'>"
+        "    <Value>overlay</Value>"
+        "    <Value>baselayer</Value>"
+        "  </Option>" MVT_MBTILES_PMTILES_COMMON_DSCO "</CreationOptionList>");
+
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_LAYER, "YES");
+    poDriver->SetMetadataItem(GDAL_DCAP_CREATE_FIELD, "YES");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,
+                              "Integer Integer64 Real String");
+    poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES,
+                              "Boolean Float32");
+
+    poDriver->SetMetadataItem(GDAL_DS_LAYER_CREATIONOPTIONLIST, MVT_LCO);
+
+    poDriver->pfnCreate = OGRPMTilesDriverCreate;
+#endif
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
