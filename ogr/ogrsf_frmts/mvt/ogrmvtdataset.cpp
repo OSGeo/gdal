@@ -5848,14 +5848,20 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
         {
             double dfTileDim = m_dfTileDim0 / (1 << nZ);
             double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
-            int nTileMinX = static_cast<int>(
-                (sExtent.MinX - m_dfTopX - dfBuffer) / dfTileDim);
-            int nTileMinY = static_cast<int>(
-                (m_dfTopY - sExtent.MaxY - dfBuffer) / dfTileDim);
-            int nTileMaxX = static_cast<int>(
-                (sExtent.MaxX - m_dfTopX + dfBuffer) / dfTileDim);
-            int nTileMaxY = static_cast<int>(
-                (m_dfTopY - sExtent.MinY + dfBuffer) / dfTileDim);
+            const int nTileMinX = std::max(
+                0, static_cast<int>((sExtent.MinX - m_dfTopX - dfBuffer) /
+                                    dfTileDim));
+            const int nTileMinY = std::max(
+                0, static_cast<int>((m_dfTopY - sExtent.MaxY - dfBuffer) /
+                                    dfTileDim));
+            const int nTileMaxX =
+                std::min(static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) /
+                                          dfTileDim),
+                         (1 << nZ) - 1);
+            const int nTileMaxY =
+                std::min(static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) /
+                                          dfTileDim),
+                         (1 << nZ) - 1);
             for (int iX = nTileMinX; iX <= nTileMaxX; iX++)
             {
                 for (int iY = nTileMinY; iY <= nTileMaxY; iY++)
