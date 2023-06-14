@@ -1212,7 +1212,13 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                 WriteVarUInt(m_abyGeomBuffer, nParts);
 
                 if (!EncodeEnvelope(m_abyGeomBuffer, poGeomField, poGeom))
+                {
+                    CPLFree(panPartStart);
+                    CPLFree(panPartType);
+                    CPLFree(poPoints);
+                    CPLFree(padfZ);
                     return false;
+                }
 
                 for (int i = 0; i < nParts - 1; i++)
                 {
