@@ -1110,7 +1110,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
         OGRFieldSubType eSubType = OFSTNone;
         int nMaxWidth = 0;
-        OGRFieldType oType = static_cast<OGRFieldType>(OFTMaxType + 1);
+        int nType = OFTMaxType + 1;
 
         // SQLite 3.31 has a " GENERATED ALWAYS" suffix in the type column,
         // but more recent versions no longer have it.
@@ -1136,17 +1136,26 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 
         if (!osType.empty() || m_bIsTable)
         {
-            oType = GPkgFieldToOGR(osType.c_str(), eSubType, nMaxWidth);
+            nType = GPkgFieldToOGR(osType.c_str(), eSubType, nMaxWidth);
+        }
+        else
+        {
+            // For a view, if the geometry column is computed, we don't
+            // get a type, so trust the one from gpkg_geometry_columns
+            if (EQUAL(osGeomColumnName, pszName))
+            {
+                osType = osGeomColsType;
+            }
         }
 
         /* Not a standard field type... */
         if (!osType.empty() && !EQUAL(pszName, "OGC_FID") &&
-            ((oType > OFTMaxType && !osGeomColsType.empty()) ||
+            ((nType > OFTMaxType && !osGeomColsType.empty()) ||
              EQUAL(osGeomColumnName, pszName)))
         {
             /* Maybe it is a geometry type? */
             OGRwkbGeometryType oGeomType;
-            if (oType > OFTMaxType)
+            if (nType > OFTMaxType)
                 oGeomType = GPkgGeometryTypeToWKB(osType.c_str(), bHasZ, bHasM);
             else
                 oGeomType = wkbUnknown;
@@ -1213,24 +1222,24 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
         }
         else
         {
-            if (oType > OFTMaxType)
+            if (nType > OFTMaxType)
             {
                 CPLDebug("GPKG",
                          "For table %s, unrecognized type name %s for "
                          "column %s. Using string type",
                          m_pszTableName, osType.c_str(), pszName);
-                oType = OFTString;
+                nType = OFTString;
             }
 
             /* Is this the FID column? */
             if (nPKIDIndex > 0 && nCountPKIDColumns == 1 &&
-                (oType == OFTInteger || oType == OFTInteger64))
+                (nType == OFTInteger || nType == OFTInteger64))
             {
                 m_pszFidColumn = CPLStrdup(pszName);
             }
             else
             {
-                OGRFieldDefn oField(pszName, oType);
+                OGRFieldDefn oField(pszName, static_cast<OGRFieldType>(nType));
                 oField.SetSubType(eSubType);
                 oField.SetWidth(nMaxWidth);
                 if (bNotNull)
@@ -1264,7 +1273,7 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
                         osDefault += "'";
                         oField.SetDefault(osDefault);
                     }
-                    else if (oType == OFTDateTime &&
+                    else if (nType == OFTDateTime &&
                              sscanf(pszDefault, "'%d-%d-%dT%d:%d:%fZ'", &nYear,
                                     &nMonth, &nDay, &nHour, &nMinute,
                                     &fSecond) == 6)
@@ -7222,23 +7231,51 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         if (nSqlite3ColType == SQLITE_BLOB)
         {
             const GByte *pabyWkb = nullptr;
-            const int iGpkgSize = sqlite3_value_bytes(argv[iCol]);
+            const int nBlobSize = sqlite3_value_bytes(argv[iCol]);
             // coverity[tainted_data_return]
-            const GByte *pabyGpkg =
+            const GByte *pabyBlob =
                 static_cast<const GByte *>(sqlite3_value_blob(argv[iCol]));
-            if (iGpkgSize >= 8 && pabyGpkg && pabyGpkg[0] == 'G' &&
-                pabyGpkg[1] == 'P')
+            GByte *pabyWkbToFree = nullptr;
+            if (nBlobSize >= 8 && pabyBlob && pabyBlob[0] == 'G' &&
+                pabyBlob[1] == 'P')
             {
                 GPkgHeader oHeader;
 
                 /* Read header */
-                OGRErr err = GPkgHeaderFromWKB(pabyGpkg, iGpkgSize, &oHeader);
+                OGRErr err = GPkgHeaderFromWKB(pabyBlob, nBlobSize, &oHeader);
                 if (err == OGRERR_NONE)
                 {
                     /* WKB pointer */
-                    pabyWkb = pabyGpkg + oHeader.nHeaderLen;
-                    nWKBSize = iGpkgSize - oHeader.nHeaderLen;
+                    pabyWkb = pabyBlob + oHeader.nHeaderLen;
+                    nWKBSize = nBlobSize - oHeader.nHeaderLen;
                 }
+            }
+            else if (nBlobSize > 0)
+            {
+                // Try also spatialite geometry blobs, although that is
+                // not really expected...
+                OGRGeometry *poGeomPtr = nullptr;
+                if (OGRSQLiteImportSpatiaLiteGeometry(
+                        pabyBlob, nBlobSize, &poGeomPtr) != OGRERR_NONE)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unable to read geometry");
+                }
+                else
+                {
+                    nWKBSize = poGeomPtr->WkbSize();
+                    pabyWkbToFree = static_cast<GByte *>(CPLMalloc(nWKBSize));
+                    if (poGeomPtr->exportToWkb(wkbNDR, pabyWkbToFree,
+                                               wkbVariantIso) != OGRERR_NONE)
+                    {
+                        nWKBSize = 0;
+                    }
+                    else
+                    {
+                        pabyWkb = pabyWkbToFree;
+                    }
+                }
+                delete poGeomPtr;
             }
 
             if (nWKBSize != 0)
@@ -7255,6 +7292,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
             {
                 psHelper->SetEmptyStringOrBinary(psArray, iFeat);
             }
+            CPLFree(pabyWkbToFree);
         }
 
         if (nWKBSize == 0)
