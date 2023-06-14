@@ -39,8 +39,8 @@ static void Usage(const char *pszErrorMsg = nullptr)
 {
     printf("nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near "
            "dist] [-nb non_black_pixels]\n"
-           "          [-setalpha] [-setmask] [-o outfile] [-q] [-co "
-           "\"NAME=VALUE\"]* infile\n");
+           "          [-setalpha] [-setmask] [-alg twopasses|floodfill]\n"
+           "          [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);
