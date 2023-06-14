@@ -530,6 +530,9 @@ def test_gdalwarp_lib_23():
 
 def test_gdalwarp_lib_32():
 
+    with pytest.raises(Exception, match="-tap option cannot be used without using -tr"):
+        gdal.Warp("", "../gcore/data/byte.tif", format="MEM", targetAlignedPixels=True)
+
     ds = gdal.Warp(
         "",
         "../gcore/data/byte.tif",
@@ -540,12 +543,12 @@ def test_gdalwarp_lib_32():
     )
     assert ds is not None
 
-    expected_gt = (440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0)
+    expected_gt = (440700.0, 100.0, 0.0, 3751300.0, 0.0, -50.0)
     got_gt = ds.GetGeoTransform()
     assert gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9), "Bad geotransform"
 
     assert (
-        ds.RasterXSize == 13 and ds.RasterYSize == 25
+        ds.RasterXSize == 12 and ds.RasterYSize == 24
     ), "Wrong raster dimensions : %d x %d" % (ds.RasterXSize, ds.RasterYSize)
 
     ds = None

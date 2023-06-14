@@ -811,38 +811,6 @@ def test_gdalwarp_31(gdalwarp_path):
 
 
 ###############################################################################
-# Test -tap
-
-
-def test_gdalwarp_32(gdalwarp_path):
-
-    (_, err) = gdaltest.runexternal_out_and_err(
-        gdalwarp_path + " -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif",
-        check_memleak=False,
-    )
-    assert (
-        err.find("-tap option cannot be used without using -tr") != -1
-    ), "expected error"
-
-    gdaltest.runexternal(
-        gdalwarp_path + " -tr 100 50 -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif"
-    )
-
-    ds = gdal.Open("tmp/testgdalwarp32.tif")
-    assert ds is not None
-
-    expected_gt = (440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0)
-    got_gt = ds.GetGeoTransform()
-    assert gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9), "Bad geotransform"
-
-    assert (
-        ds.RasterXSize == 13 and ds.RasterYSize == 25
-    ), "Wrong raster dimensions : %d x %d" % (ds.RasterXSize, ds.RasterYSize)
-
-    ds = None
-
-
-###############################################################################
 # Test warping a JPEG compressed image with a mask into a RGBA image
 
 
