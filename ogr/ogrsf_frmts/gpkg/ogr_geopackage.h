@@ -69,6 +69,7 @@ static const GUInt32 GP11_APPLICATION_ID = 0x47503131U;
 static const GUInt32 GPKG_APPLICATION_ID = 0x47504B47U;
 static const GUInt32 GPKG_1_2_VERSION = 10200U;
 static const GUInt32 GPKG_1_3_VERSION = 10300U;
+static const GUInt32 GPKG_1_4_VERSION = 10400U;
 
 static const size_t knApplicationIdPos = 68;
 static const size_t knUserVersionPos = 60;
@@ -655,6 +656,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     GIntBig m_nCountInsertInTransaction = 0;
     std::vector<CPLString> m_aoRTreeTriggersSQL{};
     bool m_bUpdate1TriggerDisabled = false;
+    bool m_bHasUpdate6And7Triggers = false;
     std::string m_osUpdate1Trigger{};
     typedef struct
     {
