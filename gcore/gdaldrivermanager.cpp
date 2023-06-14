@@ -1064,14 +1064,14 @@ void CPL_STDCALL GDALDestroyDriverManager(void)
 }
 
 /************************************************************************/
-/*        GDALIsDriverDeprecatedForGDAL35StillEnabled()                 */
+/*        GDALIsDriverDeprecatedForGDAL39StillEnabled()                 */
 /************************************************************************/
 
 /**
  * \brief Returns whether a deprecated driver is explicitly enabled by the user
  */
 
-bool GDALIsDriverDeprecatedForGDAL35StillEnabled(const char *pszDriverName,
+bool GDALIsDriverDeprecatedForGDAL39StillEnabled(const char *pszDriverName,
                                                  const char *pszExtraMsg)
 {
     CPLString osConfigOption;
@@ -1082,7 +1082,7 @@ bool GDALIsDriverDeprecatedForGDAL35StillEnabled(const char *pszDriverName,
     }
     CPLError(
         CE_Failure, CPLE_AppDefined,
-        "Driver %s is considered for removal in GDAL 3.5.%s You are invited "
+        "Driver %s is considered for removal in GDAL 3.9.%s You are invited "
         "to convert any dataset in that format to another more common one. "
         "If you need this driver in future GDAL versions, create a ticket at "
         "https://github.com/OSGeo/gdal (look first for an existing one first) "
