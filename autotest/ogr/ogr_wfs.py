@@ -184,15 +184,10 @@ def test_ogr_wfs_geoserver():
         gdaltest.geoserver_wfs = False
         pytest.skip("server probably in a broken state")
 
-    if (
-        feat.GetField("NAME") != "museam"
-        or ogrtest.check_feature_geometry(
-            feat, "POINT (-74.0104611 40.70758763)", max_error=0.000001
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail("did not get expected feature (1)")
+    assert feat.GetField("NAME") == "museam"
+    ogrtest.check_feature_geometry(
+        feat, "POINT (-74.0104611 40.70758763)", max_error=0.000001, context="1"
+    )
 
     # Same with VERSION=1.0.0
     ds = ogr.Open(
@@ -202,15 +197,10 @@ def test_ogr_wfs_geoserver():
         pytest.skip("server perhaps overloaded")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    if (
-        feat.GetField("NAME") != "museam"
-        or ogrtest.check_feature_geometry(
-            feat, "POINT (-74.0104611 40.70758763)", max_error=0.000001
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail("did not get expected feature (2)")
+    assert feat.GetField("NAME") == "museam"
+    ogrtest.check_feature_geometry(
+        feat, "POINT (-74.0104611 40.70758763)", max_error=0.000001, context="2"
+    )
 
     # Test attribute filter
     ds = ogr.Open("WFS:http://demo.opengeo.org/geoserver/wfs?TYPENAME=tiger:poi")
@@ -273,14 +263,9 @@ def test_ogr_wfs_geoserver_json():
 
     feat = lyr.GetNextFeature()
     # if feat.GetField('name') != 'Alexander Bay' or \
-    if (
-        ogrtest.check_feature_geometry(
-            feat, "POINT (16.4827778 -28.5947222)", max_error=0.000000001
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail("did not get expected feature")
+    ogrtest.check_feature_geometry(
+        feat, "POINT (16.4827778 -28.5947222)", max_error=0.000000001
+    )
 
 
 ###############################################################################
@@ -314,14 +299,9 @@ def test_ogr_wfs_geoserver_shapezip():
 
     feat = lyr.GetNextFeature()
     # if feat.GetField('name') != 'Alexander Bay' or \
-    if (
-        ogrtest.check_feature_geometry(
-            feat, "POINT (16.4827778 -28.5947222)", max_error=0.000000001
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail("did not get expected feature")
+    ogrtest.check_feature_geometry(
+        feat, "POINT (16.4827778 -28.5947222)", max_error=0.000000001
+    )
 
 
 ###############################################################################
@@ -416,15 +396,10 @@ def test_ogr_wfs_deegree():
     assert sr.IsSame(sr2), "did not get expected SRS"
 
     feat = lyr.GetNextFeature()
-    if (
-        feat.GetField("OBJECTID") != 1
-        or ogrtest.check_feature_geometry(
-            feat, "POINT (558750.703 4402882.05)", max_error=0.000000001
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail("did not get expected feature")
+    assert feat.GetField("OBJECTID") == 1
+    ogrtest.check_feature_geometry(
+        feat, "POINT (558750.703 4402882.05)", max_error=0.000000001
+    )
 
     # Test attribute filter
     ds = ogr.Open(
@@ -575,20 +550,15 @@ def test_ogr_wfs_fake_wfs_server():
         pytest.fail("did not get expected SRS")
 
     feat = lyr.GetNextFeature()
-    if (
-        feat.GetField("MPLength") != "33513."
-        or ogrtest.check_feature_geometry(
+    try:
+        assert feat.GetField("MPLength") == "33513."
+        ogrtest.check_feature_geometry(
             feat,
             "MULTICURVE ((154898.65286 568054.62753,160108.36082 566076.78094,164239.254332 563024.70188,170523.31535 561231.219583,172676.42256 559253.37299,175912.80562 557459.89069,180043.699132 553508.779495,183294.491306 552250.182732))",
             max_error=0.00001,
         )
-        != 0
-    ):
-        feat.DumpReadable()
+    finally:
         webserver.server_stop(process, port)
-        pytest.fail("did not get expected feature")
-
-    webserver.server_stop(process, port)
 
 
 ###############################################################################

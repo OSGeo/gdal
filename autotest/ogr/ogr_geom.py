@@ -702,12 +702,9 @@ def test_ogr_geom_transform_geogcrs_to_wgs84():
     gdal.ErrorReset()
     polygon = tr.Transform(polygon)
     assert gdal.GetLastErrorMsg() == ""
-    assert (
-        ogrtest.check_feature_geometry(
-            polygon,
-            "POLYGON ((44.0 43.1666661611411,44.0 43.3333328276326,44.25 43.3333328276326,44.25 43.1666661611411,44.0 43.1666661611411))",
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        polygon,
+        "POLYGON ((44.0 43.1666661611411,44.0 43.3333328276326,44.25 43.3333328276326,44.25 43.1666661611411,44.0 43.1666661611411))",
     )
 
 
@@ -759,11 +756,8 @@ def test_ogr_geomtransfomer_wrapdateline_with_ct():
     transformer = ogr.GeomTransformer(ct, ["WRAPDATELINE=YES"])
 
     geom_dst = geom.Transform(transformer)
-    assert (
-        ogrtest.check_feature_geometry(
-            geom_dst, "MULTILINESTRING ((179.9 0.0,180 0),(-180 0,-179.9 0.0))"
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom_dst, "MULTILINESTRING ((179.9 0.0,180 0),(-180 0,-179.9 0.0))"
     )
 
 
@@ -806,23 +800,17 @@ def test_ogr_geom_segmentize():
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,0 10)")
     geom.Segmentize(1.00001)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom, "LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)"
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom, "LINESTRING (0 0,0 1,0 2,0 3,0 4,0 5,0 6,0 7,0 8,0 9,0 10)"
     )
 
     # 2D + Z
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0 1,0 10 1)")
     geom.Segmentize(1.00001)
 
-    assert (
-        ogrtest.check_feature_geometry(
-            geom,
-            "LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)",
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        geom,
+        "LINESTRING (0 0 1,0 1 1,0 2 1,0 3 1,0 4 1,0 5 1,0 6 1,0 7 1,0 8 1,0 9 1,0 10 1)",
     )
     assert str(geom) == geom.ExportToIsoWkt()
 
@@ -902,23 +890,23 @@ def test_ogr_geom_value():
 
     p = geom.Value(-1e-3)
     expected_p = ogr.CreateGeometryFromWkt("POINT (2 3)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = geom.Value(geom.Length() / 4)
     expected_p = ogr.CreateGeometryFromWkt("POINT (3.5 3)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = geom.Value(geom.Length() / 2)
     expected_p = ogr.CreateGeometryFromWkt("POINT (5 3)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = geom.Value(3 * geom.Length() / 4)
     expected_p = ogr.CreateGeometryFromWkt("POINT (5 1.5)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = geom.Value(geom.Length() + 1e-3)
     expected_p = ogr.CreateGeometryFromWkt("POINT (5 0)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
 
 ###############################################################################
@@ -1445,40 +1433,39 @@ def test_ogr_geom_circularstring():
     # Test Value()
     p = g1.Value(-1)
     expected_p = ogr.CreateGeometryFromWkt("POINT (0 0)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (0 0)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(length / 6.0)
     expected_p = ogr.CreateGeometryFromWkt(
         "POINT (0.292893218813453 0.707106781186548)"
     )
-    if ogrtest.check_feature_geometry(p, expected_p) != 0:
-        print(p)
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(length / 3.0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (1 1)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(length / 2.0)
     expected_p = ogr.CreateGeometryFromWkt(
         "POINT (1.707106781186547 0.707106781186547)"
     )
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(2 * length / 3.0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (2 0)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(length)
     expected_p = ogr.CreateGeometryFromWkt("POINT (1 -1)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(length + 1)
     expected_p = ogr.CreateGeometryFromWkt("POINT (1 -1)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     # Test export/import Wkb
     g2 = ogr.CreateGeometryFromWkb(g1.ExportToWkb())
@@ -1507,7 +1494,7 @@ def test_ogr_geom_circularstring():
     expected_g = ogr.CreateGeometryFromWkt(
         "LINESTRING (0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1)"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     in_wkt = "CIRCULARSTRING (0 0,1 1,1 -1)"
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
@@ -1516,7 +1503,7 @@ def test_ogr_geom_circularstring():
     with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
         g2 = ogr.CreateGeometryFromWkb(in_wkb)
 
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test HasCurveGeometry
     assert g1.HasCurveGeometry()
@@ -1524,12 +1511,12 @@ def test_ogr_geom_circularstring():
 
     # Test GetLinearGeometry
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test ForceToLineString
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToLineString(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test ForceToMultiLineString
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
@@ -1537,7 +1524,7 @@ def test_ogr_geom_circularstring():
             "MULTILINESTRING ((0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1))"
         )
         g2 = ogr.ForceToMultiLineString(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
+    ogrtest.check_feature_geometry(g2, expected_g2)
 
     # Test GEOS operations
     if ogrtest.have_geos():
@@ -1556,12 +1543,12 @@ def test_ogr_geom_circularstring():
     # Test ForceToLineString
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToLineString(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test ForceToMultiLineString
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToMultiLineString(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
+    ogrtest.check_feature_geometry(g2, expected_g2)
 
     # Test stroking of full circle with 3 points. ISO draft
     # mentions that this should define a full circle, but there's an
@@ -1574,7 +1561,7 @@ def test_ogr_geom_circularstring():
         "LINESTRING (0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)"
     )
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
@@ -1587,7 +1574,7 @@ def test_ogr_geom_circularstring():
         "LINESTRING (0 0,0.049515566048791 0.216941869558781,0.188255099070638 0.390915741234018,0.388739533021848 0.48746395609092,0.611260466978166 0.48746395609092,0.811744900929369 0.390915741234018,0.950484433951232 0.216941869558781,1 0,0.950484433951232 -0.216941869558781,0.811744900929369 -0.390915741234018,0.611260466978166 -0.48746395609092,0.388739533021848 -0.48746395609092,0.188255099070638 -0.390915741234018,0.049515566048791 -0.216941869558781,0 0)"
     )
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
@@ -1598,7 +1585,7 @@ def test_ogr_geom_circularstring():
     expected_g = ogr.CreateGeometryFromWkt(
         "CIRCULARSTRING (0 0,0.146446609406726 0.353553390593274,0.5 0.5,0.853553390593274 0.353553390593274,1 0,0.853553390593274 -0.353553390593274,0.5 -0.5,0.146446609406726 -0.353553390593274,0 0)"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     # Sanity check: the length must remain the same
     length = g1.Length()
@@ -1630,14 +1617,14 @@ def test_ogr_geom_circularstring():
         "LINESTRING (0 0 1,0.116977778440514 -0.321393804843282 1,0.413175911166547 -0.49240387650611 1,0.75 -0.433012701892224 1,0.969846310392967 -0.171010071662835 1,0.969846310392967 0.171010071662835 1,0.75 0.433012701892224 1,0.413175911166547 0.49240387650611 1,0.116977778440514 0.321393804843282 1,0 0 1)"
     )
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Check segmentize
     g1.Segmentize(0.5)
     expected_g = ogr.CreateGeometryFromWkt(
         "CIRCULARSTRING Z (0 0 1,0.146446609406726 -0.353553390593274 1.25,0.5 -0.5 1.5,0.853553390593274 -0.353553390593274 1.75,1 0 2,0.853553390593274 0.353553390593274 1.75,0.5 0.5 1.5,0.146446609406727 0.353553390593274 1.25,0 0 1)"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     # Same as above but reverse order
     in_wkt = "CIRCULARSTRING (0 0,0.5 -0.5,1.0 0.0,0.5 0.5,0.0 0.0)"
@@ -1646,7 +1633,7 @@ def test_ogr_geom_circularstring():
         "LINESTRING (0 0,0.049515566048791 -0.216941869558781,0.188255099070638 -0.390915741234018,0.388739533021848 -0.48746395609092,0.611260466978166 -0.48746395609092,0.811744900929369 -0.390915741234018,0.950484433951232 -0.216941869558781,1 0,0.950484433951232 0.216941869558781,0.811744900929369 0.390915741234018,0.611260466978166 0.48746395609092,0.388739533021848 0.48746395609092,0.188255099070638 0.390915741234018,0.049515566048791 0.216941869558781,0 0)"
     )
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     length = g1.Length()
     expected_length = 2 * math.pi * 0.5
@@ -1657,7 +1644,7 @@ def test_ogr_geom_circularstring():
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     expected_g = ogr.CreateGeometryFromWkt("LINESTRING (0 0,1 1,2 2)")
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     length = g1.Length()
     expected_length = 2 * math.sqrt(2)
@@ -1666,17 +1653,17 @@ def test_ogr_geom_circularstring():
     # Test Value()
     p = g1.Value(length / 4.0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (0.5 0.5)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
     p = g1.Value(3.0 * length / 4.0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (1.5 1.5)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     # Check segmentize
     g1.Segmentize(0.5)
     expected_g = ogr.CreateGeometryFromWkt(
         "CIRCULARSTRING (0 0,0.166666666666667 0.166666666666667,0.333333333333333 0.333333333333333,0.5 0.5,0.666666666666667 0.666666666666667,0.833333333333333 0.833333333333333,1 1,1.166666666666667 1.166666666666667,1.333333333333333 1.333333333333333,1.5 1.5,1.666666666666667 1.666666666666667,1.833333333333333 1.833333333333333,2 2)"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     # Sanity check: the length must remain the same
     length = g1.Length()
@@ -1688,22 +1675,22 @@ def test_ogr_geom_circularstring():
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
     expected_g = ogr.CreateGeometryFromWkt("LINESTRING (0 0 1,1 1 2,2 2 1)")
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Check segmentize
     g1.Segmentize(0.5)
     expected_g = ogr.CreateGeometryFromWkt(
         "CIRCULARSTRING Z (0 0 1,0.166666666666667 0.166666666666667 1.166666666666667,0.333333333333333 0.333333333333333 1.333333333333333,0.5 0.5 1.5,0.666666666666667 0.666666666666667 1.666666666666667,0.833333333333333 0.833333333333333 1.833333333333333,1 1 2,1.166666666666667 1.166666666666667 1.833333333333333,1.333333333333333 1.333333333333333 1.666666666666667,1.5 1.5 1.5,1.666666666666667 1.666666666666667 1.333333333333333,1.833333333333333 1.833333333333333 1.166666666666667,2 2 1)"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     # Test Value()
     p = g1.Value(length / 4.0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (0.5 0.5 1.5)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
     p = g1.Value(3.0 * length / 4.0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (1.5 1.5 1.5)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
     in_wkt = "CIRCULARSTRING (0 0,1 1,1 -1)"
 
     # Test GetEnvelope() in various cases
@@ -1887,23 +1874,23 @@ def test_ogr_geom_compoundcurve():
     # Test Value()
     p = g1.Value(-1e-3)
     expected_p = ogr.CreateGeometryFromWkt("POINT (0 0 10)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(math.pi / 2.0)
     expected_p = ogr.CreateGeometryFromWkt("POINT (1 1 20)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(math.pi)
     expected_p = ogr.CreateGeometryFromWkt("POINT (2 0 30)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(math.pi + 1)
     expected_p = ogr.CreateGeometryFromWkt("POINT (1 0 20)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     p = g1.Value(math.pi + 2 + 1e-3)
     expected_p = ogr.CreateGeometryFromWkt("POINT (0 0 10)")
-    assert ogrtest.check_feature_geometry(p, expected_p) == 0
+    ogrtest.check_feature_geometry(p, expected_p)
 
     wkb = g1.ExportToWkb()
     isowkb = g1.ExportToIsoWkb()
@@ -1951,7 +1938,7 @@ def test_ogr_geom_compoundcurve():
     expected_g = ogr.CreateGeometryFromWkt(
         "LINESTRING (0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1)"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     in_wkt = "COMPOUNDCURVE (CIRCULARSTRING (0 0,1 1,1 -1))"
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
@@ -1963,35 +1950,35 @@ def test_ogr_geom_compoundcurve():
     expected_g = ogr.CreateGeometryFromWkt(
         "LINESTRING (0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1)"
     )
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     assert g1.HasCurveGeometry()
 
     assert g1.HasCurveGeometry(True)
 
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToLineString(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         expected_g = ogr.CreateGeometryFromWkt(
             "MULTILINESTRING ((0 0,0.218168517531969 0.623489801858729,0.777479066043687 0.974927912181831,1.433883739117561 0.900968867902435,1.900968867902463 0.433883739117562,1.974927912181821 -0.222520933956316,1.623489801858719 -0.78183148246804,1 -1))"
         )
         g2 = ogr.ForceToMultiLineString(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Check segmentize
     g1.Segmentize(0.5)
     expected_g = ogr.CreateGeometryFromWkt(
         "COMPOUNDCURVE (CIRCULARSTRING (0 0,0.076120467488713 0.38268343236509,0.292893218813453 0.707106781186548,0.61731656763491 0.923879532511287,1 1,1.38268343236509 0.923879532511287,1.707106781186547 0.707106781186547,1.923879532511287 0.38268343236509,2 0,1.923879532511287 -0.38268343236509,1.707106781186547 -0.707106781186547,1.38268343236509 -0.923879532511287,1 -1))"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     # Error case : not enough points
     in_wkt = "COMPOUNDCURVE ((0 0))"
@@ -2156,7 +2143,7 @@ def test_ogr_geom_curvepolygon():
     expected_g = ogr.CreateGeometryFromWkt(
         "POLYGON ((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0))"
     )
-    assert ogrtest.check_feature_geometry(g1, expected_g) == 0
+    ogrtest.check_feature_geometry(g1, expected_g)
 
     in_wkt = "CURVEPOLYGON (CIRCULARSTRING (0 0,1 0,0 0))"
     g1 = ogr.CreateGeometryFromWkt(in_wkt)
@@ -2165,7 +2152,7 @@ def test_ogr_geom_curvepolygon():
     with gdal.config_options({"OGR_STROKE_CURVE": "TRUE", "OGR_ARC_STEPSIZE": "45"}):
         g2 = ogr.CreateGeometryFromWkb(in_wkb)
 
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test HasCurveGeometry
     assert g1.HasCurveGeometry()
@@ -2173,12 +2160,12 @@ def test_ogr_geom_curvepolygon():
 
     # Test GetLinearGeometry
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test ForceToPolygon
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToPolygon(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test ForceToMultiPolygon
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
@@ -2186,7 +2173,7 @@ def test_ogr_geom_curvepolygon():
             "MULTIPOLYGON (((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)))"
         )
         g2 = ogr.ForceToMultiPolygon(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
+    ogrtest.check_feature_geometry(g2, expected_g2)
 
     # Test ForceToMultiLineString
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
@@ -2194,7 +2181,7 @@ def test_ogr_geom_curvepolygon():
     expected_g3 = ogr.CreateGeometryFromWkt(
         "MULTILINESTRING ((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0))"
     )
-    assert ogrtest.check_feature_geometry(g2, expected_g3) == 0
+    ogrtest.check_feature_geometry(g2, expected_g3)
 
     # Test GEOS operations
     if ogrtest.have_geos():
@@ -2221,12 +2208,12 @@ def test_ogr_geom_curvepolygon():
     # Test ForceToPolygon
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToPolygon(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test ForceToMultiPolygon
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToMultiPolygon(g1)
-    assert ogrtest.check_feature_geometry(g2, expected_g2) == 0
+    ogrtest.check_feature_geometry(g2, expected_g2)
 
     # Error case : not enough points
     in_wkt = "CURVEPOLYGON ((0 0,0 1,0 0))"
@@ -2437,11 +2424,11 @@ def test_ogr_geom_multicurve():
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToMultiLineString(g1)
     expected_g = "MULTILINESTRING ((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0),(0 0,1 1),(0 0,1 1,2 2,3 3))"
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test GetLinearGeometry
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Error case : wrong sub-geometry type
     in_wkt = "MULTILINESTRING (POINT EMPTY)"
@@ -2512,11 +2499,11 @@ def test_ogr_geom_multisurface():
     with gdal.config_option("OGR_ARC_STEPSIZE", "45"):
         g2 = ogr.ForceToMultiPolygon(g1)
     expected_g = "MULTIPOLYGON (((0 0,0 10,10 10,10 0,0 0)),((0 0,0.116977778440514 -0.321393804843282,0.413175911166547 -0.49240387650611,0.75 -0.433012701892224,0.969846310392967 -0.171010071662835,0.969846310392967 0.171010071662835,0.75 0.433012701892224,0.413175911166547 0.49240387650611,0.116977778440514 0.321393804843282,0 0)))"
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
 
     # Test GetLinearGeometry
     g2 = g1.GetLinearGeometry(45)
-    assert ogrtest.check_feature_geometry(g2, expected_g) == 0
+    ogrtest.check_feature_geometry(g2, expected_g)
     # Check that GetLinearGeometry() is idem-potent on MULTIPOLYGON
     g3 = g2.GetLinearGeometry(45)
     assert g3.Equals(g2)
@@ -2827,7 +2814,7 @@ def test_ogr_geom_getcurvegeometry():
     )
     g2 = g1.GetLinearGeometry()
     g3 = g2.GetCurveGeometry()
-    assert ogrtest.check_feature_geometry(g3, g1) == 0
+    ogrtest.check_feature_geometry(g3, g1)
 
     # Same with integer coordinates
     g1 = ogr.CreateGeometryFromWkt(
@@ -2844,7 +2831,7 @@ def test_ogr_geom_getcurvegeometry():
     g1_expected = ogr.CreateGeometryFromWkt(
         "CIRCULARSTRING (0 0,1.0 1.020199980003999,2 0)"
     )
-    assert ogrtest.check_feature_geometry(g3, g1_expected) == 0
+    ogrtest.check_feature_geometry(g3, g1_expected)
 
     # Test with unrecognized options
     with gdaltest.error_handler():
@@ -2918,9 +2905,11 @@ def test_ogr_geom_getcurvegeometry():
         g1 = ogr.CreateGeometryFromWkt(wkt)
         g2 = g1.GetLinearGeometry()
         g3 = g2.GetCurveGeometry()
-        assert not (eps == 0 and not g3.Equals(g1)) or (
-            eps > 0 and ogrtest.check_feature_geometry(g3, g1, eps) != 0
-        ), ""
+
+        if eps == 0:
+            assert g3.Equals(g1)
+        else:
+            ogrtest.check_feature_geometry(g3, g1, eps)
 
     # Test with GEOMETRYCOLLECTION container
     g1 = ogr.CreateGeometryFromWkt(
@@ -3898,24 +3887,20 @@ def test_ogr_geom_makevalid():
     # Invalid
     g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
     g = g.MakeValid()
-    assert (
-        g is None
-        or ogrtest.check_feature_geometry(
+
+    if g is not None:
+        ogrtest.check_feature_geometry(
             g, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))"
         )
-        == 0
-    ), g.ExportToWkt()
 
     # Invalid
     g = ogr.CreateGeometryFromWkt("CURVEPOLYGON ((0 0,10 10,0 10,10 0,0 0))")
     g = g.MakeValid()
-    assert (
-        g is None
-        or ogrtest.check_feature_geometry(
+
+    if g is not None:
+        ogrtest.check_feature_geometry(
             g, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))"
         )
-        == 0
-    ), g.ExportToWkt()
 
     if (
         ogr.GetGEOSVersionMajor() * 10000
@@ -3928,13 +3913,10 @@ def test_ogr_geom_makevalid():
         )
         # Only since GEOS 3.10
         g = g.MakeValid(["METHOD=STRUCTURE"])
-        assert (
-            g is None
-            or ogrtest.check_feature_geometry(
+        if g is not None:
+            ogrtest.check_feature_geometry(
                 g, "POLYGON ((0 10,10 10,10.0 7.5,5 5,10.0 2.5,10 0,0 0,0 10))"
             )
-            == 0
-        ), g.ExportToWkt()
 
 
 ###############################################################################

@@ -182,14 +182,10 @@ def test_ogr_fgdb_stress_2():
         )
         if f_test is None:
             break
-        if (
-            f_test.GetFID() != f_ref.GetFID()
-            or f_test["str"] != f_ref["str"]
-            or ogrtest.check_feature_geometry(f_test, f_ref.GetGeometryRef()) != 0
-        ):
-            f_test.DumpReadable()
-            f_ref.DumpReadable()
-            pytest.fail()
+
+        assert f_test.GetFID() == f_ref.GetFID()
+        assert f_test["str"] == f_ref["str"]
+        ogrtest.check_feature_geometry(f_test, f_ref.GetGeometryRef())
 
     for val in range(1000):
         lyr_test.SetAttributeFilter("str = '%d'" % val)

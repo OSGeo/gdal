@@ -193,7 +193,7 @@ def test_ogr_mysql_3():
     expect = [168, 169, 166, 158, 165]
 
     with ogrtest.attribute_filter(gdaltest.mysql_lyr, "eas_id < 170"):
-        assert ogrtest.check_features_against_list(gdaltest.mysql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(gdaltest.mysql_lyr, "eas_id", expect)
 
         assert gdaltest.mysql_lyr.GetFeatureCount() == 5
 
@@ -201,11 +201,8 @@ def test_ogr_mysql_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mysql_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.001
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.001
         )
 
         for fld in range(3):
@@ -272,12 +269,14 @@ def test_ogr_mysql_4():
         gdaltest.mysql_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.mysql_lyr.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
+        try:
+            ogrtest.check_feature_geometry(feat_read, geom)
+        except AssertionError:
             print("Geometry changed. Closing rings before trying again for wkt #", item)
             print("(before):", geom.ExportToWkt())
             geom.CloseRings()
             print("(after) :", geom.ExportToWkt())
-            assert ogrtest.check_feature_geometry(feat_read, geom) == 0
+            ogrtest.check_feature_geometry(feat_read, geom)
 
         feat_read.Destroy()
 
@@ -300,7 +299,7 @@ def test_ogr_mysql_5():
 
         assert sql_lyr.GetFeatureCount() == 11
 
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -316,17 +315,14 @@ def test_ogr_mysql_6():
         "select * from tpoly where prfedea = '2'"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
+        ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
 
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                feat_read,
-                "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            feat_read,
+            "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
         )
 
         feat_read.Destroy()
@@ -359,7 +355,7 @@ def test_ogr_mysql_7():
 
         assert gdaltest.mysql_lyr.GetFeatureCount() == 1
 
-        assert ogrtest.check_features_against_list(gdaltest.mysql_lyr, "eas_id", [158])
+        ogrtest.check_features_against_list(gdaltest.mysql_lyr, "eas_id", [158])
 
         with ogrtest.attribute_filter(gdaltest.mysql_lyr, "eas_id = 158"):
 
@@ -435,9 +431,7 @@ def test_ogr_mysql_9():
         "SetFeature() did not update SHORTNAME, got %s." % shortname
     )
 
-    if ogrtest.check_feature_geometry(feat, "POINT(5 6)") != 0:
-        print(feat.GetGeometryRef())
-        pytest.fail("Geometry update failed")
+    ogrtest.check_feature_geometry(feat, "POINT(5 6)")
 
     # Test updating non-existing feature
     feat.SetFID(-10)
@@ -499,7 +493,7 @@ def test_ogr_mysql_15():
         query = query + (" or eas_id = %d" % (i + 1000))
 
     with ogrtest.attribute_filter(gdaltest.mysql_lyr, query):
-        assert ogrtest.check_features_against_list(gdaltest.mysql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(gdaltest.mysql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -522,7 +516,7 @@ def test_ogr_mysql_16():
 
     with gdaltest.mysql_ds.ExecuteSQL(statement) as lyr:
 
-        assert ogrtest.check_features_against_list(lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -988,7 +982,7 @@ def test_ogr_mysql_longlat():
 
     lyr.SetSpatialFilterRect(149.5, 1.5, 150.5, 2.5)
     f = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(f, geom) == 0
+    ogrtest.check_feature_geometry(f, geom)
 
     extent = lyr.GetExtent()
     expect = (150.0, 150.0, 2.0, 2.0)

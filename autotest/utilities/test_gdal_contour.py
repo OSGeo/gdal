@@ -364,29 +364,21 @@ def test_gdal_contour_4(gdal_contour_path):
     ]
     expected_elev = [10, 20]
 
-    lyr = ds.ExecuteSQL("select * from contour_orientation1 order by elev asc")
+    with ds.ExecuteSQL("select * from contour_orientation1 order by elev asc") as lyr:
 
-    assert lyr.GetFeatureCount() == len(expected_contours)
+        assert lyr.GetFeatureCount() == len(expected_contours)
 
-    i = 0
-    test_failed = False
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        expected_geom = ogr.CreateGeometryFromWkt(expected_contours[i])
-        assert feat.GetField("elev") == expected_elev[i]
-        if ogrtest.check_feature_geometry(feat, expected_geom, 0.01) != 0:
-            print(
-                "Got      %s.\nExpected %s"
-                % (feat.GetGeometryRef().ExportToWkt(), expected_contours[i])
-            )
-            test_failed = True
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            expected_geom = ogr.CreateGeometryFromWkt(expected_contours[i])
+            assert feat.GetField("elev") == expected_elev[i]
+            ogrtest.check_feature_geometry(feat, expected_geom, 0.01)
 
-    ds.ReleaseResultSet(lyr)
+            i = i + 1
+            feat = lyr.GetNextFeature()
+
     ds.Destroy()
-
-    assert not test_failed
 
 
 ###############################################################################
@@ -416,29 +408,21 @@ def test_gdal_contour_5(gdal_contour_path):
     ]
     expected_elev = [140]
 
-    lyr = ds.ExecuteSQL("select * from contour_orientation2 order by elev asc")
+    with ds.ExecuteSQL("select * from contour_orientation2 order by elev asc") as lyr:
 
-    assert lyr.GetFeatureCount() == len(expected_contours)
+        assert lyr.GetFeatureCount() == len(expected_contours)
 
-    i = 0
-    test_failed = False
-    feat = lyr.GetNextFeature()
-    while feat is not None:
-        expected_geom = ogr.CreateGeometryFromWkt(expected_contours[i])
-        assert feat.GetField("elev") == expected_elev[i]
-        if ogrtest.check_feature_geometry(feat, expected_geom) != 0:
-            print(
-                "Got      %s.\nExpected %s"
-                % (feat.GetGeometryRef().ExportToWkt(), expected_contours[i])
-            )
-            test_failed = True
-        i = i + 1
+        i = 0
         feat = lyr.GetNextFeature()
+        while feat is not None:
+            expected_geom = ogr.CreateGeometryFromWkt(expected_contours[i])
+            assert feat.GetField("elev") == expected_elev[i]
+            ogrtest.check_feature_geometry(feat, expected_geom)
 
-    ds.ReleaseResultSet(lyr)
+            i = i + 1
+            feat = lyr.GetNextFeature()
+
     ds.Destroy()
-
-    assert not test_failed
 
 
 ###############################################################################

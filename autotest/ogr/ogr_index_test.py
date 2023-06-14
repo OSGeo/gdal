@@ -108,7 +108,7 @@ def test_ogr_index_can_join_without_index():
             + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY '
         ) as sql_lyr:
 
-            assert ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
+            ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
 
 
 ###############################################################################
@@ -134,8 +134,7 @@ def test_ogr_index_indexed_single_integer_lookup_works():
         s_lyr = s_ds.GetLayerByName("join_t")
         s_lyr.SetAttributeFilter("SKEY = 5")
 
-        tr = ogrtest.check_features_against_list(s_lyr, "VALUE", expect)
-    assert tr
+        ogrtest.check_features_against_list(s_lyr, "VALUE", expect)
 
 
 ###############################################################################
@@ -151,8 +150,7 @@ def test_ogr_index_indexed_single_string_works():
 
         s_lyr.SetAttributeFilter("VALUE='Value 5'")
 
-        tr = ogrtest.check_features_against_list(s_lyr, "SKEY", expect)
-    assert tr
+        ogrtest.check_features_against_list(s_lyr, "SKEY", expect)
 
 
 ###############################################################################
@@ -167,9 +165,7 @@ def test_ogr_index_unimplemented_range_query_works():
         s_lyr = s_ds.GetLayerByName("join_t")
         s_lyr.SetAttributeFilter("SKEY < 3")
 
-        tr = ogrtest.check_features_against_list(s_lyr, "SKEY", expect)
-
-    assert tr
+        ogrtest.check_features_against_list(s_lyr, "SKEY", expect)
 
 
 ###############################################################################
@@ -186,7 +182,7 @@ def test_ogr_index_indexed_join_works():
             + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY '
         ) as sql_lyr:
 
-            assert ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
+            ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
 
 
 ###############################################################################
@@ -224,8 +220,7 @@ def test_ogr_index_attribute_filter_works_after_drop_index():
 
         s_lyr.SetAttributeFilter("SKEY = 5")
 
-        tr = ogrtest.check_features_against_list(s_lyr, "VALUE", expect)
-        assert tr
+        ogrtest.check_features_against_list(s_lyr, "VALUE", expect)
 
 
 ###############################################################################

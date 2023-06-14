@@ -85,13 +85,10 @@ def test_ogr_tiger_1():
         feat.TLID == 2833200 and feat.FRIADDL is None and feat.BLOCKL == 5000
     ), "wrong attribute on cc feature."
 
-    assert (
-        ogrtest.check_feature_geometry(
-            feat,
-            "LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)",
-            max_error=0.000001,
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        feat,
+        "LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)",
+        max_error=0.000001,
     )
 
     feat = ogrtest.tiger_ds.GetLayerByName("TLIDRange").GetNextFeature()
@@ -163,13 +160,10 @@ def test_ogr_tiger_4():
         feat.TLID == 2833200 and feat.FRIADDL is None and feat.BLOCKL == 5000
     ), "wrong attribute on cc feature."
 
-    assert (
-        ogrtest.check_feature_geometry(
-            feat,
-            "LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)",
-            max_error=0.000001,
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        feat,
+        "LINESTRING (-86.4402 32.504137,-86.440313 32.504009,-86.440434 32.503884,-86.440491 32.503805,-86.44053 32.503757,-86.440578 32.503641,-86.440593 32.503515,-86.440588 32.503252,-86.440596 32.50298)",
+        max_error=0.000001,
     )
 
     feat = ogrtest.tiger_ds.GetLayerByName("TLIDRange").GetNextFeature()

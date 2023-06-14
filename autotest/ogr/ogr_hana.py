@@ -148,11 +148,8 @@ def test_ogr_hana_2():
 
         assert read_feat.GetFieldCount() == field_count, "Field count does not match"
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.001
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.001
         )
         for fld in range(field_count - 1):
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), (
@@ -171,9 +168,7 @@ def test_ogr_hana_3():
     layer = ds.GetLayerByName("tpoly")
 
     with ogrtest.attribute_filter(layer, "EAS_ID > 160 AND EAS_ID < 170"):
-        assert ogrtest.check_features_against_list(
-            layer, "EAS_ID", [168, 169, 166, 165]
-        )
+        ogrtest.check_features_against_list(layer, "EAS_ID", [168, 169, 166, 165])
 
         check_feature_count(layer, 4)
 
@@ -191,7 +186,7 @@ def test_ogr_hana_4():
 
     check_feature_count(layer, 1)
 
-    assert ogrtest.check_features_against_list(layer, "EAS_ID", [158])
+    ogrtest.check_features_against_list(layer, "EAS_ID", [158])
 
 
 ###############################################################################
@@ -275,10 +270,7 @@ def test_ogr_hana_9():
 
         feat_read = layer.GetNextFeature()
 
-        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
-            print(item)
-            print(wkt)
-            pytest.fail(geom)
+        ogrtest.check_feature_geometry(feat_read, geom)
 
     layer.ResetReading()
 
@@ -291,7 +283,7 @@ def test_ogr_hana_10():
     ds = open_datasource()
     layer = ds.ExecuteSQL("SELECT EAS_ID FROM tpoly WHERE EAS_ID IN (158, 170) ")
     check_feature_count(layer, 2)
-    assert ogrtest.check_features_against_list(layer, "EAS_ID", [158, 170])
+    ogrtest.check_features_against_list(layer, "EAS_ID", [158, 170])
 
 
 ###############################################################################
@@ -306,7 +298,7 @@ def test_ogr_hana_11():
         check_feature_count(layer, 10)
 
         expected = [179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
-        assert ogrtest.check_features_against_list(layer, "EAS_ID", expected)
+        ogrtest.check_features_against_list(layer, "EAS_ID", expected)
 
 
 ###############################################################################
@@ -332,7 +324,7 @@ def test_ogr_hana_12():
 def test_ogr_hana_13():
     ds = open_datasource()
     layer = ds.ExecuteSQL('SELECT EAS_ID FROM "TPOLY" WHERE EAS_ID IN (158, 170) ')
-    assert ogrtest.check_features_against_list(layer, "EAS_ID", [158, 170])
+    ogrtest.check_features_against_list(layer, "EAS_ID", [158, 170])
 
 
 ###############################################################################
@@ -453,9 +445,7 @@ def test_ogr_hana_18():
         "SetFeature() did not update SHORTNAME, got %s." % shortname
     )
 
-    if ogrtest.check_feature_geometry(feat, "POINT(5 6 7)") != 0:
-        print(feat.GetGeometryRef())
-        pytest.fail("Geometry update failed")
+    ogrtest.check_feature_geometry(feat, "POINT(5 6 7)")
 
     feat.SetGeometryDirectly(None)
     assert layer.SetFeature(feat) == 0, "SetFeature() method failed."
@@ -714,7 +704,7 @@ def test_ogr_hana_22():
 
     layer = ds.GetLayerByName("TPOLY")
     layer.SetAttributeFilter(query)
-    assert ogrtest.check_features_against_list(layer, "eas_id", [169])
+    ogrtest.check_features_against_list(layer, "eas_id", [169])
 
 
 ###############################################################################

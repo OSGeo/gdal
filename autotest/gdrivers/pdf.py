@@ -333,9 +333,7 @@ def test_pdf_1(poppler_or_pdfium):
             "POLYGON ((338304.150125828920864 4896673.639421294443309,338304.177293475600891 4933414.799376524984837,382774.271384406310972 4933414.546264361590147,382774.767329963855445 4896674.273581005632877,338304.150125828920864 4896673.639421294443309))"
         )
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        print(neatline)
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom)
 
 
 ###############################################################################
@@ -1023,13 +1021,7 @@ def _pdf_update_gcps(poppler_or_pdfium):
     expected_geom = ogr.Geometry(ogr.wkbPolygon)
     expected_geom.AddGeometry(expected_lr)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1158,10 +1150,7 @@ def test_pdf_set_5_gcps_ogc_bp(poppler_or_pdfium):
         "POLYGON ((2 8,2 10,2 18,16 18,16 8,2 8))"
     )
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom)
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1221,13 +1210,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     # Test SetMetadataItem()
     ds = gdal.Open(out_filename, gdal.GA_Update)
@@ -1265,13 +1248,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     gdaltest.pdf_drv.Delete(out_filename)
 

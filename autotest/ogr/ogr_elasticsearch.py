@@ -1361,9 +1361,7 @@ def test_ogr_elasticsearch_5():
 
     # Test geohash
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f["another_geopoint"], "POINT (2 49)") != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f["another_geopoint"], "POINT (2 49)")
 
     f = None
     lyr.CreateField(ogr.FieldDefn("superobject.subfield2", ogr.OFTString))

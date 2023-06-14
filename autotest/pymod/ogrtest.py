@@ -27,8 +27,6 @@
 import contextlib
 import sys
 
-import pytest
-
 sys.path.append("../pymod")
 
 import gdaltest
@@ -67,8 +65,6 @@ def check_features_against_list(layer, field_name, value_list):
     feat = layer.GetNextFeature()
     assert feat is None, "got more features than expected"
 
-    return True  # TODO remove once calling code no longer asserts return value
-
 
 ###############################################################################
 
@@ -94,8 +90,7 @@ def check_feature_geometry(feat, geom, max_error=0.0001, context=None):
 
     if geom is None:
         assert f_geom is None, "expected NULL geometry but got one" + context_msg
-        return 0  # TODO remove once calling code no longer asserts return value
-
+        return
     else:
         assert f_geom is not None, "expected geometry but got NULL" + context_msg
 
@@ -114,7 +109,7 @@ def check_feature_geometry(feat, geom, max_error=0.0001, context=None):
     )
 
     # ST_Equals(a,b) <==> ST_Within(a,b) && ST_Within(b,a)
-    # We can't use OGRGeometry::Equals() because it doesn't not test spatial
+    # We can't use OGRGeometry::Equals() because it doesn't test spatial
     # equality, but structural one
     if (
         have_geos()
@@ -122,7 +117,7 @@ def check_feature_geometry(feat, geom, max_error=0.0001, context=None):
         and geom.Within(f_geom)
         and ogr.GT_Flatten(f_geom.GetGeometryType()) == f_geom.GetGeometryType()
     ):
-        return 0  # TODO remove once calling code no longer asserts return value
+        return
 
     if f_geom.GetGeometryCount() > 0:
         count = f_geom.GetGeometryCount()
@@ -153,8 +148,6 @@ def check_feature_geometry(feat, geom, max_error=0.0001, context=None):
                 "Error in vertex %d, off by %g." + context_msg
             ) % (i, max(x_dist, y_dist, z_dist, m_dist))
 
-    return 0  # TODO remove once calling code no longer asserts return value
-
 
 ###############################################################################
 
@@ -176,8 +169,6 @@ def check_feature(feat, feat_ref, max_error=0.0001, excluded_fields=None):
             i
         ), f"Field {i}, expected {feat.GetField(i)}, got {feat_ref.GetField(i)}"
 
-    return 0  # TODO remove once calling code no longer asserts return value
-
 
 ###############################################################################
 
@@ -186,17 +177,10 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
 
     for f_ref in lyr_ref:
         f = lyr.GetNextFeature()
-        if f is None:
-            f_ref.DumpReadable()
-            pytest.fail()
-        if check_feature(f, f_ref, excluded_fields=excluded_fields) != 0:
-            f.DumpReadable()
-            f_ref.DumpReadable()
-            pytest.fail()
+        assert f is not None, "not enough features"
+        check_feature(f, f_ref, excluded_fields=excluded_fields)
     f = lyr.GetNextFeature()
-    if f is not None:
-        f.DumpReadable()
-        pytest.fail()
+    assert f is None, "more features than expected"
 
 
 ###############################################################################

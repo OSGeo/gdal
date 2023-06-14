@@ -80,19 +80,16 @@ def test_ogr_gxt_1():
         "000-2007-0050-6585-LAMB93",
     ]
 
-    assert ogrtest.check_features_against_list(lyr, "idSel", expect)
+    ogrtest.check_features_against_list(lyr, "idSel", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
 
-    assert (
-        ogrtest.check_feature_geometry(
-            feat,
-            "MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))",
-            max_error=0.000000001,
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        feat,
+        "MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))",
+        max_error=0.000000001,
     )
 
     srs = osr.SpatialReference()
@@ -128,19 +125,16 @@ def test_ogr_gxt_2():
         "000-2007-0050-6585-LAMB93",
     ]
 
-    assert ogrtest.check_features_against_list(lyr, "idSel", expect)
+    ogrtest.check_features_against_list(lyr, "idSel", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
 
-    assert (
-        ogrtest.check_feature_geometry(
-            feat,
-            "MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))",
-            max_error=0.000000001,
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        feat,
+        "MULTIPOLYGON (((50000 7130000,600000 7130000,600000 6580000,50000 6580000,50000 7130000)))",
+        max_error=0.000000001,
     )
 
 
@@ -196,33 +190,29 @@ def test_ogr_gxt_3():
 
     expect = ["PID1", "PID2"]
 
-    assert ogrtest.check_features_against_list(gxt_lyr, "Primary_ID", expect)
+    ogrtest.check_features_against_list(gxt_lyr, "Primary_ID", expect)
 
     gxt_lyr.ResetReading()
 
     expect = ["SID1", "SID2"]
 
-    assert ogrtest.check_features_against_list(gxt_lyr, "Secondary_ID", expect)
+    ogrtest.check_features_against_list(gxt_lyr, "Secondary_ID", expect)
 
     gxt_lyr.ResetReading()
 
     expect = ["TID1", None]
 
-    assert ogrtest.check_features_against_list(gxt_lyr, "Third_ID", expect)
+    ogrtest.check_features_against_list(gxt_lyr, "Third_ID", expect)
 
     gxt_lyr.ResetReading()
 
     feat = gxt_lyr.GetNextFeature()
 
-    assert (
-        ogrtest.check_feature_geometry(feat, "POINT(0 1)", max_error=0.000000001) == 0
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(0 1)", max_error=0.000000001)
 
     feat = gxt_lyr.GetNextFeature()
 
-    assert (
-        ogrtest.check_feature_geometry(feat, "POINT(2 3)", max_error=0.000000001) == 0
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(2 3)", max_error=0.000000001)
 
 
 ###############################################################################
@@ -235,14 +225,9 @@ def test_ogr_gxt_multipolygon_singlepart_nohole():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))", max_error=0.000000001
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat, "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0)))", max_error=0.000000001
+    )
 
 
 ###############################################################################
@@ -256,16 +241,11 @@ def test_ogr_gxt_multipolygon_singlepart_hole():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat,
-            "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))",
-            max_error=0.000000001,
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat,
+        "MULTIPOLYGON (((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))",
+        max_error=0.000000001,
+    )
 
 
 ###############################################################################
@@ -281,16 +261,11 @@ def test_ogr_gxt_multipolygon_twoparts_second_with_hole():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat,
-            "MULTIPOLYGON (((-10 -10,-10 -9,-9 -9,-10 -10)),((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))",
-            max_error=0.000000001,
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat,
+        "MULTIPOLYGON (((-10 -10,-10 -9,-9 -9,-10 -10)),((0 0,0 1,1 1,1 0,0 0),(0.1 0.1,0.1 0.9,0.9 0.9,0.1 0.1)))",
+        max_error=0.000000001,
+    )
 
 
 ###############################################################################
@@ -304,11 +279,6 @@ def test_ogr_gxt_line():
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat, "LINESTRING (440720 3751320,441920 3750120)", max_error=0.000000001
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat, "LINESTRING (440720 3751320,441920 3750120)", max_error=0.000000001
+    )

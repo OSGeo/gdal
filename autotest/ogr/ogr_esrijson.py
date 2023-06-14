@@ -107,10 +107,7 @@ def test_ogr_esrijson_read_point():
     assert gcs == 4326, "Spatial reference was not valid"
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("POINT(2 49)")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "POINT(2 49)")
 
     if feature.GetFID() != 1:
         feature.DumpReadable()
@@ -151,10 +148,7 @@ def test_ogr_esrijson_read_linestring():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("LINESTRING (2 49,3 50)")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "LINESTRING (2 49,3 50)")
 
     lyr = None
     ds = None
@@ -178,12 +172,9 @@ def test_ogr_esrijson_read_linestring():
     )
     lyr = ds.GetLayer(0)
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt(
-        "MULTILINESTRING ((2 49,2.1 49.1),(3 50,3.1 50.1))"
+    ogrtest.check_feature_geometry(
+        feature, "MULTILINESTRING ((2 49,2.1 49.1),(3 50,3.1 50.1))"
     )
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
 
 
 ###############################################################################
@@ -208,9 +199,7 @@ def test_ogr_esrijson_read_polygon():
     ref_geom = ogr.CreateGeometryFromWkt(
         "MULTIPOLYGON (((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.1 49.9,2.9 49.9,2.9 49.1,2.1 49.1)),((-2 49,-2 50,-3 50,-3 49,-2 49)))"
     )
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, ref_geom)
 
     lyr = None
     ds = None
@@ -246,10 +235,7 @@ def test_ogr_esrijson_read_multipoint():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("MULTIPOINT (2 49,3 50)")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "MULTIPOINT (2 49,3 50)")
 
     lyr = None
     ds = None
@@ -280,10 +266,7 @@ def test_ogr_esrijson_read_pointz():
     assert gcs == 4326, "Spatial reference was not valid"
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("POINT(2 49 1)")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "POINT(2 49 1)")
 
     if feature.GetFID() != 1:
         feature.DumpReadable()
@@ -325,10 +308,7 @@ def test_ogr_esrijson_read_linestringz():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("LINESTRING (2 49 1,3 50 2)")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "LINESTRING (2 49 1,3 50 2)")
 
     lyr = None
     ds = None
@@ -354,10 +334,7 @@ def test_ogr_esrijson_read_multipointz():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("MULTIPOINT (2 49 1,3 50 2)")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "MULTIPOINT (2 49 1,3 50 2)")
 
     lyr = None
     ds = None
@@ -383,12 +360,9 @@ def test_ogr_esrijson_read_polygonz():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt(
-        "POLYGON ((2 49 1,2 50 2,3 50 3,3 49 4,2 49 1))"
+    ogrtest.check_feature_geometry(
+        feature, "POLYGON ((2 49 1,2 50 2,3 50 3,3 49 4,2 49 1))"
     )
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
 
     lyr = None
     ds = None
@@ -413,10 +387,7 @@ def test_ogr_esrijson_read_multipointm():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("MULTIPOINT M ((2 49 1),(3 50 2))")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "MULTIPOINT M ((2 49 1),(3 50 2))")
 
     lyr = None
     ds = None
@@ -441,10 +412,7 @@ def test_ogr_esrijson_read_pointz_withou_z():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("MULTIPOINT (2 49,3 50)")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "MULTIPOINT (2 49,3 50)")
 
     lyr = None
     ds = None
@@ -469,10 +437,7 @@ def test_ogr_esrijson_read_multipointzm():
     assert rc
 
     feature = lyr.GetNextFeature()
-    ref_geom = ogr.CreateGeometryFromWkt("MULTIPOINT ZM ((2 49 1 100),(3 50 2 100))")
-    if ogrtest.check_feature_geometry(feature, ref_geom) != 0:
-        feature.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feature, "MULTIPOINT ZM ((2 49 1 100),(3 50 2 100))")
 
     lyr = None
     ds = None

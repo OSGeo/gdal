@@ -87,17 +87,14 @@ def test_gdal_polygonize_1(script_path):
 
     expect = [107, 123, 115, 115, 140, 148, 123, 140, 100, 101, 102, 156, 103]
 
-    assert ogrtest.check_features_against_list(shp_lyr, "DN", expect)
+    ogrtest.check_features_against_list(shp_lyr, "DN", expect)
 
     # check at least one geometry.
     shp_lyr.SetAttributeFilter("dn = 156")
     feat_read = shp_lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat_read,
-            "POLYGON ((440720 3751200,440900 3751200,440900 3751020,440720 3751020,440720 3751200),(440780 3751140,440780 3751080,440840 3751080,440840 3751140,440780 3751140))",
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        feat_read,
+        "POLYGON ((440720 3751200,440900 3751200,440900 3751020,440720 3751020,440720 3751200),(440780 3751140,440780 3751080,440840 3751080,440840 3751140,440780 3751140))",
     )
 
     feat_read.Destroy()
@@ -157,13 +154,11 @@ def test_gdal_polygonize_2(script_path):
         103,
     ]
 
-    tr = ogrtest.check_features_against_list(lyr, "DN", expect)
+    ogrtest.check_features_against_list(lyr, "DN", expect)
 
     ds = None
 
     gdal.Unlink(outfilename)
-
-    assert tr
 
 
 @pytest.mark.require_driver("GPKG")

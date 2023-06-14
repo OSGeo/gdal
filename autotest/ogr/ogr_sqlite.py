@@ -235,7 +235,7 @@ def test_ogr_sqlite_3():
     expect = [168, 169, 166, 158, 165]
 
     with ogrtest.attribute_filter(gdaltest.sl_lyr, "eas_id < 170"):
-        assert ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", expect)
 
         assert gdaltest.sl_lyr.GetFeatureCount() == 5
 
@@ -245,11 +245,8 @@ def test_ogr_sqlite_3():
 
         assert read_feat is not None, "Did not get as many features as expected."
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.001
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.001
         )
 
         for fld in range(3):
@@ -358,7 +355,7 @@ def test_ogr_sqlite_4():
 
         assert feat_read is not None, "Did not get as many features as expected."
 
-        assert ogrtest.check_feature_geometry(feat_read, geom) == 0
+        ogrtest.check_feature_geometry(feat_read, geom)
 
 
 ###############################################################################
@@ -378,7 +375,7 @@ def test_ogr_sqlite_5():
 
     assert sql_lyr.GetFeatureCount() == 11
 
-    assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+    ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
@@ -396,16 +393,13 @@ def test_ogr_sqlite_6():
         "select * from tpoly where prfedea = '2'"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
+        ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
 
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        assert (
-            ogrtest.check_feature_geometry(
-                feat_read,
-                "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            feat_read,
+            "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
         )
 
 
@@ -424,7 +418,7 @@ def test_ogr_sqlite_7():
 
         assert gdaltest.sl_lyr.GetFeatureCount() == 1
 
-        assert ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", [158])
+        ogrtest.check_features_against_list(gdaltest.sl_lyr, "eas_id", [158])
 
         with ogrtest.attribute_filter(gdaltest.sl_lyr, "eas_id = 158"):
             assert gdaltest.sl_lyr.GetFeatureCount() == 1
@@ -591,7 +585,7 @@ def test_ogr_sqlite_11():
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName("geomwkb")
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001) == 0
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)
 
     gdaltest.sl_lyr.ResetReading()
 
@@ -625,7 +619,7 @@ def test_ogr_sqlite_12():
     gdaltest.sl_lyr = gdaltest.sl_ds.GetLayerByName("geomwkt")
 
     feat_read = gdaltest.sl_lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001) == 0
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)
     feat_read = None
 
     gdaltest.sl_lyr.ResetReading()
@@ -633,11 +627,11 @@ def test_ogr_sqlite_12():
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("select * from geomwkt")
 
     feat_read = sql_lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001) == 0
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)
     feat_read = None
 
     feat_read = sql_lyr.GetFeature(0)
-    assert ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001) == 0
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)
     feat_read = None
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
@@ -800,17 +794,17 @@ def test_ogr_sqlite_15():
 
     for geom in geoms:
         feat_read = gdaltest.sl_lyr.GetNextFeature()
-        assert ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001) == 0
+        ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)
 
     gdaltest.sl_lyr.ResetReading()
 
     sql_lyr = gdaltest.sl_ds.ExecuteSQL("select * from geomspatialite")
 
     feat_read = sql_lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat_read, geoms[0], max_error=0.001) == 0
+    ogrtest.check_feature_geometry(feat_read, geoms[0], max_error=0.001)
 
     feat_read = sql_lyr.GetFeature(0)
-    assert ogrtest.check_feature_geometry(feat_read, geoms[0], max_error=0.001) == 0
+    ogrtest.check_feature_geometry(feat_read, geoms[0], max_error=0.001)
 
     gdaltest.sl_ds.ReleaseResultSet(sql_lyr)
 
@@ -960,7 +954,7 @@ def test_ogr_sqlite_17(require_spatialite):
     lyr = ds.GetLayerByName("geomspatialite")
 
     feat_read = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001) == 0
+    ogrtest.check_feature_geometry(feat_read, geom, max_error=0.001)
 
     srs = lyr.GetSpatialRef()
     wkt = srs.ExportToWkt()
@@ -1162,7 +1156,7 @@ def test_ogr_sqlite_23():
     assert feat.GetFieldAsInteger("EAS_ID") == 168, "missing or wrong eas_id"
 
     wkt = "POLYGON ((479819.84375 4765180.5,479690.1875 4765259.5,479647.0 4765369.5,479730.375 4765400.5,480039.03125 4765539.5,480035.34375 4765558.5,480159.78125 4765610.5,480202.28125 4765482.0,480365.0 4765015.5,480389.6875 4764950.0,480133.96875 4764856.5,480080.28125 4764979.5,480082.96875 4765049.5,480088.8125 4765139.5,480059.90625 4765239.5,480019.71875 4765319.5,479980.21875 4765409.5,479909.875 4765370.0,479859.875 4765270.0,479819.84375 4765180.5))"
-    assert ogrtest.check_feature_geometry(feat, wkt, max_error=0.00000001) == 0
+    ogrtest.check_feature_geometry(feat, wkt, max_error=0.00000001)
 
     fd = shp_layer.GetLayerDefn()
     fld = fd.GetFieldDefn(0)  # area
@@ -1650,7 +1644,7 @@ def test_ogr_spatialite_3(require_spatialite):
 
         lyr.SetSpatialFilterRect(-400, 22, -120, 400)
 
-        assert ogrtest.check_features_against_list(lyr, "FID", [0, 4, 8])
+        ogrtest.check_features_against_list(lyr, "FID", [0, 4, 8])
 
 
 ###############################################################################

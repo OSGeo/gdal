@@ -57,7 +57,7 @@ def test_ogr_dgn_2():
 
     assert feat.GetField("Text") == "Demo Text", "feature 1: expected text"
 
-    assert not ogrtest.check_feature_geometry(feat, "POINT (0.73650000 4.21980000)")
+    ogrtest.check_feature_geometry(feat, "POINT (0.73650000 4.21980000)")
 
     assert (
         feat.GetStyleString() == 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)'
@@ -123,7 +123,7 @@ def test_ogr_dgn_4():
 
     wkt = "POLYGON ((4.53550000 3.31700000,4.38320000 2.65170000,4.94410000 2.52350000,4.83200000 3.33310000,4.53550000 3.31700000))"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
 
     assert (
         feat.GetStyleString() == 'BRUSH(fc:#b40000,id:"ogr-brush-0")'
@@ -140,7 +140,7 @@ def test_ogr_dgn_5():
     dgn_lyr = dgn_ds.GetLayer(0)
 
     with ogrtest.attribute_filter(dgn_lyr, "Type = 15 and Level = 2"):
-        assert ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
+        ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
 
 
 ###############################################################################
@@ -154,7 +154,7 @@ def test_ogr_dgn_6():
 
     with ogrtest.spatial_filter(dgn_lyr, "LINESTRING(1.0 8.55, 2.5 6.86)"):
 
-        assert ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
+        ogrtest.check_features_against_list(dgn_lyr, "Type", [15])
 
 
 ###############################################################################
@@ -229,7 +229,7 @@ def test_ogr_dgn_8():
 
     assert feat.GetField("Text") == "Demo Text", "feature 1: expected text"
 
-    assert not ogrtest.check_feature_geometry(feat, "POINT (0.73650000 4.21980000)")
+    ogrtest.check_feature_geometry(feat, "POINT (0.73650000 4.21980000)")
 
     assert (
         feat.GetStyleString() == 'LABEL(t:"Demo Text",c:#ffffff,s:1.000g,f:ENGINEERING)'
@@ -272,7 +272,7 @@ def test_ogr_dgn_8():
 
     wkt = "POLYGON ((4.53550000 3.31700000,4.38320000 2.65170000,4.94410000 2.52350000,4.83200000 3.33310000,4.53550000 3.31700000))"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
 
     # should be: 'BRUSH(fc:#b40000,id:"ogr-brush-0")'
     assert feat.GetStyleString() == 'PEN(id:"ogr-pen-0",c:#b40000)', (
@@ -296,4 +296,4 @@ def test_ogr_dgn_online_1():
     feat = lyr.GetFeature(35)
     wkt = "LINESTRING (82.9999500717185 23.2084166997284,83.0007450788903 23.2084495986816,83.00081490524 23.2068095339824,82.9999503769036 23.2067737968078)"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
