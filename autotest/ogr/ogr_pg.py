@@ -334,12 +334,10 @@ def test_ogr_pg_3():
 
     expect = [168, 169, 166, 158, 165]
 
-    gdaltest.pg_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
+    with ogrtest.attribute_filter(gdaltest.pg_lyr, "eas_id < 170"):
+        assert ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
 
-    assert gdaltest.pg_lyr.GetFeatureCount() == 5
-
-    gdaltest.pg_lyr.SetAttributeFilter(None)
+        assert gdaltest.pg_lyr.GetFeatureCount() == 5
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
@@ -360,8 +358,6 @@ def test_ogr_pg_3():
         orig_feat.Destroy()
 
     gdaltest.poly_feat = None
-
-    assert tr
 
 
 ###############################################################################
@@ -419,17 +415,13 @@ def test_ogr_pg_5():
 
     expect = [None, 179, 173, 172, 171, 170, 169, 168, 166, 165, 158]
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL(
+    with gdaltest.pg_ds.ExecuteSQL(
         "select distinct eas_id from tpoly order by eas_id desc"
-    )
+    ) as sql_lyr:
 
-    assert sql_lyr.GetFeatureCount() == 11
+        assert sql_lyr.GetFeatureCount() == 11
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
-
-    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -441,37 +433,34 @@ def test_ogr_pg_6():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    sql_lyr = gdaltest.pg_ds.ExecuteSQL("select * from tpoly where prfedea = '2'")
+    with gdaltest.pg_ds.ExecuteSQL(
+        "select * from tpoly where prfedea = '2'"
+    ) as sql_lyr:
 
-    tr = ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
-    if tr:
+        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
+
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
         geom = feat_read.GetGeometryRef()
         geom = ogr.ForceTo(geom, ogr.wkbMultiLineString)
-        if (
+
+        assert (
             ogrtest.check_feature_geometry(
                 geom,
                 "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
             )
-            != 0
-        ):
-            tr = 0
+            == 0
+        )
         feat_read.Destroy()
 
-    sql_lyr.ResetReading()
+        sql_lyr.ResetReading()
 
-    geom = ogr.CreateGeometryFromWkt("LINESTRING(-10 -10,0 0)")
-    sql_lyr.SetSpatialFilter(geom)
-    geom.Destroy()
+        with ogrtest.spatial_filter(sql_lyr, "LINESTRING(-10 -10,0 0)"):
+            assert sql_lyr.GetFeatureCount() == 0
 
-    assert sql_lyr.GetFeatureCount() == 0
-
-    assert sql_lyr.GetNextFeature() is None, "GetNextFeature() did not return None"
-
-    gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+            assert (
+                sql_lyr.GetNextFeature() is None
+            ), "GetNextFeature() did not return None"
 
 
 ###############################################################################
@@ -485,23 +474,17 @@ def test_ogr_pg_7():
 
     gdaltest.pg_lyr.SetAttributeFilter(None)
 
-    geom = ogr.CreateGeometryFromWkt("LINESTRING(479505 4763195,480526 4762819)")
-    gdaltest.pg_lyr.SetSpatialFilter(geom)
-    geom.Destroy()
+    with ogrtest.spatial_filter(
+        gdaltest.pg_lyr, "LINESTRING(479505 4763195,480526 4762819)"
+    ):
 
-    assert gdaltest.pg_lyr.GetFeatureCount() == 1
+        assert gdaltest.pg_lyr.GetFeatureCount() == 1
 
-    tr = ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", [158])
+        assert ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", [158])
 
-    gdaltest.pg_lyr.SetAttributeFilter("eas_id = 158")
+        with ogrtest.attribute_filter(gdaltest.pg_lyr, "eas_id = 158"):
 
-    assert gdaltest.pg_lyr.GetFeatureCount() == 1
-
-    gdaltest.pg_lyr.SetAttributeFilter(None)
-
-    gdaltest.pg_lyr.SetSpatialFilter(None)
-
-    assert tr
+            assert gdaltest.pg_lyr.GetFeatureCount() == 1
 
 
 ###############################################################################
@@ -914,11 +897,8 @@ def test_ogr_pg_15():
     for ident in range(1000):
         query = query + (" or eas_id = %d" % (ident + 1000))
 
-    gdaltest.pg_lyr.SetAttributeFilter(query)
-    tr = ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
-    gdaltest.pg_lyr.SetAttributeFilter(None)
-
-    assert tr
+    with ogrtest.attribute_filter(gdaltest.pg_lyr, query):
+        assert ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -939,13 +919,9 @@ def test_ogr_pg_16():
 
     statement = "select eas_id from tpoly where " + query
 
-    lyr = gdaltest.pg_ds.ExecuteSQL(statement)
+    with gdaltest.pg_ds.ExecuteSQL(statement) as lyr:
 
-    tr = ogrtest.check_features_against_list(lyr, "eas_id", expect)
-
-    gdaltest.pg_ds.ReleaseResultSet(lyr)
-
-    assert tr
+        assert ogrtest.check_features_against_list(lyr, "eas_id", expect)
 
 
 ###############################################################################

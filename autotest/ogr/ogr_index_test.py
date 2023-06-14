@@ -103,16 +103,12 @@ def test_ogr_index_can_join_without_index():
     with create_index_p_test_file(), create_join_t_test_file():
         p_ds = ogr.OpenShared("index_p.mif", update=0)
 
-        sql_lyr = p_ds.ExecuteSQL(
+        with p_ds.ExecuteSQL(
             "SELECT * FROM index_p p "
             + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY '
-        )
+        ) as sql_lyr:
 
-        tr = ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
-
-        p_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+            assert ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
 
 
 ###############################################################################
@@ -185,16 +181,12 @@ def test_ogr_index_indexed_join_works():
 
     with create_index_p_test_file(), create_join_t_test_file(create_index=True):
         p_ds = ogr.OpenShared("index_p.mif", update=0)
-        sql_lyr = p_ds.ExecuteSQL(
+        with p_ds.ExecuteSQL(
             "SELECT * FROM index_p p "
             + 'LEFT JOIN "join_t.dbf".join_t j ON p.PKEY = j.SKEY '
-        )
+        ) as sql_lyr:
 
-        tr = ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
-
-        p_ds.ReleaseResultSet(sql_lyr)
-
-    assert tr
+            assert ogrtest.check_features_against_list(sql_lyr, "VALUE", expect)
 
 
 ###############################################################################

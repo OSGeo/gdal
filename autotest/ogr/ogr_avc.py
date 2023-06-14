@@ -48,8 +48,7 @@ def check_content(ds):
     lyr = ds.GetLayerByName("ARC")
     expect = ["1", "2", "3", "4", "5", "6", "7"]
 
-    tr = ogrtest.check_features_against_list(lyr, "UserID", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "UserID", expect)
 
     lyr.ResetReading()
 

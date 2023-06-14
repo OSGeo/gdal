@@ -77,8 +77,7 @@ def test_ogr_vrt_2():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
@@ -117,8 +116,7 @@ def test_ogr_vrt_3():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
@@ -156,8 +154,7 @@ def test_ogr_vrt_4():
 
     expect = ["Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
@@ -183,8 +180,7 @@ def test_ogr_vrt_5():
 
     expect = ["First"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
@@ -228,8 +224,7 @@ def test_ogr_vrt_7():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
@@ -268,8 +263,7 @@ def test_ogr_vrt_8():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 

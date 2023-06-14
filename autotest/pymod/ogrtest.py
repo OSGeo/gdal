@@ -24,6 +24,7 @@
 # Boston, MA 02111-1307, USA.
 ###############################################################################
 
+import contextlib
 import sys
 
 import pytest
@@ -355,3 +356,41 @@ def have_sfcgal():
             sfcgal_flag = pnt1.Distance3D(pnt2) >= 0
 
     return sfcgal_flag
+
+
+###############################################################################
+# Temporarily set an attribute filter
+
+
+@contextlib.contextmanager
+def attribute_filter(lyr, filter_txt):
+    lyr.SetAttributeFilter(filter_txt)
+    try:
+        yield
+    finally:
+        lyr.SetAttributeFilter(None)
+
+
+###############################################################################
+# Temporarily set a spatial filter
+# Single argument is parsed as WKT or assumed to be an OGRGeometry
+# Four arguments are interpreted as bounding rectangle
+
+
+@contextlib.contextmanager
+def spatial_filter(lyr, *args):
+
+    if len(args) == 1:
+        if type(args[0]) is str:
+            geom = ogr.CreateGeometryFromWkt(args[0])
+            lyr.SetSpatialFilter(geom)
+        else:
+            lyr.SetSpatialFilter(args[0])
+    elif len(args) == 4:
+        lyr.SetSpatialFilterRect(*args)
+    else:
+        raise Exception("Unknown spatial filter type")
+    try:
+        yield
+    finally:
+        lyr.SetSpatialFilter(None)

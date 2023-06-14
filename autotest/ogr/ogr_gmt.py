@@ -94,9 +94,8 @@ def test_ogr_gmt_2():
 
     expect = [168, 169, 166, 158, 165]
 
-    gmt_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(gmt_lyr, "eas_id", expect)
-    gmt_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gmt_lyr, "eas_id < 170"):
+        assert ogrtest.check_features_against_list(gmt_lyr, "eas_id", expect)
 
     for i in range(len(poly_feat)):
         orig_feat = poly_feat[i]
@@ -113,8 +112,6 @@ def test_ogr_gmt_2():
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), (
                 "Attribute %d does not match" % fld
             )
-
-    assert tr
 
 
 ###############################################################################

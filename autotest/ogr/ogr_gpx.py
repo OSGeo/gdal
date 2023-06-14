@@ -70,64 +70,55 @@ def test_ogr_gpx_1():
     expect = [2, None]
 
     with gdaltest.error_handler():
-        tr = ogrtest.check_features_against_list(lyr, "ele", expect)
-    assert tr
+        assert ogrtest.check_features_against_list(lyr, "ele", expect)
 
     lyr.ResetReading()
 
     expect = ["waypoint name", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "name", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "name", expect)
 
     lyr.ResetReading()
 
     expect = ["href", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "link1_href", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "link1_href", expect)
 
     lyr.ResetReading()
 
     expect = ["text", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "link1_text", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "link1_text", expect)
 
     lyr.ResetReading()
 
     expect = ["type", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "link1_type", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "link1_type", expect)
 
     lyr.ResetReading()
 
     expect = ["href2", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "link2_href", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "link2_href", expect)
 
     lyr.ResetReading()
 
     expect = ["text2", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "link2_text", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "link2_text", expect)
 
     lyr.ResetReading()
 
     expect = ["type2", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "link2_type", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "link2_type", expect)
 
     lyr.ResetReading()
 
     expect = ["2007/11/25 17:58:00+01", None]
 
-    tr = ogrtest.check_features_against_list(lyr, "time", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "time", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -172,8 +163,7 @@ def test_ogr_gpx_3():
 
     expect = ["route point name", None, None]
 
-    tr = ogrtest.check_features_against_list(lyr, "name", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "name", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -220,8 +210,7 @@ def test_ogr_gpx_5():
 
     expect = ["track point name", None, None, None]
 
-    tr = ogrtest.check_features_against_list(lyr, "name", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(lyr, "name", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -340,22 +329,19 @@ def test_ogr_gpx_7():
 
     expect = ["PID1", "PID2"]
 
-    tr = ogrtest.check_features_against_list(gpx_lyr, "ogr_Primary_ID", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(gpx_lyr, "ogr_Primary_ID", expect)
 
     gpx_lyr.ResetReading()
 
     expect = ["SID1", "SID2"]
 
-    tr = ogrtest.check_features_against_list(gpx_lyr, "ogr_Secondary_ID", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(gpx_lyr, "ogr_Secondary_ID", expect)
 
     gpx_lyr.ResetReading()
 
     expect = ["TID1", None]
 
-    tr = ogrtest.check_features_against_list(gpx_lyr, "ogr_Third_ID", expect)
-    assert tr
+    assert ogrtest.check_features_against_list(gpx_lyr, "ogr_Third_ID", expect)
 
 
 ###############################################################################
