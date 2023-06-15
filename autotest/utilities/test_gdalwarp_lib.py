@@ -120,9 +120,7 @@ def test_gdalwarp_lib_5():
 
     assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
-        ds.GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(ds.GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9)
 
     dstDS = None
 
@@ -138,11 +136,11 @@ def test_gdalwarp_lib_6():
 
     assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         dstDS.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     dstDS = None
 
@@ -158,9 +156,7 @@ def test_gdalwarp_lib_7():
     assert dstDS is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    assert gdaltest.geotransform_equals(
-        expected_gt, dstDS.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, dstDS.GetGeoTransform(), 1e-9)
 
     dstDS = None
 
@@ -176,9 +172,7 @@ def test_gdalwarp_lib_8():
     assert dstDS is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    assert gdaltest.geotransform_equals(
-        expected_gt, dstDS.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, dstDS.GetGeoTransform(), 1e-9)
 
     dstDS = None
 
@@ -196,11 +190,11 @@ def test_gdalwarp_lib_9():
         outputBounds=[440720.000, 3750120.000, 441920.000, 3751320.000],
     )
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -545,7 +539,7 @@ def test_gdalwarp_lib_32():
 
     expected_gt = (440700.0, 100.0, 0.0, 3751300.0, 0.0, -50.0)
     got_gt = ds.GetGeoTransform()
-    assert gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, got_gt, 1e-9)
 
     assert (
         ds.RasterXSize == 12 and ds.RasterYSize == 24

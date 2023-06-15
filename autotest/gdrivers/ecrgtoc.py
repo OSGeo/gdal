@@ -93,10 +93,7 @@ def test_ecrgtoc_1():
         -0.00044985604606525913,
     ]
     gt = ds.GetGeoTransform()
-    for i in range(6):
-        if gt[i] != pytest.approx(expected_gt[i], abs=1e-10):
-            gdaltest.post_reason("did not get expected geotransform")
-            print(gt)
+    gdaltest.check_geotransform(gt, expected_gt, 1e-10)
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS 84") != -1, "did not get expected SRS"
@@ -302,10 +299,7 @@ def test_ecrgtoc_4():
         -0.00044985604606525913,
     )
     gt = ds.GetGeoTransform()
-    for i in range(6):
-        assert gt[i] == pytest.approx(
-            expected_gt[i], abs=1e-10
-        ), "did not get expected geotransform"
+    gdaltest.check_geotransform(gt, expected_gt, 1e-10)
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS 84") != -1, "did not get expected SRS"
@@ -368,10 +362,7 @@ def test_ecrgtoc_online_1():
         -0.00044985604606525913,
     )
     gt = ds.GetGeoTransform()
-    for i in range(6):
-        if gt[i] != pytest.approx(expected_gt[i], abs=1e-10):
-            gdaltest.post_reason("did not get expected geotransform")
-            print(gt)
+    gdaltest.check_geotransform(gt, expected_gt, 1e-10)
 
     wkt = ds.GetProjectionRef()
     assert wkt.find("WGS 84") != -1, "did not get expected SRS"

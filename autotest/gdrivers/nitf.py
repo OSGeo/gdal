@@ -6023,15 +6023,12 @@ def test_nitf_online_18():
             0.0,
             -724.73626818537434,
         )
-        assert gdaltest.geotransform_equals(
-            gt, expected_gt, 1.0
-        ), "did not get expected geotransform."
+        gdaltest.check_geotransform(gt, expected_gt, 1.0)
 
     # If we do not have a functioning coordinate transformer.
     else:
-        assert prj == "" and gdaltest.geotransform_equals(
-            gt, (0, 1, 0, 0, 0, 1), 0.00000001
-        ), "did not get expected empty gt/projection"
+        assert prj == ""
+        gdaltest.check_geotransform(gt, (0, 1, 0, 0, 0, 1), 0.00000001)
 
         prj = ds.GetGCPProjection()
         assert prj[:6] == "GEOGCS", "did not get expected geographic srs"

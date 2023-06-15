@@ -1119,15 +1119,9 @@ def check_rpcs_equal(md1, md2):
 #
 
 
-def geotransform_equals(gt1, gt2, gt_epsilon):
-    for i in range(6):
-        if gt1[i] != pytest.approx(gt2[i], abs=gt_epsilon):
-            print("")
-            print("gt1 = ", gt1)
-            print("gt2 = ", gt2)
-            post_reason("Geotransform differs.")
-            return False
-    return True
+def check_geotransform(gt1, gt2, gt_epsilon):
+    __tracebackhide__ = True
+    assert gt1 == pytest.approx(gt2, abs=gt_epsilon), "Geotransform differs."
 
 
 ###############################################################################
