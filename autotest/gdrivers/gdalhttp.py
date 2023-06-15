@@ -122,8 +122,7 @@ def test_http_3():
 
 def test_http_4():
     # Too unreliable
-    if gdaltest.skip_on_travis():
-        pytest.skip()
+    gdaltest.skip_on_travis()
 
     url = "ftp://download.osgeo.org/gdal/data/gtiff/utm.tif"
     ds = gdal.Open("/vsicurl/" + url)

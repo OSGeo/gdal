@@ -799,8 +799,7 @@ def test_ogr_ngw_test_ogrsf():
     if gdaltest.ngw_ds is None:
         pytest.skip()
 
-    if gdaltest.skip_on_travis():
-        pytest.skip("skip on travis")
+    gdaltest.skip_on_travis()
 
     url = "NGW:" + gdaltest.ngw_test_server + "/resource/" + gdaltest.group_id
 

@@ -521,8 +521,7 @@ def wms_10():
 # Permanently down
 def wms_11():
 
-    if gdaltest.skip_on_travis():
-        pytest.skip()
+    gdaltest.skip_on_travis()
 
     srv = "http://onearth.jpl.nasa.gov/wms.cgi"
     if gdaltest.gdalurlopen(srv) is None:

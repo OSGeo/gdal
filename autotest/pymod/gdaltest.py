@@ -1431,7 +1431,7 @@ def reregister_all_jpeg2000_drivers():
 
 def filesystem_supports_sparse_files(path):
 
-    if skip_on_travis():
+    if gdal.GetConfigOption("TRAVIS", None):
         return False
 
     try:
@@ -1567,11 +1567,10 @@ def support_symlink():
 
 
 def skip_on_travis():
+    __tracebackhide__ = True
     val = gdal.GetConfigOption("TRAVIS", None)
     if val is not None:
-        post_reason("Test skipped on Travis")
-        return True
-    return False
+        pytest.skip("Test skipped on Travis")
 
 
 ###############################################################################
