@@ -1058,12 +1058,12 @@ def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
     got_srs.ImportFromWkt(got_wkt)
 
     if got_srs.IsSame(expected_srs):
-        return 1
+        return True
     if verbose:
         print("Expected:\n%s" % expected_wkt)
         print("Got:     \n%s" % got_wkt)
-        post_reason("SRS differs from expected.")
-    return 0
+        print("SRS differs from expected.")
+    return False
 
 
 ###############################################################################
