@@ -161,9 +161,7 @@ def test_ogr_mssqlspatial_3():
     expect = [168, 169, 166, 158, 165]
 
     with ogrtest.attribute_filter(gdaltest.mssqlspatial_lyr, "eas_id < 170"):
-        assert ogrtest.check_features_against_list(
-            gdaltest.mssqlspatial_lyr, "eas_id", expect
-        )
+        ogrtest.check_features_against_list(gdaltest.mssqlspatial_lyr, "eas_id", expect)
 
         assert gdaltest.mssqlspatial_lyr.GetFeatureCount() == 5
 
@@ -173,11 +171,8 @@ def test_ogr_mssqlspatial_3():
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mssqlspatial_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.001
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.001
         )
 
         for fld in range(3):
@@ -250,12 +245,8 @@ def test_ogr_mssqlspatial_4():
 
         gdaltest.mssqlspatial_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.mssqlspatial_lyr.GetNextFeature()
-        geom_read = feat_read.GetGeometryRef()
 
-        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
-            print(item)
-            print(wkt)
-            pytest.fail(geom_read)
+        ogrtest.check_feature_geometry(feat_read, geom)
 
         feat_read.Destroy()
 

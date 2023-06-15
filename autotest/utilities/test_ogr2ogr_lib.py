@@ -538,14 +538,14 @@ def test_ogr2ogr_axis_mapping_swap():
 
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    ret = ogrtest.check_feature_geometry(feat, "POINT (2 49)")
-    ds = None
+    try:
+        ogrtest.check_feature_geometry(feat, "POINT (2 49)")
+    finally:
+        ds = None
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-        "/vsimem/test_ogr2ogr_axis_mapping_swap.shp"
-    )
-
-    assert ret == 0
+        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+            "/vsimem/test_ogr2ogr_axis_mapping_swap.shp"
+        )
 
 
 ###############################################################################
@@ -565,12 +565,9 @@ def test_ogr2ogr_lib_ct():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     # f.DumpReadable()
-    assert (
-        ogrtest.check_feature_geometry(
-            f,
-            "POLYGON ((-479819.84375 4765180.5,-479690.1875 4765259.5,-479647.0 4765369.5,-479730.375 4765400.5,-480039.03125 4765539.5,-480035.34375 4765558.5,-480159.78125 4765610.5,-480202.28125 4765482.0,-480365.0 4765015.5,-480389.6875 4764950.0,-480133.96875 4764856.5,-480080.28125 4764979.5,-480082.96875 4765049.5,-480088.8125 4765139.5,-480059.90625 4765239.5,-480019.71875 4765319.5,-479980.21875 4765409.5,-479909.875 4765370.0,-479859.875 4765270.0,-479819.84375 4765180.5))",
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        f,
+        "POLYGON ((-479819.84375 4765180.5,-479690.1875 4765259.5,-479647.0 4765369.5,-479730.375 4765400.5,-480039.03125 4765539.5,-480035.34375 4765558.5,-480159.78125 4765610.5,-480202.28125 4765482.0,-480365.0 4765015.5,-480389.6875 4764950.0,-480133.96875 4764856.5,-480080.28125 4764979.5,-480082.96875 4765049.5,-480088.8125 4765139.5,-480059.90625 4765239.5,-480019.71875 4765319.5,-479980.21875 4765409.5,-479909.875 4765370.0,-479859.875 4765270.0,-479819.84375 4765180.5))",
     )
 
 
@@ -590,12 +587,9 @@ def test_ogr2ogr_lib_ct_no_srs():
     assert lyr.GetSpatialRef().GetAuthorityCode(None) == "27700"
     f = lyr.GetNextFeature()
     # f.DumpReadable()
-    assert (
-        ogrtest.check_feature_geometry(
-            f,
-            "POLYGON ((-479819.84375 4765180.5,-479690.1875 4765259.5,-479647.0 4765369.5,-479730.375 4765400.5,-480039.03125 4765539.5,-480035.34375 4765558.5,-480159.78125 4765610.5,-480202.28125 4765482.0,-480365.0 4765015.5,-480389.6875 4764950.0,-480133.96875 4764856.5,-480080.28125 4764979.5,-480082.96875 4765049.5,-480088.8125 4765139.5,-480059.90625 4765239.5,-480019.71875 4765319.5,-479980.21875 4765409.5,-479909.875 4765370.0,-479859.875 4765270.0,-479819.84375 4765180.5))",
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        f,
+        "POLYGON ((-479819.84375 4765180.5,-479690.1875 4765259.5,-479647.0 4765369.5,-479730.375 4765400.5,-480039.03125 4765539.5,-480035.34375 4765558.5,-480159.78125 4765610.5,-480202.28125 4765482.0,-480365.0 4765015.5,-480389.6875 4764950.0,-480133.96875 4764856.5,-480080.28125 4764979.5,-480082.96875 4765049.5,-480088.8125 4765139.5,-480059.90625 4765239.5,-480019.71875 4765319.5,-479980.21875 4765409.5,-479909.875 4765370.0,-479859.875 4765270.0,-479819.84375 4765180.5))",
     )
 
 
@@ -655,23 +649,14 @@ def test_ogr2ogr_lib_makevalid():
 
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            f, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))"
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        f, "MULTIPOLYGON (((0 0,5 5,10 0,0 0)),((5 5,0 10,10 10,5 5)))"
     )
     f = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(f, "POLYGON ((0 0,0 1,0.5 1.0,1 1,1 0,0 0))")
-        == 0
-    )
+    ogrtest.check_feature_geometry(f, "POLYGON ((0 0,0 1,0.5 1.0,1 1,1 0,0 0))")
     f = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            f, "GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(3 4,5 6))"
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        f, "GEOMETRYCOLLECTION(POINT(1 2),LINESTRING(3 4,5 6))"
     )
 
 
@@ -1247,10 +1232,10 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon():
     assert lyr.GetFeatureCount() == 2
 
     feat = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat, "LINESTRING Z (0 0 0, 5 5 5)") == 0
+    ogrtest.check_feature_geometry(feat, "LINESTRING Z (0 0 0, 5 5 5)")
 
     feat = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat, "LINESTRING Z (5 5 5, 10 0 10)") == 0
+    ogrtest.check_feature_geometry(feat, "LINESTRING Z (5 5 5, 10 0 10)")
 
     ds = None
 

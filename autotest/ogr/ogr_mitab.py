@@ -134,20 +134,15 @@ def test_ogr_mitab_3():
     expect = [168, 169, 166, 158, 165]
 
     with ogrtest.attribute_filter(gdaltest.mapinfo_lyr, "EAS_ID < 170"):
-        assert ogrtest.check_features_against_list(
-            gdaltest.mapinfo_lyr, "EAS_ID", expect
-        )
+        ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, "EAS_ID", expect)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mapinfo_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.02
-            )
-            == 0
-        ), ("Geometry check fail.  i=%d" % i)
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.02, context=f"i={i}"
+        )
 
         for fld in range(3):
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), (
@@ -168,17 +163,14 @@ def test_ogr_mitab_4():
         "select * from tpoly where prfedea = '35043413'"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["35043413"])
+        ogrtest.check_features_against_list(sql_lyr, "prfedea", ["35043413"])
 
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
-        assert (
-            ogrtest.check_feature_geometry(
-                feat_read,
-                "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))",
-                max_error=0.02,
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            feat_read,
+            "POLYGON ((479750.688 4764702.000,479658.594 4764670.000,479640.094 4764721.000,479735.906 4764752.000,479750.688 4764702.000))",
+            max_error=0.02,
         )
 
 
@@ -192,9 +184,7 @@ def test_ogr_mitab_5():
 
     with ogrtest.spatial_filter(gdaltest.mapinfo_lyr, 479505, 4763195, 480526, 4762819):
 
-        assert ogrtest.check_features_against_list(
-            gdaltest.mapinfo_lyr, "eas_id", [158]
-        )
+        ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, "eas_id", [158])
 
 
 ###############################################################################
@@ -281,19 +271,14 @@ def test_ogr_mitab_9():
     expect = [168, 169, 166, 158, 165]
 
     with ogrtest.attribute_filter(gdaltest.mapinfo_lyr, "eas_id < 170"):
-        assert ogrtest.check_features_against_list(
-            gdaltest.mapinfo_lyr, "eas_id", expect
-        )
+        ogrtest.check_features_against_list(gdaltest.mapinfo_lyr, "eas_id", expect)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mapinfo_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.000000001
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.000000001
         )
 
         for fld in range(3):
@@ -320,13 +305,10 @@ def test_ogr_mitab_10():
 
     assert feat.FLOODZONE == 10, "FLOODZONE attribute wrong."
 
-    assert (
-        ogrtest.check_feature_geometry(
-            feat,
-            "POLYGON ((407131.721 155322.441,407134.468 155329.616,407142.741 155327.242,407141.503 155322.467,407140.875 155320.049,407131.721 155322.441))",
-            max_error=0.000000001,
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        feat,
+        "POLYGON ((407131.721 155322.441,407134.468 155329.616,407142.741 155327.242,407141.503 155322.467,407140.875 155320.049,407131.721 155322.441))",
+        max_error=0.000000001,
     )
 
     feat = lyr.GetNextFeature()
@@ -1891,9 +1873,7 @@ def test_ogr_mitab_36():
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     got_g = f.GetGeometryRef()
-    if ogrtest.check_feature_geometry(f, got_g, max_error=0.1):
-        f.DumpReadable()
-        pytest.fail(g)
+    ogrtest.check_feature_geometry(f, got_g, max_error=0.1)
     while True:
         f = lyr.GetNextFeature()
         if f is None:
@@ -1972,13 +1952,9 @@ def test_ogr_mitab_39():
         if f is None:
             assert f_ref is None
             break
-        if (
-            ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0
-            or f.GetStyleString() != f_ref.GetStyleString()
-        ):
-            f.DumpReadable()
-            f_ref.DumpReadable()
-            pytest.fail()
+
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
+        assert f.GetStyleString() == f_ref.GetStyleString()
 
 
 ###############################################################################
@@ -2019,13 +1995,9 @@ def test_ogr_mitab_41():
         if f is None:
             assert f_ref is None
             break
-        if (
-            ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0
-            or f.GetStyleString() != f_ref.GetStyleString()
-        ):
-            f.DumpReadable()
-            f_ref.DumpReadable()
-            pytest.fail()
+
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
+        assert f.GetStyleString() == f_ref.GetStyleString()
 
 
 ###############################################################################
@@ -2046,13 +2018,9 @@ def test_ogr_mitab_42():
         if f is None:
             assert f_ref is None
             break
-        if (
-            ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0
-            or f.GetStyleString() != f_ref.GetStyleString()
-        ):
-            f.DumpReadable()
-            f_ref.DumpReadable()
-            pytest.fail()
+
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
+        assert f.GetStyleString() == f_ref.GetStyleString()
 
 
 ###############################################################################
@@ -2099,13 +2067,9 @@ def test_ogr_mitab_43():
         if f is None:
             assert f_ref is None
             break
-        if (
-            ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0
-            or f.GetStyleString() != f_ref.GetStyleString()
-        ):
-            f.DumpReadable()
-            f_ref.DumpReadable()
-            pytest.fail()
+
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
+        assert f.GetStyleString() == f_ref.GetStyleString()
 
     gdaltest.mapinfo_drv.DeleteDataSource("/vsimem/all_geoms_block_512.tab")
     gdaltest.mapinfo_drv.DeleteDataSource("/vsimem/all_geoms_block_32256.tab")

@@ -27,8 +27,6 @@
 import contextlib
 import sys
 
-import pytest
-
 sys.path.append("../pymod")
 
 import gdaltest
@@ -42,86 +40,76 @@ sfcgal_flag = None
 
 
 def check_features_against_list(layer, field_name, value_list):
+    __tracebackhide__ = True
 
     field_index = layer.GetLayerDefn().GetFieldIndex(field_name)
-    if field_index < 0:
-        gdaltest.post_reason("did not find required field " + field_name)
-        return 0
+    assert field_index >= 0, f"did not find required field {field_name}"
 
     for i, value in enumerate(value_list):
         feat = layer.GetNextFeature()
-        if feat is None:
-            gdaltest.post_reason(
-                "Got only %d features, not the expected %d features."
-                % (i, len(value_list))
-            )
-            return 0
+
+        assert (
+            feat is not None
+        ), f"Got only {i} features, not the expected {len(value_list)} features."
+
+        failure_message = (
+            "field %s feature %d did not match expected value %s, got %s."
+            % (field_name, i, str(value), str(feat.GetField(field_index)))
+        )
 
         if isinstance(value, type("str")):
-            isok = feat.GetFieldAsString(field_index) != value
+            assert feat.GetFieldAsString(field_index) == value, failure_message
         else:
-            isok = feat.GetField(field_index) != value
-        if isok:
-            gdaltest.post_reason(
-                "field %s feature %d did not match expected value %s, got %s."
-                % (field_name, i, str(value), str(feat.GetField(field_index)))
-            )
-            return 0
+            assert feat.GetField(field_index) == value, failure_message
 
     feat = layer.GetNextFeature()
-    if feat is not None:
-        gdaltest.post_reason("got more features than expected")
-        return 0
-
-    return 1
+    assert feat is None, "got more features than expected"
 
 
 ###############################################################################
 
 
 @gdaltest.disable_exceptions()
-def check_feature_geometry(feat, geom, max_error=0.0001):
-    """Returns 0 in case of success"""
+def check_feature_geometry(feat, geom, max_error=0.0001, context=None):
+    __tracebackhide__ = True
     try:
         f_geom = feat.GetGeometryRef()
     except Exception:
         f_geom = feat
 
+    if context:
+        context_msg = f" ({context})"
+    else:
+        context_msg = ""
+
     if geom is not None and isinstance(geom, type("a")):
         geom = ogr.CreateGeometryFromWkt(geom)
-
-    if f_geom is not None and geom is None:
-        gdaltest.post_reason("expected NULL geometry but got one.")
-        return 1
-
-    if f_geom is None and geom is not None:
-        gdaltest.post_reason("expected geometry but got NULL.")
-        return 1
-
-    if f_geom is None and geom is None:
-        return 0
-
-    if f_geom.GetGeometryName() != geom.GetGeometryName():
-        gdaltest.post_reason(
-            'geometry names do not match.  "%s" ! = "%s"'
-            % (f_geom.GetGeometryName(), geom.GetGeometryName())
+        assert geom is not None, (
+            "failed to parse expected geometry as WKT" + context_msg
         )
-        return 1
 
-    if f_geom.GetGeometryType() != geom.GetGeometryType():
-        gdaltest.post_reason("geometry type do not match")
-        return 1
+    if geom is None:
+        assert f_geom is None, "expected NULL geometry but got one" + context_msg
+        return
+    else:
+        assert f_geom is not None, "expected geometry but got NULL" + context_msg
 
-    if f_geom.GetGeometryCount() != geom.GetGeometryCount():
-        gdaltest.post_reason("sub-geometry counts do not match")
-        return 1
+    assert geom.GetGeometryName() == geom.GetGeometryName()
 
-    if f_geom.GetPointCount() != geom.GetPointCount():
-        gdaltest.post_reason("point counts do not match")
-        return 1
+    assert f_geom.GetGeometryType() == geom.GetGeometryType(), (
+        "geometry types do not match" + context_msg
+    )
+
+    assert f_geom.GetGeometryCount() == geom.GetGeometryCount(), (
+        "sub-geometry counts do not match" + context_msg
+    )
+
+    assert f_geom.GetPointCount() == geom.GetPointCount(), (
+        "point counts do not match" + context_msg
+    )
 
     # ST_Equals(a,b) <==> ST_Within(a,b) && ST_Within(b,a)
-    # We can't use OGRGeometry::Equals() because it doesn't not test spatial
+    # We can't use OGRGeometry::Equals() because it doesn't test spatial
     # equality, but structural one
     if (
         have_geos()
@@ -129,16 +117,14 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
         and geom.Within(f_geom)
         and ogr.GT_Flatten(f_geom.GetGeometryType()) == f_geom.GetGeometryType()
     ):
-        return 0
+        return
 
     if f_geom.GetGeometryCount() > 0:
         count = f_geom.GetGeometryCount()
         for i in range(count):
-            result = check_feature_geometry(
+            check_feature_geometry(
                 f_geom.GetGeometryRef(i), geom.GetGeometryRef(i), max_error
             )
-            if result != 0:
-                return result
     else:
         count = f_geom.GetPointCount()
         if ogr.GT_Flatten(f_geom.GetGeometryType()) == ogr.wkbPoint:
@@ -158,47 +144,30 @@ def check_feature_geometry(feat, geom, max_error=0.0001):
             ):
                 m_dist = 0
 
-            if max(x_dist, y_dist, z_dist, m_dist) > max_error:
-                gdaltest.post_reason(
-                    "Error in vertex %d, off by %g."
-                    % (i, max(x_dist, y_dist, z_dist, m_dist))
-                )
-                # print(f_geom.GetX(i))
-                # print(geom.GetX(i))
-                # print(f_geom.GetY(i))
-                # print(geom.GetY(i))
-                # print(f_geom.GetZ(i))
-                # print(geom.GetZ(i))
-                return 1
-
-    return 0
+            assert max(x_dist, y_dist, z_dist, m_dist) <= max_error, (
+                "Error in vertex %d, off by %g." + context_msg
+            ) % (i, max(x_dist, y_dist, z_dist, m_dist))
 
 
 ###############################################################################
 
 
 def check_feature(feat, feat_ref, max_error=0.0001, excluded_fields=None):
-    """Returns 0 in case of success"""
+    __tracebackhide__ = True
 
     for i in range(feat.GetGeomFieldCount()):
-        ret = check_feature_geometry(
+        check_feature_geometry(
             feat.GetGeomFieldRef(i), feat_ref.GetGeomFieldRef(i), max_error=max_error
         )
-        if ret != 0:
-            return ret
 
     for i in range(feat.GetFieldCount()):
         if excluded_fields is not None:
             if feat.GetDefnRef().GetFieldDefn(i).GetName() in excluded_fields:
                 continue
-        if feat.GetField(i) != feat_ref.GetField(i):
-            gdaltest.post_reason(
-                "Field %d, expected val %s, got val %s"
-                % (i, str(feat_ref.GetField(i)), str(feat.GetField(i)))
-            )
-            return 1
 
-    return 0
+        assert feat.GetField(i) == feat_ref.GetField(
+            i
+        ), f"Field {i}, expected {feat.GetField(i)}, got {feat_ref.GetField(i)}"
 
 
 ###############################################################################
@@ -208,17 +177,10 @@ def compare_layers(lyr, lyr_ref, excluded_fields=None):
 
     for f_ref in lyr_ref:
         f = lyr.GetNextFeature()
-        if f is None:
-            f_ref.DumpReadable()
-            pytest.fail()
-        if check_feature(f, f_ref, excluded_fields=excluded_fields) != 0:
-            f.DumpReadable()
-            f_ref.DumpReadable()
-            pytest.fail()
+        assert f is not None, "not enough features"
+        check_feature(f, f_ref, excluded_fields=excluded_fields)
     f = lyr.GetNextFeature()
-    if f is not None:
-        f.DumpReadable()
-        pytest.fail()
+    assert f is None, "more features than expected"
 
 
 ###############################################################################

@@ -115,17 +115,14 @@ def test_ogr_mem_3():
     expect = [168, 169, 166, 158, 165]
 
     with ogrtest.attribute_filter(gdaltest.mem_lyr, "eas_id < 170"):
-        assert ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", expect)
 
     for i in range(len(gdaltest.poly_feat)):
         orig_feat = gdaltest.poly_feat[i]
         read_feat = gdaltest.mem_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.000000001
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.000000001
         )
 
         for fld in range(3):
@@ -165,7 +162,7 @@ def test_ogr_mem_4():
         gdaltest.mem_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.mem_lyr.GetNextFeature()
 
-        assert ogrtest.check_feature_geometry(feat_read, geom) == 0
+        ogrtest.check_feature_geometry(feat_read, geom)
 
 
 ###############################################################################
@@ -180,7 +177,7 @@ def test_ogr_mem_5():
         "select distinct eas_id from tpoly order by eas_id desc"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -193,17 +190,14 @@ def test_ogr_mem_6():
         "select * from tpoly where prfedea = '2'"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
+        ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
 
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                feat_read,
-                "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            feat_read,
+            "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
         )
 
 
@@ -223,7 +217,7 @@ def test_ogr_mem_7():
             ogr.OLCFastSpatialFilter
         ), "OLCFastSpatialFilter capability test should have failed."
 
-        assert ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", [158])
+        ogrtest.check_features_against_list(gdaltest.mem_lyr, "eas_id", [158])
 
 
 ###############################################################################
@@ -258,7 +252,7 @@ def test_ogr_mem_8():
 
     with ogrtest.attribute_filter(gdaltest.mem_lyr, "PRFEDEA IN ( '2', '1' )"):
 
-        assert ogrtest.check_features_against_list(
+        ogrtest.check_features_against_list(
             gdaltest.mem_lyr, "new_string", ["test1", None]
         )
 

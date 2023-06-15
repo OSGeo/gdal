@@ -197,9 +197,7 @@ def test_ogr_mvt_with_extension_fields():
     ds = ogr.Open("data/mvt/with_extension_fields.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, "LINESTRING (2070 2690,2082 2707)") != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, "LINESTRING (2070 2690,2082 2707)")
 
 
 ###############################################################################
@@ -210,25 +208,16 @@ def test_ogr_mvt_mixed():
     ds = ogr.Open("data/mvt/mixed/0/0/0.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "MULTIPOINT ((215246.671651058 6281289.23636264),(332653.947097085 6447616.20991119))",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "MULTIPOINT ((215246.671651058 6281289.23636264),(332653.947097085 6447616.20991119))",
+    )
+
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)",
+    )
 
 
 ###############################################################################
@@ -239,28 +228,18 @@ def test_ogr_mvt_linestring():
     ds = ogr.Open("data/mvt/linestring/0/0/0.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119))",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119))",
+    )
 
     ds = gdal.OpenEx("data/mvt/linestring/0/0/0.pbf", open_options=["METADATA_FILE="])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)",
+    )
 
 
 ###############################################################################
@@ -271,30 +250,20 @@ def test_ogr_mvt_multilinestring():
     ds = ogr.Open("data/mvt/multilinestring/0/0/0.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))",
+    )
 
     ds = gdal.OpenEx(
         "data/mvt/multilinestring/0/0/0.pbf", open_options=["METADATA_FILE="]
     )
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "MULTILINESTRING ((215246.671651058 6281289.23636264,332653.947097085 6447616.20991119),(440277.282922614 6623727.12308023,547900.618748143 6809621.97586978),(665307.894194175 6985732.88903883,772931.230019704 7171627.74182838))",
+    )
 
 
 ###############################################################################
@@ -305,28 +274,18 @@ def test_ogr_mvt_polygon():
     ds = ogr.Open("data/mvt/polygon/0/0/0.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "MULTIPOLYGON (((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119)))",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "MULTIPOLYGON (((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119)))",
+    )
 
     ds = gdal.OpenEx("data/mvt/polygon/0/0/0.pbf", open_options=["METADATA_FILE="])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "POLYGON ((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119))",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "POLYGON ((332653.947097085 6447616.20991119,332653.947097085 6281289.23636264,215246.671651058 6281289.23636264,215246.671651058 6447616.20991119,332653.947097085 6447616.20991119))",
+    )
 
 
 ###############################################################################
@@ -337,25 +296,16 @@ def test_ogr_mvt_point_polygon():
     ds = ogr.Open("data/mvt/point_polygon/0")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f, "MULTIPOINT ((215246.671651058 6281289.23636264))"
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f, "MULTIPOINT ((215246.671651058 6281289.23636264))"
+    )
+
     lyr = ds.GetLayer(1)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "MULTIPOLYGON (((440277.282922614 450061.222543117,440277.282922614 -440277.282922614,0.0 -440277.282922614,0.0 -215246.671651058,215246.671651058 -215246.671651058,215246.671651058 225030.61127156,0.0 225030.61127156,0.0 450061.222543117,440277.282922614 450061.222543117)),((0.0 117407.275446031,0.0 -107623.335825529,-117407.275446031 -107623.335825529,-117407.275446031 117407.275446031,0.0 117407.275446031)),((107623.335825529 58703.6377230138,107623.335825529 -48919.6981025115,48919.6981025115 -48919.6981025115,48919.6981025115 58703.6377230138,107623.335825529 58703.6377230138)))",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "MULTIPOLYGON (((440277.282922614 450061.222543117,440277.282922614 -440277.282922614,0.0 -440277.282922614,0.0 -215246.671651058,215246.671651058 -215246.671651058,215246.671651058 225030.61127156,0.0 225030.61127156,0.0 450061.222543117,440277.282922614 450061.222543117)),((0.0 117407.275446031,0.0 -107623.335825529,-117407.275446031 -107623.335825529,-117407.275446031 117407.275446031,0.0 117407.275446031)),((107623.335825529 58703.6377230138,107623.335825529 -48919.6981025115,48919.6981025115 -48919.6981025115,48919.6981025115 58703.6377230138,107623.335825529 58703.6377230138)))",
+    )
 
 
 ###############################################################################
@@ -372,11 +322,14 @@ def test_ogr_mvt_point_polygon_clip():
     expected_wkt = "MULTIPOLYGON (((0.0 112515.30563578,0 0,-112515.30563578 0.0,-112515.30563578 112515.30563578,0.0 112515.30563578)))"
     expected_wkt2 = "MULTIPOLYGON (((-112515.30563578 112515.30563578,0.0 112515.30563578,0 0,-112515.30563578 0.0,-112515.30563578 112515.30563578)))"
     expected_wkt3 = "MULTIPOLYGON (((0 0,-112515.30563578 0.0,-112515.30563578 112515.30563578,0.0 112515.30563578,0 0)))"
-    assert (
-        ogrtest.check_feature_geometry(f, expected_wkt) == 0
-        or ogrtest.check_feature_geometry(f, expected_wkt2) == 0
-        or ogrtest.check_feature_geometry(f, expected_wkt3) == 0
-    ), f.GetGeometryRef().ExportToWkt()
+
+    try:
+        ogrtest.check_feature_geometry(f, expected_wkt)
+    except AssertionError:
+        try:
+            ogrtest.check_feature_geometry(f, expected_wkt2)
+        except AssertionError:
+            ogrtest.check_feature_geometry(f, expected_wkt3)
 
 
 ###############################################################################
@@ -461,30 +414,22 @@ def test_ogr_mvt_open_variants():
     ds = ogr.Open("MVT:data/mvt/linestring/0/0/0.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, expected_geom) != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, expected_geom)
 
     ds = ogr.Open("MVT:data/mvt/linestring/0")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, expected_geom) != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, expected_geom)
 
     ds = ogr.Open("/vsigzip/data/mvt/linestring/0/0/0.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, expected_geom) != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, expected_geom)
 
     ds = ogr.Open("MVT:/vsigzip/data/mvt/linestring/0/0/0.pbf")
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(f, expected_geom) != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, expected_geom)
 
 
 ###############################################################################
@@ -495,12 +440,7 @@ def test_ogr_mvt_xyz_options():
     ds = gdal.OpenEx("data/mvt/datatypes/0/0/0.pbf", open_options=["X=1", "Y=2", "Z=3"])
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(f, "POINT (-12496536.8802869 8299226.7830913)")
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, "POINT (-12496536.8802869 8299226.7830913)")
 
 
 ###############################################################################
@@ -546,26 +486,16 @@ def test_ogr_mvt_mbtiles():
     ds = ogr.Open("data/mvt/point_polygon.mbtiles")
     lyr = ds.GetLayerByName("point")
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f, "MULTIPOINT ((220138.641461308 6276397.26655239))"
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f, "MULTIPOINT ((220138.641461308 6276397.26655239))"
+    )
 
     lyr.SetSpatialFilterRect(0, 0, 10000000, 10000000)
     lyr.ResetReading()
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f, "MULTIPOINT ((220138.641461308 6276397.26655239))"
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f, "MULTIPOINT ((220138.641461308 6276397.26655239))"
+    )
 
 
 ###############################################################################
@@ -659,15 +589,10 @@ def test_ogr_mvt_x_y_z_filename_scheme():
     ds = ogr.Open(tmpfilename)
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            f,
-            "LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)",
-        )
-        != 0
-    ):
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        f,
+        "LINESTRING (215246.671651058 6281289.23636264,332653.947097085 6447616.20991119)",
+    )
     ds = None
     gdal.Unlink(tmpfilename)
 
@@ -1034,156 +959,87 @@ def test_ogr_mvt_write_one_layer(has_make_valid):
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
-    if (
-        out_f["mvt_id"] != 123
-        or out_f["strfield"] != "foo"
-        or out_f["intfield"] != -1
-        or out_f["int64field"] != 123456789012345
-        or out_f["realfield"] != 1.25
-        or out_f["datefield"] != "2018-02-01"
-        or out_f["datetimefield"] != "2018-02-01T12:34:56"
-        or out_f["boolfield"] is False
-        or ogrtest.check_feature_geometry(
-            out_f, "POINT (498980.920645632 997961.84129126)"
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    assert out_f["mvt_id"] == 123
+    assert out_f["strfield"] == "foo"
+    assert out_f["intfield"] == -1
+    assert out_f["int64field"] == 123456789012345
+    assert out_f["realfield"] == 1.25
+    assert out_f["datefield"] == "2018-02-01"
+    assert out_f["datetimefield"] == "2018-02-01T12:34:56"
+    assert out_f["boolfield"] is True
+    ogrtest.check_feature_geometry(out_f, "POINT (498980.920645632 997961.84129126)")
 
     out_f = out_lyr.GetNextFeature()
-    if (
-        out_f["strfield"] != "foo"
-        or out_f["intfield"] != -1
-        or out_f["int64field"] != 123456789012345
-        or out_f["realfield"] != 1.25
-        or out_f["datefield"] != "2018-02-01"
-        or out_f["datetimefield"] != "2018-02-01T12:34:56"
-        or out_f["boolfield"] is False
-        or ogrtest.check_feature_geometry(
-            out_f,
-            "MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    assert out_f["strfield"] == "foo"
+    assert out_f["intfield"] == -1
+    assert out_f["int64field"] == 123456789012345
+    assert out_f["realfield"] == 1.25
+    assert out_f["datefield"] == "2018-02-01"
+    assert out_f["datetimefield"] == "2018-02-01T12:34:56"
+    assert out_f["boolfield"] is True
+    ogrtest.check_feature_geometry(
+        out_f,
+        "MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))",
+    )
 
     out_f = out_lyr.GetNextFeature()
-    if (
-        out_f["strfield"] != "foobarbazbaw"
-        or out_f["intfield"] != 1
-        or out_f["int64field"] != -123456789012345
-        or out_f["realfield"] != -1.25678
-        or out_f.IsFieldSet("datefield")
-        or out_f.IsFieldSet("datetimefield")
-        or out_f.IsFieldSet("boolfield")
-        or ogrtest.check_feature_geometry(
-            out_f,
-            "POLYGON ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    assert out_f["strfield"] == "foobarbazbaw"
+    assert out_f["intfield"] == 1
+    assert out_f["int64field"] == -123456789012345
+    assert out_f["realfield"] == -1.25678
+    assert not out_f.IsFieldSet("datefield")
+    assert not out_f.IsFieldSet("datetimefield")
+    assert not out_f.IsFieldSet("boolfield")
+    ogrtest.check_feature_geometry(
+        out_f,
+        "POLYGON ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126))",
+    )
 
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOINT ((498980.920645632 997961.84129126),(508764.860266134 1007745.78091176))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f,
+        "MULTIPOINT ((498980.920645632 997961.84129126),(508764.860266134 1007745.78091176))",
+    )
 
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176),(508764.860266134 1007745.78091176,508764.860266134 997961.84129126))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f,
+        "MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176),(508764.860266134 1007745.78091176,508764.860266134 997961.84129126))",
+    )
 
     out_f = out_lyr.GetNextFeature()
-    if (
-        (
-            (not has_make_valid)
-            and ogrtest.check_feature_geometry(
-                out_f,
-                "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126)))",
-            )
-            != 0
-        )
+    if has_make_valid:
         # Below is what we get with MakeValid() available
-        or (
-            # GEOS > 3.8 (not sure which minimum version)
-            has_make_valid
-            and ogrtest.check_feature_geometry(
+        # GEOS > 3.8 (not sure which minimum version)
+        try:
+            ogrtest.check_feature_geometry(
                 out_f,
                 "MULTIPOLYGON (((-508764.860266134 1007745.78091176,-508764.860266134 997961.84129126,-498980.920645632 997961.84129126,-508764.860266134 1007745.78091176)),((508764.860266134 1007745.78091176,498980.920645632 997961.84129126,508764.860266134 997961.84129126,508764.860266134 1007745.78091176)))",
             )
-            != 0
+        except AssertionError:
             # Below result with GEOS 3.8
-            and ogrtest.check_feature_geometry(
+            ogrtest.check_feature_geometry(
                 out_f,
                 "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 997961.84129126,508764.860266134 1007745.78091176,498980.920645632 997961.84129126)),((-508764.860266134 997961.84129126,-498980.920645632 997961.84129126,-508764.860266134 1007745.78091176,-508764.860266134 997961.84129126)))",
             )
-            != 0
+    else:
+        ogrtest.check_feature_geometry(
+            out_f,
+            "MULTIPOLYGON (((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,508764.860266134 997961.84129126,498980.920645632 997961.84129126)),((-498980.920645632 997961.84129126,-508764.860266134 997961.84129126,-508764.860266134 1007745.78091176,-498980.920645632 997961.84129126)))",
         )
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
 
-    out_f = out_lyr.GetNextFeature()
-    if (
-        (
-            out_f.GetGeometryRef().GetGeometryType() == ogr.wkbPoint
-            and ogrtest.check_feature_geometry(
+    for _ in range(2):
+        out_f = out_lyr.GetNextFeature()
+        if out_f.GetGeometryRef().GetGeometryType() == ogr.wkbPoint:
+            ogrtest.check_feature_geometry(
                 out_f, "POINT (498980.920645632 997961.84129126)"
             )
-            != 0
-        )
-        or (
-            out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
-            and ogrtest.check_feature_geometry(
+        else:
+            assert out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
+            ogrtest.check_feature_geometry(
                 out_f,
                 "MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))",
             )
-            != 0
-        )
-        or out_f.GetGeometryRef().GetGeometryType()
-        not in (ogr.wkbPoint, ogr.wkbMultiLineString)
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
-
-    out_f = out_lyr.GetNextFeature()
-    if (
-        (
-            out_f.GetGeometryRef().GetGeometryType() == ogr.wkbPoint
-            and ogrtest.check_feature_geometry(
-                out_f, "POINT (498980.920645632 997961.84129126)"
-            )
-            != 0
-        )
-        or (
-            out_f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
-            and ogrtest.check_feature_geometry(
-                out_f,
-                "MULTILINESTRING ((498980.920645632 997961.84129126,508764.860266134 1007745.78091176,518548.799886636 1017529.72053226))",
-            )
-            != 0
-        )
-        or out_f.GetGeometryRef().GetGeometryType()
-        not in (ogr.wkbPoint, ogr.wkbMultiLineString)
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
 
     out_ds = ogr.Open("/vsimem/outmvt/5")
     assert out_ds is not None
@@ -1349,14 +1205,9 @@ def test_ogr_mvt_write_conf():
     out_lyr = out_ds.GetLayerByName("TheLayer")
     assert out_lyr
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f, "MULTIPOINT (498980.920645632 997961.84129126)"
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f, "MULTIPOINT (498980.920645632 997961.84129126)"
+    )
 
     f = gdal.VSIFOpenL("/vsimem/outmvt/metadata.json", "rb")
     assert f is not None
@@ -1415,14 +1266,9 @@ def test_ogr_mvt_write_mbtiles():
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f, "MULTIPOINT ((499898.164985053 1000102.07808325))"
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f, "MULTIPOINT ((499898.164985053 1000102.07808325))"
+    )
     out_ds = None
 
     gdal.Unlink("/vsimem/out.mbtiles")
@@ -1466,24 +1312,12 @@ def test_ogr_mvt_write_limitations_max_size():
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTILINESTRING ((498980.920645631 1007745.78091176,508764.860266133 1007745.78091176))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f,
+        "MULTILINESTRING ((498980.920645631 1007745.78091176,508764.860266133 1007745.78091176))",
+    )
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f, "POINT (498980.920645631 1007745.78091176)"
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(out_f, "POINT (498980.920645631 1007745.78091176)")
     out_ds = None
 
     gdal.Unlink("/vsimem/out.mbtiles")
@@ -1531,51 +1365,47 @@ def test_ogr_mvt_write_polygon_repaired():
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
+
     # Second expected result is using the HAVE_MAKE_VALID code path with GEOS 3.8
     # Third expected result is using the HAVE_MAKE_VALID code path with GEOS 3.10
-    if (
+
+    try:
         ogrtest.check_feature_geometry(
             out_f,
             "MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)))",
         )
-        != 0
-        and ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((97839.3962050267 498980.920645632,0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632)))",
-        )
-        != 0
-        and ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632,0.0 498980.920645632)))",
-        )
-        != 0
-    ):
-
-        out_f.DumpReadable()
-        pytest.fail()
+    except AssertionError:
+        try:
+            ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((97839.3962050267 498980.920645632,0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632)))",
+            )
+        except AssertionError:
+            ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632,0.0 498980.920645632)))",
+            )
 
     out_f = out_lyr.GetNextFeature()
     # Second expected result is using the HAVE_MAKE_VALID code path
     # Third expected result is using the HAVE_MAKE_VALID code path with GEOS 3.10
-    if (
+    try:
         ogrtest.check_feature_geometry(
             out_f,
             "MULTIPOLYGON (((0 0,0.0 498980.920645632,498980.920645632 498980.920645632,498980.920645632 0.0,0 0)),((997961.84129126 0.0,997961.84129126 997961.84129126,1995923.68258252 997961.84129126,997961.84129126 0.0)))",
         )
-        != 0
-        and ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((997961.84129126 0.0,1995923.68258252 997961.84129126,997961.84129126 997961.84129126,997961.84129126 0.0)),((97839.3962050267 498980.920645632,0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632)))",
-        )
-        != 0
-        and ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((997961.84129126 997961.84129126,997961.84129126 0.0,1995923.68258252 997961.84129126,997961.84129126 997961.84129126)),((0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632,0.0 498980.920645632,0 0)))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    except AssertionError:
+        try:
+            ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((997961.84129126 0.0,1995923.68258252 997961.84129126,997961.84129126 997961.84129126,997961.84129126 0.0)),((97839.3962050267 498980.920645632,0.0 498980.920645632,0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632)))",
+            )
+        except AssertionError:
+            ogrtest.check_feature_geometry(
+                out_f,
+                "MULTIPOLYGON (((997961.84129126 997961.84129126,997961.84129126 0.0,1995923.68258252 997961.84129126,997961.84129126 997961.84129126)),((0 0,498980.920645632 0.0,498980.920645632 498980.920645632,97839.3962050267 498980.920645632,0.0 498980.920645632,0 0)))",
+            )
+
     out_f = out_lyr.GetNextFeature()
     if out_f is not None:
         out_f.DumpReadable()
@@ -1613,27 +1443,18 @@ def test_ogr_mvt_write_conflicting_innner_ring(has_make_valid):
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
-    if (
-        (
-            (not has_make_valid)
-            and ogrtest.check_feature_geometry(
-                out_f,
-                "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))",
-            )
-            != 0
+
+    if has_make_valid:
+        ogrtest.check_feature_geometry(
+            out_f,
+            "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1009886.01770375,-509987.852718695 1000102.07808325,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1000713.57430953,-509070.608379273 1001019.32242267,-509070.608379273 1008357.27713804,-502038.401777037 1001019.32242267)))",
         )
-        # Below is what we get with MakeValid() available
-        or (
-            has_make_valid
-            and ogrtest.check_feature_geometry(
-                out_f,
-                "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1009886.01770375,-509987.852718695 1000102.07808325,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1000713.57430953,-509070.608379273 1001019.32242267,-509070.608379273 1008357.27713804,-502038.401777037 1001019.32242267)))",
-            )
-            != 0
+    else:
+        ogrtest.check_feature_geometry(
+            out_f,
+            "MULTIPOLYGON (((-499898.164985052 1000102.07808325,-509987.852718695 1000102.07808325,-509987.852718695 1009886.01770375,-499898.164985052 1000102.07808325),(-502038.401777037 1001019.32242267,-509070.608379273 1008357.27713804,-509070.608379273 1001019.32242267,-502038.401777037 1001019.32242267)))",
         )
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+
     out_ds = None
 
     gdal.Unlink("/vsimem/out.mbtiles")
@@ -1671,15 +1492,10 @@ def test_ogr_mvt_write_limitations_max_size_polygon():
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f,
-            "MULTIPOLYGON (((498980.920645631 1007745.78091176,508764.860266133 1017529.72053227,508764.860266133 1007745.78091176,498980.920645631 1007745.78091176)))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f,
+        "MULTIPOLYGON (((498980.920645631 1007745.78091176,508764.860266133 1017529.72053227,508764.860266133 1007745.78091176,498980.920645631 1007745.78091176)))",
+    )
     out_ds = None
 
     gdal.Unlink("/vsimem/out.mbtiles")
@@ -1720,15 +1536,10 @@ def test_ogr_mvt_write_limitations_max_features():
     assert out_ds is not None
     out_lyr = out_ds.GetLayerByName("mylayer")
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f,
-            "POLYGON ((499898.164985053 1000102.07808325,509987.852718696 1100081.71108026,509987.852718696 1000102.07808325,499898.164985053 1000102.07808325))",
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f,
+        "POLYGON ((499898.164985053 1000102.07808325,509987.852718696 1100081.71108026,509987.852718696 1000102.07808325,499898.164985053 1000102.07808325))",
+    )
     out_f = out_lyr.GetNextFeature()
     if out_f is not None:
         out_f.DumpReadable()
@@ -1768,14 +1579,9 @@ def test_ogr_mvt_write_custom_tiling_scheme():
     out_lyr = out_ds.GetLayerByName("mylayer")
     assert out_lyr.GetSpatialRef().ExportToWkt().find("3067") >= 0
     out_f = out_lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            out_f, "MULTILINESTRING ((-40160 7944704,21024 8044800))"
-        )
-        != 0
-    ):
-        out_f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        out_f, "MULTILINESTRING ((-40160 7944704,21024 8044800))"
+    )
     out_ds = None
 
     gdal.RmdirRecursive("/vsimem/out")

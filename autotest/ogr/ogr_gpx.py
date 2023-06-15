@@ -70,62 +70,62 @@ def test_ogr_gpx_1():
     expect = [2, None]
 
     with gdaltest.error_handler():
-        assert ogrtest.check_features_against_list(lyr, "ele", expect)
+        ogrtest.check_features_against_list(lyr, "ele", expect)
 
     lyr.ResetReading()
 
     expect = ["waypoint name", None]
 
-    assert ogrtest.check_features_against_list(lyr, "name", expect)
+    ogrtest.check_features_against_list(lyr, "name", expect)
 
     lyr.ResetReading()
 
     expect = ["href", None]
 
-    assert ogrtest.check_features_against_list(lyr, "link1_href", expect)
+    ogrtest.check_features_against_list(lyr, "link1_href", expect)
 
     lyr.ResetReading()
 
     expect = ["text", None]
 
-    assert ogrtest.check_features_against_list(lyr, "link1_text", expect)
+    ogrtest.check_features_against_list(lyr, "link1_text", expect)
 
     lyr.ResetReading()
 
     expect = ["type", None]
 
-    assert ogrtest.check_features_against_list(lyr, "link1_type", expect)
+    ogrtest.check_features_against_list(lyr, "link1_type", expect)
 
     lyr.ResetReading()
 
     expect = ["href2", None]
 
-    assert ogrtest.check_features_against_list(lyr, "link2_href", expect)
+    ogrtest.check_features_against_list(lyr, "link2_href", expect)
 
     lyr.ResetReading()
 
     expect = ["text2", None]
 
-    assert ogrtest.check_features_against_list(lyr, "link2_text", expect)
+    ogrtest.check_features_against_list(lyr, "link2_text", expect)
 
     lyr.ResetReading()
 
     expect = ["type2", None]
 
-    assert ogrtest.check_features_against_list(lyr, "link2_type", expect)
+    ogrtest.check_features_against_list(lyr, "link2_type", expect)
 
     lyr.ResetReading()
 
     expect = ["2007/11/25 17:58:00+01", None]
 
-    assert ogrtest.check_features_against_list(lyr, "time", expect)
+    ogrtest.check_features_against_list(lyr, "time", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat, "POINT (1 0)", max_error=0.0001) == 0
+    ogrtest.check_feature_geometry(feat, "POINT (1 0)", max_error=0.0001)
 
     feat = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat, "POINT (4 3)", max_error=0.0001) == 0
+    ogrtest.check_feature_geometry(feat, "POINT (4 3)", max_error=0.0001)
 
 
 ###############################################################################
@@ -139,17 +139,10 @@ def test_ogr_gpx_2():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "LINESTRING (6 5,9 8,12 11)", max_error=0.0001
-        )
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "LINESTRING (6 5,9 8,12 11)", max_error=0.0001)
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "LINESTRING EMPTY", max_error=0.0001) == 0
-    )
+    ogrtest.check_feature_geometry(feat, "LINESTRING EMPTY", max_error=0.0001)
 
 
 ###############################################################################
@@ -163,11 +156,11 @@ def test_ogr_gpx_3():
 
     expect = ["route point name", None, None]
 
-    assert ogrtest.check_features_against_list(lyr, "name", expect)
+    ogrtest.check_features_against_list(lyr, "name", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat, "POINT (6 5)", max_error=0.0001) == 0
+    ogrtest.check_feature_geometry(feat, "POINT (6 5)", max_error=0.0001)
 
 
 ###############################################################################
@@ -181,18 +174,12 @@ def test_ogr_gpx_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "MULTILINESTRING ((15 14,18 17),(21 20,24 23))", max_error=0.0001
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        feat, "MULTILINESTRING ((15 14,18 17),(21 20,24 23))", max_error=0.0001
     )
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "MULTILINESTRING EMPTY", max_error=0.0001)
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "MULTILINESTRING EMPTY", max_error=0.0001)
 
     feat = lyr.GetNextFeature()
     f_geom = feat.GetGeometryRef()
@@ -210,11 +197,11 @@ def test_ogr_gpx_5():
 
     expect = ["track point name", None, None, None]
 
-    assert ogrtest.check_features_against_list(lyr, "name", expect)
+    ogrtest.check_features_against_list(lyr, "name", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    assert ogrtest.check_feature_geometry(feat, "POINT (15 14)", max_error=0.0001) == 0
+    ogrtest.check_feature_geometry(feat, "POINT (15 14)", max_error=0.0001)
 
 
 ###############################################################################
@@ -329,19 +316,19 @@ def test_ogr_gpx_7():
 
     expect = ["PID1", "PID2"]
 
-    assert ogrtest.check_features_against_list(gpx_lyr, "ogr_Primary_ID", expect)
+    ogrtest.check_features_against_list(gpx_lyr, "ogr_Primary_ID", expect)
 
     gpx_lyr.ResetReading()
 
     expect = ["SID1", "SID2"]
 
-    assert ogrtest.check_features_against_list(gpx_lyr, "ogr_Secondary_ID", expect)
+    ogrtest.check_features_against_list(gpx_lyr, "ogr_Secondary_ID", expect)
 
     gpx_lyr.ResetReading()
 
     expect = ["TID1", None]
 
-    assert ogrtest.check_features_against_list(gpx_lyr, "ogr_Third_ID", expect)
+    ogrtest.check_features_against_list(gpx_lyr, "ogr_Third_ID", expect)
 
 
 ###############################################################################

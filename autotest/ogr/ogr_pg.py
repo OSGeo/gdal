@@ -335,7 +335,7 @@ def test_ogr_pg_3():
     expect = [168, 169, 166, 158, 165]
 
     with ogrtest.attribute_filter(gdaltest.pg_lyr, "eas_id < 170"):
-        assert ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
 
         assert gdaltest.pg_lyr.GetFeatureCount() == 5
 
@@ -345,9 +345,7 @@ def test_ogr_pg_3():
         orig_geom = ogr.ForceTo(orig_geom, ogr.wkbPolygon25D)
         read_feat = gdaltest.pg_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(read_feat, orig_geom, max_error=0.001) == 0
-        )
+        ogrtest.check_feature_geometry(read_feat, orig_geom, max_error=0.001)
 
         for fld in range(3):
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), (
@@ -391,12 +389,8 @@ def test_ogr_pg_4():
 
         gdaltest.pg_lyr.SetAttributeFilter("PRFEDEA = '%s'" % item)
         feat_read = gdaltest.pg_lyr.GetNextFeature()
-        geom_read = feat_read.GetGeometryRef()
 
-        if ogrtest.check_feature_geometry(feat_read, geom) != 0:
-            print(item)
-            print(wkt)
-            pytest.fail(geom_read)
+        ogrtest.check_feature_geometry(feat_read, geom)
 
         feat_read.Destroy()
 
@@ -421,7 +415,7 @@ def test_ogr_pg_5():
 
         assert sql_lyr.GetFeatureCount() == 11
 
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -437,19 +431,16 @@ def test_ogr_pg_6():
         "select * from tpoly where prfedea = '2'"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
+        ogrtest.check_features_against_list(sql_lyr, "prfedea", ["2"])
 
         sql_lyr.ResetReading()
         feat_read = sql_lyr.GetNextFeature()
         geom = feat_read.GetGeometryRef()
         geom = ogr.ForceTo(geom, ogr.wkbMultiLineString)
 
-        assert (
-            ogrtest.check_feature_geometry(
-                geom,
-                "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            geom,
+            "MULTILINESTRING ((5.00121349 2.99853132,5.00121349 1.99853133),(5.00121349 1.99853133,5.00121349 0.99853133),(3.00121351 1.99853127,5.00121349 1.99853133),(5.00121349 1.99853133,6.00121348 1.99853135))",
         )
         feat_read.Destroy()
 
@@ -480,7 +471,7 @@ def test_ogr_pg_7():
 
         assert gdaltest.pg_lyr.GetFeatureCount() == 1
 
-        assert ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", [158])
+        ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", [158])
 
         with ogrtest.attribute_filter(gdaltest.pg_lyr, "eas_id = 158"):
 
@@ -554,9 +545,7 @@ def test_ogr_pg_9():
         "SetFeature() did not update SHORTNAME, got %s." % shortname
     )
 
-    if ogrtest.check_feature_geometry(feat, "POINT(5 6 7)") != 0:
-        print(feat.GetGeometryRef())
-        pytest.fail("Geometry update failed")
+    ogrtest.check_feature_geometry(feat, "POINT(5 6 7)")
 
     feat.SetGeometryDirectly(None)
 
@@ -750,9 +739,7 @@ def test_ogr_pg_12():
             orig_geom = ogr.ForceTo(orig_geom, ogr.wkbPolygon25D)
         read_feat = gdaltest.pgc_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(read_feat, orig_geom, max_error=0.001) == 0
-        )
+        ogrtest.check_feature_geometry(read_feat, orig_geom, max_error=0.001)
 
         for fld in range(3):
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), (
@@ -898,7 +885,7 @@ def test_ogr_pg_15():
         query = query + (" or eas_id = %d" % (ident + 1000))
 
     with ogrtest.attribute_filter(gdaltest.pg_lyr, query):
-        assert ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(gdaltest.pg_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -921,7 +908,7 @@ def test_ogr_pg_16():
 
     with gdaltest.pg_ds.ExecuteSQL(statement) as lyr:
 
-        assert ogrtest.check_features_against_list(lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(lyr, "eas_id", expect)
 
 
 ###############################################################################

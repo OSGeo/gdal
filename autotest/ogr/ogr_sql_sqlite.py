@@ -700,7 +700,7 @@ def test_ogr_sql_sqlite_8():
         dialect="SQLite",
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "eas_id", expect)
 
 
 ###############################################################################
@@ -2001,13 +2001,9 @@ def test_ogr_sql_sqlite_27():
     ) as lyr:
         assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTDateTime
         assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTDateTime
-        assert ogrtest.check_features_against_list(
-            lyr, "MIN(DATE)", ["2013/01/01 00:00:00"]
-        )
+        ogrtest.check_features_against_list(lyr, "MIN(DATE)", ["2013/01/01 00:00:00"])
         lyr.ResetReading()
-        assert ogrtest.check_features_against_list(
-            lyr, "MAX(DATE)", ["2013/12/31 23:59:59"]
-        )
+        ogrtest.check_features_against_list(lyr, "MAX(DATE)", ["2013/12/31 23:59:59"])
 
 
 ###############################################################################
@@ -2194,13 +2190,10 @@ def test_ogr_sql_sqlite_st_makevalid():
     ds.ReleaseResultSet(sql_lyr)
 
     if make_valid_available:
-        assert (
-            ogrtest.check_feature_geometry(
-                ogr.CreateGeometryFromWkt(wkt),
-                "MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))",
-            )
-            == 0
-        ), wkt
+        ogrtest.check_feature_geometry(
+            ogr.CreateGeometryFromWkt(wkt),
+            "MULTIPOLYGON (((0.5 0.5,0 0,0 1,0.5 0.5)),((0.5 0.5,1 1,1 0,0.5 0.5)))",
+        )
 
 
 ###############################################################################

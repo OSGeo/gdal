@@ -194,18 +194,17 @@ def test_algebra_intersection():
             break
 
         g = feat.GetGeometryRef()
-        if ogrtest.check_feature_geometry(g, f1[0]) == 0:
+
+        try:
+            ogrtest.check_feature_geometry(g, f1[0])
             assert (
                 feat.GetField("A") == f1[1] and feat.GetField("B") == f1[2]
             ), "Did not get expected field values."
-        elif ogrtest.check_feature_geometry(g, f2[0]) == 0:
+        except AssertionError:
+            ogrtest.check_feature_geometry(g, f2[0])
             assert (
                 feat.GetField("A") == f2[1] and feat.GetField("B") == f2[2]
             ), "Did not get expected field values."
-        else:
-            pytest.fail(
-                "Layer.Intersection returned wrong geometry: " + g.ExportToWkt()
-            )
 
     # This time we test with PROMOTE_TO_MULTI and pre-created output fields.
     recreate_layer_C()
@@ -230,18 +229,16 @@ def test_algebra_intersection():
             break
 
         g = feat.GetGeometryRef()
-        if ogrtest.check_feature_geometry(g, f1[0]) == 0:
+        try:
+            ogrtest.check_feature_geometry(g, f1[0])
             assert (
                 feat.GetField("A") == f1[1] and feat.GetField("B") == f1[2]
             ), "Did not get expected field values. (1)"
-        elif ogrtest.check_feature_geometry(g, f2[0]) == 0:
+        except AssertionError:
+            ogrtest.check_feature_geometry(g, f2[0])
             assert (
                 feat.GetField("A") == f2[1] and feat.GetField("B") == f2[2]
             ), "Did not get expected field values. (2)"
-        else:
-            pytest.fail(
-                "Layer.Intersection returned wrong geometry: " + g.ExportToWkt()
-            )
 
     recreate_layer_C()
 

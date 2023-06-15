@@ -67,7 +67,7 @@ def test_ogr_join_2():
         "WHERE eas_id < 168"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "NAME", expect)
+        ogrtest.check_features_against_list(sql_lyr, "NAME", expect)
 
 
 ###############################################################################
@@ -85,7 +85,7 @@ def test_ogr_join_3():
         "WHERE eas_id < 168"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "idlink.NAME", expect)
+        ogrtest.check_features_against_list(sql_lyr, "idlink.NAME", expect)
 
 
 ###############################################################################
@@ -103,7 +103,7 @@ def test_ogr_join_4():
         + "WHERE eas_id > 170"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "NAME", expect)
+        ogrtest.check_features_against_list(sql_lyr, "NAME", expect)
 
 
 ###############################################################################
@@ -121,7 +121,7 @@ def test_ogr_join_5():
         + "WHERE eas_id > 170"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "p.eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "p.eas_id", expect)
 
 
 ###############################################################################
@@ -139,7 +139,7 @@ def test_ogr_join_6():
         + "WHERE eas_id > 170 ORDER BY p.eas_id"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "p.eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "p.eas_id", expect)
 
 
 ###############################################################################
@@ -157,7 +157,7 @@ def test_ogr_join_7():
         + "WHERE eas_id > 170 ORDER BY p.eas_id"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "p.eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "p.eas_id", expect)
 
 
 ###############################################################################
@@ -176,7 +176,7 @@ def test_ogr_join_8():
         + "WHERE eas_id > 170 ORDER BY p.eas_id"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "il2.eas_id", expect)
+        ogrtest.check_features_against_list(sql_lyr, "il2.eas_id", expect)
 
 
 ###############################################################################
@@ -195,7 +195,7 @@ def test_ogr_join_9():
         + "WHERE eas_id > 170"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "poly.EAS_ID", expect)
+        ogrtest.check_features_against_list(sql_lyr, "poly.EAS_ID", expect)
 
 
 ###############################################################################
@@ -210,7 +210,7 @@ def test_ogr_join_10():
         "SELECT * FROM poly " + "LEFT JOIN idlink2 ON poly.eas_id = idlink2.name "
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "F3", expect)
+        ogrtest.check_features_against_list(sql_lyr, "F3", expect)
 
 
 ###############################################################################
@@ -226,7 +226,7 @@ def test_ogr_join_11():
         "SELECT il.*, il2.* FROM idlink il LEFT JOIN idlink2 il2 ON il.NAME = il2.NAME"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "il2.NAME", expect)
+        ogrtest.check_features_against_list(sql_lyr, "il2.NAME", expect)
 
 
 ###############################################################################
@@ -272,7 +272,7 @@ def test_ogr_join_13():
         "SELECT * FROM poly " + "LEFT JOIN idlink2 ON poly.eas_id = idlink2.eas_id"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "name", expect)
+        ogrtest.check_features_against_list(sql_lyr, "name", expect)
 
 
 ###############################################################################
@@ -288,7 +288,7 @@ def test_ogr_join_14():
         "SELECT * FROM idlink2 " + "LEFT JOIN poly ON idlink2.eas_id = poly.eas_id"
     ) as sql_lyr:
 
-        assert ogrtest.check_features_against_list(sql_lyr, "poly.EAS_ID", expect)
+        ogrtest.check_features_against_list(sql_lyr, "poly.EAS_ID", expect)
 
 
 ###############################################################################

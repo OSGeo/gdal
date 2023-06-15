@@ -81,7 +81,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
     else:
         expect = ["8901", "8902", "8903", "8904"]
 
-    assert ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
+    ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
 
     lyr.ResetReading()
 
@@ -92,7 +92,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
         'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota',
     ]
 
-    assert ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
+    ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
 
     lyr.ResetReading()
 
@@ -291,7 +291,7 @@ def test_ogr_csv_9():
 
     expect = ["8901", "8902", "8903", "8904", "7000"]
 
-    assert ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
+    ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
 
     lyr.ResetReading()
 
@@ -303,7 +303,7 @@ def test_ogr_csv_9():
         "This is a newline test\n",
     ]
 
-    assert ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
+    ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
 
 
 ###############################################################################
@@ -370,17 +370,17 @@ def ogr_csv_check_testcsvt(lyr):
     lyr.ResetReading()
 
     expect = [12, None]
-    assert ogrtest.check_features_against_list(lyr, "INTCOL", expect)
+    ogrtest.check_features_against_list(lyr, "INTCOL", expect)
 
     lyr.ResetReading()
 
     expect = [5.7, None]
-    assert ogrtest.check_features_against_list(lyr, "REALCOL", expect)
+    ogrtest.check_features_against_list(lyr, "REALCOL", expect)
 
     lyr.ResetReading()
 
     expect = ["foo", ""]
-    assert ogrtest.check_features_against_list(lyr, "STRINGCOL", expect)
+    ogrtest.check_features_against_list(lyr, "STRINGCOL", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -590,17 +590,17 @@ def test_ogr_csv_13():
     lyr = csv_tmpds.GetLayerByName("as_wkt")
 
     expect = ["POINT (1 2)"]
-    assert ogrtest.check_features_against_list(lyr, "WKT", expect)
+    ogrtest.check_features_against_list(lyr, "WKT", expect)
 
     lyr.ResetReading()
     expect = ["avalue"]
-    assert ogrtest.check_features_against_list(lyr, "ADATA", expect)
+    ogrtest.check_features_against_list(lyr, "ADATA", expect)
 
     # Test as_wkt_no_field
     lyr = csv_tmpds.GetLayerByName("as_wkt_no_field")
 
     expect = ["POINT (1 2)"]
-    assert ogrtest.check_features_against_list(lyr, "WKT", expect)
+    ogrtest.check_features_against_list(lyr, "WKT", expect)
 
     # Test AS_XY
     lyr = csv_tmpds.GetLayerByName("as_xy")
@@ -608,15 +608,15 @@ def test_ogr_csv_13():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "X"
 
     expect = [1, None]
-    assert ogrtest.check_features_against_list(lyr, "X", expect)
+    ogrtest.check_features_against_list(lyr, "X", expect)
 
     lyr.ResetReading()
     expect = [2, None]
-    assert ogrtest.check_features_against_list(lyr, "Y", expect)
+    ogrtest.check_features_against_list(lyr, "Y", expect)
 
     lyr.ResetReading()
     expect = ["avalue", "avalue"]
-    assert ogrtest.check_features_against_list(lyr, "ADATA", expect)
+    ogrtest.check_features_against_list(lyr, "ADATA", expect)
 
     # Test AS_YX
     lyr = csv_tmpds.GetLayerByName("as_yx")
@@ -624,11 +624,11 @@ def test_ogr_csv_13():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "Y"
 
     expect = [1]
-    assert ogrtest.check_features_against_list(lyr, "X", expect)
+    ogrtest.check_features_against_list(lyr, "X", expect)
 
     lyr.ResetReading()
     expect = [2]
-    assert ogrtest.check_features_against_list(lyr, "Y", expect)
+    ogrtest.check_features_against_list(lyr, "Y", expect)
 
     # Test AS_XYZ
     lyr = csv_tmpds.GetLayerByName("as_xyz")
@@ -636,15 +636,15 @@ def test_ogr_csv_13():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "X"
 
     expect = [1]
-    assert ogrtest.check_features_against_list(lyr, "X", expect)
+    ogrtest.check_features_against_list(lyr, "X", expect)
 
     lyr.ResetReading()
     expect = [2]
-    assert ogrtest.check_features_against_list(lyr, "Y", expect)
+    ogrtest.check_features_against_list(lyr, "Y", expect)
 
     lyr.ResetReading()
     expect = [3]
-    assert ogrtest.check_features_against_list(lyr, "Z", expect)
+    ogrtest.check_features_against_list(lyr, "Z", expect)
 
 
 ###############################################################################
@@ -703,14 +703,14 @@ def test_ogr_csv_17():
         == "POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))"
     ), "feature 1: expected wkt value"
 
-    assert not ogrtest.check_feature_geometry(
+    ogrtest.check_feature_geometry(
         feat, "POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))"
     )
 
     feat = csv_lyr.GetNextFeature()
 
     feat = csv_lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(
+    ogrtest.check_feature_geometry(
         feat, "POLYGON((1.001 1.001,3.999 3.999,3.2 1.6,1.001 1.001))"
     )
 
@@ -765,15 +765,15 @@ def test_ogr_csv_19():
 
     lyr.ResetReading()
     with gdaltest.error_handler():
-        assert ogrtest.check_features_against_list(lyr, "INTCOL", [12])
+        ogrtest.check_features_against_list(lyr, "INTCOL", [12])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "REALCOL", [5.7])
+    ogrtest.check_features_against_list(lyr, "REALCOL", [5.7])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "INTCOL2", [None])
+    ogrtest.check_features_against_list(lyr, "INTCOL2", [None])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "REALCOL2", [None])
+    ogrtest.check_features_against_list(lyr, "REALCOL2", [None])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "STRINGCOL", ["foo"])
+    ogrtest.check_features_against_list(lyr, "STRINGCOL", ["foo"])
 
 
 ###############################################################################

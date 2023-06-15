@@ -86,14 +86,7 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat, ogr.CreateGeometryFromWkt("POINT (3.0 49.5)")
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feat, ogr.CreateGeometryFromWkt("POINT (3.0 49.5)"))
 
     feat = lyr.GetNextFeature()
     if feat is not None:
@@ -114,28 +107,18 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat, ogr.CreateGeometryFromWkt("LINESTRING (2 49,3 50)")
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat, ogr.CreateGeometryFromWkt("LINESTRING (2 49,3 50)")
+    )
 
     feat = lyr.GetNextFeature()
     if feat.GetFieldAsString("osm_id") != "6":
         feat.DumpReadable()
         pytest.fail()
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat, ogr.CreateGeometryFromWkt("LINESTRING (2 49,3 49,3 50,2 50,2 49)")
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat, ogr.CreateGeometryFromWkt("LINESTRING (2 49,3 49,3 50,2 50,2 49)")
+    )
 
     feat = lyr.GetNextFeature()
     if feat is not None:
@@ -159,29 +142,15 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
         pytest.fail()
 
     if filename == "tmp/ogr_osm_3":
-        if (
-            ogrtest.check_feature_geometry(
-                feat,
-                ogr.CreateGeometryFromWkt(
-                    "POLYGON ((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1))"
-                ),
-            )
-            != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+        ogrtest.check_feature_geometry(
+            feat,
+            "POLYGON ((2 49,2 50,3 50,3 49,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1))",
+        )
     else:
-        if (
-            ogrtest.check_feature_geometry(
-                feat,
-                ogr.CreateGeometryFromWkt(
-                    "MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1)))"
-                ),
-            )
-            != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+        ogrtest.check_feature_geometry(
+            feat,
+            "MULTIPOLYGON (((2 49,3 49,3 50,2 50,2 49),(2.1 49.1,2.2 49.1,2.2 49.2,2.1 49.2,2.1 49.1)))",
+        )
 
     feat = lyr.GetNextFeature()
     if (
@@ -221,23 +190,9 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
         pytest.fail()
 
     if filename == "tmp/ogr_osm_3":
-        if (
-            ogrtest.check_feature_geometry(
-                feat, ogr.CreateGeometryFromWkt("LINESTRING (2 49,3 50)")
-            )
-            != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+        ogrtest.check_feature_geometry(feat, "LINESTRING (2 49,3 50)")
     else:
-        if (
-            ogrtest.check_feature_geometry(
-                feat, ogr.CreateGeometryFromWkt("MULTILINESTRING ((2 49,3 50))")
-            )
-            != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+        ogrtest.check_feature_geometry(feat, "MULTILINESTRING ((2 49,3 50))")
 
     feat = lyr.GetNextFeature()
     if feat is not None:
@@ -259,17 +214,9 @@ def test_ogr_osm_1(filename="data/osm/test.pbf"):
             feat.DumpReadable()
             pytest.fail()
 
-        if (
-            ogrtest.check_feature_geometry(
-                feat,
-                ogr.CreateGeometryFromWkt(
-                    "GEOMETRYCOLLECTION (POINT (2 49),LINESTRING (2 49,3 50))"
-                ),
-            )
-            != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+        ogrtest.check_feature_geometry(
+            feat, "GEOMETRYCOLLECTION (POINT (2 49),LINESTRING (2 49,3 50))"
+        )
 
         feat = lyr.GetNextFeature()
         if feat is not None:
@@ -546,30 +493,18 @@ def test_ogr_osm_8():
     lyr.SetAttributeFilter("osm_id = '4294967934'")
     feat = lyr.GetNextFeature()
 
-    if (
-        feat.GetField("name") != "Treetops"
-        or ogrtest.check_feature_geometry(
-            feat, ogr.CreateGeometryFromWkt("POINT (-61.7964321 17.1498319)")
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    assert feat.GetField("name") == "Treetops"
+    ogrtest.check_feature_geometry(
+        feat, ogr.CreateGeometryFromWkt("POINT (-61.7964321 17.1498319)")
+    )
 
     lyr = ds.GetLayerByName("multipolygons")
     feat = lyr.GetFeature(1113)
 
-    if (
-        ogrtest.check_feature_geometry(
-            feat,
-            ogr.CreateGeometryFromWkt(
-                "MULTIPOLYGON (((-61.7780345 17.140634,-61.7777002 17.1406069,-61.7776854 17.1407739,-61.7779131 17.1407923,-61.7779158 17.1407624,-61.7780224 17.140771,-61.7780345 17.140634)))"
-            ),
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat,
+        "MULTIPOLYGON (((-61.7780345 17.140634,-61.7777002 17.1406069,-61.7776854 17.1407739,-61.7779131 17.1407923,-61.7779158 17.1407624,-61.7780224 17.140771,-61.7780345 17.140634)))",
+    )
 
 
 ###############################################################################
