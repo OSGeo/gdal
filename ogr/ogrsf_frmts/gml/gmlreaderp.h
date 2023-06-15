@@ -429,6 +429,8 @@ class GMLReader final : public IGMLReader
 
     bool m_bEmptyAsNull;
 
+    bool m_bUseBBOX = false;
+
     bool ParseXMLHugeFile(const char *pszOutputFilename,
                           const bool bSqliteIsTempFile,
                           const int iSqliteCacheMB);
@@ -573,6 +575,15 @@ class GMLReader final : public IGMLReader
     bool IsEmptyAsNull() const
     {
         return m_bEmptyAsNull;
+    }
+
+    void SetUseBBOX(bool bFlag)
+    {
+        m_bUseBBOX = bFlag;
+    }
+    bool UseBBOX() const
+    {
+        return m_bUseBBOX;
     }
 
     static CPLMutex *hMutex;
