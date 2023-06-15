@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import re
 from http.server import BaseHTTPRequestHandler
 
 import gdaltest
@@ -46,6 +47,8 @@ TEST_DATA_SOURCE_ENDPOINT = "https://maps.gnosis.earth/ogcapi"
 RECORD = False
 
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
+
+REPLACE_PORT_RE = re.compile(rb"http://127.0.0.1:\d{4}")
 
 if RECORD:
     import urllib
@@ -119,7 +122,16 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
             elif self.path.find("/fakeogcapi") != -1:
 
                 with open(request_data_path, "rb+") as fd:
-                    self.wfile.write(fd.read())
+                    response = REPLACE_PORT_RE.sub(
+                        (
+                            "http://"
+                            + self.address_string()
+                            + ":"
+                            + str(self.server.server_port)
+                        ).encode("utf8"),
+                        fd.read(),
+                    )
+                    self.wfile.write(response)
 
             return
 
