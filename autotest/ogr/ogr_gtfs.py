@@ -90,6 +90,15 @@ def test_ogr_gtfs_content():
     assert f is not None
     assert lyr.GetFeatureCount() == 1
 
+    lyr = ds.GetLayerByName("calendar")
+    assert lyr
+    assert lyr.GetGeomType() == ogr.wkbNone
+    assert lyr.GetFeatureCount() == 1
+    f = lyr.GetNextFeature()
+    assert f["start_date"] == "2023/01/02"
+    f = lyr.GetNextFeature()
+    assert f is None
+
     lyr = ds.GetLayerByName("stops")
     assert lyr
     assert lyr.GetGeomType() == ogr.wkbPoint
