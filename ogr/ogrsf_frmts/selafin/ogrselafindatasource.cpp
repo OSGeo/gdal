@@ -304,9 +304,6 @@ OGRSelafinDataSource::OGRSelafinDataSource()
 
 OGRSelafinDataSource::~OGRSelafinDataSource()
 {
-#ifdef DEBUG_VERBOSE
-    CPLDebug("Selafin", "~OGRSelafinDataSource(%s)", pszName);
-#endif
     for (int i = 0; i < nLayers; i++)
         delete papoLayers[i];
     CPLFree(papoLayers);
