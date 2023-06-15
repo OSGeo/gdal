@@ -92,6 +92,7 @@ Dataset Open options
 
 -  .. oo:: USER_STORE_KEY
       :since: 3.8
+
       Key defined in the SAP HANA user store (hdbuserstore).
 
 -  .. oo:: SCHEMA
