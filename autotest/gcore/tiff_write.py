@@ -580,7 +580,7 @@ def test_tiff_write_17():
 
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open(tmpfilename)
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
     ds = None
 
     # Modify the RPC
@@ -592,7 +592,7 @@ def test_tiff_write_17():
     ds = None
 
     ds = gdal.Open(tmpfilename)
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), modified_rpc)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), modified_rpc)
     ds = None
 
     # Unset the RPC
@@ -646,7 +646,7 @@ def test_tiff_write_18():
     # Open the dataset, and confirm the RPC/IMD data is still intact.
     ds = gdal.Open("tmp/tw_18.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     imd_md = ds.GetMetadata("IMD")
     assert (
@@ -765,7 +765,7 @@ def test_tiff_write_rpc_txt():
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open("tmp/tiff_write_rpc_txt.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     ds = None
 
@@ -804,7 +804,7 @@ def test_tiff_write_rpc_in_pam():
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open("tmp/tiff_write_rpc_in_pam.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     ds = None
 

@@ -1071,7 +1071,8 @@ def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
 # equivalent or not.
 
 
-def rpcs_equal(md1, md2):
+def check_rpcs_equal(md1, md2):
+    __tracebackhide__ = True
 
     simple_fields = [
         "LINE_OFF",
@@ -1094,47 +1095,23 @@ def rpcs_equal(md1, md2):
 
     for sf in simple_fields:
 
-        try:
-            if not approx_equal(float(md1[sf]), float(md2[sf])):
-                post_reason("%s values differ." % sf)
-                print(md1[sf])
-                print(md2[sf])
-                return 0
-        except Exception:
-            post_reason("%s value missing or corrupt." % sf)
-            print(md1)
-            print(md2)
-            return 0
+        assert sf in md1
+        assert sf in md2
+        assert approx_equal(float(md1[sf]), float(md2[sf]))
 
     for cf in coef_fields:
 
-        try:
-            list1 = md1[cf].split()
-            list2 = md2[cf].split()
+        list1 = md1[cf].split()
+        list2 = md2[cf].split()
 
-        except Exception:
-            post_reason("%s value missing or corrupt." % cf)
-            print(md1[cf])
-            print(md2[cf])
-            return 0
+        assert len(list1) == 20, "%s value list length wrong(1)" % cf
 
-        if len(list1) != 20:
-            post_reason("%s value list length wrong(1)" % cf)
-            print(list1)
-            return 0
-
-        if len(list2) != 20:
-            post_reason("%s value list length wrong(2)" % cf)
-            print(list2)
-            return 0
+        assert len(list2) == 20, "%s value list length wrong(2)" % cf
 
         for i in range(20):
-            if not approx_equal(float(list1[i]), float(list2[i])):
-                post_reason("%s[%d] values differ." % (cf, i))
-                print(list1[i], list2[i])
-                return 0
-
-    return 1
+            assert approx_equal(
+                float(list1[i]), float(list2[i])
+            ), "%s[%d] values differ." % (cf, i)
 
 
 ###############################################################################
