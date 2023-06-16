@@ -1113,17 +1113,18 @@ public:
 %feature ("kwargs") ComputeStatistics;
   Statistics* ComputeStatistics( bool approx_ok = FALSE,
                                  GDALProgressFunc callback = NULL,
-                                 void* callback_data=NULL)
+                                 void* callback_data=NULL,
+                                 char** options = 0)
   {
         GUInt64 nValidCount = 0;
         Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
-        int nSuccess = GDALMDArrayComputeStatistics(self, NULL, approx_ok,
+        int nSuccess = GDALMDArrayComputeStatisticsEx(self, NULL, approx_ok,
                                  &(psStatisticsOut->min),
                                  &(psStatisticsOut->max),
                                  &(psStatisticsOut->mean),
                                  &(psStatisticsOut->std_dev),
                                  &nValidCount,
-                                 callback, callback_data);
+                                 callback, callback_data, options);
         psStatisticsOut->valid_count = static_cast<GIntBig>(nValidCount);
         if( nSuccess )
             return psStatisticsOut;

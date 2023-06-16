@@ -2749,3 +2749,35 @@ void ZarrArray::ParseSpecialAttributes(CPLJSONObject &oAttributes)
         RegisterScale(dfScale);
     }
 }
+
+/************************************************************************/
+/*                           SetStatistics()                            */
+/************************************************************************/
+
+bool ZarrArray::SetStatistics(bool bApproxStats, double dfMin, double dfMax,
+                              double dfMean, double dfStdDev,
+                              GUInt64 nValidCount, CSLConstList papszOptions)
+{
+    if (!bApproxStats && m_bUpdatable &&
+        CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "UPDATE_METADATA", "NO")))
+    {
+        auto poAttr = GetAttribute("actual_range");
+        if (!poAttr)
+        {
+            poAttr =
+                CreateAttribute("actual_range", {2}, GetDataType(), nullptr);
+        }
+        if (poAttr)
+        {
+            std::vector<GUInt64> startIdx = {0};
+            std::vector<size_t> count = {2};
+            std::vector<double> values = {dfMin, dfMax};
+            poAttr->Write(startIdx.data(), count.data(), nullptr, nullptr,
+                          GDALExtendedDataType::Create(GDT_Float64),
+                          values.data(), nullptr, 0);
+        }
+    }
+    return GDALPamMDArray::SetStatistics(bApproxStats, dfMin, dfMax, dfMean,
+                                         dfStdDev, nValidCount, papszOptions);
+}

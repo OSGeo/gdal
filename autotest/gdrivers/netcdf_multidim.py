@@ -3540,3 +3540,38 @@ def test_netcdf_multidim_delete_attribute():
         reopen()
     finally:
         gdal.Unlink(filename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_netcdf_multidim_compute_statistics_update_metadata():
+
+    filename = "tmp/test_netcdf_multidim_compute_statistics_update_metadata.nc"
+    shutil.copy("data/netcdf/byte_no_cf.nc", filename)
+
+    def test():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("Band1")
+        stats = ar.ComputeStatistics(options=["UPDATE_METADATA=YES"])
+        assert stats.min == 74
+        assert stats.max == 255
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("Band1")
+        stats = ar.GetStatistics()
+        assert stats.min == 74
+        assert stats.max == 255
+        attr = ar.GetAttribute("actual_range")
+        assert array.array("B", attr.Read()).tolist() == [74, 255]
+
+    try:
+        test()
+        reopen()
+    finally:
+        gdal.Unlink(filename)
+        gdal.Unlink(filename + ".aux.xml")

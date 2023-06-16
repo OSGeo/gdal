@@ -2801,7 +2801,7 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 
     virtual bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
                                double dfMean, double dfStdDev,
-                               GUInt64 nValidCount);
+                               GUInt64 nValidCount, CSLConstList papszOptions);
 
     static std::string MassageName(const std::string &inputName);
 
@@ -2959,7 +2959,8 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     virtual bool ComputeStatistics(bool bApproxOK, double *pdfMin,
                                    double *pdfMax, double *pdfMean,
                                    double *pdfStdDev, GUInt64 *pnValidCount,
-                                   GDALProgressFunc, void *pProgressData);
+                                   GDALProgressFunc, void *pProgressData,
+                                   CSLConstList papszOptions);
 
     virtual void ClearStatistics();
 

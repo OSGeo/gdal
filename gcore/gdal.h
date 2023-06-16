@@ -2240,6 +2240,10 @@ int CPL_DLL GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH,
                                          double *pdfStdDev,
                                          GUInt64 *pnValidCount,
                                          GDALProgressFunc, void *pProgressData);
+int CPL_DLL GDALMDArrayComputeStatisticsEx(
+    GDALMDArrayH hArray, GDALDatasetH, int bApproxOK, double *pdfMin,
+    double *pdfMax, double *pdfMean, double *pdfStdDev, GUInt64 *pnValidCount,
+    GDALProgressFunc, void *pProgressData, CSLConstList papszOptions);
 GDALMDArrayH CPL_DLL GDALMDArrayGetResampled(GDALMDArrayH hArray,
                                              size_t nNewDimCount,
                                              const GDALDimensionH *pahNewDims,

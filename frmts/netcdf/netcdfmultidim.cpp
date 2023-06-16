@@ -75,6 +75,10 @@ class netCDFSharedResources
     {
         return m_bReadOnly;
     }
+    inline bool IsNC4() const
+    {
+        return m_bIsNC4;
+    }
     bool SetDefineMode(bool bNewDefineMode);
     int GetBelongingGroupOfDim(int startgid, int dimid);
     inline bool GetImappIsInElements() const
@@ -568,6 +572,10 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
                      CSLConstList papszOptions) const override;
 
     void NotifyChildrenOfRenaming() override;
+
+    bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
+                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       CSLConstList papszOptions) override;
 
   public:
     static std::shared_ptr<netCDFVariable>
@@ -2702,6 +2710,39 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
 }
 
 /************************************************************************/
+/*                           SetStatistics()                            */
+/************************************************************************/
+
+bool netCDFVariable::SetStatistics(bool bApproxStats, double dfMin,
+                                   double dfMax, double dfMean, double dfStdDev,
+                                   GUInt64 nValidCount,
+                                   CSLConstList papszOptions)
+{
+    if (!bApproxStats && !m_poShared->IsReadOnly() &&
+        CPLTestBool(
+            CSLFetchNameValueDef(papszOptions, "UPDATE_METADATA", "NO")))
+    {
+        auto poAttr = GetAttribute("actual_range");
+        if (!poAttr)
+        {
+            poAttr =
+                CreateAttribute("actual_range", {2}, GetDataType(), nullptr);
+        }
+        if (poAttr)
+        {
+            std::vector<GUInt64> startIdx = {0};
+            std::vector<size_t> count = {2};
+            std::vector<double> values = {dfMin, dfMax};
+            poAttr->Write(startIdx.data(), count.data(), nullptr, nullptr,
+                          GDALExtendedDataType::Create(GDT_Float64),
+                          values.data(), nullptr, 0);
+        }
+    }
+    return GDALPamMDArray::SetStatistics(bApproxStats, dfMin, dfMax, dfMean,
+                                         dfStdDev, nValidCount, papszOptions);
+}
+
+/************************************************************************/
 /*                             GetNCTypeSize()                          */
 /************************************************************************/
 
@@ -4217,6 +4258,12 @@ netCDFAttribute::netCDFAttribute(
     {
         m_nAttType = NC_CHAR;
     }
+    else if (oDataType.GetNumericDataType() == GDT_Byte &&
+             EQUAL(CSLFetchNameValueDef(papszOptions, "NC_TYPE", ""),
+                   "NC_BYTE"))
+    {
+        m_nAttType = NC_BYTE;
+    }
     else if (oDataType.GetNumericDataType() == GDT_Int16 &&
              EQUAL(CSLFetchNameValueDef(papszOptions, "NC_TYPE", ""),
                    "NC_BYTE"))
@@ -4288,6 +4335,17 @@ std::shared_ptr<netCDFAttribute> netCDFAttribute::Create(
                  "Only 0 or 1-dimensional attribute are supported");
         return nullptr;
     }
+
+    const char *apszOptions[2] = {nullptr, nullptr};
+    if (!poShared->IsNC4() && oDataType.GetClass() == GEDTC_NUMERIC &&
+        oDataType.GetNumericDataType() == GDT_Byte && !papszOptions)
+    {
+        // GDT_Byte would map to a NC_UBYTE datatype, which is not available in
+        // NC3 datasets
+        apszOptions[0] = "NC_TYPE=NC_BYTE";
+        papszOptions = apszOptions;
+    }
+
     auto attr(std::shared_ptr<netCDFAttribute>(new netCDFAttribute(
         poShared, gid, varid, osName, anDimensions, oDataType, papszOptions)));
     if (attr->m_nAttType == NC_NAT)

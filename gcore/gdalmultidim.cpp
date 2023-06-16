@@ -8778,7 +8778,7 @@ CPLErr GDALMDArray::GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
         return CE_Warning;
 
     return ComputeStatistics(bApproxOK, pdfMin, pdfMax, pdfMean, pdfStdDev,
-                             pnValidCount, pfnProgress, pProgressData)
+                             pnValidCount, pfnProgress, pProgressData, nullptr)
                ? CE_None
                : CE_Failure;
 }
@@ -8801,7 +8801,8 @@ CPLErr GDALMDArray::GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
  *
  * Cached statistics can be cleared with GDALDataset::ClearStatistics().
  *
- * This method is the same as the C function GDALMDArrayComputeStatistics().
+ * This method is the same as the C functions GDALMDArrayComputeStatistics().
+ * and GDALMDArrayComputeStatisticsEx().
  *
  * @param bApproxOK Currently ignored. In the future, should be set to true
  * if statistics on the whole array are wished, or to false if a subset of it
@@ -8823,6 +8824,14 @@ CPLErr GDALMDArray::GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
  *
  * @param pProgressData application data to pass to the progress function.
  *
+ * @param papszOptions NULL-terminated list of options, of NULL. Added in 3.8.
+ *                     Options are driver specific. For now the netCDF and Zarr
+ *                     drivers recognize UPDATE_METADATA=YES, whose effect is
+ *                     to add or update the actual_range attribute with the
+ *                     computed min/max, only if done on the full array, in non
+ *                     approximate mode, and the dataset is opened in update
+ *                     mode.
+ *
  * @return true on success
  *
  * @since GDAL 3.2
@@ -8832,7 +8841,8 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
                                     double *pdfMax, double *pdfMean,
                                     double *pdfStdDev, GUInt64 *pnValidCount,
                                     GDALProgressFunc pfnProgress,
-                                    void *pProgressData)
+                                    void *pProgressData,
+                                    CSLConstList papszOptions)
 {
     struct StatsPerChunkType
     {
@@ -8980,7 +8990,7 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
         *pnValidCount = sData.nValidCount;
 
     SetStatistics(bApproxOK, sData.dfMin, sData.dfMax, sData.dfMean, dfStdDev,
-                  sData.nValidCount);
+                  sData.nValidCount, papszOptions);
 
     return true;
 }
@@ -8992,7 +9002,8 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
 bool GDALMDArray::SetStatistics(bool /* bApproxStats */, double /* dfMin */,
                                 double /* dfMax */, double /* dfMean */,
                                 double /* dfStdDev */,
-                                GUInt64 /* nValidCount */)
+                                GUInt64 /* nValidCount */,
+                                CSLConstList /* papszOptions */)
 {
     CPLDebug("GDAL", "Cannot save statistics on a non-PAM MDArray");
     return false;
@@ -11663,6 +11674,7 @@ CPLErr GDALMDArrayGetStatistics(GDALMDArrayH hArray, GDALDatasetH /*hDS*/,
  * This is the same as the C++ method GDALMDArray::ComputeStatistics().
  *
  * @since GDAL 3.2
+ * @see GDALMDArrayComputeStatisticsEx()
  */
 
 int GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
@@ -11675,9 +11687,36 @@ int GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
     VALIDATE_POINTER1(hArray, __func__, FALSE);
     return hArray->m_poImpl->ComputeStatistics(
         CPL_TO_BOOL(bApproxOK), pdfMin, pdfMax, pdfMean, pdfStdDev,
-        pnValidCount, pfnProgress, pProgressData);
+        pnValidCount, pfnProgress, pProgressData, nullptr);
 }
 
+/************************************************************************/
+/*                     GDALMDArrayComputeStatisticsEx()                 */
+/************************************************************************/
+
+/**
+ * \brief Compute statistics.
+ *
+ * Same as GDALMDArrayComputeStatistics() with extra papszOptions argument.
+ *
+ * This is the same as the C++ method GDALMDArray::ComputeStatistics().
+ *
+ * @since GDAL 3.8
+ */
+
+int GDALMDArrayComputeStatisticsEx(GDALMDArrayH hArray, GDALDatasetH /* hDS */,
+                                   int bApproxOK, double *pdfMin,
+                                   double *pdfMax, double *pdfMean,
+                                   double *pdfStdDev, GUInt64 *pnValidCount,
+                                   GDALProgressFunc pfnProgress,
+                                   void *pProgressData,
+                                   CSLConstList papszOptions)
+{
+    VALIDATE_POINTER1(hArray, __func__, FALSE);
+    return hArray->m_poImpl->ComputeStatistics(
+        CPL_TO_BOOL(bApproxOK), pdfMin, pdfMax, pdfMean, pdfStdDev,
+        pnValidCount, pfnProgress, pProgressData, papszOptions);
+}
 /************************************************************************/
 /*                 GDALMDArrayGetCoordinateVariables()                  */
 /************************************************************************/
@@ -13131,7 +13170,8 @@ CPLErr GDALPamMDArray::GetStatistics(bool bApproxOK, bool bForce,
 
 bool GDALPamMDArray::SetStatistics(bool bApproxStats, double dfMin,
                                    double dfMax, double dfMean, double dfStdDev,
-                                   GUInt64 nValidCount)
+                                   GUInt64 nValidCount,
+                                   CSLConstList /* papszOptions */)
 {
     if (!m_poPam)
         return false;
