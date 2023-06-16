@@ -1,12 +1,12 @@
 HTTP/2 200 OK
-Date: Tue, 13 Jun 2023 15:31:40 GMT
+Date: Fri, 16 Jun 2023 07:04:21 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Expires: Wed, 12 Jun 2024 14:20:53 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
 Content-Length: 5962
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 4246
+Age: 233007
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 Content-Type: application/json
@@ -30,62 +30,62 @@ Content-Type: application/json
          "rel" : "self",
          "type" : "application/json",
          "title" : "The JSON representation of the WorldCRS84Quad map tileset for NaturalEarth:physical:ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=json"
       },
       {
          "rel" : "alternate",
          "type" : "text/plain",
          "title" : "The ECON representation of the WorldCRS84Quad map tileset for NaturalEarth:physical:ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=econ"
       },
       {
          "rel" : "alternate",
          "type" : "text/html",
          "title" : "The HTML representation of the WorldCRS84Quad map tileset for NaturalEarth:physical:ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?=html"
       },
       {
          "rel" : "alternate",
          "type" : "application/json+tile",
          "title" : "The TileJSON representation of the WorldCRS84Quad map tileset for NaturalEarth:physical:ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=tilejson"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=tilejson"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
          "type" : "application/json",
          "title" : "WorldCRS84QuadTileMatrixSet definition (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/WorldCRS84Quad"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldCRS84Quad"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/geodata",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
       },
       {
          "rel" : "item",
          "type" : "application/vnd.gnosis-map-tile",
          "title" : "WorldCRS84Quad map tiles for NaturalEarth:physical:ne_10m_lakes_europe (as GNOSIS Map Tiles)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.gmt",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.gmt",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "image/png",
          "title" : "WorldCRS84Quad map tiles for NaturalEarth:physical:ne_10m_lakes_europe (as PNG)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.png",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.png",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "image/jpeg",
          "title" : "WorldCRS84Quad map tiles for NaturalEarth:physical:ne_10m_lakes_europe (as JPG)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.jpg",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.jpg",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "image/tiff; application=geotiff",
          "title" : "WorldCRS84Quad map tiles for NaturalEarth:physical:ne_10m_lakes_europe (as GeoTIFF)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.tif",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad/{tileMatrix}/{tileRow}/{tileCol}.tif",
          "templated" : true
       }
    ],
@@ -100,7 +100,7 @@ Content-Type: application/json
          "links" : [
             {
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/geodata",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
             }
          ],
          "propertiesSchema" : {

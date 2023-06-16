@@ -32,6 +32,7 @@
 import os
 import re
 from http.server import BaseHTTPRequestHandler
+from tempfile import TemporaryDirectory
 
 import gdaltest
 import ogrtest
@@ -44,7 +45,7 @@ from osgeo import gdal
 TEST_DATA_SOURCE_ENDPOINT = "https://maps.gnosis.earth/ogcapi"
 
 # Set RECORD to TRUE to recreate test data from the https://demo.pygeoapi.io/stable server
-RECORD = True
+RECORD = False
 
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
 
@@ -167,7 +168,6 @@ def init():
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
-@pytest.mark.skip()
 def test_ogr_ogcapi_features():
 
     ds = gdal.OpenEx(
@@ -195,25 +195,19 @@ def test_ogr_ogcapi_features():
     assert fdef.GetFieldDefn(0).GetName() == "feature::id"
     assert fdef.GetFieldDefn(3).GetName() == "name"
 
-    if (
-        feat.GetField("name") != "Loch Bhanabhaidh"
-        or feat.GetField("feature::id") != 1
-        or feat.GetField("id") != 98696
-        or ogrtest.check_feature_geometry(
-            feat,
-            "POLYGON ((-4.6543673319905 58.1553000824025,-4.6250972807178 58.1436693142282,-4.6081017670756 58.1342702801685,-4.5893036989562 58.1245279023988,-4.5722223493866 58.1163305713239,-4.5518792345724 58.1083907480315,-4.5339395257279 58.101137612159,-4.5218366599524 58.0922965116279,-4.4935108038821 58.0780048297015,-4.4530820820363 58.0534128364768,-4.4285330067753 58.0354731276323,-4.4254429133858 58.0470180598791,-4.4260437648782 58.0616530855155,-4.4324814594397 58.0646573429775,-4.4707642830983 58.0880047152536,-4.5038969511079 58.1081761582128,-4.5227808551547 58.1120816929134,-4.5409780717817 58.1248712461088,-4.5504200238052 58.126330456876,-4.563467084783 58.126330456876,-4.5802050906427 58.14002128731,-4.6111918604651 58.154055461454,-4.6317924830617 58.1573601446622,-4.6504188793261 58.1622527925289,-4.6814056491485 58.1725960217909,-4.7105898644937 58.182252563633,-4.7324780260026 58.1904928126717,-4.7421774858085 58.1910936641641,-4.7303321278154 58.179591649881,-4.6950535616188 58.1656003937008,-4.6762554934994 58.1598064685955,-4.6543673319905 58.1553000824025))",
-            max_error=0.00001,
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail("did not get expected feature")
+    ogrtest.check_feature_geometry(
+        feat,
+        "POLYGON ((-4.6543673319905 58.1553000824025,-4.6250972807178 58.1436693142282,-4.6081017670756 58.1342702801685,-4.5893036989562 58.1245279023988,-4.5722223493866 58.1163305713239,-4.5518792345724 58.1083907480315,-4.5339395257279 58.101137612159,-4.5218366599524 58.0922965116279,-4.4935108038821 58.0780048297015,-4.4530820820363 58.0534128364768,-4.4285330067753 58.0354731276323,-4.4254429133858 58.0470180598791,-4.4260437648782 58.0616530855155,-4.4324814594397 58.0646573429775,-4.4707642830983 58.0880047152536,-4.5038969511079 58.1081761582128,-4.5227808551547 58.1120816929134,-4.5409780717817 58.1248712461088,-4.5504200238052 58.126330456876,-4.563467084783 58.126330456876,-4.5802050906427 58.14002128731,-4.6111918604651 58.154055461454,-4.6317924830617 58.1573601446622,-4.6504188793261 58.1622527925289,-4.6814056491485 58.1725960217909,-4.7105898644937 58.182252563633,-4.7324780260026 58.1904928126717,-4.7421774858085 58.1910936641641,-4.7303321278154 58.179591649881,-4.6950535616188 58.1656003937008,-4.6762554934994 58.1598064685955,-4.6543673319905 58.1553000824025))",
+        max_error=0.00001,
+    )
+    assert feat.GetField("name") == "Loch Bhanabhaidh"
+    assert feat.GetField("feature::id") == 1
+    assert feat.GetField("id") == 98696
 
     del lyr
     del ds
 
 
-@pytest.mark.skip()
 @pytest.mark.parametrize(
     "vector_format",
     (
@@ -303,25 +297,18 @@ def test_ogr_ogcapi_maps():
     a_band = ds.GetRasterBand(4)
     assert a_band.GetColorInterpretation() == 6  # alpha
 
-    # Fetch Lough Corrib
-    # gdal_translate -outsize 100 100 -oo API=MAP -projwin -9.5377 53.54212 -9.0557 53.2953  "OGCAPI:https://maps.gnosis.earth/ogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=json"  out.tif
-    gt = ds.GetGeoTransform()
-    min_x, min_y, max_x, max_y = (
-        -9.537766088426546,
-        53.29532943449727,
-        -9.055769782552064,
-        53.542129228291046,
-    )
-    min_column = int((min_x - gt[0]) / gt[1])
-    min_row = int((min_y - gt[3]) / gt[5])
-    max_column = int((max_x - gt[0]) / gt[1])
-    max_row = int((max_y - gt[3]) / gt[5])
-    ds.ReadRaster(
-        min_column,
-        min_row,
-        max_column - min_column,
-        abs(max_row - min_row),
-        100,
-        100,
-        gdal.GDT_Byte,
-    )
+    # Fetch Lough Corrib lake
+    # gdal_translate -outsize 100 100 -oo API=MAP -projwin -9.5377 53.5421 -9.0557 53.2953  "OGCAPI:https://maps.gnosis.earth/ogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=json"  out.tif
+    with TemporaryDirectory() as tmpdir:
+        options = gdal.TranslateOptions(
+            gdal.ParseCommandLine(
+                "-outsize 100 100 -oo API=MAP -projwin -9.5377 53.5421 -9.0557 53.2953"
+            )
+        )
+        out_path = os.path.join(tmpdir, "lough_corrib.png")
+        gdal.Translate(out_path, ds, options=options)
+        with open(
+            os.path.join(BASE_TEST_DATA_PATH, "expected_map_lough_corrib.png"), "rb"
+        ) as expected:
+            with open(out_path, "rb") as out_data:
+                assert out_data.read() == expected.read()
