@@ -126,15 +126,28 @@ def check_feature_geometry(
         "point counts do not match" + context_msg
     )
 
+    if expected.Is3D():
+        assert actual.Is3D(), "expected Z dimension not found"
+    if actual.Is3D():
+        assert expected.Is3D(), "unexpected Z dimension"
+
+    if expected.IsMeasured():
+        assert actual.IsMeasured(), "expected M dimension not found"
+    if actual.IsMeasured():
+        assert expected.IsMeasured(), "unexpected M dimension"
+
     # ST_Equals(a,b) <==> ST_Within(a,b) && ST_Within(b,a)
     # We can't use OGRGeometry::Equals() because it doesn't test spatial
     # equality, but structural one
+    # Within does not take into account Z or M values, so we skip to the
+    # pointwise check if they are present.
     if (
         (not pointwise)
         and have_geos()
         and actual.Within(expected)
         and expected.Within(actual)
-        and ogr.GT_Flatten(actual.GetGeometryType()) == actual.GetGeometryType()
+        and (not actual.Is3D())
+        and (not actual.IsMeasured())
     ):
         return
 
@@ -175,7 +188,7 @@ def check_feature_geometry(
 
             assert actual_pt == pytest.approx(
                 expected_pt, abs=max_error
-            ), f"Error in vertex {i}/{count} exceeds tolerance. {context_msg}\n  Expected: {_root_expected.ExportToWkt()}\n  Actual: {_root_actual.ExportToWkt()}"
+            ), f"Error in vertex {i+1}/{count} exceeds tolerance. {context_msg}\n  Expected: {_root_expected.ExportToWkt()}\n  Actual: {_root_actual.ExportToWkt()}"
 
 
 ###############################################################################
