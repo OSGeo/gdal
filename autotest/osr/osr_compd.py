@@ -124,8 +124,8 @@ def test_osr_compd_3():
         AUTHORITY["EPSG","5719"]],
     AUTHORITY["EPSG","7401"]]"""
     wkt = srs.ExportToPrettyWkt()
-    assert (
-        gdaltest.equal_srs_from_wkt(exp_wkt, wkt) != 0
+    assert gdaltest.equal_srs_from_wkt(
+        exp_wkt, wkt
     ), "did not get expected compound cs for EPSG:7401"
 
 
@@ -161,8 +161,8 @@ def test_osr_compd_4():
     AUTHORITY["EPSG","7400"]]"""
     wkt = srs.ExportToPrettyWkt()
 
-    assert (
-        gdaltest.equal_srs_from_wkt(exp_wkt, wkt) != 0
+    assert gdaltest.equal_srs_from_wkt(
+        exp_wkt, wkt
     ), "did not get expected compound cs for EPSG:7400"
 
 
@@ -209,9 +209,9 @@ def test_osr_compd_5():
         AUTHORITY["EPSG","5703"]]]"""
     wkt = srs.ExportToPrettyWkt()
 
-    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
-        pytest.fail()
-    elif exp_wkt != wkt:
+    assert gdaltest.equal_srs_from_wkt(exp_wkt, wkt)
+
+    if exp_wkt != wkt:
         print("warning they are equivalent, but not completely the same")
         print(wkt)
 
@@ -277,9 +277,9 @@ def test_osr_compd_6():
         "unknown",
     )
 
-    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
-        pytest.fail()
-    elif exp_wkt != wkt:
+    assert gdaltest.equal_srs_from_wkt(exp_wkt, wkt)
+
+    if exp_wkt != wkt:
         print("warning they are equivalent, but not completely the same")
         print(wkt)
 
@@ -329,9 +329,9 @@ def test_osr_compd_7():
 
     wkt = srs.ExportToPrettyWkt()
 
-    if gdaltest.equal_srs_from_wkt(exp_wkt, wkt) == 0:
-        pytest.fail()
-    elif exp_wkt != wkt:
+    assert gdaltest.equal_srs_from_wkt(exp_wkt, wkt)
+
+    if exp_wkt != wkt:
         print("warning they are equivalent, but not completely the same")
         print(wkt)
 

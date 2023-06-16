@@ -98,8 +98,7 @@ def test_visoss_1():
 
 def test_visoss_real_test():
 
-    if gdaltest.skip_on_travis():
-        pytest.skip()
+    gdaltest.skip_on_travis()
 
     # ERROR 1: The OSS Access Key Id you provided does not exist in our records.
     gdal.ErrorReset()

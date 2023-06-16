@@ -276,11 +276,11 @@ def test_gdal_translate_11(gdal_translate_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -301,11 +301,11 @@ def test_gdal_translate_12(gdal_translate_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -801,11 +801,11 @@ def test_gdal_translate_31(gdal_translate_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-6,
-    ), "Bad geotransform"
+    )
 
     ds = None
 

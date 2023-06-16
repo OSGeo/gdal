@@ -289,10 +289,7 @@ def test_ogr_mem_9():
     # Verify that count has dropped by one, and that the feature in question
     # can't be fetched.
     new_count = gdaltest.mem_lyr.GetFeatureCount()
-    if new_count != old_count - 1:
-        gdaltest.post_reason(
-            "got feature count of %d, not expected %d." % (new_count, old_count - 1)
-        )
+    assert new_count == (old_count - 1), "unexpected feature count"
 
     assert gdaltest.mem_lyr.TestCapability(
         ogr.OLCRandomRead

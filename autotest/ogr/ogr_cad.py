@@ -32,7 +32,6 @@
 ################################################################################
 
 
-import gdaltest
 import ogrtest
 import pytest
 
@@ -300,13 +299,16 @@ def test_ogr_cad_6():
 
     ogrtest.check_feature_geometry(feat, "POINT(0.7413 1.7794 0)")
 
+
+@pytest.mark.xfail(reason="cannot be sure iconv is builtin")
+def test_ogr_cad_6bis():
+
+    ds = gdal.OpenEx("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
+    layer = ds.GetLayer(0)
+    feat = layer.GetNextFeature()
+
     expected_style = 'LABEL(f:"Arial",t:"Русские буквы",c:#FFFFFFFF)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason(
-            "Got unexpected style string:\n%s\ninstead of:\n%s."
-            % (feat.GetStyleString(), expected_style)
-        )
-        return "expected_fail"  # cannot sure iconv is buildin
+    assert feat.GetStyleString() == expected_style
 
 
 ###############################################################################

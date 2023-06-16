@@ -1844,26 +1844,16 @@ def test_nitf_49():
     ds2 = gdal.GetDriverByName("NITF").CreateCopy("tmp/nitf49_2.ntf", ds)
 
     md = ds2.GetMetadata("TEXT")
-    if (
-        "DATA_0" not in md
-        or md["DATA_0"] != "COUCOU"
-        or "HEADER_0" not in md
-        or md["HEADER_0"].find("ABC  ") == -1
-    ):
-        gdaltest.post_reason("did not get expected TEXT metadata")
-        print(md)
-        return
+    assert "DATA_0" in md
+    assert md["DATA_0"] == "COUCOU"
+    assert "HEADER_0" in md
+    assert "ABC  " in md["HEADER_0"]
 
     md = ds2.GetMetadata("CGM")
-    if (
-        "SEGMENT_COUNT" not in md
-        or md["SEGMENT_COUNT"] != "1"
-        or "SEGMENT_0_DATA" not in md
-        or md["SEGMENT_0_DATA"] != "XYZ"
-    ):
-        gdaltest.post_reason("did not get expected CGM metadata")
-        print(md)
-        return
+    assert "SEGMENT_COUNT" in md
+    assert md["SEGMENT_COUNT"] == "1"
+    assert "SEGMENT_0_DATA" in md
+    assert md["SEGMENT_0_DATA"] == "XYZ"
 
     src_ds = None
     ds = None
@@ -1912,26 +1902,16 @@ def test_nitf_50():
     ds = gdal.Open("tmp/nitf50.ntf")
 
     md = ds.GetMetadata("TEXT")
-    if (
-        "DATA_0" not in md
-        or md["DATA_0"] != "COUCOU"
-        or "HEADER_0" not in md
-        or md["HEADER_0"].find("ABC  ") == -1
-    ):
-        gdaltest.post_reason("did not get expected TEXT metadata")
-        print(md)
-        return
+    assert "DATA_0" in md
+    assert md["DATA_0"] == "COUCOU"
+    assert "HEADER_0" in md
+    assert "ABC  " in md["HEADER_0"]
 
     md = ds.GetMetadata("CGM")
-    if (
-        "SEGMENT_COUNT" not in md
-        or md["SEGMENT_COUNT"] != "1"
-        or "SEGMENT_0_DATA" not in md
-        or md["SEGMENT_0_DATA"] != "XYZ"
-    ):
-        gdaltest.post_reason("did not get expected CGM metadata")
-        print(md)
-        return
+    assert "SEGMENT_COUNT" in md
+    assert md["SEGMENT_COUNT"] == "1"
+    assert "SEGMENT_0_DATA" in md
+    assert md["SEGMENT_0_DATA"] == "XYZ"
 
     ds = None
 
@@ -2143,10 +2123,7 @@ def test_nitf_57():
     gt = ds.GetGeoTransform()
     ds = None
 
-    if gt != (-180.0, 1.0, 0.0, 90.0, 0.0, -1.0):
-        gdaltest.post_reason("did not get expected geotransform")
-        print(gt)
-        return
+    assert gt == (-180.0, 1.0, 0.0, 90.0, 0.0, -1.0)
 
 
 ###############################################################################
@@ -6023,15 +6000,12 @@ def test_nitf_online_18():
             0.0,
             -724.73626818537434,
         )
-        assert gdaltest.geotransform_equals(
-            gt, expected_gt, 1.0
-        ), "did not get expected geotransform."
+        gdaltest.check_geotransform(gt, expected_gt, 1.0)
 
     # If we do not have a functioning coordinate transformer.
     else:
-        assert prj == "" and gdaltest.geotransform_equals(
-            gt, (0, 1, 0, 0, 0, 1), 0.00000001
-        ), "did not get expected empty gt/projection"
+        assert prj == ""
+        gdaltest.check_geotransform(gt, (0, 1, 0, 0, 0, 1), 0.00000001)
 
         prj = ds.GetGCPProjection()
         assert prj[:6] == "GEOGCS", "did not get expected geographic srs"

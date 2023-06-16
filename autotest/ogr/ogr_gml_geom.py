@@ -193,20 +193,17 @@ def test_gml_polygon():
 
 
 def _CreateGMLWithSRSFromWkt(wkt, epsg):
+    __tracebackhide__ = True
 
     geom = ogr.CreateGeometryFromWkt(wkt)
 
-    if geom is None:
-        gdaltest.post_reason("Import geometry from WKT failed")
-        return None
+    assert geom is not None, "Import geometry from WKT failed"
 
     # Assign SRS from given EPSG code
     srs = osr.SpatialReference()
     srs.ImportFromEPSG(epsg)
 
-    if srs is None:
-        gdaltest.post_reason("SRS import from EPSG failed")
-        return None
+    assert srs is not None, "SRS import from EPSG failed"
 
     geom.AssignSpatialReference(srs)
 

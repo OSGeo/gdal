@@ -56,9 +56,8 @@ def test_ogr_refcount_1():
     #    gdaltest.post_reason( 'Open DS count not 2 after shared opens.' )
     #    return 'failed'
 
-    if gdaltest.ds_1.GetRefCount() != 1 or gdaltest.ds_2.GetRefCount() != 1:
-        gdaltest.post_reason("Reference count not 1 on one of datasources.")
-        return "failed"
+    assert gdaltest.ds_1.GetRefCount() == 1
+    assert gdaltest.ds_2.GetRefCount() == 1
 
 
 ###############################################################################
@@ -73,17 +72,7 @@ def test_ogr_refcount_2():
     #    gdaltest.post_reason( 'Open DS count not 2 after third open.' )
     #    return 'failed'
 
-    # This test only works with the old bindings.
-    try:
-        if ds_3._o != gdaltest.ds_1._o:
-            gdaltest.post_reason("We did not get the expected pointer.")
-            return "failed"
-    except Exception:
-        pass
-
-    if ds_3.GetRefCount() != 2:
-        gdaltest.post_reason("Refcount not 2 after reopened.")
-        return "failed"
+    assert ds_3.GetRefCount() == 2, "Refcount not 2 after reopened."
 
     gdaltest.ds_3 = ds_3
 
@@ -96,9 +85,7 @@ def test_ogr_refcount_3():
 
     gdaltest.ds_3.Release()
 
-    if gdaltest.ds_1.GetRefCount() != 1:
-        gdaltest.post_reason("Refcount not decremented as expected.")
-        return "failed"
+    assert gdaltest.ds_1.GetRefCount() == 1
 
     gdaltest.ds_1.Release()
 
@@ -110,13 +97,7 @@ def test_ogr_refcount_3():
 def test_ogr_refcount_4():
 
     with gdaltest.error_handler():
-        ds = ogr.GetOpenDS(0)
-    try:
-        if ds._o != gdaltest.ds_2._o:
-            gdaltest.post_reason("failed to fetch expected datasource")
-            return "failed"
-    except Exception:
-        pass
+        ogr.GetOpenDS(0)
 
 
 ###############################################################################

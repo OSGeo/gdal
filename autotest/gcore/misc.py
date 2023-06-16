@@ -382,7 +382,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                                     error_detected = True
                             if not error_detected:
                                 msg = (
-                                    "write error not decteded with with drv = %s, nBands = %d, datatype = %s, truncated_size = %d"
+                                    "write error not detected with with drv = %s, nBands = %d, datatype = %s, truncated_size = %d"
                                     % (
                                         drv.ShortName,
                                         nBands,
@@ -391,7 +391,6 @@ def misc_6_internal(datatype, nBands, setDriversDone):
                                     )
                                 )
                                 print(msg)
-                                gdaltest.post_reason(msg)
 
                             fl = gdal.ReadDirRecursive("/vsimem/test_truncate")
                             if fl is not None:
