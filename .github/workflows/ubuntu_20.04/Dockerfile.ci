@@ -132,7 +132,7 @@ RUN git clone https://github.com/libjxl/libjxl.git --recursive \
     && git checkout ${JXL_TREEISH} \
     && mkdir build \
     && cd build \
-    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF .. \
+    && cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF .. \
     && make -j$(nproc) \
     && make -j$(nproc) install \
     && cd ../.. \
