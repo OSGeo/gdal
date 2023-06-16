@@ -1282,8 +1282,9 @@ GDALRasterizeOptionsNew(char **papszArgv,
             }
             else
             {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "-oo switch only supported from gdal_grid binary.");
+                CPLError(
+                    CE_Failure, CPLE_NotSupported,
+                    "-oo switch only supported from gdal_rasterize binary.");
             }
         }
         else if (papszArgv[i][0] == '-')
@@ -1302,9 +1303,9 @@ GDALRasterizeOptionsNew(char **papszArgv,
             }
             else
             {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "{source_filename} only supported from gdal_grid binary.");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "{source_filename} only supported from gdal_rasterize "
+                         "binary.");
             }
         }
         else if (!bGotDestFilename)
@@ -1317,9 +1318,9 @@ GDALRasterizeOptionsNew(char **papszArgv,
             }
             else
             {
-                CPLError(
-                    CE_Failure, CPLE_NotSupported,
-                    "{dest_filename} only supported from gdal_grid binary.");
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "{dest_filename} only supported from gdal_rasterize "
+                         "binary.");
             }
         }
         else
