@@ -1020,7 +1020,7 @@ GDALRasterizeOptionsNew(char **papszArgv,
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "%s switch only supported from gdal_grid binary.",
+                         "%s switch only supported from gdal_rasterize binary.",
                          papszArgv[i]);
             }
         }
