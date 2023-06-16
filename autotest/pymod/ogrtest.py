@@ -30,6 +30,7 @@ import sys
 sys.path.append("../pymod")
 
 import gdaltest
+import pytest
 
 from osgeo import ogr
 
@@ -70,41 +71,58 @@ def check_features_against_list(layer, field_name, value_list):
 
 
 @gdaltest.disable_exceptions()
-def check_feature_geometry(feat, geom, max_error=0.0001, context=None):
+def check_feature_geometry(
+    actual,
+    expected,
+    max_error=0.0001,
+    *,
+    pointwise=False,
+    context=None,
+    _root_actual=None,
+    _root_expected=None,
+):
+    """
+    Check that a geometry matches an expected value.
+
+    :param actual: ogr.Feature or ogr.Geometry to test
+    :param expected: ogr.Geometry or WKT string representing expected value
+    :param max_error: maximum error in any single ordinate (applies to pointwise comparison only)
+    :param pointwise: if True, a pointwise comparison will be used to check structural equality (ring ordering, orientation, etc.)
+                      if False, the pointwise comparison will be done only if a topological equality check (ST_Equals semantics) fails.
+    :param context: Optional context information to include in assertion failure message (e.g., "i = 5")
+    """
     __tracebackhide__ = True
-    try:
-        f_geom = feat.GetGeometryRef()
-    except Exception:
-        f_geom = feat
+    if type(actual) is ogr.Feature:
+        actual = actual.GetGeometryRef()
 
     if context:
         context_msg = f" ({context})"
     else:
         context_msg = ""
 
-    if geom is not None and isinstance(geom, type("a")):
-        geom = ogr.CreateGeometryFromWkt(geom)
-        assert geom is not None, (
+    if expected is not None and isinstance(expected, type("a")):
+        expected = ogr.CreateGeometryFromWkt(expected)
+        assert expected is not None, (
             "failed to parse expected geometry as WKT" + context_msg
         )
 
-    if geom is None:
-        assert f_geom is None, "expected NULL geometry but got one" + context_msg
+    if expected is None:
+        assert actual is None, "expected NULL geometry but got one" + context_msg
         return
     else:
-        assert f_geom is not None, "expected geometry but got NULL" + context_msg
+        assert actual is not None, "expected geometry but got NULL" + context_msg
 
-    assert geom.GetGeometryName() == geom.GetGeometryName()
+    assert expected.GetGeometryName() == expected.GetGeometryName()
 
-    assert f_geom.GetGeometryType() == geom.GetGeometryType(), (
+    assert actual.GetGeometryName() == expected.GetGeometryName(), (
         "geometry types do not match" + context_msg
     )
 
-    assert f_geom.GetGeometryCount() == geom.GetGeometryCount(), (
+    assert actual.GetGeometryCount() == expected.GetGeometryCount(), (
         "sub-geometry counts do not match" + context_msg
     )
 
-    assert f_geom.GetPointCount() == geom.GetPointCount(), (
+    assert actual.GetPointCount() == expected.GetPointCount(), (
         "point counts do not match" + context_msg
     )
 
@@ -112,41 +130,52 @@ def check_feature_geometry(feat, geom, max_error=0.0001, context=None):
     # We can't use OGRGeometry::Equals() because it doesn't test spatial
     # equality, but structural one
     if (
-        have_geos()
-        and f_geom.Within(geom)
-        and geom.Within(f_geom)
-        and ogr.GT_Flatten(f_geom.GetGeometryType()) == f_geom.GetGeometryType()
+        (not pointwise)
+        and have_geos()
+        and actual.Within(expected)
+        and expected.Within(actual)
+        and ogr.GT_Flatten(actual.GetGeometryType()) == actual.GetGeometryType()
     ):
         return
 
-    if f_geom.GetGeometryCount() > 0:
-        count = f_geom.GetGeometryCount()
+    if _root_actual is None:
+        _root_actual = actual
+    if _root_expected is None:
+        _root_expected = expected
+
+    if actual.GetGeometryCount() > 0:
+        count = actual.GetGeometryCount()
         for i in range(count):
             check_feature_geometry(
-                f_geom.GetGeometryRef(i), geom.GetGeometryRef(i), max_error
+                actual.GetGeometryRef(i),
+                expected.GetGeometryRef(i),
+                max_error,
+                context=context,
+                _root_actual=_root_actual,
+                _root_expected=_root_expected,
             )
     else:
-        count = f_geom.GetPointCount()
-        if ogr.GT_Flatten(f_geom.GetGeometryType()) == ogr.wkbPoint:
+        count = actual.GetPointCount()
+        if ogr.GT_Flatten(actual.GetGeometryType()) == ogr.wkbPoint:
             count = 1
 
         for i in range(count):
-            x_dist = abs(f_geom.GetX(i) - geom.GetX(i))
-            y_dist = abs(f_geom.GetY(i) - geom.GetY(i))
-            z_dist = abs(f_geom.GetZ(i) - geom.GetZ(i))
-            m_dist = abs(f_geom.GetM(i) - geom.GetM(i))
+            actual_pt = [actual.GetX(i), actual.GetY(i)]
+            expected_pt = [expected.GetX(i), expected.GetY(i)]
 
-            # Hack to deal with shapefile not-a-number M values that equal to -1.79769313486232e+308
-            if (
-                m_dist > max_error
-                and f_geom.GetM(i) < -1.7e308
-                and geom.GetM(i) < -1.7e308
-            ):
-                m_dist = 0
+            if actual.Is3D() or expected.Is3D():
+                actual_pt.append(actual.GetZ(i))
+                expected_pt.append(expected.GetZ(i))
 
-            assert max(x_dist, y_dist, z_dist, m_dist) <= max_error, (
-                "Error in vertex %d, off by %g." + context_msg
-            ) % (i, max(x_dist, y_dist, z_dist, m_dist))
+            if actual.IsMeasured() or expected.IsMeasured():
+                # Hack to deal with shapefile not-a-number M values that equal to -1.79769313486232e+308
+                if actual.GetM(i) >= -1.7e308 and expected.GetM(i) >= -1.7e308:
+                    actual_pt.append(actual.GetM(i))
+                    expected_pt.append(expected.GetM(i))
+
+            assert actual_pt == pytest.approx(
+                expected_pt, abs=max_error
+            ), f"Error in vertex {i}/{count} exceeds tolerance. {context_msg}\n  Expected: {_root_expected.ExportToWkt()}\n  Actual: {_root_actual.ExportToWkt()}"
 
 
 ###############################################################################
