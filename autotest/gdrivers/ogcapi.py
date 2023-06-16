@@ -45,13 +45,16 @@ from osgeo import gdal
 TEST_DATA_SOURCE_ENDPOINT = "https://maps.gnosis.earth/ogcapi"
 
 # Set RECORD to TRUE to recreate test data from the https://demo.pygeoapi.io/stable server
+# Note: when RECORD is TRUE control image are also regenerated, the test will always pass.
 RECORD = False
 
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
 
 REPLACE_PORT_RE = re.compile(rb"http://127.0.0.1:\d{4}")
 
+
 if RECORD:
+    import shutil
     import urllib
 
     import requests
@@ -79,7 +82,9 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                 BASE_TEST_DATA_PATH, sanitize_url(self.path) + ".http_data"
             )
 
-            if RECORD:
+            is_fake = self.path.find("/fakeogcapi") != -1
+
+            if is_fake and (RECORD or not os.path.exists(request_data_path)):
 
                 with open(request_data_path, "wb+") as fd:
                     response = requests.get(
@@ -97,9 +102,7 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                     content = response.content.replace(
                         TEST_DATA_SOURCE_ENDPOINT.encode("utf8"), local_uri
                     )
-                    content = response.content.replace(
-                        ENDPOINT_PATH.encode("utf8"), local_uri
-                    )
+                    content = content.replace(ENDPOINT_PATH.encode("utf8"), local_uri)
                     data = b"HTTP/2 200 OK\r\n"
                     for k, v in response.headers.items():
                         if k == "Content-Encoding":
@@ -263,12 +266,19 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
     del ds
 
 
-def test_ogr_ogcapi_maps():
+@pytest.mark.parametrize(
+    "api",
+    (
+        "MAP",
+        "TILES",
+    ),
+)
+def test_ogr_ogcapi_raster(api):
 
     ds = gdal.OpenEx(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
         gdal.OF_RASTER,
-        open_options=["API=MAP"],
+        open_options=[f"API={api}"],
     )
 
     assert ds is not None
@@ -281,8 +291,8 @@ def test_ogr_ogcapi_maps():
 
     ds = gdal.OpenEx(
         sub_ds_uri,
-        gdal.OF_VECTOR,
-        open_options=["API=MAP"],
+        gdal.OF_RASTER,
+        open_options=[f"API={api}"],
     )
 
     assert ds is not None
@@ -302,13 +312,21 @@ def test_ogr_ogcapi_maps():
     with TemporaryDirectory() as tmpdir:
         options = gdal.TranslateOptions(
             gdal.ParseCommandLine(
-                "-outsize 100 100 -oo API=MAP -projwin -9.5377 53.5421 -9.0557 53.2953"
+                f"-outsize 100 100 -oo API={api} -projwin -9.5377 53.5421 -9.0557 53.2953"
             )
         )
         out_path = os.path.join(tmpdir, "lough_corrib.png")
+
         gdal.Translate(out_path, ds, options=options)
-        with open(
-            os.path.join(BASE_TEST_DATA_PATH, "expected_map_lough_corrib.png"), "rb"
-        ) as expected:
+
+        control_image_path = os.path.join(
+            BASE_TEST_DATA_PATH, f"expected_map_lough_corrib_{api}.png"
+        )
+
+        # When recording also regenerate control images
+        if RECORD:
+            shutil.copyfile(out_path, control_image_path)
+
+        with open(control_image_path, "rb") as expected:
             with open(out_path, "rb") as out_data:
                 assert out_data.read() == expected.read()
