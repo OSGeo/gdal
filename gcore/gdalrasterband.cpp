@@ -7065,11 +7065,11 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                 int bHaveNoDataRaw = FALSE;
                 bool bIsSame = false;
                 if (eDataType == GDT_Int64)
-                    bIsSame = poNoDataMaskBand->nNoDataValueInt64 ==
+                    bIsSame = poNoDataMaskBand->m_nNoDataValueInt64 ==
                                   GetNoDataValueAsInt64(&bHaveNoDataRaw) &&
                               bHaveNoDataRaw;
                 else if (eDataType == GDT_UInt64)
-                    bIsSame = poNoDataMaskBand->nNoDataValueUInt64 ==
+                    bIsSame = poNoDataMaskBand->m_nNoDataValueUInt64 ==
                                   GetNoDataValueAsUInt64(&bHaveNoDataRaw) &&
                               bHaveNoDataRaw;
                 else
@@ -7080,8 +7080,8 @@ GDALRasterBand *GDALRasterBand::GetMaskBand()
                     {
                         bIsSame =
                             std::isnan(dfNoDataValue)
-                                ? std::isnan(poNoDataMaskBand->dfNoDataValue)
-                                : poNoDataMaskBand->dfNoDataValue ==
+                                ? std::isnan(poNoDataMaskBand->m_dfNoDataValue)
+                                : poNoDataMaskBand->m_dfNoDataValue ==
                                       dfNoDataValue;
                     }
                 }

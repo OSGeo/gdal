@@ -250,6 +250,7 @@ def main(argv):
         "gdal_viewshed",
         "gdal_create",
         "sozip",
+        "gdal_footprint",
     ]
 
     ogrtools = [
