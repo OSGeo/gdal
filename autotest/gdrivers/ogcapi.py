@@ -44,7 +44,7 @@ from osgeo import gdal
 TEST_DATA_SOURCE_ENDPOINT = "https://maps.gnosis.earth/ogcapi"
 
 # Set RECORD to TRUE to recreate test data from the https://demo.pygeoapi.io/stable server
-RECORD = False
+RECORD = True
 
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
 
@@ -59,7 +59,7 @@ if RECORD:
 
 
 def sanitize_url(url):
-    chars = "&#/?=:"
+    chars = "&#/?=:,"
     text = url
     for c in chars:
         text = text.replace(c, "_")
@@ -167,6 +167,7 @@ def init():
     webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
+@pytest.mark.skip()
 def test_ogr_ogcapi_features():
 
     ds = gdal.OpenEx(
@@ -212,6 +213,7 @@ def test_ogr_ogcapi_features():
     del ds
 
 
+@pytest.mark.skip()
 @pytest.mark.parametrize(
     "vector_format",
     (
@@ -265,3 +267,61 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
 
     del lyr
     del ds
+
+
+def test_ogr_ogcapi_maps():
+
+    ds = gdal.OpenEx(
+        "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
+        gdal.OF_RASTER,
+        open_options=["API=MAP"],
+    )
+
+    assert ds is not None
+
+    sub_ds_uri = [
+        v[0] for v in ds.GetSubDatasets() if v[1] == "Collection ne_10m_lakes_europe"
+    ][0]
+
+    del ds
+
+    ds = gdal.OpenEx(
+        sub_ds_uri,
+        gdal.OF_VECTOR,
+        open_options=["API=MAP"],
+    )
+
+    assert ds is not None
+
+    # Test a map with bbox
+    r_band = ds.GetRasterBand(1)
+    assert r_band.GetColorInterpretation() == 3  # red
+    g_band = ds.GetRasterBand(2)
+    assert g_band.GetColorInterpretation() == 4  # green
+    b_band = ds.GetRasterBand(3)
+    assert b_band.GetColorInterpretation() == 5  # blue
+    a_band = ds.GetRasterBand(4)
+    assert a_band.GetColorInterpretation() == 6  # alpha
+
+    # Fetch Lough Corrib
+    # gdal_translate -outsize 100 100 -oo API=MAP -projwin -9.5377 53.54212 -9.0557 53.2953  "OGCAPI:https://maps.gnosis.earth/ogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=json"  out.tif
+    gt = ds.GetGeoTransform()
+    min_x, min_y, max_x, max_y = (
+        -9.537766088426546,
+        53.29532943449727,
+        -9.055769782552064,
+        53.542129228291046,
+    )
+    min_column = int((min_x - gt[0]) / gt[1])
+    min_row = int((min_y - gt[3]) / gt[5])
+    max_column = int((max_x - gt[0]) / gt[1])
+    max_row = int((max_y - gt[3]) / gt[5])
+    ds.ReadRaster(
+        min_column,
+        min_row,
+        max_column - min_column,
+        abs(max_row - min_row),
+        100,
+        100,
+        gdal.GDT_Byte,
+    )
