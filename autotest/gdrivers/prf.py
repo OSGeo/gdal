@@ -91,4 +91,15 @@ def test_prf_4():
     return tst.testOpen(check_gt=(1.5, 1.0, 0.0, 9329.0, 0.0, -2.0))
 
 
+def test_prf_5():
+
+    ds = gdal.Open("./data/PRF/ph.prf")
+
+    assert (
+        ds.GetSpatialRef().GetAuthorityCode("PROJCS") == "32601"
+    ), "Invalid spatial reference"
+
+    ds = None
+
+
 ###############################################################################
