@@ -917,6 +917,29 @@ def test_ogr_basic_create_data_source_context_manager(tmp_path):
 
 
 ###############################################################################
+# check layer access after datasource has closed
+
+
+def test_layer_use_after_datasource_close_1():
+    with ogr.Open("data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+
+    # Make sure ds.__exit__() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+
+def test_layer_use_after_datasource_close_2():
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
+
+    del ds
+    # Make sure ds.__del__() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+
+###############################################################################
 # cleanup
 
 
