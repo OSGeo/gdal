@@ -2678,6 +2678,8 @@ struct GTiffDecompressContext
     std::mutex oMutex{};
     bool bSuccess = true;
 
+    std::vector<CPLErrorHandlerAccumulatorStruct> aoErrors{};
+
     VSIVirtualHandle *poHandle = nullptr;
     GTiffDataset *poDS = nullptr;
     GDALDataType eDT = GDT_Unknown;
@@ -2729,6 +2731,19 @@ struct GTiffDecompressJob
 };
 
 /************************************************************************/
+/*                  ThreadDecompressionFuncErrorHandler()               */
+/************************************************************************/
+
+static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
+    CPLErr eErr, CPLErrorNum eErrorNum, const char *pszMsg)
+{
+    GTiffDecompressContext *psContext =
+        static_cast<GTiffDecompressContext *>(CPLGetErrorHandlerUserData());
+    std::lock_guard<std::mutex> oLock(psContext->oMutex);
+    psContext->aoErrors.emplace_back(eErr, eErrorNum, pszMsg);
+}
+
+/************************************************************************/
 /*                     ThreadDecompressionFunc()                        */
 /************************************************************************/
 
@@ -2737,6 +2752,9 @@ static void ThreadDecompressionFunc(void *pData)
     const auto psJob = static_cast<const GTiffDecompressJob *>(pData);
     auto psContext = psJob->psContext;
     auto poDS = psContext->poDS;
+
+    CPLErrorHandlerPusher oErrorHandler(ThreadDecompressionFuncErrorHandler,
+                                        psContext);
 
     const int nBandsPerStrile =
         poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? poDS->nBands : 1;
@@ -3521,8 +3539,11 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                                   &sContext.nYCrbCrSubSampling1);
         }
     }
-    TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sContext.nExtraSampleCount,
-                 &sContext.pExtraSamples);
+    if (m_nPlanarConfig == PLANARCONFIG_CONTIG)
+    {
+        TIFFGetField(m_hTIFF, TIFFTAG_EXTRASAMPLES, &sContext.nExtraSampleCount,
+                     &sContext.pExtraSamples);
+    }
 
     // Create one job per tile/strip
     vsi_l_offset nFileSize = 0;
@@ -3665,6 +3686,12 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
 
         // Undo effect of above TemporarilyDropReadWriteLock()
         ReacquireReadWriteLock();
+
+        // Re-emit errors caught in threads
+        for (const auto &oError : sContext.aoErrors)
+        {
+            CPLError(oError.type, oError.no, "%s", oError.msg.c_str());
+        }
     }
 
     return sContext.bSuccess ? CE_None : CE_Failure;

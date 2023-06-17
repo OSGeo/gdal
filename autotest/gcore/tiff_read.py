@@ -4601,6 +4601,21 @@ def test_tiff_jxl_read_for_files_created_before_6393():
             True,
             100,
             100,
+            3,
+            gdal.GDT_Byte,
+            [
+                "COMPRESS=LZW",
+                "TILED=YES",
+                "BLOCKXSIZE=16",
+                "BLOCKYSIZE=32",
+                "INTERLEAVE=BAND",
+                "PHOTOMETRIC=MINISBLACK",
+            ],
+        ),
+        (
+            True,
+            100,
+            100,
             1,
             gdal.GDT_Byte,
             [
