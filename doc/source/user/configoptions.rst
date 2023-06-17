@@ -858,17 +858,21 @@ Persistent Auxiliary Metadata (PAM) options
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  .. config:: GDAL_PAM_ENABLED
+      :choices: YES, NO
 
       PAM support can be enabled (resp. disabled) in GDAL by setting the
-      GDAL_PAM_ENABLED configuration option (via CPLSetConfigOption(), or the
+      :config:`GDAL_PAM_ENABLED` configuration option (via CPLSetConfigOption(), or the
       environment) to the value of YES (resp. NO). Note: The default value is build
-      dependent and defaults to YES in Windows and Unix builds. See GDALPamDataset
+      dependent and defaults to YES in Windows and Unix builds. See :cpp:class:`GDALPamDataset`
       for more information. Note that setting this option to OFF may have
       subtle/silent side-effects on various drivers that rely on PAM functionality.
 
--  .. config:: GDAL_PAM_MODE
-
 -  .. config:: GDAL_PAM_PROXY_DIR
+
+      Directory to which ``.aux.xml`` files will be written when accessing
+      files from a location where the user does not have write permissions. Has
+      no effect when accessing files from locations where the user does have
+      write permissions. Must be set before the first access to PAM.
 
 PROJ options
 ^^^^^^^^^^^^
