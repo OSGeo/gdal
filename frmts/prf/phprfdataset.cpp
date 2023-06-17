@@ -635,6 +635,7 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         if (nBytes > 0 && nBytes < nBufMax - 1)
         {
             auto poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
             pszWKT[nBytes] = '\0';
             if (poSRS->importFromWkt(pszWKT) == OGRERR_NONE)
             {
