@@ -308,7 +308,7 @@ export EXTRA_LIBS="-Wl,-Bstatic "
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lcurl -lssl -lcrypto -lz"
 # PROJ
 export EXTRA_LIBS="$EXTRA_LIBS -lproj -ltiff "
-export EXTRA_LIBS="$EXTRA_LIBS -ljbig -lzstd -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -ljpeg -lz"
+export EXTRA_LIBS="$EXTRA_LIBS -ljbig -lzstd -lwebp -llzma -lexpat -L$SRC/install/lib -lsqlite3 -lgif -ljpeg -lpng -lz"
 # Xerces-C related
 export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lxerces-c"
 if [ "$ARCHITECTURE" = "x86_64" ]; then
