@@ -85,6 +85,19 @@ def test_tiff_open(filename, band, checksum):
     ut.testOpen()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
+
+    with gdal.config_option("GTIFF_FORCE_RGBA", "YES"):
+        ds = gdal.Open("data/stefan_full_greyalpha.tif")
+
+    gdaltest.supports_force_rgba = False
+    if ds.RasterCount == 4:
+        gdaltest.supports_force_rgba = True
+
+    yield
+
+
 ###############################################################################
 # Test absolute/offset && index directory access
 
@@ -159,9 +172,7 @@ def test_tiff_check_alpha():
 
     with gdal.config_option("GTIFF_FORCE_RGBA", "YES"):
         ds = gdal.Open("data/stefan_full_greyalpha.tif")
-    gdaltest.supports_force_rgba = False
-    if ds.RasterCount == 4:
-        gdaltest.supports_force_rgba = True
+
     if gdaltest.supports_force_rgba:
         got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
         assert got_cs == [1970, 1970, 1970, 10807]
@@ -3636,7 +3647,7 @@ def test_tiff_read_huge_number_strips():
 
     md = gdal.GetDriverByName("GTiff").GetMetadata()
     if md["LIBTIFF"] != "INTERNAL":
-        pytest.skip()
+        pytest.skip("Test for internal libtiff")
 
     with gdaltest.error_handler():
         ds = gdal.Open("data/huge-number-strips.tif")
@@ -3650,7 +3661,7 @@ def test_tiff_read_huge_number_strips():
 def test_tiff_read_huge_implied_number_strips():
 
     if not check_libtiff_internal_or_at_least(4, 0, 10):
-        pytest.skip()
+        pytest.skip("Test for internal libtiff or external libtiff >= 4.0.10")
 
     with gdaltest.error_handler():
         with gdal.ExceptionMgr(useExceptions=False):
@@ -3683,7 +3694,7 @@ def test_tiff_read_many_blocks_truncated():
 
     md = gdal.GetDriverByName("GTiff").GetMetadata()
     if md["LIBTIFF"] != "INTERNAL":
-        pytest.skip()
+        pytest.skip("Test for internal libtiff")
 
     ds = gdal.Open("data/many_blocks_truncated.tif")
     with pytest.raises(Exception):
