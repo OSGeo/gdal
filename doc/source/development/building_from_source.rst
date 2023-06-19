@@ -1456,7 +1456,8 @@ methods of Google Cloud. It might be required to use the :ref:`raster.eedai`
 images or use the :ref:`/vsigs/ <vsigs>` virtual file system.
 
 See https://cmake.org/cmake/help/latest/module/FindOpenSSL.html for details on
-how to configure the library
+how to configure the library. For static linking, the following options may
+be needed: -DOPENSSL_USE_STATIC_LIBS=TRUE -DOPENSSL_MSVC_STATIC_RT=TRUE
 
 .. option:: GDAL_USE_OPENSSL=ON/OFF
 
