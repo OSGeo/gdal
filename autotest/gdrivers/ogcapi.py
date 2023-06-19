@@ -84,7 +84,7 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
 
             is_fake = self.path.find("/fakeogcapi") != -1
 
-            if is_fake and (RECORD or not os.path.exists(request_data_path)):
+            if is_fake and RECORD:
 
                 with open(request_data_path, "wb+") as fd:
                     response = requests.get(
