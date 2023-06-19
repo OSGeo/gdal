@@ -494,6 +494,12 @@ the XercesC library.
 
     Path to a shared or static library file.
 
+.. option:: EXPAT_USE_STATIC_LIBS=ON/OFF
+
+    .. versionadded:: 3.7.1
+
+    Must be set to ON when linking against a static build of Expat.
+
 .. option:: GDAL_USE_EXPAT=ON/OFF
 
     Control whether to use EXPAT. Defaults to ON when EXPAT is found.
