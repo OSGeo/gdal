@@ -6408,6 +6408,8 @@ class GDALMDArrayMask final : public GDALPamMDArray
     std::vector<uint32_t> m_anValidFlagMasks{};
     std::vector<uint32_t> m_anValidFlagValues{};
 
+    bool Init(CSLConstList papszOptions);
+
     template <typename Type>
     void
     ReadInternal(const size_t *count, const GPtrDiff_t *bufferStride,
@@ -6484,11 +6486,21 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
 {
     auto newAr(std::shared_ptr<GDALMDArrayMask>(new GDALMDArrayMask(poParent)));
     newAr->SetSelf(newAr);
+    if (!newAr->Init(papszOptions))
+        return nullptr;
+    return newAr;
+}
 
+/************************************************************************/
+/*                    GDALMDArrayMask::Init()                           */
+/************************************************************************/
+
+bool GDALMDArrayMask::Init(CSLConstList papszOptions)
+{
     const auto GetSingleValNumericAttr =
-        [&poParent](const char *pszAttrName, bool &bHasVal, double &dfVal)
+        [this](const char *pszAttrName, bool &bHasVal, double &dfVal)
     {
-        auto poAttr = poParent->GetAttribute(pszAttrName);
+        auto poAttr = m_poParent->GetAttribute(pszAttrName);
         if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_NUMERIC)
         {
             const auto anDimSizes = poAttr->GetDimensionsSize();
@@ -6501,27 +6513,24 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
         }
     };
 
-    GetSingleValNumericAttr("missing_value", newAr->m_bHasMissingValue,
-                            newAr->m_dfMissingValue);
-    GetSingleValNumericAttr("_FillValue", newAr->m_bHasFillValue,
-                            newAr->m_dfFillValue);
-    GetSingleValNumericAttr("valid_min", newAr->m_bHasValidMin,
-                            newAr->m_dfValidMin);
-    GetSingleValNumericAttr("valid_max", newAr->m_bHasValidMax,
-                            newAr->m_dfValidMax);
+    GetSingleValNumericAttr("missing_value", m_bHasMissingValue,
+                            m_dfMissingValue);
+    GetSingleValNumericAttr("_FillValue", m_bHasFillValue, m_dfFillValue);
+    GetSingleValNumericAttr("valid_min", m_bHasValidMin, m_dfValidMin);
+    GetSingleValNumericAttr("valid_max", m_bHasValidMax, m_dfValidMax);
 
     {
-        auto poValidRange = poParent->GetAttribute("valid_range");
+        auto poValidRange = m_poParent->GetAttribute("valid_range");
         if (poValidRange && poValidRange->GetDimensionsSize().size() == 1 &&
             poValidRange->GetDimensionsSize()[0] == 2 &&
             poValidRange->GetDataType().GetClass() == GEDTC_NUMERIC)
         {
-            newAr->m_bHasValidMin = true;
-            newAr->m_bHasValidMax = true;
+            m_bHasValidMin = true;
+            m_bHasValidMax = true;
             auto vals = poValidRange->ReadAsDoubleArray();
             CPLAssert(vals.size() == 2);
-            newAr->m_dfValidMin = vals[0];
-            newAr->m_dfValidMax = vals[1];
+            m_dfValidMin = vals[0];
+            m_dfValidMax = vals[1];
         }
     }
 
@@ -6541,20 +6550,20 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
                      poAttr->GetDimensionsSize()[0] == 1));
         };
 
-        auto poFlagMeanings = poParent->GetAttribute("flag_meanings");
+        auto poFlagMeanings = m_poParent->GetAttribute("flag_meanings");
         if (!(poFlagMeanings && IsScalarStringAttr(poFlagMeanings)))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "UNMASK_FLAGS option specified but array has no "
                      "flag_meanings attribute");
-            return nullptr;
+            return false;
         }
         const char *pszFlagMeanings = poFlagMeanings->ReadAsString();
         if (!pszFlagMeanings)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot read flag_meanings attribute");
-            return nullptr;
+            return false;
         }
 
         const auto IsSingleDimNumericAttr =
@@ -6564,11 +6573,11 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
                    poAttr->GetDimensionsSize().size() == 1;
         };
 
-        auto poFlagValues = poParent->GetAttribute("flag_values");
+        auto poFlagValues = m_poParent->GetAttribute("flag_values");
         const bool bHasFlagValues =
             poFlagValues && IsSingleDimNumericAttr(poFlagValues);
 
-        auto poFlagMasks = poParent->GetAttribute("flag_masks");
+        auto poFlagMasks = m_poParent->GetAttribute("flag_masks");
         const bool bHasFlagMasks =
             poFlagMasks && IsSingleDimNumericAttr(poFlagMasks);
 
@@ -6576,7 +6585,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot find flag_values and/or flag_masks attribute");
-            return nullptr;
+            return false;
         }
 
         const CPLStringList aosUnmaskFlags(
@@ -6594,7 +6603,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Unsupported data type for flag_values attribute: %s",
                          GDALGetDataTypeName(eType));
-                return nullptr;
+                return false;
             }
         }
 
@@ -6608,7 +6617,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
                 CPLError(CE_Failure, CPLE_NotSupported,
                          "Unsupported data type for flag_masks attribute: %s",
                          GDALGetDataTypeName(eType));
-                return nullptr;
+                return false;
             }
         }
 
@@ -6624,7 +6633,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Number of values in flag_values attribute is different "
                      "from the one in flag_meanings");
-            return nullptr;
+            return false;
         }
 
         if (bHasFlagMasks &&
@@ -6633,7 +6642,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Number of values in flag_masks attribute is different "
                      "from the one in flag_meanings");
-            return nullptr;
+            return false;
         }
 
         for (int i = 0; i < aosUnmaskFlags.size(); ++i)
@@ -6645,7 +6654,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
                     CE_Failure, CPLE_AppDefined,
                     "Cannot fing flag %s in flag_meanings = '%s' attribute",
                     aosUnmaskFlags[i], pszFlagMeanings);
-                return nullptr;
+                return false;
             }
 
             if (bHasFlagValues && adfValues[nIdxFlag] < 0)
@@ -6653,7 +6662,7 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid value in flag_values[%d] = %f", nIdxFlag,
                          adfValues[nIdxFlag]);
-                return nullptr;
+                return false;
             }
 
             if (bHasFlagMasks && adfMasks[nIdxFlag] < 0)
@@ -6661,24 +6670,24 @@ GDALMDArrayMask::Create(const std::shared_ptr<GDALMDArray> &poParent,
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Invalid value in flag_masks[%d] = %f", nIdxFlag,
                          adfMasks[nIdxFlag]);
-                return nullptr;
+                return false;
             }
 
             if (bHasFlagValues)
             {
-                newAr->m_anValidFlagValues.push_back(
+                m_anValidFlagValues.push_back(
                     static_cast<uint32_t>(adfValues[nIdxFlag]));
             }
 
             if (bHasFlagMasks)
             {
-                newAr->m_anValidFlagMasks.push_back(
+                m_anValidFlagMasks.push_back(
                     static_cast<uint32_t>(adfMasks[nIdxFlag]));
             }
         }
     }
 
-    return newAr;
+    return true;
 }
 
 /************************************************************************/
