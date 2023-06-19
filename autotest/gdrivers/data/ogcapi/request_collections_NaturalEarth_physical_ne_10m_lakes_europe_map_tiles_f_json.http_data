@@ -1,12 +1,12 @@
 HTTP/2 200 OK
-Date: Mon, 19 Jun 2023 10:59:10 GMT
+Date: Mon, 19 Jun 2023 11:01:31 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Expires: Wed, 12 Jun 2024 14:20:53 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
 Content-Length: 19903
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 506296
+Age: 506438
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 Content-Type: application/json
@@ -17,91 +17,91 @@ Content-Type: application/json
          "rel" : "self",
          "type" : "application/json",
          "title" : "The JSON representation of the available map tilesets for ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/?f=json"
       },
       {
          "rel" : "alternate",
          "type" : "text/plain",
          "title" : "The ECON representation of the available map tilesets for ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/?f=econ"
       },
       {
          "rel" : "alternate",
          "type" : "text/html",
          "title" : "The HTML representation of the available map tilesets for ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector",
          "type" : "application/json",
          "title" : "Vector tilesets for ne_10m_lakes_europe (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector",
          "type" : "text/plain",
          "title" : "Vector tilesets for ne_10m_lakes_europe (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector",
          "type" : "text/html",
          "title" : "Vector tilesets for ne_10m_lakes_europe (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "application/json",
          "title" : "Map tilesets for ne_10m_lakes_europe (default style) (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/default/map/tiles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/default/map/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/plain",
          "title" : "Map tilesets for ne_10m_lakes_europe (default style) (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/default/map/tiles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/default/map/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/html",
          "title" : "Map tilesets for ne_10m_lakes_europe (default style) (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/default/map/tiles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/default/map/tiles?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "application/json",
          "title" : "Map tilesets for ne_10m_lakes_europe (sldImportTest style) (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/sldImportTest/map/tiles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/sldImportTest/map/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/plain",
          "title" : "Map tilesets for ne_10m_lakes_europe (sldImportTest style) (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/sldImportTest/map/tiles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/sldImportTest/map/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/html",
          "title" : "Map tilesets for ne_10m_lakes_europe (sldImportTest style) (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/sldImportTest/map/tiles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/sldImportTest/map/tiles?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "application/json",
          "title" : "Map tilesets for ne_10m_lakes_europe (mbglImportTest style) (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/mbglImportTest/map/tiles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/mbglImportTest/map/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/plain",
          "title" : "Map tilesets for ne_10m_lakes_europe (mbglImportTest style) (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/mbglImportTest/map/tiles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/mbglImportTest/map/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/html",
          "title" : "Map tilesets for ne_10m_lakes_europe (mbglImportTest style) (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/mbglImportTest/map/tiles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles/mbglImportTest/map/tiles?f=html"
       }
    ],
    "tilesets" : [
@@ -115,25 +115,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "CDB1GlobalGridTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/CDB1GlobalGrid"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/CDB1GlobalGrid"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "CDB1GlobalGrid map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/CDB1GlobalGrid?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/CDB1GlobalGrid?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "CDB1GlobalGrid map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/CDB1GlobalGrid?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/CDB1GlobalGrid?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "CDB1GlobalGrid map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/CDB1GlobalGrid?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/CDB1GlobalGrid?f=tilejson"
             }
          ]
       },
@@ -147,25 +147,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "GlobalCRS84PixelTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/GlobalCRS84Pixel"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GlobalCRS84Pixel"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "GlobalCRS84Pixel map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Pixel?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Pixel?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "GlobalCRS84Pixel map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Pixel?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Pixel?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "GlobalCRS84Pixel map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Pixel?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Pixel?f=tilejson"
             }
          ]
       },
@@ -179,25 +179,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "GlobalCRS84ScaleTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/GlobalCRS84Scale"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GlobalCRS84Scale"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "GlobalCRS84Scale map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Scale?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Scale?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "GlobalCRS84Scale map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Scale?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Scale?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "GlobalCRS84Scale map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Scale?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GlobalCRS84Scale?f=tilejson"
             }
          ]
       },
@@ -211,25 +211,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "GNOSISGlobalGridTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/GNOSISGlobalGrid"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GNOSISGlobalGrid"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "GNOSISGlobalGrid map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GNOSISGlobalGrid?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GNOSISGlobalGrid?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "GNOSISGlobalGrid map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GNOSISGlobalGrid?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GNOSISGlobalGrid?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "GNOSISGlobalGrid map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GNOSISGlobalGrid?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GNOSISGlobalGrid?f=tilejson"
             }
          ]
       },
@@ -243,25 +243,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "GoogleCRS84QuadTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/GoogleCRS84Quad"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GoogleCRS84Quad"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "GoogleCRS84Quad map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GoogleCRS84Quad?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GoogleCRS84Quad?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "GoogleCRS84Quad map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GoogleCRS84Quad?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GoogleCRS84Quad?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "GoogleCRS84Quad map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GoogleCRS84Quad?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/GoogleCRS84Quad?f=tilejson"
             }
          ]
       },
@@ -275,25 +275,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "ISEA9DiamondsTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/ISEA9Diamonds"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/ISEA9Diamonds"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "ISEA9Diamonds map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/ISEA9Diamonds?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/ISEA9Diamonds?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "ISEA9Diamonds map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/ISEA9Diamonds?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/ISEA9Diamonds?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "ISEA9Diamonds map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/ISEA9Diamonds?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/ISEA9Diamonds?f=tilejson"
             }
          ]
       },
@@ -307,25 +307,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "WebMercatorQuadTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/WebMercatorQuad"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WebMercatorQuad"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "WebMercatorQuad map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WebMercatorQuad?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WebMercatorQuad?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "WebMercatorQuad map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WebMercatorQuad?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WebMercatorQuad?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "WebMercatorQuad map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WebMercatorQuad?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WebMercatorQuad?f=tilejson"
             }
          ]
       },
@@ -339,25 +339,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "WorldCRS84QuadTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/WorldCRS84Quad"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldCRS84Quad"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "WorldCRS84Quad map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "WorldCRS84Quad map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "WorldCRS84Quad map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldCRS84Quad?f=tilejson"
             }
          ]
       },
@@ -371,25 +371,25 @@ Content-Type: application/json
                "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
                "type" : "application/json",
                "title" : "WorldMercatorWGS84QuadTileMatrixSet definition (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/tileMatrixSets/WorldMercatorWGS84Quad"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldMercatorWGS84Quad"
             },
             {
                "rel" : "self",
                "type" : "application/json",
                "title" : "WorldMercatorWGS84Quad map tileset for ne_10m_lakes_europe (as JSON)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldMercatorWGS84Quad?f=json"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldMercatorWGS84Quad?f=json"
             },
             {
                "rel" : "self",
                "type" : "text/html",
                "title" : "WorldMercatorWGS84Quad map tileset for ne_10m_lakes_europe (as HTML)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldMercatorWGS84Quad?f=html"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldMercatorWGS84Quad?f=html"
             },
             {
                "rel" : "self",
                "type" : "application/json+tilejson",
                "title" : "WorldMercatorWGS84Quad map tileset for ne_10m_lakes_europe (in TileJSON format)",
-               "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldMercatorWGS84Quad?f=tilejson"
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles/WorldMercatorWGS84Quad?f=tilejson"
             }
          ]
       }

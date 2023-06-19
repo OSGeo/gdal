@@ -63,7 +63,7 @@ if RECORD:
 
 
 def sanitize_url(url):
-    chars = "&#/?=:,"
+    chars = "&#/?=:,()"
     text = url
     for c in chars:
         text = text.replace(c, "_")

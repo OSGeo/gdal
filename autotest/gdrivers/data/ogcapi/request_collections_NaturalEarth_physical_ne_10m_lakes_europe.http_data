@@ -1,12 +1,12 @@
 HTTP/2 200 OK
-Date: Mon, 19 Jun 2023 10:59:05 GMT
+Date: Mon, 19 Jun 2023 11:01:27 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Expires: Wed, 12 Jun 2024 14:15:05 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
 Content-Length: 11484
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 506640
+Age: 506782
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 Content-Type: application/json
@@ -17,228 +17,228 @@ Content-Type: application/json
          "rel" : "self",
          "type" : "application/json",
          "title" : "Information about the ne_10m_lakes_europe data (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=json"
       },
       {
          "rel" : "alternate",
          "type" : "text/plain",
          "title" : "Information about the ne_10m_lakes_europe data (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=econ"
       },
       {
          "rel" : "alternate",
          "type" : "text/mapml",
          "title" : "Information about the ne_10m_lakes_europe data (as MapML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=mapml"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=mapml"
       },
       {
          "rel" : "alternate",
          "type" : "text/html",
          "title" : "Information about the ne_10m_lakes_europe data (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggs-list",
          "title" : "Discrete Global Grid Systems for ne_10m_lakes_europe",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/dggs"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/dggs"
       },
       {
          "rel" : "queryables",
          "type" : "application/json",
          "title" : "Queryables (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=json"
       },
       {
          "rel" : "queryables",
          "type" : "text/plain",
          "title" : "Queryables (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=econ"
       },
       {
          "rel" : "queryables",
          "type" : "text/xml",
          "title" : "Queryables (as XSD/WFS schema)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=xsd"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=xsd"
       },
       {
          "rel" : "queryables",
          "type" : "text/html",
          "title" : "Queryables (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/queryables?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/0.0/schema-item",
          "type" : "application/json",
          "title" : "Data attributes (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schemas/feature?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schemas/feature?f=json"
       },
       {
          "rel" : "describedby",
          "type" : "text/plain",
          "title" : "Data attributes (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=econ"
       },
       {
          "rel" : "describedby",
          "type" : "text/xml",
          "title" : "Data attributes (as XSD/WFS schema)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=xsd"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=xsd"
       },
       {
          "rel" : "describedby",
          "type" : "text/html",
          "title" : "Data attributes (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/schema?f=html"
       },
       {
          "rel" : "items",
          "type" : "application/geo+json",
          "title" : "ne_10m_lakes_europe (as F&G GeoJSON; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.json"
       },
       {
          "rel" : "items",
          "type" : "application/vnd.ogc.fg+json",
          "title" : "ne_10m_lakes_europe (as GeoJSON; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.fgjson"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.fgjson"
       },
       {
          "rel" : "items",
          "type" : "application/vnd.geo+econ",
          "title" : "ne_10m_lakes_europe (as GeoECON; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.econ"
       },
       {
          "rel" : "items",
          "type" : "text/xml; subtype=gml/3.1.1",
          "title" : "ne_10m_lakes_europe (as GML; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.gml"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.gml"
       },
       {
          "rel" : "items",
          "type" : "application/vnd.mapbox-vector-tile",
          "title" : "ne_10m_lakes_europe (as Mapbox Vector Tile; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.mvt"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.mvt"
       },
       {
          "rel" : "items",
          "type" : "text/mapml",
          "title" : "ne_10m_lakes_europe (as MapML; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.mapml"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items.mapml"
       },
       {
          "rel" : "item",
          "type" : "application/geo+json",
          "title" : "ne_10m_lakes_europe (individual feature as GeoJSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.json",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.json",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "application/vnd.ogc.fg+json",
          "title" : "ne_10m_lakes_europe (individual feature as F&G GeoJSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.fgjson",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.fgjson",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "application/vnd.geo+econ",
          "title" : "ne_10m_lakes_europe (individual feature as GeoECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.econ",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.econ",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "text/xml; subtype=gml/3.1.1",
          "title" : "ne_10m_lakes_europe (individual feature as GML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.gml",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.gml",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "application/vnd.mapbox-vector-tile",
          "title" : "ne_10m_lakes_europe (individual feature as Mapbox Vector Tile)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.mvt",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.mvt",
          "templated" : true
       },
       {
          "rel" : "item",
          "type" : "text/mapml",
          "title" : "ne_10m_lakes_europe (individual feature as MapML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.mapml",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items/{featureId}.mapml",
          "templated" : true
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector",
          "type" : "application/json",
          "title" : "Vector tilesets available for this dataset (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector",
          "type" : "text/plain",
          "title" : "Vector tilesets available for this dataset (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-vector",
          "type" : "text/html",
          "title" : "Vector tilesets available for this dataset (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/tiles?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/map",
          "type" : "image/png",
          "title" : "Default map (as PNG)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map.png"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map.png"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/map",
          "type" : "image/jpeg",
          "title" : "Default map (as JPG)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map.jpg"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map.jpg"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/map",
          "type" : "image/tif",
          "title" : "Default map (as GeoTIFF)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map.tif"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map.tif"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "application/json",
          "title" : "Map tilesets available for this dataset (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/plain",
          "title" : "Map tilesets available for this dataset (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/html",
          "title" : "Map tilesets available for this dataset (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/map/tiles?f=html"
       },
       {
          "rel" : "styles",
          "type" : "text/html",
          "title" : "Styles for ne_10m_lakes_europe (as HTML)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles?f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles?f=html"
       },
       {
          "rel" : "styles",
          "type" : "application/json",
          "title" : "Styles for ne_10m_lakes_europe (as JSON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles?f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles?f=json"
       },
       {
          "rel" : "styles",
          "type" : "text/plain",
          "title" : "Styles for ne_10m_lakes_europe (as ECON)",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles?f=econ"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/styles?f=econ"
       }
    ],
    "title" : "ne_10m_lakes_europe",

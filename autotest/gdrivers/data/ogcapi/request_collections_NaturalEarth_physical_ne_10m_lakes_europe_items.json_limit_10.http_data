@@ -1,5 +1,5 @@
 HTTP/2 200 OK
-Date: Mon, 19 Jun 2023 10:58:52 GMT
+Date: Mon, 19 Jun 2023 11:01:13 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Expires: Wed, 12 Jun 2024 14:15:05 GMT
 Access-Control-Allow-Origin: *
@@ -7,7 +7,7 @@ Vary: Accept,Accept-Encoding,Prefer
 Content-Crs: <http://www.opengis.net/def/crs/OGC/1.3/CRS84>
 Content-Length: 15561
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 506626
+Age: 506768
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 Content-Type: application/json; charset=utf-8
@@ -236,22 +236,22 @@ Content-Type: application/json; charset=utf-8
       {
          "rel" : "self",
          "type" : "application/geo+json",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?limit=10&f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?limit=10&f=json"
       },
       {
          "rel" : "alternate",
          "type" : "text/html",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?limit=10&f=html"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?limit=10&f=html"
       },
       {
          "rel" : "next",
          "type" : "application/geo+json",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?offset=10&limit=10&f=json"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe/items?offset=10&limit=10&f=json"
       },
       {
          "rel" : "collection",
          "type" : "application/json",
-         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe"
       }
    ],
    "timeStamp" : "2023-06-13T14:15:05Z"
