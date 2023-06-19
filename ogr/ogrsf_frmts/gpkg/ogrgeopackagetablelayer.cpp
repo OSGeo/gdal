@@ -7333,7 +7333,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
                     nWKBSize = nBlobSize - oHeader.nHeaderLen;
                 }
             }
-            else if (nBlobSize > 0)
+            else if (nBlobSize > 0 && pabyBlob)
             {
                 // Try also spatialite geometry blobs, although that is
                 // not really expected...
