@@ -1,12 +1,12 @@
 HTTP/2 200 OK
-Date: Mon, 19 Jun 2023 06:33:53 GMT
+Date: Mon, 19 Jun 2023 10:59:11 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Expires: Tue, 18 Jun 2024 06:29:01 GMT
 Access-Control-Allow-Origin: *
 Vary: Accept,Accept-Encoding,Prefer
 Content-Length: 6977
 Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
-Age: 291
+Age: 16209
 Keep-Alive: timeout=5, max=100
 Connection: Keep-Alive
 Content-Type: application/json
@@ -17,126 +17,126 @@ Content-Type: application/json
          "rel" : "self",
          "type" : "application/json",
          "title" : "Information about the SRTM ViewFinderPanorama data (as JSON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=json"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=json"
       },
       {
          "rel" : "alternate",
          "type" : "text/plain",
          "title" : "Information about the SRTM ViewFinderPanorama data (as ECON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=econ"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=econ"
       },
       {
          "rel" : "alternate",
          "type" : "text/mapml",
          "title" : "Information about the SRTM ViewFinderPanorama data (as MapML)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=mapml"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=mapml"
       },
       {
          "rel" : "alternate",
          "type" : "text/html",
          "title" : "Information about the SRTM ViewFinderPanorama data (as HTML)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=html"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/dggs-list",
          "title" : "Discrete Global Grid Systems for SRTM ViewFinderPanorama",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/dggs"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/dggs"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/coverage",
          "type" : "image/png",
          "title" : "SRTM ViewFinderPanorama (as PNG; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage?f=png"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage?f=png"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/coverage",
          "type" : "image/tiff; application=geotiff",
          "title" : "SRTM ViewFinderPanorama (as GeoTIFF; Note: requesting large extent may result in generalized data)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage?f=tif"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage?f=tif"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/coverage-domainset",
          "type" : "application/json",
          "title" : "SRTM ViewFinderPanorama (domain set of the coverage for this collection)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/domainset?f=json"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/domainset?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/coverage-rangetype",
          "type" : "application/json",
          "title" : "SRTM ViewFinderPanorama (range type of the coverage for this collection)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/rangetype?f=json"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/rangetype?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
          "type" : "application/json",
          "title" : "Coverage tilesets available for this dataset (as JSON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/tiles?f=json"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
          "type" : "text/plain",
          "title" : "Coverage tilesets available for this dataset (as ECON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/tiles?f=econ"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
          "type" : "text/html",
          "title" : "Coverage tilesets available for this dataset (as HTML)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/tiles?f=html"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/coverage/tiles?f=html"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/map",
          "type" : "image/png",
          "title" : "Default map (as PNG)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/map.png"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/map.png"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/map",
          "type" : "image/jpeg",
          "title" : "Default map (as JPG)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/map.jpg"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/map.jpg"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/map",
          "type" : "image/tif",
          "title" : "Default map (as GeoTIFF)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/map.tif"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/map.tif"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "application/json",
          "title" : "Map tilesets available for this dataset (as JSON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/map/tiles?f=json"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/map/tiles?f=json"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/plain",
          "title" : "Map tilesets available for this dataset (as ECON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/map/tiles?f=econ"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/map/tiles?f=econ"
       },
       {
          "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
          "type" : "text/html",
          "title" : "Map tilesets available for this dataset (as HTML)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/map/tiles?f=html"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/map/tiles?f=html"
       },
       {
          "rel" : "styles",
          "type" : "text/html",
          "title" : "Styles for SRTM ViewFinderPanorama (as HTML)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/styles?f=html"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/styles?f=html"
       },
       {
          "rel" : "styles",
          "type" : "application/json",
          "title" : "Styles for SRTM ViewFinderPanorama (as JSON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/styles?f=json"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/styles?f=json"
       },
       {
          "rel" : "styles",
          "type" : "text/plain",
          "title" : "Styles for SRTM ViewFinderPanorama (as ECON)",
-         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/SRTM_ViewFinderPanorama/styles?f=econ"
+         "href" : "http://127.0.0.1:8081/fakeogcapi/collections/SRTM_ViewFinderPanorama/styles?f=econ"
       }
    ],
    "title" : "SRTM ViewFinderPanorama",
