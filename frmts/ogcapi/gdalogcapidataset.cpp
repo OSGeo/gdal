@@ -822,7 +822,7 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
         if (!osTilesetsMapURL.empty())
             bRet = InitWithTilesAPI(poOpenInfo, osTilesetsMapURL, true, dfXMin,
                                     dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
-        if (!osTilesetsVectorURL.empty())
+        if (!bRet && !osTilesetsVectorURL.empty())
             bRet =
                 InitWithTilesAPI(poOpenInfo, osTilesetsVectorURL, false, dfXMin,
                                  dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
