@@ -70,7 +70,7 @@
 #define MVT_MBTILES_COMMON_DSCO                                                \
     MVT_MBTILES_PMTILES_COMMON_DSCO                                            \
     "  <Option name='COMPRESS' scope='vector' type='boolean' description="     \
-    "'Whether to deflate-compress tiles' default='YES'/>"                      \
+    "'Whether to GZip-compress tiles' default='YES'/>"                         \
     "  <Option name='TEMPORARY_DB' scope='vector' type='string' description='" \
     "Filename with path for the temporary database'/>"
 
