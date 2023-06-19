@@ -250,8 +250,9 @@ Performance and caching
       Number of datasets that can be opened simultaneously by the GDALProxyPool
       mechanism (used by VRT for example). Can be increased to get better random I/O
       performance with VRT mosaics made of numerous underlying raster files. Be
-      careful : on Linux systems, the number of file handles that can be opened by a
-      process is generally limited to 1024.
+      careful: on Linux systems, the number of file handles that can be opened by a
+      process is generally limited to 1024. This is currently clamped between 2 and
+      1000.
 
 -  .. config:: GDAL_MAX_DATASET_POOL_RAM_USAGE
       :since: 3.7
