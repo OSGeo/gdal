@@ -384,6 +384,12 @@ CURL
     Path to a shared or static library file, such as ``libcurl.dll``,
     ``libcurl.so``, ``libcurl.lib``, or other name.
 
+.. option:: CURL_USE_STATIC_LIBS=ON/OFF
+
+    .. versionadded:: 3.7.1
+
+    Must be set to ON when linking against a static build of Curl.
+
 .. option:: GDAL_USE_CURL=ON/OFF
 
     Control whether to use Curl. Defaults to ON when Curl is found.
