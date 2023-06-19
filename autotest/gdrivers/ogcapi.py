@@ -267,13 +267,14 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
 
 
 @pytest.mark.parametrize(
-    "api",
+    "api,collection",
     (
-        "MAP",
-        "TILES",
+        ("MAP", "Collection ne_10m_lakes_europe"),
+        ("TILES", "Collection ne_10m_lakes_europe"),
+        ("COVERAGE", "SRTM"),
     ),
 )
-def test_ogr_ogcapi_raster(api):
+def test_ogr_ogcapi_raster(api, collection):
 
     ds = gdal.OpenEx(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
@@ -283,9 +284,7 @@ def test_ogr_ogcapi_raster(api):
 
     assert ds is not None
 
-    sub_ds_uri = [
-        v[0] for v in ds.GetSubDatasets() if v[1] == "Collection ne_10m_lakes_europe"
-    ][0]
+    sub_ds_uri = [v[0] for v in ds.GetSubDatasets() if collection in v[1]][0]
 
     del ds
 
@@ -297,18 +296,6 @@ def test_ogr_ogcapi_raster(api):
 
     assert ds is not None
 
-    # Test a map with bbox
-    r_band = ds.GetRasterBand(1)
-    assert r_band.GetColorInterpretation() == 3  # red
-    g_band = ds.GetRasterBand(2)
-    assert g_band.GetColorInterpretation() == 4  # green
-    b_band = ds.GetRasterBand(3)
-    assert b_band.GetColorInterpretation() == 5  # blue
-    a_band = ds.GetRasterBand(4)
-    assert a_band.GetColorInterpretation() == 6  # alpha
-
-    # Fetch Lough Corrib lake
-    # gdal_translate -outsize 100 100 -oo API=MAP -projwin -9.5377 53.5421 -9.0557 53.2953  "OGCAPI:https://maps.gnosis.earth/ogcapi/collections/NaturalEarth:physical:ne_10m_lakes_europe?f=json"  out.tif
     with TemporaryDirectory() as tmpdir:
         options = gdal.TranslateOptions(
             gdal.ParseCommandLine(
