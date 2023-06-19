@@ -525,9 +525,10 @@ class GTiffDataset final : public GDALPamDataset
 
     // Only needed by createcopy and close code.
     static void WriteRPC(GDALDataset *, TIFF *, int, GTiffProfile, const char *,
-                         char **, bool bWriteOnlyInPAMIfNeeded = false);
+                         CSLConstList papszCreationOptions,
+                         bool bWriteOnlyInPAMIfNeeded = false);
     static bool WriteMetadata(GDALDataset *, TIFF *, bool, GTiffProfile,
-                              const char *, char **,
+                              const char *, CSLConstList papszCreationOptions,
                               bool bExcludeRPBandIMGFileWriting = false);
     static void WriteNoDataValue(TIFF *, double);
     static void WriteNoDataValue(TIFF *, int64_t);

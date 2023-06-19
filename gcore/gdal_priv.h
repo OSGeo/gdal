@@ -1842,6 +1842,9 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     static CPLErr DefaultRename(const char *pszNewName, const char *pszOldName);
     static CPLErr DefaultCopyFiles(const char *pszNewName,
                                    const char *pszOldName);
+    static void DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
+                                    CSLConstList papszOptions,
+                                    CSLConstList papszExcludedDomains);
     //! @endcond
 
     /** Convert a GDALDriver* to a GDALDriverH.
