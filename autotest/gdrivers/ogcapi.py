@@ -176,7 +176,7 @@ def test_ogr_ogcapi_features():
     ds = gdal.OpenEx(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
         gdal.OF_VECTOR,
-        open_options=["API=ITEMS"],
+        open_options=["CACHE=NO", "API=ITEMS"],
     )
 
     assert ds is not None
@@ -187,7 +187,7 @@ def test_ogr_ogcapi_features():
 
     del ds
 
-    ds = gdal.OpenEx(sub_ds_uri, gdal.OF_VECTOR, open_options=["API=ITEMS"])
+    ds = gdal.OpenEx(sub_ds_uri, gdal.OF_VECTOR, open_options=["CACHE=NO", "API=ITEMS"])
     assert ds is not None
 
     lyr = ds.GetLayerByName("NaturalEarth:physical:ne_10m_lakes_europe")
@@ -226,7 +226,7 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
     ds = gdal.OpenEx(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
         gdal.OF_VECTOR,
-        open_options=["API=TILES", f"VECTOR_FORMAT={vector_format}"],
+        open_options=["CACHE=NO", "API=TILES", f"VECTOR_FORMAT={vector_format}"],
     )
 
     assert ds is not None
@@ -242,7 +242,7 @@ def test_ogr_ogcapi_vector_tiles(vector_format):
     ds = gdal.OpenEx(
         sub_ds_uri,
         gdal.OF_VECTOR,
-        open_options=["API=TILES", f"VECTOR_FORMAT={vector_format}"],
+        open_options=["CACHE=NO", "API=TILES", f"VECTOR_FORMAT={vector_format}"],
     )
 
     assert ds is not None
@@ -279,7 +279,7 @@ def test_ogr_ogcapi_raster(api, collection):
     ds = gdal.OpenEx(
         "OGCAPI:http://127.0.0.1:%d/fakeogcapi" % gdaltest.webserver_port,
         gdal.OF_RASTER,
-        open_options=[f"API={api}"],
+        open_options=["CACHE=NO", f"API={api}"],
     )
 
     assert ds is not None
@@ -291,7 +291,7 @@ def test_ogr_ogcapi_raster(api, collection):
     ds = gdal.OpenEx(
         sub_ds_uri,
         gdal.OF_RASTER,
-        open_options=[f"API={api}"],
+        open_options=["CACHE=NO", f"API={api}"],
     )
 
     assert ds is not None
