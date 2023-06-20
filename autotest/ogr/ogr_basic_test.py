@@ -891,6 +891,29 @@ def test_ogr_basic_test_future_warning_exceptions():
 
 
 ###############################################################################
+# check feature defn access after layer has been destroyed
+
+
+def test_feature_defn_use_after_layer_del():
+    with ogr.Open("data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+
+        defn1 = lyr.GetLayerDefn()
+        defn2 = lyr.GetLayerDefn()
+
+        lyr.GetLayerDefn().AddFieldDefn(ogr.FieldDefn("cookie", ogr.OFTInteger))
+
+        assert defn1.GetReferenceCount() == 3
+        del defn2
+        assert defn1.GetReferenceCount() == 2
+
+    del lyr
+
+    assert defn1.GetReferenceCount() == 1
+    assert defn1.GetFieldDefn(3).GetName() == "cookie"
+
+
+###############################################################################
 # Test CreateDataSource context manager
 
 
