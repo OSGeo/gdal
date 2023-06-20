@@ -51,6 +51,7 @@ RECORD = False
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
 
 REPLACE_PORT_RE = re.compile(rb"http://127.0.0.1:\d{4}")
+REPLACE_PRECISION_RE = re.compile(r"(\d+\.\d{4})\d+")
 
 
 if RECORD:
@@ -67,6 +68,7 @@ def sanitize_url(url):
     text = url
     for c in chars:
         text = text.replace(c, "_")
+    text = REPLACE_PRECISION_RE.sub("\\1", text)
     return text.replace("_fakeogcapi", "request")
 
 
