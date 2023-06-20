@@ -2137,7 +2137,7 @@ def test_vsiaz_imds_authentication_object_id_client_is_msi_res_id():
                 gdal.VSIFCloseL(f)
             assert data == "bar"
 
-            # Check that quering again under /vsiaz/az_fake_bucket/ resuses
+            # Check that querying again under /vsiaz/az_fake_bucket/ reuses
             # the cached token
             handler.add(
                 "GET",

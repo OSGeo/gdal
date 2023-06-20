@@ -200,7 +200,7 @@ bool TileDBArray::Finalize() const
         auto poGroup = m_poParent.lock();
         if (!poGroup)
         {
-            // Temporarily instanciate a TileDBGroup to call AddMember() on it
+            // Temporarily instantiate a TileDBGroup to call AddMember() on it
             poGroup = TileDBGroup::OpenFromDisk(
                 m_poSharedResource,
                 /* osParentName = */ std::string(),
@@ -1368,7 +1368,7 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
             attr->set_cell_val_num(2);
         attr->set_filter_list(filterList);
 
-        // Implement a defered TileDB array creation given that we might
+        // Implement a deferred TileDB array creation given that we might
         // need to set the fill value of the attribute from the nodata value
         auto poArray = Create(poSharedResource, poParent->GetFullName(), osName,
                               aoDimensions, oDataType, osArrayPath);
