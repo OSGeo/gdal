@@ -1289,3 +1289,59 @@ def test_tiff_srs_read_compound_with_VerticalCitationGeoKey_only():
         wkt
         == """COMPD_CS["TestMS",GEOGCS["NAD83(2011)",DATUM["NAD83_National_Spatial_Reference_System_2011",SPHEROID["GRS 1980",6378137,298.257222101004,AUTHORITY["EPSG","7019"]],AUTHORITY["EPSG","1116"]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","6318"]],VERT_CS["NAVD88 height",VERT_DATUM["North American Vertical Datum 1988",2005,AUTHORITY["EPSG","5103"]],UNIT["metre",1,AUTHORITY["EPSG","9001"]],AXIS["Up",UP]]]"""
     )
+
+
+@pytest.mark.parametrize(
+    "code",
+    [
+        7415,  # Amersfoort / RD New + NAP height
+        9707,  # WGS 84 + EGM96 height
+    ],
+)
+@pytest.mark.require_proj(
+    7, 2
+)  # not necessarily the minimum version, but 9707 doesn't exist in PROJ 6.x
+def test_tiff_srs_read_compound_with_EPSG_code(code):
+
+    """Test bugfix for https://github.com/OSGeo/gdal/issues/7982"""
+
+    filename = "/vsimem/test_tiff_srs_read_compound_with_EPSG_code.tif"
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(code)
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    assert got_srs.GetAuthorityCode(None) == str(code)
+    assert got_srs.IsSame(srs)
+    ds = None
+    gdal.Unlink(filename)
+
+
+def test_tiff_srs_read_compound_without_EPSG_code():
+
+    """Test case where identification of code for CompoundCRS (added for
+    bugfix of https://github.com/OSGeo/gdal/issues/7982) doesn't trigger"""
+
+    filename = "/vsimem/test_tiff_srs_read_compound_without_EPSG_code.tif"
+    srs = osr.SpatialReference()
+    # WGS 84 + NAP height, unlikely to have a EPSG code ever
+    srs.SetFromUserInput("EPSG:4326+5709")
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    ds = None
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert gdal.GetLastErrorMsg() == "", srs.ExportToWkt(["FORMAT=WKT2_2019"])
+    assert got_srs.GetAuthorityCode(None) is None
+    assert got_srs.GetAuthorityCode("GEOGCS") == "4326"
+    assert got_srs.GetAuthorityCode("VERT_CS") == "5709"
+    assert got_srs.IsSame(srs)
+    ds = None
+    gdal.Unlink(filename)
