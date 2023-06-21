@@ -305,7 +305,9 @@ def test_vsis3_1(aws_test_config):
 ###############################################################################
 
 
-def get_s3_fake_bucket_resource_method(request):
+def get_s3_fake_bucket_resource_method(
+    request, with_security_token_AWS_SESSION_TOKEN=False
+):
     request.protocol_version = "HTTP/1.1"
 
     if "Authorization" not in request.headers:
@@ -324,18 +326,27 @@ def get_s3_fake_bucket_resource_method(request):
         "x-amz-date,Signature="
         "9f623b7ffce76188a456c70fb4813eb31969e88d130d6b4d801b3accbf050d6c"
     )
-    expected_authorization_8082 = (
+    expected_authorization_8080_AWS_SESSION_TOKEN = (
         "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/"
         "s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;"
         "x-amz-security-token,Signature="
         "a78e2d484679a19bec940a72d40c7fda37d1651a8ab82a6ed8fd7be46a53afb1"
     )
+    expected_authorization_8081_AWS_SESSION_TOKEN = (
+        "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/"
+        "s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;"
+        "x-amz-security-token,Signature="
+        "008300e66bf58b81c57a61581f91fc70e545717ec9f2ab08a8c3e8446d75a7f3"
+    )
     actual_authorization = request.headers["Authorization"]
-    if actual_authorization not in (
-        expected_authorization_8080,
-        expected_authorization_8081,
-        expected_authorization_8082,
-    ):
+    if with_security_token_AWS_SESSION_TOKEN:
+        expected_list = [
+            expected_authorization_8080_AWS_SESSION_TOKEN,
+            expected_authorization_8081_AWS_SESSION_TOKEN,
+        ]
+    else:
+        expected_list = [expected_authorization_8080, expected_authorization_8081]
+    if actual_authorization not in expected_list:
         sys.stderr.write("Bad Authorization: '%s'\n" % str(actual_authorization))
         request.send_response(403)
         return
@@ -346,6 +357,12 @@ def get_s3_fake_bucket_resource_method(request):
     request.send_header("Connection", "close")
     request.end_headers()
     request.wfile.write("""foo""".encode("ascii"))
+
+
+def get_s3_fake_bucket_resource_method_with_security_token(request):
+    return get_s3_fake_bucket_resource_method(
+        request, with_security_token_AWS_SESSION_TOKEN=True
+    )
 
 
 ###############################################################################
@@ -4515,7 +4532,7 @@ def test_vsis3_read_credentials_sts_assume_role_with_web_identity(
     handler.add(
         "GET",
         "/s3_fake_bucket/resource",
-        custom_method=get_s3_fake_bucket_resource_method,
+        custom_method=get_s3_fake_bucket_resource_method_with_security_token,
     )
     with webserver.install_http_handler(handler):
         with gdaltest.config_options(options, thread_local=False):
@@ -4869,8 +4886,35 @@ def test_vsis3_read_credentials_ec2_expiration(aws_test_config, webserver_port):
 
 
 def test_vsis3_read_credentials_assumed_role(aws_test_config, webserver_port):
-    if webserver_port != 8080:
-        pytest.skip("Expected results coded from webserver port = 8080")
+
+    if webserver_port == 8080:
+        expected_signature1 = (
+            "3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4"
+        )
+        expected_signature2 = (
+            "d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403"
+        )
+        expected_signature3 = (
+            "9716b5928ed350263c9492159dccbdc9aac321cfea383d7f67bd8b4c7ca33463"
+        )
+        expected_signature4 = (
+            "27e28bd4dad95495b851b54ff875b8ebcec6e0f6f5e4adf045153bd0d7958fbb"
+        )
+    elif webserver_port == 8081:
+        expected_signature1 = (
+            "07c7dbd1115cbe87c6f8817d69c722d1b943b12fe3da8e20916a2bec2b02ea6e"
+        )
+        expected_signature2 = (
+            "9db8e06522b6bad431787bd8268248e4f5ae755eeae906ada71ce8641b76998d"
+        )
+        expected_signature3 = (
+            "e560358eaf19d00b98ffea4fb23b0b6572a5b946ad915105dfb8b40ce6d8ed1b"
+        )
+        expected_signature4 = (
+            "ef71ab77159f30793c320cd053081605084b3ac7f30f470b0a6fb499df2d4c77"
+        )
+    else:
+        pytest.skip("Expected results coded for webserver_port = 8080 or 8081")
 
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
@@ -4921,7 +4965,7 @@ role_session_name = my_role_session_name
         {},
         expired_xml_response,
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature=3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature={expected_signature1}",
             "X-Amz-Date": "20150101T000000Z",
         },
     )
@@ -4932,7 +4976,7 @@ role_session_name = my_role_session_name
         {},
         expired_xml_response,
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature=3dd83fa260ec68bb50814f7fceb0ad79712de94a1ee0b285d13a8069e0a16ab4",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=AWS_ACCESS_KEY_ID/20150101/us-east-1/sts/aws4_request,SignedHeaders=host,Signature={expected_signature1}",
             "X-Amz-Date": "20150101T000000Z",
         },
     )
@@ -4943,7 +4987,7 @@ role_session_name = my_role_session_name
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature2}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
@@ -4979,7 +5023,7 @@ role_session_name = my_role_session_name
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=9716b5928ed350263c9492159dccbdc9aac321cfea383d7f67bd8b4c7ca33463",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature3}",
             "X-Amz-Security-Token": "ANOTHER_TEMP_SESSION_TOKEN",
         },
     )
@@ -5000,7 +5044,7 @@ role_session_name = my_role_session_name
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=27e28bd4dad95495b851b54ff875b8ebcec6e0f6f5e4adf045153bd0d7958fbb",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=ANOTHER_TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature4}",
             "X-Amz-Security-Token": "ANOTHER_TEMP_SESSION_TOKEN",
         },
     )
@@ -5021,6 +5065,30 @@ role_session_name = my_role_session_name
 def test_vsis3_read_credentials_sts_assume_role_with_web_identity_from_config_file(
     aws_test_config, webserver_port
 ):
+
+    if webserver_port == 8080:
+        expected_signature1 = (
+            "d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403"
+        )
+        expected_signature2 = (
+            "d5abb4e09ad29ad3810cfe21702e7e2e9071798c441acaed9613d62ed8600556"
+        )
+        expected_signature3 = (
+            "a158ddb8b5fd40fd5226c0ca28c14620863b8157c870e7e96ff841662aaef79a"
+        )
+    elif webserver_port == 8081:
+        expected_signature1 = (
+            "9db8e06522b6bad431787bd8268248e4f5ae755eeae906ada71ce8641b76998d"
+        )
+        expected_signature2 = (
+            "467838ad283d0f3af9635bc432137504c73ff32a8091dfc1ac98fc11958d91e1"
+        )
+        expected_signature3 = (
+            "d88e0aaaf375cf9f2f065287186455d7aea8f298fb8762011381cd03369c78e0"
+        )
+    else:
+        pytest.skip("Expected results coded for webserver_port = 8080 or 8081")
+
     options = {
         "AWS_SECRET_ACCESS_KEY": "",
         "AWS_ACCESS_KEY_ID": "",
@@ -5104,7 +5172,7 @@ source_profile = foo
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5e8167e066e7439e0e57a43e1167f9ee7efe4b451c72de1a3a150f6fc033403",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature1}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
@@ -5138,7 +5206,7 @@ source_profile = foo
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=d5abb4e09ad29ad3810cfe21702e7e2e9071798c441acaed9613d62ed8600556",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature2}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
@@ -5150,7 +5218,7 @@ source_profile = foo
         {},
         "foo",
         expected_headers={
-            "Authorization": "AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature=a158ddb8b5fd40fd5226c0ca28c14620863b8157c870e7e96ff841662aaef79a",
+            "Authorization": f"AWS4-HMAC-SHA256 Credential=TEMP_ACCESS_KEY_ID/20150101/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token,Signature={expected_signature3}",
             "X-Amz-Security-Token": "TEMP_SESSION_TOKEN",
         },
     )
