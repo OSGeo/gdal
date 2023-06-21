@@ -554,59 +554,85 @@ OGRGeometry *
 OGRGeometryFactory::createGeometry(OGRwkbGeometryType eGeometryType)
 
 {
+    OGRGeometry *poGeom = nullptr;
     switch (wkbFlatten(eGeometryType))
     {
         case wkbPoint:
-            return new (std::nothrow) OGRPoint();
+            poGeom = new (std::nothrow) OGRPoint();
+            break;
 
         case wkbLineString:
-            return new (std::nothrow) OGRLineString();
+            poGeom = new (std::nothrow) OGRLineString();
+            break;
 
         case wkbPolygon:
-            return new (std::nothrow) OGRPolygon();
+            poGeom = new (std::nothrow) OGRPolygon();
+            break;
 
         case wkbGeometryCollection:
-            return new (std::nothrow) OGRGeometryCollection();
+            poGeom = new (std::nothrow) OGRGeometryCollection();
+            break;
 
         case wkbMultiPolygon:
-            return new (std::nothrow) OGRMultiPolygon();
+            poGeom = new (std::nothrow) OGRMultiPolygon();
+            break;
 
         case wkbMultiPoint:
-            return new (std::nothrow) OGRMultiPoint();
+            poGeom = new (std::nothrow) OGRMultiPoint();
+            break;
 
         case wkbMultiLineString:
-            return new (std::nothrow) OGRMultiLineString();
+            poGeom = new (std::nothrow) OGRMultiLineString();
+            break;
 
         case wkbLinearRing:
-            return new (std::nothrow) OGRLinearRing();
+            poGeom = new (std::nothrow) OGRLinearRing();
+            break;
 
         case wkbCircularString:
-            return new (std::nothrow) OGRCircularString();
+            poGeom = new (std::nothrow) OGRCircularString();
+            break;
 
         case wkbCompoundCurve:
-            return new (std::nothrow) OGRCompoundCurve();
+            poGeom = new (std::nothrow) OGRCompoundCurve();
+            break;
 
         case wkbCurvePolygon:
-            return new (std::nothrow) OGRCurvePolygon();
+            poGeom = new (std::nothrow) OGRCurvePolygon();
+            break;
 
         case wkbMultiCurve:
-            return new (std::nothrow) OGRMultiCurve();
+            poGeom = new (std::nothrow) OGRMultiCurve();
+            break;
 
         case wkbMultiSurface:
-            return new (std::nothrow) OGRMultiSurface();
+            poGeom = new (std::nothrow) OGRMultiSurface();
+            break;
 
         case wkbTriangle:
-            return new (std::nothrow) OGRTriangle();
+            poGeom = new (std::nothrow) OGRTriangle();
+            break;
 
         case wkbPolyhedralSurface:
-            return new (std::nothrow) OGRPolyhedralSurface();
+            poGeom = new (std::nothrow) OGRPolyhedralSurface();
+            break;
 
         case wkbTIN:
-            return new (std::nothrow) OGRTriangulatedSurface();
+            poGeom = new (std::nothrow) OGRTriangulatedSurface();
+            break;
 
         default:
-            return nullptr;
+            CPLAssert(false);
+            break;
     }
+    if (poGeom)
+    {
+        if (OGR_GT_HasZ(eGeometryType))
+            poGeom->set3D(true);
+        if (OGR_GT_HasM(eGeometryType))
+            poGeom->setMeasured(true);
+    }
+    return poGeom;
 }
 
 /************************************************************************/

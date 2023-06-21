@@ -4064,3 +4064,35 @@ def test_ogr_geom_point_nan():
     geom = ogr.Geometry(type=ogr.wkbPoint)
     geom.AddPoint_2D(float("nan"), float("nan"))
     assert geom.IsEmpty()
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "geom_type",
+    [
+        ogr.wkbPoint,
+        ogr.wkbPoint25D,
+        ogr.wkbPointM,
+        ogr.wkbPointZM,
+        ogr.wkbLineString,
+        ogr.wkbPolygon,
+        ogr.wkbMultiPoint,
+        ogr.wkbMultiLineString,
+        ogr.wkbMultiPolygon,
+        ogr.wkbGeometryCollection,
+        ogr.wkbCircularString,
+        ogr.wkbCompoundCurve,
+        ogr.wkbCurvePolygon,
+        ogr.wkbMultiCurve,
+        ogr.wkbMultiSurface,
+        ogr.wkbPolyhedralSurface,
+        ogr.wkbTIN,
+    ],
+)
+def test_ogr_geom_CreateGeometry(geom_type):
+
+    geom = ogr.Geometry(geom_type)
+    assert geom.GetGeometryType() == geom_type
+    assert geom.IsEmpty()
