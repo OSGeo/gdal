@@ -277,6 +277,41 @@
   }
 
 /***************************************************
+ * Typemap for GDALDimension* used in Attribute::GetDimensions( )
+ ***************************************************/
+
+%typemap(in, numinputs=1) (int *nDimensions, GDALDimension const **pDimensions ) (int nDimensions=0, GDALDimension *pDimensions=0 )
+{
+  /* %typemap(in,numinputs=1) (int *nDimensions, GDALDimension const **pDimensions ) */
+  $1 = &nDimensions;
+  $2 = &pDimensions;
+}
+
+%typemap(argout) (int *nDimensions, GDALDimension const **pDimensions )
+{
+  const jclass dimensionClass = jenv->FindClass("org/gdal/gdal/Dimension");
+  const jclass vectorClass = jenv->FindClass("java/util/Vector");
+  const jmethodID add = jenv->GetMethodID(vectorClass, "add", "(Ljava/lang/Object;)Z");
+  const jmethodID dimensionCon = jenv->GetMethodID(dimensionClass, "<init>",
+    "(Ljava/lang/Long;Zjava/lang/Boolean;)V");
+
+  for( int i = 0; i < *$1; i++ ) {
+    jobject dimensionObj = jenv->NewObject(dimensionClass, dimensionCon,
+                                &((*$2)[i]),
+                                true);
+    jenv->CallBooleanMethod($input, add, dimensionObj);
+  }
+}
+
+%typemap(jni) (int *nDimensions, GDALDimension const **pDimensions ) "jobject"
+%typemap(jtype) (int *nDimensions, GDALDimension const **pDimensions ) "java.util.Vector"
+%typemap(jstype) (int *nDimensions, GDALDimension const **pDimensions ) "java.util.Vector"
+%typemap(javain) (int *nDimensions, GDALDimension const **pDimensions ) "$javainput"
+%typemap(javaout) (int *nDimensionss, GDALDimension const **pDimensions ) {
+    return $jnicall;
+  }
+
+/***************************************************
  * Typemaps for (int nLen, unsigned char *pBuf )
  ***************************************************/
 
@@ -1952,5 +1987,30 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(jstype) ( retGetPoints* ) "double[][]"
 %typemap(javain) ( retGetPoints* ) "$javainput"
 %typemap(javaout) ( retGetPoints* ) {
+    return $jnicall;
+  }
+
+/***************************************************
+ * Typemaps for Dimensions
+ ***************************************************/
+
+/***************************************************
+ * Typemaps for MDArrays
+ ***************************************************/
+
+%typemap(in,numinputs=0) (GDALMDArrayShadow* )
+{
+}
+
+%typemap(argout) (GDALMDArrayShadow* )
+{
+    $result = jenv->NewObject(jenv->FindClass("org/gdal/gdal/MDArray"), NULL);
+}
+
+%typemap(jni) ( GDALMDArrayShadow* ) "jobject"
+%typemap(jtype) ( GDALMDArrayShadow* ) "MDArray"
+%typemap(jstype) ( GDALMDArrayShadow* ) "MDArray"
+%typemap(javain) ( GDALMDArrayShadow* ) "$javainput"
+%typemap(javaout) ( GDALMDArrayShadow* ) {
     return $jnicall;
   }

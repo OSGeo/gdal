@@ -63,18 +63,25 @@ import org.gdal.ogr.Feature;
 import org.gdal.ogr.FieldDomain;
 %}
 
+%typemap(javaimports) GDALDimensionHS %{
+import java.util.Vector;
+%}
+
 %typemap(javaimports) GDALMDArrayHS %{
 import org.gdal.osr.SpatialReference;
+%}
+
+%typemap(javaimports) GDALExtendedDataTypeHS %{
+import org.gdal.gdal.ExtendedDataType;
 %}
 
 %typemap(javaimports) GDALGroupHS %{
 import org.gdal.ogr.Layer;
 %}
 
-
 %pragma(java) modulecode=%{
 
-    /* Uninstanciable class */
+    /* Uninstantiable class */
     private gdal()
     {
     }
@@ -115,6 +122,7 @@ import org.gdal.ogr.Layer;
 %}
 
 %typemap(javacode) GDAL_GCP %{
+
   public GCP(double x, double y, double z, double pixel, double line)
   {
       this(x, y, z, pixel, line, "", "");
@@ -129,8 +137,376 @@ import org.gdal.ogr.Layer;
   {
       this(x, y, 0.0, pixel, line, "", "");
   }
+  
 %}
 
+%extend GDALMDArrayShadow {
+
+    static bool MDArrayRead(const GUInt64 *arrayStartIdxes,
+								size_t *counts, const GInt64 *arraySteps,
+								GInt64 *bufferStrides,
+								GDALExtendedDataTypeH bufferDataType,
+								void *pDstBuffer)
+    {
+		return GDALMDArrayRead((GDALMDArrayH) self, arrayStartIdxes, counts, arraySteps,
+								bufferStrides, bufferDataType,
+								pDstBuffer, NULL, 0);
+    }
+
+    static bool MDArrayWrite(const GUInt64 *arrayStartIdxes,
+								size_t *counts, const GInt64 *arraySteps,
+								GInt64 *bufferStrides,
+								GDALExtendedDataTypeH bufferDataType,
+								void *pSrcBuffer)
+    {
+		return GDALMDArrayWrite((GDALMDArrayH) self, arrayStartIdxes, counts, arraySteps,
+								bufferStrides, bufferDataType,
+								pSrcBuffer, NULL, 0);
+    }
+
+} /* extend */
+
+/* TODO should it be GDALMDArray or GDALMDArrayShadow ? */
+
+%typemap(javacode) GDALMDArrayShadow %{
+
+	private boolean sizesOkay(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int bufferSize) {
+	
+		if (startIdxes.length != counts.length ||
+			startIdxes.length != arraySteps.length ||
+			startIdxes.length != bufferStrides.length)
+		{
+			return false
+		}
+		
+		long count = (startIdxes.length == 0 ? 0 : counts[0];
+		
+		for (int i = 1; i < startIdxes.length; i++) {
+			count *= count[i];
+		}
+		
+		if (count < 0) // overflow or some negative counts array entry
+		{
+			return false;
+		}
+		
+		return count == bufferSize;
+	}
+	
+	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, byte[] buffer) {
+		
+		// test type matches dest array
+
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Byte)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so read from mdarray into buffer
+		
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, short[] buffer) {
+		
+		// test type matches dest array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Int16 &&
+			typeNum != gdalconst.GDT_Uint16 &&
+			typeNum != gdalconst.GDT_CInt16)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so read from mdarray into buffer
+		
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int[] buffer) {
+		
+		// test type matches dest array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Int32 &&
+			typeNum != gdalconst.GDT_Uint32 &&
+			typeNum != gdalconst.GDT_CInt32)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so read from mdarray into buffer
+		
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, long[] buffer) {
+		
+		// test type matches dest array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Int64 &&
+			typeNum != gdalconst.GDT_UInt64)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so read from mdarray into buffer
+		
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, float[] buffer) {
+		
+		// test type matches dest array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Float32 &&
+			typeNum != gdalconst.GDT_CFloat32)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so read from mdarray into buffer
+		
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, double[] buffer) {
+		
+		// test type matches dest array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Float64 &&
+			typeNum != gdalconst.GDT_CFloat64)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so read from mdarray into buffer
+		
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, byte[] buffer) {
+		
+		// test type matches source array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Byte)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so write from buffer into mdarray
+		
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, short[] buffer) {
+		
+		// test type matches source array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Int16 &&
+			typeNum != gdalconst.GDT_Uint16 &&
+			typeNum != gdalconst.GDT_CInt16)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so write from buffer into mdarray
+		
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int[] buffer) {
+		
+		// test type matches source array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Int32 &&
+			typeNum != gdalconst.GDT_Uint32 &&
+			typeNum != gdalconst.GDT_CInt32)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so write from buffer into mdarray
+		
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, long[] buffer) {
+		
+		// test type matches source array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Int64 &&
+			typeNum != gdalconst.GDT_UInt64)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so write from buffer into mdarray
+		
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, float[] buffer) {
+		
+		// test type matches source array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Float32 &&
+			typeNum != gdalconst.GDT_CFloat32)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so write from buffer into mdarray
+		
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+
+	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, double[] buffer) {
+		
+		// test type matches source array
+		
+		ExtendedDataType dataType = this.GetDataType();
+		
+		int typeNum = dataType.GetNumericDataType() 
+		
+		if (typeNum != gdalconst.GDT_Float64 &&
+			typeNum != gdalconst.GDT_CFloat64)
+		{
+			return false;
+		}
+
+		// test that the size definitions are all okay
+		
+		if (!sizesOkay(startIdxes, counts, arraySteps, bufferStrides, buffer.length))
+		{
+			return false;
+		}
+			
+		// if so write from buffer into mdarray
+		
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+	}
+%}
 
 %typemap(javaimports) GDALDriverShadow %{
 import java.util.Vector;
@@ -252,11 +628,11 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                             int nPixelSpace, int nLineSpace, int nBandSpace,
                             GDALDataType gdal_type, size_t sizeof_ctype)
 {
-    if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
-        (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
-        (gdal_type == GDT_Int64 && buf_type != GDT_Int64 && buf_type != GDT_UInt64) ||
-        (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
-        (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
+  if ((gdal_type == GDT_Int16 && buf_type != GDT_Int16 && buf_type != GDT_UInt16 && buf_type != GDT_CInt16) ||
+      (gdal_type == GDT_Int32 && buf_type != GDT_Int32 && buf_type != GDT_UInt32 && buf_type != GDT_CInt32) ||
+      (gdal_type == GDT_Int64 && buf_type != GDT_Int64 && buf_type != GDT_UInt64) ||
+      (gdal_type == GDT_Float32 && buf_type != GDT_Float32 && buf_type != GDT_CFloat32) ||
+      (gdal_type == GDT_Float64 && buf_type != GDT_Float64 && buf_type != GDT_CFloat64))
   {
       CPLError(CE_Failure, CPLE_AppDefined,
               "Java array type is not compatible with GDAL data type");
@@ -275,30 +651,33 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                          buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, sizeof_ctype > 1 );
+  
   if (nMinBufferSizeInBytes > 0x7fffffff)
   {
      CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
      nMinBufferSizeInBytes = 0;
   }
+  
   if (nMinBufferSizeInBytes == 0)
       return CE_Failure;
+  
   if (nRegularArraySize < nMinBufferSizeInBytes)
   {
       CPLError(CE_Failure, CPLE_AppDefined,
               "Buffer is too small");
       return CE_Failure;
   }
+  
   return  GDALDatasetRasterIO( hDS, eRWFlag, xoff, yoff, xsize, ysize,
                                 regularArray, buf_xsize, buf_ysize,
                                 buf_type, band_list, pband_list, nPixelSpace, nLineSpace, nBandSpace );
-
 }
-
 
 %}
 
 
 %extend GDALDatasetShadow {
+
 %apply (int nList, int* pList) { (int band_list, int *pband_list) };
 %apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
 
