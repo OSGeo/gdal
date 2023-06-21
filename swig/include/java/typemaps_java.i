@@ -1709,6 +1709,23 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 
 /***************************************************
+ * Typemaps for GUInt64
+ ***************************************************/
+
+%typemap(in) (GUInt64) "$1 = $input;"
+%typemap(out) (GUInt64) {
+    /* %typemap(out) (GUInt64) */
+    $result = result;
+}
+%typemap(jni) (GUInt64) "jlong"
+%typemap(jtype) (GUInt64) "long"
+%typemap(jstype) (GUInt64) "long"
+%typemap(javain) (GUInt64) "$javainput"
+%typemap(javaout) (GUInt64) {
+    return $jnicall;
+}
+
+/***************************************************
  * Typemaps for ( int nCount, double *x, double *y, double *z )
  ***************************************************/
 
@@ -1998,19 +2015,27 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for MDArrays
  ***************************************************/
 
-%typemap(in,numinputs=0) (GDALMDArrayShadow* )
+/*
+
+  COMMENTING OUT. MAYBE UNNECESSARY.
+  
+%typemap(in,numinputs=0) (GDALMDArrayHS* )
 {
 }
 
-%typemap(argout) (GDALMDArrayShadow* )
+%typemap(argout) (GDALMDArrayHS* )
 {
     $result = jenv->NewObject(jenv->FindClass("org/gdal/gdal/MDArray"), NULL);
 }
 
-%typemap(jni) ( GDALMDArrayShadow* ) "jobject"
-%typemap(jtype) ( GDALMDArrayShadow* ) "MDArray"
-%typemap(jstype) ( GDALMDArrayShadow* ) "MDArray"
-%typemap(javain) ( GDALMDArrayShadow* ) "$javainput"
-%typemap(javaout) ( GDALMDArrayShadow* ) {
+%typemap(jni) ( GDALMDArrayHS* ) "jobject"
+%typemap(jtype) ( GDALMDArrayHS* ) "MDArray"
+%typemap(jstype) ( GDALMDArrayHS* ) "MDArray"
+%typemap(javain) ( GDALMDArrayHS* ) "$javainput"
+%typemap(javaout) ( GDALMDArrayHS* ) {
     return $jnicall;
-  }
+}
+
+  COMMENTING OUT. MAYBE UNNECESSARY.
+  
+*/

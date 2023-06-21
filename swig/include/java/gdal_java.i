@@ -69,6 +69,7 @@ import java.util.Vector;
 
 %typemap(javaimports) GDALMDArrayHS %{
 import org.gdal.osr.SpatialReference;
+import org.gdal.gdalconst.gdalconst;
 %}
 
 %typemap(javaimports) GDALExtendedDataTypeHS %{
@@ -140,9 +141,9 @@ import org.gdal.ogr.Layer;
   
 %}
 
-%extend GDALMDArrayShadow {
+%extend GDALMDArrayHS {
 
-    static bool MDArrayRead(const GUInt64 *arrayStartIdxes,
+    bool MDArrayRead(const GUInt64 *arrayStartIdxes,
 								size_t *counts, const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								GDALExtendedDataTypeH bufferDataType,
@@ -153,7 +154,7 @@ import org.gdal.ogr.Layer;
 								pDstBuffer, NULL, 0);
     }
 
-    static bool MDArrayWrite(const GUInt64 *arrayStartIdxes,
+    bool MDArrayWrite(const GUInt64 *arrayStartIdxes,
 								size_t *counts, const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								GDALExtendedDataTypeH bufferDataType,
@@ -166,9 +167,7 @@ import org.gdal.ogr.Layer;
 
 } /* extend */
 
-/* TODO should it be GDALMDArray or GDALMDArrayShadow ? */
-
-%typemap(javacode) GDALMDArrayShadow %{
+%typemap(javacode) GDALMDArrayHS %{
 
 	private boolean sizesOkay(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int bufferSize) {
 	
@@ -176,13 +175,13 @@ import org.gdal.ogr.Layer;
 			startIdxes.length != arraySteps.length ||
 			startIdxes.length != bufferStrides.length)
 		{
-			return false
+			return false;
 		}
 		
-		long count = (startIdxes.length == 0 ? 0 : counts[0];
+		long count = (startIdxes.length == 0 ? 0 : counts[0]);
 		
 		for (int i = 1; i < startIdxes.length; i++) {
-			count *= count[i];
+			count *= counts[i];
 		}
 		
 		if (count < 0) // overflow or some negative counts array entry
@@ -227,7 +226,7 @@ import org.gdal.ogr.Layer;
 		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int16 &&
-			typeNum != gdalconst.GDT_Uint16 &&
+			typeNum != gdalconst.GDT_UInt16 &&
 			typeNum != gdalconst.GDT_CInt16)
 		{
 			return false;
@@ -254,7 +253,7 @@ import org.gdal.ogr.Layer;
 		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int32 &&
-			typeNum != gdalconst.GDT_Uint32 &&
+			typeNum != gdalconst.GDT_UInt32 &&
 			typeNum != gdalconst.GDT_CInt32)
 		{
 			return false;
@@ -384,7 +383,7 @@ import org.gdal.ogr.Layer;
 		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int16 &&
-			typeNum != gdalconst.GDT_Uint16 &&
+			typeNum != gdalconst.GDT_UInt16 &&
 			typeNum != gdalconst.GDT_CInt16)
 		{
 			return false;
@@ -411,7 +410,7 @@ import org.gdal.ogr.Layer;
 		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int32 &&
-			typeNum != gdalconst.GDT_Uint32 &&
+			typeNum != gdalconst.GDT_UInt32 &&
 			typeNum != gdalconst.GDT_CInt32)
 		{
 			return false;
