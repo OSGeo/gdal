@@ -199,7 +199,7 @@ import org.gdal.ogr.Layer;
 
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Byte)
 		{
@@ -224,7 +224,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int16 &&
 			typeNum != gdalconst.GDT_Uint16 &&
@@ -251,7 +251,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int32 &&
 			typeNum != gdalconst.GDT_Uint32 &&
@@ -278,7 +278,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int64 &&
 			typeNum != gdalconst.GDT_UInt64)
@@ -304,7 +304,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Float32 &&
 			typeNum != gdalconst.GDT_CFloat32)
@@ -330,7 +330,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Float64 &&
 			typeNum != gdalconst.GDT_CFloat64)
@@ -356,7 +356,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Byte)
 		{
@@ -381,7 +381,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int16 &&
 			typeNum != gdalconst.GDT_Uint16 &&
@@ -408,7 +408,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int32 &&
 			typeNum != gdalconst.GDT_Uint32 &&
@@ -435,7 +435,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Int64 &&
 			typeNum != gdalconst.GDT_UInt64)
@@ -461,7 +461,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Float32 &&
 			typeNum != gdalconst.GDT_CFloat32)
@@ -487,7 +487,7 @@ import org.gdal.ogr.Layer;
 		
 		ExtendedDataType dataType = this.GetDataType();
 		
-		int typeNum = dataType.GetNumericDataType() 
+		int typeNum = dataType.GetNumericDataType();
 		
 		if (typeNum != gdalconst.GDT_Float64 &&
 			typeNum != gdalconst.GDT_CFloat64)
