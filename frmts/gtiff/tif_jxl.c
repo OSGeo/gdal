@@ -674,7 +674,7 @@ static int JXLPostEncode(TIFF *tif)
     JxlEncoderUseContainer(enc, JXL_FALSE);
 
 #ifdef HAVE_JxlEncoderFrameSettingsCreate
-    JxlEncoderOptions *opts = JxlEncoderFrameSettingsCreate(enc, NULL);
+    JxlEncoderFrameSettings *opts = JxlEncoderFrameSettingsCreate(enc, NULL);
 #else
     JxlEncoderOptions *opts = JxlEncoderOptionsCreate(enc, NULL);
 #endif
@@ -801,7 +801,11 @@ static int JXLPostEncode(TIFF *tif)
 
     if (sp->lossless)
     {
+#ifdef HAVE_JxlEncoderSetFrameLossless
+        JxlEncoderSetFrameLossless(opts, TRUE);
+#else
         JxlEncoderOptionsSetLossless(opts, TRUE);
+#endif
 #ifdef HAVE_JxlEncoderSetFrameDistance
         JxlEncoderSetFrameDistance(opts, 0);
 #else
