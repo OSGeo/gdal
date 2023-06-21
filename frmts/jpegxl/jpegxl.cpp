@@ -599,6 +599,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
         else if (status == JXL_DEC_COLOR_ENCODING)
         {
+#ifdef HAVE_JxlDecoderDefaultPixelFormat
             JxlPixelFormat format = {
                 static_cast<uint32_t>(nBands),
                 eDT == GDT_Byte     ? JXL_TYPE_UINT8
@@ -606,6 +607,7 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                                     : JXL_TYPE_FLOAT,
                 JXL_NATIVE_ENDIAN, 0 /* alignment */
             };
+#endif
 
             bool bIsDefaultColorEncoding = false;
             JxlColorEncoding color_encoding;
@@ -613,7 +615,10 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
             // Check if the color profile is the default one we set on creation.
             // If so, do not expose it as ICC color profile
             if (JXL_DEC_SUCCESS == JxlDecoderGetColorAsEncodedProfile(
-                                       m_decoder.get(), &format,
+                                       m_decoder.get(),
+#ifdef HAVE_JxlDecoderDefaultPixelFormat
+                                       &format,
+#endif
                                        JXL_COLOR_PROFILE_TARGET_DATA,
                                        &color_encoding))
             {
@@ -658,13 +663,19 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 size_t icc_size = 0;
                 if (JXL_DEC_SUCCESS ==
-                    JxlDecoderGetICCProfileSize(m_decoder.get(), &format,
+                    JxlDecoderGetICCProfileSize(m_decoder.get(),
+#ifdef HAVE_JxlDecoderDefaultPixelFormat
+                                                &format,
+#endif
                                                 JXL_COLOR_PROFILE_TARGET_DATA,
                                                 &icc_size))
                 {
                     std::vector<GByte> icc(icc_size);
                     if (JXL_DEC_SUCCESS == JxlDecoderGetColorAsICCProfile(
-                                               m_decoder.get(), &format,
+                                               m_decoder.get(),
+#ifdef HAVE_JxlDecoderDefaultPixelFormat
+                                               &format,
+#endif
                                                JXL_COLOR_PROFILE_TARGET_DATA,
                                                icc.data(), icc_size))
                     {
@@ -2289,7 +2300,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
 #endif
 
 #ifdef HAVE_JxlEncoderFrameSettingsCreate
-    JxlEncoderOptions *opts =
+    JxlEncoderFrameSettings *opts =
         JxlEncoderFrameSettingsCreate(encoder.get(), nullptr);
 #else
     JxlEncoderOptions *opts = JxlEncoderOptionsCreate(encoder.get(), nullptr);
@@ -2319,7 +2330,11 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         }
 #endif
 
+#ifdef HAVE_JxlEncoderSetFrameLossless
+        JxlEncoderSetFrameLossless(opts, TRUE);
+#else
         JxlEncoderOptionsSetLossless(opts, TRUE);
+#endif
         basic_info.uses_original_profile = JXL_TRUE;
     }
     else
