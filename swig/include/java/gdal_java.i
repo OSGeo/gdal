@@ -67,17 +67,15 @@ import org.gdal.ogr.FieldDomain;
 import java.util.Vector;
 %}
 
-%typemap(javaimports) GDALMDArrayHS %{
-import org.gdal.osr.SpatialReference;
-import org.gdal.gdalconst.gdalconst;
-%}
-
 %typemap(javaimports) GDALExtendedDataTypeHS %{
 import org.gdal.gdal.ExtendedDataType;
 %}
 
 %typemap(javaimports) GDALGroupHS %{
 import org.gdal.ogr.Layer;
+import org.gdal.gdal.Dimension;
+import org.gdal.gdal.ExtendedDataType;
+import java.util.Vector;
 %}
 
 %pragma(java) modulecode=%{
@@ -141,6 +139,11 @@ import org.gdal.ogr.Layer;
   
 %}
 
+%typemap(javaimports) GDALMDArrayHS %{
+import org.gdal.osr.SpatialReference;
+import org.gdal.gdalconst.gdalconst;
+%}
+
 %extend GDALMDArrayHS {
 
     bool MDArrayRead(const GUInt64 *arrayStartIdxes,
@@ -179,17 +182,33 @@ import org.gdal.ogr.Layer;
 		}
 		
 		long count = (startIdxes.length == 0 ? 0 : counts[0]);
+
+		long bufferStrideSize = (startIdxes.length == 0 ? 1 : bufferStrides[0]);
 		
-		for (int i = 1; i < startIdxes.length; i++) {
-			count *= counts[i];
-		}
-		
-		if (count < 0) // overflow or some negative counts array entry
-		{
+		if (count < 0)
 			return false;
+
+		if (bufferStrideSize < 1)
+			return false;
+
+		for (int i = 1; i < startIdxes.length; i++) {
+		
+			count *= counts[i];
+			
+			bufferStrideSize *= bufferStrides[i];
+			
+			// a negative count[i] given or overflow
+
+			if (count < 0)
+				return false;
+		
+			// a bad/negative bufferStride[i] given or overflow
+			
+			if (bufferStrideSize < 1)
+				return false;
 		}
 		
-		return count == bufferSize;
+		return count <= (bufferSize / bufferStrideSize);
 	}
 	
 	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, byte[] buffer) {
@@ -1354,6 +1373,24 @@ import org.gdal.gdalconst.gdalconstConstants;
   {
       return SetMetadata(metadata, null);
   }
+%}
+
+%typemap(javacode) GDALGroupHS %{
+
+  public MDArray CreateMDArray(String name, Vector<Dimension> dims, ExtendedDataType dt) {
+    
+    // TODO
+    
+    return null;
+  }
+  
+  public Dimension CreateDimension(String name, String type, String direction, long size) {
+    
+    // TODO: this is an overload that would be better addressed elsewhere
+    
+    return null;
+  }
+  
 %}
 
 %include callback.i
