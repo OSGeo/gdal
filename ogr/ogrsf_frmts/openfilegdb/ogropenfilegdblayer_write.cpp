@@ -2049,8 +2049,12 @@ bool OGROpenFileGDBLayer::PrepareFileGDBFeature(OGRFeature *poFeature,
         }
 
         // Treat empty geometries as NULL, like the FileGDB driver
-        if (poGeom->IsEmpty())
+        if (poGeom->IsEmpty() &&
+            !CPLTestBool(CPLGetConfigOption(
+                "OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", "NO")))
+        {
             poGeom = nullptr;
+        }
     }
 
     if (m_iAreaField >= 0)
