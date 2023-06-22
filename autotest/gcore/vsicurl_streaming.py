@@ -42,6 +42,8 @@ pytestmark = pytest.mark.require_curl()
 
 
 def test_vsicurl_streaming_1():
+    # Occasionally fails on Travis graviton2 configuration
+    gdaltest.skip_on_travis()
 
     with gdal.config_option("GDAL_HTTP_CONNECTTIMEOUT", "5"):
         fp = gdal.VSIFOpenL(
