@@ -505,6 +505,27 @@ const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const ch
 }
 }
 
+
+%rename(GetConfigOptions) wrapper_GetConfigOptions;
+#if defined(SWIGPYTHON)
+%apply (char **dictAndCSLDestroy) { char ** };
+#else
+%apply (char **) { char ** };
+#endif
+%inline {
+char** wrapper_GetConfigOptions() {
+    char ** papszOpts = CPLGetConfigOptions();
+    char ** papszTLOpts = CPLGetThreadLocalConfigOptions();
+
+    papszOpts = CSLMerge(papszOpts, papszTLOpts);
+
+    CPLFree(papszTLOpts);
+
+    return papszOpts;
+};
+}
+%clear char **;
+
 %apply Pointer NONNULL {const char * pszPathPrefix};
 void VSISetPathSpecificOption( const char* pszPathPrefix, const char * pszKey, const char * pszValue );
 
