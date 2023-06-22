@@ -1242,8 +1242,12 @@ public:
     return OGR_L_SyncToDisk(self);
   }
 
+  %newobject GetLayerDefn;
   OGRFeatureDefnShadow *GetLayerDefn() {
-    return (OGRFeatureDefnShadow*) OGR_L_GetLayerDefn(self);
+    auto defn = (OGRFeatureDefnShadow*) OGR_L_GetLayerDefn(self);
+    if (defn)
+        OGR_FD_Reference(defn);
+    return defn;
   }
 
 #ifndef SWIGJAVA
