@@ -216,7 +216,6 @@
   }
 }
 
-
 %typemap(freearg) (int nGCPs, GDAL_GCP const * pGCPs)
 {
   /* %typemap(freearg) (int nGCPs, GDAL_GCP const * pGCPs) */
@@ -1709,23 +1708,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 
 /***************************************************
- * Typemaps for GUInt64
- ***************************************************/
-
-%typemap(in) (GUInt64) "$1 = $input;"
-%typemap(out) (GUInt64) {
-    /* %typemap(out) (GUInt64) */
-    $result = result;
-}
-%typemap(jni) (GUInt64) "jlong"
-%typemap(jtype) (GUInt64) "long"
-%typemap(jstype) (GUInt64) "long"
-%typemap(javain) (GUInt64) "$javainput"
-%typemap(javaout) (GUInt64) {
-    return $jnicall;
-}
-
-/***************************************************
  * Typemaps for ( int nCount, double *x, double *y, double *z )
  ***************************************************/
 
@@ -2008,34 +1990,104 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 
 /***************************************************
- * Typemaps for Dimensions
+ * Typemaps for GInt64*
  ***************************************************/
 
-/***************************************************
- * Typemaps for MDArrays
- ***************************************************/
-
-/*
-
-  COMMENTING OUT. MAYBE UNNECESSARY.
-  
-%typemap(in,numinputs=0) (GDALMDArrayHS* )
+%typemap(in) (GInt64* pList)
 {
+  /* %typemap(in) (GInt64* pList) */
+
+  /* check if is List */
+
+  if ($input)
+  {
+    $1 = (GInt64 *)jenv->GetLongArrayElements($input, NULL);
+  }
+  else
+    $1 = NULL;
 }
 
-%typemap(argout) (GDALMDArrayHS* )
+/* do I need this one?
+%typemap(out) (GInt64*) {
+    // %typemap(out) (GInt64*)
+    jint count = (jint) jenv->GetArrayLength($input)
+    GInt64* values = malloc(count, sizeof(GInt64));
+    for (jint i = 0; i < count; i++) {
+        jlong val = (jlong) jenv->GetLongArrayElement($input, i);
+        values[i] = (GInt64) val;
+    }
+    $result = values;
+}
+*/
+
+%typemap(freearg) (int nList, GInt64* pList)
 {
-    $result = jenv->NewObject(jenv->FindClass("org/gdal/gdal/MDArray"), NULL);
+  /* %typemap(freearg) (int nList, GInt64* pList) */
+  if ($2) {
+    jenv->SetLongArrayRegion($input, 0, $1, (jlong*)$2);
+    free((void*) $2);
+  }
 }
 
-%typemap(jni) ( GDALMDArrayHS* ) "jobject"
-%typemap(jtype) ( GDALMDArrayHS* ) "MDArray"
-%typemap(jstype) ( GDALMDArrayHS* ) "MDArray"
-%typemap(javain) ( GDALMDArrayHS* ) "$javainput"
-%typemap(javaout) ( GDALMDArrayHS* ) {
+%typemap(freearg) (GInt64* pList)
+{
+  /* %typemap(freearg) (GInt64* pList) */
+  if ($1) {
+    free((void*) $1);
+  }
+}
+
+%typemap(jni) (GInt64*) "jlongArray"
+
+%typemap(jtype) (GInt64*) "long[]"
+
+%typemap(jstype) (GInt64*) "long[]"
+
+%typemap(javain) (GInt64*) "$javainput"
+
+%typemap(javaout) (GInt64*) {
     return $jnicall;
 }
 
-  COMMENTING OUT. MAYBE UNNECESSARY.
-  
-*/
+%typemap(in) (int nList, GInt64* pListOut)
+{
+  /* %typemap(in) (int nList, GInt64* pListOut) */
+
+  if ($input)
+  {
+    $1 = jenv->GetArrayLength($input);
+    if ($1 == 0)
+       $2 = NULL;
+    else
+       $2 = (GInt64 *)jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $1 = 0;
+    $2 = NULL;
+  }
+}
+
+%typemap(argout) (int nList, GInt64* pList)
+{
+  /* %typemap(argout) (int nList, GInt64* pList) */
+  const long* values = $2;
+  jlongArray longArray = jenv->NewLongArray($1);
+  jenv->SetLongArrayRegion(longArray, (jsize)0, (jsize)$1, (jlong*)values);
+  *(jlongArray *)&jresult = longArray;
+}
+
+/***************************************************
+ * Typemaps for GDALExtendedDataTypeH*
+ ***************************************************/
+
+%typemap(jni) (GDALExtendedDataTypeH*) "jobject"
+
+%typemap(jtype) (GDALExtendedDataTypeH*) "ExtendedDataType"
+
+%typemap(jstype) (GDALExtendedDataTypeH*) "ExtendedDataType"
+
+%typemap(javain) (GDALExtendedDataTypeH*) "$javainput"
+
+%typemap(javaout) (GDALExtendedDataTypeH*) {
+    return $jnicall;
+}

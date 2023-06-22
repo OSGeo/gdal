@@ -139,6 +139,10 @@ import java.util.Vector;
   
 %}
 
+%typemap(javaimports) GDALExtendedDataTypeHS %{
+import org.gdal.gdal.ExtendedDataType;
+%}
+
 %typemap(javaimports) GDALMDArrayHS %{
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdalconst.gdalconst;
@@ -146,26 +150,40 @@ import org.gdal.gdalconst.gdalconst;
 
 %extend GDALMDArrayHS {
 
-    bool MDArrayRead(const GUInt64 *arrayStartIdxes,
-								size_t *counts, const GInt64 *arraySteps,
+    bool MDArrayRead(const GInt64 *arrayStartIdxes,
+								GInt64 *counts,
+								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								GDALExtendedDataTypeH bufferDataType,
 								void *pDstBuffer)
     {
-		return GDALMDArrayRead((GDALMDArrayH) self, arrayStartIdxes, counts, arraySteps,
-								bufferStrides, bufferDataType,
-								pDstBuffer, NULL, 0);
+		return GDALMDArrayRead((GDALMDArrayH) self,
+								(const GUInt64*) arrayStartIdxes,
+								(size_t*) counts,
+								arraySteps,
+								bufferStrides,
+								bufferDataType,
+								pDstBuffer,
+								NULL,
+								0);
     }
 
-    bool MDArrayWrite(const GUInt64 *arrayStartIdxes,
-								size_t *counts, const GInt64 *arraySteps,
+    bool MDArrayWrite(const GInt64 *arrayStartIdxes,
+								GInt64 *counts,
+								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								GDALExtendedDataTypeH bufferDataType,
 								void *pSrcBuffer)
     {
-		return GDALMDArrayWrite((GDALMDArrayH) self, arrayStartIdxes, counts, arraySteps,
-								bufferStrides, bufferDataType,
-								pSrcBuffer, NULL, 0);
+		return GDALMDArrayWrite((GDALMDArrayH) self,
+								(const GUInt64*) arrayStartIdxes,
+								(size_t*) counts,
+								arraySteps,
+								bufferStrides,
+								bufferDataType,
+								pSrcBuffer,
+								NULL,
+								0);
     }
 
 } /* extend */
