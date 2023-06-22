@@ -1705,7 +1705,6 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
 
     bool bFoundSomething = false;
-#ifdef OGR_ENABLE_DRIVER_GML
     if (!osVectorURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_VECTOR) != 0)
     {
         const auto osVectorType = oJsonCollection.GetString("vectorType");
@@ -1727,12 +1726,14 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
             }
         }
 
+#ifdef OGR_ENABLE_DRIVER_GML
         std::vector<std::unique_ptr<OGRFieldDefn>> apoFields;
         bool bGotSchema = false;
         if (!osXMLSchemaURL.empty())
         {
             bGotSchema = ParseXMLSchema(osXMLSchemaURL, apoFields, eGeomType);
         }
+#endif
 
         for (const auto &tileMatrix : tms->tileMatrixList())
         {
@@ -1780,16 +1781,15 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                     tileMatrix, eGeomType));
             poLayer->SetMinMaxXY(minCol, minRow, maxCol, maxRow);
             poLayer->SetExtent(dfXMin, dfYMin, dfXMax, dfYMax);
+#ifdef OGR_ENABLE_DRIVER_GML
             if (bGotSchema)
                 poLayer->SetFields(apoFields);
+#endif
             m_apoLayers.emplace_back(std::move(poLayer));
         }
 
         bFoundSomething = true;
     }
-#else
-    CPL_IGNORE_RET_VAL(oJsonCollection);
-#endif
 
     if (!osRasterURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
     {
