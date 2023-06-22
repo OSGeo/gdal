@@ -2075,19 +2075,3 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   jenv->SetLongArrayRegion(longArray, (jsize)0, (jsize)$1, (jlong*)values);
   *(jlongArray *)&jresult = longArray;
 }
-
-/***************************************************
- * Typemaps for GDALExtendedDataTypeH*
- ***************************************************/
-
-%typemap(jni) (GDALExtendedDataTypeH*) "jobject"
-
-%typemap(jtype) (GDALExtendedDataTypeH*) "ExtendedDataType"
-
-%typemap(jstype) (GDALExtendedDataTypeH*) "ExtendedDataType"
-
-%typemap(javain) (GDALExtendedDataTypeH*) "$javainput"
-
-%typemap(javaout) (GDALExtendedDataTypeH*) {
-    return $jnicall;
-}

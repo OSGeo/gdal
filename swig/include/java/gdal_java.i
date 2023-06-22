@@ -139,10 +139,6 @@ import java.util.Vector;
   
 %}
 
-%typemap(javaimports) GDALExtendedDataTypeHS %{
-import org.gdal.gdal.ExtendedDataType;
-%}
-
 %typemap(javaimports) GDALMDArrayHS %{
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdalconst.gdalconst;
@@ -154,36 +150,54 @@ import org.gdal.gdalconst.gdalconst;
 								GInt64 *counts,
 								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
-								GDALExtendedDataTypeH bufferDataType,
+								int bufferDataType,
 								void *pDstBuffer)
     {
-		return GDALMDArrayRead((GDALMDArrayH) self,
+		GDALExtendedDataTypeH dataType =
+			
+			GDALExtendedDataTypeCreate((GDALDataType) bufferDataType);
+		
+		bool retVal = 
+		
+			GDALMDArrayRead((GDALMDArrayH) self,
 								(const GUInt64*) arrayStartIdxes,
 								(size_t*) counts,
 								arraySteps,
 								bufferStrides,
-								bufferDataType,
+								dataType,
 								pDstBuffer,
 								NULL,
 								0);
+		VSIFree(dataType);
+		
+		return retVal;
     }
 
     bool MDArrayWrite(const GInt64 *arrayStartIdxes,
 								GInt64 *counts,
 								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
-								GDALExtendedDataTypeH bufferDataType,
+								int bufferDataType,
 								void *pSrcBuffer)
     {
-		return GDALMDArrayWrite((GDALMDArrayH) self,
+		GDALExtendedDataTypeH dataType =
+			
+			GDALExtendedDataTypeCreate((GDALDataType) bufferDataType);
+		
+		bool retVal = 
+			
+			GDALMDArrayWrite((GDALMDArrayH) self,
 								(const GUInt64*) arrayStartIdxes,
 								(size_t*) counts,
 								arraySteps,
 								bufferStrides,
-								bufferDataType,
+								dataType,
 								pSrcBuffer,
 								NULL,
 								0);
+		VSIFree(dataType);
+		
+		return retVal;
     }
 
 } /* extend */
@@ -251,7 +265,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so read from mdarray into buffer
 		
-		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, short[] buffer) {
@@ -278,7 +292,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so read from mdarray into buffer
 		
-		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int[] buffer) {
@@ -305,7 +319,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so read from mdarray into buffer
 		
-		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, long[] buffer) {
@@ -331,7 +345,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so read from mdarray into buffer
 		
-		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, float[] buffer) {
@@ -357,7 +371,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so read from mdarray into buffer
 		
-		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, double[] buffer) {
@@ -383,7 +397,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so read from mdarray into buffer
 		
-		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayRead(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, byte[] buffer) {
@@ -408,7 +422,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so write from buffer into mdarray
 		
-		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, short[] buffer) {
@@ -435,7 +449,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so write from buffer into mdarray
 		
-		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int[] buffer) {
@@ -462,7 +476,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so write from buffer into mdarray
 		
-		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, long[] buffer) {
@@ -488,7 +502,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so write from buffer into mdarray
 		
-		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, float[] buffer) {
@@ -514,7 +528,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so write from buffer into mdarray
 		
-		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 
 	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, double[] buffer) {
@@ -540,7 +554,7 @@ import org.gdal.gdalconst.gdalconst;
 			
 		// if so write from buffer into mdarray
 		
-		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, dataType, buffer);
+		return MDArrayWrite(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
 	}
 %}
 
