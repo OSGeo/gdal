@@ -230,6 +230,8 @@ class OGCAPITiledLayer final
 {
     OGCAPIDataset *m_poDS = nullptr;
     bool m_bFeatureDefnEstablished = false;
+    bool m_bEstablishFieldsCalled =
+        false;  // prevent recursion in EstablishFields()
     OGCAPITiledLayerFeatureDefn *m_poFeatureDefn = nullptr;
     OGREnvelope m_sEnvelope{};
     CPLString m_osTileData{};
@@ -2532,10 +2534,62 @@ OGRFeature *OGCAPITiledLayer::GetFeature(GIntBig nFID)
 
 void OGCAPITiledLayer::EstablishFields()
 {
-    if (!m_bFeatureDefnEstablished)
+    if (!m_bFeatureDefnEstablished && !m_bEstablishFieldsCalled)
     {
-        m_bFeatureDefnEstablished = true;
-        delete GetNextRawFeature();
+        m_bEstablishFieldsCalled = true;
+
+        // Try up to 10 requests in order. We could probably remove that
+        // to use just the fallback logic.
+        for (int i = 0; i < 10; ++i)
+        {
+            bool bEmptyContent = false;
+            m_poUnderlyingDS.reset(OpenTile(m_nCurX, m_nCurY, bEmptyContent));
+            if (bEmptyContent || !m_poUnderlyingDS)
+            {
+                if (!IncrementTileIndices())
+                    break;
+                continue;
+            }
+            m_poUnderlyingLayer = m_poUnderlyingDS->GetLayer(0);
+            if (m_poUnderlyingLayer)
+            {
+                FinalizeFeatureDefnWithLayer(m_poUnderlyingLayer);
+                break;
+            }
+        }
+
+        if (!m_bFeatureDefnEstablished)
+        {
+            // Try to sample at different locations in the extent
+            for (int j = 0; !m_bFeatureDefnEstablished && j < 3; ++j)
+            {
+                m_nCurY = m_nMinY + (2 * j + 1) * (m_nMaxY - m_nMinY) / 6;
+                for (int i = 0; i < 3; ++i)
+                {
+                    m_nCurX = m_nMinX + (2 * i + 1) * (m_nMaxX - m_nMinX) / 6;
+                    bool bEmptyContent = false;
+                    m_poUnderlyingDS.reset(
+                        OpenTile(m_nCurX, m_nCurY, bEmptyContent));
+                    if (bEmptyContent || !m_poUnderlyingDS)
+                    {
+                        continue;
+                    }
+                    m_poUnderlyingLayer = m_poUnderlyingDS->GetLayer(0);
+                    if (m_poUnderlyingLayer)
+                    {
+                        FinalizeFeatureDefnWithLayer(m_poUnderlyingLayer);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!m_bFeatureDefnEstablished)
+        {
+            CPLDebug("OGCAPI", "Could not establish feature definition. No "
+                               "valid tile found in sampling done");
+        }
+
         ResetReading();
     }
 }
