@@ -511,12 +511,12 @@ Creation Options
       already allocated in the file). The default is FALSE.
 
 -  .. co:: JPEG_QUALITY
-      :choices: 1-100
+      :choices: 10-100
       :default: 75
 
       Set the JPEG quality when using JPEG
       compression. A value of 100 is best quality (least compression), and
-      1 is worst quality (best compression).
+      10 is worst quality (best compression).
 
 -  .. co:: JPEGTABLESMODE
       :choices: 0, 1, 2, 3
@@ -931,7 +931,7 @@ the default behavior of the GTiff driver.
       Set the predictor to use for overviews with LZW, DEFLATE and ZSTD compression.
 
 -  .. config:: JPEG_QUALITY_OVERVIEW
-      :choices: Integer between 0 and 100
+      :choices: Integer between 10 and 100
       :default: 75
 
       Quality of JPEG compressed overviews, either internal or external.
