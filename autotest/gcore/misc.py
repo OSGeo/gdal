@@ -869,6 +869,85 @@ def test_misc_15():
 
 
 ###############################################################################
+# Test config option context managers
+
+
+def test_misc_config_context_mgrs_1():
+    # Make sure that config_options context manager does not convert a
+    # global config option to a thread-local config option
+
+    try:
+        gdal.SetConfigOption("A", "1")
+
+        assert gdal.GetConfigOption("A") == "1"
+        assert gdal.GetThreadLocalConfigOption("A") is None
+
+        # temporarily set new thread-local value for A
+        with gdal.config_option("A", "2", thread_local=True):
+            assert gdal.GetConfigOption("A") == "2"
+            assert gdal.GetThreadLocalConfigOption("A") == "2"
+
+        # value of A is restored, and thread-local value is unset
+        assert gdal.GetConfigOption("A") == "1"
+        assert gdal.GetThreadLocalConfigOption("A") is None
+
+    finally:
+        gdal.SetConfigOption("A", None)
+
+
+def test_misc_config_context_mgrs_2():
+    # Make sure that config_options context manager does not convert a
+    # thread-local config option to a global config option
+
+    try:
+        gdal.SetThreadLocalConfigOption("B", "5")
+        assert gdal.GetConfigOption("B") == "5"
+        assert gdal.GetThreadLocalConfigOption("B") == "5"
+
+        # temporarily set new global value for B
+        # this has no effect, because the thread-local value overrides it
+        with gdal.config_option("B", "6", thread_local=False):
+            assert gdal.GetConfigOption("B") == "5"
+            assert gdal.GetThreadLocalConfigOption("B") == "5"
+
+        # value of B is restored
+        assert gdal.GetThreadLocalConfigOption("B") == "5"
+
+        gdal.SetThreadLocalConfigOption("B", None)
+        assert gdal.GetConfigOption("B") is None
+
+    finally:
+        gdal.SetThreadLocalConfigOption("B", None)
+
+
+def test_misc_config_context_mgrs_3():
+    # Make sure that config_options correctly restores state when
+    # a configuration option is set in both thread-local and global
+    # contexts.
+
+    try:
+        gdal.SetConfigOption("C", "GLOBAL")
+        gdal.SetThreadLocalConfigOption("C", "TL")
+
+        # temporarily set new global value for C
+        # this has no effect, because the thread-local value overrides it
+        with gdal.config_option("C", "XX", thread_local=False):
+            assert gdal.GetConfigOption("C") == "TL"
+            assert gdal.GetThreadLocalConfigOption("C") == "TL"
+
+        # value of C is restored
+        assert gdal.GetThreadLocalConfigOption("C") == "TL"
+
+        # clear thread-local value of C, exposing global value
+        gdal.SetThreadLocalConfigOption("C", None)
+        assert gdal.GetConfigOption("C") == "GLOBAL"
+
+    finally:
+        gdal.SetConfigOption("C", None)
+        gdal.SetThreadLocalConfigOption("C", None)
+
+
+###############################################################################
 
 
 def test_misc_cleanup():

@@ -198,6 +198,7 @@ void CPL_STDCALL PyCPLErrorHandler(CPLErr eErrClass, int err_no, const char* psz
 %rename (GetFileSystemOptions) VSIGetFileSystemOptions;
 %rename (SetConfigOption) CPLSetConfigOption;
 %rename (GetConfigOption) wrapper_CPLGetConfigOption;
+%rename (GetGlobalConfigOption) wrapper_CPLGetGlobalConfigOption;
 %rename (SetThreadLocalConfigOption) CPLSetThreadLocalConfigOption;
 %rename (GetThreadLocalConfigOption) wrapper_CPLGetThreadLocalConfigOption;
 %rename (SetCredential) wrapper_VSISetCredential;
@@ -493,6 +494,10 @@ void CPLSetThreadLocalConfigOption( const char * pszKey, const char * pszValue )
 const char *wrapper_CPLGetConfigOption( const char * pszKey, const char * pszDefault = NULL )
 {
     return CPLGetConfigOption( pszKey, pszDefault );
+}
+const char *wrapper_CPLGetGlobalConfigOption( const char * pszKey, const char * pszDefault = NULL )
+{
+    return CPLGetGlobalConfigOption( pszKey, pszDefault );
 }
 const char *wrapper_CPLGetThreadLocalConfigOption( const char * pszKey, const char * pszDefault = NULL )
 {
