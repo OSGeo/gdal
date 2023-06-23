@@ -2075,3 +2075,117 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   jenv->SetLongArrayRegion(longArray, (jsize)0, (jsize)$1, (jlong*)values);
   *(jlongArray *)&jresult = longArray;
 }
+
+/*******************************************************
+   Typemaps for passing java arrays as a void pointer
+ *******************************************************/
+ 
+//  useful docs: https://www.swig.org/Doc1.3/Typemaps.html
+
+//investigate
+//  do we have to mess with numinputs?
+//  out versus in
+//  jdoubleArray or DoubleArray or double* or something else
+//  $result versus $1
+
+// argout is for code that does java manipulations.
+//   if it ends up with a $result is a java object
+// out seems exactly the same
+
+// typemap(in)  (c types): convert from Java to C
+// typemap(out) (c types): convert from C to Java
+
+%typemap(in) (DoubleArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetDoubleArrayElements($input), NULL);
+%}
+
+%typemap(in) (jobject) %{
+
+  $1 = 0;
+
+  if ($input)
+  {
+    jclass clazz = jenv->GetObjectClass($input);
+    
+    jmethodID isArrayMeth = jenv->GetMethodID(clazz, "isArray", "()Z");
+    
+    jboolean isArray = jenv->CallBooleanMethod($input, isArrayMeth);
+    
+    if (isArray) {
+    
+      jmethodID getNameMeth = jenv->GetMethodID(clazz, "getName", "()[C");
+    
+      jstring clazz_name = jenv->CallCharMethod(clazz, getNameMeth);
+
+      jstring ARR_BOOL = jenv->NewStringUTF("[Z");
+      
+      jstring ARR_CHAR = jenv->NewStringUTF("[C");
+      
+      jstring ARR_BYTE = jenv->NewStringUTF("[B");
+      
+      jstring ARR_SHORT = jenv->NewStringUTF("[S");
+      
+      jstring ARR_INT = jenv->NewStringUTF("[I");
+      
+      jstring ARR_LONG = jenv->NewStringUTF("[L");
+      
+      jstring ARR_FLOAT = jenv->NewStringUTF("[F");
+      
+      jstring ARR_DOUBLE = jenv->NewStringUTF("[D");
+      
+      jclass strClass = jenv->GetObjectClass(clazz_name);
+      
+      jmethodID equalsMethID = jenv->GetMethodID(strClass, "equals", "(Ljava/lang/Object;)Z");
+
+      if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_BOOL))
+      
+        $1 = jenv->GetBooleanArrayElements(*((jbooleanArray *) &$input), NULL);
+      
+      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_CHAR))
+      
+        $1 = jenv->GetCharArrayElements(*((jcharArray *) &$input), NULL);
+      
+      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_BYTE))
+      
+        $1 = jenv->GetByteArrayElements(*((jbyteArray *) &$input), NULL);
+      
+      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_SHORT))
+      
+        $1 = jenv->GetShortArrayElements(*((jshortArray *) &$input), NULL);
+      
+      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_INT))
+      
+        $1 = jenv->GetIntArrayElements(*((jintArray *) &$input), NULL);
+      
+      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_LONG))
+      
+        $1 = jenv->GetLongArrayElements(*((jlongArray *) &$input), NULL);
+      
+      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_FLOAT))
+      
+        $1 = jenv->GetFloatArrayElements(*((jfloatArray *) &$input), NULL);
+      
+      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_DOUBLE))
+      
+        $1 = jenv->GetDoubleArrayElements(*((jdoubleArray *) &$input), NULL);
+      
+      jenv->DeleteLocalRef(ARR_DOUBLE);
+      
+      jenv->DeleteLocalRef(ARR_FLOAT);
+      
+      jenv->DeleteLocalRef(ARR_LONG);
+      
+      jenv->DeleteLocalRef(ARR_INT);
+      
+      jenv->DeleteLocalRef(ARR_SHORT);
+      
+      jenv->DeleteLocalRef(ARR_BYTE);
+      
+      jenv->DeleteLocalRef(ARR_CHAR);
+      
+      jenv->DeleteLocalRef(ARR_BOOL);
+    }
+  }
+
+%}
