@@ -146,6 +146,8 @@ import org.gdal.gdalconst.gdalconst;
 
 %extend GDALMDArrayHS {
 
+    private:
+	
     bool MDArrayRead(const GInt64 *arrayStartIdxes,
 								GInt64 *counts,
 								const GInt64 *arraySteps,
@@ -204,6 +206,8 @@ import org.gdal.gdalconst.gdalconst;
 		return retVal;
     }
 
+    public:
+    
 } /* extend */
 
 %typemap(javacode) GDALMDArrayHS %{
