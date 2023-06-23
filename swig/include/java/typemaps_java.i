@@ -2111,27 +2111,27 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 // are these arrays listed here C arrays and not java arrays?
 // I think so and that is why mapping is not happening.
 
-%typemap(in) GInt64 out (byte[]) %{
+%typemap(in) GInt64 out (jbyteArray) %{
     $1 = (GInt64) jenv->GetByteArrayElements($input), NULL);
 %}
 
-%typemap(in) GInt64 out (short[]) %{
+%typemap(in) GInt64 out (jshortArray) %{
     $1 = (GInt64) jenv->GetShortArrayElements($input), NULL);
 %}
 
-%typemap(in) GInt64 out (int[]) %{
+%typemap(in) GInt64 out (jintArray) %{
     $1 = (GInt64) jenv->GetIntArrayElements($input), NULL);
 %}
 
-%typemap(in) GInt64 out (long[]) %{
+%typemap(in) GInt64 out (jlongArray) %{
     $1 = (GInt64) jenv->GetLongArrayElements($input), NULL);
 %}
 
-%typemap(in) GInt64 out (float[]) %{
+%typemap(in) GInt64 out (jfloatArray) %{
     $1 = (GInt64) jenv->GetFloatArrayElements($input), NULL);
 %}
 
-%typemap(in) GInt64 out (double[]) %{
+%typemap(in) GInt64 out (jdoubleArray) %{
     $1 = (GInt64) jenv->GetDoubleArrayElements($input), NULL);
 %}
 
