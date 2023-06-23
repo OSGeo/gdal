@@ -2102,7 +2102,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(in) (jobject) %{
 
-  $1 = 0;
+  $1 = (SWIGTYPE_p_void) 0;
 
   if ($input)
   {
@@ -2140,35 +2140,35 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
       if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_BOOL))
       
-        $1 = jenv->GetBooleanArrayElements(*((jbooleanArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetBooleanArrayElements(*((jbooleanArray *) &$input), NULL);
       
       else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_CHAR))
       
-        $1 = jenv->GetCharArrayElements(*((jcharArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetCharArrayElements(*((jcharArray *) &$input), NULL);
       
       else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_BYTE))
       
-        $1 = jenv->GetByteArrayElements(*((jbyteArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetByteArrayElements(*((jbyteArray *) &$input), NULL);
       
       else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_SHORT))
       
-        $1 = jenv->GetShortArrayElements(*((jshortArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetShortArrayElements(*((jshortArray *) &$input), NULL);
       
       else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_INT))
       
-        $1 = jenv->GetIntArrayElements(*((jintArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetIntArrayElements(*((jintArray *) &$input), NULL);
       
       else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_LONG))
       
-        $1 = jenv->GetLongArrayElements(*((jlongArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetLongArrayElements(*((jlongArray *) &$input), NULL);
       
       else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_FLOAT))
       
-        $1 = jenv->GetFloatArrayElements(*((jfloatArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetFloatArrayElements(*((jfloatArray *) &$input), NULL);
       
       else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_DOUBLE))
       
-        $1 = jenv->GetDoubleArrayElements(*((jdoubleArray *) &$input), NULL);
+        $1 = (SWIGTYPE_p_void) jenv->GetDoubleArrayElements(*((jdoubleArray *) &$input), NULL);
       
       jenv->DeleteLocalRef(ARR_DOUBLE);
       
