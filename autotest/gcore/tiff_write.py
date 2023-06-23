@@ -11231,5 +11231,22 @@ def test_tiff_write_dataset_block_cache_bypass_optim_non_triggered():
     gdal.Unlink(tmpfilename)
 
 
+def test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam():
+
+    filename = "/vsimem/test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.GetRasterBand(1).SetScale(0.01)
+    ds = None
+    ds = gdal.Open(filename)
+    # this goes into PAM
+    ds.GetRasterBand(1).SetMetadataItem("foo", "bar")
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetScale() == 0.01
+    assert ds.GetRasterBand(1).GetMetadataItem("foo") == "bar"
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete(filename)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
