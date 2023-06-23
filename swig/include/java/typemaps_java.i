@@ -2095,12 +2095,53 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 // typemap(in)  (c types): convert from Java to C
 // typemap(out) (c types): convert from C to Java
 
-%typemap(in) (DoubleArray) %{
+%typemap(in) (jbooleanArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetBooleanArrayElements($input), NULL);
+%}
+
+%typemap(in) (jcharArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetCharArrayElements($input), NULL);
+%}
+
+%typemap(in) (jbyteArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetByteArrayElements($input), NULL);
+%}
+
+%typemap(in) (jshortArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetShortArrayElements($input), NULL);
+%}
+
+%typemap(in) (jintArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetIntArrayElements($input), NULL);
+%}
+
+%typemap(in) (jlongArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetLongArrayElements($input), NULL);
+%}
+
+%typemap(in) (jfloatArray) %{
+    
+    $1 = (SWIGTYPE_p_void) jenv->GetFloatArrayElements($input), NULL);
+%}
+
+// NONE OF THESE WORK!!!
+
+//%typemap(in) (double*) %{
+
+//%typemap(in) (DoubleArray) %{
+
+%typemap(in) (jdoubleArray) %{
     
     $1 = (SWIGTYPE_p_void) jenv->GetDoubleArrayElements($input), NULL);
 %}
 
-%typemap(in) (jobject) %{
+%typemap(in) (jarray) %{
 
   $1 = (SWIGTYPE_p_void) 0;
 
@@ -2114,9 +2155,9 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     
     if (isArray) {
     
-      jmethodID getNameMeth = jenv->GetMethodID(clazz, "getName", "()[C");
+      jmethodID getNameMeth = jenv->GetMethodID(clazz, "getName", "()Ljava/lang/String;");
     
-      jstring clazz_name = jenv->CallCharMethod(clazz, getNameMeth);
+      jstring clazz_name = (jstring) jenv->CallObjectMethod(clazz, getNameMeth);
 
       jstring ARR_BOOL = jenv->NewStringUTF("[Z");
       

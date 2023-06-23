@@ -151,7 +151,7 @@ import org.gdal.gdalconst.gdalconst;
 								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								int bufferDataType,
-								void *pDstBuffer)
+								jarray pDstBuffer)
     {
 		GDALExtendedDataTypeH dataType =
 			
@@ -178,7 +178,7 @@ import org.gdal.gdalconst.gdalconst;
 								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								int bufferDataType,
-								void *pSrcBuffer)
+								jarray pSrcBuffer)
     {
 		GDALExtendedDataTypeH dataType =
 			
