@@ -151,11 +151,13 @@ import org.gdal.gdalconst.gdalconst;
 								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								int bufferDataType,
-								jarray pDstBuffer)
+								GInt64 dstArrayH)
     {
 		GDALExtendedDataTypeH dataType =
 			
 			GDALExtendedDataTypeCreate((GDALDataType) bufferDataType);
+		
+		//void* buffer = findBuffer(dstArray);
 		
 		bool retVal = 
 		
@@ -165,7 +167,7 @@ import org.gdal.gdalconst.gdalconst;
 								arraySteps,
 								bufferStrides,
 								dataType,
-								pDstBuffer,
+								(void*) dstArrayH,
 								NULL,
 								0);
 		VSIFree(dataType);
@@ -178,11 +180,13 @@ import org.gdal.gdalconst.gdalconst;
 								const GInt64 *arraySteps,
 								GInt64 *bufferStrides,
 								int bufferDataType,
-								jarray pSrcBuffer)
+								GInt64 srcArrayH)
     {
 		GDALExtendedDataTypeH dataType =
 			
 			GDALExtendedDataTypeCreate((GDALDataType) bufferDataType);
+		
+		//void* buffer = findBuffer(srcArray);
 		
 		bool retVal = 
 			
@@ -192,7 +196,7 @@ import org.gdal.gdalconst.gdalconst;
 								arraySteps,
 								bufferStrides,
 								dataType,
-								pSrcBuffer,
+								(void*) srcArrayH,
 								NULL,
 								0);
 		VSIFree(dataType);
