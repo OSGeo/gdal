@@ -349,6 +349,7 @@ class JPGDataset final : public JPGDatasetCommon
         GDALJPEGUserData &sUserData, struct jpeg_compress_struct &sCInfo,
         struct jpeg_error_mgr &sJErr, GByte *&pabyScanline);
     static void ErrorExit(j_common_ptr cinfo);
+    static void OutputMessage(j_common_ptr cinfo);
 };
 
 /************************************************************************/

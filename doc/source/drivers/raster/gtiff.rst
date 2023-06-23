@@ -514,9 +514,12 @@ Creation Options
       :choices: 1-100
       :default: 75
 
-      Set the JPEG quality when using JPEG
-      compression. A value of 100 is best quality (least compression), and
-      1 is worst quality (best compression).
+      Set the JPEG quality when using JPEG compression.
+
+      Low values result in higher compression ratios, but poorer image quality
+      with strong blocking artifacts.
+      Values above 95 are not meaningfully better quality but can be
+      substantially larger.
 
 -  .. co:: JPEGTABLESMODE
       :choices: 0, 1, 2, 3
