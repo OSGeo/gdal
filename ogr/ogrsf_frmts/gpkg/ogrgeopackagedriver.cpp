@@ -148,7 +148,10 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
                 nUserVersion < GPKG_1_2_VERSION + 99) ||
                // Accept any 103XX version
                (nUserVersion >= GPKG_1_3_VERSION &&
-                nUserVersion < GPKG_1_3_VERSION + 99)))
+                nUserVersion < GPKG_1_3_VERSION + 99) ||
+               // Accept any 104XX version
+               (nUserVersion >= GPKG_1_4_VERSION &&
+                nUserVersion < GPKG_1_4_VERSION + 99)))
     {
 #ifdef DEBUG
         if (EQUAL(CPLGetFilename(poOpenInfo->pszFilename), ".cur_input"))
@@ -169,7 +172,7 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
                 "GPKG_WARN_UNRECOGNIZED_APPLICATION_ID", "YES"));
             if (bWarn)
             {
-                if (nUserVersion > GPKG_1_3_VERSION)
+                if (nUserVersion > GPKG_1_4_VERSION)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "This version of GeoPackage "
@@ -193,7 +196,7 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
             }
             else
             {
-                if (nUserVersion > GPKG_1_3_VERSION)
+                if (nUserVersion > GPKG_1_4_VERSION)
                 {
                     CPLDebug("GPKG",
                              "This version of GeoPackage "
@@ -450,6 +453,7 @@ void GDALGPKGDriver::InitializeCreationOptionList()
         "     <Value>1.1</Value>"
         "     <Value>1.2</Value>"
         "     <Value>1.3</Value>"
+        "     <Value>1.4</Value>"
         "  </Option>"
         "  <Option name='DATETIME_FORMAT' type='string-select' "
         "description='How to encode DateTime not in UTC' default='WITH_TZ'>"

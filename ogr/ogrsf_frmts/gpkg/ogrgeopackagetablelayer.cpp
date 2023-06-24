@@ -3458,15 +3458,23 @@ bool OGRGeoPackageTableLayer::StartDeferredSpatialIndexUpdate()
     m_osRTreeName += "_";
     m_osRTreeName += pszC;
 
-    char *pszSQL =
-        sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type = 'trigger' "
-                        "AND name IN ('%q', '%q', '%q', '%q', '%q', '%q')",
-                        (m_osRTreeName + "_insert").c_str(),
-                        (m_osRTreeName + "_update1").c_str(),
-                        (m_osRTreeName + "_update2").c_str(),
-                        (m_osRTreeName + "_update3").c_str(),
-                        (m_osRTreeName + "_update4").c_str(),
-                        (m_osRTreeName + "_delete").c_str());
+    char *pszSQL = sqlite3_mprintf(
+        "SELECT sql FROM sqlite_master WHERE type = 'trigger' "
+        "AND name IN ('%q', '%q', '%q', '%q', '%q', '%q', "
+        "'%q', '%q', '%q')",
+        (m_osRTreeName + "_insert").c_str(),
+        (m_osRTreeName + "_update1").c_str(),
+        (m_osRTreeName + "_update2").c_str(),
+        (m_osRTreeName + "_update3").c_str(),
+        (m_osRTreeName + "_update4").c_str(),
+        // update5 replaces update3 in GPKG 1.4
+        // cf https://github.com/opengeospatial/geopackage/pull/661
+        (m_osRTreeName + "_update5").c_str(),
+        // update6 and update7 replace update1 in GPKG 1.4
+        // cf https://github.com/opengeospatial/geopackage/pull/661
+        (m_osRTreeName + "_update6").c_str(),
+        (m_osRTreeName + "_update7").c_str(),
+        (m_osRTreeName + "_delete").c_str());
     auto oResult = SQLQuery(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
     if (oResult)
@@ -3480,9 +3488,9 @@ bool OGRGeoPackageTableLayer::StartDeferredSpatialIndexUpdate()
             }
         }
     }
-    if (m_aoRTreeTriggersSQL.size() != 6)
+    if (m_aoRTreeTriggersSQL.size() != 6 && m_aoRTreeTriggersSQL.size() != 7)
     {
-        CPLDebug("GPKG", "Could not find expected 6 RTree triggers");
+        CPLDebug("GPKG", "Could not find expected RTree triggers");
         m_aoRTreeTriggersSQL.clear();
         return false;
     }
@@ -4292,7 +4300,9 @@ void OGRGeoPackageTableLayer::WorkaroundUpdate1TriggerIssue()
     // Workaround issue of https://sqlite.org/forum/forumpost/8c8de6ff91
     // Basically the official _update1 spatial index trigger doesn't work
     // with current versions of SQLite when invoked from an UPSERT statement.
-    if (m_poFeatureDefn->GetGeomFieldCount() == 0)
+    // In GeoPackage 1.4, the update6 and update7 triggers replace update1
+
+    if (m_bHasUpdate6And7Triggers || m_poFeatureDefn->GetGeomFieldCount() == 0)
         return;
 
     const char *pszT = m_pszTableName;
@@ -4304,9 +4314,23 @@ void OGRGeoPackageTableLayer::WorkaroundUpdate1TriggerIssue()
     osRTreeName += "_";
     osRTreeName += pszC;
 
-    char *pszSQL;
+    // Check if update6 and update7 triggers are there
+    {
+        char *pszSQL = sqlite3_mprintf(
+            "SELECT * FROM sqlite_master WHERE type = 'trigger' "
+            "AND name IN ('%q', '%q')",
+            (m_osRTreeName + "_update6").c_str(),
+            (m_osRTreeName + "_update7").c_str());
+        auto oResult = SQLQuery(m_poDS->GetDB(), pszSQL);
+        sqlite3_free(pszSQL);
+        if (oResult && oResult->RowCount() == 2)
+        {
+            m_bHasUpdate6And7Triggers = true;
+            return;
+        }
+    }
 
-    pszSQL =
+    char *pszSQL =
         sqlite3_mprintf("SELECT sql FROM sqlite_master WHERE type = 'trigger' "
                         "AND name = '%q'",
                         (m_osRTreeName + "_update1").c_str());
@@ -4331,11 +4355,11 @@ void OGRGeoPackageTableLayer::WorkaroundUpdate1TriggerIssue()
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
-        "CREATE TRIGGER \"%w_update1_old_geom_notnull\" AFTER UPDATE OF \"%w\" "
+        "CREATE TRIGGER \"%w_update6\" AFTER UPDATE OF \"%w\" "
         "ON \"%w\" "
         "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
-        "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\") AND OLD.\"%w\" "
-        "NOTNULL AND NOT ST_IsEmpty(OLD.\"%w\")) "
+        "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) AND "
+        "(OLD.\"%w\" NOTNULL AND NOT ST_IsEmpty(OLD.\"%w\")) "
         "BEGIN "
         "UPDATE \"%w\" SET "
         "minx = ST_MinX(NEW.\"%w\"), maxx = ST_MaxX(NEW.\"%w\"),"
@@ -4348,11 +4372,11 @@ void OGRGeoPackageTableLayer::WorkaroundUpdate1TriggerIssue()
     sqlite3_free(pszSQL);
 
     pszSQL = sqlite3_mprintf(
-        "CREATE TRIGGER \"%w_update1_old_geom_null\" AFTER UPDATE OF \"%w\" ON "
+        "CREATE TRIGGER \"%w_update7\" AFTER UPDATE OF \"%w\" ON "
         "\"%w\" "
         "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
-        "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\") AND (OLD.\"%w\" "
-        "ISNULL OR ST_IsEmpty(OLD.\"%w\"))) "
+        "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) AND "
+        "(OLD.\"%w\" ISNULL OR ST_IsEmpty(OLD.\"%w\")) "
         "BEGIN "
         "INSERT INTO \"%w\" VALUES ("
         "NEW.\"%w\","
@@ -4375,6 +4399,7 @@ void OGRGeoPackageTableLayer::RevertWorkaroundUpdate1TriggerIssue()
     if (!m_bUpdate1TriggerDisabled)
         return;
     m_bUpdate1TriggerDisabled = false;
+    CPLAssert(!m_bHasUpdate6And7Triggers);
 
     const char *pszT = m_pszTableName;
     const char *pszC = m_poFeatureDefn->GetGeomFieldDefn(0)->GetNameRef();
@@ -4389,13 +4414,13 @@ void OGRGeoPackageTableLayer::RevertWorkaroundUpdate1TriggerIssue()
     SQLCommand(m_poDS->GetDB(), m_osUpdate1Trigger.c_str());
     m_osUpdate1Trigger.clear();
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_update1_old_geom_notnull\"",
-                             osRTreeName.c_str());
+    pszSQL =
+        sqlite3_mprintf("DROP TRIGGER \"%w_update6\"", osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 
-    pszSQL = sqlite3_mprintf("DROP TRIGGER \"%w_update1_old_geom_null\"",
-                             osRTreeName.c_str());
+    pszSQL =
+        sqlite3_mprintf("DROP TRIGGER \"%w_update7\"", osRTreeName.c_str());
     SQLCommand(m_poDS->GetDB(), pszSQL);
     sqlite3_free(pszSQL);
 }
@@ -4438,25 +4463,74 @@ CPLString OGRGeoPackageTableLayer::ReturnSQLCreateSpatialIndexTriggers(
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
 
-    /* Conditions: Update of geometry column to non-empty geometry
-               No row ID change
-       Actions   : Update record in rtree */
-    pszSQL = sqlite3_mprintf(
-        "CREATE TRIGGER \"%w_update1\" AFTER UPDATE OF \"%w\" ON \"%w\" "
-        "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
-        "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
-        "BEGIN "
-        "INSERT OR REPLACE INTO \"%w\" VALUES ("
-        "NEW.\"%w\","
-        "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
-        "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
-        "); "
-        "END",
-        osRTreeName.c_str(), pszC, pszT, pszI, pszI, pszC, pszC,
-        osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC);
-    osSQL += ";";
-    osSQL += pszSQL;
-    sqlite3_free(pszSQL);
+    if (m_poDS->m_nApplicationId == GPKG_APPLICATION_ID &&
+        m_poDS->m_nUserVersion >= GPKG_1_4_VERSION)
+    {
+        /* Conditions: Update a non-empty geometry with another non-empty geometry
+           Actions   : Replace record from R-tree
+        */
+        pszSQL = sqlite3_mprintf(
+            "CREATE TRIGGER \"%w_update6\" AFTER UPDATE OF \"%w\" "
+            "ON \"%w\" "
+            "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
+            "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) AND "
+            "(OLD.\"%w\" NOTNULL AND NOT ST_IsEmpty(OLD.\"%w\")) "
+            "BEGIN "
+            "UPDATE \"%w\" SET "
+            "minx = ST_MinX(NEW.\"%w\"), maxx = ST_MaxX(NEW.\"%w\"),"
+            "miny = ST_MinY(NEW.\"%w\"), maxy = ST_MaxY(NEW.\"%w\") "
+            "WHERE id = NEW.\"%w\";"
+            "END",
+            osRTreeName.c_str(), pszC, pszT, pszI, pszI, pszC, pszC, pszC, pszC,
+            osRTreeName.c_str(), pszC, pszC, pszC, pszC, pszI);
+        osSQL += ";";
+        osSQL += pszSQL;
+        sqlite3_free(pszSQL);
+
+        /* Conditions: Update a null/empty geometry with a non-empty geometry
+           Actions : Insert record into R-tree
+        */
+        pszSQL = sqlite3_mprintf(
+            "CREATE TRIGGER \"%w_update7\" AFTER UPDATE OF \"%w\" ON "
+            "\"%w\" "
+            "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
+            "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) AND "
+            "(OLD.\"%w\" ISNULL OR ST_IsEmpty(OLD.\"%w\")) "
+            "BEGIN "
+            "INSERT INTO \"%w\" VALUES ("
+            "NEW.\"%w\","
+            "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
+            "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
+            "); "
+            "END",
+            osRTreeName.c_str(), pszC, pszT, pszI, pszI, pszC, pszC, pszC, pszC,
+            osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC);
+        osSQL += ";";
+        osSQL += pszSQL;
+        sqlite3_free(pszSQL);
+    }
+    else
+    {
+        /* Conditions: Update of geometry column to non-empty geometry
+                   No row ID change
+           Actions   : Update record in rtree */
+        pszSQL = sqlite3_mprintf(
+            "CREATE TRIGGER \"%w_update1\" AFTER UPDATE OF \"%w\" ON \"%w\" "
+            "WHEN OLD.\"%w\" = NEW.\"%w\" AND "
+            "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
+            "BEGIN "
+            "INSERT OR REPLACE INTO \"%w\" VALUES ("
+            "NEW.\"%w\","
+            "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
+            "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
+            "); "
+            "END",
+            osRTreeName.c_str(), pszC, pszT, pszI, pszI, pszC, pszC,
+            osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC);
+        osSQL += ";";
+        osSQL += pszSQL;
+        sqlite3_free(pszSQL);
+    }
 
     /* Conditions: Update of geometry column to empty geometry
                No row ID change
@@ -4479,20 +4553,25 @@ CPLString OGRGeoPackageTableLayer::ReturnSQLCreateSpatialIndexTriggers(
                     Non-empty geometry
         Actions   : Remove record from rtree for old <i>
                     Insert record into rtree for new <i> */
-    pszSQL = sqlite3_mprintf(
-        "CREATE TRIGGER \"%w_update3\" AFTER UPDATE ON \"%w\" "
-        "WHEN OLD.\"%w\" != NEW.\"%w\" AND "
-        "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
-        "BEGIN "
-        "DELETE FROM \"%w\" WHERE id = OLD.\"%w\"; "
-        "INSERT OR REPLACE INTO \"%w\" VALUES ("
-        "NEW.\"%w\","
-        "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
-        "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
-        "); "
-        "END",
-        osRTreeName.c_str(), pszT, pszI, pszI, pszC, pszC, osRTreeName.c_str(),
-        pszI, osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC);
+    pszSQL =
+        sqlite3_mprintf("CREATE TRIGGER \"%w_%s\" AFTER UPDATE ON \"%w\" "
+                        "WHEN OLD.\"%w\" != NEW.\"%w\" AND "
+                        "(NEW.\"%w\" NOTNULL AND NOT ST_IsEmpty(NEW.\"%w\")) "
+                        "BEGIN "
+                        "DELETE FROM \"%w\" WHERE id = OLD.\"%w\"; "
+                        "INSERT OR REPLACE INTO \"%w\" VALUES ("
+                        "NEW.\"%w\","
+                        "ST_MinX(NEW.\"%w\"), ST_MaxX(NEW.\"%w\"),"
+                        "ST_MinY(NEW.\"%w\"), ST_MaxY(NEW.\"%w\")"
+                        "); "
+                        "END",
+                        osRTreeName.c_str(),
+                        (m_poDS->m_nApplicationId == GPKG_APPLICATION_ID &&
+                         m_poDS->m_nUserVersion >= GPKG_1_4_VERSION)
+                            ? "update5"
+                            : "update3",
+                        pszT, pszI, pszI, pszC, pszC, osRTreeName.c_str(), pszI,
+                        osRTreeName.c_str(), pszI, pszC, pszC, pszC, pszC);
     osSQL += ";";
     osSQL += pszSQL;
     sqlite3_free(pszSQL);
@@ -4835,11 +4914,15 @@ CPLString OGRGeoPackageTableLayer::ReturnSQLDropSpatialIndexTriggers()
 {
     char *pszSQL = sqlite3_mprintf(
         "DROP TRIGGER \"%w_insert\";"
-        "DROP TRIGGER \"%w_update1\";"
+        "DROP TRIGGER IF EXISTS \"%w_update1\";"  // replaced by update6 and update7 in GPKG 1.4
         "DROP TRIGGER \"%w_update2\";"
-        "DROP TRIGGER \"%w_update3\";"
+        "DROP TRIGGER IF EXISTS \"%w_update3\";"  // replace by update5 in GPKG 1.4
         "DROP TRIGGER \"%w_update4\";"
+        "DROP TRIGGER IF EXISTS \"%w_update5\";"  // replace update3 in GPKG 1.4
+        "DROP TRIGGER IF EXISTS \"%w_update6\";"  // replace update1 in GPKG 1.4
+        "DROP TRIGGER IF EXISTS \"%w_update7\";"  // replace update1 in GPKG 1.4
         "DROP TRIGGER \"%w_delete\";",
+        m_osRTreeName.c_str(), m_osRTreeName.c_str(), m_osRTreeName.c_str(),
         m_osRTreeName.c_str(), m_osRTreeName.c_str(), m_osRTreeName.c_str(),
         m_osRTreeName.c_str(), m_osRTreeName.c_str(), m_osRTreeName.c_str());
     CPLString osSQL(pszSQL);
