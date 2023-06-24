@@ -81,7 +81,7 @@ public class GDALTestMultiDim
 			
 			Dimension d =
 				
-				rg.CreateDimension("name"+i, "fieldtype"+i, "direction"+i, dimsB[i]);
+				rg.CreateDimension("name"+i, "type"+i, "direction"+i, dimsB[i]);
 			
 			inDims.add(d);
 		}
@@ -109,9 +109,9 @@ public class GDALTestMultiDim
 				throw new RuntimeException("resulting dimension name "+d.GetName()+"does not match name"+i);
 			}
 			
-			if (!d.GetFieldType().equals("fieldtype"+i)) {
+			if (!d.GetType().equals("type"+i)) {
 
-				throw new RuntimeException("resulting dimension type "+d.GetFieldType()+"does not match fieldtype"+i);
+				throw new RuntimeException("resulting dimension type "+d.GetType()+"does not match fieldtype"+i);
 			}
 			
 			if (!d.GetDirection().equals("direction"+i)) {
