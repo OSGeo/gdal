@@ -443,7 +443,7 @@ def Calc(
         if ProjectionCheck:
             myOut.SetProjection(ProjectionCheck)
 
-        if NoDataValue is None:
+        if NoDataValue is None and not hideNoData:
             myOutNDV = DefaultNDVLookup[
                 myOutType
             ]  # use the default noDataValue for this datatype
@@ -464,9 +464,6 @@ def Calc(
                 myOutB.SetRasterColorInterpretation(gdal.GCI_PaletteIndex)
 
             myOutB = None  # write to band
-
-        if hideNoData:
-            myOutNDV = None
 
     myOutTypeName = gdal.GetDataTypeName(myOutType)
     if debug:
