@@ -2723,7 +2723,10 @@ struct GTiffDecompressContext
 struct GTiffDecompressJob
 {
     GTiffDecompressContext *psContext = nullptr;
-    int iBand = 0;  // or -1 to indicate all bands of panBandMap
+    int iSrcBandIdxSeparate =
+        0;  // in [0, GetRasterCount()-1] in PLANARCONFIG_SEPARATE, or -1 in PLANARCONFIG_CONTIG
+    int iDstBandIdxSeparate =
+        0;  // in [0, nBandCount-1] in PLANARCONFIG_SEPARATE, or -1 in PLANARCONFIG_CONTIG
     int nXBlock = 0;
     int nYBlock = 0;
     vsi_l_offset nOffset = 0;
@@ -2829,8 +2832,9 @@ static void ThreadDecompressionFunc(void *pData)
             for (int i = 0; i < nBandsToWrite; ++i)
             {
                 const int iDstBandIdx =
-                    poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? i
-                                                                 : psJob->iBand;
+                    poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG
+                        ? i
+                        : psJob->iDstBandIdxSeparate;
                 GDALCopyWords64(
                     &dfNoDataValue, GDT_Float64, 0,
                     psContext->pabyData + iDstBandIdx * psContext->nBandSpace +
@@ -2876,7 +2880,7 @@ static void ThreadDecompressionFunc(void *pData)
             const int iBand = psContext->bCacheAllBands ? i + 1
                               : poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG
                                   ? psContext->panBandMap[i]
-                                  : psJob->iBand + 1;
+                                  : psJob->iSrcBandIdxSeparate + 1;
             apoBlocks[i] = poDS->GetRasterBand(iBand)->TryGetLockedBlockRef(
                 psJob->nXBlock, psJob->nYBlock);
             if (apoBlocks[i] == nullptr)
@@ -3227,7 +3231,7 @@ static void ThreadDecompressionFunc(void *pData)
                     const int iDstBandIdx =
                         poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG
                             ? i
-                            : psJob->iBand;
+                            : psJob->iDstBandIdxSeparate;
                     GDALCopyWords64(
                         pSrcPtr + iSrcBandIdx * nDTSize + y * nSrcLineInc,
                         psContext->eDT, nDTSize * nBandsPerStrile,
@@ -3250,8 +3254,9 @@ static void ThreadDecompressionFunc(void *pData)
             psContext->bCacheAllBands ? psContext->panBandMap[i] - 1
             : poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? i
                                                            : 0;
-        const int iDstBandIdx =
-            poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? i : psJob->iBand;
+        const int iDstBandIdx = poDS->m_nPlanarConfig == PLANARCONFIG_CONTIG
+                                    ? i
+                                    : psJob->iDstBandIdxSeparate;
         const GByte *pSrcPtr =
             static_cast<GByte *>(apoBlocks[iSrcBandIdx]->GetDataRef()) +
             (static_cast<size_t>(nYOffsetInBlock) * poDS->m_nBlockXSize +
@@ -3343,7 +3348,10 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     sContext.panBandMap = panBandMap;
     sContext.nPixelSpace = nPixelSpace;
     sContext.nLineSpace = nLineSpace;
-    sContext.nBandSpace = nBandSpace;
+    // Setting nBandSpace to a dummy value when nBandCount == 1 helps detecting
+    // bad computations of target buffer address
+    // (https://github.com/rasterio/rasterio/issues/2847)
+    sContext.nBandSpace = nBandCount == 1 ? 0xDEADBEEF : nBandSpace;
     sContext.bIsTiled = CPL_TO_BOOL(TIFFIsTiled(m_hTIFF));
     sContext.bTIFFIsBigEndian = CPL_TO_BOOL(TIFFIsBigEndian(m_hTIFF));
     sContext.nPredictor = PREDICTOR_NONE;
@@ -3559,16 +3567,19 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
             for (int i = 0; i < nStrilePerBlock; ++i)
             {
                 asJobs[iJob].psContext = &sContext;
-                asJobs[iJob].iBand = m_nPlanarConfig == PLANARCONFIG_CONTIG
-                                         ? -1
-                                         : panBandMap[i] - 1;
+                asJobs[iJob].iSrcBandIdxSeparate =
+                    m_nPlanarConfig == PLANARCONFIG_CONTIG ? -1
+                                                           : panBandMap[i] - 1;
+                asJobs[iJob].iDstBandIdxSeparate =
+                    m_nPlanarConfig == PLANARCONFIG_CONTIG ? -1 : i;
                 asJobs[iJob].nXBlock = nBlockXStart + x;
                 asJobs[iJob].nYBlock = nBlockYStart + y;
 
                 int nBlockId = asJobs[iJob].nXBlock +
                                asJobs[iJob].nYBlock * sContext.nBlocksPerRow;
                 if (m_nPlanarConfig == PLANARCONFIG_SEPARATE)
-                    nBlockId += asJobs[iJob].iBand * m_nBlocksPerBand;
+                    nBlockId +=
+                        asJobs[iJob].iSrcBandIdxSeparate * m_nBlocksPerBand;
 
                 if (!sContext.bHasPRead)
                 {

@@ -4751,8 +4751,21 @@ def test_tiff_read_multi_threaded(
         ) == ref_ds.ReadRaster(
             buf_pixel_space=nbands * pixel_size, buf_band_space=pixel_size
         )
-        assert ds.GetRasterBand(1).ReadRaster() == ref_ds.GetRasterBand(1).ReadRaster()
-        assert ds.GetRasterBand(1).ReadRaster() == ref_ds.GetRasterBand(1).ReadRaster()
+        for i in range(1, 1 + nbands):
+            assert (
+                ds.GetRasterBand(i).ReadRaster() == ref_ds.GetRasterBand(i).ReadRaster()
+            )
+            assert (
+                ds.GetRasterBand(i).ReadRaster() == ref_ds.GetRasterBand(i).ReadRaster()
+            )
+        ds.FlushCache()
+        inverse_band_list = [i + 1 for i in range(nbands)][::-1]
+        assert ds.ReadRaster(band_list=inverse_band_list) == ref_ds.ReadRaster(
+            band_list=inverse_band_list
+        )
+        assert ds.ReadRaster(band_list=inverse_band_list) == ref_ds.ReadRaster(
+            band_list=inverse_band_list
+        )
         ds.FlushCache()
         blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
         if blockxsize < ds.RasterXSize:
