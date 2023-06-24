@@ -55,10 +55,15 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
                 this = _osr.new_SpatialReference(*args, **kwargs)
         finally:
             pass
-        try:
-            self.this.append(this)
-        except __builtin__.Exception:
-            self.this = this
+        if hasattr(_osr, "SpatialReference_swiginit"):
+            # SWIG 4 way
+            _osr.SpatialReference_swiginit(self, this)
+        else:
+            # SWIG < 4 way
+            try:
+                self.this.append(this)
+            except __builtin__.Exception:
+                self.this = this
 
   %}
 }
