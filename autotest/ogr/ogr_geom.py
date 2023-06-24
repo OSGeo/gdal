@@ -4066,3 +4066,35 @@ def test_ogr_isclockwise():
     geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,1 0,1 1,0 0))")
     ring = geom.GetGeometryRef(0)
     assert not ring.IsClockwise()
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "geom_type",
+    [
+        ogr.wkbPoint,
+        ogr.wkbPoint25D,
+        ogr.wkbPointM,
+        ogr.wkbPointZM,
+        ogr.wkbLineString,
+        ogr.wkbPolygon,
+        ogr.wkbMultiPoint,
+        ogr.wkbMultiLineString,
+        ogr.wkbMultiPolygon,
+        ogr.wkbGeometryCollection,
+        ogr.wkbCircularString,
+        ogr.wkbCompoundCurve,
+        ogr.wkbCurvePolygon,
+        ogr.wkbMultiCurve,
+        ogr.wkbMultiSurface,
+        ogr.wkbPolyhedralSurface,
+        ogr.wkbTIN,
+    ],
+)
+def test_ogr_geom_CreateGeometry(geom_type):
+
+    geom = ogr.Geometry(geom_type)
+    assert geom.GetGeometryType() == geom_type
+    assert geom.IsEmpty()
