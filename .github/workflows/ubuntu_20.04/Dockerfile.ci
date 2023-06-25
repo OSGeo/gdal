@@ -20,6 +20,7 @@ RUN apt-get update -y \
     curl \
     git \
     gnupg \
+    lcov \
     libarmadillo-dev \
     libblosc-dev \
     libboost-dev \

@@ -35,7 +35,7 @@ jobs:
       GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
 
     permissions:
-      contents: read
+      contents: write  # for Git to git push
       packages: write
 
     strategy:
@@ -81,6 +81,13 @@ jobs:
             travis_branch: ubuntu_2004
             container: ubuntu_20.04
             use_avx2: true
+            build_script: build.sh
+            test_script: test.sh
+
+          - name: Ubuntu 20.04, coverage
+            id: coverage
+            travis_branch: ubuntu_2004
+            container: ubuntu_20.04
             build_script: build.sh
             test_script: test.sh
 
@@ -248,6 +255,8 @@ jobs:
             -e GITHUB_WORKFLOW \
             -e TRAVIS \
             -e TRAVIS_BRANCH \
+            -e GDAL_SOURCE_DIR \
+            -e "COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }}" \
             --security-opt seccomp=unconfined \
             --add-host=host.docker.internal:host-gateway \
             --rm \
@@ -265,3 +274,45 @@ jobs:
         run: |
           docker push ${CONTAINER_NAME_FULL}
 
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        if: ${{ matrix.id == 'coverage' }}
+        with:
+          name: coverage_index.html
+          path: build-${{ matrix.id }}/coverage_html/index.html
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        if: ${{ matrix.id == 'coverage' }}
+        with:
+          name: HTML
+          path: build-${{ matrix.id }}/coverage_html/*
+
+      - name: Deploy ssh key (for coverage)
+        if: ${{ matrix.id == 'coverage' && github.event_name == 'push' && github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
+        shell: bash -l {0}
+        run: |
+          mkdir $HOME/.ssh && echo "${{ secrets.GDAL_TEST_COVERAGE_RESULTS_SSH_KEY }}" > $HOME/.ssh/id_rsa
+          chmod 700 $HOME/.ssh && chmod 600 $HOME/.ssh/id_rsa
+          ssh-keyscan -t rsa github.com >> $HOME/.ssh/known_hosts
+          eval `ssh-agent -s`
+          ssh-add $HOME/.ssh/id_rsa
+
+      - name: Deploy to https://github.com/OSGeo/gdal-test-coverage-results
+        if: ${{ matrix.id == 'coverage' && github.event_name == 'push' && github.ref_name == 'master' && github.repository == 'OSGeo/gdal' }}
+        shell: bash -l {0}
+        run: |
+          set -x
+          set -e
+          mkdir -p output_html/coverage_html
+          cp -r $GITHUB_WORKSPACE/build-${{ matrix.id }}/coverage_html/* output_html/coverage_html/
+          cd output_html
+          git init
+          git config user.email "gdal-test-coverage-results-bot@example.com"
+          git config user.name "GDAL test coverage results bot"
+          git remote add origin git@github.com:gdalautotest-coverage-results/gdalautotest-coverage-results.github.io
+          git remote -v
+          echo "Results of coverage of GDAL autotest See https://gdalautotest-coverage-results.github.io/coverage_html/index.html" > README.md
+          git add -A
+          git commit -m "Update with OSGeo/gdal commit $GITHUB_SHA"
+          git push -f origin master
