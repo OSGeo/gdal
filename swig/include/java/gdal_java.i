@@ -378,9 +378,9 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 
 %typemap(javacode) GDALMDArrayHS %{
 
-	public Vector<Dimension> GetDimensions() {
+	public Vector GetDimensions() {
       
-      Vector<Dimension> dims = new java.util.Vector();
+      Vector dims = new java.util.Vector();
       
       // TODO
       
