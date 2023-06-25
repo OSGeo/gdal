@@ -155,27 +155,18 @@ static bool MDArrayRead(GDALMDArrayH hMDA,
 							GInt64 *bufferStrides,
 							void* regularArrayIn,
 							long nRegularArraySizeIn,
-                            GDALDataType gdalType,
+							GDALExtendedDataTypeH extended_data_type,
 							size_t sizeof_ctype)
     {
-		GDALExtendedDataTypeH dataType =
-			
-			GDALExtendedDataTypeCreate((GDALDataType) gdalType);
-		
-		bool retVal = 
-		
-			GDALMDArrayRead(hMDA,
+		return GDALMDArrayRead(hMDA,
 								(const GUInt64*) arrayStartIdxes,
 								(const size_t*) counts,
 								(GInt64*) arraySteps,
 								(const GPtrDiff_t*) bufferStrides,
-								dataType,
+								extended_data_type,
 								regularArrayIn,
 								regularArrayIn,
 								nRegularArraySizeIn * sizeof_ctype);
-		VSIFree(dataType);
-		
-		return retVal;
     }
 
 static bool MDArrayWrite(GDALMDArrayH hMDA,
@@ -185,27 +176,18 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 							GInt64 *bufferStrides,
 							void* regularArrayOut,
 							long nRegularArraySizeOut,
-                            GDALDataType gdalType,
+							GDALExtendedDataTypeH extended_data_type,
 							size_t sizeof_ctype)
     {
-		GDALExtendedDataTypeH dataType =
-			
-			GDALExtendedDataTypeCreate((GDALDataType) gdalType);
-		
-		bool retVal = 
-		
-			GDALMDArrayWrite(hMDA,
+		return GDALMDArrayWrite(hMDA,
 								(const GUInt64*) arrayStartIdxes,
 								(const size_t*) counts,
 								(GInt64*) arraySteps,
 								(const GPtrDiff_t*) bufferStrides,
-								dataType,
+								extended_data_type,
 								regularArrayOut,
 								regularArrayOut,
 								nRegularArraySizeOut * sizeof_ctype);
-		VSIFree(dataType);
-		
-		return retVal;
     }
     
 %}
@@ -229,11 +211,11 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
                      long nRegularArraySizeOut
                   )
   {
-    GDALExtendedDataTypeH extended_type =
+    GDALExtendedDataTypeH extended_data_type =
     
        GDALMDArrayGetDataType(self);
     
-    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_type);
+    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_data_type);
     
     if (buffer_type == GDT_Byte &&
           internal_type != GDT_Byte)
@@ -266,6 +248,8 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
           internal_type != GDT_CFloat64)
       return false; 
 
+	// TODO: I don't have to free extended_data_type, do I?
+	
     return MDArrayRead(self,
 						arrayStartIdxes,
 						counts,
@@ -273,7 +257,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 						bufferStrides,
 						regularArrayOut,
 						nRegularArraySizeOut,
-						buffer_type,
+						extended_data_type,
 						sizeof(ctype)
 						);
   }
@@ -295,11 +279,11 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
                      long nRegularArraySizeIn
                   )
   {
-    GDALExtendedDataTypeH extended_type =
+    GDALExtendedDataTypeH extended_data_type =
     
        GDALMDArrayGetDataType(self);
     
-    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_type);
+    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_data_type);
     
     if (buffer_type == GDT_Byte &&
           internal_type != GDT_Byte)
@@ -332,6 +316,8 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
           internal_type != GDT_CFloat64)
       return false; 
 
+	// TODO: I don't have to free extended_data_type, do I?
+	
     return MDArrayWrite(self,
 						arrayStartIdxes,
 						counts,
@@ -339,7 +325,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 						bufferStrides,
 						regularArrayIn,
 						nRegularArraySizeIn,
-						buffer_type,
+						extended_data_type,
 						sizeof(ctype)
 						);
   }
