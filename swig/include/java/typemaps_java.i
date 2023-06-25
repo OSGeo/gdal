@@ -2189,6 +2189,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 //   Also UTF chars. Also instead of malloc should I be using
 //   VSI kinds of stuff?
 
+/*
+
 // From Java: (String, Vector<Dimension>, ExtendedDataType)
 // To C: (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH* type)
 
@@ -2221,4 +2223,19 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
         }
     }
     *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $3);
+}
+
+*/
+
+/*
+  From Java: ExtendedDataType
+  To C:      GDALExtendedDataType*
+*/
+
+%typemap(in) (GDALExtendedDataTypeH **type)
+{
+    const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
+    const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
+
+    *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $1);
 }
