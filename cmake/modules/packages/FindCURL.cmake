@@ -7,8 +7,11 @@ FindCURL
 
 Find the native CURL headers and libraries.
 
-This module accept optional COMPONENTS to check supported features and
-protocols::
+.. versionadded:: 3.14
+  This module accept optional COMPONENTS to check supported features and
+  protocols:
+
+::
 
   PROTOCOLS: ICT FILE FTP FTPS GOPHER HTTP HTTPS IMAP IMAPS LDAP LDAPS POP3
              POP3S RTMP RTSP SCP SFTP SMB SMBS SMTP SMTPS TELNET TFTP
@@ -17,6 +20,8 @@ protocols::
 
 IMPORTED Targets
 ^^^^^^^^^^^^^^^^
+
+.. versionadded:: 3.12
 
 This module defines :prop_tgt:`IMPORTED` target ``CURL::libcurl``, if
 curl has been found.
@@ -27,23 +32,63 @@ Result Variables
 This module defines the following variables:
 
 ``CURL_FOUND``
-  True if curl found.
+  "True" if ``curl`` found.
 
 ``CURL_INCLUDE_DIRS``
-  where to find curl/curl.h, etc.
+  where to find ``curl``/``curl.h``, etc.
 
 ``CURL_LIBRARIES``
-  List of libraries when using curl.
+  List of libraries when using ``curl``.
 
 ``CURL_VERSION_STRING``
-  The version of curl found.
+  The version of ``curl`` found.
+
+.. versionadded:: 3.13
+  Debug and Release variants are found separately.
+
+CURL CMake
+^^^^^^^^^^
+
+.. versionadded:: 3.17
+
+If CURL was built using the CMake buildsystem then it provides its own
+``CURLConfig.cmake`` file for use with the :command:`find_package` command's
+config mode. This module looks for this file and, if found,
+returns its results with no further action.
+
+Set ``CURL_NO_CURL_CMAKE`` to ``ON`` to disable this search.
+
+Hints
+^^^^^
+
+Set ``CURL_USE_STATIC_LIBS`` to ``TRUE`` to use static libraries
+(only used if CURL CMake configuration file is not used)
+
 #]=======================================================================]
+
+#include(${CMAKE_CURRENT_LIST_DIR}/FindPackageHandleStandardArgs.cmake)
+include(FindPackageHandleStandardArgs)
+
+if(NOT CURL_NO_CURL_CMAKE)
+  # do a find package call to specifically look for the CMake version
+  # of curl
+  find_package(CURL QUIET NO_MODULE)
+  mark_as_advanced(CURL_DIR)
+
+  # if we found the CURL cmake package then we are done, and
+  # can print what we found and return.
+  if(CURL_FOUND)
+    find_package_handle_standard_args(CURL HANDLE_COMPONENTS CONFIG_MODE)
+    # The upstream curl package sets CURL_VERSION, not CURL_VERSION_STRING.
+    set(CURL_VERSION_STRING "${CURL_VERSION}")
+    return()
+  endif()
+endif()
 
 find_package(PkgConfig QUIET)
 if(PKG_CONFIG_FOUND)
   pkg_check_modules(PC_CURL QUIET libcurl)
   if(PC_CURL_FOUND)
-    set(CURL_VERSION_STRING ${PC_CURL_VERSION})
     pkg_get_variable(CURL_SUPPORTED_PROTOCOLS libcurl supported_protocols)
     pkg_get_variable(CURL_SUPPORTED_FEATURES libcurl supported_features)
   endif()
@@ -65,6 +110,7 @@ if(NOT CURL_LIBRARY)
       curllib_static
     # Windows older "Win32 - MSVC" prebuilts (libcurl.lib, e.g. libcurl-7.15.5-win32-msvc.zip):
       libcurl
+      NAMES_PER_DIR
       HINTS ${PC_CURL_LIBRARY_DIRS}
   )
   mark_as_advanced(CURL_LIBRARY_RELEASE)
@@ -73,15 +119,17 @@ if(NOT CURL_LIBRARY)
     # Windows MSVC CMake builds in debug configuration on vcpkg:
       libcurl-d_imp
       libcurl-d
+      NAMES_PER_DIR
       HINTS ${PC_CURL_LIBRARY_DIRS}
   )
   mark_as_advanced(CURL_LIBRARY_DEBUG)
 
+  #include(${CMAKE_CURRENT_LIST_DIR}/SelectLibraryConfigurations.cmake)
   include(SelectLibraryConfigurations)
   select_library_configurations(CURL)
 endif()
 
-if(CURL_INCLUDE_DIR AND NOT CURL_VERSION_STRING)
+if(CURL_INCLUDE_DIR)
   foreach(_curl_version_header curlver.h curl.h)
     if(EXISTS "${CURL_INCLUDE_DIR}/curl/${_curl_version_header}")
       file(STRINGS "${CURL_INCLUDE_DIR}/curl/${_curl_version_header}" curl_version_str REGEX "^#define[\t ]+LIBCURL_VERSION[\t ]+\".*\"")
@@ -121,16 +169,16 @@ if(CURL_FIND_COMPONENTS)
   endif()
   foreach(component IN LISTS CURL_FIND_COMPONENTS)
     list(FIND CURL_KNOWN_PROTOCOLS ${component} _found)
-    if(_found)
+    if(NOT _found EQUAL -1)
       list(FIND CURL_SUPPORTED_PROTOCOLS ${component} _found)
-      if(_found)
+      if(NOT _found EQUAL -1)
         set(CURL_${component}_FOUND TRUE)
       elseif(CURL_FIND_REQUIRED)
         message(FATAL_ERROR "CURL: Required protocol ${component} is not found")
       endif()
     else()
       list(FIND CURL_SUPPORTED_FEATURES ${component} _found)
-      if(_found)
+      if(NOT _found EQUAL -1)
         set(CURL_${component}_FOUND TRUE)
       elseif(CURL_FIND_REQUIRED)
         message(FATAL_ERROR "CURL: Required feature ${component} is not found")
@@ -139,7 +187,6 @@ if(CURL_FIND_COMPONENTS)
   endforeach()
 endif()
 
-include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CURL
                                   REQUIRED_VARS CURL_LIBRARY CURL_INCLUDE_DIR
                                   VERSION_VAR CURL_VERSION_STRING
@@ -153,6 +200,11 @@ if(CURL_FOUND)
     add_library(CURL::libcurl UNKNOWN IMPORTED)
     set_target_properties(CURL::libcurl PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES "${CURL_INCLUDE_DIRS}")
+
+    if(CURL_USE_STATIC_LIBS)
+      set_property(TARGET CURL::libcurl APPEND PROPERTY
+                   INTERFACE_COMPILE_DEFINITIONS "CURL_STATICLIB")
+    endif()
 
     if(EXISTS "${CURL_LIBRARY}")
       set_target_properties(CURL::libcurl PROPERTIES
@@ -173,5 +225,11 @@ if(CURL_FOUND)
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
         IMPORTED_LOCATION_DEBUG "${CURL_LIBRARY_DEBUG}")
     endif()
+
+    if(CURL_USE_STATIC_LIBS AND MSVC)
+       set_target_properties(CURL::libcurl PROPERTIES
+           INTERFACE_LINK_LIBRARIES "normaliz.lib;ws2_32.lib;wldap32.lib")
+    endif()
+
   endif()
 endif()
