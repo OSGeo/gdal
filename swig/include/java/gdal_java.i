@@ -365,6 +365,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 
 %typemap(javacode) GDALMDArrayHS %{
 
+/*
 	public Vector GetDimensions() {
       
       Vector dims = new java.util.Vector();
@@ -375,6 +376,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
       
       return dims;
 	}
+*/
 	
 %}
 
@@ -1237,7 +1239,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %typemap(javacode) GDALGroupHS %{
 
-  public MDArray CreateMDArray(String name, Vector<Dimension> dims, ExtendedDataType dataType) {
+  public MDArray CreateMDArray(String name, Vector dims, ExtendedDataType dataType) {
     
     return CreateMDA(name, dims, dataType);
   }
