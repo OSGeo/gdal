@@ -4622,8 +4622,17 @@ def test_ogr_gml_read_boundedby_only():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    def check():
+    def check_no_options():
         ds = gdal.OpenEx("data/gml/only_boundedby.gml")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbNone
+        ds = None
+
+    gdal.Unlink("data/gml/only_boundedby.gfs")
+    check_no_options()
+
+    def check():
+        ds = gdal.OpenEx("data/gml/only_boundedby.gml", open_options=["USE_BBOX=YES"])
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
         assert lyr.GetGeomType() == ogr.wkbPolygon
@@ -4657,7 +4666,9 @@ def test_ogr_gml_read_boundedby_only_gml_null_only():
         pytest.skip()
 
     def check():
-        ds = gdal.OpenEx("data/gml/only_boundedby_only_null.gml")
+        ds = gdal.OpenEx(
+            "data/gml/only_boundedby_only_null.gml", open_options=["USE_BBOX=YES"]
+        )
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 0
         f = lyr.GetNextFeature()
@@ -4686,7 +4697,9 @@ def test_ogr_gml_read_bbox_and_several_geom_elements():
         pytest.skip()
 
     def check():
-        ds = gdal.OpenEx("data/gml/bbox_and_several_geom_elements.gml")
+        ds = gdal.OpenEx(
+            "data/gml/bbox_and_several_geom_elements.gml", open_options=["USE_BBOX=YES"]
+        )
         lyr = ds.GetLayer(0)
         assert lyr.GetGeometryColumn() == "geom1"
         assert lyr.GetGeomType() == ogr.wkbMultiPolygon
@@ -4719,7 +4732,9 @@ def test_ogr_gml_read_boundedby_invalid():
         pytest.skip()
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx("data/gml/only_boundedby_invalid.gml")
+        ds = gdal.OpenEx(
+            "data/gml/only_boundedby_invalid.gml", open_options=["USE_BBOX=YES"]
+        )
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 0
 
@@ -4734,7 +4749,9 @@ def test_ogr_gml_read_boundedby_repeated():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    ds = gdal.OpenEx("data/gml/only_boundedby_repeated.gml")
+    ds = gdal.OpenEx(
+        "data/gml/only_boundedby_repeated.gml", open_options=["USE_BBOX=YES"]
+    )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
 
