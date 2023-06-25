@@ -156,7 +156,7 @@ static bool MDArrayRead(GDALMDArrayH hMDA,
 							void* regularArrayIn,
 							long nRegularArraySizeIn,
                             GDALDataType gdalType,
-							size_t sizeofCType)
+							size_t sizeof_ctype)
     {
 		GDALExtendedDataTypeH dataType =
 			
@@ -172,7 +172,7 @@ static bool MDArrayRead(GDALMDArrayH hMDA,
 								dataType,
 								regularArrayIn,
 								regularArrayIn,
-								nRegularArraySizeIn * sizeofCType);
+								nRegularArraySizeIn * sizeof_ctype);
 		VSIFree(dataType);
 		
 		return retVal;
@@ -186,7 +186,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 							void* regularArrayOut,
 							long nRegularArraySizeOut,
                             GDALDataType gdalType,
-							size_t sizeofCType)
+							size_t sizeof_ctype)
     {
 		GDALExtendedDataTypeH dataType =
 			
@@ -202,7 +202,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 								dataType,
 								regularArrayOut,
 								regularArrayOut,
-								nRegularArraySizeOut * sizeofCType);
+								nRegularArraySizeOut * sizeof_ctype);
 		VSIFree(dataType);
 		
 		return retVal;
@@ -210,18 +210,62 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
     
 %}
 
+// TODO Test MDArray read/write code with complex types:
+//   CInt16, CInt32, CFloat32, CFloat64
+// Does the sizeof the two component value types mess up
+//   the read write routines? Same issues might crop up
+//   for Raster IO and Band IO routines in this file.
+//   Maybe the array size returned is double for those
+//   types and thus this is not an issue?
+
 %extend GDALMDArrayHS {
 
-  %define DEFINE_READ_MDA_DATA(ctype, gdal_type)
-  bool ReadMDAData(const GInt64 *arrayStartIdxes,
+  %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
+  bool Read(const GInt64 *arrayStartIdxes,
 					 GInt64 *counts,
 					 const GInt64 *arraySteps,
 					 GInt64 *bufferStrides,
-                     GDALDataType gdalType,
                      ctype *regularArrayOut,
                      long nRegularArraySizeOut
                   )
   {
+    GDALExtendedDataTypeH extended_type =
+    
+       GDALMDArrayGetDataType(self);
+    
+    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_type);
+    
+    if (buffer_type == GDT_Byte &&
+          internal_type != GDT_Byte)
+      return false;
+       
+    if (buffer_type == GDT_Int16 &&
+          internal_type != GDT_Int16 &&
+          internal_type != GDT_UInt16 &&
+          internal_type != GDT_CInt16)
+      return false; 
+    
+    if (buffer_type == GDT_Int32 &&
+          internal_type != GDT_Int32 &&
+          internal_type != GDT_UInt32 &&
+          internal_type != GDT_CInt32)
+      return false; 
+    
+    if (buffer_type == GDT_Int64 &&
+          internal_type != GDT_Int64 &&
+          internal_type != GDT_UInt64)
+      return false; 
+    
+    if (buffer_type == GDT_Float32 &&
+          internal_type != GDT_Float32 &&
+          internal_type != GDT_CFloat32)
+      return false;
+    
+    if (buffer_type == GDT_Float64 &&
+          internal_type != GDT_Float64 &&
+          internal_type != GDT_CFloat64)
+      return false; 
+
     return MDArrayRead(self,
 						arrayStartIdxes,
 						counts,
@@ -229,29 +273,65 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 						bufferStrides,
 						regularArrayOut,
 						nRegularArraySizeOut,
-						gdalType,
+						buffer_type,
 						sizeof(ctype)
 						);
   }
   %enddef
 
-  DEFINE_READ_MDA_DATA(char, GDT_Byte)
-  DEFINE_READ_MDA_DATA(short, GDT_Int16)
-  DEFINE_READ_MDA_DATA(int, GDT_Int32)
+  DEFINE_READ_MDA_DATA(char,    GDT_Byte)
+  DEFINE_READ_MDA_DATA(short,   GDT_Int16)
+  DEFINE_READ_MDA_DATA(int,     GDT_Int32)
   DEFINE_READ_MDA_DATA(int64_t, GDT_Int64)
-  DEFINE_READ_MDA_DATA(float, GDT_Float32)
-  DEFINE_READ_MDA_DATA(double, GDT_Float64)
+  DEFINE_READ_MDA_DATA(float,   GDT_Float32)
+  DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
-  %define DEFINE_WRITE_MDA_DATA(ctype, gdal_type)
-  bool WriteMDAData(const GInt64 *arrayStartIdxes,
+  %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type)
+  bool Write(const GInt64 *arrayStartIdxes,
 					 GInt64 *counts,
 					 const GInt64 *arraySteps,
 					 GInt64 *bufferStrides,
-                     GDALDataType gdalType,
                      ctype *regularArrayIn,
                      long nRegularArraySizeIn
                   )
   {
+    GDALExtendedDataTypeH extended_type =
+    
+       GDALMDArrayGetDataType(self);
+    
+    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_type);
+    
+    if (buffer_type == GDT_Byte &&
+          internal_type != GDT_Byte)
+      return false;
+       
+    if (buffer_type == GDT_Int16 &&
+          internal_type != GDT_Int16 &&
+          internal_type != GDT_UInt16 &&
+          internal_type != GDT_CInt16)
+      return false; 
+    
+    if (buffer_type == GDT_Int32 &&
+          internal_type != GDT_Int32 &&
+          internal_type != GDT_UInt32 &&
+          internal_type != GDT_CInt32)
+      return false; 
+    
+    if (buffer_type == GDT_Int64 &&
+          internal_type != GDT_Int64 &&
+          internal_type != GDT_UInt64)
+      return false; 
+    
+    if (buffer_type == GDT_Float32 &&
+          internal_type != GDT_Float32 &&
+          internal_type != GDT_CFloat32)
+      return false;
+    
+    if (buffer_type == GDT_Float64 &&
+          internal_type != GDT_Float64 &&
+          internal_type != GDT_CFloat64)
+      return false; 
+
     return MDArrayWrite(self,
 						arrayStartIdxes,
 						counts,
@@ -259,20 +339,25 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 						bufferStrides,
 						regularArrayIn,
 						nRegularArraySizeIn,
-						gdalType,
+						buffer_type,
 						sizeof(ctype)
 						);
   }
   %enddef
 
-  DEFINE_WRITE_MDA_DATA(char, GDT_Byte)
-  DEFINE_WRITE_MDA_DATA(short, GDT_Int16)
-  DEFINE_WRITE_MDA_DATA(int, GDT_Int32)
+  DEFINE_WRITE_MDA_DATA(char   , GDT_Byte)
+  DEFINE_WRITE_MDA_DATA(short  , GDT_Int16)
+  DEFINE_WRITE_MDA_DATA(int    , GDT_Int32)
   DEFINE_WRITE_MDA_DATA(int64_t, GDT_Int64)
-  DEFINE_WRITE_MDA_DATA(float, GDT_Float32)
-  DEFINE_WRITE_MDA_DATA(double, GDT_Float64)
+  DEFINE_WRITE_MDA_DATA(float  , GDT_Float32)
+  DEFINE_WRITE_MDA_DATA(double , GDT_Float64)
 
-/*
+/*  TODO: other devs: is this stuff needed? It's only
+    in one of the other classes below (raster IO versus
+    band IO) that could include it. Why do they differ?
+    Also when I include this code here compile errors
+    happen elsewhere.
+
 %clear (char *regularArrayOut, long nRegularArraySizeOut);
 %clear (short *regularArrayOut, long nRegularArraySizeOut);
 %clear (int *regularArrayOut, long nRegularArraySizeOut);
@@ -287,244 +372,21 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 %clear (float *regularArrayIn, long nRegularArraySizeIn);
 %clear (double *regularArrayIn, long nRegularArraySizeIn);
 
-*/
+*/  // end commenting out code related to TODO
 
 } /* extend */
 
 %typemap(javacode) GDALMDArrayHS %{
 
-	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, byte[] buffer) {
-		
-		// test type matches dest array
-
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Byte)
-		{
-			return false;
-		}
-
-		// if so read from mdarray into buffer
-		
-		return ReadMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, short[] buffer) {
-		
-		// test type matches dest array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Int16 &&
-			typeNum != gdalconst.GDT_UInt16 &&
-			typeNum != gdalconst.GDT_CInt16)
-		{
-			return false;
-		}
-
-		// if so read from mdarray into buffer
-		
-		return ReadMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int[] buffer) {
-		
-		// test type matches dest array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Int32 &&
-			typeNum != gdalconst.GDT_UInt32 &&
-			typeNum != gdalconst.GDT_CInt32)
-		{
-			return false;
-		}
-
-		// if so read from mdarray into buffer
-		
-		return ReadMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, long[] buffer) {
-		
-		// test type matches dest array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Int64 &&
-			typeNum != gdalconst.GDT_UInt64)
-		{
-			return false;
-		}
-
-		// if so read from mdarray into buffer
-		
-		return ReadMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, float[] buffer) {
-		
-		// test type matches dest array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Float32 &&
-			typeNum != gdalconst.GDT_CFloat32)
-		{
-			return false;
-		}
-
-		// if so read from mdarray into buffer
-		
-		return ReadMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Read(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, double[] buffer) {
-		
-		// test type matches dest array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Float64 &&
-			typeNum != gdalconst.GDT_CFloat64)
-		{
-			return false;
-		}
-
-		// if so read from mdarray into buffer
-		
-		return ReadMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, byte[] buffer) {
-		
-		// test type matches source array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Byte)
-		{
-			return false;
-		}
-
-		// if so write from buffer into mdarray
-		
-		return WriteMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, short[] buffer) {
-		
-		// test type matches source array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Int16 &&
-			typeNum != gdalconst.GDT_UInt16 &&
-			typeNum != gdalconst.GDT_CInt16)
-		{
-			return false;
-		}
-
-		// if so write from buffer into mdarray
-		
-		return WriteMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, int[] buffer) {
-		
-		// test type matches source array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Int32 &&
-			typeNum != gdalconst.GDT_UInt32 &&
-			typeNum != gdalconst.GDT_CInt32)
-		{
-			return false;
-		}
-
-		// if so write from buffer into mdarray
-		
-		return WriteMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, long[] buffer) {
-		
-		// test type matches source array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Int64 &&
-			typeNum != gdalconst.GDT_UInt64)
-		{
-			return false;
-		}
-
-		// if so write from buffer into mdarray
-		
-		return WriteMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, float[] buffer) {
-		
-		// test type matches source array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Float32 &&
-			typeNum != gdalconst.GDT_CFloat32)
-		{
-			return false;
-		}
-
-		// if so write from buffer into mdarray
-		
-		return WriteMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-
-	public boolean Write(long[] startIdxes, long[] counts, long[] arraySteps, long[] bufferStrides, double[] buffer) {
-		
-		// test type matches source array
-		
-		ExtendedDataType dataType = this.GetDataType();
-		
-		int typeNum = dataType.GetNumericDataType();
-		
-		if (typeNum != gdalconst.GDT_Float64 &&
-			typeNum != gdalconst.GDT_CFloat64)
-		{
-			return false;
-		}
-
-		// if so write from buffer into mdarray
-		
-		return WriteMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
-	}
-	
 	public Vector<Dimension> GetDimensions() {
-		return null;
+      
+      Vector<Dimension> dims = new java.util.Vector();
+      
+      // TODO
+      
+      //GetDims(dims);
+      
+      return dims;
 	}
 	
 %}

@@ -2077,7 +2077,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 /*******************************************************
-   Typemaps for passing java arrays as a void pointer
+   Typemaps for MDArray support
  *******************************************************/
  
 //  useful docs: https://www.swig.org/Doc1.3/Typemaps.html
