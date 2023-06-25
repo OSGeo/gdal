@@ -2507,6 +2507,8 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField *psField)
         {
             GUIntBig x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
+            if (x == 0)  // POINT EMPTY
+                return FALSE;
             x--;
             if (x < m_nFilterXMin || x > m_nFilterXMax)
                 return FALSE;
@@ -3382,19 +3384,19 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             ReadVarUInt64NoCheck(pabyCur, x);
             ReadVarUInt64NoCheck(pabyCur, y);
 
-            const double dfX =
-                CPLUnsanitizedAdd<GUIntBig>(x, -1) / poGeomField->GetXYScale() +
-                poGeomField->GetXOrigin();
-            const double dfY =
-                CPLUnsanitizedAdd<GUIntBig>(y, -1) / poGeomField->GetXYScale() +
-                poGeomField->GetYOrigin();
+            const double dfX = x == 0 ? std::numeric_limits<double>::quiet_NaN()
+                                      : (x - 1U) / poGeomField->GetXYScale() +
+                                            poGeomField->GetXOrigin();
+            const double dfY = y == 0 ? std::numeric_limits<double>::quiet_NaN()
+                                      : (y - 1U) / poGeomField->GetXYScale() +
+                                            poGeomField->GetYOrigin();
             if (bHasZ)
             {
                 ReadVarUInt64NoCheck(pabyCur, z);
                 const double dfZScale = SanitizeScale(poGeomField->GetZScale());
                 const double dfZ =
-                    CPLUnsanitizedAdd<GUIntBig>(z, -1) / dfZScale +
-                    poGeomField->GetZOrigin();
+                    z == 0 ? std::numeric_limits<double>::quiet_NaN()
+                           : (z - 1U) / dfZScale + poGeomField->GetZOrigin();
                 if (bHasM)
                 {
                     GUIntBig m = 0;
@@ -3402,8 +3404,9 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                     const double dfMScale =
                         SanitizeScale(poGeomField->GetMScale());
                     const double dfM =
-                        CPLUnsanitizedAdd<GUIntBig>(m, -1) / dfMScale +
-                        poGeomField->GetMOrigin();
+                        m == 0
+                            ? std::numeric_limits<double>::quiet_NaN()
+                            : (m - 1U) / dfMScale + poGeomField->GetMOrigin();
                     return new OGRPoint(dfX, dfY, dfZ, dfM);
                 }
                 return new OGRPoint(dfX, dfY, dfZ);
@@ -3415,8 +3418,8 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                 ReadVarUInt64NoCheck(pabyCur, m);
                 const double dfMScale = SanitizeScale(poGeomField->GetMScale());
                 const double dfM =
-                    CPLUnsanitizedAdd<GUIntBig>(m, -1) / dfMScale +
-                    poGeomField->GetMOrigin();
+                    m == 0 ? std::numeric_limits<double>::quiet_NaN()
+                           : (m - 1U) / dfMScale + poGeomField->GetMOrigin();
                 poPoint->setM(dfM);
                 return poPoint;
             }

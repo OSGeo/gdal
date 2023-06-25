@@ -4259,3 +4259,49 @@ def test_ogr_openfilegdb_write_compound_crs(write_wkid, write_vcswkid):
 
     finally:
         gdal.RmdirRecursive(dirname)
+
+
+###############################################################################
+# Test writing empty geometries
+
+
+@pytest.mark.parametrize(
+    "geom_type",
+    [
+        ogr.wkbPoint,
+        ogr.wkbPoint25D,
+        ogr.wkbPointM,
+        ogr.wkbPointZM,
+        ogr.wkbMultiLineString,
+        ogr.wkbMultiLineString25D,
+        ogr.wkbMultiLineStringM,
+        ogr.wkbMultiLineStringZM,
+        ogr.wkbMultiPolygon,
+        ogr.wkbMultiPolygon25D,
+        ogr.wkbMultiPolygonM,
+        ogr.wkbMultiPolygonZM,
+    ],
+)
+def test_ogr_openfilegdb_write_empty_geoms(geom_type):
+
+    dirname = "/vsimem/test_ogr_openfilegdb_write_empty_geoms.gdb"
+    try:
+        ds = ogr.GetDriverByName("OpenFileGDB").CreateDataSource(dirname)
+        lyr = ds.CreateLayer("test", geom_type=geom_type)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        g = ogr.Geometry(geom_type)
+        f.SetGeometry(g)
+        with gdaltest.config_option("OGR_OPENFILEGDB_WRITE_EMPTY_GEOMETRY", "YES"):
+            lyr.CreateFeature(f)
+        ds = None
+
+        ds = ogr.Open(dirname)
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == geom_type
+        f = lyr.GetNextFeature()
+        g = f.GetGeometryRef()
+        assert g.GetGeometryType() == geom_type
+        assert g.IsEmpty()
+
+    finally:
+        gdal.RmdirRecursive(dirname)

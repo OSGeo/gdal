@@ -578,38 +578,54 @@ bool FileGDBTable::EncodeGeometry(const FileGDBGeomField *poGeomField,
                 }
             }
             const auto poPoint = poGeom->toPoint();
-            double dfVal;
-
-            dfVal = (poPoint->getX() - poGeomField->GetXOrigin()) *
-                        poGeomField->GetXYScale() +
-                    1;
-            CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode value");
-            WriteVarUInt(m_abyGeomBuffer, static_cast<uint64_t>(dfVal + 0.5));
-
-            dfVal = (poPoint->getY() - poGeomField->GetYOrigin()) *
-                        poGeomField->GetXYScale() +
-                    1;
-            CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode Y value");
-            WriteVarUInt(m_abyGeomBuffer, static_cast<uint64_t>(dfVal + 0.5));
-
-            if (bIs3D)
+            if (poPoint->IsEmpty())
             {
-                dfVal = (poPoint->getZ() - poGeomField->GetZOrigin()) *
-                            poGeomField->GetZScale() +
-                        1;
-                CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode Z value");
-                WriteVarUInt(m_abyGeomBuffer,
-                             static_cast<uint64_t>(dfVal + 0.5));
+                WriteUInt8(m_abyGeomBuffer, 0);
+                WriteUInt8(m_abyGeomBuffer, 0);
+                if (bIs3D)
+                    WriteUInt8(m_abyGeomBuffer, 0);
+                if (bIsMeasured)
+                    WriteUInt8(m_abyGeomBuffer, 0);
             }
-
-            if (bIsMeasured)
+            else
             {
-                dfVal = (poPoint->getM() - poGeomField->GetMOrigin()) *
-                            poGeomField->GetMScale() +
+                double dfVal;
+
+                dfVal = (poPoint->getX() - poGeomField->GetXOrigin()) *
+                            poGeomField->GetXYScale() +
                         1;
-                CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode M value");
+                CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode value");
                 WriteVarUInt(m_abyGeomBuffer,
                              static_cast<uint64_t>(dfVal + 0.5));
+
+                dfVal = (poPoint->getY() - poGeomField->GetYOrigin()) *
+                            poGeomField->GetXYScale() +
+                        1;
+                CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal, "Cannot encode Y value");
+                WriteVarUInt(m_abyGeomBuffer,
+                             static_cast<uint64_t>(dfVal + 0.5));
+
+                if (bIs3D)
+                {
+                    dfVal = (poPoint->getZ() - poGeomField->GetZOrigin()) *
+                                poGeomField->GetZScale() +
+                            1;
+                    CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal,
+                                                    "Cannot encode Z value");
+                    WriteVarUInt(m_abyGeomBuffer,
+                                 static_cast<uint64_t>(dfVal + 0.5));
+                }
+
+                if (bIsMeasured)
+                {
+                    dfVal = (poPoint->getM() - poGeomField->GetMOrigin()) *
+                                poGeomField->GetMScale() +
+                            1;
+                    CHECK_CAN_BE_ENCODED_ON_VARUINT(dfVal,
+                                                    "Cannot encode M value");
+                    WriteVarUInt(m_abyGeomBuffer,
+                                 static_cast<uint64_t>(dfVal + 0.5));
+                }
             }
 
             return true;
