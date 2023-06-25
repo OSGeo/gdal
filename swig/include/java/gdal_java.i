@@ -1227,13 +1227,19 @@ import org.gdal.gdalconst.gdalconstConstants;
   }
 %}
 
+%extend GDALGroupHS {
+
+    GDALMDArrayH CreateMDA(const char* name, int nDims, GDALDimensionH* dims, GDALExtendedDataTypeH dataType) {
+		
+		return GDALGroupCreateMDArray(self, name, nDims, dims, dataType, NULL);
+    }
+}
+
 %typemap(javacode) GDALGroupHS %{
 
-  public MDArray CreateMDArray(String name, Vector<Dimension> dims, ExtendedDataType dt) {
+  public MDArray CreateMDArray(String name, Vector<Dimension> dims, ExtendedDataType dataType) {
     
-    // TODO
-    
-    return null;
+    return CreateMDA(name, dims, dataType);
   }
   
   public Dimension CreateDimension(String name, String type, String direction, long size) {
