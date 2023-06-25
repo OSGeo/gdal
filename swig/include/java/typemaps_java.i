@@ -276,41 +276,6 @@
   }
 
 /***************************************************
- * Typemap for GDALDimension* used in Attribute::GetDimensions( )
- ***************************************************/
-
-%typemap(in, numinputs=1) (int *nDimensions, GDALDimension const **pDimensions ) (int nDimensions=0, GDALDimension *pDimensions=0 )
-{
-  /* %typemap(in,numinputs=1) (int *nDimensions, GDALDimension const **pDimensions ) */
-  $1 = &nDimensions;
-  $2 = &pDimensions;
-}
-
-%typemap(argout) (int *nDimensions, GDALDimension const **pDimensions )
-{
-  const jclass dimensionClass = jenv->FindClass("org/gdal/gdal/Dimension");
-  const jclass vectorClass = jenv->FindClass("java/util/Vector");
-  const jmethodID add = jenv->GetMethodID(vectorClass, "add", "(Ljava/lang/Object;)Z");
-  const jmethodID dimensionCon = jenv->GetMethodID(dimensionClass, "<init>",
-    "(Ljava/lang/Long;Zjava/lang/Boolean;)V");
-
-  for( int i = 0; i < *$1; i++ ) {
-    jobject dimensionObj = jenv->NewObject(dimensionClass, dimensionCon,
-                                &((*$2)[i]),
-                                true);
-    jenv->CallBooleanMethod($input, add, dimensionObj);
-  }
-}
-
-%typemap(jni) (int *nDimensions, GDALDimension const **pDimensions ) "jobject"
-%typemap(jtype) (int *nDimensions, GDALDimension const **pDimensions ) "java.util.Vector"
-%typemap(jstype) (int *nDimensions, GDALDimension const **pDimensions ) "java.util.Vector"
-%typemap(javain) (int *nDimensions, GDALDimension const **pDimensions ) "$javainput"
-%typemap(javaout) (int *nDimensionss, GDALDimension const **pDimensions ) {
-    return $jnicall;
-  }
-
-/***************************************************
  * Typemaps for (int nLen, unsigned char *pBuf )
  ***************************************************/
 
@@ -2095,24 +2060,115 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 // typemap(in)  (C types): convert from Java to C
 // typemap(out) (C types): convert from C to Java
 
-/*
 
-%typemap(out) (Vector<Dimension>) (int cnt, GDALDimension* dims) %{
+/* From java.util.Vector<Dimension> to C types below */
 
-  const jclass vectorClass = jenv->FindClass("java/util/Vector");
-  const jclass dimensionClass = jenv->FindClass("org/gdal/gdal/Dimension");
-  const jmethodID vecCtorMeth = jenv->GetMethodID(vectorClass, "<init>",
-                                  "()V");
-  const jmethodID dimCtorMeth = jenv->GetMethodID(dimensionClass, "<init>",
-                                  "(DDDDDLjava/lang/String;Ljava/lang/String;)V");
-  const jmethodID vecAddMeth = jenv->GetMethodID(vectorClass, "add", "(Ljava/lang/Object;)Z");
+%typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) %{
 
-  vector = jenv->CallObjectMethod(vectorClass, vecCtorMeth);
-  for (int i = 0; i < cnt; i++) {
-    dim = jenv->CallObjectMethod(dimensionClass, dimCtorMeth);
-    jenv->CallBooleanMethod(vector, vecAddMeth, dim);
+  /* %typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) */
+
+  if ($input)
+  {
+    const jclass vectorClass = jenv->FindClass("java/util/Vector");
+    const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
+    const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)");
+  
+    $1 = jenv->CallIntMethod($input, vsize);
+    if ($1 == 0)
+       $2 = NULL;
+    else
+    {
+        $2 = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * $1);
+        int i;
+        for (i = 0; i<$1; i++) {
+            jobject obj = (jobject)jenv->CallObjectMethod($input, vget);
+            if (obj == NULL)
+            {
+                free ($2 );
+                SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
+                return $null;
+            }
+            const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+            const jmethodID getCPtr = jenv->GetStaticMethodID(dimClass, "getCPtr", "(Lorg/gdal/gdal/Dimension;)J");
+            $2[i] = *(GDALDimensionH*) jenv->CallStaticLongMethod(dimClass, getCPtr, obj);
+        }
+    }
   }
-  $1 = vector
+  else
+  {
+    $1 = 0;
+    $2 = NULL;
+  }
 %}
 
-*/
+/* From C types below to java.util.Vector<Dimension> */
+
+%typemap(argout) (int nDims, GDALDimensionH *pDims)
+%{
+  /* %typemap(argout) (int nDims, GDALDimensionH *pDims) */
+
+  const jclass vectorClass = jenv->FindClass("java/util/Vector");
+  const jmethodID vctor = jenv->GetMethodID(vectorClass, "<init>", "()V");
+  const jmethodID vadd = jenv->GetMethodID(vectorClass, "add", "()B");
+  
+  const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+  const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
+    "(Ljava/lang/Long;Zjava/lang/Boolean;)V");
+  
+  $result = jenv->NewObject(vectorClass, vctor);
+
+  for (int i = 0; i < nDims; i++) {
+  
+    GDALDimensionH gdim = pDims[i];
+    
+    jobject dim = jenv->NewObject(dimClass, dctor, $2[i], false);
+    
+    jenv->CallBooleanMethod($result, vadd, dim)
+  }
+%}
+
+%typemap(freearg) (int nDims, GDALDimensionH *pDims) %{
+{
+  /* %typemap(freearg)  (int nDims, GDALDimensionH *pDims) */
+  
+  if ($2) {
+    free((void*) $2);
+  }
+}
+
+%typemap(jni) (int nDims, GDALDimensionH* pDims) "jobject"
+
+%typemap(jtype) (int nDims, GDALDimensionH* pDims) "java.util.Vector"
+
+%typemap(jstype) (int nDims, GDALDimensionH* pDims) "java.util.Vector"
+
+%typemap(javain) (int nDims, GDALDimensionH* pDims) "$javainput"
+
+%typemap(javaout) (int nDims, GDALDimensionH* pDims) {
+    return $jnicall;
+}
+
+
+/********************************************/
+/*  ExtendedDataType mappings               */
+/********************************************/
+
+
+// From Java to C
+
+// TODO: do I need indirection via pointers in this declaration?
+
+%typemap(in, numinputs=1) (GDALExtendedDataTypeH dataType) %{
+
+	if ($input)
+	{
+		const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
+        const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
+	  
+        $1 = *(GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
+	}
+	else
+	{
+		$1 = NULL;
+	}
+%}
