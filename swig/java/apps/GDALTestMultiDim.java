@@ -143,8 +143,8 @@ public class GDALTestMultiDim
 			
 			starts[3] = t;
 			counts[3] = 1;
-			steps[3] = 1;  // right?
-			strides[3] = 1;  // right?
+			steps[3] = 1;
+			strides[3] = 1;
 
 			for (int z = 0; z < zSize; z++) {
 			
@@ -163,7 +163,7 @@ public class GDALTestMultiDim
 				steps[0] = 1;
 				strides[0] = 1;
 
-				int i = 0;
+				int pos = 0;
 				
 				for (int y = 0; y < ySize; y++) {
 				
@@ -171,7 +171,7 @@ public class GDALTestMultiDim
 					
 						short val = (short) ((t+1)*(z+1)*(y+1)*(x+1));
 						
-						planeWritten[i++] = val;
+						planeWritten[pos++] = val;
 					}
 				}
 
