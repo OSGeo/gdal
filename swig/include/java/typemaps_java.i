@@ -2132,7 +2132,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     jenv->CallBooleanMethod(vec, vadd, dim);
   }
   
-  $result = vec;
+  $result = *(jlong*) &vec;
 }
 
 %typemap(freearg) (int nDims, GDALDimensionH *pDims)

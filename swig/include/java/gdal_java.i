@@ -1229,26 +1229,32 @@ import org.gdal.gdalconst.gdalconstConstants;
   }
 %}
 
+// TODO: do not extend this class. make a static block. figure out how to
+//   pass the group from otuside: maybe via a typemap conversion.
+
+%{
+    static GDALMDArrayH CreateMDA(GDALGroupH groupH, const char* name, int nDims, GDALDimensionH* dims, GDALExtendedDataTypeH dataType) {
+		
+		return GDALGroupCreateMDArray(groupH, name, nDims, dims, dataType, NULL);
+    }
+%}
+
 %extend GDALGroupHS {
 
-    GDALMDArrayH CreateMDA(const char* name, int nDims, GDALDimensionH* dims, GDALExtendedDataTypeH dataType) {
-		
-		return GDALGroupCreateMDArray(self, name, nDims, dims, dataType, NULL);
-    }
-}
+  GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH dataType) {
+    
+    return CreateMDA(self, name, nDims, pDims, dataType);
+  }
+  
+} /* extend */
 
 %typemap(javacode) GDALGroupHS %{
-
-  public MDArray CreateMDArray(String name, Vector dims, ExtendedDataType dataType) {
-    
-    return CreateMDA(name, dims, dataType);
-  }
   
   public Dimension CreateDimension(String name, String type, String direction, long size) {
     
     return CreateDimension(name, type, direction, BigInteger.valueOf(size));
   }
-  
+
 %}
 
 %include callback.i
