@@ -211,44 +211,44 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
                      long nRegularArraySizeOut
                   )
   {
-    GDALExtendedDataTypeH extended_data_type =
+    GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     
-       GDALMDArrayGetDataType(self);
+    int internal_type_code =
     
-    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_data_type);
+      GDALExtendedDataTypeGetNumericDataType(internal_type);
     
     if (buffer_type == GDT_Byte &&
-          internal_type != GDT_Byte)
+          internal_type_code != GDT_Byte)
       return false;
        
     if (buffer_type == GDT_Int16 &&
-          internal_type != GDT_Int16 &&
-          internal_type != GDT_UInt16 &&
-          internal_type != GDT_CInt16)
+          internal_type_code != GDT_Int16 &&
+          internal_type_code != GDT_UInt16 &&
+          internal_type_code != GDT_CInt16)
       return false; 
     
     if (buffer_type == GDT_Int32 &&
-          internal_type != GDT_Int32 &&
-          internal_type != GDT_UInt32 &&
-          internal_type != GDT_CInt32)
+          internal_type_code != GDT_Int32 &&
+          internal_type_code != GDT_UInt32 &&
+          internal_type_code != GDT_CInt32)
       return false; 
     
     if (buffer_type == GDT_Int64 &&
-          internal_type != GDT_Int64 &&
-          internal_type != GDT_UInt64)
+          internal_type_code != GDT_Int64 &&
+          internal_type_code != GDT_UInt64)
       return false; 
     
     if (buffer_type == GDT_Float32 &&
-          internal_type != GDT_Float32 &&
-          internal_type != GDT_CFloat32)
+          internal_type_code != GDT_Float32 &&
+          internal_type_code != GDT_CFloat32)
       return false;
     
     if (buffer_type == GDT_Float64 &&
-          internal_type != GDT_Float64 &&
-          internal_type != GDT_CFloat64)
+          internal_type_code != GDT_Float64 &&
+          internal_type_code != GDT_CFloat64)
       return false; 
 
-	// TODO: I don't have to free extended_data_type, do I?
+	// TODO: I don't have to free internal_type, do I?
 	
     return MDArrayRead(self,
 						arrayStartIdxes,
@@ -257,7 +257,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 						bufferStrides,
 						regularArrayOut,
 						nRegularArraySizeOut,
-						extended_data_type,
+						internal_type,  // TODO: pass buffer_type instead?
 						sizeof(ctype)
 						);
   }
@@ -279,44 +279,44 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
                      long nRegularArraySizeIn
                   )
   {
-    GDALExtendedDataTypeH extended_data_type =
+    GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     
-       GDALMDArrayGetDataType(self);
+    int internal_type_code =
     
-    int internal_type = GDALExtendedDataTypeGetNumericDataType(extended_data_type);
+      GDALExtendedDataTypeGetNumericDataType(internal_type);
     
     if (buffer_type == GDT_Byte &&
-          internal_type != GDT_Byte)
+          internal_type_code != GDT_Byte)
       return false;
        
     if (buffer_type == GDT_Int16 &&
-          internal_type != GDT_Int16 &&
-          internal_type != GDT_UInt16 &&
-          internal_type != GDT_CInt16)
+          internal_type_code != GDT_Int16 &&
+          internal_type_code != GDT_UInt16 &&
+          internal_type_code != GDT_CInt16)
       return false; 
     
     if (buffer_type == GDT_Int32 &&
-          internal_type != GDT_Int32 &&
-          internal_type != GDT_UInt32 &&
-          internal_type != GDT_CInt32)
+          internal_type_code != GDT_Int32 &&
+          internal_type_code != GDT_UInt32 &&
+          internal_type_code != GDT_CInt32)
       return false; 
     
     if (buffer_type == GDT_Int64 &&
-          internal_type != GDT_Int64 &&
-          internal_type != GDT_UInt64)
+          internal_type_code != GDT_Int64 &&
+          internal_type_code != GDT_UInt64)
       return false; 
     
     if (buffer_type == GDT_Float32 &&
-          internal_type != GDT_Float32 &&
-          internal_type != GDT_CFloat32)
+          internal_type_code != GDT_Float32 &&
+          internal_type_code != GDT_CFloat32)
       return false;
     
     if (buffer_type == GDT_Float64 &&
-          internal_type != GDT_Float64 &&
-          internal_type != GDT_CFloat64)
+          internal_type_code != GDT_Float64 &&
+          internal_type_code != GDT_CFloat64)
       return false; 
 
-	// TODO: I don't have to free extended_data_type, do I?
+	// TODO: I don't have to free internal_type, do I?
 	
     return MDArrayWrite(self,
 						arrayStartIdxes,
@@ -325,7 +325,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 						bufferStrides,
 						regularArrayIn,
 						nRegularArraySizeIn,
-						extended_data_type,
+						internal_type,  // TODO: pass buffer_type instead?
 						sizeof(ctype)
 						);
   }
