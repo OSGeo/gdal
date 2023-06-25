@@ -2048,10 +2048,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 //  useful docs: https://www.swig.org/Doc1.3/Typemaps.html
 
 //investigate
-//  do we have to mess with numinputs?
-//  out versus in
-//  jdoubleArray or DoubleArray or double* or something else
-//  $result versus $1
+//  do we have to mess with numinputs? it must be = 0, 1, or not present
 
 // argout is for code that does java manipulations.
 //   if it ends up with a $result is a java object
@@ -2063,7 +2060,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 /*
   From Java: Vector<Dimension>
-  To C:      types below
+  To C:      (int nDims, GDALDimensionH *pDims)
 */
 
 %typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) %{
@@ -2193,10 +2190,10 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 //   VSI kinds of stuff?
 
 // From Java: (String, Vector<Dimension>, ExtendedDataType)
-// To C: (const char*, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH type)
+// To C: (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH* type)
 
-%typemap(in) (const char** s, int* nD, GDALDimensionH **pD, GDALExtendedDataTypeH **type) (jobject, jobject, jobject)
-// %typemap(in) (const char* s, int* nD, GDALDimensionH **pD, GDALExtendedDataTypeH *type) (const char*, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH type)
+// typemap(in,numinputs=0) (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH *type) (jobject, jobject, jobject)
+%typemap(in,numinputs=0) (const char **name, int *nDims, GDALDimensionH **pDims, GDALExtendedDataTypeH **type) (jobject, jobject, jobject)
 %{
     const jclass vectorClass = jenv->FindClass("java/util/Vector");
     const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
@@ -2205,21 +2202,21 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
     const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
 
-    *s = (const char *) jenv->GetStringUTFChars($1, 0);
-    *nD = jenv->CallIntMethod($2, vsize);
-    if (*nD == 0)
-		*pD = NULL;
+    *name = (const char *) jenv->GetStringUTFChars($1, 0);
+    *nDims = jenv->CallIntMethod($2, vsize);
+    if (*nDims == 0)
+		*pDims = NULL;
     else {
-        *pD = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * *nD);
-        for (int i = 0; i<*nD; i++) {
+        *pDims = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * *nDims);
+        for (int i = 0; i < *nDims; i++) {
             jobject obj = (jobject) jenv->CallObjectMethod($2, vget, i);
             if (obj == NULL)
             {
-                free (*pD);
+                free (*pDims);
                 SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
                 return $null;
             }
-            (*pD)[i] = (GDALDimensionH*) jenv->CallStaticLongMethod(dtClass, getCPtr, obj);
+            (*pDims)[i] = (GDALDimensionH*) jenv->CallStaticLongMethod(dtClass, getCPtr, obj);
         }
     }
     *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $3);
