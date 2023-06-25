@@ -142,6 +142,8 @@ import java.util.Vector;
 %typemap(javaimports) GDALMDArrayHS %{
 import org.gdal.osr.SpatialReference;
 import org.gdal.gdalconst.gdalconst;
+import org.gdal.gdal.Dimension;
+import java.util.Vector;
 %}
 
 %{
@@ -269,6 +271,23 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
   DEFINE_WRITE_MDA_DATA(int64_t, GDT_Int64)
   DEFINE_WRITE_MDA_DATA(float, GDT_Float32)
   DEFINE_WRITE_MDA_DATA(double, GDT_Float64)
+
+/*
+%clear (char *regularArrayOut, long nRegularArraySizeOut);
+%clear (short *regularArrayOut, long nRegularArraySizeOut);
+%clear (int *regularArrayOut, long nRegularArraySizeOut);
+%clear (int64_t *regularArrayOut, long nRegularArraySizeOut);
+%clear (float *regularArrayOut, long nRegularArraySizeOut);
+%clear (double *regularArrayOut, long nRegularArraySizeOut);
+
+%clear (char *regularArrayIn, long nRegularArraySizeIn);
+%clear (short *regularArrayIn, long nRegularArraySizeIn);
+%clear (int *regularArrayIn, long nRegularArraySizeIn);
+%clear (int64_t *regularArrayIn, long nRegularArraySizeIn);
+%clear (float *regularArrayIn, long nRegularArraySizeIn);
+%clear (double *regularArrayIn, long nRegularArraySizeIn);
+
+*/
 
 } /* extend */
 
@@ -502,6 +521,10 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 		// if so write from buffer into mdarray
 		
 		return WriteMDAData(startIdxes, counts, arraySteps, bufferStrides, typeNum, buffer);
+	}
+	
+	public Vector<Dimension> GetDimensions() {
+		return null;
 	}
 	
 %}

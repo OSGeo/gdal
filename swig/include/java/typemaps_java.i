@@ -2095,141 +2095,24 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 // typemap(in)  (C types): convert from Java to C
 // typemap(out) (C types): convert from C to Java
 
+/*
 
-// NONE OF THESE WORK!!!
-//
-//%typemap(in) (double*) %{
-//
-//%typemap(in) (DoubleArray) %{
-//
-//%typemap(in) (jdoubleArray) %{
-//    
-//    $1 = (SWIGTYPE_p_void) jenv->GetDoubleArrayElements($input), NULL);
-//%}
+%typemap(out) (Vector<Dimension>) (int cnt, GDALDimension* dims) %{
 
+  const jclass vectorClass = jenv->FindClass("java/util/Vector");
+  const jclass dimensionClass = jenv->FindClass("org/gdal/gdal/Dimension");
+  const jmethodID vecCtorMeth = jenv->GetMethodID(vectorClass, "<init>",
+                                  "()V");
+  const jmethodID dimCtorMeth = jenv->GetMethodID(dimensionClass, "<init>",
+                                  "(DDDDDLjava/lang/String;Ljava/lang/String;)V");
+  const jmethodID vecAddMeth = jenv->GetMethodID(vectorClass, "add", "(Ljava/lang/Object;)Z");
 
-// are these arrays listed here C arrays and not java arrays?
-// I think so and that is why mapping is not happening.
-
-%typemap(in) GInt64 out (jbooleanArray) %{
-    $1 = (GInt64) jenv->GetBooleanArrayElements($input), NULL);
-%}
-
-%typemap(in) GInt64 out (jcharArray) %{
-    $1 = (GInt64) jenv->GetCharArrayElements($input), NULL);
-%}
-
-%typemap(in) GInt64 out (jbyteArray) %{
-    $1 = (GInt64) jenv->GetByteArrayElements($input), NULL);
-%}
-
-%typemap(in) GInt64 out (jshortArray) %{
-    $1 = (GInt64) jenv->GetShortArrayElements($input), NULL);
-%}
-
-%typemap(in) GInt64 out (jintArray) %{
-    $1 = (GInt64) jenv->GetIntArrayElements($input), NULL);
-%}
-
-%typemap(in) GInt64 out (jlongArray) %{
-    $1 = (GInt64) jenv->GetLongArrayElements($input), NULL);
-%}
-
-%typemap(in) GInt64 out (jfloatArray) %{
-    $1 = (GInt64) jenv->GetFloatArrayElements($input), NULL);
-%}
-
-%typemap(in) GInt64 out (jdoubleArray) %{
-    $1 = (GInt64) jenv->GetDoubleArrayElements($input), NULL);
-%}
-
-
-%typemap(in) void* out (jarray) %{
-
-  $1 = (void*) $null;
-
-  if ($input)
-  {
-    jclass clazz = jenv->GetObjectClass((jarray) $input);
-    
-    jmethodID isArrayMeth = jenv->GetMethodID(clazz, "isArray", "()Z");
-    
-    jboolean isArray = jenv->CallBooleanMethod((jarray) $input, isArrayMeth);
-    
-    if (isArray) {
-    
-      jmethodID getNameMeth = jenv->GetMethodID(clazz, "getName", "()Ljava/lang/String;");
-    
-      jstring clazz_name = (jstring) jenv->CallObjectMethod(clazz, getNameMeth);
-
-      jstring ARR_BOOL = jenv->NewStringUTF("[Z");
-      
-      jstring ARR_CHAR = jenv->NewStringUTF("[C");
-      
-      jstring ARR_BYTE = jenv->NewStringUTF("[B");
-      
-      jstring ARR_SHORT = jenv->NewStringUTF("[S");
-      
-      jstring ARR_INT = jenv->NewStringUTF("[I");
-      
-      jstring ARR_LONG = jenv->NewStringUTF("[L");
-      
-      jstring ARR_FLOAT = jenv->NewStringUTF("[F");
-      
-      jstring ARR_DOUBLE = jenv->NewStringUTF("[D");
-      
-      jclass strClass = jenv->GetObjectClass(clazz_name);
-      
-      jmethodID equalsMethID = jenv->GetMethodID(strClass, "equals", "(Ljava/lang/Object;)Z");
-
-      if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_BOOL))
-      
-        $1 = (void*) jenv->GetBooleanArrayElements(*((jbooleanArray *) &$input), NULL);
-      
-      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_CHAR))
-      
-        $1 = (void*) jenv->GetCharArrayElements(*((jcharArray *) &$input), NULL);
-      
-      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_BYTE))
-      
-        $1 = (void*) jenv->GetByteArrayElements(*((jbyteArray *) &$input), NULL);
-      
-      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_SHORT))
-      
-        $1 = (void*) jenv->GetShortArrayElements(*((jshortArray *) &$input), NULL);
-      
-      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_INT))
-      
-        $1 = (void*) jenv->GetIntArrayElements(*((jintArray *) &$input), NULL);
-      
-      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_LONG))
-      
-        $1 = (void*) jenv->GetLongArrayElements(*((jlongArray *) &$input), NULL);
-      
-      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_FLOAT))
-      
-        $1 = (void*) jenv->GetFloatArrayElements(*((jfloatArray *) &$input), NULL);
-      
-      else if (jenv->CallBooleanMethod(clazz_name, equalsMethID, ARR_DOUBLE))
-      
-        $1 = (void*) jenv->GetDoubleArrayElements(*((jdoubleArray *) &$input), NULL);
-      
-      jenv->DeleteLocalRef(ARR_DOUBLE);
-      
-      jenv->DeleteLocalRef(ARR_FLOAT);
-      
-      jenv->DeleteLocalRef(ARR_LONG);
-      
-      jenv->DeleteLocalRef(ARR_INT);
-      
-      jenv->DeleteLocalRef(ARR_SHORT);
-      
-      jenv->DeleteLocalRef(ARR_BYTE);
-      
-      jenv->DeleteLocalRef(ARR_CHAR);
-      
-      jenv->DeleteLocalRef(ARR_BOOL);
-    }
+  vector = jenv->CallObjectMethod(vectorClass, vecCtorMeth);
+  for (int i = 0; i < cnt; i++) {
+    dim = jenv->CallObjectMethod(dimensionClass, dimCtorMeth);
+    jenv->CallBooleanMethod(vector, vecAddMeth, dim);
   }
-
+  $1 = vector
 %}
+
+*/

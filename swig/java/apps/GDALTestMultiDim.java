@@ -31,7 +31,7 @@
  *****************************************************************************/
 
 import java.math.BigInteger;
-
+import java.util.Arrays;
 import java.util.Vector;
 
 import org.gdal.gdal.gdal;
@@ -64,31 +64,24 @@ public class GDALTestMultiDim
         
 		Group rg = dataset.GetRootGroup();
 
-		ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_UInt16);
+		ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
 
 		long[] dims = new long[]{10,6,2,7};
 
-		BigInteger[] dimsB = new BigInteger[dims.length];
-		
-		for (int i = 0; i < dims.length; i++) {
-			
-			dimsB[i] = BigInteger.valueOf(dims[i]);
-		}
-		
 		Vector<Dimension> inDims = new Vector<>();
 		
 		for (int i = 0; i < dims.length; i++) {
 			
 			Dimension d =
 				
-				rg.CreateDimension("name"+i, "type"+i, "direction"+i, dimsB[i]);
+				rg.CreateDimension("name"+i, "type"+i, "direction"+i, dims[i]);
 			
 			inDims.add(d);
 		}
 		
-		MDArray mdarray = null; // rg.CreateMDArray("my_data", inDims, dt);
+		MDArray mdarray = rg.CreateMDArray("my_data", inDims, dt);
 		
-		Vector<Dimension> outDims = null; // (Vector<Dimension>) mdarray.GetDimensions();
+		Vector<Dimension> outDims = (Vector<Dimension>) mdarray.GetDimensions();
 		
 		if (outDims.size() != dims.length) {
 			
@@ -99,64 +92,123 @@ public class GDALTestMultiDim
 			
 			Dimension d = outDims.get(i);
 			
-			if (d.GetSize().compareTo(dimsB[i]) != 0) {
+			if (d.GetSize().longValue() != dims[i]) {
 
-				throw new RuntimeException("resulting dimension "+i+" has size"+ d.GetSize()+" but should equal "+dims[i]);
+				throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+dims[i]);
 			}
 			
 			if (!d.GetName().equals("name"+i)) {
 
-				throw new RuntimeException("resulting dimension name "+d.GetName()+"does not match name"+i);
+				throw new RuntimeException("resulting dimension name "+d.GetName()+" does not match name"+i);
 			}
 			
 			if (!d.GetType().equals("type"+i)) {
 
-				throw new RuntimeException("resulting dimension type "+d.GetType()+"does not match fieldtype"+i);
+				throw new RuntimeException("resulting dimension type "+d.GetType()+" does not match type"+i);
 			}
 			
 			if (!d.GetDirection().equals("direction"+i)) {
 
-				throw new RuntimeException("resulting dimension direction "+d.GetDirection()+"does not match direction"+i);
+				throw new RuntimeException("resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
 			}
 		}
+
+		long xSize = dims[0];
+		
+		long ySize = dims[1];
+		
+		long zSize = dims[2];
+		
+		long timePoints = dims[3];
+		
+		int planeSize = (int) (xSize * ySize);
+		
+		short[] planeZeros = new short[planeSize];
+
+		short[] planeWritten = new short[planeSize];
+
+		short[] planeRead = new short[planeSize];
+
+		long[] starts = new long[dims.length];
+
+		long[] counts = new long[dims.length];
+
+		long[] steps = new long[dims.length];
+
+		long[] strides = new long[dims.length];
+
+		// read/write XY planes one at a time through whole mdarray
+		
+		for (int t = 0; t < timePoints; t++) {
+			
+			starts[3] = t;
+			counts[3] = 1;
+			steps[3] = 1;  // right?
+			strides[3] = 1;  // right?
+
+			for (int z = 0; z < zSize; z++) {
+			
+				starts[2] = z;
+				counts[2] = 1;
+				steps[2] = 1;
+				strides[2] = 1;
+
+				starts[1] = 0;
+				counts[1] = ySize;
+				steps[1] = 1;
+				strides[1] = 1;
+
+				starts[0] = 0;
+				counts[0] = xSize;
+				steps[0] = 1;
+				strides[0] = 1;
+
+				int i = 0;
+				
+				for (int y = 0; y < ySize; y++) {
+				
+					for (int x = 0; x < xSize; x++) {
+					
+						short val = (short) ((t+1)*(z+1)*(y+1)*(x+1));
+						
+						planeWritten[i++] = val;
+					}
+				}
+
+				if (Arrays.equals(planeWritten, planeZeros)) {
+					
+					throw new RuntimeException("write plane is zero and shouldn't be");
+				}
+				
+				if (!Arrays.equals(planeRead, planeZeros)) {
+					
+					throw new RuntimeException("read plane is not zero and should be");
+				}
+
+				if (!mdarray.Write(starts, counts, steps, strides, planeWritten)) {
+
+					throw new RuntimeException("could not write a plane for some reason");
+				}
+				
+				if (!mdarray.Read(starts, counts, steps, strides, planeRead)) {
+
+					throw new RuntimeException("could not read a plane for some reason");
+				}
+				
+				if (Arrays.equals(planeRead, planeZeros)) {
+					
+					throw new RuntimeException("read plane is zero and shouldn't be");
+				}
+				
+				if (!Arrays.equals(planeRead, planeWritten)) {
+					
+					throw new RuntimeException("plane read does not match plane written");
+				}
+				
+				Arrays.fill(planeWritten, (short)0);
+				
+				Arrays.fill(planeRead, (short)0);
+			}			
+		}
 	}
-	
-/*  python test code from gdal source that I can try and replicate
-
-    drv = gdal.GetDriverByName("MEM")
-    ds = drv.CreateMultiDimensional("")
-    rg = ds.GetRootGroup()
-    subg = rg.CreateGroup("subgroup")
-    subg.CreateGroup("subsubgroup")
-
-    dim0 = rg.CreateDimension("dim0", "my_type", "my_direction", 2)
-    comp0 = gdal.EDTComponent.Create(
-        "x", 0, gdal.ExtendedDataType.Create(gdal.GDT_Int16)
-    )
-    comp1 = gdal.EDTComponent.Create(
-        "y", 4, gdal.ExtendedDataType.Create(gdal.GDT_Int32)
-    )
-    dt = gdal.ExtendedDataType.CreateCompound("mytype", 8, [comp0, comp1])
-    ar = rg.CreateMDArray("ar_compound", [dim0], dt)
-    assert (
-        ar.Write(struct.pack("hi" * 2, 32767, 1000000, -32768, -1000000))
-        == gdal.CE_None
-    )
-    assert ar.SetNoDataValueRaw(struct.pack("hi", 32767, 1000000)) == gdal.CE_None
-
-    dim1 = rg.CreateDimension("dim1", None, None, 3)
-    ar = rg.CreateMDArray(
-        "ar_2d", [dim0, dim1], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
-    )
-    ar.SetOffset(1)
-    ar.SetScale(2)
-    ar.SetUnit("foo")
-    srs = osr.SpatialReference()
-    srs.SetFromUserInput("+proj=utm +zone=31 +datum=WGS84")
-    srs.SetDataAxisToSRSAxisMapping([2, 1])
-    ar.SetSpatialRef(srs)
-    attr = ar.CreateAttribute("myattr", [], gdal.ExtendedDataType.CreateString())
-    attr.WriteString("bar")
-    ret = gdal.MultiDimInfo(ds, detailed=True, as_text=True)
-*/
 }
