@@ -75,6 +75,7 @@ import org.gdal.gdal.ExtendedDataType;
 import org.gdal.ogr.Layer;
 import org.gdal.gdal.Dimension;
 import org.gdal.gdal.ExtendedDataType;
+import java.math.BigInteger;
 import java.util.Vector;
 %}
 
@@ -1237,9 +1238,7 @@ import org.gdal.gdalconst.gdalconstConstants;
   
   public Dimension CreateDimension(String name, String type, String direction, long size) {
     
-    // TODO: this is an overload that would be better addressed elsewhere
-    
-    return null;
+    return CreateDimension(name, type, direction, BigInteger.valueOf(size));
   }
   
 %}
