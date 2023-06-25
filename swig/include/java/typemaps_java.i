@@ -2061,7 +2061,10 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 // typemap(out) (C types): convert from C to Java
 
 
-/* From java.util.Vector<Dimension> to C types below */
+/*
+  From Java: Vector<Dimension>
+  To C:      types below
+*/
 
 %typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) %{
 
@@ -2071,7 +2074,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   {
     const jclass vectorClass = jenv->FindClass("java/util/Vector");
     const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
-    const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)");
+    const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)Ljava/lang/Object;");
   
     $1 = jenv->CallIntMethod($input, vsize);
     if ($1 == 0)
@@ -2101,7 +2104,15 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 %}
 
-/* From C types below to java.util.Vector<Dimension> */
+// TODO: why is this one not autodiscovered for use by
+//   Attribute::GetDimensions() and MDArray::GetDimensions()?
+//   Neither of them automatically make their way into the
+//   Java api javaddoc.
+
+/*
+  From C: (int nDims, GDALDimensionH *pDims)
+  To Java: Vector<Dimension>
+*/
 
 %typemap(argout) (int nDims, GDALDimensionH *pDims)
 %{
@@ -2117,11 +2128,11 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   
   $result = jenv->NewObject(vectorClass, vctor);
 
-  for (int i = 0; i < nDims; i++) {
+  for (int i = 0; i < $1; i++) {
   
-    GDALDimensionH gdim = pDims[i];
+    GDALDimensionH gdim = $2[i];
     
-    jobject dim = jenv->NewObject(dimClass, dctor, $2[i], false);
+    jobject dim = jenv->NewObject(dimClass, dctor, gdim, false);
     
     jenv->CallBooleanMethod($result, vadd, dim)
   }
@@ -2171,4 +2182,45 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	{
 		$1 = NULL;
 	}
+%}
+
+/********************************************/
+/* One I need for MDArrays creation I think */
+/********************************************/
+
+// TODO: make sure malloced() memory below is freed somewhere.
+//   Also UTF chars. Also instead of malloc should I be using
+//   VSI kinds of stuff?
+
+// From Java: (String, Vector<Dimension>, ExtendedDataType)
+// To C: (const char*, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH type)
+
+%typemap(in) (const char** s, int* nD, GDALDimensionH **pD, GDALExtendedDataTypeH **type) (jobject, jobject, jobject)
+// %typemap(in) (const char* s, int* nD, GDALDimensionH **pD, GDALExtendedDataTypeH *type) (const char*, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH type)
+%{
+    const jclass vectorClass = jenv->FindClass("java/util/Vector");
+    const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
+    const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)Ljava/lang/Object;");
+
+    const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
+    const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
+
+    *s = (const char *) jenv->GetStringUTFChars($1, 0);
+    *nD = jenv->CallIntMethod($2, vsize);
+    if (*nD == 0)
+		*pD = NULL;
+    else {
+        *pD = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * *nD);
+        for (int i = 0; i<*nD; i++) {
+            jobject obj = (jobject) jenv->CallObjectMethod($2, vget, i);
+            if (obj == NULL)
+            {
+                free (*pD);
+                SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
+                return $null;
+            }
+            (*pD)[i] = (GDALDimensionH*) jenv->CallStaticLongMethod(dtClass, getCPtr, obj);
+        }
+    }
+    *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $3);
 %}
