@@ -2063,7 +2063,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   To C:      (int nDims, GDALDimensionH *pDims)
 */
 
-%typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) %{
+%typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) {
 
   /* %typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) */
 
@@ -2074,14 +2074,14 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)Ljava/lang/Object;");
   
     $1 = jenv->CallIntMethod($input, vsize);
-    if ($1 == 0)
+    if ($1 == 0) {
        $2 = NULL;
+    }
     else
     {
         $2 = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * $1);
-        int i;
-        for (i = 0; i<$1; i++) {
-            jobject obj = (jobject)jenv->CallObjectMethod($input, vget);
+        for (int i = 0; i < $1; i++) {
+            jobject obj = (jobject) jenv->CallObjectMethod($input, vget);
             if (obj == NULL)
             {
                 free ($2 );
@@ -2099,7 +2099,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     $1 = 0;
     $2 = NULL;
   }
-%}
+}
 
 // TODO: why is this one not autodiscovered for use by
 //   Attribute::GetDimensions() and MDArray::GetDimensions()?
@@ -2112,9 +2112,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 */
 
 %typemap(argout) (int nDims, GDALDimensionH *pDims)
-%{
-  /* %typemap(argout) (int nDims, GDALDimensionH *pDims) */
-
+{
   const jclass vectorClass = jenv->FindClass("java/util/Vector");
   const jmethodID vctor = jenv->GetMethodID(vectorClass, "<init>", "()V");
   const jmethodID vadd = jenv->GetMethodID(vectorClass, "add", "()B");
@@ -2123,7 +2121,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
     "(Ljava/lang/Long;Zjava/lang/Boolean;)V");
   
-  $result = jenv->NewObject(vectorClass, vctor);
+  jobject vec = jenv->NewObject(vectorClass, vctor);
 
   for (int i = 0; i < $1; i++) {
   
@@ -2131,11 +2129,13 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     
     jobject dim = jenv->NewObject(dimClass, dctor, gdim, false);
     
-    jenv->CallBooleanMethod($result, vadd, dim)
+    jenv->CallBooleanMethod(vec, vadd, dim);
   }
-%}
+  
+  $result = vec;
+}
 
-%typemap(freearg) (int nDims, GDALDimensionH *pDims) %{
+%typemap(freearg) (int nDims, GDALDimensionH *pDims)
 {
   /* %typemap(freearg)  (int nDims, GDALDimensionH *pDims) */
   
@@ -2166,12 +2166,12 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 // TODO: do I need indirection via pointers in this declaration?
 
-%typemap(in, numinputs=1) (GDALExtendedDataTypeH dataType) %{
+%typemap(in, numinputs=1) (GDALExtendedDataTypeH dataType) {
 
 	if ($input)
 	{
 		const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-        const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
+        const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
 	  
         $1 = *(GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
 	}
@@ -2179,7 +2179,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	{
 		$1 = NULL;
 	}
-%}
+}
 
 /********************************************/
 /* One I need for MDArrays creation I think */
@@ -2192,15 +2192,16 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 // From Java: (String, Vector<Dimension>, ExtendedDataType)
 // To C: (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH* type)
 
-// typemap(in,numinputs=0) (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH *type) (jobject, jobject, jobject)
-%typemap(in,numinputs=0) (const char **name, int *nDims, GDALDimensionH **pDims, GDALExtendedDataTypeH **type) (jobject, jobject, jobject)
-%{
+// typemap(in,numinputs=0) (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH type) (jobject, jobject, jobject)
+
+%typemap(in,numinputs=0) (const char **name, int *nDims, GDALDimensionH **pDims, GDALExtendedDataTypeH *type) (jobject, jobject, jobject)
+{
     const jclass vectorClass = jenv->FindClass("java/util/Vector");
     const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
     const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)Ljava/lang/Object;");
 
     const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-    const jmethodID getCPtr = jenv->GetStaticMethodID(klass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
+    const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
 
     *name = (const char *) jenv->GetStringUTFChars($1, 0);
     *nDims = jenv->CallIntMethod($2, vsize);
@@ -2220,4 +2221,4 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
         }
     }
     *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $3);
-%}
+}
