@@ -1227,6 +1227,7 @@ And the Band object has the following 3 methods :
      def GetVirtualMemAutoArray(self, eAccess = gdalconst.GF_Read, options = None):
            """Return a NumPy array for the band, seen as a virtual memory mapping.
               An element is accessed with array[y][x].
+           """
 
      def GetTiledVirtualMemArray(self, eAccess = gdalconst.GF_Read, xoff=0, yoff=0,
                               xsize=None, ysize=None, tilexsize=256, tileysize=256,
