@@ -748,9 +748,8 @@ after_loop:
 no_eoi:
     sp->read_error = 1;
     TIFFErrorExtR(tif, module,
-                  "LZWDecode: Strip %" PRIu32 " not terminated with EOI code"
-                  " (short %" PRIu64" bytes)",
-                  tif->tif_curstrip, (uint64_t)occ);
+                  "LZWDecode: Strip %" PRIu32 " not terminated with EOI code",
+                  tif->tif_curstrip);
     return 0;
 error_code:
     sp->read_error = 1;
