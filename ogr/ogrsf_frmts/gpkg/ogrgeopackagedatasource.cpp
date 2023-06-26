@@ -10097,3 +10097,32 @@ bool GDALGeoPackageDataset::UpdateRelationship(
     LoadRelationships();
     return true;
 }
+
+/************************************************************************/
+/*                    GetSqliteMasterContent()                          */
+/************************************************************************/
+
+const std::vector<SQLSqliteMasterContent> &
+GDALGeoPackageDataset::GetSqliteMasterContent()
+{
+    if (m_aoSqliteMasterContent.empty())
+    {
+        auto oResultTable =
+            SQLQuery(hDB, "SELECT sql, type, tbl_name FROM sqlite_master");
+        if (oResultTable)
+        {
+            for (int rowCnt = 0; rowCnt < oResultTable->RowCount(); ++rowCnt)
+            {
+                SQLSqliteMasterContent row;
+                const char *pszSQL = oResultTable->GetValue(0, rowCnt);
+                row.osSQL = pszSQL ? pszSQL : "";
+                const char *pszType = oResultTable->GetValue(1, rowCnt);
+                row.osType = pszType ? pszType : "";
+                const char *pszTableName = oResultTable->GetValue(2, rowCnt);
+                row.osTableName = pszTableName ? pszTableName : "";
+                m_aoSqliteMasterContent.emplace_back(std::move(row));
+            }
+        }
+    }
+    return m_aoSqliteMasterContent;
+}

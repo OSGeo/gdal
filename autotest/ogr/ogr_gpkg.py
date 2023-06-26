@@ -2497,6 +2497,35 @@ def test_ogr_gpkg_unique():
 
 
 ###############################################################################
+# Test unique constraints on fields
+
+
+def test_ogr_gpkg_unique_many_layers():
+
+    filename = "/vsimem/test_ogr_gpkg_unique_many_layers.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    THRESHOLD = 10
+    for i in range(THRESHOLD + 1):
+        lyr_name = "test" + str(i)
+        ds.ExecuteSQL(
+            f'CREATE TABLE IF NOT EXISTS "{lyr_name}" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, other_field TEXT, "field_unique" TEXT UNIQUE);'
+        )
+        ds.ExecuteSQL(
+            f"CREATE UNIQUE INDEX {lyr_name}_unique_idx ON {lyr_name}(other_field);"
+        )
+    ds = None
+
+    ds = ogr.Open(filename)
+    for i in range(THRESHOLD + 1):
+        lyr = ds.GetLayerByName("test" + str(i))
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetFieldDefn(0).IsUnique()
+        assert lyr_defn.GetFieldDefn(1).IsUnique()
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test default values
 
 

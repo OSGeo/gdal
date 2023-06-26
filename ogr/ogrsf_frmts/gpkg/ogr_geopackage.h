@@ -181,6 +181,20 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     CPLString m_osTilingScheme = "CUSTOM";
 
+    // To optimize reading table constraints
+    int m_nReadTableDefCount = 0;
+    std::vector<SQLSqliteMasterContent> m_aoSqliteMasterContent{};
+
+    void IncrementReadTableDefCounter()
+    {
+        m_nReadTableDefCount++;
+    }
+    int GetReadTableDefCounter() const
+    {
+        return m_nReadTableDefCount;
+    }
+    const std::vector<SQLSqliteMasterContent> &GetSqliteMasterContent();
+
     bool ComputeTileAndPixelShifts();
     bool AllocCachedTiles();
     bool InitRaster(GDALGeoPackageDataset *poParentDS, const char *pszTableName,
