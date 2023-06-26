@@ -149,6 +149,58 @@ static int TWebPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
                 segment_height = td->td_rowsperstrip;
         }
 
+        int webp_width, webp_height;
+        if (!WebPGetInfo(tif->tif_rawcp,
+                         (uint64_t)tif->tif_rawcc > UINT32_MAX
+                             ? UINT32_MAX
+                             : (uint32_t)tif->tif_rawcc,
+                         &webp_width, &webp_height))
+        {
+            TIFFErrorExtR(tif, module, "WebPGetInfo() failed");
+            return 0;
+        }
+        if ((uint32_t)webp_width != segment_width ||
+            (uint32_t)webp_height != segment_height)
+        {
+            TIFFErrorExtR(
+                tif, module, "WebP blob dimension is %dx%d. Expected %ux%u",
+                webp_width, webp_height, segment_width, segment_height);
+            return 0;
+        }
+
+#if WEBP_DECODER_ABI_VERSION >= 0x0002
+        WebPDecoderConfig config;
+        if (!WebPInitDecoderConfig(&config))
+        {
+            TIFFErrorExtR(tif, module, "WebPInitDecoderConfig() failed");
+            return 0;
+        }
+
+        const bool bWebPGetFeaturesOK =
+            WebPGetFeatures(tif->tif_rawcp,
+                            (uint64_t)tif->tif_rawcc > UINT32_MAX
+                                ? UINT32_MAX
+                                : (uint32_t)tif->tif_rawcc,
+                            &config.input) == VP8_STATUS_OK;
+
+        WebPFreeDecBuffer(&config.output);
+
+        if (!bWebPGetFeaturesOK)
+        {
+            TIFFErrorExtR(tif, module, "WebPInitDecoderConfig() failed");
+            return 0;
+        }
+
+        const int webp_bands = config.input.has_alpha ? 4 : 3;
+        if (webp_bands != sp->nSamples)
+        {
+            TIFFErrorExtR(tif, module,
+                          "WebP blob band count is %d. Expected %d", webp_bands,
+                          sp->nSamples);
+            return 0;
+        }
+#endif
+
         buffer_size = segment_width * segment_height * sp->nSamples;
         if (occ == (tmsize_t)buffer_size)
         {
