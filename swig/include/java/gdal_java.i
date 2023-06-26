@@ -149,7 +149,7 @@ import java.util.Vector;
 
 %{
 
-static bool MDArrayRead(GDALMDArrayH hMDA,
+  static bool MDArrayRead(GDALMDArrayH hMDA,
 							const GInt64 *arrayStartIdxes,
 							const GInt64 *counts,
 							const GInt64 *arraySteps,
@@ -158,7 +158,7 @@ static bool MDArrayRead(GDALMDArrayH hMDA,
 							long nRegularArraySizeIn,
 							GDALExtendedDataTypeH extended_data_type,
 							size_t sizeof_ctype)
-    {
+  {
 		return GDALMDArrayRead(hMDA,
 								(const GUInt64*) arrayStartIdxes,
 								(const size_t*) counts,
@@ -168,9 +168,9 @@ static bool MDArrayRead(GDALMDArrayH hMDA,
 								regularArrayIn,
 								regularArrayIn,
 								nRegularArraySizeIn * sizeof_ctype);
-    }
+  }
 
-static bool MDArrayWrite(GDALMDArrayH hMDA,
+  static bool MDArrayWrite(GDALMDArrayH hMDA,
 							const GInt64 *arrayStartIdxes,
 							const GInt64 *counts,
 							const GInt64 *arraySteps,
@@ -179,7 +179,7 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 							long nRegularArraySizeOut,
 							GDALExtendedDataTypeH extended_data_type,
 							size_t sizeof_ctype)
-    {
+  {
 		return GDALMDArrayWrite(hMDA,
 								(const GUInt64*) arrayStartIdxes,
 								(const size_t*) counts,
@@ -189,8 +189,18 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 								regularArrayOut,
 								regularArrayOut,
 								nRegularArraySizeOut * sizeof_ctype);
-    }
-    
+  }
+  
+  static GDAL_JAVA_DIMS find_dims_helper(GDALMDArrayH mdaH)
+  {
+  
+    GDAL_JAVA_DIMS dims;
+      
+    dims.pDims = GDALMDArrayGetDimensions(mdaH, &dims.nDims);
+      
+    return dims;
+  }
+  
 %}
 
 // TODO Test MDArray read/write code with complex types:
@@ -361,23 +371,21 @@ static bool MDArrayWrite(GDALMDArrayH hMDA,
 
 */  // end commenting out code related to TODO
 
+  GDAL_JAVA_DIMS FindGdalDims() {
+  
+    return find_dims_helper(self);
+  }
+  
 } /* extend */
 
 %typemap(javacode) GDALMDArrayHS %{
 
-/*
-	public Vector GetDimensions() {
-      
-      Vector dims = new java.util.Vector();
-      
-      // TODO
-      
-      //GetDims(dims);
-      
-      return dims;
-	}
-*/
-	
+    Vector<Dimension> GetDimensions() {
+
+		Vector vec = FindGdalDims();
+		
+		return (Vector<Dimension>) vec;
+    }
 %}
 
 %typemap(javaimports) GDALDriverShadow %{
@@ -1228,9 +1236,6 @@ import org.gdal.gdalconst.gdalconstConstants;
       return SetMetadata(metadata, null);
   }
 %}
-
-// TODO: do not extend this class. make a static block. figure out how to
-//   pass the group from otuside: maybe via a typemap conversion.
 
 %{
     static GDALMDArrayH CreateMDA(GDALGroupH groupH, const char* name, int nDims, GDALDimensionH* dims, GDALExtendedDataTypeH dataType) {

@@ -62,7 +62,6 @@
 
 %typemap(javain) SWIGTYPE *DISOWN "$javaclassname.getCPtrAndDisown($javainput)"
 
-
 /* JAVA TYPEMAPS */
 
 /***************************************************
@@ -2119,7 +2118,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   
   const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
   const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
-    "(Ljava/lang/Long;Zjava/lang/Boolean;)V");
+							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
   
   jobject vec = jenv->NewObject(vectorClass, vctor);
 
@@ -2182,60 +2181,77 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 /********************************************/
-/* One I need for MDArrays creation I think */
+/* One I need for MDArray creation I think  */
 /********************************************/
-
-// TODO: make sure malloced() memory below is freed somewhere.
-//   Also UTF chars. Also instead of malloc should I be using
-//   VSI kinds of stuff?
-
-/*
-
-// From Java: (String, Vector<Dimension>, ExtendedDataType)
-// To C: (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH* type)
-
-// typemap(in,numinputs=0) (const char* name, int nDims, GDALDimensionH *pDims, GDALExtendedDataTypeH type) (jobject, jobject, jobject)
-
-%typemap(in,numinputs=0) (const char **name, int *nDims, GDALDimensionH **pDims, GDALExtendedDataTypeH *type) (jobject, jobject, jobject)
-{
-    const jclass vectorClass = jenv->FindClass("java/util/Vector");
-    const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
-    const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)Ljava/lang/Object;");
-
-    const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-    const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
-
-    *name = (const char *) jenv->GetStringUTFChars($1, 0);
-    *nDims = jenv->CallIntMethod($2, vsize);
-    if (*nDims == 0)
-		*pDims = NULL;
-    else {
-        *pDims = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * *nDims);
-        for (int i = 0; i < *nDims; i++) {
-            jobject obj = (jobject) jenv->CallObjectMethod($2, vget, i);
-            if (obj == NULL)
-            {
-                free (*pDims);
-                SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
-                return $null;
-            }
-            (*pDims)[i] = (GDALDimensionH*) jenv->CallStaticLongMethod(dtClass, getCPtr, obj);
-        }
-    }
-    *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $3);
-}
-
-*/
 
 /*
   From Java: ExtendedDataType
-  To C:      GDALExtendedDataType*
+  To C:      GDALExtendedDataTypeH*
 */
 
-%typemap(in) (GDALExtendedDataTypeH **type)
+%typemap(in) (GDALExtendedDataTypeH** type)
 {
     const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
     const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
 
     *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $1);
+}
+
+/***********************************/
+/* One I need for GetDimensions    */
+/***********************************/
+
+/*
+   From C:  (size_t *nDims, GDALDimensionH **pDims)
+   To Java: Vector<Dimension>
+*/
+
+%typemap(out) (size_t *nDims, GDALDimensionH **pDims) {
+
+  const jclass vectorClass = jenv->FindClass("java/util/Vector");
+  const jmethodID vctor = jenv->GetMethodID(vectorClass, "<init>", "()V");
+  const jmethodID vadd = jenv->GetMethodID(vectorClass, "add", "()B");
+  
+  const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+  const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
+							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
+  
+  jobject vec = jenv->NewObject(vectorClass, vctor);
+
+  for (size_t i = 0; i < *$1; i++) {
+  
+    GDALDimensionH gdim = (*$2)[i];
+    
+    jobject dim = jenv->NewObject(dimClass, dctor, gdim, true);
+    
+    jenv->CallBooleanMethod(vec, vadd, dim);
+  }
+  
+  $result = *(jlong*) &vec;
+}
+
+/*** another one ***/
+
+%typemap(out) (GDAL_JAVA_DIMS*) {
+
+  const jclass vectorClass = jenv->FindClass("java/util/Vector");
+  const jmethodID vctor = jenv->GetMethodID(vectorClass, "<init>", "()V");
+  const jmethodID vadd = jenv->GetMethodID(vectorClass, "add", "()B");
+  
+  const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+  const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
+							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
+  
+  jobject vec = jenv->NewObject(vectorClass, vctor);
+
+  for (size_t i = 0; i < $1->nDims; i++) {
+  
+    GDALDimensionH gdim = ($1->pDims)[i];
+    
+    jobject dim = jenv->NewObject(dimClass, dctor, gdim, true);
+    
+    jenv->CallBooleanMethod(vec, vadd, dim);
+  }
+  
+  $result = vec;
 }

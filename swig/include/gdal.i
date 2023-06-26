@@ -93,6 +93,24 @@ typedef GDALDimensionHS GDALDimensionHS;
 
 %}
 
+#if defined(SWIGJAVA)
+
+%{
+
+// TODO locate this somewhere else? needed by swig java api.
+
+typedef struct GdalJavaDimStruct {
+
+    size_t nDims;
+
+    GDALDimensionH* pDims;
+
+} GDAL_JAVA_DIMS;
+
+%}
+
+#endif
+
 #if defined(SWIGPYTHON) || defined(SWIGJAVA) || defined(SWIGCSHARP)
 %{
 #ifdef DEBUG
