@@ -1,4 +1,4 @@
-HTTP/2 200 OK
+HTTP/1.1 200 OK
 Date: Tue, 20 Jun 2023 10:38:13 GMT
 Server: Apache/2.4.52 (Ubuntu)
 Expires: Mon, 01 Apr 2024 08:45:51 GMT

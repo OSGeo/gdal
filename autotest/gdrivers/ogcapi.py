@@ -105,7 +105,7 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                         TEST_DATA_SOURCE_ENDPOINT.encode("utf8"), local_uri
                     )
                     content = content.replace(ENDPOINT_PATH.encode("utf8"), local_uri)
-                    data = b"HTTP/2 200 OK\r\n"
+                    data = b"HTTP/1.1 200 OK\r\n"
                     for k, v in response.headers.items():
                         if k == "Content-Encoding":
                             continue
