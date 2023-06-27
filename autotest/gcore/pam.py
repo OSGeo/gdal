@@ -85,67 +85,51 @@ def test_pam_1():
 
 
 ###############################################################################
-# Verify that we can write XML to a new file.
+# Verify that we can write XML to a new file and read it back.
 
 
 @pytest.mark.require_driver("PNM")
 def test_pam_2():
 
     driver = gdal.GetDriverByName("PNM")
-    ds = driver.Create("tmp/pam.pgm", 10, 10)
-    band = ds.GetRasterBand(1)
 
-    band.SetMetadata({"other": "red", "key": "value"})
+    with driver.Create("tmp/pam.pgm", 10, 10) as ds:
+        band = ds.GetRasterBand(1)
 
-    expected_xml = """<?xml version="2.0"?>
+        band.SetMetadata({"other": "red", "key": "value"})
+
+        expected_xml = """<?xml version="2.0"?>
 <TestXML>Value</TestXML>
 """
 
-    band.SetMetadata([expected_xml], "xml:test")
+        band.SetMetadata([expected_xml], "xml:test")
 
-    band.SetNoDataValue(100)
+        band.SetNoDataValue(100)
 
-    ds = None
+    with gdal.Open("tmp/pam.pgm") as ds:
 
+        band = ds.GetRasterBand(1)
+        base_md = band.GetMetadata()
 
-###############################################################################
-# Check that we can read PAM metadata for existing PNM file.
+        assert base_md == {"other": "red", "key": "value"}
 
+        xml_md = band.GetMetadata("xml:test")
 
-@pytest.mark.require_driver("PNM")
-def test_pam_3():
+        assert len(xml_md) == 1, "xml:test metadata missing"
 
-    ds = gdal.Open("tmp/pam.pgm")
+        assert isinstance(xml_md, list), "xml:test metadata not returned as list."
 
-    band = ds.GetRasterBand(1)
-    base_md = band.GetMetadata()
-    assert (
-        len(base_md) == 2 and base_md["other"] == "red" and base_md["key"] == "value"
-    ), "Default domain metadata missing"
+        assert xml_md[0] == expected_xml, "xml does not match"
 
-    xml_md = band.GetMetadata("xml:test")
+        assert band.GetNoDataValue() == 100, "nodata not saved via pam"
 
-    assert len(xml_md) == 1, "xml:test metadata missing"
+    with gdal.Open("tmp/pam.pgm", gdal.GA_Update) as ds:
+        assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
 
-    assert isinstance(xml_md, list), "xml:test metadata not returned as list."
-
-    expected_xml = """<?xml version="2.0"?>
-<TestXML>Value</TestXML>
-"""
-
-    assert xml_md[0] == expected_xml, "xml does not match"
-
-    assert band.GetNoDataValue() == 100, "nodata not saved via pam"
-
-    ds = None
-    ds = gdal.Open("tmp/pam.pgm", gdal.GA_Update)
-    assert ds.GetRasterBand(1).DeleteNoDataValue() == 0
-    ds = None
-
-    ds = gdal.Open("tmp/pam.pgm")
-    assert (
-        ds.GetRasterBand(1).GetNoDataValue() is None
-    ), "got nodata value whereas none was expected"
+    with gdal.Open("tmp/pam.pgm") as ds:
+        assert (
+            ds.GetRasterBand(1).GetNoDataValue() is None
+        ), "got nodata value whereas none was expected"
 
 
 ###############################################################################
