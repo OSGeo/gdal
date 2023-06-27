@@ -175,6 +175,10 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
     self._add_layer_ref(val)
 %}
 
+%feature("pythonappend") CopyLayer %{
+    self._add_layer_ref(val)
+%}
+
 %feature("shadow") DeleteLayer %{
     def DeleteLayer(self, value) -> "OGRErr":
         """

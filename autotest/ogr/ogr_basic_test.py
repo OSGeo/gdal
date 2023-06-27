@@ -969,10 +969,15 @@ def test_layer_use_after_datasource_close_3(tmp_path):
 
     with drv.CreateDataSource(fname) as ds:
         lyr = ds.CreateLayer("test")
+        lyr2 = ds.CopyLayer(lyr, "test2")
 
     # Make sure ds.__exit__() has invalidated "lyr" so we don't crash here
     with pytest.raises(Exception):
         lyr.GetFeatureCount()
+
+    # Make sure ds.__exit__() has invalidated "lyr2" so we don't crash here
+    with pytest.raises(Exception):
+        lyr2.GetFeatureCount()
 
 
 ###############################################################################
