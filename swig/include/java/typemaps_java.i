@@ -2197,61 +2197,23 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $1);
 }
 
-/***********************************/
-/* One I need for GetDimensions    */
-/***********************************/
-
 /*
-   From C:  (size_t *nDims, GDALDimensionH **pDims)
-   To Java: Vector<Dimension>
+  From C:  GDALDimensionH*
+  To Java: Dimension
 */
+%typemap(out) (GDALDimensionH*)
+{
+	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+	const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
+									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-%typemap(out) (size_t *nDims, GDALDimensionH **pDims) {
-
-  const jclass vectorClass = jenv->FindClass("java/util/Vector");
-  const jmethodID vctor = jenv->GetMethodID(vectorClass, "<init>", "()V");
-  const jmethodID vadd = jenv->GetMethodID(vectorClass, "add", "()B");
-  
-  const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
-  const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
-							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
-  
-  jobject vec = jenv->NewObject(vectorClass, vctor);
-
-  for (size_t i = 0; i < *$1; i++) {
-  
-    GDALDimensionH gdim = (*$2)[i];
-    
-    jobject dim = jenv->NewObject(dimClass, dctor, gdim, true);
-    
-    jenv->CallBooleanMethod(vec, vadd, dim);
-  }
-  
-  $result = *(jlong*) &vec;
+	$result = jenv->NewObject(dimClass, dctor, *$1, false);
 }
 
-/*** another one ***/
-
-%typemap(out) (GDAL_JAVA_DIMS*) {
-
-  const jclass vectorClass = jenv->FindClass("java/util/Vector");
-  const jmethodID vctor = jenv->GetMethodID(vectorClass, "<init>", "()V");
-  const jmethodID vadd = jenv->GetMethodID(vectorClass, "add", "()B");
-  
-  const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
-  const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
-							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
-  
-  jobject vec = jenv->NewObject(vectorClass, vctor);
-
-  for (size_t i = 0; i < $1->nDims; i++) {
-  
-    GDALDimensionH gdim = ($1->pDims)[i];
-    
-    jobject dim = jenv->NewObject(dimClass, dctor, gdim, true);
-    
-    jenv->CallBooleanMethod(vec, vadd, dim);
+%typemap(jni) (GDALDimensionH*) "jobject"
+%typemap(jtype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
+%typemap(jstype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
+%typemap(javain) (GDALDimensionH*) "$javainput"
+%typemap(javaout) (GDALDimensionH*) {
+    return $jnicall;
   }
-  
-  $result = vec;
-}

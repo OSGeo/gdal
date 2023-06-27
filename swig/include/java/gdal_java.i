@@ -8,6 +8,9 @@
  *
 */
 
+// TODO - when MDArray::GetDimensions() is working copy
+//   the approach to implement Attribute::GetDimensions()
+
 %include java_exceptions.i
 
 %pragma(java) jniclasscode=%{
@@ -191,16 +194,6 @@ import java.util.Vector;
 								nRegularArraySizeOut * sizeof_ctype);
   }
   
-  static GDAL_JAVA_DIMS find_dims_helper(GDALMDArrayH mdaH)
-  {
-  
-    GDAL_JAVA_DIMS dims;
-      
-    dims.pDims = GDALMDArrayGetDimensions(mdaH, &dims.nDims);
-      
-    return dims;
-  }
-  
 %}
 
 // TODO Test MDArray read/write code with complex types:
@@ -371,20 +364,46 @@ import java.util.Vector;
 
 */  // end commenting out code related to TODO
 
-  GDAL_JAVA_DIMS FindGdalDims() {
-  
-    return find_dims_helper(self);
-  }
-  
+	GDALDimensionH GetDimension(size_t index) {
+	
+		size_t dimCount;
+		
+		GDALDimensionH* dims = GDALMDArrayGetDimensions(self, &dimCount);
+
+		if (index < 0 || index >= dimCount) {
+		
+			free((void*) dims);
+		
+			return (GDALDimensionH) NULL;
+		}
+		else {
+		
+			GDALDimensionH retVal = dims[index];
+			
+			free((void*) dims);
+
+			return retVal;
+		}
+	}
+	
 } /* extend */
 
 %typemap(javacode) GDALMDArrayHS %{
 
-    Vector<Dimension> GetDimensions() {
+    public Vector<Dimension> GetDimensions() {
 
-		Vector vec = FindGdalDims();
+		Vector<Dimension> vec = new Vector<>();
 		
-		return (Vector<Dimension>) vec;
+		long numDims = GetDimensionCount();
+		
+		for (long i = 0; i < numDims; i++) {
+
+			Dimension dim = GetDimension(i);
+			
+			vec.add(dim);
+		}
+		
+		return vec;
     }
 %}
 
