@@ -150,36 +150,29 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
             for lyr in self._layer_references:
                 lyr.this = None
 
+
+    def _add_layer_ref(self, lyr):
+        if not lyr:
+            return
+
+        if not hasattr(self, '_layer_references'):
+            import weakref
+
+            self._layer_references = weakref.WeakSet()
+
+        self._layer_references.add(lyr)
   }
 
-%feature("shadow") GetLayerByName %{
-    def GetLayerByName(self, name):
-        lyr = $action(self, name)
-
-        if not hasattr(self, '_layer_references'):
-            import weakref
-
-            self._layer_references = weakref.WeakSet()
-
-        if lyr is not None:
-            self._layer_references.add(lyr)
-
-        return lyr
+%feature("pythonappend") GetLayerByName %{
+    self._add_layer_ref(val)
 %}
 
-%feature("shadow") GetLayerByIndex %{
-    def GetLayerByIndex(self, idx):
-        lyr = $action(self, idx)
+%feature("pythonappend") GetLayerByIndex %{
+    self._add_layer_ref(val)
+%}
 
-        if not hasattr(self, '_layer_references'):
-            import weakref
-
-            self._layer_references = weakref.WeakSet()
-
-        if lyr is not None:
-            self._layer_references.add(lyr)
-
-        return lyr
+%feature("pythonappend") CreateLayer %{
+    self._add_layer_ref(val)
 %}
 
 %feature("shadow") DeleteLayer %{
