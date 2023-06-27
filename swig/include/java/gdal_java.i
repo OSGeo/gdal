@@ -194,6 +194,30 @@ import java.util.Vector;
 								nRegularArraySizeOut * sizeof_ctype);
   }
   
+  static GDALDimensionH* GDALGetDim(GDALMDArrayH hMDA, size_t index) {
+
+	size_t dimCount;
+	
+	GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
+
+	if (index < 0 || index >= dimCount) {
+	
+		free((void*) dims);
+	
+		return NULL;
+	}
+	else {
+	
+		GDALDimensionH* retVal = (GDALDimensionH*) malloc(sizeof(GDALDimensionH));
+		
+		*retVal = dims[index];
+		
+		free((void*) dims);
+
+		return retVal;
+	}
+  }
+  
 %}
 
 // TODO Test MDArray read/write code with complex types:
@@ -364,26 +388,9 @@ import java.util.Vector;
 
 */  // end commenting out code related to TODO
 
-	GDALDimensionH GetDimension(size_t index) {
-	
-		size_t dimCount;
-		
-		GDALDimensionH* dims = GDALMDArrayGetDimensions(self, &dimCount);
+	GDALDimensionH* GetDimension(size_t index) {
 
-		if (index < 0 || index >= dimCount) {
-		
-			free((void*) dims);
-		
-			return (GDALDimensionH) NULL;
-		}
-		else {
-		
-			GDALDimensionH retVal = dims[index];
-			
-			free((void*) dims);
-
-			return retVal;
-		}
+		return GDALGetDim(self, index);
 	}
 	
 } /* extend */

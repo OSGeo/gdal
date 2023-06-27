@@ -2207,7 +2207,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = jenv->NewObject(dimClass, dctor, *$1, false);
+	$result = jenv->NewObject(dimClass, dctor, *$1, true);
 }
 
 %typemap(jni) (GDALDimensionH*) "jobject"
