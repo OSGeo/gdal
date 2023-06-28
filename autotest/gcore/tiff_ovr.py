@@ -107,20 +107,24 @@ def tiff_ovr_check(src_ds):
 # later.  Build overviews on it.
 
 
-def test_tiff_ovr_1(both_endian):
-
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
+@pytest.fixture()
+def mfloat32_tif(tmp_path):
+    dst_fname = str(tmp_path / "mfloat32.tif")
 
     src_ds = gdal.Open("data/mfloat32.vrt")
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    gdaltest.tiff_drv.CreateCopy(
-        "tmp/mfloat32.tif", src_ds, options=["INTERLEAVE=PIXEL"]
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        dst_fname, src_ds, options=["INTERLEAVE=PIXEL"]
     )
-    src_ds = None
 
-    ds = gdal.Open("tmp/mfloat32.tif")
+    yield dst_fname
+
+
+def test_tiff_ovr_1(mfloat32_tif, both_endian):
+
+    ds = gdal.Open(mfloat32_tif)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -132,14 +136,9 @@ def test_tiff_ovr_1(both_endian):
 
     ds = None
 
+    # Open file and verify some characteristics of the overviews.
 
-###############################################################################
-# Open file and verify some characteristics of the overviews.
-
-
-def test_tiff_ovr_2(both_endian):
-
-    src_ds = gdal.Open("tmp/mfloat32.tif")
+    src_ds = gdal.Open(mfloat32_tif)
 
     assert src_ds is not None, "Failed to open test dataset."
 
@@ -152,14 +151,9 @@ def test_tiff_ovr_2(both_endian):
 # Open target file in update mode, and create internal overviews.
 
 
-def test_tiff_ovr_3(both_endian):
+def test_tiff_ovr_3(mfloat32_tif, both_endian):
 
-    try:
-        os.unlink("tmp/mfloat32.tif.ovr")
-    except OSError:
-        pass
-
-    src_ds = gdal.Open("tmp/mfloat32.tif", gdal.GA_Update)
+    src_ds = gdal.Open(mfloat32_tif, gdal.GA_Update)
 
     assert src_ds is not None, "Failed to open test dataset."
 
@@ -170,31 +164,33 @@ def test_tiff_ovr_3(both_endian):
 
     src_ds = None
 
+    # Re-open target file and check overviews
+    src_ds = gdal.Open(mfloat32_tif)
 
-###############################################################################
-# Re-open target file and check overviews
+    assert src_ds is not None, "Failed to open test dataset."
 
+    tiff_ovr_check(src_ds)
 
-def test_tiff_ovr_3bis(both_endian):
-    return test_tiff_ovr_2(both_endian)
+    src_ds = None
 
 
 ###############################################################################
 # Test generation
 
 
-def test_tiff_ovr_4(both_endian):
+def test_tiff_ovr_4(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr4.tif")
 
-    shutil.copyfile("data/oddsize_1bit2b.tif", "tmp/ovr4.tif")
+    shutil.copyfile("data/oddsize_1bit2b.tif", tif_fname)
 
-    wrk_ds = gdal.Open("tmp/ovr4.tif", gdal.GA_Update)
+    wrk_ds = gdal.Open(tif_fname, gdal.GA_Update)
 
     assert wrk_ds is not None, "Failed to open test dataset."
 
     wrk_ds.BuildOverviews("AVERAGE_BIT2GRAYSCALE", overviewlist=[2, 4])
     wrk_ds = None
 
-    wrk_ds = gdal.Open("tmp/ovr4.tif")
+    wrk_ds = gdal.Open(tif_fname)
 
     ovband = wrk_ds.GetRasterBand(1).GetOverview(1)
     md = ovband.GetMetadata()
@@ -238,11 +234,12 @@ def test_tiff_ovr_4(both_endian):
 # Test average overview generation with nodata.
 
 
-def test_tiff_ovr_5(both_endian):
+def test_tiff_ovr_5(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr5.tif")
 
-    shutil.copyfile("data/nodata_byte.tif", "tmp/ovr5.tif")
+    shutil.copyfile("data/nodata_byte.tif", tif_fname)
 
-    wrk_ds = gdal.Open("tmp/ovr5.tif", gdal.GA_ReadOnly)
+    wrk_ds = gdal.Open(tif_fname, gdal.GA_ReadOnly)
 
     assert wrk_ds is not None, "Failed to open test dataset."
 
@@ -258,11 +255,12 @@ def test_tiff_ovr_5(both_endian):
 # Same as tiff_ovr_5 but with USE_RDD=YES to force external overview
 
 
-def test_tiff_ovr_6(both_endian):
+def test_tiff_ovr_6(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr6.tif")
 
-    shutil.copyfile("data/nodata_byte.tif", "tmp/ovr6.tif")
+    shutil.copyfile("data/nodata_byte.tif", tif_fname)
 
-    wrk_ds = gdal.Open("tmp/ovr6.tif", gdal.GA_Update)
+    wrk_ds = gdal.Open(tif_fname, gdal.GA_Update)
 
     assert wrk_ds is not None, "Failed to open test dataset."
 
@@ -284,7 +282,7 @@ def test_tiff_ovr_6(both_endian):
     assert tab[0] == 1.0
 
     try:
-        os.stat("tmp/ovr6.aux")
+        os.stat(tif_fname.replace(".tif", ".aux"))
     except OSError:
         pytest.fail("no external overview.")
 
@@ -298,13 +296,14 @@ def test_tiff_ovr_6(both_endian):
 # Check nearest resampling on a dataset with a raster band that has a color table
 
 
-def test_tiff_ovr_7(both_endian):
+def test_tiff_ovr_7(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "test_average_palette.tif")
 
-    shutil.copyfile("data/test_average_palette.tif", "tmp/test_average_palette.tif")
+    shutil.copyfile("data/test_average_palette.tif", tif_fname)
 
     # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
     # In nearest resampling, we are expecting a uniform black image.
-    ds = gdal.Open("tmp/test_average_palette.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -322,14 +321,16 @@ def test_tiff_ovr_7(both_endian):
 # Check average resampling on a dataset with a raster band that has a color table
 
 
-def test_tiff_ovr_8(both_endian):
+def test_tiff_ovr_8(tmp_path, both_endian):
 
-    shutil.copyfile("data/test_average_palette.tif", "tmp/test_average_palette.tif")
+    tif_fname = str(tmp_path / "test_average_palette.tif")
+
+    shutil.copyfile("data/test_average_palette.tif", tif_fname)
 
     # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
     # So the result of averaging (0,0,0) and (255,255,255) is (127,127,127), which is
     # index 2. So the result of the averaging is a uniform grey image.
-    ds = gdal.Open("tmp/test_average_palette.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -347,15 +348,16 @@ def test_tiff_ovr_8(both_endian):
 # Check RMS resampling on a dataset with a raster band that has a color table
 
 
-def test_tiff_ovr_rms_palette(both_endian):
+def test_tiff_ovr_rms_palette(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "test_average_palette.tif")
 
-    shutil.copyfile("data/test_average_palette.tif", "tmp/test_average_palette.tif")
+    shutil.copyfile("data/test_average_palette.tif", tif_fname)
 
     # This dataset is a black&white chessboard, index 0 is black, index 1 is white.
     # So the result of averaging (0,0,0) and (255,255,255) is (180.3,180.3,180.3),
     # and the closest color is (127,127,127) at index 2.
     # So the result of the averaging is a uniform grey image.
-    ds = gdal.Open("tmp/test_average_palette.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
     ds.BuildOverviews("RMS", overviewlist=[2])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -374,14 +376,12 @@ def test_tiff_ovr_rms_palette(both_endian):
 @pytest.mark.parametrize("option_name_suffix", ["", "_OVERVIEW"])
 @pytest.mark.parametrize("read_only", [True, False])
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
+def test_tiff_ovr_9(tmp_path, both_endian, option_name_suffix, read_only):
+    tif_fname = str(tmp_path / "ovr9.tif")
 
-    tiff_drv = gdal.GetDriverByName("GTiff")
-    tiff_drv.Delete("tmp/ovr9.tif")
+    shutil.copyfile("data/rgbsmall.tif", tif_fname)
 
-    shutil.copyfile("data/rgbsmall.tif", "tmp/ovr9.tif")
-
-    ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly if read_only else gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_ReadOnly if read_only else gdal.GA_Update)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -408,7 +408,7 @@ def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
         assert cs != 0
 
     # Re-check after dataset reopening
-    ds = gdal.Open("tmp/ovr9.tif", gdal.GA_ReadOnly)
+    ds = gdal.Open(tif_fname, gdal.GA_ReadOnly)
 
     assert (
         ds.GetRasterBand(1)
@@ -432,14 +432,15 @@ def test_tiff_ovr_9(both_endian, option_name_suffix, read_only):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_tiff_ovr_10(both_endian):
+def test_tiff_ovr_10(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr10.tif")
 
     src_ds = gdal.Open("data/rgbsmall.tif", gdal.GA_ReadOnly)
 
     assert src_ds is not None, "Failed to open test dataset."
 
     ds = gdal.GetDriverByName("GTiff").CreateCopy(
-        "tmp/ovr10.tif", src_ds, options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR"]
+        tif_fname, src_ds, options=["COMPRESS=JPEG", "PHOTOMETRIC=YCBCR"]
     )
     src_ds = None
 
@@ -448,7 +449,7 @@ def test_tiff_ovr_10(both_endian):
     ds.BuildOverviews("AVERAGE", overviewlist=[2])
 
     ds = None
-    ds = gdal.Open("tmp/ovr10.tif", gdal.GA_ReadOnly)
+    ds = gdal.Open(tif_fname, gdal.GA_ReadOnly)
 
     assert ds is not None, "Failed to open copy of test dataset."
 
@@ -467,19 +468,20 @@ def test_tiff_ovr_10(both_endian):
 # Overview on a dataset with NODATA_VALUES
 
 
-def test_tiff_ovr_11(both_endian):
+def test_tiff_ovr_11(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr11.tif")
 
     src_ds = gdal.Open("data/test_nodatavalues.tif", gdal.GA_ReadOnly)
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    ds = gdaltest.tiff_drv.CreateCopy("tmp/ovr11.tif", src_ds)
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(tif_fname, src_ds)
     src_ds = None
 
     ds.BuildOverviews("AVERAGE", overviewlist=[2])
 
     ds = None
-    ds = gdal.Open("tmp/ovr11.tif", gdal.GA_ReadOnly)
+    ds = gdal.Open(tif_fname, gdal.GA_ReadOnly)
 
     assert ds is not None, "Failed to open copy of test dataset."
 
@@ -497,21 +499,22 @@ def test_tiff_ovr_11(both_endian):
 # code
 
 
-def test_tiff_ovr_12(both_endian):
+def test_tiff_ovr_12(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr12.tif")
 
     src_ds = gdal.Open("data/test_nodatavalues.tif", gdal.GA_ReadOnly)
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "tmp/ovr12.tif", src_ds, options=["COMPRESS=DEFLATE"]
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tif_fname, src_ds, options=["COMPRESS=DEFLATE"]
     )
     src_ds = None
 
     ds.BuildOverviews("AVERAGE", overviewlist=[2])
 
     ds = None
-    ds = gdal.Open("tmp/ovr12.tif", gdal.GA_ReadOnly)
+    ds = gdal.Open(tif_fname, gdal.GA_ReadOnly)
 
     assert ds is not None, "Failed to open copy of test dataset."
 
@@ -528,20 +531,9 @@ def test_tiff_ovr_12(both_endian):
 # Test gaussian resampling
 
 
-def test_tiff_ovr_13(both_endian):
+def test_tiff_ovr_13(mfloat32_tif, both_endian):
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
-
-    src_ds = gdal.Open("data/mfloat32.vrt")
-
-    assert src_ds is not None, "Failed to open test dataset."
-
-    gdaltest.tiff_drv.CreateCopy(
-        "tmp/mfloat32.tif", src_ds, options=["INTERLEAVE=PIXEL"]
-    )
-    src_ds = None
-
-    ds = gdal.Open("tmp/mfloat32.tif")
+    ds = gdal.Open(mfloat32_tif)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -560,11 +552,12 @@ def test_tiff_ovr_13(both_endian):
 # Check gauss resampling on a dataset with a raster band that has a color table
 
 
-def test_tiff_ovr_14(both_endian):
+def test_tiff_ovr_14(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "test_gauss_palette.tif")
 
-    shutil.copyfile("data/test_average_palette.tif", "tmp/test_gauss_palette.tif")
+    shutil.copyfile("data/test_average_palette.tif", tif_fname)
 
-    ds = gdal.Open("tmp/test_gauss_palette.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -583,21 +576,22 @@ def test_tiff_ovr_14(both_endian):
 # code
 
 
-def test_tiff_ovr_15(both_endian):
+def test_tiff_ovr_15(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr15.tif")
 
     src_ds = gdal.Open("data/test_nodatavalues.tif", gdal.GA_ReadOnly)
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "tmp/ovr15.tif", src_ds, options=["COMPRESS=DEFLATE"]
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tif_fname, src_ds, options=["COMPRESS=DEFLATE"]
     )
     src_ds = None
 
     ds.BuildOverviews("GAUSS", overviewlist=[2])
 
     ds = None
-    ds = gdal.Open("tmp/ovr15.tif", gdal.GA_ReadOnly)
+    ds = gdal.Open(tif_fname, gdal.GA_ReadOnly)
 
     assert ds is not None, "Failed to open copy of test dataset."
 
@@ -614,18 +608,20 @@ def test_tiff_ovr_15(both_endian):
 # Test mode resampling on non-byte dataset
 
 
-def test_tiff_ovr_16(both_endian):
+def test_tiff_ovr_16(tmp_path, both_endian):
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
+    tif_fname = str(tmp_path / "ovr16.tif")
+
+    tiff_drv = gdal.GetDriverByName("GTiff")
 
     src_ds = gdal.Open("data/mfloat32.vrt")
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    gdaltest.tiff_drv.CreateCopy("tmp/ovr16.tif", src_ds, options=["INTERLEAVE=PIXEL"])
+    tiff_drv.CreateCopy(tif_fname, src_ds, options=["INTERLEAVE=PIXEL"])
     src_ds = None
 
-    ds = gdal.Open("tmp/ovr16.tif")
+    ds = gdal.Open(tif_fname)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -644,11 +640,13 @@ def test_tiff_ovr_16(both_endian):
 # Test mode resampling on a byte dataset
 
 
-def test_tiff_ovr_17(both_endian):
+def test_tiff_ovr_17(tmp_path, both_endian):
 
-    shutil.copyfile("data/byte.tif", "tmp/ovr17.tif")
+    tif_fname = str(tmp_path / "ovr17.tif")
 
-    ds = gdal.Open("tmp/ovr17.tif")
+    shutil.copyfile("data/byte.tif", tif_fname)
+
+    ds = gdal.Open(tif_fname)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -667,11 +665,13 @@ def test_tiff_ovr_17(both_endian):
 # Check mode resampling on a dataset with a raster band that has a color table
 
 
-def test_tiff_ovr_18(both_endian):
+def test_tiff_ovr_18(tmp_path, both_endian):
 
-    shutil.copyfile("data/test_average_palette.tif", "tmp/ovr18.tif")
+    tif_fname = str(tmp_path / "ovr18.tif")
 
-    ds = gdal.Open("tmp/ovr18.tif", gdal.GA_Update)
+    shutil.copyfile("data/test_average_palette.tif", tif_fname)
+
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -724,9 +724,11 @@ def test_tiff_ovr_mode_multiband(multiband, read_only):
 # Check that we can create overviews on a newly create file (#2621)
 
 
-def test_tiff_ovr_19(both_endian):
+def test_tiff_ovr_19(tmp_path, both_endian):
 
-    ds = gdal.GetDriverByName("GTiff").Create("tmp/ovr19.tif", 100, 100, 1)
+    tif_fname = str(tmp_path / "ovr19.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
 
     # The flush is important to simulate the behaviour that wash it by #2621
@@ -752,12 +754,14 @@ def test_tiff_ovr_19(both_endian):
 # Test BIGTIFF_OVERVIEW=YES option
 
 
-def test_tiff_ovr_20(both_endian):
+def test_tiff_ovr_20(tmp_path, both_endian):
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr20.tif", 100, 100, 1)
+    tif_fname = str(tmp_path / "ovr20.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 100, 100, 1)
     ds = None
 
-    ds = gdal.Open("tmp/ovr20.tif")
+    ds = gdal.Open(tif_fname)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -766,7 +770,7 @@ def test_tiff_ovr_20(both_endian):
 
     ds = None
 
-    fileobj = open("tmp/ovr20.tif.ovr", mode="rb")
+    fileobj = open(f"{tif_fname}.ovr", mode="rb")
     binvalues = array.array("b")
     binvalues.fromfile(fileobj, 4)
     fileobj.close()
@@ -782,14 +786,16 @@ def test_tiff_ovr_20(both_endian):
 # Test BIGTIFF_OVERVIEW=IF_NEEDED option
 
 
-def test_tiff_ovr_21(both_endian):
+def test_tiff_ovr_21(tmp_path, both_endian):
 
-    ds = gdaltest.tiff_drv.Create(
-        "tmp/ovr21.tif", 170000, 100000, 1, options=["SPARSE_OK=YES"]
+    tif_fname = str(tmp_path / "ovr21.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tif_fname, 170000, 100000, 1, options=["SPARSE_OK=YES"]
     )
     ds = None
 
-    ds = gdal.Open("tmp/ovr21.tif")
+    ds = gdal.Open(tif_fname)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -799,7 +805,7 @@ def test_tiff_ovr_21(both_endian):
 
     ds = None
 
-    fileobj = open("tmp/ovr21.tif.ovr", mode="rb")
+    fileobj = open(f"{tif_fname}.ovr", mode="rb")
     binvalues = array.array("b")
     binvalues.fromfile(fileobj, 4)
     fileobj.close()
@@ -815,14 +821,16 @@ def test_tiff_ovr_21(both_endian):
 # Test BIGTIFF_OVERVIEW=NO option when BigTIFF is really needed
 
 
-def test_tiff_ovr_22(both_endian):
+def test_tiff_ovr_22(tmp_path, both_endian):
 
-    ds = gdaltest.tiff_drv.Create(
-        "tmp/ovr22.tif", 170000, 100000, 1, options=["SPARSE_OK=YES"]
+    tif_fname = str(tmp_path / "ovr22.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tif_fname, 170000, 100000, 1, options=["SPARSE_OK=YES"]
     )
     ds = None
 
-    ds = gdal.Open("tmp/ovr22.tif")
+    ds = gdal.Open(tif_fname)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -844,14 +852,16 @@ def test_tiff_ovr_22(both_endian):
 # method for the overviews.
 
 
-def test_tiff_ovr_23(both_endian):
+def test_tiff_ovr_23(tmp_path, both_endian):
 
-    ds = gdaltest.tiff_drv.Create(
-        "tmp/ovr23.tif", 170000, 100000, 1, options=["SPARSE_OK=YES"]
+    tif_fname = str(tmp_path / "ovr23.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tif_fname, 170000, 100000, 1, options=["SPARSE_OK=YES"]
     )
     ds = None
 
-    ds = gdal.Open("tmp/ovr23.tif")
+    ds = gdal.Open(tif_fname)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -861,7 +871,7 @@ def test_tiff_ovr_23(both_endian):
 
     ds = None
 
-    fileobj = open("tmp/ovr23.tif.ovr", mode="rb")
+    fileobj = open(f"{tif_fname}.ovr", mode="rb")
     binvalues = array.array("b")
     binvalues.fromfile(fileobj, 4)
     fileobj.close()
@@ -877,14 +887,15 @@ def test_tiff_ovr_23(both_endian):
 # Test BIGTIFF_OVERVIEW=IF_SAFER option
 
 
-def test_tiff_ovr_24(both_endian):
+def test_tiff_ovr_24(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr24.tif")
 
-    ds = gdaltest.tiff_drv.Create(
-        "tmp/ovr24.tif", 85000, 100000, 1, options=["SPARSE_OK=YES"]
+    ds = gdal.GetDriverByName("GTiff").Create(
+        tif_fname, 85000, 100000, 1, options=["SPARSE_OK=YES"]
     )
     ds = None
 
-    ds = gdal.Open("tmp/ovr24.tif")
+    ds = gdal.Open(tif_fname)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -895,7 +906,7 @@ def test_tiff_ovr_24(both_endian):
 
     ds = None
 
-    fileobj = open("tmp/ovr24.tif.ovr", mode="rb")
+    fileobj = open(tif_fname + ".ovr", mode="rb")
     binvalues = array.array("b")
     binvalues.fromfile(fileobj, 4)
     fileobj.close()
@@ -912,15 +923,21 @@ def test_tiff_ovr_24(both_endian):
 # band and actually flushed
 
 
-def test_tiff_ovr_25(both_endian):
+@pytest.fixture()
+def tiff_with_ovr(tmp_path):
+    tiff_fname = str(tmp_path / "ovr.tif")
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr25.tif", 100, 100, 1)
+    ds = gdal.GetDriverByName("GTiff").Create(tiff_fname, 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
     ds.BuildOverviews("NEAR", overviewlist=[2])
-    ds = None
 
-    ds = gdal.Open("tmp/ovr25.tif")
+    return tiff_fname
+
+
+def test_tiff_ovr_25(tiff_with_ovr, both_endian):
+
+    ds = gdal.Open(tiff_with_ovr)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 10000
@@ -934,9 +951,11 @@ def test_tiff_ovr_25(both_endian):
 # Test gdal.RegenerateOverview()
 
 
-def test_tiff_ovr_26(both_endian):
+def test_tiff_ovr_26(tmp_path, both_endian):
 
-    ds = gdal.GetDriverByName("GTiff").Create("tmp/ovr26.tif", 100, 100, 1)
+    tif_fname = str(tmp_path / "ovr26.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
     ds.BuildOverviews("NEAR", overviewlist=[2])
@@ -956,9 +975,11 @@ def test_tiff_ovr_26(both_endian):
 # Test gdal.RegenerateOverviews()
 
 
-def test_tiff_ovr_27(both_endian):
+def test_tiff_ovr_27(tmp_path, both_endian):
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr27.tif", 100, 100, 1)
+    tif_fname = str(tmp_path / "ovr27.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 100, 100, 1)
     ds.GetRasterBand(1).Fill(1)
     ds.GetRasterBand(1).FlushCache()
     ds.BuildOverviews("NEAR", overviewlist=[2, 4])
@@ -985,9 +1006,9 @@ def test_tiff_ovr_27(both_endian):
 # Test cleaning overviews.
 
 
-def test_tiff_ovr_28(both_endian):
+def test_tiff_ovr_28(tiff_with_ovr, both_endian):
 
-    ds = gdal.Open("tmp/ovr25.tif", gdal.GA_Update)
+    ds = gdal.Open(tiff_with_ovr, gdal.GA_Update)
     assert (
         ds.BuildOverviews(overviewlist=[]) == 0
     ), "BuildOverviews() returned error code."
@@ -998,7 +1019,7 @@ def test_tiff_ovr_28(both_endian):
 
     # Close and reopen to confirm they are really gone.
     ds = None
-    ds = gdal.Open("tmp/ovr25.tif")
+    ds = gdal.Open(tiff_with_ovr)
     assert (
         ds.GetRasterBand(1).GetOverviewCount() == 0
     ), "Overview(s) appear to still exist after reopen."
@@ -1009,18 +1030,20 @@ def test_tiff_ovr_28(both_endian):
 
 
 @pytest.mark.require_driver("PNG")
-def test_tiff_ovr_29(both_endian):
+def test_tiff_ovr_29(tmp_path, both_endian):
+
+    png_fname = str(tmp_path / "ovr29.png")
 
     src_ds = gdal.Open("data/byte.tif")
-    png_ds = gdal.GetDriverByName("PNG").CreateCopy("tmp/ovr29.png", src_ds)
+    png_ds = gdal.GetDriverByName("PNG").CreateCopy(png_fname, src_ds)
     src_ds = None
 
     png_ds.BuildOverviews(overviewlist=[2])
     png_ds = None
 
-    assert open("tmp/ovr29.png.ovr") is not None, "Did not expected .ovr file."
+    assert open(f"{png_fname}.ovr") is not None, "Did not expected .ovr file."
 
-    png_ds = gdal.Open("tmp/ovr29.png")
+    png_ds = gdal.Open(png_fname)
 
     assert png_ds.GetRasterBand(1).GetOverviewCount() == 1, "did not find overview"
 
@@ -1028,42 +1051,41 @@ def test_tiff_ovr_29(both_endian):
     assert png_ds.GetRasterBand(1).GetOverviewCount() == 0, "delete overview failed."
 
     png_ds = None
-    png_ds = gdal.Open("tmp/ovr29.png")
+    png_ds = gdal.Open(png_fname)
 
     assert png_ds.GetRasterBand(1).GetOverviewCount() == 0, "delete overview failed."
 
     png_ds = None
 
-    assert not os.path.exists("tmp/ovr29.png.ovr")
-
-    gdal.GetDriverByName("PNG").Delete("tmp/ovr29.png")
+    assert not os.path.exists(f"{png_fname}.ovr")
 
 
 ###############################################################################
 # Test fix for #2988.
 
 
-def test_tiff_ovr_30(both_endian):
+def test_tiff_ovr_30(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr30.tif")
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr30.tif", 20, 20, 1)
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 20, 20, 1)
     ds.BuildOverviews(overviewlist=[2])
     ds = None
 
-    ds = gdal.Open("tmp/ovr30.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
     ds.SetMetadata({"TEST_KEY": "TestValue"})
     ds = None
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr30.tif", 20, 20, 1)
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 20, 20, 1)
     ds.BuildOverviews(overviewlist=[2])
     ds = None
 
-    ds = gdal.Open("tmp/ovr30.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
     ds.SetProjection(sr.ExportToWkt())
     ds = None
 
-    ds = gdal.Open("tmp/ovr30.tif")
+    ds = gdal.Open(tif_fname)
     assert ds.GetProjectionRef().find("4326") != -1
 
 
@@ -1071,9 +1093,11 @@ def test_tiff_ovr_30(both_endian):
 # Test fix for #3033
 
 
-def test_tiff_ovr_31(both_endian):
+def test_tiff_ovr_31(tmp_path, both_endian):
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr31.tif", 100, 100, 4)
+    tif_fname = str(tmp_path / "ovr31.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 100, 100, 4)
     ds.GetRasterBand(1).Fill(255)
     ds.GetRasterBand(2).Fill(255)
     ds.GetRasterBand(3).Fill(255)
@@ -1092,12 +1116,13 @@ def test_tiff_ovr_31(both_endian):
 # Test Cubic sampling.
 
 
-def test_tiff_ovr_32(both_endian):
+def test_tiff_ovr_32(tmp_path, both_endian):
+    tif_fname = str(tmp_path / "ovr32.tif")
 
     # 4 regular band
-    shutil.copyfile("data/stefan_full_rgba_photometric_rgb.tif", "tmp/ovr32.tif")
+    shutil.copyfile("data/stefan_full_rgba_photometric_rgb.tif", tif_fname)
 
-    ds = gdal.Open("tmp/ovr32.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
     ds.BuildOverviews("cubic", overviewlist=[2, 5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1114,7 +1139,7 @@ def test_tiff_ovr_32(both_endian):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete("tmp/ovr32.tif")
+    gdal.GetDriverByName("GTiff").Delete(tif_fname)
 
     # Same, but with non-byte data type (help testing the non-SSE2 code path)
     src_ds = gdal.Open("data/stefan_full_rgba_photometric_rgb.tif")
@@ -1157,13 +1182,13 @@ def test_tiff_ovr_32(both_endian):
     src_ds = None
     tmp_ds = None
     tmp2_ds = None
-    gdaltest.tiff_drv.Delete("/vsimem/ovr32_float.tif")
-    gdaltest.tiff_drv.Delete("/vsimem/ovr32_byte.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/ovr32_float.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/ovr32_byte.tif")
 
     # Test GDALRegenerateOverviewsMultiBand
-    shutil.copyfile("data/stefan_full_rgba_photometric_rgb.tif", "tmp/ovr32.tif")
+    shutil.copyfile("data/stefan_full_rgba_photometric_rgb.tif", tif_fname)
 
-    ds = gdal.Open("tmp/ovr32.tif")
+    ds = gdal.Open(tif_fname)
     with gdaltest.config_option("COMPRESS_OVERVIEW", "DEFLATE"):
         with gdaltest.config_option("INTERLEAVE_OVERVIEW", "PIXEL"):
             ds.BuildOverviews("cubic", overviewlist=[2, 5])
@@ -1182,12 +1207,12 @@ def test_tiff_ovr_32(both_endian):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete("tmp/ovr32.tif")
+    gdal.GetDriverByName("GTiff").Delete(tif_fname)
 
     # 3 bands + alpha
-    shutil.copyfile("data/stefan_full_rgba.tif", "tmp/ovr32.tif")
+    shutil.copyfile("data/stefan_full_rgba.tif", tif_fname)
 
-    ds = gdal.Open("tmp/ovr32.tif", gdal.GA_Update)
+    ds = gdal.Open(tif_fname, gdal.GA_Update)
     ds.BuildOverviews("cubic", overviewlist=[2, 5])
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
@@ -1210,7 +1235,7 @@ def test_tiff_ovr_32(both_endian):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete("tmp/ovr32.tif")
+    gdal.GetDriverByName("GTiff").Delete(tif_fname)
 
     # Same, but with non-byte data type (help testing the non-SSE2 code path)
     src_ds = gdal.Open("data/stefan_full_rgba.tif")
@@ -1254,13 +1279,13 @@ def test_tiff_ovr_32(both_endian):
     src_ds = None
     tmp_ds = None
     tmp2_ds = None
-    gdaltest.tiff_drv.Delete("/vsimem/ovr32_float.tif")
-    gdaltest.tiff_drv.Delete("/vsimem/ovr32_byte.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/ovr32_float.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/ovr32_byte.tif")
 
     # Same test with a compressed dataset
     src_ds = gdal.Open("data/stefan_full_rgba.tif")
     ds = gdal.GetDriverByName("GTiff").CreateCopy(
-        "tmp/ovr32.tif", src_ds, options=["COMPRESS=DEFLATE"]
+        tif_fname, src_ds, options=["COMPRESS=DEFLATE"]
     )
     ds.BuildOverviews("cubic", overviewlist=[2, 5])
 
@@ -1282,43 +1307,38 @@ def test_tiff_ovr_32(both_endian):
 
     ds = None
 
-    gdaltest.tiff_drv.Delete("tmp/ovr32.tif")
-
 
 ###############################################################################
 # Test creation of overviews on a 1x1 dataset (fix for #3069)
 
 
-def test_tiff_ovr_33(both_endian):
+def test_tiff_ovr_33(tmp_path, both_endian):
 
-    try:
-        os.remove("tmp/ovr33.tif.ovr")
-    except OSError:
-        pass
+    tif_fname = str(tmp_path / "ovr33.tif")
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr33.tif", 1, 1, 1)
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 1, 1, 1)
     ds = None
-    ds = gdal.Open("tmp/ovr33.tif")
+    ds = gdal.Open(tif_fname)
     ds.BuildOverviews("NEAREST", overviewlist=[2, 4])
     ds = None
-
-    gdaltest.tiff_drv.Delete("tmp/ovr33.tif")
 
 
 ###############################################################################
 # Confirm that overviews are used on a Band.RasterIO().
 
 
-def test_tiff_ovr_34(both_endian):
+def test_tiff_ovr_34(tmp_path, both_endian):
+
+    tif_fname = str(tmp_path / "ovr34.tif")
 
     ds_in = gdal.Open("data/byte.tif")
-    ds = gdaltest.tiff_drv.CreateCopy("tmp/ovr34.tif", ds_in)
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(tif_fname, ds_in)
     ds.BuildOverviews("NEAREST", overviewlist=[2])
     ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
     ds = None
     ds_in = None
 
-    ds = gdal.Open("tmp/ovr34.tif")
+    ds = gdal.Open(tif_fname)
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 20, 20, buf_xsize=5, buf_ysize=5)
     ds = None
 
@@ -1326,41 +1346,34 @@ def test_tiff_ovr_34(both_endian):
         print("[%s]" % data)
         pytest.fail("did not get expected cleared overview.")
 
-    gdaltest.tiff_drv.Delete("tmp/ovr34.tif")
-
 
 ###############################################################################
 # Confirm that overviews are used on a Band.RasterIO().
+# FORCE_CACHING=YES confirms that overviews are used on a Band.RasterIO() when
+# using BlockBasedRasterIO() (#3124)
 
 
-def test_tiff_ovr_35(both_endian):
+@pytest.mark.parametrize("force_caching", ("NO", "YES"))
+def test_tiff_ovr_35(tmp_path, force_caching, both_endian):
 
-    ds_in = gdal.Open("data/byte.tif")
-    ds = gdaltest.tiff_drv.CreateCopy("tmp/ovr35.tif", ds_in)
-    ds.BuildOverviews("NEAREST", overviewlist=[2])
-    ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
-    ds = None
-    ds_in = None
+    tif_fname = str(tmp_path / "ovr35.tif")
 
-    ds = gdal.Open("tmp/ovr35.tif")
-    data = ds.ReadRaster(0, 0, 20, 20, buf_xsize=5, buf_ysize=5, band_list=[1])
-    ds = None
+    with gdal.config_option("GDAL_FORCE_CACHING", force_caching):
 
-    if data != "                         ".encode("ascii"):
-        print("[%s]" % data)
-        pytest.fail("did not get expected cleared overview.")
+        ds_in = gdal.Open("data/byte.tif")
+        ds = gdal.GetDriverByName("GTiff").CreateCopy(tif_fname, ds_in)
+        ds.BuildOverviews("NEAREST", overviewlist=[2])
+        ds.GetRasterBand(1).GetOverview(0).Fill(32.0)
+        ds = None
+        ds_in = None
 
-    gdaltest.tiff_drv.Delete("tmp/ovr35.tif")
+        ds = gdal.Open(tif_fname)
+        data = ds.ReadRaster(0, 0, 20, 20, buf_xsize=5, buf_ysize=5, band_list=[1])
+        ds = None
 
-
-###############################################################################
-# Confirm that overviews are used on a Band.RasterIO() when using BlockBasedRasterIO() (#3124)
-
-
-def test_tiff_ovr_36(both_endian):
-
-    with gdaltest.config_option("GDAL_FORCE_CACHING", "YES"):
-        test_tiff_ovr_35(both_endian)
+        if data != "                         ".encode("ascii"):
+            print("[%s]" % data)
+            pytest.fail("did not get expected cleared overview.")
 
 
 ###############################################################################
@@ -1368,11 +1381,13 @@ def test_tiff_ovr_36(both_endian):
 
 
 @pytest.mark.require_driver("DTED")
-def test_tiff_ovr_37(both_endian):
+def test_tiff_ovr_37(tmp_path, both_endian):
 
-    shutil.copy("../gdrivers/data/n43.dt0", "tmp/ovr37.dt0")
+    ovr37_dt0 = str(tmp_path / "ovr37.dt0")
 
-    ds = gdal.Open("tmp/ovr37.dt0")
+    shutil.copy("../gdrivers/data/n43.dt0", ovr37_dt0)
+
+    ds = gdal.Open(ovr37_dt0)
 
     assert ds is not None, "Failed to open test dataset."
 
@@ -1382,12 +1397,12 @@ def test_tiff_ovr_37(both_endian):
 
     ds = None
 
-    ds = gdal.Open("tmp/ovr37.dt0")
+    ds = gdal.Open(ovr37_dt0)
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     assert cs == 45378, "got wrong overview checksum."
     ds = None
 
-    predictor2_size = os.stat("tmp/ovr37.dt0.ovr")[stat.ST_SIZE]
+    predictor2_size = os.stat(f"{ovr37_dt0}.ovr")[stat.ST_SIZE]
     # 3789 : on little-endian host
     # 3738 : on big-endian host
     assert predictor2_size in (3789, 3738), "did not get expected file size."
@@ -1398,16 +1413,18 @@ def test_tiff_ovr_37(both_endian):
 
 
 @pytest.mark.require_driver("DTED")
-def test_tiff_ovr_38(both_endian):
+def test_tiff_ovr_38(tmp_path, both_endian):
+
+    tif_fname = str(tmp_path / "ovr38.tif")
 
     src_ds = gdal.Open("../gdrivers/data/n43.dt0")
-    ds = gdaltest.tiff_drv.CreateCopy(
-        "tmp/ovr38.tif", src_ds, options=["COMPRESS=LZW", "PREDICTOR=2"]
+    ds = gdal.GetDriverByName("GTiff").CreateCopy(
+        tif_fname, src_ds, options=["COMPRESS=LZW", "PREDICTOR=2"]
     )
     ds.BuildOverviews(overviewlist=[2, 4])
     ds = None
 
-    file_size = os.stat("tmp/ovr38.tif")[stat.ST_SIZE]
+    file_size = os.stat(tif_fname)[stat.ST_SIZE]
 
     assert file_size <= 21000, "did not get expected file size."
 
@@ -1416,9 +1433,9 @@ def test_tiff_ovr_38(both_endian):
 # Test external overviews on all datatypes
 
 
-def test_tiff_ovr_39(both_endian):
-
-    for datatype in [
+@pytest.mark.parametrize(
+    "datatype",
+    (
         gdal.GDT_Byte,
         gdal.GDT_Int16,
         gdal.GDT_UInt16,
@@ -1430,60 +1447,59 @@ def test_tiff_ovr_39(both_endian):
         gdal.GDT_CInt32,
         gdal.GDT_CFloat32,
         gdal.GDT_CFloat64,
-    ]:
+    ),
+)
+def test_tiff_ovr_39(tmp_path, datatype, both_endian):
+    tif_fname = str(tmp_path / "ovr39.tif")
 
-        gdal.Translate(
-            "tmp/ovr39.tif",
-            "data/byte.tif",
-            options="-ot " + gdal.GetDataTypeName(datatype),
-        )
-        try:
-            os.remove("tmp/ovr39.tif.ovr")
-        except OSError:
-            pass
+    gdal.Translate(
+        tif_fname,
+        "data/byte.tif",
+        options="-ot " + gdal.GetDataTypeName(datatype),
+    )
 
-        ds = gdal.Open("tmp/ovr39.tif")
-        ds.BuildOverviews("NEAREST", overviewlist=[2])
-        ds = None
+    ds = gdal.Open(tif_fname)
+    ds.BuildOverviews("NEAREST", overviewlist=[2])
+    ds = None
 
-        ds = gdal.Open("tmp/ovr39.tif.ovr")
-        ovr_datatype = ds.GetRasterBand(1).DataType
-        ds = None
+    ds = gdal.Open(tif_fname + ".ovr")
+    ovr_datatype = ds.GetRasterBand(1).DataType
+    ds = None
 
-        assert datatype == ovr_datatype, "did not get expected datatype"
+    assert datatype == ovr_datatype, "did not get expected datatype"
 
-        ds = gdal.Open("tmp/ovr39.tif")
-        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        ds = None
+    ds = gdal.Open(tif_fname)
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
 
-        if gdal.DataTypeIsComplex(datatype):
-            expected_cs = 1171
-        else:
-            expected_cs = 1087
+    if gdal.DataTypeIsComplex(datatype):
+        expected_cs = 1171
+    else:
+        expected_cs = 1087
 
-        assert (
-            cs == expected_cs
-        ), "did not get expected checksum for datatype %s" % gdal.GetDataTypeName(
-            datatype
-        )
+    assert (
+        cs == expected_cs
+    ), "did not get expected checksum for datatype %s" % gdal.GetDataTypeName(datatype)
 
 
 ###############################################################################
 # Test external overviews on 1 bit datasets with AVERAGE_BIT2GRAYSCALE (similar to tiff_ovr_4)
 
 
-def test_tiff_ovr_40(both_endian):
+def test_tiff_ovr_40(tmp_path, both_endian):
 
-    shutil.copyfile("data/oddsize_1bit2b.tif", "tmp/ovr40.tif")
+    tif_fname = str(tmp_path / "ovr40.tif")
 
-    wrk_ds = gdal.Open("tmp/ovr40.tif")
+    shutil.copyfile("data/oddsize_1bit2b.tif", tif_fname)
+
+    wrk_ds = gdal.Open(tif_fname)
 
     assert wrk_ds is not None, "Failed to open test dataset."
 
     wrk_ds.BuildOverviews("AVERAGE_BIT2GRAYSCALE", overviewlist=[2, 4])
     wrk_ds = None
 
-    wrk_ds = gdal.Open("tmp/ovr40.tif")
+    wrk_ds = gdal.Open(tif_fname)
 
     ovband = wrk_ds.GetRasterBand(1).GetOverview(1)
     md = ovband.GetMetadata()
@@ -1526,11 +1542,13 @@ def test_tiff_ovr_40(both_endian):
 # Test external overviews on 1 bit datasets with NEAREST
 
 
-def test_tiff_ovr_41(both_endian):
+def test_tiff_ovr_41(tmp_path, both_endian):
 
-    shutil.copyfile("data/oddsize_1bit2b.tif", "tmp/ovr41.tif")
+    tif_fname = str(tmp_path / "ovr41.tif")
 
-    ds = gdal.Open("tmp/ovr41.tif")
+    shutil.copyfile("data/oddsize_1bit2b.tif", tif_fname)
+
+    ds = gdal.Open(tif_fname)
     # data = wrk_ds.GetRasterBand(1).ReadRaster(0,0,99,99,50,50)
     ds.BuildOverviews("NEAREST", overviewlist=[2])
     ds = None
@@ -1539,7 +1557,7 @@ def test_tiff_ovr_41(both_endian):
     # ds.GetRasterBand(1).WriteRaster(0,0,50,50,data)
     # ds = None
 
-    ds = gdal.Open("tmp/ovr41.tif")
+    ds = gdal.Open(tif_fname)
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
     ds = None
 
@@ -1550,7 +1568,9 @@ def test_tiff_ovr_41(both_endian):
 # Test external overviews on dataset with color table
 
 
-def test_tiff_ovr_42(both_endian):
+def test_tiff_ovr_42(tmp_path, both_endian):
+
+    tif_fname = str(tmp_path / "ovr42.tif")
 
     ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255)]
 
@@ -1558,15 +1578,15 @@ def test_tiff_ovr_42(both_endian):
     for i, data in enumerate(ct_data):
         ct.SetColorEntry(i, data)
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr42.tif", 1, 1)
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 1, 1)
     ds.GetRasterBand(1).SetRasterColorTable(ct)
     ds = None
 
-    ds = gdal.Open("tmp/ovr42.tif")
+    ds = gdal.Open(tif_fname)
     ds.BuildOverviews("NEAREST", overviewlist=[2])
     ds = None
 
-    ds = gdal.Open("tmp/ovr42.tif.ovr")
+    ds = gdal.Open(f"{tif_fname}.ovr")
     ct2 = ds.GetRasterBand(1).GetRasterColorTable()
 
     assert (
@@ -1589,7 +1609,9 @@ def test_tiff_ovr_42(both_endian):
     "SKIP_TIFF_JPEG12" in os.environ, reason="Crashes on build-windows-msys2-mingw"
 )
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_tiff_ovr_43(both_endian):
+def test_tiff_ovr_43(tmp_path, both_endian):
+
+    tif_fname = str(tmp_path / "ovr43.tif")
 
     with gdaltest.config_option("CPL_ACCUM_ERROR_MSG", "ON"):
         gdal.ErrorReset()
@@ -1603,21 +1625,16 @@ def test_tiff_ovr_43(both_endian):
     if gdal.GetLastErrorMsg().find("Unsupported JPEG data precision 12") != -1:
         pytest.skip("12bit jpeg not available")
 
-    ds = gdaltest.tiff_drv.Create("tmp/ovr43.tif", 16, 16, 1, gdal.GDT_UInt16)
+    ds = gdal.GetDriverByName("GTiff").Create(tif_fname, 16, 16, 1, gdal.GDT_UInt16)
     ds.GetRasterBand(1).Fill(4000)
     ds = None
 
-    try:
-        os.remove("tmp/ovr43.tif.ovr")
-    except OSError:
-        pass
-
-    ds = gdal.Open("tmp/ovr43.tif")
+    ds = gdal.Open(tif_fname)
     with gdaltest.config_option("COMPRESS_OVERVIEW", "JPEG"):
         ds.BuildOverviews("NEAREST", overviewlist=[2])
         ds = None
 
-    ds = gdal.Open("tmp/ovr43.tif.ovr")
+    ds = gdal.Open(f"{tif_fname}.ovr")
     md = ds.GetRasterBand(1).GetMetadata("IMAGE_STRUCTURE")
     cs = ds.GetRasterBand(1).Checksum()
     ds = None
@@ -1626,31 +1643,29 @@ def test_tiff_ovr_43(both_endian):
 
     assert cs == 642, "did not get expected checksum"
 
-    gdaltest.tiff_drv.Delete("tmp/ovr43.tif")
-
 
 ###############################################################################
 # Test that we can change overview block size through GDAL_TIFF_OVR_BLOCKSIZE configuration
 # option
 
 
-def test_tiff_ovr_44(both_endian):
+def test_tiff_ovr_44(tmp_path, both_endian):
 
-    shutil.copyfile("data/byte.tif", "tmp/ovr44.tif")
+    tif_fname = str(tmp_path / "ovr44.tif")
+
+    shutil.copyfile("data/byte.tif", tif_fname)
     with gdaltest.config_option("GDAL_TIFF_OVR_BLOCKSIZE", "256"):
-        ds = gdal.Open("tmp/ovr44.tif", gdal.GA_Update)
+        ds = gdal.Open(tif_fname, gdal.GA_Update)
         ds.BuildOverviews(overviewlist=[2])
         ds = None
 
-    ds = gdal.Open("tmp/ovr44.tif")
+    ds = gdal.Open(tif_fname)
     ovr_band = ds.GetRasterBand(1).GetOverview(0)
     if "GetBlockSize" in dir(gdal.Band):
         (blockx, blocky) = ovr_band.GetBlockSize()
         assert blockx == 256 and blocky == 256, "did not get expected block size"
     cs = ovr_band.Checksum()
     ds = None
-
-    gdaltest.tiff_drv.Delete("tmp/ovr44.tif")
 
     assert cs == 1087, "did not get expected checksum"
 
@@ -1659,23 +1674,23 @@ def test_tiff_ovr_44(both_endian):
 # Same as tiff_ovr_44, but with external overviews
 
 
-def test_tiff_ovr_45(both_endian):
+def test_tiff_ovr_45(tmp_path, both_endian):
 
-    shutil.copyfile("data/byte.tif", "tmp/ovr45.tif")
+    tif_fname = str(tmp_path / "ovr45.tif")
+
+    shutil.copyfile("data/byte.tif", tif_fname)
     with gdaltest.config_option("GDAL_TIFF_OVR_BLOCKSIZE", "256"):
-        ds = gdal.Open("tmp/ovr45.tif", gdal.GA_ReadOnly)
+        ds = gdal.Open(tif_fname, gdal.GA_ReadOnly)
         ds.BuildOverviews(overviewlist=[2])
         ds = None
 
-    ds = gdal.Open("tmp/ovr45.tif.ovr")
+    ds = gdal.Open(f"{tif_fname}.ovr")
     ovr_band = ds.GetRasterBand(1)
     if "GetBlockSize" in dir(gdal.Band):
         (blockx, blocky) = ovr_band.GetBlockSize()
         assert blockx == 256 and blocky == 256, "did not get expected block size"
     cs = ovr_band.Checksum()
     ds = None
-
-    gdaltest.tiff_drv.Delete("tmp/ovr45.tif")
 
     assert cs == 1087, "did not get expected checksum"
 
@@ -1688,7 +1703,7 @@ def test_tiff_ovr_45(both_endian):
 def test_tiff_ovr_propagate_sparse_ok_creation_option(apply_sparse):
 
     filename = "/vsimem/test_tiff_ovr_propagate_sparse_ok_creation_option.tif"
-    ds = gdaltest.tiff_drv.Create(
+    ds = gdal.GetDriverByName("GTiff").Create(
         filename, 100, 100, options=["SPARSE_OK=YES"] if apply_sparse else []
     )
     ds.BuildOverviews("NEAREST", overviewlist=[2])
@@ -1704,7 +1719,7 @@ def test_tiff_ovr_propagate_sparse_ok_creation_option(apply_sparse):
         assert has_block
     ds = None
 
-    gdaltest.tiff_drv.Delete(filename)
+    gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################
@@ -1715,7 +1730,7 @@ def test_tiff_ovr_propagate_sparse_ok_creation_option(apply_sparse):
 def test_tiff_ovr_propagate_sparse_ok_open_option_internal(apply_sparse):
 
     filename = "/vsimem/test_tiff_ovr_propagate_sparse_ok_open_option_internal.tif"
-    gdaltest.tiff_drv.Create(filename, 100, 100)
+    gdal.GetDriverByName("GTiff").Create(filename, 100, 100)
     ds = gdal.OpenEx(
         filename,
         gdal.OF_UPDATE | gdal.OF_RASTER,
@@ -1734,7 +1749,7 @@ def test_tiff_ovr_propagate_sparse_ok_open_option_internal(apply_sparse):
         assert has_block
     ds = None
 
-    gdaltest.tiff_drv.Delete(filename)
+    gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################
@@ -1745,7 +1760,7 @@ def test_tiff_ovr_propagate_sparse_ok_open_option_internal(apply_sparse):
 def test_tiff_ovr_propagate_sparse_ok_open_option_external(apply_sparse):
 
     filename = "/vsimem/test_tiff_ovr_propagate_sparse_ok_open_option_external.tif"
-    gdaltest.tiff_drv.Create(filename, 100, 100)
+    gdal.GetDriverByName("GTiff").Create(filename, 100, 100)
     ds = gdal.OpenEx(filename, open_options=["SPARSE_OK=YES"] if apply_sparse else [])
     ds.BuildOverviews("NEAREST", overviewlist=[2])
     ds = None
@@ -1760,7 +1775,7 @@ def test_tiff_ovr_propagate_sparse_ok_open_option_external(apply_sparse):
         assert has_block
     ds = None
 
-    gdaltest.tiff_drv.Delete(filename)
+    gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################
@@ -1771,7 +1786,7 @@ def test_tiff_ovr_propagate_sparse_ok_open_option_external(apply_sparse):
 def test_tiff_ovr_sparse_ok_internal_overview(apply_sparse):
 
     filename = "/vsimem/test_tiff_ovr_sparse_ok_internal_overview.tif"
-    gdaltest.tiff_drv.Create(filename, 100, 100)
+    gdal.GetDriverByName("GTiff").Create(filename, 100, 100)
     ds = gdal.Open(filename, gdal.GA_Update)
     with gdaltest.config_options({"SPARSE_OK_OVERVIEW": "YES"} if apply_sparse else {}):
         ds.BuildOverviews("NEAREST", overviewlist=[2])
@@ -1787,7 +1802,7 @@ def test_tiff_ovr_sparse_ok_internal_overview(apply_sparse):
         assert has_block
     ds = None
 
-    gdaltest.tiff_drv.Delete(filename)
+    gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################
@@ -1798,7 +1813,7 @@ def test_tiff_ovr_sparse_ok_internal_overview(apply_sparse):
 def test_tiff_ovr_sparse_ok_external_overview(apply_sparse):
 
     filename = "/vsimem/test_tiff_ovr_sparse_ok_external_overview.tif"
-    gdaltest.tiff_drv.Create(filename, 100, 100)
+    gdal.GetDriverByName("GTiff").Create(filename, 100, 100)
     ds = gdal.Open(filename)
     with gdaltest.config_options({"SPARSE_OK_OVERVIEW": "YES"} if apply_sparse else {}):
         ds.BuildOverviews("NEAREST", overviewlist=[2])
@@ -1814,7 +1829,7 @@ def test_tiff_ovr_sparse_ok_external_overview(apply_sparse):
         assert has_block
     ds = None
 
-    gdaltest.tiff_drv.Delete(filename)
+    gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 ###############################################################################
@@ -1826,37 +1841,37 @@ def test_tiff_ovr_46():
 
     # Test NEAREST
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
         ds.BuildOverviews("NEAREST", overviewlist=[2])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
     # Test AVERAGE in optimized case (x2 reduction)
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
         ds.BuildOverviews("AVERAGE", overviewlist=[2])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
     # Test AVERAGE in un-optimized case (x3 reduction)
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
         ds.BuildOverviews("AVERAGE", overviewlist=[3])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
     # Test AVERAGE in un-optimized case (color table)
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
 
@@ -1867,21 +1882,21 @@ def test_tiff_ovr_46():
         ds.BuildOverviews("AVERAGE", overviewlist=[2])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
     # Test GAUSS
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
         ds.BuildOverviews("GAUSS", overviewlist=[2])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
     # Test GAUSS with color table
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
 
@@ -1892,27 +1907,27 @@ def test_tiff_ovr_46():
         ds.BuildOverviews("GAUSS", overviewlist=[2])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
     # Test MODE
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
         ds.BuildOverviews("MODE", overviewlist=[2])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
     # Test CUBIC
     with gdaltest.config_option("GTIFF_DONT_WRITE_BLOCKS", "YES"):
-        ds = gdaltest.tiff_drv.Create(
+        ds = gdal.GetDriverByName("GTiff").Create(
             "/vsimem/tiff_ovr_46.tif", 50000, 50000, options=["SPARSE_OK=YES"]
         )
         ds.BuildOverviews("CUBIC", overviewlist=[2])
         ds = None
 
-    gdaltest.tiff_drv.Delete("/vsimem/tiff_ovr_46.tif")
+    gdal.GetDriverByName("GTiff").Delete("/vsimem/tiff_ovr_46.tif")
 
 
 ###############################################################################
@@ -1946,27 +1961,29 @@ def test_tiff_ovr_47(both_endian):
 # Test that we don't average 0's in alpha band
 
 
-def test_tiff_ovr_48(both_endian):
+def test_tiff_ovr_48(tmp_path, both_endian):
 
-    shutil.copy("data/rgba_with_alpha_0_and_255.tif", "tmp")
-    ds = gdal.Open("tmp/rgba_with_alpha_0_and_255.tif")
+    tif_fname = str(tmp_path / "rgba_with_alpha_0_and_255.tif")
+
+    shutil.copy("data/rgba_with_alpha_0_and_255.tif", tif_fname)
+    ds = gdal.Open(tif_fname)
     ds.BuildOverviews("AVERAGE", [2])
     ds = None
 
-    ds = gdal.Open("tmp/rgba_with_alpha_0_and_255.tif.ovr")
+    ds = gdal.Open(f"{tif_fname}.ovr")
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == 3, i
 
     # But if we define GDAL_OVR_PROPAGATE_NODATA, a nodata value in source
     # samples will cause the target pixel to be zeroed.
-    shutil.copy("data/rgba_with_alpha_0_and_255.tif", "tmp")
-    ds = gdal.Open("tmp/rgba_with_alpha_0_and_255.tif")
+    shutil.copy("data/rgba_with_alpha_0_and_255.tif", tif_fname)
+    ds = gdal.Open(tif_fname)
     with gdaltest.config_option("GDAL_OVR_PROPAGATE_NODATA", "YES"):
         ds.BuildOverviews("AVERAGE", [2])
     ds = None
 
-    ds = gdal.Open("tmp/rgba_with_alpha_0_and_255.tif.ovr")
+    ds = gdal.Open(f"{tif_fname}.ovr")
     for i in range(4):
         cs = ds.GetRasterBand(i + 1).Checksum()
         assert cs == 0, i
@@ -2777,42 +2794,3 @@ def test_tiff_ovr_external_3_px_wide_1_px_tall():
     assert ds.GetRasterBand(1).Checksum() == 1
     del ds
     gdal.GetDriverByName("GTiff").Delete(temp_path)
-
-
-###############################################################################
-# Cleanup
-
-
-def test_tiff_ovr_cleanup():
-    gdaltest.tiff_drv.Delete("tmp/mfloat32.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr4.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr5.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr6.tif")
-    gdaltest.tiff_drv.Delete("tmp/test_average_palette.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr9.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr10.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr11.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr12.tif")
-    gdaltest.tiff_drv.Delete("tmp/test_gauss_palette.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr15.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr16.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr17.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr18.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr19.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr20.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr21.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr22.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr23.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr24.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr25.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr26.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr27.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr30.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr31.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr37.dt0")
-    gdaltest.tiff_drv.Delete("tmp/ovr38.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr39.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr40.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr41.tif")
-    gdaltest.tiff_drv.Delete("tmp/ovr42.tif")
-    gdaltest.tiff_drv.Delete("tmp/rgba_with_alpha_0_and_255.tif")
