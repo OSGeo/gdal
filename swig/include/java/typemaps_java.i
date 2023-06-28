@@ -2148,13 +2148,9 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 %typemap(jni) (int nDims, GDALDimensionH* pDims) "jobject"
-
 %typemap(jtype) (int nDims, GDALDimensionH* pDims) "java.util.Vector"
-
 %typemap(jstype) (int nDims, GDALDimensionH* pDims) "java.util.Vector"
-
 %typemap(javain) (int nDims, GDALDimensionH* pDims) "$javainput"
-
 %typemap(javaout) (int nDims, GDALDimensionH* pDims) {
     return $jnicall;
 }
@@ -2235,6 +2231,14 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
 }
 
+%typemap(jni) (GDALExtendedDataTypeH) "jobject"
+%typemap(jtype) (GDALExtendedDataTypeH) "org.gdal.gdal.ExtendedDataType"
+%typemap(jstype) (GDALExtendedDataTypeH) "org.gdal.gdal.ExtendedDataType"
+%typemap(javain) (GDALExtendedDataTypeH) "$javainput"
+%typemap(javaout) (GDALExtendedDataTypeH) {
+    return $jnicall;
+}
+
 /***** MDArray typemaps *******************************/
 
 /*
@@ -2286,3 +2290,12 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(javaout) (GDALMDArrayH*) {
     return $jnicall;
 }
+
+%typemap(jni) (GDALMDArrayH) "jobject"
+%typemap(jtype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
+%typemap(jstype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
+%typemap(javain) (GDALMDArrayH) "$javainput"
+%typemap(javaout) (GDALMDArrayH) {
+    return $jnicall;
+}
+
