@@ -2223,6 +2223,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	$result = (jobject) jenv->NewObject(typeClass, ctor, *$1, false);  // TODO false or true?
 }
 
+/* no longer needed?
+
 %typemap(jni) (GDALExtendedDataTypeH*) "jobject"
 %typemap(jtype) (GDALExtendedDataTypeH*) "org.gdal.gdal.ExtendedDataType"
 %typemap(jstype) (GDALExtendedDataTypeH*) "org.gdal.gdal.ExtendedDataType"
@@ -2230,6 +2232,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(javaout) (GDALExtendedDataTypeH*) {
     return $jnicall;
 }
+
+*/
 
 %typemap(jni) (GDALExtendedDataTypeH) "jobject"
 %typemap(jtype) (GDALExtendedDataTypeH) "org.gdal.gdal.ExtendedDataType"
@@ -2283,6 +2287,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	$result = (jobject) jenv->NewObject(arrClass, ctor, *$1, false);
 }
 
+/* no longer needed?
+
 %typemap(jni) (GDALMDArrayH*) "jobject"
 %typemap(jtype) (GDALMDArrayH*) "org.gdal.gdal.MDArray"
 %typemap(jstype) (GDALMDArrayH*) "org.gdal.gdal.MDArray"
@@ -2290,6 +2296,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(javaout) (GDALMDArrayH*) {
     return $jnicall;
 }
+
+*/
 
 %typemap(jni) (GDALMDArrayH) "jobject"
 %typemap(jtype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
