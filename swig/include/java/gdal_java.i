@@ -1268,18 +1268,17 @@ import org.gdal.gdalconst.gdalconstConstants;
                                   const char* name,
                                   int nDims,
                                   GDALDimensionH* dims,
-                                  GDALExtendedDataTypeH* dataType)  // WASN'T a ptr
+                                  GDALExtendedDataTypeH dataTypeH)
     {
-		
-		return GDALGroupCreateMDArray(groupH, name, nDims, dims, *dataType, NULL);  // WASN'T a deref
+		return GDALGroupCreateMDArray(groupH, name, nDims, dims, dataTypeH, NULL);
     }
 %}
 
 %extend GDALGroupHS {
 
-  GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH* dataType) {   // last param WASN'T a ptr
+  GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH dataTypeH) {
     
-    return CreateMDA(self, name, nDims, pDims, dataType);
+    return CreateMDA(self, name, nDims, pDims, dataTypeH);
   }
   
 } /* extend */
