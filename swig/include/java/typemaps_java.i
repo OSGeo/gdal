@@ -2042,7 +2042,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 /*******************************************************
-   Typemaps for MDArray support
+   Typemap notes
  *******************************************************/
  
 //  useful docs: https://www.swig.org/Doc1.3/Typemaps.html
@@ -2057,6 +2057,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 // typemap(in)  (C types): convert from Java to C
 // typemap(out) (C types): convert from C to Java
 
+  
+/***** Dimension typemaps *****************************/
 
 /*
   From Java: Vector<Dimension>
@@ -2100,11 +2102,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     $2 = NULL;
   }
 }
-
-// TODO: why is this one not autodiscovered for use by
-//   Attribute::GetDimensions() and MDArray::GetDimensions()?
-//   Neither of them automatically make their way into the
-//   Java api javaddoc.
 
 /*
   From C: (int nDims, GDALDimensionH *pDims)
@@ -2156,11 +2153,28 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
 }
 
+/*
+  From C:  GDALDimensionH*
+  To Java: Dimension
+*/
+%typemap(out) (GDALDimensionH*)
+{
+	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+	const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
+									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-/********************************************/
-/*  ExtendedDataType mappings               */
-/********************************************/
+	$result = jenv->NewObject(dimClass, dctor, *$1, true);
+}
 
+%typemap(jni) (GDALDimensionH*) "jobject"
+%typemap(jtype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
+%typemap(jstype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
+%typemap(javain) (GDALDimensionH*) "$javainput"
+%typemap(javaout) (GDALDimensionH*) {
+    return $jnicall;
+  }
+
+/***** ExtendedDataType typemaps **********************/
 
 // From Java to C
 
@@ -2180,10 +2194,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 		$1 = NULL;
 	}
 }
-
-/********************************************/
-/* One I need for MDArray creation I think  */
-/********************************************/
 
 /*
   From Java: ExtendedDataType
@@ -2231,25 +2241,4 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
   }
 
-/******* A Dimension converter that is needed ************************/
-
-/*
-  From C:  GDALDimensionH*
-  To Java: Dimension
-*/
-%typemap(out) (GDALDimensionH*)
-{
-	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
-	const jmethodID dctor = jenv->GetMethodID(dimClass, "<init>",
-									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
-
-	$result = jenv->NewObject(dimClass, dctor, *$1, true);
-}
-
-%typemap(jni) (GDALDimensionH*) "jobject"
-%typemap(jtype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
-%typemap(jstype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
-%typemap(javain) (GDALDimensionH*) "$javainput"
-%typemap(javaout) (GDALDimensionH*) {
-    return $jnicall;
-  }
+/***** MDArray typemaps *******************************/
