@@ -397,8 +397,8 @@ init_list = [
     ],
 )
 @pytest.mark.require_driver("HFA")
-def test_hfa_create_normal(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest("HFA", filename, 1, checksum)
+def test_hfa_create_normal(filename, checksum, testfunction, tmp_path):
+    ut = gdaltest.GDALTest("HFA", filename, 1, checksum, tmpdir=str(tmp_path))
     getattr(ut, testfunction)()
 
 
@@ -419,8 +419,10 @@ short_list = [("byte.tif", 4672), ("uint16.tif", 4672), ("float64.tif", 4672)]
     ],
 )
 @pytest.mark.require_driver("HFA")
-def test_hfa_create_spill(filename, checksum, testfunction):
-    ut = gdaltest.GDALTest("HFA", filename, 1, checksum, options=["USE_SPILL=YES"])
+def test_hfa_create_spill(filename, checksum, testfunction, tmp_path):
+    ut = gdaltest.GDALTest(
+        "HFA", filename, 1, checksum, options=["USE_SPILL=YES"], tmpdir=str(tmp_path)
+    )
     getattr(ut, testfunction)()
 
 
