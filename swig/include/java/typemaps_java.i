@@ -2189,12 +2189,38 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From Java: ExtendedDataType
   To C:      GDALExtendedDataTypeH*
 */
+
 %typemap(in) (GDALExtendedDataTypeH* type)
 {
     const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-    const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
+    const jmethodID getCPtr =
+            jenv->GetStaticMethodID(dtClass, "getCPtr",
+                                    "(Lorg/gdal/gdal/ExtendedDataType;)J");
 
     $1 = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
+}
+
+/*
+
+%typemap(in) (GDALExtendedDataTypeH** type) (GDALExtendedDataTypeH* pTypeH)
+{
+  $1 = &pTypeH;
+}
+
+%typemap(in) (GDALExtendedDataTypeH* pTypeH)
+{
+  $1 = &pTypeH;
+}
+
+*/
+
+%typemap(out) (GDALExtendedDataTypeH*)
+{
+	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
+	const jmethodID typeCtor = jenv->GetMethodID(dimClass, "<init>",
+									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
+
+	$result = jenv->NewObject(typeClass, typeCtor, *$1, false);  // TODO false or true?
 }
 
 %typemap(jni) (GDALExtendedDataTypeH*) "jobject"
