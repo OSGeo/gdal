@@ -77,6 +77,7 @@
     return $null;
   }
 }
+
 %typemap(argout) (double *val, int*hasval) {
   /* %typemap(argout) (double *val, int*hasval) */
   const jclass Double = jenv->FindClass("java/lang/Double");
@@ -2188,14 +2189,23 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From Java: ExtendedDataType
   To C:      GDALExtendedDataTypeH*
 */
-
-%typemap(in) (GDALExtendedDataTypeH** type)
+%typemap(in) (GDALExtendedDataTypeH* type)
 {
     const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
     const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
 
-    *type = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $1);
+    $1 = (GDALExtendedDataTypeH*) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
 }
+
+%typemap(jni) (GDALExtendedDataTypeH*) "jobject"
+%typemap(jtype) (GDALExtendedDataTypeH*) "org.gdal.gdal.ExtendedDataType"
+%typemap(jstype) (GDALExtendedDataTypeH*) "org.gdal.gdal.ExtendedDataType"
+%typemap(javain) (GDALExtendedDataTypeH*) "$javainput"
+%typemap(javaout) (GDALExtendedDataTypeH*) {
+    return $jnicall;
+  }
+
+/******* A Dimension converter that is needed ************************/
 
 /*
   From C:  GDALDimensionH*

@@ -1264,7 +1264,12 @@ import org.gdal.gdalconst.gdalconstConstants;
 %}
 
 %{
-    static GDALMDArrayH CreateMDA(GDALGroupH groupH, const char* name, int nDims, GDALDimensionH* dims, GDALExtendedDataTypeH dataType) {
+    static GDALMDArrayH CreateMDA(GDALGroupH groupH,
+                                  const char* name,
+                                  int nDims,
+                                  GDALDimensionH* dims,
+                                  GDALExtendedDataTypeH dataType)
+    {
 		
 		return GDALGroupCreateMDArray(groupH, name, nDims, dims, dataType, NULL);
     }
