@@ -2163,7 +2163,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From C:  GDALDimensionH*
   To Java: Dimension
 */
-%typemap(out) (GDALDimensionH*)
+%typemap(out) (GDALDimensionH* pDimH)
 {
 	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
@@ -2218,7 +2218,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   $1 = *pTypeH;
 }
 
-%typemap(out) jobject (GDALExtendedDataTypeH* pTypeH)
+%typemap(out) (GDALExtendedDataTypeH* pTypeH)
 {
 	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
@@ -2270,7 +2270,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From C:  GDALMDArrayH*
   To Java: MDArray
 */
-%typemap(out) jobject (GDALMDArrayH* pArrH)
+%typemap(out) (GDALMDArrayH* pArrH)
 {
 	const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
 	const jmethodID ctor = jenv->GetMethodID(arrClass, "<init>",
