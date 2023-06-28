@@ -1658,10 +1658,14 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GIntBig
  ***************************************************/
 
-%typemap(in) (GIntBig) "$1 = $input;"
+/*  comment out for now. probably was never used. investigate.
+
+%typemap(in) (GIntBig)
+{
+   $1 = $input;
+}
 %typemap(out) (GIntBig)
 {
-    /* %typemap(out) (GIntBig) */
     $result = result;
 }
 %typemap(jni) (GIntBig) "jlong"
@@ -1671,7 +1675,9 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(javaout) (GIntBig) {
     return $jnicall;
   }
-
+  
+*/
+  
 /***************************************************
  * Typemaps for ( int nCount, double *x, double *y, double *z )
  ***************************************************/
