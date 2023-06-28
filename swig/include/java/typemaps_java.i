@@ -2051,14 +2051,16 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 //  useful docs: https://www.swig.org/Doc1.3/Typemaps.html
 
 //investigate
-//  do we have to mess with numinputs? it must be = 0, 1, or not present
+//  do we have to mess with numinputs? it must be = 0, 1, or not present.
+//  what effects do the options have?
 
 // argout is for code that does java manipulations.
-//   if it ends up with a $result is a java object
-// out seems exactly the same
+//   if it ends up with a $result iy is a java object
+// out seems exactly the same. why are there two?
+//   why choose one over the other?
 
-// typemap(in)  (C types): convert from Java to C
-// typemap(out) (C types): convert from C to Java
+// typemap(in)  (type list): convert from Java to C
+// typemap(out) (type list): convert from C to Java
 
   
 /***** Dimension typemaps *****************************/
@@ -2112,7 +2114,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   To Java: Vector<Dimension>
 */
 
-%typemap(argout) (int nDims, GDALDimensionH *pDims)
+%typemap(out) (int nDims, GDALDimensionH *pDims)
 {
   const jclass vectorClass = jenv->FindClass("java/util/Vector");
   const jmethodID vCtor = jenv->GetMethodID(vectorClass, "<init>", "()V");
@@ -2186,7 +2188,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 */
 
-%typemap(in) (GDALExtendedDataTypeH* dataType) (jlong) {
+%typemap(in) GDALExtendedDataTypeH* (jobject) {
 
 	if ($input)
 	{
@@ -2201,28 +2203,28 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	}
 }
 
-%typemap(in) (GDALExtendedDataTypeH** type) (GDALExtendedDataTypeH* pTypeH)
+%typemap(in) GDALExtendedDataTypeH** (GDALExtendedDataTypeH* pTypeH)
 {
   $1 = &pTypeH;
 }
 
-%typemap(in) (GDALExtendedDataTypeH* type) (GDALExtendedDataTypeH typeH)
+%typemap(in) GDALExtendedDataTypeH* (GDALExtendedDataTypeH typeH)
 {
   $1 = &typeH;
 }
 
-%typemap(in) (GDALExtendedDataTypeH type) (GDALExtendedDataTypeH* pTypeH)
+%typemap(in) GDALExtendedDataTypeH (GDALExtendedDataTypeH* pTypeH)
 {
   $1 = *pTypeH;
 }
 
-%typemap(out) (jlong) (GDALExtendedDataTypeH*)
+%typemap(out) jobject (GDALExtendedDataTypeH* pTypeH)
 {
 	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = (jlong) jenv->NewObject(typeClass, ctor, *$1, false);  // TODO false or true?
+	$result = (jobject) jenv->NewObject(typeClass, ctor, *$1, false);  // TODO false or true?
 }
 
 %typemap(jni) (GDALExtendedDataTypeH*) "jobject"
@@ -2239,7 +2241,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From Java: MDArray
   To C:      GDALMDArrayH*
 */
-%typemap(in) (GDALMDArrayH*) (jlong)
+%typemap(in) GDALMDArrayH* (jobject)
 {
     const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
     const jmethodID getCPtr =
@@ -2249,17 +2251,17 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     $1 = jenv->CallStaticLongMethod(arrClass, getCPtr, $input);
 }
 
-%typemap(in) (GDALMDArrayH** arr) (GDALMDArrayH* pArrH)
+%typemap(in) GDALMDArrayH** (GDALMDArrayH* pArrH)
 {
   $1 = &pArrH;
 }
 
-%typemap(in) (GDALMDArrayH* arr) (GDALMDArrayH arrH)
+%typemap(in) GDALMDArrayH* (GDALMDArrayH arrH)
 {
   $1 = &arrH;
 }
 
-%typemap(in) (GDALMDArrayH arr) (GDALMDArrayH* pArrH)
+%typemap(in) GDALMDArrayH (GDALMDArrayH* pArrH)
 {
   $1 = *pArrH;
 }
@@ -2268,13 +2270,13 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From C:  GDALMDArrayH*
   To Java: MDArray
 */
-%typemap(out) (jlong) (GDALMDArrayH*)
+%typemap(out) jobject (GDALMDArrayH* pArrH)
 {
 	const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
 	const jmethodID ctor = jenv->GetMethodID(arrClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = (jlong) jenv->NewObject(arrClass, ctor, *$1, false);
+	$result = (jobject) jenv->NewObject(arrClass, ctor, *$1, false);
 }
 
 %typemap(jni) (GDALMDArrayH*) "jobject"
