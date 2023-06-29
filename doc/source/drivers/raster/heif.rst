@@ -18,7 +18,7 @@ iOS 11 can generate such files.
 
 libheif 1.4 or later is needed to support images with more than 8-bits per channel.
 
-The driver can read EXIF metadatata (exposed in the ``EXIF`` metadata domain)
+The driver can read EXIF metadata (exposed in the ``EXIF`` metadata domain)
 and XMP metadata (exposed in the ``xml:XMP`` metadata domain)
 
 The driver will expose the thumbnail as an overview (when its number of bands
