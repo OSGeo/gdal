@@ -202,7 +202,7 @@ import java.util.Vector;
 
 	if (index < 0 || index >= dimCount) {
 	
-		free((void*) dims);  // TODO or some other free routine?
+		free((void*) dims);  // TODO or some other free routine or a free typemap?
 	
 		return NULL;
 	}
@@ -210,7 +210,7 @@ import java.util.Vector;
 	
 		free((void*) dims);
 
-		return dims[index];  // TODO or some other free routine?
+		return dims[index];  // TODO or some other free routine or a free typemap?
 	}
   }
   
