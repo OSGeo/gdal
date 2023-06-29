@@ -2099,9 +2099,8 @@ def test_netcdf_51():
 
     import netcdf_cf
 
-    netcdf_cf.netcdf_cf_setup()
-    if gdaltest.netcdf_cf_method is not None:
-        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_51.nc", "auto", False)
+    if netcdf_cf.cfchecks_available():
+        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_51.nc", "auto")
 
     gdal.Unlink("tmp/netcdf_51.nc")
     gdal.Unlink("tmp/netcdf_51.csv")
@@ -2243,9 +2242,8 @@ def test_netcdf_52():
 
     import netcdf_cf
 
-    netcdf_cf.netcdf_cf_setup()
-    if gdaltest.netcdf_cf_method is not None:
-        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_52.nc", "auto", False)
+    if netcdf_cf.cfchecks_available():
+        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_52.nc", "auto")
 
     gdal.Unlink("tmp/netcdf_52.nc")
     gdal.Unlink("tmp/netcdf_52.csv")
@@ -2725,9 +2723,8 @@ def test_netcdf_62():
 
     import netcdf_cf
 
-    netcdf_cf.netcdf_cf_setup()
-    if gdaltest.netcdf_cf_method is not None:
-        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_62.nc", "auto", False)
+    if netcdf_cf.cfchecks_available():
+        netcdf_cf.netcdf_cf_check_file("tmp/netcdf_62.nc", "auto")
 
     gdal.Unlink("tmp/netcdf_62.nc")
 
