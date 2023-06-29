@@ -2103,15 +2103,14 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
             }
             const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
             const jmethodID getCPtr = jenv->GetStaticMethodID(dimClass, "getCPtr", "(Lorg/gdal/gdal/Dimension;)J");
-            /* TODO - this cast looks wrong! */
-            $2[i] = *(GDALDimensionH*) jenv->CallStaticLongMethod(dimClass, getCPtr, obj);
+            $2[i] = (GDALDimensionH) jenv->CallStaticLongMethod(dimClass, getCPtr, obj);
         }
     }
   }
   else
   {
     $1 = 0;
-    $2 = NULL;
+    $2 = (GDALDimensionH*) NULL;
   }
 }
 
@@ -2141,7 +2140,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     jenv->CallBooleanMethod(vec, vAdd, dim);
   }
   
-  $result = *(jlong*) &vec;
+  $result = vec;
 }
 
 %typemap(freearg) (int nDims, GDALDimensionH *pDims)
@@ -2162,23 +2161,23 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 /*
-  From C:  GDALDimensionH*
+  From C:  GDALDimensionH
   To Java: Dimension
 */
-%typemap(out) (GDALDimensionH* pDimH)
+%typemap(out) (GDALDimensionH dimH)
 {
 	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = jenv->NewObject(dimClass, ctor, *$1, true);
+	$result = jenv->NewObject(dimClass, ctor, $1, false);
 }
 
-%typemap(jni) (GDALDimensionH*) "jobject"
-%typemap(jtype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
-%typemap(jstype) (GDALDimensionH*) "org.gdal.gdal.Dimension"
-%typemap(javain) (GDALDimensionH*) "$javainput"
-%typemap(javaout) (GDALDimensionH*) {
+%typemap(jni) (GDALDimensionH) "jobject"
+%typemap(jtype) (GDALDimensionH) "org.gdal.gdal.Dimension"
+%typemap(jstype) (GDALDimensionH) "org.gdal.gdal.Dimension"
+%typemap(javain) (GDALDimensionH) "$javainput"
+%typemap(javaout) (GDALDimensionH) {
     return $jnicall;
   }
 
@@ -2186,22 +2185,22 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 /*
   From Java: ExtendedDataType
-  To C:      GDALExtendedDataTypeH*
+  To C:      GDALExtendedDataTypeH
 
 */
 
-%typemap(in) GDALExtendedDataTypeH* (jobject) {
+%typemap(in) GDALExtendedDataTypeH (jobject) {
 
 	if ($input)
 	{
 		const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
         const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
 	  
-        $1 = jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
+        $1 = (GDALExtendedDataTypeH) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
 	}
 	else
 	{
-		$1 = NULL;
+		$1 = (GDALExtendedDataTypeH) NULL;
 	}
 }
 
@@ -2220,26 +2219,14 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   $1 = *pTypeH;
 }
 
-%typemap(out) (GDALExtendedDataTypeH* pTypeH)
+%typemap(out) (GDALExtendedDataTypeH typeH)
 {
 	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = (jobject) jenv->NewObject(typeClass, ctor, *$1, false);  // TODO false or true?
+	$result = jenv->NewObject(typeClass, ctor, $1, false);  // TODO false or true?
 }
-
-/* no longer needed?
-
-%typemap(jni) (GDALExtendedDataTypeH*) "jobject"
-%typemap(jtype) (GDALExtendedDataTypeH*) "org.gdal.gdal.ExtendedDataType"
-%typemap(jstype) (GDALExtendedDataTypeH*) "org.gdal.gdal.ExtendedDataType"
-%typemap(javain) (GDALExtendedDataTypeH*) "$javainput"
-%typemap(javaout) (GDALExtendedDataTypeH*) {
-    return $jnicall;
-}
-
-*/
 
 %typemap(jni) (GDALExtendedDataTypeH) "jobject"
 %typemap(jtype) (GDALExtendedDataTypeH) "org.gdal.gdal.ExtendedDataType"
@@ -2253,16 +2240,21 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 /*
   From Java: MDArray
-  To C:      GDALMDArrayH*
+  To C:      GDALMDArrayH
 */
-%typemap(in) GDALMDArrayH* (jobject)
+%typemap(in) GDALMDArrayH (jobject)
 {
-    const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
-    const jmethodID getCPtr =
-            jenv->GetStaticMethodID(arrClass, "getCPtr",
-                                    "(Lorg/gdal/gdal/MDArray;)J");
+	if ($input) {
+		const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
+		const jmethodID getCPtr =
+				jenv->GetStaticMethodID(arrClass, "getCPtr",
+										"(Lorg/gdal/gdal/MDArray;)J");
 
-    $1 = jenv->CallStaticLongMethod(arrClass, getCPtr, $input);
+		$1 = (GDALMDArrayH) jenv->CallStaticLongMethod(arrClass, getCPtr, $input);
+    }
+    else {
+		$1 = (GDALMDArrayH) NULL;
+    }
 }
 
 %typemap(in) GDALMDArrayH** (GDALMDArrayH* pArrH)
@@ -2281,29 +2273,17 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 /*
-  From C:  GDALMDArrayH*
+  From C:  GDALMDArrayH
   To Java: MDArray
 */
-%typemap(out) (GDALMDArrayH* pArrH)
+%typemap(out) (GDALMDArrayH arrH)
 {
 	const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
 	const jmethodID ctor = jenv->GetMethodID(arrClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = (jobject) jenv->NewObject(arrClass, ctor, *$1, false);
+	$result = jenv->NewObject(arrClass, ctor, $1, false);
 }
-
-/* no longer needed?
-
-%typemap(jni) (GDALMDArrayH*) "jobject"
-%typemap(jtype) (GDALMDArrayH*) "org.gdal.gdal.MDArray"
-%typemap(jstype) (GDALMDArrayH*) "org.gdal.gdal.MDArray"
-%typemap(javain) (GDALMDArrayH*) "$javainput"
-%typemap(javaout) (GDALMDArrayH*) {
-    return $jnicall;
-}
-
-*/
 
 %typemap(jni) (GDALMDArrayH) "jobject"
 %typemap(jtype) (GDALMDArrayH) "org.gdal.gdal.MDArray"

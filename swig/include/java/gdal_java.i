@@ -194,7 +194,7 @@ import java.util.Vector;
 								nRegularArraySizeOut * sizeof_ctype);
   }
   
-  static GDALDimensionH* GDALGetDim(GDALMDArrayH hMDA, size_t index) {
+  static GDALDimensionH GDALGetDim(GDALMDArrayH hMDA, size_t index) {
 
 	size_t dimCount;
 	
@@ -202,19 +202,15 @@ import java.util.Vector;
 
 	if (index < 0 || index >= dimCount) {
 	
-		free((void*) dims);
+		free((void*) dims);  // TODO or some other free routine?
 	
 		return NULL;
 	}
 	else {
 	
-		GDALDimensionH* retVal = (GDALDimensionH*) malloc(sizeof(GDALDimensionH));
-		
-		*retVal = dims[index];
-		
 		free((void*) dims);
 
-		return retVal;
+		return dims[index];  // TODO or some other free routine?
 	}
   }
   
@@ -388,7 +384,7 @@ import java.util.Vector;
 
 */  // end commenting out code related to TODO
 
-	GDALDimensionH* GetDimension(size_t index) {
+	GDALDimensionH GetDimension(size_t index) {
 
 		return GDALGetDim(self, index);
 	}
