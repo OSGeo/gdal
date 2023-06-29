@@ -2094,7 +2094,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     {
         $2 = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * $1);
         for (int i = 0; i < $1; i++) {
-            jobject obj = (jobject) jenv->CallObjectMethod($input, vget);
+            jobject obj = jenv->CallObjectMethod($input, vget, i);
             if (obj == NULL)
             {
                 free ($2 );
@@ -2313,3 +2313,9 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
 }
 
+/******** GUIntBig typemaps **********************/
+
+/*
+  From Java: Vector<Long>
+  To C:      (int nDims, GUIntBig *pNums)
+*/
