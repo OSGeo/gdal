@@ -208,9 +208,11 @@ import java.util.Vector;
 	}
 	else {
 	
-		free((void*) dims);
+		GDALDimensionH retVal = dims[index];
+		
+		free((void*) dims);  // TODO or some other free routine or a free typemap?
 
-		return dims[index];  // TODO or some other free routine or a free typemap?
+		return retVal;
 	}
   }
   
