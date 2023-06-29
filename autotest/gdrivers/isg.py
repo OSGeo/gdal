@@ -43,7 +43,7 @@ def test_isg_1():
 
     tst = gdaltest.GDALTest("ISG", "isg/test.isg", 1, 159)
     expected_gt = [120.0, 0.25, 0.0, 41.0, 0.0, -0.25]
-    return tst.testOpen(check_gt=expected_gt)
+    tst.testOpen(check_gt=expected_gt)
 
 
 ###############################################################################

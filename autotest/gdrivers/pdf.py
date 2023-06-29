@@ -342,14 +342,12 @@ def test_pdf_1(poppler_or_pdfium):
 
 def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None)
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
         check_srs=True,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -358,14 +356,12 @@ def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
 
 def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["DPI=300"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
         check_srs=True,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -377,14 +373,12 @@ def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
         )
-        ret = tst.testCreateCopy(
+        tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
-
-    return ret
 
 
 ###############################################################################
@@ -396,14 +390,12 @@ def test_pdf_ogcbp_dpi_300(poppler_or_pdfium):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP", "DPI=300"]
         )
-        ret = tst.testCreateCopy(
+        tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
-
-    return ret
 
 
 def test_pdf_ogcbp_lcc(poppler_or_pdfium):
@@ -451,14 +443,12 @@ def test_pdf_ogcbp_lcc(poppler_or_pdfium):
 
 def test_pdf_no_compression(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["COMPRESS=NONE"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -607,26 +597,22 @@ def test_pdf_jpeg_compression_rgba(poppler_or_pdfium):
 
 def test_pdf_predictor_2(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "utm.tif", 1, None, options=["PREDICTOR=2"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 def test_pdf_predictor_2_rgb(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "rgbsmall.tif", 1, None, options=["PREDICTOR=2"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -637,28 +623,24 @@ def test_pdf_tiled(poppler_or_pdfium):
     tst = gdaltest.GDALTest(
         "PDF", "utm.tif", 1, None, options=["COMPRESS=DEFLATE", "TILED=YES"]
     )
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 def test_pdf_tiled_128(poppler_or_pdfium):
     tst = gdaltest.GDALTest(
         "PDF", "utm.tif", 1, None, options=["BLOCKXSIZE=128", "BLOCKYSIZE=128"]
     )
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -669,14 +651,12 @@ def test_pdf_tiled_128(poppler_or_pdfium):
 def test_pdf_color_table(poppler_or_pdfium):
 
     tst = gdaltest.GDALTest("PDF", "small_world_pct.tif", 1, None)
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################

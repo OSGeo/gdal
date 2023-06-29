@@ -45,7 +45,7 @@ from osgeo import gdal
 def test_vrtwarp_1():
 
     tst = gdaltest.GDALTest("VRT", "vrt/rgb_warp.vrt", 2, 21504)
-    return tst.testOpen(check_filelist=False)
+    tst.testOpen(check_filelist=False)
 
 
 ###############################################################################

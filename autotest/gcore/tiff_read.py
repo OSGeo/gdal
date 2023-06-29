@@ -3965,7 +3965,7 @@ def test_tiff_read_negative_scaley():
 def test_tiff_read_zstd():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd.tif", 1, 4672)
-    return ut.testOpen()
+    ut.testOpen()
 
 
 ###############################################################################
@@ -3977,7 +3977,7 @@ def test_tiff_read_zstd_corrupted():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted.tif", 1, -1)
     with pytest.raises(Exception):
-        return ut.testOpen()
+        ut.testOpen()
 
 
 ###############################################################################
@@ -3989,7 +3989,7 @@ def test_tiff_read_zstd_corrupted2():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted2.tif", 1, -1)
     with pytest.raises(Exception):
-        return ut.testOpen()
+        ut.testOpen()
 
 
 ###############################################################################
@@ -4001,9 +4001,8 @@ def test_tiff_read_webp():
 
     stats = (0, 215, 66.38, 47.186)
     ut = gdaltest.GDALTest("GTiff", "tif_webp.tif", 1, None)
-    success = ut.testOpen(check_approx_stat=stats, stat_epsilon=1)
+    ut.testOpen(check_approx_stat=stats, stat_epsilon=1)
     gdal.Unlink("data/tif_webp.tif.aux.xml")
-    return success
 
 
 ###############################################################################
@@ -4034,7 +4033,7 @@ def test_tiff_read_1bit_2bands():
 def test_tiff_read_lerc():
 
     ut = gdaltest.GDALTest("GTiff", "byte_lerc.tif", 1, 4672)
-    return ut.testOpen()
+    ut.testOpen()
 
 
 ###############################################################################

@@ -44,13 +44,13 @@ pytestmark = pytest.mark.require_driver("SAFE")
 def test_safe_1():
 
     tst = gdaltest.GDALTest("SAFE", "SAFE_FAKE/test.SAFE/manifest.safe", 1, 65372)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_safe_2():
 
     tst = gdaltest.GDALTest("SAFE", "SAFE_FAKE/test.SAFE/manifest.safe", 2, 3732)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_safe_3():
@@ -62,7 +62,7 @@ def test_safe_3():
         65372,
         filename_absolute=1,
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_safe_4():
@@ -74,7 +74,7 @@ def test_safe_4():
         3732,
         filename_absolute=1,
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_safe_5():
@@ -86,7 +86,7 @@ def test_safe_5():
         65372,
         filename_absolute=1,
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_safe_WV():

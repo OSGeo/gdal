@@ -881,7 +881,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetNoDataValueAndDelete(self):
-        return self.testSetNoDataValue(delete=True)
+        self.testSetNoDataValue(delete=True)
 
     def testSetDescription(self):
         self.testDriver()

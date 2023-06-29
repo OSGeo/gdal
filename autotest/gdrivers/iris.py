@@ -43,7 +43,7 @@ pytestmark = pytest.mark.require_driver("IRIS")
 def test_iris_1():
 
     tst = gdaltest.GDALTest("IRIS", "iris/fakeiris.dat", 1, 65532)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

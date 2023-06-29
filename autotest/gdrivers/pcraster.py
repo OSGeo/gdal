@@ -42,7 +42,7 @@ pytestmark = pytest.mark.require_driver("PCRaster")
 def test_pcraster_1():
 
     tst = gdaltest.GDALTest("PCRaster", "pcraster/ldd.map", 1, 4528)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -74,7 +74,7 @@ def test_pcraster_2():
 def test_pcraster_createcopy():
 
     tst = gdaltest.GDALTest("PCRaster", "pcraster/ldd.map", 1, 4528)
-    return tst.testCreateCopy(new_filename="tmp/ldd.map")
+    tst.testCreateCopy(new_filename="tmp/ldd.map")
 
 
 ###############################################################################
@@ -85,4 +85,4 @@ def test_pcraster_create():
     tst = gdaltest.GDALTest(
         "PCRaster", "float32.tif", 1, 4672, options=["PCRASTER_VALUESCALE=VS_SCALAR"]
     )
-    return tst.testCreate(new_filename="tmp/float32.map")
+    tst.testCreate(new_filename="tmp/float32.map")

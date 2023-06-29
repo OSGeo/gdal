@@ -41,7 +41,7 @@ from osgeo import gdal
 def test_vrtfilt_1():
 
     tst = gdaltest.GDALTest("VRT", "vrt/avfilt.vrt", 1, 21890)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -57,7 +57,7 @@ def test_vrtfilt_2():
     # This is a black&white checkboard, where black = nodata
     # Thus averaging it and taking nodata into account will not change it
     tst = gdaltest.GDALTest("VRT", "vrt/avfilt_nodata.vrt", 1, checksum)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -154,7 +154,7 @@ def test_vrtfilt_5():
 def test_vrtfilt_6():
 
     tst = gdaltest.GDALTest("VRT", "vrt/avfilt_1d.vrt", 1, 22377)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

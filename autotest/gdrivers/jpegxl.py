@@ -48,41 +48,41 @@ def module_disable_exceptions():
 
 def test_jpegxl_read():
     tst = gdaltest.GDALTest("JPEGXL", "jpegxl/byte.jxl", 1, 4672)
-    return tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
+    tst.testOpen(check_gt=(440720, 60, 0, 3751320, 0, -60))
 
 
 def test_jpegxl_byte():
     tst = gdaltest.GDALTest(
         "JPEGXL", "byte.tif", 1, 4672, options=["LOSSLESS_COPY=YES"]
     )
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 def test_jpegxl_uint16():
     tst = gdaltest.GDALTest("JPEGXL", "../../gcore/data/uint16.tif", 1, 4672)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 def test_jpegxl_float32():
     tst = gdaltest.GDALTest("JPEGXL", "float32.tif", 1, 4672)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 def test_jpegxl_grey_alpha():
     tst = gdaltest.GDALTest(
         "JPEGXL", "../../gcore/data/stefan_full_greyalpha.tif", 1, 1970
     )
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 def test_jpegxl_rgb():
     tst = gdaltest.GDALTest("JPEGXL", "rgbsmall.tif", 1, 21212)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 def test_jpegxl_rgba():
     tst = gdaltest.GDALTest("JPEGXL", "../../gcore/data/stefan_full_rgba.tif", 1, 12603)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 @pytest.mark.parametrize("lossless", ["YES", "NO", None])

@@ -63,7 +63,7 @@ def has_jp2kdrv():
 def test_grib_1():
 
     tst = gdaltest.GDALTest("GRIB", "grib/ds.mint.bin", 2, 46927)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -91,13 +91,11 @@ def test_grib_read_different_sizes_messages():
 
     tst = gdaltest.GDALTest("GRIB", "grib/bug3246.grb", 4, 4081)
     with gdaltest.error_handler():
-        result = tst.testOpen()
+        tst.testOpen()
 
     msg = gdal.GetLastErrorMsg()
     assert "data access may be incomplete" in msg, "did not get expected warning."
     assert gdal.GetLastErrorType() == 2, "did not get expected warning."
-
-    return result
 
 
 ###############################################################################

@@ -42,7 +42,7 @@ from osgeo import gdal
 def test_cutline_1():
 
     tst = gdaltest.GDALTest("VRT", "cutline_noblend.vrt", 1, 11409)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -52,7 +52,7 @@ def test_cutline_1():
 def test_cutline_2():
 
     tst = gdaltest.GDALTest("VRT", "cutline_blend.vrt", 1, 21395)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -62,7 +62,7 @@ def test_cutline_2():
 def test_cutline_3():
 
     tst = gdaltest.GDALTest("VRT", "cutline_multipolygon.vrt", 1, 20827)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

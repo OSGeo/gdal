@@ -53,7 +53,7 @@ def test_bsb_1():
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall.kap", 1, 30321)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -70,7 +70,7 @@ def test_bsb_2():
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall.kap", 1, 30321)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -86,7 +86,7 @@ def test_bsb_3():
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_index.kap", 1, 30321)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -101,7 +101,7 @@ def test_bsb_4():
 
     tst = gdaltest.GDALTest("BSB", "bsb/rgbsmall_with_line_break.kap", 1, 30321)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

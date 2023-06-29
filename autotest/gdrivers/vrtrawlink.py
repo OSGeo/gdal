@@ -51,7 +51,7 @@ def _xmlsearch(root, nodetype, name):
 def test_vrtrawlink_1():
 
     tst = gdaltest.GDALTest("VRT", "small.vrt", 2, 12816)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

@@ -54,7 +54,7 @@ def test_kea_1():
     tst = gdaltest.GDALTest(
         "KEA", "byte.tif", 1, 4672, options=["IMAGEBLOCKSIZE=15", "THEMATIC=YES"]
     )
-    return tst.testCreateCopy(check_srs=True, check_gt=1, new_filename="tmp/byte.kea")
+    tst.testCreateCopy(check_srs=True, check_gt=1, new_filename="tmp/byte.kea")
 
 
 ###############################################################################

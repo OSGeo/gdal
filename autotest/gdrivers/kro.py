@@ -44,7 +44,7 @@ def test_kro_1():
 
     tst = gdaltest.GDALTest("KRO", "rgbsmall.tif", 2, 21053)
 
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################
@@ -55,7 +55,7 @@ def test_kro_2():
 
     tst = gdaltest.GDALTest("KRO", "../../gcore/data/uint16.tif", 1, 4672)
 
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################
@@ -66,7 +66,7 @@ def test_kro_3():
 
     tst = gdaltest.GDALTest("KRO", "../../gcore/data/float32.tif", 1, 4672)
 
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################
@@ -77,7 +77,7 @@ def test_kro_4():
 
     tst = gdaltest.GDALTest("KRO", "png/rgba16.png", 1, 1886)
 
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################

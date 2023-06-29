@@ -2975,7 +2975,7 @@ def test_zarr_create_copy():
     tst = gdaltest.GDALTest("Zarr", "../../gcore/data/uint16.tif", 1, 4672)
 
     try:
-        return tst.testCreate(vsimem=1, new_filename="/vsimem/test.zarr")
+        tst.testCreate(vsimem=1, new_filename="/vsimem/test.zarr")
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
@@ -3165,7 +3165,7 @@ def test_zarr_create_with_filter():
     )
 
     try:
-        ret = tst.testCreate(
+        tst.testCreate(
             vsimem=1, new_filename="/vsimem/test.zarr", delete_output_file=False
         )
 
@@ -3176,8 +3176,6 @@ def test_zarr_create_with_filter():
         j = json.loads(data)
         assert "filters" in j
         assert j["filters"] == [{"id": "delta", "dtype": "<u2"}]
-
-        return ret
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 

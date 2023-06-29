@@ -49,7 +49,7 @@ def test_kmlsuperoverlay_1():
         "KMLSUPEROVERLAY", "small_world.tif", 1, 30111, options=["FORMAT=PNG"]
     )
 
-    return tst.testCreateCopy(new_filename="/vsimem/kmlout.kmz")
+    tst.testCreateCopy(new_filename="/vsimem/kmlout.kmz")
 
 
 ###############################################################################
@@ -62,7 +62,7 @@ def test_kmlsuperoverlay_2():
         "KMLSUPEROVERLAY", "small_world.tif", 1, 30111, options=["FORMAT=PNG"]
     )
 
-    return tst.testCreateCopy(new_filename="/vsimem/kmlout.kml")
+    tst.testCreateCopy(new_filename="/vsimem/kmlout.kml")
 
 
 ###############################################################################

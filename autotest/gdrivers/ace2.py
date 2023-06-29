@@ -58,8 +58,6 @@ def test_ace2_1():
     UNIT["degree",0.0174532925199433,
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
-    ret = tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
+    tst.testOpen(check_gt=expected_gt, check_prj=expected_srs)
 
     gdal.Unlink("/vsimem/45N015E_5M.ACE2")
-
-    return ret
