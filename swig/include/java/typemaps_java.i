@@ -220,7 +220,7 @@
 {
   /* %typemap(freearg) (int nGCPs, GDAL_GCP const * pGCPs) */
   if ($2) {
-    free((void*) $2);
+    free( (void*) $2 );
   }
 }
 %typemap(jni) (int nGCPs, GDAL_GCP const * pGCPs ) "jobjectArray"
@@ -342,7 +342,7 @@
     }
     $result = jenv->NewByteArray(nBytes$argnum);
     jenv->SetByteArrayRegion($result, (jsize)0, (jsize)nBytes$argnum, (jbyte*)result);
-    CPLFree(result);
+    CPLFree( result );
 }
 
 %typemap(jni) (const char *pszHex, int *pnBytes) "jstring"
@@ -434,7 +434,7 @@
     if(result)
     {
         $result = jenv->NewStringUTF((const char *)result);
-        CPLFree(result);
+        CPLFree( result );
     }
 }
 
@@ -659,7 +659,7 @@
   /* %typemap(freearg) (int nList, int* pListOut) */
   if ($2) {
     jenv->SetIntArrayRegion($input, 0, $1, (jint*)$2);
-    free((void*) $2);
+    free( (void*) $2 );
   }
 }
 
@@ -694,7 +694,7 @@
     jenv->SetObjectArrayElement($input,0,intArray);
     jenv->DeleteLocalRef(intArray);
   }
-  CPLFree(pBuf$argnum);
+  CPLFree( pBuf$argnum );
 }
 
 %typemap(freearg) (int* pnList, int** ppListOut)
@@ -894,7 +894,7 @@
 {
   /* %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects) */
   if ($2) {
-    free((void*) $2);
+    free( (void*) $2 );
   }
 }
 
@@ -954,7 +954,7 @@
 {
   /* %typemap(freearg) (int object_list_count, GDALDatasetShadow **poObjects) */
   if ($2) {
-    free((void*) $2);
+    free( (void*) $2 );
   }
 }
 
@@ -1291,7 +1291,7 @@
 {
   /* %typemap(freearg) (char **argout) */
   if($1) {
-    CPLFree((void *)argout$argnum);
+    CPLFree( (void *) argout$argnum );
   }
 }
 
@@ -1329,7 +1329,7 @@
 %typemap(freearg) (double *argout[ANY])
 {
   /* %typemap(freearg) (double *argout[ANY]) */
-  CPLFree(*$1);
+  CPLFree( *$1 );
 }
 
 %typemap(jni) (double *argout[ANY]) "jdoubleArray"
@@ -1443,8 +1443,8 @@
   /* %typemap(freearg) char ** */
     int i;
     for (i=0; i<size$argnum-1; i++)
-      free($1[i]);
-    free($1);
+      free( $1[i] );
+    free( $1 );
 }
 
 /* This allows a C function to return a char ** as a Java String array */
@@ -1542,7 +1542,7 @@
   /* %typemap(freearg) (ctype *regularArrayOut, long nRegularArraySizeOut) */
   if (result == CE_None)
     jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
-  free($1);
+  free( $1 );
   //jenv->ReleasePrimitiveArrayCritical($input, $1, JNI_COMMIT);
   //jenv->ReleasePrimitiveArrayCritical($input, $1, 0);
 }
@@ -1733,9 +1733,9 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
         if (nDim == 3)
                 jenv->SetDoubleArrayRegion(doubleArray, (jsize)2, (jsize)1, &$4[i]);
     }
-    CPLFree($2);
-    CPLFree($3);
-    CPLFree($4);
+    CPLFree( $2 );
+    CPLFree( $3 );
+    CPLFree( $4 );
 }
 
 %typemap(jni) ( int nCount, double *x, double *y, double *z ) "jobjectArray"
@@ -1810,10 +1810,10 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
         if (nDim == 4)
             jenv->SetDoubleArrayRegion(doubleArray, (jsize)3, (jsize)1, &$5[i]);
     }
-    CPLFree($2);
-    CPLFree($3);
-    CPLFree($4);
-    CPLFree($5);
+    CPLFree( $2 );
+    CPLFree( $3 );
+    CPLFree( $4 );
+    CPLFree( $5 );
 }
 
 %typemap(jni) ( int nCount, double *x, double *y, double *z, double *t ) "jobjectArray"
@@ -1843,7 +1843,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 {
   /* %typemap(freearg)  (int* pnCountOut, int** outErrorCodes) */
   int* errorCodes = *($2);
-  VSIFree(errorCodes);
+  VSIFree( errorCodes );
 }
 
 %typemap(jni) (int* pnCountOut, int** outErrorCodes) "jintArray"
@@ -1892,7 +1892,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     /* %typemap(argout) ( int *panSuccess ) */
     if ($input)
         jenv->SetIntArrayRegion($input, (jsize)0, (jsize)xyzLen3, (jint*)$1);
-    CPLFree($1);
+    CPLFree( $1 );
 }
 
 %typemap(jni) ( int *panSuccess ) "jintArray"
@@ -1943,8 +1943,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
     /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
-    VSIFree(*$2);
-    VSIFree(*$3);
+    VSIFree( *$2 );
+    VSIFree( *$3 );
 }
 
 %typemap(argout)  (retGetPoints*)
@@ -1999,7 +1999,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   /* %typemap(freearg) (int nList, GInt64* pList) */
   if ($2) {
     jenv->SetLongArrayRegion($input, 0, $1, (jlong*)$2);
-    free((void*) $2);
+    free( (void*) $2 );
   }
 }
 
@@ -2007,7 +2007,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 {
   /* %typemap(freearg) (GInt64* pList) */
   if ($1) {
-    free((void*) $1);
+    free( (void*) $1 );
   }
 }
 
@@ -2097,7 +2097,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
             jobject obj = jenv->CallObjectMethod($input, vget, i);
             if (obj == NULL)
             {
-                free ($2 );
+                free( $2 );
                 SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
                 return $null;
             }
@@ -2148,7 +2148,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   /* %typemap(freearg)  (int nDims, GDALDimensionH *pDims) */
   
   if ($2) {
-    free((void*) $2);
+    free( (void*) $2 );
   }
 }
 
