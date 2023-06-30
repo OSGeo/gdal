@@ -275,15 +275,23 @@ Performance and caching
       :choices: TRUE, FALSE, EMPTY_DIR
       :default: FALSE
 
-      By default (FALSE), GDAL establishes a list of all the files in the directory
-      of the file passed to :cpp:func:`GDALOpen`. This can result in speed-ups in some use
-      cases, but also to major slow downs when the directory contains thousands of
-      other files. When set to TRUE, GDAL will not try to establish the list of
-      files.
+      By default (FALSE), GDAL establishes a list of all the files in the
+      directory of the file passed to :cpp:func:`GDALOpen`. This can result in
+      speed-ups in some use cases, but also to major slow downswhen the
+      directory contains thousands of other files. When set to TRUE, GDAL will
+      not try to establish the list of files. The number of files read can
+      also be limited by :config:`GDAL_READDIR_LIMIT_ON_OPEN`.
 
       If set to EMPTY_DIR, only the file that is being opened will be seen when a
       GDAL driver will request sibling files, so this is a way to disable loading
       side-car/auxiliary files.
+
+-  .. config:: GDAL_READDIR_LIMIT_ON_OPEN
+      :default: 1000
+      :since: 2.1
+
+      Sets the maximum number of files to scan when searching for sidecar files
+      in :cpp:func:`GDALOpen`.
 
 -  .. config:: VSI_CACHE
       :choices: TRUE, FALSE
