@@ -388,6 +388,13 @@ General options
       Sometimes this is not optimal and it would be better to write temporary files
       on bigger or faster drives (SSD).
 
+-  .. config:: GDAL_RASTERIO_RESAMPLING
+      :choices: NEAR, BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, AVERAGE, RMS, MODE, GAUSS
+      :default: NEAR
+
+      Sets the resampling algorithm to be used when reading a from a raster
+      into a buffer with different dimensions from the source region.
+
 -  .. config:: OGR_ARC_STEPSIZE
       :choices: <degrees>
       :default: 4
