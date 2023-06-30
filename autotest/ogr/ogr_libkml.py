@@ -500,8 +500,7 @@ def test_ogr_libkml_check_write_kmz():
 
 def test_ogr_libkml_write_kmz_use_doc_off():
     with gdal.config_option("LIBKML_USE_DOC.KML", "NO"):
-        ret = ogr_libkml_write("/vsimem/libkml_use_doc_off.kmz")
-    return ret
+        ogr_libkml_write("/vsimem/libkml_use_doc_off.kmz")
 
 
 def test_ogr_libkml_check_write_kmz_use_doc_off():
@@ -516,12 +515,11 @@ def test_ogr_libkml_check_write_dir():
     if not ogrtest.have_read_libkml:
         pytest.skip()
 
-    ret = ogr_libkml_check_write("/vsimem/libkmldir")
+    ogr_libkml_check_write("/vsimem/libkmldir")
     files = gdal.ReadDir("/vsimem/libkmldir")
     for filename in files:
         gdal.Unlink("/vsimem/libkmldir/" + filename)
     gdal.Rmdir("/vsimem/libkmldir")
-    return ret
 
 
 ###############################################################################

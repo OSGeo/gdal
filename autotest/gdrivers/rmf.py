@@ -825,7 +825,7 @@ def test_rmf_32c():
         options="-outsize 400% 400% -co COMPRESS=LZW -co NUM_THREADS=4",
     )
 
-    res = rmf_build_ov(
+    rmf_build_ov(
         source=ds_name,
         testid="32c",
         options=["RMFHUGE=NO", "COMPRESS=LZW", "NUM_THREADS=4"],
@@ -834,8 +834,6 @@ def test_rmf_32c():
         reopen=False,
     )
     os.remove(ds_name)
-
-    return res
 
 
 ###############################################################################

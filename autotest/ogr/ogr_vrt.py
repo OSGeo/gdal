@@ -1029,11 +1029,7 @@ def ogr_vrt_21_internal():
 
 def test_ogr_vrt_21():
     with gdaltest.error_handler():
-        try:
-            ret = ogr_vrt_21_internal()
-        except Exception:
-            ret = "fail"
-    return ret
+        ogr_vrt_21_internal()
 
 
 ###############################################################################

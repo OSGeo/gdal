@@ -245,12 +245,10 @@ def test_ogr_ods_5():
     )
 
     ds = ogr.Open("tmp/test.ods")
-    ret = ogr_ods_check(ds)
+    ogr_ods_check(ds)
     ds = None
 
     os.unlink("tmp/test.ods")
-
-    return ret
 
 
 ###############################################################################

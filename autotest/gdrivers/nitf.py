@@ -744,7 +744,7 @@ def test_nitf_28_jp2mrsid():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2MrSID")
 
-    ret = nitf_check_created_file(
+    nitf_check_created_file(
         32398,
         42502,
         38882,
@@ -753,8 +753,6 @@ def test_nitf_28_jp2mrsid():
     )
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
 
 
 ###############################################################################
@@ -767,7 +765,7 @@ def test_nitf_28_jp2kak():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2KAK")
 
-    ret = nitf_check_created_file(
+    nitf_check_created_file(
         32398,
         42502,
         38882,
@@ -776,8 +774,6 @@ def test_nitf_28_jp2kak():
     )
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
 
 
 ###############################################################################

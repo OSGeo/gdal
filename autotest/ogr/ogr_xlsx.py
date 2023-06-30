@@ -177,12 +177,10 @@ def test_ogr_xlsx_5():
     )
 
     ds = ogr.Open("tmp/test.xlsx")
-    ret = ogr_xlsx_check(ds)
+    ogr_xlsx_check(ds)
     ds = None
 
     os.unlink("tmp/test.xlsx")
-
-    return ret
 
 
 ###############################################################################

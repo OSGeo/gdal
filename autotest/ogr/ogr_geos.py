@@ -291,7 +291,7 @@ def test_ogr_geos_centroid_multipolygon():
 
     centroid = g1.Centroid()
 
-    ogrtest.check_feature_geometry(centroid, "POINT (1.5 0.5)") == 0
+    ogrtest.check_feature_geometry(centroid, "POINT (1.5 0.5)")
 
 
 ###############################################################################

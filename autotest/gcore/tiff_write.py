@@ -614,8 +614,7 @@ def test_tiff_write_17():
 
 def test_tiff_write_17_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
-        ret = test_tiff_write_17()
-    return ret
+        test_tiff_write_17()
 
 
 ###############################################################################
@@ -720,8 +719,7 @@ def test_tiff_write_imd_with_space_in_values():
 
 def test_tiff_write_18_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
-        ret = test_tiff_write_18()
-    return ret
+        test_tiff_write_18()
 
 
 ###############################################################################
@@ -1651,8 +1649,7 @@ def test_tiff_write_46():
 def test_tiff_write_47():
 
     with gdaltest.SetCacheMax(0):
-        ret = test_tiff_write_3()
-    return ret
+        test_tiff_write_3()
 
 
 ###############################################################################

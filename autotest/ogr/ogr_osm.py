@@ -301,11 +301,9 @@ def test_ogr_osm_3(options=None, all_layers=False):
             "tmp/ogr_osm_3", "data/osm/test.pbf", options=layers + options
         )
 
-    ret = test_ogr_osm_1(filepath)
+    test_ogr_osm_1(filepath)
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filepath)
-
-    return ret
 
 
 ###############################################################################
@@ -314,8 +312,7 @@ def test_ogr_osm_3(options=None, all_layers=False):
 
 def test_ogr_osm_3_sqlite_nodes():
     with gdal.config_option("OSM_USE_CUSTOM_INDEXING", "NO"):
-        ret = test_ogr_osm_3(options="-skip")
-    return ret
+        test_ogr_osm_3(options="-skip")
 
 
 ###############################################################################
@@ -324,8 +321,7 @@ def test_ogr_osm_3_sqlite_nodes():
 
 def test_ogr_osm_3_custom_compress_nodes():
     with gdal.config_option("OSM_COMPRESS_NODES", "YES"):
-        ret = test_ogr_osm_3()
-    return ret
+        test_ogr_osm_3()
 
 
 ###############################################################################
@@ -514,9 +510,7 @@ def test_ogr_osm_8():
 def test_ogr_osm_9():
 
     with gdal.config_option("OSM_USE_CUSTOM_INDEXING", "NO"):
-        ret = test_ogr_osm_8()
-
-    return ret
+        test_ogr_osm_8()
 
 
 ###############################################################################
