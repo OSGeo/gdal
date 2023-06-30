@@ -944,6 +944,11 @@ PROJ options
       If ``NO``, disables the coordinate epoch associated with the target or
       source CRS when transforming between a static and dynamic CRS.
 
+-  .. config:: OSR_WKT_FORMAT
+      :choices: SFSQL, WKT1_SIMPLE, WKT1, WKT1_GDAL, WKT1_ESRI, WKT2_2015, WKT2_2018, WKT2, DEFAULT
+      :default: DEFAULT
+
+      Sets the format for writing a CRS to WKT.
 
 .. _list_config_options:
 

@@ -2442,3 +2442,18 @@ def test_osr_basic_warning_exceptions():
     except Exception as e:
         pytest.skip("got exception %s" % str(e))
     assert "FutureWarning: Neither osr.UseExceptions()" in err
+
+
+def test_osr_basic_wkt_format_configuration_option():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32145)
+
+    with gdal.config_option("OSR_WKT_FORMAT", "WKT1"):
+        wkt1 = srs.ExportToWkt()
+
+    with gdal.config_option("OSR_WKT_FORMAT", "WKT2"):
+        wkt2 = srs.ExportToWkt()
+
+    assert "BBOX" not in wkt1
+    assert "BBOX" in wkt2
