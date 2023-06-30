@@ -1094,6 +1094,14 @@ the default behavior of the GTiff driver.
       always written. If set to NO, then the transformation will not be written in
       any situation.
 
+-  .. config:: CHECK_DISK_FREE_SPACE
+      :choices: YES, NO
+      :default: YES
+
+      If ``YES``, ensure that enough disk space is available before attempting to
+      write an uncompressed, non-sparse GeoTIFF. Disabling this check is not
+      expected to be necessary, unless GDAL is incorrectly determining the disk
+      space available on the destination file system.
 
 Codec Recommendations
 ---------------------
