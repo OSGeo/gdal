@@ -148,6 +148,9 @@ import org.gdal.osr.SpatialReference;
 import org.gdal.gdalconst.gdalconst;
 import org.gdal.gdal.Dimension;
 import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
+import java.lang.Integer;
 %}
 
 %{
@@ -202,7 +205,10 @@ import java.util.Vector;
 
 	if (index < 0 || index >= dimCount) {
 	
-		free((void*) dims);  // TODO or some other free routine or a free typemap?
+		// TODO what free routine? or a free typemap?
+		
+		//free((void*) dims);
+		//CPLFree((void*) dims);
 	
 		return NULL;
 	}
@@ -210,8 +216,11 @@ import java.util.Vector;
 	
 		GDALDimensionH retVal = dims[index];
 		
-		free((void*) dims);  // TODO or some other free routine or a free typemap?
-
+		// TODO what free routine? or a free typemap?
+		
+		//free((void*) dims);
+		//CPLFree((void*) dims);
+	
 		return retVal;
 	}
   }
@@ -395,21 +404,44 @@ import java.util.Vector;
 
 %typemap(javacode) GDALMDArrayHS %{
 
-    public Vector<Dimension> GetDimensions() {
+	public Vector<Dimension> GetDimensions() {
 
-		Vector<Dimension> vec = new Vector<>();
+		Vector<Dimension> vec = new Vector<Dimension>();
 		
-		long numDims = GetDimensionCount();
-		
-		for (long i = 0; i < numDims; i++) {
+		long size = GetDimensionCount();
+        
+		if (size > Integer.MAX_VALUE)
+			throw new IllegalArgumentException("java vector can hold at most "+Integer.MAX_VALUE+" values.");
+        
+		for (int i = 0; i < size; i++) {
 
 			Dimension dim = GetDimension(i);
 			
 			vec.add(dim);
 		}
-		
+
 		return vec;
-    }
+	}
+    
+	public Dimension[] GetDimensionsAsArray() {
+    
+		long size = GetDimensionCount();
+        
+		if (size > Integer.MAX_VALUE)
+			throw new IllegalArgumentException("java array can hold at most "+Integer.MAX_VALUE+" values.");
+        
+		Dimension[] array = new Dimension[(int) size];
+	    
+		for (int i = 0; i < size; i++) {
+	   
+			Dimension dim = GetDimension(i);
+	       
+			array[i] = dim;
+		}
+	    
+		return array;
+	}
+
 %}
 
 %typemap(javaimports) GDALDriverShadow %{
@@ -1274,22 +1306,36 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %extend GDALGroupHS {
 
-  GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH dataTypeH) {
+	GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH dataTypeH) {
   
-    //printf("      %d %p\n",nDims, pDims);
+		//printf("      %d %p\n", nDims, pDims);
     
-    return CreateMDA(self, name, nDims, pDims, dataTypeH);
-  }
+		return CreateMDA(self, name, nDims, pDims, dataTypeH);
+	}
   
 } /* extend */
 
 %typemap(javacode) GDALGroupHS %{
   
-  public Dimension CreateDimension(String name, String type, String direction, long size) {
+	public Dimension CreateDimension(String name, String type, String direction, long size) {
     
-    return CreateDimension(name, type, direction, BigInteger.valueOf(size));
-  }
+		return CreateDimension(name, type, direction, BigInteger.valueOf(size));
+	}
 
+	public MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType dataType) {
+  
+		Vector<Dimension> vDims = new Vector<>();
+    
+		for (int i = 0; i < dims.length; i++) {
+
+			Dimension dim = dims[i];
+      
+			vDims.add(dim);
+		}
+    
+		return CreateMDArray(name, vDims, dataType);
+	}
+  
 %}
 
 %include callback.i
