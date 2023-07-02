@@ -2204,3 +2204,40 @@ Might need to define %apply's in Multdimensional.i
 %typemap(javaout) (GInt64*) {
     return $jnicall;
 }
+
+
+/***** GUIntBig* typemaps *******************************/
+
+// TODO: MDArray java docs do not match int/GUIntBig* to long[]
+//   My %apply code is not workign for some reason.
+
+%typemap(in) (int nList, GUIntBig* pListOut)
+{
+  if ($input)
+  {
+    $1 = jenv->GetArrayLength($input);
+    if ($1 == 0)
+       $2 = (GUIntBig *) NULL;
+    else
+       $2 = (GUIntBig *) jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $1 = 0;
+    $2 = (GUIntBig *) NULL;
+  }
+}
+
+%typemap(freearg) (int nList, GUIntBig* pListOut)
+{
+  if ($2) {
+    jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
+  }
+}
+
+%typemap(jni) (int, GUIntBig*) "jlongArray"
+%typemap(jtype) (int, GUIntBig*) "long[]"
+%typemap(jstype) (int, GUIntBig*) "long[]"
+%typemap(javain) (int, GUIntBig*) "$javainput"
+%typemap(javaout) (int, GUIntBig*) {
+    return $jnicall;
+}

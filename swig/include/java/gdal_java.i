@@ -237,6 +237,11 @@ import java.lang.Integer;
 
 %extend GDALMDArrayHS {
 
+/*
+%apply (int nList, GUIntBig* pList) { (int nDimensions, GUIntBig* dimensions)};
+%apply (int nList, GUIntBig* pList) { (int nDimCount, GUIntBig* newDimSizes)};
+*/
+
   GDALDimensionH GetDimension(size_t index) {
 
     return GDALGetDim(self, index);
