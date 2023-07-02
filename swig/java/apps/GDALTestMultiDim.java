@@ -83,10 +83,10 @@ public class GDALTestMultiDim
         System.out.println("5");
         System.out.flush();
 
-		Vector<Dimension> inDims = new Vector<Dimension>();
+		Dimension[] inDims = new Dimension[dims.length];
 		
 		for (int i = 0; i < dims.length; i++) {
-			
+
 			Dimension d =
 				
 				rg.CreateDimension("name"+i, "type"+i, "direction"+i, dims[i]);
@@ -96,7 +96,7 @@ public class GDALTestMultiDim
 				throw new RuntimeException("dimension create returned null!");
 			}
 			
-			inDims.add(d);
+			inDims[i] = d;
 		}
 		
         System.out.println("6");
@@ -107,7 +107,31 @@ public class GDALTestMultiDim
         System.out.println("7");
         System.out.flush();
 
-		Vector<Dimension> outDims = (Vector<Dimension>) mdarray.GetDimensions();
+		long cnt = mdarray.GetDCnt();
+		
+        System.out.println("7.1");
+        System.out.flush();
+
+		for (long i = 0; i < cnt; i++) {
+
+        System.out.println("7.2");
+        System.out.flush();
+
+			Dimension d = mdarray.GetDimension(i);
+
+        System.out.println("7.3");
+        System.out.flush();
+
+			if (d == null){
+				System.out.println("SHIT");
+				System.out.flush();
+			}
+		}
+		
+        System.out.println("7.4");
+        System.out.flush();
+
+		Vector<Dimension> outDims = mdarray.GetDimensions();
 		
         System.out.println("8");
         System.out.flush();
