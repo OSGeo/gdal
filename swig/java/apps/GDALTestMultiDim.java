@@ -107,7 +107,7 @@ public class GDALTestMultiDim
         System.out.println("7");
         System.out.flush();
 
-		long cnt = mdarray.GetDCnt();
+		long cnt = mdarray.GetDimensionCount();
 		
         System.out.println("7.1");
         System.out.flush();
