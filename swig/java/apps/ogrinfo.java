@@ -81,7 +81,7 @@ public class ogrinfo
                 bVerbose = false;
             else if (args[i].equals("-fid") && i + 1 < args.length)
             {
-                nFetchFID = (int) Double.parseDouble(args[++i]);
+                nFetchFID = Integer.parseInt(args[++i]);
             }
             else if (args[i].equals("-spat") && i + 4 < args.length)
             {
@@ -113,7 +113,7 @@ public class ogrinfo
             }
             else if( args[i].equals("-rc") && i + 1 < args.length)
             {
-                nRepeatCount = (int) Double.parseDouble(args[++i]);
+                nRepeatCount = Integer.parseInt(args[++i]);
             }
             else if( args[i].equals("-al") )
             {
