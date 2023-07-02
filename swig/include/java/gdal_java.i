@@ -208,7 +208,8 @@ import java.lang.Integer;
 		// TODO what free routine? or a free typemap?
 		
 		free((void*) dims);
-		//CPLFree((void*) dims);
+		// CPLFree((void*) dims);
+		// VSIFree()?
 	
 		return NULL;
 	}
@@ -219,7 +220,8 @@ import java.lang.Integer;
 		// TODO what free routine? or a free typemap?
 		
 		free((void*) dims);
-		//CPLFree((void*) dims);
+		// CPLFree((void*) dims);
+		// VSIFree()?
 	
 		return retVal;
 	}
@@ -409,6 +411,7 @@ import java.lang.Integer;
 
 %typemap(javacode) GDALMDArrayHS %{
 
+/*
 	public Vector<Dimension> GetDimensions() {
 
 		Vector<Dimension> vec = new Vector<Dimension>();
@@ -427,8 +430,9 @@ import java.lang.Integer;
 
 		return vec;
 	}
+  */
     
-	public Dimension[] GetDimensionsAsArray() {
+	public Dimension[] GetDimensions() {
     
 		long size = GetDimensionCount();
         
