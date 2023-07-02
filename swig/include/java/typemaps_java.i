@@ -69,7 +69,6 @@
  ***************************************************/
 
 %typemap(in) (double *val, int*hasval) ( double tmpval, int tmphasval ) {
-  /* %typemap(in,numinputs=0) (double *val, int*hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
   if($input == NULL || jenv->GetArrayLength($input) < 1) {
@@ -79,7 +78,6 @@
 }
 
 %typemap(argout) (double *val, int*hasval) {
-  /* %typemap(argout) (double *val, int*hasval) */
   const jclass Double = jenv->FindClass("java/lang/Double");
   const jmethodID ctor = jenv->GetMethodID(Double, "<init>",
     "(D)V");
@@ -109,7 +107,6 @@
 /* Android Version with int */
 
 %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) {
-  /* %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) */
   tmp.c4 = ($input >> 24) & 0xff;
   tmp.c1 = ($input >> 16) & 0xff;
   tmp.c2 = ($input >> 8) & 0xff;
@@ -118,7 +115,6 @@
 }
 
 %typemap(out) (GDALColorEntry *) {
-  /* %typemap(out) (GDALColorEntry *) */
  /* Android Color is int = (alpha << 24) | (red << 16) | (green << 8) | blue */
   $result = ($1->c4 << 24) | ($1->c1 << 16) | ($1->c2 << 8) | $1->c3;
 }
@@ -136,7 +132,6 @@
 /* J2SE Version with java.awt.Color */
 
 %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) {
-  /* %typemap(in) (GDALColorEntry *) (GDALColorEntry tmp) */
   $1 = NULL;
   if ($input == NULL)
   {
@@ -162,7 +157,6 @@
 }
 
 %typemap(out) (GDALColorEntry *) {
-  /* %typemap(out) (GDALColorEntry *) */
   const jclass Color = jenv->FindClass("java/awt/Color");
   const jmethodID ccon = jenv->GetMethodID(Color, "<init>",
     "(IIII)V");
@@ -185,7 +179,6 @@
 
 %typemap(in, numinputs=1) (int nGCPs, GDAL_GCP const * pGCPs)
 {
-  /* %typemap(in, numinputs=1) (int nGCPs, GDAL_GCP const * pGCPs) */
   if ($input)
   {
     $1 = jenv->GetArrayLength($input);
@@ -195,7 +188,7 @@
     {
         $2 = (GDAL_GCP*) malloc(sizeof(GDAL_GCP) * $1);
         int i;
-        for (i = 0; i<$1; i++) {
+        for (i = 0; i < $1; i++) {
             jobject obj = (jobject)jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
@@ -218,7 +211,6 @@
 
 %typemap(freearg) (int nGCPs, GDAL_GCP const * pGCPs)
 {
-  /* %typemap(freearg) (int nGCPs, GDAL_GCP const * pGCPs) */
   if ($2) {
     free( (void*) $2 );
   }
@@ -237,20 +229,20 @@
 
 %typemap(in, numinputs=1) (int *nGCPs, GDAL_GCP const **pGCPs ) (int nGCPs=0, GDAL_GCP *pGCPs=0 )
 {
-  /* %typemap(in,numinputs=1) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   $1 = &nGCPs;
   $2 = &pGCPs;
 }
+
 %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs )
 {
-  /* %typemap(argout) (int *nGCPs, GDAL_GCP const **pGCPs ) */
   const jclass GCPClass = jenv->FindClass("org/gdal/gdal/GCP");
   const jclass vectorClass = jenv->FindClass("java/util/Vector");
   const jmethodID add = jenv->GetMethodID(vectorClass, "add", "(Ljava/lang/Object;)Z");
   const jmethodID GCPcon = jenv->GetMethodID(GCPClass, "<init>",
     "(DDDDDLjava/lang/String;Ljava/lang/String;)V");
 
-  for( int i = 0; i < *$1; i++ ) {
+  int i;
+  for (i = 0; i < *$1; i++ ) {
     jstring stringInfo = jenv->NewStringUTF((*$2)[i].pszInfo);
     jstring stringId = jenv->NewStringUTF((*$2)[i].pszId);
     jobject GCPobj = jenv->NewObject(GCPClass, GCPcon,
@@ -281,7 +273,6 @@
 
 %typemap(in) (int nLen, unsigned char *pBuf )
 {
-  /* %typemap(in) (int nLen, unsigned char *pBuf ) */
   $1 = 0;
   $2 = NULL;
   if ($input)
@@ -293,12 +284,10 @@
 
 %typemap(argout) (int nLen, unsigned char *pBuf )
 {
-  /* %typemap(argout) (int nLen, unsigned char *pBuf ) */
 }
 
 %typemap(freearg) (int nLen, unsigned char *pBuf )
 {
-  /* %typemap(freearg) (int nLen, unsigned char *pBuf ) */
   /* This calls JNI_ABORT, so any modifications will not be passed back
       into the Java caller
    */
@@ -321,7 +310,6 @@
 
 %typemap(in) (const char *pszHex, int *pnBytes) (int nBytes)
 {
-    /* %typemap(in) (const char *pszHex, int *pnBytes) (int nBytes) */
     if ($input)
     {
         $1 = (char *)jenv->GetStringUTFChars($input, 0);
@@ -335,7 +323,6 @@
 
 %typemap(argout) (const char *pszHex, int *pnBytes)
 {
-    /* %typemap(argout) (const char *pszHex, int *pnBytes) */
     if ($input)
     {
         jenv->ReleaseStringUTFChars($input, (char*)$1);
@@ -360,7 +347,6 @@
 
 %typemap(out) (GByte* outBytes )
 {
-    /* %typemap(out) (GByte* outBytes ) */
 }
 
 %typemap(jni) (GByte* outBytes ) "jbyteArray"
@@ -377,7 +363,6 @@
 
 %typemap(in) (const char* stringWithDefaultValue)
 {
-  /* %typemap(in) (const char* stringWithDefaultValue) */
   if ($input)
   {
     $1 = (char *)jenv->GetStringUTFChars($input, 0);
@@ -385,7 +370,6 @@
 }
 %typemap(freearg) (const char* stringWithDefaultValue)
 {
-  /* %typemap(freearg) (const char* stringWithDefaultValue) */
   if ($input)
   {
     jenv->ReleaseStringUTFChars($input, (char*)$1);
@@ -406,13 +390,11 @@
 
 %typemap(in) (tostring argin)
 {
-  /* %typemap(in) (tostring argin) */
   if ($input)
     $1 = (char *)jenv->GetStringUTFChars($input, 0);
 }
 %typemap(freearg) (tostring argin)
 {
-  /* %typemap(in) (tostring argin) */
   if ($input)
     jenv->ReleaseStringUTFChars($input, (char*)$1);
 }
@@ -428,9 +410,9 @@
 /***************************************************
  * Typemaps for  (retStringAndCPLFree*)
  ***************************************************/
+
 %typemap(out) (retStringAndCPLFree*)
 {
-    /* %typemap(out) (retStringAndCPLFree*) */
     if(result)
     {
         $result = jenv->NewStringUTF((const char *)result);
@@ -453,13 +435,12 @@
 
 %typemap(in) (char **ignorechange) (char* ori_val, char *val)
 {
-  /* %typemap(in) (char **ignorechange) */
   ori_val = val = (char *)jenv->GetStringUTFChars($input, 0);
   $1 = &val;
 }
+
 %typemap(freearg) (char **ignorechange)
 {
-  /* %typemap(freearg) (char **ignorechange) */
   jenv->ReleaseStringUTFChars($input, ori_val$argnum);
 }
 
@@ -477,14 +458,12 @@
 
 %typemap(in,numinputs=0) (int *nLen, char **pBuf ) ( int nLen, char *pBuf )
 {
-  /* %typemap(in) (int *nLen, char **pBuf ) */
   $1 = &nLen;
   $2 = &pBuf;
 }
 
 %typemap(argout) (int *nLen, char **pBuf )
 {
-  /* %typemap(argout) (int *nLen, char **pBuf ) */
   jbyteArray byteArray = jenv->NewByteArray(nLen$argnum);
   jenv->SetByteArrayRegion(byteArray, (jsize)0, (jsize)nLen$argnum, (jbyte*)pBuf$argnum);
   $result = byteArray;
@@ -492,7 +471,6 @@
 
 %typemap(freearg) (int *nLen, char **pBuf )
 {
-  /* %typemap(freearg) (int *nLen, char **pBuf ) */
   if( nLen$argnum ) {
     VSIFree( pBuf$argnum );
   }
@@ -512,14 +490,12 @@
 
 %typemap(in,numinputs=0) (size_t *nLen, char **pBuf ) ( size_t nLen, char *pBuf )
 {
-  /* %typemap(in) (size_t *nLen, char **pBuf ) */
   $1 = &nLen;
   $2 = &pBuf;
 }
 
 %typemap(argout) (size_t *nLen, char **pBuf )
 {
-  /* %typemap(argout) (size_t *nLen, char **pBuf ) */
   jbyteArray byteArray = jenv->NewByteArray(nLen$argnum);
   jenv->SetByteArrayRegion(byteArray, (jsize)0, (jsize)nLen$argnum, (jbyte*)pBuf$argnum);
   $result = byteArray;
@@ -527,7 +503,6 @@
 
 %typemap(freearg) (size_t *nLen, char **pBuf )
 {
-  /* %typemap(freearg) (size_t *nLen, char **pBuf ) */
   if( nLen$argnum ) {
     VSIFree( pBuf$argnum );
   }
@@ -546,7 +521,6 @@
 
 %typemap(out,fragment="OGRErrMessages") OGRErr
 {
-  /* %typemap(out) OGRErr */
   if (result != 0 && bUseExceptions) {
     SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
       OGRErrMessages(result));
@@ -554,10 +528,9 @@
   }
   $result = (jint)result;
 }
+
 %typemap(ret) OGRErr
 {
-  /* %typemap(ret) OGRErr */
-
 }
 
 
@@ -565,21 +538,20 @@
 
 %typemap(out) IF_ERR_RETURN_NONE
 {
-  /* %typemap(out) IF_ERR_RETURN_NONE */
   $result = 0;
 }
+
 %typemap(ret) IF_ERR_RETURN_NONE
 {
- /* %typemap(ret) IF_ERR_RETURN_NONE */
 }
+
 %typemap(out) IF_FALSE_RETURN_NONE
 {
-  /* %typemap(out) IF_FALSE_RETURN_NONE */
   $result = 0;
 }
+
 %typemap(ret) IF_FALSE_RETURN_NONE
 {
- /* %typemap(ret) IF_FALSE_RETURN_NONE */
 }
 
 /***************************************************
@@ -587,9 +559,9 @@
  *  Java typemaps for (int nList, int* pList)
  *
  ***************************************************/
+
 %typemap(in) (int nList, int* pList)
 {
-  /* %typemap(in) (int nList, int* pList) */
   /* check if is List */
   if ($input)
   {
@@ -608,12 +580,10 @@
 
 %typemap(argout) (int nList, int* pList)
 {
-  /* %typemap(argout) (int nList, int* pList) */
 }
 
 %typemap(freearg) (int nList, int* pList)
 {
-  /* %typemap(freearg) (int nList, int* pList) */
   if ($2) {
     jenv->ReleaseIntArrayElements($input, (jint*)$2, JNI_ABORT);
   }
@@ -635,7 +605,6 @@
  ***************************************************/
 %typemap(in) (int nList, int* pListOut)
 {
-  /* %typemap(in) (int nList, int* pListOut) */
   /* check if is List */
   if ($input)
   {
@@ -651,12 +620,10 @@
 
 %typemap(argout) (int nList, int* pListOut)
 {
-  /* %typemap(argout) (int nList, int* pListOut) */
 }
 
 %typemap(freearg) (int nList, int* pListOut)
 {
-  /* %typemap(freearg) (int nList, int* pListOut) */
   if ($2) {
     jenv->SetIntArrayRegion($input, 0, $1, (jint*)$2);
     free( (void*) $2 );
@@ -679,14 +646,12 @@
  ***************************************************/
 %typemap(in) (int* pnList, int** ppListOut) (int nLen = 0, int* pBuf = NULL)
 {
-  /* %typemap(in) (int* pnList, int** ppListOut) */
   $1 = &nLen;
   $2 = &pBuf;
 }
 
 %typemap(argout) (int* pnList, int** ppListOut)
 {
-  /* %typemap(argout) (int* pnList, int** ppListOut) */
   if($input && jenv->GetArrayLength($input) >= 1)
   {
     jintArray intArray = jenv->NewIntArray(nLen$argnum);
@@ -699,7 +664,6 @@
 
 %typemap(freearg) (int* pnList, int** ppListOut)
 {
-  /* %typemap(freearg) (int* pnList, int** ppListOut) */
 }
 
 %typemap(jni) (int* pnList, int** ppListOut) "jobjectArray"
@@ -717,7 +681,6 @@
  ***************************************************/
 %typemap(in) (int id, int *nLen, const int **pList) (int nLen, int* pList)
 {
-  /* %typemap(in) (int id, int *nLen, const int **pList) */
   $1 = $input;
   $2 = &nLen;
   $3 = &pList;
@@ -725,7 +688,6 @@
 
 %typemap(argout) (int id, int *nLen, const int **pList)
 {
-  /* %typemap(argout) (int id, int *nLen, const int **pList) */
   jintArray intArray = jenv->NewIntArray(nLen$argnum);
   jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nLen$argnum, (jint*)pList$argnum);
   $result = intArray;
@@ -733,7 +695,6 @@
 
 %typemap(freearg) (int id, int *nLen, const int **pList)
 {
-  /* %typemap(freearg) (int id, int *nLen, const int **pList) */
 }
 
 %typemap(jni) (int id, int *nLen, const int **pList) "jint"
@@ -763,7 +724,6 @@
  ***************************************************/
 %typemap(in) (int id, int *nLen, const double **pList) (int nLen, double* pList)
 {
-  /* %typemap(in) (int id, int *nLen, const double **pList) */
   $1 = $input;
   $2 = &nLen;
   $3 = &pList;
@@ -771,7 +731,6 @@
 
 %typemap(argout) (int id, int *nLen, const double **pList)
 {
-  /* %typemap(argout) (int id, int *nLen, const double **pList) */
   jdoubleArray doubleArray = jenv->NewDoubleArray(nLen$argnum);
   jenv->SetDoubleArrayRegion(doubleArray, (jsize)0, (jsize)nLen$argnum, pList$argnum);
   $result = doubleArray;
@@ -779,7 +738,6 @@
 
 %typemap(freearg) (int id, int *nLen, const double **pList)
 {
-  /* %typemap(freearg) (int id, int *nLen, const double **pList) */
 }
 
 %typemap(jni) (int id, int *nLen, const double **pList) "jint"
@@ -801,14 +759,15 @@
 %typemap(javaout) (retDoubleArray) {
     return $jnicall;
   }
+
 /***************************************************
  *
  *  Java typemaps for (int nList, double* pList)
  *
  ***************************************************/
+
 %typemap(in) (int nList, double* pList)
 {
-  /* %typemap(in) (int nList, double* pList) */
   /* check if is List */
   if ($input)
   {
@@ -827,12 +786,10 @@
 
 %typemap(argout) (int nList, double* pList)
 {
-  /* %typemap(argout) (int nList, double* pList) */
 }
 
 %typemap(freearg) (int nList, double* pList)
 {
-  /* %typemap(freearg) (int nList, double* pList) */
   if ($2) {
     jenv->ReleaseDoubleArrayElements($input, $2, JNI_ABORT);
   }
@@ -851,9 +808,9 @@
  *  Java typemaps for (int object_list_count, GDALRasterBandShadow **poObjects)
  *
  ***************************************************/
+
 %typemap(in) (int object_list_count, GDALRasterBandShadow **poObjects)
 {
-  /* %typemap(in)(int object_list_count, GDALRasterBandShadow **poObjects) */
   /* check if is List */
   if ($input)
   {
@@ -864,7 +821,7 @@
     {
         $2 = (GDALRasterBandShadow**) malloc(sizeof(GDALRasterBandShadow*) * $1);
         int i;
-        for (i = 0; i<$1; i++) {
+        for (i = 0; i < $1; i++) {
             jobject obj = (jobject)jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
@@ -887,12 +844,10 @@
 
 %typemap(argout) (int object_list_count, GDALRasterBandShadow **poObjects)
 {
-  /* %typemap(argout) (int object_list_count, GDALRasterBandShadow **poObjects) */
 }
 
 %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects)
 {
-  /* %typemap(freearg) (int object_list_count, GDALRasterBandShadow **poObjects) */
   if ($2) {
     free( (void*) $2 );
   }
@@ -911,9 +866,9 @@
  *  Java typemaps for (int object_list_count, GDALDatasetShadow **poObjects)
  *
  ***************************************************/
+
 %typemap(in) (int object_list_count, GDALDatasetShadow **poObjects)
 {
-  /* %typemap(in)(int object_list_count, GDALDatasetShadow **poObjects) */
   /* check if is List */
   if ($input)
   {
@@ -924,7 +879,7 @@
     {
         $2 = (GDALDatasetShadow**) malloc(sizeof(GDALDatasetShadow*) * $1);
         int i;
-        for (i = 0; i<$1; i++) {
+        for (i = 0; i < $1; i++) {
             jobject obj = (jobject)jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
@@ -947,12 +902,10 @@
 
 %typemap(argout) (int object_list_count, GDALDatasetShadow **poObjects)
 {
-  /* %typemap(argout) (int object_list_count, GDALDatasetShadow **poObjects) */
 }
 
 %typemap(freearg) (int object_list_count, GDALDatasetShadow **poObjects)
 {
-  /* %typemap(freearg) (int object_list_count, GDALDatasetShadow **poObjects) */
   if ($2) {
     free( (void*) $2 );
   }
@@ -972,7 +925,6 @@
 
 %typemap(in) char **dict
 {
-  /* %typemap(in) char **dict */
   /* Convert the Hashtable to a char array */
   $1 = NULL;
   if($input != 0) {
@@ -1014,7 +966,6 @@
 
 %typemap(out) char **dict
 {
-  /* %typemap(out) char ** -> to hash */
   /* Convert a char array to a Hashtable */
   char **stringarray = $1;
   const jclass hashtable = jenv->FindClass("java/util/Hashtable");
@@ -1045,7 +996,6 @@
 
 %typemap(freearg) char **dict
 {
-  /* %typemap(freearg) char **dict */
   CSLDestroy( $1 );
 }
 
@@ -1057,15 +1007,12 @@
     return $jnicall;
   }
 
-
-
 /***************************************************
  * Typemaps maps char** arguments from a Vector
  ***************************************************/
 
 %typemap(in) char **options
 {
-  /* %typemap(in) char **options */
   $1 = NULL;
   if($input != 0) {
     const jclass vector = jenv->FindClass("java/util/Vector");
@@ -1097,14 +1044,14 @@
     }
   }
 }
+
 %typemap(freearg) char **options
 {
-  /* %typemap(freearg) char **options */
   CSLDestroy( $1 );
 }
+
 %typemap(out) char **options
 {
-  /* %typemap(out) char ** -> Vector */
   char **stringarray = $1;
   const jclass vector = jenv->FindClass("java/util/Vector");
   const jmethodID constructor = jenv->GetMethodID(vector, "<init>", "()V");
@@ -1136,7 +1083,6 @@
 
 %typemap(out) char **retAsStringArrayNoFree
 {
-  /* %typemap(out) char **retAsStringArrayNoFree -> String[] */
   char **stringarray = result;
   int i;
   int len=CSLCount(result);
@@ -1146,9 +1092,9 @@
   $result = jenv->NewObjectArray(len, clazz, NULL);
   /* exception checking omitted */
 
-  for (i=0; i<len; i++) {
+  for (i = 0; i < len; i++) {
       temp_string = jenv->NewStringUTF(*stringarray++);
-      jenv->SetObjectArrayElement(jresult, i, temp_string);
+      jenv->SetObjectArrayElement($result, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
   }
 }
@@ -1167,7 +1113,6 @@
 
 %typemap(out) char **retAsStringArrayAndFree
 {
-  /* %typemap(out) char **retAsStringArrayAndFree -> String[] */
   char **stringarray = result;
   int i;
   int len=CSLCount(result);
@@ -1177,9 +1122,9 @@
   $result = jenv->NewObjectArray(len, clazz, NULL);
   /* exception checking omitted */
 
-  for (i=0; i<len; i++) {
+  for (i = 0; i < len; i++) {
       temp_string = jenv->NewStringUTF(*stringarray++);
-      jenv->SetObjectArrayElement(jresult, i, temp_string);
+      jenv->SetObjectArrayElement($result, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
   }
 
@@ -1194,14 +1139,12 @@
     return $jnicall;
   }
 
-
 /***************************************************
  * Typemaps for char **OUTPUT
  ***************************************************/
 
 %typemap(in) char **OUTPUT (char* ret)
 {
-    /* %typemap(in) char **OUTPUT (char* ret) */
     if (!$input) {
       SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "array null");
       return $null;
@@ -1215,7 +1158,6 @@
 
 %typemap(argout) char **OUTPUT
 {
-  /* %typemap(argout) char **OUTPUT */
   jstring temp_string = jenv->NewStringUTF(ret$argnum);
   jenv->SetObjectArrayElement($input, 0, temp_string);
   jenv->DeleteLocalRef(temp_string);
@@ -1236,9 +1178,9 @@
 
 /* Almost same as %typemap(out) char **options */
 /* but we CSLDestroy the char** pointer at the end */
+
 %typemap(out) char **CSL
 {
-  /* %typemap(out) char **CSL -> vector of strings */
   char **stringarray = $1;
   const jclass vector = jenv->FindClass("java/util/Vector");
   const jmethodID constructor = jenv->GetMethodID(vector, "<init>", "()V");
@@ -1271,13 +1213,11 @@
 
 %typemap(in) (char **argout) ( char *argout=0 )
 {
-  /* %typemap(in) (char **argout) */
   $1 = &argout;
 }
 
 %typemap(argout) (char **argout)
 {
-  /* %typemap(argout) (char **argout) */
   jstring temp_string;
 
   if($input != NULL && (int)jenv->GetArrayLength($input) >= 1) {
@@ -1289,7 +1229,6 @@
 
 %typemap(freearg) (char **argout)
 {
-  /* %typemap(freearg) (char **argout) */
   if($1) {
     CPLFree( (void *) argout$argnum );
   }
@@ -1310,7 +1249,6 @@
 
 %typemap(in) (double *argout[ANY]) (double *argout)
 {
-  /* %typemap(in) (double *argout[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
       char errorMsg[512];
       sprintf(errorMsg, "array of size %d expected", $dim0);
@@ -1322,13 +1260,11 @@
 
 %typemap(argout) (double *argout[ANY])
 {
-  /* %typemap(argout) (double *argout[ANY]) */
   jenv->SetDoubleArrayRegion($input, (jsize)0, (jsize)$dim0, *$1);
 }
 
 %typemap(freearg) (double *argout[ANY])
 {
-  /* %typemap(freearg) (double *argout[ANY]) */
   CPLFree( *$1 );
 }
 
@@ -1340,14 +1276,12 @@
     return $jnicall;
   }
 
-
 /***************************************************
  * Typemaps for double argin[ANY]
  ***************************************************/
 
 %typemap(in) (double argin[ANY])
 {
-  /* %typemap(in) (double argin[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
       char errorMsg[512];
       sprintf(errorMsg, "array of size %d expected", $dim0);
@@ -1359,12 +1293,10 @@
 
 %typemap(argout) (double argin[ANY])
 {
-  /* %typemap(argout) (double argin[ANY]) */
 }
 
 %typemap(freearg) (double argin[ANY])
 {
-  /* %typemap(in) (double argin[ANY]) */
   if($1) {
     jenv->ReleaseDoubleArrayElements($input, (jdouble *)$1, JNI_ABORT);
   }
@@ -1378,14 +1310,12 @@
     return $jnicall;
   }
 
-
 /***************************************************
  * Typemaps for double argout[ANY]
  ***************************************************/
 
 %typemap(in) (double argout[ANY])
 {
-  /* %typemap(in) (double argout[ANY]) */
   if($input == NULL || jenv->GetArrayLength($input) != $dim0) {
       char errorMsg[512];
       sprintf(errorMsg, "array of size %d expected", $dim0);
@@ -1397,12 +1327,10 @@
 
 %typemap(argout) (double argout[ANY])
 {
-  /* %typemap(argout) (double argout[ANY]) */
 }
 
 %typemap(freearg) (double argout[ANY])
 {
-  /* %typemap(freearg) (double argout[ANY]) */
   jenv->ReleaseDoubleArrayElements($input, (jdouble *)$1, 0);
 }
 
@@ -1414,20 +1342,19 @@
     return $jnicall;
   }
 
-
 /***************************************************
  * Typemaps for char **
  ***************************************************/
 
 /* This tells SWIG to treat char ** as a special case when used as a parameter
    in a function call */
+
 %typemap(in) char ** (jint size) {
-  /* %typemap(in) char ** (jint size) */
     int i = 0;
     size = jenv->GetArrayLength($input);
     $1 = (char **) malloc((size+1)*sizeof(char *));
     /* make a copy of each string */
-    for (i = 0; i<size; i++) {
+    for (i = 0; i < size; i++) {
         jstring j_string = (jstring)jenv->GetObjectArrayElement($input, i);
         const char * c_string = jenv->GetStringUTFChars(j_string, 0);
         $1[i] = (char *)malloc(strlen((c_string)+1)*sizeof(const char *));
@@ -1439,29 +1366,29 @@
 }
 
 /* This cleans up the memory we malloc'd before the function call */
+
 %typemap(freearg) char ** {
-  /* %typemap(freearg) char ** */
     int i;
-    for (i=0; i<size$argnum-1; i++)
+    for (i = 0; i < size$argnum-1; i++)
       free( $1[i] );
     free( $1 );
 }
 
 /* This allows a C function to return a char ** as a Java String array */
+
 %typemap(out) char ** {
-  /* %typemap(out) char ** */
     int i;
     int len=0;
     jstring temp_string;
     const jclass clazz = jenv->FindClass("java/lang/String");
 
     while ($1[len]) len++;
-    jresult = jenv->NewObjectArray(len, clazz, NULL);
+    $result = jenv->NewObjectArray(len, clazz, NULL);
     /* exception checking omitted */
 
-    for (i=0; i<len; i++) {
+    for (i = 0; i < len; i++) {
       temp_string = jenv->NewStringUTF(*result++);
-      jenv->SetObjectArrayElement(jresult, i, temp_string);
+      jenv->SetObjectArrayElement($result, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
     }
 }
@@ -1474,14 +1401,12 @@
     return $jnicall;
   }
 
-
 /***************************************************
  * Typemaps for (void * nioBuffer, long nioBufferSize)
  ***************************************************/
 
 %typemap(in, numinputs=1) (void * nioBuffer, long nioBufferSize)
 {
-    /* %typemap(in, numinputs=1) (void * nioBuffer, long nioBufferSize)  */
     if ($input == 0)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null array");
@@ -1498,11 +1423,12 @@
     /* The cast to long is actually not that correct, but anyway afterwards */
     /* we check that the theoretical minimum buffer size is not larger than INT_MAX */
     /* so truncating to INT_MAX is OK */
+
     $2 = (long) ((jenv->GetDirectBufferCapacity($input) > INT_MAX) ? INT_MAX : jenv->GetDirectBufferCapacity($input));
 }
 
-
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
+
 %typemap(jni) (void * nioBuffer, long nioBufferSize)  "jobject"
 %typemap(jtype) (void * nioBuffer, long nioBufferSize)  "java.nio.ByteBuffer"
 %typemap(jstype) (void * nioBuffer, long nioBufferSize)  "java.nio.ByteBuffer"
@@ -1511,7 +1437,6 @@
     return $jnicall;
   }
 
-
 /***************************************************
  * Typemaps for (ctype *regularArrayOut, long nRegularArraySizeOut)
  ***************************************************/
@@ -1519,7 +1444,6 @@
 %define DEFINE_REGULAR_ARRAY_OUT(ctype, jtype, function)
 %typemap(in, numinputs=1) (ctype *regularArrayOut, long nRegularArraySizeOut)
 {
-    /* %typemap(in, numinputs=1) (ctype *regularArrayOut, long nRegularArraySizeOut)  */
     if ($input == 0)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null array");
@@ -1539,7 +1463,6 @@
 
 %typemap(freearg) (ctype *regularArrayOut, long nRegularArraySizeOut)
 {
-  /* %typemap(freearg) (ctype *regularArrayOut, long nRegularArraySizeOut) */
   if (result == CE_None)
     jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
   free( $1 );
@@ -1547,8 +1470,8 @@
   //jenv->ReleasePrimitiveArrayCritical($input, $1, 0);
 }
 
-
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
+
 %typemap(javain) (ctype *regularArrayOut, long nRegularArraySizeOut)  "$javainput"
 %typemap(javaout) (ctype *regularArrayOut, long nRegularArraySizeOut) {
     return $jnicall;
@@ -1593,7 +1516,6 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 %define DEFINE_REGULAR_ARRAY_IN(ctype, jtype, get_fct, release_fct)
 %typemap(in, numinputs=1) (ctype *regularArrayIn, long nRegularArraySizeIn)
 {
-    /* %typemap(in, numinputs=1) (ctype *regularArrayIn, long nRegularArraySizeIn)  */
     if ($input == 0)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null array");
@@ -1612,12 +1534,12 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 
 %typemap(freearg) (ctype *regularArrayIn, long nRegularArraySizeIn)
 {
-  /* %typemap(freearg) (ctype *regularArrayIn, long nRegularArraySizeIn) */
   jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
 }
 
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
+
 %typemap(javain) (ctype *regularArrayIn, long nRegularArraySizeIn)  "$javainput"
 %typemap(javaout) (ctype *regularArrayIn, long nRegularArraySizeIn) {
     return $jnicall;
@@ -1658,25 +1580,103 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GIntBig
  ***************************************************/
 
-/*  comment out for now. probably was never used. investigate.
-
 %typemap(in) (GIntBig)
 {
-   $1 = $input;
+  $1 = $input;
 }
+
 %typemap(out) (GIntBig)
 {
-    $result = result;
+  $result = $1;
 }
+
 %typemap(jni) (GIntBig) "jlong"
 %typemap(jtype) (GIntBig) "long"
 %typemap(jstype) (GIntBig) "long"
 %typemap(javain) (GIntBig) "$javainput"
 %typemap(javaout) (GIntBig) {
-    return $jnicall;
-  }
+  return $jnicall;
+}
   
+/***************************************************
+ * Typemaps for GUIntBig
+ ***************************************************/
+
+%typemap(in) (GUIntBig)
+{
+  $1 = $input;
+}
+
+%typemap(out) (GUIntBig)
+{
+  $result = $1;
+}
+
+%typemap(jni) (GUIntBig) "jlong"
+%typemap(jtype) (GUIntBig) "long"
+%typemap(jstype) (GUIntBig) "long"
+%typemap(javain) (GUIntBig) "$javainput"
+%typemap(javaout) (GUIntBig) {
+  return $jnicall;
+}
+  
+/*
+
+Someday to fix the javadoc errors for Attributes and MDArrays and Groups.
+
+Might need to define %apply's in Multdimensional.i
+
+%typemap(in) (int nNums, GUIntBig* pNums)
+{
+  $1 = 0;
+  $2 = NULL;
+}
+
 */
+
+/***************************************************
+ * Typemaps for GInt64
+ ***************************************************/
+
+%typemap(in) (GInt64)
+{
+  $1 = $input;
+}
+
+%typemap(out) (GInt64)
+{
+  $result = $1;
+}
+
+%typemap(jni) (GInt64) "jlong"
+%typemap(jtype) (GInt64) "long"
+%typemap(jstype) (GInt64) "long"
+%typemap(javain) (GInt64) "$javainput"
+%typemap(javaout) (GInt64) {
+  return $jnicall;
+}
+  
+/***************************************************
+ * Typemaps for GUInt64
+ ***************************************************/
+
+%typemap(in) (GUInt64)
+{
+  $1 = $input;
+}
+
+%typemap(out) (GUInt64)
+{
+  $result = $1;
+}
+
+%typemap(jni) (GUInt64) "jlong"
+%typemap(jtype) (GUInt64) "long"
+%typemap(jstype) (GUInt64) "long"
+%typemap(javain) (GUInt64) "$javainput"
+%typemap(javaout) (GUInt64) {
+  return $jnicall;
+}
   
 /***************************************************
  * Typemaps for ( int nCount, double *x, double *y, double *z )
@@ -1684,14 +1684,13 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(in) ( int nCount, double *x, double *y, double *z ) (int xyzLen)
 {
-    /* %typemap(in) ( int nCount, double *x, double *y, double *z ) (int xyzLen) */
     $1 = ($input) ? jenv->GetArrayLength($input) : 0;
     xyzLen = $1;
     $2 = (double*)CPLMalloc($1 * sizeof(double));
     $3 = (double*)CPLMalloc($1 * sizeof(double));
     $4 = (double*)CPLMalloc($1 * sizeof(double));
     int i;
-    for (i = 0; i<$1; i++) {
+    for (i = 0; i < $1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         if (doubleArray == NULL)
         {
@@ -1723,9 +1722,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(argout) ( int nCount, double *x, double *y, double *z )
 {
-    /* %typemap(argout) ( int nCount, double *x, double *y, double *z ) */
     int i;
-    for (i = 0; i<$1; i++) {
+    for (i = 0; i < $1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         int nDim = jenv->GetArrayLength(doubleArray);
         jenv->SetDoubleArrayRegion(doubleArray, (jsize)0, (jsize)1, &$2[i]);
@@ -1752,7 +1750,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(in) ( int nCount, double *x, double *y, double *z, double *t ) (int xyzLen)
 {
-    /* %typemap(in) ( int nCount, double *x, double *y, double *z, double *t ) (int xyzLen) */
     $1 = ($input) ? jenv->GetArrayLength($input) : 0;
     xyzLen = $1;
     $2 = (double*)CPLMalloc($1 * sizeof(double));
@@ -1760,7 +1757,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     $4 = (double*)CPLMalloc($1 * sizeof(double));
     $5 = (double*)CPLMalloc($1 * sizeof(double));
     int i;
-    for (i = 0; i<$1; i++) {
+    for (i = 0; i < $1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         if (doubleArray == NULL)
         {
@@ -1798,9 +1795,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(argout) ( int nCount, double *x, double *y, double *z, double *t )
 {
-    /* %typemap(argout) ( int nCount, double *x, double *y, double *z, double *t ) */
     int i;
-    for (i = 0; i<$1; i++) {
+    for (i = 0; i < $1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         int nDim = jenv->GetArrayLength(doubleArray);
         jenv->SetDoubleArrayRegion(doubleArray, (jsize)0, (jsize)1, &$2[i]);
@@ -1821,27 +1817,23 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(jstype) ( int nCount, double *x, double *y, double *z, double *t ) "double[][]"
 %typemap(javain) ( int nCount, double *x, double *y, double *z, double *t ) "$javainput"
 
-
 %typemap(in,numinputs=0) (int* pnCountOut, int** outErrorCodes) ( int nPoints = 0, int* errorCodes = NULL )
 {
-  /* %typemap(in,numinputs=0) (int* pnCountOut, int** outErrorCodes) */
   $1 = &nPoints;
   $2 = &errorCodes;
 }
 
 %typemap(argout)  (int* pnCountOut, int** outErrorCodes)
 {
-  /* %typemap(argout)  (int* pnCountOut, int** outErrorCodes) */
   int nPointCount = *($1);
   const int* errorCodes = *($2);
   jintArray intArray = jenv->NewIntArray(nPointCount);
   jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nPointCount, (jint*)errorCodes);
-  *(jintArray *)&jresult = intArray;
+  $result = intArray;
 }
 
 %typemap(freearg)  (int* pnCountOut, int** outErrorCodes)
 {
-  /* %typemap(freearg)  (int* pnCountOut, int** outErrorCodes) */
   int* errorCodes = *($2);
   VSIFree( errorCodes );
 }
@@ -1869,7 +1861,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(in) ( int *panSuccess )
 {
-    /* %typemap(in) ( int *panSuccess ) */
     if ($input == NULL)
     {
         $1 = (int*)CPLCalloc(xyzLen3, sizeof(int));
@@ -1889,7 +1880,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(argout) ( int *panSuccess )
 {
-    /* %typemap(argout) ( int *panSuccess ) */
     if ($input)
         jenv->SetIntArrayRegion($input, (jsize)0, (jsize)xyzLen3, (jint*)$1);
     CPLFree( $1 );
@@ -1909,7 +1899,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) ( int nPoints = 0, double* padfXY = NULL, double* padfZ = NULL)
 {
-  /* %typemap(in,numinputs=0) (int* pnCount, double** ppadfXY, double** ppadfZ) */
   $1 = &nPoints;
   $2 = &padfXY;
   $3 = &padfZ;
@@ -1917,8 +1906,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(argout)  (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
-  /* %typemap(out)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
-
   int nPointCount = *($1);
   if (nPointCount == 0)
   {
@@ -1928,7 +1915,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   {
     int nDimensions = (*$3 != NULL) ? 3 : 2;
     $result = jenv->NewObjectArray(nPointCount, jenv->FindClass("java/lang/Object"), NULL);
-    for( int i=0; i< nPointCount; i++ )
+    int i;
+    for (i = 0; i < nPointCount; i++ )
     {
         jdoubleArray dblArray = jenv->NewDoubleArray(nDimensions);
         jenv->SetDoubleArrayRegion(dblArray, 0, 2, &( (*$2)[2*i] ));
@@ -1942,14 +1930,12 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
-    /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
     VSIFree( *$2 );
     VSIFree( *$3 );
 }
 
 %typemap(argout)  (retGetPoints*)
 {
-    /* foo */
 }
 
 %typemap(jni) ( retGetPoints* ) "jobjectArray"
@@ -1959,96 +1945,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(javaout) ( retGetPoints* ) {
     return $jnicall;
   }
-
-/***************************************************
- * Typemaps for GInt64*
- ***************************************************/
-
-%typemap(in) (GInt64* pList)
-{
-  /* %typemap(in) (GInt64* pList) */
-
-  /* check if is List */
-
-  if ($input)
-  {
-    $1 = (GInt64 *)jenv->GetLongArrayElements($input, NULL);
-  }
-  else
-    $1 = NULL;
-}
-
-/*
-  do I need this one?  looks very wrong
-
-%typemap(out) (GInt64*) {
-    // %typemap(out) (GInt64*)
-    jint count = (jint) jenv->GetArrayLength($input)
-    GInt64* values = malloc(count, sizeof(GInt64));
-    for (jint i = 0; i < count; i++) {
-        jlong val = (jlong) jenv->GetLongArrayElement($input, i);
-        values[i] = (GInt64) val;
-    }
-    $result = values;
-}
-
-*/
-
-%typemap(freearg) (int nList, GInt64* pList)
-{
-  /* %typemap(freearg) (int nList, GInt64* pList) */
-  if ($2) {
-    jenv->SetLongArrayRegion($input, 0, $1, (jlong*)$2);
-    free( (void*) $2 );
-  }
-}
-
-%typemap(freearg) (GInt64* pList)
-{
-  /* %typemap(freearg) (GInt64* pList) */
-  if ($1) {
-    free( (void*) $1 );
-  }
-}
-
-%typemap(jni) (GInt64*) "jlongArray"
-
-%typemap(jtype) (GInt64*) "long[]"
-
-%typemap(jstype) (GInt64*) "long[]"
-
-%typemap(javain) (GInt64*) "$javainput"
-
-%typemap(javaout) (GInt64*) {
-    return $jnicall;
-}
-
-%typemap(in) (int nList, GInt64* pListOut)
-{
-  /* %typemap(in) (int nList, GInt64* pListOut) */
-
-  if ($input)
-  {
-    $1 = jenv->GetArrayLength($input);
-    if ($1 == 0)
-       $2 = NULL;
-    else
-       $2 = (GInt64 *)jenv->GetLongArrayElements($input, NULL);
-  }
-  else {
-    $1 = 0;
-    $2 = NULL;
-  }
-}
-
-%typemap(argout) (int nList, GInt64* pList)
-{
-  /* %typemap(argout) (int nList, GInt64* pList) */
-  const long* values = $2;
-  jlongArray longArray = jenv->NewLongArray($1);
-  jenv->SetLongArrayRegion(longArray, (jsize)0, (jsize)$1, (jlong*)values);
-  *(jlongArray *)&jresult = longArray;
-}
 
 /*******************************************************
    Typemap notes
@@ -2076,16 +1972,17 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   To C:      (int nDims, GDALDimensionH *pDims)
 */
 
-%typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) {
-
-  /* %typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) */
-
+%typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims)
+{
   if ($input)
   {
     const jclass vectorClass = jenv->FindClass("java/util/Vector");
     const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
     const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)Ljava/lang/Object;");
   
+    const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+    const jmethodID getCPtr = jenv->GetStaticMethodID(dimClass, "getCPtr", "(Lorg/gdal/gdal/Dimension;)J");
+
     $1 = jenv->CallIntMethod($input, vsize);
     if ($1 == 0) {
        $2 = NULL;
@@ -2093,7 +1990,9 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     else
     {
         $2 = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * $1);
-        for (int i = 0; i < $1; i++) {
+
+        int i;
+        for (i = 0; i < $1; i++) {
             jobject obj = jenv->CallObjectMethod($input, vget, i);
             if (obj == NULL)
             {
@@ -2101,8 +2000,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
                 SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
                 return $null;
             }
-            const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
-            const jmethodID getCPtr = jenv->GetStaticMethodID(dimClass, "getCPtr", "(Lorg/gdal/gdal/Dimension;)J");
             $2[i] = (GDALDimensionH) jenv->CallStaticLongMethod(dimClass, getCPtr, obj);
         }
     }
@@ -2123,34 +2020,47 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 {
   const jclass vectorClass = jenv->FindClass("java/util/Vector");
   const jmethodID vCtor = jenv->GetMethodID(vectorClass, "<init>", "()V");
-  const jmethodID vAdd = jenv->GetMethodID(vectorClass, "add", "()B");
+  const jmethodID vAdd = jenv->GetMethodID(vectorClass, "add", "(Ljava/lang/Object;)Z");
   
   const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
   const jmethodID dCtor = jenv->GetMethodID(dimClass, "<init>",
 							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
-  
+
   jobject vec = jenv->NewObject(vectorClass, vCtor);
 
-  for (int i = 0; i < $1; i++) {
+  int i;
+  for (i = 0; i < $1; i++) {
   
-    GDALDimensionH gdim = $2[i];
+    GDALDimensionH gDimH = $2[i];
+
+    jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, true);
     
-    jobject dim = jenv->NewObject(dimClass, dCtor, gdim, false);
-    
-    jenv->CallBooleanMethod(vec, vAdd, dim);
+    jenv->CallBooleanMethod(vec, vAdd, dimension);
   }
   
   $result = vec;
 }
 
+/*
+
 %typemap(freearg) (int nDims, GDALDimensionH *pDims)
 {
-  /* %typemap(freearg)  (int nDims, GDALDimensionH *pDims) */
+		fprintf(stderr, "102\n");
+		fflush(stderr);
   
   if ($2) {
+
+		fprintf(stderr, "FREE\n");
+		fflush(stderr);
+
     free( (void*) $2 );
+
+		fprintf(stderr, "YES\n");
+		fflush(stderr);
   }
 }
+
+*/
 
 %typemap(jni) (int nDims, GDALDimensionH* pDims) "jobject"
 %typemap(jtype) (int nDims, GDALDimensionH* pDims) "java.util.Vector"
@@ -2164,13 +2074,14 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From C:  GDALDimensionH
   To Java: Dimension
 */
+
 %typemap(out) (GDALDimensionH dimH)
 {
 	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = jenv->NewObject(dimClass, ctor, $1, false);
+	$result = jenv->NewObject(dimClass, ctor, $1, true);
 }
 
 %typemap(jni) (GDALDimensionH) "jobject"
@@ -2186,11 +2097,10 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 /*
   From Java: ExtendedDataType
   To C:      GDALExtendedDataTypeH
-
 */
 
-%typemap(in) GDALExtendedDataTypeH (jobject) {
-
+%typemap(in) GDALExtendedDataTypeH
+{
 	if ($input)
 	{
 		const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
@@ -2204,28 +2114,17 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	}
 }
 
-%typemap(in) GDALExtendedDataTypeH** (GDALExtendedDataTypeH* pTypeH)
-{
-  $1 = &pTypeH;
-}
-
-%typemap(in) GDALExtendedDataTypeH* (GDALExtendedDataTypeH typeH)
-{
-  $1 = &typeH;
-}
-
-%typemap(in) GDALExtendedDataTypeH (GDALExtendedDataTypeH* pTypeH)
-{
-  $1 = *pTypeH;
-}
+/*
+  From C:  GDALExtendedDataTypeH
+  To Java: ExtendedDataType
+*/
 
 %typemap(out) (GDALExtendedDataTypeH typeH)
 {
 	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
-									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = jenv->NewObject(typeClass, ctor, $1, false);  // TODO false or true?
+	$result = jenv->NewObject(typeClass, ctor, $1, true);
 }
 
 %typemap(jni) (GDALExtendedDataTypeH) "jobject"
@@ -2242,7 +2141,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   From Java: MDArray
   To C:      GDALMDArrayH
 */
-%typemap(in) GDALMDArrayH (jobject)
+
+%typemap(in) GDALMDArrayH
 {
 	if ($input) {
 		const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
@@ -2257,32 +2157,18 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     }
 }
 
-%typemap(in) GDALMDArrayH** (GDALMDArrayH* pArrH)
-{
-  $1 = &pArrH;
-}
-
-%typemap(in) GDALMDArrayH* (GDALMDArrayH arrH)
-{
-  $1 = &arrH;
-}
-
-%typemap(in) GDALMDArrayH (GDALMDArrayH* pArrH)
-{
-  $1 = *pArrH;
-}
-
 /*
   From C:  GDALMDArrayH
   To Java: MDArray
 */
+
 %typemap(out) (GDALMDArrayH arrH)
 {
 	const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
 	const jmethodID ctor = jenv->GetMethodID(arrClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = jenv->NewObject(arrClass, ctor, $1, false);
+	$result = jenv->NewObject(arrClass, ctor, $1, true);
 }
 
 %typemap(jni) (GDALMDArrayH) "jobject"
@@ -2293,9 +2179,28 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
 }
 
-/******** GUIntBig typemaps **********************/
+/***** GInt64* typemaps *******************************/
 
-/*
-  From Java: Vector<Long>
-  To C:      (int nDims, GUIntBig *pNums)
-*/
+%typemap(in) (int nList, GInt64* pListOut)
+{
+  if ($input)
+  {
+    $1 = jenv->GetArrayLength($input);
+    if ($1 == 0)
+       $2 = (GInt64 *) NULL;
+    else
+       $2 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $1 = 0;
+    $2 = (GInt64 *) NULL;
+  }
+}
+
+%typemap(jni) (GInt64*) "jlongArray"
+%typemap(jtype) (GInt64*) "long[]"
+%typemap(jstype) (GInt64*) "long[]"
+%typemap(javain) (GInt64*) "$javainput"
+%typemap(javaout) (GInt64*) {
+    return $jnicall;
+}

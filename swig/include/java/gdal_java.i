@@ -197,6 +197,17 @@ import java.lang.Integer;
 								nRegularArraySizeOut * sizeof_ctype);
   }
   
+  static size_t GDALGetDCnt(GDALMDArrayH hMDA) {
+
+	size_t dimCount;
+	
+	GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
+
+	free((void*) dims);
+	
+	return (dimCount);
+  }
+  
   static GDALDimensionH GDALGetDim(GDALMDArrayH hMDA, size_t index) {
 
 	size_t dimCount;
@@ -207,7 +218,7 @@ import java.lang.Integer;
 	
 		// TODO what free routine? or a free typemap?
 		
-		//free((void*) dims);
+		free((void*) dims);
 		//CPLFree((void*) dims);
 	
 		return NULL;
@@ -218,7 +229,7 @@ import java.lang.Integer;
 		
 		// TODO what free routine? or a free typemap?
 		
-		//free((void*) dims);
+		free((void*) dims);
 		//CPLFree((void*) dims);
 	
 		return retVal;
@@ -236,6 +247,17 @@ import java.lang.Integer;
 //   types and thus this is not an issue?
 
 %extend GDALMDArrayHS {
+
+  size_t GetDCnt() {
+
+    return GDALGetDCnt(self);
+  }
+  
+
+  GDALDimensionH GetDimension(size_t index) {
+
+    return GDALGetDim(self, index);
+  }
 
   %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
   bool Read(const GInt64 *arrayStartIdxes,
@@ -394,11 +416,6 @@ import java.lang.Integer;
 %clear (double *regularArrayIn, long nRegularArraySizeIn);
 
 */  // end commenting out code related to TODO
-
-	GDALDimensionH GetDimension(size_t index) {
-
-		return GDALGetDim(self, index);
-	}
 	
 } /* extend */
 
@@ -408,7 +425,7 @@ import java.lang.Integer;
 
 		Vector<Dimension> vec = new Vector<Dimension>();
 		
-		long size = GetDimensionCount();
+		long size = GetDCnt();
         
 		if (size > Integer.MAX_VALUE)
 			throw new IllegalArgumentException("java vector can hold at most "+Integer.MAX_VALUE+" values.");
@@ -425,7 +442,7 @@ import java.lang.Integer;
     
 	public Dimension[] GetDimensionsAsArray() {
     
-		long size = GetDimensionCount();
+		long size = GetDCnt();
         
 		if (size > Integer.MAX_VALUE)
 			throw new IllegalArgumentException("java array can hold at most "+Integer.MAX_VALUE+" values.");
