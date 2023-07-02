@@ -197,17 +197,6 @@ import java.lang.Integer;
 								nRegularArraySizeOut * sizeof_ctype);
   }
   
-  static size_t GDALGetDCnt(GDALMDArrayH hMDA) {
-
-	size_t dimCount;
-	
-	GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
-
-	free((void*) dims);
-	
-	return (dimCount);
-  }
-  
   static GDALDimensionH GDALGetDim(GDALMDArrayH hMDA, size_t index) {
 
 	size_t dimCount;
@@ -247,12 +236,6 @@ import java.lang.Integer;
 //   types and thus this is not an issue?
 
 %extend GDALMDArrayHS {
-
-  size_t GetDCnt() {
-
-    return GDALGetDCnt(self);
-  }
-  
 
   GDALDimensionH GetDimension(size_t index) {
 
@@ -425,7 +408,7 @@ import java.lang.Integer;
 
 		Vector<Dimension> vec = new Vector<Dimension>();
 		
-		long size = GetDCnt();
+		long size = GetDimensionCount();
         
 		if (size > Integer.MAX_VALUE)
 			throw new IllegalArgumentException("java vector can hold at most "+Integer.MAX_VALUE+" values.");
@@ -442,7 +425,7 @@ import java.lang.Integer;
     
 	public Dimension[] GetDimensionsAsArray() {
     
-		long size = GetDCnt();
+		long size = GetDimensionCount();
         
 		if (size > Integer.MAX_VALUE)
 			throw new IllegalArgumentException("java array can hold at most "+Integer.MAX_VALUE+" values.");
