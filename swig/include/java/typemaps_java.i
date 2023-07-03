@@ -1954,7 +1954,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 /***** Dimension typemaps *****************************/
 
 /*
-  From Java: Vector<Dimension>
+  From Java: Dimension[]
   To C:      (int nDims, GDALDimensionH *pDims)
 */
 
@@ -1995,7 +1995,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 /*
   From C: (int nDims, GDALDimensionH *pDims)
-  To Java: Vector<Dimension>
+  To Java: Dimension[]
 */
 
 %typemap(out) (int nDims, GDALDimensionH *pDims)

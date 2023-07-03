@@ -239,10 +239,12 @@ import java.lang.Integer;
 
 %extend GDALMDArrayHS {
 
+/*
   GDALDimensionH GetDimension(size_t index) {
 
     return GDALGetDim(self, index);
   }
+*/
 
   %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
   bool Read(const GInt64 *arrayStartIdxes,
@@ -406,6 +408,7 @@ import java.lang.Integer;
 
 %typemap(javacode) GDALMDArrayHS %{
 
+/*
 	public Dimension[] GetDimensions() {
     
 		long size = GetDimensionCount();
@@ -424,6 +427,7 @@ import java.lang.Integer;
 	    
 		return array;
 	}
+*/
 
 %}
 
@@ -1281,17 +1285,17 @@ import org.gdal.gdalconst.gdalconstConstants;
                                   const char* name,
                                   int nDims,
                                   GDALDimensionH* pDims,
-                                  GDALExtendedDataTypeH dataTypeH)
+                                  GDALExtendedDataTypeH typeH)
     {
-		return GDALGroupCreateMDArray(groupH, name, nDims, pDims, dataTypeH, NULL);
+		return GDALGroupCreateMDArray(groupH, name, nDims, pDims, typeH, NULL);
     }
 %}
 
 %extend GDALGroupHS {
 
-	GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH dataTypeH) {
+	GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH typeH) {
   
-		return CreateMDA(self, name, nDims, pDims, dataTypeH);
+		return CreateMDA(self, name, nDims, pDims, typeH);
 	}
   
 } /* extend */
