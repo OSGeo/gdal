@@ -1288,7 +1288,7 @@ import org.gdal.gdalconst.gdalconstConstants;
                                   GDALExtendedDataTypeH typeH,
                                   char** options)
     {
-		return GDALGroupCreateMDArray(groupH, name, nDims, pDims, typeH, options);
+		return GDALGroupCreateMDArray(groupH, name, (size_t) nDims, pDims, typeH, options);
     }
 %}
 
