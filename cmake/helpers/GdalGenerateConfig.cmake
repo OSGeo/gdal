@@ -322,6 +322,10 @@ function(gdal_generate_config)
 
     gdal_join_and_quote(CONFIG_PREFIX)
 
+    # For gdal-config --plugindir
+    set(CONFIG_PLUGINDIR "${INSTALL_PLUGIN_FULL_DIR}")
+    gdal_join_and_quote(CONFIG_PLUGINDIR)
+
     configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in" "${arg_GDAL_CONFIG}" @ONLY)
     configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in" "${arg_PKG_CONFIG}" @ONLY)
 endfunction()

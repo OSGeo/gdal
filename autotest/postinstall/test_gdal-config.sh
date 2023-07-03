@@ -64,6 +64,11 @@ check_version(){
   esac
 }
 
+if ! ${GDAL_CONFIG} --plugindir >/dev/null; then
+  echo "${GDAL_CONFIG} --plugindir does not work"
+  exit 1
+fi
+
 cd $(dirname $0)
 
 echo Testing C app
