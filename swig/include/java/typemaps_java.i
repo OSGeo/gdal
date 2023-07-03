@@ -2010,7 +2010,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   
     GDALDimensionH gDimH = $2[i];
 
-    jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, true);
+    jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, true);  // TODO: true or false?
     
     jenv->SetObjectArrayValue($result, i, dimension);
   }
@@ -2042,7 +2042,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
 
-	$result = jenv->NewObject(dimClass, ctor, $1, true);
+	$result = jenv->NewObject(dimClass, ctor, $1, true);  // TODO: true or false?
 }
 
 %typemap(jni) (GDALDimensionH) "jobject"
@@ -2085,7 +2085,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
 	const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>", "(JZ)V")
 
-	$result = jenv->NewObject(typeClass, ctor, $1, true);
+	$result = jenv->NewObject(typeClass, ctor, $1, true);  // TODO: true or false?
 }
 
 %typemap(jni) (GDALExtendedDataTypeH typeH) "jobject"
@@ -2128,7 +2128,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
 	const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>", "(JZ)V");
 
-	$result = jenv->NewObject(mdaClass, ctor, $1, true);
+	$result = jenv->NewObject(mdaClass, ctor, $1, true);  // TODO: true or false?
 }
 
 %typemap(jni) (GDALMDArrayH) "jobject"
