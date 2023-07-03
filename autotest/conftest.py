@@ -29,9 +29,6 @@ collect_ignore = [
 ]
 collect_ignore_glob = ["pymod/*.py"]
 
-# we set ECW to not resolve projection and datum strings to get 3.x behavior.
-gdal.SetConfigOption("ECW_DO_NOT_RESOLVE_DATUM_PROJECTION", "YES")
-
 if "APPLY_LOCALE" in os.environ:
     import locale
 
