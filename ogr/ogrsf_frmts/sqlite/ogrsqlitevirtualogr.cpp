@@ -677,22 +677,28 @@ static int OGR2SQLITE_ConnectCreate(sqlite3 *hDB, void *pAux, int argc,
         osSQL += SQLEscapeName(osFieldName);
         osSQL += "\"";
         osSQL += " ";
-        osSQL += OGRSQLiteFieldDefnToSQliteFieldDefn(poFieldDefn, bInternalUse,
-                                                     false);
+
+        std::string osType(OGRSQLiteFieldDefnToSQliteFieldDefn(
+            poFieldDefn, bInternalUse, false));
         if (bInternalUse)
         {
             const auto &osDomainName = poFieldDefn->GetDomainName();
             if (!osDomainName.empty())
             {
-                osSQL += "_BEGIN_DOMAIN_NAME_";
+                // Avoids illegal VARCHAR(n)_BEGIN_DOMAIN_NAME_... to be
+                // emitted
+                if (poFieldDefn->GetType() == OFTString)
+                    osType = "VARCHAR";
+                osType += "_BEGIN_DOMAIN_NAME_";
                 char *pszEncoded = CPLBinaryToHex(
                     static_cast<int>(osDomainName.size()),
                     reinterpret_cast<const GByte *>(osDomainName.data()));
-                osSQL += pszEncoded;
+                osType += pszEncoded;
                 CPLFree(pszEncoded);
-                osSQL += "_END_DOMAIN_NAME";
+                osType += "_END_DOMAIN_NAME";
             }
         }
+        osSQL += osType;
     }
 
     if (bAddComma)

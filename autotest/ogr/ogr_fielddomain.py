@@ -214,6 +214,7 @@ def test_delete_domain_assigned_to_field():
     field_defn.SetDomainName("name")
     lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn("new_string2", ogr.OFTString)
+    field_defn.SetWidth(16)
     field_defn.SetDomainName("name2")
     lyr.CreateField(field_defn)
 
@@ -241,6 +242,9 @@ def test_delete_domain_assigned_to_field():
     if gdal.GetDriverByName("SQLITE") is not None:
         sql_lyr = ds.ExecuteSQL("SELECT * FROM ogr_mem_1", dialect="SQLITE")
         assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetDomainName() == "name"
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(1).GetDomainName() == "name2"
+        assert sql_lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
         ds.ReleaseResultSet(sql_lyr)
 
     # deleting domain should remove it from field definitions too
