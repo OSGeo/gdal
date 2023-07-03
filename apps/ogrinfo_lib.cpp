@@ -384,6 +384,47 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
                     }
                 }
             }
+            else if (poDomain->GetFieldType() == OFTDateTime)
+            {
+                if (!OGR_RawField_IsUnset(&sMin))
+                {
+                    const char *pszVal = CPLSPrintf(
+                        "%04d-%02d-%02dT%02d:%02d:%02d", sMin.Date.Year,
+                        sMin.Date.Month, sMin.Date.Day, sMin.Date.Hour,
+                        sMin.Date.Minute,
+                        static_cast<int>(sMin.Date.Second + 0.5));
+                    if (bJson)
+                    {
+                        oDomain.Set("minValue", pszVal);
+                        oDomain.Set("minValueIncluded", bMinIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput,
+                               "  Minimum value: %s%s\n", pszVal,
+                               bMinIsIncluded ? "" : " (excluded)");
+                    }
+                }
+                if (!OGR_RawField_IsUnset(&sMax))
+                {
+                    const char *pszVal = CPLSPrintf(
+                        "%04d-%02d-%02dT%02d:%02d:%02d", sMax.Date.Year,
+                        sMax.Date.Month, sMax.Date.Day, sMax.Date.Hour,
+                        sMax.Date.Minute,
+                        static_cast<int>(sMax.Date.Second + 0.5));
+                    if (bJson)
+                    {
+                        oDomain.Set("maxValue", pszVal);
+                        oDomain.Set("maxValueIncluded", bMaxIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput,
+                               "  Maximum value: %s%s\n", pszVal,
+                               bMaxIsIncluded ? "" : " (excluded)");
+                    }
+                }
+            }
             break;
         }
 

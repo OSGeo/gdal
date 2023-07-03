@@ -103,6 +103,30 @@ def test_ogr_fielddomain_range():
     assert domain.GetFieldSubType() == ogr.OFSTNone
     assert domain.GetMinAsString() == "2023-07-03T12:13:14"
     assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
+    ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    ds.AddFieldDomain(domain)
+    ret = gdal.VectorInfo(ds, format="json")
+    assert ret["domains"] == {
+        "datetime_range": {
+            "description": "datetime_range_desc",
+            "fieldType": "DateTime",
+            "maxValue": "2023-07-03T12:13:15",
+            "maxValueIncluded": True,
+            "mergePolicy": "default value",
+            "minValue": "2023-07-03T12:13:14",
+            "minValueIncluded": True,
+            "splitPolicy": "default value",
+            "type": "range",
+        }
+    }
+    ret = gdal.VectorInfo(ds, options="-fielddomain datetime_range")
+    assert "Description: datetime_range_desc" in ret
+    assert "Type: range" in ret
+    assert "Field type: DateTime" in ret
+    assert "Split policy: default value" in ret
+    assert "Merge policy: default value" in ret
+    assert "Minimum value: 2023-07-03T12:13:14" in ret
+    assert "Maximum value: 2023-07-03T12:13:15" in ret
 
     with pytest.raises(Exception):
         with gdaltest.error_handler():
