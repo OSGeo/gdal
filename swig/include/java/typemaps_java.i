@@ -2038,7 +2038,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   To Java: Dimension
 */
 
-%typemap(out) (GDALDimensionH dimH)
+%typemap(out) (GDALDimensionH)
 {
 	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
 	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
@@ -2047,11 +2047,11 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	$result = jenv->NewObject(dimClass, ctor, $1, true);
 }
 
-%typemap(jni) (GDALDimensionH dimH) "jobject"
-%typemap(jtype) (GDALDimensionH dimH) "org.gdal.gdal.Dimension"
-%typemap(jstype) (GDALDimensionH dimH) "org.gdal.gdal.Dimension"
-%typemap(javain) (GDALDimensionH dimH) "$javainput"
-%typemap(javaout) (GDALDimensionH dimH) {
+%typemap(jni) (GDALDimensionH) "jobject"
+%typemap(jtype) (GDALDimensionH) "org.gdal.gdal.Dimension"
+%typemap(jstype) (GDALDimensionH) "org.gdal.gdal.Dimension"
+%typemap(javain) (GDALDimensionH) "$javainput"
+%typemap(javaout) (GDALDimensionH) {
     return $jnicall;
   }
 

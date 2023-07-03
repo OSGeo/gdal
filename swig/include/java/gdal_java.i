@@ -409,7 +409,7 @@ import java.lang.Integer;
 	
 } /* extend */
 
-%typemap(javacode) MDArray %{
+%typemap(javacode) GDALMDArrayHS %{
 
        public Dimension[] GetDimensions() {
 
