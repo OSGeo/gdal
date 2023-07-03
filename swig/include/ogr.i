@@ -269,6 +269,7 @@ using namespace std;
 #include "cpl_string.h"
 #include "ogr_srs_api.h"
 #include "ogr_recordbatch.h"
+#include "ogr_p.h"
 
 #define FIELD_INDEX_ERROR_TMPL "Invalid field index: '%i'"
 #define FIELD_NAME_ERROR_TMPL "Invalid field name: '%s'"
@@ -3734,6 +3735,28 @@ public:
       return CPLAtof("-inf");
   }
 
+  const char* GetMinAsString() {
+    const OGRField* psVal = OGR_RangeFldDomain_GetMin(self, NULL);
+      if( psVal == NULL || OGR_RawField_IsUnset(psVal) )
+          return NULL;
+      const OGRFieldType eType = OGR_FldDomain_GetFieldType(self);
+      if( eType == OFTInteger )
+          return CPLSPrintf("%d", psVal->Integer);
+      if( eType == OFTInteger64 )
+          return CPLSPrintf(CPL_FRMT_GIB, psVal->Integer64);
+      if( eType == OFTReal )
+          return CPLSPrintf("%.18g", psVal->Real);
+      if( eType == OFTDateTime )
+          return CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                     psVal->Date.Year,
+                     psVal->Date.Month,
+                     psVal->Date.Day,
+                     psVal->Date.Hour,
+                     psVal->Date.Minute,
+                     static_cast<int>(psVal->Date.Second + 0.5));
+     return NULL;
+  }
+
   bool IsMinInclusive() {
       bool isInclusive = false;
       (void)OGR_RangeFldDomain_GetMin(self, &isInclusive);
@@ -3752,6 +3775,28 @@ public:
       if( eType == OFTReal )
           return psVal->Real;
       return CPLAtof("inf");
+  }
+
+  const char* GetMaxAsString() {
+    const OGRField* psVal = OGR_RangeFldDomain_GetMax(self, NULL);
+      if( psVal == NULL || OGR_RawField_IsUnset(psVal) )
+          return NULL;
+      const OGRFieldType eType = OGR_FldDomain_GetFieldType(self);
+      if( eType == OFTInteger )
+          return CPLSPrintf("%d", psVal->Integer);
+      if( eType == OFTInteger64 )
+          return CPLSPrintf(CPL_FRMT_GIB, psVal->Integer64);
+      if( eType == OFTReal )
+          return CPLSPrintf("%.18g", psVal->Real);
+      if( eType == OFTDateTime )
+          return CPLSPrintf("%04d-%02d-%02dT%02d:%02d:%02d",
+                     psVal->Date.Year,
+                     psVal->Date.Month,
+                     psVal->Date.Day,
+                     psVal->Date.Hour,
+                     psVal->Date.Minute,
+                     static_cast<int>(psVal->Date.Second + 0.5));
+     return NULL;
   }
 
   bool IsMaxInclusive() {
@@ -3828,6 +3873,42 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
                                                             maxIsInclusive );
 }
 %}
+
+%inline %{
+static
+OGRFieldDomainShadow* CreateRangeFieldDomainDateTime( const char *name,
+                                              const char* description,
+                                              const char* min,
+                                              bool minIsInclusive,
+                                              const char* max,
+                                              double maxIsInclusive) {
+  OGRField sMin;
+  OGRField sMax;
+  if( !OGRParseXMLDateTime(min, &sMin))
+  {
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Invalid min: %s",
+             min);
+    return NULL;
+  }
+  if( !OGRParseXMLDateTime(max, &sMax))
+  {
+    CPLError(CE_Failure, CPLE_AppDefined,
+             "Invalid max: %s",
+             max);
+    return NULL;
+  }
+  return (OGRFieldDomainShadow*) OGR_RangeFldDomain_Create( name,
+                                                            description,
+                                                            OFTDateTime,
+                                                            OFSTNone,
+                                                            &sMin,
+                                                            minIsInclusive,
+                                                            &sMax,
+                                                            maxIsInclusive );
+}
+%}
+
 %clear const char* name;
 
 %newobject CreateGlobFieldDomain;

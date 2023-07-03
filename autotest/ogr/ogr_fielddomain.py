@@ -88,6 +88,22 @@ def test_ogr_fielddomain_range():
     assert domain.GetMaxAsDouble() == -1234567890123.0
     assert not domain.IsMaxInclusive()
 
+    domain = ogr.CreateRangeFieldDomainDateTime(
+        "datetime_range",
+        "datetime_range_desc",
+        "2023-07-03T12:13:14",
+        True,
+        "2023-07-03T12:13:15",
+        True,
+    )
+    assert domain.GetName() == "datetime_range"
+    assert domain.GetDescription() == "datetime_range_desc"
+    assert domain.GetDomainType() == ogr.OFDT_RANGE
+    assert domain.GetFieldType() == ogr.OFTDateTime
+    assert domain.GetFieldSubType() == ogr.OFSTNone
+    assert domain.GetMinAsString() == "2023-07-03T12:13:14"
+    assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
+
     with pytest.raises(Exception):
         with gdaltest.error_handler():
             domain.GetEnumeration()
