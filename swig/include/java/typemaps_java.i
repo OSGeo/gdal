@@ -2085,7 +2085,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(out) (GDALExtendedDataTypeH typeH)
 {
 	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
+	const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>",
 
 	$result = jenv->NewObject(typeClass, ctor, $1, true);
 }
@@ -2108,12 +2108,12 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(in) (GDALMDArrayH)
 {
 	if ($input) {
-		const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
+		const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
 		const jmethodID getCPtr =
-				jenv->GetStaticMethodID(arrClass, "getCPtr",
+				jenv->GetStaticMethodID(mdaClass, "getCPtr",
 										"(Lorg/gdal/gdal/MDArray;)J");
 
-		$1 = (GDALMDArrayH) jenv->CallStaticLongMethod(arrClass, getCPtr, $input);
+		$1 = (GDALMDArrayH) jenv->CallStaticLongMethod(mdaClass, getCPtr, $input);
     }
     else {
 		$1 = (GDALMDArrayH) NULL;
@@ -2127,11 +2127,11 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 %typemap(out) (GDALMDArrayH)
 {
-	const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
-	const jmethodID ctor = jenv->GetMethodID(arrClass, "<init>",
+	const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
+	const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>",
 									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-	$result = jenv->NewObject(arrClass, ctor, $1, true);
+	$result = jenv->NewObject(mdaClass, ctor, $1, true);
 }
 
 %typemap(jni) (GDALMDArrayH) "jobject"
