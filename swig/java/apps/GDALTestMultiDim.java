@@ -32,7 +32,6 @@
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Vector;
 
 import org.gdal.gdal.gdal;
 import org.gdal.gdal.Dataset;
@@ -131,14 +130,14 @@ public class GDALTestMultiDim
         System.out.println("7.4");
         System.out.flush();
 
-		Vector<Dimension> outDims = mdarray.GetDimensions();
+		Dimension[] outDims = mdarray.GetDimensions();
 		
         System.out.println("8");
         System.out.flush();
 
-		if (outDims.size() != dims.length) {
+		if (outDims.length != dims.length) {
 			
-			throw new RuntimeException("resulting dimension count "+outDims.size()+" does not equal input dim len "+dims.length);
+			throw new RuntimeException("resulting dimension count "+outDims.length+" does not equal input dim len "+dims.length);
 		}
 		
 		for (int i = 0; i < dims.length; i++) {
@@ -146,7 +145,7 @@ public class GDALTestMultiDim
 			System.out.println("  1");
 			System.out.flush();
 
-			Dimension d = outDims.get(i);
+			Dimension d = outDims[i];
 			
 			System.out.println("  2");
 			System.out.flush();

@@ -1580,21 +1580,21 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GIntBig
  ***************************************************/
 
-%typemap(in) (GIntBig v)
+%typemap(in) (GIntBig)
 {
   $1 = $input;
 }
 
-%typemap(out) (GIntBig v)
+%typemap(out) (GIntBig)
 {
   $result = $1;
 }
 
-%typemap(jni) (GIntBig v) "jlong"
-%typemap(jtype) (GIntBig v) "long"
-%typemap(jstype) (GIntBig v) "long"
-%typemap(javain) (GIntBig v) "$javainput"
-%typemap(javaout) (GIntBig v) {
+%typemap(jni) (GIntBig) "jlong"
+%typemap(jtype) (GIntBig) "long"
+%typemap(jstype) (GIntBig) "long"
+%typemap(javain) (GIntBig) "$javainput"
+%typemap(javaout) (GIntBig) {
   return $jnicall;
 }
   
@@ -1602,21 +1602,21 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GUIntBig
  ***************************************************/
 
-%typemap(in) (GUIntBig v)
+%typemap(in) (GUIntBig)
 {
   $1 = $input;
 }
 
-%typemap(out) (GUIntBig v)
+%typemap(out) (GUIntBig)
 {
   $result = $1;
 }
 
-%typemap(jni) (GUIntBig v) "jlong"
-%typemap(jtype) (GUIntBig v) "long"
-%typemap(jstype) (GUIntBig v) "long"
-%typemap(javain) (GUIntBig v) "$javainput"
-%typemap(javaout) (GUIntBig v) {
+%typemap(jni) (GUIntBig) "jlong"
+%typemap(jtype) (GUIntBig) "long"
+%typemap(jstype) (GUIntBig) "long"
+%typemap(javain) (GUIntBig) "$javainput"
+%typemap(javaout) (GUIntBig) {
   return $jnicall;
 }
   
@@ -1624,21 +1624,21 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GInt64
  ***************************************************/
 
-%typemap(in) (GInt64 v)
+%typemap(in) (GInt64)
 {
   $1 = $input;
 }
 
-%typemap(out) (GInt64 v)
+%typemap(out) (GInt64)
 {
   $result = $1;
 }
 
-%typemap(jni) (GInt64 v) "jlong"
-%typemap(jtype) (GInt64 v) "long"
-%typemap(jstype) (GInt64 v) "long"
-%typemap(javain) (GInt64 v) "$javainput"
-%typemap(javaout) (GInt64 v) {
+%typemap(jni) (GInt64) "jlong"
+%typemap(jtype) (GInt64) "long"
+%typemap(jstype) (GInt64) "long"
+%typemap(javain) (GInt64) "$javainput"
+%typemap(javaout) (GInt64) {
   return $jnicall;
 }
   
@@ -1646,24 +1646,24 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GUInt64
  ***************************************************/
 
-%typemap(in) (GUInt64 v)
+%typemap(in) (GUInt64)
 {
   $1 = $input;
 }
 
-%typemap(out) (GUInt64 v)
+%typemap(out) (GUInt64)
 {
   $result = $1;
 }
 
-%typemap(jni) (GUInt64 v) "jlong"
-%typemap(jtype) (GUInt64 v) "long"
-%typemap(jstype) (GUInt64 v) "long"
-%typemap(javain) (GUInt64 v) "$javainput"
-%typemap(javaout) (GUInt64 v) {
+%typemap(jni) (GUInt64) "jlong"
+%typemap(jtype) (GUInt64) "long"
+%typemap(jstype) (GUInt64) "long"
+%typemap(javain) (GUInt64) "$javainput"
+%typemap(javaout) (GUInt64) {
   return $jnicall;
 }
-  
+
 /***************************************************
  * Typemaps for ( int nCount, double *x, double *y, double *z )
  ***************************************************/
