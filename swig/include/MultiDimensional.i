@@ -229,15 +229,15 @@ public:
   }
 
 %newobject CreateAttribute;
-%apply (GUIntBig *nums, int cnt) {(GUIntBig *dimensions, int nDimensions)};
+%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
-                                    GUIntBig *dimensions,
-                                    int nDimensions,
+                                    int dimensions,
+                                    GUIntBig *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
-    return GDALGroupCreateAttribute(self, name, nDimensions,
-                                    (const GUInt64*)dimensions,
+    return GDALGroupCreateAttribute(self, name, dimensions,
+                                    (const GUInt64*) sizes,
                                     data_type, options);
   }
 
@@ -886,15 +886,15 @@ public:
 #endif
 
 %newobject CreateAttribute;
-%apply (GUIntBig *nums, int cnt) {(GUIntBig *dimensions, int nDimensions)};
+%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
-                                    GUIntBig *dimensions,
-                                    int nDimensions,
+                                    int dimensions,
+                                    GUIntBig *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
-    return GDALMDArrayCreateAttribute(self, name, nDimensions,
-                                    (const GUInt64*)dimensions,
+    return GDALMDArrayCreateAttribute(self, name, dimensions,
+                                    (const GUInt64*) sizes,
                                     data_type, options);
   }
 
