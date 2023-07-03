@@ -1305,7 +1305,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %typemap(javacode) GDALGroupHS %{
 
-	MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType type) {
+	public MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType type) {
   
 		return CreateMDArray(name, dims, type, new Vector());
 	}
