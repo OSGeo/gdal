@@ -1331,6 +1331,11 @@ import org.gdal.gdalconst.gdalconstConstants;
 		return CreateDimension(name, type, direction, BigInteger.valueOf(size));
 	}
 
+	public Dimension CreateDimension(String name, String type, String direction, long size, Vector options) {
+    
+		return CreateDimension(name, type, direction, BigInteger.valueOf(size), options);
+	}
+
 	public MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType dataType) {
   
 		Vector<Dimension> vDims = new Vector<>();
