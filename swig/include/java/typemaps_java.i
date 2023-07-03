@@ -2268,25 +2268,13 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 /* problems
 
-  I had to make GInt64* typemap wih no int
-    the way I am mapping things might be the cause of that.
-    maybe the mdarray read/write code needs a bunch of ndims
-    and I map all of them. and then GInt64* code is closer
-    to the other typemaps.
-    
-  if I make GUIntBig* pList typemaps it blows up and won't compile.
-  if I make it pListOut everything compiles but needed typemap doesn't exist.
-  
-  Group
-    javadoc
-      CreateAttribute() GUIntBig* mappings are wrong
-    we could dispose of vector based CreateMDArray()
   MDArray
-    javadoc
-      none of the Read/Write long[] methods are translated right : NOW FIXED
-      same for Resize() and CreateAttribute()
-    code sometimes uses Vector input/output
-      would like to change to Dimension[]
+    none of the Read/Write long[] methods are translated right
+      need multiple apply's like other code does and pass an
+      len int for each array. then I can get rid of the pNums
+      typemaps.
+        
   Attribute
-    GetDimensions() is missing. Maybe GetDimension(index) too.
+    GetDimensions() is missing?
+    
 */

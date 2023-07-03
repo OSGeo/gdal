@@ -239,13 +239,6 @@ import java.lang.Integer;
 
 %extend GDALMDArrayHS {
 
-/*
-  GDALDimensionH GetDimension(size_t index) {
-
-    return GDALGetDim(self, index);
-  }
-*/
-
   %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
   bool Read(const GInt64 *arrayStartIdxes,
 					 GInt64 *counts,
@@ -405,31 +398,6 @@ import java.lang.Integer;
 */  // end commenting out code related to TODO
 	
 } /* extend */
-
-%typemap(javacode) GDALMDArrayHS %{
-
-/*
-	public Dimension[] GetDimensions() {
-    
-		long size = GetDimensionCount();
-        
-		if (size > Integer.MAX_VALUE)
-			throw new IllegalArgumentException("java array can hold at most "+Integer.MAX_VALUE+" values.");
-        
-		Dimension[] array = new Dimension[(int) size];
-	    
-		for (int i = 0; i < size; i++) {
-	   
-			Dimension dim = GetDimension(i);
-	       
-			array[i] = dim;
-		}
-	    
-		return array;
-	}
-*/
-
-%}
 
 %typemap(javaimports) GDALDriverShadow %{
 import java.util.Vector;
