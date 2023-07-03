@@ -944,6 +944,45 @@ PROJ options
       If ``NO``, disables the coordinate epoch associated with the target or
       source CRS when transforming between a static and dynamic CRS.
 
+-  .. config:: OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1
+      :choices: YES, NO
+      :default: NO
+      :since: 3.0.3
+
+      Determines whether a ``TOWGS84`` node should be automatically added when exporting
+      a CRS to the GDAL flavor of WKT1.
+
+-  .. config:: OSR_ADD_TOWGS84_ON_EXPORT_TO_PROJ4
+      :choices: YES, NO
+      :default: YES
+      :since: 3.0.3
+
+      Determines whether a ``+towgs84`` parameter should be automatically added when
+      exporting a CRS as a legacy PROJ.4 string.
+
+-  .. config:: OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG
+      :choices: YES, NO
+      :default: NO
+      :since: 3.0.3
+
+      Determines whether to automatically add a 3-parameter or 7-parameter
+      Helmert transformation to WGS84 when there is exactly one such method
+      available for the CRS.
+
+-  .. config:: OSR_STRIP_TOWGS84
+      :choices: YES, NO
+      :default: YES
+      :since: 3.1
+
+      Determines whether to remove TOWGS84 information if the CRS has a known
+      horizontal datum.
+
+-  .. config:: OSR_USE_NON_DEPRECATED
+      :choices: YES, NO
+      :default: YES
+
+      Determines whether to substitute a replacement for deprecated EPSG codes.
+
 -  .. config:: OSR_WKT_FORMAT
       :choices: SFSQL, WKT1_SIMPLE, WKT1, WKT1_GDAL, WKT1_ESRI, WKT2_2015, WKT2_2018, WKT2, DEFAULT
       :default: DEFAULT

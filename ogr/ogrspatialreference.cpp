@@ -11205,12 +11205,11 @@ OGRSpatialReference::FindMatches(char **papszOptions, int *pnEntries,
  *
  * Since GDAL 3.0, this method is identical to importFromEPSG().
  *
- * Before GDAL 3.0.3, this method try to attach a 3-parameter or 7-parameter
- * Helmert transformation to WGS84 when there is one and only one such method
- * available for the CRS.
- * This behavior might not always be desirable, so starting with GDAL 3.0.3,
- * this is no longer done. However the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG
- * configuration option can be set to YES to enable past behavior.
+ * Before GDAL 3.0.3, this method would try to attach a 3-parameter or
+ * 7-parameter Helmert transformation to WGS84 when there is one and only one
+ * such method available for the CRS. This behavior might not always be
+ * desirable, so starting with GDAL 3.0.3, this is no longer done unless
+ * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option is set to YES.
  * The AddGuessedTOWGS84() method can also be used for that purpose.
  *
  * The method will also by default substitute a deprecated EPSG code by its
@@ -11402,11 +11401,11 @@ OGRErr CPL_STDCALL OSRImportFromEPSGA(OGRSpatialReferenceH hSRS, int nCode)
  *
  * This method is the same as the C function OSRImportFromEPSG().
  *
- * This method try to attach a 3-parameter or 7-parameter Helmert transformation
- * to WGS84 when there is one and only one such method available for the CRS.
- * This behavior might not always be desirable, so starting with GDAL 3.0.3,
- * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option can be set to
- * NO to disable this behavior.
+ * Before GDAL 3.0.3, this method would try to attach a 3-parameter or
+ * 7-parameter Helmert transformation to WGS84 when there is one and only one
+ * such method available for the CRS. This behavior might not always be
+ * desirable, so starting with GDAL 3.0.3, this is no longer done unless
+ * the OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG configuration option is set to YES.
  *
  * @param nCode a GCS or PCS code from the horizontal coordinate system table.
  *
