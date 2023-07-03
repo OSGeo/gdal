@@ -139,11 +139,11 @@ public class GDALTestMultiDim
 		
 		int planeSize = (int) (xSize * ySize);
 		
-		short[] planeZeros = new short[planeSize];
+		short[] zeros = new short[planeSize];
 
-		short[] planeWritten = new short[planeSize];
+		short[] writeData = new short[planeSize];
 
-		short[] planeRead = new short[planeSize];
+		short[] readData = new short[planeSize];
 
 		long[] starts = new long[dims.length];
 
@@ -179,32 +179,32 @@ public class GDALTestMultiDim
 				steps[0] = 1;
 				strides[0] = 1;
 
-				int pos = 0;
-				
-				System.out.println("  testing plane t = "+t+" z = "+z);
+				System.out.println("  testing plane t = "+t+" z = "+z+" size (y="+ySize+" by "+"x="+xSize+")");
 				System.out.flush();
 
+				int pos = 0;
+				
 				for (int y = 0; y < ySize; y++) {
 				
 					for (int x = 0; x < xSize; x++) {
 					
 						short val = (short) ((t+1)*(z+1)*(y+1)*(x+1));
 						
-						planeWritten[pos++] = val;
+						writeData[pos++] = val;
 					}
 				}
 
-				if (Arrays.equals(planeWritten, planeZeros)) {
+				if (Arrays.equals(writeData, zeros)) {
 					
-					throw new RuntimeException("write plane is zero and shouldn't be");
+					throw new RuntimeException("data to be written is zero and shouldn't be");
 				}
 				
-				if (!Arrays.equals(planeRead, planeZeros)) {
+				if (!Arrays.equals(readData, zeros)) {
 					
-					throw new RuntimeException("read plane is not zero and should be");
+					throw new RuntimeException("data read buffer is not zero and should be");
 				}
 
-				if (!mdarray.Write(starts, counts, steps, strides, planeWritten)) {
+				if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
 
 					throw new RuntimeException("could not write a plane for some reason");
 				}
@@ -212,7 +212,7 @@ public class GDALTestMultiDim
 				System.out.println("    plane written");
 				System.out.flush();
 
-				if (!mdarray.Read(starts, counts, steps, strides, planeRead)) {
+				if (!mdarray.Read(starts, counts, steps, strides, readData)) {
 
 					throw new RuntimeException("could not read a plane for some reason");
 				}
@@ -220,19 +220,19 @@ public class GDALTestMultiDim
 				System.out.println("    plane read");
 				System.out.flush();
 				
-				if (Arrays.equals(planeRead, planeZeros)) {
+				if (Arrays.equals(readData, zeros)) {
 					
-					throw new RuntimeException("read plane is zero and shouldn't be");
+					throw new RuntimeException("data read is zero and shouldn't be");
 				}
 				
-				if (!Arrays.equals(planeRead, planeWritten)) {
+				if (!Arrays.equals(readData, writeData)) {
 					
-					throw new RuntimeException("plane read does not match plane written");
+					throw new RuntimeException("data read does not match data written");
 				}
 				
-				Arrays.fill(planeWritten, (short)0);
+				Arrays.fill(writeData, (short) 0);
 				
-				Arrays.fill(planeRead, (short)0);
+				Arrays.fill(readData, (short) 0);
 			}			
 		}
 	}
