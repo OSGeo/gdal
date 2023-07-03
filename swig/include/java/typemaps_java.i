@@ -2285,14 +2285,10 @@ an aborted attempt to trick compiler into a good
 
 /* problems
   
-  Attribute
+  MDArray does not know hwo to create Dimension[] as output
+    
+  Group does not know how to convert <something> to Dimension[] as output
   
-    Copy the MDArray approach to support GetDimensions()
-
-  Group
-
-    The return type of CreateMDArray() can't be figured
-    out by the compiler for some reason. The test code
-    is confused and running things results in a crash.
+  It is the same problem and the last remaining one.
     
 */

@@ -8,9 +8,6 @@
  *
 */
 
-// TODO - when MDArray::GetDimensions() is working copy
-//   the approach to implement Attribute::GetDimensions()
-
 %include java_exceptions.i
 
 %pragma(java) jniclasscode=%{
@@ -154,7 +151,37 @@ import java.lang.Integer;
 %}
 
 %{
+ 
+  static GDALDimensionH GDALMDArrayGetDim(GDALMDArrayH hMDA, size_t index) {
 
+	size_t dimCount;
+	
+	GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
+
+	if (index < 0 || index >= dimCount) {
+	
+		// TODO what free routine? or a free typemap?
+		
+		free((void*) dims);
+		// CPLFree((void*) dims);
+		// VSIFree()?
+	
+		return NULL;
+	}
+	else {
+	
+		GDALDimensionH retVal = dims[index];
+		
+		// TODO what free routine? or a free typemap?
+		
+		free((void*) dims);
+		// CPLFree((void*) dims);
+		// VSIFree()?
+	
+		return retVal;
+	}
+  }
+  
   static bool MDArrayRead(GDALMDArrayH hMDA,
 							const GInt64 *arrayStartIdxes,
 							const GInt64 *counts,
@@ -196,38 +223,16 @@ import java.lang.Integer;
 								regularArrayOut,
 								nRegularArraySizeOut * sizeof_ctype);
   }
-  
-  static GDALDimensionH GDALGetDim(GDALMDArrayH hMDA, size_t index) {
 
-	size_t dimCount;
-	
-	GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
-
-	if (index < 0 || index >= dimCount) {
-	
-		// TODO what free routine? or a free typemap?
-		
-		free((void*) dims);
-		// CPLFree((void*) dims);
-		// VSIFree()?
-	
-		return NULL;
-	}
-	else {
-	
-		GDALDimensionH retVal = dims[index];
-		
-		// TODO what free routine? or a free typemap?
-		
-		free((void*) dims);
-		// CPLFree((void*) dims);
-		// VSIFree()?
-	
-		return retVal;
-	}
-  }
-  
 %}
+
+
+%extend GDALMDArrayHS {
+
+  GDALDimensionH GetDimension(size_t index) {
+    return GDALMDArrayGetDim(self, index);
+  }
+}
 
 // TODO Test MDArray read/write code with complex types:
 //   CInt16, CInt32, CFloat32, CFloat64
@@ -239,6 +244,10 @@ import java.lang.Integer;
 
 %extend GDALMDArrayHS {
 
+  GDALDimensionH GetDimension(size_t index) {
+    return GDALMDArrayGetDim(self, index);
+  }
+  
 %apply(int nList, GInt64 *pList) { (int dim1, GInt64 *arrayStartIdxes) };
 %apply(int nList, GInt64 *pList) { (int dim2, GInt64 *counts) };
 %apply(int nList, GInt64 *pList) { (int dim3, GInt64 *arraySteps) };
@@ -406,6 +415,28 @@ import java.lang.Integer;
 */  // end commenting out code related to TODO
 	
 } /* extend */
+
+%typemap(javacode) MDArray %{
+
+       public Dimension[] GetDimensions() {
+
+               long size = GetDimensionCount();
+        
+               if (size > Integer.MAX_VALUE)
+                       throw new IllegalArgumentException("java array can hold at most "+Integer.MAX_VALUE+" values.");
+        
+               Dimension[] arr = new Dimension[(int) size];
+               
+               for (int i = 0; i < size; i++) {
+
+                       Dimension dim = GetDimension(i);
+                       
+                       arr[i] = dim;
+               }
+
+               return arr;
+       }
+%}
 
 %typemap(javaimports) GDALDriverShadow %{
 import java.util.Vector;
@@ -1288,6 +1319,59 @@ import org.gdal.gdalconst.gdalconstConstants;
 		return CreateDimension(name, type, direction, BigInteger.valueOf(size), options);
 	}
   
+%}
+
+%{
+  static size_t GDALAttributeGetDimSize(GDALAttributeH attH, size_t index) {
+
+    size_t count;
+
+    GUInt64* sizes = GDALAttributeGetDimensionsSize(attH, &count);
+
+    if (index < 0 || index >= count) {
+    
+      free(sizes);
+    
+      return (size_t) 0;
+    }
+
+    size_t size = (size_t) sizes[index];
+    
+    free(sizes);
+    
+    return size;
+  }
+  
+%}
+
+%extend GDALAttributeHS {
+
+	size_t GetDimension(size_t index) {
+  
+		return GDALAttributeGetDimSize(self, index);
+	}
+  
+} /* extend */
+
+
+%typemap(javacode) GDALAttributeHS %{
+
+       public long[] GetDimensions() {
+
+               long size = GetDimensionCount();
+        
+               if (size > Integer.MAX_VALUE)
+                       throw new IllegalArgumentException("java array can hold at most "+Integer.MAX_VALUE+" values.");
+        
+               long[] arr = new long[(int) size];
+               
+               for (int i = 0; i < size; i++) {
+
+                       arr[i] = GetDimension(i);
+               }
+
+               return arr;
+       }
 %}
 
 %include callback.i
