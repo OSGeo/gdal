@@ -2285,39 +2285,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
 }
 
-/***** GInt64*, int typemaps *******************************/
-
-%typemap(in, numinputs=1) (GInt64 *nums, int cnt)
-{
-  if ($input)
-  {
-    $2 = jenv->GetArrayLength($input);
-    if ($2 == 0)
-       $1 = (GInt64 *) NULL;
-    else
-       $1 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
-  }
-  else {
-    $2 = 0;
-    $1 = (GInt64 *) NULL;
-  }
-}
-
-%typemap(freearg) (GInt64 *nums, int cnt)
-{
-  if ($1) {
-    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
-  }
-}
-
-%typemap(jni) (GInt64 *nums, int cnt) "jlongArray"
-%typemap(jtype) (GInt64 *nums, int cnt) "long[]"
-%typemap(jstype) (GInt64 *nums, int cnt) "long[]"
-%typemap(javain) (GInt64 *nums, int cnt) "$javainput"
-%typemap(javaout) (GInt64 *nums, int cnt) {
-    return $jnicall;
-}
-
 /***** GUIntBig* typemaps *******************************/
 
 %typemap(in, numinputs=1) (GUIntBig *pNums)
@@ -2378,46 +2345,3 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(javaout) (int nList, GUIntBig *pList) {
     return $jnicall;
 }
-
-/***** GUIntBig*, int typemaps *******************************/
-
-%typemap(in, numinputs=1) (GUIntBig *nums, int cnt)
-{
-  if ($input)
-  {
-    $2 = jenv->GetArrayLength($input);
-    if ($2 == 0)
-       $1 = (GUIntBig *) NULL;
-    else
-       $1 = (GUIntBig *) jenv->GetLongArrayElements($input, NULL);
-  }
-  else {
-    $2 = 0;
-    $1 = (GUIntBig *) NULL;
-  }
-}
-
-%typemap(freearg) (GUIntBig *nums, int cnt)
-{
-  if ($1) {
-    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
-  }
-}
-
-%typemap(jni) (GUIntBig *nums, int cnt) "jlongArray"
-%typemap(jtype) (GUIntBig *nums, int cnt) "long[]"
-%typemap(jstype) (GUIntBig *nums, int cnt) "long[]"
-%typemap(javain) (GUIntBig *nums, int cnt) "$javainput"
-%typemap(javaout) (GUIntBig *nums, int cnt) {
-    return $jnicall;
-}
-
-/* problems
-  
-  MDArray does not know how to create MDArray as output.
-    
-  Group does not know how to convert to MDArray as output.
-    
-  It is the same problem and the last remaining one. Some typemap issue.
-
-*/

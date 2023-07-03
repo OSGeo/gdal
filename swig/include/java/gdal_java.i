@@ -241,15 +241,15 @@ import java.lang.Integer;
     return GDALMDArrayGetDim(self, index);
   }
   
-%apply(GInt64 *nums, int cnt) { (GInt64 *arrayStartIdxes, int dim1) };
-%apply(GInt64 *nums, int cnt) { (GInt64 *counts, int dim2) };
-%apply(GInt64 *nums, int cnt) { (GInt64 *arraySteps, int dim3) };
-%apply(GInt64 *nums, int cnt) { (GInt64 *bufferStrides, int dim4) };
+%apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
+%apply(int nList, GInt64 *pList) { (int counts, GInt64 *sizes2) };
+%apply(int nList, GInt64 *pList) { (int arraySteps, GInt64 *sizes3) };
+%apply(int nList, GInt64 *pList) { (int bufferStrides, GInt64 *sizes4) };
   %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
-  bool Read(GInt64 *arrayStartIdxes, int dim1, 
-            GInt64 *counts, int dim2, 
-            GInt64 *arraySteps, int dim3, 
-            GInt64 *bufferStrides, int dim4,
+  bool Read(int arrayStartIdxes, GInt64 *sizes1, 
+            int counts, GInt64 *sizes2, 
+            int arraySteps, GInt64 *sizes3, 
+            int bufferStrides, GInt64 *sizes4,
             ctype *regularArrayOut,
             long nRegularArraySizeOut
            )
@@ -294,10 +294,10 @@ import java.lang.Integer;
 	// TODO: I don't have to free internal_type, do I?
 	
     return MDArrayRead(self,
-						arrayStartIdxes,
-						counts,
-						arraySteps,
-						bufferStrides,
+						sizes1,
+						sizes2,
+						sizes3,
+						sizes4,
 						regularArrayOut,
 						nRegularArraySizeOut,
 						internal_type,  // TODO: pass buffer_type instead?
@@ -313,15 +313,15 @@ import java.lang.Integer;
   DEFINE_READ_MDA_DATA(float,   GDT_Float32)
   DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
-%apply(GInt64 *nums, int cnt) { (GInt64 *arrayStartIdxes, int dim1) };
-%apply(GInt64 *nums, int cnt) { (GInt64 *counts, int dim2) };
-%apply(GInt64 *nums, int cnt) { (GInt64 *arraySteps, int dim3) };
-%apply(GInt64 *nums, int cnt) { (GInt64 *bufferStrides, int dim4) };
+%apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
+%apply(int nList, GInt64 *pList) { (int counts, GInt64 *sizes2) };
+%apply(int nList, GInt64 *pList) { (int arraySteps, GInt64 *sizes3) };
+%apply(int nList, GInt64 *pList) { (int bufferStrides, GInt64 *sizes4) };
   %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type)
-  bool Write(GInt64 *arrayStartIdxes, int dim1, 
-             GInt64 *counts, int dim2, 
-             GInt64 *arraySteps, int dim3, 
-             GInt64 *bufferStrides, int dim4, 
+  bool Write(int arrayStartIdxes, GInt64 *sizes1, 
+             int counts, GInt64 *sizes2, 
+             int arraySteps, GInt64 *sizes3, 
+             int bufferStrides, GInt64 *sizes4,
              ctype *regularArrayIn,
              long nRegularArraySizeIn
             )
@@ -366,10 +366,10 @@ import java.lang.Integer;
 	// TODO: I don't have to free internal_type, do I?
 	
     return MDArrayWrite(self,
-						arrayStartIdxes,
-						counts,
-						arraySteps,
-						bufferStrides,
+						sizes1,
+						sizes2,
+						sizes3,
+						sizes4,
 						regularArrayIn,
 						nRegularArraySizeIn,
 						internal_type,  // TODO: pass buffer_type instead?
