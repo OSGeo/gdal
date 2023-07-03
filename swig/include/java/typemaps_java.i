@@ -2187,7 +2187,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   To C:      GDALMDArrayH
 */
 
-%typemap(in) (GDALMDArrayH arrH)
+%typemap(in) (GDALMDArrayH)
 {
 	if ($input) {
 		const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
@@ -2207,7 +2207,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   To Java: MDArray
 */
 
-%typemap(out) (GDALMDArrayH arrH)
+%typemap(out) (GDALMDArrayH)
 {
 	const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
 	const jmethodID ctor = jenv->GetMethodID(arrClass, "<init>",
@@ -2216,31 +2216,14 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 	$result = jenv->NewObject(arrClass, ctor, $1, true);
 }
 
-%typemap(jni) (GDALMDArrayH arrH) "jobject"
-%typemap(jtype) (GDALMDArrayH arrH) "org.gdal.gdal.MDArray"
-%typemap(jstype) (GDALMDArrayH arrH) "org.gdal.gdal.MDArray"
-%typemap(javain) (GDALMDArrayH arrH) "$javainput"
-%typemap(javaout) (GDALMDArrayH arrH) {
+%typemap(jni) (GDALMDArrayH) "jobject"
+%typemap(jtype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
+%typemap(jstype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
+%typemap(javain) (GDALMDArrayH) "$javainput"
+%typemap(javaout) (GDALMDArrayH) {
     return $jnicall;
 }
 
-/**
-
-an aborted attempt to trick compiler into a good
-  return type for Group.CreateMDArray().
-
-%typemap(out) (GDALMDArrayH* pAH) (GDALMDArrayH AH)
-{
-	$result = &$1
-}
-
-%typemap(out) (GDALMDArrayH AH) (GDALMDArrayH* pAH)
-{
-	$result = *$1
-}
-
-*/
-  
 /***** GInt64* typemaps *******************************/
 
 %typemap(in) (GInt64* pNums)

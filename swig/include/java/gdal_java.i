@@ -72,11 +72,12 @@ import org.gdal.gdal.ExtendedDataType;
 %}
 
 %typemap(javaimports) GDALGroupHS %{
-import org.gdal.ogr.Layer;
-import org.gdal.gdal.Dimension;
-import org.gdal.gdal.ExtendedDataType;
 import java.math.BigInteger;
 import java.util.Vector;
+import org.gdal.gdal.Dimension;
+import org.gdal.gdal.ExtendedDataType;
+import org.gdal.gdal.MDArray;
+import org.gdal.ogr.Layer;
 %}
 
 %pragma(java) modulecode=%{
@@ -225,14 +226,6 @@ import java.lang.Integer;
   }
 
 %}
-
-
-%extend GDALMDArrayHS {
-
-  GDALDimensionH GetDimension(size_t index) {
-    return GDALMDArrayGetDim(self, index);
-  }
-}
 
 // TODO Test MDArray read/write code with complex types:
 //   CInt16, CInt32, CFloat32, CFloat64
@@ -1312,12 +1305,11 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %typemap(javacode) GDALGroupHS %{
 
-/*  
 	MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType type) {
   
 		return CreateMDArray(name, dims, type, new Vector());
 	}
-*/
+
 	public Dimension CreateDimension(String name, String type, String direction, long size) {
     
 		return CreateDimension(name, type, direction, BigInteger.valueOf(size));
