@@ -637,6 +637,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %}
 
+%feature("pythonappend") GetMaskBand %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_band_ref(val)
+%}
+
+%feature("pythonappend") GetOverview %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_band_ref(val)
+%}
+
 %feature("shadow") ComputeStatistics %{
 def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
     """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr"""
@@ -1054,6 +1064,18 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         else:
             return self._SetGCPs2(gcps, wkt_or_spatial_ref)
 
+    def _add_band_ref(self, band):
+        if band is None:
+            return
+
+        import weakref
+
+        if not hasattr(self, '_band_references'):
+            self._band_references = weakref.WeakSet()
+
+        self._band_references.add(band)
+        band._parent_ds = weakref.ref(self)
+
     def _invalidate_bands(self):
         if hasattr(self, '_band_references'):
             for band in self._band_references:
@@ -1168,18 +1190,8 @@ def ReleaseResultSet(self, sql_lyr):
         sql_lyr.this = None
 %}
 
-%feature("shadow") GetRasterBand %{
-def GetRasterBand(self, nBand):
-    band = $action(self, nBand)
-
-    if band:
-        import weakref
-
-        if not hasattr(self, '_band_references'):
-            self._band_references = weakref.WeakSet()
-        self._band_references.add(band)
-
-    return band
+%feature("pythonappend") GetRasterBand %{
+    self._add_band_ref(val)
 %}
 
 }
