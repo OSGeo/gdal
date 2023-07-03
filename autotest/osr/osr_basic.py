@@ -2457,3 +2457,18 @@ def test_osr_basic_wkt_format_configuration_option():
 
     assert "BBOX" not in wkt1
     assert "BBOX" in wkt2
+
+
+def test_osr_basic_default_axis_mapping_strategy():
+
+    with gdal.config_option(
+        "OSR_DEFAULT_AXIS_MAPPING_STRATEGY", "TRADITIONAL_GIS_ORDER"
+    ):
+        crs1 = osr.SpatialReference()
+        crs1.ImportFromEPSG(4326)
+
+    crs2 = osr.SpatialReference()
+    crs2.ImportFromEPSG(4326)
+
+    assert crs1.GetAxisMappingStrategy() == osr.OAMS_TRADITIONAL_GIS_ORDER
+    assert crs2.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT

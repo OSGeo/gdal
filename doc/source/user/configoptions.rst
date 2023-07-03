@@ -969,6 +969,14 @@ PROJ options
       Helmert transformation to WGS84 when there is exactly one such method
       available for the CRS.
 
+-  .. config:: OSR_DEFAULT_AXIS_MAPPING_STRATEGY
+      :choices: TRADITIONAL_GIS_ORDER, AUTHORITY_COMPLIANT
+      :default: AUTHORITY_COMPLIANT
+      :since: 3.5
+
+      Determines whether to honor the declared axis mapping of a CRS or override it
+      with the traditional GIS ordering (x = longitude, y = latitude).
+
 -  .. config:: OSR_STRIP_TOWGS84
       :choices: YES, NO
       :default: YES
