@@ -1580,21 +1580,21 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GIntBig
  ***************************************************/
 
-%typemap(in) (GIntBig)
+%typemap(in) (GIntBig v)
 {
   $1 = $input;
 }
 
-%typemap(out) (GIntBig)
+%typemap(out) (GIntBig v)
 {
   $result = $1;
 }
 
-%typemap(jni) (GIntBig) "jlong"
-%typemap(jtype) (GIntBig) "long"
-%typemap(jstype) (GIntBig) "long"
-%typemap(javain) (GIntBig) "$javainput"
-%typemap(javaout) (GIntBig) {
+%typemap(jni) (GIntBig v) "jlong"
+%typemap(jtype) (GIntBig v) "long"
+%typemap(jstype) (GIntBig v) "long"
+%typemap(javain) (GIntBig v) "$javainput"
+%typemap(javaout) (GIntBig v) {
   return $jnicall;
 }
   
@@ -1602,57 +1602,43 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for GUIntBig
  ***************************************************/
 
-%typemap(in) (GUIntBig)
+%typemap(in) (GUIntBig v)
 {
   $1 = $input;
 }
 
-%typemap(out) (GUIntBig)
+%typemap(out) (GUIntBig v)
 {
   $result = $1;
 }
 
-%typemap(jni) (GUIntBig) "jlong"
-%typemap(jtype) (GUIntBig) "long"
-%typemap(jstype) (GUIntBig) "long"
-%typemap(javain) (GUIntBig) "$javainput"
-%typemap(javaout) (GUIntBig) {
+%typemap(jni) (GUIntBig v) "jlong"
+%typemap(jtype) (GUIntBig v) "long"
+%typemap(jstype) (GUIntBig v) "long"
+%typemap(javain) (GUIntBig v) "$javainput"
+%typemap(javaout) (GUIntBig v) {
   return $jnicall;
 }
   
-/*
-
-Someday to fix the javadoc errors for Attributes and MDArrays and Groups.
-
-Might need to define %apply's in Multdimensional.i
-
-%typemap(in) (int nNums, GUIntBig* pNums)
-{
-  $1 = 0;
-  $2 = NULL;
-}
-
-*/
-
 /***************************************************
  * Typemaps for GInt64
  ***************************************************/
 
-%typemap(in) (GInt64)
+%typemap(in) (GInt64 v)
 {
   $1 = $input;
 }
 
-%typemap(out) (GInt64)
+%typemap(out) (GInt64 v)
 {
   $result = $1;
 }
 
-%typemap(jni) (GInt64) "jlong"
-%typemap(jtype) (GInt64) "long"
-%typemap(jstype) (GInt64) "long"
-%typemap(javain) (GInt64) "$javainput"
-%typemap(javaout) (GInt64) {
+%typemap(jni) (GInt64 v) "jlong"
+%typemap(jtype) (GInt64 v) "long"
+%typemap(jstype) (GInt64 v) "long"
+%typemap(javain) (GInt64 v) "$javainput"
+%typemap(javaout) (GInt64 v) {
   return $jnicall;
 }
   
@@ -1660,21 +1646,21 @@ Might need to define %apply's in Multdimensional.i
  * Typemaps for GUInt64
  ***************************************************/
 
-%typemap(in) (GUInt64)
+%typemap(in) (GUInt64 v)
 {
   $1 = $input;
 }
 
-%typemap(out) (GUInt64)
+%typemap(out) (GUInt64 v)
 {
   $result = $1;
 }
 
-%typemap(jni) (GUInt64) "jlong"
-%typemap(jtype) (GUInt64) "long"
-%typemap(jstype) (GUInt64) "long"
-%typemap(javain) (GUInt64) "$javainput"
-%typemap(javaout) (GUInt64) {
+%typemap(jni) (GUInt64 v) "jlong"
+%typemap(jtype) (GUInt64 v) "long"
+%typemap(jstype) (GUInt64 v) "long"
+%typemap(javain) (GUInt64 v) "$javainput"
+%typemap(javaout) (GUInt64 v) {
   return $jnicall;
 }
   
@@ -1976,14 +1962,10 @@ Might need to define %apply's in Multdimensional.i
 {
   if ($input)
   {
-    const jclass vectorClass = jenv->FindClass("java/util/Vector");
-    const jmethodID vsize = jenv->GetMethodID(vectorClass, "size", "()I");
-    const jmethodID vget  = jenv->GetMethodID(vectorClass, "get", "(I)Ljava/lang/Object;");
-  
     const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
     const jmethodID getCPtr = jenv->GetStaticMethodID(dimClass, "getCPtr", "(Lorg/gdal/gdal/Dimension;)J");
 
-    $1 = jenv->CallIntMethod($input, vsize);
+    $1 = jenv->GetArrayLength($input);
     if ($1 == 0) {
        $2 = NULL;
     }
@@ -1993,7 +1975,7 @@ Might need to define %apply's in Multdimensional.i
 
         int i;
         for (i = 0; i < $1; i++) {
-            jobject obj = jenv->CallObjectMethod($input, vget, i);
+            jobject obj = jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
                 free( $2 );
@@ -2018,15 +2000,11 @@ Might need to define %apply's in Multdimensional.i
 
 %typemap(out) (int nDims, GDALDimensionH *pDims)
 {
-  const jclass vectorClass = jenv->FindClass("java/util/Vector");
-  const jmethodID vCtor = jenv->GetMethodID(vectorClass, "<init>", "()V");
-  const jmethodID vAdd = jenv->GetMethodID(vectorClass, "add", "(Ljava/lang/Object;)Z");
-  
   const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
   const jmethodID dCtor = jenv->GetMethodID(dimClass, "<init>",
 							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
 
-  jobject vec = jenv->NewObject(vectorClass, vCtor);
+  $result = jenv->NewObjectArray($1, dimClass, NULL);
 
   int i;
   for (i = 0; i < $1; i++) {
@@ -2035,36 +2013,23 @@ Might need to define %apply's in Multdimensional.i
 
     jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, true);
     
-    jenv->CallBooleanMethod(vec, vAdd, dimension);
+    jenv->SetObjectArrayValue($result, i, dimension);
   }
   
-  $result = vec;
+  $result = arr;
 }
-
-/*
 
 %typemap(freearg) (int nDims, GDALDimensionH *pDims)
 {
-		fprintf(stderr, "102\n");
-		fflush(stderr);
-  
   if ($2) {
 
-		fprintf(stderr, "FREE\n");
-		fflush(stderr);
-
     free( (void*) $2 );
-
-		fprintf(stderr, "YES\n");
-		fflush(stderr);
   }
 }
 
-*/
-
-%typemap(jni) (int nDims, GDALDimensionH* pDims) "jobject"
-%typemap(jtype) (int nDims, GDALDimensionH* pDims) "java.util.Vector"
-%typemap(jstype) (int nDims, GDALDimensionH* pDims) "java.util.Vector"
+%typemap(jni) (int nDims, GDALDimensionH* pDims) "jobjectArray"
+%typemap(jtype) (int nDims, GDALDimensionH* pDims) "org.gdal.gdal.Dimension[]"
+%typemap(jstype) (int nDims, GDALDimensionH* pDims) "org.gdal.gdal.Dimension[]"
 %typemap(javain) (int nDims, GDALDimensionH* pDims) "$javainput"
 %typemap(javaout) (int nDims, GDALDimensionH* pDims) {
     return $jnicall;
@@ -2084,11 +2049,11 @@ Might need to define %apply's in Multdimensional.i
 	$result = jenv->NewObject(dimClass, ctor, $1, true);
 }
 
-%typemap(jni) (GDALDimensionH) "jobject"
-%typemap(jtype) (GDALDimensionH) "org.gdal.gdal.Dimension"
-%typemap(jstype) (GDALDimensionH) "org.gdal.gdal.Dimension"
-%typemap(javain) (GDALDimensionH) "$javainput"
-%typemap(javaout) (GDALDimensionH) {
+%typemap(jni) (GDALDimensionH dimH) "jobject"
+%typemap(jtype) (GDALDimensionH dimH) "org.gdal.gdal.Dimension"
+%typemap(jstype) (GDALDimensionH dimH) "org.gdal.gdal.Dimension"
+%typemap(javain) (GDALDimensionH dimH) "$javainput"
+%typemap(javaout) (GDALDimensionH dimH) {
     return $jnicall;
   }
 
@@ -2099,7 +2064,7 @@ Might need to define %apply's in Multdimensional.i
   To C:      GDALExtendedDataTypeH
 */
 
-%typemap(in) GDALExtendedDataTypeH
+%typemap(in) (GDALExtendedDataTypeH typeH)
 {
 	if ($input)
 	{
@@ -2127,11 +2092,11 @@ Might need to define %apply's in Multdimensional.i
 	$result = jenv->NewObject(typeClass, ctor, $1, true);
 }
 
-%typemap(jni) (GDALExtendedDataTypeH) "jobject"
-%typemap(jtype) (GDALExtendedDataTypeH) "org.gdal.gdal.ExtendedDataType"
-%typemap(jstype) (GDALExtendedDataTypeH) "org.gdal.gdal.ExtendedDataType"
-%typemap(javain) (GDALExtendedDataTypeH) "$javainput"
-%typemap(javaout) (GDALExtendedDataTypeH) {
+%typemap(jni) (GDALExtendedDataTypeH typeH) "jobject"
+%typemap(jtype) (GDALExtendedDataTypeH typeH) "org.gdal.gdal.ExtendedDataType"
+%typemap(jstype) (GDALExtendedDataTypeH typeH) "org.gdal.gdal.ExtendedDataType"
+%typemap(javain) (GDALExtendedDataTypeH typeH) "$javainput"
+%typemap(javaout) (GDALExtendedDataTypeH typeH) {
     return $jnicall;
 }
 
@@ -2142,7 +2107,7 @@ Might need to define %apply's in Multdimensional.i
   To C:      GDALMDArrayH
 */
 
-%typemap(in) GDALMDArrayH
+%typemap(in) (GDALMDArrayH arrH)
 {
 	if ($input) {
 		const jclass arrClass = jenv->FindClass("org/gdal/gdal/MDArray");
@@ -2171,17 +2136,17 @@ Might need to define %apply's in Multdimensional.i
 	$result = jenv->NewObject(arrClass, ctor, $1, true);
 }
 
-%typemap(jni) (GDALMDArrayH) "jobject"
-%typemap(jtype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
-%typemap(jstype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
-%typemap(javain) (GDALMDArrayH) "$javainput"
-%typemap(javaout) (GDALMDArrayH) {
+%typemap(jni) (GDALMDArrayH arrH) "jobject"
+%typemap(jtype) (GDALMDArrayH arrH) "org.gdal.gdal.MDArray"
+%typemap(jstype) (GDALMDArrayH arrH) "org.gdal.gdal.MDArray"
+%typemap(javain) (GDALMDArrayH arrH) "$javainput"
+%typemap(javaout) (GDALMDArrayH arrH) {
     return $jnicall;
 }
 
 /***** GInt64* typemaps *******************************/
 
-%typemap(in) (GInt64* pList)
+%typemap(in) (GInt64* pNums)
 {
   if ($input)
   {
@@ -2192,27 +2157,85 @@ Might need to define %apply's in Multdimensional.i
   }
 }
 
-%typemap(freearg) (GUInt64* pList)
+%typemap(freearg) (GInt64* pNums)
 {
   if ($1) {
     jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
   }
 }
 
-%typemap(jni) (GInt64*) "jlongArray"
-%typemap(jtype) (GInt64*) "long[]"
-%typemap(jstype) (GInt64*) "long[]"
-%typemap(javain) (GInt64*) "$javainput"
-%typemap(javaout) (GInt64*) {
+%typemap(jni) (GInt64* pNums) "jlongArray"
+%typemap(jtype) (GInt64* pNums) "long[]"
+%typemap(jstype) (GInt64* pNums) "long[]"
+%typemap(javain) (GInt64* pNums) "$javainput"
+%typemap(javaout) (GInt64* pNums) {
     return $jnicall;
 }
 
-// TODO: MDArray java docs do not match int/GUIntBig* to long[]
-//   by itself. My %apply code is not working for some reason.
+/***** int, GInt64* typemaps *******************************/
+
+%typemap(in, numinputs=1) (int nList, GInt64 *pList)
+{
+  if ($input)
+  {
+    $1 = jenv->GetArrayLength($input);
+    if ($1 == 0)
+       $2 = (GInt64 *) NULL;
+    else
+       $2 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $1 = 0;
+    $2 = (GInt64 *) NULL;
+  }
+}
+
+%typemap(freearg) (int nList, GInt64 *pList)
+{
+  if ($2) {
+    jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
+  }
+}
+
+%typemap(jni) (int nList, GInt64 *pList) "jlongArray"
+%typemap(jtype) (int nList, GInt64 *pList) "long[]"
+%typemap(jstype) (int nList, GInt64 *pList) "long[]"
+%typemap(javain) (int nList, GInt64 *pList) "$javainput"
+%typemap(javaout) (int nList, GInt64 *pList) {
+    return $jnicall;
+}
 
 /***** GUIntBig* typemaps *******************************/
 
-%typemap(in) (int nList, GUIntBig* pListOut)
+%typemap(in, numinputs=1) (GUIntBig *pNums)
+{
+  if ($input)
+  {
+    $1 = (GUIntBig *) jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $1 = (GUIntBig *) NULL;
+  }
+}
+
+%typemap(freearg) (GUIntBig *pNums)
+{
+  if ($1) {
+    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
+  }
+}
+
+%typemap(jni) (GUIntBig *pNums) "jlongArray"
+%typemap(jtype) (GUIntBig *pNums) "long[]"
+%typemap(jstype) (GUIntBig *pNums) "long[]"
+%typemap(javain) (GUIntBig *pNums) "$javainput"
+%typemap(javaout) (GUIntBig *pNums) {
+    return $jnicall;
+}
+
+/***** int, GUIntBig* typemaps *******************************/
+
+%typemap(in, numinputs=1) (int nList, GUIntBig *pList)
 {
   if ($input)
   {
@@ -2228,23 +2251,32 @@ Might need to define %apply's in Multdimensional.i
   }
 }
 
-%typemap(freearg) (int nList, GUIntBig* pListOut)
+%typemap(freearg) (int nList, GUIntBig *pList)
 {
   if ($2) {
     jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
   }
 }
 
-%typemap(jni) (int, GUIntBig*) "jlongArray"
-%typemap(jtype) (int, GUIntBig*) "long[]"
-%typemap(jstype) (int, GUIntBig*) "long[]"
-%typemap(javain) (int, GUIntBig*) "$javainput"
-%typemap(javaout) (int, GUIntBig*) {
+%typemap(jni) (int nList, GUIntBig *pList) "jlongArray"
+%typemap(jtype) (int nList, GUIntBig *pList) "long[]"
+%typemap(jstype) (int nList, GUIntBig *pList) "long[]"
+%typemap(javain) (int nList, GUIntBig *pList) "$javainput"
+%typemap(javaout) (int nList, GUIntBig *pList) {
     return $jnicall;
 }
 
 /* problems
 
+  I had to make GInt64* typemap wih no int
+    the way I am mapping things might be the cause of that.
+    maybe the mdarray read/write code needs a bunch of ndims
+    and I map all of them. and then GInt64* code is closer
+    to the other typemaps.
+    
+  if I make GUIntBig* pList typemaps it blows up and won't compile.
+  if I make it pListOut everything compiles but needed typemap doesn't exist.
+  
   Group
     javadoc
       CreateAttribute() GUIntBig* mappings are wrong

@@ -239,11 +239,6 @@ import java.lang.Integer;
 
 %extend GDALMDArrayHS {
 
-/*
-%apply (int nList, GUIntBig* pList) { (int nDimensions, GUIntBig* dimensions)};
-%apply (int nList, GUIntBig* pList) { (int nDimCount, GUIntBig* newDimSizes)};
-*/
-
   GDALDimensionH GetDimension(size_t index) {
 
     return GDALGetDim(self, index);
@@ -411,27 +406,6 @@ import java.lang.Integer;
 
 %typemap(javacode) GDALMDArrayHS %{
 
-/*
-	public Vector<Dimension> GetDimensions() {
-
-		Vector<Dimension> vec = new Vector<Dimension>();
-		
-		long size = GetDimensionCount();
-        
-		if (size > Integer.MAX_VALUE)
-			throw new IllegalArgumentException("java vector can hold at most "+Integer.MAX_VALUE+" values.");
-        
-		for (int i = 0; i < size; i++) {
-
-			Dimension dim = GetDimension(i);
-			
-			vec.add(dim);
-		}
-
-		return vec;
-	}
-  */
-    
 	public Dimension[] GetDimensions() {
     
 		long size = GetDimensionCount();
@@ -1317,8 +1291,6 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 	GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH dataTypeH) {
   
-		//printf("      %d %p\n", nDims, pDims);
-    
 		return CreateMDA(self, name, nDims, pDims, dataTypeH);
 	}
   
@@ -1334,20 +1306,6 @@ import org.gdal.gdalconst.gdalconstConstants;
 	public Dimension CreateDimension(String name, String type, String direction, long size, Vector options) {
     
 		return CreateDimension(name, type, direction, BigInteger.valueOf(size), options);
-	}
-
-	public MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType dataType) {
-  
-		Vector<Dimension> vDims = new Vector<>();
-    
-		for (int i = 0; i < dims.length; i++) {
-
-			Dimension dim = dims[i];
-      
-			vDims.add(dim);
-		}
-    
-		return CreateMDArray(name, vDims, dataType);
 	}
   
 %}
