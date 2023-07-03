@@ -192,9 +192,7 @@ raster data is only supported since GDAL 2.1.0.
 .. option:: <dst_filename>
 
     The GDAL supported output file.  Must support update mode access.
-    This file will be created (or overwritten if it already exists):option:`-of`,
-    :option:`-a_nodata`, :option:`-init`, :option:`-a_srs`, :option:`-co`, :option:`-te`,
-    :option:`-tr`, :option:`-tap`, :option:`-ts`, or :option:`-ot` options are used.
+    This file will be created (or overwritten if it already exists).
 
 The program create a new target raster image when any of the :option:`-of`,
 :option:`-a_nodata`, :option:`-init`, :option:`-a_srs`, :option:`-co`, :option:`-te`,
