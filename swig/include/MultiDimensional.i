@@ -229,7 +229,7 @@ public:
   }
 
 %newobject CreateAttribute;
-%apply (GUIntBig *goodName, int cnt) {(GUIntBig *dimensions, int nDimensions)};
+%apply (GUIntBig *nums, int cnt) {(GUIntBig *dimensions, int nDimensions)};
   GDALAttributeHS *CreateAttribute( const char *name,
                                     GUIntBig *dimensions,
                                     int nDimensions,
@@ -886,7 +886,7 @@ public:
 #endif
 
 %newobject CreateAttribute;
-%apply (GUIntBig *goodName, int cnt) {(GUIntBig *dimensions, int nDimensions)};
+%apply (GUIntBig *nums, int cnt) {(GUIntBig *dimensions, int nDimensions)};
   GDALAttributeHS *CreateAttribute( const char *name,
                                     GUIntBig *dimensions,
                                     int nDimensions,
@@ -1081,9 +1081,10 @@ public:
   }
 
 %newobject Transpose;
-  GDALMDArrayHS* Transpose(int nList, int* pList)
+%apply (int nList, int* pList) { (int axisMap, int* mapInts) };
+  GDALMDArrayHS* Transpose(int axisMap, int* mapInts)
   {
-    return GDALMDArrayTranspose(self, nList, pList);
+    return GDALMDArrayTranspose(self, axisMap, mapInts);
   }
 
 %newobject GetUnscaled;

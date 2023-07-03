@@ -2059,10 +2059,10 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
 /*
   From Java: Dimension[]
-  To C:      (GDALDimensionH *goodName, int cnt)
+  To C:      (GDALDimensionH *dims, int cnt)
 */
 
-%typemap(in, numinputs=1) (GDALDimensionH *goodName, int cnt)
+%typemap(in, numinputs=1) (GDALDimensionH *dims, int cnt)
 {
   if ($input)
   {
@@ -2098,11 +2098,11 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 /*
-  From C: (GDALDimensionH *pDims, int nDims)
+  From C: (GDALDimensionH *dims, int cnt)
   To Java: Dimension[]
 */
 
-%typemap(out) (GDALDimensionH *goodName, int cnt)
+%typemap(out) (GDALDimensionH *dims, int cnt)
 {
   const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
   const jmethodID dCtor = jenv->GetMethodID(dimClass, "<init>",
@@ -2121,7 +2121,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 }
 
-%typemap(freearg) (GDALDimensionH *goodName, int cnt)
+%typemap(freearg) (GDALDimensionH *dims, int cnt)
 {
   if ($1) {
 
@@ -2129,11 +2129,11 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
   }
 }
 
-%typemap(jni) (GDALDimensionH *goodName, int cnt) "jobjectArray"
-%typemap(jtype) (GDALDimensionH *goodName, int cnt) "org.gdal.gdal.Dimension[]"
-%typemap(jstype) (GDALDimensionH *goodName, int cnt) "org.gdal.gdal.Dimension[]"
-%typemap(javain) (GDALDimensionH *goodName, int cnt) "$javainput"
-%typemap(javaout) (GDALDimensionH *goodName, int cnt) {
+%typemap(jni) (GDALDimensionH *dims, int cnt) "jobjectArray"
+%typemap(jtype) (GDALDimensionH *dims, int cnt) "org.gdal.gdal.Dimension[]"
+%typemap(jstype) (GDALDimensionH *dims, int cnt) "org.gdal.gdal.Dimension[]"
+%typemap(javain) (GDALDimensionH *dims, int cnt) "$javainput"
+%typemap(javaout) (GDALDimensionH *dims, int cnt) {
     return $jnicall;
 }
 
@@ -2304,7 +2304,7 @@ an aborted attempt to trick compiler into a good
 
 /***** GInt64*, int typemaps *******************************/
 
-%typemap(in, numinputs=1) (GInt64 *goodName, int cnt)
+%typemap(in, numinputs=1) (GInt64 *nums, int cnt)
 {
   if ($input)
   {
@@ -2320,18 +2320,18 @@ an aborted attempt to trick compiler into a good
   }
 }
 
-%typemap(freearg) (GInt64 *goodName, int cnt)
+%typemap(freearg) (GInt64 *nums, int cnt)
 {
   if ($1) {
     jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
   }
 }
 
-%typemap(jni) (GInt64 *goodName, int cnt) "jlongArray"
-%typemap(jtype) (GInt64 *goodName, int cnt) "long[]"
-%typemap(jstype) (GInt64 *goodName, int cnt) "long[]"
-%typemap(javain) (GInt64 *goodName, int cnt) "$javainput"
-%typemap(javaout) (GInt64 *goodName, int cnt) {
+%typemap(jni) (GInt64 *nums, int cnt) "jlongArray"
+%typemap(jtype) (GInt64 *nums, int cnt) "long[]"
+%typemap(jstype) (GInt64 *nums, int cnt) "long[]"
+%typemap(javain) (GInt64 *nums, int cnt) "$javainput"
+%typemap(javaout) (GInt64 *nums, int cnt) {
     return $jnicall;
 }
 
@@ -2398,7 +2398,7 @@ an aborted attempt to trick compiler into a good
 
 /***** GUIntBig*, int typemaps *******************************/
 
-%typemap(in, numinputs=1) (GUIntBig *goodName, int cnt)
+%typemap(in, numinputs=1) (GUIntBig *nums, int cnt)
 {
   if ($input)
   {
@@ -2414,37 +2414,27 @@ an aborted attempt to trick compiler into a good
   }
 }
 
-%typemap(freearg) (GUIntBig *goodName, int cnt)
+%typemap(freearg) (GUIntBig *nums, int cnt)
 {
   if ($1) {
     jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
   }
 }
 
-%typemap(jni) (GUIntBig *goodName, int cnt) "jlongArray"
-%typemap(jtype) (GUIntBig *goodName, int cnt) "long[]"
-%typemap(jstype) (GUIntBig *goodName, int cnt) "long[]"
-%typemap(javain) (GUIntBig *goodName, int cnt) "$javainput"
-%typemap(javaout) (GUIntBig *goodName, int cnt) {
+%typemap(jni) (GUIntBig *nums, int cnt) "jlongArray"
+%typemap(jtype) (GUIntBig *nums, int cnt) "long[]"
+%typemap(jstype) (GUIntBig *nums, int cnt) "long[]"
+%typemap(javain) (GUIntBig *nums, int cnt) "$javainput"
+%typemap(javaout) (GUIntBig *nums, int cnt) {
     return $jnicall;
 }
 
 /* problems
   
-  The javadocs names of the variables in MDArray Read()/Write()
-  looks terrible. Figure out how to fix it.
-  
-    name probs are in Group and MDArray
-      long[]'s that grab name "nDims" instead of "dims"
-      Group: CreateAttribute()  and maybe CreateMDArray()
-      MDArray: Read(), Write(), CreateAttribute(), Transpose()?
-  
-  MDArray does not know how to create Dimension[] as output.
+  MDArray does not know how to create MDArray as output.
     
-  Group does not know how to convert <something> to Dimension[] as output.
+  Group does not know how to convert to MDArray as output.
     
   It is the same problem and the last remaining one. Some typemap issue.
-    
-  Also I made Group.CreateMDArray() take options. Are they now required?
-  Or does correctly get passed as null?
+
 */
