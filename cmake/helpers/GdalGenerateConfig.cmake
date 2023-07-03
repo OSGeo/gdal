@@ -276,6 +276,34 @@ function(gdal_generate_config)
     endif()
     gdal_join_and_quote(CONFIG_LIBS)
 
+    # For gdal.pc libdir variable. Not strictly needed, but quite standard
+    # to have one in a .pc
+    if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+        if( "${CMAKE_INSTALL_LIBDIR}" MATCHES "^${CONFIG_PREFIX}.*")
+            file(RELATIVE_PATH _rel_path "${CONFIG_PREFIX}" "${CMAKE_INSTALL_LIBDIR}")
+            set(CONFIG_LIBDIR "\${exec_prefix}/${_rel_path}")
+        else()
+            set(CONFIG_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+        endif()
+    else()
+        set(CONFIG_LIBDIR "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
+    gdal_join_and_quote(CONFIG_LIBDIR)
+
+    # For gdal.pc includedir variable. Not strictly needed, but quite standard
+    # to have one in a .pc
+    if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+        if( "${CMAKE_INSTALL_INCLUDEDIR}" MATCHES "^${CONFIG_PREFIX}.*")
+            file(RELATIVE_PATH _rel_path "${CONFIG_PREFIX}" "${CMAKE_INSTALL_INCLUDEDIR}")
+            set(CONFIG_INCLUDEDIR "\${exec_prefix}/${_rel_path}")
+        else()
+            set(CONFIG_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+        endif()
+    else()
+        set(CONFIG_INCLUDEDIR "\${exec_prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+    endif()
+    gdal_join_and_quote(CONFIG_INCLUDEDIR)
+
     get_property(libs GLOBAL PROPERTY "${arg_GLOBAL_PROPERTY}")
     if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
         list(APPEND libs ${CMAKE_THREAD_LIBS_INIT})
