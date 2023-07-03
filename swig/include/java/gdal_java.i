@@ -1292,17 +1292,18 @@ import org.gdal.gdalconst.gdalconstConstants;
                                   const char* name,
                                   int nDims,
                                   GDALDimensionH* pDims,
-                                  GDALExtendedDataTypeH typeH)
+                                  GDALExtendedDataTypeH typeH,
+                                  char** options)
     {
-		return GDALGroupCreateMDArray(groupH, name, nDims, pDims, typeH, NULL);
+		return GDALGroupCreateMDArray(groupH, name, nDims, pDims, typeH, options);
     }
 %}
 
 %extend GDALGroupHS {
 
-	GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH typeH) {
+	GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH typeH, char** options) {
   
-		return CreateMDA(self, name, nDims, pDims, typeH);
+		return CreateMDA(self, name, nDims, pDims, typeH, options);
 	}
   
 } /* extend */

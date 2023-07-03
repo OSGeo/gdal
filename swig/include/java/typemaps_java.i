@@ -2285,10 +2285,13 @@ an aborted attempt to trick compiler into a good
 
 /* problems
   
-  MDArray does not know hwo to create Dimension[] as output
-    
-  Group does not know how to convert <something> to Dimension[] as output
+  The javadocs names of the variables in MDArray Read()/Write()
+  looks terrible. Figure out how to fix it.
   
-  It is the same problem and the last remaining one.
+  MDArray does not know how to create Dimension[] as output.
+    
+  Group does not know how to convert <something> to Dimension[] as output.
+    
+  It is the same problem and the last remaining one. Some typemap issue.
     
 */
