@@ -2015,8 +2015,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     
     jenv->SetObjectArrayValue($result, i, dimension);
   }
-  
-  $result = arr;
 }
 
 %typemap(freearg) (int nDims, GDALDimensionH *pDims)
@@ -2056,6 +2054,88 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(javaout) (GDALDimensionH dimH) {
     return $jnicall;
   }
+
+// REVERSE ORDER ARGS FOR DIMENSIONS
+
+/*
+  From Java: Dimension[]
+  To C:      (GDALDimensionH *goodName, int cnt)
+*/
+
+%typemap(in, numinputs=1) (GDALDimensionH *goodName, int cnt)
+{
+  if ($input)
+  {
+    const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+    const jmethodID getCPtr = jenv->GetStaticMethodID(dimClass, "getCPtr", "(Lorg/gdal/gdal/Dimension;)J");
+
+    $2 = jenv->GetArrayLength($input);
+    if ($2 == 0) {
+       $1 = NULL;
+    }
+    else
+    {
+        $1 = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * $2);
+
+        int i;
+        for (i = 0; i < $2; i++) {
+            jobject obj = jenv->GetObjectArrayElement($input, i);
+            if (obj == NULL)
+            {
+                free( $1 );
+                SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null object in array");
+                return $null;
+            }
+            $1[i] = (GDALDimensionH) jenv->CallStaticLongMethod(dimClass, getCPtr, obj);
+        }
+    }
+  }
+  else
+  {
+    $2 = 0;
+    $1 = (GDALDimensionH*) NULL;
+  }
+}
+
+/*
+  From C: (GDALDimensionH *pDims, int nDims)
+  To Java: Dimension[]
+*/
+
+%typemap(out) (GDALDimensionH *goodName, int cnt)
+{
+  const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+  const jmethodID dCtor = jenv->GetMethodID(dimClass, "<init>",
+							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
+
+  $result = jenv->NewObjectArray($2, dimClass, NULL);
+
+  int i;
+  for (i = 0; i < $2; i++) {
+  
+    GDALDimensionH gDimH = $1[i];
+
+    jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, true);
+    
+    jenv->SetObjectArrayValue($result, i, dimension);
+  }
+}
+
+%typemap(freearg) (GDALDimensionH *goodName, int cnt)
+{
+  if ($1) {
+
+    free( (void*) $1 );
+  }
+}
+
+%typemap(jni) (GDALDimensionH *goodName, int cnt) "jobjectArray"
+%typemap(jtype) (GDALDimensionH *goodName, int cnt) "org.gdal.gdal.Dimension[]"
+%typemap(jstype) (GDALDimensionH *goodName, int cnt) "org.gdal.gdal.Dimension[]"
+%typemap(javain) (GDALDimensionH *goodName, int cnt) "$javainput"
+%typemap(javaout) (GDALDimensionH *goodName, int cnt) {
+    return $jnicall;
+}
 
 /***** ExtendedDataType typemaps **********************/
 
@@ -2222,6 +2302,39 @@ an aborted attempt to trick compiler into a good
     return $jnicall;
 }
 
+/***** GInt64*, int typemaps *******************************/
+
+%typemap(in, numinputs=1) (GInt64 *goodName, int cnt)
+{
+  if ($input)
+  {
+    $2 = jenv->GetArrayLength($input);
+    if ($2 == 0)
+       $1 = (GInt64 *) NULL;
+    else
+       $1 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $2 = 0;
+    $1 = (GInt64 *) NULL;
+  }
+}
+
+%typemap(freearg) (GInt64 *goodName, int cnt)
+{
+  if ($1) {
+    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
+  }
+}
+
+%typemap(jni) (GInt64 *goodName, int cnt) "jlongArray"
+%typemap(jtype) (GInt64 *goodName, int cnt) "long[]"
+%typemap(jstype) (GInt64 *goodName, int cnt) "long[]"
+%typemap(javain) (GInt64 *goodName, int cnt) "$javainput"
+%typemap(javaout) (GInt64 *goodName, int cnt) {
+    return $jnicall;
+}
+
 /***** GUIntBig* typemaps *******************************/
 
 %typemap(in, numinputs=1) (GUIntBig *pNums)
@@ -2283,10 +2396,48 @@ an aborted attempt to trick compiler into a good
     return $jnicall;
 }
 
+/***** GUIntBig*, int typemaps *******************************/
+
+%typemap(in, numinputs=1) (GUIntBig *goodName, int cnt)
+{
+  if ($input)
+  {
+    $2 = jenv->GetArrayLength($input);
+    if ($2 == 0)
+       $1 = (GUIntBig *) NULL;
+    else
+       $1 = (GUIntBig *) jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $2 = 0;
+    $1 = (GUIntBig *) NULL;
+  }
+}
+
+%typemap(freearg) (GUIntBig *goodName, int cnt)
+{
+  if ($1) {
+    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
+  }
+}
+
+%typemap(jni) (GUIntBig *goodName, int cnt) "jlongArray"
+%typemap(jtype) (GUIntBig *goodName, int cnt) "long[]"
+%typemap(jstype) (GUIntBig *goodName, int cnt) "long[]"
+%typemap(javain) (GUIntBig *goodName, int cnt) "$javainput"
+%typemap(javaout) (GUIntBig *goodName, int cnt) {
+    return $jnicall;
+}
+
 /* problems
   
   The javadocs names of the variables in MDArray Read()/Write()
   looks terrible. Figure out how to fix it.
+  
+    name probs are in Group and MDArray
+      long[]'s that grab name "nDims" instead of "dims"
+      Group: CreateAttribute()  and maybe CreateMDArray()
+      MDArray: Read(), Write(), CreateAttribute(), Transpose()?
   
   MDArray does not know how to create Dimension[] as output.
     
@@ -2294,4 +2445,6 @@ an aborted attempt to trick compiler into a good
     
   It is the same problem and the last remaining one. Some typemap issue.
     
+  Also I made Group.CreateMDArray() take options. Are they now required?
+  Or does correctly get passed as null?
 */

@@ -248,15 +248,15 @@ import java.lang.Integer;
     return GDALMDArrayGetDim(self, index);
   }
   
-%apply(int nList, GInt64 *pList) { (int dim1, GInt64 *arrayStartIdxes) };
-%apply(int nList, GInt64 *pList) { (int dim2, GInt64 *counts) };
-%apply(int nList, GInt64 *pList) { (int dim3, GInt64 *arraySteps) };
-%apply(int nList, GInt64 *pList) { (int dim4, GInt64 *bufferStrides) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *arrayStartIdxes, int dim1) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *counts, int dim2) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *arraySteps, int dim3) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *bufferStrides, int dim4) };
   %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
-  bool Read(int dim1, GInt64 *arrayStartIdxes,
-            int dim2, GInt64 *counts,
-            int dim3, GInt64 *arraySteps,
-            int dim4, GInt64 *bufferStrides,
+  bool Read(GInt64 *arrayStartIdxes, int dim1, 
+            GInt64 *counts, int dim2, 
+            GInt64 *arraySteps, int dim3, 
+            GInt64 *bufferStrides, int dim4,
             ctype *regularArrayOut,
             long nRegularArraySizeOut
            )
@@ -320,15 +320,15 @@ import java.lang.Integer;
   DEFINE_READ_MDA_DATA(float,   GDT_Float32)
   DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
-%apply(int nList, GInt64 *pList) { (int dim1, GInt64 *arrayStartIdxes) };
-%apply(int nList, GInt64 *pList) { (int dim2, GInt64 *counts) };
-%apply(int nList, GInt64 *pList) { (int dim3, GInt64 *arraySteps) };
-%apply(int nList, GInt64 *pList) { (int dim4, GInt64 *bufferStrides) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *arrayStartIdxes, int dim1) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *counts, int dim2) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *arraySteps, int dim3) };
+%apply(GInt64 *goodName, int cnt) { (GInt64 *bufferStrides, int dim4) };
   %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type)
-  bool Write(int dim1, GInt64 *arrayStartIdxes,
-             int dim2, GInt64 *counts,
-             int dim3, GInt64 *arraySteps,
-             int dim4, GInt64 *bufferStrides,
+  bool Write(GInt64 *arrayStartIdxes, int dim1, 
+             GInt64 *counts, int dim2, 
+             GInt64 *arraySteps, int dim3, 
+             GInt64 *bufferStrides, int dim4, 
              ctype *regularArrayIn,
              long nRegularArraySizeIn
             )
@@ -1290,8 +1290,8 @@ import org.gdal.gdalconst.gdalconstConstants;
 %{
     static GDALMDArrayH CreateMDA(GDALGroupH groupH,
                                   const char* name,
-                                  int nDims,
                                   GDALDimensionH* pDims,
+                                  int nDims,
                                   GDALExtendedDataTypeH typeH,
                                   char** options)
     {
@@ -1301,14 +1301,26 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %extend GDALGroupHS {
 
-	GDALMDArrayH CreateMDArray(const char* name, int nDims, GDALDimensionH* pDims, GDALExtendedDataTypeH typeH, char** options) {
+%apply(GDALDimensionH *goodName, int cnt) { (GDALDimensionH *dims, int nDims) };
+%apply(GDALExtendedDataTypeH typeH) { (GDALExtendedDataTypeH type) };
+
+	GDALMDArrayH CreateMDArray(const char* name, GDALDimensionH* dims, int nDims, GDALExtendedDataTypeH type, char** options) {
   
-		return CreateMDA(self, name, nDims, pDims, typeH, options);
+		return CreateMDA(self, name, dims, nDims, type, options);
 	}
   
 } /* extend */
 
 %typemap(javacode) GDALGroupHS %{
+  
+/*   TODO - enable me when return value mapping fixed for MDArray.
+
+	MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType type) {
+  
+		return CreateMDArray(name, dims, type, new Vector());
+	}
+
+*/
   
 	public Dimension CreateDimension(String name, String type, String direction, long size) {
     

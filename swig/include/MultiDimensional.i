@@ -229,10 +229,10 @@ public:
   }
 
 %newobject CreateAttribute;
-%apply (int nList, GUIntBig* pList) {(int nDimensions, GUIntBig *dimensions)};
+%apply (GUIntBig *goodName, int cnt) {(GUIntBig *dimensions, int nDimensions)};
   GDALAttributeHS *CreateAttribute( const char *name,
-                                    int nDimensions,
                                     GUIntBig *dimensions,
+                                    int nDimensions,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
@@ -886,10 +886,10 @@ public:
 #endif
 
 %newobject CreateAttribute;
-%apply (int nList, GUIntBig* pList) {(int nDimensions, GUIntBig *dimensions)};
+%apply (GUIntBig *goodName, int cnt) {(GUIntBig *dimensions, int nDimensions)};
   GDALAttributeHS *CreateAttribute( const char *name,
-                                    int nDimensions,
                                     GUIntBig *dimensions,
+                                    int nDimensions,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
