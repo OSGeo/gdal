@@ -74,6 +74,19 @@ def require_ogr_sql_sqlite():
     ds.ReleaseResultSet(sql_lyr)
     assert sql_lyr is not None
 
+    with gdaltest.error_handler():
+        ds = ogr.GetDriverByName("SQLite").CreateDataSource(
+            "/vsimem/foo.db", options=["SPATIALITE=YES"]
+        )
+        ogrtest.has_spatialite = ds is not None
+        if ogrtest.has_spatialite:
+            sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
+            feat = sql_lyr.GetNextFeature()
+            gdaltest.spatialite_version = feat.GetFieldAsString(0)
+            ds.ReleaseResultSet(sql_lyr)
+        ds = None
+        gdal.Unlink("/vsimem/foo.db")
+
 
 ###############################################################################
 # Tests that don't involve geometry
@@ -587,20 +600,6 @@ def test_ogr_sql_sqlite_4():
 
 
 def test_ogr_sql_sqlite_5():
-
-    with gdaltest.error_handler():
-        ds = ogr.GetDriverByName("SQLite").CreateDataSource(
-            "/vsimem/foo.db", options=["SPATIALITE=YES"]
-        )
-        ogrtest.has_spatialite = ds is not None
-        if ogrtest.has_spatialite:
-            sql_lyr = ds.ExecuteSQL("SELECT spatialite_version()")
-            feat = sql_lyr.GetNextFeature()
-            gdaltest.spatialite_version = feat.GetFieldAsString(0)
-            ds.ReleaseResultSet(sql_lyr)
-        ds = None
-        gdal.Unlink("/vsimem/foo.db")
-
     if ogrtest.has_spatialite is False:
         pytest.skip("Spatialite not available")
 
@@ -625,7 +624,7 @@ def test_ogr_sql_sqlite_5():
 def test_ogr_sql_sqlite_6():
 
     if ogrtest.has_spatialite is False:
-        pytest.skip()
+        pytest.skip("Spatialite not available")
 
     with gdal.config_option("OGR_SQLITE_DIALECT_USE_SPATIALITE", "NO"):
 
@@ -1011,7 +1010,7 @@ def ogr_sql_sqlite_14_and_15(sql):
 def test_ogr_sql_sqlite_14():
 
     if ogrtest.has_spatialite is False:
-        pytest.skip()
+        pytest.skip("Spatialite not available")
 
     sql = (
         "SELECT intfield, intfield2 FROM my_layer, my_layer2 WHERE "
@@ -1030,7 +1029,7 @@ def test_ogr_sql_sqlite_14():
 def test_ogr_sql_sqlite_15():
 
     if ogrtest.has_spatialite is False:
-        pytest.skip()
+        pytest.skip("Spatialite not available")
 
     if int(gdaltest.spatialite_version[0 : gdaltest.spatialite_version.find(".")]) < 3:
         pytest.skip()

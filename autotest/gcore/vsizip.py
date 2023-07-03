@@ -683,6 +683,7 @@ def test_vsizip_create_zip64():
 
 
 @pytest.mark.slow()
+@gdaltest.disable_exceptions()
 def test_vsizip_create_zip64_stream_larger_than_4G():
 
     zip_name = "tmp/vsizip_create_zip64_stream_larger_than_4G.zip"
