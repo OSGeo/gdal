@@ -47,6 +47,7 @@
 #include "cpl_error.h"
 #include "cpl_error_internal.h"
 #include "cpl_http.h"
+#include "cpl_json.h"
 #include "cpl_multiproc.h"
 #include "cpl_string.h"
 #include "cpl_vsi.h"

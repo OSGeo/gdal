@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "ogr_geometry.h"
 #include "ogr_p.h"
 
 #include <cassert>
