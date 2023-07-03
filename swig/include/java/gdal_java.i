@@ -239,14 +239,18 @@ import java.lang.Integer;
 
 %extend GDALMDArrayHS {
 
+%apply(int nList, GInt64 *pList) { (int dim1, GInt64 *arrayStartIdxes) };
+%apply(int nList, GInt64 *pList) { (int dim2, GInt64 *counts) };
+%apply(int nList, GInt64 *pList) { (int dim3, GInt64 *arraySteps) };
+%apply(int nList, GInt64 *pList) { (int dim4, GInt64 *bufferStrides) };
   %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
-  bool Read(const GInt64 *arrayStartIdxes,
-					 GInt64 *counts,
-					 const GInt64 *arraySteps,
-					 GInt64 *bufferStrides,
-                     ctype *regularArrayOut,
-                     long nRegularArraySizeOut
-                  )
+  bool Read(int dim1, GInt64 *arrayStartIdxes,
+            int dim2, GInt64 *counts,
+            int dim3, GInt64 *arraySteps,
+            int dim4, GInt64 *bufferStrides,
+            ctype *regularArrayOut,
+            long nRegularArraySizeOut
+           )
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     
@@ -307,14 +311,18 @@ import java.lang.Integer;
   DEFINE_READ_MDA_DATA(float,   GDT_Float32)
   DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
+%apply(int nList, GInt64 *pList) { (int dim1, GInt64 *arrayStartIdxes) };
+%apply(int nList, GInt64 *pList) { (int dim2, GInt64 *counts) };
+%apply(int nList, GInt64 *pList) { (int dim3, GInt64 *arraySteps) };
+%apply(int nList, GInt64 *pList) { (int dim4, GInt64 *bufferStrides) };
   %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type)
-  bool Write(const GInt64 *arrayStartIdxes,
-					 GInt64 *counts,
-					 const GInt64 *arraySteps,
-					 GInt64 *bufferStrides,
-                     ctype *regularArrayIn,
-                     long nRegularArraySizeIn
-                  )
+  bool Write(int dim1, GInt64 *arrayStartIdxes,
+             int dim2, GInt64 *counts,
+             int dim3, GInt64 *arraySteps,
+             int dim4, GInt64 *bufferStrides,
+             ctype *regularArrayIn,
+             long nRegularArraySizeIn
+            )
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     

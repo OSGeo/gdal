@@ -2144,6 +2144,23 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     return $jnicall;
 }
 
+/**
+
+an aborted attempt to trick compiler into a good
+  return type for Group.CreateMDArray().
+
+%typemap(out) (GDALMDArrayH* pAH) (GDALMDArrayH AH)
+{
+	$result = &$1
+}
+
+%typemap(out) (GDALMDArrayH AH) (GDALMDArrayH* pAH)
+{
+	$result = *$1
+}
+
+*/
+  
 /***** GInt64* typemaps *******************************/
 
 %typemap(in) (GInt64* pNums)
@@ -2267,14 +2284,15 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 }
 
 /* problems
-
-  MDArray
-    none of the Read/Write long[] methods are translated right
-      need multiple apply's like other code does and pass an
-      len int for each array. then I can get rid of the pNums
-      typemaps.
-        
+  
   Attribute
-    GetDimensions() is missing?
+  
+    Copy the MDArray approach to support GetDimensions()
+
+  Group
+
+    The return type of CreateMDArray() can't be figured
+    out by the compiler for some reason. The test code
+    is confused and running things results in a crash.
     
 */
