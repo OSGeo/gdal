@@ -534,17 +534,17 @@ public:
   }
 %clear char **;
 
-%apply (int nList, GUIntBig* pList) {(int nDimCount, GUIntBig* newDimSizes)};
-  CPLErr Resize( int nDimCount, GUIntBig* newDimSizes, char** options = NULL ) {
-    if( static_cast<size_t>(nDimCount) != GDALMDArrayGetDimensionCount(self) )
+%apply (int nList, GUIntBig* pList) {(int newDimensions, GUIntBig* newSizes)};
+  CPLErr Resize( int newDimensions, GUIntBig* newSizes, char** options = NULL ) {
+    if( static_cast<size_t>(newDimensions) != GDALMDArrayGetDimensionCount(self) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "newDimSizes array not of expected size");
+                 "newSizes array not of expected size");
         return CE_Failure;
     }
-    return GDALMDArrayResize( self, newDimSizes, options ) ? CE_None : CE_Failure;
+    return GDALMDArrayResize( self, newSizes, options ) ? CE_None : CE_Failure;
   }
-%clear (int nDimCount, GUIntBig* newDimSizes);
+%clear (int newDimensions, GUIntBig* newSizes);
 
 #if defined(SWIGPYTHON)
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* buffer_datatype};
