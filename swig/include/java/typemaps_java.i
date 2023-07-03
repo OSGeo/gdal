@@ -2001,8 +2001,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(out) (int nDims, GDALDimensionH *pDims)
 {
   const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
-  const jmethodID dCtor = jenv->GetMethodID(dimClass, "<init>",
-							"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
+  const jmethodID dCtor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
 
   $result = jenv->NewObjectArray($1, dimClass, NULL);
 
@@ -2041,8 +2040,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(out) (GDALDimensionH)
 {
 	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
-	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>",
-									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
+	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
 
 	$result = jenv->NewObject(dimClass, ctor, $1, true);
 }
@@ -2085,7 +2083,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(out) (GDALExtendedDataTypeH typeH)
 {
 	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-	const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>",
+	const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>", "(JZ)V")
 
 	$result = jenv->NewObject(typeClass, ctor, $1, true);
 }
@@ -2128,8 +2126,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(out) (GDALMDArrayH)
 {
 	const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
-	const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>",
-									"(Jjava/lang/Long;Zjava/lang/Boolean;)V");
+	const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>", "(JZ)V");
 
 	$result = jenv->NewObject(mdaClass, ctor, $1, true);
 }
