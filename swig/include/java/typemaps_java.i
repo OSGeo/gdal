@@ -2181,34 +2181,29 @@ Might need to define %apply's in Multdimensional.i
 
 /***** GInt64* typemaps *******************************/
 
-%typemap(in) (int nList, GInt64* pListOut)
+%typemap(in) (GInt64* pList)
 {
   if ($input)
   {
-    $1 = jenv->GetArrayLength($input);
-    if ($1 == 0)
-       $2 = (GInt64 *) NULL;
-    else
-       $2 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
+    $1 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
   }
   else {
-    $1 = 0;
-    $2 = (GInt64 *) NULL;
+    $1 = (GInt64 *) NULL;
   }
 }
 
-%typemap(freearg) (int nList, GUInt64* pListOut)
+%typemap(freearg) (GUInt64* pList)
 {
-  if ($2) {
-    jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
+  if ($1) {
+    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
   }
 }
 
-%typemap(jni) (int, GInt64*) "jlongArray"
-%typemap(jtype) (int, GInt64*) "long[]"
-%typemap(jstype) (int, GInt64*) "long[]"
-%typemap(javain) (int, GInt64*) "$javainput"
-%typemap(javaout) (int, GInt64*) {
+%typemap(jni) (GInt64*) "jlongArray"
+%typemap(jtype) (GInt64*) "long[]"
+%typemap(jstype) (GInt64*) "long[]"
+%typemap(javain) (GInt64*) "$javainput"
+%typemap(javaout) (GInt64*) {
     return $jnicall;
 }
 
@@ -2247,3 +2242,19 @@ Might need to define %apply's in Multdimensional.i
 %typemap(javaout) (int, GUIntBig*) {
     return $jnicall;
 }
+
+/* problems
+
+  Group
+    javadoc
+      CreateAttribute() GUIntBig* mappings are wrong
+    we could dispose of vector based CreateMDArray()
+  MDArray
+    javadoc
+      none of the Read/Write long[] methods are translated right : NOW FIXED
+      same for Resize() and CreateAttribute()
+    code sometimes uses Vector input/output
+      would like to change to Dimension[]
+  Attribute
+    GetDimensions() is missing. Maybe GetDimension(index) too.
+*/
