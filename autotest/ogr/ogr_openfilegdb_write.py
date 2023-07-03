@@ -2490,7 +2490,7 @@ def test_ogr_openfilegdb_write_alter_field_defn():
 # Test writing field domains
 
 
-def test_ogr_openfilegdb_write_domains_from_other_gdb():
+def test_ogr_openfilegdb_write_domains():
 
     dirname = "/vsimem/out.gdb"
     try:
@@ -2512,10 +2512,31 @@ def test_ogr_openfilegdb_write_domains_from_other_gdb():
         fld_defn = ogr.FieldDefn("foo2", ogr.OFTInteger)
         fld_defn.SetDomainName("domain")
         assert lyr.CreateField(fld_defn) == ogr.OGRERR_NONE
+
+        domain = ogr.CreateRangeFieldDomainDateTime(
+            "datetime_range",
+            "datetime_range_desc",
+            "2023-07-03T12:13:14",
+            True,
+            "2023-07-03T12:13:15",
+            True,
+        )
+        assert ds.AddFieldDomain(domain)
         ds = None
 
-        ds = ogr.Open(dirname, update=1)
+        ds = gdal.OpenEx(dirname)
         assert ds.GetLayerByName("GDB_ItemRelationships").GetFeatureCount() == 2
+
+        domain = ds.GetFieldDomain("datetime_range")
+        assert domain is not None
+        assert domain.GetName() == "datetime_range"
+        assert domain.GetDescription() == "datetime_range_desc"
+        assert domain.GetDomainType() == ogr.OFDT_RANGE
+        assert domain.GetFieldType() == ogr.OFTDateTime
+        assert domain.GetFieldSubType() == ogr.OFSTNone
+        assert domain.GetMinAsString() == "2023-07-03T12:13:14"
+        assert domain.GetMaxAsString() == "2023-07-03T12:13:15"
+
         ds = None
 
         ds = ogr.Open(dirname, update=1)
