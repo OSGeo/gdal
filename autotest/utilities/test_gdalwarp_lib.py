@@ -463,6 +463,48 @@ def test_gdalwarp_lib_21():
 
 
 ###############################################################################
+# Test cutline from PostGIS (mostly to check that we open the dataset in
+# vector mode, and not in raster mode, which would cause the PostGISRaster
+# driver to be used)
+
+
+@pytest.mark.require_driver("PostgreSQL")
+@pytest.mark.skipif(
+    gdal.GetConfigOption("OGR_PG_CONNECTION_STRING", None) is None,
+    reason="OGR_PG_CONNECTION_STRING not defined",
+)
+def test_gdalwarp_lib_cutline_postgis():
+
+    postgis_ds_name = "PG:" + gdal.GetConfigOption("OGR_PG_CONNECTION_STRING", None)
+    cutline_ds = ogr.Open(postgis_ds_name, update=1)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(26711)
+    cutline_lyr = cutline_ds.CreateLayer("cutline", srs=srs)
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((400000 3000000,400000 4000000,500000 4000000,500000 3000000,400000 3000000))"
+        )
+    )
+    cutline_lyr.CreateFeature(f)
+    cutline_ds = None
+
+    try:
+        ds = gdal.Warp(
+            "",
+            "../gcore/data/byte.tif",
+            format="MEM",
+            cutlineDSName=postgis_ds_name,
+            cutlineSQL="SELECT * FROM cutline",
+        )
+        assert ds is not None
+        assert ds.GetRasterBand(1).Checksum() == 4672
+    finally:
+        cutline_ds = ogr.Open(postgis_ds_name, update=1)
+        cutline_ds.ExecuteSQL("DELLAYER:cutline")
+
+
+###############################################################################
 # Test cutline whose extent is larger than the source data
 
 
