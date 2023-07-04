@@ -8,6 +8,8 @@
  *
 */
 
+// TODO - general comment: am I clear()'ing things I need to?
+
 %include java_exceptions.i
 
 %pragma(java) jniclasscode=%{
