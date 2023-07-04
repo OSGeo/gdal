@@ -86,7 +86,7 @@ public class GDALtest extends JFrame implements ActionListener{
 		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
 		this.setSize(1024, 768);
-		this.show();
+		this.setVisible(true);
 	}
 
 	public void setImage(BufferedImage image) {
