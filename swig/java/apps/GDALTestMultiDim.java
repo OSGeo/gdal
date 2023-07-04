@@ -65,15 +65,15 @@ public class GDALTestMultiDim
 
 		ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
 
-		long[] dims = new long[]{10,6,2,7};
+		long[] sizes = new long[]{10,6,2,7};
 
-		Dimension[] inDims = new Dimension[dims.length];
+		Dimension[] inDims = new Dimension[sizes.length];
 		
-		for (int i = 0; i < dims.length; i++) {
+		for (int i = 0; i < sizes.length; i++) {
 
 			Dimension d =
 				
-				rg.CreateDimension("name"+i, "type"+i, "direction"+i, dims[i]);
+				rg.CreateDimension("name"+i, "type"+i, "direction"+i, sizes[i]);
 
 			if (d == null) {
 				
@@ -99,18 +99,18 @@ public class GDALTestMultiDim
 		
 		Dimension[] outDims = mdarray.GetDimensions();
 		
-		if (outDims.length != dims.length) {
+		if (outDims.length != sizes.length) {
 			
-			throw new RuntimeException("resulting dimension count "+outDims.length+" does not equal input dim len "+dims.length);
+			throw new RuntimeException("resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
 		}
 		
-		for (int i = 0; i < dims.length; i++) {
+		for (int i = 0; i < sizes.length; i++) {
 			
 			Dimension d = outDims[i];
 
-			if (d.GetSize().longValue() != dims[i]) {
+			if (d.GetSize().longValue() != sizes[i]) {
 
-				throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+dims[i]);
+				throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
 			}
 
 			if (!d.GetName().equals("name"+i)) {
@@ -129,13 +129,15 @@ public class GDALTestMultiDim
 			}
 		}
 		
-		long xSize = dims[0];
+		// TODO - am I specifying dimensions in manner reversed from gdal conventions?
+
+		long xSize = sizes[0];
 		
-		long ySize = dims[1];
+		long ySize = sizes[1];
 		
-		long zSize = dims[2];
+		long zSize = sizes[2];
 		
-		long timePoints = dims[3];
+		long timePoints = sizes[3];
 		
 		int planeSize = (int) (xSize * ySize);
 		
@@ -145,13 +147,13 @@ public class GDALTestMultiDim
 
 		short[] readData = new short[planeSize];
 
-		long[] starts = new long[dims.length];
+		long[] starts = new long[sizes.length];
 
-		long[] counts = new long[dims.length];
+		long[] counts = new long[sizes.length];
 
-		long[] steps = new long[dims.length];
+		long[] steps = new long[sizes.length];
 
-		long[] strides = new long[dims.length];
+		long[] strides = new long[sizes.length];
 
 		// read/write XY planes one at a time through whole mdarray
 		
