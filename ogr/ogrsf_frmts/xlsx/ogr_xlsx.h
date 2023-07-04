@@ -271,7 +271,7 @@ class OGRXLSXDataSource final : public GDALDataset
     void DeleteLayer(const char *pszLayerName);
 
   public:
-    OGRXLSXDataSource();
+    explicit OGRXLSXDataSource(CSLConstList papszOpenOptionsIn);
     virtual ~OGRXLSXDataSource();
     CPLErr Close() override;
 
