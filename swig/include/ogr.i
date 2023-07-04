@@ -2487,7 +2487,7 @@ public:
     OGR_Fld_SetAlternativeName(self, alternativeName);
   }
 
-  OGRFieldType GetFieldType() {
+  OGRFieldType GetType() {
     return OGR_Fld_GetType(self);
   }
 

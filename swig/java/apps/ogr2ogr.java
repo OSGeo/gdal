@@ -1337,14 +1337,14 @@ public class ogr2ogr
                 {
                     FieldDefn poSrcFieldDefn = poSrcFDefn.GetFieldDefn(iSrcField);
                     FieldDefn oFieldDefn = new FieldDefn( poSrcFieldDefn.GetNameRef(),
-                                                poSrcFieldDefn.GetFieldType() );
+                                                poSrcFieldDefn.GetType() );
                     oFieldDefn.SetWidth( poSrcFieldDefn.GetWidth() );
                     oFieldDefn.SetPrecision( poSrcFieldDefn.GetPrecision() );
 
                     if (papszFieldTypesToString != null &&
                         (CSLFindString(papszFieldTypesToString, "All") != -1 ||
                         CSLFindString(papszFieldTypesToString,
-                                    ogr.GetFieldTypeName(poSrcFDefn.GetFieldDefn(iSrcField).GetFieldType())) != -1))
+                                    ogr.GetFieldTypeName(poSrcFDefn.GetFieldDefn(iSrcField).GetType())) != -1))
                         oFieldDefn.SetType(ogr.OFTString);
 
                     /* The field may have been already created at layer creation */
@@ -1428,14 +1428,14 @@ public class ogr2ogr
             {
                 FieldDefn poSrcFieldDefn = poSrcFDefn.GetFieldDefn(iField);
                 FieldDefn oFieldDefn = new FieldDefn( poSrcFieldDefn.GetNameRef(),
-                                            poSrcFieldDefn.GetFieldType() );
+                                            poSrcFieldDefn.GetType() );
                 oFieldDefn.SetWidth( poSrcFieldDefn.GetWidth() );
                 oFieldDefn.SetPrecision( poSrcFieldDefn.GetPrecision() );
 
                 if (papszFieldTypesToString != null &&
                     (CSLFindString(papszFieldTypesToString, "All") != -1 ||
                     CSLFindString(papszFieldTypesToString,
-                                ogr.GetFieldTypeName(poSrcFDefn.GetFieldDefn(iField).GetFieldType())) != -1))
+                                ogr.GetFieldTypeName(poSrcFDefn.GetFieldDefn(iField).GetType())) != -1))
                     oFieldDefn.SetType(ogr.OFTString);
 
                 /* The field may have been already created at layer creation */
