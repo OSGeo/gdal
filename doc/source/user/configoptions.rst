@@ -275,15 +275,23 @@ Performance and caching
       :choices: TRUE, FALSE, EMPTY_DIR
       :default: FALSE
 
-      By default (FALSE), GDAL establishes a list of all the files in the directory
-      of the file passed to :cpp:func:`GDALOpen`. This can result in speed-ups in some use
-      cases, but also to major slow downs when the directory contains thousands of
-      other files. When set to TRUE, GDAL will not try to establish the list of
-      files.
+      By default (FALSE), GDAL establishes a list of all the files in the
+      directory of the file passed to :cpp:func:`GDALOpen`. This can result in
+      speed-ups in some use cases, but also to major slow downswhen the
+      directory contains thousands of other files. When set to TRUE, GDAL will
+      not try to establish the list of files. The number of files read can
+      also be limited by :config:`GDAL_READDIR_LIMIT_ON_OPEN`.
 
       If set to EMPTY_DIR, only the file that is being opened will be seen when a
       GDAL driver will request sibling files, so this is a way to disable loading
       side-car/auxiliary files.
+
+-  .. config:: GDAL_READDIR_LIMIT_ON_OPEN
+      :default: 1000
+      :since: 2.1
+
+      Sets the maximum number of files to scan when searching for sidecar files
+      in :cpp:func:`GDALOpen`.
 
 -  .. config:: VSI_CACHE
       :choices: TRUE, FALSE
@@ -387,6 +395,13 @@ General options
       By default, temporary files are written into current working directory.
       Sometimes this is not optimal and it would be better to write temporary files
       on bigger or faster drives (SSD).
+
+-  .. config:: GDAL_RASTERIO_RESAMPLING
+      :choices: NEAR, BILINEAR, CUBIC, CUBICSPLINE, LANCZOS, AVERAGE, RMS, MODE, GAUSS
+      :default: NEAR
+
+      Sets the resampling algorithm to be used when reading a from a raster
+      into a buffer with different dimensions from the source region.
 
 -  .. config:: OGR_ARC_STEPSIZE
       :choices: <degrees>
@@ -929,6 +944,58 @@ PROJ options
       If ``NO``, disables the coordinate epoch associated with the target or
       source CRS when transforming between a static and dynamic CRS.
 
+-  .. config:: OSR_ADD_TOWGS84_ON_EXPORT_TO_WKT1
+      :choices: YES, NO
+      :default: NO
+      :since: 3.0.3
+
+      Determines whether a ``TOWGS84`` node should be automatically added when exporting
+      a CRS to the GDAL flavor of WKT1.
+
+-  .. config:: OSR_ADD_TOWGS84_ON_EXPORT_TO_PROJ4
+      :choices: YES, NO
+      :default: YES
+      :since: 3.0.3
+
+      Determines whether a ``+towgs84`` parameter should be automatically added when
+      exporting a CRS as a legacy PROJ.4 string.
+
+-  .. config:: OSR_ADD_TOWGS84_ON_IMPORT_FROM_EPSG
+      :choices: YES, NO
+      :default: NO
+      :since: 3.0.3
+
+      Determines whether to automatically add a 3-parameter or 7-parameter
+      Helmert transformation to WGS84 when there is exactly one such method
+      available for the CRS.
+
+-  .. config:: OSR_DEFAULT_AXIS_MAPPING_STRATEGY
+      :choices: TRADITIONAL_GIS_ORDER, AUTHORITY_COMPLIANT
+      :default: AUTHORITY_COMPLIANT
+      :since: 3.5
+
+      Determines whether to honor the declared axis mapping of a CRS or override it
+      with the traditional GIS ordering (x = longitude, y = latitude).
+
+-  .. config:: OSR_STRIP_TOWGS84
+      :choices: YES, NO
+      :default: YES
+      :since: 3.1
+
+      Determines whether to remove TOWGS84 information if the CRS has a known
+      horizontal datum.
+
+-  .. config:: OSR_USE_NON_DEPRECATED
+      :choices: YES, NO
+      :default: YES
+
+      Determines whether to substitute a replacement for deprecated EPSG codes.
+
+-  .. config:: OSR_WKT_FORMAT
+      :choices: SFSQL, WKT1_SIMPLE, WKT1, WKT1_GDAL, WKT1_ESRI, WKT2_2015, WKT2_2018, WKT2, DEFAULT
+      :default: DEFAULT
+
+      Sets the format for writing a CRS to WKT.
 
 .. _list_config_options:
 

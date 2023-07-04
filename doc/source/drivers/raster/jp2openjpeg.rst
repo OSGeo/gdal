@@ -344,7 +344,7 @@ Creation Options
       For PROFILE_1 compatibility, CODEBLOCK_HEIGHT must not be greater
       than 64.
 
--  ..co:: CODEBLOCK_STYLE
+-  .. co:: CODEBLOCK_STYLE
      :since: 2.4
 
       (OpenJPEG >= 2.3.0) Style
