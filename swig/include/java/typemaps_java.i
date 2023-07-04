@@ -8,6 +8,10 @@
  *
 */
 
+// TODO - there is a lot of code that refers to "result"
+//   that is not prepended with a $. Is this an old style
+//   of defining typemap params? Is it still valid?
+
 %include "arrays_java.i";
 %include "typemaps.i"
 
@@ -1463,9 +1467,17 @@
 
 %typemap(freearg) (ctype *regularArrayOut, long nRegularArraySizeOut)
 {
-  if (result == CE_None)
-    jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
+//
+// BDZ - 7-3-23
+//
+// Insidious bug here! The bytes were not getting saved to the array!!!
+//   Maybe occasionally if random memory happened to equal CE_None.
+//
+//  if (result == CE_None)
+      jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
+
   free( $1 );
+
   //jenv->ReleasePrimitiveArrayCritical($input, $1, JNI_COMMIT);
   //jenv->ReleasePrimitiveArrayCritical($input, $1, 0);
 }
@@ -1943,7 +1955,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 //  what effects do the options have?
 
 // argout is for code that does java manipulations.
-//   if it ends up with a $result iy is a java object
+//   if it ends up with a $result it is a java object
 // out seems exactly the same. why are there two?
 //   why choose one over the other?
 
