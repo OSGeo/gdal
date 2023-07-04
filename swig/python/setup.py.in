@@ -16,6 +16,8 @@ from setuptools import setup
 from setuptools import find_packages
 from setuptools import Extension
 
+version = '@GDAL_PYTHON_VERSION@'
+
 # If CXX is defined in the environment, it will be used to link the .so
 # but setuptools will be confused if it is made of several words like 'ccache g++'
 # and it will try to use only the first word.
@@ -225,6 +227,15 @@ class gdal_ext(build_ext):
     def finalize_options(self):
         global include_dirs, library_dirs
 
+        try:
+            library_version = self.get_gdal_config("version").replace("dev", "")
+            library_version_num = [int(x) for x in library_version.split('.')]
+            gdal_python_version = [int(x) for x in version.split('.')]
+            if library_version_num < gdal_python_version:
+                raise Exception(f"Python bindings of GDAL {version} require at least libgdal {version}, but {library_version} was found")
+        except gdal_config_error:
+            pass
+
         include_dirs_found = self.include_dirs is not None or len(include_dirs) != 0
 
         if self.include_dirs is None:
@@ -322,7 +333,6 @@ package_dir = {'osgeo': 'osgeo', '': utils_package_root}
 readme = open('README.rst', encoding="utf-8").read()
 
 name = 'GDAL'
-version = '@GDAL_PYTHON_VERSION@'
 author = "Frank Warmerdam"
 author_email = "warmerdam@pobox.com"
 maintainer = "Howard Butler"
