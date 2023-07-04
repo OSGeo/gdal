@@ -5110,7 +5110,10 @@ bool GDALBufferHasOnlyNoData(const void *pBuffer, double dfNoDataValue,
 #else
     typedef std::uint32_t WordType;
 #endif
-    if (dfNoDataValue == 0.0 && nWidth == nLineStride)
+    if (dfNoDataValue == 0.0 && nWidth == nLineStride &&
+        // Do not use this optimized code path for floating point numbers,
+        // as it can't detect negative zero.
+        nSampleFormat != GSF_FLOATING_POINT)
     {
         const GByte *pabyBuffer = static_cast<const GByte *>(pBuffer);
         const size_t nSize =
