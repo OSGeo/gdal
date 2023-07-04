@@ -505,6 +505,9 @@ int GDALDriverManager::RegisterDriver(GDALDriver *poDriver)
                  poDriver->GetDescription());
     }
 
+    if (poDriver->pfnVectorTranslateFrom != nullptr)
+        poDriver->SetMetadataItem(GDAL_DCAP_VECTOR_TRANSLATE_FROM, "YES");
+
     oMapNameToDrivers[CPLString(poDriver->GetDescription()).toupper()] =
         poDriver;
 

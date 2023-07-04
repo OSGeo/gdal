@@ -53,5 +53,6 @@ repos:
                 frmts/grib/degrib/g2clib|
                 ogr/ogrsf_frmts/cad/libopencad/|
                 ogr/ogrsf_frmts/geojson/libjson/|
-                ogr/ogrsf_frmts/flatgeobuf/flatbuffers/
+                ogr/ogrsf_frmts/flatgeobuf/flatbuffers/|
+                ogr/ogrsf_frmts/pmtiles/pmtiles/
               )

@@ -79,6 +79,7 @@ ogr_dependent_driver(osm "OpenStreetMap XML and PBF" "GDAL_USE_SQLITE3;OGR_ENABL
 ogr_dependent_driver(vfk "Czech Cadastral Exchange Data Format" "GDAL_USE_SQLITE3")
 # Caution: if modifying MVT declaration here, also modify it in gdal.cmake
 ogr_dependent_driver(mvt "MVT" "GDAL_USE_SQLITE3")
+ogr_dependent_driver(pmtiles PMTiles "OGR_ENABLE_DRIVER_MVT")
 
 # ODBC/POSTGRES/MYSQL
 ogr_dependent_driver(amigocloud AMIGOCLOUD "GDAL_USE_CURL;OGR_ENABLE_DRIVER_PGDUMP")

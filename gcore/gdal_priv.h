@@ -1727,35 +1727,46 @@ class CPL_DLL GDALDriver : public GDALMajorObject
                             GDALProgressFunc pfnProgress,
                             void *pProgressData) CPL_WARN_UNUSED_RESULT;
 
+    bool CanVectorTranslateFrom(const char *pszDestName,
+                                GDALDataset *poSourceDS,
+                                CSLConstList papszVectorTranslateArguments,
+                                char ***ppapszFailureReasons);
+
+    GDALDataset *
+    VectorTranslateFrom(const char *pszDestName, GDALDataset *poSourceDS,
+                        CSLConstList papszVectorTranslateArguments,
+                        GDALProgressFunc pfnProgress,
+                        void *pProgressData) CPL_WARN_UNUSED_RESULT;
+
     /* -------------------------------------------------------------------- */
     /*      The following are semiprivate, not intended to be accessed      */
     /*      by anyone but the formats instantiating and populating the      */
     /*      drivers.                                                        */
     /* -------------------------------------------------------------------- */
     //! @cond Doxygen_Suppress
-    GDALDataset *(*pfnOpen)(GDALOpenInfo *);
+    GDALDataset *(*pfnOpen)(GDALOpenInfo *) = nullptr;
 
     GDALDataset *(*pfnCreate)(const char *pszName, int nXSize, int nYSize,
                               int nBands, GDALDataType eType,
-                              char **papszOptions);
+                              char **papszOptions) = nullptr;
 
     GDALDataset *(*pfnCreateEx)(GDALDriver *, const char *pszName, int nXSize,
                                 int nYSize, int nBands, GDALDataType eType,
-                                char **papszOptions);
+                                char **papszOptions) = nullptr;
 
     GDALDataset *(*pfnCreateMultiDimensional)(
         const char *pszName, CSLConstList papszRootGroupOptions,
-        CSLConstList papszOptions);
+        CSLConstList papszOptions) = nullptr;
 
-    CPLErr (*pfnDelete)(const char *pszName);
+    CPLErr (*pfnDelete)(const char *pszName) = nullptr;
 
     GDALDataset *(*pfnCreateCopy)(const char *, GDALDataset *, int, char **,
                                   GDALProgressFunc pfnProgress,
-                                  void *pProgressData);
+                                  void *pProgressData) = nullptr;
 
-    void *pDriverData;
+    void *pDriverData = nullptr;
 
-    void (*pfnUnloadDriver)(GDALDriver *);
+    void (*pfnUnloadDriver)(GDALDriver *) = nullptr;
 
     /** Identify() if the file is recognized or not by the driver.
 
@@ -1765,19 +1776,41 @@ class CPL_DLL GDALDriver : public GDALMajorObject
        if the passed file may be or may not be recognized by the driver, and
        that a potentially costly test must be done with pfnOpen.
     */
-    int (*pfnIdentify)(GDALOpenInfo *);
-    int (*pfnIdentifyEx)(GDALDriver *, GDALOpenInfo *);
+    int (*pfnIdentify)(GDALOpenInfo *) = nullptr;
+    int (*pfnIdentifyEx)(GDALDriver *, GDALOpenInfo *) = nullptr;
 
-    CPLErr (*pfnRename)(const char *pszNewName, const char *pszOldName);
-    CPLErr (*pfnCopyFiles)(const char *pszNewName, const char *pszOldName);
+    CPLErr (*pfnRename)(const char *pszNewName,
+                        const char *pszOldName) = nullptr;
+    CPLErr (*pfnCopyFiles)(const char *pszNewName,
+                           const char *pszOldName) = nullptr;
 
     // Used for legacy OGR drivers, and Python drivers
-    GDALDataset *(*pfnOpenWithDriverArg)(GDALDriver *, GDALOpenInfo *);
+    GDALDataset *(*pfnOpenWithDriverArg)(GDALDriver *,
+                                         GDALOpenInfo *) = nullptr;
 
     /* For legacy OGR drivers */
     GDALDataset *(*pfnCreateVectorOnly)(GDALDriver *, const char *pszName,
-                                        char **papszOptions);
-    CPLErr (*pfnDeleteDataSource)(GDALDriver *, const char *pszName);
+                                        char **papszOptions) = nullptr;
+    CPLErr (*pfnDeleteDataSource)(GDALDriver *, const char *pszName) = nullptr;
+
+    /** Whether pfnVectorTranslateFrom() can be run given the source dataset
+     * and the non-positional arguments of GDALVectorTranslate() stored
+     * in papszVectorTranslateArguments.
+     */
+    bool (*pfnCanVectorTranslateFrom)(
+        const char *pszDestName, GDALDataset *poSourceDS,
+        CSLConstList papszVectorTranslateArguments,
+        char ***ppapszFailureReasons) = nullptr;
+
+    /** Creates a copy from the specified source dataset, using the
+     * non-positional arguments of GDALVectorTranslate() stored
+     * in papszVectorTranslateArguments.
+     */
+    GDALDataset *(*pfnVectorTranslateFrom)(
+        const char *pszDestName, GDALDataset *poSourceDS,
+        CSLConstList papszVectorTranslateArguments,
+        GDALProgressFunc pfnProgress, void *pProgressData) = nullptr;
+
     //! @endcond
 
     /* -------------------------------------------------------------------- */

@@ -151,7 +151,8 @@ class OGRMVTLayerBase CPL_NON_FINAL
   protected:
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
 
-    void InitFields(const CPLJSONObject &oFields);
+    void InitFields(const CPLJSONObject &oFields,
+                    const CPLJSONArray &oAttributesFromTileStats);
 
   public:
     virtual ~OGRMVTLayerBase();
@@ -198,7 +199,8 @@ class OGRMVTLayer final : public OGRMVTLayerBase
     double m_dfTileMaxY = 0;
     bool m_bEnforceExternalIsClockwise = false;
 
-    void Init(const CPLJSONObject &oFields);
+    void Init(const CPLJSONObject &oFields,
+              const CPLJSONArray &oAttributesFromTileStats);
     bool QuickScanFeature(const GByte *pabyData,
                           const GByte *pabyDataFeatureEnd, bool bScanFields,
                           bool bScanGeometries, bool &bGeomTypeSet);
@@ -212,7 +214,9 @@ class OGRMVTLayer final : public OGRMVTLayerBase
   public:
     OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
                 const GByte *pabyData, int nLayerSize,
-                const CPLJSONObject &oFields, OGRwkbGeometryType eGeomType);
+                const CPLJSONObject &oFields,
+                const CPLJSONArray &oAttributesFromTileStats,
+                OGRwkbGeometryType eGeomType);
     virtual ~OGRMVTLayer();
 
     virtual void ResetReading() override;
@@ -254,8 +258,9 @@ class OGRMVTDirectoryLayer final : public OGRMVTLayerBase
   public:
     OGRMVTDirectoryLayer(OGRMVTDataset *poDS, const char *pszLayerName,
                          const char *pszDirectoryName,
-                         const CPLJSONObject &oFields, bool bJsonField,
-                         OGRwkbGeometryType eGeomType,
+                         const CPLJSONObject &oFields,
+                         const CPLJSONArray &oAttributesFromTileStats,
+                         bool bJsonField, OGRwkbGeometryType eGeomType,
                          const OGREnvelope *psExtent);
     virtual ~OGRMVTDirectoryLayer();
 
@@ -354,9 +359,10 @@ OGRMVTLayerBase::~OGRMVTLayerBase()
 /*                           InitFields()                               */
 /************************************************************************/
 
-void OGRMVTLayerBase::InitFields(const CPLJSONObject &oFields)
+void OGRMVTLayerBase::InitFields(const CPLJSONObject &oFields,
+                                 const CPLJSONArray &oAttributesFromTileStats)
 {
-    OGRMVTInitFields(m_poFeatureDefn, oFields);
+    OGRMVTInitFields(m_poFeatureDefn, oFields, oAttributesFromTileStats);
 }
 
 /************************************************************************/
@@ -379,6 +385,7 @@ int OGRMVTLayerBase::TestCapability(const char *pszCap)
 OGRMVTLayer::OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
                          const GByte *pabyData, int nLayerSize,
                          const CPLJSONObject &oFields,
+                         const CPLJSONArray &oAttributesFromTileStats,
                          OGRwkbGeometryType eGeomType)
     : m_poDS(poDS), m_pabyDataStart(pabyData),
       m_pabyDataEnd(pabyData + nLayerSize)
@@ -393,7 +400,7 @@ OGRMVTLayer::OGRMVTLayer(OGRMVTDataset *poDS, const char *pszLayerName,
         m_poFeatureDefn->GetGeomFieldDefn(0)->SetSpatialRef(m_poDS->GetSRS());
     }
 
-    Init(oFields);
+    Init(oFields, oAttributesFromTileStats);
 
     GetXY(0, 0, m_dfTileMinX, m_dfTileMaxY);
     GetXY(m_nExtent, m_nExtent, m_dfTileMaxX, m_dfTileMinY);
@@ -433,7 +440,8 @@ OGRMVTLayer::~OGRMVTLayer()
 /*                               Init()                                 */
 /************************************************************************/
 
-void OGRMVTLayer::Init(const CPLJSONObject &oFields)
+void OGRMVTLayer::Init(const CPLJSONObject &oFields,
+                       const CPLJSONArray &oAttributesFromTileStats)
 {
     // First pass to collect keys and values
     const GByte *pabyData = m_pabyDataStart;
@@ -557,7 +565,7 @@ void OGRMVTLayer::Init(const CPLJSONObject &oFields)
             }
         }
 
-        InitFields(oFields);
+        InitFields(oFields, oAttributesFromTileStats);
 
         m_nFeatureCount = 0;
         pabyData = m_pabyDataStart;
@@ -1441,8 +1449,8 @@ static CPLStringList StripDummyEntries(const CPLStringList &aosInput)
 
 OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
     OGRMVTDataset *poDS, const char *pszLayerName, const char *pszDirectoryName,
-    const CPLJSONObject &oFields, bool bJsonField, OGRwkbGeometryType eGeomType,
-    const OGREnvelope *psExtent)
+    const CPLJSONObject &oFields, const CPLJSONArray &oAttributesFromTileStats,
+    bool bJsonField, OGRwkbGeometryType eGeomType, const OGREnvelope *psExtent)
     : m_poDS(poDS), m_osDirName(pszDirectoryName), m_bJsonField(bJsonField)
 {
     m_poFeatureDefn = new OGRFeatureDefn(pszLayerName);
@@ -1459,7 +1467,7 @@ OGRMVTDirectoryLayer::OGRMVTDirectoryLayer(
     }
     else
     {
-        InitFields(oFields);
+        InitFields(oFields, oAttributesFromTileStats);
     }
 
     m_nZ = atoi(CPLGetFilename(m_osDirName));
@@ -2703,7 +2711,8 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
                                     new OGRMVTDirectoryLayer(
                                         poDS, poTileLayer->GetName(),
                                         poOpenInfo->pszFilename, oFields,
-                                        bJsonField, wkbUnknown, nullptr)));
+                                        CPLJSONArray(), bJsonField, wkbUnknown,
+                                        nullptr)));
                             poLayer = poDS->m_apoLayers.back().get();
                             poLDefn = poLayer->GetLayerDefn();
                             poLDefn->SetGeomType(eTileGeomType);
@@ -2835,11 +2844,15 @@ GDALDataset *OGRMVTDataset::OpenDirectory(GDALOpenInfo *poOpenInfo)
             }
 
             CPLJSONObject oFields = oVectorLayers[i].GetObj("fields");
-            poDS->m_apoLayers.push_back(std::unique_ptr<OGRLayer>(
-                new OGRMVTDirectoryLayer(poDS, oId.ToString().c_str(),
-                                         poOpenInfo->pszFilename, oFields,
-                                         bJsonField, eGeomType,
-                                         (bExtentValid) ? &sExtent : nullptr)));
+            CPLJSONArray oAttributesFromTileStats =
+                OGRMVTFindAttributesFromTileStat(oTileStatLayers,
+                                                 oId.ToString().c_str());
+
+            poDS->m_apoLayers.push_back(
+                std::unique_ptr<OGRLayer>(new OGRMVTDirectoryLayer(
+                    poDS, oId.ToString().c_str(), poOpenInfo->pszFilename,
+                    oFields, oAttributesFromTileStats, bJsonField, eGeomType,
+                    (bExtentValid) ? &sExtent : nullptr)));
         }
     }
 
@@ -3180,10 +3193,14 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
                             eGeomType = OGRMVTFindGeomTypeFromTileStat(
                                 oTileStatLayers, pszLayerName);
                         }
+                        CPLJSONArray oAttributesFromTileStats =
+                            OGRMVTFindAttributesFromTileStat(oTileStatLayers,
+                                                             pszLayerName);
 
-                        poDS->m_apoLayers.push_back(std::unique_ptr<OGRLayer>(
-                            new OGRMVTLayer(poDS, pszLayerName, pabyDataLayer,
-                                            nLayerSize, oFields, eGeomType)));
+                        poDS->m_apoLayers.push_back(
+                            std::unique_ptr<OGRLayer>(new OGRMVTLayer(
+                                poDS, pszLayerName, pabyDataLayer, nLayerSize,
+                                oFields, oAttributesFromTileStats, eGeomType)));
                         CPLFree(pszLayerName);
                         break;
                     }
@@ -3353,6 +3370,8 @@ class OGRMVTWriterDataset final : public GDALDataset
     OGRMVTWriterDataset();
     ~OGRMVTWriterDataset();
 
+    CPLErr Close() override;
+
     OGRLayer *ICreateLayer(const char *, OGRSpatialReference * = nullptr,
                            OGRwkbGeometryType = wkbUnknown,
                            char ** = nullptr) override;
@@ -3506,27 +3525,7 @@ OGRMVTWriterDataset::OGRMVTWriterDataset()
 
 OGRMVTWriterDataset::~OGRMVTWriterDataset()
 {
-    if (GetDescription()[0] != '\0')
-    {
-        CreateOutput();
-    }
-    if (m_hInsertStmt != nullptr)
-    {
-        sqlite3_finalize(m_hInsertStmt);
-    }
-    if (m_hDB)
-    {
-        sqlite3_close(m_hDB);
-    }
-    if (m_hDBMBTILES)
-    {
-        sqlite3_close(m_hDBMBTILES);
-    }
-    if (!m_osTempDB.empty() && !m_bReuseTempFile &&
-        CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")))
-    {
-        VSIUnlink(m_osTempDB);
-    }
+    OGRMVTWriterDataset::Close();
 
     if (m_pMyVFS)
     {
@@ -3534,7 +3533,46 @@ OGRMVTWriterDataset::~OGRMVTWriterDataset()
         CPLFree(m_pMyVFS->pAppData);
         CPLFree(m_pMyVFS);
     }
+
     m_poSRS->Release();
+}
+
+/************************************************************************/
+/*                              Close()                                 */
+/************************************************************************/
+
+CPLErr OGRMVTWriterDataset::Close()
+{
+    CPLErr eErr = CE_None;
+    if (nOpenFlags != OPEN_FLAGS_CLOSED)
+    {
+        if (GetDescription()[0] != '\0')
+        {
+            if (!CreateOutput())
+                eErr = CE_Failure;
+        }
+        if (m_hInsertStmt != nullptr)
+        {
+            sqlite3_finalize(m_hInsertStmt);
+        }
+        if (m_hDB)
+        {
+            sqlite3_close(m_hDB);
+        }
+        if (m_hDBMBTILES)
+        {
+            sqlite3_close(m_hDBMBTILES);
+        }
+        if (!m_osTempDB.empty() && !m_bReuseTempFile &&
+            CPLTestBool(CPLGetConfigOption("OGR_MVT_REMOVE_TEMP_FILE", "YES")))
+        {
+            VSIUnlink(m_osTempDB);
+        }
+
+        if (GDALDataset::Close() != CE_None)
+            eErr = CE_Failure;
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -5855,14 +5893,20 @@ OGRErr OGRMVTWriterDataset::WriteFeature(OGRMVTWriterLayer *poLayer,
         {
             double dfTileDim = m_dfTileDim0 / (1 << nZ);
             double dfBuffer = dfTileDim * m_nBuffer / m_nExtent;
-            int nTileMinX = static_cast<int>(
-                (sExtent.MinX - m_dfTopX - dfBuffer) / dfTileDim);
-            int nTileMinY = static_cast<int>(
-                (m_dfTopY - sExtent.MaxY - dfBuffer) / dfTileDim);
-            int nTileMaxX = static_cast<int>(
-                (sExtent.MaxX - m_dfTopX + dfBuffer) / dfTileDim);
-            int nTileMaxY = static_cast<int>(
-                (m_dfTopY - sExtent.MinY + dfBuffer) / dfTileDim);
+            const int nTileMinX = std::max(
+                0, static_cast<int>((sExtent.MinX - m_dfTopX - dfBuffer) /
+                                    dfTileDim));
+            const int nTileMinY = std::max(
+                0, static_cast<int>((m_dfTopY - sExtent.MaxY - dfBuffer) /
+                                    dfTileDim));
+            const int nTileMaxX =
+                std::min(static_cast<int>((sExtent.MaxX - m_dfTopX + dfBuffer) /
+                                          dfTileDim),
+                         (1 << nZ) - 1);
+            const int nTileMaxY =
+                std::min(static_cast<int>((m_dfTopY - sExtent.MinY + dfBuffer) /
+                                          dfTileDim),
+                         (1 << nZ) - 1);
             for (int iX = nTileMinX; iX <= nTileMaxX; iX++)
             {
                 for (int iY = nTileMinY; iY <= nTileMaxY; iY++)
@@ -6305,7 +6349,7 @@ void RegisterOGRMVT()
         "'For tilesets without metadata file, maximum number of tiles to use "
         "to "
         "establish the layer schemas' default='1000'/>"
-        "  <Option name='JSON_FIELD' type='string' description='For tilesets, "
+        "  <Option name='JSON_FIELD' type='boolean' description='For tilesets, "
         "whether to put all attributes as a serialized JSon dictionary'/>"
         "</OpenOptionList>");
 
