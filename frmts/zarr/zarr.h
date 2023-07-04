@@ -824,6 +824,10 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     virtual std::string
     BuildTileFilename(const uint64_t *tileIndices) const = 0;
 
+    bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
+                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       CSLConstList papszOptions) override;
+
   public:
     ~ZarrArray() override;
 

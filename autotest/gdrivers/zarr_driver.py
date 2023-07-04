@@ -5215,3 +5215,42 @@ def test_zarr_driver_copy_files(format):
             gdal.RmdirRecursive(filename)
         if gdal.VSIStatL(newfilename):
             gdal.RmdirRecursive(newfilename)
+
+
+###############################################################################
+
+
+@gdaltest.enable_exceptions()
+def test_zarr_multidim_compute_statistics_update_metadata():
+
+    filename = "/vsimem/test_netcdf_multidim_compute_statistics_update_metadata.zarr"
+
+    def test():
+        drv = gdal.GetDriverByName("ZARR")
+        ds = drv.CreateMultiDimensional(filename)
+        rg = ds.GetRootGroup()
+        dim0 = rg.CreateDimension("dim0", None, None, 2)
+        ar = rg.CreateMDArray(
+            "ar", [dim0], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
+        )
+        ar.Write(array.array("f", [1.5, 2.5]))
+        stats = ar.ComputeStatistics(options=["UPDATE_METADATA=YES"])
+        assert stats.min == 1.5
+        assert stats.max == 2.5
+
+    def reopen():
+        ds = gdal.OpenEx(filename, gdal.OF_MULTIDIM_RASTER)
+        rg = ds.GetRootGroup()
+        ar = rg.OpenMDArray("ar")
+        stats = ar.GetStatistics()
+        assert stats.min == 1.5
+        assert stats.max == 2.5
+        attr = ar.GetAttribute("actual_range")
+        assert list(attr.Read()) == [1.5, 2.5]
+
+    try:
+        test()
+        reopen()
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.RmdirRecursive(filename)
