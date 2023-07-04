@@ -44,15 +44,15 @@ import org.gdal.gdalconst.gdalconst;
 
 public class GDALTestMultiDim
 {
-    public GDALTestMultiDim() { }
+	public GDALTestMultiDim() { }
 
-    public static void main(String[] args)
-    {
-        gdal.AllRegister();
+	public static void main(String[] args)
+	{
+		gdal.AllRegister();
 
-        testMDArrayStuff();
+		testMDArrayStuff();
 
-        System.out.println("Success !");
+		System.out.println("Success !");
 	}
 	
 	private static void testMDArrayStuff() {
@@ -181,9 +181,6 @@ public class GDALTestMultiDim
 				steps[0] = 1;
 				strides[0] = 1;
 
-				System.out.println("  testing plane t = "+t+" z = "+z+" size (y="+ySize+" by "+"x="+xSize+")");
-				System.out.flush();
-
 				int pos = 0;
 				
 				for (int y = 0; y < ySize; y++) {
@@ -211,16 +208,10 @@ public class GDALTestMultiDim
 					throw new RuntimeException("could not write a plane for some reason");
 				}
 				
-				System.out.println("    plane written");
-				System.out.flush();
-
 				if (!mdarray.Read(starts, counts, steps, strides, readData)) {
 
 					throw new RuntimeException("could not read a plane for some reason");
 				}
-				
-				System.out.println("    plane read");
-				System.out.flush();
 				
 				if (Arrays.equals(readData, zeros)) {
 					
