@@ -234,7 +234,7 @@ class OGRODSDataSource final : public GDALDataset
     void FillRepeatedCells(bool wasLastCell);
 
   public:
-    OGRODSDataSource();
+    explicit OGRODSDataSource(CSLConstList papszOpenOptionsIn);
     virtual ~OGRODSDataSource();
     CPLErr Close() override;
 
