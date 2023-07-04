@@ -3212,7 +3212,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /*      Open source vector dataset.                                     */
     /* -------------------------------------------------------------------- */
     auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open(osCutlineDSName.c_str()));
+        GDALDataset::Open(osCutlineDSName.c_str(), GDAL_OF_VECTOR));
     if (poDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s.",
