@@ -95,6 +95,9 @@ OGREnvelope3D OGRGeoJSONGetBBox(OGRGeometry *poGeometry,
                                 const OGRGeoJSONWriteOptions &oOptions);
 json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
                                     const OGRGeoJSONWriteOptions &oOptions);
+void OGRGeoJSONWriteId(const OGRFeature *poFeature, json_object *poObj,
+                       bool bIdAlreadyWritten,
+                       const OGRGeoJSONWriteOptions &oOptions);
 json_object *OGRGeoJSONWriteAttributes(
     OGRFeature *poFeature, bool bWriteIdIfFoundInAttributes = true,
     const OGRGeoJSONWriteOptions &oOptions = OGRGeoJSONWriteOptions());

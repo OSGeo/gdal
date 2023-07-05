@@ -1,0 +1,14 @@
+{
+  "type": "FeatureCollection",
+  "conformsTo" : [ "[ogc-json-fg-1-0.1:core]" ],
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": { "type": "Point", "coordinates": [0, 0] },
+      "properties": {"notes": "does not meet req 10 No point, line string or polygon geometry in WGS 84 longitude/latitude"},
+      "place": { "type": "Point", "coordinates": [2, 49] },
+      "time": null
+    }
+  ]
+}

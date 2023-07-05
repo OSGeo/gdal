@@ -4480,7 +4480,21 @@ OGRErr OGRSpatialReference::importFromCRSURL(const char *pszURL)
         return OGRERR_CORRUPT_DATA;
     }
 
-    auto obj = proj_create(d->getPROJContext(), pszURL);
+    PJ *obj;
+#if !PROJ_AT_LEAST_VERSION(9, 2, 0)
+    if (STARTS_WITH(pszURL, "http://www.opengis.net/def/crs/IAU/0/"))
+    {
+        obj = proj_create(
+            d->getPROJContext(),
+            CPLSPrintf("IAU:%s",
+                       pszURL +
+                           strlen("http://www.opengis.net/def/crs/IAU/0/")));
+    }
+    else
+#endif
+    {
+        obj = proj_create(d->getPROJContext(), pszURL);
+    }
     if (!obj)
     {
         return OGRERR_FAILURE;
@@ -8108,6 +8122,36 @@ OGRSpatialReference::GetAuthorityCode(const char *pszTargetKey) const
         }
     }
 
+    // Special key for that context
+    else if (EQUAL(pszTargetKey, "HORIZCRS") &&
+             d->m_pjType == PJ_TYPE_COMPOUND_CRS)
+    {
+        auto ctxt = d->getPROJContext();
+        auto crs = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 0);
+        if (crs)
+        {
+            const char *ret = proj_get_id_code(crs, 0);
+            if (ret)
+                ret = CPLSPrintf("%s", ret);
+            proj_destroy(crs);
+            return ret;
+        }
+    }
+    else if (EQUAL(pszTargetKey, "VERTCRS") &&
+             d->m_pjType == PJ_TYPE_COMPOUND_CRS)
+    {
+        auto ctxt = d->getPROJContext();
+        auto crs = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 1);
+        if (crs)
+        {
+            const char *ret = proj_get_id_code(crs, 0);
+            if (ret)
+                ret = CPLSPrintf("%s", ret);
+            proj_destroy(crs);
+            return ret;
+        }
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Find the node below which the authority should be put.          */
     /* -------------------------------------------------------------------- */
@@ -8208,6 +8252,36 @@ OGRSpatialReference::GetAuthorityName(const char *pszTargetKey) const
         d->undoDemoteFromBoundCRS();
         if (ret != nullptr || pszTargetKey == nullptr)
         {
+            return ret;
+        }
+    }
+
+    // Special key for that context
+    else if (EQUAL(pszTargetKey, "HORIZCRS") &&
+             d->m_pjType == PJ_TYPE_COMPOUND_CRS)
+    {
+        auto ctxt = d->getPROJContext();
+        auto crs = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 0);
+        if (crs)
+        {
+            const char *ret = proj_get_id_auth_name(crs, 0);
+            if (ret)
+                ret = CPLSPrintf("%s", ret);
+            proj_destroy(crs);
+            return ret;
+        }
+    }
+    else if (EQUAL(pszTargetKey, "VERTCRS") &&
+             d->m_pjType == PJ_TYPE_COMPOUND_CRS)
+    {
+        auto ctxt = d->getPROJContext();
+        auto crs = proj_crs_get_sub_crs(ctxt, d->m_pj_crs, 1);
+        if (crs)
+        {
+            const char *ret = proj_get_id_auth_name(crs, 0);
+            if (ret)
+                ret = CPLSPrintf("%s", ret);
+            proj_destroy(crs);
             return ret;
         }
     }

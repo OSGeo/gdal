@@ -61,6 +61,7 @@ Vector drivers
    idrisi
    ili
    jml
+   jsonfg
    kml
    libkml
    lvbag

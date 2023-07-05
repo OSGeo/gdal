@@ -663,46 +663,7 @@ json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
     /* -------------------------------------------------------------------- */
     /*      Write FID if available                                          */
     /* -------------------------------------------------------------------- */
-    if (!oOptions.osIDField.empty())
-    {
-        int nIdx = poFeature->GetDefnRef()->GetFieldIndexCaseSensitive(
-            oOptions.osIDField);
-        if (nIdx >= 0)
-        {
-            if ((oOptions.bForceIDFieldType &&
-                 oOptions.eForcedIDFieldType == OFTInteger64) ||
-                (!oOptions.bForceIDFieldType &&
-                 (poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger ||
-                  poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger64)))
-            {
-                json_object_object_add(
-                    poObj, "id",
-                    json_object_new_int64(
-                        poFeature->GetFieldAsInteger64(nIdx)));
-            }
-            else
-            {
-                json_object_object_add(
-                    poObj, "id",
-                    json_object_new_string(poFeature->GetFieldAsString(nIdx)));
-            }
-        }
-    }
-    else if (poFeature->GetFID() != OGRNullFID && !bIdAlreadyWritten)
-    {
-        if (oOptions.bForceIDFieldType &&
-            oOptions.eForcedIDFieldType == OFTString)
-        {
-            json_object_object_add(poObj, "id",
-                                   json_object_new_string(CPLSPrintf(
-                                       CPL_FRMT_GIB, poFeature->GetFID())));
-        }
-        else
-        {
-            json_object_object_add(poObj, "id",
-                                   json_object_new_int64(poFeature->GetFID()));
-        }
-    }
+    OGRGeoJSONWriteId(poFeature, poObj, bIdAlreadyWritten, oOptions);
 
     /* -------------------------------------------------------------------- */
     /*      Write feature attributes to GeoJSON "properties" object.        */
@@ -765,6 +726,56 @@ json_object *OGRGeoJSONWriteFeature(OGRFeature *poFeature,
         json_object_put(poNativeGeom);
 
     return poObj;
+}
+
+/************************************************************************/
+/*                        OGRGeoJSONWriteId                            */
+/************************************************************************/
+
+void OGRGeoJSONWriteId(const OGRFeature *poFeature, json_object *poObj,
+                       bool bIdAlreadyWritten,
+                       const OGRGeoJSONWriteOptions &oOptions)
+{
+    if (!oOptions.osIDField.empty())
+    {
+        int nIdx = poFeature->GetDefnRef()->GetFieldIndexCaseSensitive(
+            oOptions.osIDField);
+        if (nIdx >= 0)
+        {
+            if ((oOptions.bForceIDFieldType &&
+                 oOptions.eForcedIDFieldType == OFTInteger64) ||
+                (!oOptions.bForceIDFieldType &&
+                 (poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger ||
+                  poFeature->GetFieldDefnRef(nIdx)->GetType() == OFTInteger64)))
+            {
+                json_object_object_add(
+                    poObj, "id",
+                    json_object_new_int64(
+                        poFeature->GetFieldAsInteger64(nIdx)));
+            }
+            else
+            {
+                json_object_object_add(
+                    poObj, "id",
+                    json_object_new_string(poFeature->GetFieldAsString(nIdx)));
+            }
+        }
+    }
+    else if (poFeature->GetFID() != OGRNullFID && !bIdAlreadyWritten)
+    {
+        if (oOptions.bForceIDFieldType &&
+            oOptions.eForcedIDFieldType == OFTString)
+        {
+            json_object_object_add(poObj, "id",
+                                   json_object_new_string(CPLSPrintf(
+                                       CPL_FRMT_GIB, poFeature->GetFID())));
+        }
+        else
+        {
+            json_object_object_add(poObj, "id",
+                                   json_object_new_int64(poFeature->GetFID()));
+        }
+    }
 }
 
 /************************************************************************/

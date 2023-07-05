@@ -75,7 +75,8 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     OGRFeature *GetFeatureRef(GIntBig nFeatureId);
 
   public:
-    OGRMemLayer(const char *pszName, OGRSpatialReference *poSRS,
+    // Clone poSRS if not nullptr
+    OGRMemLayer(const char *pszName, const OGRSpatialReference *poSRS,
                 OGRwkbGeometryType eGeomType);
     virtual ~OGRMemLayer();
 

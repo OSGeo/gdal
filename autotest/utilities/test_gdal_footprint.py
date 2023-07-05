@@ -59,7 +59,8 @@ def test_gdal_footprint_basic(gdal_footprint_path):
         gdal.Unlink("tmp/out_footprint.json")
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdal_footprint_path + " ../gcore/data/byte.tif tmp/out_footprint.json"
+        gdal_footprint_path
+        + " -f GeoJSON ../gcore/data/byte.tif tmp/out_footprint.json"
     )
     assert err is None or err == "", "got error/warning"
 

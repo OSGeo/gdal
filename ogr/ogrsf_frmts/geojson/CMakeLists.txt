@@ -13,6 +13,7 @@ add_gdal_driver(
           ogresrijsondriver.cpp
           ogrtopojsonreader.cpp
           ogrtopojsondriver.cpp
+          ogrjsoncollectionstreamingparser.cpp
   BUILTIN)
 gdal_standard_includes(ogr_geojson)
 target_include_directories(ogr_geojson PRIVATE $<TARGET_PROPERTY:appslib,SOURCE_DIR>)

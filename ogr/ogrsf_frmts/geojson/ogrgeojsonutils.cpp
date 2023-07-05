@@ -167,6 +167,9 @@ static bool IsGeoJSONLikeObject(const char *pszText, bool &bMightBeSequence,
     if (IsTypeSomething(pszText, "Topology"))
         return false;
 
+    if (JSONFGIsObject(pszText) && GDALGetDriverByName("JSONFG"))
+        return false;
+
     if (IsTypeSomething(pszText, "FeatureCollection"))
     {
         return true;
@@ -482,6 +485,60 @@ bool GeoJSONSeqIsObject(const char *pszText)
 }
 
 /************************************************************************/
+/*                        JSONFGFileIsObject()                          */
+/************************************************************************/
+
+static bool JSONFGFileIsObject(GDALOpenInfo *poOpenInfo)
+{
+    // 6000 somewhat arbitrary. Based on other JSON-like drivers
+    if (poOpenInfo->fpL == nullptr || !poOpenInfo->TryToIngest(6000))
+    {
+        return false;
+    }
+
+    const char *pszText =
+        reinterpret_cast<const char *>(poOpenInfo->pabyHeader);
+    return JSONFGIsObject(pszText);
+}
+
+bool JSONFGIsObject(const char *pszText)
+{
+    if (!IsJSONObject(pszText))
+        return false;
+
+    const std::string osWithoutSpace = GetCompactJSon(pszText, strlen(pszText));
+
+    {
+        const auto nPos = osWithoutSpace.find("\"conformsTo\":[");
+        if (nPos != std::string::npos)
+        {
+            if (osWithoutSpace.find("\"[ogc-json-fg-1-0.1:core]\"", nPos) !=
+                    std::string::npos ||
+                osWithoutSpace.find(
+                    "\"http://www.opengis.net/spec/json-fg-1/0.1\"", nPos) !=
+                    std::string::npos)
+            {
+                return true;
+            }
+        }
+    }
+
+    if (osWithoutSpace.find("\"coordRefSys\":") != std::string::npos ||
+        osWithoutSpace.find("\"featureType\":\"") != std::string::npos ||
+        osWithoutSpace.find("\"place\":{\"type\":") != std::string::npos ||
+        osWithoutSpace.find("\"place\":{\"coordinates\":") !=
+            std::string::npos ||
+        osWithoutSpace.find("\"time\":{\"date\":") != std::string::npos ||
+        osWithoutSpace.find("\"time\":{\"timestamp\":") != std::string::npos ||
+        osWithoutSpace.find("\"time\":{\"interval\":") != std::string::npos)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*                           IsLikelyESRIJSONURL()                      */
 /************************************************************************/
 
@@ -717,6 +774,55 @@ GeoJSONSourceType GeoJSONSeqGetSourceType(GDALOpenInfo *poOpenInfo)
         srcType = eGeoJSONSourceText;
     }
     else if (GeoJSONSeqFileIsObject(poOpenInfo))
+    {
+        srcType = eGeoJSONSourceFile;
+    }
+
+    return srcType;
+}
+
+/************************************************************************/
+/*                      JSONFGDriverGetSourceType()                     */
+/************************************************************************/
+
+GeoJSONSourceType JSONFGDriverGetSourceType(GDALOpenInfo *poOpenInfo)
+{
+    GeoJSONSourceType srcType = eGeoJSONSourceUnknown;
+
+    if (STARTS_WITH_CI(poOpenInfo->pszFilename, "JSONFG:http://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "JSONFG:https://") ||
+        STARTS_WITH_CI(poOpenInfo->pszFilename, "JSONFG:ftp://"))
+    {
+        srcType = eGeoJSONSourceService;
+    }
+    else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "http://") ||
+             STARTS_WITH_CI(poOpenInfo->pszFilename, "https://") ||
+             STARTS_WITH_CI(poOpenInfo->pszFilename, "ftp://"))
+    {
+        if (IsLikelyESRIJSONURL(poOpenInfo->pszFilename))
+        {
+            return eGeoJSONSourceUnknown;
+        }
+        srcType = eGeoJSONSourceService;
+    }
+    else if (STARTS_WITH_CI(poOpenInfo->pszFilename, "JSONFG:"))
+    {
+        VSIStatBufL sStat;
+        const size_t nJSONFGPrefixLen = strlen("JSONFG:");
+        if (VSIStatL(poOpenInfo->pszFilename + nJSONFGPrefixLen, &sStat) == 0)
+        {
+            return eGeoJSONSourceFile;
+        }
+        const char *pszText = poOpenInfo->pszFilename + nJSONFGPrefixLen;
+        if (JSONFGIsObject(pszText))
+            return eGeoJSONSourceText;
+        return eGeoJSONSourceUnknown;
+    }
+    else if (JSONFGIsObject(poOpenInfo->pszFilename))
+    {
+        srcType = eGeoJSONSourceText;
+    }
+    else if (JSONFGFileIsObject(poOpenInfo))
     {
         srcType = eGeoJSONSourceFile;
     }

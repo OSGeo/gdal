@@ -662,6 +662,7 @@ void CPL_DLL RegisterOGRParquet();
 void CPL_DLL RegisterOGRArrow();
 void CPL_DLL RegisterOGRGTFS();
 void CPL_DLL RegisterOGRPMTiles();
+void CPL_DLL RegisterOGRJSONFG();
 // @endcond
 
 CPL_C_END
