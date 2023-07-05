@@ -6159,8 +6159,8 @@ GDALDataset *GTiffDataset::Create(const char *pszFilename, int nXSize,
     poDS->m_nZSTDLevel = GTiffGetZSTDPreset(papszParamList);
     poDS->m_nWebPLevel = GTiffGetWebPLevel(papszParamList);
     poDS->m_bWebPLossless = GTiffGetWebPLossless(papszParamList);
-    if (CSLFetchNameValue(papszParamList, "WEBP_LEVEL") &&
-        poDS->m_bWebPLossless)
+    if (poDS->m_nWebPLevel != 100 && poDS->m_bWebPLossless &&
+        CSLFetchNameValue(papszParamList, "WEBP_LEVEL"))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "WEBP_LEVEL is specified, but WEBP_LOSSLESS=YES. "
@@ -7451,7 +7451,8 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     poDS->m_nZSTDLevel = GTiffGetZSTDPreset(papszOptions);
     poDS->m_nWebPLevel = GTiffGetWebPLevel(papszOptions);
     poDS->m_bWebPLossless = GTiffGetWebPLossless(papszOptions);
-    if (CSLFetchNameValue(papszOptions, "WEBP_LEVEL") && poDS->m_bWebPLossless)
+    if (poDS->m_nWebPLevel != 100 && poDS->m_bWebPLossless &&
+        CSLFetchNameValue(papszOptions, "WEBP_LEVEL"))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "WEBP_LEVEL is specified, but WEBP_LOSSLESS=YES. "
