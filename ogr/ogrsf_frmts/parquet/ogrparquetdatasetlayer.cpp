@@ -125,21 +125,26 @@ bool OGRParquetDatasetLayer::ReadNextBatch()
             return false;
     }
 
-    ++m_iRecordBatch;
-
     std::shared_ptr<arrow::RecordBatch> poNextBatch;
-    auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
-    if (!status.ok())
+    do
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
-                 status.message().c_str());
+        ++m_iRecordBatch;
+
         poNextBatch.reset();
-    }
-    if (poNextBatch == nullptr)
-    {
-        m_poBatch.reset();
-        return false;
-    }
+        auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
+        if (!status.ok())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
+                     status.message().c_str());
+            poNextBatch.reset();
+        }
+        if (poNextBatch == nullptr)
+        {
+            m_poBatch.reset();
+            return false;
+        }
+    } while (poNextBatch->num_rows() == 0);
+
     SetBatch(poNextBatch);
 
     return true;

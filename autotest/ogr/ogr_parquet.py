@@ -1722,3 +1722,16 @@ def test_ogr_parquet_field_alternative_name_comment():
         ds = None
     finally:
         gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test reading a partitioned dataset with a part with an empty batch
+
+
+@pytest.mark.skipif(not _has_arrow_dataset(), reason="GDAL not built with ArrowDataset")
+def test_ogr_parquet_read_dataset_with_empty_batch():
+    ds = ogr.Open("data/parquet/part_with_empty_batch")
+    lyr = ds.GetLayer(0)
+    # Check that we don't iterate forever
+    lyr.GetExtent()
+    assert len([f for f in lyr]) == 1
