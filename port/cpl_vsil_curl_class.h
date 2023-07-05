@@ -213,6 +213,21 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     char **ParseHTMLFileList(const char *pszFilename, int nMaxFiles,
                              char *pszData, bool *pbGotFileList);
 
+    // Data structure and map to store regions that are in progress, to
+    // avoid simultaneous downloads of the same region in different threads
+    // Cf https://github.com/OSGeo/gdal/issues/8041
+    struct RegionInDownload
+    {
+        std::mutex oMutex{};
+        std::condition_variable oCond{};
+        bool bDownloadInProgress = false;
+        int nWaiters = 0;
+        std::string osData{};
+    };
+    std::mutex m_oMutex{};
+    std::map<std::string, std::unique_ptr<RegionInDownload>>
+        m_oMapRegionInDownload{};
+
   protected:
     CPLMutex *hMutex = nullptr;
 
@@ -302,6 +317,13 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     void AddRegion(const char *pszURL, vsi_l_offset nFileOffsetStart,
                    size_t nSize, const char *pData);
+
+    std::string NotifyStartDownloadRegion(const std::string &osURL,
+                                          vsi_l_offset startOffset,
+                                          int nBlocks);
+    void NotifyStopDownloadRegion(const std::string &osURL,
+                                  vsi_l_offset startOffset, int nBlocks,
+                                  const std::string &osData);
 
     bool GetCachedFileProp(const char *pszURL, FileProp &oFileProp);
     void SetCachedFileProp(const char *pszURL, FileProp &oFileProp);

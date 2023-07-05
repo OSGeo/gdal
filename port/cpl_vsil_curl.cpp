@@ -1602,6 +1602,132 @@ CPLString VSICurlHandle::GetRedirectURLIfValid(bool &bHasExpired) const
 }
 
 /************************************************************************/
+/*                          CurrentDownload                             */
+/************************************************************************/
+
+namespace
+{
+struct CurrentDownload
+{
+    VSICurlFilesystemHandlerBase *m_poFS = nullptr;
+    std::string m_osURL{};
+    vsi_l_offset m_nStartOffset = 0;
+    int m_nBlocks = 0;
+    std::string m_osData{};
+    bool m_bDone = false;
+
+    CurrentDownload(VSICurlFilesystemHandlerBase *poFS, const char *pszURL,
+                    vsi_l_offset startOffset, int nBlocks)
+        : m_poFS(poFS), m_osURL(pszURL), m_nStartOffset(startOffset),
+          m_nBlocks(nBlocks)
+    {
+        m_osData = m_poFS->NotifyStartDownloadRegion(m_osURL, m_nStartOffset,
+                                                     m_nBlocks);
+        m_bDone = !m_osData.empty();
+    }
+
+    const std::string &GetAlreadyDownloadedData() const
+    {
+        return m_osData;
+    }
+
+    void SetData(const std::string &osData)
+    {
+        CPLAssert(!m_bDone);
+        m_bDone = true;
+        m_poFS->NotifyStopDownloadRegion(m_osURL, m_nStartOffset, m_nBlocks,
+                                         osData);
+    }
+
+    ~CurrentDownload()
+    {
+        if (!m_bDone)
+            m_poFS->NotifyStopDownloadRegion(m_osURL, m_nStartOffset, m_nBlocks,
+                                             std::string());
+    }
+
+    CurrentDownload(const CurrentDownload &) = delete;
+    CurrentDownload &operator=(const CurrentDownload &) = delete;
+};
+}  // namespace
+
+/************************************************************************/
+/*                      NotifyStartDownloadRegion()                     */
+/************************************************************************/
+
+std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
+    const std::string &osURL, vsi_l_offset startOffset, int nBlocks)
+{
+    std::string osId(osURL);
+    osId += '_';
+    osId += std::to_string(startOffset);
+    osId += '_';
+    osId += std::to_string(nBlocks);
+
+    m_oMutex.lock();
+    auto oIter = m_oMapRegionInDownload.find(osId);
+    if (oIter != m_oMapRegionInDownload.end())
+    {
+        auto &region = *(oIter->second);
+        std::unique_lock<std::mutex> oRegionLock(region.oMutex);
+        m_oMutex.unlock();
+        region.nWaiters++;
+        while (region.bDownloadInProgress)
+        {
+            region.oCond.wait(oRegionLock);
+        }
+        std::string osRet = region.osData;
+        region.nWaiters--;
+        region.oCond.notify_one();
+        return osRet;
+    }
+    else
+    {
+        auto poRegionInDownload = cpl::make_unique<RegionInDownload>();
+        poRegionInDownload->bDownloadInProgress = true;
+        m_oMapRegionInDownload[osId] = std::move(poRegionInDownload);
+        m_oMutex.unlock();
+        return std::string();
+    }
+}
+
+/************************************************************************/
+/*                      NotifyStopDownloadRegion()                      */
+/************************************************************************/
+
+void VSICurlFilesystemHandlerBase::NotifyStopDownloadRegion(
+    const std::string &osURL, vsi_l_offset startOffset, int nBlocks,
+    const std::string &osData)
+{
+    std::string osId(osURL);
+    osId += '_';
+    osId += std::to_string(startOffset);
+    osId += '_';
+    osId += std::to_string(nBlocks);
+
+    m_oMutex.lock();
+    auto oIter = m_oMapRegionInDownload.find(osId);
+    CPLAssert(oIter != m_oMapRegionInDownload.end());
+    auto &region = *(oIter->second);
+    {
+        std::unique_lock<std::mutex> oRegionLock(region.oMutex);
+        if (region.nWaiters)
+        {
+            region.osData = osData;
+            region.bDownloadInProgress = false;
+            region.oCond.notify_all();
+
+            while (region.nWaiters)
+            {
+                region.oCond.wait(oRegionLock);
+            }
+        }
+    }
+    m_oMapRegionInDownload.erase(oIter);
+    m_oMutex.unlock();
+}
+
+/************************************************************************/
 /*                          DownloadRegion()                            */
 /************************************************************************/
 
@@ -1614,6 +1740,15 @@ std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
     if (oFileProp.eExists == EXIST_NO)
         return std::string();
 
+    // Check if there is not a download of the same region in progress in
+    // another thread, and if so wait for it to be completed
+    CurrentDownload currentDownload(poFS, m_pszURL, startOffset, nBlocks);
+    const std::string &osAlreadyDownloadedData =
+        currentDownload.GetAlreadyDownloadedData();
+    if (!osAlreadyDownloadedData.empty())
+        return osAlreadyDownloadedData;
+
+begin:
     CURLM *hCurlMultiHandle = poFS->GetCurlMultiHandleFor(m_pszURL);
 
     ManagePlanetaryComputerSigning();
@@ -1778,7 +1913,7 @@ retry:
             CPLFree(sWriteFuncData.pBuffer);
             CPLFree(sWriteFuncHeaderData.pBuffer);
             curl_easy_cleanup(hCurlHandle);
-            return DownloadRegion(startOffset, nBlocks);
+            goto begin;
         }
 
         // Look if we should attempt a retry
@@ -1892,6 +2027,9 @@ retry:
 
     std::string osRet;
     osRet.assign(sWriteFuncData.pBuffer, sWriteFuncData.nSize);
+
+    // Notify that the download of the current region is finished
+    currentDownload.SetData(osRet);
 
     CPLFree(sWriteFuncData.pBuffer);
     CPLFree(sWriteFuncHeaderData.pBuffer);
