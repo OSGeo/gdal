@@ -24,7 +24,6 @@
 %}
 
 
-%rename (GetFieldType) GetType;
 %rename (GetDriverCount) OGRGetDriverCount;
 %rename (GetOpenDSCount) OGRGetOpenDSCount;
 %rename (SetGenerate_DB2_V72_BYTE_ORDER) OGRSetGenerate_DB2_V72_BYTE_ORDER;

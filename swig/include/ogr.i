@@ -2500,6 +2500,13 @@ public:
         OGR_Fld_SetType(self, type);
   }
 
+#ifdef SWIGJAVA
+  // Alias for backward compatibity
+  OGRFieldType GetFieldType() {
+    return OGR_Fld_GetType(self);
+  }
+#endif
+
   OGRFieldSubType GetSubType() {
     return OGR_Fld_GetSubType(self);
   }
