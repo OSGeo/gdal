@@ -192,7 +192,13 @@ static int TWebPDecode(TIFF *tif, uint8_t *op, tmsize_t occ, uint16_t s)
         }
 
         const int webp_bands = config.input.has_alpha ? 4 : 3;
-        if (webp_bands != sp->nSamples)
+        if (webp_bands != sp->nSamples &&
+            /* We accept the situation where the WebP blob has only 3 bands,
+             * whereas the raster is 4 bands. This can happen when the alpha
+             * channel is fully opaque, and WebP decoding works fine in that
+             * situation.
+             */
+            !(webp_bands == 3 && sp->nSamples == 4))
         {
             TIFFErrorExtR(tif, module,
                           "WebP blob band count is %d. Expected %d", webp_bands,
