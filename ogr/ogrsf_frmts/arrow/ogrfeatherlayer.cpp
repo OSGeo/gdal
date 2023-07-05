@@ -441,27 +441,36 @@ bool OGRFeatherLayer::ReadNextBatch()
 
 bool OGRFeatherLayer::ReadNextBatchFile()
 {
-    ++m_iRecordBatch;
-    if (m_iRecordBatch == m_poRecordBatchFileReader->num_record_batches())
+    while (true)
     {
-        if (m_iRecordBatch == 1)
-            m_iRecordBatch = 0;
-        else
+        ++m_iRecordBatch;
+        if (m_iRecordBatch == m_poRecordBatchFileReader->num_record_batches())
+        {
+            if (m_iRecordBatch == 1)
+                m_iRecordBatch = 0;
+            else
+                m_poBatch.reset();
+            return false;
+        }
+
+        m_nIdxInBatch = 0;
+
+        auto result =
+            m_poRecordBatchFileReader->ReadRecordBatch(m_iRecordBatch);
+        if (!result.ok())
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "ReadRecordBatch() failed: %s",
+                     result.status().message().c_str());
             m_poBatch.reset();
-        return false;
+            return false;
+        }
+        if ((*result)->num_rows() != 0)
+        {
+            SetBatch(*result);
+            break;
+        }
     }
-
-    m_nIdxInBatch = 0;
-
-    auto result = m_poRecordBatchFileReader->ReadRecordBatch(m_iRecordBatch);
-    if (!result.ok())
-    {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReadRecordBatch() failed: %s",
-                 result.status().message().c_str());
-        m_poBatch.reset();
-        return false;
-    }
-    SetBatch(*result);
 
     return true;
 }
@@ -474,66 +483,71 @@ bool OGRFeatherLayer::ReadNextBatchStream()
 {
     m_nIdxInBatch = 0;
 
-    if (m_iRecordBatch == 0 && m_poBatchIdx0)
-    {
-        SetBatch(m_poBatchIdx0);
-        m_iRecordBatch = 1;
-        return true;
-    }
-
-    else if (m_iRecordBatch == 1 && m_poBatchIdx1)
-    {
-        SetBatch(m_poBatchIdx1);
-        m_iRecordBatch = 2;
-        return true;
-    }
-
-    else if (m_bSingleBatch)
-    {
-        CPLAssert(m_iRecordBatch == 0);
-        CPLAssert(m_poBatch != nullptr);
-        return false;
-    }
-
-    if (m_bResetRecordBatchReaderAsked)
-    {
-        if (!m_bSeekable)
-        {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Attempting to rewind non-seekable stream");
-            return false;
-        }
-        if (!ResetRecordBatchReader())
-            return false;
-        m_bResetRecordBatchReaderAsked = false;
-    }
-
-    CPLAssert(m_poRecordBatchReader);
-
-    ++m_iRecordBatch;
-
     std::shared_ptr<arrow::RecordBatch> poNextBatch;
-    auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
-    if (!status.ok())
+    do
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
-                 status.message().c_str());
+        if (m_iRecordBatch == 0 && m_poBatchIdx0)
+        {
+            SetBatch(m_poBatchIdx0);
+            m_iRecordBatch = 1;
+            return true;
+        }
+
+        else if (m_iRecordBatch == 1 && m_poBatchIdx1)
+        {
+            SetBatch(m_poBatchIdx1);
+            m_iRecordBatch = 2;
+            return true;
+        }
+
+        else if (m_bSingleBatch)
+        {
+            CPLAssert(m_iRecordBatch == 0);
+            CPLAssert(m_poBatch != nullptr);
+            return false;
+        }
+
+        if (m_bResetRecordBatchReaderAsked)
+        {
+            if (!m_bSeekable)
+            {
+                CPLError(CE_Failure, CPLE_NotSupported,
+                         "Attempting to rewind non-seekable stream");
+                return false;
+            }
+            if (!ResetRecordBatchReader())
+                return false;
+            m_bResetRecordBatchReaderAsked = false;
+        }
+
+        CPLAssert(m_poRecordBatchReader);
+
+        ++m_iRecordBatch;
+
         poNextBatch.reset();
-    }
-    if (poNextBatch == nullptr)
-    {
-        if (m_iRecordBatch == 1)
+        auto status = m_poRecordBatchReader->ReadNext(&poNextBatch);
+        if (!status.ok())
         {
-            m_iRecordBatch = 0;
-            m_bSingleBatch = true;
+            CPLError(CE_Failure, CPLE_AppDefined, "ReadNext() failed: %s",
+                     status.message().c_str());
+            poNextBatch.reset();
         }
-        else
+        if (poNextBatch == nullptr)
         {
-            m_poBatch.reset();
-            m_poBatchColumns.clear();
+            if (m_iRecordBatch == 1)
+            {
+                m_iRecordBatch = 0;
+                m_bSingleBatch = true;
+            }
+            else
+            {
+                m_poBatch.reset();
+                m_poBatchColumns.clear();
+            }
+            return false;
         }
-        return false;
-    }
+    } while (poNextBatch->num_rows() == 0);
+
     SetBatch(poNextBatch);
 
     return true;
