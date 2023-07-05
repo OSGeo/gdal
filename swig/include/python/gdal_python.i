@@ -3565,8 +3565,11 @@ def config_options(options, thread_local=True):
            with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
                gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
     """
-    oldvals = {key: GetConfigOption(key) for key in options}
+    get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
+
+    oldvals = {key: get_config_option(key) for key in options}
+
     for key in options:
         set_config_option(key, options[key])
     try:

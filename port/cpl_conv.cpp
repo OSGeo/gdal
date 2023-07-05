@@ -1689,24 +1689,11 @@ const char *CPL_STDCALL CPLGetConfigOption(const char *pszKey,
                                            const char *pszDefault)
 
 {
-#ifdef DEBUG_CONFIG_OPTIONS
-    CPLAccessConfigOption(pszKey, TRUE);
-#endif
-
-    const char *pszResult = nullptr;
-
-    int bMemoryError = FALSE;
-    char **papszTLConfigOptions = reinterpret_cast<char **>(
-        CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
-    if (papszTLConfigOptions != nullptr)
-        pszResult = CSLFetchNameValue(papszTLConfigOptions, pszKey);
+    const char *pszResult = CPLGetThreadLocalConfigOption(pszKey, nullptr);
 
     if (pszResult == nullptr)
     {
-        CPLMutexHolderD(&hConfigMutex);
-
-        pszResult = CSLFetchNameValue(const_cast<char **>(g_papszConfigOptions),
-                                      pszKey);
+        pszResult = CPLGetGlobalConfigOption(pszKey, nullptr);
     }
 
     if (gbIgnoreEnvVariables)
@@ -1801,6 +1788,33 @@ const char *CPL_STDCALL CPLGetThreadLocalConfigOption(const char *pszKey,
         CPLGetTLSEx(CTLS_CONFIGOPTIONS, &bMemoryError));
     if (papszTLConfigOptions != nullptr)
         pszResult = CSLFetchNameValue(papszTLConfigOptions, pszKey);
+
+    if (pszResult == nullptr)
+        return pszDefault;
+
+    return pszResult;
+}
+
+/************************************************************************/
+/*                   CPLGetGlobalConfigOption()                         */
+/************************************************************************/
+
+/** Same as CPLGetConfigOption() but excludes environment variables and
+ *  options set with CPLSetThreadLocalConfigOption().
+ *  This function should generally not be used by applications, which should
+ *  use CPLGetConfigOption() instead.
+ *  @since 3.8 */
+const char *CPL_STDCALL CPLGetGlobalConfigOption(const char *pszKey,
+                                                 const char *pszDefault)
+{
+#ifdef DEBUG_CONFIG_OPTIONS
+    CPLAccessConfigOption(pszKey, TRUE);
+#endif
+
+    CPLMutexHolderD(&hConfigMutex);
+
+    const char *pszResult =
+        CSLFetchNameValue(const_cast<char **>(g_papszConfigOptions), pszKey);
 
     if (pszResult == nullptr)
         return pszDefault;
