@@ -5018,3 +5018,19 @@ def test_tiff_read_projection_from_esri_xml_get_file_list():
             "data/gtiff/projection_from_esri_xml.xml",
         ]
     )
+
+
+###############################################################################
+# Test reading a WebP compressed image with an alpha channel fully opaque
+
+
+@pytest.mark.require_creation_option("GTiff", "WEBP")
+def test_tiff_read_webp_lossless_rgba_alpha_fully_opaque():
+
+    ds = gdal.Open("data/gtiff/webp_lossless_rgba_alpha_fully_opaque.tif")
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [
+        4672,
+        4672,
+        4672,
+        4873,
+    ]
