@@ -213,7 +213,7 @@ def test_postgisraster_test_utm_open():
             cs,
             filename_absolute=1,
         )
-        return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
+        tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 
 ###############################################################################
@@ -247,7 +247,7 @@ def test_postgisraster_test_small_world_open_b1():
             cs,
             filename_absolute=1,
         )
-        return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
+        tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 
 ###############################################################################
@@ -281,7 +281,7 @@ def test_postgisraster_test_small_world_open_b2():
             cs,
             filename_absolute=1,
         )
-        return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
+        tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 
 ###############################################################################
@@ -316,7 +316,7 @@ def test_postgisraster_test_small_world_open_b3():
             filename_absolute=1,
         )
 
-        return tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
+        tst.testOpen(check_prj=prj, check_gt=gt, skip_checksum=True)
 
 
 def test_postgisraster_test_create_copy_bad_conn_string():

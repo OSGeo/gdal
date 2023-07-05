@@ -91,7 +91,7 @@ def test_jp2openjpeg_2():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest("JP2OpenJPEG", "jpeg2000/byte.jp2", 1, 50054)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################
@@ -205,7 +205,7 @@ def test_jp2openjpeg_5():
         None,
         options=["REVERSIBLE=YES", "QUALITY=100", "CODEC=J2K"],
     )
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -235,9 +235,8 @@ def test_jp2openjpeg_7():
         50054,
         filename_absolute=1,
     )
-    ret = tst.testOpen()
+    tst.testOpen()
     gdal.Unlink("data/jpeg2000/byte.jp2.gz.properties")
-    return ret
 
 
 ###############################################################################

@@ -175,28 +175,28 @@ def test_ogr_rfc35_mem_2():
     feat = None
 
     assert lyr.ReorderField(1, 3) == 0
-    ret = Check(lyr, ["foo5", "baz15", "baw20", "bar10"])
+    Check(lyr, ["foo5", "baz15", "baw20", "bar10"])
 
     lyr.ReorderField(3, 1)
-    ret = Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     lyr.ReorderField(0, 2)
-    ret = Check(lyr, ["bar10", "baz15", "foo5", "baw20"])
+    Check(lyr, ["bar10", "baz15", "foo5", "baw20"])
 
     lyr.ReorderField(2, 0)
-    ret = Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     lyr.ReorderField(0, 1)
-    ret = Check(lyr, ["bar10", "foo5", "baz15", "baw20"])
+    Check(lyr, ["bar10", "foo5", "baz15", "baw20"])
 
     lyr.ReorderField(1, 0)
-    ret = Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ["baw20", "baz15", "bar10", "foo5"])
+    Check(lyr, ["baw20", "baz15", "bar10", "foo5"])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    ret = Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     with gdaltest.error_handler():
         ret = lyr.ReorderFields([0, 0, 0, 0])
@@ -226,7 +226,7 @@ def test_ogr_rfc35_mem_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3="baz25")
+    CheckFeatures(lyr, field3="baz25")
 
     fd = ogr.FieldDefn("baz5", ogr.OFTString)
     fd.SetWidth(5)
@@ -234,13 +234,13 @@ def test_ogr_rfc35_mem_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    ret = CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(lyr, field3="baz5")
 
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("baz5"))
     assert fld_defn.GetWidth() == 5
 
-    ret = CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(lyr, field3="baz5")
 
 
 ###############################################################################
@@ -355,21 +355,21 @@ def test_ogr_rfc35_mem_5():
 
     assert lyr.DeleteField(0) == 0
 
-    ret = CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(lyr, field3="baz5")
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex("baw20")) == 0
 
-    ret = CheckFeatures(lyr, field3="baz5", field4=None)
+    CheckFeatures(lyr, field3="baz5", field4=None)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex("baz5")) == 0
 
-    ret = CheckFeatures(lyr, field3=None, field4=None)
+    CheckFeatures(lyr, field3=None, field4=None)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex("foo5")) == 0
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex("bar10")) == 0
 
-    ret = CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
+    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
 
 
 ###############################################################################

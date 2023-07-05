@@ -59,7 +59,7 @@ def test_bmp_online_1():
         "BMP", "tmp/cache/8bit_pal_rle.bmp", 1, 17270, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_bmp_online_2():
@@ -69,9 +69,8 @@ def test_bmp_online_2():
     )
 
     tst = gdaltest.GDALTest("BMP", "tmp/cache/24bit.bmp", 1, 7158, filename_absolute=1)
-    if tst == "success":
-        tst = gdaltest.GDALTest(
-            "BMP", "tmp/cache/24bit.bmp", 3, 27670, filename_absolute=1
-        )
+    tst.testOpen()
 
-    return tst.testOpen()
+    tst = gdaltest.GDALTest("BMP", "tmp/cache/24bit.bmp", 3, 27670, filename_absolute=1)
+
+    tst.testOpen()

@@ -39,7 +39,7 @@ def test_r_1():
 
     tst = gdaltest.GDALTest("R", "r/r_test.asc", 2, 202)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -49,7 +49,7 @@ def test_r_1():
 def test_r_2():
 
     tst = gdaltest.GDALTest("R", "r/r_test.rdb", 1, 202)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -59,7 +59,7 @@ def test_r_2():
 def test_r_3():
 
     tst = gdaltest.GDALTest("R", "byte.tif", 1, 4672, options=["ASCII=YES"])
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################

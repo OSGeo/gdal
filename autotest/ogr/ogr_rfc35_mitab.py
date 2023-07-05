@@ -482,7 +482,6 @@ def test_ogr_rfc35_mitab_5():
 
     # Check that the file size has decreased after column removing
     CheckFileSize("tmp/rfc35_test.tab")
-    assert ret != "fail"
 
     ds = ogr.Open("tmp/rfc35_test.tab", update=1)
     lyr = ds.GetLayer(0)

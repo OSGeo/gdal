@@ -64,7 +64,7 @@ def test_rik_online_1():
             pytest.skip()
 
     tst = gdaltest.GDALTest("RIK", file_to_test, 1, 17162, filename_absolute=1)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -80,4 +80,4 @@ def test_rik_online_2():
     tst = gdaltest.GDALTest(
         "RIK", "tmp/cache/ab-del.rik", 1, 44974, filename_absolute=1
     )
-    return tst.testOpen()
+    tst.testOpen()

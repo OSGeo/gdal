@@ -481,10 +481,7 @@ def test_misc_6():
             datatype = gdal.GDT_Byte
             setDriversDone = set()
             for nBands in range(6):
-                ret = misc_6_internal(datatype, nBands, setDriversDone)
-                if ret != "success":
-                    gdal.PopErrorHandler()
-                    return ret
+                misc_6_internal(datatype, nBands, setDriversDone)
 
             nBands = 1
             for datatype in (
@@ -499,10 +496,7 @@ def test_misc_6():
                 gdal.GDT_CFloat32,
                 gdal.GDT_CFloat64,
             ):
-                ret = misc_6_internal(datatype, nBands, setDriversDone)
-                if ret != "success":
-                    gdal.PopErrorHandler()
-                    return ret
+                misc_6_internal(datatype, nBands, setDriversDone)
 
 
 ###############################################################################

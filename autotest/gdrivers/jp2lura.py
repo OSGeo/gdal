@@ -182,7 +182,7 @@ def test_jp2lura_2():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest("JP2Lura", "jpeg2000/byte.jp2", 1, 50054)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################
@@ -285,7 +285,7 @@ def test_jp2lura_5():
         None,
         options=["REVERSIBLE=YES", "CODEC=J2K"],
     )
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -312,9 +312,8 @@ def test_jp2lura_7():
     tst = gdaltest.GDALTest(
         "JP2Lura", "/vsigzip/data/jpeg2000/byte.jp2.gz", 1, 50054, filename_absolute=1
     )
-    ret = tst.testOpen()
+    tst.testOpen()
     gdal.Unlink("data/jpeg2000/byte.jp2.gz.properties")
-    return ret
 
 
 ###############################################################################
@@ -2135,7 +2134,7 @@ def test_jp2lura_50():
     tst = gdaltest.GDALTest(
         "JP2Lura", "jpeg2000/float32_ieee754_split_reversible.jp2", 1, 4672
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

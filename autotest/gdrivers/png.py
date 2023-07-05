@@ -53,7 +53,7 @@ def module_disable_exceptions():
 def test_png_1():
 
     tst = gdaltest.GDALTest("PNG", "png/test.png", 1, 57921)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -64,7 +64,7 @@ def test_png_2():
 
     tst = gdaltest.GDALTest("PNG", "png/test.png", 1, 57921)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -107,7 +107,7 @@ def test_png_4():
 
     tst = gdaltest.GDALTest("PNG", "rgbsmall.tif", 3, 21349)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -117,7 +117,7 @@ def test_png_4():
 def test_png_5():
 
     tst = gdaltest.GDALTest("PNG", "png/rgba16.png", 3, 1815)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -128,7 +128,7 @@ def test_png_6():
 
     tst = gdaltest.GDALTest("PNG", "png/rgba16.png", 4, 4873)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -202,7 +202,7 @@ def test_png_9():
 
     tst = gdaltest.GDALTest("PNG", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -234,9 +234,8 @@ def test_png_11():
 
     tst = gdaltest.GDALTest("PNG", "byte.tif", 1, 4672)
 
-    ret = tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
+    tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
     gdal.Unlink("/vsimem/byte.tif.tst")
-    return ret
 
 
 ###############################################################################

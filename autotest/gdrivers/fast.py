@@ -48,7 +48,7 @@ def test_fast_2():
     tst = gdaltest.GDALTest(
         "fast", "fast/L71118038_03820020111_HPN.FST", 1, 60323, 0, 0, 5000, 1
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -144,7 +144,7 @@ def test_fast_5():
         PARAMETER["false_northing",10002288.3],
         UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt=gt, check_prj=proj)
+    tst.testOpen(check_gt=gt, check_prj=proj)
 
 
 ###############################################################################
@@ -169,7 +169,7 @@ def test_fast_6():
     proj = """LOCAL_CS["GCTP projection number 22",
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt=gt, check_prj=proj)
+    tst.testOpen(check_gt=gt, check_prj=proj)
 
 
 ###############################################################################
@@ -199,7 +199,7 @@ def test_fast_7():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt=gt, check_prj=proj)
+    tst.testOpen(check_gt=gt, check_prj=proj)
 
 
 ###############################################################################
@@ -237,7 +237,7 @@ def test_fast_8():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(check_gt=gt, check_prj=proj)
+    tst.testOpen(check_gt=gt, check_prj=proj)
 
 
 ###############################################################################

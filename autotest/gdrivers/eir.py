@@ -38,4 +38,4 @@ import gdaltest
 def test_eir_1():
 
     tst = gdaltest.GDALTest("EIR", "eir/fakeeir.hdr", 1, 1)
-    return tst.testOpen()
+    tst.testOpen()

@@ -183,7 +183,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options):
     for x in ut.options:
         if "OPTIONS:LERC_PREC=" in x:
             check_minmax = False
-    return ut.testCreateCopy(check_minmax=check_minmax)
+    ut.testCreateCopy(check_minmax=check_minmax)
 
 
 def cleanup(base="/vsimem/out."):

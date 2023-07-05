@@ -131,7 +131,7 @@ def netcdf_test_copy(ifile, band, checksum, ofile, opts=None, driver="NETCDF"):
     # pylint: disable=unused-argument
     opts = [] if opts is None else opts
     test = gdaltest.GDALTest("NETCDF", "../" + ifile, band, checksum, options=opts)
-    return test.testCreateCopy(
+    test.testCreateCopy(
         check_gt=0, check_srs=0, new_filename=ofile, delete_copy=0, check_minmax=0
     )
 
@@ -388,9 +388,7 @@ def test_netcdf_4():
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
     with gdaltest.error_handler():
         # don't test for checksum (see bug #4284)
-        result = tst.testOpen(skip_checksum=True)
-
-    return result
+        tst.testOpen(skip_checksum=True)
 
 
 ###############################################################################
@@ -412,9 +410,7 @@ def test_netcdf_5():
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
     with gdaltest.error_handler():
         # don't test for checksum (see bug #4284)
-        result = tst.testOpen(skip_checksum=True)
-
-    return result
+        tst.testOpen(skip_checksum=True)
 
 
 ###############################################################################
@@ -831,9 +827,7 @@ def test_netcdf_19():
         "NetCDF", "data/netcdf/trmm-nc4z.nc", 1, 50235, filename_absolute=1
     )
 
-    result = tst.testOpen(skip_checksum=True)
-
-    return result
+    tst.testOpen(skip_checksum=True)
 
 
 ###############################################################################
@@ -1269,9 +1263,7 @@ def test_netcdf_30():
     # We don't want to gum up the test stream output with the
     # 'Warning 1: No UNIDATA NC_GLOBAL:Conventions attribute' message.
     with gdaltest.error_handler():
-        result = tst.testOpen()
-
-    return result
+        tst.testOpen()
 
 
 ###############################################################################
@@ -2590,7 +2582,7 @@ def test_netcdf_59():
     # set
     tst = gdaltest.GDALTest("NetCDF", "netcdf/unittype.nc", 1, 4672)
 
-    return tst.testSetUnitType()
+    tst.testSetUnitType()
 
 
 ###############################################################################
@@ -3186,7 +3178,7 @@ def test_netcdf_75():
         AUTHORITY["EPSG","9001"]],
     AUTHORITY["EPSG","26711"]]"""
 
-    return tst.testOpen(check_prj=wkt)
+    tst.testOpen(check_prj=wkt)
 
 
 ###############################################################################
@@ -3255,7 +3247,7 @@ def test_netcdf_79():
 def test_netcdf_80():
 
     test = gdaltest.GDALTest("NETCDF", "../data/byte.tif", 1, 4672)
-    return test.testCreateCopy(
+    test.testCreateCopy(
         new_filename="test\xc3\xa9.nc", check_gt=0, check_srs=0, check_minmax=0
     )
 

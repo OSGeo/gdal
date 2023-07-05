@@ -45,7 +45,7 @@ pytestmark = pytest.mark.require_driver("SAGA")
 def test_saga_1():
 
     tst = gdaltest.GDALTest("SAGA", "saga/4byteFloat.sdat", 1, 108)
-    return tst.testOpen(
+    tst.testOpen(
         check_prj="""PROJCS["NAD_1927_UTM_Zone_11N",
     GEOGCS["GCS_North_American_1927",
         DATUM["North_American_Datum_1927",
@@ -69,7 +69,7 @@ def test_saga_1():
 def test_saga_2():
 
     tst = gdaltest.GDALTest("SAGA", "saga/4byteFloat.sdat", 1, 108)
-    return tst.testCreateCopy(new_filename="tmp/createcopy.sdat", check_srs=True)
+    tst.testCreateCopy(new_filename="tmp/createcopy.sdat", check_srs=True)
 
 
 ###############################################################################
@@ -79,7 +79,7 @@ def test_saga_2():
 def test_saga_3():
 
     tst = gdaltest.GDALTest("SAGA", "saga/4byteFloat.sdat", 1, 108)
-    return tst.testCreate(new_filename="tmp/copy.sdat", out_bands=1)
+    tst.testCreate(new_filename="tmp/copy.sdat", out_bands=1)
 
 
 ###############################################################################
@@ -186,7 +186,7 @@ def test_saga_6():
 def test_saga_7():
 
     tst = gdaltest.GDALTest("SAGA", "saga/4byteFloat.sdat", 1, 108)
-    return tst.testCreateCopy(new_filename="/vsimem/createcopy.sdat")
+    tst.testCreateCopy(new_filename="/vsimem/createcopy.sdat")
 
 
 ###############################################################################
@@ -195,7 +195,7 @@ def test_saga_7():
 
 def test_saga_8():
     tst = gdaltest.GDALTest("SAGA", "saga/4byteFloat.sg-grd-z", 1, 108)
-    return tst.testOpen(
+    tst.testOpen(
         check_prj="""PROJCS["NAD_1927_UTM_Zone_11N",
     GEOGCS["GCS_North_American_1927",
         DATUM["North_American_Datum_1927",

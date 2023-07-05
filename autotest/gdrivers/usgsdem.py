@@ -46,7 +46,7 @@ def test_usgsdem_1():
     tst = gdaltest.GDALTest("USGSDEM", "usgsdem/022gdeme_truncated", 1, 1583)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
-    return tst.testOpen(
+    tst.testOpen(
         check_prj=srs.ExportToWkt(),
         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333),
     )
@@ -63,7 +63,7 @@ def test_usgsdem_2():
     )
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
-    return tst.testOpen(
+    tst.testOpen(
         check_prj=srs.ExportToWkt(),
         check_gt=(
             -136.25010416667,
@@ -86,7 +86,7 @@ def test_usgsdem_3():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("WGS72")
     srs.SetUTM(17)
-    return tst.testOpen(
+    tst.testOpen(
         check_prj=srs.ExportToWkt(),
         check_gt=(606855.0, 30.0, 0.0, 4414605.0, 0.0, -30.0),
     )
@@ -105,7 +105,7 @@ def test_usgsdem_4():
         61424,
         options=["RESAMPLE=Nearest"],
     )
-    return tst.testCreateCopy(check_gt=1, check_srs=1, vsimem=1)
+    tst.testCreateCopy(check_gt=1, check_srs=1, vsimem=1)
 
 
 ###############################################################################
@@ -242,7 +242,7 @@ def test_usgsdem_8():
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
     srs.SetUTM(12)
-    return tst.testOpen(
+    tst.testOpen(
         check_prj=srs.ExportToWkt(),
         check_gt=(660055.0, 10.0, 0.0, 4429465.0, 0.0, -10.0),
     )
@@ -258,7 +258,7 @@ def test_usgsdem_9():
     tst = gdaltest.GDALTest("USGSDEM", "usgsdem/4619old_truncated.dem", 1, 10659)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
-    return tst.testOpen(
+    tst.testOpen(
         check_prj=srs.ExportToWkt(),
         check_gt=(18.99958333, 0.0008333, 0.0, 47.000416667, 0.0, -0.0008333),
     )
@@ -273,7 +273,7 @@ def test_usgsdem_with_extra_values_at_end_of_profile():
     tst = gdaltest.GDALTest(
         "USGSDEM", "usgsdem/usgsdem_with_extra_values_at_end_of_profile.dem", 1, 56679
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -285,7 +285,7 @@ def test_usgsdem_with_spaces_after_byte_864():
     tst = gdaltest.GDALTest(
         "USGSDEM", "usgsdem/usgsdem_with_spaces_after_byte_864.dem", 1, 61078
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -317,7 +317,7 @@ def test_usgsdem_record_1025_bytes_ending_with_linefeed():
     tst = gdaltest.GDALTest(
         "USGSDEM", "usgsdem/record_1025_ending_with_linefeed.dem", 1, 14172
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

@@ -44,7 +44,7 @@ pytestmark = pytest.mark.require_driver("RS2")
 
 def test_rs2_1():
     tst = gdaltest.GDALTest("RS2", "rs2/product.xml", 1, 4672)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 def test_rs2_2():
@@ -55,7 +55,7 @@ def test_rs2_2():
         4848,
         filename_absolute=1,
     )
-    return tst.testOpen()
+    tst.testOpen()
 
 
 # Test reading our dummy RPC

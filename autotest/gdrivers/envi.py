@@ -65,7 +65,7 @@ def test_envi_1():
     PARAMETER["false_northing",0],
     UNIT["Meter",1]]"""
 
-    return tst.testOpen(
+    tst.testOpen(
         check_prj=prj, check_gt=(-936408.178, 28.5, 0.0, 2423902.344, 0.0, -28.5)
     )
 
@@ -77,7 +77,7 @@ def test_envi_1():
 def test_envi_2():
 
     tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 14823)
-    return tst.testCreateCopy(check_gt=1)
+    tst.testCreateCopy(check_gt=1)
 
 
 ###############################################################################
@@ -87,7 +87,7 @@ def test_envi_2():
 def test_envi_3():
 
     tst = gdaltest.GDALTest("envi", "rgbsmall.tif", 2, 21053)
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################
@@ -114,7 +114,7 @@ def test_envi_4():
     PARAMETER["false_northing",30000],
     UNIT["Meter",1]]"""
 
-    return tst.testSetProjection(prj=prj)
+    tst.testSetProjection(prj=prj)
 
 
 ###############################################################################
@@ -142,7 +142,7 @@ def test_envi_5():
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH]]"""
 
-    return tst.testSetProjection(prj=prj)
+    tst.testSetProjection(prj=prj)
 
 
 ###############################################################################
@@ -169,7 +169,7 @@ def test_envi_6():
     AXIS["Easting",EAST],
     AXIS["Northing",NORTH]]"""
 
-    return gdaltest.envi_tst.testSetProjection(prj=prj)
+    gdaltest.envi_tst.testSetProjection(prj=prj)
 
 
 ###############################################################################
@@ -179,7 +179,7 @@ def test_envi_6():
 def test_envi_7():
 
     tst = gdaltest.GDALTest("envi", "envi/aea.dat", 1, 14823)
-    return tst.testCreateCopy(check_gt=1, vsimem=1)
+    tst.testCreateCopy(check_gt=1, vsimem=1)
 
 
 ###############################################################################
@@ -205,7 +205,7 @@ def test_envi_8():
 def test_envi_9():
 
     tst = gdaltest.GDALTest("envi", "envi/aea_compressed.dat", 1, 14823)
-    return tst.testCreateCopy(check_gt=1)
+    tst.testCreateCopy(check_gt=1)
 
 
 ###############################################################################

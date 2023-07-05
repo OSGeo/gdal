@@ -226,7 +226,7 @@ def test_mrsid_4():
     UNIT["metre",1,
         AUTHORITY["EPSG","9001"]]]"""
 
-    ret = tst.testOpen(
+    tst.testOpen(
         check_gt=gt,
         check_prj=prj,
         check_stat=(0.0, 255.0, 103.112, 52.477),
@@ -237,8 +237,6 @@ def test_mrsid_4():
         os.remove("data/sid/mercator_new.sid.aux.xml")
     except OSError:
         pass
-
-    return ret
 
 
 ###############################################################################
@@ -272,7 +270,7 @@ def test_mrsid_6():
     gt = (440720.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest("JP2MrSID", "jpeg2000/byte.jp2", 1, 50054)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################

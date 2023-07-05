@@ -182,7 +182,7 @@ def test_pds4_read_cart_versions(filename):
     gt = (-59280.0, 60.0, 0.0, 3751320.0, 0.0, -60.0)
 
     tst = gdaltest.GDALTest("PDS4", filename, 1, 4672)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################
@@ -212,8 +212,7 @@ def test_pds4_2():
 
     tst = gdaltest.GDALTest("PDS4", "rgbsmall.tif", 2, 21053)
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
-    return ret
+        tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
 
 
 ###############################################################################
@@ -246,8 +245,7 @@ def test_pds4_3():
         "PDS4", "rgbsmall.tif", 2, 21053, options=["INTERLEAVE=BSQ"]
     )
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
-    return ret
+        tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
 
 
 ###############################################################################
@@ -260,8 +258,7 @@ def test_pds4_4():
         "PDS4", "rgbsmall.tif", 2, 21053, options=["INTERLEAVE=BIP"]
     )
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
-    return ret
+        tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
 
 
 ###############################################################################
@@ -274,8 +271,7 @@ def test_pds4_5():
         "PDS4", "rgbsmall.tif", 2, 21053, options=["INTERLEAVE=BIL"]
     )
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
-    return ret
+        tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
 
 
 ###############################################################################
@@ -292,8 +288,7 @@ def test_pds4_6():
         options=["INTERLEAVE=BSQ", "IMAGE_FORMAT=GEOTIFF"],
     )
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
-    return ret
+        tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
 
 
 ###############################################################################
@@ -310,8 +305,7 @@ def test_pds4_7():
         options=["INTERLEAVE=BIP", "IMAGE_FORMAT=GEOTIFF"],
     )
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
-    return ret
+        tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
 
 
 ###############################################################################
@@ -324,8 +318,7 @@ def test_pds4_from_bil_to_geotiff():
         "PDS4", "envi/envi_rgbsmall_bil.img", 2, 20669, options=["IMAGE_FORMAT=GEOTIFF"]
     )
     with hide_substitution_warnings_error_handler():
-        ret = tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
-    return ret
+        tst.testCreateCopy(vsimem=1, strict_in=1, quiet_error_handler=False)
 
 
 ###############################################################################

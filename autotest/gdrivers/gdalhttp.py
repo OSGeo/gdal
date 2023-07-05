@@ -101,8 +101,10 @@ def test_http_1():
 def test_http_2():
     url = "https://raw.githubusercontent.com/OSGeo/gdal/release/3.1/autotest/gcore/data/byte.tif"
     tst = gdaltest.GDALTest("GTiff", "/vsicurl/" + url, 1, 4672, filename_absolute=1)
-    ret = tst.testOpen()
-    if ret == "fail":
+
+    try:
+        tst.testOpen()
+    except Exception:
         skip_if_unreachable(url)
         pytest.fail()
 

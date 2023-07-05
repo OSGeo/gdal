@@ -54,7 +54,7 @@ def test_gif_1():
 def test_gif_2():
 
     tst = gdaltest.GDALTest("GIF", "gif/bug407.gif", 1, 57921)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -67,7 +67,7 @@ def test_gif_3():
         "GIF", "gif/bug407.gif", 1, 57921, options=["INTERLACING=NO"]
     )
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -102,7 +102,7 @@ def test_gif_5():
 
     tst = gdaltest.GDALTest("GIF", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -205,7 +205,7 @@ def test_gif_10():
 
     tst = gdaltest.GDALTest("GIF", "byte.tif", 1, 4672, options=["INTERLACING=YES"])
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################

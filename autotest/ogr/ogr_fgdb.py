@@ -1160,11 +1160,9 @@ def test_ogr_fgdb_18(openfilegdb_drv, fgdb_drv):
 
     if openfilegdb_drv is not None:
         openfilegdb_drv.Register()
-    ret = ogr_fgdb_18_test_results(openfilegdb_drv)
+    ogr_fgdb_18_test_results(openfilegdb_drv)
     if openfilegdb_drv is not None:
         openfilegdb_drv.Deregister()
-
-    return ret
 
 
 def ogr_fgdb_18_test_results(openfilegdb_drv):
@@ -1756,8 +1754,7 @@ def test_ogr_fgdb_19bis(openfilegdb_drv, fgdb_drv):
         pytest.skip()
 
     with gdal.config_option("FGDB_PER_LAYER_COPYING_TRANSACTION", "FALSE"):
-        ret = test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv)
-    return ret
+        test_ogr_fgdb_19(openfilegdb_drv, fgdb_drv)
 
 
 ###############################################################################

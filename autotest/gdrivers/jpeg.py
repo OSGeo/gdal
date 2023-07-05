@@ -72,7 +72,7 @@ def test_jpeg_1():
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 34298)
     else:
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 17016)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

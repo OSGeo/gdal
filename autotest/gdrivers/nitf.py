@@ -72,7 +72,7 @@ def hex_string(s):
 def test_nitf_1():
 
     tst = gdaltest.GDALTest("NITF", "byte.tif", 1, 4672)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -82,7 +82,7 @@ def test_nitf_1():
 def test_nitf_2():
 
     tst = gdaltest.GDALTest("NITF", "int16.tif", 1, 4672)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -92,7 +92,7 @@ def test_nitf_2():
 def test_nitf_3():
 
     tst = gdaltest.GDALTest("NITF", "rgbsmall.tif", 3, 21349)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -221,7 +221,7 @@ def test_nitf_5():
 def test_nitf_6():
 
     tst = gdaltest.GDALTest("NITF", "nitf/rgb.ntf", 3, 21349)
-    return tst.testOpen(
+    tst.testOpen(
         check_prj="WGS84",
         check_gt=(
             -44.842029478458,
@@ -241,7 +241,7 @@ def test_nitf_6():
 def test_nitf_7():
 
     tst = gdaltest.GDALTest("NITF", "rgbsmall.tif", 3, 21349)
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -316,7 +316,7 @@ def test_nitf_10():
     )
 
     tst = gdaltest.GDALTest("NITF", "../tmp/nitf9.ntf", 2, expected_cs)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -327,7 +327,7 @@ def test_nitf_11():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034c.ntf
     tst = gdaltest.GDALTest("NITF", "nitf/i_3034c.ntf", 1, 170)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -547,7 +547,7 @@ def test_nitf_15():
 
     tst = gdaltest.GDALTest("NITF", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -558,7 +558,7 @@ def test_nitf_16():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/ns3034d.nsf
     tst = gdaltest.GDALTest("NITF", "nitf/ns3034d.nsf", 1, 170)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -570,7 +570,7 @@ def test_nitf_17():
 
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_1/i_3034f.ntf
     tst = gdaltest.GDALTest("NITF", "nitf/i_3034f.ntf", 1, 170)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -596,7 +596,7 @@ def test_nitf_19():
     # From http://www.gwg.nga.mil/ntb/baseline/software/testfile/Nitfv2_0/U_1050A.NTF
     tst = gdaltest.GDALTest("NITF", "nitf/U_1050A.NTF", 1, 65024)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -646,7 +646,7 @@ def test_nitf_21():
 def test_nitf_22():
 
     tst = gdaltest.GDALTest("NITF", "../../gcore/data/int32.tif", 1, 4672)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -656,7 +656,7 @@ def test_nitf_22():
 def test_nitf_23():
 
     tst = gdaltest.GDALTest("NITF", "../../gcore/data/float32.tif", 1, 4672)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -666,7 +666,7 @@ def test_nitf_23():
 def test_nitf_24():
 
     tst = gdaltest.GDALTest("NITF", "../../gcore/data/float64.tif", 1, 4672)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -676,7 +676,7 @@ def test_nitf_24():
 def test_nitf_25():
 
     tst = gdaltest.GDALTest("NITF", "../../gcore/data/uint16.tif", 1, 4672)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -686,7 +686,7 @@ def test_nitf_25():
 def test_nitf_26():
 
     tst = gdaltest.GDALTest("NITF", "../../gcore/data/uint32.tif", 1, 4672)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -744,7 +744,7 @@ def test_nitf_28_jp2mrsid():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2MrSID")
 
-    ret = nitf_check_created_file(
+    nitf_check_created_file(
         32398,
         42502,
         38882,
@@ -753,8 +753,6 @@ def test_nitf_28_jp2mrsid():
     )
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
 
 
 ###############################################################################
@@ -767,7 +765,7 @@ def test_nitf_28_jp2kak():
     # Deregister other potential conflicting JPEG2000 drivers
     gdaltest.deregister_all_jpeg2000_drivers_but("JP2KAK")
 
-    ret = nitf_check_created_file(
+    nitf_check_created_file(
         32398,
         42502,
         38882,
@@ -776,8 +774,6 @@ def test_nitf_28_jp2kak():
     )
 
     gdaltest.reregister_all_jpeg2000_drivers()
-
-    return ret
 
 
 ###############################################################################
@@ -1306,7 +1302,7 @@ def test_nitf_33():
 def test_nitf_34():
 
     tst = gdaltest.GDALTest("NITF", "n43.dt0", 1, 49187, options=["BLOCKSIZE=64"])
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -5511,9 +5507,7 @@ def test_nitf_online_1():
 
     # Shut up the warning about missing image segment
     with gdaltest.error_handler():
-        ret = tst.testOpen()
-
-    return ret
+        tst.testOpen()
 
 
 ###############################################################################
@@ -5547,7 +5541,7 @@ def test_nitf_online_3():
         "NITF", "NITF_IM:3:tmp/cache/U_0001a.ntf", 1, 23463, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -5575,7 +5569,7 @@ def test_nitf_online_4():
         "NITF", "tmp/cache/001zc013.on1", 1, 53960, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -5592,7 +5586,7 @@ def test_nitf_online_5():
         "NITF", "tmp/cache/overview.ovr", 1, 60699, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -5609,7 +5603,7 @@ def test_nitf_online_6():
         "NITF", "tmp/cache/U_4001b.ntf", 1, 60030, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -5664,7 +5658,7 @@ def test_nitf_online_8():
         "NITF", "tmp/cache/ns3301j.nsf", 1, 56861, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -5682,7 +5676,7 @@ def test_nitf_online_9():
         "NITF", "tmp/cache/ns3304a.nsf", 1, 32419, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -5784,7 +5778,7 @@ def test_nitf_online_12():
         "NITF", "tmp/cache/i_3430a.ntf", 1, 38647, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -6036,7 +6030,7 @@ def test_nitf_online_19():
         "NITF", "tmp/cache/0000M033.GN3", 1, 38928, filename_absolute=1
     )
 
-    return tst.testOpen(
+    tst.testOpen(
         check_gt=(
             174.375000000000000,
             0.010986328125000,
@@ -6207,7 +6201,7 @@ def test_nitf_online_23():
         "NITF", "tmp/cache/U_3058b.ntf", 1, 44748, filename_absolute=1
     )
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################

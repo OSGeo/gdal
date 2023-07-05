@@ -455,8 +455,6 @@ def test_ogr_rfc35_shape_5():
 
     # Check that the file size has decreased after column removing
     CheckFileSize("tmp/rfc35_test.dbf")
-    if ret == "fail":
-        return ret
 
     ds = ogr.Open("tmp/rfc35_test.dbf", update=1)
     lyr = ds.GetLayer(0)

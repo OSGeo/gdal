@@ -44,7 +44,7 @@ from osgeo import gdal, osr
 def test_geoloc_1():
 
     tst = gdaltest.GDALTest("VRT", "warpsst.vrt", 1, 63034)
-    return tst.testOpen(check_filelist=False)
+    tst.testOpen(check_filelist=False)
 
 
 ###############################################################################

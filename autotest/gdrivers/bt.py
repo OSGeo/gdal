@@ -44,7 +44,7 @@ def test_bt_1():
     tst = gdaltest.GDALTest("BT", "int16.tif", 1, 4672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
-    return tst.testCreateCopy(
+    tst.testCreateCopy(
         vsimem=1,
         check_srs=srs.ExportToWkt(),
         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333),
@@ -60,7 +60,7 @@ def test_bt_2():
     tst = gdaltest.GDALTest("BT", "int32.tif", 1, 4672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
-    return tst.testCreateCopy(
+    tst.testCreateCopy(
         check_srs=srs.ExportToWkt(),
         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333),
     )
@@ -75,7 +75,7 @@ def test_bt_3():
     tst = gdaltest.GDALTest("BT", "float32.tif", 1, 4672)
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("NAD27")
-    return tst.testCreateCopy(
+    tst.testCreateCopy(
         check_srs=srs.ExportToWkt(),
         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333),
     )
@@ -88,7 +88,7 @@ def test_bt_3():
 def test_bt_4():
 
     tst = gdaltest.GDALTest("BT", "float32.tif", 1, 4672)
-    return tst.testCreate(out_bands=1)
+    tst.testCreate(out_bands=1)
 
 
 ###############################################################################
@@ -98,7 +98,7 @@ def test_bt_4():
 def test_bt_5():
 
     tst = gdaltest.GDALTest("BT", "float32.tif", 1, 4672)
-    return tst.testSetProjection()
+    tst.testSetProjection()
 
 
 ###############################################################################
@@ -108,7 +108,7 @@ def test_bt_5():
 def test_bt_6():
 
     tst = gdaltest.GDALTest("BT", "float32.tif", 1, 4672)
-    return tst.testSetGeoTransform()
+    tst.testSetGeoTransform()
 
 
 ###############################################################################

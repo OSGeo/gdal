@@ -51,19 +51,6 @@ import pytest
 
 from osgeo import gdal, osr
 
-cur_name = "default"
-
-success_counter = 0
-failure_counter = 0
-expected_failure_counter = 0
-blow_counter = 0
-skip_counter = 0
-failure_summary = []
-
-reason = None
-start_time = None
-end_time = None
-
 jp2kak_drv = None
 jpeg2000_drv = None
 jp2ecw_drv = None
@@ -76,36 +63,6 @@ jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
-
-# Process commandline arguments for stuff like --debug, --locale, --config
-
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-
-###############################################################################
-
-
-def git_status():
-
-    out, _ = runexternal_out_and_err("git status --porcelain .")
-    return out
-
-
-###############################################################################
-
-
-def get_lineno_2framesback(frames):
-    try:
-        import inspect
-
-        frame = inspect.currentframe()
-        while frames > 0:
-            frame = frame.f_back
-            frames = frames - 1
-
-        return frame.f_lineno
-    except ImportError:
-        return -1
-
 
 ###############################################################################
 
@@ -924,7 +881,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetNoDataValueAndDelete(self):
-        return self.testSetNoDataValue(delete=True)
+        self.testSetNoDataValue(delete=True)
 
     def testSetDescription(self):
         self.testDriver()

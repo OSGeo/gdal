@@ -4487,12 +4487,10 @@ def test_ogr_pg_76():
     level = int(gdaltest.pg_ds.GetMetadataItem("nSoftTransactionLevel", "_DEBUG_"))
     assert level == 0
 
-    ret = ogr_pg_76_scenario1(lyr1, lyr2)
-    ret = ogr_pg_76_scenario2(lyr1, lyr2)
-    ret = ogr_pg_76_scenario3(lyr1, lyr2)
-    ret = ogr_pg_76_scenario4(lyr1, lyr2)
-
-    return ret
+    ogr_pg_76_scenario1(lyr1, lyr2)
+    ogr_pg_76_scenario2(lyr1, lyr2)
+    ogr_pg_76_scenario3(lyr1, lyr2)
+    ogr_pg_76_scenario4(lyr1, lyr2)
 
 
 # Scenario 1 : a CreateFeature done in the middle of GetNextFeature()
