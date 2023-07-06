@@ -353,6 +353,8 @@ jobs:
           echo "JAVA_HOME=$JAVA_HOME_11_X64" >> ${GITHUB_ENV}
       - name: Install python dependencies for autotest
         run: |
+          # One of the dependencies of jsonschema 4.18 is rpds_py which requires a Rust compiler
+          python -m pip install "jsonschema<4.18"
           python -m pip install -r autotest/requirements.txt
       # Disable mySQL since C:/mysql/lib/mysqlclient.lib (unrelated to msys) is found, which causes linking issues
       # Set explicitly CMAKE_C|CXX_COMPILER otherwise C:/ProgramData/chocolatey/bin/gcc.exe would be used
