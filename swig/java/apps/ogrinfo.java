@@ -369,7 +369,7 @@ public class ogrinfo
             {
                 FieldDefn  poField = poDefn.GetFieldDefn( iAttr );
 
-                System.out.println( poField.GetNameRef() + ": " + poField.GetFieldTypeName( poField.GetType() ) + " (" + poField.GetWidth() + "." + poField.GetPrecision() + ")");
+                System.out.println( poField.GetNameRef() + ": " + poField.GetFieldTypeName( poField.GetFieldType() ) + " (" + poField.GetWidth() + "." + poField.GetPrecision() + ")");
             }
         }
 /* -------------------------------------------------------------------- */

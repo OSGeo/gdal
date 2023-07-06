@@ -331,57 +331,40 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
                                              GDALExtendedDataTypeHS* buffer_datatype,
                                              size_t* pnBufferSize)
 {
-    const int nExpectedDims = (int) GDALMDArrayGetDimensionCount(array);
-
-    // the cast might have overflowed an int
-
-    if( nExpectedDims < 0 )
-    {
-        CPLError(CE_Failure, CPLE_AppDefined,
-            "number of dimensions cannot be negative");
-        return CE_Failure;
-    }
-
+    const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(array);
     if( nDims1 != nExpectedDims )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Wrong number of values in array_start_idx");
         return CE_Failure;
     }
-
     if( nDims2 != nExpectedDims )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Wrong number of values in count");
         return CE_Failure;
     }
-
     if( nDims3 != nExpectedDims )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Wrong number of values in array_step");
         return CE_Failure;
     }
-
     if( nDims4!= nExpectedDims )
     {
         CPLError(CE_Failure, CPLE_AppDefined,
             "Wrong number of values in buffer_stride");
         return CE_Failure;
     }
-
     if( bCheckOnlyDims )
         return CE_None;
-
     if( !CheckNumericDataType(buffer_datatype) )
     {
         CPLError(CE_Failure, CPLE_NotSupported,
             "non-numeric buffer data type not supported in SWIG bindings");
         return CE_Failure;
     }
-
     GIntBig nBufferSize = 0;
-
     for( int i = 0; i < nExpectedDims; i++ )
     {
         if( count[i] == 0 )
@@ -390,14 +373,12 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
                      "count[%d] = 0 is invalid", i);
             return CE_Failure;
         }
-
         if( buffer_stride[i] < 0 )
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                 "Negative value in buffer_stride not supported in SWIG bindings");
             return CE_Failure;
         }
-
         if( count[i] > 1 && buffer_stride[i] != 0 )
         {
             if( (GUIntBig)buffer_stride[i] > std::numeric_limits<GIntBig>::max() / (count[i] - 1) )
@@ -405,59 +386,45 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
                 CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
                 return CE_Failure;
             }
-
             GIntBig nDelta = buffer_stride[i] * (count[i] - 1);
-
             if( nBufferSize > std::numeric_limits<GIntBig>::max() - nDelta )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
                 return CE_Failure;
             }
-
             nBufferSize += nDelta;
         }
     }
-
     const size_t nDTSize = GDALExtendedDataTypeGetSize(buffer_datatype);
-
     if( nDTSize == 0 )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "nDTSize == 0");
         return CE_Failure;
     }
-
     if( (GUIntBig)nBufferSize > (GUIntBig)std::numeric_limits<GIntBig>::max() / nDTSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
         return CE_Failure;
     }
-
     nBufferSize *= nDTSize;
-
     if( (GUIntBig)nBufferSize > (GUIntBig)std::numeric_limits<GIntBig>::max() - nDTSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
         return CE_Failure;
     }
-
     nBufferSize += nDTSize;
 
 #if SIZEOF_VOIDP == 4
-
     if( nBufferSize > INT_MAX )
     {
         CPLError(CE_Failure, CPLE_IllegalArg, "Integer overflow");
         return CE_Failure;
     }
-
 #endif
-
-    *pnBufferSize = (size_t) nBufferSize;
-
+    *pnBufferSize = (size_t)nBufferSize;
     return CE_None;
 }
 %}
-
 
 %rename (MDArray) GDALMDArrayHS;
 

@@ -44,189 +44,189 @@ import org.gdal.gdalconst.gdalconst;
 
 public class GDALTestMultiDim
 {
-	public GDALTestMultiDim() { }
+    public GDALTestMultiDim() { }
 
-	public static void main(String[] args)
-	{
-		gdal.AllRegister();
+    public static void main(String[] args)
+    {
+        gdal.AllRegister();
 
-		testMDArrayStuff();
+        testMDArrayStuff();
 
-		System.out.println("Success !");
-	}
-	
-	private static void testMDArrayStuff() {
+        System.out.println("Success !");
+    }
+    
+    private static void testMDArrayStuff() {
 
-		Driver driver = gdal.GetDriverByName("MEM");
+        Driver driver = gdal.GetDriverByName("MEM");
 
-		Dataset dataset = driver.CreateMultiDimensional("mdstuff");
+        Dataset dataset = driver.CreateMultiDimensional("mdstuff");
         
-		Group rg = dataset.GetRootGroup();
+        Group rg = dataset.GetRootGroup();
 
-		ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
+        ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
 
-		long[] sizes = new long[]{10,6,2,7};
+        long[] sizes = new long[]{10,6,2,7};
 
-		Dimension[] inDims = new Dimension[sizes.length];
-		
-		for (int i = 0; i < sizes.length; i++) {
+        Dimension[] inDims = new Dimension[sizes.length];
+        
+        for (int i = 0; i < sizes.length; i++) {
 
-			Dimension d =
-				
-				rg.CreateDimension("name"+i, "type"+i, "direction"+i, sizes[i]);
+            Dimension d =
+                
+                rg.CreateDimension("name"+i, "type"+i, "direction"+i, sizes[i]);
 
-			if (d == null) {
-				
-				throw new RuntimeException("dimension create returned null!");
-			}
-			
-			inDims[i] = d;
-		}
-		
-		MDArray mdarray = rg.CreateMDArray("my_data", inDims, dt);
-		
-		long cnt = mdarray.GetDimensionCount();
-		
-		for (long i = 0; i < cnt; i++) {
+            if (d == null) {
+                
+                throw new RuntimeException("dimension create returned null!");
+            }
+            
+            inDims[i] = d;
+        }
+        
+        MDArray mdarray = rg.CreateMDArray("my_data", inDims, dt);
+        
+        long cnt = mdarray.GetDimensionCount();
+        
+        for (long i = 0; i < cnt; i++) {
 
-			Dimension d = mdarray.GetDimension(i);
+            Dimension d = mdarray.GetDimension(i);
 
-			if (d == null) {
-				
-				throw new RuntimeException("returned dimension was null!");
-			}
-		}
-		
-		Dimension[] outDims = mdarray.GetDimensions();
-		
-		if (outDims.length != sizes.length) {
-			
-			throw new RuntimeException("resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
-		}
-		
-		for (int i = 0; i < sizes.length; i++) {
-			
-			Dimension d = outDims[i];
+            if (d == null) {
+                
+                throw new RuntimeException("returned dimension was null!");
+            }
+        }
+        
+        Dimension[] outDims = mdarray.GetDimensions();
+        
+        if (outDims.length != sizes.length) {
+            
+            throw new RuntimeException("resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
+        }
+        
+        for (int i = 0; i < sizes.length; i++) {
+            
+            Dimension d = outDims[i];
 
-			if (d.GetSize().longValue() != sizes[i]) {
+            if (d.GetSize().longValue() != sizes[i]) {
 
-				throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
-			}
+                throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
+            }
 
-			if (!d.GetName().equals("name"+i)) {
+            if (!d.GetName().equals("name"+i)) {
 
-				throw new RuntimeException("resulting dimension name "+d.GetName()+" does not match name"+i);
-			}
+                throw new RuntimeException("resulting dimension name "+d.GetName()+" does not match name"+i);
+            }
 
-			if (!d.GetType().equals("type"+i)) {
+            if (!d.GetType().equals("type"+i)) {
 
-				throw new RuntimeException("resulting dimension type "+d.GetType()+" does not match type"+i);
-			}
+                throw new RuntimeException("resulting dimension type "+d.GetType()+" does not match type"+i);
+            }
 
-			if (!d.GetDirection().equals("direction"+i)) {
+            if (!d.GetDirection().equals("direction"+i)) {
 
-				throw new RuntimeException("resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
-			}
-		}
-		
-		// TODO - am I specifying dimensions in manner reversed from gdal conventions?
+                throw new RuntimeException("resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
+            }
+        }
+        
+        // TODO - am I specifying dimensions in manner reversed from gdal conventions?
 
-		long xSize = sizes[0];
-		
-		long ySize = sizes[1];
-		
-		long zSize = sizes[2];
-		
-		long timePoints = sizes[3];
-		
-		int planeSize = (int) (xSize * ySize);
-		
-		short[] zeros = new short[planeSize];
+        long xSize = sizes[0];
+        
+        long ySize = sizes[1];
+        
+        long zSize = sizes[2];
+        
+        long timePoints = sizes[3];
+        
+        int planeSize = (int) (xSize * ySize);
+        
+        short[] zeros = new short[planeSize];
 
-		short[] writeData = new short[planeSize];
+        short[] writeData = new short[planeSize];
 
-		short[] readData = new short[planeSize];
+        short[] readData = new short[planeSize];
 
-		long[] starts = new long[sizes.length];
+        long[] starts = new long[sizes.length];
 
-		long[] counts = new long[sizes.length];
+        long[] counts = new long[sizes.length];
 
-		long[] steps = new long[sizes.length];
+        long[] steps = new long[sizes.length];
 
-		long[] strides = new long[sizes.length];
+        long[] strides = new long[sizes.length];
 
-		// read/write XY planes one at a time through whole mdarray
-		
-		for (int t = 0; t < timePoints; t++) {
-			
-			starts[3] = t;
-			counts[3] = 1;
-			steps[3] = 1;
-			strides[3] = 1;
+        // read/write XY planes one at a time through whole mdarray
+        
+        for (int t = 0; t < timePoints; t++) {
+            
+            starts[3] = t;
+            counts[3] = 1;
+            steps[3] = 1;
+            strides[3] = 1;
 
-			for (int z = 0; z < zSize; z++) {
-			
-				starts[2] = z;
-				counts[2] = 1;
-				steps[2] = 1;
-				strides[2] = 1;
+            for (int z = 0; z < zSize; z++) {
+            
+                starts[2] = z;
+                counts[2] = 1;
+                steps[2] = 1;
+                strides[2] = 1;
 
-				starts[1] = 0;
-				counts[1] = ySize;
-				steps[1] = 1;
-				strides[1] = 1;
+                starts[1] = 0;
+                counts[1] = ySize;
+                steps[1] = 1;
+                strides[1] = 1;
 
-				starts[0] = 0;
-				counts[0] = xSize;
-				steps[0] = 1;
-				strides[0] = 1;
+                starts[0] = 0;
+                counts[0] = xSize;
+                steps[0] = 1;
+                strides[0] = 1;
 
-				int pos = 0;
-				
-				for (int y = 0; y < ySize; y++) {
-				
-					for (int x = 0; x < xSize; x++) {
-					
-						short val = (short) ((t+1)*(z+1)*(y+1)*(x+1));
-						
-						writeData[pos++] = val;
-					}
-				}
+                int pos = 0;
+                
+                for (int y = 0; y < ySize; y++) {
+                
+                    for (int x = 0; x < xSize; x++) {
+                    
+                        short val = (short) ((t+1)*(z+1)*(y+1)*(x+1));
+                        
+                        writeData[pos++] = val;
+                    }
+                }
 
-				if (Arrays.equals(writeData, zeros)) {
-					
-					throw new RuntimeException("data to be written is zero and shouldn't be");
-				}
-				
-				if (!Arrays.equals(readData, zeros)) {
-					
-					throw new RuntimeException("data read buffer is not zero and should be");
-				}
+                if (Arrays.equals(writeData, zeros)) {
+                    
+                    throw new RuntimeException("data to be written is zero and shouldn't be");
+                }
+                
+                if (!Arrays.equals(readData, zeros)) {
+                    
+                    throw new RuntimeException("data read buffer is not zero and should be");
+                }
 
-				if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+                if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
 
-					throw new RuntimeException("could not write a plane for some reason");
-				}
-				
-				if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+                    throw new RuntimeException("could not write a plane for some reason");
+                }
+                
+                if (!mdarray.Read(starts, counts, steps, strides, readData)) {
 
-					throw new RuntimeException("could not read a plane for some reason");
-				}
-				
-				if (Arrays.equals(readData, zeros)) {
-					
-					throw new RuntimeException("data read is zero and shouldn't be");
-				}
-				
-				if (!Arrays.equals(readData, writeData)) {
-					
-					throw new RuntimeException("data read does not match data written");
-				}
-				
-				Arrays.fill(writeData, (short) 0);
-				
-				Arrays.fill(readData, (short) 0);
-			}			
-		}
-	}
+                    throw new RuntimeException("could not read a plane for some reason");
+                }
+                
+                if (Arrays.equals(readData, zeros)) {
+                    
+                    throw new RuntimeException("data read is zero and shouldn't be");
+                }
+                
+                if (!Arrays.equals(readData, writeData)) {
+                    
+                    throw new RuntimeException("data read does not match data written");
+                }
+                
+                Arrays.fill(writeData, (short) 0);
+                
+                Arrays.fill(readData, (short) 0);
+            }            
+        }
+    }
 }
