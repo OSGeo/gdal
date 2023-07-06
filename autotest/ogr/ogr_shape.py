@@ -3651,7 +3651,7 @@ def test_ogr_shape_85():
 
     # Test open option ADJUST_TYPE
     ds = gdal.OpenEx(
-        "/vsimem/ogr_shape_85.shp", gdal.OF_VECTOR, open_options=["ADJUST_TYPE=YES"]
+        "/vsimem/ogr_shape_85.shp", gdal.OF_VECTOR, open_options={"ADJUST_TYPE": "YES"}
     )
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTInteger
@@ -3948,7 +3948,7 @@ def test_ogr_shape_94(shpt, geom_type, wkt):
             "/vsimem/ogr_shape_94.shp"
         )
         if i == 0:
-            lyr = ds.CreateLayer("ogr_shape_94", options=["SHPT=" + shpt])
+            lyr = ds.CreateLayer("ogr_shape_94", options={"SHPT": shpt})
         else:
             lyr = ds.CreateLayer("ogr_shape_94", geom_type=geom_type)
         test_lyr_geom_type = (
@@ -4581,7 +4581,7 @@ def test_ogr_shape_103(options, expected):
     lyr = ds.CreateLayer(
         "ogr_shape_103",
         geom_type=ogr.wkbNone,
-        options=["DBF_EOF_CHAR=NO"] + ["DBF_DATE_LAST_UPDATE=1970-01-01"],
+        options={"DBF_EOF_CHAR": "NO", "DBF_DATE_LAST_UPDATE": "1970-01-01"},
     )
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     lyr.CreateFeature(ogr.Feature(lyr.GetLayerDefn()))

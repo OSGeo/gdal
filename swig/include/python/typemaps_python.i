@@ -988,28 +988,16 @@ CreateTupleFromDoubleArray( int *first, unsigned int size ) {
   /* (see #4816) */
   $1 = ((PyMapping_Check($input) || PySequence_Check($input) ) && !SWIG_CheckState(SWIG_AsCharPtrAndSize($input, 0, NULL, 0)) ) ? 1 : 0;
 }
-%typemap(in) char **dict
+%typemap(in, fragment="CSLFromPySequence") char **dict
 {
   /* %typemap(in) char **dict */
   $1 = NULL;
   if ( PySequence_Check( $input ) ) {
-    Py_ssize_t size = PySequence_Size($input);
-    if( size != (int)size ) {
-        PyErr_SetString(PyExc_TypeError, "too big sequence");
+    int bErr = FALSE;
+    $1 = CSLFromPySequence($input, &bErr);
+    if ( bErr )
+    {
         SWIG_fail;
-    }
-    for (int i = 0; i < (int)size; i++) {
-      PyObject* pyObj = PySequence_GetItem($input,i);
-      int bFreeStr;
-      char* pszStr = GDALPythonObjectToCStr(pyObj, &bFreeStr);
-      if ( pszStr == NULL ) {
-          Py_DECREF(pyObj);
-          PyErr_SetString(PyExc_TypeError,"sequence must contain strings");
-          SWIG_fail;
-      }
-      $1 = CSLAddString( $1, pszStr );
-      GDALPythonFreeCStr(pszStr, bFreeStr);
-      Py_DECREF(pyObj);
     }
   }
   else if ( PyMapping_Check( $input ) ) {
@@ -1147,24 +1135,7 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
 }
 %}
 
-/*
- * Typemap maps char** arguments from Python Sequence Object
- */
-%typemap(in,fragment="CSLFromPySequence") char **options
-{
-  /* %typemap(in) char **options */
-  int bErr = FALSE;
-  $1 = CSLFromPySequence($input, &bErr);
-  if( bErr )
-  {
-    SWIG_fail;
-  }
-}
-%typemap(freearg) char **options
-{
-  /* %typemap(freearg) char **options */
-  CSLDestroy( $1 );
-}
+%apply char **dict { char **options};
 
 
 /*
