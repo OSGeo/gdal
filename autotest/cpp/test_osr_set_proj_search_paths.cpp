@@ -63,9 +63,11 @@ TEST(test_osr_set_proj_search_paths, test)
 {
     auto tokens = OSRGetPROJSearchPaths();
 
-    // Overriding PROJ_LIB
+    // Overriding PROJ_LIB and PROJ_DATA
     static char szPROJ_LIB[] = "PROJ_LIB=/i_do/not_exist";
     putenv(szPROJ_LIB);
+    static char szPROJ_DATA[] = "PROJ_DATA=/i_do/not_exist";
+    putenv(szPROJ_DATA);
 
     // Test we can no longer find the database
     func1(nullptr);
