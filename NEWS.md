@@ -1,3 +1,228 @@
+# GDAL/OGR 3.7.1 Release Notes
+
+GDAL 3.7.1 is a bugfix release.
+
+## New installed files
+
+* data/gfs.xsd and data/gml_registry.xsd
+
+## Build
+
+* CMake: only try to detect HDF5 CXX component if KEA is detected
+* CMake: capture dependency of MBTiles driver to MVT
+* CMake: add a EXPAT_USE_STATIC_LIBS hint (#7955)
+* CMake: add a CURL_USE_STATIC_LIBS hint (#7955)
+* minified_zutil.h: fix build error on Gentoo and derivatives (#7739)
+* Fix build error with MSYS64 UCRT64 with gcc 13 (#7909)
+* FlatGeobuf: fix build error when new Abseil headers are present (#7894)
+* Fix build against latest libjxl master
+
+## GDAL 3.7.1
+
+### Port
+
+* CPLBloscDecompressor(): fix logic error when providing an output buffer
+  larger than needed
+* Fix issues on big endian hosts: recode from UTF-16
+* RequiresUnixPathSeparator(): takes into account /vsihdfs/ and /vsiwebhdfs/
+  (#7801)
+* /vsiadls/: make it take into account Azure SAS token
+* /vsiaz/: fix truncated Authorization header with very large SAS tokens
+
+### Core
+
+* Multidim GDALGroup::CopyFrom(): modify logic to copy first indexing variables.
+  Fixes issue with gdalmdimtranslate from Zarr to netCDF
+* RawRasterBand::IRasterIO(): avoid harmless unsigned integer overflow
+  (ossfuzz #57371)
+* GDALDatasetPool: Make VRT pool size clamping more lenient (#7977)
+* PAM rasterband: on .aux.xml reading do not systematically set (offset,scale)
+  to (0,1) and similarly for unit type (#7997)
+
+### Algorithms
+
+* Warp (average,mode,min,max,med,Q1,Q3): fix issue on edge of target valid area
+  when oversampling (#7733)
+* Warp average resampling: using Weighted incremental algorithm mean for numeric
+  stability
+* GDALWarpResolveWorkingDataType(): take into account data type of both source
+  and target dataset
+
+### Utilities
+
+* gdallocationinfo: set exit code to 1 as soon as one coordinate is off the file
+  (#7759)
+* gdal_rasterize: issue explicit error message when specifying invalid layer
+  name, and catch absence of bounds (#7763)
+* gdalsrsinfo: when -e flag is passed, report properly non EPSG authorities
+  (#7833)
+* gdalwarp: make -cutline to work again with PostGIS datasources
+  (fixes 3.7.0 regression, #8023)
+* gdal_calc.py: allow "none" or a float for --NoDataValue (#7796)
+* gdal_calc.py: make --hideNoData imply --NoDataValue=none as documented (#8009)
+
+### Raster drivers
+
+DIMAP driver:
+ * correctly set RPC origin for SPOT, PHR and PNEO (#7726)
+
+DIPEx driver:
+ * fix memleak in error code path (ossfuzz 57478)
+
+ERS driver:
+ * avoid integer overflow (ossfuzz 57472)
+
+GTiff driver:
+ * multi-threaded reader: avoid error when reading PlanarConfiguration=Separate
+   and ExtraSamples > 0 (fixes #7921)
+ * Multi-threaded reader: fix crash/read errors when reading a
+   PlanarConfiguration=Separate file band per band (rasterio/rasterio#2847)
+ * SRS writer: make sure to write EPSG codes only in VerticalDatumGeoKey and
+   VerticalUnitsGeoKey, and write VerticalCSTypeGeoKey = KvUserDefined,
+   VerticalDatumGeoKey = KvUserDefined and VerticalCitationGeoKey=CRS name when
+   the vertical CRS code is unknown (#7833)
+ * SRS reader: try to recover the vertical datum from the name of the vertical
+   CRS if we only know it (#7833)
+ * SRS reader: try to retrieve the EPSG code of a CompoundCRS if the one of its
+   horizontal and vertical part is known (#7982)
+ * SPARSE_OK=YES: recognize negative floating point 0 as 0 (#8025)
+ * do not emit 'WEBP_LEVEL is specified, but WEBP_LOSSLESS=YES' warning when
+   only WEBP_LOSSLESS=YES is specified
+
+HDF5 driver:
+ * multidim: deal with _FillValue attribute of different type as variable
+   (e.g. for NASA GEDI L2B products)
+
+ISG driver:
+ * relax tolerance check to accept GEOIDEAR16_20160419.isg
+
+JP2OpenJPEG driver:
+ * avoid hard crash in multi-threaded writing mode when opj_write_tile()
+   fails (#7713)
+
+netCDF driver:
+ * multidim: fix issues with data vs definition mode
+ * multidim: deal with _FillValue attribute of different type as variable
+   (e.g. for NASA GEDI L2B products)
+ * parse coordinates attribute from Sentinel-3 Synergy product which uses
+   comma instead of space
+
+OGCAPI driver:
+ * Fix TILES raster API not working
+ * make sure OGR_ENABLE_DRIVER_GML is set when the driver is built
+
+OpenFileGDB driver:
+ * correctly deal with rasters whose block_origin_x/y != (eminx, emaxy) (#7794)
+ * do not emit error if SRS is unknown (#7794)
+ * reduce debug traces on raster datasets
+
+SAFE driver:
+ * fix non-contiguous number in subdataset names (#7939)
+
+Zarr driver:
+ * avoid GetMDArrayNames() to report duplicates
+ * fix SRS DataAxisToSRSAxisMapping
+
+WMTS driver:
+ * workaround buggy TileMatrix.TopLeftCorner of one server (#5729)
+
+## OGR 3.7.1
+
+### Core
+
+* OGRGeometryFactory::createGeometry(): take into account Z/M flags
+* SQL SQLite: fix error on field of type String with GetWidth() > 0 and a
+  field domain
+
+### Vector drivers
+
+CSV driver:
+ * do not allow CREATE_CSVT=YES with /vsistdout/ (#7699), and make it possible
+   to use GEOMETRY_NAME with /vsistdout/ (#7700)
+
+DGN driver:
+ * CreateFeature(): fix crash on empty geometries (ossfuzz 56771)
+
+DXF driver:
+ * show constant ATTDEFs as text
+
+FileGDB driver:
+ * OGRCreateFromShapeBin(): accept empty polygon (#7986)
+
+GeoJSON driver:
+ * Internal libjson: use locale insensitive CPLStrtod() to parse floating point
+   numbers (qgis/qgis#52731)
+
+GeoPackage driver:
+ * ArrowArray interface: make it tolerant to Spatialite geometries
+ * fix handling of geometry column from a view, when it is the result of
+   computing, and not just simple selection from a table
+ * define a 'gdal_spatialite_computed_geom_column' extension when a view has
+   its geometry column being the result of Spatialite SQL function
+ * implement GeoPackage 1.4 RTree triggers, and add a VERSION=1.4 dsco (#7823)
+
+GML driver:
+ * fix 3.7.0 regression when reading files with several layers, whose features
+   have gml:boundedBy elements and the geometry element name is different
+   between the different layers (#7925)
+ * add a USE_BBOX=YES open option to allow using gml:boundedBy as feature
+   geometry (#7947) to revert back to < 3.7.0 behavior by default
+
+GTFS driver:
+ * Fix date parsing
+
+MITAB driver:
+ * fix reading CRS with LCC_2SP and non-metre unit (#7715)
+
+MSSQL driver:
+ * fix crash in ogr2ogr when BCP is enabled (#7787)
+ * fix GEOGRAPHY clockwise vertex order (#1128)
+ * fix cannot write binary field in BCP mode (#3040)
+
+MVT driver:
+ * writing: improve dealing with polygon inner rings (#7890)
+ * writing: fix wrong winding order for polygons after MakeValid()
+
+MySQL driver:
+ * add support for inserting new SRS in MySQL >= 8
+   INFORMATION_SCHEMA.ST_SPATIAL_REFERENCE_SYSTEMS table (#7781)
+
+netCDF driver:
+ * fix crash on invalid layer (ossfuzz 58469)
+
+OpenFileGDB driver:
+ * allows to modify a record with a GlobalID field without regenerating it
+ * correctly read POINT EMPTY (#7986)
+
+Parquet driver:
+ * fix crash when calling SetIgnoredFields() after SetAttributeFilter()
+   (qgis/QGIS#53301)
+ * do not hang on empty RecordBatch (#8042)
+
+SDTS driver:
+ * fix reading of polygon geometries (#7680)
+
+Shapefile driver:
+ * in creation, uses w+b file opening mode instead of wb followed by r+b, to
+   support network file systems having sequential write only and when using
+   CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE=YES (#7801)
+ * SHPRestoreSHX: update SHX content length even if error occurred
+ * Internal Shapelib: update list of symbols to rename to avoid conflicts with
+   external shapelib (microsoft/vcpkg#32070)
+
+TileDB driver:
+ * add TILE_Z_EXTENT layer creation option (#7683)
+ * fully apply spatial filter when using ArrowArray interface
+ * FillPrimitiveListArray(): fix data corruption with spatial filter
+
+## Python bindings
+
+* take into account Int64/UInt64 in gdal.Array.Write(array(...))
+* do not pass deprecated -py3 SWIG switch for SWIG >= 4.1
+* GetArrowStreamAsNumPy(): fix wrong retrieval of content when
+  ArrowArray::offset != 0 on a field of primitive type (integer, float)
+* works around issue with SWIG 4.1 related to module unloading (#4907)
+
 # GDAL/OGR 3.7.0 Releases Notes
 
 GDAL/OGR 3.7.0 is a feature release.
