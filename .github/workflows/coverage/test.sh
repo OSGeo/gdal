@@ -14,10 +14,3 @@ lcov --remove gdal_filtered.info '*jpeg/libjpeg*' --output-file gdal_filtered.in
 lcov --remove gdal_filtered.info '*pcraster/libcsf*' --output-file gdal_filtered.info
 lcov --remove gdal_filtered.info '*googletest-src*' --output-file gdal_filtered.info
 genhtml -o ./coverage_html --ignore-errors source --num-spaces 2 gdal_filtered.info >/dev/null
-
-if test "${COVERALLS_REPO_TOKEN:-}" != ""; then
-  pip install cpp-coveralls
-  echo "Running git config --global --add safe.directory ${GDAL_SOURCE_DIR}"
-  git config --global --add safe.directory ${GDAL_SOURCE_DIR}
-  coveralls -n -l gdal_filtered.info
-fi

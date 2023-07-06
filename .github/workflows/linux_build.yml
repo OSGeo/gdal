@@ -32,7 +32,6 @@ jobs:
       CONTAINER_NAME: gdal-deps
       CONTAINER_TAG: ${{ matrix.container }}-${{ github.base_ref || github.ref_name }}
       CACHE_CONTAINER_TAG: ${{ matrix.container }}-master
-      GDAL_SOURCE_DIR: /gdal # Directory to which workspace (source root) will be mounted inside container
 
     permissions:
       contents: write  # for Git to git push
@@ -206,7 +205,7 @@ jobs:
       - name: Build
         run: |
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"; then
-            BUILD_CMD="${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
+            BUILD_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.build_script }}"
           else
             BUILD_CMD="sh -c 'cmake .. && make -j$(nproc)'"
           fi
@@ -214,9 +213,10 @@ jobs:
           mkdir -p build-${{ matrix.id }}
           docker run --name gdal-build \
             --rm \
-            -v $(pwd):/${GDAL_SOURCE_DIR}:rw \
+            -e "GDAL_SOURCE_DIR=$(pwd)" \
+            -v $(pwd):$(pwd):rw \
             -v ${{ github.workspace }}/.ccache:/root/.ccache:rw \
-            --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
+            --workdir $(pwd)/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \
             ${BUILD_CMD}
 
@@ -245,7 +245,7 @@ jobs:
           TRAVIS_BRANCH: ${{ matrix.travis_branch }}
         run: |
           if test -f ".github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"; then
-            TEST_CMD="${GDAL_SOURCE_DIR}/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
+            TEST_CMD="$(pwd)/.github/workflows/${{ matrix.id }}/${{ matrix.test_script }}"
           else
             TEST_CMD="ctest -V -j $(nproc)"
           fi
@@ -255,16 +255,21 @@ jobs:
             -e GITHUB_WORKFLOW \
             -e TRAVIS \
             -e TRAVIS_BRANCH \
-            -e GDAL_SOURCE_DIR \
-            -e "COVERALLS_REPO_TOKEN=${{ secrets.COVERALLS_REPO_TOKEN }}" \
+            -e "GDAL_SOURCE_DIR=$(pwd)" \
             --security-opt seccomp=unconfined \
             --add-host=host.docker.internal:host-gateway \
             --rm \
-            -v $(pwd):${GDAL_SOURCE_DIR} \
-            --workdir ${GDAL_SOURCE_DIR}/build-${{ matrix.id }} \
+            -v $(pwd):$(pwd) \
+            --workdir $(pwd)/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \
             ${TEST_CMD}
 
+      - name: Coveralls
+        uses: coverallsapp/github-action@v2
+        if: ${{ matrix.id == 'coverage' }}
+        with:
+          format: lcov
+          file: build-coverage/gdal_filtered.info
 
       - name: Push build environment
         if: github.event_name == 'push'
