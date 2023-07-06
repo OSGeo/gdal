@@ -1406,10 +1406,10 @@
   }
 
 /***************************************************
- * Typemaps for (void * nioBuffer, long nioBufferSize)
+ * Typemaps for (void * nioBuffer, size_t nioBufferSize)
  ***************************************************/
 
-%typemap(in, numinputs=1) (void * nioBuffer, long nioBufferSize)
+%typemap(in, numinputs=1) (void * nioBuffer, size_t nioBufferSize)
 {
     if ($input == 0)
     {
@@ -1424,29 +1424,29 @@
         return $null;
     }
 
-    /* The cast to long is actually not that correct, but anyway afterwards */
+    /* The cast to size_t is actually not that correct, but anyway afterwards */
     /* we check that the theoretical minimum buffer size is not larger than INT_MAX */
     /* so truncating to INT_MAX is OK */
 
-    $2 = (long) ((jenv->GetDirectBufferCapacity($input) > INT_MAX) ? INT_MAX : jenv->GetDirectBufferCapacity($input));
+    $2 = (size_t) ((jenv->GetDirectBufferCapacity($input) > INT_MAX) ? INT_MAX : jenv->GetDirectBufferCapacity($input));
 }
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
 
-%typemap(jni) (void * nioBuffer, long nioBufferSize)  "jobject"
-%typemap(jtype) (void * nioBuffer, long nioBufferSize)  "java.nio.ByteBuffer"
-%typemap(jstype) (void * nioBuffer, long nioBufferSize)  "java.nio.ByteBuffer"
-%typemap(javain) (void * nioBuffer, long nioBufferSize)  "$javainput"
-%typemap(javaout) (void * nioBuffer, long nioBufferSize) {
+%typemap(jni) (void * nioBuffer, size_t nioBufferSize)  "jobject"
+%typemap(jtype) (void * nioBuffer, size_t nioBufferSize)  "java.nio.ByteBuffer"
+%typemap(jstype) (void * nioBuffer, size_t nioBufferSize)  "java.nio.ByteBuffer"
+%typemap(javain) (void * nioBuffer, size_t nioBufferSize)  "$javainput"
+%typemap(javaout) (void * nioBuffer, size_t nioBufferSize) {
     return $jnicall;
   }
 
 /***************************************************
- * Typemaps for (ctype *regularArrayOut, long nRegularArraySizeOut)
+ * Typemaps for (ctype *regularArrayOut, size_t nRegularArraySizeOut)
  ***************************************************/
 
 %define DEFINE_REGULAR_ARRAY_OUT(ctype, jtype, function)
-%typemap(in, numinputs=1) (ctype *regularArrayOut, long nRegularArraySizeOut)
+%typemap(in, numinputs=1) (ctype *regularArrayOut, size_t nRegularArraySizeOut)
 {
     if ($input == 0)
     {
@@ -1465,18 +1465,12 @@
     }
 }
 
-%typemap(freearg) (ctype *regularArrayOut, long nRegularArraySizeOut)
+%typemap(freearg) (ctype *regularArrayOut, size_t nRegularArraySizeOut)
 {
-//
-// BDZ - 7-3-23
-//
-// Insidious bug here! The bytes were not getting saved to the array!!!
-//   Maybe occasionally if random memory happened to equal CE_None.
-//
-//  if (result == CE_None)
-      jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
+  if (result == CE_None)  // testing the CPL result
+    jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
-  free( $1 );
+  free($1);
 
   //jenv->ReleasePrimitiveArrayCritical($input, $1, JNI_COMMIT);
   //jenv->ReleasePrimitiveArrayCritical($input, $1, 0);
@@ -1484,49 +1478,49 @@
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
 
-%typemap(javain) (ctype *regularArrayOut, long nRegularArraySizeOut)  "$javainput"
-%typemap(javaout) (ctype *regularArrayOut, long nRegularArraySizeOut) {
+%typemap(javain) (ctype *regularArrayOut, size_t nRegularArraySizeOut)  "$javainput"
+%typemap(javaout) (ctype *regularArrayOut, size_t nRegularArraySizeOut) {
     return $jnicall;
   }
 %enddef
 
 DEFINE_REGULAR_ARRAY_OUT(char, jbyte, SetByteArrayRegion);
-%typemap(jni) (char *regularArrayOut, long nRegularArraySizeOut)  "jbyteArray"
-%typemap(jtype) (char *regularArrayOut, long nRegularArraySizeOut)  "byte[]"
-%typemap(jstype) (char *regularArrayOut, long nRegularArraySizeOut)  "byte[]"
+%typemap(jni) (char *regularArrayOut, size_t nRegularArraySizeOut)  "jbyteArray"
+%typemap(jtype) (char *regularArrayOut, size_t nRegularArraySizeOut)  "byte[]"
+%typemap(jstype) (char *regularArrayOut, size_t nRegularArraySizeOut)  "byte[]"
 
 DEFINE_REGULAR_ARRAY_OUT(short, jshort, SetShortArrayRegion);
-%typemap(jni) (short *regularArrayOut, long nRegularArraySizeOut)  "jshortArray"
-%typemap(jtype) (short *regularArrayOut, long nRegularArraySizeOut)  "short[]"
-%typemap(jstype) (short *regularArrayOut, long nRegularArraySizeOut)  "short[]"
+%typemap(jni) (short *regularArrayOut, size_t nRegularArraySizeOut)  "jshortArray"
+%typemap(jtype) (short *regularArrayOut, size_t nRegularArraySizeOut)  "short[]"
+%typemap(jstype) (short *regularArrayOut, size_t nRegularArraySizeOut)  "short[]"
 
 DEFINE_REGULAR_ARRAY_OUT(int, jint, SetIntArrayRegion);
-%typemap(jni) (int *regularArrayOut, long nRegularArraySizeOut)  "jintArray"
-%typemap(jtype) (int *regularArrayOut, long nRegularArraySizeOut)  "int[]"
-%typemap(jstype) (int *regularArrayOut, long nRegularArraySizeOut)  "int[]"
+%typemap(jni) (int *regularArrayOut, size_t nRegularArraySizeOut)  "jintArray"
+%typemap(jtype) (int *regularArrayOut, size_t nRegularArraySizeOut)  "int[]"
+%typemap(jstype) (int *regularArrayOut, size_t nRegularArraySizeOut)  "int[]"
 
 DEFINE_REGULAR_ARRAY_OUT(int64_t, jlong, SetLongArrayRegion);
-%typemap(jni) (int64_t *regularArrayOut, long nRegularArraySizeOut)  "jlongArray"
-%typemap(jtype) (int64_t *regularArrayOut, long nRegularArraySizeOut)  "long[]"
-%typemap(jstype) (int64_t *regularArrayOut, long nRegularArraySizeOut)  "long[]"
+%typemap(jni) (int64_t *regularArrayOut, size_t nRegularArraySizeOut)  "jlongArray"
+%typemap(jtype) (int64_t *regularArrayOut, size_t nRegularArraySizeOut)  "long[]"
+%typemap(jstype) (int64_t *regularArrayOut, size_t nRegularArraySizeOut)  "long[]"
 
 DEFINE_REGULAR_ARRAY_OUT(float, jfloat, SetFloatArrayRegion);
-%typemap(jni) (float *regularArrayOut, long nRegularArraySizeOut)  "jfloatArray"
-%typemap(jtype) (float *regularArrayOut, long nRegularArraySizeOut)  "float[]"
-%typemap(jstype) (float *regularArrayOut, long nRegularArraySizeOut)  "float[]"
+%typemap(jni) (float *regularArrayOut, size_t nRegularArraySizeOut)  "jfloatArray"
+%typemap(jtype) (float *regularArrayOut, size_t nRegularArraySizeOut)  "float[]"
+%typemap(jstype) (float *regularArrayOut, size_t nRegularArraySizeOut)  "float[]"
 
 DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
-%typemap(jni) (double *regularArrayOut, long nRegularArraySizeOut)  "jdoubleArray"
-%typemap(jtype) (double *regularArrayOut, long nRegularArraySizeOut)  "double[]"
-%typemap(jstype) (double *regularArrayOut, long nRegularArraySizeOut)  "double[]"
+%typemap(jni) (double *regularArrayOut, size_t nRegularArraySizeOut)  "jdoubleArray"
+%typemap(jtype) (double *regularArrayOut, size_t nRegularArraySizeOut)  "double[]"
+%typemap(jstype) (double *regularArrayOut, size_t nRegularArraySizeOut)  "double[]"
 
 
 /***************************************************
- * Typemaps for (ctype *regularArrayIn, long nRegularArraySizeIn)
+ * Typemaps for (ctype *regularArrayIn, size_t nRegularArraySizeIn)
  ***************************************************/
 
 %define DEFINE_REGULAR_ARRAY_IN(ctype, jtype, get_fct, release_fct)
-%typemap(in, numinputs=1) (ctype *regularArrayIn, long nRegularArraySizeIn)
+%typemap(in, numinputs=1) (ctype *regularArrayIn, size_t nRegularArraySizeIn)
 {
     if ($input == 0)
     {
@@ -1544,7 +1538,7 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
     }
 }
 
-%typemap(freearg) (ctype *regularArrayIn, long nRegularArraySizeIn)
+%typemap(freearg) (ctype *regularArrayIn, size_t nRegularArraySizeIn)
 {
   jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
 }
@@ -1552,41 +1546,183 @@ DEFINE_REGULAR_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
 
-%typemap(javain) (ctype *regularArrayIn, long nRegularArraySizeIn)  "$javainput"
-%typemap(javaout) (ctype *regularArrayIn, long nRegularArraySizeIn) {
+%typemap(javain) (ctype *regularArrayIn, size_t nRegularArraySizeIn)  "$javainput"
+%typemap(javaout) (ctype *regularArrayIn, size_t nRegularArraySizeIn) {
     return $jnicall;
   }
 %enddef
 
 DEFINE_REGULAR_ARRAY_IN(char, jbyte, GetByteArrayElements, ReleaseByteArrayElements);
-%typemap(jni) (char *regularArrayIn, long nRegularArraySizeIn)  "jbyteArray"
-%typemap(jtype) (char *regularArrayIn, long nRegularArraySizeIn)  "byte[]"
-%typemap(jstype) (char *regularArrayIn, long nRegularArraySizeIn)  "byte[]"
+%typemap(jni) (char *regularArrayIn, size_t nRegularArraySizeIn)  "jbyteArray"
+%typemap(jtype) (char *regularArrayIn, size_t nRegularArraySizeIn)  "byte[]"
+%typemap(jstype) (char *regularArrayIn, size_t nRegularArraySizeIn)  "byte[]"
 
 DEFINE_REGULAR_ARRAY_IN(short, jshort, GetShortArrayElements, ReleaseShortArrayElements);
-%typemap(jni) (short *regularArrayIn, long nRegularArraySizeIn)  "jshortArray"
-%typemap(jtype) (short *regularArrayIn, long nRegularArraySizeIn)  "short[]"
-%typemap(jstype) (short *regularArrayIn, long nRegularArraySizeIn)  "short[]"
+%typemap(jni) (short *regularArrayIn, size_t nRegularArraySizeIn)  "jshortArray"
+%typemap(jtype) (short *regularArrayIn, size_t nRegularArraySizeIn)  "short[]"
+%typemap(jstype) (short *regularArrayIn, size_t nRegularArraySizeIn)  "short[]"
 
 DEFINE_REGULAR_ARRAY_IN(int, jint, GetIntArrayElements, ReleaseIntArrayElements);
-%typemap(jni) (int *regularArrayIn, long nRegularArraySizeIn)  "jintArray"
-%typemap(jtype) (int *regularArrayIn, long nRegularArraySizeIn)  "int[]"
-%typemap(jstype) (int *regularArrayIn, long nRegularArraySizeIn)  "int[]"
+%typemap(jni) (int *regularArrayIn, size_t nRegularArraySizeIn)  "jintArray"
+%typemap(jtype) (int *regularArrayIn, size_t nRegularArraySizeIn)  "int[]"
+%typemap(jstype) (int *regularArrayIn, size_t nRegularArraySizeIn)  "int[]"
 
 DEFINE_REGULAR_ARRAY_IN(int64_t, jlong, GetLongArrayElements, ReleaseLongArrayElements);
-%typemap(jni) (int64_t *regularArrayIn, long nRegularArraySizeIn)  "jlongArray"
-%typemap(jtype) (int64_t *regularArrayIn, long nRegularArraySizeIn)  "long[]"
-%typemap(jstype) (int64_t *regularArrayIn, long nRegularArraySizeIn)  "long[]"
+%typemap(jni) (int64_t *regularArrayIn, size_t nRegularArraySizeIn)  "jlongArray"
+%typemap(jtype) (int64_t *regularArrayIn, size_t nRegularArraySizeIn)  "long[]"
+%typemap(jstype) (int64_t *regularArrayIn, size_t nRegularArraySizeIn)  "long[]"
 
 DEFINE_REGULAR_ARRAY_IN(float, jfloat, GetFloatArrayElements, ReleaseFloatArrayElements);
-%typemap(jni) (float *regularArrayIn, long nRegularArraySizeIn)  "jfloatArray"
-%typemap(jtype) (float *regularArrayIn, long nRegularArraySizeIn)  "float[]"
-%typemap(jstype) (float *regularArrayIn, long nRegularArraySizeIn)  "float[]"
+%typemap(jni) (float *regularArrayIn, size_t nRegularArraySizeIn)  "jfloatArray"
+%typemap(jtype) (float *regularArrayIn, size_t nRegularArraySizeIn)  "float[]"
+%typemap(jstype) (float *regularArrayIn, size_t nRegularArraySizeIn)  "float[]"
 
 DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleArrayElements);
-%typemap(jni) (double *regularArrayIn, long nRegularArraySizeIn)  "jdoubleArray"
-%typemap(jtype) (double *regularArrayIn, long nRegularArraySizeIn)  "double[]"
-%typemap(jstype) (double *regularArrayIn, long nRegularArraySizeIn)  "double[]"
+%typemap(jni) (double *regularArrayIn, size_t nRegularArraySizeIn)  "jdoubleArray"
+%typemap(jtype) (double *regularArrayIn, size_t nRegularArraySizeIn)  "double[]"
+%typemap(jstype) (double *regularArrayIn, size_t nRegularArraySizeIn)  "double[]"
+
+/***************************************************
+ * Typemaps for (ctype *arrayOut, size_t arrayOutSize)
+ ***************************************************/
+
+%define DEFINE_BOOLEAN_FUNC_ARRAY_OUT(ctype, jtype, function)
+%typemap(in, numinputs=1) (ctype *arrayOut, size_t arrayOutSize)
+{
+    if ($input == 0)
+    {
+        SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null array");
+        return $null;
+    }
+
+    $2 = sizeof(ctype) * jenv->GetArrayLength($input);
+    $1 = (ctype*) malloc($2);
+    //$1 = (ctype*) jenv->GetPrimitiveArrayCritical($input, 0);
+    if ($1 == NULL)
+    {
+        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
+                                "Unable to allocate temporary buffer.");
+        return $null;
+    }
+}
+
+%typemap(freearg) (ctype *arrayOut, size_t arrayOutSize)
+{
+  if (result)  // testing the boolean function result
+    jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
+
+  free($1);
+
+  //jenv->ReleasePrimitiveArrayCritical($input, $1, JNI_COMMIT);
+  //jenv->ReleasePrimitiveArrayCritical($input, $1, 0);
+}
+
+/* These 3 typemaps tell SWIG what JNI and Java types to use */
+
+%typemap(javain) (ctype *arrayOut, size_t arrayOutSize)  "$javainput"
+%typemap(javaout) (ctype *arrayOut, size_t arrayOutSize) {
+    return $jnicall;
+  }
+%enddef
+
+DEFINE_BOOLEAN_FUNC_ARRAY_OUT(char, jbyte, SetByteArrayRegion);
+%typemap(jni) (char *arrayOut, size_t arrayOutSize)  "jbyteArray"
+%typemap(jtype) (char *arrayOut, size_t arrayOutSize)  "byte[]"
+%typemap(jstype) (char *arrayOut, size_t arrayOutSize)  "byte[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_OUT(short, jshort, SetShortArrayRegion);
+%typemap(jni) (short *arrayOut, size_t arrayOutSize)  "jshortArray"
+%typemap(jtype) (short *arrayOut, size_t arrayOutSize)  "short[]"
+%typemap(jstype) (short *arrayOut, size_t arrayOutSize)  "short[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_OUT(int, jint, SetIntArrayRegion);
+%typemap(jni) (int *arrayOut, size_t arrayOutSize)  "jintArray"
+%typemap(jtype) (int *arrayOut, size_t arrayOutSize)  "int[]"
+%typemap(jstype) (int *arrayOut, size_t arrayOutSize)  "int[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_OUT(int64_t, jlong, SetLongArrayRegion);
+%typemap(jni) (int64_t *arrayOut, size_t arrayOutSize)  "jlongArray"
+%typemap(jtype) (int64_t *arrayOut, size_t arrayOutSize)  "long[]"
+%typemap(jstype) (int64_t *arrayOut, size_t arrayOutSize)  "long[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_OUT(float, jfloat, SetFloatArrayRegion);
+%typemap(jni) (float *arrayOut, size_t arrayOutSize)  "jfloatArray"
+%typemap(jtype) (float *arrayOut, size_t arrayOutSize)  "float[]"
+%typemap(jstype) (float *arrayOut, size_t arrayOutSize)  "float[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
+%typemap(jni) (double *arrayOut, size_t arrayOutSize)  "jdoubleArray"
+%typemap(jtype) (double *arrayOut, size_t arrayOutSize)  "double[]"
+%typemap(jstype) (double *arrayOut, size_t arrayOutSize)  "double[]"
+
+
+/***************************************************
+ * Typemaps for (ctype *arrayIn, size_t arrayInSize)
+ ***************************************************/
+
+%define DEFINE_BOOLEAN_FUNC_ARRAY_IN(ctype, jtype, get_fct, release_fct)
+%typemap(in, numinputs=1) (ctype *arrayIn, size_t arrayInSize)
+{
+    if ($input == 0)
+    {
+        SWIG_JavaThrowException(jenv, SWIG_JavaNullPointerException, "null array");
+        return $null;
+    }
+
+    $2 = sizeof(ctype) * jenv->GetArrayLength($input);
+    $1 = (ctype*) jenv->get_fct($input, 0);
+    if ($1 == NULL)
+    {
+        SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
+                                "Unable to get buffer.");
+        return $null;
+    }
+}
+
+%typemap(freearg) (ctype *arrayIn, size_t arrayInSize)
+{
+  jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
+}
+
+
+/* These 3 typemaps tell SWIG what JNI and Java types to use */
+
+%typemap(javain) (ctype *arrayIn, size_t arrayInSize)  "$javainput"
+%typemap(javaout) (ctype *arrayIn, size_t arrayInSize) {
+    return $jnicall;
+  }
+%enddef
+
+DEFINE_BOOLEAN_FUNC_ARRAY_IN(char, jbyte, GetByteArrayElements, ReleaseByteArrayElements);
+%typemap(jni) (char *arrayIn, size_t arrayInSize)  "jbyteArray"
+%typemap(jtype) (char *arrayIn, size_t arrayInSize)  "byte[]"
+%typemap(jstype) (char *arrayIn, size_t arrayInSize)  "byte[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_IN(short, jshort, GetShortArrayElements, ReleaseShortArrayElements);
+%typemap(jni) (short *arrayIn, size_t arrayInSize)  "jshortArray"
+%typemap(jtype) (short *arrayIn, size_t arrayInSize)  "short[]"
+%typemap(jstype) (short *arrayIn, size_t arrayInSize)  "short[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_IN(int, jint, GetIntArrayElements, ReleaseIntArrayElements);
+%typemap(jni) (int *arrayIn, size_t arrayInSize)  "jintArray"
+%typemap(jtype) (int *arrayIn, size_t arrayInSize)  "int[]"
+%typemap(jstype) (int *arrayIn, size_t arrayInSize)  "int[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_IN(int64_t, jlong, GetLongArrayElements, ReleaseLongArrayElements);
+%typemap(jni) (int64_t *arrayIn, size_t arrayInSize)  "jlongArray"
+%typemap(jtype) (int64_t *arrayIn, size_t arrayInSize)  "long[]"
+%typemap(jstype) (int64_t *arrayIn, size_t arrayInSize)  "long[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_IN(float, jfloat, GetFloatArrayElements, ReleaseFloatArrayElements);
+%typemap(jni) (float *arrayIn, size_t arrayInSize)  "jfloatArray"
+%typemap(jtype) (float *arrayIn, size_t arrayInSize)  "float[]"
+%typemap(jstype) (float *arrayIn, size_t arrayInSize)  "float[]"
+
+DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleArrayElements);
+%typemap(jni) (double *arrayIn, size_t arrayInSize)  "jdoubleArray"
+%typemap(jtype) (double *arrayIn, size_t arrayInSize)  "double[]"
+%typemap(jstype) (double *arrayIn, size_t arrayInSize)  "double[]"
+
 
 /***************************************************
  * Typemaps for GIntBig

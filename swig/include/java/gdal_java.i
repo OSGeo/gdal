@@ -8,8 +8,6 @@
  *
 */
 
-// TODO - general comment: am I clear()'ing things I need to?
-
 %include java_exceptions.i
 
 %pragma(java) jniclasscode=%{
@@ -190,8 +188,8 @@ import java.lang.Integer;
 							const GInt64 *counts,
 							const GInt64 *arraySteps,
 							GInt64 *bufferStrides,
-							void* regularArrayIn,
-							long nRegularArraySizeIn,
+							void* arrayIn,
+							size_t arrayInSize,
 							GDALExtendedDataTypeH extended_data_type,
 							size_t sizeof_ctype)
   {
@@ -201,9 +199,9 @@ import java.lang.Integer;
 								(GInt64*) arraySteps,
 								(const GPtrDiff_t*) bufferStrides,
 								extended_data_type,
-								regularArrayIn,
-								regularArrayIn,
-								nRegularArraySizeIn * sizeof_ctype);
+								arrayIn,
+								arrayIn,
+								arrayInSize * sizeof_ctype);
   }
 
   static bool MDArrayWrite(GDALMDArrayH hMDA,
@@ -211,8 +209,8 @@ import java.lang.Integer;
 							const GInt64 *counts,
 							const GInt64 *arraySteps,
 							GInt64 *bufferStrides,
-							void* regularArrayOut,
-							long nRegularArraySizeOut,
+							void* arrayOut,
+							size_t arrayOutSize,
 							GDALExtendedDataTypeH extended_data_type,
 							size_t sizeof_ctype)
   {
@@ -222,20 +220,12 @@ import java.lang.Integer;
 								(GInt64*) arraySteps,
 								(const GPtrDiff_t*) bufferStrides,
 								extended_data_type,
-								regularArrayOut,
-								regularArrayOut,
-								nRegularArraySizeOut * sizeof_ctype);
+								arrayOut,
+								arrayOut,
+								arrayOutSize * sizeof_ctype);
   }
 
 %}
-
-// TODO Test MDArray read/write code with complex types:
-//   CInt16, CInt32, CFloat32, CFloat64
-// Does the sizeof the two component value types mess up
-//   the read write routines? Same issues might crop up
-//   for Raster IO and Band IO routines in this file.
-//   Maybe the array size returned is double for those
-//   types and thus this is not an issue?
 
 %extend GDALMDArrayHS {
 
@@ -252,8 +242,8 @@ import java.lang.Integer;
             int counts, GInt64 *sizes2, 
             int arraySteps, GInt64 *sizes3, 
             int bufferStrides, GInt64 *sizes4,
-            ctype *regularArrayOut,
-            long nRegularArraySizeOut
+            ctype *arrayOut,
+            size_t arrayOutSize
            )
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
@@ -300,8 +290,8 @@ import java.lang.Integer;
 						sizes2,
 						sizes3,
 						sizes4,
-						regularArrayOut,
-						nRegularArraySizeOut,
+						arrayOut,
+						arrayOutSize,
 						internal_type,  // TODO: pass buffer_type instead?
 						sizeof(ctype)
 						);
@@ -324,8 +314,8 @@ import java.lang.Integer;
              int counts, GInt64 *sizes2, 
              int arraySteps, GInt64 *sizes3, 
              int bufferStrides, GInt64 *sizes4,
-             ctype *regularArrayIn,
-             long nRegularArraySizeIn
+             ctype *arrayIn,
+             size_t arrayInSize
             )
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
@@ -372,8 +362,8 @@ import java.lang.Integer;
 						sizes2,
 						sizes3,
 						sizes4,
-						regularArrayIn,
-						nRegularArraySizeIn,
+						arrayIn,
+						arrayInSize,
 						internal_type,  // TODO: pass buffer_type instead?
 						sizeof(ctype)
 						);
@@ -386,28 +376,6 @@ import java.lang.Integer;
   DEFINE_WRITE_MDA_DATA(int64_t, GDT_Int64)
   DEFINE_WRITE_MDA_DATA(float  , GDT_Float32)
   DEFINE_WRITE_MDA_DATA(double , GDT_Float64)
-
-/*  TODO: other devs: is this stuff needed? It's only
-    in one of the other classes below (raster IO versus
-    band IO) that could include it. Why do they differ?
-    Also when I include this code here compile errors
-    happen elsewhere.
-
-%clear (char *regularArrayOut, long nRegularArraySizeOut);
-%clear (short *regularArrayOut, long nRegularArraySizeOut);
-%clear (int *regularArrayOut, long nRegularArraySizeOut);
-%clear (int64_t *regularArrayOut, long nRegularArraySizeOut);
-%clear (float *regularArrayOut, long nRegularArraySizeOut);
-%clear (double *regularArrayOut, long nRegularArraySizeOut);
-
-%clear (char *regularArrayIn, long nRegularArraySizeIn);
-%clear (short *regularArrayIn, long nRegularArraySizeIn);
-%clear (int *regularArrayIn, long nRegularArraySizeIn);
-%clear (int64_t *regularArrayIn, long nRegularArraySizeIn);
-%clear (float *regularArrayIn, long nRegularArraySizeIn);
-%clear (double *regularArrayIn, long nRegularArraySizeIn);
-
-*/  // end commenting out code related to TODO
 	
 } /* extend */
 
@@ -548,7 +516,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
                             int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *regularArray, long nRegularArraySize,
+                            void *regularArray, size_t nRegularArraySize,
                             int band_list, int *pband_list,
                             int nPixelSpace, int nLineSpace, int nBandSpace,
                             GDALDataType gdal_type, size_t sizeof_ctype)
@@ -604,21 +572,22 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
 %extend GDALDatasetShadow {
 
 %apply (int nList, int* pList) { (int band_list, int *pband_list) };
-%apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
 
-%apply (char *regularArrayOut, long nRegularArraySizeOut) { (char *regularArrayOut, long nRegularArraySizeOut) };
-%apply (short *regularArrayOut, long nRegularArraySizeOut) { (short *regularArrayOut, long nRegularArraySizeOut) };
-%apply (int *regularArrayOut, long nRegularArraySizeOut) { (int *regularArrayOut, long nRegularArraySizeOut) };
-%apply (int64_t *regularArrayOut, long nRegularArraySizeOut) { (int64_t *regularArrayOut, long nRegularArraySizeOut) };
-%apply (float *regularArrayOut, long nRegularArraySizeOut) { (float *regularArrayOut, long nRegularArraySizeOut) };
-%apply (double *regularArrayOut, long nRegularArraySizeOut) { (double *regularArrayOut, long nRegularArraySizeOut) };
+%apply (void* nioBuffer, size_t nioBufferSize) { (void* nioBuffer, size_t nioBufferSize) };
 
-%apply (char *regularArrayIn, long nRegularArraySizeIn) { (char *regularArrayIn, long nRegularArraySizeIn) };
-%apply (short *regularArrayIn, long nRegularArraySizeIn) { (short *regularArrayIn, long nRegularArraySizeIn) };
-%apply (int *regularArrayIn, long nRegularArraySizeIn) { (int *regularArrayIn, long nRegularArraySizeIn) };
-%apply (int64_t *regularArrayIn, long nRegularArraySizeIn) { (int64_t *regularArrayIn, long nRegularArraySizeIn) };
-%apply (float *regularArrayIn, long nRegularArraySizeIn) { (float *regularArrayIn, long nRegularArraySizeIn) };
-%apply (double *regularArrayIn, long nRegularArraySizeIn) { (double *regularArrayIn, long nRegularArraySizeIn) };
+%apply (char *regularArrayOut, size_t nRegularArraySizeOut) { (char *regularArrayOut, size_t nRegularArraySizeOut) };
+%apply (short *regularArrayOut, size_t nRegularArraySizeOut) { (short *regularArrayOut, size_t nRegularArraySizeOut) };
+%apply (int *regularArrayOut, size_t nRegularArraySizeOut) { (int *regularArrayOut, size_t nRegularArraySizeOut) };
+%apply (int64_t *regularArrayOut, size_t nRegularArraySizeOut) { (int64_t *regularArrayOut, size_t nRegularArraySizeOut) };
+%apply (float *regularArrayOut, size_t nRegularArraySizeOut) { (float *regularArrayOut, size_t nRegularArraySizeOut) };
+%apply (double *regularArrayOut, size_t nRegularArraySizeOut) { (double *regularArrayOut, size_t nRegularArraySizeOut) };
+
+%apply (char *regularArrayIn, size_t nRegularArraySizeIn) { (char *regularArrayIn, size_t nRegularArraySizeIn) };
+%apply (short *regularArrayIn, size_t nRegularArraySizeIn) { (short *regularArrayIn, size_t nRegularArraySizeIn) };
+%apply (int *regularArrayIn, size_t nRegularArraySizeIn) { (int *regularArrayIn, size_t nRegularArraySizeIn) };
+%apply (int64_t *regularArrayIn, size_t nRegularArraySizeIn) { (int64_t *regularArrayIn, size_t nRegularArraySizeIn) };
+%apply (float *regularArrayIn, size_t nRegularArraySizeIn) { (float *regularArrayIn, size_t nRegularArraySizeIn) };
+%apply (double *regularArrayIn, size_t nRegularArraySizeIn) { (double *regularArrayIn, size_t nRegularArraySizeIn) };
 
   CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
@@ -642,7 +611,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
 CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            ctype *regularArrayOut, long nRegularArraySizeOut,
+                            ctype *regularArrayOut, size_t nRegularArraySizeOut,
                             int band_list, int *pband_list,
                             int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
 {
@@ -668,7 +637,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *nioBuffer, long nioBufferSize,
+                            void *nioBuffer, size_t nioBufferSize,
                             int band_list, int *pband_list,
                             int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
 {
@@ -686,7 +655,7 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            ctype *regularArrayIn, long nRegularArraySizeIn,
+                            ctype *regularArrayIn, size_t nRegularArraySizeIn,
                             int band_list, int *pband_list,
                             int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
 {
@@ -723,7 +692,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                             int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *regularArrayOut, long nRegularArraySizeOut,
+                            void *regularArrayOut, size_t nRegularArraySizeOut,
                             int nPixelSpace, int nLineSpace,
                             GDALDataType gdal_type, size_t sizeof_ctype)
 {
@@ -766,7 +735,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
   CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *nioBuffer, long nioBufferSize,
+                            void *nioBuffer, size_t nioBufferSize,
                             int nPixelSpace = 0, int nLineSpace = 0)
   {
     return BandRasterIO( self, GF_Read,
@@ -782,7 +751,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
   CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
                      int buf_xsize, int buf_ysize,
                      GDALDataType buf_type,
-                     ctype *regularArrayOut, long nRegularArraySizeOut,
+                     ctype *regularArrayOut, size_t nRegularArraySizeOut,
                      int nPixelSpace = 0, int nLineSpace = 0)
   {
     return BandRasterIO( self, GF_Read,
@@ -805,7 +774,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
   CPLErr WriteRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *nioBuffer, long nioBufferSize,
+                            void *nioBuffer, size_t nioBufferSize,
                             int nPixelSpace = 0, int nLineSpace = 0)
   {
     return BandRasterIO( self, GF_Write,
@@ -821,7 +790,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
   CPLErr WriteRaster( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            ctype *regularArrayIn, long nRegularArraySizeIn,
+                            ctype *regularArrayIn, size_t nRegularArraySizeIn,
                             int nPixelSpace = 0, int nLineSpace = 0)
   {
     return BandRasterIO( self, GF_Write,
@@ -841,7 +810,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
   DEFINE_WRITE_RASTER(float, GDT_Float32)
   DEFINE_WRITE_RASTER(double, GDT_Float64)
 
-  CPLErr ReadBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, long nioBufferSize )
+  CPLErr ReadBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, size_t nioBufferSize )
   {
     if (BandBlockReadWrite_Validate((GDALRasterBandH)self, nioBuffer, nioBufferSize) != CE_None)
       return CE_Failure;
@@ -849,28 +818,28 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
     return GDALReadBlock(self, nXBlockOff, nYBlockOff, nioBuffer);
   }
 
-  CPLErr WriteBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, long nioBufferSize )
+  CPLErr WriteBlock_Direct( int nXBlockOff, int nYBlockOff, void *nioBuffer, size_t nioBufferSize )
   {
     if (BandBlockReadWrite_Validate((GDALRasterBandH)self, nioBuffer, nioBufferSize) != CE_None)
       return CE_Failure;
 
     return GDALWriteBlock(self, nXBlockOff, nYBlockOff, nioBuffer);
   }
-/* %clear (void *nioBuffer, long nioBufferSize); */
+/* %clear (void *nioBuffer, size_t nioBufferSize); */
 
-%clear (char *regularArrayOut, long nRegularArraySizeOut);
-%clear (short *regularArrayOut, long nRegularArraySizeOut);
-%clear (int *regularArrayOut, long nRegularArraySizeOut);
-%clear (int64_t *regularArrayOut, long nRegularArraySizeOut);
-%clear (float *regularArrayOut, long nRegularArraySizeOut);
-%clear (double *regularArrayOut, long nRegularArraySizeOut);
+%clear (char *regularArrayOut, size_t nRegularArraySizeOut);
+%clear (short *regularArrayOut, size_t nRegularArraySizeOut);
+%clear (int *regularArrayOut, size_t nRegularArraySizeOut);
+%clear (int64_t *regularArrayOut, size_t nRegularArraySizeOut);
+%clear (float *regularArrayOut, size_t nRegularArraySizeOut);
+%clear (double *regularArrayOut, size_t nRegularArraySizeOut);
 
-%clear (char *regularArrayIn, long nRegularArraySizeIn);
-%clear (short *regularArrayIn, long nRegularArraySizeIn);
-%clear (int *regularArrayIn, long nRegularArraySizeIn);
-%clear (int64_t *regularArrayIn, long nRegularArraySizeIn);
-%clear (float *regularArrayIn, long nRegularArraySizeIn);
-%clear (double *regularArrayIn, long nRegularArraySizeIn);
+%clear (char *regularArrayIn, size_t nRegularArraySizeIn);
+%clear (short *regularArrayIn, size_t nRegularArraySizeIn);
+%clear (int *regularArrayIn, size_t nRegularArraySizeIn);
+%clear (int64_t *regularArrayIn, size_t nRegularArraySizeIn);
+%clear (float *regularArrayIn, size_t nRegularArraySizeIn);
+%clear (double *regularArrayIn, size_t nRegularArraySizeIn);
 
 %apply (int nList, int* pListOut) {(int buckets, int *panHistogram)};
 %apply Pointer NONNULL { int *panHistogram };
