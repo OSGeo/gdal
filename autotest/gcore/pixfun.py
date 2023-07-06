@@ -1044,6 +1044,27 @@ def test_pixfun_pow():
 
     assert numpy.allclose(data, refdata**3.14)
 
+###############################################################################
+# Verify the normalized difference of 2 (real) datasets.
+
+
+def test_pixfun_norm_diff_r():
+
+    filename = "data/vrt/pixfun_norm_diff_r.vrt"
+    ds = gdal.OpenShared(filename, gdal.GA_ReadOnly)
+    assert ds is not None, 'Unable to open "%s" dataset.' % filename
+    data = ds.GetRasterBand(1).ReadAsArray()
+
+    reffilename = "data/int32.tif"
+    refds = gdal.Open(reffilename)
+    assert refds is not None, 'Unable to open "%s" dataset.' % reffilename
+    refdata1 = refds.GetRasterBand(1).ReadAsArray(0, 0, 5, 6)
+
+    reffilename = "data/float32.tif"
+    refds = gdal.Open(reffilename)
+    assert refds is not None, 'Unable to open "%s" dataset.' % reffilename
+    refdata2 = refds.GetRasterBand(1).ReadAsArray(10, 10, 5, 6)
+    assert numpy.allclose(data, (refdata1 - refdata2) / (refdata1 + refdata2))
 
 ###############################################################################
 # Verify linear pixel interpolation
