@@ -3212,7 +3212,7 @@ static CPLErr LoadCutline(const std::string &osCutlineDSName,
     /*      Open source vector dataset.                                     */
     /* -------------------------------------------------------------------- */
     auto poDS = std::unique_ptr<GDALDataset>(
-        GDALDataset::Open(osCutlineDSName.c_str()));
+        GDALDataset::Open(osCutlineDSName.c_str(), GDAL_OF_VECTOR));
     if (poDS == nullptr)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot open %s.",
@@ -4048,9 +4048,13 @@ static GDALDatasetH GDALWarpCreateOutput(
     }
     else if (psOptions->dfXRes != 0.0 && psOptions->dfYRes != 0.0)
     {
+        bool bDetectBlankBorders = false;
+
         if (psOptions->dfMinX == 0.0 && psOptions->dfMinY == 0.0 &&
             psOptions->dfMaxX == 0.0 && psOptions->dfMaxY == 0.0)
         {
+            bDetectBlankBorders = bNeedsSuggestedWarpOutput;
+
             psOptions->dfMinX = adfDstGeoTransform[0];
             psOptions->dfMaxX =
                 adfDstGeoTransform[0] + adfDstGeoTransform[1] * nPixels;
@@ -4063,6 +4067,8 @@ static GDALDatasetH GDALWarpCreateOutput(
             (psOptions->bCropToCutline &&
              psOptions->aosWarpOptions.FetchBool("CUTLINE_ALL_TOUCHED", false)))
         {
+            bDetectBlankBorders = true;
+
             psOptions->dfMinX = floor(psOptions->dfMinX / psOptions->dfXRes) *
                                 psOptions->dfXRes;
             psOptions->dfMaxX =
@@ -4073,19 +4079,148 @@ static GDALDatasetH GDALWarpCreateOutput(
                 ceil(psOptions->dfMaxY / psOptions->dfYRes) * psOptions->dfYRes;
         }
 
-        nPixels = static_cast<int>((psOptions->dfMaxX - psOptions->dfMinX +
-                                    (psOptions->dfXRes / 2.0)) /
-                                   psOptions->dfXRes);
-        nLines =
-            static_cast<int>((std::fabs(psOptions->dfMaxY - psOptions->dfMinY) +
-                              (psOptions->dfYRes / 2.0)) /
-                             psOptions->dfYRes);
-        adfDstGeoTransform[0] = psOptions->dfMinX;
-        adfDstGeoTransform[3] = psOptions->dfMaxY;
-        adfDstGeoTransform[1] = psOptions->dfXRes;
-        adfDstGeoTransform[5] = (psOptions->dfMaxY > psOptions->dfMinY)
-                                    ? -psOptions->dfYRes
-                                    : psOptions->dfYRes;
+        const auto UpdateGeoTransformandAndPixelLines = [&]()
+        {
+            nPixels = static_cast<int>((psOptions->dfMaxX - psOptions->dfMinX +
+                                        (psOptions->dfXRes / 2.0)) /
+                                       psOptions->dfXRes);
+            nLines = static_cast<int>(
+                (std::fabs(psOptions->dfMaxY - psOptions->dfMinY) +
+                 (psOptions->dfYRes / 2.0)) /
+                psOptions->dfYRes);
+            adfDstGeoTransform[0] = psOptions->dfMinX;
+            adfDstGeoTransform[3] = psOptions->dfMaxY;
+            adfDstGeoTransform[1] = psOptions->dfXRes;
+            adfDstGeoTransform[5] = (psOptions->dfMaxY > psOptions->dfMinY)
+                                        ? -psOptions->dfYRes
+                                        : psOptions->dfYRes;
+        };
+
+        if (bDetectBlankBorders && nSrcCount == 1 && phTransformArg &&
+            *phTransformArg != nullptr)
+        {
+            // Try to detect if the edge of the raster would be blank
+            // Cf https://github.com/OSGeo/gdal/issues/7905
+            while (true)
+            {
+                UpdateGeoTransformandAndPixelLines();
+
+                GDALSetGenImgProjTransformerDstGeoTransform(*phTransformArg,
+                                                            adfDstGeoTransform);
+
+                std::vector<double> adfX(std::max(nPixels, nLines));
+                std::vector<double> adfY(adfX.size());
+                std::vector<double> adfZ(adfX.size());
+                std::vector<int> abSuccess(adfX.size());
+
+                const auto DetectBlankBorder =
+                    [&](int nValues,
+                        std::function<bool(double, double)> funcIsOK)
+                {
+                    if (nValues > 3)
+                    {
+                        // First try with just a subsample of 3 points
+                        double adf3X[3] = {adfX[0], adfX[nValues / 2],
+                                           adfX[nValues - 1]};
+                        double adf3Y[3] = {adfY[0], adfY[nValues / 2],
+                                           adfY[nValues - 1]};
+                        double adf3Z[3] = {0};
+                        if (GDALGenImgProjTransform(*phTransformArg, TRUE, 3,
+                                                    &adf3X[0], &adf3Y[0],
+                                                    &adf3Z[0], &abSuccess[0]))
+                        {
+                            for (int i = 0; i < 3; ++i)
+                            {
+                                if (abSuccess[i] &&
+                                    funcIsOK(adf3X[i], adf3Y[i]))
+                                {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+
+                    // Do on full border to confirm
+                    if (GDALGenImgProjTransform(*phTransformArg, TRUE, nValues,
+                                                &adfX[0], &adfY[0], &adfZ[0],
+                                                &abSuccess[0]))
+                    {
+                        for (int i = 0; i < nValues; ++i)
+                        {
+                            if (abSuccess[i] && funcIsOK(adfX[i], adfY[i]))
+                            {
+                                return false;
+                            }
+                        }
+                    }
+
+                    return true;
+                };
+
+                for (int i = 0; i < nPixels; ++i)
+                {
+                    adfX[i] = i + 0.5;
+                    adfY[i] = 0.5;
+                    adfZ[i] = 0;
+                }
+                const bool bTopBlankLine = DetectBlankBorder(
+                    nPixels, [](double, double y) { return y >= 0; });
+
+                for (int i = 0; i < nPixels; ++i)
+                {
+                    adfX[i] = i + 0.5;
+                    adfY[i] = nLines - 0.5;
+                    adfZ[i] = 0;
+                }
+                const int nSrcLines = GDALGetRasterYSize(pahSrcDS[0]);
+                const bool bBottomBlankLine =
+                    DetectBlankBorder(nPixels, [nSrcLines](double, double y)
+                                      { return y <= nSrcLines; });
+
+                for (int i = 0; i < nLines; ++i)
+                {
+                    adfX[i] = 0.5;
+                    adfY[i] = i + 0.5;
+                    adfZ[i] = 0;
+                }
+                const bool bLeftBlankCol = DetectBlankBorder(
+                    nLines, [](double x, double) { return x >= 0; });
+
+                for (int i = 0; i < nLines; ++i)
+                {
+                    adfX[i] = nPixels - 0.5;
+                    adfY[i] = i + 0.5;
+                    adfZ[i] = 0;
+                }
+                const int nSrcCols = GDALGetRasterXSize(pahSrcDS[0]);
+                const bool bRightBlankCol =
+                    DetectBlankBorder(nLines, [nSrcCols](double x, double)
+                                      { return x <= nSrcCols; });
+
+                if (!bTopBlankLine && !bBottomBlankLine && !bLeftBlankCol &&
+                    !bRightBlankCol)
+                    break;
+
+                if (bTopBlankLine)
+                {
+                    psOptions->dfMaxY -= psOptions->dfYRes;
+                }
+                if (bBottomBlankLine)
+                {
+                    psOptions->dfMinY += psOptions->dfYRes;
+                }
+                if (bLeftBlankCol)
+                {
+                    psOptions->dfMinX += psOptions->dfXRes;
+                }
+                if (bRightBlankCol)
+                {
+                    psOptions->dfMaxX -= psOptions->dfXRes;
+                }
+            }
+        }
+
+        UpdateGeoTransformandAndPixelLines();
     }
 
     else if (psOptions->nForcePixels != 0 && psOptions->nForceLines != 0)

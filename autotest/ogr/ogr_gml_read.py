@@ -201,7 +201,7 @@ def test_ogr_gml_1():
 
     wkt = "POLYGON ((44038 511549,44015 511548,43994 511522,43941 511539,43844 511514,43754 511479,43685 511521,43594 511505,43619 511452,43645 511417,4363 511387,437 511346,43749 511298,43808 511229,43819 511205,4379 511185,43728 511167,43617 511175,43604 511151,43655 511125,43746 511143,43886 511154,43885 511178,43928 511186,43977 511217,4404 511223,44008 511229,44099 51131,44095 511335,44106 51135,44127 511379,44124 511435,44137 511455,44105 511467,44098 511484,44086 511499,4407 511506,44067 511535,44038 511549))"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
     assert feat is None, "got unexpected feature."
@@ -230,7 +230,7 @@ def test_ogr_gml_2():
 
     wkt = "POLYGON ((44038 511549,44015 511548,43994 511522,43941 511539,43844 511514,43754 511479,43685 511521,43594 511505,43619 511452,43645 511417,4363 511387,437 511346,43749 511298,43808 511229,43819 511205,4379 511185,43728 511167,43617 511175,43604 511151,43655 511125,43746 511143,43886 511154,43885 511178,43928 511186,43977 511217,4404 511223,44008 511229,44099 51131,44095 511335,44106 51135,44127 511379,44124 511435,44137 511455,44105 511467,44098 511484,44086 511499,4407 511506,44067 511535,44038 511549))"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
     assert feat is None, "got unexpected feature."
@@ -257,7 +257,7 @@ def test_ogr_gml_3():
 
     wkt = "LINESTRING (-63.500411040289066 46.240122507771368,-63.501009714909742 46.240344881690326,-63.502170462373471 46.241041855639622,-63.505862621395394 46.24195250605576,-63.506719184531178 46.242002742901576,-63.507197272602212 46.241931577811606,-63.508403092799554 46.241752283460158,-63.509946573455622 46.241745397977233)"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
     assert feat is None, "got unexpected feature."
@@ -289,7 +289,7 @@ def test_ogr_gml_4():
 
     wkt = "POINT (347243.85 461299.5)"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
 
     # Test 2nd feature
     feat = lyr.GetNextFeature()
@@ -298,7 +298,7 @@ def test_ogr_gml_4():
 
     wkt = "POINT (347251.45 461250.85)"
 
-    assert not ogrtest.check_feature_geometry(feat, wkt)
+    ogrtest.check_feature_geometry(feat, wkt)
 
 
 ###############################################################################
@@ -794,7 +794,7 @@ def test_gml_read_compound_crs_lat_long():
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(feat, wkt), "Wrong geometry"
+    ogrtest.check_feature_geometry(feat, wkt)
 
 
 ###############################################################################
@@ -818,7 +818,7 @@ def test_ogr_gml_city_gml_lod2_with_xlink_href():
 
     # print(feat.GetGeometryRef().ExportToIsoWkt())
     wkt = "POLYHEDRALSURFACE Z (((713235.347 5322980.429 584.22,713235.909 5322980.781 584.22,713237.154 5322981.561 584.22,713237.154 5322981.561 587.655,713235.909 5322980.781 588.03,713235.347 5322980.429 587.86,713235.347 5322980.429 584.22)),((713236.374 5322982.678 587.658,713237.154 5322981.561 587.655,713237.154 5322981.561 584.22,713236.374 5322982.678 584.22,713234.768 5322984.981 584.22,713234.768 5322984.981 587.666,713236.374 5322982.678 587.658)),((713234.612 5322981.452 584.22,713235.347 5322980.429 584.22,713235.347 5322980.429 587.86,713234.612 5322981.452 587.853,713234.612 5322981.452 588.21,713234.585 5322981.49 588.21,713234.585 5322981.49 584.22,713234.612 5322981.452 584.22)),((713229.269 5322983.856 587.663,713231.399 5322985.337 588.33,713233.571 5322986.847 587.65,713235.231 5322988.002 587.13,713235.231 5322988.002 584.22,713233.571 5322986.847 584.22,713231.399 5322985.337 584.22,713229.269 5322983.856 584.22,713229.269 5322983.856 587.663)),((713235.231 5322988.002 584.22,713235.231 5322988.002 587.13,713236.493 5322986.18 587.126,713236.493 5322986.18 584.22,713235.231 5322988.002 584.22)),((713232.071 5322979.751 584.22,713232.071 5322979.751 587.663,713229.269 5322983.856 587.663,713229.269 5322983.856 584.22,713232.071 5322979.751 584.22)),((713235.909 5322980.781 584.22,713235.347 5322980.429 584.22,713234.612 5322981.452 584.22,713234.585 5322981.49 584.22,713234.205 5322981.227 584.22,713232.071 5322979.751 584.22,713229.269 5322983.856 584.22,713231.399 5322985.337 584.22,713233.571 5322986.847 584.22,713235.231 5322988.002 584.22,713236.493 5322986.18 584.22,713234.82 5322985.017 584.22,713234.768 5322984.981 584.22,713236.374 5322982.678 584.22,713237.154 5322981.561 584.22,713235.909 5322980.781 584.22)),((713232.071 5322979.751 584.22,713234.205 5322981.227 584.22,713234.585 5322981.49 584.22,713234.585 5322981.49 588.21,713234.205 5322981.227 588.33,713232.071 5322979.751 587.663,713232.071 5322979.751 584.22)),((713235.181 5322981.849 588.032,713234.612 5322981.452 588.21,713234.612 5322981.452 587.853,713235.181 5322981.849 588.032)),((713235.347 5322980.429 587.86,713235.909 5322980.781 588.03,713235.181 5322981.849 588.032,713234.612 5322981.452 587.853,713235.347 5322980.429 587.86)),((713234.768 5322984.981 584.22,713234.82 5322985.017 584.22,713236.493 5322986.18 584.22,713236.493 5322986.18 587.126,713234.82 5322985.017 587.65,713234.768 5322984.981 587.666,713234.768 5322984.981 584.22)),((713234.205 5322981.227 588.33,713234.585 5322981.49 588.21,713234.612 5322981.452 588.21,713235.181 5322981.849 588.032,713235.909 5322980.781 588.03,713237.154 5322981.561 587.655,713236.374 5322982.678 587.658,713234.768 5322984.981 587.666,713234.82 5322985.017 587.65,713236.493 5322986.18 587.126,713235.231 5322988.002 587.13,713233.571 5322986.847 587.65,713231.399 5322985.337 588.33,713234.205 5322981.227 588.33)),((713232.071 5322979.751 587.663,713234.205 5322981.227 588.33,713231.399 5322985.337 588.33,713229.269 5322983.856 587.663,713232.071 5322979.751 587.663)))"
-    assert not ogrtest.check_feature_geometry(feat, wkt), "Wrong geometry"
+    ogrtest.check_feature_geometry(feat, wkt)
 
     feat = lyr.GetNextFeature()
     assert not feat.GetGeometryRef().IsEmpty()
@@ -1535,14 +1535,14 @@ def test_ogr_gml_35():
     lyr = ds.GetLayerByName("Suolo")
     feat = lyr.GetNextFeature()
     wkt = "MULTIPOLYGON (((-0.1 0.6,-0.0 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6)))"
-    assert not ogrtest.check_feature_geometry(feat, wkt), feat.GetGeometryRef()
+    ogrtest.check_feature_geometry(feat, wkt)
 
     ds = None
 
     ds = ogr.Open("tmp/GmlTopo-sample.xml")
     lyr = ds.GetLayerByName("Suolo")
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(feat, wkt), feat.GetGeometryRef()
+    ogrtest.check_feature_geometry(feat, wkt)
 
     ds = None
 
@@ -1586,7 +1586,7 @@ def test_ogr_gml_36(GML_FACE_HOLE_NEGATIVE="NO"):
         wkt = "MULTIPOLYGON (((-0.1 0.6,-0.0 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6)))"
     else:
         wkt = "POLYGON ((-0.1 0.6,-0.0 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6),(0.2 0.2,0.2 0.4,0.4 0.4,0.5 0.2,0.5 0.1,0.5 0.0,0.2 0.0,0.2 0.2),(0.6 0.1,0.8 0.1,0.8 -0.1,0.6 -0.1,0.6 0.1))"
-    assert not ogrtest.check_feature_geometry(feat, wkt), feat.GetGeometryRef()
+    ogrtest.check_feature_geometry(feat, wkt)
 
     ds = None
 
@@ -1594,7 +1594,7 @@ def test_ogr_gml_36(GML_FACE_HOLE_NEGATIVE="NO"):
         ds = ogr.Open("tmp/GmlTopo-sample.xml")
     lyr = ds.GetLayerByName("Suolo")
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(feat, wkt), feat.GetGeometryRef()
+    ogrtest.check_feature_geometry(feat, wkt)
 
     ds = None
 
@@ -1646,7 +1646,7 @@ def internal_ogr_gml_38(resolver):
     lyr = ds.GetLayerByName("Suolo")
     feat = lyr.GetNextFeature()
     wkt = "MULTIPOLYGON (((0.9 0.6,0.9 0.4,0.7 0.3,0.7 0.2,0.9 0.1,0.9 -0.1,0.6 -0.2,0.3 -0.2,0.2 -0.2,-0.1 0.0,-0.1 0.1,-0.1 0.2,0.1 0.3,0.1 0.4,-0.0 0.4,-0.1 0.5,-0.1 0.6,-0.0 0.7,0.2 0.7,0.3 0.6,0.5 0.6,0.5 0.8,0.7 0.8,0.8 0.6,0.9 0.6),(0.6 0.1,0.6 -0.1,0.8 -0.1,0.8 0.1,0.6 0.1),(0.2 0.4,0.2 0.2,0.2 0.0,0.5 0.0,0.5 0.1,0.5 0.2,0.4 0.4,0.2 0.4)))"
-    assert not ogrtest.check_feature_geometry(feat, wkt), feat.GetGeometryRef()
+    ogrtest.check_feature_geometry(feat, wkt)
 
     ds = None
 
@@ -2262,44 +2262,31 @@ def test_ogr_gml_52():
         assert lyr.GetExtent() == (280000, 280000, 7000000, 7000000)
 
         feat = lyr.GetNextFeature()
-        if (
-            feat.GetField("gid") != "1"
-            or feat.GetField("regular_attribute") != 5
-            or feat.GetField("foo_href") != "some_ref"
-            or feat.GetField("teksti") != "En francais !"
-            or feat.GetField("teksti_kieli") != "fr"
-            or ogrtest.check_feature_geometry(feat, "POINT (280000 7000000 0)") != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+
+        assert feat.GetField("gid") == "1"
+        assert feat.GetField("regular_attribute") == 5
+        assert feat.GetField("foo_href") == "some_ref"
+        assert feat.GetField("teksti") == "En francais !"
+        assert feat.GetField("teksti_kieli") == "fr"
+        ogrtest.check_feature_geometry(feat, "POINT (280000 7000000 0)")
 
         lyr = ds.GetLayerByName("B")
         assert lyr.GetGeomType() == ogr.wkbPolygon25D
         srs = lyr.GetSpatialRef()
         assert srs is not None
         feat = lyr.GetNextFeature()
-        if (
-            ogrtest.check_feature_geometry(
-                feat,
-                "POLYGON ((280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0))",
-            )
-            != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+        ogrtest.check_feature_geometry(
+            feat,
+            "POLYGON ((280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0))",
+        )
 
         lyr = ds.GetLayerByName("C")
         assert lyr.GetGeomType() == ogr.wkbLineString25D
         feat = lyr.GetNextFeature()
-        if (
-            ogrtest.check_feature_geometry(
-                feat,
-                "LINESTRING (280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0)",
-            )
-            != 0
-        ):
-            feat.DumpReadable()
-            pytest.fail()
+        ogrtest.check_feature_geometry(
+            feat,
+            "LINESTRING (280000 7000000 0,281000 7000000 0,281000 7001000 0,280000 7001000 0,280000 7000000 0)",
+        )
 
         ds = None
 
@@ -4622,8 +4609,17 @@ def test_ogr_gml_read_boundedby_only():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    def check():
+    def check_no_options():
         ds = gdal.OpenEx("data/gml/only_boundedby.gml")
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeomType() == ogr.wkbNone
+        ds = None
+
+    gdal.Unlink("data/gml/only_boundedby.gfs")
+    check_no_options()
+
+    def check():
+        ds = gdal.OpenEx("data/gml/only_boundedby.gml", open_options=["USE_BBOX=YES"])
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 1
         assert lyr.GetGeomType() == ogr.wkbPolygon
@@ -4657,7 +4653,9 @@ def test_ogr_gml_read_boundedby_only_gml_null_only():
         pytest.skip()
 
     def check():
-        ds = gdal.OpenEx("data/gml/only_boundedby_only_null.gml")
+        ds = gdal.OpenEx(
+            "data/gml/only_boundedby_only_null.gml", open_options=["USE_BBOX=YES"]
+        )
         lyr = ds.GetLayer(0)
         assert lyr.GetLayerDefn().GetGeomFieldCount() == 0
         f = lyr.GetNextFeature()
@@ -4675,6 +4673,42 @@ def test_ogr_gml_read_boundedby_only_gml_null_only():
 
 
 ###############################################################################
+# Test bug fix for https://github.com/OSGeo/gdal/pull/4397
+# where there are several layers with features with gml:boundedBy elements
+# and geometries in elements with different names
+
+
+def test_ogr_gml_read_bbox_and_several_geom_elements():
+
+    if not gdaltest.have_gml_reader:
+        pytest.skip()
+
+    def check():
+        ds = gdal.OpenEx(
+            "data/gml/bbox_and_several_geom_elements.gml", open_options=["USE_BBOX=YES"]
+        )
+        lyr = ds.GetLayer(0)
+        assert lyr.GetGeometryColumn() == "geom1"
+        assert lyr.GetGeomType() == ogr.wkbMultiPolygon
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiPolygon
+        lyr = ds.GetLayer(1)
+        assert lyr.GetGeometryColumn() == "geom2"
+        assert lyr.GetGeomType() == ogr.wkbPoint
+        f = lyr.GetNextFeature()
+        assert f.GetGeometryRef().GetGeometryType() == ogr.wkbPoint
+        ds = None
+
+    gdal.Unlink("data/gml/bbox_and_several_geom_elements.gfs")
+    check()
+
+    # This time with .gfs
+    assert os.path.exists("data/gml/bbox_and_several_geom_elements.gfs")
+    check()
+    gdal.Unlink("data/gml/bbox_and_several_geom_elements.gfs")
+
+
+###############################################################################
 # Test reading a file with only a boundedBy property in features that is
 # invalid
 
@@ -4685,7 +4719,9 @@ def test_ogr_gml_read_boundedby_invalid():
         pytest.skip()
 
     with gdaltest.error_handler():
-        ds = gdal.OpenEx("data/gml/only_boundedby_invalid.gml")
+        ds = gdal.OpenEx(
+            "data/gml/only_boundedby_invalid.gml", open_options=["USE_BBOX=YES"]
+        )
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 0
 
@@ -4700,7 +4736,9 @@ def test_ogr_gml_read_boundedby_repeated():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    ds = gdal.OpenEx("data/gml/only_boundedby_repeated.gml")
+    ds = gdal.OpenEx(
+        "data/gml/only_boundedby_repeated.gml", open_options=["USE_BBOX=YES"]
+    )
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
 

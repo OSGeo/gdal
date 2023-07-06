@@ -891,6 +891,29 @@ def test_ogr_basic_test_future_warning_exceptions():
 
 
 ###############################################################################
+# check feature defn access after layer has been destroyed
+
+
+def test_feature_defn_use_after_layer_del():
+    with ogr.Open("data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+
+        defn1 = lyr.GetLayerDefn()
+        defn2 = lyr.GetLayerDefn()
+
+        lyr.GetLayerDefn().AddFieldDefn(ogr.FieldDefn("cookie", ogr.OFTInteger))
+
+        assert defn1.GetReferenceCount() == 3
+        del defn2
+        assert defn1.GetReferenceCount() == 2
+
+    del lyr
+
+    assert defn1.GetReferenceCount() == 1
+    assert defn1.GetFieldDefn(3).GetName() == "cookie"
+
+
+###############################################################################
 # Test CreateDataSource context manager
 
 
@@ -914,6 +937,47 @@ def test_ogr_basic_create_data_source_context_manager(tmp_path):
     lyr_in = ds_in.GetLayer(0)
 
     assert lyr_in.GetFeatureCount() == 1
+
+
+###############################################################################
+# check layer access after datasource has closed
+
+
+def test_layer_use_after_datasource_close_1():
+    with ogr.Open("data/poly.shp") as ds:
+        lyr = ds.GetLayer(0)
+
+    # Make sure ds.__exit__() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+
+def test_layer_use_after_datasource_close_2():
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
+
+    del ds
+    # Make sure ds.__del__() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+
+def test_layer_use_after_datasource_close_3(tmp_path):
+    fname = str(tmp_path / "test.shp")
+
+    drv = ogr.GetDriverByName("ESRI Shapefile")
+
+    with drv.CreateDataSource(fname) as ds:
+        lyr = ds.CreateLayer("test")
+        lyr2 = ds.CopyLayer(lyr, "test2")
+
+    # Make sure ds.__exit__() has invalidated "lyr" so we don't crash here
+    with pytest.raises(Exception):
+        lyr.GetFeatureCount()
+
+    # Make sure ds.__exit__() has invalidated "lyr2" so we don't crash here
+    with pytest.raises(Exception):
+        lyr2.GetFeatureCount()
 
 
 ###############################################################################

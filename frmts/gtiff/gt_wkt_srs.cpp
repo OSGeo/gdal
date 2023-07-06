@@ -1689,6 +1689,8 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
 
         if (bCanBuildCompoundCRS)
         {
+            const bool bHorizontalHasCode =
+                oSRS.GetAuthorityCode(nullptr) != nullptr;
             const char *pszHorizontalName = oSRS.GetName();
             const std::string osHorizontalName(
                 pszHorizontalName ? pszHorizontalName : "unnamed");
@@ -1735,6 +1737,19 @@ OGRSpatialReferenceH GTIFGetOGISDefnAsOSR(GTIF *hGTIF, GTIFDefn *psDefn)
             {
                 oSRS.GetRoot()->AddChild(oVertSRS.GetRoot()->Clone());
                 bNeedManualVertCS = false;
+
+                // GeoTIFF doesn't store EPSG code of CompoundCRS, so
+                // if we have an EPSG code for both the horizontal and vertical
+                // parts, check if there's a known CompoundCRS associating
+                // both
+                if (bHorizontalHasCode && verticalCSType != KvUserDefined &&
+                    verticalCSType > 0)
+                {
+                    const auto *poSRSMatch = oSRS.FindBestMatch(100);
+                    if (poSRSMatch)
+                        oSRS = *poSRSMatch;
+                    delete poSRSMatch;
+                }
             }
         }
     }

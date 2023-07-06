@@ -258,9 +258,9 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
 #pragma warning(disable : 4250)
 #endif  //_MSC_VER
 
-class MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
-                                 public GDALMDArray,
-                                 public MEMAttributeHolder
+class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
+                                         public GDALMDArray,
+                                         public MEMAttributeHolder
 {
     std::string m_osUnit{};
     std::shared_ptr<OGRSpatialReference> m_poSRS{};

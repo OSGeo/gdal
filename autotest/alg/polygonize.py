@@ -72,23 +72,17 @@ def test_polygonize_1(is_int_polygonize):
 
     expect = [107, 123, 115, 115, 140, 148, 123, 140, 100, 101, 102, 156, 103]
 
-    tr = ogrtest.check_features_against_list(mem_layer, "DN", expect)
+    ogrtest.check_features_against_list(mem_layer, "DN", expect)
 
     # check at least one geometry.
-    if tr:
-        mem_layer.SetAttributeFilter("dn = 156")
-        feat_read = mem_layer.GetNextFeature()
-        if (
-            ogrtest.check_feature_geometry(
-                feat_read,
-                "POLYGON ((440720 3751200,440720 3751020,440900 3751020,440900 3751200,440720 3751200),(440780 3751140,440840 3751140,440840 3751080,440780 3751080,440780 3751140))",
-            )
-            != 0
-        ):
-            tr = 0
-        feat_read.Destroy()
+    mem_layer.SetAttributeFilter("dn = 156")
+    feat_read = mem_layer.GetNextFeature()
+    ogrtest.check_feature_geometry(
+        feat_read,
+        "POLYGON ((440720 3751200,440720 3751020,440900 3751020,440900 3751200,440720 3751200),(440780 3751140,440840 3751140,440840 3751080,440780 3751080,440780 3751140))",
+    )
 
-    assert tr
+    feat_read.Destroy()
 
 
 ###############################################################################
@@ -139,9 +133,7 @@ def test_polygonize_2():
         103,
     ]
 
-    tr = ogrtest.check_features_against_list(mem_layer, "DN", expect)
-
-    assert tr
+    ogrtest.check_features_against_list(mem_layer, "DN", expect)
 
 
 ###############################################################################
@@ -175,20 +167,13 @@ def test_polygonize_3():
     # check at least one geometry.
     mem_layer.SetAttributeFilter("dn = 0")
     feat_read = mem_layer.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            feat_read,
-            "POLYGON ((6 -3,6 -40,19 -40,19 -39,25 -39,25 -38,27 -38,27 -37,28 -37,28 -36,29 -36,29 -35,30 -35,30 -34,31 -34,31 -25,30 -25,30 -24,29 -24,29 -23,28 -23,28 -22,27 -22,27 -21,24 -21,24 -20,23 -20,23 -19,26 -19,26 -18,27 -18,27 -17,28 -17,28 -16,29 -16,29 -8,28 -8,28 -7,27 -7,27 -6,26 -6,26 -5,24 -5,24 -4,18 -4,18 -3,6 -3),(11 -7,23 -7,23 -8,24 -8,24 -9,25 -9,25 -16,24 -16,24 -17,23 -17,23 -18,11 -18,11 -7),(11 -22,24 -22,24 -23,26 -23,26 -25,27 -25,27 -33,26 -33,26 -35,24 -35,24 -36,11 -36,11 -22))",
-        )
-        != 0
-    ):
-        print(feat_read.GetGeometryRef().ExportToWkt())
-        tr = 0
-    else:
-        tr = 1
-    feat_read.Destroy()
 
-    assert tr
+    ogrtest.check_feature_geometry(
+        feat_read,
+        "POLYGON ((6 -3,6 -40,19 -40,19 -39,25 -39,25 -38,27 -38,27 -37,28 -37,28 -36,29 -36,29 -35,30 -35,30 -34,31 -34,31 -25,30 -25,30 -24,29 -24,29 -23,28 -23,28 -22,27 -22,27 -21,24 -21,24 -20,23 -20,23 -19,26 -19,26 -18,27 -18,27 -17,28 -17,28 -16,29 -16,29 -8,28 -8,28 -7,27 -7,27 -6,26 -6,26 -5,24 -5,24 -4,18 -4,18 -3,6 -3),(11 -7,23 -7,23 -8,24 -8,24 -9,25 -9,25 -16,24 -16,24 -17,23 -17,23 -18,11 -18,11 -7),(11 -22,24 -22,24 -23,26 -23,26 -25,27 -25,27 -33,26 -33,26 -35,24 -35,24 -36,11 -36,11 -22))",
+    )
+
+    feat_read.Destroy()
 
 
 ###############################################################################
@@ -238,9 +223,7 @@ def test_polygonize_4():
         103,
     ]
 
-    tr = ogrtest.check_features_against_list(mem_layer, "DN", expect)
-
-    assert tr
+    ogrtest.check_features_against_list(mem_layer, "DN", expect)
 
 
 ###############################################################################

@@ -63,7 +63,7 @@ def test_ers_1():
 def test_ers_2():
 
     tst = gdaltest.GDALTest("ERS", "ehdr/float32.bil", 1, 27)
-    return tst.testCreateCopy(new_filename="tmp/float32.ers", check_gt=1, vsimem=1)
+    tst.testCreateCopy(new_filename="tmp/float32.ers", check_gt=1, vsimem=1)
 
 
 ###############################################################################
@@ -73,7 +73,7 @@ def test_ers_2():
 def test_ers_3():
 
     tst = gdaltest.GDALTest("ERS", "rgbsmall.tif", 2, 21053)
-    return tst.testCreate(new_filename="tmp/rgbsmall.ers")
+    tst.testCreate(new_filename="tmp/rgbsmall.ers")
 
 
 ###############################################################################
@@ -90,7 +90,7 @@ def test_ers_4():
     UNIT["degree",0.0174532925199433]]"""
 
     tst = gdaltest.GDALTest("ERS", "ers/ers_dem.ers", 1, 56588)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################

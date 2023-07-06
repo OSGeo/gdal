@@ -469,12 +469,8 @@ def test_ogr_openfilegdb_1(gdb_source):
             geom = feat.GetGeometryRef()
             if geom:
                 geom = geom.ExportToWkt()
-            if (
-                geom != expected_wkt
-                and ogrtest.check_feature_geometry(feat, expected_wkt) == 1
-            ):
-                feat.DumpReadable()
-                pytest.fail(expected_wkt)
+            if geom != expected_wkt:
+                ogrtest.check_feature_geometry(feat, expected_wkt)
 
         if (
             feat.GetField("id") != 1
@@ -534,13 +530,8 @@ def test_ogr_openfilegdb_1(gdb_source):
                 expected_wkt = data[3]
             except IndexError:
                 expected_wkt = data[2]
-            if expected_wkt is None:
-                if feat.GetGeometryRef() is not None:
-                    feat.DumpReadable()
-                    pytest.fail(data)
-            elif ogrtest.check_feature_geometry(feat, expected_wkt) != 0:
-                feat.DumpReadable()
-                pytest.fail(data)
+
+            ogrtest.check_feature_geometry(feat, expected_wkt)
 
     ds = None
 
@@ -1748,18 +1739,14 @@ def test_ogr_openfilegdb_18():
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
-        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            print(f.GetGeometryRef().ExportToWkt())
-            pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
 
     lyr = ds.GetLayerByName("polygon")
     ds_ref = ogr.Open("data/filegdb/curves_polygon.csv")
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
-        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            print(f.GetGeometryRef().ExportToWkt())
-            pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
 
     ds = ogr.Open("data/filegdb/curve_circle_by_center.gdb")
     lyr = ds.GetLayer(0)
@@ -1767,9 +1754,7 @@ def test_ogr_openfilegdb_18():
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
-        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            print(f.GetGeometryRef().ExportToWkt())
-            pytest.fail(f_ref.GetGeometryRef().ExportToWkt())
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
 
 
 ###############################################################################
@@ -1799,9 +1784,7 @@ def test_ogr_openfilegdb_20():
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
-        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            print(f.GetGeometryRef().ExportToIsoWkt())
-            pytest.fail(f_ref.GetGeometryRef().ExportToIsoWkt())
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
 
     ds = ogr.Open("data/filegdb/filegdb_polygonzm_nan_m_with_curves.gdb")
     lyr = ds.GetLayer(0)
@@ -1809,9 +1792,7 @@ def test_ogr_openfilegdb_20():
     lyr_ref = ds_ref.GetLayer(0)
     for f in lyr:
         f_ref = lyr_ref.GetNextFeature()
-        if ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef()) != 0:
-            print(f.GetGeometryRef().ExportToIsoWkt())
-            pytest.fail(f_ref.GetGeometryRef().ExportToIsoWkt())
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef())
 
 
 ###############################################################################

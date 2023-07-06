@@ -79,9 +79,7 @@ def test_ogr_gml_fgd_1():
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(
-        feat, "POINT (133.123456789 34.123456789)"
-    ), "Wrong geometry"
+    ogrtest.check_feature_geometry(feat, "POINT (133.123456789 34.123456789)")
 
     assert feat.GetField("devDate") == "2015-01-07", "Wrong attribute value"
 
@@ -111,6 +109,6 @@ def test_ogr_gml_fgd_2():
 
     # check the first feature
     feat = lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(feat, wkt), "Wrong geometry"
+    ogrtest.check_feature_geometry(feat, wkt)
 
     assert feat.GetField("devDate") == "2017-03-07", "Wrong attribute value"

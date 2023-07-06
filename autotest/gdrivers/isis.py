@@ -68,7 +68,7 @@ def test_isis_1():
     )
 
     tst = gdaltest.GDALTest("ISIS3", "isis3/isis3_detached.lbl", 1, 9978)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################
@@ -93,7 +93,7 @@ def test_isis_2():
     gt = (653.132641495800044, 0.38, 0, -2298409.710162799805403, 0, -0.38)
 
     tst = gdaltest.GDALTest("ISIS3", "isis3/isis3_unit_test.cub", 1, 42403)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 ###############################################################################
@@ -125,7 +125,7 @@ def test_isis_3():
     )
 
     tst = gdaltest.GDALTest("ISIS3", "isis3/isis3_geotiff.lbl", 1, 9978)
-    return tst.testOpen(check_prj=srs, check_gt=gt)
+    tst.testOpen(check_prj=srs, check_gt=gt)
 
 
 # ISIS3 -> ISIS3 conversion
@@ -558,7 +558,7 @@ def test_isis_16():
 def test_isis_17():
 
     tst = gdaltest.GDALTest("ISIS3", "isis3/isis3_detached.lbl", 1, 9978)
-    return tst.testCreate(vsimem=1)
+    tst.testCreate(vsimem=1)
 
 
 # Test SRS serialization and deserialization

@@ -123,6 +123,6 @@ ds1 = None
 ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test')
 ds1 = ogr.GetDriverByName('CSV').CreateDataSource('/vsimem/test2.csv', options=['GEOMETRY=AS_WKT'])
 ds1_lyr1 = ds1.CreateLayer('test2', srs=None, geom_type=ogr.wkbUnknown, options=[])
-fdefn1 = ds1_lyr1.GetLayerDefn()
+fdefn3 = ds1_lyr1.GetLayerDefn()
 ds1 = None
 ogr.GetDriverByName('ESRI Shapefile').DeleteDataSource('/vsimem/test2.csv')

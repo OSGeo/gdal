@@ -2985,3 +2985,27 @@ def test_rasterio_readraster_in_existing_buffer_alignment_issues(datatype):
             band.ReadBlock(0, 0, buf_obj=memoryview(bytearray([0] * (2 * 8 + 1)))[1:])
             is None
         )
+
+
+def test_rasterio_gdal_rasterio_resampling():
+
+    with gdal.Open("data/float32.tif") as ds:
+        band = ds.GetRasterBand(1)
+
+        data_avg1 = band.ReadRaster(
+            buf_xsize=4, buf_ysize=4, resample_alg=gdal.GRIORA_Average
+        )
+
+        # GDAL_RASTERIO_RESAMPLING has samme function as resample_alg argument
+        with gdal.config_option("GDAL_RASTERIO_RESAMPLING", "AVERAGE"):
+            data_avg2 = band.ReadRaster(buf_xsize=4, buf_ysize=4)
+
+        assert data_avg1 == data_avg2
+
+        # resample_alg argument takes precedence over GDAL_RASTERIO_RESAMPLING configuration option
+        with gdal.config_option("GDAL_RASTERIO_RESAMPLING", "NEAREST"):
+            data_avg3 = band.ReadRaster(
+                buf_xsize=4, buf_ysize=4, resample_alg=gdal.GRIORA_Average
+            )
+
+        assert data_avg1 == data_avg3

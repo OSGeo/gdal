@@ -545,6 +545,10 @@ CPLErr GDALPamDataset::XMLInit(CPLXMLNode *psTree, const char *pszUnused)
                 CPLGetXMLNode(psGeodataXform, "SourceGCPs");
             const CPLXMLNode *psTargetGCPs =
                 CPLGetXMLNode(psGeodataXform, "TargetGCPs");
+            const CPLXMLNode *psCoeffX =
+                CPLGetXMLNode(psGeodataXform, "CoeffX");
+            const CPLXMLNode *psCoeffY =
+                CPLGetXMLNode(psGeodataXform, "CoeffY");
             if (psSourceGCPS && psTargetGCPs && !psPam->bHaveGeoTransform)
             {
                 std::vector<double> adfSource;
@@ -595,6 +599,64 @@ CPLErr GDALPamDataset::XMLInit(CPLXMLNode *psTree, const char *pszUnused)
                                             &asGCPs[0], psPam->poSRS);
                     delete psPam->poSRS;
                     psPam->poSRS = nullptr;
+                }
+            }
+            else if (psCoeffX && psCoeffY && !psPam->bHaveGeoTransform &&
+                     EQUAL(
+                         CPLGetXMLValue(psGeodataXform, "PolynomialOrder", ""),
+                         "1"))
+            {
+                std::vector<double> adfCoeffX;
+                std::vector<double> adfCoeffY;
+                for (auto psIter = psCoeffX->psChild; psIter;
+                     psIter = psIter->psNext)
+                {
+                    if (psIter->eType == CXT_Element &&
+                        strcmp(psIter->pszValue, "Double") == 0)
+                    {
+                        adfCoeffX.push_back(
+                            CPLAtof(CPLGetXMLValue(psIter, nullptr, "0")));
+                    }
+                }
+                for (auto psIter = psCoeffY->psChild; psIter;
+                     psIter = psIter->psNext)
+                {
+                    if (psIter->eType == CXT_Element &&
+                        strcmp(psIter->pszValue, "Double") == 0)
+                    {
+                        adfCoeffY.push_back(
+                            CPLAtof(CPLGetXMLValue(psIter, nullptr, "0")));
+                    }
+                }
+                if (adfCoeffX.size() == 3 && adfCoeffY.size() == 3)
+                {
+                    psPam->adfGeoTransform[0] = adfCoeffX[0];
+                    psPam->adfGeoTransform[1] = adfCoeffX[1];
+                    // Looking at the example of https://github.com/qgis/QGIS/issues/53125#issuecomment-1567650082
+                    // when comparing the .pgwx world file and .png.aux.xml file,
+                    // it appears that the sign of the coefficients for the line
+                    // terms must be negated (which is a bit in line with the
+                    // negation of dfGCPLine in the above GCP case)
+                    psPam->adfGeoTransform[2] = -adfCoeffX[2];
+                    psPam->adfGeoTransform[3] = adfCoeffY[0];
+                    psPam->adfGeoTransform[4] = adfCoeffY[1];
+                    psPam->adfGeoTransform[5] = -adfCoeffY[2];
+
+                    // Looking at the example of https://github.com/qgis/QGIS/issues/53125#issuecomment-1567650082
+                    // when comparing the .pgwx world file and .png.aux.xml file,
+                    // one can see that they have the same origin, so knowing
+                    // that world file uses a center-of-pixel convention,
+                    // correct from center of pixel to top left of pixel
+                    psPam->adfGeoTransform[0] -=
+                        0.5 * psPam->adfGeoTransform[1];
+                    psPam->adfGeoTransform[0] -=
+                        0.5 * psPam->adfGeoTransform[2];
+                    psPam->adfGeoTransform[3] -=
+                        0.5 * psPam->adfGeoTransform[4];
+                    psPam->adfGeoTransform[3] -=
+                        0.5 * psPam->adfGeoTransform[5];
+
+                    psPam->bHaveGeoTransform = TRUE;
                 }
             }
         }

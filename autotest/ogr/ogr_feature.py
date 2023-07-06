@@ -117,22 +117,6 @@ def mk_src_feature():
 
 
 ###############################################################################
-# Helper function to check a single field value
-
-
-def check(feat, fieldname, value):
-    if feat.GetField(fieldname) != value:
-        gdaltest.post_reason(
-            "did not get value %s for field %s, got %s."
-            % (str(value), fieldname, str(feat.GetField(fieldname))),
-            frames=3,
-        )
-        feat.DumpReadable()
-        return 0
-    return 1
-
-
-###############################################################################
 # Copy to Integer
 
 
@@ -145,29 +129,18 @@ def test_ogr_feature_cp_integer():
     with gdaltest.error_handler():
         dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", 17)
-
-    assert check(dst_feature, "field_integer64", 2147483647)
-
-    assert check(dst_feature, "field_real", 18)
-
-    assert check(dst_feature, "field_string", 0)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", None)
-
-    assert check(dst_feature, "field_time", None)
-
-    assert check(dst_feature, "field_datetime", None)
-
-    assert check(dst_feature, "field_integerlist", 15)
-
-    assert check(dst_feature, "field_integer64list", 2147483647)
-
-    assert check(dst_feature, "field_reallist", 17)
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") == 17
+    assert dst_feature.GetField("field_integer64") == 2147483647
+    assert dst_feature.GetField("field_real") == 18
+    assert dst_feature.GetField("field_string") == 0
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") is None
+    assert dst_feature.GetField("field_time") is None
+    assert dst_feature.GetField("field_datetime") is None
+    assert dst_feature.GetField("field_integerlist") == 15
+    assert dst_feature.GetField("field_integer64list") == 2147483647
+    assert dst_feature.GetField("field_reallist") == 17
+    assert dst_feature.GetField("field_stringlist") is None
 
     vals = []
     for val in dst_feature:
@@ -200,33 +173,23 @@ def test_ogr_feature_cp_integer64():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTInteger64)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", 17)
-
-    assert check(dst_feature, "field_integer64", 9876543210)
+    assert dst_feature.GetField("field_integer") == 17
+    assert dst_feature.GetField("field_integer64") == 9876543210
 
     with gdaltest.error_handler():
         int32_ovflw = dst_feature.GetFieldAsInteger("field_integer64")
     assert int32_ovflw == 2147483647
 
-    assert check(dst_feature, "field_real", 18)
-
-    assert check(dst_feature, "field_string", 0)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", None)
-
-    assert check(dst_feature, "field_time", None)
-
-    assert check(dst_feature, "field_datetime", None)
-
-    assert check(dst_feature, "field_integerlist", 15)
-
-    assert check(dst_feature, "field_integer64list", 9876543210)
-
-    assert check(dst_feature, "field_reallist", 17)
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_real") == 18
+    assert dst_feature.GetField("field_string") == 0
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") is None
+    assert dst_feature.GetField("field_time") is None
+    assert dst_feature.GetField("field_datetime") is None
+    assert dst_feature.GetField("field_integerlist") == 15
+    assert dst_feature.GetField("field_integer64list") == 9876543210
+    assert dst_feature.GetField("field_reallist") == 17
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -242,25 +205,16 @@ def test_ogr_feature_cp_real():
     with gdaltest.error_handler():
         dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", 17.0)
-
-    assert check(dst_feature, "field_real", 18.4)
-
-    assert check(dst_feature, "field_string", 0)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", None)
-
-    assert check(dst_feature, "field_time", None)
-
-    assert check(dst_feature, "field_datetime", None)
-
-    assert check(dst_feature, "field_integerlist", 15.0)
-
-    assert check(dst_feature, "field_reallist", 17.5)
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") == 17.0
+    assert dst_feature.GetField("field_real") == 18.4
+    assert dst_feature.GetField("field_string") == 0
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") is None
+    assert dst_feature.GetField("field_time") is None
+    assert dst_feature.GetField("field_datetime") is None
+    assert dst_feature.GetField("field_integerlist") == 15.0
+    assert dst_feature.GetField("field_reallist") == 17.5
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -273,29 +227,18 @@ def test_ogr_feature_cp_string():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTString)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", "17")
-
-    assert check(dst_feature, "field_integer64", "9876543210")
-
-    assert check(dst_feature, "field_real", "18.4")
-
-    assert check(dst_feature, "field_string", "abc def")
-
-    assert check(dst_feature, "field_binary", "0123465789ABCDEF")
-
-    assert check(dst_feature, "field_date", "2011/11/11")
-
-    assert check(dst_feature, "field_time", "14:10:35")
-
-    assert check(dst_feature, "field_datetime", "2011/11/11 14:10:35.123")
-
-    assert check(dst_feature, "field_integerlist", "(3:10,20,30)")
-
-    assert check(dst_feature, "field_integer64list", "(1:9876543210)")
-
-    assert check(dst_feature, "field_reallist", "(2:123.5,567)")
-
-    assert check(dst_feature, "field_stringlist", "(2:abc,def)")
+    assert dst_feature.GetField("field_integer") == "17"
+    assert dst_feature.GetField("field_integer64") == "9876543210"
+    assert dst_feature.GetField("field_real") == "18.4"
+    assert dst_feature.GetField("field_string") == "abc def"
+    assert dst_feature.GetField("field_binary") == "0123465789ABCDEF"
+    assert dst_feature.GetField("field_date") == "2011/11/11"
+    assert dst_feature.GetField("field_time") == "14:10:35"
+    assert dst_feature.GetField("field_datetime") == "2011/11/11 14:10:35.123"
+    assert dst_feature.GetField("field_integerlist") == "(3:10,20,30)"
+    assert dst_feature.GetField("field_integer64list") == "(1:9876543210)"
+    assert dst_feature.GetField("field_reallist") == "(2:123.5,567)"
+    assert dst_feature.GetField("field_stringlist") == "(2:abc,def)"
 
 
 ###############################################################################
@@ -308,15 +251,11 @@ def test_ogr_feature_cp_binary():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTBinary)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", None)
-
-    assert check(dst_feature, "field_integer64", None)
-
-    assert check(dst_feature, "field_real", None)
-
-    assert check(dst_feature, "field_string", None)
-
-    assert check(dst_feature, "field_binary", "0123465789ABCDEF")
+    assert dst_feature.GetField("field_integer") is None
+    assert dst_feature.GetField("field_integer64") is None
+    assert dst_feature.GetField("field_real") is None
+    assert dst_feature.GetField("field_string") is None
+    assert dst_feature.GetField("field_binary") == "0123465789ABCDEF"
 
     expected = b"\x01\x23\x46\x57\x89\xAB\xCD\xEF"
     assert dst_feature.GetFieldAsBinary("field_binary") == expected
@@ -327,19 +266,13 @@ def test_ogr_feature_cp_binary():
         == expected
     )
 
-    assert check(dst_feature, "field_date", None)
-
-    assert check(dst_feature, "field_time", None)
-
-    assert check(dst_feature, "field_datetime", None)
-
-    assert check(dst_feature, "field_integerlist", None)
-
-    assert check(dst_feature, "field_integer64list", None)
-
-    assert check(dst_feature, "field_reallist", None)
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_date") is None
+    assert dst_feature.GetField("field_time") is None
+    assert dst_feature.GetField("field_datetime") is None
+    assert dst_feature.GetField("field_integerlist") is None
+    assert dst_feature.GetField("field_integer64list") is None
+    assert dst_feature.GetField("field_reallist") is None
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -352,29 +285,18 @@ def test_ogr_feature_cp_date():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTDate)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", None)
-
-    assert check(dst_feature, "field_integer64", None)
-
-    assert check(dst_feature, "field_real", None)
-
-    assert check(dst_feature, "field_string", None)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", "2011/11/11")
-
-    assert check(dst_feature, "field_time", "0000/00/00")
-
-    assert check(dst_feature, "field_datetime", "2011/11/11")
-
-    assert check(dst_feature, "field_integerlist", None)
-
-    assert check(dst_feature, "field_integer64list", None)
-
-    assert check(dst_feature, "field_reallist", None)
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") is None
+    assert dst_feature.GetField("field_integer64") is None
+    assert dst_feature.GetField("field_real") is None
+    assert dst_feature.GetField("field_string") is None
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") == "2011/11/11"
+    assert dst_feature.GetField("field_time") == "0000/00/00"
+    assert dst_feature.GetField("field_datetime") == "2011/11/11"
+    assert dst_feature.GetField("field_integerlist") is None
+    assert dst_feature.GetField("field_integer64list") is None
+    assert dst_feature.GetField("field_reallist") is None
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -387,29 +309,18 @@ def test_ogr_feature_cp_time():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTTime)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", None)
-
-    assert check(dst_feature, "field_integer64", None)
-
-    assert check(dst_feature, "field_real", None)
-
-    assert check(dst_feature, "field_string", None)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", "00:00:00")
-
-    assert check(dst_feature, "field_time", "14:10:35")
-
-    assert check(dst_feature, "field_datetime", "14:10:35.123")
-
-    assert check(dst_feature, "field_integerlist", None)
-
-    assert check(dst_feature, "field_integer64list", None)
-
-    assert check(dst_feature, "field_reallist", None)
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") is None
+    assert dst_feature.GetField("field_integer64") is None
+    assert dst_feature.GetField("field_real") is None
+    assert dst_feature.GetField("field_string") is None
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") == "00:00:00"
+    assert dst_feature.GetField("field_time") == "14:10:35"
+    assert dst_feature.GetField("field_datetime") == "14:10:35.123"
+    assert dst_feature.GetField("field_integerlist") is None
+    assert dst_feature.GetField("field_integer64list") is None
+    assert dst_feature.GetField("field_reallist") is None
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -422,29 +333,18 @@ def test_ogr_feature_cp_datetime():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTDateTime)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", None)
-
-    assert check(dst_feature, "field_integer64", None)
-
-    assert check(dst_feature, "field_real", None)
-
-    assert check(dst_feature, "field_string", None)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", "2011/11/11 00:00:00")
-
-    assert check(dst_feature, "field_time", "0000/00/00 14:10:35")
-
-    assert check(dst_feature, "field_datetime", "2011/11/11 14:10:35.123")
-
-    assert check(dst_feature, "field_integerlist", None)
-
-    assert check(dst_feature, "field_integer64list", None)
-
-    assert check(dst_feature, "field_reallist", None)
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") is None
+    assert dst_feature.GetField("field_integer64") is None
+    assert dst_feature.GetField("field_real") is None
+    assert dst_feature.GetField("field_string") is None
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") == "2011/11/11 00:00:00"
+    assert dst_feature.GetField("field_time") == "0000/00/00 14:10:35"
+    assert dst_feature.GetField("field_datetime") == "2011/11/11 14:10:35.123"
+    assert dst_feature.GetField("field_integerlist") is None
+    assert dst_feature.GetField("field_integer64list") is None
+    assert dst_feature.GetField("field_reallist") is None
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -458,29 +358,18 @@ def test_ogr_feature_cp_integerlist():
     with gdaltest.error_handler():
         dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", [17])
-
-    assert check(dst_feature, "field_integer64", [2147483647])
-
-    assert check(dst_feature, "field_real", [18])
-
-    assert check(dst_feature, "field_string", None)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", None)
-
-    assert check(dst_feature, "field_time", None)
-
-    assert check(dst_feature, "field_datetime", None)
-
-    assert check(dst_feature, "field_integerlist", [10, 20, 30])
-
-    assert check(dst_feature, "field_integer64list", [2147483647])
-
-    assert check(dst_feature, "field_reallist", [123, 567])
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") == [17]
+    assert dst_feature.GetField("field_integer64") == [2147483647]
+    assert dst_feature.GetField("field_real") == [18]
+    assert dst_feature.GetField("field_string") is None
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") is None
+    assert dst_feature.GetField("field_time") is None
+    assert dst_feature.GetField("field_datetime") is None
+    assert dst_feature.GetField("field_integerlist") == [10, 20, 30]
+    assert dst_feature.GetField("field_integer64list") == [2147483647]
+    assert dst_feature.GetField("field_reallist") == [123, 567]
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -493,29 +382,18 @@ def test_ogr_feature_cp_integer64list():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTInteger64List)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", [17])
-
-    assert check(dst_feature, "field_integer64", [9876543210])
-
-    assert check(dst_feature, "field_real", [18])
-
-    assert check(dst_feature, "field_string", None)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", None)
-
-    assert check(dst_feature, "field_time", None)
-
-    assert check(dst_feature, "field_datetime", None)
-
-    assert check(dst_feature, "field_integerlist", [10, 20, 30])
-
-    assert check(dst_feature, "field_integer64list", [9876543210])
-
-    assert check(dst_feature, "field_reallist", [123, 567])
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") == [17]
+    assert dst_feature.GetField("field_integer64") == [9876543210]
+    assert dst_feature.GetField("field_real") == [18]
+    assert dst_feature.GetField("field_string") is None
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") is None
+    assert dst_feature.GetField("field_time") is None
+    assert dst_feature.GetField("field_datetime") is None
+    assert dst_feature.GetField("field_integerlist") == [10, 20, 30]
+    assert dst_feature.GetField("field_integer64list") == [9876543210]
+    assert dst_feature.GetField("field_reallist") == [123, 567]
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -528,29 +406,18 @@ def test_ogr_feature_cp_reallist():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTRealList)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", [17.0])
-
-    assert check(dst_feature, "field_integer64", [9876543210.0])
-
-    assert check(dst_feature, "field_real", [18.4])
-
-    assert check(dst_feature, "field_string", None)
-
-    assert check(dst_feature, "field_binary", None)
-
-    assert check(dst_feature, "field_date", None)
-
-    assert check(dst_feature, "field_time", None)
-
-    assert check(dst_feature, "field_datetime", None)
-
-    assert check(dst_feature, "field_integerlist", [10.0, 20.0, 30.0])
-
-    assert check(dst_feature, "field_integer64list", [9876543210.0])
-
-    assert check(dst_feature, "field_reallist", [123.5, 567.0])
-
-    assert check(dst_feature, "field_stringlist", None)
+    assert dst_feature.GetField("field_integer") == [17.0]
+    assert dst_feature.GetField("field_integer64") == [9876543210.0]
+    assert dst_feature.GetField("field_real") == [18.4]
+    assert dst_feature.GetField("field_string") is None
+    assert dst_feature.GetField("field_binary") is None
+    assert dst_feature.GetField("field_date") is None
+    assert dst_feature.GetField("field_time") is None
+    assert dst_feature.GetField("field_datetime") is None
+    assert dst_feature.GetField("field_integerlist") == [10.0, 20.0, 30.0]
+    assert dst_feature.GetField("field_integer64list") == [9876543210.0]
+    assert dst_feature.GetField("field_reallist") == [123.5, 567.0]
+    assert dst_feature.GetField("field_stringlist") is None
 
 
 ###############################################################################
@@ -563,29 +430,18 @@ def test_ogr_feature_cp_stringlist():
     dst_feature = mk_dst_feature(src_feature, ogr.OFTStringList)
     dst_feature.SetFrom(src_feature)
 
-    assert check(dst_feature, "field_integer", ["17"])
-
-    assert check(dst_feature, "field_integer64", ["9876543210"])
-
-    assert check(dst_feature, "field_real", ["18.4"])
-
-    assert check(dst_feature, "field_string", ["abc def"])
-
-    assert check(dst_feature, "field_binary", ["0123465789ABCDEF"])
-
-    assert check(dst_feature, "field_date", ["2011/11/11"])
-
-    assert check(dst_feature, "field_time", ["14:10:35"])
-
-    assert check(dst_feature, "field_datetime", ["2011/11/11 14:10:35.123"])
-
-    assert check(dst_feature, "field_integerlist", ["10", "20", "30"])
-
-    assert check(dst_feature, "field_integer64list", ["9876543210"])
-
-    assert check(dst_feature, "field_reallist", ["123.5", "567"])
-
-    assert check(dst_feature, "field_stringlist", ["abc", "def"])
+    assert dst_feature.GetField("field_integer") == ["17"]
+    assert dst_feature.GetField("field_integer64") == ["9876543210"]
+    assert dst_feature.GetField("field_real") == ["18.4"]
+    assert dst_feature.GetField("field_string") == ["abc def"]
+    assert dst_feature.GetField("field_binary") == ["0123465789ABCDEF"]
+    assert dst_feature.GetField("field_date") == ["2011/11/11"]
+    assert dst_feature.GetField("field_time") == ["14:10:35"]
+    assert dst_feature.GetField("field_datetime") == ["2011/11/11 14:10:35.123"]
+    assert dst_feature.GetField("field_integerlist") == ["10", "20", "30"]
+    assert dst_feature.GetField("field_integer64list") == ["9876543210"]
+    assert dst_feature.GetField("field_reallist") == ["123.5", "567"]
+    assert dst_feature.GetField("field_stringlist") == ["abc", "def"]
 
 
 ###############################################################################

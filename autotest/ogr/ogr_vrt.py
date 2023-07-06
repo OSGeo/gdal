@@ -77,28 +77,17 @@ def test_ogr_vrt_2():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "POINT(12.5 17 1.2)", max_error=0.000000001
-        )
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(12.5 17 1.2)", max_error=0.000000001)
 
     assert feat.GetFID() == 0, "Unexpected fid"
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "POINT Z (100 200 0)", max_error=0.000000001
-        )
-        == 0
-    ), feat.GetGeometryRef().ExportToIsoWkt()
+    ogrtest.check_feature_geometry(feat, "POINT Z (100 200 0)", max_error=0.000000001)
 
     assert feat.GetFID() == 1, "Unexpected fid"
 
@@ -117,26 +106,17 @@ def test_ogr_vrt_3():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "POINT(12.5 17 1.2)", max_error=0.000000001
-        )
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(12.5 17 1.2)", max_error=0.000000001)
 
     assert feat.GetFID() == 1, "Unexpected fid"
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
-        == 0
-    ), feat.GetGeometryRef().ExportToIsoWkt()
+    ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
 
     assert feat.GetFID() == 2, "Unexpected fid"
 
@@ -156,16 +136,12 @@ def test_ogr_vrt_4():
 
     expect = ["Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
-        == 0
-    ), feat.GetGeometryRef().ExportToIsoWkt()
+    ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
 
     lyr.SetSpatialFilter(None)
 
@@ -183,18 +159,12 @@ def test_ogr_vrt_5():
 
     expect = ["First"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "POINT(12.5 17 1.2)", max_error=0.000000001
-        )
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(12.5 17 1.2)", max_error=0.000000001)
 
     lyr.SetAttributeFilter(None)
 
@@ -228,26 +198,17 @@ def test_ogr_vrt_7():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "POINT(12.5 17 1.2)", max_error=0.000000001
-        )
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(12.5 17 1.2)", max_error=0.000000001)
 
     assert feat.GetFID() == 1, "Unexpected fid"
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
-        == 0
-    ), feat.GetGeometryRef().ExportToIsoWkt()
+    ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
 
     assert feat.GetFID() == 2, "Unexpected fid"
 
@@ -268,26 +229,17 @@ def test_ogr_vrt_8():
 
     expect = ["First", "Second"]
 
-    tr = ogrtest.check_features_against_list(lyr, "other", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "other", expect)
 
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(
-            feat, "POINT(12.5 17 1.2)", max_error=0.000000001
-        )
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(12.5 17 1.2)", max_error=0.000000001)
 
     assert feat.GetFID() == 1, "Unexpected fid"
 
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
-        == 0
-    ), feat.GetGeometryRef().ExportToIsoWkt()
+    ogrtest.check_feature_geometry(feat, "POINT(100 200 0)", max_error=0.000000001)
 
     assert feat.GetFID() == 2, "Unexpected fid"
 
@@ -1077,11 +1029,7 @@ def ogr_vrt_21_internal():
 
 def test_ogr_vrt_21():
     with gdaltest.error_handler():
-        try:
-            ret = ogr_vrt_21_internal()
-        except Exception:
-            ret = "fail"
-    return ret
+        ogr_vrt_21_internal()
 
 
 ###############################################################################
@@ -1407,7 +1355,7 @@ def test_ogr_vrt_27():
     feat = lyr.GetNextFeature()
     i = 0
     while feat is not None:
-        assert ogrtest.check_feature_geometry(feat, wkt_list[i]) == 0
+        ogrtest.check_feature_geometry(feat, wkt_list[i])
         feat = lyr.GetNextFeature()
         i = i + 1
 
@@ -1631,14 +1579,9 @@ def test_ogr_vrt_29():
         ), "did not get expected extent"
 
     feat = lyr.GetNextFeature()
-    if (
-        ogrtest.check_feature_geometry(
-            feat, "POINT(426857.987717275274917 5427937.523466162383556)"
-        )
-        != 0
-    ):
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(
+        feat, "POINT(426857.987717275274917 5427937.523466162383556)"
+    )
 
     feat = lyr.GetNextFeature()
 
@@ -1653,9 +1596,7 @@ def test_ogr_vrt_29():
     lyr.ResetReading()
 
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, "POINT(500000 0)") != 0:
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feat, "POINT(500000 0)")
     feat = None
 
     feat = ogr.Feature(lyr.GetLayerDefn())
@@ -1701,16 +1642,12 @@ def test_ogr_vrt_29():
 
     feat = lyr.GetNextFeature()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, "POINT(3.0 0.0)") != 0:
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feat, "POINT(3.0 0.0)")
 
     lyr.SetAttributeFilter("id = -99")
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    if ogrtest.check_feature_geometry(feat, "POINT(3.0 0.0)") != 0:
-        feat.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(feat, "POINT(3.0 0.0)")
 
     lyr.SetAttributeFilter("id = -100")
     lyr.ResetReading()
@@ -1926,16 +1863,10 @@ def test_ogr_vrt_30():
                         feat.GetFieldAsInteger("id2") == 100 + i
                     ), "did not get expected value"
                     assert not feat.IsFieldSet("id3"), "did not get expected value"
-                    if (
-                        ogrtest.check_feature_geometry(
-                            feat,
-                            "POINT(%f %f)"
-                            % (2 + int(i / 5) / 5.0, 49 + int(i % 5) / 5.0),
-                        )
-                        != 0
-                    ):
-                        feat.DumpReadable()
-                        pytest.fail("did not get expected value")
+                    ogrtest.check_feature_geometry(
+                        feat,
+                        "POINT(%f %f)" % (2 + int(i / 5) / 5.0, 49 + int(i % 5) / 5.0),
+                    )
                 else:
                     assert feat.GetFID() == i, "did not get expected value"
                     assert not feat.IsFieldSet("id1"), "did not get expected value"
@@ -1945,17 +1876,14 @@ def test_ogr_vrt_30():
                     assert (
                         feat.GetFieldAsInteger("id3") == 300 + i - 5 * 5
                     ), "did not get expected value"
-                    assert (
-                        ogrtest.check_feature_geometry(
-                            feat,
-                            "POINT(%f %f)"
-                            % (
-                                4 + int((i - 5 * 5) / 5) / 5.0,
-                                49 + int((i - 5 * 5) % 5) / 5.0,
-                            ),
-                        )
-                        == 0
-                    ), "did not get expected value"
+                    ogrtest.check_feature_geometry(
+                        feat,
+                        "POINT(%f %f)"
+                        % (
+                            4 + int((i - 5 * 5) / 5) / 5.0,
+                            49 + int((i - 5 * 5) % 5) / 5.0,
+                        ),
+                    )
 
                 i = i + 1
                 feat = lyr.GetNextFeature()

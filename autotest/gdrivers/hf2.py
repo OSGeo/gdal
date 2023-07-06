@@ -39,7 +39,7 @@ import gdaltest
 def test_hf2_1():
 
     tst = gdaltest.GDALTest("HF2", "byte.tif", 1, 4672)
-    return tst.testCreateCopy(
+    tst.testCreateCopy(
         vsimem=1,
         check_gt=(-67.00041667, 0.00083333, 0.0, 50.000416667, 0.0, -0.00083333),
     )
@@ -54,12 +54,11 @@ def test_hf2_2():
     tst = gdaltest.GDALTest(
         "HF2", "byte.tif", 1, 4672, options=["COMPRESS=YES", "BLOCKSIZE=10"]
     )
-    ret = tst.testCreateCopy(new_filename="tmp/hf2_2.hfz")
+    tst.testCreateCopy(new_filename="tmp/hf2_2.hfz")
     try:
         os.remove("tmp/hf2_2.hfz.properties")
     except OSError:
         pass
-    return ret
 
 
 ###############################################################################
@@ -69,7 +68,7 @@ def test_hf2_2():
 def test_hf2_3():
 
     tst = gdaltest.GDALTest("HF2", "hfa/float.img", 1, 23529)
-    return tst.testCreateCopy(check_minmax=0)
+    tst.testCreateCopy(check_minmax=0)
 
 
 ###############################################################################
@@ -79,7 +78,7 @@ def test_hf2_3():
 def test_hf2_4():
 
     tst = gdaltest.GDALTest("HF2", "n43.dt0", 1, 49187)
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################

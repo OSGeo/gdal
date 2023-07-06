@@ -436,6 +436,7 @@ def test_gdal_calc_py_9(script_path):
         kwargs = copy(common_kwargs)
         kwargs.update(inputs0)
         ds = gdal_calc.Calc(calc="a", outfile=outfile, **kwargs)
+        assert ds.GetRasterBand(1).GetNoDataValue() is None
         if return_ds:
             input_file = ds
         else:

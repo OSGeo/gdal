@@ -117,7 +117,7 @@ jobs:
             && mkdir build \
             && cd build \
             && sudo apt-get install -y --no-install-recommends libgflags-dev libbrotli-dev \
-            && /usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGXL_FORCE_SYSTEM_BROTLI:BOOL=ON -DCMAKE_INSTALL_PREFIX=/usr .. \
+            && /usr/bin/cmake -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DJPEGXL_FORCE_SYSTEM_BROTLI:BOOL=ON -DJPEGXL_ENABLE_JPEGLI_LIBJPEG=OFF -DCMAKE_INSTALL_PREFIX=/usr .. \
             && make -j$(nproc) \
             && sudo make -j$(nproc) install \
             && cd ../.. \

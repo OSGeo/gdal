@@ -31,33 +31,25 @@
 ###############################################################################
 
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
 
 ###############################################################################
-# Create a color table.
+# Create a color table and verify its contents
 
 
 def test_colortable_1():
 
-    gdaltest.test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
+    test_ct_data = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (255, 255, 255, 0)]
 
-    gdaltest.test_ct = gdal.ColorTable()
-    for i in range(len(gdaltest.test_ct_data)):
-        gdaltest.test_ct.SetColorEntry(i, gdaltest.test_ct_data[i])
+    test_ct = gdal.ColorTable()
+    for i, color in enumerate(test_ct_data):
+        test_ct.SetColorEntry(i, color)
 
-
-###############################################################################
-# verify contents.
-
-
-def test_colortable_2():
-
-    for i in range(len(gdaltest.test_ct_data)):
-        g_data = gdaltest.test_ct.GetColorEntry(i)
-        o_data = gdaltest.test_ct_data[i]
+    for i in range(len(test_ct_data)):
+        g_data = test_ct.GetColorEntry(i)
+        o_data = test_ct_data[i]
 
         for j in range(4):
             if len(o_data) <= j:
@@ -85,11 +77,3 @@ def test_colortable_3():
     assert ct.GetColorEntry(0) == (255, 0, 0, 255)
 
     assert ct.GetColorEntry(255) == (0, 0, 255, 255)
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_colortable_cleanup():
-    gdaltest.test_ct = None

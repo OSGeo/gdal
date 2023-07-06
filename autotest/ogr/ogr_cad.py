@@ -32,7 +32,6 @@
 ################################################################################
 
 
-import gdaltest
 import ogrtest
 import pytest
 
@@ -257,9 +256,7 @@ def test_ogr_cad_4():
 
     feat = layer.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(
-        feat, "POINT (50 50 0)"
-    ), "got feature which does not fit expectations."
+    ogrtest.check_feature_geometry(feat, "POINT (50 50 0)")
 
 
 ###############################################################################
@@ -278,9 +275,7 @@ def test_ogr_cad_5():
 
     feat = layer.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(
-        feat, "LINESTRING (50 50 0,100 100 0)"
-    ), "got feature which does not fit expectations."
+    ogrtest.check_feature_geometry(feat, "LINESTRING (50 50 0,100 100 0)")
 
 
 ###############################################################################
@@ -302,15 +297,18 @@ def test_ogr_cad_6():
 
     feat = layer.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(feat, "POINT(0.7413 1.7794 0)")
+    ogrtest.check_feature_geometry(feat, "POINT(0.7413 1.7794 0)")
+
+
+@pytest.mark.xfail(reason="cannot be sure iconv is builtin")
+def test_ogr_cad_6bis():
+
+    ds = gdal.OpenEx("data/cad/text_mtext_attdef_r2000.dwg", allowed_drivers=["CAD"])
+    layer = ds.GetLayer(0)
+    feat = layer.GetNextFeature()
 
     expected_style = 'LABEL(f:"Arial",t:"Русские буквы",c:#FFFFFFFF)'
-    if feat.GetStyleString() != expected_style:
-        gdaltest.post_reason(
-            "Got unexpected style string:\n%s\ninstead of:\n%s."
-            % (feat.GetStyleString(), expected_style)
-        )
-        return "expected_fail"  # cannot sure iconv is buildin
+    assert feat.GetStyleString() == expected_style
 
 
 ###############################################################################
@@ -325,7 +323,7 @@ def test_ogr_cad_7():
     feat = layer.GetNextFeature()
     feat = layer.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(feat, "POINT(2.8139 5.7963 0)")
+    ogrtest.check_feature_geometry(feat, "POINT(2.8139 5.7963 0)")
 
     expected_style = 'LABEL(f:"Arial",t:"English letters",c:#FFFFFFFF)'
     assert (
@@ -349,9 +347,7 @@ def test_ogr_cad_8():
     feat = layer.GetNextFeature()
     feat = layer.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(
-        feat, "POINT(4.98953601938918 2.62670161690571 0)"
-    )
+    ogrtest.check_feature_geometry(feat, "POINT(4.98953601938918 2.62670161690571 0)")
 
     expected_style = 'LABEL(f:"Arial",t:"TESTTAG",c:#FFFFFFFF)'
     assert (

@@ -58,6 +58,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*ogr/ogrsf_frmts/pmtiles/pmtiles/*)
+	  continue
+	  ;;
+
 	*swig/*)
 	  continue
 	  ;;

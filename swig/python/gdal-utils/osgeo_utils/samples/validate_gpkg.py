@@ -113,6 +113,8 @@ class GPKGChecker(object):
         warning_as_error=False,
     ):
         self.filename = filename
+        self.conn = None
+        self.has_tried_spatialite = False
         self.extended_pragma_info = False
         self.abort_at_first_error = abort_at_first_error
         self.extra_checks = extra_checks
@@ -669,31 +671,64 @@ class GPKGChecker(object):
         geometry_type_name = rows_gpkg_geometry_columns[0][3]
         srs_id = rows_gpkg_geometry_columns[0][4]
 
-        c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
+        c.execute(
+            "SELECT 1 FROM sqlite_master WHERE name = ? and type = 'view'",
+            (table_name,),
+        )
+        is_view = c.fetchone() is not None
+        is_spatialite_computed_column = False
+        if is_view:
+            c.execute("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_extensions'")
+            if c.fetchone() is not None:
+                c.execute(
+                    "SELECT 1 FROM gpkg_extensions WHERE table_name = ? AND column_name = ? AND extension_name = 'gdal_spatialite_computed_geom_column'",
+                    (table_name, geom_column_name),
+                )
+                if c.fetchone() is not None:
+                    is_spatialite_computed_column = True
+
+        try:
+            c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
+        except sqlite3.OperationalError as e:
+            if not self.has_tried_spatialite:
+                self.has_tried_spatialite = True
+                spatialite_loaded = False
+                try:
+                    self.conn.enable_load_extension(True)
+                    self.conn.execute('SELECT load_extension("mod_spatialite")')
+                    spatialite_loaded = True
+                except Exception:
+                    pass
+                if not spatialite_loaded:
+                    raise e
+                c.execute("PRAGMA table_info(%s)" % _esc_id(table_name))
+
         cols = c.fetchall()
+
         found_geom = False
         count_pkid = 0
         pkid_column_name = None
         for (_, name, typ, notnull, default, pk) in cols:
             if name.lower() == geom_column_name.lower():
                 found_geom = True
-                self._assert(
-                    typ in GPKGChecker.BASE_GEOM_TYPES
-                    or typ in GPKGChecker.EXT_GEOM_TYPES,
-                    25,
-                    ("invalid type (%s) for geometry " + "column of table %s")
-                    % (typ, table_name),
-                )
-                self._assert(
-                    typ == geometry_type_name,
-                    31,
-                    (
-                        "table %s has geometry column of type %s in "
-                        + "SQL and %s in geometry_type_name of "
-                        + "gpkg_geometry_columns"
+                if not is_spatialite_computed_column:
+                    self._assert(
+                        typ in GPKGChecker.BASE_GEOM_TYPES
+                        or typ in GPKGChecker.EXT_GEOM_TYPES,
+                        25,
+                        ("invalid type (%s) for geometry " + "column of table %s")
+                        % (typ, table_name),
                     )
-                    % (table_name, typ, geometry_type_name),
-                )
+                    self._assert(
+                        typ == geometry_type_name,
+                        31,
+                        (
+                            "table %s has geometry column of type %s in "
+                            + "SQL and %s in geometry_type_name of "
+                            + "gpkg_geometry_columns"
+                        )
+                        % (table_name, typ, geometry_type_name),
+                    )
 
             elif pk == 1:
                 if pkid_column_name is None:
@@ -1017,16 +1052,28 @@ class GPKGChecker(object):
                 c.fetchone() is not None, 75, "%s_insert trigger missing" % rtree_name
             )
 
-            for i in range(4):
-                c.execute(
-                    "SELECT 1 FROM sqlite_master WHERE "
-                    + "type = 'trigger' "
-                    + "AND name = '%s_update%d'" % (_esc_literal(rtree_name), i + 1)
-                )
+            if self.version < (1, 4):
+                expected_update_triggers_numbers = (1, 2, 3, 4)
+            else:
+                expected_update_triggers_numbers = (2, 4, 5, 6, 7)
+
+            c.execute(
+                "SELECT name FROM sqlite_master WHERE "
+                + "type = 'trigger' "
+                + "AND name LIKE '%s_update%%'" % (_esc_literal(rtree_name))
+            )
+            trigger_names = c.fetchall()
+            found_numbers = set()
+            for (name,) in trigger_names:
+                number = int(name[len(_esc_literal(rtree_name)) + len("_update") :])
+                if number not in expected_update_triggers_numbers:
+                    self._assert(False, 75, f"{name} trigger unexpected")
+                found_numbers.add(number)
+            for expected_number in expected_update_triggers_numbers:
                 self._assert(
-                    c.fetchone() is not None,
+                    expected_number in found_numbers,
                     75,
-                    "%s_update%d trigger missing" % (rtree_name, i + 1),
+                    "%s_update%d trigger missing" % (rtree_name, expected_number),
                 )
 
             c.execute(
@@ -2797,10 +2844,12 @@ class GPKGChecker(object):
                     % (user_version, expected_version),
                 )
                 self.version = (
-                    expected_version // 10000,
-                    (expected_version % 10000) // 100,
-                    expected_version % 100,
+                    user_version // 10000,
+                    (user_version % 10000) // 100,
+                    user_version % 100,
                 )
+                if self.version >= (1, 5, 0):
+                    self._warn(f"Version {self.version} not handled by this script")
             else:
                 self.version = (99, 99)
 
@@ -2818,6 +2867,7 @@ class GPKGChecker(object):
         conn.close()
 
         conn = sqlite3.connect(self.filename)
+        self.conn = conn
         c = conn.cursor()
         try:
             try:

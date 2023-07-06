@@ -34,7 +34,8 @@
 /************************************************************************/
 
 void OGRMVTInitFields(OGRFeatureDefn *poFeatureDefn,
-                      const CPLJSONObject &oFields)
+                      const CPLJSONObject &oFields,
+                      const CPLJSONArray &oAttributesFromTileStats)
 {
     {
         OGRFieldDefn oFieldDefnId("mvt_id", OFTInteger64);
@@ -50,6 +51,36 @@ void OGRMVTInitFields(OGRFeatureDefn *poFeatureDefn,
                 if (oField.ToString() == "Number")
                 {
                     OGRFieldDefn oFieldDefn(oField.GetName().c_str(), OFTReal);
+
+                    for (int i = 0; i < oAttributesFromTileStats.Size(); ++i)
+                    {
+                        if (oAttributesFromTileStats[i].GetString(
+                                "attribute") == oField.GetName() &&
+                            oAttributesFromTileStats[i].GetString("type") ==
+                                "number")
+                        {
+                            const auto eMinType = oAttributesFromTileStats[i]
+                                                      .GetObj("min")
+                                                      .GetType();
+                            const auto eMaxType = oAttributesFromTileStats[i]
+                                                      .GetObj("max")
+                                                      .GetType();
+                            if (eMinType == CPLJSONObject::Type::Integer &&
+                                eMaxType == CPLJSONObject::Type::Integer)
+                            {
+                                oFieldDefn.SetType(OFTInteger);
+                            }
+                            else if ((eMinType ==
+                                          CPLJSONObject::Type::Integer ||
+                                      eMinType == CPLJSONObject::Type::Long) &&
+                                     eMaxType == CPLJSONObject::Type::Long)
+                            {
+                                oFieldDefn.SetType(OFTInteger64);
+                            }
+                            break;
+                        }
+                    }
+
                     poFeatureDefn->AddFieldDefn(&oFieldDefn);
                 }
                 else if (oField.ToString() == "Integer")  // GDAL extension
@@ -118,6 +149,37 @@ OGRMVTFindGeomTypeFromTileStat(const CPLJSONArray &oTileStatLayers,
         }
     }
     return eGeomType;
+}
+
+/************************************************************************/
+/*                     OGRMVTFindAttributesFromTileStat()               */
+/************************************************************************/
+
+CPLJSONArray
+OGRMVTFindAttributesFromTileStat(const CPLJSONArray &oTileStatLayers,
+                                 const char *pszLayerName)
+{
+    for (int i = 0; i < oTileStatLayers.Size(); i++)
+    {
+        CPLJSONObject oId = oTileStatLayers[i].GetObj("layer");
+        if (oId.IsValid() && oId.GetType() == CPLJSONObject::Type::String)
+        {
+            if (oId.ToString() == pszLayerName)
+            {
+                CPLJSONObject oAttributes =
+                    oTileStatLayers[i].GetObj("attributes");
+                if (oAttributes.IsValid() &&
+                    oAttributes.GetType() == CPLJSONObject::Type::Array)
+                {
+                    return oAttributes.ToArray();
+                }
+                break;
+            }
+        }
+    }
+    CPLJSONArray oAttributes;
+    oAttributes.Deinit();
+    return oAttributes;
 }
 
 /************************************************************************/

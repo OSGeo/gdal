@@ -103,8 +103,12 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
         return self
 
     def __exit__(self, *args):
+        self._invalidate_layers()
         self.Destroy()
         self.this = None
+
+    def __del__(self):
+        self._invalidate_layers()
 
     def __getitem__(self, value):
         """Support dictionary, list, and slice -like access to the datasource.
@@ -140,7 +144,40 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
             return self.GetLayerByIndex(iLayer)
         else:
             raise TypeError("Input %s is not of String or Int type" % type(iLayer))
+
+    def _invalidate_layers(self, lyr = None):
+        if hasattr(self, '_layer_references'):
+            for lyr in self._layer_references:
+                lyr.this = None
+
+
+    def _add_layer_ref(self, lyr):
+        if not lyr:
+            return
+
+        if not hasattr(self, '_layer_references'):
+            import weakref
+
+            self._layer_references = weakref.WeakSet()
+
+        self._layer_references.add(lyr)
   }
+
+%feature("pythonappend") GetLayerByName %{
+    self._add_layer_ref(val)
+%}
+
+%feature("pythonappend") GetLayerByIndex %{
+    self._add_layer_ref(val)
+%}
+
+%feature("pythonappend") CreateLayer %{
+    self._add_layer_ref(val)
+%}
+
+%feature("pythonappend") CopyLayer %{
+    self._add_layer_ref(val)
+%}
 
 %feature("shadow") DeleteLayer %{
     def DeleteLayer(self, value) -> "OGRErr":
@@ -165,8 +202,8 @@ def _WarnIfUserHasNotSpecifiedIfUsingExceptions():
 
         if isinstance(value, str):
             for i in range(self.GetLayerCount()):
-                name = self.GetLayer(i).GetName()
-                if name == value:
+                lyr = self.GetLayer(i)
+                if lyr.GetName() == value:
                     return $action(self, i)
             raise ValueError("Layer %s not found to delete" % value)
         elif isinstance(value, int):

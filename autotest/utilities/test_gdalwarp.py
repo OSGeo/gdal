@@ -147,11 +147,11 @@ def test_gdalwarp_5(gdalwarp_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -171,11 +171,11 @@ def test_gdalwarp_6(gdalwarp_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -194,9 +194,7 @@ def test_gdalwarp_7(gdalwarp_path):
     assert ds is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    assert gdaltest.geotransform_equals(
-        expected_gt, ds.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, ds.GetGeoTransform(), 1e-9)
 
     ds = None
 
@@ -215,9 +213,7 @@ def test_gdalwarp_8(gdalwarp_path):
     assert ds is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    assert gdaltest.geotransform_equals(
-        expected_gt, ds.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, ds.GetGeoTransform(), 1e-9)
 
     ds = None
 
@@ -236,11 +232,11 @@ def test_gdalwarp_9(gdalwarp_path):
     ds = gdal.Open("tmp/testgdalwarp9.tif")
     assert ds is not None
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -811,38 +807,6 @@ def test_gdalwarp_31(gdalwarp_path):
 
 
 ###############################################################################
-# Test -tap
-
-
-def test_gdalwarp_32(gdalwarp_path):
-
-    (_, err) = gdaltest.runexternal_out_and_err(
-        gdalwarp_path + " -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif",
-        check_memleak=False,
-    )
-    assert (
-        err.find("-tap option cannot be used without using -tr") != -1
-    ), "expected error"
-
-    gdaltest.runexternal(
-        gdalwarp_path + " -tr 100 50 -tap ../gcore/data/byte.tif tmp/testgdalwarp32.tif"
-    )
-
-    ds = gdal.Open("tmp/testgdalwarp32.tif")
-    assert ds is not None
-
-    expected_gt = (440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0)
-    got_gt = ds.GetGeoTransform()
-    assert gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9), "Bad geotransform"
-
-    assert (
-        ds.RasterXSize == 13 and ds.RasterYSize == 25
-    ), "Wrong raster dimensions : %d x %d" % (ds.RasterXSize, ds.RasterYSize)
-
-    ds = None
-
-
-###############################################################################
 # Test warping a JPEG compressed image with a mask into a RGBA image
 
 
@@ -945,11 +909,11 @@ def test_gdalwarp_35(gdalwarp_path):
     ds = gdal.Open("tmp/testgdalwarp35.tif")
     assert ds is not None
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -968,11 +932,11 @@ def test_gdalwarp_36(gdalwarp_path):
     ds = gdal.Open("tmp/testgdalwarp36.tif")
     assert ds is not None
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 

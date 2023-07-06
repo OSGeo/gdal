@@ -120,9 +120,7 @@ def test_gdalwarp_lib_5():
 
     assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
-        ds.GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(ds.GetGeoTransform(), dstDS.GetGeoTransform(), 1e-9)
 
     dstDS = None
 
@@ -138,11 +136,11 @@ def test_gdalwarp_lib_6():
 
     assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         dstDS.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     dstDS = None
 
@@ -158,9 +156,7 @@ def test_gdalwarp_lib_7():
     assert dstDS is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    assert gdaltest.geotransform_equals(
-        expected_gt, dstDS.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, dstDS.GetGeoTransform(), 1e-9)
 
     dstDS = None
 
@@ -176,9 +172,7 @@ def test_gdalwarp_lib_8():
     assert dstDS is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
-    assert gdaltest.geotransform_equals(
-        expected_gt, dstDS.GetGeoTransform(), 1e-9
-    ), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, dstDS.GetGeoTransform(), 1e-9)
 
     dstDS = None
 
@@ -196,11 +190,11 @@ def test_gdalwarp_lib_9():
         outputBounds=[440720.000, 3750120.000, 441920.000, 3751320.000],
     )
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -463,6 +457,48 @@ def test_gdalwarp_lib_21():
 
 
 ###############################################################################
+# Test cutline from PostGIS (mostly to check that we open the dataset in
+# vector mode, and not in raster mode, which would cause the PostGISRaster
+# driver to be used)
+
+
+@pytest.mark.require_driver("PostgreSQL")
+@pytest.mark.skipif(
+    gdal.GetConfigOption("OGR_PG_CONNECTION_STRING", None) is None,
+    reason="OGR_PG_CONNECTION_STRING not defined",
+)
+def test_gdalwarp_lib_cutline_postgis():
+
+    postgis_ds_name = "PG:" + gdal.GetConfigOption("OGR_PG_CONNECTION_STRING", None)
+    cutline_ds = ogr.Open(postgis_ds_name, update=1)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(26711)
+    cutline_lyr = cutline_ds.CreateLayer("cutline", srs=srs)
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON((400000 3000000,400000 4000000,500000 4000000,500000 3000000,400000 3000000))"
+        )
+    )
+    cutline_lyr.CreateFeature(f)
+    cutline_ds = None
+
+    try:
+        ds = gdal.Warp(
+            "",
+            "../gcore/data/byte.tif",
+            format="MEM",
+            cutlineDSName=postgis_ds_name,
+            cutlineSQL="SELECT * FROM cutline",
+        )
+        assert ds is not None
+        assert ds.GetRasterBand(1).Checksum() == 4672
+    finally:
+        cutline_ds = ogr.Open(postgis_ds_name, update=1)
+        cutline_ds.ExecuteSQL("DELLAYER:cutline")
+
+
+###############################################################################
 # Test cutline whose extent is larger than the source data
 
 
@@ -530,6 +566,9 @@ def test_gdalwarp_lib_23():
 
 def test_gdalwarp_lib_32():
 
+    with pytest.raises(Exception, match="-tap option cannot be used without using -tr"):
+        gdal.Warp("", "../gcore/data/byte.tif", format="MEM", targetAlignedPixels=True)
+
     ds = gdal.Warp(
         "",
         "../gcore/data/byte.tif",
@@ -540,12 +579,12 @@ def test_gdalwarp_lib_32():
     )
     assert ds is not None
 
-    expected_gt = (440700.0, 100.0, 0.0, 3751350.0, 0.0, -50.0)
+    expected_gt = (440700.0, 100.0, 0.0, 3751300.0, 0.0, -50.0)
     got_gt = ds.GetGeoTransform()
-    assert gdaltest.geotransform_equals(expected_gt, got_gt, 1e-9), "Bad geotransform"
+    gdaltest.check_geotransform(expected_gt, got_gt, 1e-9)
 
     assert (
-        ds.RasterXSize == 13 and ds.RasterYSize == 25
+        ds.RasterXSize == 12 and ds.RasterYSize == 24
     ), "Wrong raster dimensions : %d x %d" % (ds.RasterXSize, ds.RasterYSize)
 
     ds = None

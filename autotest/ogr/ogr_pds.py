@@ -56,15 +56,10 @@ def test_ogr_pds_1():
     if feat.GetField("NOISE_COUNTS_1") != 96:
         feat.DumpReadable()
         pytest.fail()
-    geom = feat.GetGeometryRef()
-    if (
-        ogrtest.check_feature_geometry(
-            feat, "POINT (146.1325 -55.648)", max_error=0.000000001
-        )
-        != 0
-    ):
-        print("did not get expected geom")
-        pytest.fail(geom.ExportToWkt())
+
+    ogrtest.check_feature_geometry(
+        feat, "POINT (146.1325 -55.648)", max_error=0.000000001
+    )
 
     with gdaltest.error_handler():
         feat = lyr.GetFeature(1)

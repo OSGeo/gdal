@@ -280,6 +280,7 @@ GDALDataset *MAPDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterYSize = poDS->poImageDS->GetRasterYSize();
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
     {
+        CSLDestroy(papszLines);
         GDALClose(poDS->poImageDS);
         delete poDS;
         return nullptr;

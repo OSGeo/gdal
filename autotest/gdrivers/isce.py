@@ -56,7 +56,7 @@ def test_isce_1():
         AUTHORITY["EPSG","9108"]],
     AUTHORITY["EPSG","4326"]]"""
 
-    return tst.testOpen(
+    tst.testOpen(
         check_prj=prj,
         check_gt=(
             14.259166666666667,
@@ -87,7 +87,7 @@ def test_isce_2():
 def test_isce_3():
 
     tst = gdaltest.GDALTest("isce", "isce/isce.slc", 1, 350)
-    return tst.testCreateCopy(check_gt=0, new_filename="isce.tst.slc")
+    tst.testCreateCopy(check_gt=0, new_filename="isce.tst.slc")
 
 
 ###############################################################################
@@ -97,4 +97,4 @@ def test_isce_3():
 def test_isce_4():
 
     tst = gdaltest.GDALTest("isce", "isce/isce.slc", 1, 350)
-    return tst.testCreateCopy(check_gt=0, new_filename="isce.tst.slc", vsimem=1)
+    tst.testCreateCopy(check_gt=0, new_filename="isce.tst.slc", vsimem=1)

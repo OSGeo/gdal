@@ -85,6 +85,19 @@ def test_tiff_open(filename, band, checksum):
     ut.testOpen()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
+
+    with gdal.config_option("GTIFF_FORCE_RGBA", "YES"):
+        ds = gdal.Open("data/stefan_full_greyalpha.tif")
+
+    gdaltest.supports_force_rgba = False
+    if ds.RasterCount == 4:
+        gdaltest.supports_force_rgba = True
+
+    yield
+
+
 ###############################################################################
 # Test absolute/offset && index directory access
 
@@ -159,9 +172,7 @@ def test_tiff_check_alpha():
 
     with gdal.config_option("GTIFF_FORCE_RGBA", "YES"):
         ds = gdal.Open("data/stefan_full_greyalpha.tif")
-    gdaltest.supports_force_rgba = False
-    if ds.RasterCount == 4:
-        gdaltest.supports_force_rgba = True
+
     if gdaltest.supports_force_rgba:
         got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)]
         assert got_cs == [1970, 1970, 1970, 10807]
@@ -3636,7 +3647,7 @@ def test_tiff_read_huge_number_strips():
 
     md = gdal.GetDriverByName("GTiff").GetMetadata()
     if md["LIBTIFF"] != "INTERNAL":
-        pytest.skip()
+        pytest.skip("Test for internal libtiff")
 
     with gdaltest.error_handler():
         ds = gdal.Open("data/huge-number-strips.tif")
@@ -3650,7 +3661,7 @@ def test_tiff_read_huge_number_strips():
 def test_tiff_read_huge_implied_number_strips():
 
     if not check_libtiff_internal_or_at_least(4, 0, 10):
-        pytest.skip()
+        pytest.skip("Test for internal libtiff or external libtiff >= 4.0.10")
 
     with gdaltest.error_handler():
         with gdal.ExceptionMgr(useExceptions=False):
@@ -3683,7 +3694,7 @@ def test_tiff_read_many_blocks_truncated():
 
     md = gdal.GetDriverByName("GTiff").GetMetadata()
     if md["LIBTIFF"] != "INTERNAL":
-        pytest.skip()
+        pytest.skip("Test for internal libtiff")
 
     ds = gdal.Open("data/many_blocks_truncated.tif")
     with pytest.raises(Exception):
@@ -3954,7 +3965,7 @@ def test_tiff_read_negative_scaley():
 def test_tiff_read_zstd():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd.tif", 1, 4672)
-    return ut.testOpen()
+    ut.testOpen()
 
 
 ###############################################################################
@@ -3966,7 +3977,7 @@ def test_tiff_read_zstd_corrupted():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted.tif", 1, -1)
     with pytest.raises(Exception):
-        return ut.testOpen()
+        ut.testOpen()
 
 
 ###############################################################################
@@ -3978,7 +3989,7 @@ def test_tiff_read_zstd_corrupted2():
 
     ut = gdaltest.GDALTest("GTiff", "byte_zstd_corrupted2.tif", 1, -1)
     with pytest.raises(Exception):
-        return ut.testOpen()
+        ut.testOpen()
 
 
 ###############################################################################
@@ -3990,9 +4001,8 @@ def test_tiff_read_webp():
 
     stats = (0, 215, 66.38, 47.186)
     ut = gdaltest.GDALTest("GTiff", "tif_webp.tif", 1, None)
-    success = ut.testOpen(check_approx_stat=stats, stat_epsilon=1)
+    ut.testOpen(check_approx_stat=stats, stat_epsilon=1)
     gdal.Unlink("data/tif_webp.tif.aux.xml")
-    return success
 
 
 ###############################################################################
@@ -4023,7 +4033,7 @@ def test_tiff_read_1bit_2bands():
 def test_tiff_read_lerc():
 
     ut = gdaltest.GDALTest("GTiff", "byte_lerc.tif", 1, 4672)
-    return ut.testOpen()
+    ut.testOpen()
 
 
 ###############################################################################
@@ -4601,6 +4611,21 @@ def test_tiff_jxl_read_for_files_created_before_6393():
             True,
             100,
             100,
+            3,
+            gdal.GDT_Byte,
+            [
+                "COMPRESS=LZW",
+                "TILED=YES",
+                "BLOCKXSIZE=16",
+                "BLOCKYSIZE=32",
+                "INTERLEAVE=BAND",
+                "PHOTOMETRIC=MINISBLACK",
+            ],
+        ),
+        (
+            True,
+            100,
+            100,
             1,
             gdal.GDT_Byte,
             [
@@ -4736,8 +4761,21 @@ def test_tiff_read_multi_threaded(
         ) == ref_ds.ReadRaster(
             buf_pixel_space=nbands * pixel_size, buf_band_space=pixel_size
         )
-        assert ds.GetRasterBand(1).ReadRaster() == ref_ds.GetRasterBand(1).ReadRaster()
-        assert ds.GetRasterBand(1).ReadRaster() == ref_ds.GetRasterBand(1).ReadRaster()
+        for i in range(1, 1 + nbands):
+            assert (
+                ds.GetRasterBand(i).ReadRaster() == ref_ds.GetRasterBand(i).ReadRaster()
+            )
+            assert (
+                ds.GetRasterBand(i).ReadRaster() == ref_ds.GetRasterBand(i).ReadRaster()
+            )
+        ds.FlushCache()
+        inverse_band_list = [i + 1 for i in range(nbands)][::-1]
+        assert ds.ReadRaster(band_list=inverse_band_list) == ref_ds.ReadRaster(
+            band_list=inverse_band_list
+        )
+        assert ds.ReadRaster(band_list=inverse_band_list) == ref_ds.ReadRaster(
+            band_list=inverse_band_list
+        )
         ds.FlushCache()
         blockxsize, blockysize = ds.GetRasterBand(1).GetBlockSize()
         if blockxsize < ds.RasterXSize:
@@ -4980,3 +5018,19 @@ def test_tiff_read_projection_from_esri_xml_get_file_list():
             "data/gtiff/projection_from_esri_xml.xml",
         ]
     )
+
+
+###############################################################################
+# Test reading a WebP compressed image with an alpha channel fully opaque
+
+
+@pytest.mark.require_creation_option("GTiff", "WEBP")
+def test_tiff_read_webp_lossless_rgba_alpha_fully_opaque():
+
+    ds = gdal.Open("data/gtiff/webp_lossless_rgba_alpha_fully_opaque.tif")
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [
+        4672,
+        4672,
+        4672,
+        4873,
+    ]

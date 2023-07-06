@@ -714,8 +714,7 @@ def test_bag_vr_resampled_mask():
 def test_bag_write_single_band():
 
     tst = gdaltest.GDALTest("BAG", "byte.tif", 1, 4672)
-    ret = tst.testCreateCopy(quiet_error_handler=False, new_filename="/vsimem/out.bag")
-    return ret
+    tst.testCreateCopy(quiet_error_handler=False, new_filename="/vsimem/out.bag")
 
 
 ###############################################################################

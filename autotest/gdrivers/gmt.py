@@ -55,7 +55,7 @@ def test_gmt_1():
         -0.083333333333333,
     )
 
-    return tst.testOpen(check_gt=gt)
+    tst.testOpen(check_gt=gt)
 
 
 ###############################################################################
@@ -68,7 +68,7 @@ def test_gmt_2():
         pytest.skip()
 
     tst = gdaltest.GDALTest("GMT", "int16.tif", 1, 4672)
-    return tst.testCreateCopy(check_gt=1)
+    tst.testCreateCopy(check_gt=1)
 
 
 ###############################################################################

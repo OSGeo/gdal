@@ -356,7 +356,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
   public:
     ~ZarrGroupBase() override;
 
-    void SetSelf(std::weak_ptr<ZarrGroupBase> self)
+    void SetSelf(const std::weak_ptr<ZarrGroupBase> &self)
     {
         m_pSelf = self;
     }
@@ -823,6 +823,10 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     virtual std::string
     BuildTileFilename(const uint64_t *tileIndices) const = 0;
+
+    bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
+                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       CSLConstList papszOptions) override;
 
   public:
     ~ZarrArray() override;

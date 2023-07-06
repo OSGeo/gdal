@@ -89,6 +89,7 @@ Vector drivers
    pgeo
    pg
    plscenes
+   pmtiles
    s57
    sdts
    selafin

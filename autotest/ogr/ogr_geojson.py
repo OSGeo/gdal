@@ -86,32 +86,20 @@ def validate_layer(lyr, name, features, typ, fields, box):
 
 def verify_geojson_copy(fname, fids, names):
 
-    if gdaltest.gjpoint_feat is None:
-        print("Missing features collection")
-        return False
+    assert gdaltest.gjpoint_feat is not None, "Missing features collection"
 
     ds = ogr.Open(fname)
-    if ds is None:
-        print("Can not open '" + fname + "'")
-        return False
+    assert ds is not None, f"Can not open '{fname}'"
 
     lyr = ds.GetLayer(0)
-    if lyr is None:
-        print("Missing layer")
-        return False
+    assert lyr is not None, "Missing layer"
 
     ######################################################
     # Test attributes
-    ret = ogrtest.check_features_against_list(lyr, "FID", fids)
-    if ret != 1:
-        print("Wrong values in 'FID' field")
-        return False
+    ogrtest.check_features_against_list(lyr, "FID", fids)
 
     lyr.ResetReading()
-    ret = ogrtest.check_features_against_list(lyr, "NAME", names)
-    if ret != 1:
-        print("Wrong values in 'NAME' field")
-        return False
+    ogrtest.check_features_against_list(lyr, "NAME", names)
 
     ######################################################
     # Test geometries
@@ -121,25 +109,13 @@ def verify_geojson_copy(fname, fids, names):
         orig_feat = gdaltest.gjpoint_feat[i]
         feat = lyr.GetNextFeature()
 
-        if feat is None:
-            print("Failed trying to read feature")
-            return False
+        assert feat is not None, "Failed trying to read feature"
 
-        if (
-            ogrtest.check_feature_geometry(
-                feat, orig_feat.GetGeometryRef(), max_error=0.001
-            )
-            != 0
-        ):
-            print("Geometry test failed")
-            gdaltest.gjpoint_feat = None
-            return False
-
-    gdaltest.gjpoint_feat = None
+        ogrtest.check_feature_geometry(
+            feat, orig_feat.GetGeometryRef(), max_error=0.001
+        )
 
     lyr = None
-
-    return True
 
 
 def copy_shape_to_geojson(gjname, compress=None):
@@ -377,8 +353,7 @@ def test_ogr_geojson_9():
         try:
             assert rc, "Failed making copy of " + test[0] + ".shp"
 
-            rc = verify_geojson_copy(dstname, test[1], test[2])
-            assert rc, "Verification of copy of " + test[0] + ".shp failed"
+            verify_geojson_copy(dstname, test[1], test[2])
         finally:
             if dstname:
                 gdal.Unlink(dstname)
@@ -405,8 +380,7 @@ def test_ogr_geojson_10():
         try:
             assert rc, "Failed making copy of " + test[0] + ".shp"
 
-            rc = verify_geojson_copy(dstname, test[1], test[2])
-            assert rc, "Verification of copy of " + test[0] + ".shp failed"
+            verify_geojson_copy(dstname, test[1], test[2])
         finally:
             if dstname:
                 dstname = dstname[len("/vsigzip/") :]
@@ -606,14 +580,11 @@ def test_ogr_geojson_21():
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt("POINT (1 2)")
-    if (
-        feature.GetFieldAsString("_id") != "aid"
-        or feature.GetFieldAsString("_rev") != "arev"
-        or feature.GetFieldAsInteger("intvalue") != 2
-        or ogrtest.check_feature_geometry(feature, ref_geom) != 0
-    ):
-        feature.DumpReadable()
-        pytest.fail()
+
+    assert feature.GetFieldAsString("_id") == "aid"
+    assert feature.GetFieldAsString("_rev") == "arev"
+    assert feature.GetFieldAsInteger("intvalue") == 2
+    ogrtest.check_feature_geometry(feature, ref_geom)
 
     lyr = None
     ds = None
@@ -642,26 +613,20 @@ def test_ogr_geojson_22():
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt("POINT (1 2)")
-    if (
-        feature.GetFieldAsString("_id") != "aid"
-        or feature.GetFieldAsString("_rev") != "arev"
-        or feature.GetFieldAsDouble("intvalue") != 2
-        or ogrtest.check_feature_geometry(feature, ref_geom) != 0
-    ):
-        feature.DumpReadable()
-        pytest.fail()
+
+    assert feature.GetFieldAsString("_id") == "aid"
+    assert feature.GetFieldAsString("_rev") == "arev"
+    assert feature.GetFieldAsDouble("intvalue") == 2
+    ogrtest.check_feature_geometry(feature, ref_geom)
 
     feature = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt("POINT (3 4)")
-    if (
-        feature.GetFieldAsString("_id") != "aid2"
-        or feature.GetFieldAsString("_rev") != "arev2"
-        or feature.GetFieldAsDouble("intvalue") != 3.5
-        or feature.GetFieldAsString("str2value") != "bar"
-        or ogrtest.check_feature_geometry(feature, ref_geom) != 0
-    ):
-        feature.DumpReadable()
-        pytest.fail()
+
+    assert feature.GetFieldAsString("_id") == "aid2"
+    assert feature.GetFieldAsString("_rev") == "arev2"
+    assert feature.GetFieldAsDouble("intvalue") == 3.5
+    assert feature.GetFieldAsString("str2value") == "bar"
+    ogrtest.check_feature_geometry(feature, ref_geom)
 
     lyr = None
     ds = None
@@ -746,24 +711,18 @@ def test_ogr_geojson_24():
 
         feature = lyr.GetNextFeature()
         ref_geom = ogr.CreateGeometryFromWkt("POINT (2 49)")
-        if (
-            feature.GetFieldAsString("name") != "bar"
-            or ogrtest.check_feature_geometry(feature, ref_geom) != 0
-        ):
-            feature.DumpReadable()
-            pytest.fail()
+
+        assert feature.GetFieldAsString("name") == "bar"
+        ogrtest.check_feature_geometry(feature, ref_geom)
 
         lyr = ds.GetLayerByName("layerBar")
         assert lyr is not None, "cannot find layer"
 
         feature = lyr.GetNextFeature()
         ref_geom = ogr.CreateGeometryFromWkt("POINT (2 49)")
-        if (
-            feature.GetFieldAsString("other_name") != "baz"
-            or ogrtest.check_feature_geometry(feature, ref_geom) != 0
-        ):
-            feature.DumpReadable()
-            pytest.fail()
+
+        assert feature.GetFieldAsString("other_name") == "baz"
+        ogrtest.check_feature_geometry(feature, ref_geom)
 
         ds = None
 
@@ -2311,50 +2270,29 @@ def test_ogr_geojson_56():
     j_expected = json.loads(expected)
     assert j_got["bbox"] == j_expected["bbox"]
     assert len(j_expected["features"]) == 5
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][0]["geometry"])
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"])),
     )
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][1]["geometry"])
-            ),
-        )
-        == 0
+
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"])),
     )
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][2]["geometry"])
-            ),
-        )
-        == 0
+
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][2]["geometry"])),
     )
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][3]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][3]["geometry"])
-            ),
-        )
-        == 0
+
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][3]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][3]["geometry"])),
     )
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][4]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][4]["geometry"])
-            ),
-        )
-        == 0
+
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][4]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][4]["geometry"])),
     )
 
     # Test polygon geometry that covers the whole world (#2833)
@@ -2514,23 +2452,14 @@ def test_ogr_geojson_57():
     j_expected = json.loads(expected)
     assert j_got["bbox"] == j_expected["bbox"]
     assert len(j_expected["features"]) == 2
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][0]["geometry"])
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"])),
     )
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][1]["geometry"])
-            ),
-        )
-        == 0
+
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"])),
     )
 
     # Polar case: slice of spherical cap (not intersecting antimeridian, west hemisphere)
@@ -2689,14 +2618,9 @@ def test_ogr_geojson_57():
     j_expected = json.loads(expected)
     assert j_got["bbox"] == j_expected["bbox"]
     assert len(j_expected["features"]) == 1
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][0]["geometry"])
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"])),
     )
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N with polygon and line crossing
@@ -2743,32 +2667,19 @@ def test_ogr_geojson_57():
     j_expected = json.loads(expected)
     assert j_got["bbox"] == j_expected["bbox"]
     assert len(j_expected["features"]) == 3
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][0]["geometry"])
-            ),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][0]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][0]["geometry"])),
     )
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][1]["geometry"])
-            ),
-        )
-        == 0
+
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][1]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][1]["geometry"])),
     )
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])),
-            ogr.CreateGeometryFromJson(
-                json.dumps(j_expected["features"][2]["geometry"])
-            ),
-        )
-        == 0
+
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(json.dumps(j_got["features"][2]["geometry"])),
+        ogr.CreateGeometryFromJson(json.dumps(j_expected["features"][2]["geometry"])),
     )
 
     # Antimeridian case: EPSG:32660: WGS 84 / UTM zone 60N with polygon on west of antimeridian
@@ -3082,7 +2993,7 @@ def test_ogr_geojson_63():
     lyr_ref = ds_ref.GetLayer(0)
     ds = ogr.Open("data/geojson/test_type_promotion.json")
     lyr = ds.GetLayer(0)
-    return ogrtest.compare_layers(lyr, lyr_ref)
+    ogrtest.compare_layers(lyr, lyr_ref)
 
 
 ###############################################################################
@@ -3092,39 +3003,27 @@ def test_ogr_geojson_63():
 def test_ogr_geojson_64():
 
     g = ogr.CreateGeometryFromWkt("POINT ZM(1 2 3 4)")
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(g.ExportToJson()),
-            ogr.CreateGeometryFromWkt("POINT Z(1 2 3)"),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(g.ExportToJson()),
+        "POINT Z(1 2 3)",
     )
 
     g = ogr.CreateGeometryFromWkt("POINT M(1 2 3)")
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(g.ExportToJson()),
-            ogr.CreateGeometryFromWkt("POINT (1 2)"),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(g.ExportToJson()),
+        "POINT (1 2)",
     )
 
     g = ogr.CreateGeometryFromWkt("LINESTRING ZM(1 2 3 4,5 6 7 8)")
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(g.ExportToJson()),
-            ogr.CreateGeometryFromWkt("LINESTRING Z(1 2 3,5 6 7)"),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(g.ExportToJson()),
+        ogr.CreateGeometryFromWkt("LINESTRING Z(1 2 3,5 6 7)"),
     )
 
     g = ogr.CreateGeometryFromWkt("LINESTRING M(1 2 3,4 5 6)")
-    assert (
-        ogrtest.check_feature_geometry(
-            ogr.CreateGeometryFromJson(g.ExportToJson()),
-            ogr.CreateGeometryFromWkt("LINESTRING (1 2,4 5)"),
-        )
-        == 0
+    ogrtest.check_feature_geometry(
+        ogr.CreateGeometryFromJson(g.ExportToJson()),
+        ogr.CreateGeometryFromWkt("LINESTRING (1 2,4 5)"),
     )
 
 
@@ -3544,25 +3443,20 @@ def test_ogr_geojson_clip_geometries_rfc7946():
     ref_geom = ogr.CreateGeometryFromWkt(
         "MULTIPOLYGON (((-180 30,-180 -20,16 -20,16 30,-180 30)),((140 -20,180 -20,180 30,140 30,140 -20)))"
     )
-    if ogrtest.check_feature_geometry(f, ref_geom) != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, ref_geom)
 
     f = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt(
         "MULTIPOLYGON (((180 40,180 70,-16 70,-16 40,180 40)),((-180 70,-180 40,-140 40,-140 70,-180 70)))"
     )
-    if ogrtest.check_feature_geometry(f, ref_geom) != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, ref_geom)
 
     f = lyr.GetNextFeature()
     ref_geom = ogr.CreateGeometryFromWkt(
         "POLYGON ((170 -40,-16 -40,-16 70,170 -70,170 -40))"
     )
-    if ogrtest.check_feature_geometry(f, ref_geom) != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(f, ref_geom)
+
     ds = None
 
     gdal.Unlink(tmpfilename)

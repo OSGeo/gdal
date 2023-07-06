@@ -585,19 +585,20 @@ def test_ogr2ogr_18(ogr2ogr_path):
     ds = ogr.Open("tmp/wrapdateline_dst.shp")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    got_wkt = feat.GetGeometryRef().ExportToWkt()
-    ok = (
-        ogrtest.check_feature_geometry(feat, expected_wkt) == 0
-        or ogrtest.check_feature_geometry(feat, expected_wkt2) == 0
-        or ogrtest.check_feature_geometry(feat, expected_wkt3) == 0
-    )
+
+    try:
+        ogrtest.check_feature_geometry(feat, expected_wkt)
+    except AssertionError:
+        try:
+            ogrtest.check_feature_geometry(feat, expected_wkt2)
+        except AssertionError:
+            ogrtest.check_feature_geometry(feat, expected_wkt3)
+
     feat.Destroy()
     ds.Destroy()
 
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/wrapdateline_src.shp")
     ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/wrapdateline_dst.shp")
-
-    assert ok, got_wkt
 
 
 ###############################################################################
@@ -1057,15 +1058,20 @@ def test_ogr2ogr_28(ogr2ogr_path):
     ds = ogr.Open("tmp/wrapdateline_dst.shp")
     lyr = ds.GetLayer(0)
     feat = lyr.GetNextFeature()
-    ret = ogrtest.check_feature_geometry(feat, expected_geom)
-    feat.Destroy()
-    expected_geom.Destroy()
-    ds.Destroy()
 
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/wrapdateline_src.shp")
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/wrapdateline_dst.shp")
+    try:
+        ogrtest.check_feature_geometry(feat, expected_geom)
+    finally:
+        feat.Destroy()
+        expected_geom.Destroy()
+        ds.Destroy()
 
-    assert ret == 0
+        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+            "tmp/wrapdateline_src.shp"
+        )
+        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+            "tmp/wrapdateline_dst.shp"
+        )
 
 
 ###############################################################################
@@ -1123,23 +1129,20 @@ def test_ogr2ogr_29(ogr2ogr_path):
         ds = ogr.Open("tmp/wrapdateline_dst.shp")
         lyr = ds.GetLayer(0)
         feat = lyr.GetNextFeature()
-        ret = ogrtest.check_feature_geometry(feat, expected_geom)
-        if ret != 0:
-            print("src is : %s" % geom.ExportToWkt())
-            print("got    : %s" % feat.GetGeometryRef().ExportToWkt())
 
-        feat.Destroy()
-        expected_geom.Destroy()
-        ds.Destroy()
+        try:
+            ogrtest.check_feature_geometry(feat, expected_geom)
+        finally:
+            feat.Destroy()
+            expected_geom.Destroy()
+            ds.Destroy()
 
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-            "tmp/wrapdateline_src.shp"
-        )
-        ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
-            "tmp/wrapdateline_dst.shp"
-        )
-
-        assert ret == 0
+            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+                "tmp/wrapdateline_src.shp"
+            )
+            ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(
+                "tmp/wrapdateline_dst.shp"
+            )
 
 
 ###############################################################################

@@ -269,6 +269,9 @@ class CPL_DLL GMLFeatureClass
     char *m_pszSRSName;
     bool m_bSRSNameConsistent;
 
+    bool m_bIsConsistentSingleGeomElemPath = true;
+    std::string m_osSingleGeomElemPath{};
+
   public:
     explicit GMLFeatureClass(const char *pszName = "");
     ~GMLFeatureClass();
@@ -308,6 +311,23 @@ class CPL_DLL GMLFeatureClass
     int AddProperty(GMLPropertyDefn *, int iPos = -1);
     int AddGeometryProperty(GMLGeometryPropertyDefn *);
     void ClearGeometryProperties();
+
+    void SetConsistentSingleGeomElemPath(bool b)
+    {
+        m_bIsConsistentSingleGeomElemPath = b;
+    }
+    bool IsConsistentSingleGeomElemPath() const
+    {
+        return m_bIsConsistentSingleGeomElemPath;
+    }
+    void SetSingleGeomElemPath(const std::string &s)
+    {
+        m_osSingleGeomElemPath = s;
+    }
+    const std::string &GetSingleGeomElemPath() const
+    {
+        return m_osSingleGeomElemPath;
+    }
 
     bool IsSchemaLocked() const
     {

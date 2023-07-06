@@ -54,7 +54,7 @@ def test_gif_1():
 def test_gif_2():
 
     tst = gdaltest.GDALTest("GIF", "gif/bug407.gif", 1, 57921)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -67,7 +67,7 @@ def test_gif_3():
         "GIF", "gif/bug407.gif", 1, 57921, options=["INTERLACING=NO"]
     )
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -102,7 +102,7 @@ def test_gif_5():
 
     tst = gdaltest.GDALTest("GIF", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -114,14 +114,10 @@ def test_gif_6():
     src_ds = gdal.Open("../gcore/data/nodata_byte.tif")
 
     new_ds = gdaltest.gif_drv.CreateCopy("tmp/nodata_byte.gif", src_ds)
-    if new_ds is None:
-        gdaltest.post_reason("Create copy operation failure")
-        return "false"
+    assert new_ds is not None, "Create copy operation failure"
 
     bnd = new_ds.GetRasterBand(1)
-    if bnd.Checksum() != 4440:
-        gdaltest.post_reason("Wrong checksum")
-        return "false"
+    assert bnd.Checksum() == 4440, "Wrong checksum"
 
     bnd = None
     new_ds = None
@@ -130,15 +126,11 @@ def test_gif_6():
     new_ds = gdal.Open("tmp/nodata_byte.gif")
 
     bnd = new_ds.GetRasterBand(1)
-    if bnd.Checksum() != 4440:
-        gdaltest.post_reason("Wrong checksum")
-        return "false"
+    assert bnd.Checksum() == 4440, "Wrong checksum"
 
     # NOTE - mloskot: condition may fail as nodata is a float-point number
     nodata = bnd.GetNoDataValue()
-    if nodata != 0:
-        gdaltest.post_reason("Got unexpected nodata value.")
-        return "false"
+    assert nodata == 0, "Got unexpected nodata value."
 
     bnd = None
     new_ds = None
@@ -213,7 +205,7 @@ def test_gif_10():
 
     tst = gdaltest.GDALTest("GIF", "byte.tif", 1, 4672, options=["INTERLACING=YES"])
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################

@@ -20,10 +20,7 @@ Driver capabilities
 Esri Compact Cache V2
 ---------------------
 
-A reader for `Esri
-Compact
-Cache
-V2 <https://github.com/Esri/raster-tiles-compactcache>`__.
+A reader for `Esri Compact Cache V2 <https://github.com/Esri/raster-tiles-compactcache>`__.
 The cache is stored in multiple files located in a specific folder
 structure. From the point of view of this driver the raster is
 represented by the file named conf.xml, which resides in the root
@@ -35,16 +32,17 @@ Esri Tile Package (.tpkx)
 -------------------------
 
 Starting from GDAL 3.8, the driver supports reading the `Esri
-Tile
-Package
-Specification <https://github.com/Esri/tile-package-spec>`__.
-A tile package is a compressed file with ".tpkx" extension. 
-It has a simplified structure, containing image tiles stored in 
-Compact Cache V2 storage format and tiling scheme and other 
+Tile Package Specification <https://github.com/Esri/tile-package-spec>`__.
+A tile package is a compressed file with ".tpkx" extension.
+It has a simplified structure, containing image tiles stored in
+Compact Cache V2 storage format and tiling scheme and other
 metadata stored in a JSON file.
-Note: Tile packages with ".tpk" extension, use compact storage V1 
-format for cache tiles. The spec for this package type is not 
-available and it is not supported by GDAL.
+
+.. note::
+
+    Tile packages with ".tpk" extension, use compact storage V1
+    format for cache tiles. The spec for this package type is not
+    available and it is not supported by GDAL.
 
 Usage examples
 ______________
@@ -55,16 +53,9 @@ content into a TIF file.
 
 ``gdal_translate -outsize 1024 1024 path/Layers/conf.xml output.tif``
 
-When reading the .tpkx format, the content can either be extracted
-into a directory (for example into path/Layers) and the 
-full path to the root.json file can be specified.
+To convert a .tpkx file to a GeoTIFF:
 
-``gdal_translate -outsize 1024 1024 path/Layers/root.json output.tif``
-
-Alternatively, the /vsizip/ option can be utilized ed to read the 
-contents of the .tpkx file without extracting that into a directory.
-
-``gdal_translate -outsize 1024 1024 "/vsizip/{path to tpkx}/root.json" output.tif``
+``gdal_translate -outsize 1024 1024 "/path/to/my.tpkx output.tif``
 
 Features and Limitations
 ________________________

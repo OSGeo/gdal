@@ -38,4 +38,4 @@ import gdaltest
 def test_vrtlut_1():
 
     tst = gdaltest.GDALTest("VRT", "vrt/byte_lut.vrt", 1, 4655)
-    return tst.testOpen()
+    tst.testOpen()

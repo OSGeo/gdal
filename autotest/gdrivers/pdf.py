@@ -333,9 +333,7 @@ def test_pdf_1(poppler_or_pdfium):
             "POLYGON ((338304.150125828920864 4896673.639421294443309,338304.177293475600891 4933414.799376524984837,382774.271384406310972 4933414.546264361590147,382774.767329963855445 4896674.273581005632877,338304.150125828920864 4896673.639421294443309))"
         )
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        print(neatline)
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom)
 
 
 ###############################################################################
@@ -344,14 +342,12 @@ def test_pdf_1(poppler_or_pdfium):
 
 def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None)
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
         check_srs=True,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -360,14 +356,12 @@ def test_pdf_iso32000(poppler_or_pdfium_or_podofo):
 
 def test_pdf_iso32000_dpi_300(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["DPI=300"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=1,
         check_srs=True,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -379,14 +373,12 @@ def test_pdf_ogcbp(poppler_or_pdfium_or_podofo):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP"]
         )
-        ret = tst.testCreateCopy(
+        tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
-
-    return ret
 
 
 ###############################################################################
@@ -398,14 +390,12 @@ def test_pdf_ogcbp_dpi_300(poppler_or_pdfium):
         tst = gdaltest.GDALTest(
             "PDF", "byte.tif", 1, None, options=["GEO_ENCODING=OGC_BP", "DPI=300"]
         )
-        ret = tst.testCreateCopy(
+        tst.testCreateCopy(
             check_minmax=0,
             check_gt=1,
             check_srs=True,
             check_checksum_not_null=pdf_checksum_available(),
         )
-
-    return ret
 
 
 def test_pdf_ogcbp_lcc(poppler_or_pdfium):
@@ -453,14 +443,12 @@ def test_pdf_ogcbp_lcc(poppler_or_pdfium):
 
 def test_pdf_no_compression(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "byte.tif", 1, None, options=["COMPRESS=NONE"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -609,26 +597,22 @@ def test_pdf_jpeg_compression_rgba(poppler_or_pdfium):
 
 def test_pdf_predictor_2(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "utm.tif", 1, None, options=["PREDICTOR=2"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 def test_pdf_predictor_2_rgb(poppler_or_pdfium):
     tst = gdaltest.GDALTest("PDF", "rgbsmall.tif", 1, None, options=["PREDICTOR=2"])
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -639,28 +623,24 @@ def test_pdf_tiled(poppler_or_pdfium):
     tst = gdaltest.GDALTest(
         "PDF", "utm.tif", 1, None, options=["COMPRESS=DEFLATE", "TILED=YES"]
     )
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 def test_pdf_tiled_128(poppler_or_pdfium):
     tst = gdaltest.GDALTest(
         "PDF", "utm.tif", 1, None, options=["BLOCKXSIZE=128", "BLOCKYSIZE=128"]
     )
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -671,14 +651,12 @@ def test_pdf_tiled_128(poppler_or_pdfium):
 def test_pdf_color_table(poppler_or_pdfium):
 
     tst = gdaltest.GDALTest("PDF", "small_world_pct.tif", 1, None)
-    ret = tst.testCreateCopy(
+    tst.testCreateCopy(
         check_minmax=0,
         check_gt=0,
         check_srs=None,
         check_checksum_not_null=pdf_checksum_available(),
     )
-
-    return ret
 
 
 ###############################################################################
@@ -1023,13 +1001,7 @@ def _pdf_update_gcps(poppler_or_pdfium):
     expected_geom = ogr.Geometry(ogr.wkbPolygon)
     expected_geom.AddGeometry(expected_lr)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1158,10 +1130,7 @@ def test_pdf_set_5_gcps_ogc_bp(poppler_or_pdfium):
         "POLYGON ((2 8,2 10,2 18,16 18,16 8,2 8))"
     )
 
-    if ogrtest.check_feature_geometry(got_geom, expected_geom) != 0:
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom)
 
     gdaltest.pdf_drv.Delete(out_filename)
 
@@ -1221,13 +1190,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     # Test SetMetadataItem()
     ds = gdal.Open(out_filename, gdal.GA_Update)
@@ -1265,13 +1228,7 @@ def _pdf_set_neatline(pdf_backend, geo_encoding, dpi=300):
     got_geom = ogr.CreateGeometryFromWkt(got_neatline)
     expected_geom = ogr.CreateGeometryFromWkt(neatline)
 
-    if (
-        ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
-        != 0
-    ):
-        print("got : %s" % got_neatline)
-        print("expected : %s" % expected_geom.ExportToWkt())
-        pytest.fail("bad neatline")
+    ogrtest.check_feature_geometry(got_geom, expected_geom, max_error=max_error)
 
     gdaltest.pdf_drv.Delete(out_filename)
 

@@ -94,27 +94,21 @@ def test_ogr_gmt_2():
 
     expect = [168, 169, 166, 158, 165]
 
-    gmt_lyr.SetAttributeFilter("eas_id < 170")
-    tr = ogrtest.check_features_against_list(gmt_lyr, "eas_id", expect)
-    gmt_lyr.SetAttributeFilter(None)
+    with ogrtest.attribute_filter(gmt_lyr, "eas_id < 170"):
+        ogrtest.check_features_against_list(gmt_lyr, "eas_id", expect)
 
     for i in range(len(poly_feat)):
         orig_feat = poly_feat[i]
         read_feat = gmt_lyr.GetNextFeature()
 
-        assert (
-            ogrtest.check_feature_geometry(
-                read_feat, orig_feat.GetGeometryRef(), max_error=0.000000001
-            )
-            == 0
+        ogrtest.check_feature_geometry(
+            read_feat, orig_feat.GetGeometryRef(), max_error=0.000000001
         )
 
         for fld in range(3):
             assert orig_feat.GetField(fld) == read_feat.GetField(fld), (
                 "Attribute %d does not match" % fld
             )
-
-    assert tr
 
 
 ###############################################################################
@@ -132,7 +126,7 @@ def test_ogr_gmt_4():
 
     feat = lyr.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(
+    ogrtest.check_feature_geometry(
         feat, "MULTILINESTRING ((175 -45,176 -45),(180.0 -45.3,179.0 -45.4))"
     )
 
@@ -140,7 +134,7 @@ def test_ogr_gmt_4():
 
     feat = lyr.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(
+    ogrtest.check_feature_geometry(
         feat, "MULTILINESTRING ((175.1 -45.0,175.2 -45.1),(180.1 -45.3,180.0 -45.2))"
     )
 
@@ -203,7 +197,7 @@ def test_ogr_gmt_5():
 
     feat = lyr.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(
+    ogrtest.check_feature_geometry(
         feat,
         "MULTIPOLYGON(((0 0,0 10,10 10,0 10,0 0),(3 3,4 4, 3 4,3 3)),((12 0,14 0,12 3,12 0)))",
     )
@@ -212,9 +206,7 @@ def test_ogr_gmt_5():
 
     feat = lyr.GetNextFeature()
 
-    assert not ogrtest.check_feature_geometry(
-        feat, "MULTIPOLYGON(((30 20,40 20,30 30,30 20)))"
-    )
+    ogrtest.check_feature_geometry(feat, "MULTIPOLYGON(((30 20,40 20,30 30,30 20)))")
 
     assert feat.GetField("ID") == 16, "got wrong ID, second feature"
 
@@ -233,9 +225,7 @@ def test_ogr_gmt_coord_only():
         ds = ogr.Open("/vsimem/test.gmt")
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
-        assert not ogrtest.check_feature_geometry(
-            f, "POINT Z (1 2 3)"
-        ), f.GetGeometryRef().ExportToIsoWkt()
+        ogrtest.check_feature_geometry(f, "POINT Z (1 2 3)")
 
 
 ###############################################################################

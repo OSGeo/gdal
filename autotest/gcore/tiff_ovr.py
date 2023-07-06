@@ -128,11 +128,9 @@ def test_tiff_ovr_1(both_endian):
 
     assert err == 0, "BuildOverviews reports an error"
 
-    ret = tiff_ovr_check(ds)
+    tiff_ovr_check(ds)
 
     ds = None
-
-    return ret
 
 
 ###############################################################################
@@ -145,11 +143,9 @@ def test_tiff_ovr_2(both_endian):
 
     assert src_ds is not None, "Failed to open test dataset."
 
-    ret = tiff_ovr_check(src_ds)
+    tiff_ovr_check(src_ds)
 
     src_ds = None
-
-    return ret
 
 
 ###############################################################################
@@ -170,11 +166,9 @@ def test_tiff_ovr_3(both_endian):
     err = src_ds.BuildOverviews(overviewlist=[2, 4])
     assert err == 0, "BuildOverviews reports an error"
 
-    ret = tiff_ovr_check(src_ds)
+    tiff_ovr_check(src_ds)
 
     src_ds = None
-
-    return ret
 
 
 ###############################################################################
@@ -1366,8 +1360,7 @@ def test_tiff_ovr_35(both_endian):
 def test_tiff_ovr_36(both_endian):
 
     with gdaltest.config_option("GDAL_FORCE_CACHING", "YES"):
-        ret = test_tiff_ovr_35(both_endian)
-    return ret
+        test_tiff_ovr_35(both_endian)
 
 
 ###############################################################################

@@ -224,7 +224,11 @@ static int ErrnoFromGetLastError(DWORD dwError = 0)
 int VSIWin32Handle::Close()
 
 {
-    return CloseHandle(hFile) ? 0 : -1;
+    if (!hFile)
+        return 0;
+    int ret = CloseHandle(hFile) ? 0 : -1;
+    hFile = nullptr;
+    return ret;
 }
 
 /************************************************************************/

@@ -771,3 +771,45 @@ def test_create_context_manager(tmp_path):
 
     ds_in = gdal.Open(fname)
     assert ds_in.GetRasterBand(1).Checksum() != 0
+
+
+def test_band_use_after_dataset_close_1():
+    ds = gdal.Open("data/byte.tif")
+    band = ds.GetRasterBand(1)
+    del ds
+
+    # Make sure "del ds" has invalidated "band" so we don't crash here
+    with pytest.raises(Exception):
+        band.Checksum()
+
+
+def test_band_use_after_dataset_close_2():
+    with gdal.Open("data/byte.tif") as ds:
+        band = ds.GetRasterBand(1)
+
+    # Make sure ds.__exit__() has invalidated "band" so we don't crash here
+    with pytest.raises(Exception):
+        band.Checksum()
+
+
+def test_mask_band_use_after_dataset_close():
+    with gdal.Open("data/byte.tif") as ds:
+        m1 = ds.GetRasterBand(1).GetMaskBand()
+        m2 = m1.GetMaskBand()
+
+    # Make sure ds.__exit__() invalidation has propagated to mask bands
+    with pytest.raises(Exception):
+        m1.Checksum()
+
+    with pytest.raises(Exception):
+        m2.Checksum()
+
+
+def test_ovr_band_use_after_dataset_close():
+    with gdal.Open("data/byte_with_ovr.tif") as ds:
+        ovr = ds.GetRasterBand(1).GetOverview(1)
+
+    # Make sure ds.__exit__() invalidation has propagated to overviews
+
+    with pytest.raises(Exception):
+        ovr.Checksum()

@@ -624,6 +624,28 @@ GDALDataset *PhPrfDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    const char *pszPrj = CPLResetExtension(poOpenInfo->pszFilename, "prj");
+    VSILFILE *const fp = VSIFOpenL(pszPrj, "rt");
+    if (fp != nullptr)
+    {
+        const size_t nBufMax = 100000;
+        char *const pszWKT = static_cast<char *>(CPLMalloc(nBufMax));
+        const size_t nBytes = VSIFReadL(pszWKT, 1, nBufMax - 1, fp);
+        VSIFCloseL(fp);
+        if (nBytes > 0 && nBytes < nBufMax - 1)
+        {
+            auto poSRS = new OGRSpatialReference();
+            poSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            pszWKT[nBytes] = '\0';
+            if (poSRS->importFromWkt(pszWKT) == OGRERR_NONE)
+            {
+                poDataset->SetSpatialRef(poSRS);
+            }
+            delete poSRS;
+        }
+        CPLFree(pszWKT);
+    }
+
     return poDataset;
 }
 

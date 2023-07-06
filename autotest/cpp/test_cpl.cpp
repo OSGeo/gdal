@@ -4269,8 +4269,8 @@ TEST_F(test_cpl, config_file_ignore_env_vars)
 {
     char szEnvVar[] = "SOME_ENV_VAR_FOR_TEST_CPL_61=FOO";
     putenv(szEnvVar);
-    ASSERT_TRUE(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) !=
-                nullptr);
+    ASSERT_STREQ(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr),
+                 "FOO");
 
     VSILFILE *fp = VSIFOpenL("/vsimem/.gdal/gdalrc", "wb");
     VSIFPrintfL(fp, "[directives]\n");
@@ -4280,11 +4280,12 @@ TEST_F(test_cpl, config_file_ignore_env_vars)
     VSIFCloseL(fp);
 
     // Load configuration file
-    CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
+    constexpr bool bOverrideEnvVars = false;
+    CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", bOverrideEnvVars);
 
     // Check that reading configuration option works
-    ASSERT_TRUE(
-        EQUAL(CPLGetConfigOption("CONFIG_OPTION_FOR_TEST_CPL_61", ""), "BAR"));
+    ASSERT_STREQ(CPLGetConfigOption("CONFIG_OPTION_FOR_TEST_CPL_61", ""),
+                 "BAR");
 
     // Check that environment variables are not read as configuration options
     ASSERT_TRUE(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) ==
@@ -4301,15 +4302,37 @@ TEST_F(test_cpl, config_file_ignore_env_vars)
     // Reload configuration file
     CPLLoadConfigOptionsFromFile("/vsimem/.gdal/gdalrc", false);
 
-    // Check that environment variables are read as configuration options
-    // and override configuration options
+    // Check that environment variables override configuration options defined
+    // in the file (config file was loaded with bOverrideEnvVars = false)
     ASSERT_TRUE(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", nullptr) !=
                 nullptr);
-    ASSERT_EQ(
-        std::string(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", "")),
-        std::string("FOO"));
+    ASSERT_STREQ(CPLGetConfigOption("SOME_ENV_VAR_FOR_TEST_CPL_61", ""), "FOO");
 
     VSIUnlink("/vsimem/.gdal/gdalrc");
+}
+
+// Test that explicitly defined configuration options override environment variables
+// with the same name
+TEST_F(test_cpl, test_config_overrides_environment)
+{
+    char szEnvVar[] = "TEST_CONFIG_OVERRIDES_ENVIRONMENT=123";
+    putenv(szEnvVar);
+
+    ASSERT_STREQ(
+        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
+        "123");
+
+    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", "456");
+
+    ASSERT_STREQ(
+        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
+        "456");
+
+    CPLSetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr);
+
+    ASSERT_STREQ(
+        CPLGetConfigOption("TEST_CONFIG_OVERRIDES_ENVIRONMENT", nullptr),
+        "123");
 }
 
 // Test CPLWorkerThreadPool recursion

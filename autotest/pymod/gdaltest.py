@@ -51,19 +51,6 @@ import pytest
 
 from osgeo import gdal, osr
 
-cur_name = "default"
-
-success_counter = 0
-failure_counter = 0
-expected_failure_counter = 0
-blow_counter = 0
-skip_counter = 0
-failure_summary = []
-
-reason = None
-start_time = None
-end_time = None
-
 jp2kak_drv = None
 jpeg2000_drv = None
 jp2ecw_drv = None
@@ -76,49 +63,6 @@ jp2ecw_drv_unregistered = False
 jp2mrsid_drv_unregistered = False
 jp2openjpeg_drv_unregistered = False
 jp2lura_drv_unregistered = False
-
-# Process commandline arguments for stuff like --debug, --locale, --config
-
-argv = gdal.GeneralCmdLineProcessor(sys.argv)
-
-###############################################################################
-
-
-def git_status():
-
-    out, _ = runexternal_out_and_err("git status --porcelain .")
-    return out
-
-
-###############################################################################
-
-
-def get_lineno_2framesback(frames):
-    try:
-        import inspect
-
-        frame = inspect.currentframe()
-        while frames > 0:
-            frame = frame.f_back
-            frames = frames - 1
-
-        return frame.f_lineno
-    except ImportError:
-        return -1
-
-
-###############################################################################
-
-
-def post_reason(msg, frames=2):
-    lineno = get_lineno_2framesback(frames)
-    global reason
-
-    if lineno >= 0:
-        reason = "line %d: %s" % (lineno, msg)
-    else:
-        reason = msg
-
 
 ###############################################################################
 
@@ -937,7 +881,7 @@ class GDALTest(object):
             self.driver.Delete(new_filename)
 
     def testSetNoDataValueAndDelete(self):
-        return self.testSetNoDataValue(delete=True)
+        self.testSetNoDataValue(delete=True)
 
     def testSetDescription(self):
         self.testDriver()
@@ -1058,12 +1002,12 @@ def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
     got_srs.ImportFromWkt(got_wkt)
 
     if got_srs.IsSame(expected_srs):
-        return 1
+        return True
     if verbose:
         print("Expected:\n%s" % expected_wkt)
         print("Got:     \n%s" % got_wkt)
-        post_reason("SRS differs from expected.")
-    return 0
+        print("SRS differs from expected.")
+    return False
 
 
 ###############################################################################
@@ -1071,7 +1015,8 @@ def equal_srs_from_wkt(expected_wkt, got_wkt, verbose=True):
 # equivalent or not.
 
 
-def rpcs_equal(md1, md2):
+def check_rpcs_equal(md1, md2):
+    __tracebackhide__ = True
 
     simple_fields = [
         "LINE_OFF",
@@ -1094,47 +1039,23 @@ def rpcs_equal(md1, md2):
 
     for sf in simple_fields:
 
-        try:
-            if not approx_equal(float(md1[sf]), float(md2[sf])):
-                post_reason("%s values differ." % sf)
-                print(md1[sf])
-                print(md2[sf])
-                return 0
-        except Exception:
-            post_reason("%s value missing or corrupt." % sf)
-            print(md1)
-            print(md2)
-            return 0
+        assert sf in md1
+        assert sf in md2
+        assert approx_equal(float(md1[sf]), float(md2[sf]))
 
     for cf in coef_fields:
 
-        try:
-            list1 = md1[cf].split()
-            list2 = md2[cf].split()
+        list1 = md1[cf].split()
+        list2 = md2[cf].split()
 
-        except Exception:
-            post_reason("%s value missing or corrupt." % cf)
-            print(md1[cf])
-            print(md2[cf])
-            return 0
+        assert len(list1) == 20, "%s value list length wrong(1)" % cf
 
-        if len(list1) != 20:
-            post_reason("%s value list length wrong(1)" % cf)
-            print(list1)
-            return 0
-
-        if len(list2) != 20:
-            post_reason("%s value list length wrong(2)" % cf)
-            print(list2)
-            return 0
+        assert len(list2) == 20, "%s value list length wrong(2)" % cf
 
         for i in range(20):
-            if not approx_equal(float(list1[i]), float(list2[i])):
-                post_reason("%s[%d] values differ." % (cf, i))
-                print(list1[i], list2[i])
-                return 0
-
-    return 1
+            assert approx_equal(
+                float(list1[i]), float(list2[i])
+            ), "%s[%d] values differ." % (cf, i)
 
 
 ###############################################################################
@@ -1142,15 +1063,9 @@ def rpcs_equal(md1, md2):
 #
 
 
-def geotransform_equals(gt1, gt2, gt_epsilon):
-    for i in range(6):
-        if gt1[i] != pytest.approx(gt2[i], abs=gt_epsilon):
-            print("")
-            print("gt1 = ", gt1)
-            print("gt2 = ", gt2)
-            post_reason("Geotransform differs.")
-            return False
-    return True
+def check_geotransform(gt1, gt2, gt_epsilon):
+    __tracebackhide__ = True
+    assert gt1 == pytest.approx(gt2, abs=gt_epsilon), "Geotransform differs."
 
 
 ###############################################################################
@@ -1431,7 +1346,7 @@ def reregister_all_jpeg2000_drivers():
 
 def filesystem_supports_sparse_files(path):
 
-    if skip_on_travis():
+    if gdal.GetConfigOption("TRAVIS", None):
         return False
 
     try:
@@ -1440,17 +1355,16 @@ def filesystem_supports_sparse_files(path):
         return False
 
     if err != "":
-        post_reason("Cannot determine if filesystem supports sparse files")
+        print("Cannot determine if filesystem supports sparse files")
         return False
 
-    if ret.find("fat32") != -1:
-        post_reason("File system does not support sparse files")
+    if "fat32" in ret:
+        print("File system does not support sparse files")
         return False
 
-    if (
-        ret.find("wslfs") != -1 or ret.find("0x53464846") != -1
-    ):  # wslfs for older stat versions
-        post_reason(
+    if "wslfs" in ret or "0x53464846" in ret:
+        # wslfs for older stat versions
+        print(
             "Windows Subsystem for Linux FS is at the time of "
             + "writing not known to support sparse files"
         )
@@ -1458,19 +1372,22 @@ def filesystem_supports_sparse_files(path):
 
     # Add here any missing filesystem supporting sparse files
     # See http://en.wikipedia.org/wiki/Comparison_of_file_systems
-    if (
-        ret.find("ext3") == -1
-        and ret.find("ext4") == -1
-        and ret.find("reiser") == -1
-        and ret.find("xfs") == -1
-        and ret.find("jfs") == -1
-        and ret.find("zfs") == -1
-        and ret.find("ntfs") == -1
-    ):
-        post_reason("Filesystem %s is not believed to support sparse files" % ret)
-        return False
+    filesystems_supporting_sparse_files = {
+        "ext3",
+        "ext4",
+        "reiser",
+        "xfs",
+        "jfs",
+        "zfs",
+        "ntfs",
+    }
 
-    return True
+    for fs in filesystems_supporting_sparse_files:
+        if fs in ret:
+            return True
+
+    print("Filesystem %s is not believed to support sparse files" % ret)
+    return False
 
 
 ###############################################################################
@@ -1567,11 +1484,10 @@ def support_symlink():
 
 
 def skip_on_travis():
+    __tracebackhide__ = True
     val = gdal.GetConfigOption("TRAVIS", None)
     if val is not None:
-        post_reason("Test skipped on Travis")
-        return True
-    return False
+        pytest.skip("Test skipped on Travis")
 
 
 ###############################################################################

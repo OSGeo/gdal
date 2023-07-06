@@ -44,10 +44,8 @@ def test_ogr_toposjon_objects_is_array():
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == "a_layer"
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "LINESTRING (100 1000,110 1000,110 1100)")
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "LINESTRING (100 1000,110 1000,110 1100)")
+
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == "TopoJSON"
     assert lyr.GetLayerDefn().GetFieldCount() == 2
@@ -136,17 +134,13 @@ def test_ogr_toposjon_objects_is_dict():
     feat = lyr.GetNextFeature()
     assert feat["id"] == "foo"
     assert feat["name"] == "line"
-    assert (
-        ogrtest.check_feature_geometry(feat, "LINESTRING (100 1000,110 1000,110 1100)")
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "LINESTRING (100 1000,110 1000,110 1100)")
+
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == "TopoJSON"
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "LINESTRING (100 1000,110 1000,110 1100)")
-        == 0
-    )
+    ogrtest.check_feature_geometry(feat, "LINESTRING (100 1000,110 1000,110 1100)")
+
     ds = None
 
 
@@ -156,13 +150,10 @@ def test_ogr_toposjon_no_transform():
     lyr = ds.GetLayer(0)
     assert lyr.GetName() == "a_layer"
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "LINESTRING (0 0,10 0,0 10,10 0,0 0)") == 0
-    )
+    ogrtest.check_feature_geometry(feat, "LINESTRING (0 0,10 0,0 10,10 0,0 0)")
+
     lyr = ds.GetLayer(1)
     assert lyr.GetName() == "TopoJSON"
     feat = lyr.GetNextFeature()
-    assert (
-        ogrtest.check_feature_geometry(feat, "LINESTRING (0 0,10 0,0 10,10 0,0 0)") == 0
-    )
+    ogrtest.check_feature_geometry(feat, "LINESTRING (0 0,10 0,0 10,10 0,0 0)")
     ds = None

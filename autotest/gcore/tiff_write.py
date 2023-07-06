@@ -354,7 +354,7 @@ def test_tiff_write_10():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize_1bit2b.tif", 2, 5918, options=["NBITS=1", "INTERLEAVE=BAND"]
     )
-    return ut.testCreate(out_bands=2)
+    ut.testCreate(out_bands=2)
 
 
 ###############################################################################
@@ -366,7 +366,7 @@ def test_tiff_write_11():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize1bit.tif", 1, 5918, options=["NBITS=1", "COMPRESS=CCITTFAX4"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -430,7 +430,7 @@ def test_tiff_write_14():
 
     tst = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1)
+    tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -580,7 +580,7 @@ def test_tiff_write_17():
 
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open(tmpfilename)
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
     ds = None
 
     # Modify the RPC
@@ -592,7 +592,7 @@ def test_tiff_write_17():
     ds = None
 
     ds = gdal.Open(tmpfilename)
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), modified_rpc)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), modified_rpc)
     ds = None
 
     # Unset the RPC
@@ -614,8 +614,7 @@ def test_tiff_write_17():
 
 def test_tiff_write_17_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
-        ret = test_tiff_write_17()
-    return ret
+        test_tiff_write_17()
 
 
 ###############################################################################
@@ -646,7 +645,7 @@ def test_tiff_write_18():
     # Open the dataset, and confirm the RPC/IMD data is still intact.
     ds = gdal.Open("tmp/tw_18.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     imd_md = ds.GetMetadata("IMD")
     assert (
@@ -720,8 +719,7 @@ def test_tiff_write_imd_with_space_in_values():
 
 def test_tiff_write_18_disable_readdir():
     with gdal.config_option("GDAL_DISABLE_READDIR_ON_OPEN", "TRUE"):
-        ret = test_tiff_write_18()
-    return ret
+        test_tiff_write_18()
 
 
 ###############################################################################
@@ -765,7 +763,7 @@ def test_tiff_write_rpc_txt():
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open("tmp/tiff_write_rpc_txt.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     ds = None
 
@@ -804,7 +802,7 @@ def test_tiff_write_rpc_in_pam():
     # Open the dataset, and confirm the RPC data is still intact.
     ds = gdal.Open("tmp/tiff_write_rpc_in_pam.tif")
 
-    assert gdaltest.rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
+    gdaltest.check_rpcs_equal(ds.GetMetadata("RPC"), rpc_md)
 
     ds = None
 
@@ -1651,8 +1649,7 @@ def test_tiff_write_46():
 def test_tiff_write_47():
 
     with gdaltest.SetCacheMax(0):
-        ret = test_tiff_write_3()
-    return ret
+        test_tiff_write_3()
 
 
 ###############################################################################
@@ -4634,7 +4631,7 @@ def test_tiff_write_114():
 
     tst = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672)
 
-    return tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
+    tst.testCreateCopy(vsimem=1, interrupt_during_copy=True)
 
 
 ###############################################################################
@@ -8173,7 +8170,7 @@ def test_tiff_write_168_ccitfax3():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize1bit.tif", 1, 5918, options=["NBITS=1", "COMPRESS=CCITTFAX3"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8185,7 +8182,7 @@ def test_tiff_write_169_ccitrle():
     ut = gdaltest.GDALTest(
         "GTiff", "oddsize1bit.tif", 1, 5918, options=["NBITS=1", "COMPRESS=CCITTRLE"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8213,7 +8210,7 @@ def test_tiff_write_171_zstd():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=ZSTD", "ZSTD_LEVEL=1"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8230,7 +8227,7 @@ def test_tiff_write_171_zstd_predictor():
         4672,
         options=["COMPRESS=ZSTD", "ZSTD_LEVEL=1", "PREDICTOR=2"],
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8380,7 +8377,7 @@ def test_tiff_write_172_geometadata_tiff_rsid():
 def test_tiff_write_173_lerc():
 
     ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8393,7 +8390,7 @@ def test_tiff_write_174_lerc_deflate():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_DEFLATE"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8406,7 +8403,7 @@ def test_tiff_write_174_lerc_deflate_with_level():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_DEFLATE", "ZLEVEL=1"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8417,7 +8414,7 @@ def test_tiff_write_174_lerc_deflate_with_level():
 def test_tiff_write_175_lerc_zstd():
 
     ut = gdaltest.GDALTest("GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_ZSTD"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8430,7 +8427,7 @@ def test_tiff_write_175_lerc_zstd_with_level():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4672, options=["COMPRESS=LERC_ZSTD", "ZSTD_LEVEL=1"]
     )
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -8443,7 +8440,7 @@ def test_tiff_write_176_lerc_max_z_error():
     ut = gdaltest.GDALTest(
         "GTiff", "byte.tif", 1, 4529, options=["COMPRESS=LERC", "MAX_Z_ERROR=1"]
     )
-    return ut.testCreateCopy(skip_preclose_test=1)
+    ut.testCreateCopy(skip_preclose_test=1)
 
 
 ###############################################################################
@@ -9419,7 +9416,7 @@ def test_tiff_write_jpegxl_byte_single_band(lossless, writeImageStructureMetadat
 def test_tiff_write_jpegxl_byte_three_band():
 
     ut = gdaltest.GDALTest("GTiff", "rgbsmall.tif", 1, 21212, options=["COMPRESS=JXL"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -9430,7 +9427,7 @@ def test_tiff_write_jpegxl_byte_three_band():
 def test_tiff_write_jpegxl_uint16_single_band():
 
     ut = gdaltest.GDALTest("GTiff", "uint16.tif", 1, 4672, options=["COMPRESS=JXL"])
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -10029,7 +10026,7 @@ def test_tiff_write_predictor_2_float64():
 def test_tiff_write_uint64():
 
     ut = gdaltest.GDALTest("GTiff", "gtiff/uint64_full_range.tif", 1, 1)
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -10063,7 +10060,7 @@ def test_tiff_write_uint64_nodata():
 def test_tiff_write_int64():
 
     ut = gdaltest.GDALTest("GTiff", "gtiff/int64_full_range.tif", 1, 65535)
-    return ut.testCreateCopy()
+    ut.testCreateCopy()
 
 
 ###############################################################################
@@ -11229,6 +11226,23 @@ def test_tiff_write_dataset_block_cache_bypass_optim_non_triggered():
     ds = None
 
     gdal.Unlink(tmpfilename)
+
+
+def test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam():
+
+    filename = "/vsimem/test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.GetRasterBand(1).SetScale(0.01)
+    ds = None
+    ds = gdal.Open(filename)
+    # this goes into PAM
+    ds.GetRasterBand(1).SetMetadataItem("foo", "bar")
+    ds = None
+    ds = gdal.Open(filename)
+    assert ds.GetRasterBand(1).GetScale() == 0.01
+    assert ds.GetRasterBand(1).GetMetadataItem("foo") == "bar"
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete(filename)
 
 
 def test_tiff_write_cleanup():

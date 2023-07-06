@@ -124,11 +124,10 @@ def test_gdal_ls_py_4(script_path):
         )
         == -1
     ):
-        if gdaltest.skip_on_travis():
-            # FIXME
-            # Fails on Travis with dates at 1970-01-01 00:00
-            # Looks like a 32/64bit issue with Python bindings of VSIStatL()
-            pytest.skip()
+        gdaltest.skip_on_travis()
+        # FIXME
+        # Fails on Travis with dates at 1970-01-01 00:00
+        # Looks like a 32/64bit issue with Python bindings of VSIStatL()
         pytest.fail(ret_str)
 
 
@@ -191,11 +190,10 @@ def test_gdal_ls_py_6(script_path):
         )
         == -1
     ):
-        if gdaltest.skip_on_travis():
-            # FIXME
-            # Fails on Travis with dates at 1970-01-01 00:00
-            # Looks like a 32/64bit issue with Python bindings of VSIStatL()
-            pytest.skip()
+        gdaltest.skip_on_travis()
+        # FIXME
+        # Fails on Travis with dates at 1970-01-01 00:00
+        # Looks like a 32/64bit issue with Python bindings of VSIStatL()
         pytest.fail(ret_str)
 
 

@@ -503,9 +503,7 @@ def test_ogr_gmlas_geometryproperty():
     f = lyr.GetNextFeature()
     geom_idx = lyr.GetLayerDefn().GetGeomFieldIndex("geometryProperty")
     geom = f.GetGeomFieldRef(geom_idx)
-    if ogrtest.check_feature_geometry(geom, "POINT (3.0 0.0)") != 0:
-        f.DumpReadable()
-        pytest.fail()
+    ogrtest.check_feature_geometry(geom, "POINT (3.0 0.0)")
 
     # Failed reprojection
     with gdaltest.error_handler():

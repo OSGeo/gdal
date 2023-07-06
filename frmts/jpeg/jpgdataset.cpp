@@ -3027,6 +3027,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     poDS->sDInfo.err = jpeg_std_error(&poDS->sJErr);
     poDS->sJErr.error_exit = JPGDataset::ErrorExit;
+    poDS->sJErr.output_message = JPGDataset::OutputMessage;
     poDS->sUserData.p_previous_emit_message = poDS->sJErr.emit_message;
     poDS->sJErr.emit_message = JPGDataset::EmitMessage;
     poDS->sDInfo.client_data = &poDS->sUserData;
@@ -3609,6 +3610,20 @@ void JPGDataset::ErrorExit(j_common_ptr cinfo)
 
     // Return control to the setjmp point.
     longjmp(psUserData->setjmp_buffer, 1);
+}
+
+/************************************************************************/
+/*                          OutputMessage()                             */
+/************************************************************************/
+
+void JPGDataset::OutputMessage(j_common_ptr cinfo)
+{
+    char buffer[JMSG_LENGTH_MAX] = {};
+
+    // Create the message.
+    (*cinfo->err->format_message)(cinfo, buffer);
+
+    CPLDebug("JPEG", "libjpeg: %s", buffer);
 }
 
 /************************************************************************/
@@ -4453,14 +4468,15 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
 
     // What options has the caller selected?
     int nQuality = 75;
-    if (CSLFetchNameValue(papszOptions, "QUALITY") != nullptr)
+    const char *pszQuality = CSLFetchNameValue(papszOptions, "QUALITY");
+    if (pszQuality)
     {
-        nQuality = atoi(CSLFetchNameValue(papszOptions, "QUALITY"));
-        if (nQuality < 10 || nQuality > 100)
+        nQuality = atoi(pszQuality);
+        if (nQuality < 1 || nQuality > 100)
         {
             CPLError(CE_Failure, CPLE_IllegalArg,
-                     "QUALITY=%s is not a legal value in the range 10-100.",
-                     CSLFetchNameValue(papszOptions, "QUALITY"));
+                     "QUALITY=%s is not a legal value in the range 1-100.",
+                     pszQuality);
             return nullptr;
         }
     }
@@ -4509,6 +4525,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
     // Initialize JPG access to the file.
     sCInfo.err = jpeg_std_error(&sJErr);
     sJErr.error_exit = JPGDataset::ErrorExit;
+    sJErr.output_message = JPGDataset::OutputMessage;
     sUserData.p_previous_emit_message = sJErr.emit_message;
     sJErr.emit_message = JPGDataset::EmitMessage;
     sCInfo.client_data = &sUserData;
@@ -4847,7 +4864,7 @@ const char *GDALJPGDriver::GetMetadataItem(const char *pszName,
             "   <Option name='PROGRESSIVE' type='boolean' description='whether "
             "to generate a progressive JPEG' default='NO'/>\n"
             "   <Option name='QUALITY' type='int' description='good=100, "
-            "bad=0, default=75'/>\n"
+            "bad=1, default=75'/>\n"
             "   <Option name='LOSSLESS_COPY' type='string-select' "
             "description='Whether conversion should be lossless' "
             "default='AUTO'>"

@@ -81,8 +81,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
     else:
         expect = ["8901", "8902", "8903", "8904"]
 
-    tr = ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
 
     lyr.ResetReading()
 
@@ -93,8 +92,7 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
         'Instituto Geografico "Augustin Cadazzi" (IGAC); Bogota',
     ]
 
-    tr = ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
 
     lyr.ResetReading()
 
@@ -293,8 +291,7 @@ def test_ogr_csv_9():
 
     expect = ["8901", "8902", "8903", "8904", "7000"]
 
-    tr = ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "PRIME_MERIDIAN_CODE", expect)
 
     lyr.ResetReading()
 
@@ -306,8 +303,7 @@ def test_ogr_csv_9():
         "This is a newline test\n",
     ]
 
-    tr = ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "INFORMATION_SOURCE", expect)
 
 
 ###############################################################################
@@ -374,20 +370,17 @@ def ogr_csv_check_testcsvt(lyr):
     lyr.ResetReading()
 
     expect = [12, None]
-    tr = ogrtest.check_features_against_list(lyr, "INTCOL", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "INTCOL", expect)
 
     lyr.ResetReading()
 
     expect = [5.7, None]
-    tr = ogrtest.check_features_against_list(lyr, "REALCOL", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "REALCOL", expect)
 
     lyr.ResetReading()
 
     expect = ["foo", ""]
-    tr = ogrtest.check_features_against_list(lyr, "STRINGCOL", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "STRINGCOL", expect)
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
@@ -597,20 +590,17 @@ def test_ogr_csv_13():
     lyr = csv_tmpds.GetLayerByName("as_wkt")
 
     expect = ["POINT (1 2)"]
-    tr = ogrtest.check_features_against_list(lyr, "WKT", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "WKT", expect)
 
     lyr.ResetReading()
     expect = ["avalue"]
-    tr = ogrtest.check_features_against_list(lyr, "ADATA", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "ADATA", expect)
 
     # Test as_wkt_no_field
     lyr = csv_tmpds.GetLayerByName("as_wkt_no_field")
 
     expect = ["POINT (1 2)"]
-    tr = ogrtest.check_features_against_list(lyr, "WKT", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "WKT", expect)
 
     # Test AS_XY
     lyr = csv_tmpds.GetLayerByName("as_xy")
@@ -618,18 +608,15 @@ def test_ogr_csv_13():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "X"
 
     expect = [1, None]
-    tr = ogrtest.check_features_against_list(lyr, "X", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "X", expect)
 
     lyr.ResetReading()
     expect = [2, None]
-    tr = ogrtest.check_features_against_list(lyr, "Y", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "Y", expect)
 
     lyr.ResetReading()
     expect = ["avalue", "avalue"]
-    tr = ogrtest.check_features_against_list(lyr, "ADATA", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "ADATA", expect)
 
     # Test AS_YX
     lyr = csv_tmpds.GetLayerByName("as_yx")
@@ -637,13 +624,11 @@ def test_ogr_csv_13():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "Y"
 
     expect = [1]
-    tr = ogrtest.check_features_against_list(lyr, "X", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "X", expect)
 
     lyr.ResetReading()
     expect = [2]
-    tr = ogrtest.check_features_against_list(lyr, "Y", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "Y", expect)
 
     # Test AS_XYZ
     lyr = csv_tmpds.GetLayerByName("as_xyz")
@@ -651,18 +636,15 @@ def test_ogr_csv_13():
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetName() == "X"
 
     expect = [1]
-    tr = ogrtest.check_features_against_list(lyr, "X", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "X", expect)
 
     lyr.ResetReading()
     expect = [2]
-    tr = ogrtest.check_features_against_list(lyr, "Y", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "Y", expect)
 
     lyr.ResetReading()
     expect = [3]
-    tr = ogrtest.check_features_against_list(lyr, "Z", expect)
-    assert tr
+    ogrtest.check_features_against_list(lyr, "Z", expect)
 
 
 ###############################################################################
@@ -721,14 +703,14 @@ def test_ogr_csv_17():
         == "POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))"
     ), "feature 1: expected wkt value"
 
-    assert not ogrtest.check_feature_geometry(
+    ogrtest.check_feature_geometry(
         feat, "POLYGON((6.25 1.25,7.25 1.25,7.25 2.25,6.25 2.25,6.25 1.25))"
     )
 
     feat = csv_lyr.GetNextFeature()
 
     feat = csv_lyr.GetNextFeature()
-    assert not ogrtest.check_feature_geometry(
+    ogrtest.check_feature_geometry(
         feat, "POLYGON((1.001 1.001,3.999 3.999,3.2 1.6,1.001 1.001))"
     )
 
@@ -783,15 +765,15 @@ def test_ogr_csv_19():
 
     lyr.ResetReading()
     with gdaltest.error_handler():
-        assert ogrtest.check_features_against_list(lyr, "INTCOL", [12])
+        ogrtest.check_features_against_list(lyr, "INTCOL", [12])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "REALCOL", [5.7])
+    ogrtest.check_features_against_list(lyr, "REALCOL", [5.7])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "INTCOL2", [None])
+    ogrtest.check_features_against_list(lyr, "INTCOL2", [None])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "REALCOL2", [None])
+    ogrtest.check_features_against_list(lyr, "REALCOL2", [None])
     lyr.ResetReading()
-    assert ogrtest.check_features_against_list(lyr, "STRINGCOL", ["foo"])
+    ogrtest.check_features_against_list(lyr, "STRINGCOL", ["foo"])
 
 
 ###############################################################################
@@ -2876,6 +2858,126 @@ def test_ogr_csv_single_column():
     f = lyr.GetNextFeature()
     assert f["WKT"] == "POINT (1 2)"
     assert f.GetGeometryRef().ExportToIsoWkt() == "POINT (1 2)"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("sep", [",", ";", "\t", "|"])
+def test_ogr_csv_separator_single_occurence_no_space(sep):
+
+    gdal.FileFromMemBuffer("/vsimem/test.csv", f"foo{sep}bar{sep}baz\n1{sep}2{sep}3\n")
+
+    gdal.ErrorReset()
+    ds = ogr.Open("/vsimem/test.csv")
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f["bar"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("sep", [",", ";", "\t", "|"])
+def test_ogr_csv_separator_single_occurence_space(sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv", f"foo {sep} bar {sep} baz\n1{sep}2{sep}3\n"
+    )
+
+    gdal.ErrorReset()
+    ds = ogr.Open("/vsimem/test.csv")
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f["bar"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "sep,other_sep", [(",", ";"), (";", ","), ("\t", ","), ("|", ",")]
+)
+def test_ogr_csv_separator_with_other_sep_in_string(sep, other_sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv",
+        f'foo{sep}"bar{other_sep}{other_sep}{other_sep}{other_sep}rr"{sep}baz\n1{sep}2{sep}3\n',
+    )
+
+    gdal.ErrorReset()
+    ds = ogr.Open("/vsimem/test.csv")
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f[f"bar{other_sep}{other_sep}{other_sep}{other_sep}rr"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "sep,other_sep", [(",", ";"), (";", ","), ("\t", ","), ("|", ",")]
+)
+def test_ogr_csv_separator_with_other_sep(sep, other_sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv", f"foo{sep}bar{other_sep}rr{sep}baz\n1{sep}2{sep}3\n"
+    )
+
+    with gdaltest.error_handler():
+        ds = ogr.Open("/vsimem/test.csv")
+        assert "other candidate separator" in gdal.GetLastErrorMsg()
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f[f"bar{other_sep}rr"] == "2"
+    assert f["baz"] == "3"
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "sep,sep_opt_value,other_sep",
+    [
+        (",", "COMMA", ";"),
+        (";", "SEMICOLON", ","),
+        ("\t", "TAB", ","),
+        ("|", "PIPE", ","),
+        (" ", "SPACE", ","),
+    ],
+)
+def test_ogr_csv_separator_open_option(sep, sep_opt_value, other_sep):
+
+    gdal.FileFromMemBuffer(
+        "/vsimem/test.csv",
+        f"foo{sep}bar{other_sep}{other_sep}{other_sep}{other_sep}rr{sep}baz\n1{sep}2{sep}3\n",
+    )
+
+    gdal.ErrorReset()
+    ds = gdal.OpenEx(
+        "/vsimem/test.csv", gdal.OF_VECTOR, open_options=["SEPARATOR=" + sep_opt_value]
+    )
+    assert gdal.GetLastErrorMsg() == ""
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    gdal.Unlink("/vsimem/test.csv")
+    assert f["foo"] == "1"
+    assert f[f"bar{other_sep}{other_sep}{other_sep}{other_sep}rr"] == "2"
+    assert f["baz"] == "3"
 
 
 ###############################################################################

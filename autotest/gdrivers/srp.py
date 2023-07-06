@@ -103,8 +103,7 @@ def test_srp_3():
 def test_srp_4():
 
     tst = gdaltest.GDALTest("SRP", "srp/USRP_PCB0/TRANSH01.THF", 1, 24576)
-    ret = tst.testOpen()
-    return ret
+    tst.testOpen()
 
 
 ###############################################################################

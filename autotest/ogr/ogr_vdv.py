@@ -365,16 +365,9 @@ def test_ogr_vdv_7():
         ds = ogr.Open(out_filename)
         lyr = ds.GetLayer(0)
         f = lyr.GetNextFeature()
-        if (
-            f[longname] != -1234556789
-            or f[latname] != -234556789
-            or ogrtest.check_feature_geometry(
-                f, "POINT (-123.765774722222 -23.7657747222222)"
-            )
-            != 0
-        ):
-            f.DumpReadable()
-            pytest.fail()
+        assert f[longname] == -1234556789
+        assert f[latname] == -234556789
+        ogrtest.check_feature_geometry(f, "POINT (-123.765774722222 -23.7657747222222)")
         ds = None
 
         gdal.Unlink("/vsimem/vdv/ogr_vdv_7.x10")

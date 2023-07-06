@@ -44,7 +44,7 @@ def test_cals_1():
 
     tst = gdaltest.GDALTest("CALS", "hfa/small1bit.img", 1, 9907)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -56,7 +56,7 @@ def test_cals_2():
     # Has no color table
     tst = gdaltest.GDALTest("CALS", "../../gcore/data/oddsize1bit.tif", 1, 3883)
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################

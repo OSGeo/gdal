@@ -64,7 +64,7 @@ def test_gcps2gt_1():
             ]
         )
     )
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001
     )
 
@@ -85,7 +85,7 @@ def test_gcps2gt_2():
             ]
         )
     )
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gt, (400000.0, 100.0, 0.0, 370000.0025, -5e-05, -9.999975), 0.000001
     )
 
@@ -141,7 +141,7 @@ def test_gcps2gt_5():
             ]
         )
     )
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gt, (400000.0, 100.0, 0.0, 370000.0, 0.0, -10.0), 0.000001
     )
 
@@ -162,7 +162,7 @@ def test_gcps2gt_6():
             ]
         )
     )
-    assert gdaltest.geotransform_equals(gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
+    gdaltest.check_geotransform(gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
 
 ###############################################################################
@@ -181,7 +181,7 @@ def test_gcps2gt_7():
             ]
         )
     )
-    assert gdaltest.geotransform_equals(gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
+    gdaltest.check_geotransform(gt, (0.0, 1.0, 0.0, 0.0, 0.0, 1.0), 0.000001)
 
 
 ###############################################################################
@@ -210,4 +210,4 @@ def test_gcps2gt_8():
         2.6091510188921e-05,
         1.596921026218e-05,
     )
-    assert gdaltest.geotransform_equals(gt, gt_expected, 0.00001)
+    gdaltest.check_geotransform(gt, gt_expected, 0.00001)

@@ -50,12 +50,23 @@ namespace ESRIC
 // ESRI tpkx files use root.json
 static int IdentifyJSON(GDALOpenInfo *poOpenInfo)
 {
-    if (poOpenInfo->eAccess != GA_ReadOnly
-#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
-        || !ENDS_WITH_CI(poOpenInfo->pszFilename, "root.json")
-#endif
-        || poOpenInfo->nHeaderBytes < 512)
+    if (poOpenInfo->eAccess != GA_ReadOnly || poOpenInfo->nHeaderBytes < 512)
         return false;
+
+    // Recognize .tpkx file directly passed
+    if (!STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+        ENDS_WITH_CI(poOpenInfo->pszFilename, ".tpkx") &&
+#endif
+        memcmp(poOpenInfo->pabyHeader, "PK\x03\x04", 4) == 0)
+    {
+        return true;
+    }
+
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+    if (!ENDS_WITH_CI(poOpenInfo->pszFilename, "root.json"))
+        return false;
+#endif
     CPLString header(reinterpret_cast<char *>(poOpenInfo->pabyHeader),
                      poOpenInfo->nHeaderBytes);
     return (CPLString::npos != header.find("tileBundlesPath"));
@@ -474,6 +485,23 @@ GDALDataset *ECDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else if (IdentifyJSON(poOpenInfo))
     {
+        // Recognize .tpkx file directly passed
+        if (!STARTS_WITH(poOpenInfo->pszFilename, "/vsizip/") &&
+#if !defined(FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION)
+            ENDS_WITH_CI(poOpenInfo->pszFilename, ".tpkx") &&
+#endif
+            memcmp(poOpenInfo->pabyHeader, "PK\x03\x04", 4) == 0)
+        {
+            GDALOpenInfo oOpenInfo((std::string("/vsizip/{") +
+                                    poOpenInfo->pszFilename + "}/root.json")
+                                       .c_str(),
+                                   GA_ReadOnly);
+            auto poDS = Open(&oOpenInfo);
+            if (poDS)
+                poDS->SetDescription(poOpenInfo->pszFilename);
+            return poDS;
+        }
+
         CPLJSONDocument oJSONDocument;
         if (!oJSONDocument.Load(poOpenInfo->pszFilename))
         {
@@ -784,6 +812,8 @@ void CPL_DLL GDALRegister_ESRIC()
     poDriver->SetMetadataItem(GDAL_DCAP_RASTER, "YES");
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
     poDriver->SetMetadataItem(GDAL_DMD_LONGNAME, "Esri Compact Cache");
+
+    poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "json tpkx");
 
     poDriver->pfnIdentify = ESRIC::Identify;
     poDriver->pfnOpen = ESRIC::ECDataset::Open;

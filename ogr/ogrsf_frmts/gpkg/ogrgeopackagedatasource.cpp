@@ -1210,7 +1210,11 @@ GDALGeoPackageDataset::GetUnknownExtensionsTableSpecific()
         "'gpkg_rtree_index', 'gpkg_geometry_type_trigger', "
         "'gpkg_srs_id_trigger', "
         "'gpkg_crs_wkt', 'gpkg_crs_wkt_1_1', 'gpkg_schema', "
-        "'gpkg_related_tables', 'related_tables')");
+        "'gpkg_related_tables', 'related_tables'"
+#ifdef HAVE_SPATIALITE
+        ", 'gdal_spatialite_computed_geom_column'"
+#endif
+        ")");
     const int nTableLimit = GetOGRTableLimit();
     if (nTableLimit > 0)
     {
@@ -5074,6 +5078,11 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
         {
             m_nApplicationId = GPKG_APPLICATION_ID;
             m_nUserVersion = GPKG_1_3_VERSION;
+        }
+        else if (EQUAL(pszVersion, "1.4"))
+        {
+            m_nApplicationId = GPKG_APPLICATION_ID;
+            m_nUserVersion = GPKG_1_4_VERSION;
         }
     }
 

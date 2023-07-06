@@ -90,6 +90,11 @@ Dataset Open options
 
       Database name.
 
+-  .. oo:: USER_STORE_KEY
+      :since: 3.8
+
+      Key defined in the SAP HANA user store (hdbuserstore).
+
 -  .. oo:: SCHEMA
 
       Specifies schema used for tables listed in :oo:`TABLES`
@@ -272,6 +277,12 @@ Examples
    ::
 
       ogrinfo -ro HANA:"DSN=MYHANADB;USER=mylogin;PASSWORD=mypassword;SCHEMA=MYSCHEMA"
+
+   or
+
+   ::
+
+      ogrinfo -ro HANA:"DRIVER=HDBODBC;USER_STORE_KEY=mykey;SCHEMA=MYSCHEMA"
 
 -  This example shows how to print summary information about a given layer,
    i.e. 'planet_osm_line', using :ref:`ogrinfo`.

@@ -313,9 +313,7 @@ def test_ogr_mongodbv3_2():
     if not f.Equal(f_ref):
         f.DumpReadable()
         f_ref.DumpReadable()
-        print(ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef(), max_error=0))
-        print(gdaltest.reason)
-        pytest.fail()
+        ogrtest.check_feature_geometry(f, f_ref.GetGeometryRef(), max_error=0)
     f = lyr.GetNextFeature()
     if f is not None:
         f.DumpReadable()

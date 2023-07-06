@@ -54,4 +54,4 @@ def test_genbin_1():
             -82.021003723045894,
         )
 
-        return tst.testOpen(check_prj=sr.ExportToWkt(), check_gt=gt)
+        tst.testOpen(check_prj=sr.ExportToWkt(), check_gt=gt)

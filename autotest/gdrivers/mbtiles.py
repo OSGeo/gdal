@@ -146,8 +146,7 @@ def test_mbtiles_3():
     )
     if locationInfo is None or locationInfo.find("France") == -1:
         print(locationInfo)
-        if gdaltest.skip_on_travis():
-            pytest.skip()
+        gdaltest.skip_on_travis()
         pytest.fail("did not get expected LocationInfo")
 
     locationInfo2 = (
@@ -157,8 +156,7 @@ def test_mbtiles_3():
     )
     if locationInfo2 != locationInfo:
         print(locationInfo2)
-        if gdaltest.skip_on_travis():
-            pytest.skip()
+        gdaltest.skip_on_travis()
         pytest.fail("did not get expected LocationInfo on overview")
 
 

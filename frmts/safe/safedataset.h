@@ -59,6 +59,7 @@ class SAFEDataset final : public GDALPamDataset
     double adfGeoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
     bool bHaveGeoTransform = false;
     char **papszExtraFiles = nullptr;
+    int m_nSubDSNum = 0;
 
   protected:
     virtual int CloseDependentDatasets() override;
@@ -68,8 +69,7 @@ class SAFEDataset final : public GDALPamDataset
     static CPLXMLNode *GetDataObject(CPLXMLNode *, const char *);
     static CPLXMLNode *GetDataObject(CPLXMLNode *, CPLXMLNode *, const char *);
 
-    static void AddSubDataset(SAFEDataset *poDS, int iDSNum,
-                              const CPLString &osName, const CPLString &osDesc);
+    void AddSubDataset(const CPLString &osName, const CPLString &osDesc);
 
   public:
     SAFEDataset();

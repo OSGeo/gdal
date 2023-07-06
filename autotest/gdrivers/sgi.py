@@ -39,7 +39,7 @@ def test_sgi_1():
 
     tst = gdaltest.GDALTest("SGI", "sgi/byte.sgi", 1, 4672)
 
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -50,7 +50,7 @@ def test_sgi_2():
 
     tst = gdaltest.GDALTest("SGI", "byte.tif", 1, 4672)
 
-    return tst.testCreate()
+    tst.testCreate()
 
 
 ###############################################################################
@@ -61,4 +61,4 @@ def test_sgi_3():
 
     tst = gdaltest.GDALTest("SGI", "rgbsmall.tif", 2, 21053)
 
-    return tst.testCreate()
+    tst.testCreate()

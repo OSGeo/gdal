@@ -30,6 +30,7 @@
 ###############################################################################
 
 import os
+import sys
 
 import gdaltest
 import pytest
@@ -275,11 +276,11 @@ def test_gdal_translate_11(gdal_translate_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -300,11 +301,11 @@ def test_gdal_translate_12(gdal_translate_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -800,11 +801,11 @@ def test_gdal_translate_31(gdal_translate_path):
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-6,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -1035,6 +1036,20 @@ def test_gdal_translate_if_option(gdal_translate_path):
         gdal_translate_path + " -if HFA ../gcore/data/byte.tif /vsimem/out.tif"
     )
     assert err is not None
+
+
+###############################################################################
+# Test -scale and -a_offset + -a_scale
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="not working on Windows")
+def test_gdal_translate_scale_and_unscale_incompatible(gdal_translate_path):
+
+    _, err = gdaltest.runexternal_out_and_err(
+        gdal_translate_path
+        + " -a_scale 0.0001 -a_offset 0.1 -unscale ../gcore/data/byte.tif /vsimem/out.tif"
+    )
+    assert "-a_scale/-a_offset are not applied by -unscale" in err
 
 
 ###############################################################################

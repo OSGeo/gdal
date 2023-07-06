@@ -43,7 +43,7 @@
     "description='A description of the layer'/>"                               \
     "</LayerCreationOptionList>"
 
-#define MVT_MBTILES_COMMON_DSCO                                                \
+#define MVT_MBTILES_PMTILES_COMMON_DSCO                                        \
     "  <Option name='MINZOOM' scope='vector' type='int' min='0' max='22' "     \
     "description='Minimum zoom level' default='0'/>"                           \
     "  <Option name='MAXZOOM' scope='vector' type='int' min='0' max='22' "     \
@@ -60,10 +60,6 @@
     "description='Number of units in a tile'/>"                                \
     "  <Option name='BUFFER' scope='vector' type='unsigned int' default='80' " \
     "description='Number of units for geometry buffering'/>"                   \
-    "  <Option name='COMPRESS' scope='vector' type='boolean' description="     \
-    "'Whether to deflate-compress tiles' default='YES'/>"                      \
-    "  <Option name='TEMPORARY_DB' scope='vector' type='string' description='" \
-    "Filename with path for the temporary database'/>"                         \
     "  <Option name='MAX_SIZE' scope='vector' type='unsigned int' min='100' "  \
     "default='500000' "                                                        \
     "description='Maximum size of a tile in bytes'/>"                          \
@@ -71,12 +67,23 @@
     "min='1' default='200000' "                                                \
     "description='Maximum number of features per tile'/>"
 
+#define MVT_MBTILES_COMMON_DSCO                                                \
+    MVT_MBTILES_PMTILES_COMMON_DSCO                                            \
+    "  <Option name='COMPRESS' scope='vector' type='boolean' description="     \
+    "'Whether to GZip-compress tiles' default='YES'/>"                         \
+    "  <Option name='TEMPORARY_DB' scope='vector' type='string' description='" \
+    "Filename with path for the temporary database'/>"
+
 void OGRMVTInitFields(OGRFeatureDefn *poFeatureDefn,
-                      const CPLJSONObject &oFields);
+                      const CPLJSONObject &oFields,
+                      const CPLJSONArray &oAttributesFromTileStats);
 
 OGRwkbGeometryType
 OGRMVTFindGeomTypeFromTileStat(const CPLJSONArray &oTileStatLayers,
                                const char *pszLayerName);
+CPLJSONArray
+OGRMVTFindAttributesFromTileStat(const CPLJSONArray &oTileStatLayers,
+                                 const char *pszLayerName);
 
 OGRFeature *OGRMVTCreateFeatureFrom(OGRFeature *poSrcFeature,
                                     OGRFeatureDefn *poTargetFeatureDefn,

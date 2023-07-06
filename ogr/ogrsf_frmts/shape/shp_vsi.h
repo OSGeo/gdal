@@ -31,6 +31,7 @@
 #ifndef SHP_VSI_H_INCLUDED
 #define SHP_VSI_H_INCLUDED
 
+#include "gdal_shapelib_symbol_rename.h"
 #include "cpl_vsi.h"
 #include "shapefil.h"
 

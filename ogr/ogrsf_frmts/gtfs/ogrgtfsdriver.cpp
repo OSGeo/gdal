@@ -300,7 +300,7 @@ OGRFeature *OGRGTFSLayer::GetNextFeature()
                 if (pszVal && strlen(pszVal) == 8)
                 {
                     const int nYear = (pszVal[0] - ZERO_DIGIT) * 1000 +
-                                      (pszVal[0] - ZERO_DIGIT) * 100 +
+                                      (pszVal[1] - ZERO_DIGIT) * 100 +
                                       (pszVal[2] - ZERO_DIGIT) * 10 +
                                       (pszVal[3] - ZERO_DIGIT);
                     const int nMonth = (pszVal[4] - ZERO_DIGIT) * 10 +

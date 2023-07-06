@@ -74,6 +74,15 @@
 #define HAS_TILEDB_WORKING_UTF8_STRING_FILTER
 #endif
 
+#if TILEDB_VERSION_MAJOR > 2 ||                                                \
+    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 15)
+#define HAS_TILEDB_DIMENSION_LABEL
+#endif
+
+#ifdef HAS_TILEDB_DIMENSION_LABEL
+#define HAS_TILEDB_MULTIDIM
+#endif
+
 typedef enum
 {
     BAND = 0,
@@ -85,7 +94,9 @@ typedef enum
 
 #define DEFAULT_BATCH_SIZE 500000
 
-const CPLString TILEDB_VALUES("TDB_VALUES");
+constexpr const char *TILEDB_VALUES = "TDB_VALUES";
+
+constexpr const char *GDAL_ATTRIBUTE_NAME = "_gdal";
 
 /************************************************************************/
 /* ==================================================================== */
@@ -123,6 +134,13 @@ class TileDBDataset : public GDALPamDataset
                                    char **papszOptions,
                                    GDALProgressFunc pfnProgress,
                                    void *pProgressData);
+#ifdef HAS_TILEDB_MULTIDIM
+    static GDALDataset *OpenMultiDimensional(GDALOpenInfo *);
+    static GDALDataset *
+    CreateMultiDimensional(const char *pszFilename,
+                           CSLConstList papszRootGroupOptions,
+                           CSLConstList papszOptions);
+#endif
 };
 
 /************************************************************************/

@@ -58,7 +58,7 @@ def startup_and_cleanup():
 def test_jp2kak_1():
 
     tst = gdaltest.GDALTest("JP2KAK", "jpeg2000/byte.jp2", 1, 50054)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -68,7 +68,7 @@ def test_jp2kak_1():
 def test_jp2kak_2():
 
     tst = gdaltest.GDALTest("JP2KAK", "jpeg2000/int16.jp2", 1, 4587)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -81,7 +81,7 @@ def test_jp2kak_3():
         "JP2KAK", "jpeg2000/byte.jp2", 1, 50054, options=["QUALITY=100"]
     )
 
-    return tst.testCreateCopy()
+    tst.testCreateCopy()
 
 
 ###############################################################################
@@ -92,7 +92,7 @@ def test_jp2kak_4():
 
     tst = gdaltest.GDALTest("JP2KAK", "rgbsmall.tif", 0, 0, options=["GMLJP2=OFF"])
 
-    return tst.testCreateCopy(check_srs=1, check_gt=1)
+    tst.testCreateCopy(check_srs=1, check_gt=1)
 
 
 ###############################################################################
@@ -103,7 +103,7 @@ def test_jp2kak_5():
 
     tst = gdaltest.GDALTest("JP2KAK", "rgbsmall.tif", 0, 0, options=["GEOJP2=OFF"])
 
-    return tst.testCreateCopy(check_srs=1, check_gt=1)
+    tst.testCreateCopy(check_srs=1, check_gt=1)
 
 
 ###############################################################################
@@ -117,7 +117,7 @@ def test_jp2kak_8():
         "JP2KAK", "jpeg2000/byte.jp2", 1, 50054, options=["QUALITY=100"]
     )
 
-    return tst.testCreateCopy(vsimem=1, new_filename="/vsimem/jp2kak_8.jpc")
+    tst.testCreateCopy(vsimem=1, new_filename="/vsimem/jp2kak_8.jpc")
 
 
 ###############################################################################
@@ -128,7 +128,7 @@ def test_jp2kak_8():
 def test_jp2kak_9():
 
     tst = gdaltest.GDALTest("JP2KAK", "jpeg2000/rgbwcmyk01_YeGeo_kakadu.jp2", 2, 32141)
-    return tst.testOpen()
+    tst.testOpen()
 
 
 ###############################################################################
@@ -363,7 +363,7 @@ def test_jp2kak_lossless_int16(use_stripe_compressor):
     tst = gdaltest.GDALTest("JP2KAK", "int16.tif", 1, 4672, options=["QUALITY=100"])
 
     with gdaltest.config_option("JP2KAK_USE_STRIPE_COMPRESSOR", use_stripe_compressor):
-        return tst.testCreateCopy()
+        tst.testCreateCopy()
 
 
 ###############################################################################
@@ -383,7 +383,7 @@ def test_jp2kak_lossless_uint16(use_stripe_compressor):
     )
 
     with gdaltest.config_option("JP2KAK_USE_STRIPE_COMPRESSOR", use_stripe_compressor):
-        return tst.testCreateCopy(vsimem=1)
+        tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################
@@ -403,7 +403,7 @@ def test_jp2kak_lossless_int32(use_stripe_compressor):
     )
 
     with gdaltest.config_option("JP2KAK_USE_STRIPE_COMPRESSOR", use_stripe_compressor):
-        return tst.testCreateCopy()
+        tst.testCreateCopy()
 
 
 ###############################################################################
@@ -423,7 +423,7 @@ def test_jp2kak_lossless_uint32(use_stripe_compressor):
     )
 
     with gdaltest.config_option("JP2KAK_USE_STRIPE_COMPRESSOR", use_stripe_compressor):
-        return tst.testCreateCopy(vsimem=1)
+        tst.testCreateCopy(vsimem=1)
 
 
 ###############################################################################

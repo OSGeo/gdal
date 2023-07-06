@@ -637,6 +637,16 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 
 %}
 
+%feature("pythonappend") GetMaskBand %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_band_ref(val)
+%}
+
+%feature("pythonappend") GetOverview %{
+    if hasattr(self, '_parent_ds') and self._parent_ds():
+        self._parent_ds()._add_band_ref(val)
+%}
+
 %feature("shadow") ComputeStatistics %{
 def ComputeStatistics(self, *args, **kwargs) -> "CPLErr":
     """ComputeStatistics(Band self, bool approx_ok, callback=None, callback_data=None) -> CPLErr"""
@@ -1054,10 +1064,32 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
         else:
             return self._SetGCPs2(gcps, wkt_or_spatial_ref)
 
+    def _add_band_ref(self, band):
+        if band is None:
+            return
+
+        import weakref
+
+        if not hasattr(self, '_band_references'):
+            self._band_references = weakref.WeakSet()
+
+        self._band_references.add(band)
+        band._parent_ds = weakref.ref(self)
+
+    def _invalidate_bands(self):
+        if hasattr(self, '_band_references'):
+            for band in self._band_references:
+                band.this = None
+
+    def __del__(self):
+        self._invalidate_bands()
+
     def __enter__(self):
         return self
 
     def __exit__(self, *args):
+        self._invalidate_bands()
+
         _gdal.delete_Dataset(self)
         self.this = None
 %}
@@ -1156,6 +1188,10 @@ def ReleaseResultSet(self, sql_lyr):
     if sql_lyr:
         sql_lyr.thisown = None
         sql_lyr.this = None
+%}
+
+%feature("pythonappend") GetRasterBand %{
+    self._add_band_ref(val)
 %}
 
 }
@@ -2796,6 +2832,7 @@ def DEMProcessing(destName, srcDS, processing, **kwargs):
 def NearblackOptions(options=None, format=None,
          creationOptions=None, white = False, colors=None,
          maxNonBlack=None, nearDist=None, setAlpha = False, setMask = False,
+         alg=None,
          callback=None, callback_data=None):
     """Create a NearblackOptions() object that can be passed to gdal.Nearblack()
 
@@ -2819,6 +2856,8 @@ def NearblackOptions(options=None, format=None,
         adds an alpha band to the output file.
     setMask:
         adds a mask band to the output file.
+    alg:
+        "twopasses" (default), or "floodfill"
     callback:
         callback method
     callback_data:
@@ -2853,6 +2892,8 @@ def NearblackOptions(options=None, format=None,
             new_options += ['-setalpha']
         if setMask:
             new_options += ['-setmask']
+        if alg:
+            new_options += ['-alg', alg]
 
     return (GDALNearblackOptions(new_options), callback, callback_data)
 
@@ -3524,8 +3565,11 @@ def config_options(options, thread_local=True):
            with gdal.config_options({"GDAL_NUM_THREADS": "ALL_CPUS"}):
                gdal.Warp("out.tif", "in.tif", dstSRS="EPSG:4326")
     """
-    oldvals = {key: GetConfigOption(key) for key in options}
+    get_config_option = GetThreadLocalConfigOption if thread_local else GetGlobalConfigOption
     set_config_option = SetThreadLocalConfigOption if thread_local else SetConfigOption
+
+    oldvals = {key: get_config_option(key) for key in options}
+
     for key in options:
         set_config_option(key, options[key])
     try:

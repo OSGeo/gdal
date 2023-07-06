@@ -235,9 +235,9 @@ def test_ogrtindex_3(ogrtindex_path):
             if feat.GetField("src_srs") != expected_srss[i]:
                 feat.DumpReadable()
                 pytest.fail(i, src_srs_format)
-            assert (
-                ogrtest.check_feature_geometry(feat, expected_wkts[i]) == 0
-            ), "i=%d, wkt=%s" % (i, feat.GetGeometryRef().ExportToWkt())
+
+                ogrtest.check_feature_geometry(feat, expected_wkts[i], context=f"i={i}")
+
             i = i + 1
             feat = ds.GetLayer(0).GetNextFeature()
         ds = None

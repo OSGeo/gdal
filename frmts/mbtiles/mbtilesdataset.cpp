@@ -260,9 +260,11 @@ class MBTilesVectorLayer final : public OGRLayer
 
   public:
     MBTilesVectorLayer(MBTilesDataset *poDS, const char *pszLayerName,
-                       const CPLJSONObject &oFields, bool bJsonField,
-                       double dfMinX, double dfMinY, double dfMaxX,
-                       double dfMaxY, OGRwkbGeometryType eGeomType,
+                       const CPLJSONObject &oFields,
+                       const CPLJSONArray &oAttributesFromTileStats,
+                       bool bJsonField, double dfMinX, double dfMinY,
+                       double dfMaxX, double dfMaxY,
+                       OGRwkbGeometryType eGeomType,
                        bool bZoomLevelFromSpatialFilter);
     ~MBTilesVectorLayer();
 
@@ -1444,9 +1446,9 @@ OGRLayer *MBTilesDataset::GetLayer(int iLayer)
 
 MBTilesVectorLayer::MBTilesVectorLayer(
     MBTilesDataset *poDS, const char *pszLayerName,
-    const CPLJSONObject &oFields, bool bJsonField, double dfMinX, double dfMinY,
-    double dfMaxX, double dfMaxY, OGRwkbGeometryType eGeomType,
-    bool bZoomLevelFromSpatialFilter)
+    const CPLJSONObject &oFields, const CPLJSONArray &oAttributesFromTileStats,
+    bool bJsonField, double dfMinX, double dfMinY, double dfMaxX, double dfMaxY,
+    OGRwkbGeometryType eGeomType, bool bZoomLevelFromSpatialFilter)
     : m_poDS(poDS), m_poFeatureDefn(new OGRFeatureDefn(pszLayerName)),
       m_bJsonField(bJsonField)
 {
@@ -1465,7 +1467,7 @@ MBTilesVectorLayer::MBTilesVectorLayer(
     }
     else
     {
-        OGRMVTInitFields(m_poFeatureDefn, oFields);
+        OGRMVTInitFields(m_poFeatureDefn, oFields, oAttributesFromTileStats);
     }
 
     m_sExtent.MinX = dfMinX;
@@ -1989,11 +1991,14 @@ void MBTilesDataset::InitVector(double dfMinX, double dfMinY, double dfMaxX,
             }
 
             CPLJSONObject oFields = oVectorLayers[i].GetObj("fields");
-            m_apoLayers.push_back(std::unique_ptr<OGRLayer>(
-                new MBTilesVectorLayer(this, oId.ToString().c_str(), oFields,
-                                       bJsonField, dfMinX, dfMinY, dfMaxX,
-                                       dfMaxY, eGeomType,
-                                       bZoomLevelFromSpatialFilter)));
+            CPLJSONArray oAttributesFromTileStats =
+                OGRMVTFindAttributesFromTileStat(oTileStatLayers,
+                                                 oId.ToString().c_str());
+            m_apoLayers.push_back(
+                std::unique_ptr<OGRLayer>(new MBTilesVectorLayer(
+                    this, oId.ToString().c_str(), oFields,
+                    oAttributesFromTileStats, bJsonField, dfMinX, dfMinY,
+                    dfMaxX, dfMaxY, eGeomType, bZoomLevelFromSpatialFilter)));
         }
     }
 }
@@ -3730,7 +3735,7 @@ void GDALRegister_MBTiles()
         "description='Whether to auto-select the zoom level for vector layers "
         "according to spatial filter extent. Only for display purpose' "
         "default='NO'/>"
-        "  <Option name='JSON_FIELD' scope='vector' type='string' "
+        "  <Option name='JSON_FIELD' scope='vector' type='boolean' "
         "description='For vector layers, "
         "whether to put all attributes as a serialized JSon dictionary'/>"
         "</OpenOptionList>");

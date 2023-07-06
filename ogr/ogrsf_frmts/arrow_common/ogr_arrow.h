@@ -85,6 +85,10 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<Constraint> m_asAttributeFilterConstraints{};
     int m_nUseOptimizedAttributeFilter = -1;
     bool m_bSpatialFilterIntersectsLayerExtent = true;
+    bool m_bUseRecordBatchBaseImplementation = false;
+
+    // Modified by UseRecordBatchBaseImplementation()
+    mutable struct ArrowSchema m_sCachedSchema = {};
 
     bool SkipToNextFeatureDueToAttributeFilter() const;
     void ExploreExprNode(const swq_expr_node *poNode);
@@ -92,6 +96,8 @@ class OGRArrowLayer CPL_NON_FINAL
 
     static struct ArrowArray *
     CreateWKTArrayFromWKBArray(const struct ArrowArray *sourceArray);
+
+    int GetArrowSchemaInternal(struct ArrowSchema *out) const;
 
   protected:
     OGRArrowDataset *m_poArrowDS = nullptr;
@@ -216,6 +222,9 @@ class OGRArrowLayer CPL_NON_FINAL
     void SetSpatialFilter(int iGeomField, OGRGeometry *poGeom) override;
 
     int TestCapability(const char *pszCap) override;
+
+    bool GetArrowStream(struct ArrowArrayStream *out_stream,
+                        CSLConstList papszOptions = nullptr) override;
 
     virtual std::unique_ptr<OGRFieldDomain>
     BuildDomain(const std::string &osDomainName, int iFieldIndex) const = 0;

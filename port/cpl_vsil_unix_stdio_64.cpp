@@ -272,13 +272,18 @@ VSIUnixStdioHandle::VSIUnixStdioHandle(
 int VSIUnixStdioHandle::Close()
 
 {
+    if (!fp)
+        return 0;
+
     VSIDebug1("VSIUnixStdioHandle::Close(%p)", fp);
 
 #ifdef VSI_COUNT_BYTES_READ
     poFS->AddToTotal(nTotalBytesRead);
 #endif
 
-    return fclose(fp);
+    int ret = fclose(fp);
+    fp = nullptr;
+    return ret;
 }
 
 /************************************************************************/

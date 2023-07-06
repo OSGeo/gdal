@@ -51,15 +51,7 @@
 /*                             GDALDriver()                             */
 /************************************************************************/
 
-GDALDriver::GDALDriver()
-    : pfnOpen(nullptr), pfnCreate(nullptr), pfnCreateEx(nullptr),
-      pfnCreateMultiDimensional(nullptr), pfnDelete(nullptr),
-      pfnCreateCopy(nullptr), pDriverData(nullptr), pfnUnloadDriver(nullptr),
-      pfnIdentify(nullptr), pfnIdentifyEx(nullptr), pfnRename(nullptr),
-      pfnCopyFiles(nullptr), pfnOpenWithDriverArg(nullptr),
-      pfnCreateVectorOnly(nullptr), pfnDeleteDataSource(nullptr)
-{
-}
+GDALDriver::GDALDriver() = default;
 
 /************************************************************************/
 /*                            ~GDALDriver()                             */
@@ -1253,6 +1245,102 @@ GDALDatasetH CPL_STDCALL GDALCreateCopy(GDALDriverH hDriver,
 }
 
 /************************************************************************/
+/*                      CanVectorTranslateFrom()                        */
+/************************************************************************/
+
+/** Returns whether the driver can translate from a vector dataset,
+ * using the arguments passed to GDALVectorTranslate() stored in
+ * papszVectorTranslateArguments.
+ *
+ * This is used to determine if the driver supports the VectorTranslateFrom()
+ * operation.
+ *
+ * @param pszDestName Target dataset name
+ * @param poSourceDS  Source dataset
+ * @param papszVectorTranslateArguments Non-positional arguments passed to
+ *                                      GDALVectorTranslate() (may be nullptr)
+ * @param[out] ppapszFailureReasons nullptr, or a pointer to an null-terminated
+ * array of strings to record the reason(s) for the impossibility.
+ * @return true if VectorTranslateFrom() can be called with the same arguments.
+ * @since GDAL 3.8
+ */
+bool GDALDriver::CanVectorTranslateFrom(
+    const char *pszDestName, GDALDataset *poSourceDS,
+    CSLConstList papszVectorTranslateArguments, char ***ppapszFailureReasons)
+
+{
+    if (ppapszFailureReasons)
+    {
+        *ppapszFailureReasons = nullptr;
+    }
+
+    if (!pfnCanVectorTranslateFrom)
+    {
+        if (ppapszFailureReasons)
+        {
+            *ppapszFailureReasons = CSLAddString(
+                nullptr,
+                "CanVectorTranslateFrom() not implemented for this driver");
+        }
+        return false;
+    }
+
+    char **papszFailureReasons = nullptr;
+    bool bRet = pfnCanVectorTranslateFrom(
+        pszDestName, poSourceDS, papszVectorTranslateArguments,
+        ppapszFailureReasons ? ppapszFailureReasons : &papszFailureReasons);
+    if (!ppapszFailureReasons)
+    {
+        for (CSLConstList papszIter = papszFailureReasons;
+             papszIter && *papszIter; ++papszIter)
+        {
+            CPLDebug("GDAL", "%s", *papszIter);
+        }
+        CSLDestroy(papszFailureReasons);
+    }
+    return bRet;
+}
+
+/************************************************************************/
+/*                         VectorTranslateFrom()                        */
+/************************************************************************/
+
+/** Create a copy of a vector dataset, using the arguments passed to
+ * GDALVectorTranslate() stored in papszVectorTranslateArguments.
+ *
+ * This may be implemented by some drivers that can convert from an existing
+ * dataset in an optimized way.
+ *
+ * This is for example used by the PMTiles to convert from MBTiles.
+ *
+ * @param pszDestName Target dataset name
+ * @param poSourceDS  Source dataset
+ * @param papszVectorTranslateArguments Non-positional arguments passed to
+ *                                      GDALVectorTranslate() (may be nullptr)
+ * @param pfnProgress a function to be used to report progress of the copy.
+ * @param pProgressData application data passed into progress function.
+ * @return a new dataset in case of success, or nullptr in case of error.
+ * @since GDAL 3.8
+ */
+GDALDataset *GDALDriver::VectorTranslateFrom(
+    const char *pszDestName, GDALDataset *poSourceDS,
+    CSLConstList papszVectorTranslateArguments, GDALProgressFunc pfnProgress,
+    void *pProgressData)
+
+{
+    if (!pfnVectorTranslateFrom)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "VectorTranslateFrom() not implemented for this driver");
+        return nullptr;
+    }
+
+    return pfnVectorTranslateFrom(pszDestName, poSourceDS,
+                                  papszVectorTranslateArguments, pfnProgress,
+                                  pProgressData);
+}
+
+/************************************************************************/
 /*                            QuietDelete()                             */
 /************************************************************************/
 
@@ -1511,7 +1599,11 @@ CPLErr GDALDriver::DefaultRename(const char *pszNewName, const char *pszOldName)
             eErr = CE_Failure;
             // Try to put the ones we moved back.
             for (--i; i >= 0; i--)
-                CPLMoveFile(papszFileList[i], papszNewFileList[i]);
+            {
+                // Nothing we can do if the moving back doesn't work...
+                CPL_IGNORE_RET_VAL(
+                    CPLMoveFile(papszFileList[i], papszNewFileList[i]));
+            }
             break;
         }
     }

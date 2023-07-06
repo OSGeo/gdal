@@ -460,8 +460,7 @@ def test_ogr_gpkg_7():
     ), "Expected failure of DeleteFeature()."
 
     # Delete the layer
-    if gpkg_ds.DeleteLayer("field_test_layer") != 0:
-        gdaltest.post_reason("got error code from DeleteLayer(field_test_layer)")
+    assert gpkg_ds.DeleteLayer("field_test_layer") == ogr.OGRERR_NONE
 
 
 ###############################################################################
@@ -5583,7 +5582,8 @@ def test_ogr_gpkg_deferred_spi_creation():
 # Test deferred spatial index update
 
 
-def test_ogr_gpkg_deferred_spi_update():
+@pytest.mark.parametrize("gpkg_version", ["1.2", "1.4"])
+def test_ogr_gpkg_deferred_spi_update(gpkg_version):
     def has_spi_triggers(ds):
         sql_lyr = ds.ExecuteSQL(
             "SELECT * FROM sqlite_master WHERE type = 'trigger' AND name LIKE 'rtree_test_geom%'",
@@ -5591,12 +5591,14 @@ def test_ogr_gpkg_deferred_spi_update():
         )
         res = sql_lyr.GetFeatureCount()
         ds.ReleaseResultSet(sql_lyr)
-        return res == 6
+        return res == 6 or res == 7
 
     filename = "/vsimem/test.gpkg"
 
     # Basic test
-    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(
+        filename, options=["VERSION=" + gpkg_version]
+    )
     ds.CreateLayer("test")
     ds = None
     with gdaltest.config_option("OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD", "2"):
@@ -5636,7 +5638,9 @@ def test_ogr_gpkg_deferred_spi_update():
         ds = None
 
     # Check effect of RollbackTransaction()
-    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(
+        filename, options=["VERSION=" + gpkg_version]
+    )
     ds.CreateLayer("test")
     ds = None
     with gdaltest.config_option("OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD", "1"):
@@ -5672,7 +5676,9 @@ def test_ogr_gpkg_deferred_spi_update():
 
     # Check that GetNextFeature() with a spatial filter causes flushing of
     # deferred SPI values
-    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(
+        filename, options=["VERSION=" + gpkg_version]
+    )
     ds.CreateLayer("test")
     ds = None
     with gdaltest.config_option("OGR_GPKG_DEFERRED_SPI_UPDATE_THRESHOLD", "1"):
@@ -6311,6 +6317,70 @@ def test_ogr_gpkg_views():
 
     lyr = ds.GetLayerByName("attr_view")
     assert lyr.GetGeomType() == ogr.wkbNone
+
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+###############################################################################
+# Test a spatial view where the geometry column is computed with a
+# Spatialite function
+
+
+def test_ogr_gpkg_spatial_view_computed_geom_column():
+
+    filename = "/vsimem/test_ogr_gpkg_spatial_view_computed_geom_column.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+
+    if not _has_spatialite_4_3_or_later(ds):
+        ds = None
+        gdal.Unlink(filename)
+        pytest.skip("spatialite missing")
+
+    lyr = ds.CreateLayer("foo", geom_type=ogr.wkbPoint)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+
+    ds.ExecuteSQL(
+        "CREATE VIEW geom_view AS SELECT fid AS my_fid, AsGPB(ST_Multi(geom)) AS my_geom FROM foo"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_contents (table_name, identifier, data_type, srs_id) VALUES ( 'geom_view', 'geom_view', 'features', 4326 )"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_geometry_columns (table_name, column_name, geometry_type_name, srs_id, z, m) values ('geom_view', 'my_geom', 'MULTIPOINT', 4326, 0, 0)"
+    )
+    ds.ExecuteSQL(
+        "INSERT INTO gpkg_extensions VALUES('geom_view', 'my_geom', 'gdal_spatialite_computed_geom_column', 'https://gdal.org/drivers/vector/gpkg_spatialite_computed_column.html', 'read-write')"
+    )
+
+    ds = None
+
+    import sqlite3
+
+    conn = sqlite3.connect(":memory:")
+    can_use_validate = False
+    try:
+        conn.enable_load_extension(True)
+        conn.execute('SELECT load_extension("mod_spatialite")')
+        can_use_validate = True
+    except Exception:
+        pass
+    conn.close()
+    if can_use_validate:
+        assert validate(filename), "validation failed"
+    else:
+        print("Cannot validate() due to mod_spatialite not being loadable")
+
+    ds = ogr.Open(filename)
+
+    lyr = ds.GetLayerByName("geom_view")
+    assert lyr.GetGeomType() == ogr.wkbMultiPoint
+    assert lyr.GetSpatialRef().GetAuthorityCode(None) == "4326"
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().ExportToWkt() == "MULTIPOINT (1 2)"
 
     ds = None
 
@@ -7751,10 +7821,13 @@ def test_ogr_gpkg_immutable():
     reason="sqlite >= 3.24 needed",
 )
 @pytest.mark.parametrize("with_geom", [True, False])
-def test_ogr_gpkg_upsert_without_fid(with_geom):
+@pytest.mark.parametrize("gpkg_version", ["1.2", "1.4"])
+def test_ogr_gpkg_upsert_without_fid(with_geom, gpkg_version):
 
     filename = "/vsimem/test_ogr_gpkg_upsert_without_fid.gpkg"
-    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    ds = gdaltest.gpkg_dr.CreateDataSource(
+        filename, options=["VERSION=" + gpkg_version]
+    )
     lyr = ds.CreateLayer(
         "foo", geom_type=(ogr.wkbUnknown if with_geom else ogr.wkbNone)
     )
@@ -7783,7 +7856,7 @@ def test_ogr_gpkg_upsert_without_fid(with_geom):
     if get_sqlite_version() >= (3, 35, 0):
         assert f.GetFID() == 2
 
-    if with_geom:
+    if with_geom and gpkg_version == "1.2":
         sql_lyr = ds.ExecuteSQL(
             "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
             dialect="DEBUG",
@@ -7792,14 +7865,14 @@ def test_ogr_gpkg_upsert_without_fid(with_geom):
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL(
-            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update6'",
             dialect="DEBUG",
         )
         assert sql_lyr.GetFeatureCount() == 1
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL(
-            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update7'",
             dialect="DEBUG",
         )
         assert sql_lyr.GetFeatureCount() == 1
@@ -7821,7 +7894,7 @@ def test_ogr_gpkg_upsert_without_fid(with_geom):
 
     ds = ogr.Open(filename)
 
-    if with_geom:
+    if with_geom and gpkg_version == "1.2":
         sql_lyr = ds.ExecuteSQL(
             "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1'",
             dialect="DEBUG",
@@ -7830,14 +7903,14 @@ def test_ogr_gpkg_upsert_without_fid(with_geom):
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL(
-            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_null'",
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update6'",
             dialect="DEBUG",
         )
         assert sql_lyr.GetFeatureCount() == 0
         ds.ReleaseResultSet(sql_lyr)
 
         sql_lyr = ds.ExecuteSQL(
-            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update1_old_geom_notnull'",
+            "SELECT 1 FROM sqlite_master WHERE name = 'rtree_foo_geom_update7'",
             dialect="DEBUG",
         )
         assert sql_lyr.GetFeatureCount() == 0
@@ -8724,6 +8797,114 @@ def test_ogr_gpkg_field_alter_field_defn_alternative_names_comment():
         assert lyr.GetLayerDefn().GetFieldDefn(2).GetName() == "third"
         assert lyr.GetLayerDefn().GetFieldDefn(2).GetAlternativeName() == "third alias"
         assert lyr.GetLayerDefn().GetFieldDefn(2).GetComment() == "third comment"
+        ds = None
+
+    finally:
+        gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test RTree triggers
+
+
+@pytest.mark.parametrize("gpkg_version", ["1.2", "1.4"])
+def test_ogr_gpkg_rtree_triggers(gpkg_version):
+    def get_rtree_entry_count(ds):
+        with ds.ExecuteSQL("SELECT * FROM rtree_test_geom") as sql_lyr:
+            return sql_lyr.GetFeatureCount()
+
+    dbname = "/vsimem/test_ogr_gpkg_rtree_triggers.gpkg"
+    try:
+        ds = gdaltest.gpkg_dr.CreateDataSource(
+            dbname, options=["VERSION=" + gpkg_version]
+        )
+        ds.CreateLayer("test", geom_type=ogr.wkbPoint)
+        ds = None
+
+        ds = ogr.Open(dbname, update=1)
+        lyr = ds.GetLayer(0)
+
+        # Create a feature without geometry
+        f = ogr.Feature(lyr.GetLayerDefn())
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
+        # Update the feature with a geometry
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 1
+        lyr.SetSpatialFilterRect(1, 2, 1, 2)
+        assert lyr.GetFeatureCount() == 1
+
+        # Update the feature with another geometry
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 1
+        lyr.SetSpatialFilterRect(3, 4, 3, 4)
+        assert lyr.GetFeatureCount() == 1
+
+        # Upsert the feature with another geometry
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (5 6)"))
+        assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 1
+        lyr.SetSpatialFilterRect(5, 6, 5, 6)
+        assert lyr.GetFeatureCount() == 1
+
+        # Upsert the feature without geometry
+        f.SetGeometry(None)
+        assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
+        # Upsert the feature with another geometry
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (7 8)"))
+        assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 1
+        lyr.SetSpatialFilterRect(7, 8, 7, 8)
+        assert lyr.GetFeatureCount() == 1
+
+        # Upsert the feature with empty geometry
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT EMPTY"))
+        assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
+        # Upsert the feature with a geometry
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (7 8)"))
+        assert lyr.UpsertFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 1
+        lyr.SetSpatialFilterRect(7, 8, 7, 8)
+        assert lyr.GetFeatureCount() == 1
+
+        # Remove the geometry
+        f.SetGeometry(None)
+        assert lyr.SetFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
+        # Delete the geometry
+        assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
+        # Create a feature with a geometry
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (9 10)"))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 1
+        lyr.SetSpatialFilterRect(9, 10, 9, 10)
+        assert lyr.GetFeatureCount() == 1
+
+        # Delete the geometry
+        assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
+        # Create a feature with a empty geometry
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT EMPTY"))
+        assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
+        # Delete the geometry
+        assert lyr.DeleteFeature(f.GetFID()) == ogr.OGRERR_NONE
+        assert get_rtree_entry_count(ds) == 0
+
         ds = None
 
     finally:

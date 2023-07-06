@@ -80,10 +80,13 @@ The attribute field values are separated by commas. At least two fields
 per line must be present. Lines may be terminated by a DOS (CR/LF) or
 Unix (LF) style line terminators. Each record should have the same
 number of fields. The driver will also accept a semicolon, a tabulation,
-a pipe, or a space character as field separator .
-This autodetection will work only if there's no other potential
-separator on the first line of the CSV file. Otherwise it will default
-to comma as separator.
+a pipe, or a space character as field separator.
+Starting with GDAL 3.8, the autodection will select the separator with the
+most occurrences if there are several candidates  on the first line of the CSV
+file (and warn about that). The :oo:`SEPARATOR` open option may also be set to
+define the desired separator.
+Previous versions select comma by default when there are several potential
+separators.
 
 Complex attribute values (such as those containing commas, quotes or
 newlines) may be placed in double quotes. Any occurrences of double
@@ -257,6 +260,13 @@ Open options
 
 The following open options can be specified
 (typically with the -oo name=value parameters of ogrinfo or ogr2ogr):
+
+-  .. oo:: SEPARATOR
+      :choices: AUTO, COMMA, SEMICOLON, TAB, SPACE, PIPE
+      :default: AUTO
+      :since: 3.8
+
+      Field separator character. Default value is AUTO for autodetection.
 
 -  .. oo:: MERGE_SEPARATOR
       :choices: YES, NO

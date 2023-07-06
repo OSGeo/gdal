@@ -514,9 +514,12 @@ Creation Options
       :choices: 1-100
       :default: 75
 
-      Set the JPEG quality when using JPEG
-      compression. A value of 100 is best quality (least compression), and
-      1 is worst quality (best compression).
+      Set the JPEG quality when using JPEG compression.
+
+      Low values result in higher compression ratios, but poorer image quality
+      with strong blocking artifacts.
+      Values above 95 are not meaningfully better quality but can be
+      substantially larger.
 
 -  .. co:: JPEGTABLESMODE
       :choices: 0, 1, 2, 3
@@ -1094,6 +1097,14 @@ the default behavior of the GTiff driver.
       always written. If set to NO, then the transformation will not be written in
       any situation.
 
+-  .. config:: CHECK_DISK_FREE_SPACE
+      :choices: YES, NO
+      :default: YES
+
+      If ``YES``, ensure that enough disk space is available before attempting to
+      write an uncompressed, non-sparse GeoTIFF. Disabling this check is not
+      expected to be necessary, unless GDAL is incorrectly determining the disk
+      space available on the destination file system.
 
 Codec Recommendations
 ---------------------

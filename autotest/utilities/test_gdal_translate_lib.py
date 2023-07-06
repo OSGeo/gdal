@@ -288,11 +288,11 @@ def test_gdal_translate_lib_11():
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -313,11 +313,11 @@ def test_gdal_translate_lib_12():
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
     ds = None
 
@@ -467,11 +467,11 @@ def test_gdal_translate_lib_103():
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
-    assert gdaltest.geotransform_equals(
+    gdaltest.check_geotransform(
         gdal.Open("../gcore/data/byte.tif").GetGeoTransform(),
         ds.GetGeoTransform(),
         1e-9,
-    ), "Bad geotransform"
+    )
 
 
 ###############################################################################
@@ -1037,6 +1037,26 @@ def test_gdal_translate_lib_no_input_band():
         gdal.Translate("", src_ds, format="MEM")
     with pytest.raises(Exception):
         gdal.Translate("", src_ds, format="MEM", outputType=gdal.GDT_Int16)
+
+
+###############################################################################
+# Test -scale and -unscape
+
+
+@gdaltest.enable_exceptions()
+def test_gdal_translate_lib_scale_and_unscale_incompatible():
+
+    with pytest.raises(
+        Exception, match=r"-scale and -unscale cannot be used as the same time"
+    ):
+        gdal.Translate(
+            "",
+            gdal.Open("../gcore/data/byte.tif"),
+            format="MEM",
+            scaleParams=[[0, 255, 0, 65535]],
+            unscale=True,
+            outputType=gdal.GDT_UInt16,
+        )
 
 
 ###############################################################################
