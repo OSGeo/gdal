@@ -445,13 +445,13 @@ int  RegenerateOverview( GDALRasterBandShadow *srcBand,
 #ifdef SWIGJAVA
 %rename (GridCreate) wrapper_GridCreate;
 %apply (int nCount, double *x, double *y, double *z) { (int points, double *x, double *y, double *z) };
-%apply (void* nioBuffer, long nioBufferSize) { (void* nioBuffer, long nioBufferSize) };
+%apply (void* nioBuffer, size_t nioBufferSize) { (void* nioBuffer, size_t nioBufferSize) };
 %inline %{
 int wrapper_GridCreate( char* algorithmOptions,
                         int points, double *x, double *y, double *z,
                         double xMin, double xMax, double yMin, double yMax,
                         int xSize, int ySize, GDALDataType dataType,
-                        void* nioBuffer, long nioBufferSize,
+                        void* nioBuffer, size_t nioBufferSize,
                         GDALProgressFunc callback = NULL,
                         void* callback_data = NULL)
 {
@@ -492,7 +492,7 @@ int wrapper_GridCreate( char* algorithmOptions,
     return eErr;
 }
 %}
-%clear (void *nioBuffer, long nioBufferSize);
+%clear (void *nioBuffer, size_t nioBufferSize);
 #endif
 
 /************************************************************************/

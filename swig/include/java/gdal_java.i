@@ -483,7 +483,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 %}
 
 %{
-    static CPLErr BandBlockReadWrite_Validate(GDALRasterBandH self, void *nioBuffer, long nioBufferSize)
+    static CPLErr BandBlockReadWrite_Validate(GDALRasterBandH self, void *nioBuffer, size_t nioBufferSize)
     {
         int nBlockXSize, nBlockYSize;
         GDALDataType eDataType;
@@ -592,7 +592,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
   CPLErr ReadRaster_Direct( int xoff, int yoff, int xsize, int ysize,
                             int buf_xsize, int buf_ysize,
                             GDALDataType buf_type,
-                            void *nioBuffer, long nioBufferSize,
+                            void *nioBuffer, size_t nioBufferSize,
                             int band_list, int *pband_list,
                             int nPixelSpace = 0, int nLineSpace = 0, int nBandSpace = 0)
 {
