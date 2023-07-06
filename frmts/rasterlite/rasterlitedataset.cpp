@@ -1296,12 +1296,9 @@ GDALDataset *RasterliteDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         else
         {
-            CPLString osOldVal =
-                CPLGetConfigOption("OGR_SQLITE_EXACT_EXTENT", "NO");
-            CPLSetThreadLocalConfigOption("OGR_SQLITE_EXACT_EXTENT", "YES");
+            CPLConfigOptionSetter oSetter("OGR_SQLITE_EXACT_EXTENT", "YES",
+                                          false);
             OGR_L_GetExtent(hMetadataLyr, &oEnvelope, TRUE);
-            CPLSetThreadLocalConfigOption("OGR_SQLITE_EXACT_EXTENT",
-                                          osOldVal.c_str());
             // printf("minx=%.15f miny=%.15f maxx=%.15f maxy=%.15f\n",
             //        oEnvelope.MinX, oEnvelope.MinY, oEnvelope.MaxX,
             //        oEnvelope.MaxY);

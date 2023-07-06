@@ -942,6 +942,31 @@ def test_misc_config_context_mgrs_3():
 
 
 ###############################################################################
+# Test GetConfigOptions
+
+
+def test_misc_get_config_options():
+
+    assert gdal.GetConfigOptions() == {}
+
+    try:
+        gdal.SetConfigOption("A", "1")
+
+        assert gdal.GetConfigOptions() == {"A": "1"}
+
+        gdal.SetConfigOption("B", "2")
+
+        with gdal.config_options({"A": "9", "C": "8"}):
+            assert gdal.GetConfigOptions() == {"A": "9", "B": "2", "C": "8"}
+
+        assert gdal.GetConfigOptions() == {"A": "1", "B": "2"}
+
+    finally:
+        gdal.SetConfigOption("A", None)
+        gdal.SetConfigOption("B", None)
+
+
+###############################################################################
 
 
 def test_misc_cleanup():
