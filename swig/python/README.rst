@@ -49,7 +49,7 @@ pip
 
 GDAL can be installed from the Python Package Index:
 
-  $ pip install GDAL
+  $ pip install gdal
 
 It will be necessary to have libgdal and its development headers installed
 if pip is expected to do a source build because no wheel is available
@@ -57,7 +57,20 @@ for your specified platform and Python version.
 
 To install the version of the Python bindings matching your native GDAL library:
 
-  $ pip install GDAL=="$(gdal-config --version).*"
+  $ pip install gdal=="$(gdal-config --version).*"
+
+To install the Python bindings with the numpy optional (but recommended) dependency,
+use
+
+   $ pip install gdal[numpy]
+
+Note however there are known issues (cf https://github.com/OSGeo/gdal/issues/8024#issuecomment-1623395130)
+when the ``wheel`` package is present and ``numpy`` is not already installed.
+To workaround, you may need to install in 2 steps:
+
+   $ pip install numpy
+   $ pip install gdal[numpy]
+
 
 Building as part of the GDAL library source tree
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
