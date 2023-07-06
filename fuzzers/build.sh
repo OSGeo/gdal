@@ -316,7 +316,7 @@ if [ "$ARCHITECTURE" = "x86_64" ]; then
   export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lnetcdf -lhdf5_serial_hl -lhdf5_serial -lsz -laec -lz"
 fi
 # poppler related
-export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -ljpeg -lfreetype -lfontconfig"
+export EXTRA_LIBS="$EXTRA_LIBS -L$SRC/install/lib -lpoppler -ljpeg -lfreetype -lfontconfig -lpng"
 export EXTRA_LIBS="$EXTRA_LIBS -Wl,-Bdynamic -ldl -lpthread"
 
 # to find sqlite3.h
