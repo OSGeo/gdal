@@ -26,4 +26,6 @@ RUN dnf install -y clang make diffutils ccache cmake \
       glibc-gconv-extra
 
 COPY requirements.txt /tmp/
+# One of the dependencies of jsonschema 4.18 is rpds_py which requires a Rust compiler
+RUN python3 -m pip install -U "jsonschema<4.18"
 RUN python3 -m pip install -U -r /tmp/requirements.txt
