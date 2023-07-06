@@ -805,6 +805,199 @@ public:
 %}
 #endif
 
+
+/************************************************************************/
+/*                        SuggestedWarpOutput()                         */
+/************************************************************************/
+
+%{
+typedef struct
+{
+  int     width;
+  int     height;
+  double  xmin;
+  double  ymin;
+  double  xmax;
+  double  ymax;
+  double  geotransform[6];
+} SuggestedWarpOutputRes;
+%}
+
+%nodefaultctor SuggestedWarpOutputRes;
+struct SuggestedWarpOutputRes
+{
+%immutable;
+  int     width;
+  int     height;
+  double  xmin;
+  double  ymin;
+  double  xmax;
+  double  ymax;
+
+%extend {
+  ~SuggestedWarpOutputRes() {
+    CPLFree(self);
+  }
+
+  %apply (double argout[ANY]) {(double geotransform[6])};
+  void GetGeotransform( double geotransform[6] ) {
+      memcpy(geotransform, self->geotransform, 6 * sizeof(double));
+  }
+
+} /* extend */
+} /* SuggestedWarpOutputRes */ ;
+
+#ifdef SWIGPYTHON
+%newobject SuggestedWarpOutputFromTransformer;
+#else
+%newobject SuggestedWarpOutput;
+#endif
+%inline %{
+#ifdef SWIGPYTHON
+  SuggestedWarpOutputRes* SuggestedWarpOutputFromTransformer(
+                                               GDALDatasetShadow *src,
+                                               GDALTransformerInfoShadow* transformer )
+#else
+  SuggestedWarpOutputRes* SuggestedWarpOutput( GDALDatasetShadow *src,
+                                               GDALTransformerInfoShadow* transformer )
+#endif
+  {
+    SuggestedWarpOutputRes* res = (SuggestedWarpOutputRes*)CPLMalloc(sizeof(SuggestedWarpOutputRes));
+    double extent[4];
+    if( GDALSuggestedWarpOutput2(src, GDALGenImgProjTransform, transformer,
+                                 res->geotransform,&(res->width), &(res->height),
+                                 extent, 0) != CE_None )
+    {
+        CPLFree(res);
+        return NULL;
+    }
+    res->xmin = extent[0];
+    res->ymin = extent[1];
+    res->xmax = extent[2];
+    res->ymax = extent[3];
+    return res;
+  }
+%}
+
+#ifdef SWIGPYTHON
+%newobject SuggestedWarpOutputFromOptions;
+#else
+%newobject SuggestedWarpOutput;
+#endif
+%inline %{
+#ifdef SWIGPYTHON
+  SuggestedWarpOutputRes* SuggestedWarpOutputFromOptions( GDALDatasetShadow *src,
+                                                          char** options )
+#else
+  SuggestedWarpOutputRes* SuggestedWarpOutput( GDALDatasetShadow *src,
+                                               char** options )
+#endif
+  {
+    SuggestedWarpOutputRes* res = (SuggestedWarpOutputRes*)CPLMalloc(sizeof(SuggestedWarpOutputRes));
+    double extent[4];
+    void* pTransformArg = GDALCreateGenImgProjTransformer2( src, NULL, options );
+    if( GDALSuggestedWarpOutput2(src, GDALGenImgProjTransform, pTransformArg,
+                                 res->geotransform,&(res->width), &(res->height),
+                                 extent, 0) != CE_None )
+    {
+        GDALDestroyTransformer(pTransformArg);
+        CPLFree(res);
+        return NULL;
+    }
+    GDALDestroyTransformer(pTransformArg);
+    res->xmin = extent[0];
+    res->ymin = extent[1];
+    res->xmax = extent[2];
+    res->ymax = extent[3];
+    return res;
+  }
+%}
+
+#ifdef SWIGPYTHON
+
+%extend SuggestedWarpOutputRes {
+%pythoncode %{
+geotransform = property(_gdal.SuggestedWarpOutputRes_GetGeotransform, doc=r"""geotransform : double[6]""")
+%}
+}
+
+%pythoncode %{
+
+def SuggestedWarpOutput(*args):
+    """
+    Suggest output dataset size and extent.
+
+    SuggestedWarpOutput(src: Dataset, transformer: Transformer) -> SuggestedWarpOutputRes
+    SuggestedWarpOutput(src: Dataset, options: list[str]) -> SuggestedWarpOutputRes
+
+    This function is used to suggest the size, and georeferenced extents
+    appropriate given the indicated transformation and input file.  It walks
+    the edges of the input file (approximately 20 sample points along each
+    edge) transforming into output coordinates in order to get an extents box.
+
+    Then a resolution is computed with the intent that the length of the
+    distance from the top left corner of the output imagery to the bottom right
+    corner would represent the same number of pixels as in the source image.
+    Note that if the image is somewhat rotated the diagonal taken isn't of the
+    whole output bounding rectangle, but instead of the locations where the
+    top/left and bottom/right corners transform.  The output pixel size is
+    always square.  This is intended to approximately preserve the resolution
+    of the input data in the output file.
+
+    There are 2 forms of this method:
+
+    - one that takes the output of gdal.Transformer(src, dst, options) as the second argument.
+      The src argument of the gdal.Transformer() call should nominally be the src
+      argument passed to this function.
+      The dst argument of the gdal.Transformer() call should nominally be None
+      The third argument of the gdal.Transformer() call should be a list of strings,
+      that are transforming options accepted by
+      :cpp:func:`GDALCreateGenImgProjTransformer2` (e.g ``DST_SRS``)
+
+    - one that takes a list of strings as the second argument. Those strings
+      are the transforming options accepted by
+      :cpp:func:`GDALCreateGenImgProjTransformer2` (e.g ``DST_SRS``)
+
+    Parameters
+    ----------
+
+    src: Dataset
+        Source dataset
+    transformer: Transformer
+        The return value of gdal.Transformer(src, None, options)
+        (exclusive with below options parameter)
+    options: list[str]
+        List of strings that are the transforming options accepted by
+        :cpp:func:`GDALCreateGenImgProjTransformer2` (e.g ``DST_SRS``)
+        (exclusive with above transformer parameter)
+
+    Returns
+    -------
+
+    A SuggestedWarpOutputRes class instance with the following members:
+    - width: number of pixels in width of the output dataset
+    - height: number of pixels in height of the output dataset
+    - xmin: minimum value of the georeferenced X coordinates
+    - ymin: maximum value of the georeferenced Y coordinates
+    - xmax: minimum value of the georeferenced X coordinates
+    - ymax: maximum value of the georeferenced Y coordinates
+    - geotransform: affine geotransformation matrix (6 values)
+
+    Example
+    -------
+
+    >>> ds = gdal.Open("my.tif")
+    ... res = gdal.SuggestedWarpOutput(ds, ["DST_SRS=EPSG:4326"])
+    ... print(res.width, res.height, res.xmin, res.ymin, res.xmax, res.ymax, res.geotransform)
+
+    """
+    if isinstance(args[1], GDALTransformerInfoShadow):
+        return _gdal.SuggestedWarpOutputFromTransformer(*args)
+    else:
+        return _gdal.SuggestedWarpOutputFromOptions(*args)
+%}
+#endif
+
 /************************************************************************/
 /*                        ApplyVerticalShiftGrid()                      */
 /************************************************************************/
