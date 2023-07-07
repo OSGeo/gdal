@@ -2501,7 +2501,7 @@ public:
   }
 
 #ifdef SWIGJAVA
-  // Alias for backward compatibity
+  // Alias for backward compatibility
   OGRFieldType GetFieldType() {
     return OGR_Fld_GetType(self);
   }
