@@ -155,74 +155,74 @@ import java.lang.Integer;
  
   static GDALDimensionH GDALMDArrayGetDim(GDALMDArrayH hMDA, size_t index) {
 
-	size_t dimCount;
-	
-	GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
+    size_t dimCount;
+    
+    GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
 
-	if (index < 0 || index >= dimCount) {
-	
-		// TODO what free routine? or a free typemap?
-		
-		free((void*) dims);
-		// CPLFree((void*) dims);
-		// VSIFree()?
-	
-		return NULL;
-	}
-	else {
-	
-		GDALDimensionH retVal = dims[index];
-		
-		// TODO what free routine? or a free typemap?
-		
-		free((void*) dims);
-		// CPLFree((void*) dims);
-		// VSIFree()?
-	
-		return retVal;
-	}
+    if (index < 0 || index >= dimCount) {
+    
+        // TODO what free routine? or a free typemap?
+        
+        free((void*) dims);
+        // CPLFree((void*) dims);
+        // VSIFree()?
+    
+        return NULL;
+    }
+    else {
+    
+        GDALDimensionH retVal = dims[index];
+        
+        // TODO what free routine? or a free typemap?
+        
+        free((void*) dims);
+        // CPLFree((void*) dims);
+        // VSIFree()?
+    
+        return retVal;
+    }
   }
   
   static bool MDArrayRead(GDALMDArrayH hMDA,
-							const GInt64 *arrayStartIdxes,
-							const GInt64 *counts,
-							const GInt64 *arraySteps,
-							GInt64 *bufferStrides,
-							void* arrayIn,
-							size_t arrayInSize,
-							GDALExtendedDataTypeH extended_data_type,
-							size_t sizeof_ctype)
+                            const GInt64 *arrayStartIdxes,
+                            const GInt64 *counts,
+                            const GInt64 *arraySteps,
+                            GInt64 *bufferStrides,
+                            void* arrayIn,
+                            size_t arrayInSize,
+                            GDALExtendedDataTypeH extended_data_type,
+                            size_t sizeof_ctype)
   {
-		return GDALMDArrayRead(hMDA,
-								(const GUInt64*) arrayStartIdxes,
-								(const size_t*) counts,
-								(GInt64*) arraySteps,
-								(const GPtrDiff_t*) bufferStrides,
-								extended_data_type,
-								arrayIn,
-								arrayIn,
-								arrayInSize * sizeof_ctype);
+        return GDALMDArrayRead(hMDA,
+                                (const GUInt64*) arrayStartIdxes,
+                                (const size_t*) counts,
+                                (GInt64*) arraySteps,
+                                (const GPtrDiff_t*) bufferStrides,
+                                extended_data_type,
+                                arrayIn,
+                                arrayIn,
+                                arrayInSize * sizeof_ctype);
   }
 
   static bool MDArrayWrite(GDALMDArrayH hMDA,
-							const GInt64 *arrayStartIdxes,
-							const GInt64 *counts,
-							const GInt64 *arraySteps,
-							GInt64 *bufferStrides,
-							void* arrayOut,
-							size_t arrayOutSize,
-							GDALExtendedDataTypeH extended_data_type,
-							size_t sizeof_ctype)
+                            const GInt64 *arrayStartIdxes,
+                            const GInt64 *counts,
+                            const GInt64 *arraySteps,
+                            GInt64 *bufferStrides,
+                            void* arrayOut,
+                            size_t arrayOutSize,
+                            GDALExtendedDataTypeH extended_data_type,
+                            size_t sizeof_ctype)
   {
-		return GDALMDArrayWrite(hMDA,
-								(const GUInt64*) arrayStartIdxes,
-								(const size_t*) counts,
-								(GInt64*) arraySteps,
-								(const GPtrDiff_t*) bufferStrides,
-								extended_data_type,
-								arrayOut,
-								arrayOut,
-								arrayOutSize * sizeof_ctype);
+        return GDALMDArrayWrite(hMDA,
+                                (const GUInt64*) arrayStartIdxes,
+                                (const size_t*) counts,
+                                (GInt64*) arraySteps,
+                                (const GPtrDiff_t*) bufferStrides,
+                                extended_data_type,
+                                arrayOut,
+                                arrayOut,
+                                arrayOutSize * sizeof_ctype);
   }
 
 %}
@@ -283,18 +283,18 @@ import java.lang.Integer;
           internal_type_code != GDT_CFloat64)
       return false; 
 
-	// TODO: I don't have to free internal_type, do I?
-	
+    // TODO: I don't have to free internal_type, do I?
+    
     return MDArrayRead(self,
-						sizes1,
-						sizes2,
-						sizes3,
-						sizes4,
-						arrayOut,
-						arrayOutSize,
-						internal_type,  // TODO: pass buffer_type instead?
-						sizeof(ctype)
-						);
+                        sizes1,
+                        sizes2,
+                        sizes3,
+                        sizes4,
+                        arrayOut,
+                        arrayOutSize,
+                        internal_type,  // TODO: pass buffer_type instead?
+                        sizeof(ctype)
+                        );
   }
   %enddef
 
@@ -355,18 +355,18 @@ import java.lang.Integer;
           internal_type_code != GDT_CFloat64)
       return false; 
 
-	// TODO: I don't have to free internal_type, do I?
-	
+    // TODO: I don't have to free internal_type, do I?
+    
     return MDArrayWrite(self,
-						sizes1,
-						sizes2,
-						sizes3,
-						sizes4,
-						arrayIn,
-						arrayInSize,
-						internal_type,  // TODO: pass buffer_type instead?
-						sizeof(ctype)
-						);
+                        sizes1,
+                        sizes2,
+                        sizes3,
+                        sizes4,
+                        arrayIn,
+                        arrayInSize,
+                        internal_type,  // TODO: pass buffer_type instead?
+                        sizeof(ctype)
+                        );
   }
   %enddef
 
@@ -376,7 +376,7 @@ import java.lang.Integer;
   DEFINE_WRITE_MDA_DATA(int64_t, GDT_Int64)
   DEFINE_WRITE_MDA_DATA(float  , GDT_Float32)
   DEFINE_WRITE_MDA_DATA(double , GDT_Float64)
-	
+    
 } /* extend */
 
 %typemap(javacode) GDALMDArrayHS %{
@@ -1259,7 +1259,7 @@ import org.gdal.gdalconst.gdalconstConstants;
                                   GDALExtendedDataTypeH typeH,
                                   char** options)
     {
-		return GDALGroupCreateMDArray(groupH, name, (size_t) nDims, pDims, typeH, options);
+        return GDALGroupCreateMDArray(groupH, name, (size_t) nDims, pDims, typeH, options);
     }
 %}
 
@@ -1268,29 +1268,29 @@ import org.gdal.gdalconst.gdalconstConstants;
 %apply(int nDims, GDALDimensionH *pDims) { (int dims, GDALDimensionH* sizes) };
 %apply(GDALExtendedDataTypeH typeH) { (GDALExtendedDataTypeH type) };
 
-	GDALMDArrayH CreateMDArray(const char* name, int dims, GDALDimensionH* sizes, GDALExtendedDataTypeH type, char** options) {
+    GDALMDArrayH CreateMDArray(const char* name, int dims, GDALDimensionH* sizes, GDALExtendedDataTypeH type, char** options) {
   
-		return CreateMDA(self, name, dims, sizes, type, options);
-	}
+        return CreateMDA(self, name, dims, sizes, type, options);
+    }
   
 } /* extend */
 
 %typemap(javacode) GDALGroupHS %{
 
-	public MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType type) {
+    public MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType type) {
   
-		return CreateMDArray(name, dims, type, new Vector());
-	}
+        return CreateMDArray(name, dims, type, new Vector());
+    }
 
-	public Dimension CreateDimension(String name, String type, String direction, long size) {
+    public Dimension CreateDimension(String name, String type, String direction, long size) {
     
-		return CreateDimension(name, type, direction, BigInteger.valueOf(size));
-	}
+        return CreateDimension(name, type, direction, BigInteger.valueOf(size));
+    }
 
-	public Dimension CreateDimension(String name, String type, String direction, long size, Vector options) {
+    public Dimension CreateDimension(String name, String type, String direction, long size, Vector options) {
     
-		return CreateDimension(name, type, direction, BigInteger.valueOf(size), options);
-	}
+        return CreateDimension(name, type, direction, BigInteger.valueOf(size), options);
+    }
   
 %}
 
@@ -1319,10 +1319,10 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %extend GDALAttributeHS {
 
-	size_t GetDimension(size_t index) {
+    size_t GetDimension(size_t index) {
   
-		return GDALAttributeGetDimSize(self, index);
-	}
+        return GDALAttributeGetDimSize(self, index);
+    }
   
 } /* extend */
 
