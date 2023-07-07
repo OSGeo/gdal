@@ -129,8 +129,6 @@ public class GDALTestMultiDim
             }
         }
         
-        // TODO - am I specifying dimensions in manner reversed from gdal conventions?
-
         long xSize = sizes[0];
         
         long ySize = sizes[1];

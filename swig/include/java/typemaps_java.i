@@ -8,6 +8,12 @@
  *
 */
 
+// TODO: Even tjought I could get rid of some typemaps
+//   related to handles H if instead I passed around
+//   HS* instead. Dims, MDArray, something else.
+//   Once other things are working try to test that
+//   theory out.
+
 %include "arrays_java.i";
 %include "typemaps.i"
 
@@ -1817,13 +1823,13 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GIntBig)
 {
   /* %typemap(in) (GIntBig) */
-  $1 = $input;
+  $1 = (jlong) $input;
 }
 
 %typemap(out) (GIntBig)
 {
   /* %typemap(out) (GIntBig) */
-  $result = $1;
+  $result = (jlong) $1;
 }
 
 %typemap(jni) (GIntBig) "jlong"
@@ -1841,13 +1847,13 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GUIntBig)
 {
   /* %typemap(in) (GUIntBig) */
-  $1 = $input;
+  $1 = (jlong) $input;
 }
 
 %typemap(out) (GUIntBig)
 {
   /* %typemap(out) (GUIntBig) */
-  $result = $1;
+  $result = (jlong) $1;
 }
 
 %typemap(jni) (GUIntBig) "jlong"
@@ -1865,13 +1871,13 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GInt64)
 {
   /* %typemap(in) (GInt64) */
-  $1 = $input;
+  $1 = (jlong) $input;
 }
 
 %typemap(out) (GInt64)
 {
   /* %typemap(out) (GInt64) */
-  $result = $1;
+  $result = (jlong) $1;
 }
 
 %typemap(jni) (GInt64) "jlong"
@@ -1889,13 +1895,13 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GUInt64)
 {
   /* %typemap(in) (GUInt64) */
-  $1 = $input;
+  $1 = (jlong) $input;
 }
 
 %typemap(out) (GUInt64)
 {
   /* %typemap(out) (GUInt64) */
-  $result = $1;
+  $result = (jlong) $1;
 }
 
 %typemap(jni) (GUInt64) "jlong"
@@ -2267,7 +2273,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
   
     GDALDimensionH gDimH = $2[i];
 
-    jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, true);  // TODO: true or false?
+    jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, false);
     
     jenv->SetObjectArrayValue($result, i, dimension);
   }
@@ -2301,7 +2307,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
     const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
 
-    $result = jenv->NewObject(dimClass, ctor, $1, true);  // TODO: true or false?
+    $result = jenv->NewObject(dimClass, ctor, $1, false);
 }
 
 %typemap(jni) (GDALDimensionH) "jobject"
@@ -2346,7 +2352,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
     const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>", "(JZ)V")
 
-    $result = jenv->NewObject(typeClass, ctor, $1, true);  // TODO: true or false?
+    $result = jenv->NewObject(typeClass, ctor, $1, false);
 }
 
 %typemap(jni) (GDALExtendedDataTypeH typeH) "jobject"
@@ -2391,7 +2397,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
     const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>", "(JZ)V");
 
-    $result = jenv->NewObject(mdaClass, ctor, $1, true);  // TODO: true or false?
+    $result = jenv->NewObject(mdaClass, ctor, $1, false);
 }
 
 %typemap(jni) (GDALMDArrayH) "jobject"
@@ -2403,6 +2409,8 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 }
 
 /***** GInt64* typemaps *******************************/
+
+#if 0
 
 %typemap(in) (GInt64* pNums)
 {
@@ -2431,6 +2439,8 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (GInt64* pNums) {
     return $jnicall;
 }
+
+#endif
 
 /***** int, GInt64* typemaps *******************************/
 
@@ -2469,6 +2479,8 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 
 /***** GUIntBig* typemaps *******************************/
 
+#if 0
+
 %typemap(in, numinputs=1) (GUIntBig *pNums)
 {
   /* %typemap(in, numinputs=1) (GUIntBig *pNums) */
@@ -2496,6 +2508,8 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (GUIntBig *pNums) {
     return $jnicall;
 }
+
+#endif
 
 /***** int, GUIntBig* typemaps *******************************/
 

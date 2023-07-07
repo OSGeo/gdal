@@ -159,31 +159,24 @@ import java.lang.Integer;
     
     GDALDimensionH* dims = GDALMDArrayGetDimensions(hMDA, &dimCount);
 
+    GDALDimensionH retVal;
+    
     if (index < 0 || index >= dimCount) {
     
-        // TODO what free routine? or a free typemap?
-        
-        free((void*) dims);
-        // CPLFree((void*) dims);
-        // VSIFree()?
-    
-        return NULL;
+      retVal = NULL;
     }
     else {
     
-        GDALDimensionH retVal = dims[index];
-        
-        // TODO what free routine? or a free typemap?
-        
-        free((void*) dims);
-        // CPLFree((void*) dims);
-        // VSIFree()?
-    
-        return retVal;
+      retVal = dims[index];
     }
+    
+    GDALReleaseDimensions(dims, dimCount);    
+        
+    return retVal;
   }
   
   static bool MDArrayRead(GDALMDArrayH hMDA,
+                            int numDims,
                             const GInt64 *arrayStartIdxes,
                             const GInt64 *counts,
                             const GInt64 *arraySteps,
@@ -193,18 +186,37 @@ import java.lang.Integer;
                             GDALExtendedDataTypeH extended_data_type,
                             size_t sizeof_ctype)
   {
-        return GDALMDArrayRead(hMDA,
+    size_t* localCounts =
+      (size_t*) malloc(sizeof(size_t) * numDims);
+    
+    GPtrDiff_t* localBufferStrides =
+      (GPtrDiff_t*) malloc(sizeof(GPtrDiff_t) * numDims);
+    
+    for (int i = 0; i < numDims; i++) {
+
+      localCounts[i] = (size_t) counts[i];
+
+      localBufferStrides[i] = (GPtrDiff_t) bufferStrides[i];
+    }
+    
+    bool retVal = GDALMDArrayRead(hMDA,
                                 (const GUInt64*) arrayStartIdxes,
-                                (const size_t*) counts,
+                                (const size_t*) localCounts,
                                 (GInt64*) arraySteps,
-                                (const GPtrDiff_t*) bufferStrides,
+                                (const GPtrDiff_t*) localBufferStrides,
                                 extended_data_type,
                                 arrayIn,
                                 arrayIn,
                                 arrayInSize * sizeof_ctype);
+    free(localBufferStrides);
+    
+    free(localCounts);
+    
+    return retVal;
   }
 
   static bool MDArrayWrite(GDALMDArrayH hMDA,
+                            int numDims,
                             const GInt64 *arrayStartIdxes,
                             const GInt64 *counts,
                             const GInt64 *arraySteps,
@@ -214,21 +226,40 @@ import java.lang.Integer;
                             GDALExtendedDataTypeH extended_data_type,
                             size_t sizeof_ctype)
   {
-        return GDALMDArrayWrite(hMDA,
+    size_t* localCounts =
+      (size_t*) malloc(sizeof(size_t) * numDims);
+    
+    GPtrDiff_t* localBufferStrides =
+      (GPtrDiff_t*) malloc(sizeof(GPtrDiff_t) * numDims);
+    
+    for (int i = 0; i < numDims; i++) {
+
+      localCounts[i] = (size_t) counts[i];
+
+      localBufferStrides[i] = (GPtrDiff_t) bufferStrides[i];
+    }
+    
+    bool retVal = GDALMDArrayWrite(hMDA,
                                 (const GUInt64*) arrayStartIdxes,
-                                (const size_t*) counts,
+                                (const size_t*) localCounts,
                                 (GInt64*) arraySteps,
-                                (const GPtrDiff_t*) bufferStrides,
+                                (const GPtrDiff_t*) localBufferStrides,
                                 extended_data_type,
                                 arrayOut,
                                 arrayOut,
                                 arrayOutSize * sizeof_ctype);
+    free(localBufferStrides);
+    
+    free(localCounts);
+    
+    return retVal;
   }
 
 %}
 
 %extend GDALMDArrayHS {
 
+//%newobject GetDimension;
   GDALDimensionH GetDimension(size_t index) {
     return GDALMDArrayGetDim(self, index);
   }
@@ -248,53 +279,67 @@ import java.lang.Integer;
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     
-    int internal_type_code =
+    GDALDataType internal_type_code =
     
       GDALExtendedDataTypeGetNumericDataType(internal_type);
-    
+
+    bool okay_so_far = true;
+        
     if (buffer_type == GDT_Byte &&
           internal_type_code != GDT_Byte)
-      return false;
+      okay_so_far = false; 
        
     if (buffer_type == GDT_Int16 &&
           internal_type_code != GDT_Int16 &&
           internal_type_code != GDT_UInt16 &&
           internal_type_code != GDT_CInt16)
-      return false; 
+      okay_so_far = false; 
     
     if (buffer_type == GDT_Int32 &&
           internal_type_code != GDT_Int32 &&
           internal_type_code != GDT_UInt32 &&
           internal_type_code != GDT_CInt32)
-      return false; 
+      okay_so_far = false; 
     
     if (buffer_type == GDT_Int64 &&
           internal_type_code != GDT_Int64 &&
           internal_type_code != GDT_UInt64)
-      return false; 
+      okay_so_far = false; 
     
     if (buffer_type == GDT_Float32 &&
           internal_type_code != GDT_Float32 &&
           internal_type_code != GDT_CFloat32)
-      return false;
+      okay_so_far = false; 
     
     if (buffer_type == GDT_Float64 &&
           internal_type_code != GDT_Float64 &&
           internal_type_code != GDT_CFloat64)
-      return false; 
+      okay_so_far = false; 
 
-    // TODO: I don't have to free internal_type, do I?
+    if (okay_so_far) {
     
-    return MDArrayRead(self,
+      GDALExtendedDataTypeH extended_buffer_type =
+        GDALExtendedDataTypeCreate(buffer_type);
+      
+      okay_so_far =
+        MDArrayRead(self,
+                        counts,
                         sizes1,
                         sizes2,
                         sizes3,
                         sizes4,
                         arrayOut,
                         arrayOutSize,
-                        internal_type,  // TODO: pass buffer_type instead?
+                        extended_buffer_type,
                         sizeof(ctype)
                         );
+      
+      GDALExtendedDataTypeRelease(extended_buffer_type);
+    }
+                        
+    GDALExtendedDataTypeRelease(internal_type);
+
+    return okay_so_far;
   }
   %enddef
 
@@ -320,53 +365,67 @@ import java.lang.Integer;
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     
-    int internal_type_code =
+    GDALDataType internal_type_code =
     
       GDALExtendedDataTypeGetNumericDataType(internal_type);
     
+    bool okay_so_far = true;
+    
     if (buffer_type == GDT_Byte &&
           internal_type_code != GDT_Byte)
-      return false;
+      okay_so_far = false;
        
     if (buffer_type == GDT_Int16 &&
           internal_type_code != GDT_Int16 &&
           internal_type_code != GDT_UInt16 &&
           internal_type_code != GDT_CInt16)
-      return false; 
+      okay_so_far = false;
     
     if (buffer_type == GDT_Int32 &&
           internal_type_code != GDT_Int32 &&
           internal_type_code != GDT_UInt32 &&
           internal_type_code != GDT_CInt32)
-      return false; 
+      okay_so_far = false;
     
     if (buffer_type == GDT_Int64 &&
           internal_type_code != GDT_Int64 &&
           internal_type_code != GDT_UInt64)
-      return false; 
+      okay_so_far = false;
     
     if (buffer_type == GDT_Float32 &&
           internal_type_code != GDT_Float32 &&
           internal_type_code != GDT_CFloat32)
-      return false;
+      okay_so_far = false;
     
     if (buffer_type == GDT_Float64 &&
           internal_type_code != GDT_Float64 &&
           internal_type_code != GDT_CFloat64)
-      return false; 
+      okay_so_far = false;
 
-    // TODO: I don't have to free internal_type, do I?
+    if (okay_so_far) {
     
-    return MDArrayWrite(self,
+      GDALExtendedDataTypeH extended_buffer_type =
+        GDALExtendedDataTypeCreate(buffer_type);
+      
+      okay_so_far =
+        MDArrayWrite(self,
+                        counts,
                         sizes1,
                         sizes2,
                         sizes3,
                         sizes4,
                         arrayIn,
                         arrayInSize,
-                        internal_type,  // TODO: pass buffer_type instead?
+                        extended_buffer_type,
                         sizeof(ctype)
                         );
+
+      GDALExtendedDataTypeRelease(extended_buffer_type);
+    }
+                        
+    GDALExtendedDataTypeRelease(internal_type);
+
+    return okay_so_far;
   }
   %enddef
 
@@ -1297,20 +1356,24 @@ import org.gdal.gdalconst.gdalconstConstants;
 %{
   static size_t GDALAttributeGetDimSize(GDALAttributeH attH, size_t index) {
 
+    size_t size;
+    
     size_t count;
 
     GUInt64* sizes = GDALAttributeGetDimensionsSize(attH, &count);
 
     if (index < 0 || index >= count) {
     
-      free(sizes);
+      CPLFree(sizes);
     
-      return (size_t) 0;
+      size = (size_t) 0;
     }
-
-    size_t size = (size_t) sizes[index];
+    else {
     
-    free(sizes);
+      size = (size_t) sizes[index];
+    }
+    
+    CPLFree(sizes);
     
     return size;
   }
@@ -1319,7 +1382,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %extend GDALAttributeHS {
 
-    size_t GetDimension(size_t index) {
+    size_t GetDimensionSize(size_t index) {
   
         return GDALAttributeGetDimSize(self, index);
     }
@@ -1329,7 +1392,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 
 %typemap(javacode) GDALAttributeHS %{
 
-       public long[] GetDimensions() {
+       public long[] GetDimensionSizes() {
 
                long size = GetDimensionCount();
         
@@ -1340,7 +1403,7 @@ import org.gdal.gdalconst.gdalconstConstants;
                
                for (int i = 0; i < size; i++) {
 
-                       arr[i] = GetDimension(i);
+                       arr[i] = GetDimensionSize(i);
                }
 
                return arr;
