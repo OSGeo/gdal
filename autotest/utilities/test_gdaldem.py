@@ -100,11 +100,11 @@ def test_gdaldem_hillshade_compressed_tiled_output(gdaldem_path):
 
     ds = None
 
-    stat_uncompressed = os.stat("tmp/n43_hillshade.tif")
     stat_compressed = os.stat("tmp/n43_hillshade_compressed_tiled.tif")
+
     assert (
-        stat_uncompressed.st_size >= stat_compressed.st_size
-    ), "failure: compressed size greater than uncompressed one"
+        stat_compressed.st_size <= 15027
+    ), "compressed size greater than uncompressed one"
 
 
 ###############################################################################
@@ -299,14 +299,22 @@ def test_gdaldem_aspect(gdaldem_path):
 # Test gdaldem color relief
 
 
-def test_gdaldem_color_relief(gdaldem_path):
+@pytest.fixture()
+def n43_colorrelief_tif(gdaldem_path, tmp_path):
+    n43_colorrelief_tif = str(tmp_path / "n43_colorrelief.tif")
 
     gdaltest.runexternal(
         gdaldem_path
-        + " color-relief ../gdrivers/data/n43.tif data/color_file.txt tmp/n43_colorrelief.tif"
+        + f" color-relief ../gdrivers/data/n43.tif data/color_file.txt {n43_colorrelief_tif}"
     )
+
+    yield n43_colorrelief_tif
+
+
+def test_gdaldem_color_relief(gdaldem_path, n43_colorrelief_tif):
+
     src_ds = gdal.Open("../gdrivers/data/n43.tif")
-    ds = gdal.Open("tmp/n43_colorrelief.tif")
+    ds = gdal.Open(n43_colorrelief_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 55009, "Bad checksum"
@@ -363,7 +371,7 @@ def test_gdaldem_color_relief_cpt(gdaldem_path):
 # Test gdaldem color relief to VRT
 
 
-def test_gdaldem_color_relief_vrt(gdaldem_path):
+def test_gdaldem_color_relief_vrt(gdaldem_path, n43_colorrelief_tif):
 
     gdaltest.runexternal(
         gdaldem_path
@@ -373,7 +381,7 @@ def test_gdaldem_color_relief_vrt(gdaldem_path):
     ds = gdal.Open("tmp/n43_colorrelief.vrt")
     assert ds is not None
 
-    ds_ref = gdal.Open("tmp/n43_colorrelief.tif")
+    ds_ref = gdal.Open(n43_colorrelief_tif)
     assert gdaltest.compare_ds(ds, ds_ref, verbose=0) <= 1, "Bad checksum"
     ds_ref = None
 
@@ -393,15 +401,21 @@ def test_gdaldem_color_relief_vrt(gdaldem_path):
 # Test gdaldem color relief from a Float32 dataset
 
 
-def test_gdaldem_color_relief_from_float32(gdaldem_path):
+@pytest.fixture()
+def n43_float32_tif(tmp_path):
 
-    gdal.Translate(
-        "tmp/n43_float32.tif", "../gdrivers/data/n43.tif", options="-ot Float32"
-    )
+    n43_float32_path = str(tmp_path / "n43_float32.tif")
+
+    gdal.Translate(n43_float32_path, "../gdrivers/data/n43.tif", options="-ot Float32")
+
+    yield n43_float32_path
+
+
+def test_gdaldem_color_relief_from_float32(gdaldem_path, n43_float32_tif):
 
     gdaltest.runexternal(
         gdaldem_path
-        + " color-relief tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.tif"
+        + f" color-relief {n43_float32_tif} data/color_file.txt tmp/n43_colorrelief_from_float32.tif"
     )
     ds = gdal.Open("tmp/n43_colorrelief_from_float32.tif")
     assert ds is not None
@@ -443,11 +457,11 @@ def test_gdaldem_color_relief_png(gdaldem_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdaldem_color_relief_from_float32_to_png(gdaldem_path):
+def test_gdaldem_color_relief_from_float32_to_png(gdaldem_path, n43_float32_tif):
 
     gdaltest.runexternal(
         gdaldem_path
-        + " color-relief -of PNG tmp/n43_float32.tif data/color_file.txt tmp/n43_colorrelief_from_float32.png"
+        + f" color-relief -of PNG {n43_float32_tif} data/color_file.txt tmp/n43_colorrelief_from_float32.png"
     )
     ds = gdal.Open("tmp/n43_colorrelief_from_float32.png")
     assert ds is not None
