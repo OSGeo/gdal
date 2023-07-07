@@ -2298,10 +2298,10 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(out) (GDALDimensionH)
 {
     /* %typemap(out) (GDALDimensionH) */
-	const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
-	const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
+    const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
+    const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
 
-	$result = jenv->NewObject(dimClass, ctor, $1, true);  // TODO: true or false?
+    $result = jenv->NewObject(dimClass, ctor, $1, true);  // TODO: true or false?
 }
 
 %typemap(jni) (GDALDimensionH) "jobject"
@@ -2322,17 +2322,17 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GDALExtendedDataTypeH typeH)
 {
     /* %typemap(in) (GDALExtendedDataTypeH typeH) */
-	if ($input)
-	{
-		const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
+    if ($input)
+    {
+        const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
         const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
-	  
+      
         $1 = (GDALExtendedDataTypeH) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
-	}
-	else
-	{
-		$1 = (GDALExtendedDataTypeH) NULL;
-	}
+    }
+    else
+    {
+        $1 = (GDALExtendedDataTypeH) NULL;
+    }
 }
 
 /*
@@ -2343,10 +2343,10 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(out) (GDALExtendedDataTypeH typeH)
 {
     /* %typemap(out) (GDALExtendedDataTypeH typeH) */
-	const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-	const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>", "(JZ)V")
+    const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
+    const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>", "(JZ)V")
 
-	$result = jenv->NewObject(typeClass, ctor, $1, true);  // TODO: true or false?
+    $result = jenv->NewObject(typeClass, ctor, $1, true);  // TODO: true or false?
 }
 
 %typemap(jni) (GDALExtendedDataTypeH typeH) "jobject"
@@ -2367,16 +2367,16 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GDALMDArrayH)
 {
     /* %typemap(in) (GDALMDArrayH) */
-	if ($input) {
-		const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
-		const jmethodID getCPtr =
-				jenv->GetStaticMethodID(mdaClass, "getCPtr",
-										"(Lorg/gdal/gdal/MDArray;)J");
+    if ($input) {
+        const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
+        const jmethodID getCPtr =
+                jenv->GetStaticMethodID(mdaClass, "getCPtr",
+                                        "(Lorg/gdal/gdal/MDArray;)J");
 
-		$1 = (GDALMDArrayH) jenv->CallStaticLongMethod(mdaClass, getCPtr, $input);
+        $1 = (GDALMDArrayH) jenv->CallStaticLongMethod(mdaClass, getCPtr, $input);
     }
     else {
-		$1 = (GDALMDArrayH) NULL;
+        $1 = (GDALMDArrayH) NULL;
     }
 }
 
@@ -2388,10 +2388,10 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(out) (GDALMDArrayH)
 {
     /* %typemap(out) (GDALMDArrayH) */
-	const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
-	const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>", "(JZ)V");
+    const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
+    const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>", "(JZ)V");
 
-	$result = jenv->NewObject(mdaClass, ctor, $1, true);  // TODO: true or false?
+    $result = jenv->NewObject(mdaClass, ctor, $1, true);  // TODO: true or false?
 }
 
 %typemap(jni) (GDALMDArrayH) "jobject"
