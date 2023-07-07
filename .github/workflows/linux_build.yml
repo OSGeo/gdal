@@ -195,8 +195,11 @@ jobs:
 
       - name: Prepare ccache
         run: |
+          mkdir -p ${{ github.workspace }}/.ccache
+          chmod -R a+rw ${{ github.workspace }}/.ccache
           docker run --rm \
-            -v ${{ github.workspace }}/.ccache:/root/.ccache \
+            -v ${{ github.workspace }}/.ccache:/.ccache \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
             ${CONTAINER_NAME_FULL} \
             sh -c "ccache -M 1G && ccache -sp && ccache -z"
 
@@ -214,8 +217,9 @@ jobs:
           docker run --name gdal-build \
             --rm \
             -e "GDAL_SOURCE_DIR=$(pwd)" \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
             -v $(pwd):$(pwd):rw \
-            -v ${{ github.workspace }}/.ccache:/root/.ccache:rw \
+            -v ${{ github.workspace }}/.ccache:/.ccache:rw \
             --workdir $(pwd)/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \
             ${BUILD_CMD}
@@ -223,7 +227,8 @@ jobs:
       - name: Summarize ccache
         run: |
           docker run --rm \
-            -v ${{ github.workspace }}/.ccache:/root/.ccache \
+            -v ${{ github.workspace }}/.ccache:/.ccache \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
             ${CONTAINER_NAME_FULL} \
             ccache -s
 
@@ -250,15 +255,20 @@ jobs:
             TEST_CMD="ctest -V -j $(nproc)"
           fi
 
+          # For cache
+          mkdir .gdal
+
           docker run \
             -e CI \
             -e GITHUB_WORKFLOW \
             -e TRAVIS \
             -e TRAVIS_BRANCH \
             -e "GDAL_SOURCE_DIR=$(pwd)" \
+            -u $(id -u ${USER}):$(id -g ${USER}) \
             --security-opt seccomp=unconfined \
             --add-host=host.docker.internal:host-gateway \
             --rm \
+            -v $(pwd)/.gdal:/.gdal \
             -v $(pwd):$(pwd) \
             --workdir $(pwd)/build-${{ matrix.id }} \
             ${CONTAINER_NAME_FULL} \
