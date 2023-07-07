@@ -1164,7 +1164,7 @@
 
   for (i = 0; i < len; i++) {
       temp_string = jenv->NewStringUTF(*stringarray++);
-      jenv->SetObjectArrayElement($result, i, temp_string);
+      jenv->SetObjectArrayElement(jresult, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
   }
 }
@@ -1195,7 +1195,7 @@
 
   for (i = 0; i < len; i++) {
       temp_string = jenv->NewStringUTF(*stringarray++);
-      jenv->SetObjectArrayElement($result, i, temp_string);
+      jenv->SetObjectArrayElement(jresult, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
   }
 
@@ -1472,12 +1472,12 @@
     const jclass clazz = jenv->FindClass("java/lang/String");
 
     while ($1[len]) len++;
-    $result = jenv->NewObjectArray(len, clazz, NULL);
+    jresult = jenv->NewObjectArray(len, clazz, NULL);
     /* exception checking omitted */
 
     for (i = 0; i < len; i++) {
       temp_string = jenv->NewStringUTF(*result++);
-      jenv->SetObjectArrayElement($result, i, temp_string);
+      jenv->SetObjectArrayElement(jresult, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
     }
 }
@@ -2063,7 +2063,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
   const int* errorCodes = *($2);
   jintArray intArray = jenv->NewIntArray(nPointCount);
   jenv->SetIntArrayRegion(intArray, (jsize)0, (jsize)nPointCount, (jint*)errorCodes);
-  $result = intArray;
+  *(jintArray *)&jresult = intArray;
 }
 
 %typemap(freearg) (int* pnCountOut, int** outErrorCodes)
