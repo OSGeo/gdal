@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
 import os
 import shutil
 
@@ -182,3 +183,162 @@ def test_gdaladdo_5(gdaladdo_path):
     assert cnt == 1
 
     os.remove("tmp/test_gdaladdo_5.tif")
+
+
+###############################################################################
+# Test --partial-refresh-from-projwin
+
+
+def test_gdaladdo_partial_refresh_from_projwin(gdaladdo_path):
+
+    gdal.Translate(
+        "tmp/tmp.tif", "../gcore/data/byte.tif", options="-outsize 512 512 -r cubic"
+    )
+    gdaltest.runexternal(gdaladdo_path + " -r bilinear tmp/tmp.tif 2 4")
+
+    ds = gdal.Open("tmp/tmp.tif", gdal.GA_Update)
+    ovr_data_ori = array.array("B", ds.GetRasterBand(1).GetOverview(0).ReadRaster())
+    ds.GetRasterBand(1).Fill(0)
+    gt = ds.GetGeoTransform()
+    ds = None
+
+    x = 10
+    y = 20
+    width = 30
+    height = 40
+    ulx = gt[0] + gt[1] * x
+    uly = gt[3] + gt[5] * y
+    lrx = gt[0] + gt[1] * (x + width)
+    lry = gt[3] + gt[5] * (y + height)
+    out, err = gdaltest.runexternal_out_and_err(
+        gdaladdo_path
+        + f" -r bilinear --partial-refresh-from-projwin {ulx} {uly} {lrx} {lry} tmp/tmp.tif 2"
+    )
+    assert "ERROR" not in err, (out, err)
+
+    ds = gdal.Open("tmp/tmp.tif")
+    ovr_band = ds.GetRasterBand(1).GetOverview(0)
+    ovr_data_refreshed = array.array("B", ovr_band.ReadRaster())
+    # Test that data is zero only in the refreshed area, and unchanged
+    # in other areas
+    for j in range(height // 2):
+        for i in range(width // 2):
+            idx = (y // 2 + j) * ovr_band.XSize + (x // 2 + i)
+            assert ovr_data_refreshed[idx] == 0
+            ovr_data_refreshed[idx] = ovr_data_ori[idx]
+    assert ovr_data_refreshed == ovr_data_ori
+    ds = None
+
+    gdal.GetDriverByName("GTiff").Delete("tmp/tmp.tif")
+
+
+###############################################################################
+# Test --partial-refresh-from-source-timestamp
+
+
+def test_gdaladdo_partial_refresh_from_source_timestamp(gdaladdo_path):
+
+    gdal.Translate(
+        "tmp/left.tif", "../gcore/data/byte.tif", options="-srcwin 0 0 10 20"
+    )
+    gdal.Translate(
+        "tmp/right.tif", "../gcore/data/byte.tif", options="-srcwin 10 0 10 20"
+    )
+    gdal.BuildVRT("tmp/tmp.vrt", ["tmp/left.tif", "tmp/right.tif"])
+    gdaltest.runexternal(gdaladdo_path + " -r bilinear tmp/tmp.vrt 2")
+
+    ds = gdal.Open("tmp/tmp.vrt", gdal.GA_Update)
+    ovr_data_ori = array.array("B", ds.GetRasterBand(1).GetOverview(0).ReadRaster())
+    ds = None
+
+    ds = gdal.Open("tmp/left.tif", gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    # Make sure timestamp of left.tif is before tmp.vrt.ovr
+    timestamp = int(os.stat("tmp/tmp.vrt.ovr").st_mtime) - 10
+    os.utime("tmp/left.tif", times=(timestamp, timestamp))
+
+    ds = gdal.Open("tmp/right.tif", gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    # Make sure timestamp of right.tif is after tmp.vrt.ovr
+    timestamp = int(os.stat("tmp/tmp.vrt.ovr").st_mtime) + 10
+    os.utime("tmp/right.tif", times=(timestamp, timestamp))
+
+    out, err = gdaltest.runexternal_out_and_err(
+        gdaladdo_path
+        + " -r bilinear --partial-refresh-from-source-timestamp tmp/tmp.vrt"
+    )
+    assert "ERROR" not in err, (out, err)
+
+    ds = gdal.Open("tmp/tmp.vrt")
+    ovr_band = ds.GetRasterBand(1).GetOverview(0)
+    ovr_data_refreshed = array.array("B", ovr_band.ReadRaster())
+    # Test that data is zero only in the refreshed area, and unchanged
+    # in other areas
+    for j in range(10):
+        for i in range(5):
+            idx = (j) * ovr_band.XSize + (i + 5)
+            assert ovr_data_refreshed[idx] == 0
+            ovr_data_refreshed[idx] = ovr_data_ori[idx]
+    assert ovr_data_refreshed == ovr_data_ori
+    ds = None
+
+    gdal.GetDriverByName("VRT").Delete("tmp/tmp.vrt")
+    gdal.GetDriverByName("GTiff").Delete("tmp/tmp.vrt.ovr")
+    gdal.GetDriverByName("GTiff").Delete("tmp/left.tif")
+    gdal.GetDriverByName("GTiff").Delete("tmp/right.tif")
+
+
+###############################################################################
+# Test --partial-refresh-from-source-extent
+
+
+def test_gdaladdo_partial_refresh_from_source_extent(gdaladdo_path):
+
+    gdal.Translate(
+        "tmp/left.tif", "../gcore/data/byte.tif", options="-srcwin 0 0 10 20"
+    )
+    gdal.Translate(
+        "tmp/right.tif", "../gcore/data/byte.tif", options="-srcwin 10 0 10 20"
+    )
+    gdal.BuildVRT("tmp/tmp.vrt", ["tmp/left.tif", "tmp/right.tif"])
+    gdaltest.runexternal(gdaladdo_path + " -r bilinear tmp/tmp.vrt 2")
+
+    ds = gdal.Open("tmp/tmp.vrt", gdal.GA_Update)
+    ovr_data_ori = array.array("B", ds.GetRasterBand(1).GetOverview(0).ReadRaster())
+    ds = None
+
+    ds = gdal.Open("tmp/left.tif", gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    ds = gdal.Open("tmp/right.tif", gdal.GA_Update)
+    ds.GetRasterBand(1).Fill(0)
+    ds = None
+
+    out, err = gdaltest.runexternal_out_and_err(
+        gdaladdo_path
+        + " -r bilinear --partial-refresh-from-source-extent tmp/right.tif tmp/tmp.vrt"
+    )
+    assert "ERROR" not in err, (out, err)
+
+    ds = gdal.Open("tmp/tmp.vrt")
+    ovr_band = ds.GetRasterBand(1).GetOverview(0)
+    ovr_data_refreshed = array.array("B", ovr_band.ReadRaster())
+    # Test that data is zero only in the refreshed area, and unchanged
+    # in other areas
+    for j in range(10):
+        for i in range(5):
+            idx = (j) * ovr_band.XSize + (i + 5)
+            assert ovr_data_refreshed[idx] == 0
+            ovr_data_refreshed[idx] = ovr_data_ori[idx]
+    assert ovr_data_refreshed == ovr_data_ori
+    ds = None
+
+    gdal.GetDriverByName("VRT").Delete("tmp/tmp.vrt")
+    gdal.GetDriverByName("GTiff").Delete("tmp/tmp.vrt.ovr")
+    gdal.GetDriverByName("GTiff").Delete("tmp/left.tif")
+    gdal.GetDriverByName("GTiff").Delete("tmp/right.tif")
