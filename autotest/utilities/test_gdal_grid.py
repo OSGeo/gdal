@@ -52,6 +52,36 @@ def gdal_grid_path():
     return test_cli_utilities.get_gdal_grid_path()
 
 
+@pytest.fixture()
+def n43_shp(tmp_path):
+    n43_shp_fname = str(tmp_path / "n43.shp")
+
+    # Create an OGR grid from the values of n43.tif
+    ds = gdal.Open("../gdrivers/data/n43.tif")
+    geotransform = ds.GetGeoTransform()
+
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    with shape_drv.CreateDataSource(str(tmp_path)) as shape_ds:
+        shape_lyr = shape_ds.CreateLayer("n43")
+
+        data = ds.ReadRaster(0, 0, 121, 121)
+        array_val = struct.unpack("h" * 121 * 121, data)
+        for j in range(121):
+            for i in range(121):
+                wkt = "POINT(%f %f %s)" % (
+                    geotransform[0] + (i + 0.5) * geotransform[1],
+                    geotransform[3] + (j + 0.5) * geotransform[5],
+                    array_val[j * 121 + i],
+                )
+                dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
+                dst_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
+                shape_lyr.CreateFeature(dst_feat)
+
+        shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON n43")
+
+    yield n43_shp_fname
+
+
 # List of output TIFF files that will be created by tests and later deleted
 # in test_gdal_grid_cleanup()
 outfiles = []
@@ -74,65 +104,20 @@ def auto_cleanup():
 #
 
 
-def test_gdal_grid_1(gdal_grid_path):
+def test_gdal_grid_1(gdal_grid_path, n43_shp, tmp_path):
 
-    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-    outfiles.append("tmp/n43.tif")
-
-    try:
-        os.remove("tmp/n43.shp")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43.dbf")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43.shx")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/n43.qix")
-    except OSError:
-        pass
-
-    # Create an OGR grid from the values of n43.tif
-    ds = gdal.Open("../gdrivers/data/n43.tif")
-    geotransform = ds.GetGeoTransform()
-
-    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-    shape_ds = shape_drv.CreateDataSource("tmp")
-    shape_lyr = shape_ds.CreateLayer("n43")
-
-    data = ds.ReadRaster(0, 0, 121, 121)
-    array_val = struct.unpack("h" * 121 * 121, data)
-    for j in range(121):
-        for i in range(121):
-            wkt = "POINT(%f %f %s)" % (
-                geotransform[0] + (i + 0.5) * geotransform[1],
-                geotransform[3] + (j + 0.5) * geotransform[5],
-                array_val[j * 121 + i],
-            )
-            dst_feat = ogr.Feature(feature_def=shape_lyr.GetLayerDefn())
-            dst_feat.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
-            shape_lyr.CreateFeature(dst_feat)
-
-    dst_feat.Destroy()
-
-    shape_ds.ExecuteSQL("CREATE SPATIAL INDEX ON n43")
-
-    shape_ds.Destroy()
+    output_tif = str(tmp_path / "n43.tif")
 
     # Create a GDAL dataset from the previous generated OGR grid
     (_, err) = gdaltest.runexternal_out_and_err(
         gdal_grid_path
-        + " -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -a nearest:radius1=0.0:radius2=0.0:angle=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp "
-        + outfiles[-1]
+        + f" -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -a nearest:radius1=0.0:radius2=0.0:angle=0.0 -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 {n43_shp} {output_tif}"
     )
     assert err is None or err == "", "got error/warning"
 
     # We should get the same values as in n43.td0
-    ds2 = gdal.Open(outfiles[-1])
+    ds = gdal.Open("../gdrivers/data/n43.tif")
+    ds2 = gdal.Open(output_tif)
     assert (
         ds.GetRasterBand(1).Checksum() == ds2.GetRasterBand(1).Checksum()
     ), "bad checksum : got %d, expected %d" % (
@@ -1138,14 +1123,14 @@ def test_gdal_grid_17(gdal_grid_path, use_quadtree):
 
 
 @pytest.mark.skipif(not gdal.HasTriangulation(), reason="qhull missing")
-def test_gdal_grid_18(gdal_grid_path):
+def test_gdal_grid_18(gdal_grid_path, n43_shp):
 
     outfiles.append("tmp/n43_linear.tif")
 
     # Create a GDAL dataset from the previous generated OGR grid
     (_, err) = gdaltest.runexternal_out_and_err(
         gdal_grid_path
-        + " -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a linear -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 tmp/n43.shp "
+        + f" -txe -80.0041667 -78.9958333 -tye 42.9958333 44.0041667 -outsize 121 121 -ot Int16 -l n43 -a linear -co TILED=YES -co BLOCKXSIZE=256 -co BLOCKYSIZE=256 {n43_shp} "
         + outfiles[-1]
     )
     assert err is None or err == "", "got error/warning"
