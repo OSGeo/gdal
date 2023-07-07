@@ -29,7 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import imp  # for netcdf_cf_setup()
+import importlib  # for netcdf_cf_setup()
 import os
 
 from gdrivers.netcdf import netcdf_setup, netcdf_test_copy  # noqa
@@ -64,10 +64,9 @@ def netcdf_cf_setup():
 
     # try local method
     cdms2_installed = False
-    try:
-        imp.find_module("cdms2")
+    if importlib.util.find_spec("cdms2"):
         cdms2_installed = True
-    except ImportError:
+    else:
         print("NOTICE: cdms2 not installed!")
         print("        see installation notes at http://pypi.python.org/pypi/cfchecker")
     if cdms2_installed:
