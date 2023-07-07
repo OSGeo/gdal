@@ -31,6 +31,7 @@
 
 import os
 import shutil
+import sys
 
 import gdaltest
 import ogrtest
@@ -1731,6 +1732,7 @@ def test_ogr_openfilegdb_17():
 # Read curves
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_openfilegdb_18():
 
     ds = ogr.Open("data/filegdb/curves.gdb")
@@ -1774,6 +1776,7 @@ def test_ogr_openfilegdb_19():
 # one of the starting point (#7017)
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_openfilegdb_20():
 
     ds = ogr.Open("data/filegdb/filegdb_polygonzm_m_not_closing_with_curves.gdb")
@@ -2462,6 +2465,47 @@ def test_ogr_openfilegdb_read_relationships():
     assert rel.GetForwardPathLabel() == "attachment"
     assert rel.GetBackwardPathLabel() == "object"
     assert rel.GetRelatedTableType() == "media"
+
+
+###############################################################################
+# Test opening a read-only database in update mode
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="Incorrect platform")
+def test_ogr_openfilegdb_read_readonly_in_update_mode():
+
+    if os.getuid() == 0:
+        pytest.skip("running as root... skipping")
+
+    shutil.copytree("data/filegdb/Domains.gdb", "tmp/testreadonly.gdb")
+    os.chmod("tmp/testreadonly.gdb", 0o555)
+    for f in os.listdir("tmp/testreadonly.gdb"):
+        os.chmod("tmp/testreadonly.gdb/" + f, 0o555)
+
+    try:
+        with pytest.raises(Exception):
+            ogr.Open("tmp/testreadonly.gdb", update=1)
+
+        assert ogr.Open("tmp/testreadonly.gdb")
+
+        # Only turn on a few system tables in read-write mode, but not the
+        # layer of interest
+        for f in os.listdir("tmp/testreadonly.gdb"):
+            if f.startswith("a00000001.") or f.startswith("a00000004."):
+                os.chmod("tmp/testreadonly.gdb/" + f, 0o755)
+        ds = ogr.Open("tmp/testreadonly.gdb", update=1)
+        lyr = ds.GetLayer(0)
+        with pytest.raises(
+            Exception, match="Cannot open Roads in update mode, but only in read-only"
+        ):
+            lyr.TestCapability(ogr.OLCSequentialWrite)
+        assert lyr.TestCapability(ogr.OLCSequentialWrite) == 0
+
+    finally:
+        os.chmod("tmp/testreadonly.gdb", 0o755)
+        for f in os.listdir("tmp/testreadonly.gdb"):
+            os.chmod("tmp/testreadonly.gdb/" + f, 0o755)
+        shutil.rmtree("tmp/testreadonly.gdb")
 
 
 ###############################################################################
