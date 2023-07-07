@@ -4254,7 +4254,7 @@ def test_ogr_gpkg_47():
     assert gdal.GetLastErrorMsg() == ""
 
     gdaltest.gpkg_dr.CreateDataSource(
-        "/vsimem/ogr_gpkg_47.gpkg", options=["VERSION=1.2"]
+        "/vsimem/ogr_gpkg_47.gpkg", options={"VERSION": "1.2"}
     )
     # Set wrong user_version
     fp = gdal.VSIFOpenL("/vsimem/ogr_gpkg_47.gpkg", "rb+")
@@ -4299,7 +4299,7 @@ def test_ogr_gpkg_47():
 
     # Set GPKG 1.3.0
     gdaltest.gpkg_dr.CreateDataSource(
-        "/vsimem/ogr_gpkg_47.gpkg", options=["VERSION=1.3"]
+        "/vsimem/ogr_gpkg_47.gpkg", options={"VERSION": "1.3"}
     )
     # Check user_version
     fp = gdal.VSIFOpenL("/vsimem/ogr_gpkg_47.gpkg", "rb")
