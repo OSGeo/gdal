@@ -202,7 +202,7 @@ public:
   GDALDimensionHS *CreateDimension( const char *name,
                                     const char* type,
                                     const char* direction,
-                                    unsigned long long size,
+                                    GUInt64 size,
                                     char **options = 0 ) {
     return GDALGroupCreateDimension(self, name, type, direction, size, options);
   }
@@ -446,7 +446,7 @@ public:
     return GDALMDArrayGetFullName(self);
   }
 
-  unsigned long long GetTotalElementsCount() {
+  GUInt64 GetTotalElementsCount() {
     return GDALMDArrayGetTotalElementsCount(self);
   }
 
@@ -1189,7 +1189,7 @@ public:
     return GDALAttributeGetFullName(self);
   }
 
-  unsigned long long GetTotalElementsCount() {
+  GUInt64 GetTotalElementsCount() {
     return GDALAttributeGetTotalElementsCount(self);
   }
 
@@ -1376,7 +1376,7 @@ public:
     return GDALDimensionGetDirection(self);
   }
 
-  unsigned long long GetSize() {
+  GUInt64 GetSize() {
     return GDALDimensionGetSize(self);
   }
 

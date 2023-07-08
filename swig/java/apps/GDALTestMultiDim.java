@@ -30,7 +30,6 @@
  * DEALINGS IN THE SOFTWARE.
  *****************************************************************************/
 
-import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.gdal.gdal.gdal;
@@ -108,7 +107,7 @@ public class GDALTestMultiDim
             
             Dimension d = outDims[i];
 
-            if (d.GetSize().longValue() != sizes[i]) {
+            if (d.GetSize() != sizes[i]) {
 
                 throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
             }

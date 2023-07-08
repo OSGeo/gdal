@@ -1341,6 +1341,7 @@ import org.gdal.gdalconst.gdalconstConstants;
         return CreateMDArray(name, dims, type, new Vector());
     }
 
+/*
     public Dimension CreateDimension(String name, String type, String direction, long size) {
     
         return CreateDimension(name, type, direction, BigInteger.valueOf(size));
@@ -1350,6 +1351,7 @@ import org.gdal.gdalconst.gdalconstConstants;
     
         return CreateDimension(name, type, direction, BigInteger.valueOf(size), options);
     }
+*/
   
 %}
 
