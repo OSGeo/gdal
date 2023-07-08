@@ -2408,40 +2408,6 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     return $jnicall;
 }
 
-/***** GInt64* typemaps *******************************/
-
-#if 0
-
-%typemap(in) (GInt64* pNums)
-{
-  /* %typemap(in) (GInt64* pNums) */
-  if ($input)
-  {
-    $1 = (GInt64 *) jenv->GetLongArrayElements($input, NULL);
-  }
-  else {
-    $1 = (GInt64 *) NULL;
-  }
-}
-
-%typemap(freearg) (GInt64* pNums)
-{
-  /* %typemap(freearg) (GInt64* pNums) */
-  if ($1) {
-    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
-  }
-}
-
-%typemap(jni) (GInt64* pNums) "jlongArray"
-%typemap(jtype) (GInt64* pNums) "long[]"
-%typemap(jstype) (GInt64* pNums) "long[]"
-%typemap(javain) (GInt64* pNums) "$javainput"
-%typemap(javaout) (GInt64* pNums) {
-    return $jnicall;
-}
-
-#endif
-
 /***** int, GInt64* typemaps *******************************/
 
 %typemap(in, numinputs=1) (int nList, GInt64 *pList)
@@ -2476,40 +2442,6 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (int nList, GInt64 *pList) {
     return $jnicall;
 }
-
-/***** GUIntBig* typemaps *******************************/
-
-#if 0
-
-%typemap(in, numinputs=1) (GUIntBig *pNums)
-{
-  /* %typemap(in, numinputs=1) (GUIntBig *pNums) */
-  if ($input)
-  {
-    $1 = (GUIntBig *) jenv->GetLongArrayElements($input, NULL);
-  }
-  else {
-    $1 = (GUIntBig *) NULL;
-  }
-}
-
-%typemap(freearg) (GUIntBig *pNums)
-{
-  /* %typemap(freearg) (GUIntBig *pNums) */
-  if ($1) {
-    jenv->ReleaseLongArrayElements($input, (jlong*)$1, JNI_ABORT);
-  }
-}
-
-%typemap(jni) (GUIntBig *pNums) "jlongArray"
-%typemap(jtype) (GUIntBig *pNums) "long[]"
-%typemap(jstype) (GUIntBig *pNums) "long[]"
-%typemap(javain) (GUIntBig *pNums) "$javainput"
-%typemap(javaout) (GUIntBig *pNums) {
-    return $jnicall;
-}
-
-#endif
 
 /***** int, GUIntBig* typemaps *******************************/
 
