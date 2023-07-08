@@ -168,14 +168,13 @@ import java.lang.Integer;
     else {
     
       retVal = dims[index];
+      
+      dims[index] = NULL;  // make sure we do not free our index
     }
 
-// This is bad because the retVal points into this memory and
-//   we free it. And then things get crashy.
-//
-// By commenting out the free I can prove tests work.
-//    
-//    GDALReleaseDimensions(dims, dimCount);    
+    // free all the other indices
+    
+    GDALReleaseDimensions(dims, dimCount);    
         
     return retVal;
   }

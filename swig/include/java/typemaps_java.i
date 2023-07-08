@@ -2312,7 +2312,15 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
     const jmethodID ctor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
 
-    $result = jenv->NewObject(dimClass, ctor, $1, false);
+    // NOTE: how do I free the memory associated with MDArray::GetDimension()?
+    //   I think there are two approaches: 1) assign this new dim to own the
+    //   memory pass to it (assuming only that method invokes thus typemap.
+    //   OR 2) maybe we need a typemap(freearg). But I can't figure out the
+    //   correct memory free routine to call. CPLFree()?
+    // So for now I am doing approach #1 by setting the last param in this
+    //   construction to true.
+     
+    $result = jenv->NewObject(dimClass, ctor, $1, true);
 }
 
 %typemap(jni) (GDALDimensionH) "jobject"
