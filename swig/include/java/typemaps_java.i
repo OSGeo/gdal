@@ -207,7 +207,7 @@
     {
         $2 = (GDAL_GCP*) malloc(sizeof(GDAL_GCP) * $1);
         int i;
-        for (i = 0; i < $1; i++) {
+        for (i=0; i<$1; i++) {
             jobject obj = (jobject)jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
@@ -264,7 +264,7 @@
     "(DDDDDLjava/lang/String;Ljava/lang/String;)V");
 
   int i;
-  for (i = 0; i < *$1; i++ ) {
+  for (i=0; i<*$1; i++ ) {
     jstring stringInfo = jenv->NewStringUTF((*$2)[i].pszInfo);
     jstring stringId = jenv->NewStringUTF((*$2)[i].pszId);
     jobject GCPobj = jenv->NewObject(GCPClass, GCPcon,
@@ -890,7 +890,7 @@
     {
         $2 = (GDALRasterBandShadow**) malloc(sizeof(GDALRasterBandShadow*) * $1);
         int i;
-        for (i = 0; i < $1; i++) {
+        for (i=0; i<$1; i++) {
             jobject obj = (jobject)jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
@@ -951,7 +951,7 @@
     {
         $2 = (GDALDatasetShadow**) malloc(sizeof(GDALDatasetShadow*) * $1);
         int i;
-        for (i = 0; i < $1; i++) {
+        for (i=0; i<$1; i++) {
             jobject obj = (jobject)jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
@@ -1173,7 +1173,7 @@
   $result = jenv->NewObjectArray(len, clazz, NULL);
   /* exception checking omitted */
 
-  for (i = 0; i < len; i++) {
+  for (i=0; i<len; i++) {
       temp_string = jenv->NewStringUTF(*stringarray++);
       jenv->SetObjectArrayElement(jresult, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
@@ -1204,7 +1204,7 @@
   $result = jenv->NewObjectArray(len, clazz, NULL);
   /* exception checking omitted */
 
-  for (i = 0; i < len; i++) {
+  for (i=0; i<len; i++) {
       temp_string = jenv->NewStringUTF(*stringarray++);
       jenv->SetObjectArrayElement(jresult, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
@@ -1452,7 +1452,7 @@
     size = jenv->GetArrayLength($input);
     $1 = (char **) malloc((size+1)*sizeof(char *));
     /* make a copy of each string */
-    for (i = 0; i < size; i++) {
+    for (i=0; i<size; i++) {
         jstring j_string = (jstring)jenv->GetObjectArrayElement($input, i);
         const char * c_string = jenv->GetStringUTFChars(j_string, 0);
         $1[i] = (char *)malloc(strlen((c_string)+1)*sizeof(const char *));
@@ -1468,7 +1468,7 @@
 %typemap(freearg) char ** {
     /* %typemap(freearg) char ** */
     int i;
-    for (i = 0; i < size$argnum-1; i++)
+    for (i=0; i<size$argnum-1; i++)
       free($1[i]);
     free($1);
 }
@@ -1486,7 +1486,7 @@
     jresult = jenv->NewObjectArray(len, clazz, NULL);
     /* exception checking omitted */
 
-    for (i = 0; i < len; i++) {
+    for (i=0; i<len; i++) {
       temp_string = jenv->NewStringUTF(*result++);
       jenv->SetObjectArrayElement(jresult, i, temp_string);
       jenv->DeleteLocalRef(temp_string);
@@ -1930,7 +1930,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     $3 = (double*)CPLMalloc($1 * sizeof(double));
     $4 = (double*)CPLMalloc($1 * sizeof(double));
     int i;
-    for (i = 0; i < $1; i++) {
+    for (i=0; i<$1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         if (doubleArray == NULL)
         {
@@ -1964,7 +1964,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 {
     /* %typemap(argout) ( int nCount, double *x, double *y, double *z ) */
     int i;
-    for (i = 0; i < $1; i++) {
+    for (i=0; i<$1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         int nDim = jenv->GetArrayLength(doubleArray);
         jenv->SetDoubleArrayRegion(doubleArray, (jsize)0, (jsize)1, &$2[i]);
@@ -1999,7 +1999,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     $4 = (double*)CPLMalloc($1 * sizeof(double));
     $5 = (double*)CPLMalloc($1 * sizeof(double));
     int i;
-    for (i = 0; i < $1; i++) {
+    for (i=0; i<$1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         if (doubleArray == NULL)
         {
@@ -2039,7 +2039,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 {
     /* %typemap(argout) ( int nCount, double *x, double *y, double *z, double *t ) */
     int i;
-    for (i = 0; i < $1; i++) {
+    for (i=0; i<$1; i++) {
         jdoubleArray doubleArray = (jdoubleArray)jenv->GetObjectArrayElement($input, i);
         int nDim = jenv->GetArrayLength(doubleArray);
         jenv->SetDoubleArrayRegion(doubleArray, (jsize)0, (jsize)1, &$2[i]);
@@ -2067,9 +2067,9 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
   $2 = &errorCodes;
 }
 
-%typemap(argout)  (int* pnCountOut, int** outErrorCodes)
+%typemap(argout) (int* pnCountOut, int** outErrorCodes)
 {
-  /* %typemap(argout)  (int* pnCountOut, int** outErrorCodes) */
+  /* %typemap(argout) (int* pnCountOut, int** outErrorCodes) */
   int nPointCount = *($1);
   const int* errorCodes = *($2);
   jintArray intArray = jenv->NewIntArray(nPointCount);
@@ -2153,9 +2153,9 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
   $3 = &padfZ;
 }
 
-%typemap(argout)  (int* pnCount, double** ppadfXY, double** ppadfZ)
+%typemap(argout) (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
-  /* %typemap(argout)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+  /* %typemap(argout) (int* pnCount, double** ppadfXY, double** ppadfZ) */
   int nPointCount = *($1);
   if (nPointCount == 0)
   {
@@ -2166,7 +2166,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     int nDimensions = (*$3 != NULL) ? 3 : 2;
     $result = jenv->NewObjectArray(nPointCount, jenv->FindClass("java/lang/Object"), NULL);
     int i;
-    for (i = 0; i < nPointCount; i++ )
+    for (i=0; i<nPointCount; i++ )
     {
         jdoubleArray dblArray = jenv->NewDoubleArray(nDimensions);
         jenv->SetDoubleArrayRegion(dblArray, 0, 2, &( (*$2)[2*i] ));
@@ -2180,14 +2180,14 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 
 %typemap(freearg) (int* pnCount, double** ppadfXY, double** ppadfZ)
 {
-    /* %typemap(freearg)  (int* pnCount, double** ppadfXY, double** ppadfZ) */
+    /* %typemap(freearg) (int* pnCount, double** ppadfXY, double** ppadfZ) */
     VSIFree(*$2);
     VSIFree(*$3);
 }
 
-%typemap(argout)  (retGetPoints*)
+%typemap(argout) (retGetPoints*)
 {
-  /* %typemap(argout)  (retGetPoints*) */
+  /* %typemap(argout) (retGetPoints*) */
 }
 
 %typemap(jni) ( retGetPoints* ) "jobjectArray"
@@ -2241,7 +2241,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
         $2 = (GDALDimensionH*) malloc(sizeof(GDALDimensionH) * $1);
 
         int i;
-        for (i = 0; i < $1; i++) {
+        for (i=0; i<$1; i++) {
             jobject obj = jenv->GetObjectArrayElement($input, i);
             if (obj == NULL)
             {
@@ -2274,7 +2274,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
   $result = jenv->NewObjectArray($1, dimClass, NULL);
 
   int i;
-  for (i = 0; i < $1; i++) {
+  for (i=0; i<$1; i++) {
   
     GDALDimensionH gDimH = $2[i];
 
