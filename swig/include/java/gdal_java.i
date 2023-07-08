@@ -169,8 +169,13 @@ import java.lang.Integer;
     
       retVal = dims[index];
     }
-    
-    GDALReleaseDimensions(dims, dimCount);    
+
+// This is bad because the retVal points into this memory and
+//   we free it. And then things get crashy.
+//
+// By commenting out the free I can prove tests work.
+//    
+//    GDALReleaseDimensions(dims, dimCount);    
         
     return retVal;
   }
@@ -452,7 +457,7 @@ import java.lang.Integer;
                for (int i = 0; i < size; i++) {
 
                        Dimension dim = GetDimension(i);
-                       
+
                        arr[i] = dim;
                }
 

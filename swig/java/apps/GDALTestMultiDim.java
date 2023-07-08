@@ -106,7 +106,7 @@ public class GDALTestMultiDim
         for (int i = 0; i < sizes.length; i++) {
             
             Dimension d = outDims[i];
-
+            
             if (d.GetSize() != sizes[i]) {
 
                 throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
