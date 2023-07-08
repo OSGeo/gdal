@@ -202,7 +202,7 @@ public:
   GDALDimensionHS *CreateDimension( const char *name,
                                     const char* type,
                                     const char* direction,
-                                    GUInt64 size,
+                                    GUIntBig size,
                                     char **options = 0 ) {
     return GDALGroupCreateDimension(self, name, type, direction, size, options);
   }
@@ -229,10 +229,10 @@ public:
   }
 
 %newobject CreateAttribute;
-%apply (int nList, GUInt64 *pList) {(int dimensions, GUInt64 *sizes)};
+%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
                                     int dimensions,
-                                    GUInt64 *sizes,
+                                    GUIntBig *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
@@ -446,7 +446,7 @@ public:
     return GDALMDArrayGetFullName(self);
   }
 
-  GUInt64 GetTotalElementsCount() {
+  GUIntBig GetTotalElementsCount() {
     return GDALMDArrayGetTotalElementsCount(self);
   }
 
@@ -853,10 +853,10 @@ public:
 #endif
 
 %newobject CreateAttribute;
-%apply (int nList, GUInt64 *pList) {(int dimensions, GUInt64 *sizes)};
+%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
                                     int dimensions,
-                                    GUInt64 *sizes,
+                                    GUIntBig *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
@@ -1189,7 +1189,7 @@ public:
     return GDALAttributeGetFullName(self);
   }
 
-  GUInt64 GetTotalElementsCount() {
+  GUIntBig GetTotalElementsCount() {
     return GDALAttributeGetTotalElementsCount(self);
   }
 
@@ -1376,7 +1376,7 @@ public:
     return GDALDimensionGetDirection(self);
   }
 
-  GUInt64 GetSize() {
+  GUIntBig GetSize() {
     return GDALDimensionGetSize(self);
   }
 
