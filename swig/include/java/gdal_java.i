@@ -259,7 +259,7 @@ import java.lang.Integer;
 
 %extend GDALMDArrayHS {
 
-//%newobject GetDimension;
+%newobject GetDimension;
   GDALDimensionH GetDimension(size_t index) {
     return GDALMDArrayGetDim(self, index);
   }
@@ -1363,8 +1363,6 @@ import org.gdal.gdalconst.gdalconstConstants;
     GUInt64* sizes = GDALAttributeGetDimensionsSize(attH, &count);
 
     if (index < 0 || index >= count) {
-    
-      CPLFree(sizes);
     
       size = (size_t) 0;
     }

@@ -1823,7 +1823,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GIntBig)
 {
   /* %typemap(in) (GIntBig) */
-  $1 = (jlong) $input;
+  $1 = (GIntBig) $input;
 }
 
 %typemap(out) (GIntBig)
@@ -1847,7 +1847,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GUIntBig)
 {
   /* %typemap(in) (GUIntBig) */
-  $1 = (jlong) $input;
+  $1 = (GUIntBig) $input;
 }
 
 %typemap(out) (GUIntBig)
@@ -1871,7 +1871,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GInt64)
 {
   /* %typemap(in) (GInt64) */
-  $1 = (jlong) $input;
+  $1 = (GInt64) $input;
 }
 
 %typemap(out) (GInt64)
@@ -1895,7 +1895,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(in) (GUInt64)
 {
   /* %typemap(in) (GUInt64) */
-  $1 = (jlong) $input;
+  $1 = (GUInt64) $input;
 }
 
 %typemap(out) (GUInt64)
