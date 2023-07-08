@@ -363,8 +363,31 @@ int OGROpenFileGDBLayer::BuildLayerDefinition()
         if (!(m_poLyrTable->Open(m_osGDBFilename, m_bEditable,
                                  GetDescription())))
         {
-            Close();
-            return FALSE;
+            if (m_bEditable)
+            {
+                // Retry in read-only mode
+                m_bEditable = false;
+                delete m_poLyrTable;
+                m_poLyrTable = new FileGDBTable();
+                if (!(m_poLyrTable->Open(m_osGDBFilename, m_bEditable,
+                                         GetDescription())))
+                {
+                    Close();
+                    return FALSE;
+                }
+                else
+                {
+                    CPLError(
+                        CE_Failure, CPLE_FileIO,
+                        "Cannot open %s in update mode, but only in read-only",
+                        GetDescription());
+                }
+            }
+            else
+            {
+                Close();
+                return FALSE;
+            }
         }
     }
 
