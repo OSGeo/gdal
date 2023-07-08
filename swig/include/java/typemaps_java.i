@@ -8,11 +8,17 @@
  *
 */
 
-// TODO: Even tjought I could get rid of some typemaps
+// TODO: Even thought I could get rid of some typemaps
 //   related to handles H if instead I passed around
-//   HS* instead. Dims, MDArray, something else.
+//   HS* instead. Dimensions, MDArrays, ExtendedDataTypes.
 //   Once other things are working try to test that
-//   theory out.
+//   theory out. It's Even's opinion that my typemaps are
+//   needed for these classes because SWIG isn't going
+//   from H's to HS*'s by itself.
+
+// TODO: maintenance
+//   The code below mixes uses of $result, result, and jresult.
+//   Shouldn't they all be made into $result?
 
 %include "arrays_java.i";
 %include "typemaps.i"
@@ -571,7 +577,6 @@
 {
   /* %typemap(ret) OGRErr */
 }
-
 
 /* GDAL Typemaps */
 
@@ -2440,6 +2445,41 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(jstype) (int nList, GInt64 *pList) "long[]"
 %typemap(javain) (int nList, GInt64 *pList) "$javainput"
 %typemap(javaout) (int nList, GInt64 *pList) {
+    return $jnicall;
+}
+
+/***** int, GUInt64* typemaps *******************************/
+
+%typemap(in, numinputs=1) (int nList, GUInt64 *pList)
+{
+  /* %typemap(in, numinputs=1) (int nList, GUInt64 *pList) */
+  if ($input)
+  {
+    $1 = jenv->GetArrayLength($input);
+    if ($1 == 0)
+       $2 = (GUInt64 *) NULL;
+    else
+       $2 = (GUInt64 *) jenv->GetLongArrayElements($input, NULL);
+  }
+  else {
+    $1 = 0;
+    $2 = (GUInt64 *) NULL;
+  }
+}
+
+%typemap(freearg) (int nList, GUInt64 *pList)
+{
+  /* %typemap(freearg) (int nList, GUInt64 *pList) */
+  if ($2) {
+    jenv->ReleaseLongArrayElements($input, (jlong*)$2, JNI_ABORT);
+  }
+}
+
+%typemap(jni) (int nList, GUInt64 *pList) "jlongArray"
+%typemap(jtype) (int nList, GUInt64 *pList) "long[]"
+%typemap(jstype) (int nList, GUInt64 *pList) "long[]"
+%typemap(javain) (int nList, GUInt64 *pList) "$javainput"
+%typemap(javaout) (int nList, GUInt64 *pList) {
     return $jnicall;
 }
 
