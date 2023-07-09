@@ -269,14 +269,14 @@ import java.lang.Integer;
   }
   
 %apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
-%apply(int nList, GInt64 *pList) { (int counts, GInt64 *sizes2) };
-%apply(int nList, GInt64 *pList) { (int arraySteps, GInt64 *sizes3) };
-%apply(int nList, GInt64 *pList) { (int bufferStrides, GInt64 *sizes4) };
-  %define DEFINE_READ_MDA_DATA(ctype, buffer_type)
+%apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
+%apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
+%apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
+  %define DEFINE_READ_MDA_DATA(ctype, buffer_type_code)
   bool Read(int arrayStartIdxes, GInt64 *sizes1, 
-            int counts, GInt64 *sizes2, 
-            int arraySteps, GInt64 *sizes3, 
-            int bufferStrides, GInt64 *sizes4,
+            int counts,          GInt64 *sizes2, 
+            int arraySteps,      GInt64 *sizes3, 
+            int bufferStrides,   GInt64 *sizes4,
             ctype *arrayOut,
             size_t arrayOutSize
            )
@@ -289,41 +289,41 @@ import java.lang.Integer;
 
     bool okay_so_far = true;
         
-    if (buffer_type == GDT_Byte &&
+    if (buffer_type_code == GDT_Byte &&
           internal_type_code != GDT_Byte)
       okay_so_far = false; 
        
-    if (buffer_type == GDT_Int16 &&
+    if (buffer_type_code == GDT_Int16 &&
           internal_type_code != GDT_Int16 &&
           internal_type_code != GDT_UInt16 &&
           internal_type_code != GDT_CInt16)
       okay_so_far = false; 
     
-    if (buffer_type == GDT_Int32 &&
+    if (buffer_type_code == GDT_Int32 &&
           internal_type_code != GDT_Int32 &&
           internal_type_code != GDT_UInt32 &&
           internal_type_code != GDT_CInt32)
       okay_so_far = false; 
     
-    if (buffer_type == GDT_Int64 &&
+    if (buffer_type_code == GDT_Int64 &&
           internal_type_code != GDT_Int64 &&
           internal_type_code != GDT_UInt64)
       okay_so_far = false; 
     
-    if (buffer_type == GDT_Float32 &&
+    if (buffer_type_code == GDT_Float32 &&
           internal_type_code != GDT_Float32 &&
           internal_type_code != GDT_CFloat32)
       okay_so_far = false; 
     
-    if (buffer_type == GDT_Float64 &&
+    if (buffer_type_code == GDT_Float64 &&
           internal_type_code != GDT_Float64 &&
           internal_type_code != GDT_CFloat64)
       okay_so_far = false; 
 
     if (okay_so_far) {
     
-      GDALExtendedDataTypeH extended_buffer_type =
-        GDALExtendedDataTypeCreate(buffer_type);
+      GDALExtendedDataTypeH buffer_type =
+        GDALExtendedDataTypeCreate(buffer_type_code);
       
       okay_so_far =
         MDArrayRead(self,
@@ -334,11 +334,11 @@ import java.lang.Integer;
                         sizes4,
                         arrayOut,
                         arrayOutSize,
-                        extended_buffer_type,
+                        buffer_type,
                         sizeof(ctype)
                         );
       
-      GDALExtendedDataTypeRelease(extended_buffer_type);
+      GDALExtendedDataTypeRelease(buffer_type);
     }
                         
     GDALExtendedDataTypeRelease(internal_type);
@@ -355,14 +355,14 @@ import java.lang.Integer;
   DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
 %apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
-%apply(int nList, GInt64 *pList) { (int counts, GInt64 *sizes2) };
-%apply(int nList, GInt64 *pList) { (int arraySteps, GInt64 *sizes3) };
-%apply(int nList, GInt64 *pList) { (int bufferStrides, GInt64 *sizes4) };
-  %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type)
+%apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
+%apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
+%apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
+  %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type_code)
   bool Write(int arrayStartIdxes, GInt64 *sizes1, 
-             int counts, GInt64 *sizes2, 
-             int arraySteps, GInt64 *sizes3, 
-             int bufferStrides, GInt64 *sizes4,
+             int counts,          GInt64 *sizes2, 
+             int arraySteps,      GInt64 *sizes3, 
+             int bufferStrides,   GInt64 *sizes4,
              ctype *arrayIn,
              size_t arrayInSize
             )
@@ -375,41 +375,41 @@ import java.lang.Integer;
     
     bool okay_so_far = true;
     
-    if (buffer_type == GDT_Byte &&
+    if (buffer_type_code == GDT_Byte &&
           internal_type_code != GDT_Byte)
       okay_so_far = false;
        
-    if (buffer_type == GDT_Int16 &&
+    if (buffer_type_code == GDT_Int16 &&
           internal_type_code != GDT_Int16 &&
           internal_type_code != GDT_UInt16 &&
           internal_type_code != GDT_CInt16)
       okay_so_far = false;
     
-    if (buffer_type == GDT_Int32 &&
+    if (buffer_type_code == GDT_Int32 &&
           internal_type_code != GDT_Int32 &&
           internal_type_code != GDT_UInt32 &&
           internal_type_code != GDT_CInt32)
       okay_so_far = false;
     
-    if (buffer_type == GDT_Int64 &&
+    if (buffer_type_code == GDT_Int64 &&
           internal_type_code != GDT_Int64 &&
           internal_type_code != GDT_UInt64)
       okay_so_far = false;
     
-    if (buffer_type == GDT_Float32 &&
+    if (buffer_type_code == GDT_Float32 &&
           internal_type_code != GDT_Float32 &&
           internal_type_code != GDT_CFloat32)
       okay_so_far = false;
     
-    if (buffer_type == GDT_Float64 &&
+    if (buffer_type_code == GDT_Float64 &&
           internal_type_code != GDT_Float64 &&
           internal_type_code != GDT_CFloat64)
       okay_so_far = false;
 
     if (okay_so_far) {
     
-      GDALExtendedDataTypeH extended_buffer_type =
-        GDALExtendedDataTypeCreate(buffer_type);
+      GDALExtendedDataTypeH buffer_type =
+        GDALExtendedDataTypeCreate(buffer_type_code);
       
       okay_so_far =
         MDArrayWrite(self,
@@ -420,11 +420,11 @@ import java.lang.Integer;
                         sizes4,
                         arrayIn,
                         arrayInSize,
-                        extended_buffer_type,
+                        buffer_type,
                         sizeof(ctype)
                         );
 
-      GDALExtendedDataTypeRelease(extended_buffer_type);
+      GDALExtendedDataTypeRelease(buffer_type);
     }
                         
     GDALExtendedDataTypeRelease(internal_type);
