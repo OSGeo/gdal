@@ -40,6 +40,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <unordered_map>
 #include <utility>
 
@@ -291,8 +292,19 @@ bool OGRPMTilesConvertFromMBTiles(const char *pszDestName,
         // MBTiles uses a 0=bottom-most row, whereas PMTiles uses
         // 0=top-most row
         const int nY = (1 << nZoomLevel) - 1 - nRow;
-        const uint64_t nTileId = pmtiles::zxy_to_tileid(
-            static_cast<uint8_t>(nZoomLevel), nColumn, nY);
+        uint64_t nTileId;
+        try
+        {
+            nTileId = pmtiles::zxy_to_tileid(static_cast<uint8_t>(nZoomLevel),
+                                             nColumn, nY);
+        }
+        catch (const std::exception &e)
+        {
+            // shouldn't happen given previous checks
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot compute tile id: %s",
+                     e.what());
+            return false;
+        }
         int nTileDataLength = 0;
         const GByte *pabyData =
             poFeature->GetFieldAsBinary(iTileData, &nTileDataLength);
@@ -442,6 +454,7 @@ bool OGRPMTilesConvertFromMBTiles(const char *pszDestName,
     }
 
     const CPLCompressor *psCompressor = CPLGetCompressor("gzip");
+    assert(psCompressor);
     std::string osCompressed;
     struct compression_exception : std::exception
     {
