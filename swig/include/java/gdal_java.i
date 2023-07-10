@@ -327,6 +327,10 @@ import java.lang.Integer;
     
     if (okay_so_far) {
     
+      // figure out how many bytes the total count of elements of the
+      //   internal type take. Ideally I could call type.GetSize() but
+      //   the C include file is not accessible here.
+          
       size_t baseValueSize = sizeof(ctype);
       
       size_t componentCount = 1;
@@ -343,6 +347,8 @@ import java.lang.Integer;
     
       if (counts > 0) {
 
+        totalElements = 1;
+        
         for (int c = 0; c < counts; c++) {
       
           totalElements *= (size_t) sizes2[c];
@@ -444,7 +450,11 @@ import java.lang.Integer;
     size_t actualArraySize = 0;
     
     if (okay_so_far) {
-    
+
+      // figure out how many bytes the total count of elements of the
+      //   internal type take. Ideally I could call type.GetSize() but
+      //   the C include file is not accessible here.
+          
       size_t baseValueSize = sizeof(ctype);
       
       size_t componentCount = 1;
@@ -461,6 +471,8 @@ import java.lang.Integer;
     
       if (counts > 0) {
 
+        totalElements = 1;
+        
         for (int c = 0; c < counts; c++) {
       
           totalElements *= (size_t) sizes2[c];

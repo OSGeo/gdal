@@ -64,7 +64,7 @@ public class GDALTestMultiDim
 
         ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
 
-        long[] sizes = new long[]{10,6,2,7};
+        long[] sizes = new long[]{7,2,10,6};
 
         Dimension[] inDims = new Dimension[sizes.length];
         
@@ -128,13 +128,15 @@ public class GDALTestMultiDim
             }
         }
         
-        long xSize = sizes[0];
+        // these indices follow the conventions of the MEM driver
         
-        long ySize = sizes[1];
+        long timePoints = sizes[0];
         
-        long zSize = sizes[2];
+        long zSize = sizes[1];
         
-        long timePoints = sizes[3];
+        long ySize = sizes[2];
+        
+        long xSize = sizes[3];
         
         int planeSize = (int) (xSize * ySize);
         
@@ -156,27 +158,27 @@ public class GDALTestMultiDim
         
         for (int t = 0; t < timePoints; t++) {
             
-            starts[3] = t;
-            counts[3] = 1;
-            steps[3] = 1;
-            strides[3] = 1;
+            starts[0] = t;
+            counts[0] = 1;
+            steps[0] = 1;
+            strides[0] = 1;
 
             for (int z = 0; z < zSize; z++) {
             
-                starts[2] = z;
-                counts[2] = 1;
-                steps[2] = 1;
-                strides[2] = 1;
-
-                starts[1] = 0;
-                counts[1] = ySize;
+                starts[1] = z;
+                counts[1] = 1;
                 steps[1] = 1;
                 strides[1] = 1;
 
-                starts[0] = 0;
-                counts[0] = xSize;
-                steps[0] = 1;
-                strides[0] = 1;
+                starts[2] = 0;
+                counts[2] = ySize;
+                steps[2] = 1;
+                strides[2] = 1;
+
+                starts[3] = 0;
+                counts[3] = xSize;
+                steps[3] = 1;
+                strides[3] = 1;
 
                 int pos = 0;
                 
