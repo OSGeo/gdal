@@ -357,7 +357,7 @@ import java.lang.Integer;
     
       size_t necessaryArraySize = totalElements * componentCount * baseValueSize;
 
-      size_t actualArraySize = arraySize * sizeof(ctype);
+      actualArraySize = arraySize ; // * sizeof(ctype);
 
       if (actualArraySize < necessaryArraySize) {
 	  
@@ -481,7 +481,7 @@ import java.lang.Integer;
     
       size_t necessaryArraySize = totalElements * componentCount * baseValueSize;
 
-      size_t actualArraySize = arraySize * sizeof(ctype);
+      actualArraySize = arraySize ; // * sizeof(ctype);
 
       if (actualArraySize < necessaryArraySize) {
 	  
