@@ -328,21 +328,10 @@ import java.lang.Integer;
     if (okay_so_far) {
     
       // figure out how many bytes the total count of elements of the
-      //   internal type take. Ideally I could call type.GetSize() but
-      //   the C include file is not accessible here.
-          
-      size_t baseValueSize = sizeof(ctype);
+      //   internal type take.
+
+      size_t type_size = GDALExtendedDataTypeGetSize(internal_type);
       
-      size_t componentCount = 1;
-
-      if (internal_type_code == GDT_CInt16 ||
-          internal_type_code == GDT_CInt32 ||
-          internal_type_code == GDT_CFloat32 ||
-          internal_type_code == GDT_CFloat64)
-      {
-          componentCount = 2;
-      }
-
       size_t totalElements = 0;
     
       if (counts > 0) {
@@ -355,7 +344,7 @@ import java.lang.Integer;
         }
       }
     
-      size_t necessaryArraySize = totalElements * componentCount * baseValueSize;
+      size_t necessaryArraySize = totalElements * type_size;
 
       actualArraySize = arraySize ; // * sizeof(ctype);
 
@@ -450,23 +439,12 @@ import java.lang.Integer;
     size_t actualArraySize = 0;
     
     if (okay_so_far) {
-
+    
       // figure out how many bytes the total count of elements of the
-      //   internal type take. Ideally I could call type.GetSize() but
-      //   the C include file is not accessible here.
-          
-      size_t baseValueSize = sizeof(ctype);
+      //   internal type take.
+
+      size_t type_size = GDALExtendedDataTypeGetSize(internal_type);
       
-      size_t componentCount = 1;
-
-      if (internal_type_code == GDT_CInt16 ||
-          internal_type_code == GDT_CInt32 ||
-          internal_type_code == GDT_CFloat32 ||
-          internal_type_code == GDT_CFloat64)
-      {
-          componentCount = 2;
-      }
-
       size_t totalElements = 0;
     
       if (counts > 0) {
@@ -479,7 +457,7 @@ import java.lang.Integer;
         }
       }
     
-      size_t necessaryArraySize = totalElements * componentCount * baseValueSize;
+      size_t necessaryArraySize = totalElements * type_size;
 
       actualArraySize = arraySize ; // * sizeof(ctype);
 
