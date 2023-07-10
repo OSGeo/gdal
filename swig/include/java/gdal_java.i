@@ -186,9 +186,8 @@ import java.lang.Integer;
                             const GInt64 *arraySteps,
                             GInt64 *bufferStrides,
                             void* arrayIn,
-                            size_t arrayInSize,
-                            GDALExtendedDataTypeH extended_data_type,
-                            size_t sizeof_ctype)
+                            size_t arrayByteSize,
+                            GDALExtendedDataTypeH data_type)
   {
     size_t* localCounts =
       (size_t*) malloc(sizeof(size_t) * numDims);
@@ -208,10 +207,11 @@ import java.lang.Integer;
                                 (const size_t*) localCounts,
                                 (GInt64*) arraySteps,
                                 (const GPtrDiff_t*) localBufferStrides,
-                                extended_data_type,
+                                data_type,
                                 arrayIn,
                                 arrayIn,
-                                arrayInSize * sizeof_ctype);
+                                arrayByteSize);
+                                
     free(localBufferStrides);
     
     free(localCounts);
@@ -226,9 +226,8 @@ import java.lang.Integer;
                             const GInt64 *arraySteps,
                             GInt64 *bufferStrides,
                             void* arrayOut,
-                            size_t arrayOutSize,
-                            GDALExtendedDataTypeH extended_data_type,
-                            size_t sizeof_ctype)
+                            size_t arrayByteSize,
+                            GDALExtendedDataTypeH data_type)
   {
     size_t* localCounts =
       (size_t*) malloc(sizeof(size_t) * numDims);
@@ -248,10 +247,11 @@ import java.lang.Integer;
                                 (const size_t*) localCounts,
                                 (GInt64*) arraySteps,
                                 (const GPtrDiff_t*) localBufferStrides,
-                                extended_data_type,
+                                data_type,
                                 arrayOut,
                                 arrayOut,
-                                arrayOutSize * sizeof_ctype);
+                                arrayByteSize);
+
     free(localBufferStrides);
     
     free(localCounts);
@@ -278,7 +278,7 @@ import java.lang.Integer;
             int arraySteps,      GInt64 *sizes3, 
             int bufferStrides,   GInt64 *sizes4,
             ctype *arrayOut,
-            size_t arrayOutSize
+            size_t arraySize
            )
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
@@ -287,8 +287,11 @@ import java.lang.Integer;
     
       GDALExtendedDataTypeGetNumericDataType(internal_type);
 
+    // make sure MDArray internal type is compatible with passed
+    //   in value buffer (by checking buffer_type_code).
+    
     bool okay_so_far = true;
-        
+    
     if (buffer_type_code == GDT_Byte &&
           internal_type_code != GDT_Byte)
       okay_so_far = false; 
@@ -320,11 +323,44 @@ import java.lang.Integer;
           internal_type_code != GDT_CFloat64)
       okay_so_far = false; 
 
+    size_t actualArraySize = 0;
+    
     if (okay_so_far) {
     
-      GDALExtendedDataTypeH buffer_type =
-        GDALExtendedDataTypeCreate(buffer_type_code);
+      size_t baseValueSize = sizeof(ctype);
       
+      size_t componentCount = 1;
+
+      if (internal_type_code == GDT_CInt16 ||
+          internal_type_code == GDT_CInt32 ||
+          internal_type_code == GDT_CFloat32 ||
+          internal_type_code == GDT_CFloat64)
+      {
+          componentCount = 2;
+      }
+
+      size_t totalElements = 0;
+    
+      if (counts > 0) {
+
+        for (int c = 0; c < counts; c++) {
+      
+          totalElements *= (size_t) sizes2[c];
+        }
+      }
+    
+      size_t necessaryArraySize = totalElements * componentCount * baseValueSize;
+
+      size_t actualArraySize = arraySize * sizeof(ctype);
+
+      if (actualArraySize < necessaryArraySize) {
+	  
+	    okay_so_far = false;
+	  }
+    }
+        
+    if (okay_so_far) {
+    
       okay_so_far =
         MDArrayRead(self,
                         counts,
@@ -333,12 +369,8 @@ import java.lang.Integer;
                         sizes3,
                         sizes4,
                         arrayOut,
-                        arrayOutSize,
-                        buffer_type,
-                        sizeof(ctype)
-                        );
-      
-      GDALExtendedDataTypeRelease(buffer_type);
+                        actualArraySize,
+                        internal_type);
     }
                         
     GDALExtendedDataTypeRelease(internal_type);
@@ -364,7 +396,7 @@ import java.lang.Integer;
              int arraySteps,      GInt64 *sizes3, 
              int bufferStrides,   GInt64 *sizes4,
              ctype *arrayIn,
-             size_t arrayInSize
+             size_t arraySize
             )
   {
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
@@ -372,6 +404,9 @@ import java.lang.Integer;
     GDALDataType internal_type_code =
     
       GDALExtendedDataTypeGetNumericDataType(internal_type);
+    
+    // make sure MDArray internal type is compatible with passed
+    //   in value buffer (by checking buffer_type_code).
     
     bool okay_so_far = true;
     
@@ -406,11 +441,44 @@ import java.lang.Integer;
           internal_type_code != GDT_CFloat64)
       okay_so_far = false;
 
+    size_t actualArraySize = 0;
+    
     if (okay_so_far) {
     
-      GDALExtendedDataTypeH buffer_type =
-        GDALExtendedDataTypeCreate(buffer_type_code);
+      size_t baseValueSize = sizeof(ctype);
       
+      size_t componentCount = 1;
+
+      if (internal_type_code == GDT_CInt16 ||
+          internal_type_code == GDT_CInt32 ||
+          internal_type_code == GDT_CFloat32 ||
+          internal_type_code == GDT_CFloat64)
+      {
+          componentCount = 2;
+      }
+
+      size_t totalElements = 0;
+    
+      if (counts > 0) {
+
+        for (int c = 0; c < counts; c++) {
+      
+          totalElements *= (size_t) sizes2[c];
+        }
+      }
+    
+      size_t necessaryArraySize = totalElements * componentCount * baseValueSize;
+
+      size_t actualArraySize = arraySize * sizeof(ctype);
+
+      if (actualArraySize < necessaryArraySize) {
+	  
+	    okay_so_far = false;
+	  }
+    }
+
+    if (okay_so_far) {
+    
       okay_so_far =
         MDArrayWrite(self,
                         counts,
@@ -419,12 +487,10 @@ import java.lang.Integer;
                         sizes3,
                         sizes4,
                         arrayIn,
-                        arrayInSize,
-                        buffer_type,
-                        sizeof(ctype)
+                        actualArraySize,
+                        internal_type
                         );
 
-      GDALExtendedDataTypeRelease(buffer_type);
     }
                         
     GDALExtendedDataTypeRelease(internal_type);
