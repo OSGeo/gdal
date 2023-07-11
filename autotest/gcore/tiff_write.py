@@ -11245,5 +11245,31 @@ def test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam():
     gdal.GetDriverByName("GTiff").Delete(filename)
 
 
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 6, 0),
+    reason="libtiff internal or >=4.6.0 needed",
+)
+@pytest.mark.require_creation_option("GTiff", "WEBP")
+def test_tiff_write_webp_lossless_exact():
+
+    filename = "/vsimem/test_tiff_write_webp_lossless_exact.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename,
+        10,
+        10,
+        4,
+        options=["PHOTOMETRIC=RGB", "ALPHA=YES", "COMPRESS=WEBP", "WEBP_LOSSLESS=YES"],
+    )
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(2).Fill(2)
+    ds.GetRasterBand(3).Fill(3)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+    ds = gdal.Open(filename)
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [100, 200, 300, 0]
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete(filename)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None
