@@ -296,82 +296,12 @@ import java.lang.Integer;
       return false;
     }
     
-    GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
+    GDALExtendedDataTypeH buffer_type =
     
-    GDALDataType internal_type_code =
+      GDALExtendedDataTypeCreate(buffer_type_code);
     
-      GDALExtendedDataTypeGetNumericDataType(internal_type);
-
-    // make sure MDArray internal type is compatible with passed
-    //   in value buffer (by checking buffer_type_code).
+    bool result =
     
-    bool okay_so_far = true;
-    
-    if (buffer_type_code == GDT_Byte &&
-          internal_type_code != GDT_Byte)
-      okay_so_far = false; 
-       
-    if (buffer_type_code == GDT_Int16 &&
-          internal_type_code != GDT_Int16 &&
-          internal_type_code != GDT_UInt16 &&
-          internal_type_code != GDT_CInt16)
-      okay_so_far = false; 
-    
-    if (buffer_type_code == GDT_Int32 &&
-          internal_type_code != GDT_Int32 &&
-          internal_type_code != GDT_UInt32 &&
-          internal_type_code != GDT_CInt32)
-      okay_so_far = false; 
-    
-    if (buffer_type_code == GDT_Int64 &&
-          internal_type_code != GDT_Int64 &&
-          internal_type_code != GDT_UInt64)
-      okay_so_far = false; 
-    
-    if (buffer_type_code == GDT_Float32 &&
-          internal_type_code != GDT_Float32 &&
-          internal_type_code != GDT_CFloat32)
-      okay_so_far = false; 
-    
-    if (buffer_type_code == GDT_Float64 &&
-          internal_type_code != GDT_Float64 &&
-          internal_type_code != GDT_CFloat64)
-      okay_so_far = false; 
-
-    size_t actualArraySize = 0;
-    
-    if (okay_so_far) {
-    
-      // figure out how many bytes the total count of elements of the
-      //   internal type take.
-
-      size_t type_size = GDALExtendedDataTypeGetSize(internal_type);
-      
-      size_t totalElements = 0;
-    
-      if (counts > 0) {
-
-        totalElements = 1;
-        
-        for (int c = 0; c < counts; c++) {
-      
-          totalElements *= (size_t) sizes2[c];
-        }
-      }
-    
-      size_t necessaryArraySize = totalElements * type_size;
-
-      actualArraySize = arraySize ; // * sizeof(ctype);
-
-      if (actualArraySize < necessaryArraySize) {
-	  
-	    okay_so_far = false;
-	  }
-    }
-        
-    if (okay_so_far) {
-    
-      okay_so_far =
         MDArrayRead(self,
                         counts,
                         sizes1,
@@ -379,13 +309,12 @@ import java.lang.Integer;
                         sizes3,
                         sizes4,
                         arrayOut,
-                        actualArraySize,
-                        internal_type);
-    }
+                        arraySize,
+                        buffer_type);
                         
-    GDALExtendedDataTypeRelease(internal_type);
+    GDALExtendedDataTypeRelease(buffer_type);
 
-    return okay_so_far;
+    return result;
   }
 %enddef
 
@@ -420,82 +349,12 @@ import java.lang.Integer;
       return false;
     }
     
-    GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
+    GDALExtendedDataTypeH buffer_type =
     
-    GDALDataType internal_type_code =
+      GDALExtendedDataTypeCreate(buffer_type_code);
     
-      GDALExtendedDataTypeGetNumericDataType(internal_type);
+    bool result =
     
-    // make sure MDArray internal type is compatible with passed
-    //   in value buffer (by checking buffer_type_code).
-    
-    bool okay_so_far = true;
-    
-    if (buffer_type_code == GDT_Byte &&
-          internal_type_code != GDT_Byte)
-      okay_so_far = false;
-       
-    if (buffer_type_code == GDT_Int16 &&
-          internal_type_code != GDT_Int16 &&
-          internal_type_code != GDT_UInt16 &&
-          internal_type_code != GDT_CInt16)
-      okay_so_far = false;
-    
-    if (buffer_type_code == GDT_Int32 &&
-          internal_type_code != GDT_Int32 &&
-          internal_type_code != GDT_UInt32 &&
-          internal_type_code != GDT_CInt32)
-      okay_so_far = false;
-    
-    if (buffer_type_code == GDT_Int64 &&
-          internal_type_code != GDT_Int64 &&
-          internal_type_code != GDT_UInt64)
-      okay_so_far = false;
-    
-    if (buffer_type_code == GDT_Float32 &&
-          internal_type_code != GDT_Float32 &&
-          internal_type_code != GDT_CFloat32)
-      okay_so_far = false;
-    
-    if (buffer_type_code == GDT_Float64 &&
-          internal_type_code != GDT_Float64 &&
-          internal_type_code != GDT_CFloat64)
-      okay_so_far = false;
-
-    size_t actualArraySize = 0;
-    
-    if (okay_so_far) {
-    
-      // figure out how many bytes the total count of elements of the
-      //   internal type take.
-
-      size_t type_size = GDALExtendedDataTypeGetSize(internal_type);
-      
-      size_t totalElements = 0;
-    
-      if (counts > 0) {
-
-        totalElements = 1;
-        
-        for (int c = 0; c < counts; c++) {
-      
-          totalElements *= (size_t) sizes2[c];
-        }
-      }
-    
-      size_t necessaryArraySize = totalElements * type_size;
-
-      actualArraySize = arraySize ; // * sizeof(ctype);
-
-      if (actualArraySize < necessaryArraySize) {
-	  
-	    okay_so_far = false;
-	  }
-    }
-
-    if (okay_so_far) {
-    
-      okay_so_far =
         MDArrayWrite(self,
                         counts,
                         sizes1,
@@ -503,15 +362,12 @@ import java.lang.Integer;
                         sizes3,
                         sizes4,
                         arrayIn,
-                        actualArraySize,
-                        internal_type
-                        );
+                        arraySize,
+                        buffer_type);
 
-    }
-                        
-    GDALExtendedDataTypeRelease(internal_type);
+    GDALExtendedDataTypeRelease(buffer_type);
 
-    return okay_so_far;
+    return result;
   }
 %enddef
 
