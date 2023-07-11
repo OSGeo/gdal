@@ -185,14 +185,16 @@ import java.lang.Integer;
                             const GInt64 *counts,
                             const GInt64 *arraySteps,
                             GInt64 *bufferStrides,
-                            void* arrayIn,
+                            void* arrayOut,
                             size_t arrayByteSize,
                             GDALExtendedDataTypeH data_type)
   {
     size_t* localCounts =
+      
       (size_t*) malloc(sizeof(size_t) * numDims);
     
     GPtrDiff_t* localBufferStrides =
+      
       (GPtrDiff_t*) malloc(sizeof(GPtrDiff_t) * numDims);
     
     for (int i = 0; i < numDims; i++) {
@@ -203,14 +205,14 @@ import java.lang.Integer;
     }
     
     bool retVal = GDALMDArrayRead(hMDA,
-                                (const GUInt64*) arrayStartIdxes,
-                                (const size_t*) localCounts,
-                                (GInt64*) arraySteps,
-                                (const GPtrDiff_t*) localBufferStrides,
-                                data_type,
-                                arrayIn,
-                                arrayIn,
-                                arrayByteSize);
+                                   (const GUInt64*) arrayStartIdxes,
+                                   (const size_t*) localCounts,
+                                   (GInt64*) arraySteps,
+                                   (const GPtrDiff_t*) localBufferStrides,
+                                   data_type,
+                                   arrayOut,
+                                   arrayOut,
+                                   arrayByteSize);
                                 
     free(localBufferStrides);
     
@@ -225,14 +227,16 @@ import java.lang.Integer;
                             const GInt64 *counts,
                             const GInt64 *arraySteps,
                             GInt64 *bufferStrides,
-                            void* arrayOut,
+                            void* arrayIn,
                             size_t arrayByteSize,
                             GDALExtendedDataTypeH data_type)
   {
     size_t* localCounts =
+      
       (size_t*) malloc(sizeof(size_t) * numDims);
     
     GPtrDiff_t* localBufferStrides =
+      
       (GPtrDiff_t*) malloc(sizeof(GPtrDiff_t) * numDims);
     
     for (int i = 0; i < numDims; i++) {
@@ -243,14 +247,14 @@ import java.lang.Integer;
     }
     
     bool retVal = GDALMDArrayWrite(hMDA,
-                                (const GUInt64*) arrayStartIdxes,
-                                (const size_t*) localCounts,
-                                (GInt64*) arraySteps,
-                                (const GPtrDiff_t*) localBufferStrides,
-                                data_type,
-                                arrayOut,
-                                arrayOut,
-                                arrayByteSize);
+                                    (const GUInt64*) arrayStartIdxes,
+                                    (const size_t*) localCounts,
+                                    (GInt64*) arraySteps,
+                                    (const GPtrDiff_t*) localBufferStrides,
+                                    data_type,
+                                    arrayIn,
+                                    arrayIn,
+                                    arrayByteSize);
 
     free(localBufferStrides);
     
@@ -268,11 +272,12 @@ import java.lang.Integer;
     return GDALMDArrayGetDim(self, index);
   }
   
-%apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
-%apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
-%apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
-%apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
-  %define DEFINE_READ_MDA_DATA(ctype, buffer_type_code)
+%define DEFINE_READ_MDA_DATA(ctype, buffer_type_code)
+  %apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
+  %apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
+  %apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
+  %apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
+  %apply (ctype *arrayOut, size_t arraySize) { (ctype *arrayOut, size_t arraySize) };
   bool Read(int arrayStartIdxes, GInt64 *sizes1, 
             int counts,          GInt64 *sizes2, 
             int arraySteps,      GInt64 *sizes3, 
@@ -372,7 +377,7 @@ import java.lang.Integer;
 
     return okay_so_far;
   }
-  %enddef
+%enddef
 
   DEFINE_READ_MDA_DATA(char,    GDT_Byte)
   DEFINE_READ_MDA_DATA(short,   GDT_Int16)
@@ -381,11 +386,12 @@ import java.lang.Integer;
   DEFINE_READ_MDA_DATA(float,   GDT_Float32)
   DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
-%apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
-%apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
-%apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
-%apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
-  %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type_code)
+%define DEFINE_WRITE_MDA_DATA(ctype, buffer_type_code)
+  %apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
+  %apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
+  %apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
+  %apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
+  %apply (ctype *arrayIn, size_t arraySize) { (ctype *arrayIn, size_t arraySize) };
   bool Write(int arrayStartIdxes, GInt64 *sizes1, 
              int counts,          GInt64 *sizes2, 
              int arraySteps,      GInt64 *sizes3, 
@@ -487,7 +493,7 @@ import java.lang.Integer;
 
     return okay_so_far;
   }
-  %enddef
+%enddef
 
   DEFINE_WRITE_MDA_DATA(char   , GDT_Byte)
   DEFINE_WRITE_MDA_DATA(short  , GDT_Int16)

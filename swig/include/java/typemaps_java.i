@@ -1556,7 +1556,7 @@
 
     $2 = sizeof(ctype) * jenv->GetArrayLength($input);
     $1 = (ctype*) malloc($2);
-    //$1 = (ctype*) jenv->GetPrimitiveArrayCritical($input, 0);
+
     if ($1 == NULL)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
@@ -1571,9 +1571,6 @@
     jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
   free($1);
-
-  //jenv->ReleasePrimitiveArrayCritical($input, $1, JNI_COMMIT);
-  //jenv->ReleasePrimitiveArrayCritical($input, $1, 0);
 }
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
@@ -1697,7 +1694,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
     $2 = sizeof(ctype) * jenv->GetArrayLength($input);
     $1 = (ctype*) malloc($2);
-    //$1 = (ctype*) jenv->GetPrimitiveArrayCritical($input, 0);
+
     if ($1 == NULL)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
@@ -1712,9 +1709,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
   free($1);
-
-  //jenv->ReleasePrimitiveArrayCritical($input, $1, JNI_COMMIT);
-  //jenv->ReleasePrimitiveArrayCritical($input, $1, 0);
 }
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
@@ -1784,7 +1778,6 @@ DEFINE_BOOLEAN_FUNC_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
   jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
 }
 
-
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
 
 %typemap(javain) (ctype *arrayIn, size_t arraySize)  "$javainput"
@@ -1822,7 +1815,6 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(jni) (double *arrayIn, size_t arraySize)  "jdoubleArray"
 %typemap(jtype) (double *arrayIn, size_t arraySize)  "double[]"
 %typemap(jstype) (double *arrayIn, size_t arraySize)  "double[]"
-
 
 /***************************************************
  * Typemaps for GIntBig
