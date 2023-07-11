@@ -890,7 +890,7 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 2
      - -
      - divide one raster band by another (``b1 / b2``)
-   * - **norm_diff*
+   * - **norm_diff**
      - 2
      - -
      - computes the normalized difference between two raster bands: ``(b1 - b2)/(b1 + b2)``
