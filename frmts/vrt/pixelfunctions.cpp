@@ -1496,8 +1496,11 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
             const double dfLeftVal = GetSrcVal(papoSources[0], eSrcType, ii);
             const double dfRightVal = GetSrcVal(papoSources[1], eSrcType, ii);
 
+            const double dfDenom = (dfLeftVal + dfRightVal);
+
             const double dfPixVal =
-                (dfLeftVal - dfRightVal) / (dfLeftVal + dfRightVal);
+                    dfDenom == 0 ? std::numeric_limits<double>::infinity()
+                               : (dfLeftVal - dfRightVal) / dfDenom;
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
@@ -1536,12 +1539,10 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
  * - "diff": computes the difference between 2 raster bands (b1 - b2)
  * - "mul": multiply 2 or more raster bands
  * - "div": divide one raster band by another (b1 / b2).
- *          Note: no check is performed on zero division
  * - "norm_diff": computes the normalized difference between two raster bands:
  *                ``(b1 - b2)/(b1 + b2)``.
- *                Note: no check is performed on zero division
  * - "cmul": multiply the first band for the complex conjugate of the second
- * - "inv": inverse (1./x). Note: no check is performed on zero division
+ * - "inv": inverse (1./x).
  * - "intensity": computes the intensity Re(x*conj(x)) of a single raster band
  *                (real or complex)
  * - "sqrt": perform the square root of a single raster band (real only)
