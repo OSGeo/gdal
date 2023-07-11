@@ -516,7 +516,13 @@ class GPKGChecker(object):
         geom_types = GPKGChecker.BASE_GEOM_TYPES + GPKGChecker.EXT_GEOM_TYPES
         date_pattern_str = "[0-9]{4}-[0-1][0-9]-[0-3][0-9]"
         date_pattern = re.compile(date_pattern_str)
-        datetime_pattern = re.compile(
+        datetime_pattern_no_seconds = re.compile(
+            date_pattern_str + "T[0-2][0-9]:[0-5][0-9]Z"
+        )
+        datetime_pattern_with_seconds_no_ms = re.compile(
+            date_pattern_str + "T[0-2][0-9]:[0-5][0-9]:[0-5][0-9]Z"
+        )
+        datetime_pattern_with_milliseconds = re.compile(
             date_pattern_str + "T[0-2][0-9]:[0-5][0-9]:[0-5][0-9].[0-9]{3}Z"
         )
         for row in c.fetchall():
@@ -633,7 +639,11 @@ class GPKGChecker(object):
                         continue
 
                 elif expected_col_type == "DATETIME" and got_col_type == "TEXT":
-                    if datetime_pattern.match(val) is None:
+                    if (
+                        datetime_pattern_with_milliseconds.match(val) is None
+                        and datetime_pattern_with_seconds_no_ms.match(val) is None
+                        and datetime_pattern_no_seconds.match(val) is None
+                    ):
                         warned_col[i] = True
                         self._warn(
                             "In column %s, text %s found which is not a valid DATETIME"

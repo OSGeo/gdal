@@ -135,9 +135,9 @@ def validate(filename, quiet=False):
         open(my_filename, "wb").write(content)
     try:
         _validate_check(my_filename)
-    except Exception as e:
+    except Exception:
         if not quiet:
-            print(e)
+            raise
         return False
     finally:
         if my_filename != filename:
@@ -8909,3 +8909,40 @@ def test_ogr_gpkg_rtree_triggers(gpkg_version):
 
     finally:
         gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test relaxed DATETIME format for GeoPackage 1.4
+# (https://github.com/OSGeo/gdal/issues/8037)
+
+
+def test_ogr_gpkg_1_4_relaxed_datetime_format():
+    dbname = "/vsimem/test_ogr_gpkg_1_4_relaxed_datetime_format.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname, options=["VERSION=1.4"])
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("dt", "2023-11-07T16:03:34Z")
+    lyr.CreateFeature(f)
+    f = None
+
+    # Check we have written without milliseconds
+    with ds.ExecuteSQL("SELECT CAST(dt AS VARCHAR) AS dt FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["dt"] == "2023-11-07T16:03:34Z"
+
+    # Test datetime without seconds
+    ds.ExecuteSQL("INSERT INTO test (dt) VALUES ('2023-11-07T16:03Z')")
+    ds = None
+
+    validate(dbname)
+
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["dt"] == "2023/11/07 16:03:34+00"
+    f = lyr.GetNextFeature()
+    assert f["dt"] == "2023/11/07 16:03:00+00"
+    ds = None
+
+    gdal.Unlink(dbname)

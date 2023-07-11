@@ -305,9 +305,12 @@ bool OGRGeoPackageLayer::ParseDateTimeField(const char *pszTxt,
 
     const size_t nLen = strlen(pszTxt);
 
-    if (OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(pszTxt, nLen, psField))
+    if (OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(pszTxt, nLen, psField) ||
+        OGRParseDateTimeYYYYMMDDTHHMMSSZ(pszTxt, nLen, psField) ||
+        OGRParseDateTimeYYYYMMDDTHHMMZ(pszTxt, nLen, psField))
     {
-        // nominal format
+        // nominal format is YYYYMMDDTHHMMSSsssZ before GeoPackage 1.4
+        // GeoPackage 1.4 also accepts omission of seconds and milliseconds
     }
     else if (OGRParseDate(pszTxt, psField, 0))
     {

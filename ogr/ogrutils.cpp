@@ -1177,6 +1177,57 @@ int OGRParseDate(const char *pszInput, OGRField *psField,
 }
 
 /************************************************************************/
+/*               OGRParseDateTimeYYYYMMDDTHHMMZ()                       */
+/************************************************************************/
+
+bool OGRParseDateTimeYYYYMMDDTHHMMZ(const char *pszInput, size_t nLen,
+                                    OGRField *psField)
+{
+    // Detect "YYYY-MM-DDTHH:MM[Z]" (16 or 17 characters)
+    if ((nLen == 16 || (nLen == 17 && pszInput[16] == 'Z')) &&
+        pszInput[4] == '-' && pszInput[7] == '-' && pszInput[10] == 'T' &&
+        pszInput[13] == ':' && static_cast<unsigned>(pszInput[0] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[1] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[2] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[3] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[5] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[6] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[8] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[9] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[11] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[12] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[14] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[15] - '0') <= 9)
+    {
+        psField->Date.Year = static_cast<GInt16>(
+            ((((pszInput[0] - '0') * 10 + (pszInput[1] - '0')) * 10) +
+             (pszInput[2] - '0')) *
+                10 +
+            (pszInput[3] - '0'));
+        psField->Date.Month =
+            static_cast<GByte>((pszInput[5] - '0') * 10 + (pszInput[6] - '0'));
+        psField->Date.Day =
+            static_cast<GByte>((pszInput[8] - '0') * 10 + (pszInput[9] - '0'));
+        psField->Date.Hour = static_cast<GByte>((pszInput[11] - '0') * 10 +
+                                                (pszInput[12] - '0'));
+        psField->Date.Minute = static_cast<GByte>((pszInput[14] - '0') * 10 +
+                                                  (pszInput[15] - '0'));
+        psField->Date.Second = 0.0f;
+        psField->Date.TZFlag = nLen == 16 ? 0 : 100;
+        psField->Date.Reserved = 0;
+        if (psField->Date.Month == 0 || psField->Date.Month > 12 ||
+            psField->Date.Day == 0 || psField->Date.Day > 31 ||
+            psField->Date.Hour > 23 || psField->Date.Minute > 59)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*               OGRParseDateTimeYYYYMMDDTHHMMSSZ()                     */
 /************************************************************************/
 

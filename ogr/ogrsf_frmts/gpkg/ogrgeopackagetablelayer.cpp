@@ -388,7 +388,8 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                     else if (poFieldDefn->GetType() == OFTDateTime)
                     {
                         destructorType = SQLITE_STATIC;
-                        constexpr bool bAlwaysMillisecond = true;
+                        const bool bAlwaysMillisecond =
+                            (m_poDS->m_nUserVersion < GPKG_1_4_VERSION);
                         const auto psFieldRaw =
                             poFeature->GetRawFieldRef(iField);
                         char *pszValEdit =
