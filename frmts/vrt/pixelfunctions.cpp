@@ -1499,8 +1499,8 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
             const double dfDenom = (dfLeftVal + dfRightVal);
 
             const double dfPixVal =
-                    dfDenom == 0 ? std::numeric_limits<double>::infinity()
-                               : (dfLeftVal - dfRightVal) / dfDenom;
+                dfDenom == 0 ? std::numeric_limits<double>::infinity()
+                             : (dfLeftVal - dfRightVal) / dfDenom;
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
