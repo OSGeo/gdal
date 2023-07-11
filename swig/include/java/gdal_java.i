@@ -286,9 +286,12 @@ import java.lang.Integer;
             size_t arraySize
            )
   {
-    if (arrayStartIdxes != counts ||
-        arrayStartIdxes != arraySteps ||
-        arrayStartIdxes != bufferStrides)
+    size_t numDims = GDALMDArrayGetDimensionCount(self);
+    
+    if (arrayStartIdxes != numDims ||
+        counts != numDims ||
+        arraySteps != numDims ||
+        bufferStrides != numDims)
     {
       return false;
     }
@@ -407,9 +410,12 @@ import java.lang.Integer;
              size_t arraySize
             )
   {
-    if (arrayStartIdxes != counts ||
-        arrayStartIdxes != arraySteps ||
-        arrayStartIdxes != bufferStrides)
+    size_t numDims = GDALMDArrayGetDimensionCount(self);
+    
+    if (arrayStartIdxes != numDims ||
+        counts != numDims ||
+        arraySteps != numDims ||
+        bufferStrides != numDims)
     {
       return false;
     }
