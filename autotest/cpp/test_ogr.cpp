@@ -2364,4 +2364,52 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
 #endif
 }
 
+TEST_F(test_ogr, OGRGetISO8601DateTime)
+{
+    OGRField sField;
+    sField.Date.Year = 2023;
+    sField.Date.Month = 7;
+    sField.Date.Day = 11;
+    sField.Date.Hour = 17;
+    sField.Date.Minute = 27;
+    sField.Date.Second = 34.567f;
+    sField.Date.TZFlag = 100;
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::AUTO;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:34.567Z");
+    }
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::MILLISECOND;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:34.567Z");
+    }
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::SECOND;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:35Z");
+    }
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::MINUTE;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27Z");
+    }
+    sField.Date.Second = 34.0f;
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::AUTO;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:34Z");
+    }
+}
+
 }  // namespace

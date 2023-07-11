@@ -375,6 +375,19 @@ The following layer creation options are available:
       gpkg_extensions table. Starting with GDAL 3.3, OGR_ASPATIAL is no longer
       available on creation.
 
+-  .. lco:: DATETIME_PRECISION
+      :choices: AUTO, MILLISECOND, SECOND, MINUTE
+      :default: AUTO
+      :since: 3.8
+
+      Determines the level of detail for datetime fields.
+      Starting with GeoPackage 1.4, three variants of datetime formats are supported:
+      truncated at minute (``MINUTE``), truncated at second (``SECOND``) or
+      including milliseconds (``MILLISECOND``).
+      In ``AUTO`` mode and GeoPackage 1.4, milliseconds are included only if non-zero.
+      Selecting modes ``MINUTE`` or ``SECOND`` will raise a warning with GeoPackage < 1.4.
+
+
 Configuration options
 ---------------------
 

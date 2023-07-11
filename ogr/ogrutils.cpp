@@ -1537,6 +1537,16 @@ char *OGRGetXMLDateTime(const OGRField *psField, bool bAlwaysMillisecond)
 int OGRGetISO8601DateTime(const OGRField *psField, bool bAlwaysMillisecond,
                           char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER])
 {
+    OGRISO8601Format sFormat;
+    sFormat.ePrecision = bAlwaysMillisecond ? OGRISO8601Precision::MILLISECOND
+                                            : OGRISO8601Precision::AUTO;
+    return OGRGetISO8601DateTime(psField, sFormat, szBuffer);
+}
+
+int OGRGetISO8601DateTime(const OGRField *psField,
+                          const OGRISO8601Format &sFormat,
+                          char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER])
+{
     const GInt16 year = psField->Date.Year;
     const GByte month = psField->Date.Month;
     const GByte day = psField->Date.Day;
@@ -1573,44 +1583,53 @@ int OGRGetISO8601DateTime(const OGRField *psField, bool bAlwaysMillisecond,
     szBuffer[13] = ':';
     szBuffer[14] = ((minute / 10) % 10) + '0';
     szBuffer[15] = (minute % 10) + '0';
-    szBuffer[16] = ':';
-
     int nPos;
-    if (bAlwaysMillisecond || OGR_GET_MS(second))
+    if (sFormat.ePrecision == OGRISO8601Precision::MINUTE)
     {
-        /* Below is equivalent of the below snprintf(), but hand-made for
-         * faster execution. */
-        /* snprintf(szBuffer, nMaxSize,
-                               "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
-                               year, month, day, hour, minute, second,
-                               szTimeZone);
-        */
-        int nMilliSecond = static_cast<int>(second * 1000.0f + 0.5f);
-        szBuffer[22] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[21] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[20] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[19] = '.';
-        szBuffer[18] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[17] = (nMilliSecond % 10) + '0';
-        nPos = 23;
+        nPos = 16;
     }
     else
     {
-        /* Below is equivalent of the below snprintf(), but hand-made for
-         * faster execution. */
-        /* snprintf(szBuffer, nMaxSize,
-                               "%04d-%02u-%02uT%02u:%02u:%02u%s",
-                               year, month, day, hour, minute,
-                               static_cast<GByte>(second), szTimeZone);
-        */
-        int nSecond = static_cast<int>(second + 0.5f);
-        szBuffer[17] = ((nSecond / 10) % 10) + '0';
-        szBuffer[18] = (nSecond % 10) + '0';
-        nPos = 19;
+        szBuffer[16] = ':';
+
+        if (sFormat.ePrecision == OGRISO8601Precision::MILLISECOND ||
+            (sFormat.ePrecision == OGRISO8601Precision::AUTO &&
+             OGR_GET_MS(second)))
+        {
+            /* Below is equivalent of the below snprintf(), but hand-made for
+             * faster execution. */
+            /* snprintf(szBuffer, nMaxSize,
+                                   "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
+                                   year, month, day, hour, minute, second,
+                                   szTimeZone);
+            */
+            int nMilliSecond = static_cast<int>(second * 1000.0f + 0.5f);
+            szBuffer[22] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[21] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[20] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[19] = '.';
+            szBuffer[18] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[17] = (nMilliSecond % 10) + '0';
+            nPos = 23;
+        }
+        else
+        {
+            /* Below is equivalent of the below snprintf(), but hand-made for
+             * faster execution. */
+            /* snprintf(szBuffer, nMaxSize,
+                                   "%04d-%02u-%02uT%02u:%02u:%02u%s",
+                                   year, month, day, hour, minute,
+                                   static_cast<GByte>(second), szTimeZone);
+            */
+            int nSecond = static_cast<int>(second + 0.5f);
+            szBuffer[17] = ((nSecond / 10) % 10) + '0';
+            szBuffer[18] = (nSecond % 10) + '0';
+            nPos = 19;
+        }
     }
 
     switch (TZFlag)

@@ -121,6 +121,30 @@ char CPL_DLL *OGRGetXMLDateTime(const OGRField *psField,
 int CPL_DLL
 OGRGetISO8601DateTime(const OGRField *psField, bool bAlwaysMillisecond,
                       char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER]);
+
+/** Precision of formatting */
+enum class OGRISO8601Precision
+{
+    /** Automated mode: millisecond included if non zero, otherwise truncated at second */
+    AUTO,
+    /** Always include millisecond */
+    MILLISECOND,
+    /** Always include second, but no millisecond */
+    SECOND,
+    /** Always include minute, but no second */
+    MINUTE
+};
+
+/** Configuration of the ISO8601 formatting output */
+struct OGRISO8601Format
+{
+    /** Precision of formatting */
+    OGRISO8601Precision ePrecision;
+};
+
+int CPL_DLL
+OGRGetISO8601DateTime(const OGRField *psField, const OGRISO8601Format &sFormat,
+                      char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER]);
 char CPL_DLL *OGRGetXML_UTF8_EscapedString(const char *pszString);
 bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMZ(const char *pszInput, size_t nLen,
                                             OGRField *psField);

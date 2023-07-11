@@ -8946,3 +8946,51 @@ def test_ogr_gpkg_1_4_relaxed_datetime_format():
     ds = None
 
     gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test relaxed DATETIME format for GeoPackage 1.4
+# (https://github.com/OSGeo/gdal/issues/8037)
+
+
+@pytest.mark.parametrize(
+    "version,datetime_precision,input,output",
+    [
+        ("1.4", "AUTO", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.4", "AUTO", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34Z"),
+        ("1.3", "AUTO", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.3", "AUTO", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34.000Z"),
+        ("1.4", "MILLISECOND", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.4", "MILLISECOND", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34.000Z"),
+        ("1.4", "SECOND", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34Z"),
+        ("1.4", "MINUTE", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03Z"),
+        ("1.4", "INVALID", None, None),
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_1_4_DATETIME_PRECISION(version, datetime_precision, input, output):
+    dbname = "/vsimem/test_ogr_gpkg_1_4_DATETIME_PRECISION.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname, options=["VERSION=" + version])
+    if datetime_precision == "INVALID":
+        with pytest.raises(Exception), gdaltest.error_handler():
+            lyr = ds.CreateLayer(
+                "test", options=["DATETIME_PRECISION=" + datetime_precision]
+            )
+    else:
+        lyr = ds.CreateLayer(
+            "test", options=["DATETIME_PRECISION=" + datetime_precision]
+        )
+        lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("dt", input)
+        lyr.CreateFeature(f)
+        f = None
+
+        # Check we have written what we expected
+        with ds.ExecuteSQL("SELECT CAST(dt AS VARCHAR) AS dt FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["dt"] == output
+
+    ds = None
+
+    gdal.Unlink(dbname)

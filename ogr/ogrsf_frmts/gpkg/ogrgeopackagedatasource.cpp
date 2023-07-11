@@ -6606,6 +6606,41 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
         poLayer->SetASpatialVariant(eASpatialVariant);
     }
 
+    const char *pszDateTimePrecision =
+        CSLFetchNameValueDef(papszOptions, "DATETIME_PRECISION", "AUTO");
+    if (EQUAL(pszDateTimePrecision, "MILLISECOND"))
+    {
+        poLayer->SetDateTimePrecision(OGRISO8601Precision::MILLISECOND);
+    }
+    else if (EQUAL(pszDateTimePrecision, "SECOND"))
+    {
+        if (m_nUserVersion < GPKG_1_4_VERSION)
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "DATETIME_PRECISION=SECOND is only valid since GeoPackage 1.4");
+        poLayer->SetDateTimePrecision(OGRISO8601Precision::SECOND);
+    }
+    else if (EQUAL(pszDateTimePrecision, "MINUTE"))
+    {
+        if (m_nUserVersion < GPKG_1_4_VERSION)
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "DATETIME_PRECISION=MINUTE is only valid since GeoPackage 1.4");
+        poLayer->SetDateTimePrecision(OGRISO8601Precision::MINUTE);
+    }
+    else if (EQUAL(pszDateTimePrecision, "AUTO"))
+    {
+        if (m_nUserVersion < GPKG_1_4_VERSION)
+            poLayer->SetDateTimePrecision(OGRISO8601Precision::MILLISECOND);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported value for DATETIME_PRECISION: %s",
+                 pszDateTimePrecision);
+        return nullptr;
+    }
+
     // If there was an ogr_empty_table table, we can remove it
     // But do it at dataset closing, otherwise locking performance issues
     // can arise (probably when transactions are used).
