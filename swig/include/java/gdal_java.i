@@ -286,6 +286,13 @@ import java.lang.Integer;
             size_t arraySize
            )
   {
+    if (arrayStartIdxes != counts ||
+        arrayStartIdxes != arraySteps ||
+        arrayStartIdxes != bufferStrides)
+    {
+      return false;
+    }
+    
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     
     GDALDataType internal_type_code =
@@ -400,6 +407,13 @@ import java.lang.Integer;
              size_t arraySize
             )
   {
+    if (arrayStartIdxes != counts ||
+        arrayStartIdxes != arraySteps ||
+        arrayStartIdxes != bufferStrides)
+    {
+      return false;
+    }
+    
     GDALExtendedDataTypeH internal_type = GDALMDArrayGetDataType(self);
     
     GDALDataType internal_type_code =
