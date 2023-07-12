@@ -668,7 +668,6 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures,
 
         if (bHasIgnoredField && !osPropertyName.empty())
         {
-            osPropertyName = "(" + osPropertyName + ")";
             osURL = CPLURLAddKVP(osURL, "PROPERTYNAME",
                                  WFS_EscapeURL(osPropertyName));
         }
@@ -1181,8 +1180,8 @@ OGRFeatureDefn *OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn *poSrcFDefn)
         bUnsetWidthPrecision = true;
     }
 
-    CPLString osPropertyName = CPLURLGetValue(pszBaseURL, "PROPERTYNAME");
-    const char *pszPropertyName = osPropertyName.c_str();
+    const CPLStringList aosPropertyName(CSLTokenizeString2(
+        CPLURLGetValue(pszBaseURL, "PROPERTYNAME"), "(,)", 0));
 
     poFeatureDefn->SetGeomType(poSrcFDefn->GetGeomType());
     if (poSrcFDefn->GetGeomFieldCount() > 0)
@@ -1190,10 +1189,10 @@ OGRFeatureDefn *OGRWFSLayer::BuildLayerDefn(OGRFeatureDefn *poSrcFDefn)
             poSrcFDefn->GetGeomFieldDefn(0)->GetNameRef());
     for (int i = 0; i < poSrcFDefn->GetFieldCount(); i++)
     {
-        if (pszPropertyName[0] != 0)
+        if (!aosPropertyName.empty())
         {
-            if (strstr(pszPropertyName,
-                       poSrcFDefn->GetFieldDefn(i)->GetNameRef()) != nullptr)
+            if (aosPropertyName.FindString(
+                    poSrcFDefn->GetFieldDefn(i)->GetNameRef()) >= 0)
                 poFeatureDefn->AddFieldDefn(poSrcFDefn->GetFieldDefn(i));
             else
                 bGotApproximateLayerDefn = true;
