@@ -1471,6 +1471,49 @@ static CPLErr ScalePixelFunc(void **papoSources, int nSources, void *pData,
     return CE_None;
 }
 
+static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
+                                int nXSize, int nYSize, GDALDataType eSrcType,
+                                GDALDataType eBufType, int nPixelSpace,
+                                int nLineSpace)
+{
+    /* ---- Init ---- */
+    if (nSources != 2)
+        return CE_Failure;
+
+    if (GDALDataTypeIsComplex(eSrcType))
+    {
+        CPLError(CE_Failure, CPLE_AppDefined,
+                 "norm_diff cannot by applied to complex data types");
+        return CE_Failure;
+    }
+
+    /* ---- Set pixels ---- */
+    size_t ii = 0;
+    for (int iLine = 0; iLine < nYSize; ++iLine)
+    {
+        for (int iCol = 0; iCol < nXSize; ++iCol, ++ii)
+        {
+            const double dfLeftVal = GetSrcVal(papoSources[0], eSrcType, ii);
+            const double dfRightVal = GetSrcVal(papoSources[1], eSrcType, ii);
+
+            const double dfDenom = (dfLeftVal + dfRightVal);
+
+            const double dfPixVal =
+                dfDenom == 0 ? std::numeric_limits<double>::infinity()
+                             : (dfLeftVal - dfRightVal) / dfDenom;
+
+            GDALCopyWords(&dfPixVal, GDT_Float64, 0,
+                          static_cast<GByte *>(pData) +
+                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              iCol * nPixelSpace,
+                          eBufType, nPixelSpace, 1);
+        }
+    }
+
+    /* ---- Return success ---- */
+    return CE_None;
+}  // NormDiffPixelFunc
+
 /************************************************************************/
 /*                     GDALRegisterDefaultPixelFunc()                   */
 /************************************************************************/
@@ -1495,10 +1538,11 @@ static CPLErr ScalePixelFunc(void **papoSources, int nSources, void *pData,
  * - "sum": sum 2 or more raster bands
  * - "diff": computes the difference between 2 raster bands (b1 - b2)
  * - "mul": multiply 2 or more raster bands
- * - "div": divide one rasted band by another (b1 / b2).
- *          Note: no check is performed on zero division
+ * - "div": divide one raster band by another (b1 / b2).
+ * - "norm_diff": computes the normalized difference between two raster bands:
+ *                ``(b1 - b2)/(b1 + b2)``.
  * - "cmul": multiply the first band for the complex conjugate of the second
- * - "inv": inverse (1./x). Note: no check is performed on zero division
+ * - "inv": inverse (1./x).
  * - "intensity": computes the intensity Re(x*conj(x)) of a single raster band
  *                (real or complex)
  * - "sqrt": perform the square root of a single raster band (real only)
@@ -1584,6 +1628,7 @@ CPLErr GDALRegisterDefaultPixelFunc()
                                         pszReplaceNoDataPixelFuncMetadata);
     GDALAddDerivedBandPixelFuncWithArgs("scale", ScalePixelFunc,
                                         pszScalePixelFuncMetadata);
+    GDALAddDerivedBandPixelFunc("norm_diff", NormDiffPixelFunc);
 
     return CE_None;
 }
