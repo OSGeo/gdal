@@ -1683,7 +1683,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
  * Typemaps for (ctype *arrayOut, size_t arraySize)
  ***************************************************/
 
-%define DEFINE_BOOLEAN_FUNC_ARRAY_OUT(ctype, jtype, function)
+%define DEFINE_BOOLEAN_FUNC_ARRAY_OUT(ctype, jtype, element_setter)
 %typemap(in, numinputs=1) (ctype *arrayOut, size_t arraySize)
 {
     if ($input == 0)
@@ -1694,6 +1694,8 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
     $2 = sizeof(ctype) * jenv->GetArrayLength($input);
     $1 = (ctype*) malloc($2);
+    
+    //fprintf(stderr, "allocated read buffer of %d bytes\n", (int) $2);
 
     if ($1 == NULL)
     {
@@ -1706,7 +1708,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 %typemap(freearg) (ctype *arrayOut, size_t arraySize)
 {
   if (result)  // testing the boolean function result
-    jenv->function($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
+    jenv->element_setter($input, (jsize)0, jenv->GetArrayLength($input), (jtype*)$1);
 
   free($1);
 }
@@ -1754,7 +1756,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
  * Typemaps for (ctype *arrayIn, size_t arraySize)
  ***************************************************/
 
-%define DEFINE_BOOLEAN_FUNC_ARRAY_IN(ctype, jtype, get_fct, release_fct)
+%define DEFINE_BOOLEAN_FUNC_ARRAY_IN(ctype, jtype, element_getter, element_releaser)
 %typemap(in, numinputs=1) (ctype *arrayIn, size_t arraySize)
 {
     if ($input == 0)
@@ -1764,7 +1766,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
     }
 
     $2 = sizeof(ctype) * jenv->GetArrayLength($input);
-    $1 = (ctype*) jenv->get_fct($input, 0);
+    $1 = (ctype*) jenv->element_getter($input, 0);
     if ($1 == NULL)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
@@ -1775,7 +1777,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_OUT(double, jdouble, SetDoubleArrayRegion);
 
 %typemap(freearg) (ctype *arrayIn, size_t arraySize)
 {
-  jenv->release_fct($input, (jtype*) $1, JNI_ABORT);
+  jenv->element_releaser($input, (jtype*) $1, JNI_ABORT);
 }
 
 /* These 3 typemaps tell SWIG what JNI and Java types to use */
