@@ -29,7 +29,6 @@
 ###############################################################################
 
 import os
-import shutil
 
 import pytest
 import test_py_scripts
@@ -51,60 +50,53 @@ def script_path():
 # Test gdal_retile.py
 
 
-def test_gdal_retile_1(script_path):
+def test_gdal_retile_1(script_path, tmp_path):
 
-    try:
-        os.mkdir("tmp/outretile")
-    except OSError:
-        pass
+    out_dir = tmp_path / "outretile2"
+    out_dir.mkdir()
 
     test_py_scripts.run_py_script(
         script_path,
         "gdal_retile",
-        "-v -levels 2 -r bilinear -targetDir tmp/outretile "
+        f"-v -levels 2 -r bilinear -targetDir {out_dir} "
         + test_py_scripts.get_data_path("gcore")
         + "byte.tif",
     )
 
-    ds = gdal.Open("tmp/outretile/byte_1_1.tif")
-    assert ds.GetRasterBand(1).Checksum() == 4672
-    ds = None
+    with gdal.Open(f"{out_dir}/byte_1_1.tif") as ds:
+        assert ds.GetRasterBand(1).Checksum() == 4672
 
-    ds = gdal.Open("tmp/outretile/1/byte_1_1.tif")
-    assert ds.RasterXSize == 10
-    # if ds.GetRasterBand(1).Checksum() != 1152:
-    #    print(ds.GetRasterBand(1).Checksum())
-    #    return 'fail'
-    ds = None
+    with gdal.Open(f"{out_dir}/1/byte_1_1.tif") as ds:
+        assert ds.RasterXSize == 10
+        # if ds.GetRasterBand(1).Checksum() != 1152:
+        #    print(ds.GetRasterBand(1).Checksum())
+        #    return 'fail'
 
-    ds = gdal.Open("tmp/outretile/2/byte_1_1.tif")
-    assert ds.RasterXSize == 5
-    # if ds.GetRasterBand(1).Checksum() != 215:
-    #    print(ds.GetRasterBand(1).Checksum())
-    #    return 'fail'
-    ds = None
+    with gdal.Open(f"{out_dir}/2/byte_1_1.tif") as ds:
+        assert ds.RasterXSize == 5
+        # if ds.GetRasterBand(1).Checksum() != 215:
+        #    print(ds.GetRasterBand(1).Checksum())
+        #    return 'fail'
 
 
 ###############################################################################
 # Test gdal_retile.py with RGBA dataset
 
 
-def test_gdal_retile_2(script_path):
+def test_gdal_retile_2(script_path, tmp_path):
 
-    try:
-        os.mkdir("tmp/outretile2")
-    except OSError:
-        pass
+    out_dir = tmp_path / "outretile2"
+    out_dir.mkdir()
 
     test_py_scripts.run_py_script(
         script_path,
         "gdal_retile",
-        "-v -levels 2 -r bilinear -targetDir tmp/outretile2 "
+        f"-v -levels 2 -r bilinear -targetDir {out_dir} "
         + test_py_scripts.get_data_path("gcore")
         + "rgba.tif",
     )
 
-    ds = gdal.Open("tmp/outretile2/2/rgba_1_1.tif")
+    ds = gdal.Open(f"{out_dir}/2/rgba_1_1.tif")
     assert ds.GetRasterBand(1).Checksum() == 35, "wrong checksum for band 1"
     assert ds.GetRasterBand(4).Checksum() == 35, "wrong checksum for band 4"
     ds = None
@@ -114,7 +106,7 @@ def test_gdal_retile_2(script_path):
 # Test gdal_retile.py with input images of different pixel sizes
 
 
-def test_gdal_retile_3(script_path):
+def test_gdal_retile_3(script_path, tmp_path):
 
     drv = gdal.GetDriverByName("GTiff")
     srs = osr.SpatialReference()
@@ -140,35 +132,33 @@ def test_gdal_retile_3(script_path):
     #  0 N ---------------
     #      0 E           30 E
 
-    ds = drv.Create("tmp/in1.tif", 100, 100, 1)
-    px1_x = 30.0 / ds.RasterXSize
-    px1_y = 30.0 / ds.RasterYSize
-    ds.SetProjection(wkt)
-    ds.SetGeoTransform([0, px1_x, 0, 30, 0, -px1_y])
-    ds.GetRasterBand(1).Fill(0)
-    ds = None
+    in1_tif = str(tmp_path / "in1.tif")
+    with drv.Create(in1_tif, 100, 100, 1) as ds:
+        px1_x = 30.0 / ds.RasterXSize
+        px1_y = 30.0 / ds.RasterYSize
+        ds.SetProjection(wkt)
+        ds.SetGeoTransform([0, px1_x, 0, 30, 0, -px1_y])
+        ds.GetRasterBand(1).Fill(0)
 
-    ds = drv.Create("tmp/in2.tif", 50, 50, 1)
-    px2_x = 30.0 / ds.RasterXSize
-    px2_y = 30.0 / ds.RasterYSize
-    ds.SetProjection(wkt)
-    ds.SetGeoTransform([0, px2_x, 0, 60, 0, -px2_y])
-    ds.GetRasterBand(1).Fill(42)
-    ds = None
+    in2_tif = str(tmp_path / "in2.tif")
+    with drv.Create(in2_tif, 50, 50, 1) as ds:
+        px2_x = 30.0 / ds.RasterXSize
+        px2_y = 30.0 / ds.RasterYSize
+        ds.SetProjection(wkt)
+        ds.SetGeoTransform([0, px2_x, 0, 60, 0, -px2_y])
+        ds.GetRasterBand(1).Fill(42)
 
-    try:
-        os.mkdir("tmp/outretile3")
-    except OSError:
-        pass
+    out_dir = tmp_path / "outretile4"
+    out_dir.mkdir()
 
     test_py_scripts.run_py_script(
         script_path,
         "gdal_retile",
-        "-v -levels 2 -r bilinear -targetDir tmp/outretile3 tmp/in1.tif tmp/in2.tif",
+        f"-v -levels 2 -r bilinear -targetDir {out_dir} {in1_tif} {in2_tif}",
     )
 
-    ds = gdal.Open("tmp/outretile3/in1_1_1.tif")
-    assert ds.GetProjectionRef().find("WGS 84") != -1, "Expected WGS 84\nGot : %s" % (
+    ds = gdal.Open(f"{out_dir}/in1_1_1.tif")
+    assert "WGS 84" in ds.GetProjectionRef(), "Expected WGS 84\nGot : %s" % (
         ds.GetProjectionRef()
     )
 
@@ -193,42 +183,40 @@ def test_gdal_retile_3(script_path):
 # Test gdal_retile.py -overlap
 
 
-def test_gdal_retile_4(script_path):
+def test_gdal_retile_4(script_path, tmp_path):
 
-    try:
-        os.mkdir("tmp/outretile4")
-    except OSError:
-        pass
+    out_dir = tmp_path / "outretile4"
+    out_dir.mkdir()
 
     test_py_scripts.run_py_script(
         script_path,
         "gdal_retile",
-        "-v -ps 8 7 -overlap 3 -targetDir tmp/outretile4 "
+        f"-v -ps 8 7 -overlap 3 -targetDir {out_dir} "
         + test_py_scripts.get_data_path("gcore")
         + "byte.tif",
     )
 
     expected_results = [
-        ["tmp/outretile4/byte_1_1.tif", 8, 7],
-        ["tmp/outretile4/byte_1_2.tif", 8, 7],
-        ["tmp/outretile4/byte_1_3.tif", 8, 7],
-        ["tmp/outretile4/byte_1_4.tif", 5, 7],
-        ["tmp/outretile4/byte_2_1.tif", 8, 7],
-        ["tmp/outretile4/byte_2_2.tif", 8, 7],
-        ["tmp/outretile4/byte_2_3.tif", 8, 7],
-        ["tmp/outretile4/byte_2_4.tif", 5, 7],
-        ["tmp/outretile4/byte_3_1.tif", 8, 7],
-        ["tmp/outretile4/byte_3_2.tif", 8, 7],
-        ["tmp/outretile4/byte_3_3.tif", 8, 7],
-        ["tmp/outretile4/byte_3_4.tif", 5, 7],
-        ["tmp/outretile4/byte_4_1.tif", 8, 7],
-        ["tmp/outretile4/byte_4_2.tif", 8, 7],
-        ["tmp/outretile4/byte_4_3.tif", 8, 7],
-        ["tmp/outretile4/byte_4_4.tif", 5, 7],
-        ["tmp/outretile4/byte_5_1.tif", 8, 4],
-        ["tmp/outretile4/byte_5_2.tif", 8, 4],
-        ["tmp/outretile4/byte_5_3.tif", 8, 4],
-        ["tmp/outretile4/byte_5_4.tif", 5, 4],
+        [f"{out_dir}/byte_1_1.tif", 8, 7],
+        [f"{out_dir}/byte_1_2.tif", 8, 7],
+        [f"{out_dir}/byte_1_3.tif", 8, 7],
+        [f"{out_dir}/byte_1_4.tif", 5, 7],
+        [f"{out_dir}/byte_2_1.tif", 8, 7],
+        [f"{out_dir}/byte_2_2.tif", 8, 7],
+        [f"{out_dir}/byte_2_3.tif", 8, 7],
+        [f"{out_dir}/byte_2_4.tif", 5, 7],
+        [f"{out_dir}/byte_3_1.tif", 8, 7],
+        [f"{out_dir}/byte_3_2.tif", 8, 7],
+        [f"{out_dir}/byte_3_3.tif", 8, 7],
+        [f"{out_dir}/byte_3_4.tif", 5, 7],
+        [f"{out_dir}/byte_4_1.tif", 8, 7],
+        [f"{out_dir}/byte_4_2.tif", 8, 7],
+        [f"{out_dir}/byte_4_3.tif", 8, 7],
+        [f"{out_dir}/byte_4_4.tif", 5, 7],
+        [f"{out_dir}/byte_5_1.tif", 8, 4],
+        [f"{out_dir}/byte_5_2.tif", 8, 4],
+        [f"{out_dir}/byte_5_3.tif", 8, 4],
+        [f"{out_dir}/byte_5_4.tif", 5, 4],
     ]
 
     for (filename, width, height) in expected_results:
@@ -240,32 +228,32 @@ def test_gdal_retile_4(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_retile",
-        "-v -levels 1 -ps 8 8 -overlap 4 -targetDir tmp/outretile4 "
+        f"-v -levels 1 -ps 8 8 -overlap 4 -targetDir {out_dir} "
         + test_py_scripts.get_data_path("gcore")
         + "byte.tif",
     )
 
     expected_results = [
-        ["tmp/outretile4/byte_1_1.tif", 8, 8],
-        ["tmp/outretile4/byte_1_2.tif", 8, 8],
-        ["tmp/outretile4/byte_1_3.tif", 8, 8],
-        ["tmp/outretile4/byte_1_4.tif", 8, 8],
-        ["tmp/outretile4/byte_2_1.tif", 8, 8],
-        ["tmp/outretile4/byte_2_2.tif", 8, 8],
-        ["tmp/outretile4/byte_2_3.tif", 8, 8],
-        ["tmp/outretile4/byte_2_4.tif", 8, 8],
-        ["tmp/outretile4/byte_3_1.tif", 8, 8],
-        ["tmp/outretile4/byte_3_2.tif", 8, 8],
-        ["tmp/outretile4/byte_3_3.tif", 8, 8],
-        ["tmp/outretile4/byte_3_4.tif", 8, 8],
-        ["tmp/outretile4/byte_4_1.tif", 8, 8],
-        ["tmp/outretile4/byte_4_2.tif", 8, 8],
-        ["tmp/outretile4/byte_4_3.tif", 8, 8],
-        ["tmp/outretile4/byte_4_4.tif", 8, 8],
-        ["tmp/outretile4/1/byte_1_1.tif", 8, 8],
-        ["tmp/outretile4/1/byte_1_2.tif", 6, 8],
-        ["tmp/outretile4/1/byte_2_1.tif", 8, 6],
-        ["tmp/outretile4/1/byte_2_2.tif", 6, 6],
+        [f"{out_dir}/byte_1_1.tif", 8, 8],
+        [f"{out_dir}/byte_1_2.tif", 8, 8],
+        [f"{out_dir}/byte_1_3.tif", 8, 8],
+        [f"{out_dir}/byte_1_4.tif", 8, 8],
+        [f"{out_dir}/byte_2_1.tif", 8, 8],
+        [f"{out_dir}/byte_2_2.tif", 8, 8],
+        [f"{out_dir}/byte_2_3.tif", 8, 8],
+        [f"{out_dir}/byte_2_4.tif", 8, 8],
+        [f"{out_dir}/byte_3_1.tif", 8, 8],
+        [f"{out_dir}/byte_3_2.tif", 8, 8],
+        [f"{out_dir}/byte_3_3.tif", 8, 8],
+        [f"{out_dir}/byte_3_4.tif", 8, 8],
+        [f"{out_dir}/byte_4_1.tif", 8, 8],
+        [f"{out_dir}/byte_4_2.tif", 8, 8],
+        [f"{out_dir}/byte_4_3.tif", 8, 8],
+        [f"{out_dir}/byte_4_4.tif", 8, 8],
+        [f"{out_dir}/1/byte_1_1.tif", 8, 8],
+        [f"{out_dir}/1/byte_1_2.tif", 6, 8],
+        [f"{out_dir}/1/byte_2_1.tif", 8, 6],
+        [f"{out_dir}/1/byte_2_2.tif", 6, 6],
     ]
 
     for (filename, width, height) in expected_results:
@@ -279,7 +267,7 @@ def test_gdal_retile_4(script_path):
 # Test gdal_retile.py with input having a NoData value
 
 
-def test_gdal_retile_5(script_path):
+def test_gdal_retile_5(script_path, tmp_path):
 
     np = pytest.importorskip("numpy")
 
@@ -291,42 +279,39 @@ def test_gdal_retile_5(script_path):
     srs.SetWellKnownGeogCS("WGS84")
     wkt = srs.ExportToWkt()
 
-    ds = drv.Create("tmp/in5.tif", 2, 2, 1, gdal.GDT_Float32)
-    px1_x = 0.1 / ds.RasterXSize
-    px1_y = 0.1 / ds.RasterYSize
-    ds.SetProjection(wkt)
-    ds.SetGeoTransform([0, px1_x, 0, 30, 0, -px1_y])
-    raster_band = ds.GetRasterBand(1)
-    raster_band.SetNoDataValue(nodata_value)
-    raster_band.WriteArray(raster_array)
-    raster_band = None
-    ds = None
+    input_tif = str(tmp_path / "in5.tif")
 
-    try:
-        os.mkdir("tmp/outretile5")
-    except OSError:
-        pass
+    with drv.Create(input_tif, 2, 2, 1, gdal.GDT_Float32) as ds:
+        px1_x = 0.1 / ds.RasterXSize
+        px1_y = 0.1 / ds.RasterYSize
+        ds.SetProjection(wkt)
+        ds.SetGeoTransform([0, px1_x, 0, 30, 0, -px1_y])
+        raster_band = ds.GetRasterBand(1)
+        raster_band.SetNoDataValue(nodata_value)
+        raster_band.WriteArray(raster_array)
+        raster_band = None
+
+    out_dir = tmp_path / "outretile5"
+    out_dir.mkdir()
 
     test_py_scripts.run_py_script(
-        script_path, "gdal_retile", "-v -targetDir tmp/outretile5 tmp/in5.tif"
+        script_path, "gdal_retile", f"-v -targetDir {out_dir} {input_tif}"
     )
 
-    ds = gdal.Open("tmp/outretile5/in5_1_1.tif")
-    raster_band = ds.GetRasterBand(1)
+    with gdal.Open(str(out_dir / "in5_1_1.tif")) as ds:
+        raster_band = ds.GetRasterBand(1)
 
-    assert (
-        raster_band.GetNoDataValue() == nodata_value
-    ), "Wrong nodata value.\nExpected %f, Got: %f" % (
-        nodata_value,
-        raster_band.GetNoDataValue(),
-    )
+        assert (
+            raster_band.GetNoDataValue() == nodata_value
+        ), "Wrong nodata value.\nExpected %f, Got: %f" % (
+            nodata_value,
+            raster_band.GetNoDataValue(),
+        )
 
-    min_val, max_val = raster_band.ComputeRasterMinMax()
-    assert max_val, "Wrong maximum value.\nExpected 2.0, Got: %f" % max_val
+        min_val, max_val = raster_band.ComputeRasterMinMax()
+        assert max_val, "Wrong maximum value.\nExpected 2.0, Got: %f" % max_val
 
-    assert min_val == -1.0, "Wrong minimum value.\nExpected -1.0, Got: %f" % min_val
-
-    ds = None
+        assert min_val == -1.0, "Wrong minimum value.\nExpected -1.0, Got: %f" % min_val
 
 
 ###############################################################################
@@ -334,71 +319,24 @@ def test_gdal_retile_5(script_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal_retile_png(script_path):
+def test_gdal_retile_png(script_path, tmp_path):
 
-    out_dirname = os.path.join("tmp", "outretile_png")
-    os.mkdir(out_dirname)
+    out_dir = tmp_path / "outretile_png"
+    out_dir.mkdir()
 
-    try:
-        test_py_scripts.run_py_script(
-            script_path,
-            "gdal_retile",
-            "-v -levels 2 -r bilinear -of PNG -targetDir "
-            + '"'
-            + out_dirname
-            + '"'
-            + " "
-            + test_py_scripts.get_data_path("gcore")
-            + "byte.tif",
-        )
+    test_py_scripts.run_py_script(
+        script_path,
+        "gdal_retile",
+        "-v -levels 2 -r bilinear -of PNG -targetDir "
+        + '"'
+        + str(out_dir)
+        + '"'
+        + " "
+        + test_py_scripts.get_data_path("gcore")
+        + "byte.tif",
+    )
 
-        ds = gdal.Open(out_dirname + "/byte_1_1.png")
+    with gdal.Open(str(out_dir / "byte_1_1.png")) as ds:
         assert ds.GetRasterBand(1).Checksum() == 4672
-        ds = None
-        assert os.path.exists(out_dirname + "/byte_1_1.png.aux.xml")
-    finally:
-        shutil.rmtree(out_dirname)
 
-
-###############################################################################
-# Cleanup
-
-
-def test_gdal_retile_cleanup():
-
-    lst = [
-        "tmp/outretile/1/byte_1_1.tif",
-        "tmp/outretile/2/byte_1_1.tif",
-        "tmp/outretile/byte_1_1.tif",
-        "tmp/outretile/1",
-        "tmp/outretile/2",
-        "tmp/outretile",
-        "tmp/outretile2/1/rgba_1_1.tif",
-        "tmp/outretile2/2/rgba_1_1.tif",
-        "tmp/outretile2/1",
-        "tmp/outretile2/2",
-        "tmp/outretile2/rgba_1_1.tif",
-        "tmp/outretile2",
-        "tmp/in1.tif",
-        "tmp/in2.tif",
-        "tmp/outretile3/1/in1_1_1.tif",
-        "tmp/outretile3/2/in1_1_1.tif",
-        "tmp/outretile3/1",
-        "tmp/outretile3/2",
-        "tmp/outretile3/in1_1_1.tif",
-        "tmp/outretile3",
-        "tmp/in5.tif",
-    ]
-    for filename in lst:
-        try:
-            os.remove(filename)
-        except OSError:
-            try:
-                os.rmdir(filename)
-            except OSError:
-                pass
-
-    shutil.rmtree("tmp/outretile4")
-
-    if os.path.exists("tmp/outretile5"):
-        shutil.rmtree("tmp/outretile5")
+    assert os.path.exists(out_dir / "byte_1_1.png.aux.xml")
