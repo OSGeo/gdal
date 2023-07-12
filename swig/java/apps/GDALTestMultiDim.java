@@ -55,13 +55,13 @@ public class GDALTestMultiDim
     }
     
     private static void testMDArrayStuff() {
-		
-		test1d();
-		test2d();
-		test3d();
-		test4d();
-	}
-	
+        
+        test1d();
+        test2d();
+        test3d();
+        test4d();
+    }
+    
     private static void test1d() {
 
         Driver driver = gdal.GetDriverByName("MEM");
@@ -156,51 +156,51 @@ public class GDALTestMultiDim
 
         long[] strides = new long[sizes.length];
 
-		starts[0] = 0;
-		counts[0] = xSize;
-		steps[0] = 1;
-		strides[0] = 1;
+        starts[0] = 0;
+        counts[0] = xSize;
+        steps[0] = 1;
+        strides[0] = 1;
 
-		int pos = 0;
-		
-		for (int x = 0; x < xSize; x++) {
-		
-			short val = (short) ((x+1));
-			
-			writeData[pos++] = val;
-		}
+        int pos = 0;
+        
+        for (int x = 0; x < xSize; x++) {
+        
+            short val = (short) ((x+1));
+            
+            writeData[pos++] = val;
+        }
 
-		if (Arrays.equals(writeData, zeros)) {
-			
-			throw new RuntimeException("1D test: data to be written is zero and shouldn't be");
-		}
-		
-		if (!Arrays.equals(readData, zeros)) {
-			
-			throw new RuntimeException("1D test: data read buffer is not zero and should be");
-		}
+        if (Arrays.equals(writeData, zeros)) {
+            
+            throw new RuntimeException("1D test: data to be written is zero and shouldn't be");
+        }
+        
+        if (!Arrays.equals(readData, zeros)) {
+            
+            throw new RuntimeException("1D test: data read buffer is not zero and should be");
+        }
 
-		if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+        if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
 
-			throw new RuntimeException("1D test: could not write a plane for some reason");
-		}
-		
-		if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+            throw new RuntimeException("1D test: could not write a plane for some reason");
+        }
+        
+        if (!mdarray.Read(starts, counts, steps, strides, readData)) {
 
-			throw new RuntimeException("1D test: could not read a plane for some reason");
-		}
-		
-		if (Arrays.equals(readData, zeros)) {
-			
-			throw new RuntimeException("1D test: data read is zero and shouldn't be");
-		}
-		
-		if (!Arrays.equals(readData, writeData)) {
-			
-			throw new RuntimeException("1D test: data read does not match data written");
-		}
-	}
-	
+            throw new RuntimeException("1D test: could not read a plane for some reason");
+        }
+        
+        if (Arrays.equals(readData, zeros)) {
+            
+            throw new RuntimeException("1D test: data read is zero and shouldn't be");
+        }
+        
+        if (!Arrays.equals(readData, writeData)) {
+            
+            throw new RuntimeException("1D test: data read does not match data written");
+        }
+    }
+    
     private static void test2d() {
 
         Driver driver = gdal.GetDriverByName("MEM");
@@ -299,59 +299,59 @@ public class GDALTestMultiDim
 
         // read/write XY planes one at a time through whole mdarray
         
-		starts[0] = 0;
-		counts[0] = ySize;
-		steps[0] = 1;
-		strides[0] = 1;
+        starts[0] = 0;
+        counts[0] = ySize;
+        steps[0] = 1;
+        strides[0] = 1;
 
-		starts[1] = 0;
-		counts[1] = xSize;
-		steps[1] = 1;
-		strides[1] = 1;
+        starts[1] = 0;
+        counts[1] = xSize;
+        steps[1] = 1;
+        strides[1] = 1;
 
-		int pos = 0;
-		
-		for (int y = 0; y < ySize; y++) {
-		
-			for (int x = 0; x < xSize; x++) {
-			
-				short val = (short) ((y+1)*(x+1));
-				
-				writeData[pos++] = val;
-			}
-		}
+        int pos = 0;
+        
+        for (int y = 0; y < ySize; y++) {
+        
+            for (int x = 0; x < xSize; x++) {
+            
+                short val = (short) ((y+1)*(x+1));
+                
+                writeData[pos++] = val;
+            }
+        }
 
-		if (Arrays.equals(writeData, zeros)) {
-			
-			throw new RuntimeException("2D test: data to be written is zero and shouldn't be");
-		}
-		
-		if (!Arrays.equals(readData, zeros)) {
-			
-			throw new RuntimeException("2D test: data read buffer is not zero and should be");
-		}
+        if (Arrays.equals(writeData, zeros)) {
+            
+            throw new RuntimeException("2D test: data to be written is zero and shouldn't be");
+        }
+        
+        if (!Arrays.equals(readData, zeros)) {
+            
+            throw new RuntimeException("2D test: data read buffer is not zero and should be");
+        }
 
-		if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+        if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
 
-			throw new RuntimeException("2D test: could not write a plane for some reason");
-		}
-		
-		if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+            throw new RuntimeException("2D test: could not write a plane for some reason");
+        }
+        
+        if (!mdarray.Read(starts, counts, steps, strides, readData)) {
 
-			throw new RuntimeException("2D test: could not read a plane for some reason");
-		}
-		
-		if (Arrays.equals(readData, zeros)) {
-			
-			throw new RuntimeException("2D test: data read is zero and shouldn't be");
-		}
-		
-		if (!Arrays.equals(readData, writeData)) {
-			
-			throw new RuntimeException("2D test: data read does not match data written");
-		}
+            throw new RuntimeException("2D test: could not read a plane for some reason");
+        }
+        
+        if (Arrays.equals(readData, zeros)) {
+            
+            throw new RuntimeException("2D test: data read is zero and shouldn't be");
+        }
+        
+        if (!Arrays.equals(readData, writeData)) {
+            
+            throw new RuntimeException("2D test: data read does not match data written");
+        }
     }
-	
+    
     private static void test3d() {
 
         Driver driver = gdal.GetDriverByName("MEM");
@@ -452,71 +452,71 @@ public class GDALTestMultiDim
 
         // read/write XY planes one at a time through whole mdarray
         
-		for (int z = 0; z < zSize; z++) {
-		
-			starts[0] = z;
-			counts[0] = 1;
-			steps[0] = 1;
-			strides[0] = 1;
+        for (int z = 0; z < zSize; z++) {
+        
+            starts[0] = z;
+            counts[0] = 1;
+            steps[0] = 1;
+            strides[0] = 1;
 
-			starts[1] = 0;
-			counts[1] = ySize;
-			steps[1] = 1;
-			strides[1] = 1;
+            starts[1] = 0;
+            counts[1] = ySize;
+            steps[1] = 1;
+            strides[1] = 1;
 
-			starts[2] = 0;
-			counts[2] = xSize;
-			steps[2] = 1;
-			strides[2] = 1;
+            starts[2] = 0;
+            counts[2] = xSize;
+            steps[2] = 1;
+            strides[2] = 1;
 
-			int pos = 0;
-			
-			for (int y = 0; y < ySize; y++) {
-			
-				for (int x = 0; x < xSize; x++) {
-				
-					short val = (short) ((z+1)*(y+1)*(x+1));
-					
-					writeData[pos++] = val;
-				}
-			}
+            int pos = 0;
+            
+            for (int y = 0; y < ySize; y++) {
+            
+                for (int x = 0; x < xSize; x++) {
+                
+                    short val = (short) ((z+1)*(y+1)*(x+1));
+                    
+                    writeData[pos++] = val;
+                }
+            }
 
-			if (Arrays.equals(writeData, zeros)) {
-				
-				throw new RuntimeException("3D test: data to be written is zero and shouldn't be");
-			}
-			
-			if (!Arrays.equals(readData, zeros)) {
-				
-				throw new RuntimeException("3D test: data read buffer is not zero and should be");
-			}
+            if (Arrays.equals(writeData, zeros)) {
+                
+                throw new RuntimeException("3D test: data to be written is zero and shouldn't be");
+            }
+            
+            if (!Arrays.equals(readData, zeros)) {
+                
+                throw new RuntimeException("3D test: data read buffer is not zero and should be");
+            }
 
-			if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+            if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
 
-				throw new RuntimeException("3D test: could not write a plane for some reason");
-			}
-			
-			if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+                throw new RuntimeException("3D test: could not write a plane for some reason");
+            }
+            
+            if (!mdarray.Read(starts, counts, steps, strides, readData)) {
 
-				throw new RuntimeException("3D test: could not read a plane for some reason");
-			}
-			
-			if (Arrays.equals(readData, zeros)) {
-				
-				throw new RuntimeException("3D test: data read is zero and shouldn't be");
-			}
-			
-			if (!Arrays.equals(readData, writeData)) {
-				
-				throw new RuntimeException("3D test: data read does not match data written for plane z = "+z);
-			}
-			
-			Arrays.fill(writeData, (short) 0);
-			
-			Arrays.fill(readData, (short) 0);
-		}
+                throw new RuntimeException("3D test: could not read a plane for some reason");
+            }
+            
+            if (Arrays.equals(readData, zeros)) {
+                
+                throw new RuntimeException("3D test: data read is zero and shouldn't be");
+            }
+            
+            if (!Arrays.equals(readData, writeData)) {
+                
+                throw new RuntimeException("3D test: data read does not match data written for plane z = "+z);
+            }
+            
+            Arrays.fill(writeData, (short) 0);
+            
+            Arrays.fill(readData, (short) 0);
+        }
     }
-	
+    
     private static void test4d() {
 
         Driver driver = gdal.GetDriverByName("MEM");
