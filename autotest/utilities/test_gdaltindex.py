@@ -37,9 +37,13 @@ import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
-pytestmark = pytest.mark.skipif(
-    test_cli_utilities.get_gdaltindex_path() is None, reason="gdaltindex not available"
-)
+pytestmark = [
+    pytest.mark.skipif(
+        test_cli_utilities.get_gdaltindex_path() is None,
+        reason="gdaltindex not available",
+    ),
+    pytest.mark.random_order(disabled=True),
+]
 
 
 @pytest.fixture()

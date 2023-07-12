@@ -46,6 +46,7 @@ pytestmark = [
         test_cli_utilities.get_gnmanalyse_path() is None,
         reason="gnmanalyse not available",
     ),
+    pytest.mark.random_order(disabled=True),
 ]
 
 
