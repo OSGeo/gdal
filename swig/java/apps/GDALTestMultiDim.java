@@ -55,6 +55,469 @@ public class GDALTestMultiDim
     }
     
     private static void testMDArrayStuff() {
+		
+		test1d();
+		test2d();
+		test3d();
+		test4d();
+	}
+	
+    private static void test1d() {
+
+        Driver driver = gdal.GetDriverByName("MEM");
+
+        Dataset dataset = driver.CreateMultiDimensional("mdstuff");
+        
+        Group rg = dataset.GetRootGroup();
+
+        ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
+
+        long[] sizes = new long[]{6};
+
+        Dimension[] inDims = new Dimension[sizes.length];
+        
+        for (int i = 0; i < sizes.length; i++) {
+
+            Dimension d =
+                
+                rg.CreateDimension("name"+i, "type"+i, "direction"+i, sizes[i]);
+
+            if (d == null) {
+                
+                throw new RuntimeException("1D test: dimension create returned null!");
+            }
+            
+            inDims[i] = d;
+        }
+        
+        MDArray mdarray = rg.CreateMDArray("my_data", inDims, dt);
+        
+        long cnt = mdarray.GetDimensionCount();
+        
+        for (long i = 0; i < cnt; i++) {
+
+            Dimension d = mdarray.GetDimension(i);
+
+            if (d == null) {
+                
+                throw new RuntimeException("1D test: returned dimension was null!");
+            }
+        }
+        
+        Dimension[] outDims = mdarray.GetDimensions();
+        
+        if (outDims.length != sizes.length) {
+            
+            throw new RuntimeException("1D test: resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
+        }
+        
+        for (int i = 0; i < sizes.length; i++) {
+            
+            Dimension d = outDims[i];
+            
+            if (d.GetSize() != sizes[i]) {
+
+                throw new RuntimeException("1D test: resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
+            }
+
+            if (!d.GetName().equals("name"+i)) {
+
+                throw new RuntimeException("1D test: resulting dimension name "+d.GetName()+" does not match name"+i);
+            }
+
+            if (!d.GetType().equals("type"+i)) {
+
+                throw new RuntimeException("1D test: resulting dimension type "+d.GetType()+" does not match type"+i);
+            }
+
+            if (!d.GetDirection().equals("direction"+i)) {
+
+                throw new RuntimeException("1D test: resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
+            }
+        }
+        
+        // these indices follow the conventions of the MEM driver
+        
+        long xSize = sizes[0];
+        
+        int planeSize = (int) (xSize);
+        
+        short[] zeros = new short[planeSize];
+
+        short[] writeData = new short[planeSize];
+
+        short[] readData = new short[planeSize];
+
+        long[] starts = new long[sizes.length];
+
+        long[] counts = new long[sizes.length];
+
+        long[] steps = new long[sizes.length];
+
+        long[] strides = new long[sizes.length];
+
+		starts[0] = 0;
+		counts[0] = xSize;
+		steps[0] = 1;
+		strides[0] = 1;
+
+		int pos = 0;
+		
+		for (int x = 0; x < xSize; x++) {
+		
+			short val = (short) ((x+1));
+			
+			writeData[pos++] = val;
+		}
+
+		if (Arrays.equals(writeData, zeros)) {
+			
+			throw new RuntimeException("1D test: data to be written is zero and shouldn't be");
+		}
+		
+		if (!Arrays.equals(readData, zeros)) {
+			
+			throw new RuntimeException("1D test: data read buffer is not zero and should be");
+		}
+
+		if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+
+			throw new RuntimeException("1D test: could not write a plane for some reason");
+		}
+		
+		if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+
+			throw new RuntimeException("1D test: could not read a plane for some reason");
+		}
+		
+		if (Arrays.equals(readData, zeros)) {
+			
+			throw new RuntimeException("1D test: data read is zero and shouldn't be");
+		}
+		
+		if (!Arrays.equals(readData, writeData)) {
+			
+			throw new RuntimeException("1D test: data read does not match data written");
+		}
+	}
+	
+    private static void test2d() {
+
+        Driver driver = gdal.GetDriverByName("MEM");
+
+        Dataset dataset = driver.CreateMultiDimensional("mdstuff");
+        
+        Group rg = dataset.GetRootGroup();
+
+        ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
+
+        long[] sizes = new long[]{10,6};
+
+        Dimension[] inDims = new Dimension[sizes.length];
+        
+        for (int i = 0; i < sizes.length; i++) {
+
+            Dimension d =
+                
+                rg.CreateDimension("name"+i, "type"+i, "direction"+i, sizes[i]);
+
+            if (d == null) {
+                
+                throw new RuntimeException("2D test: dimension create returned null!");
+            }
+            
+            inDims[i] = d;
+        }
+        
+        MDArray mdarray = rg.CreateMDArray("my_data", inDims, dt);
+        
+        long cnt = mdarray.GetDimensionCount();
+        
+        for (long i = 0; i < cnt; i++) {
+
+            Dimension d = mdarray.GetDimension(i);
+
+            if (d == null) {
+                
+                throw new RuntimeException("2D test: returned dimension was null!");
+            }
+        }
+        
+        Dimension[] outDims = mdarray.GetDimensions();
+        
+        if (outDims.length != sizes.length) {
+            
+            throw new RuntimeException("2D test: resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
+        }
+        
+        for (int i = 0; i < sizes.length; i++) {
+            
+            Dimension d = outDims[i];
+            
+            if (d.GetSize() != sizes[i]) {
+
+                throw new RuntimeException("2D test: resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
+            }
+
+            if (!d.GetName().equals("name"+i)) {
+
+                throw new RuntimeException("2D test: resulting dimension name "+d.GetName()+" does not match name"+i);
+            }
+
+            if (!d.GetType().equals("type"+i)) {
+
+                throw new RuntimeException("2D test: resulting dimension type "+d.GetType()+" does not match type"+i);
+            }
+
+            if (!d.GetDirection().equals("direction"+i)) {
+
+                throw new RuntimeException("2D test: resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
+            }
+        }
+        
+        // these indices follow the conventions of the MEM driver
+        
+        long ySize = sizes[0];
+        
+        long xSize = sizes[1];
+        
+        int planeSize = (int) (xSize * ySize);
+        
+        short[] zeros = new short[planeSize];
+
+        short[] writeData = new short[planeSize];
+
+        short[] readData = new short[planeSize];
+
+        long[] starts = new long[sizes.length];
+
+        long[] counts = new long[sizes.length];
+
+        long[] steps = new long[sizes.length];
+
+        long[] strides = new long[sizes.length];
+
+        // read/write XY planes one at a time through whole mdarray
+        
+		starts[0] = 0;
+		counts[0] = ySize;
+		steps[0] = 1;
+		strides[0] = 1;
+
+		starts[1] = 0;
+		counts[1] = xSize;
+		steps[1] = 1;
+		strides[1] = 1;
+
+		int pos = 0;
+		
+		for (int y = 0; y < ySize; y++) {
+		
+			for (int x = 0; x < xSize; x++) {
+			
+				short val = (short) ((y+1)*(x+1));
+				
+				writeData[pos++] = val;
+			}
+		}
+
+		if (Arrays.equals(writeData, zeros)) {
+			
+			throw new RuntimeException("2D test: data to be written is zero and shouldn't be");
+		}
+		
+		if (!Arrays.equals(readData, zeros)) {
+			
+			throw new RuntimeException("2D test: data read buffer is not zero and should be");
+		}
+
+		if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+
+			throw new RuntimeException("2D test: could not write a plane for some reason");
+		}
+		
+		if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+
+			throw new RuntimeException("2D test: could not read a plane for some reason");
+		}
+		
+		if (Arrays.equals(readData, zeros)) {
+			
+			throw new RuntimeException("2D test: data read is zero and shouldn't be");
+		}
+		
+		if (!Arrays.equals(readData, writeData)) {
+			
+			throw new RuntimeException("2D test: data read does not match data written");
+		}
+    }
+	
+    private static void test3d() {
+
+        Driver driver = gdal.GetDriverByName("MEM");
+
+        Dataset dataset = driver.CreateMultiDimensional("mdstuff");
+        
+        Group rg = dataset.GetRootGroup();
+
+        ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
+
+        long[] sizes = new long[]{2,10,6};
+
+        Dimension[] inDims = new Dimension[sizes.length];
+        
+        for (int i = 0; i < sizes.length; i++) {
+
+            Dimension d =
+                
+                rg.CreateDimension("name"+i, "type"+i, "direction"+i, sizes[i]);
+
+            if (d == null) {
+                
+                throw new RuntimeException("3D test: dimension create returned null!");
+            }
+            
+            inDims[i] = d;
+        }
+        
+        MDArray mdarray = rg.CreateMDArray("my_data", inDims, dt);
+        
+        long cnt = mdarray.GetDimensionCount();
+        
+        for (long i = 0; i < cnt; i++) {
+
+            Dimension d = mdarray.GetDimension(i);
+
+            if (d == null) {
+                
+                throw new RuntimeException("3D test: returned dimension was null!");
+            }
+        }
+        
+        Dimension[] outDims = mdarray.GetDimensions();
+        
+        if (outDims.length != sizes.length) {
+            
+            throw new RuntimeException("3D test: resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
+        }
+        
+        for (int i = 0; i < sizes.length; i++) {
+            
+            Dimension d = outDims[i];
+            
+            if (d.GetSize() != sizes[i]) {
+
+                throw new RuntimeException("3D test: resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
+            }
+
+            if (!d.GetName().equals("name"+i)) {
+
+                throw new RuntimeException("3D test: resulting dimension name "+d.GetName()+" does not match name"+i);
+            }
+
+            if (!d.GetType().equals("type"+i)) {
+
+                throw new RuntimeException("3D test: resulting dimension type "+d.GetType()+" does not match type"+i);
+            }
+
+            if (!d.GetDirection().equals("direction"+i)) {
+
+                throw new RuntimeException("3D test: resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
+            }
+        }
+        
+        // these indices follow the conventions of the MEM driver
+        
+        long zSize = sizes[0];
+        
+        long ySize = sizes[1];
+        
+        long xSize = sizes[2];
+        
+        int planeSize = (int) (xSize * ySize);
+        
+        short[] zeros = new short[planeSize];
+
+        short[] writeData = new short[planeSize];
+
+        short[] readData = new short[planeSize];
+
+        long[] starts = new long[sizes.length];
+
+        long[] counts = new long[sizes.length];
+
+        long[] steps = new long[sizes.length];
+
+        long[] strides = new long[sizes.length];
+
+        // read/write XY planes one at a time through whole mdarray
+        
+		for (int z = 0; z < zSize; z++) {
+		
+			starts[0] = z;
+			counts[0] = 1;
+			steps[0] = 1;
+			strides[0] = 1;
+
+			starts[1] = 0;
+			counts[1] = ySize;
+			steps[1] = 1;
+			strides[1] = 1;
+
+			starts[2] = 0;
+			counts[2] = xSize;
+			steps[2] = 1;
+			strides[2] = 1;
+
+			int pos = 0;
+			
+			for (int y = 0; y < ySize; y++) {
+			
+				for (int x = 0; x < xSize; x++) {
+				
+					short val = (short) ((z+1)*(y+1)*(x+1));
+					
+					writeData[pos++] = val;
+				}
+			}
+
+			if (Arrays.equals(writeData, zeros)) {
+				
+				throw new RuntimeException("3D test: data to be written is zero and shouldn't be");
+			}
+			
+			if (!Arrays.equals(readData, zeros)) {
+				
+				throw new RuntimeException("3D test: data read buffer is not zero and should be");
+			}
+
+			if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+
+				throw new RuntimeException("3D test: could not write a plane for some reason");
+			}
+			
+			if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+
+				throw new RuntimeException("3D test: could not read a plane for some reason");
+			}
+			
+			if (Arrays.equals(readData, zeros)) {
+				
+				throw new RuntimeException("3D test: data read is zero and shouldn't be");
+			}
+			
+			if (!Arrays.equals(readData, writeData)) {
+				
+				throw new RuntimeException("3D test: data read does not match data written for plane z = "+z);
+			}
+			
+			Arrays.fill(writeData, (short) 0);
+			
+			Arrays.fill(readData, (short) 0);
+		}
+    }
+	
+    private static void test4d() {
 
         Driver driver = gdal.GetDriverByName("MEM");
 
@@ -76,7 +539,7 @@ public class GDALTestMultiDim
 
             if (d == null) {
                 
-                throw new RuntimeException("dimension create returned null!");
+                throw new RuntimeException("4D test: dimension create returned null!");
             }
             
             inDims[i] = d;
@@ -92,7 +555,7 @@ public class GDALTestMultiDim
 
             if (d == null) {
                 
-                throw new RuntimeException("returned dimension was null!");
+                throw new RuntimeException("4D test: returned dimension was null!");
             }
         }
         
@@ -100,7 +563,7 @@ public class GDALTestMultiDim
         
         if (outDims.length != sizes.length) {
             
-            throw new RuntimeException("resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
+            throw new RuntimeException("4D test: resulting dimension count "+outDims.length+" does not equal input dim len "+sizes.length);
         }
         
         for (int i = 0; i < sizes.length; i++) {
@@ -109,22 +572,22 @@ public class GDALTestMultiDim
             
             if (d.GetSize() != sizes[i]) {
 
-                throw new RuntimeException("resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
+                throw new RuntimeException("4D test: resulting dimension "+i+" has size "+ d.GetSize()+" but should equal "+sizes[i]);
             }
 
             if (!d.GetName().equals("name"+i)) {
 
-                throw new RuntimeException("resulting dimension name "+d.GetName()+" does not match name"+i);
+                throw new RuntimeException("4D test: resulting dimension name "+d.GetName()+" does not match name"+i);
             }
 
             if (!d.GetType().equals("type"+i)) {
 
-                throw new RuntimeException("resulting dimension type "+d.GetType()+" does not match type"+i);
+                throw new RuntimeException("4D test: resulting dimension type "+d.GetType()+" does not match type"+i);
             }
 
             if (!d.GetDirection().equals("direction"+i)) {
 
-                throw new RuntimeException("resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
+                throw new RuntimeException("4D test: resulting dimension direction "+d.GetDirection()+" does not match direction"+i);
             }
         }
         
@@ -194,32 +657,32 @@ public class GDALTestMultiDim
 
                 if (Arrays.equals(writeData, zeros)) {
                     
-                    throw new RuntimeException("data to be written is zero and shouldn't be");
+                    throw new RuntimeException("4D test: data to be written is zero and shouldn't be");
                 }
                 
                 if (!Arrays.equals(readData, zeros)) {
                     
-                    throw new RuntimeException("data read buffer is not zero and should be");
+                    throw new RuntimeException("4D test: data read buffer is not zero and should be");
                 }
 
                 if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
 
-                    throw new RuntimeException("could not write a plane for some reason");
+                    throw new RuntimeException("4D test: could not write a plane for some reason");
                 }
                 
                 if (!mdarray.Read(starts, counts, steps, strides, readData)) {
 
-                    throw new RuntimeException("could not read a plane for some reason");
+                    throw new RuntimeException("4D test: could not read a plane for some reason");
                 }
                 
                 if (Arrays.equals(readData, zeros)) {
                     
-                    throw new RuntimeException("data read is zero and shouldn't be");
+                    throw new RuntimeException("4D test: data read is zero and shouldn't be");
                 }
                 
                 if (!Arrays.equals(readData, writeData)) {
                     
-                    throw new RuntimeException("data read does not match data written");
+                    throw new RuntimeException("4D test: data read does not match data written for plane t = "+t+" z = "+z);
                 }
                 
                 Arrays.fill(writeData, (short) 0);
