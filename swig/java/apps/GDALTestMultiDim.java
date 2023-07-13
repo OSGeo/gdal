@@ -51,7 +51,7 @@ public class GDALTestMultiDim
 
         testMDArrayStuff();
 
-        System.out.println("Success !");
+        System.out.println("Successfully tested MDArray code!");
     }
     
     private static void testMDArrayStuff() {
