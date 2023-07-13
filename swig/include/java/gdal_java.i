@@ -273,25 +273,25 @@ import java.lang.Integer;
   }
   
 %define DEFINE_READ_MDA_DATA(ctype, buffer_type_code)
-  %apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
-  %apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
-  %apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
-  %apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
+  %apply(int nList, GInt64 *pList) { (int starts,  GInt64 *sizes1) };
+  %apply(int nList, GInt64 *pList) { (int counts,  GInt64 *sizes2) };
+  %apply(int nList, GInt64 *pList) { (int steps,   GInt64 *sizes3) };
+  %apply(int nList, GInt64 *pList) { (int strides, GInt64 *sizes4) };
   %apply (ctype *arrayOut, size_t arraySize) { (ctype *arrayOut, size_t arraySize) };
-  bool Read(int arrayStartIdxes, GInt64 *sizes1, 
-            int counts,          GInt64 *sizes2, 
-            int arraySteps,      GInt64 *sizes3, 
-            int bufferStrides,   GInt64 *sizes4,
+  bool Read(int starts,  GInt64 *sizes1, 
+            int counts,  GInt64 *sizes2, 
+            int steps,   GInt64 *sizes3, 
+            int strides, GInt64 *sizes4,
             ctype *arrayOut,
             size_t arraySize
            )
   {
     size_t numDims = GDALMDArrayGetDimensionCount(self);
     
-    if (arrayStartIdxes != numDims ||
+    if (starts != numDims ||
         counts != numDims ||
-        arraySteps != numDims ||
-        bufferStrides != numDims)
+        steps != numDims ||
+        strides != numDims)
     {
       return false;
     }
@@ -326,25 +326,25 @@ import java.lang.Integer;
   DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
 %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type_code)
-  %apply(int nList, GInt64 *pList) { (int arrayStartIdxes, GInt64 *sizes1) };
-  %apply(int nList, GInt64 *pList) { (int counts,          GInt64 *sizes2) };
-  %apply(int nList, GInt64 *pList) { (int arraySteps,      GInt64 *sizes3) };
-  %apply(int nList, GInt64 *pList) { (int bufferStrides,   GInt64 *sizes4) };
+  %apply(int nList, GInt64 *pList) { (int starts,  GInt64 *sizes1) };
+  %apply(int nList, GInt64 *pList) { (int counts,  GInt64 *sizes2) };
+  %apply(int nList, GInt64 *pList) { (int steps,   GInt64 *sizes3) };
+  %apply(int nList, GInt64 *pList) { (int strides, GInt64 *sizes4) };
   %apply (ctype *arrayIn, size_t arraySize) { (ctype *arrayIn, size_t arraySize) };
-  bool Write(int arrayStartIdxes, GInt64 *sizes1, 
-             int counts,          GInt64 *sizes2, 
-             int arraySteps,      GInt64 *sizes3, 
-             int bufferStrides,   GInt64 *sizes4,
+  bool Write(int starts,  GInt64 *sizes1, 
+             int counts,  GInt64 *sizes2, 
+             int steps,   GInt64 *sizes3, 
+             int strides, GInt64 *sizes4,
              ctype *arrayIn,
              size_t arraySize
             )
   {
     size_t numDims = GDALMDArrayGetDimensionCount(self);
     
-    if (arrayStartIdxes != numDims ||
+    if (starts != numDims ||
         counts != numDims ||
-        arraySteps != numDims ||
-        bufferStrides != numDims)
+        steps != numDims ||
+        strides != numDims)
     {
       return false;
     }
