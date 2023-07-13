@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Date: Tue, 20 Jun 2023 10:38:04 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Type: application/json; charset=utf-8
+Content-Crs: <http://www.opengis.net/def/crs/OGC/1.3/CRS84>
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+
