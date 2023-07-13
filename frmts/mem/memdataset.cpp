@@ -2253,7 +2253,7 @@ bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
 
     ReadWrite(false, count, stack, m_oType, bufferDataType);
-	
+
     return true;
 }
 
