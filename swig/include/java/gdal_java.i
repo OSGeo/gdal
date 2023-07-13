@@ -311,7 +311,7 @@ import java.lang.Integer;
                         arrayOut,
                         arraySize,
                         buffer_type);
-                        
+    
     GDALExtendedDataTypeRelease(buffer_type);
 
     return result;
@@ -400,6 +400,131 @@ import java.lang.Integer;
 
                return arr;
        }
+       
+       private long[] defaultSteps(int numDims) {
+       
+           long[] retVal = new long[numDims];
+           
+           for (int i = 0; i < numDims; i++) {
+           
+               retVal[i] = 1;
+           }
+           
+           return retVal;
+       }
+       
+       private long[] defaultStrides(long[] counts) {
+       
+           int numDims = counts.length;
+           
+           long[] retVal = new long[numDims];
+           
+           retVal[numDims-1] = 1;
+           
+           for (int i = numDims - 2; i >= 0; i--) {
+           
+               retVal[i] = retVal[i+1] * counts[i+1];
+           }
+           
+           return retVal;
+       }
+       
+       public boolean Read(long[] starts, long[] counts, long[] steps, byte[] outputBuffer) {
+           return Read(starts, counts, steps, defaultStrides(counts), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, long[] steps, short[] outputBuffer) {
+           return Read(starts, counts, steps, defaultStrides(counts), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, long[] steps, int[] outputBuffer) {
+           return Read(starts, counts, steps, defaultStrides(counts), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, long[] steps, long[] outputBuffer) {
+           return Read(starts, counts, steps, defaultStrides(counts), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, long[] steps, float[] outputBuffer) {
+           return Read(starts, counts, steps, defaultStrides(counts), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, long[] steps, double[] outputBuffer) {
+           return Read(starts, counts, steps, defaultStrides(counts), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, byte[] outputBuffer) {
+           return Read(starts, counts, defaultSteps(counts.length), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, short[] outputBuffer) {
+           return Read(starts, counts, defaultSteps(counts.length), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, int[] outputBuffer) {
+           return Read(starts, counts, defaultSteps(counts.length), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, long[] outputBuffer) {
+           return Read(starts, counts, defaultSteps(counts.length), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, float[] outputBuffer) {
+           return Read(starts, counts, defaultSteps(counts.length), outputBuffer);
+       }
+       
+       public boolean Read(long[] starts, long[] counts, double[] outputBuffer) {
+           return Read(starts, counts, defaultSteps(counts.length), outputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, long[] steps, byte[] inputBuffer) {
+           return Write(starts, counts, steps, defaultStrides(counts), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, long[] steps, short[] inputBuffer) {
+           return Write(starts, counts, steps, defaultStrides(counts), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, long[] steps, int[] inputBuffer) {
+           return Write(starts, counts, steps, defaultStrides(counts), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, long[] steps, long[] inputBuffer) {
+           return Write(starts, counts, steps, defaultStrides(counts), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, long[] steps, float[] inputBuffer) {
+           return Write(starts, counts, steps, defaultStrides(counts), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, long[] steps, double[] inputBuffer) {
+           return Write(starts, counts, steps, defaultStrides(counts), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, byte[] inputBuffer) {
+           return Write(starts, counts, defaultSteps(counts.length), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, short[] inputBuffer) {
+           return Write(starts, counts, defaultSteps(counts.length), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, int[] inputBuffer) {
+           return Write(starts, counts, defaultSteps(counts.length), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, long[] inputBuffer) {
+           return Write(starts, counts, defaultSteps(counts.length), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, float[] inputBuffer) {
+           return Write(starts, counts, defaultSteps(counts.length), inputBuffer);
+       }
+       
+       public boolean Write(long[] starts, long[] counts, double[] inputBuffer) {
+           return Write(starts, counts, defaultSteps(counts.length), inputBuffer);
+       }
+
 %}
 
 %typemap(javaimports) GDALDriverShadow %{

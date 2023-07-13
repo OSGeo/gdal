@@ -2248,10 +2248,12 @@ bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
         stack[i].dst_inc_offset =
             static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
     }
+
     stack[0].src_ptr = m_pabyArray + startSrcOffset;
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
 
     ReadWrite(false, count, stack, m_oType, bufferDataType);
+	
     return true;
 }
 
@@ -2286,6 +2288,7 @@ bool MEMAbstractMDArray::IWrite(const GUInt64 *arrayStartIdx,
     std::vector<StackReadWrite> stack(nDims);
     const auto nBufferDTSize = bufferDataType.GetSize();
     GPtrDiff_t startDstOffset = 0;
+
     for (size_t i = 0; i < nDims; i++)
     {
         startDstOffset +=
@@ -2300,6 +2303,7 @@ bool MEMAbstractMDArray::IWrite(const GUInt64 *arrayStartIdx,
     stack[0].src_ptr = static_cast<const GByte *>(pSrcBuffer);
 
     ReadWrite(true, count, stack, bufferDataType, m_oType);
+
     return true;
 }
 

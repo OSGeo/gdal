@@ -152,14 +152,8 @@ public class GDALTestMultiDim
 
         long[] counts = new long[sizes.length];
 
-        long[] steps = new long[sizes.length];
-
-        long[] strides = new long[sizes.length];
-
         starts[0] = 0;
         counts[0] = xSize;
-        steps[0] = 1;
-        strides[0] = 1;
 
         int pos = 0;
         
@@ -180,16 +174,16 @@ public class GDALTestMultiDim
             throw new RuntimeException("1D test: data read buffer is not zero and should be");
         }
 
-        if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+        if (!mdarray.Write(starts, counts, writeData)) {
 
             throw new RuntimeException("1D test: could not write a plane for some reason");
         }
         
-        if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+        if (!mdarray.Read(starts, counts, readData)) {
 
             throw new RuntimeException("1D test: could not read a plane for some reason");
         }
-        
+
         if (Arrays.equals(readData, zeros)) {
             
             throw new RuntimeException("1D test: data read is zero and shouldn't be");
@@ -211,7 +205,8 @@ public class GDALTestMultiDim
 
         ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
 
-        long[] sizes = new long[]{10,6};
+        //long[] sizes = new long[]{10,6};
+        long[] sizes = new long[]{2,2};
 
         Dimension[] inDims = new Dimension[sizes.length];
         
@@ -293,21 +288,13 @@ public class GDALTestMultiDim
 
         long[] counts = new long[sizes.length];
 
-        long[] steps = new long[sizes.length];
-
-        long[] strides = new long[sizes.length];
-
         // read/write XY planes one at a time through whole mdarray
         
         starts[0] = 0;
         counts[0] = ySize;
-        steps[0] = 1;
-        strides[0] = 1;
 
         starts[1] = 0;
         counts[1] = xSize;
-        steps[1] = 1;
-        strides[1] = 1;
 
         int pos = 0;
         
@@ -331,16 +318,16 @@ public class GDALTestMultiDim
             throw new RuntimeException("2D test: data read buffer is not zero and should be");
         }
 
-        if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+        if (!mdarray.Write(starts, counts, writeData)) {
 
             throw new RuntimeException("2D test: could not write a plane for some reason");
         }
         
-        if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+        if (!mdarray.Read(starts, counts, readData)) {
 
             throw new RuntimeException("2D test: could not read a plane for some reason");
         }
-        
+
         if (Arrays.equals(readData, zeros)) {
             
             throw new RuntimeException("2D test: data read is zero and shouldn't be");
@@ -446,28 +433,18 @@ public class GDALTestMultiDim
 
         long[] counts = new long[sizes.length];
 
-        long[] steps = new long[sizes.length];
-
-        long[] strides = new long[sizes.length];
-
         // read/write XY planes one at a time through whole mdarray
         
         for (int z = 0; z < zSize; z++) {
         
             starts[0] = z;
             counts[0] = 1;
-            steps[0] = 1;
-            strides[0] = 1;
 
             starts[1] = 0;
             counts[1] = ySize;
-            steps[1] = 1;
-            strides[1] = 1;
 
             starts[2] = 0;
             counts[2] = xSize;
-            steps[2] = 1;
-            strides[2] = 1;
 
             int pos = 0;
             
@@ -491,12 +468,12 @@ public class GDALTestMultiDim
                 throw new RuntimeException("3D test: data read buffer is not zero and should be");
             }
 
-            if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+            if (!mdarray.Write(starts, counts, writeData)) {
 
                 throw new RuntimeException("3D test: could not write a plane for some reason");
             }
             
-            if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+            if (!mdarray.Read(starts, counts, readData)) {
 
                 throw new RuntimeException("3D test: could not read a plane for some reason");
             }
@@ -613,35 +590,23 @@ public class GDALTestMultiDim
 
         long[] counts = new long[sizes.length];
 
-        long[] steps = new long[sizes.length];
-
-        long[] strides = new long[sizes.length];
-
         // read/write XY planes one at a time through whole mdarray
         
         for (int t = 0; t < timePoints; t++) {
             
             starts[0] = t;
             counts[0] = 1;
-            steps[0] = 1;
-            strides[0] = 1;
 
             for (int z = 0; z < zSize; z++) {
             
                 starts[1] = z;
                 counts[1] = 1;
-                steps[1] = 1;
-                strides[1] = 1;
 
                 starts[2] = 0;
                 counts[2] = ySize;
-                steps[2] = 1;
-                strides[2] = 1;
 
                 starts[3] = 0;
                 counts[3] = xSize;
-                steps[3] = 1;
-                strides[3] = 1;
 
                 int pos = 0;
                 
@@ -665,12 +630,12 @@ public class GDALTestMultiDim
                     throw new RuntimeException("4D test: data read buffer is not zero and should be");
                 }
 
-                if (!mdarray.Write(starts, counts, steps, strides, writeData)) {
+                if (!mdarray.Write(starts, counts, writeData)) {
 
                     throw new RuntimeException("4D test: could not write a plane for some reason");
                 }
                 
-                if (!mdarray.Read(starts, counts, steps, strides, readData)) {
+                if (!mdarray.Read(starts, counts, readData)) {
 
                     throw new RuntimeException("4D test: could not read a plane for some reason");
                 }

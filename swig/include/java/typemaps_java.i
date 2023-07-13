@@ -1695,8 +1695,6 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
     $2 = sizeof(ctype) * jenv->GetArrayLength($input);
     $1 = (ctype*) malloc($2);
     
-    //fprintf(stderr, "allocated read buffer of %d bytes\n", (int) $2);
-
     if ($1 == NULL)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
