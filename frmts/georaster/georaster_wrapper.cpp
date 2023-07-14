@@ -3614,6 +3614,19 @@ bool GeoRasterWrapper::FlushMetadata()
         }
     }
 
+    if (bGenerateStatistics)
+    {
+        if (GenerateStatistics(sStatisticsLayerNumbers.c_str(), 1, false, true))
+        {
+            CPLDebug("GEOR", "Generated statistics successfully.");
+        }
+        else
+        {
+            CPLError(CE_Warning, CPLE_AppDefined,
+                     "Error generating statistics!");
+        }
+    }
+
     return true;
 }
 
@@ -3769,6 +3782,37 @@ void GeoRasterWrapper::DeletePyramid()
     CPL_IGNORE_RET_VAL(poStmt->Execute());
 
     delete poStmt;
+}
+
+//  ---------------------------------------------------------------------------
+//                                                         GenerateStatistics()
+//  ---------------------------------------------------------------------------
+bool GeoRasterWrapper::GenerateStatistics(const char *pszLayerNumbers,
+                                          int nSamplingFactor, bool bHistogram,
+                                          bool bNodata)
+{
+    const char *pszHistogram = bHistogram ? "TRUE" : "FALSE";
+    const char *pszNodata = bNodata ? "TRUE" : "FALSE";
+    OWStatement *poStmt = poConnection->CreateStatement(CPLSPrintf(
+        "DECLARE\n"
+        "  gr sdo_georaster;\n"
+        "  swin SDO_GEOMETRY := NULL;\n"
+        "  res VARCHAR2(32767);"
+        "BEGIN\n"
+        "  SELECT %s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
+        "  res := sdo_geor.generateStatistics(gr, 'samplingFactor=%d', swin,\n"
+        "  '%s', '%s', 'TRUE', NULL, '%s');\n"
+        "  UPDATE %s t SET %s = gr WHERE %s;\n"
+        "  COMMIT;\n"
+        "END;\n",
+        sColumn.c_str(), sTable.c_str(), sWhere.c_str(), nSamplingFactor,
+        pszHistogram, pszLayerNumbers, pszNodata, sTable.c_str(),
+        sColumn.c_str(), sWhere.c_str()));
+
+    bool bResult = poStmt->Execute();
+    delete poStmt;
+
+    return bResult;
 }
 
 //  ---------------------------------------------------------------------------

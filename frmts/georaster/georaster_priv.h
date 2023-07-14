@@ -394,6 +394,8 @@ class GeoRasterWrapper
     char *GetVAT(int nBand);
     bool GeneratePyramid(int nLevels, const char *pszResampling,
                          bool bInternal = false);
+    bool GenerateStatistics(const char *pszLayerNumbers, int nSamplingFactor,
+                            bool bHistogram, bool bNodata);
     void DeletePyramid();
     void PrepareToOverwrite();
     bool InitializeMask(int nLevel, int nBlockColumns, int nBlockRows,
@@ -467,6 +469,9 @@ class GeoRasterWrapper
 
     bool bHasBitmapMask;
     bool bUniqueFound;
+
+    bool bGenerateStatistics;
+    CPLString sStatisticsLayerNumbers;
 
     int eModelCoordLocation;
     unsigned int anULTCoordinate[3];

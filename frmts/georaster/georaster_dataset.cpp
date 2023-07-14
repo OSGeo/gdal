@@ -1272,6 +1272,14 @@ GDALDataset *GeoRasterDataset::Create(const char *pszFilename, int nXSize,
         poGRD->poGeoRaster->nPyramidLevels = atoi(pszFetched);
     }
 
+    pszFetched = CSLFetchNameValue(papszOptions, "STATISTICS");
+
+    if (pszFetched != nullptr)
+    {
+        poGRD->poGeoRaster->bGenerateStatistics = true;
+        poGRD->poGeoRaster->sStatisticsLayerNumbers = pszFetched;
+    }
+
     //  -------------------------------------------------------------------
     //  Return a new Dataset
     //  -------------------------------------------------------------------
@@ -2912,6 +2920,9 @@ void CPL_DLL GDALRegister_GEOR()
         "  </Option>"
         "  <Option name='GENPYRLEVELS'  type='int'  description='Number of "
         "pyramid level to generate'/>"
+        "  <Option name='STATISTICS'    type='string' "
+        " description='Generate statistics for the raster, value should be in'"
+        "the form \"1,2,3\" (1 to 3) or \"1-10\" />"
         "  <Option name='OBJECTTABLE' type='boolean' "
         "description='Create RDT as object table'/>"
         "  <Option name='SPATIALEXTENT' type='boolean' "

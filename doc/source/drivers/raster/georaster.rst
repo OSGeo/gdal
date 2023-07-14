@@ -185,6 +185,11 @@ Creation Options
       generated. If :co:`GENPYRAMID` is not informed the resample method NN
       (nearest neighbor) will apply.
 
+-  .. co:: STATISTICS
+
+      Defines the layers to generate statistics. The content of this parameter
+      should be a sequence (such as 1,3,5) or a range (1-5).
+
 -  .. co:: QUALITY
       :choices: 0-100
       :default: 75
