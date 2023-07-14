@@ -159,7 +159,7 @@ class GeoParquetValidator(object):
                     geoparquet_schemas[schema_url] = json.loads(response)
                 except Exception as e:
                     return self._error(
-                        f"Failed to read GeoParquet schema at {schema_url} as JSON. Schema content = '{response}. Exception = {repr(e)}"
+                        f"Failed to read GeoParquet schema at {schema_url} as JSON. Schema content = '{response}'. Exception = {repr(e)}"
                     )
 
             schema_j = geoparquet_schemas[schema_url]
