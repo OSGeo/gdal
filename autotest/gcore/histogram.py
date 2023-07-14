@@ -48,13 +48,22 @@ def module_disable_exceptions():
         yield
 
 
+@pytest.fixture()
+def utmsmall_tif(tmp_path):
+    fname = str(tmp_path / "utmsmall.tif")
+
+    shutil.copyfile("data/utmsmall.tif", fname)
+
+    return fname
+
+
 ###############################################################################
 # Fetch simple histogram.
 
 
-def test_histogram_1():
+def test_histogram_1(utmsmall_tif):
 
-    ds = gdal.Open("data/utmsmall.tif")
+    ds = gdal.Open(utmsmall_tif)
     hist = ds.GetRasterBand(1).GetHistogram()
 
     exp_hist = [
@@ -323,9 +332,9 @@ def test_histogram_1():
 # Fetch histogram with specified sampling, using keywords.
 
 
-def test_histogram_2():
+def test_histogram_2(utmsmall_tif):
 
-    ds = gdal.Open("data/utmsmall.tif")
+    ds = gdal.Open(utmsmall_tif)
     hist = ds.GetRasterBand(1).GetHistogram(buckets=16, max=255.5, min=-0.5)
 
     exp_hist = [
@@ -392,9 +401,9 @@ def test_histogram_4():
 # Test GetDefaultHistogram() on the file.
 
 
-def test_histogram_5():
+def test_histogram_5(utmsmall_tif):
 
-    ds = gdal.Open("data/utmsmall.tif")
+    ds = gdal.Open(utmsmall_tif)
     hist = ds.GetRasterBand(1).GetDefaultHistogram(force=1)
 
     exp_hist = (
@@ -664,8 +673,6 @@ def test_histogram_5():
     assert hist == exp_hist, "did not get expected histogram."
 
     ds = None
-
-    gdal.Unlink("data/utmsmall.tif.aux.xml")
 
 
 ###############################################################################
