@@ -44,8 +44,18 @@ testnonboundtoswig_setup
 
 ###############################################################################
 @pytest.fixture(autouse=True, scope="module")
-def module_disable_exceptions():
+def setup_and_cleanup():
+
     with gdaltest.disable_exceptions():
+
+        fp = gdal.VSIFOpenL(
+            "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "wb+"
+        )
+        if fp is None:
+            pytest.skip("/vsicrypt is not available")
+        gdal.VSIFCloseL(fp)
+        gdal.Unlink("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin")
+
         yield
 
 
@@ -55,19 +65,9 @@ def module_disable_exceptions():
 
 def test_vsicrypt_1():
 
-    gdaltest.has_vsicrypt = False
-    fp = gdal.VSIFOpenL("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin", "wb+")
-    if fp is None:
-        pytest.skip()
-    gdal.VSIFCloseL(fp)
-    gdal.Unlink("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin")
-    gdaltest.has_vsicrypt = True
-
     import vsifile
 
-    return vsifile.vsifile_generic(
-        "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin"
-    )
+    vsifile.vsifile_generic("/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file.bin")
 
 
 ###############################################################################
@@ -75,9 +75,6 @@ def test_vsicrypt_1():
 
 
 def test_vsicrypt_2():
-
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
 
     # Missing key
     with gdaltest.error_handler():
@@ -356,9 +353,6 @@ def test_vsicrypt_2():
 )
 def test_vsicrypt_3():
 
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
-
     for options in [
         "sector_size=16",
         "alg=AES",
@@ -492,9 +486,6 @@ def test_vsicrypt_3():
 
 def test_vsicrypt_4():
 
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
-
     test_file = (
         "/vsicrypt/key=DONT_USE_IN_PROD,sector_size=32,file=/vsimem/file_enc.bin"
     )
@@ -562,9 +553,6 @@ def test_vsicrypt_4():
 
 def test_vsicrypt_5():
 
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
-
     test_file = "/vsicrypt/key=DONT_USE_IN_PROD,file=/vsimem/file_enc.bin"
 
     f = gdal.VSIFOpenL(test_file, "wb+")
@@ -622,9 +610,6 @@ def test_vsicrypt_6(testnonboundtoswig_setup):  # noqa
 
     # Set a valid key
     testnonboundtoswig_setup.VSISetCryptKey("DONT_USE_IN_PROD".encode("ASCII"), 16)
-
-    if not gdaltest.has_vsicrypt:
-        pytest.skip()
 
     fp = gdal.VSIFOpenL("/vsicrypt/add_key_check=yes,file=/vsimem/file.bin", "wb+")
     assert fp is not None
