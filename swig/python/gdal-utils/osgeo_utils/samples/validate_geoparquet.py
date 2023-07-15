@@ -145,35 +145,24 @@ class GeoParquetValidator(object):
                 )
 
             schema_url = f"https://github.com/opengeospatial/geoparquet/releases/download/v{version}/schema.json"
-            if schema_url in geoparquet_schemas:
-                schema_j = geoparquet_schemas[schema_url]
-            else:
-                stat_res = gdal.VSIStatL("/vsicurl/" + schema_url)
-                if stat_res is None:
+            if schema_url not in geoparquet_schemas:
+                import urllib
+
+                try:
+                    response = urllib.request.urlopen(schema_url).read()
+                except Exception as e:
                     return self._error(
-                        f"Cannot download GeoParquet JSON schema from {schema_url}"
-                    )
-                f = gdal.VSIFOpenL("/vsicurl_streaming/" + schema_url, "rb")
-                if f is None:
-                    return self._error(
-                        f"Cannot download GeoParquet JSON schema from {schema_url}"
-                    )
-                schema = gdal.VSIFReadL(1, stat_res.size, f)
-                gdal.VSIFCloseL(f)
-                if len(schema) < stat_res.size:
-                    return self._error(
-                        f"Cannot download GeoParquet JSON schema from {schema_url}"
+                        f"Cannot download GeoParquet JSON schema from {schema_url}. Exception = {repr(e)}"
                     )
 
                 try:
-                    schema_j = json.loads(schema)
+                    geoparquet_schemas[schema_url] = json.loads(response)
                 except Exception as e:
                     return self._error(
-                        f"GeoParquet schema at {schema_url} is not valid JSON. Schema content = '{schema}'. Exception = '%s' "
-                        % (str(e))
+                        f"Failed to read GeoParquet schema at {schema_url} as JSON. Schema content = '{response}'. Exception = {repr(e)}"
                     )
 
-                geoparquet_schemas[schema_url] = schema_j
+            schema_j = geoparquet_schemas[schema_url]
 
         try:
             jsonschema.validate(instance=geo_j, schema=schema_j)
