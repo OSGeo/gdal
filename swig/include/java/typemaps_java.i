@@ -21,7 +21,8 @@
 //   Shouldn't they all be made into $result?
 
 // TODO: we call free(), CPLFree(), and VSIFree() to free memory.
-//   Can we settle on one or two instead of all three?
+//   Can we settle on one or two instead of all three? Maybe make
+//   the malloc()s into CPLMalloc()s?
 
 %include "arrays_java.i";
 %include "typemaps.i"
