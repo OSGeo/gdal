@@ -3793,6 +3793,10 @@ bool GeoRasterWrapper::GenerateStatistics(const char *pszLayerNumbers,
 {
     const char *pszHistogram = bHistogram ? "TRUE" : "FALSE";
     const char *pszNodata = bNodata ? "TRUE" : "FALSE";
+
+    char szLayerNumbers[OWTEXT];
+    snprintf(szLayerNumbers, sizeof(szLayerNumbers), "%s", pszLayerNumbers);
+
     OWStatement *poStmt = poConnection->CreateStatement(CPLSPrintf(
         "DECLARE\n"
         "  gr sdo_georaster;\n"
@@ -3800,14 +3804,17 @@ bool GeoRasterWrapper::GenerateStatistics(const char *pszLayerNumbers,
         "  res VARCHAR2(5);\n"
         "BEGIN\n"
         "  SELECT %s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
-        "  res := sdo_geor.generateStatistics(gr, 'samplingFactor=%d', swin,\n"
-        "  '%s', '%s', 'TRUE', NULL, '%s');\n"
+        "  res := sdo_geor.generateStatistics(gr, 'samplingFactor='||:samplingfactor, swin,\n"
+        "  '%s', :layernums, 'TRUE', NULL, '%s');\n"
         "  UPDATE %s t SET %s = gr WHERE %s;\n"
         "  COMMIT;\n"
         "END;\n",
-        sColumn.c_str(), sTable.c_str(), sWhere.c_str(), nSamplingFactor,
-        pszHistogram, pszLayerNumbers, pszNodata, sTable.c_str(),
+        sColumn.c_str(), sTable.c_str(), sWhere.c_str(),
+        pszHistogram, pszNodata, sTable.c_str(),
         sColumn.c_str(), sWhere.c_str()));
+    
+    poStmt->BindName(":samplingfactor", &nSamplingFactor);
+    poStmt->BindName(":layernums", szLayerNumbers);
 
     bool bResult = poStmt->Execute();
     delete poStmt;
