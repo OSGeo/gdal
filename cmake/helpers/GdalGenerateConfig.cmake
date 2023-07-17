@@ -326,6 +326,13 @@ function(gdal_generate_config)
     set(CONFIG_PLUGINDIR "${INSTALL_PLUGIN_FULL_DIR}")
     gdal_join_and_quote(CONFIG_PLUGINDIR)
 
-    configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in" "${arg_GDAL_CONFIG}" @ONLY)
+    # Create apps/gdal-config with execution rights from gdal-config.in
+    get_filename_component(GDAL_CONFIG_DIR "${arg_GDAL_CONFIG}" DIRECTORY)
+    file(MAKE_DIRECTORY "${GDAL_CONFIG_DIR}.tmp")
+    configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in" "${GDAL_CONFIG_DIR}.tmp/gdal-config" @ONLY)
+    file(COPY "${GDAL_CONFIG_DIR}.tmp/gdal-config"
+         DESTINATION "${GDAL_CONFIG_DIR}"
+         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
     configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in" "${arg_PKG_CONFIG}" @ONLY)
 endfunction()
