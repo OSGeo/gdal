@@ -5,8 +5,8 @@ CONFIG_INST_CFLAGS=@CONFIG_CFLAGS@
 CONFIG_INST_DATA=@CONFIG_DATA@
 prefix=${CONFIG_INST_PREFIX}
 exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${exec_prefix}/include
+libdir=@CONFIG_LIBDIR@
+includedir=@CONFIG_INCLUDEDIR@
 datadir=${CONFIG_INST_DATA}
 
 Name: libgdal
