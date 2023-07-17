@@ -1361,38 +1361,6 @@ import org.gdal.gdalconst.gdalconstConstants;
 %}
 
 %{
-    static GDALMDArrayH CreateMDA(GDALGroupH groupH,
-                                  const char* name,
-                                  int nDims,
-                                  GDALDimensionH* pDims,
-                                  GDALExtendedDataTypeH typeH,
-                                  char** options)
-    {
-        return GDALGroupCreateMDArray(groupH, name, (size_t) nDims, pDims, typeH, options);
-    }
-%}
-
-%extend GDALGroupHS {
-
-%apply(int nDims, GDALDimensionH *pDims) { (int dims, GDALDimensionH* sizes) };
-%apply(GDALExtendedDataTypeH typeH) { (GDALExtendedDataTypeH type) };
-
-    GDALMDArrayH CreateMDArray(const char* name, int dims, GDALDimensionH* sizes, GDALExtendedDataTypeH type, char** options) {
-
-        return CreateMDA(self, name, dims, sizes, type, options);
-    }
-
-} /* extend */
-
-%typemap(javacode) GDALGroupHS %{
-
-    public MDArray CreateMDArray(String name, Dimension[] dims, ExtendedDataType type) {
-        return CreateMDArray(name, dims, type, new Vector());
-    }
-
-%}
-
-%{
   static size_t GDALAttributeGetDimSize(GDALAttributeH attH, size_t index) {
 
     size_t size;

@@ -207,7 +207,7 @@ public:
     return GDALGroupCreateDimension(self, name, type, direction, size, options);
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 %newobject CreateMDArray;
 %apply (int object_list_count, GDALDimensionHS **poObjects) {(int nDimensions, GDALDimensionHS **dimensions)};
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* data_type};

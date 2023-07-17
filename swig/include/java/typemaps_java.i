@@ -1695,7 +1695,7 @@ DEFINE_REGULAR_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDoubleAr
 
     $2 = sizeof(ctype) * jenv->GetArrayLength($input);
     $1 = (ctype*) malloc($2);
-    
+
     if ($1 == NULL)
     {
         SWIG_JavaThrowException(jenv, SWIG_JavaRuntimeException,
@@ -1840,7 +1840,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (GIntBig) {
   return $jnicall;
 }
-  
+
 /***************************************************
  * Typemaps for GUIntBig
  ***************************************************/
@@ -1864,7 +1864,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (GUIntBig) {
   return $jnicall;
 }
-  
+
 /***************************************************
  * Typemaps for GInt64
  ***************************************************/
@@ -1888,7 +1888,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (GInt64) {
   return $jnicall;
 }
-  
+
 /***************************************************
  * Typemaps for GUInt64
  ***************************************************/
@@ -2197,7 +2197,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 /*******************************************************
    Typemap notes
  *******************************************************/
- 
+
 //  useful docs: https://www.swig.org/Doc1.3/Typemaps.html
 
 //investigate
@@ -2212,17 +2212,17 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 // typemap(in)  (type list): convert from Java to C
 // typemap(out) (type list): convert from C to Java
 
-  
+
 /***** Dimension typemaps *****************************/
 
 /*
   From Java: Dimension[]
-  To C:      (int nDims, GDALDimensionH *pDims)
+  To C:      (int object_list_count, GDALDimensionHS **poObjects)
 */
 
-%typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims)
+%typemap(in, numinputs=1) (int object_list_count, GDALDimensionHS **poObjects)
 {
-  /* %typemap(in, numinputs=1) (int nDims, GDALDimensionH *pDims) */
+  /* %typemap(in, numinputs=1) (int object_list_count, GDALDimensionHS **poObjects) */
   if ($input)
   {
     const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
@@ -2257,13 +2257,13 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 }
 
 /*
-  From C: (int nDims, GDALDimensionH *pDims)
+  From C: (int object_list_count, GDALDimensionHS **poObjects)
   To Java: Dimension[]
 */
 
-%typemap(out) (int nDims, GDALDimensionH *pDims)
+%typemap(out) (int object_list_count, GDALDimensionHS **poObjects)
 {
-  /* %typemap(out) (int nDims, GDALDimensionH *pDims) */
+  /* %typemap(out) (int object_list_count, GDALDimensionHS **poObjects) */
   const jclass dimClass = jenv->FindClass("org/gdal/gdal/Dimension");
   const jmethodID dCtor = jenv->GetMethodID(dimClass, "<init>", "(JZ)V");
 
@@ -2271,29 +2271,29 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 
   int i;
   for (i=0; i<$1; i++) {
-  
+
     GDALDimensionH gDimH = $2[i];
 
     jobject dimension = jenv->NewObject(dimClass, dCtor, gDimH, false);
-    
+
     jenv->SetObjectArrayValue($result, i, dimension);
   }
 }
 
-%typemap(freearg) (int nDims, GDALDimensionH *pDims)
+%typemap(freearg) (int object_list_count, GDALDimensionHS **poObjects)
 {
-  /* %typemap(freearg) (int nDims, GDALDimensionH *pDims) */
+  /* %typemap(freearg) (int object_list_count, GDALDimensionHS **poObjects) */
   if ($2) {
 
     free((void*) $2);
   }
 }
 
-%typemap(jni) (int nDims, GDALDimensionH* pDims) "jobjectArray"
-%typemap(jtype) (int nDims, GDALDimensionH* pDims) "org.gdal.gdal.Dimension[]"
-%typemap(jstype) (int nDims, GDALDimensionH* pDims) "org.gdal.gdal.Dimension[]"
-%typemap(javain) (int nDims, GDALDimensionH* pDims) "$javainput"
-%typemap(javaout) (int nDims, GDALDimensionH* pDims) {
+%typemap(jni) (int object_list_count, GDALDimensionHS **poObjects) "jobjectArray"
+%typemap(jtype) (int object_list_count, GDALDimensionHS **poObjects) "org.gdal.gdal.Dimension[]"
+%typemap(jstype) (int object_list_count, GDALDimensionHS **poObjects) "org.gdal.gdal.Dimension[]"
+%typemap(javain) (int object_list_count, GDALDimensionHS **poObjects) "$javainput"
+%typemap(javaout) (int object_list_count, GDALDimensionHS **poObjects) {
     return $jnicall;
 }
 
@@ -2315,7 +2315,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     //   correct memory free routine to call. CPLFree()?
     // So for now I am doing approach #1 by setting the last param in this
     //   construction to true.
-     
+
     $result = jenv->NewObject(dimClass, ctor, $1, true);
 }
 
@@ -2341,7 +2341,7 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
     {
         const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
         const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
-      
+
         $1 = (GDALExtendedDataTypeH) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
     }
     else
@@ -2369,51 +2369,6 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(jstype) (GDALExtendedDataTypeH typeH) "org.gdal.gdal.ExtendedDataType"
 %typemap(javain) (GDALExtendedDataTypeH typeH) "$javainput"
 %typemap(javaout) (GDALExtendedDataTypeH typeH) {
-    return $jnicall;
-}
-
-/***** MDArray typemaps *******************************/
-
-/*
-  From Java: MDArray
-  To C:      GDALMDArrayH
-*/
-
-%typemap(in) (GDALMDArrayH)
-{
-    /* %typemap(in) (GDALMDArrayH) */
-    if ($input) {
-        const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
-        const jmethodID getCPtr =
-                jenv->GetStaticMethodID(mdaClass, "getCPtr",
-                                        "(Lorg/gdal/gdal/MDArray;)J");
-
-        $1 = (GDALMDArrayH) jenv->CallStaticLongMethod(mdaClass, getCPtr, $input);
-    }
-    else {
-        $1 = (GDALMDArrayH) NULL;
-    }
-}
-
-/*
-  From C:  GDALMDArrayH
-  To Java: MDArray
-*/
-
-%typemap(out) (GDALMDArrayH)
-{
-    /* %typemap(out) (GDALMDArrayH) */
-    const jclass mdaClass = jenv->FindClass("org/gdal/gdal/MDArray");
-    const jmethodID ctor = jenv->GetMethodID(mdaClass, "<init>", "(JZ)V");
-
-    $result = jenv->NewObject(mdaClass, ctor, $1, false);
-}
-
-%typemap(jni) (GDALMDArrayH) "jobject"
-%typemap(jtype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
-%typemap(jstype) (GDALMDArrayH) "org.gdal.gdal.MDArray"
-%typemap(javain) (GDALMDArrayH) "$javainput"
-%typemap(javaout) (GDALMDArrayH) {
     return $jnicall;
 }
 
