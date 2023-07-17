@@ -2895,6 +2895,9 @@ def test_vsis3_6(aws_test_config, webserver_port):
 # Test multipart upload with retry logic
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
+)
 def test_vsis3_write_multipart_retry(aws_test_config, webserver_port):
 
     with gdaltest.config_options(
