@@ -258,7 +258,7 @@ import java.lang.Integer;
 %extend GDALMDArrayHS {
 
 %newobject GetDimension;
-  GDALDimensionH GetDimension(size_t index) {
+  GDALDimensionHS* GetDimension(size_t index) {
     return GDALMDArrayGetDim(self, index);
   }
 
