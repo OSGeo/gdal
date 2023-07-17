@@ -2820,10 +2820,17 @@ GDALDataset *PNGDataset::CreateCopy(const char *pszFilename,
         CPLPopErrorHandler();
         if (poDS)
         {
-            int nFlags = GCIF_PAM_DEFAULT;
-            if (bWriteMetadataAsText)
-                nFlags &= ~GCIF_METADATA;
+            int nFlags = GCIF_PAM_DEFAULT & ~GCIF_METADATA;
             poDS->CloneInfo(poSrcDS, nFlags);
+
+            char **papszExcludedDomains =
+                CSLAddString(nullptr, "COLOR_PROFILE");
+            if (bWriteMetadataAsText)
+                papszExcludedDomains = CSLAddString(papszExcludedDomains, "");
+            GDALDriver::DefaultCopyMetadata(poSrcDS, poDS, papszOptions,
+                                            papszExcludedDomains);
+            CSLDestroy(papszExcludedDomains);
+
             return poDS;
         }
         CPLErrorReset();

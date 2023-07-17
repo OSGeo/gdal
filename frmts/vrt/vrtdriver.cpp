@@ -300,22 +300,77 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Emit dataset level metadata.                                    */
     /* -------------------------------------------------------------------- */
-    poVRTDS->SetMetadata(poSrcDS->GetMetadata());
+    const char *pszCopySrcMDD =
+        CSLFetchNameValueDef(papszOptions, "COPY_SRC_MDD", "AUTO");
+    char **papszSrcMDD = CSLFetchNameValueMultiple(papszOptions, "SRC_MDD");
+    if (EQUAL(pszCopySrcMDD, "AUTO") || CPLTestBool(pszCopySrcMDD) ||
+        papszSrcMDD)
+    {
+        if (!papszSrcMDD || CSLFindString(papszSrcMDD, "") >= 0 ||
+            CSLFindString(papszSrcMDD, "_DEFAULT_") >= 0)
+        {
+            poVRTDS->SetMetadata(poSrcDS->GetMetadata());
+        }
 
-    /* -------------------------------------------------------------------- */
-    /*      Copy any special domains that should be transportable.          */
-    /* -------------------------------------------------------------------- */
-    char **papszMD = poSrcDS->GetMetadata("RPC");
-    if (papszMD)
-        poVRTDS->SetMetadata(papszMD, "RPC");
+        /* -------------------------------------------------------------------- */
+        /*      Copy any special domains that should be transportable.          */
+        /* -------------------------------------------------------------------- */
+        constexpr const char *apszDefaultDomains[] = {"RPC", "IMD",
+                                                      "GEOLOCATION"};
+        for (const char *pszDomain : apszDefaultDomains)
+        {
+            if (!papszSrcMDD || CSLFindString(papszSrcMDD, pszDomain) >= 0)
+            {
+                char **papszMD = poSrcDS->GetMetadata(pszDomain);
+                if (papszMD)
+                    poVRTDS->SetMetadata(papszMD, pszDomain);
+            }
+        }
 
-    papszMD = poSrcDS->GetMetadata("IMD");
-    if (papszMD)
-        poVRTDS->SetMetadata(papszMD, "IMD");
-
-    papszMD = poSrcDS->GetMetadata("GEOLOCATION");
-    if (papszMD)
-        poVRTDS->SetMetadata(papszMD, "GEOLOCATION");
+        if ((!EQUAL(pszCopySrcMDD, "AUTO") && CPLTestBool(pszCopySrcMDD)) ||
+            papszSrcMDD)
+        {
+            char **papszDomainList = poSrcDS->GetMetadataDomainList();
+            constexpr const char *apszReservedDomains[] = {
+                "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"};
+            for (char **papszIter = papszDomainList; papszIter && *papszIter;
+                 ++papszIter)
+            {
+                const char *pszDomain = *papszIter;
+                if (pszDomain[0] != 0 &&
+                    (!papszSrcMDD ||
+                     CSLFindString(papszSrcMDD, pszDomain) >= 0))
+                {
+                    bool bCanCopy = true;
+                    for (const char *pszOtherDomain : apszDefaultDomains)
+                    {
+                        if (EQUAL(pszDomain, pszOtherDomain))
+                        {
+                            bCanCopy = false;
+                            break;
+                        }
+                    }
+                    if (!papszSrcMDD)
+                    {
+                        for (const char *pszOtherDomain : apszReservedDomains)
+                        {
+                            if (EQUAL(pszDomain, pszOtherDomain))
+                            {
+                                bCanCopy = false;
+                                break;
+                            }
+                        }
+                    }
+                    if (bCanCopy)
+                    {
+                        poVRTDS->SetMetadata(poSrcDS->GetMetadata(pszDomain),
+                                             pszDomain);
+                    }
+                }
+            }
+            CSLDestroy(papszDomainList);
+        }
+    }
 
     {
         const char *pszInterleave =

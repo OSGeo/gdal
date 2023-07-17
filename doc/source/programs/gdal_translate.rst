@@ -293,7 +293,61 @@ resampling, and rescaling pixels in the process.
 
     Passes a metadata key and value to set on the output dataset if possible.
 
-.. include:: options/co.rst
+.. option:: -co <NAME=VALUE>
+
+    .. WARNING: if modifying the 2 below paragraphs, please edit options/co.rst too
+
+    Many formats have one or more optional creation options that can be
+    used to control particulars about the file created. For instance,
+    the GeoTIFF driver supports creation options to control compression,
+    and whether the file should be tiled.
+
+    The creation options available vary by format driver, and some
+    simple formats have no creation options at all. A list of options
+    supported for a format can be listed with the
+    :ref:`--formats <raster_common_options_formats>`
+    command line option but the documentation for the format is the
+    definitive source of information on driver creation options.
+    See :ref:`raster_drivers` format
+    specific documentation for legal creation options for each format.
+
+    In addition to the driver-specific creation options, gdal_translate
+    (and :cpp:func:`GDALTranslate` and :cpp:func:`GDALCreateCopy`) recognize
+    the following options:
+
+    - .. co:: APPEND_SUBDATASET
+         :choices: YES, NO
+         :default: NO
+
+      Can be specified to YES to avoid prior destruction of existing dataset,
+      for drivers that support adding several subdatasets (e.g. GTIFF, NITF)
+
+    - .. co:: COPY_SRC_MDD
+         :choices: AUTO, YES, NO
+         :default: AUTO
+         :since: 3.8
+
+      Defines if metadata domains of the source dataset should be copied to the
+      destination dataset.
+      In the default AUTO mode, only "safe" domains will be copied, which
+      include the default metadata domain (some drivers may include other
+      domains such as IMD, RPC, GEOLOCATION).
+      When setting YES, all domains will be copied (but a few reserved ones like
+      IMAGE_STRUCTURE or DERIVED_SUBDATASETS).
+      Currently only recognized by the GTiff, COG, VRT, PNG and JPEG drivers.
+
+      When setting NO, no source metadata will be copied.
+
+    - .. co:: SRC_MDD
+         :choices: <domain_name>
+         :since: 3.8
+
+      Defines which source metadata domain should be copied.
+      This option restricts the list of source metadata domains to be copied
+      (it implies COPY_SRC_MDD=YES if it is not set). This option may be specified
+      as many times as they are source domains. The default metadata domain is the
+      empty string "" ("_DEFAULT_") may also be used when empty string is not practical).
+      Currently only recognized by the GTiff, COG, VRT, PNG and JPEG drivers.
 
 .. option:: -nogcp
 
