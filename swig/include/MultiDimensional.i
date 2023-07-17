@@ -202,25 +202,25 @@ public:
   GDALDimensionHS *CreateDimension( const char *name,
                                     const char* type,
                                     const char* direction,
-                                    unsigned long long size,
+                                    GUIntBig size,
                                     char **options = 0 ) {
     return GDALGroupCreateDimension(self, name, type, direction, size, options);
   }
 
-#if defined(SWIGPYTHON)
+#if defined(SWIGPYTHON) || defined(SWIGJAVA)
 %newobject CreateMDArray;
-%apply (int object_list_count, GDALDimensionHS **poObjects) {(int nDimensions, GDALDimensionHS **dimensions)};
+%apply (int object_list_count, GDALDimensionHS **poObjects) {(int dimensions, GDALDimensionHS **dimensionsValues)};
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* data_type};
   GDALMDArrayHS *CreateMDArray(const char* name,
-                               int nDimensions,
-                               GDALDimensionHS** dimensions,
+                               int dimensions,
+                               GDALDimensionHS **dimensionsValues,
                                GDALExtendedDataTypeHS* data_type,
                                char **options = 0)
   {
-    return GDALGroupCreateMDArray(self, name, nDimensions, dimensions,
+    return GDALGroupCreateMDArray(self, name, dimensions, dimensionsValues,
                                   data_type, options);
   }
-%clear (int nDimensions, GDALDimensionHS **dimensions);
+%clear (int dimensions, GDALDimensionHS **dimensionsValue);
 #endif
 
   CPLErr DeleteMDArray( const char *name,
@@ -229,15 +229,15 @@ public:
   }
 
 %newobject CreateAttribute;
-%apply (int nList, GUIntBig* pList) {(int nDimensions, GUIntBig *dimensions)};
+%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
-                                    int nDimensions,
-                                    GUIntBig *dimensions,
+                                    int dimensions,
+                                    GUIntBig *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
-    return GDALGroupCreateAttribute(self, name, nDimensions,
-                                    (const GUInt64*)dimensions,
+    return GDALGroupCreateAttribute(self, name, dimensions,
+                                    (const GUInt64*) sizes,
                                     data_type, options);
   }
 
@@ -426,7 +426,6 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
 }
 %}
 
-
 %rename (MDArray) GDALMDArrayHS;
 
 class GDALMDArrayHS {
@@ -447,7 +446,7 @@ public:
     return GDALMDArrayGetFullName(self);
   }
 
-  unsigned long long GetTotalElementsCount() {
+  GUIntBig GetTotalElementsCount() {
     return GDALMDArrayGetTotalElementsCount(self);
   }
 
@@ -502,17 +501,17 @@ public:
   }
 %clear char **;
 
-%apply (int nList, GUIntBig* pList) {(int nDimCount, GUIntBig* newDimSizes)};
-  CPLErr Resize( int nDimCount, GUIntBig* newDimSizes, char** options = NULL ) {
-    if( static_cast<size_t>(nDimCount) != GDALMDArrayGetDimensionCount(self) )
+%apply (int nList, GUIntBig* pList) {(int newDimensions, GUIntBig* newSizes)};
+  CPLErr Resize( int newDimensions, GUIntBig* newSizes, char** options = NULL ) {
+    if( static_cast<size_t>(newDimensions) != GDALMDArrayGetDimensionCount(self) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "newDimSizes array not of expected size");
+                 "newSizes array not of expected size");
         return CE_Failure;
     }
-    return GDALMDArrayResize( self, newDimSizes, options ) ? CE_None : CE_Failure;
+    return GDALMDArrayResize( self, newSizes, options ) ? CE_None : CE_Failure;
   }
-%clear (int nDimCount, GUIntBig* newDimSizes);
+%clear (int newDimensions, GUIntBig* newSizes);
 
 #if defined(SWIGPYTHON)
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* buffer_datatype};
@@ -854,15 +853,15 @@ public:
 #endif
 
 %newobject CreateAttribute;
-%apply (int nList, GUIntBig* pList) {(int nDimensions, GUIntBig *dimensions)};
+%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
-                                    int nDimensions,
-                                    GUIntBig *dimensions,
+                                    int dimensions,
+                                    GUIntBig *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
-    return GDALMDArrayCreateAttribute(self, name, nDimensions,
-                                    (const GUInt64*)dimensions,
+    return GDALMDArrayCreateAttribute(self, name, dimensions,
+                                    (const GUInt64*) sizes,
                                     data_type, options);
   }
 
@@ -1049,9 +1048,10 @@ public:
   }
 
 %newobject Transpose;
-  GDALMDArrayHS* Transpose(int nList, int* pList)
+%apply (int nList, int* pList) { (int axisMap, int* mapInts) };
+  GDALMDArrayHS* Transpose(int axisMap, int* mapInts)
   {
-    return GDALMDArrayTranspose(self, nList, pList);
+    return GDALMDArrayTranspose(self, axisMap, mapInts);
   }
 
 %newobject GetUnscaled;
@@ -1189,7 +1189,7 @@ public:
     return GDALAttributeGetFullName(self);
   }
 
-  unsigned long long GetTotalElementsCount() {
+  GUIntBig GetTotalElementsCount() {
     return GDALAttributeGetTotalElementsCount(self);
   }
 
@@ -1376,7 +1376,7 @@ public:
     return GDALDimensionGetDirection(self);
   }
 
-  unsigned long long GetSize() {
+  GUIntBig GetSize() {
     return GDALDimensionGetSize(self);
   }
 
