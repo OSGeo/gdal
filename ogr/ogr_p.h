@@ -41,8 +41,9 @@
 #include "cpl_minixml.h"
 
 #include "ogr_core.h"
-#include "ogr_geometry.h"
-#include "ogr_feature.h"
+
+class OGRGeometry;
+class OGRFieldDefn;
 
 /* A default name for the default geometry column, instead of '' */
 #define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME "_ogr_geometry_"
@@ -97,7 +98,10 @@ std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double,
 void CPL_DLL OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
                              char chDecimalSep, int nPrecision = 15,
                              char chConversionSpecifier = 'f');
+
+#ifdef OGR_GEOMETRY_H_INCLUDED
 std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts);
+#endif
 
 int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
                    char chConversionSpecifier);
