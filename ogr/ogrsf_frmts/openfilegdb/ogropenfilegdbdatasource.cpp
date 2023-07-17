@@ -279,7 +279,8 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
     m_osGDBSystemCatalogFilename =
         CPLFormFilename(m_osDirName, "a00000001", "gdbtable");
     if (!FileExists(m_osGDBSystemCatalogFilename.c_str()) ||
-        !oTable.Open(m_osGDBSystemCatalogFilename.c_str(), false))
+        !oTable.Open(m_osGDBSystemCatalogFilename.c_str(),
+                     poOpenInfo->eAccess == GA_Update))
     {
         if (nInterestTable > 0 && FileExists(poOpenInfo->pszFilename))
         {
