@@ -3817,13 +3817,17 @@ const char *GDALGeoPackageDataset::CheckMetadataDomain(const char *pszDomain)
 
 bool GDALGeoPackageDataset::HasMetadataTables() const
 {
-    const int nCount =
-        SQLGetInteger(hDB,
-                      "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
-                      "('gpkg_metadata', 'gpkg_metadata_reference') "
-                      "AND type IN ('table', 'view')",
-                      nullptr);
-    return nCount == 2;
+    if (m_nHasMetadataTables < 0)
+    {
+        const int nCount =
+            SQLGetInteger(hDB,
+                          "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
+                          "('gpkg_metadata', 'gpkg_metadata_reference') "
+                          "AND type IN ('table', 'view')",
+                          nullptr);
+        m_nHasMetadataTables = nCount == 2;
+    }
+    return CPL_TO_BOOL(m_nHasMetadataTables);
 }
 
 /************************************************************************/
@@ -4574,7 +4578,9 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
              "'http://www.geopackage.org/spec120/#extension_metadata', "
              "'read-write')";
 
-    return SQLCommand(hDB, osSQL) == OGRERR_NONE;
+    const bool bOK = SQLCommand(hDB, osSQL) == OGRERR_NONE;
+    m_nHasMetadataTables = bOK;
+    return bOK;
 }
 
 /************************************************************************/
@@ -10090,4 +10096,33 @@ bool GDALGeoPackageDataset::UpdateRelationship(
     ClearCachedRelationships();
     LoadRelationships();
     return true;
+}
+
+/************************************************************************/
+/*                    GetSqliteMasterContent()                          */
+/************************************************************************/
+
+const std::vector<SQLSqliteMasterContent> &
+GDALGeoPackageDataset::GetSqliteMasterContent()
+{
+    if (m_aoSqliteMasterContent.empty())
+    {
+        auto oResultTable =
+            SQLQuery(hDB, "SELECT sql, type, tbl_name FROM sqlite_master");
+        if (oResultTable)
+        {
+            for (int rowCnt = 0; rowCnt < oResultTable->RowCount(); ++rowCnt)
+            {
+                SQLSqliteMasterContent row;
+                const char *pszSQL = oResultTable->GetValue(0, rowCnt);
+                row.osSQL = pszSQL ? pszSQL : "";
+                const char *pszType = oResultTable->GetValue(1, rowCnt);
+                row.osType = pszType ? pszType : "";
+                const char *pszTableName = oResultTable->GetValue(2, rowCnt);
+                row.osTableName = pszTableName ? pszTableName : "";
+                m_aoSqliteMasterContent.emplace_back(std::move(row));
+            }
+        }
+    }
+    return m_aoSqliteMasterContent;
 }

@@ -142,6 +142,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool m_bHasEpochColumn =
         false;  // whether gpkg_spatial_ref_sys has a epoch column
     bool m_bNonSpatialTablesNonRegisteredInGpkgContentsFound = false;
+    mutable int m_nHasMetadataTables = -1;  // -1 = unknown, 0 = false, 1 = true
 
     CPLString m_osIdentifier{};
     bool m_bIdentifierAsCO = false;
@@ -179,6 +180,20 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool m_bRemoveOGREmptyTable = false;
 
     CPLString m_osTilingScheme = "CUSTOM";
+
+    // To optimize reading table constraints
+    int m_nReadTableDefCount = 0;
+    std::vector<SQLSqliteMasterContent> m_aoSqliteMasterContent{};
+
+    void IncrementReadTableDefCounter()
+    {
+        m_nReadTableDefCount++;
+    }
+    int GetReadTableDefCounter() const
+    {
+        return m_nReadTableDefCount;
+    }
+    const std::vector<SQLSqliteMasterContent> &GetSqliteMasterContent();
 
     bool ComputeTileAndPixelShifts();
     bool AllocCachedTiles();

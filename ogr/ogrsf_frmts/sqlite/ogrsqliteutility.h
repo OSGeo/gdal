@@ -37,6 +37,7 @@
 #include <set>
 #include <string>
 #include <memory>
+#include <vector>
 
 class SQLResult
 {
@@ -87,6 +88,16 @@ CPLString SQLUnescape(const char *pszVal);
 
 char **SQLTokenize(const char *pszSQL);
 
-std::set<std::string> SQLGetUniqueFieldUCConstraints(sqlite3 *poDb,
-                                                     const char *pszTableName);
+struct SQLSqliteMasterContent
+{
+    std::string osSQL{};
+    std::string osType{};
+    std::string osTableName{};
+};
+
+std::set<std::string> SQLGetUniqueFieldUCConstraints(
+    sqlite3 *poDb, const char *pszTableName,
+    const std::vector<SQLSqliteMasterContent> &sqliteMasterContent =
+        std::vector<SQLSqliteMasterContent>());
+
 #endif  // OGR_SQLITEUTILITY_H_INCLUDED

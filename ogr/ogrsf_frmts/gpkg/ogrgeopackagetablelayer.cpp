@@ -844,6 +844,8 @@ const char *OGRGeoPackageTableLayer::GetGeometryColumn()
 //
 OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
 {
+    m_poDS->IncrementReadTableDefCounter();
+
     bool bReadExtent = false;
     sqlite3 *poDb = m_poDS->GetDB();
     OGREnvelope oExtent;
@@ -1053,7 +1055,22 @@ OGRErr OGRGeoPackageTableLayer::ReadTableDefinition()
     std::set<std::string> uniqueFieldsUC;
     if (m_bIsTable)
     {
-        uniqueFieldsUC = SQLGetUniqueFieldUCConstraints(poDb, m_pszTableName);
+        // If resolving the layer definition of a substantial number of tables,
+        // fetch in a single time the content of the sqlite_master to increase
+        // performance
+        // Threshold somewhat arbitrary. If changing it, change
+        // ogr_gpkg.py::test_ogr_gpkg_unique_many_layers as well
+        constexpr int THRESHOLD_GET_SQLITE_MASTER = 10;
+        if (m_poDS->GetReadTableDefCounter() >= THRESHOLD_GET_SQLITE_MASTER)
+        {
+            uniqueFieldsUC = SQLGetUniqueFieldUCConstraints(
+                poDb, m_pszTableName, m_poDS->GetSqliteMasterContent());
+        }
+        else
+        {
+            uniqueFieldsUC =
+                SQLGetUniqueFieldUCConstraints(poDb, m_pszTableName);
+        }
     }
 
     /* Use the "PRAGMA TABLE_INFO()" call to get table definition */
