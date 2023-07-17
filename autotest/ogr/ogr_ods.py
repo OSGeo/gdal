@@ -198,6 +198,19 @@ def test_ogr_ods_2():
 
 
 ###############################################################################
+# Test HEADERS = DISABLE open option
+
+
+def test_ogr_ods_headers_open_option():
+
+    ds = gdal.OpenEx("data/ods/test.ods", open_options=["HEADERS=DISABLE"])
+
+    lyr = ds.GetLayerByName("Feuille7")
+
+    assert lyr.GetFeatureCount() == 3
+
+
+###############################################################################
 # Test OGR_ODS_FIELD_TYPES = STRING
 
 
@@ -209,6 +222,19 @@ def test_ogr_ods_3():
         lyr = ds.GetLayerByName("Feuille7")
 
         assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
+
+
+###############################################################################
+# Test FIELD_TYPES = STRING open option
+
+
+def test_ogr_ods_field_types_open_option():
+
+    ds = gdal.OpenEx("data/ods/test.ods", open_options=["FIELD_TYPES=STRING"])
+
+    lyr = ds.GetLayerByName("Feuille7")
+
+    assert lyr.GetLayerDefn().GetFieldDefn(1).GetType() == ogr.OFTString
 
 
 ###############################################################################
@@ -255,6 +281,7 @@ def test_ogr_ods_5():
 # Test formula evaluation
 
 
+@pytest.mark.require_driver("CSV")
 def test_ogr_ods_6():
 
     src_ds = ogr.Open("ODS:data/ods/content_formulas.xml")
