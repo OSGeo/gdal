@@ -1832,3 +1832,71 @@ def test_width_precision_flags(
             assert f.GetFieldAsDouble(field_idx) == -12.34
         else:
             assert f.GetFieldAsDouble(field_idx) == -12.3
+
+
+###############################################################################
+def test_ogr2ogr_lib_nlt_GEOMETRY_nlt_CURVE_TO_LINEAR():
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_lyr = src_ds.CreateLayer("test", geom_type=ogr.wkbMultiCurve)
+    f = ogr.Feature(src_lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("MULTICURVE(CIRCULARSTRING(0 0,1 1,2 0))"))
+    src_lyr.CreateFeature(f)
+    f = None
+
+    dst_ds = gdal.VectorTranslate(
+        "", src_ds, format="Memory", geometryType=["GEOMETRY", "CONVERT_TO_LINEAR"]
+    )
+    dst_lyr = dst_ds.GetLayer(0)
+    assert dst_lyr.GetGeomType() == ogr.wkbUnknown
+    f = dst_lyr.GetNextFeature()
+    assert f.GetGeometryRef().GetGeometryType() == ogr.wkbMultiLineString
+
+
+###############################################################################
+@pytest.mark.parametrize(
+    "nlt_value",
+    [
+        ["NONE", "POINT"],
+        ["GEOMETRY", "POINT"],
+        ["CONVERT_TO_LINEAR", "CONVERT_TO_CURVE"],
+        ["CONVERT_TO_CURVE", "CONVERT_TO_LINEAR"],
+        # Not supported but could likely make sense
+        ["PROMOTE_TO_MULTI", "CONVERT_TO_CURVE"],
+        # Not supported but could likely make sense
+        ["CONVERT_TO_CURVE", "PROMOTE_TO_MULTI"],
+        ["POINT", "LINESTRING"],
+    ],
+)
+def test_ogr2ogr_lib_invalid_nlt_combinations(nlt_value):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("test", geom_type=ogr.wkbMultiCurve)
+    with pytest.raises(Exception, match="Unsupported combination of -nlt arguments"):
+        gdal.VectorTranslate("", src_ds, format="Memory", geometryType=nlt_value)
+
+
+###############################################################################
+# Just check we don't reject them
+
+
+@pytest.mark.parametrize(
+    "nlt_value",
+    [
+        ["GEOMETRY", "CONVERT_TO_LINEAR"],
+        ["CONVERT_TO_LINEAR", "GEOMETRY"],
+        ["LINESTRING", "CONVERT_TO_LINEAR"],
+        ["CONVERT_TO_CURVE", "MULTICURVE"],
+        ["MULTICURVE", "CONVERT_TO_CURVE"],
+        ["CONVERT_TO_LINEAR", "PROMOTE_TO_MULTI"],
+        ["PROMOTE_TO_MULTI", "CONVERT_TO_LINEAR"],
+    ],
+)
+def test_ogr2ogr_lib_valid_nlt_combinations(nlt_value):
+
+    src_ds = gdal.GetDriverByName("Memory").Create("", 0, 0, 0, gdal.GDT_Unknown)
+    src_ds.CreateLayer("test", geom_type=ogr.wkbMultiCurve)
+    assert (
+        gdal.VectorTranslate("", src_ds, format="Memory", geometryType=nlt_value)
+        is not None
+    )
