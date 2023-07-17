@@ -8,14 +8,6 @@
  *
 */
 
-// TODO: Even thought I could get rid of some typemaps
-//   related to handles H if instead I passed around
-//   HS* instead. Dimensions, MDArrays, ExtendedDataTypes.
-//   Once other things are working try to test that
-//   theory out. It's Even's opinion that my typemaps are
-//   needed for these classes because SWIG isn't going
-//   from H's to HS*'s by itself.
-
 // TODO: maintenance
 //   The code below mixes uses of $result, result, and jresult.
 //   Shouldn't they all be made into $result?
@@ -2294,51 +2286,6 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(jstype) (int object_list_count, GDALDimensionHS **poObjects) "org.gdal.gdal.Dimension[]"
 %typemap(javain) (int object_list_count, GDALDimensionHS **poObjects) "$javainput"
 %typemap(javaout) (int object_list_count, GDALDimensionHS **poObjects) {
-    return $jnicall;
-}
-
-/***** ExtendedDataType typemaps **********************/
-
-/*
-  From Java: ExtendedDataType
-  To C:      GDALExtendedDataTypeH
-*/
-
-%typemap(in) (GDALExtendedDataTypeH typeH)
-{
-    /* %typemap(in) (GDALExtendedDataTypeH typeH) */
-    if ($input)
-    {
-        const jclass dtClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-        const jmethodID getCPtr = jenv->GetStaticMethodID(dtClass, "getCPtr", "(Lorg/gdal/gdal/ExtendedDataType;)J");
-
-        $1 = (GDALExtendedDataTypeH) jenv->CallStaticLongMethod(dtClass, getCPtr, $input);
-    }
-    else
-    {
-        $1 = (GDALExtendedDataTypeH) NULL;
-    }
-}
-
-/*
-  From C:  GDALExtendedDataTypeH
-  To Java: ExtendedDataType
-*/
-
-%typemap(out) (GDALExtendedDataTypeH typeH)
-{
-    /* %typemap(out) (GDALExtendedDataTypeH typeH) */
-    const jclass typeClass = jenv->FindClass("org/gdal/gdal/ExtendedDataType");
-    const jmethodID ctor = jenv->GetMethodID(typeClass, "<init>", "(JZ)V")
-
-    $result = jenv->NewObject(typeClass, ctor, $1, false);
-}
-
-%typemap(jni) (GDALExtendedDataTypeH typeH) "jobject"
-%typemap(jtype) (GDALExtendedDataTypeH typeH) "org.gdal.gdal.ExtendedDataType"
-%typemap(jstype) (GDALExtendedDataTypeH typeH) "org.gdal.gdal.ExtendedDataType"
-%typemap(javain) (GDALExtendedDataTypeH typeH) "$javainput"
-%typemap(javaout) (GDALExtendedDataTypeH typeH) {
     return $jnicall;
 }
 
