@@ -5748,17 +5748,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                         }
                     }
 
-                    if (eGType != GEOMTYPE_UNCHANGED)
-                    {
-                        poDstGeometry = OGRGeometryFactory::forceTo(
-                            poDstGeometry,
-                            static_cast<OGRwkbGeometryType>(eGType));
-                    }
-                    else if (m_eGeomTypeConversion == GTC_PROMOTE_TO_MULTI ||
-                             m_eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
-                             m_eGeomTypeConversion ==
-                                 GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR ||
-                             m_eGeomTypeConversion == GTC_CONVERT_TO_CURVE)
+                    if (m_eGeomTypeConversion != GTC_DEFAULT)
                     {
                         OGRwkbGeometryType eTargetType =
                             poDstGeometry->getGeometryType();
@@ -5766,6 +5756,12 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                             ConvertType(m_eGeomTypeConversion, eTargetType);
                         poDstGeometry = OGRGeometryFactory::forceTo(
                             poDstGeometry, eTargetType);
+                    }
+                    else if (eGType != GEOMTYPE_UNCHANGED)
+                    {
+                        poDstGeometry = OGRGeometryFactory::forceTo(
+                            poDstGeometry,
+                            static_cast<OGRwkbGeometryType>(eGType));
                     }
                 }
 
@@ -6131,29 +6127,72 @@ GDALVectorTranslateOptions *GDALVectorTranslateOptionsNew(
                 osGeomName.resize(osGeomName.size() - 1);
             }
             if (EQUAL(osGeomName, "NONE"))
+            {
+                if (psOptions->eGType != GEOMTYPE_UNCHANGED)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unsupported combination of -nlt arguments");
+                    return nullptr;
+                }
                 psOptions->eGType = wkbNone;
+            }
             else if (EQUAL(osGeomName, "GEOMETRY"))
+            {
+                if (psOptions->eGType != GEOMTYPE_UNCHANGED)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unsupported combination of -nlt arguments");
+                    return nullptr;
+                }
                 psOptions->eGType = wkbUnknown;
+            }
             else if (EQUAL(osGeomName, "PROMOTE_TO_MULTI"))
             {
                 if (psOptions->eGeomTypeConversion == GTC_CONVERT_TO_LINEAR)
                     psOptions->eGeomTypeConversion =
                         GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
-                else
+                else if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
                     psOptions->eGeomTypeConversion = GTC_PROMOTE_TO_MULTI;
+                else
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unsupported combination of -nlt arguments");
+                    return nullptr;
+                }
             }
             else if (EQUAL(osGeomName, "CONVERT_TO_LINEAR"))
             {
                 if (psOptions->eGeomTypeConversion == GTC_PROMOTE_TO_MULTI)
                     psOptions->eGeomTypeConversion =
                         GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR;
-                else
+                else if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
                     psOptions->eGeomTypeConversion = GTC_CONVERT_TO_LINEAR;
+                else
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unsupported combination of -nlt arguments");
+                    return nullptr;
+                }
             }
             else if (EQUAL(osGeomName, "CONVERT_TO_CURVE"))
-                psOptions->eGeomTypeConversion = GTC_CONVERT_TO_CURVE;
+            {
+                if (psOptions->eGeomTypeConversion == GTC_DEFAULT)
+                    psOptions->eGeomTypeConversion = GTC_CONVERT_TO_CURVE;
+                else
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unsupported combination of -nlt arguments");
+                    return nullptr;
+                }
+            }
             else
             {
+                if (psOptions->eGType != GEOMTYPE_UNCHANGED)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Unsupported combination of -nlt arguments");
+                    return nullptr;
+                }
                 psOptions->eGType = OGRFromOGCGeomType(osGeomName);
                 if (psOptions->eGType == wkbUnknown)
                 {
