@@ -44,23 +44,8 @@ RUN apk add --no-cache \
     apache-arrow-dev \
     # For spatialite (and GDAL)
     libxml2-dev \
+    libaec-dev \
     && mkdir -p /build_thirdparty/usr/lib
-
-# Build szip
-ARG SZIP_VERSION=2.1.1
-RUN if test "${SZIP_VERSION}" != ""; then ( \
-    wget -q https://support.hdfgroup.org/ftp/lib-external/szip/${SZIP_VERSION}/src/szip-${SZIP_VERSION}.tar.gz \
-    && tar xzf szip-${SZIP_VERSION}.tar.gz \
-    && rm -f szip-${SZIP_VERSION}.tar.gz \
-    && cd szip-${SZIP_VERSION} \
-    && CFLAGS=-O2 ./configure --prefix=/usr --disable-static \
-    && make -j$(nproc) \
-    && make install \
-    && cp -P /usr/lib/libsz*.so* /build_thirdparty/usr/lib \
-    && for i in /build_thirdparty/usr/lib/*; do strip -s $i 2>/dev/null || /bin/true; done \
-    && cd .. \
-    && rm -rf szip-${SZIP_VERSION} \
-    ); fi
 
 # Build hdf4
 ARG HDF4_VERSION=4.2.16
@@ -285,6 +270,7 @@ RUN apk add --no-cache \
         unixodbc \
         libpq \
         apache-arrow \
+        libaec \
     # Remove /usr/lib/libopenjp2.so.2.3.0 since we are building v2.3.1 manually
     # && rm -f /usr/lib/libopenjp2.so.2.3.0 \
     # libturbojpeg.so is not used by GDAL. Only libjpeg.so*

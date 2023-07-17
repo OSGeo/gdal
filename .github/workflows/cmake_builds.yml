@@ -54,7 +54,7 @@ jobs:
       run: |
         sudo add-apt-repository -y ppa:ubuntugis/ubuntugis-unstable
         sudo apt-get update
-        sudo apt-get install -y -q bison libjpeg-dev libgif-dev liblzma-dev libzstd-dev libgeos-dev git \
+        sudo apt-get install -y -q bison libaec-dev libjpeg-dev libgif-dev liblzma-dev libzstd-dev libgeos-dev git \
            libcurl4-gnutls-dev libproj-dev libxml2-dev  libxerces-c-dev libnetcdf-dev netcdf-bin \
            libpoppler-dev libpoppler-private-dev gpsbabel libhdf4-alt-dev libhdf5-serial-dev libpodofo-dev poppler-utils \
            libfreexl-dev unixodbc-dev libwebp-dev libepsilon-dev liblcms2-2 libcrypto++-dev libkml-dev \
@@ -436,7 +436,7 @@ jobs:
             cfitsio freexl geotiff libjpeg-turbo libpq libspatialite libwebp-base pcre pcre2 postgresql \
             sqlite tiledb zstd cryptopp cgal doxygen librttopo libkml openssl xz \
             openjdk ant qhull armadillo blas blas-devel libblas libcblas liblapack liblapacke blosc libarchive \
-            arrow-cpp pyarrow
+            arrow-cpp pyarrow libaec
     - name: Install pdfium
       shell: bash -l {0}
       run: |

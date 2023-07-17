@@ -5,10 +5,6 @@
 #include <string.h>
 #include "grib2.h"
 
-#ifdef USE_PNG
-  g2int pngunpack(unsigned char *,g2int,g2int *,g2int, g2float *);
-#endif  /* USE_PNG */
-
 static float DoubleToFloatClamp(double val) {
    if (val >= FLT_MAX) return FLT_MAX;
    if (val <= -FLT_MAX) return -FLT_MAX;
@@ -216,6 +212,17 @@ g2int g2_unpack7(unsigned char *cgrib,g2int cgrib_length,g2int *iofst,g2int igds
         pngunpack(cgrib+ipos,lensec-5,idrstmpl,ndpts,lfld);
         }
 #endif  /* USE_PNG */
+      else if (idrsnum == 42) {
+#ifdef USE_AEC
+        aecunpack(cgrib+ipos,lensec-5,idrstmpl,ndpts,lfld);
+#else
+        fprintf(stderr,"g2_unpack7: Data Representation Template 5.42 decoding requires building against libaec.\n");
+        ierr=4;
+        if ( lfld != 0 ) free(lfld);
+        *fld=0;     //NULL
+        return(ierr);
+#endif
+        }
       else {
         fprintf(stderr,"g2_unpack7: Data Representation Template 5.%d not yet implemented.\n",(int)idrsnum);
         ierr=4;

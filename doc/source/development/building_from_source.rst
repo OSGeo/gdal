@@ -1026,6 +1026,24 @@ of the original input image is preserved (within user defined error bounds).
     Control whether to use the LERC internal library. Defaults depends on GDAL_USE_INTERNAL_LIBS. When set
     to ON, has precedence over GDAL_USE_LERC=ON
 
+LIBAEC
+******
+
+`libaec <https://gitlab.dkrz.de/k202009/libaec>`_ is a compression library which offers
+the extended Golomb-Rice coding as defined in the CCSDS recommended standard 121.0-B-3.
+It is used by the :ref:`raster.grib` driver.
+
+.. option:: LIBAEC_INCLUDE_DIR
+
+    Path to an include directory with the ``libaec.h`` header file.
+
+.. option:: LIBAEC_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_LIBAEC=ON/OFF
+
+    Control whether to use LIBAEC. Defaults to ON when LIBAEC is found.
 
 LibKML
 ******

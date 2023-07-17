@@ -14,7 +14,7 @@
 // 2009-01-14  Vuong     Changed struct template to gtemplate
 //
 //   Each element of structure gribfield is defined as:
-//   
+//
 //   gribfield gfld;
 //
 //        gfld->version = GRIB edition number ( currently 2 )
@@ -293,6 +293,9 @@ void pngpack(g2float *fld,g2int width,g2int height,g2int *idrstmpl,
              unsigned char *cpack,g2int *lcpack);
 
 int dec_jpeg2000(const void *injpc,g2int bufsize,g2int **outfld,g2int outpixels);
+
+g2int aecunpack(unsigned char *cpack,g2int len,g2int *idrstmpl,g2int ndpts,
+                g2float *fld);
 
 #endif  /*  grib2_H  */
 

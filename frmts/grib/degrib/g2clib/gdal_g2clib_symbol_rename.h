@@ -1,4 +1,5 @@
 /* This is a generated file by rename_g2clib_symbols.h. *DO NOT EDIT MANUALLY !* */
+#define aecunpack gdal_aecunpack
 #define cmplxpack gdal_cmplxpack
 #define compack gdal_compack
 #define comunpack gdal_comunpack
