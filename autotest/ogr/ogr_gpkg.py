@@ -135,9 +135,9 @@ def validate(filename, quiet=False):
         open(my_filename, "wb").write(content)
     try:
         _validate_check(my_filename)
-    except Exception as e:
+    except Exception:
         if not quiet:
-            print(e)
+            raise
         return False
     finally:
         if my_filename != filename:
@@ -8938,3 +8938,88 @@ def test_ogr_gpkg_rtree_triggers(gpkg_version):
 
     finally:
         gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test relaxed DATETIME format for GeoPackage 1.4
+# (https://github.com/OSGeo/gdal/issues/8037)
+
+
+def test_ogr_gpkg_1_4_relaxed_datetime_format():
+    dbname = "/vsimem/test_ogr_gpkg_1_4_relaxed_datetime_format.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname, options=["VERSION=1.4"])
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("dt", "2023-11-07T16:03:34Z")
+    lyr.CreateFeature(f)
+    f = None
+
+    # Check we have written without milliseconds
+    with ds.ExecuteSQL("SELECT CAST(dt AS VARCHAR) AS dt FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["dt"] == "2023-11-07T16:03:34Z"
+
+    # Test datetime without seconds
+    ds.ExecuteSQL("INSERT INTO test (dt) VALUES ('2023-11-07T16:03Z')")
+    ds = None
+
+    validate(dbname)
+
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["dt"] == "2023/11/07 16:03:34+00"
+    f = lyr.GetNextFeature()
+    assert f["dt"] == "2023/11/07 16:03:00+00"
+    ds = None
+
+    gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test relaxed DATETIME format for GeoPackage 1.4
+# (https://github.com/OSGeo/gdal/issues/8037)
+
+
+@pytest.mark.parametrize(
+    "version,datetime_precision,input,output",
+    [
+        ("1.4", "AUTO", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.4", "AUTO", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34Z"),
+        ("1.3", "AUTO", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.3", "AUTO", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34.000Z"),
+        ("1.4", "MILLISECOND", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.4", "MILLISECOND", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34.000Z"),
+        ("1.4", "SECOND", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34Z"),
+        ("1.4", "MINUTE", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03Z"),
+        ("1.4", "INVALID", None, None),
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_1_4_DATETIME_PRECISION(version, datetime_precision, input, output):
+    dbname = "/vsimem/test_ogr_gpkg_1_4_DATETIME_PRECISION.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname, options=["VERSION=" + version])
+    if datetime_precision == "INVALID":
+        with pytest.raises(Exception), gdaltest.error_handler():
+            lyr = ds.CreateLayer(
+                "test", options=["DATETIME_PRECISION=" + datetime_precision]
+            )
+    else:
+        lyr = ds.CreateLayer(
+            "test", options=["DATETIME_PRECISION=" + datetime_precision]
+        )
+        lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("dt", input)
+        lyr.CreateFeature(f)
+        f = None
+
+        # Check we have written what we expected
+        with ds.ExecuteSQL("SELECT CAST(dt AS VARCHAR) AS dt FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["dt"] == output
+
+    ds = None
+
+    gdal.Unlink(dbname)

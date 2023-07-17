@@ -36,6 +36,7 @@
 #include "ogrsqliteutility.h"
 #include "cpl_threadsafe_queue.hpp"
 #include "ograrrowarrayhelper.h"
+#include "ogr_p.h"
 
 #include <condition_variable>
 #include <limits>
@@ -699,6 +700,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
              // thread
     std::thread m_oThreadRTree{};
 
+    OGRISO8601Format m_sDateTimeFormat = {OGRISO8601Precision::AUTO};
+
     void StartAsyncRTree();
     void CancelAsyncRTree();
     void RemoveAsyncRTreeTempDB();
@@ -853,6 +856,10 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
         m_eASpatialVariant = eASpatialVariant;
         if (eASpatialVariant == GPKG_ATTRIBUTES)
             m_bIsInGpkgContents = true;
+    }
+    void SetDateTimePrecision(OGRISO8601Precision ePrecision)
+    {
+        m_sDateTimeFormat.ePrecision = ePrecision;
     }
 
     void CreateSpatialIndexIfNecessary();

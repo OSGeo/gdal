@@ -590,6 +590,14 @@ void RegisterOGRGeoPackage()
         "     <Value>GPKG_ATTRIBUTES</Value>"
         "     <Value>NOT_REGISTERED</Value>"
         "  </Option>"
+        "  <Option name='DATETIME_PRECISION' type='string-select' "
+        "description='Number of components of datetime fields' "
+        "default='AUTO'>"
+        "     <Value>AUTO</Value>"
+        "     <Value>MILLISECOND</Value>"
+        "     <Value>SECOND</Value>"
+        "     <Value>MINUTE</Value>"
+        "  </Option>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATATYPES,

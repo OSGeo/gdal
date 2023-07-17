@@ -388,7 +388,6 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                     else if (poFieldDefn->GetType() == OFTDateTime)
                     {
                         destructorType = SQLITE_STATIC;
-                        constexpr bool bAlwaysMillisecond = true;
                         const auto psFieldRaw =
                             poFeature->GetRawFieldRef(iField);
                         char *pszValEdit =
@@ -398,7 +397,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                             psFieldRaw->Date.TZFlag == 100)
                         {
                             nValLengthBytes = OGRGetISO8601DateTime(
-                                psFieldRaw, bAlwaysMillisecond, pszValEdit);
+                                psFieldRaw, m_sDateTimeFormat, pszValEdit);
                         }
                         else
                         {
@@ -438,7 +437,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                             }
 
                             nValLengthBytes = OGRGetISO8601DateTime(
-                                &sField, bAlwaysMillisecond, pszValEdit);
+                                &sField, m_sDateTimeFormat, pszValEdit);
                         }
                         nInsertionBufferPos += nValLengthBytes;
                     }
