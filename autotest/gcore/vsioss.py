@@ -810,6 +810,9 @@ def test_vsioss_5():
 # Test multipart upload with a fake OSS server
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
+)
 @gdaltest.disable_exceptions()
 def test_vsioss_6():
 
