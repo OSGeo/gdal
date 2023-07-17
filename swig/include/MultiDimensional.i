@@ -209,18 +209,18 @@ public:
 
 #if defined(SWIGPYTHON) || defined(SWIGJAVA)
 %newobject CreateMDArray;
-%apply (int object_list_count, GDALDimensionHS **poObjects) {(int nDimensions, GDALDimensionHS **dimensions)};
+%apply (int object_list_count, GDALDimensionHS **poObjects) {(int dimensions, GDALDimensionHS **dimensionsValues)};
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* data_type};
   GDALMDArrayHS *CreateMDArray(const char* name,
-                               int nDimensions,
-                               GDALDimensionHS** dimensions,
+                               int dimensions,
+                               GDALDimensionHS **dimensionsValues,
                                GDALExtendedDataTypeHS* data_type,
                                char **options = 0)
   {
-    return GDALGroupCreateMDArray(self, name, nDimensions, dimensions,
+    return GDALGroupCreateMDArray(self, name, dimensions, dimensionsValues,
                                   data_type, options);
   }
-%clear (int nDimensions, GDALDimensionHS **dimensions);
+%clear (int dimensions, GDALDimensionHS **dimensionsValue);
 #endif
 
   CPLErr DeleteMDArray( const char *name,
