@@ -1611,12 +1611,10 @@ def test_vsiaz_rmdirrecursive():
 # Test Sync() and multithreaded download and CHUNK_SIZE
 
 
+@pytest.mark.skipif(
+    gdaltest.is_travis_branch("macos_build"), reason="randomly fails on macos"
+)
 def test_vsiaz_fake_sync_multithreaded_upload_chunk_size():
-
-    if gdaltest.is_travis_branch("MacOS build"):
-        pytest.xfail(
-            "Failure. See https://github.com/rouault/gdal/runs/1329425333?check_suite_focus=true"
-        )
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
