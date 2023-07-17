@@ -1869,6 +1869,31 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         pytest.fail()
     ds.ReleaseResultSet(sql_lyr)
 
+    with gdaltest.tempfile(
+        "/vsimem/wfs_endpoint?SERVICE=WFS&VERSION=1.1.0&REQUEST=GetFeature&TYPENAME=my_layer&PROPERTYNAME=str,boolean,shape",
+        """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+xmlns:ogc="http://www.opengis.net/ogc"
+xmlns:foo="http://foo"
+xmlns:wfs="http://www.opengis.net/wfs"
+xmlns:ows="http://www.opengis.net/ows"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:gml="http://www.opengis.net/gml"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+numberOfFeatures="1"
+timeStamp="2015-04-17T14:14:24.859Z"
+xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                    http://www.opengis.net/wfs http://schemas.opengis.net/wfs/1.1.0/wfs.xsd">
+    <gml:featureMembers>
+        <foo:my_layer gml:id="my_layer.100">
+            <foo:str>bar</foo:str>
+        </foo:my_layer>
+    </gml:featureMembers>
+</wfs:FeatureCollection>
+""",
+    ), ds.ExecuteSQL("SELECT boolean, str FROM my_layer") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["str"] == "bar"
+
 
 ###############################################################################
 
