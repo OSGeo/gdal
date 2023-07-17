@@ -3244,6 +3244,192 @@ def Rasterize(destNameOrDestDS, srcDS, **kwargs):
         return wrapper_GDALRasterizeDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
 
 
+def FootprintOptions(options=None,
+                     format=None,
+                     bands=None,
+                     srcNodata=None,
+                     ovr=None,
+                     targetCoordinateSystem=None,
+                     dstSRS=None,
+                     splitPolys=None,
+                     convexHull=None,
+                     densify=None,
+                     simplify=None,
+                     maxPoints=None,
+                     layerName=None,
+                     layerCreationOptions=None,
+                     datasetCreationOptions=None,
+                     callback=None, callback_data=None):
+    """Create a FootprintOptions() object that can be passed to gdal.Footprint()
+
+    Parameters
+    ----------
+    options:
+        can be be an array of strings, a string or let empty and filled from other keywords.
+    format:
+        output format ("GeoJSON", etc...)
+    bands:
+        list of output bands to burn values into
+    srcNodata:
+        source nodata value(s).
+    ovr:
+        overview index.
+    targetCoordinateSystem:
+        "pixel" or "georef"
+    dstSRS:
+        output SRS
+    datasetCreationOptions:
+        list of dataset creation options
+    layerCreationOptions:
+        list of layer creation options
+    splitPolys:
+        whether to split multipolygons as several polygons
+    convexHull:
+        whether to compute the convex hull of polygons/multipolygons
+    densify:
+        tolerance value for polygon densification
+    simplify:
+        tolerance value for polygon simplification
+    maxPoints:
+        maximum number of points (100 by default, "unlimited" for unlimited)
+    layerName:
+        output layer name
+    callback:
+        callback method
+    callback_data:
+        user data for callback
+    """
+    options = [] if options is None else options
+
+    if isinstance(options, str):
+        new_options = ParseCommandLine(options)
+    else:
+        new_options = options
+        if format is not None:
+            new_options += ['-of', format]
+        if bands is not None:
+            for b in bands:
+                new_options += ['-b', str(b)]
+        if targetCoordinateSystem:
+            new_options += ["-t_cs", targetCoordinateSystem]
+        if dstSRS:
+            new_options += ["-t_srs", dstSRS]
+        if srcNodata is not None:
+            new_options += ['-srcnodata', str(srcNodata)]
+        if ovr is not None:
+            new_options += ['-ovr', str(ovr)]
+        if splitPolys:
+            new_options += ["-split_polys"]
+        if convexHull:
+            new_options += ["-convex_hull"]
+        if densify is not None:
+            new_options += ['-densify', str(densify)]
+        if simplify is not None:
+            new_options += ['-simplify', str(simplify)]
+        if maxPoints is not None:
+            new_options += ['-max_points', str(maxPoints)]
+        if layerName is not None:
+            new_options += ['-lyr_name', layerName]
+        if datasetCreationOptions is not None:
+            for opt in datasetCreationOptions:
+                new_options += ['-dsco', opt]
+        if layerCreationOptions is not None:
+            for opt in layerCreationOptions:
+                new_options += ['-lco', opt]
+
+    return (GDALFootprintOptions(new_options), callback, callback_data)
+
+def Footprint(destNameOrDestDS, srcDS, **kwargs):
+    """Compute the footprint of a raster
+
+    Parameters
+    ----------
+    destNameOrDestDS:
+        Output dataset name or object
+    srcDS:
+        a Dataset object or a filename
+    kwargs:
+        options: return of gdal.FootprintOptions(), string or array of strings,
+        other keywords arguments of gdal.FootprintOptions()
+        If options is provided as a gdal.FootprintOptions() object, other keywords are ignored.
+
+    Examples
+    --------
+
+    1. Special mode to get deserialized GeoJSON (in EPSG:4326 if dstSRS not specified):
+
+    >>> deserialized_geojson = gdal.FootPrint(None, src_ds, format="GeoJSON")
+
+    2. Special mode to get WKT:
+
+    >>> wkt = gdal.FootPrint(None, src_ds, format="WKT")
+
+    3. Get result in a GeoPackage
+
+    >>> gdal.FootPrintf("out.gpkg", src_ds, format="GPKG")
+
+    """
+
+    _WarnIfUserHasNotSpecifiedIfUsingExceptions()
+
+    inline_geojson_requested = (destNameOrDestDS is None or destNameOrDestDS == "") and \
+        "format" in kwargs and kwargs["format"] == "GeoJSON"
+    if inline_geojson_requested and "dstSRS" not in kwargs:
+        import copy
+        kwargs = copy.copy(kwargs)
+        kwargs["dstSRS"] = "EPSG:4326"
+
+    wkt_requested = (destNameOrDestDS is None or destNameOrDestDS == "") and \
+        "format" in kwargs and kwargs["format"] == "WKT"
+    if wkt_requested:
+        import copy
+        kwargs = copy.copy(kwargs)
+        kwargs["format"] = "GeoJSON"
+
+    if 'options' not in kwargs or isinstance(kwargs['options'], (list, str)):
+        (opts, callback, callback_data) = FootprintOptions(**kwargs)
+    else:
+        (opts, callback, callback_data) = kwargs['options']
+    if isinstance(srcDS, str):
+        srcDS = OpenEx(srcDS, gdalconst.OF_RASTER)
+
+    if inline_geojson_requested or wkt_requested:
+        import uuid
+        temp_filename = "/vsimem/" + str(uuid.uuid4())
+        try:
+            if not wrapper_GDALFootprintDestName(temp_filename, srcDS, opts, callback, callback_data):
+                return None
+            if inline_geojson_requested:
+                f = VSIFOpenL(temp_filename, "rb")
+                assert f
+                VSIFSeekL(f, 0, 2) # SEEK_END
+                size = VSIFTellL(f)
+                VSIFSeekL(f, 0, 0) # SEEK_SET
+                data = VSIFReadL(1, size, f)
+                VSIFCloseL(f)
+                import json
+                return json.loads(data)
+            else:
+                assert wkt_requested
+                ds = OpenEx(temp_filename)
+                lyr = ds.GetLayer(0)
+                wkts = []
+                for f in lyr:
+                    wkts.append(f.GetGeometryRef().ExportToWkt())
+                if len(wkts) == 1:
+                    return wkts[0]
+                else:
+                    return wkts
+        finally:
+            if VSIStatL(temp_filename):
+                Unlink(temp_filename)
+
+    if isinstance(destNameOrDestDS, str):
+        return wrapper_GDALFootprintDestName(destNameOrDestDS, srcDS, opts, callback, callback_data)
+    else:
+        return wrapper_GDALFootprintDestDS(destNameOrDestDS, srcDS, opts, callback, callback_data)
+
+
 def BuildVRTOptions(options=None,
                     resolution=None,
                     outputBounds=None,

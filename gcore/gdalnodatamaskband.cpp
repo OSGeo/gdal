@@ -46,24 +46,50 @@
 /************************************************************************/
 
 GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn)
-    : poParent(poParentIn)
+    : m_poParent(poParentIn)
 {
     poDS = nullptr;
     nBand = 0;
 
-    nRasterXSize = poParent->GetXSize();
-    nRasterYSize = poParent->GetYSize();
+    nRasterXSize = m_poParent->GetXSize();
+    nRasterYSize = m_poParent->GetYSize();
 
     eDataType = GDT_Byte;
-    poParent->GetBlockSize(&nBlockXSize, &nBlockYSize);
+    m_poParent->GetBlockSize(&nBlockXSize, &nBlockYSize);
 
-    const auto eParentDT = poParent->GetRasterDataType();
+    const auto eParentDT = m_poParent->GetRasterDataType();
     if (eParentDT == GDT_Int64)
-        nNoDataValueInt64 = poParent->GetNoDataValueAsInt64();
+        m_nNoDataValueInt64 = m_poParent->GetNoDataValueAsInt64();
     else if (eParentDT == GDT_UInt64)
-        nNoDataValueUInt64 = poParent->GetNoDataValueAsUInt64();
+        m_nNoDataValueUInt64 = m_poParent->GetNoDataValueAsUInt64();
     else
-        dfNoDataValue = poParent->GetNoDataValue();
+        m_dfNoDataValue = m_poParent->GetNoDataValue();
+}
+
+/************************************************************************/
+/*                        GDALNoDataMaskBand()                          */
+/************************************************************************/
+
+GDALNoDataMaskBand::GDALNoDataMaskBand(GDALRasterBand *poParentIn,
+                                       double dfNoDataValue)
+    : m_poParent(poParentIn)
+{
+    poDS = nullptr;
+    nBand = 0;
+
+    nRasterXSize = m_poParent->GetXSize();
+    nRasterYSize = m_poParent->GetYSize();
+
+    eDataType = GDT_Byte;
+    m_poParent->GetBlockSize(&nBlockXSize, &nBlockYSize);
+
+    const auto eParentDT = m_poParent->GetRasterDataType();
+    if (eParentDT == GDT_Int64)
+        m_nNoDataValueInt64 = static_cast<int64_t>(dfNoDataValue);
+    else if (eParentDT == GDT_UInt64)
+        m_nNoDataValueUInt64 = static_cast<uint64_t>(dfNoDataValue);
+    else
+        m_dfNoDataValue = dfNoDataValue;
 }
 
 /************************************************************************/
@@ -213,7 +239,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         return CE_Failure;
     }
-    const auto eParentDT = poParent->GetRasterDataType();
+    const auto eParentDT = m_poParent->GetRasterDataType();
     const GDALDataType eWrkDT = GetWorkDataType(eParentDT);
 
     // Optimization in common use case (#4488).
@@ -221,14 +247,14 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // reducing the global block cache consumption.
     if (eBufType == GDT_Byte && eWrkDT == GDT_Byte)
     {
-        const CPLErr eErr = poParent->RasterIO(
+        const CPLErr eErr = m_poParent->RasterIO(
             GF_Read, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
             eBufType, nPixelSpace, nLineSpace, psExtraArg);
         if (eErr != CE_None)
             return eErr;
 
         GByte *pabyData = static_cast<GByte *>(pData);
-        const GByte byNoData = static_cast<GByte>(dfNoDataValue);
+        const GByte byNoData = static_cast<GByte>(m_dfNoDataValue);
 
         if (nPixelSpace == 1 && nLineSpace == nBufXSize)
         {
@@ -265,7 +291,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 psExtraArg);
         }
 
-        const CPLErr eErr = poParent->RasterIO(
+        const CPLErr eErr = m_poParent->RasterIO(
             GF_Read, nXOff, nYOff, nXSize, nYSize, pTemp, nBufXSize, nBufYSize,
             eWrkDT, nWrkDTSize, nBufXSize * nWrkDTSize, psExtraArg);
         if (eErr != CE_None)
@@ -274,7 +300,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             return eErr;
         }
 
-        const bool bIsNoDataNan = CPLIsNan(dfNoDataValue) != 0;
+        const bool bIsNoDataNan = CPLIsNan(m_dfNoDataValue) != 0;
         GByte *pabyDest = static_cast<GByte *>(pData);
 
         /* --------------------------------------------------------------------
@@ -286,7 +312,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             case GDT_UInt32:
             {
-                const GUInt32 nNoData = static_cast<GUInt32>(dfNoDataValue);
+                const GUInt32 nNoData = static_cast<GUInt32>(m_dfNoDataValue);
                 const GUInt32 *panSrc = static_cast<const GUInt32 *>(pTemp);
 
                 size_t i = 0;
@@ -305,7 +331,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
             case GDT_Int32:
             {
-                const GInt32 nNoData = static_cast<GInt32>(dfNoDataValue);
+                const GInt32 nNoData = static_cast<GInt32>(m_dfNoDataValue);
                 const GInt32 *panSrc = static_cast<const GInt32 *>(pTemp);
 
                 size_t i = 0;
@@ -324,7 +350,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
             case GDT_Float32:
             {
-                const float fNoData = static_cast<float>(dfNoDataValue);
+                const float fNoData = static_cast<float>(m_dfNoDataValue);
                 const float *pafSrc = static_cast<const float *>(pTemp);
 
                 size_t i = 0;
@@ -360,7 +386,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                         const double dfVal = padfSrc[i];
                         if (bIsNoDataNan && CPLIsNan(dfVal))
                             *pabyLineDest = 0;
-                        else if (ARE_REAL_EQUAL(dfVal, dfNoDataValue))
+                        else if (ARE_REAL_EQUAL(dfVal, m_dfNoDataValue))
                             *pabyLineDest = 0;
                         else
                             *pabyLineDest = 255;
@@ -382,7 +408,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     for (int iX = 0; iX < nBufXSize; iX++)
                     {
                         const auto nVal = panSrc[i];
-                        if (nVal == nNoDataValueInt64)
+                        if (nVal == m_nNoDataValueInt64)
                             *pabyLineDest = 0;
                         else
                             *pabyLineDest = 255;
@@ -404,7 +430,7 @@ CPLErr GDALNoDataMaskBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     for (int iX = 0; iX < nBufXSize; iX++)
                     {
                         const auto nVal = panSrc[i];
-                        if (nVal == nNoDataValueUInt64)
+                        if (nVal == m_nNoDataValueUInt64)
                             *pabyLineDest = 0;
                         else
                             *pabyLineDest = 255;

@@ -211,6 +211,27 @@ GDALDatasetH CPL_DLL GDALRasterize(const char *pszDest, GDALDatasetH hDstDS,
                                    const GDALRasterizeOptions *psOptions,
                                    int *pbUsageError);
 
+/*! Options for GDALFootprint(). Opaque type */
+typedef struct GDALFootprintOptions GDALFootprintOptions;
+
+/** Opaque type */
+typedef struct GDALFootprintOptionsForBinary GDALFootprintOptionsForBinary;
+
+GDALFootprintOptions CPL_DLL *
+GDALFootprintOptionsNew(char **papszArgv,
+                        GDALFootprintOptionsForBinary *psOptionsForBinary);
+
+void CPL_DLL GDALFootprintOptionsFree(GDALFootprintOptions *psOptions);
+
+void CPL_DLL GDALFootprintOptionsSetProgress(GDALFootprintOptions *psOptions,
+                                             GDALProgressFunc pfnProgress,
+                                             void *pProgressData);
+
+GDALDatasetH CPL_DLL GDALFootprint(const char *pszDest, GDALDatasetH hDstDS,
+                                   GDALDatasetH hSrcDS,
+                                   const GDALFootprintOptions *psOptions,
+                                   int *pbUsageError);
+
 /*! Options for GDALBuildVRT(). Opaque type */
 typedef struct GDALBuildVRTOptions GDALBuildVRTOptions;
 
