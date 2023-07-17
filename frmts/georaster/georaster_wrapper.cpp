@@ -3797,7 +3797,7 @@ bool GeoRasterWrapper::GenerateStatistics(const char *pszLayerNumbers,
         "DECLARE\n"
         "  gr sdo_georaster;\n"
         "  swin SDO_GEOMETRY := NULL;\n"
-        "  res VARCHAR2(32767);"
+        "  res VARCHAR2(5);\n"
         "BEGIN\n"
         "  SELECT %s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
         "  res := sdo_geor.generateStatistics(gr, 'samplingFactor=%d', swin,\n"
