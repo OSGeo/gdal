@@ -44,9 +44,15 @@ from osgeo import gdal
 # Source of test data
 TEST_DATA_SOURCE_ENDPOINT = "https://maps.gnosis.earth/ogcapi"
 
+# The following RECORD options control the download of test data when developing or debugging
+# this test.
 # Set RECORD to TRUE to recreate test data from the https://maps.gnosis.earth/ogcapi server
-# Note: when RECORD is TRUE control image are also regenerated, the test will always pass.
 RECORD = False
+# When RECORD is True, RECORD_NEW_ONLY will only download test data if they do not already
+# exist in the test data directory.
+# Note: when RECORD is TRUE and RECORD_NEW_ONLY is False control image are also regenerated
+# making the test always pass.
+RECORD_NEW_ONLY = True
 
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
 
@@ -88,7 +94,7 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
 
             if is_fake and RECORD:
 
-                if os.path.exists(request_data_path):
+                if RECORD_NEW_ONLY and os.path.exists(request_data_path):
                     with open(request_data_path, "rb") as fd:
                         data = fd.read()
                 else:
