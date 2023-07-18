@@ -346,19 +346,19 @@ def test_ogr_ogcapi_raster(api, collection):
 
 
 @pytest.mark.parametrize(
-    "api,collection,of_type",
+    "api,of_type",
     (
-        ("MAP", "NOT_EXISTS", gdal.OF_RASTER),
-        ("TILES", "NOT_EXISTS", gdal.OF_RASTER),
-        ("COVERAGE", "NOT_EXISTS", gdal.OF_RASTER),
-        ("TILES", "NOT_EXISTS", gdal.OF_VECTOR),
+        ("MAP", gdal.OF_RASTER),
+        ("TILES", gdal.OF_RASTER),
+        ("COVERAGE", gdal.OF_RASTER),
+        ("TILES", gdal.OF_VECTOR),
     ),
 )
-def test_ogc_api_wrong_collection(api, collection, of_type):
+def test_ogc_api_wrong_collection(api, of_type):
 
     with pytest.raises(Exception, match="Invalid data collection"):
         gdal.OpenEx(
-            f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/{collection}",
+            f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/NOT_EXISTS",
             of_type,
             open_options=["CACHE=NO", f"API={api}"],
         )
