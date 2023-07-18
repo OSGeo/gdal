@@ -88,42 +88,53 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
 
             if is_fake and RECORD:
 
-                with open(request_data_path, "wb+") as fd:
-                    response = requests.get(
-                        TEST_DATA_SOURCE_ENDPOINT
-                        + self.path.replace("/fakeogcapi", ""),
-                        stream=True,
-                    )
-                    local_uri = (
-                        "http://"
-                        + self.address_string()
-                        + ":"
-                        + str(self.server.server_port)
-                        + "/fakeogcapi"
-                    ).encode("utf8")
-                    content = response.content.replace(
-                        TEST_DATA_SOURCE_ENDPOINT.encode("utf8"), local_uri
-                    )
-                    content = content.replace(ENDPOINT_PATH.encode("utf8"), local_uri)
-                    data = b"HTTP/1.1 200 OK\r\n"
-                    for k, v in response.headers.items():
-                        if k == "Content-Encoding":
-                            continue
-                        if k == "Content-Length":
-                            data += (
-                                k.encode("utf8")
-                                + b": "
-                                + str(len(content)).encode("utf8")
-                                + b"\r\n"
-                            )
-                        else:
-                            data += (
-                                k.encode("utf8") + b": " + v.encode("utf8") + b"\r\n"
-                            )
-                    data += b"\r\n"
-                    data += content
-                    fd.write(data)
-                    self.wfile.write(data)
+                if os.path.exists(request_data_path):
+                    with open(request_data_path, "rb") as fd:
+                        data = fd.read()
+                else:
+                    with open(request_data_path, "wb+") as fd:
+
+                        response = requests.get(
+                            TEST_DATA_SOURCE_ENDPOINT
+                            + self.path.replace("/fakeogcapi", ""),
+                            stream=True,
+                        )
+                        local_uri = (
+                            "http://"
+                            + self.address_string()
+                            + ":"
+                            + str(self.server.server_port)
+                            + "/fakeogcapi"
+                        ).encode("utf8")
+                        content = response.content.replace(
+                            TEST_DATA_SOURCE_ENDPOINT.encode("utf8"), local_uri
+                        )
+                        content = content.replace(
+                            ENDPOINT_PATH.encode("utf8"), local_uri
+                        )
+                        data = b"HTTP/1.1 200 OK\r\n"
+                        for k, v in response.headers.items():
+                            if k == "Content-Encoding":
+                                continue
+                            if k == "Content-Length":
+                                data += (
+                                    k.encode("utf8")
+                                    + b": "
+                                    + str(len(content)).encode("utf8")
+                                    + b"\r\n"
+                                )
+                            else:
+                                data += (
+                                    k.encode("utf8")
+                                    + b": "
+                                    + v.encode("utf8")
+                                    + b"\r\n"
+                                )
+                        data += b"\r\n"
+                        data += content
+                        fd.write(data)
+
+                self.wfile.write(data)
 
             elif self.path.find("/fakeogcapi") != -1:
 
@@ -319,3 +330,29 @@ def test_ogr_ogcapi_raster(api, collection):
         with open(control_image_path, "rb") as expected:
             with open(out_path, "rb") as out_data:
                 assert out_data.read() == expected.read()
+
+
+@pytest.mark.parametrize(
+    "api,collection,of_type",
+    (
+        ("MAP", "NOT_EXISTS", gdal.OF_RASTER),
+        ("TILES", "NOT_EXISTS", gdal.OF_RASTER),
+        ("COVERAGE", "NOT_EXISTS", gdal.OF_RASTER),
+        ("TILES", "NOT_EXISTS", gdal.OF_VECTOR),
+    ),
+)
+def test_ogc_api_wrong_collection(api, collection, of_type):
+
+    exc = None
+
+    try:
+        gdal.OpenEx(
+            f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/{collection}",
+            of_type,
+            open_options=["CACHE=NO", f"API={api}"],
+        )
+    except RuntimeError as ex:
+        exc = ex
+
+    assert exc is not None
+    assert str(exc) == "Unexpected Content-Type: text/html"
