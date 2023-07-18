@@ -90,6 +90,21 @@ def test_osr_ct_2():
         and result[2] == pytest.approx(0.0, abs=0.01)
     ), "Wrong LL to UTM result"
 
+    result = ct.TransformPoint([32.0, -117.5, 10.0])
+    assert (
+        result[0] == pytest.approx(452772.06, abs=0.01)
+        and result[1] == pytest.approx(3540544.89, abs=0.01)
+        and result[2] == 10
+    ), "Wrong LL to UTM result"
+
+    result = ct.TransformPoint([32.0, -117.5, 10.0, 2000.0])
+    assert (
+        result[0] == pytest.approx(452772.06, abs=0.01)
+        and result[1] == pytest.approx(3540544.89, abs=0.01)
+        and result[2] == 10
+        and result[3] == 2000
+    ), "Wrong LL to UTM result"
+
 
 ###############################################################################
 # Transform an OGR geometry ... this is mostly aimed at ensuring that
