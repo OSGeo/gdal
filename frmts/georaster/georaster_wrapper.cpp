@@ -3804,15 +3804,15 @@ bool GeoRasterWrapper::GenerateStatistics(const char *pszLayerNumbers,
         "  res VARCHAR2(5);\n"
         "BEGIN\n"
         "  SELECT %s INTO gr FROM %s t WHERE %s FOR UPDATE;\n"
-        "  res := sdo_geor.generateStatistics(gr, 'samplingFactor='||:samplingfactor, swin,\n"
+        "  res := sdo_geor.generateStatistics(gr, "
+        "'samplingFactor='||:samplingfactor, swin,\n"
         "  '%s', :layernums, 'TRUE', NULL, '%s');\n"
         "  UPDATE %s t SET %s = gr WHERE %s;\n"
         "  COMMIT;\n"
         "END;\n",
-        sColumn.c_str(), sTable.c_str(), sWhere.c_str(),
-        pszHistogram, pszNodata, sTable.c_str(),
-        sColumn.c_str(), sWhere.c_str()));
-    
+        sColumn.c_str(), sTable.c_str(), sWhere.c_str(), pszHistogram,
+        pszNodata, sTable.c_str(), sColumn.c_str(), sWhere.c_str()));
+
     poStmt->BindName(":samplingfactor", &nSamplingFactor);
     poStmt->BindName(":layernums", szLayerNumbers);
 
