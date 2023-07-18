@@ -563,7 +563,8 @@ bool ValidateInsertExpression(const CPLString &sInsertStatement)
 
         // Check that, if text ';', '--', '/*' and '*/' exists, is only inside quotes.
         if (sInsertStatement[nPos] == ';' ||
-            (sInsertStatement[nPos] == '-' && sInsertStatement[nPos + 1]) ||
+            (sInsertStatement[nPos] == '-' && 
+            sInsertStatement[nPos + 1] == '-') ||
             (sInsertStatement[nPos] == '/' &&
              sInsertStatement[nPos + 1] == '/') ||
             (sInsertStatement[nPos] == '*' &&
