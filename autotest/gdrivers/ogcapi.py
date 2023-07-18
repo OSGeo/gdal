@@ -44,7 +44,7 @@ from osgeo import gdal
 # Source of test data
 TEST_DATA_SOURCE_ENDPOINT = "https://maps.gnosis.earth/ogcapi"
 
-# Set RECORD to TRUE to recreate test data from the https://demo.pygeoapi.io/stable server
+# Set RECORD to TRUE to recreate test data from the https://maps.gnosis.earth/ogcapi server
 # Note: when RECORD is TRUE control image are also regenerated, the test will always pass.
 RECORD = False
 
@@ -112,7 +112,10 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                         content = content.replace(
                             ENDPOINT_PATH.encode("utf8"), local_uri
                         )
-                        data = b"HTTP/1.1 200 OK\r\n"
+                        data = b"HTTP/1.1 %s %s\r\n" % (
+                            str(response.status_code).encode("utf8"),
+                            response.reason.encode("utf8"),
+                        )
                         for k, v in response.headers.items():
                             if k == "Content-Encoding":
                                 continue
@@ -355,4 +358,4 @@ def test_ogc_api_wrong_collection(api, collection, of_type):
         exc = ex
 
     assert exc is not None
-    assert str(exc) == "Unexpected Content-Type: text/html"
+    assert "Invalid data collection" in str(exc)
