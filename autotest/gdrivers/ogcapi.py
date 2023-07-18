@@ -138,6 +138,7 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                         fd.write(data)
 
                 self.wfile.write(data)
+                return
 
             elif self.path.find("/fakeogcapi") != -1:
 
@@ -152,13 +153,16 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                         fd.read(),
                     )
                     self.wfile.write(response)
-
-            return
+                return
 
         except IOError:
             pass
 
-        self.send_error(404, "File Not Found: %s" % self.path)
+        self.send_error(
+            404,
+            "File Not Found: %s" % self.path,
+            "The requested URL was not found on this server.",
+        )
 
 
 ###############################################################################
@@ -359,3 +363,29 @@ def test_ogc_api_wrong_collection(api, collection, of_type):
 
     assert exc is not None
     assert "Invalid data collection" in str(exc)
+
+
+@pytest.mark.parametrize(
+    "api,of_type",
+    (
+        ("MAP", gdal.OF_RASTER),
+        ("TILES", gdal.OF_RASTER),
+        ("COVERAGE", gdal.OF_RASTER),
+        ("TILES", gdal.OF_VECTOR),
+    ),
+)
+def test_wrong_url(api, of_type):
+
+    exc = None
+
+    try:
+        gdal.OpenEx(
+            f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/NOT_FOUND/",
+            of_type,
+            open_options=["CACHE=NO", f"API={api}"],
+        )
+    except RuntimeError as ex:
+        exc = ex
+
+    assert exc is not None
+    assert "File Not Found" in str(exc)
