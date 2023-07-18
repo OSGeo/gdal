@@ -4264,7 +4264,7 @@ void GTiffDataset::ApplyPamInfo()
     }
 
     int nPamGCPCount;
-    if (m_nPAMGeorefSrcIndex >= 0 &&
+    if (m_nPAMGeorefSrcIndex >= 0 && !oMDMD.GetMetadata("xml:ESRI") &&
         (nPamGCPCount = GDALPamDataset::GetGCPCount()) > 0 &&
         ((m_nGCPCount > 0 &&
           m_nPAMGeorefSrcIndex < m_nGeoTransformGeorefSrcIndex) ||
@@ -4311,10 +4311,98 @@ void GTiffDataset::ApplyPamInfo()
                 psGeodataXform = CPLGetXMLNode(psValueAsXML, "=GeodataXform");
         }
 
+        const char *pszTIFFTagResUnit =
+            GetMetadataItem("TIFFTAG_RESOLUTIONUNIT");
         const char *pszTIFFTagXRes = GetMetadataItem("TIFFTAG_XRESOLUTION");
         const char *pszTIFFTagYRes = GetMetadataItem("TIFFTAG_YRESOLUTION");
-        if (psGeodataXform && pszTIFFTagXRes && pszTIFFTagYRes)
+        if (psGeodataXform && pszTIFFTagXRes && pszTIFFTagYRes &&
+            pszTIFFTagResUnit && atoi(pszTIFFTagResUnit) == 2)
         {
+            CPLXMLNode *psSourceGCPs =
+                CPLGetXMLNode(psGeodataXform, "SourceGCPs");
+            CPLXMLNode *psTargetGCPs =
+                CPLGetXMLNode(psGeodataXform, "TargetGCPs");
+            if (psSourceGCPs && psTargetGCPs)
+            {
+                std::vector<double> adfSourceGCPs, adfTargetGCPs;
+                for (CPLXMLNode *psIter = psSourceGCPs->psChild;
+                     psIter != nullptr; psIter = psIter->psNext)
+                {
+                    if (psIter->eType == CXT_Element &&
+                        EQUAL(psIter->pszValue, "Double"))
+                    {
+                        adfSourceGCPs.push_back(
+                            CPLAtof(CPLGetXMLValue(psIter, nullptr, "")));
+                    }
+                }
+                for (CPLXMLNode *psIter = psTargetGCPs->psChild;
+                     psIter != nullptr; psIter = psIter->psNext)
+                {
+                    if (psIter->eType == CXT_Element &&
+                        EQUAL(psIter->pszValue, "Double"))
+                    {
+                        adfTargetGCPs.push_back(
+                            CPLAtof(CPLGetXMLValue(psIter, nullptr, "")));
+                    }
+                }
+                if (adfSourceGCPs.size() == adfTargetGCPs.size() &&
+                    (adfSourceGCPs.size() % 2) == 0)
+                {
+                    const char *pszESRI_WKT = CPLGetXMLValue(
+                        psGeodataXform, "SpatialReference.WKT", nullptr);
+                    if (pszESRI_WKT)
+                    {
+                        m_bLookedForProjection = true;
+                        m_oSRS.SetAxisMappingStrategy(
+                            OAMS_TRADITIONAL_GIS_ORDER);
+                        if (m_oSRS.importFromWkt(pszESRI_WKT) != OGRERR_NONE)
+                        {
+                            m_oSRS.Clear();
+                        }
+                    }
+
+                    if (m_nGCPCount > 0)
+                    {
+                        GDALDeinitGCPs(m_nGCPCount, m_pasGCPList);
+                        CPLFree(m_pasGCPList);
+                        m_pasGCPList = nullptr;
+                        m_nGCPCount = 0;
+                    }
+
+                    m_nGCPCount = static_cast<int>(adfSourceGCPs.size() / 2);
+                    m_pasGCPList = static_cast<GDAL_GCP *>(
+                        CPLCalloc(sizeof(GDAL_GCP), m_nGCPCount));
+                    for (int i = 0; i < m_nGCPCount; ++i)
+                    {
+                        m_pasGCPList[i].pszId = CPLStrdup("");
+                        m_pasGCPList[i].pszInfo = CPLStrdup("");
+                        // The origin used is the bottom left corner,
+                        // and raw values to be multiplied by the
+                        // TIFFTAG_XRESOLUTION/TIFFTAG_YRESOLUTION
+                        m_pasGCPList[i].dfGCPPixel =
+                            adfSourceGCPs[2 * i] * CPLAtof(pszTIFFTagXRes);
+                        m_pasGCPList[i].dfGCPLine =
+                            nRasterYSize -
+                            adfSourceGCPs[2 * i + 1] * CPLAtof(pszTIFFTagYRes);
+                        m_pasGCPList[i].dfGCPX = adfTargetGCPs[2 * i];
+                        m_pasGCPList[i].dfGCPY = adfTargetGCPs[2 * i + 1];
+                    }
+
+                    // Invalidate Geotransform got from less prioritary sources
+                    if (m_nGCPCount > 0 && m_bGeoTransformValid &&
+                        !bGotGTFromPAM && m_nPAMGeorefSrcIndex == 0)
+                    {
+                        m_bGeoTransformValid = false;
+                    }
+                }
+            }
+        }
+        else if (psGeodataXform && !pszTIFFTagXRes && !pszTIFFTagYRes &&
+                 !pszTIFFTagResUnit && m_bGeoTransformValid &&
+                 m_adfGeoTransform[2] == 0 && m_adfGeoTransform[4] == 0)
+        {
+            // To be removed as this leads to a worse georeferencing.
+            // Case of https://github.com/OSGeo/gdal/issues/8083
             CPLXMLNode *psSourceGCPs =
                 CPLGetXMLNode(psGeodataXform, "SourceGCPs");
             CPLXMLNode *psTargetGCPs =
@@ -4360,19 +4448,17 @@ void GTiffDataset::ApplyPamInfo()
                     {
                         m_pasGCPList[i].pszId = CPLStrdup("");
                         m_pasGCPList[i].pszInfo = CPLStrdup("");
-                        // The origin used is the bottom left corner,
-                        // and raw values to be multiplied by the
-                        // TIFFTAG_XRESOLUTION/TIFFTAG_YRESOLUTION
                         m_pasGCPList[i].dfGCPPixel =
-                            adfSourceGCPs[2 * i] * CPLAtof(pszTIFFTagXRes);
+                            (adfSourceGCPs[2 * i] - m_adfGeoTransform[0]) /
+                            m_adfGeoTransform[1];
                         m_pasGCPList[i].dfGCPLine =
-                            nRasterYSize -
-                            adfSourceGCPs[2 * i + 1] * CPLAtof(pszTIFFTagYRes);
+                            (adfSourceGCPs[2 * i + 1] - m_adfGeoTransform[3]) /
+                            m_adfGeoTransform[5];
                         m_pasGCPList[i].dfGCPX = adfTargetGCPs[2 * i];
                         m_pasGCPList[i].dfGCPY = adfTargetGCPs[2 * i + 1];
                     }
 
-                    // Invalidate Geotransorm got from less prioritary sources
+                    // Invalidate Geotransform got from less prioritary sources
                     if (m_nGCPCount > 0 && m_bGeoTransformValid &&
                         !bGotGTFromPAM && m_nPAMGeorefSrcIndex == 0)
                     {
@@ -4381,6 +4467,7 @@ void GTiffDataset::ApplyPamInfo()
                 }
             }
         }
+
         if (psValueAsXML)
             CPLDestroyXMLNode(psValueAsXML);
     }
