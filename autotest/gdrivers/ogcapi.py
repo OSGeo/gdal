@@ -356,19 +356,12 @@ def test_ogr_ogcapi_raster(api, collection):
 )
 def test_ogc_api_wrong_collection(api, collection, of_type):
 
-    exc = None
-
-    try:
+    with pytest.raises(Exception, match="Invalid data collection"):
         gdal.OpenEx(
             f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/{collection}",
             of_type,
             open_options=["CACHE=NO", f"API={api}"],
         )
-    except RuntimeError as ex:
-        exc = ex
-
-    assert exc is not None
-    assert "Invalid data collection" in str(exc)
 
 
 @pytest.mark.parametrize(
@@ -382,16 +375,9 @@ def test_ogc_api_wrong_collection(api, collection, of_type):
 )
 def test_wrong_url(api, of_type):
 
-    exc = None
-
-    try:
+    with pytest.raises(Exception, match="File Not Found"):
         gdal.OpenEx(
             f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/NOT_FOUND/",
             of_type,
             open_options=["CACHE=NO", f"API={api}"],
         )
-    except RuntimeError as ex:
-        exc = ex
-
-    assert exc is not None
-    assert "File Not Found" in str(exc)
