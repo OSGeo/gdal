@@ -185,7 +185,7 @@ Creation Options
       generated. If :co:`GENPYRAMID` is not informed the resample method NN
       (nearest neighbor) will apply.
 
--  .. co:: GENSTATISTICS
+-  .. co:: GENSTATS
       :choices: TRUE, FALSE
       :default: FALSE
 
@@ -217,7 +217,7 @@ Creation Options
       :default: FALSE
 
       When this value is set to TRUE, a histogram will be computed and stored.
-      Defaults to FALSE, so an histogram won't be generated.
+      Defaults to FALSE, so a histogram won't be generated.
 
 -  .. co:: GENSTATS_LAYERNUMBERS
       :choices: <integer\,integer\,...>, <integer>-<integer>
@@ -441,23 +441,28 @@ Loading:
 General use of GeoRaster
 ------------------------
 
-| GeoRaster can be used in any GDAL command line tool with all the
-  available options. Like a image subset extraction or re-project:
-| % gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54
-  output.tif \\
+GeoRaster can be used in any GDAL command line tool with all the available options.
+Like a image subset extraction or re-project:
+
+.. code-block:: bash
+
+    % gdal_translate -of gtiff geor:scott/tiger@dbdemo,landsat,scene,id=54 output.tif \
     -srcwin 0 0 800 600
-  % gdalwarp -of png geor:scott/tiger@dbdemo,st_rdt_1,130 output.png
-  -t_srs EPSG:9000913
-  Two different GeoRaster can be used as input and output on the same
-  operation:
-| % gdal_translate -of georaster
-  geor:scott/tiger@dbdemo,landsat,scene,id=54
-  geor:scott/tiger@proj1,projview,image -co INSERT="VALUES
-  (102, SDO_GEOR.INIT())"
-  Applications that use GDAL can theoretically read and write from
-  GeoRaster just like any other format but most of then are more
-  inclined to try to access files on the file system so one alternative
-  is to create VRT to represent the GeoRaster description, e.g.:
-| % gdal_translate -of VRT geor:scott/tiger@dbdemo,landsat,scene,id=54
-  view_54.vrt
-  % openenv view_54.vrt
+    % gdalwarp -of png geor:scott/tiger@dbdemo,st_rdt_1,130 output.png
+   -t_srs EPSG:9000913
+
+Two different GeoRaster can be used as input and output on the same operation:
+
+.. code-block:: bash
+
+    % gdal_translate -of georaster geor:scott/tiger@dbdemo,landsat,scene,id=54 \
+    geor:scott/tiger@proj1,projview,image -co INSERT="VALUES (102, SDO_GEOR.INIT())"
+
+Applications that use GDAL can theoretically read and write from GeoRaster just like
+any other format but most of then are more inclined to try to access files on the file
+system so one alternative is to create VRT to represent the GeoRaster description, e.g.:
+
+.. code-block:: bash
+
+    % gdal_translate -of VRT geor:scott/tiger@dbdemo,landsat,scene,id=54 view_54.vrt
+    % openenv view_54.vrt
