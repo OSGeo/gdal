@@ -539,6 +539,65 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     return poGRW;
 }
 
+bool ValidateInsertExpression(const CPLString &sInsertStatement);
+bool ValidateDescriptionExpression(const CPLString &sInsertStatement);
+
+bool ValidateInsertExpression(const CPLString &sInsertStatement)
+{
+    std::vector<char> vStringExpressions;
+    for (size_t nPos = 0; nPos < sInsertStatement.length(); ++nPos)
+    {
+        // Check if text is inside quotes
+        if (sInsertStatement[nPos] == '\'' &&
+            sInsertStatement[nPos - 1] != '\\')
+        {
+            if (vStringExpressions.empty())
+            {
+                vStringExpressions.push_back('\'');
+            }
+            else if (vStringExpressions.back() == '\'')
+            {
+                vStringExpressions.pop_back();
+            }
+        }
+
+        // Check that, if text ';', '--', '/*' and '*/' exists, is only inside quotes.
+        if (sInsertStatement[nPos] == ';' ||
+            (sInsertStatement[nPos] == '-' && sInsertStatement[nPos + 1]) ||
+            (sInsertStatement[nPos] == '/' &&
+             sInsertStatement[nPos + 1] == '/') ||
+            (sInsertStatement[nPos] == '*' &&
+             sInsertStatement[nPos + 1] == '/') ||
+            (sInsertStatement[nPos] == '/' &&
+             sInsertStatement[nPos + 1] == '*'))
+        {
+            if (vStringExpressions.empty())
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+bool ValidateDescriptionExpression(const CPLString &sInsertStatement)
+{
+    const char *rgpszInvalidChars[] = { ";", "--", "/*", "*/", "//" };
+    const size_t nInvalidCharsSize = 5;
+
+    for (size_t nPos = 0; nPos < nInvalidCharsSize; ++nPos)
+    {
+        const char *pszInvalidChar = rgpszInvalidChars[nPos];
+        if (sInsertStatement.find(pszInvalidChar) != std::string::npos)
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 //  ---------------------------------------------------------------------------
 //                                                                     Create()
 //  ---------------------------------------------------------------------------
@@ -597,6 +656,12 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
 
         if (pszDescription)
         {
+            if (!ValidateDescriptionExpression(pszDescription))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "DESCRIPTION expression contains invalid values.");
+                return false;
+            }
             snprintf(szDescription, sizeof(szDescription), "%s",
                      pszDescription);
         }
@@ -613,6 +678,14 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
         if (pszInsert)
         {
             sValues = pszInsert;
+            sValues.Trim();  // Remove spaces on the left and on the right
+
+            if (!ValidateInsertExpression(sValues))
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                            "INSERT expression contains invalid values.");
+                return false;
+            }
 
             if (pszInsert[0] == '(' &&
                 sValues.ifind("VALUES") == std::string::npos)
