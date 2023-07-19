@@ -2393,3 +2393,131 @@ DEFINE_BOOLEAN_FUNC_ARRAY_IN(double, jdouble, GetDoubleArrayElements, ReleaseDou
 %typemap(javaout) (int nList, GUIntBig *pList) {
     return $jnicall;
 }
+
+/***************************************************
+ * Typemaps converts a HashMap to a OGRCodedValue*
+ ***************************************************/
+
+%typemap(in) OGRCodedValue*
+{
+  /* %typemap(in) OGRCodedValue* */
+  /* Convert the HashMap to a OGRCodedValue* */
+  $1 = NULL;
+  if($input != 0) {
+    const jclass hashmapCass = jenv->FindClass("java/util/HashMap");
+    const jclass setClass = jenv->FindClass("java/util/Set");
+    const jclass iteratorClass = jenv->FindClass("java/util/Iterator");
+    const jclass stringClass = jenv->FindClass("java/lang/String");
+    const jmethodID sizeMethod = jenv->GetMethodID(hashmapCass, "size", "()I");
+    const jmethodID getMethod = jenv->GetMethodID(hashmapCass, "get",
+      "(Ljava/lang/Object;)Ljava/lang/Object;");
+    const jmethodID keySetMethod = jenv->GetMethodID(hashmapCass, "keySet",
+      "()Ljava/util/Set;");
+    const jmethodID iteratorMethod = jenv->GetMethodID(setClass, "iterator",
+      "()Ljava/util/Iterator;");
+    const jmethodID hasNextMethod = jenv->GetMethodID(iteratorClass,
+      "hasNext", "()Z");
+    const jmethodID nextMethod = jenv->GetMethodID(iteratorClass,
+      "next", "()Ljava/lang/Object;");
+
+    int size = jenv->CallIntMethod($input, sizeMethod);
+    $1 = (OGRCodedValue*)CPLCalloc(size+1, sizeof(OGRCodedValue) );
+
+    jobject keyset = jenv->CallObjectMethod($input, keySetMethod);
+    jobject iterator = jenv->CallObjectMethod(keyset, iteratorMethod);
+    int i = 0;
+    while( jenv->CallBooleanMethod(iterator, hasNextMethod) == JNI_TRUE ) {
+      jstring key = (jstring)jenv->CallObjectMethod(iterator, nextMethod);
+      if (key == NULL || !jenv->IsInstanceOf(key, stringClass))
+      {
+          for( int j = 0; j < i; ++j )
+          {
+              CPLFree(($1)[j].pszCode);
+              CPLFree(($1)[j].pszValue);
+          }
+          CPLFree($1);
+          SWIG_JavaThrowException(jenv, SWIG_JavaIllegalArgumentException, "a key in the HashMap is not a string");
+          return $null;
+      }
+      jstring value = (jstring)jenv->CallObjectMethod($input, getMethod, key);
+      if (value != NULL && !jenv->IsInstanceOf(value, stringClass))
+      {
+          for( int j = 0; j < i; ++j )
+          {
+              CPLFree(($1)[j].pszCode);
+              CPLFree(($1)[j].pszValue);
+          }
+          CPLFree($1);
+          SWIG_JavaThrowException(jenv, SWIG_JavaIllegalArgumentException, "a value in the HashMap is not a string");
+          return $null;
+      }
+      const char *keyptr = jenv->GetStringUTFChars(key, 0);
+      ($1)[i].pszCode = CPLStrdup(keyptr);
+      if( value )
+      {
+          const char *valptr = jenv->GetStringUTFChars(value, 0);
+          ($1)[i].pszValue = CPLStrdup(valptr);
+          jenv->ReleaseStringUTFChars(value, valptr);
+      }
+      else
+      {
+          ($1)[i].pszValue = NULL;
+      }
+      ++i;
+      jenv->ReleaseStringUTFChars(key, keyptr);
+    }
+  }
+}
+
+%typemap(freearg) OGRCodedValue*
+{
+  /* %typemap(freearg) OGRCodedValue* */
+  if( $1 )
+  {
+      for( size_t i = 0; ($1)[i].pszCode != NULL; ++i )
+      {
+          CPLFree(($1)[i].pszCode);
+          CPLFree(($1)[i].pszValue);
+      }
+  }
+  CPLFree( $1 );
+}
+
+%typemap(out) OGRCodedValue*
+{
+  /* %typemap(out) OGRCodedValue* */
+  /* Convert a OGRCodedValue* to a HashMap */
+  if( $1 == NULL )
+  {
+      SWIG_JavaThrowException(jenv, SWIG_JavaIllegalArgumentException, CPLGetLastErrorMsg() );
+      return $null;
+  }
+  const jclass hashMapClass = jenv->FindClass("java/util/HashMap");
+  const jmethodID constructor = jenv->GetMethodID(hashMapClass, "<init>", "()V");
+  const jmethodID put = jenv->GetMethodID(hashMapClass, "put",
+    "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;");
+  $result = jenv->NewObject(hashMapClass, constructor);
+  for( int i = 0; ($1)[i].pszCode != NULL; i++ )
+  {
+    jstring name = jenv->NewStringUTF(($1)[i].pszCode);
+    if( ($1)[i].pszValue )
+    {
+        jstring value = jenv->NewStringUTF(($1)[i].pszValue);
+        jenv->CallObjectMethod($result, put, name, value);
+        jenv->DeleteLocalRef(value);
+    }
+    else
+    {
+        jenv->CallObjectMethod($result, put, name, NULL);
+    }
+    jenv->DeleteLocalRef(name);
+  }
+}
+
+%typemap(jni) (OGRCodedValue*) "jobject"
+%typemap(jtype) (OGRCodedValue*) "java.util.HashMap<String, String>"
+%typemap(jstype) (OGRCodedValue*) "java.util.HashMap<String, String>"
+%typemap(javain) (OGRCodedValue*) "$javainput"
+%typemap(javaout) (OGRCodedValue*) {
+    return $jnicall;
+  }
