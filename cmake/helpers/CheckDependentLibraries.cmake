@@ -759,6 +759,17 @@ gdal_check_package(MONGOCXX "Enable MongoDBV3 driver" CAN_DISABLE)
 define_find_package2(HEIF libheif/heif.h heif PKGCONFIG_NAME libheif)
 gdal_check_package(HEIF "HEIF >= 1.1" CAN_DISABLE)
 
+find_package(Grok MODULE)
+if (GDAL_USE_GROK)
+  if (NOT GROK_FOUND)
+    message(FATAL_ERROR "Configured to use GDAL_USE_GROK, but not found")
+  endif ()
+endif ()
+cmake_dependent_option(GDAL_USE_GROK "Set ON to use grok" ON GROK_FOUND OFF)
+if (GDAL_USE_GROK)
+  string(APPEND GDAL_IMPORT_DEPENDENCIES "find_dependency(Grok MODULE)\n")
+endif ()
+
 # OpenJPEG's cmake-CONFIG is broken with older OpenJPEG releases, so call module explicitly
 set(GDAL_FIND_PACKAGE_OpenJPEG_MODE "MODULE" CACHE STRING "Mode to use for find_package(OpenJPEG): CONFIG, MODULE or empty string")
 set_property(CACHE GDAL_FIND_PACKAGE_OpenJPEG_MODE PROPERTY STRINGS "CONFIG" "MODULE" "")

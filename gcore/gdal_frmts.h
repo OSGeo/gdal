@@ -181,6 +181,7 @@ void CPL_DLL GDALRegister_GTX(void);
 void CPL_DLL GDALRegister_LOSLAS(void);
 void CPL_DLL GDALRegister_NTv2(void);
 void CPL_DLL GDALRegister_CTable2(void);
+void CPL_DLL GDALRegister_JP2Grok(void);
 void CPL_DLL GDALRegister_JP2OpenJPEG(void);
 void DeclareDeferredOPENJPEGPlugin(void);
 void CPL_DLL GDALRegister_XYZ(void);
