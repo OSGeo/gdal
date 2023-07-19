@@ -483,15 +483,16 @@ def test_pam_metadata_preserved():
 #
 
 
+@pytest.mark.require_driver("PNM")
 def test_pam_esri_GeodataXform_gcp():
 
-    ds = gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/test_pam_esri_GeodataXform_gcp.tif", 20, 20, 1
+    ds = gdal.GetDriverByName("PNM").Create(
+        "/vsimem/test_pam_esri_GeodataXform_gcp.pgm", 20, 20, 1
     )
     ds = None
 
     gdal.FileFromMemBuffer(
-        "/vsimem/test_pam_esri_GeodataXform_gcp.tif.aux.xml",
+        "/vsimem/test_pam_esri_GeodataXform_gcp.pgm.aux.xml",
         """<PAMDataset>
   <Metadata domain="xml:ESRI" format="xml">
     <GeodataXform xsi:type="typens:PolynomialXform" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:typens="http://www.esri.com/schemas/ArcGIS/10.3">
@@ -531,12 +532,12 @@ def test_pam_esri_GeodataXform_gcp():
 </PAMDataset>""",
     )
 
-    ds = gdal.Open("/vsimem/test_pam_esri_GeodataXform_gcp.tif")
+    ds = gdal.Open("/vsimem/test_pam_esri_GeodataXform_gcp.pgm")
     gcps = ds.GetGCPs()
     sr_gt = ds.GetSpatialRef()
     sr_gcp = ds.GetGCPSpatialRef()
 
-    gdal.GetDriverByName("GTiff").Delete("/vsimem/test_pam_esri_GeodataXform_gcp.tif")
+    gdal.GetDriverByName("PNM").Delete("/vsimem/test_pam_esri_GeodataXform_gcp.pgm")
 
     assert len(gcps) == 3
     assert gcps[0].GCPPixel == 1
