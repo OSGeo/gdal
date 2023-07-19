@@ -547,9 +547,10 @@ bool ValidateInsertExpression(const CPLString &sInsertStatement)
     std::vector<char> vStringExpressions;
     for (size_t nPos = 0; nPos < sInsertStatement.length(); ++nPos)
     {
-        // Check if text is inside quotes
+        // Search for quotes inside the string.
+        // Do not consider nested quotes.
         if (sInsertStatement[nPos] == '\'' &&
-            sInsertStatement[nPos - 1] != '\\')
+            (nPos > 0 && sInsertStatement[nPos - 1] != '\\'))
         {
             if (vStringExpressions.empty())
             {
@@ -562,20 +563,21 @@ bool ValidateInsertExpression(const CPLString &sInsertStatement)
         }
 
         // Check that, if text ';', '--', '/*' and '*/' exists, is only inside quotes.
-        if (sInsertStatement[nPos] == ';' ||
-            (sInsertStatement[nPos] == '-' && 
-            sInsertStatement[nPos + 1] == '-') ||
-            (sInsertStatement[nPos] == '/' &&
-             sInsertStatement[nPos + 1] == '/') ||
-            (sInsertStatement[nPos] == '*' &&
-             sInsertStatement[nPos + 1] == '/') ||
-            (sInsertStatement[nPos] == '/' &&
-             sInsertStatement[nPos + 1] == '*'))
+        const bool bIsInvalidCharacter =
+            sInsertStatement[nPos] == ';' ||
+            (nPos < sInsertStatement.length() - 1 &&
+             ((sInsertStatement[nPos] == '-' &&
+               sInsertStatement[nPos + 1] == '-') ||
+              (sInsertStatement[nPos] == '/' &&
+               sInsertStatement[nPos + 1] == '/') ||
+              (sInsertStatement[nPos] == '*' &&
+               sInsertStatement[nPos + 1] == '/') ||
+              (sInsertStatement[nPos] == '/' &&
+               sInsertStatement[nPos + 1] == '*')));
+
+        if (vStringExpressions.empty() && bIsInvalidCharacter)
         {
-            if (vStringExpressions.empty())
-            {
-                return false;
-            }
+            return false;
         }
     }
 
@@ -584,7 +586,7 @@ bool ValidateInsertExpression(const CPLString &sInsertStatement)
 
 bool ValidateDescriptionExpression(const CPLString &sInsertStatement)
 {
-    const char *rgpszInvalidChars[] = { ";", "--", "/*", "*/", "//" };
+    const char *rgpszInvalidChars[] = {";", "--", "/*", "*/", "//"};
     const size_t nInvalidCharsSize = 5;
 
     for (size_t nPos = 0; nPos < nInvalidCharsSize; ++nPos)
@@ -660,7 +662,7 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
             if (!ValidateDescriptionExpression(pszDescription))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "DESCRIPTION expression contains invalid values.");
+                         "DESCRIPTION expression contains invalid values.");
                 return false;
             }
             snprintf(szDescription, sizeof(szDescription), "%s",
@@ -684,7 +686,7 @@ bool GeoRasterWrapper::Create(char *pszDescription, char *pszInsert,
             if (!ValidateInsertExpression(sValues))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                            "INSERT expression contains invalid values.");
+                         "INSERT expression contains invalid values.");
                 return false;
             }
 
