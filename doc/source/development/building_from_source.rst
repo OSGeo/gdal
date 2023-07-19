@@ -1476,6 +1476,23 @@ JPEG-2000 codec written in C language. It is required for the
 
     Control whether to use OpenJPEG. Defaults to ON when OpenJPEG is found.
 
+Grok
+****
+
+The `Grok <https://github.com/GrokImageCompression/grok>`_ library is an open-source
+JPEG-2000 codec written in the C++ language.
+
+.. option:: GROK_INCLUDE_DIR
+
+    Path to an include directory with the ``grok.h`` header file.
+
+.. option:: GROK_LIBRARY
+
+    Path to a shared or static library file.
+
+.. option:: GDAL_USE_GROK=ON/OFF
+
+    Control whether to use Grok or not. Defaults to ON when Grok is found.
 
 OpenSSL
 *******
