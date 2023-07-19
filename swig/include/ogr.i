@@ -619,7 +619,6 @@ typedef int OGRErr;
 %{
 #include "gdal.h"
 %}
-typedef int CPLErr;
 #define FROM_PYTHON_OGR_I
 %include MajorObject.i
 #undef FROM_PYTHON_OGR_I
