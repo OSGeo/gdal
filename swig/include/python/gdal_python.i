@@ -2382,7 +2382,9 @@ def VectorTranslateOptions(options=None, format=None,
     layerName:
         output layer name
     geometryType:
-        output layer geometry type ('POINT', ....)
+        output layer geometry type ('POINT', ....). May be an array of strings
+        when using a special value like 'PROMOTE_TO_MULTI', 'CONVERT_TO_LINEAR',
+        'CONVERT_TO_CURVE' combined with another one or a geometry type.
     dim:
         output dimension ('XY', 'XYZ', 'XYM', 'XYZM', 'layer_dim')
     transactionSize:
