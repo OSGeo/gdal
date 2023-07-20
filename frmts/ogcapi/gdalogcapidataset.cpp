@@ -1742,11 +1742,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                       MEDIA_TYPE_JSON))
         return false;
 
-    // Attempts to find the uri for a well-known TMS; if it does not work, it will send the entire document
-    const auto uri = oDoc.GetRoot().GetString("uri");
-
-    auto tms = gdal::TileMatrixSet::parse(
-        !uri.empty() ? uri.c_str() : oDoc.SaveAsString().c_str());
+    auto tms = gdal::TileMatrixSet::parse(oDoc.SaveAsString().c_str());
     if (tms == nullptr)
         return false;
 
