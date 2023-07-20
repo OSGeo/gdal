@@ -539,52 +539,61 @@ GeoRasterWrapper *GeoRasterWrapper::Open(const char *pszStringId, bool bUpdate)
     return poGRW;
 }
 
-bool ValidateInsertExpression(const CPLString &sInsertStatement);
-bool ValidateDescriptionExpression(const CPLString &sInsertStatement);
-
-bool ValidateInsertExpression(const CPLString &sInsertStatement)
+static bool ValidateInsertExpression(const CPLString &sInsertStatement)
 {
-    std::vector<char> vStringExpressions;
-    for (size_t nPos = 0; nPos < sInsertStatement.length(); ++nPos)
+    bool bInQuotes = false;
+    const size_t nStrLength = sInsertStatement.length();
+
+    for (size_t nPos = 0; nPos < nStrLength; ++nPos)
     {
-        // Search for quotes inside the string.
-        // Do not consider nested quotes.
-        if (sInsertStatement[nPos] == '\'' &&
-            (nPos > 0 && sInsertStatement[nPos - 1] != '\\'))
+        const char cCurrentChar = sInsertStatement[nPos];
+
+        if (cCurrentChar == '\'')
         {
-            if (vStringExpressions.empty())
+            if (bInQuotes)
             {
-                vStringExpressions.push_back('\'');
+                if (nPos + 1 < nStrLength && sInsertStatement[nPos + 1] == '\'')
+                {
+                    ++nPos;
+                }
+                else
+                {
+                    bInQuotes = false;
+                }
             }
-            else if (vStringExpressions.back() == '\'')
+            else
             {
-                vStringExpressions.pop_back();
+                bInQuotes = true;
             }
         }
-
-        // Check that, if text ';', '--', '/*' and '*/' exists, is only inside quotes.
-        const bool bIsInvalidCharacter =
-            sInsertStatement[nPos] == ';' ||
-            (nPos < sInsertStatement.length() - 1 &&
-             ((sInsertStatement[nPos] == '-' &&
-               sInsertStatement[nPos + 1] == '-') ||
-              (sInsertStatement[nPos] == '/' &&
-               sInsertStatement[nPos + 1] == '/') ||
-              (sInsertStatement[nPos] == '*' &&
-               sInsertStatement[nPos + 1] == '/') ||
-              (sInsertStatement[nPos] == '/' &&
-               sInsertStatement[nPos + 1] == '*')));
-
-        if (vStringExpressions.empty() && bIsInvalidCharacter)
+        else if (!bInQuotes)
         {
-            return false;
+            if (cCurrentChar == ';')
+            {
+                return false;
+            }
+            else if (nPos < nStrLength - 1)
+            {
+                const char cNextChar = sInsertStatement[nPos + 1];
+                const bool bIsInvalid =
+                    (cCurrentChar == '-' && cNextChar == '-') ||
+                    (cCurrentChar == '/' && cNextChar == '/') ||
+                    (cCurrentChar == '/' && cNextChar == '*') ||
+                    (cCurrentChar == '*' && cNextChar == '/');
+
+                if (bIsInvalid)
+                {
+                    return false;
+                }
+            }
         }
     }
-
-    return true;
+    // Quotes must be properly closed, if not, this variable will be true
+    // thus having an unclosed string
+    return !bInQuotes;
 }
 
-bool ValidateDescriptionExpression(const CPLString &sInsertStatement)
+static bool ValidateDescriptionExpression(const CPLString &sInsertStatement)
 {
     const char *rgpszInvalidChars[] = {";", "--", "/*", "*/", "//"};
     const size_t nInvalidCharsSize = 5;
