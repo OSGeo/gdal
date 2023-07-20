@@ -123,6 +123,8 @@ class OGRGeoJSONLayer final : public OGRMemLayer
 
     bool IngestAll();
     void TerminateAppendSession();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONLayer)
 };
 
 /************************************************************************/
@@ -186,6 +188,8 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     OGRCoordinateTransformation *poCT_;
     OGRGeometryFactory::TransformWithOptionsCache oTransformCache_;
     OGRGeoJSONWriteOptions oWriteOptions_;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONWriteLayer)
 };
 
 /************************************************************************/
@@ -304,6 +308,8 @@ class OGRGeoJSONDataSource final : public OGRDataSource
                             OGRGeoJSONReader *poReader);
     void CheckExceededTransferLimit(json_object *poObj);
     void RemoveJSonPStuff();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONDataSource)
 };
 
 #endif  // OGR_GEOJSON_H_INCLUDED

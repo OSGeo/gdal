@@ -2536,13 +2536,30 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             }
         }
 
+        CPLStringList aosDSCO(psOptions->aosDSCO);
+
+        if (!aosDSCO.FetchNameValue("SINGLE_LAYER"))
+        {
+            // Informs the target driver (e.g. JSONFG) if a single layer
+            // will be created
+            const char *pszCOList =
+                poDriver->GetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST);
+            if (pszCOList && strstr(pszCOList, "SINGLE_LAYER") &&
+                (!psOptions->osSQLStatement.empty() ||
+                 psOptions->aosLayers.size() == 1 ||
+                 (psOptions->aosLayers.empty() && poDS->GetLayerCount() == 1)))
+            {
+                aosDSCO.SetNameValue("SINGLE_LAYER", "YES");
+            }
+        }
+
         /* --------------------------------------------------------------------
          */
         /*      Create the output data source. */
         /* --------------------------------------------------------------------
          */
         poODS = poDriver->Create(osDestFilename, 0, 0, 0, GDT_Unknown,
-                                 psOptions->aosDSCO.List());
+                                 aosDSCO.List());
         if (poODS == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined,

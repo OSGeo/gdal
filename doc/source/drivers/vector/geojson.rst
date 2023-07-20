@@ -487,5 +487,6 @@ See Also
    (obsoleted by RFC 7946).
 -  `JSON <http://json.org/>`__ - JavaScript Object Notation
 -  :ref:`GeoJSON sequence driver <vector.geojsonseq>`
+-  :ref:`OGC Features and Geometries JSON (JSON-FG) driver <vector.jsonfg>`
 -  :ref:`ESRI JSon / FeatureService driver <vector.esrijson>`
 -  :ref:`TopoJSON driver <vector.topojson>`

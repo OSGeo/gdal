@@ -1,0 +1,27 @@
+{
+    "type": "Feature",
+    "id": "pylon.1",
+    "conformsTo" : [ "[ogc-json-fg-1-0.1:core]", "[ogc-json-fg-1-0.1:3d]" ],
+    "featureType": "pylon",
+    "time": {
+        "interval": [
+            "2022-07-12T16:47:18Z",
+            ".."
+        ]
+    },
+    "geometry": null,
+    "coordRefSys": "http://www.opengis.net/def/crs/EPSG/0/7415",
+    "place": {
+        "type": "Prism",
+        "base": {
+            "type": "Point",
+            "coordinates": [
+                81220.15,
+                455113.71
+            ]
+        },
+        "lower": 2.02,
+        "upper": 8.02
+    },
+    "properties": null
+}

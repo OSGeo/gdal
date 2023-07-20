@@ -260,6 +260,9 @@ void OGRRegisterAllInternal()
 #ifdef PMTILES_ENABLED
     RegisterOGRPMTiles();
 #endif
+#ifdef JSONFG_ENABLED
+    RegisterOGRJSONFG();
+#endif
 
     // NOTE: you need to generally insert your own driver before that line.
 

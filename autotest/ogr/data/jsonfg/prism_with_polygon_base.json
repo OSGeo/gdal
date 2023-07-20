@@ -1,0 +1,18 @@
+{
+    "type": "Feature",
+    "conformsTo" : [ "[ogc-json-fg-1-0.1:core]", "[ogc-json-fg-1-0.1:3d]" ],
+    "featureType": "fence",
+    "time": null,
+    "geometry": null,
+    "coordRefSys": "http://www.opengis.net/def/crs/EPSG/0/4979",
+    "place": {
+        "type": "Prism",
+        "base": {
+            "type": "Polygon",
+            "coordinates": [[[0, 0],[0, 1],[2, 0],[0, 0]]]
+        },
+        "lower": 10,
+        "upper": 20
+    },
+    "properties": null
+}
