@@ -100,12 +100,7 @@ def test_nearblack_2(nearblack_path):
 
     ds = None
 
-
-###############################################################################
-# Set existing alpha band
-
-
-def test_nearblack_3(nearblack_path):
+    # Set existing alpha band
 
     shutil.copy("tmp/nearblack2.tif", "tmp/nearblack3.tif")
     gdaltest.runexternal(
@@ -165,12 +160,7 @@ def test_nearblack_5(nearblack_path):
 
     ds = None
 
-
-###############################################################################
-# Set existing mask band
-
-
-def test_nearblack_6(nearblack_path):
+    # Set existing mask band
 
     shutil.copy("tmp/nearblack5.tif", "tmp/nearblack6.tif")
     shutil.copy("tmp/nearblack5.tif.msk", "tmp/nearblack6.tif.msk")

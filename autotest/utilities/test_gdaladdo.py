@@ -120,12 +120,7 @@ def test_gdaladdo_3(gdaladdo_path):
     except OSError:
         pytest.fail("no external overview.")
 
-
-###############################################################################
-# Test -clean
-
-
-def test_gdaladdo_4(gdaladdo_path):
+    # Test -clean
 
     gdaltest.runexternal(gdaladdo_path + " -clean tmp/test_gdaladdo_3.tif")
 

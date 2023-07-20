@@ -48,6 +48,22 @@ def ogrtindex_path():
     return test_cli_utilities.get_ogrtindex_path()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
+
+    yield
+
+    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
+    if os.path.exists("tmp/tileindex.shp"):
+        shape_drv.DeleteDataSource("tmp/tileindex.shp")
+    shape_drv.DeleteDataSource("tmp/point1.shp")
+    shape_drv.DeleteDataSource("tmp/point2.shp")
+    if os.path.exists("tmp/point3.shp"):
+        shape_drv.DeleteDataSource("tmp/point3.shp")
+    if os.path.exists("tmp/point4.shp"):
+        shape_drv.DeleteDataSource("tmp/point4.shp")
+
+
 ###############################################################################
 # Simple test
 
@@ -246,20 +262,3 @@ def test_ogrtindex_3(ogrtindex_path):
         shape_drv.DeleteDataSource("tmp/tileindex.shp")
     if os.path.exists("tmp/tileindex.db"):
         os.unlink("tmp/tileindex.db")
-
-
-###############################################################################
-# Cleanup
-
-
-def test_ogrtindex_cleanup():
-
-    shape_drv = ogr.GetDriverByName("ESRI Shapefile")
-    if os.path.exists("tmp/tileindex.shp"):
-        shape_drv.DeleteDataSource("tmp/tileindex.shp")
-    shape_drv.DeleteDataSource("tmp/point1.shp")
-    shape_drv.DeleteDataSource("tmp/point2.shp")
-    if os.path.exists("tmp/point3.shp"):
-        shape_drv.DeleteDataSource("tmp/point3.shp")
-    if os.path.exists("tmp/point4.shp"):
-        shape_drv.DeleteDataSource("tmp/point4.shp")

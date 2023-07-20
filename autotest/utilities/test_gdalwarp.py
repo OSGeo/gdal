@@ -48,6 +48,107 @@ def gdalwarp_path():
     return test_cli_utilities.get_gdalwarp_path()
 
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_and_cleanup():
+
+    yield
+
+    # We don't clean up when run in debug mode.
+    if gdal.GetConfigOption("CPL_DEBUG", "OFF") == "ON":
+        return
+
+    for i in range(37):
+        try:
+            os.remove("tmp/testgdalwarp" + str(i + 1) + ".tif")
+        except OSError:
+            pass
+        try:
+            os.remove("tmp/testgdalwarp" + str(i + 1) + ".vrt")
+        except OSError:
+            pass
+        try:
+            os.remove("tmp/testgdalwarp" + str(i + 1) + ".tif.aux.xml")
+        except OSError:
+            pass
+    try:
+        os.remove("tmp/testgdalwarp24src.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/testgdalwarp24dst.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/testgdalwarp30_1.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/testgdalwarp30_2.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/testgdalwarp30_3.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/testgdalwarp33_mask.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/testgdalwarp37.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/testgdalwarp38.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/test_gdalwarp_39.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/test_gdalwarp_40_src.tif")
+        os.remove("tmp/test_gdalwarp_40.tif")
+        os.remove("tmp/test_gdalwarp_40.vrt")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/test_gdalwarp_41_src.tif")
+        os.remove("tmp/test_gdalwarp_41.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/small_world_left.tif")
+        os.remove("tmp/small_world_right.tif")
+        os.remove("tmp/test_gdalwarp_42.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/small_world.tif")
+        os.remove("tmp/test_gdalwarp_43.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/test_gdalwarp_44.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/test_gdalwarp_45.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/test_gdalwarp_46.tif")
+    except OSError:
+        pass
+    try:
+        os.remove("tmp/cutline_4326.shp")
+        os.remove("tmp/cutline_4326.shx")
+        os.remove("tmp/cutline_4326.dbf")
+        os.remove("tmp/cutline_4326.prj")
+    except OSError:
+        pass
+
+
 ###############################################################################
 # Simple test
 
@@ -128,18 +229,28 @@ def test_gdalwarp_4(gdalwarp_path):
 # Test warping from GCPs without any explicit option
 
 
-def test_gdalwarp_5(gdalwarp_path):
+@pytest.fixture(scope="module")
+def testgdalwarp_gcp_tif(tmp_path_factory):
+
+    testgdalwarp_gcp_tif_fname = str(
+        tmp_path_factory.mktemp("tmp") / "testgdalwarp_gcp.tif"
+    )
 
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip("gdal_translate missing")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + " -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif tmp/testgdalwarp_gcp.tif"
+        + f" -a_srs EPSG:26711 -gcp 0 0  440720.000 3751320.000 -gcp 20 0 441920.000 3751320.000 -gcp 20 20 441920.000 3750120.000 0 -gcp 0 20 440720.000 3750120.000 ../gcore/data/byte.tif {testgdalwarp_gcp_tif_fname}"
     )
 
+    yield testgdalwarp_gcp_tif_fname
+
+
+def test_gdalwarp_5(gdalwarp_path, testgdalwarp_gcp_tif):
+
     gdaltest.runexternal(
-        gdalwarp_path + " tmp/testgdalwarp_gcp.tif tmp/testgdalwarp5.tif"
+        gdalwarp_path + f" {testgdalwarp_gcp_tif} tmp/testgdalwarp5.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp5.tif")
@@ -160,10 +271,10 @@ def test_gdalwarp_5(gdalwarp_path):
 # Test warping from GCPs with -tps
 
 
-def test_gdalwarp_6(gdalwarp_path):
+def test_gdalwarp_6(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -tps tmp/testgdalwarp_gcp.tif tmp/testgdalwarp6.tif"
+        gdalwarp_path + f" -tps {testgdalwarp_gcp_tif} tmp/testgdalwarp6.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp6.tif")
@@ -184,10 +295,10 @@ def test_gdalwarp_6(gdalwarp_path):
 # Test -tr
 
 
-def test_gdalwarp_7(gdalwarp_path):
+def test_gdalwarp_7(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -tr 120 120 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp7.tif"
+        gdalwarp_path + f" -tr 120 120 {testgdalwarp_gcp_tif} tmp/testgdalwarp7.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp7.tif")
@@ -203,10 +314,10 @@ def test_gdalwarp_7(gdalwarp_path):
 # Test -ts
 
 
-def test_gdalwarp_8(gdalwarp_path):
+def test_gdalwarp_8(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -ts 10 10 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp8.tif"
+        gdalwarp_path + f" -ts 10 10 {testgdalwarp_gcp_tif} tmp/testgdalwarp8.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp8.tif")
@@ -222,11 +333,11 @@ def test_gdalwarp_8(gdalwarp_path):
 # Test -te
 
 
-def test_gdalwarp_9(gdalwarp_path):
+def test_gdalwarp_9(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
         gdalwarp_path
-        + " -te 440720.000 3750120.000 441920.000 3751320.000 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp9.tif"
+        + f" -te 440720.000 3750120.000 441920.000 3751320.000 {testgdalwarp_gcp_tif} tmp/testgdalwarp9.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp9.tif")
@@ -245,10 +356,10 @@ def test_gdalwarp_9(gdalwarp_path):
 # Test -rn
 
 
-def test_gdalwarp_10(gdalwarp_path):
+def test_gdalwarp_10(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -ts 40 40 -rn tmp/testgdalwarp_gcp.tif tmp/testgdalwarp10.tif"
+        gdalwarp_path + f" -ts 40 40 -rn {testgdalwarp_gcp_tif} tmp/testgdalwarp10.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp10.tif")
@@ -263,10 +374,10 @@ def test_gdalwarp_10(gdalwarp_path):
 # Test -rb
 
 
-def test_gdalwarp_11(gdalwarp_path):
+def test_gdalwarp_11(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -ts 40 40 -rb tmp/testgdalwarp_gcp.tif tmp/testgdalwarp11.tif"
+        gdalwarp_path + f" -ts 40 40 -rb {testgdalwarp_gcp_tif} tmp/testgdalwarp11.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp11.tif")
@@ -287,10 +398,10 @@ def test_gdalwarp_11(gdalwarp_path):
 # Test -rc
 
 
-def test_gdalwarp_12(gdalwarp_path):
+def test_gdalwarp_12(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -ts 40 40 -rc tmp/testgdalwarp_gcp.tif tmp/testgdalwarp12.tif"
+        gdalwarp_path + f" -ts 40 40 -rc {testgdalwarp_gcp_tif} tmp/testgdalwarp12.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp12.tif")
@@ -312,11 +423,10 @@ def test_gdalwarp_12(gdalwarp_path):
 # Test -rcs
 
 
-def test_gdalwarp_13(gdalwarp_path):
+def test_gdalwarp_13(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -ts 40 40 -rcs tmp/testgdalwarp_gcp.tif tmp/testgdalwarp13.tif"
+        gdalwarp_path + f" -ts 40 40 -rcs {testgdalwarp_gcp_tif} tmp/testgdalwarp13.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp13.tif")
@@ -335,11 +445,11 @@ def test_gdalwarp_13(gdalwarp_path):
 # Test -r lanczos
 
 
-def test_gdalwarp_14(gdalwarp_path):
+def test_gdalwarp_14(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
         gdalwarp_path
-        + " -ts 40 40 -r lanczos tmp/testgdalwarp_gcp.tif tmp/testgdalwarp14.tif"
+        + f" -ts 40 40 -r lanczos {testgdalwarp_gcp_tif} tmp/testgdalwarp14.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp14.tif")
@@ -358,10 +468,10 @@ def test_gdalwarp_14(gdalwarp_path):
 # Test -of VRT which is a special case
 
 
-def test_gdalwarp_16(gdalwarp_path):
+def test_gdalwarp_16(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -of VRT tmp/testgdalwarp_gcp.tif tmp/testgdalwarp16.vrt"
+        gdalwarp_path + f" -of VRT {testgdalwarp_gcp_tif} tmp/testgdalwarp16.vrt"
     )
 
     ds = gdal.Open("tmp/testgdalwarp16.vrt")
@@ -416,10 +526,10 @@ def test_gdalwarp_18(gdalwarp_path):
 # Test -et 0 which is a special case
 
 
-def test_gdalwarp_19(gdalwarp_path):
+def test_gdalwarp_19(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp19.tif"
+        gdalwarp_path + f" -et 0 {testgdalwarp_gcp_tif} tmp/testgdalwarp19.tif"
     )
 
     ds = gdal.Open("tmp/testgdalwarp19.tif")
@@ -434,10 +544,10 @@ def test_gdalwarp_19(gdalwarp_path):
 # Test -of VRT -et 0 which is a special case
 
 
-def test_gdalwarp_20(gdalwarp_path):
+def test_gdalwarp_20(gdalwarp_path, testgdalwarp_gcp_tif):
 
     gdaltest.runexternal(
-        gdalwarp_path + " -of VRT -et 0 tmp/testgdalwarp_gcp.tif tmp/testgdalwarp20.vrt"
+        gdalwarp_path + f" -of VRT -et 0 {testgdalwarp_gcp_tif} tmp/testgdalwarp20.vrt"
     )
 
     ds = gdal.Open("tmp/testgdalwarp20.vrt")
@@ -1518,109 +1628,3 @@ def test_gdalwarp_if_option(gdalwarp_path):
         gdalwarp_path + " -if HFA ../gcore/data/byte.tif /vsimem/out.tif"
     )
     assert err is not None
-
-
-###############################################################################
-# Cleanup
-
-
-def test_gdalwarp_cleanup():
-
-    # We don't clean up when run in debug mode.
-    if gdal.GetConfigOption("CPL_DEBUG", "OFF") == "ON":
-        return
-
-    for i in range(37):
-        try:
-            os.remove("tmp/testgdalwarp" + str(i + 1) + ".tif")
-        except OSError:
-            pass
-        try:
-            os.remove("tmp/testgdalwarp" + str(i + 1) + ".vrt")
-        except OSError:
-            pass
-        try:
-            os.remove("tmp/testgdalwarp" + str(i + 1) + ".tif.aux.xml")
-        except OSError:
-            pass
-    try:
-        os.remove("tmp/testgdalwarp_gcp.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp24src.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp24dst.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp30_1.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp30_2.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp30_3.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp33_mask.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp37.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp38.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_39.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_40_src.tif")
-        os.remove("tmp/test_gdalwarp_40.tif")
-        os.remove("tmp/test_gdalwarp_40.vrt")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_41_src.tif")
-        os.remove("tmp/test_gdalwarp_41.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/small_world_left.tif")
-        os.remove("tmp/small_world_right.tif")
-        os.remove("tmp/test_gdalwarp_42.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/small_world.tif")
-        os.remove("tmp/test_gdalwarp_43.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_44.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_45.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_46.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/cutline_4326.shp")
-        os.remove("tmp/cutline_4326.shx")
-        os.remove("tmp/cutline_4326.dbf")
-        os.remove("tmp/cutline_4326.prj")
-    except OSError:
-        pass
