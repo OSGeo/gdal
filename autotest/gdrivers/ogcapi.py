@@ -381,3 +381,30 @@ def test_wrong_url(api, of_type):
             of_type,
             open_options=["CACHE=NO", f"API={api}"],
         )
+
+
+def test_ogc_api_raster_tiles():
+
+    ds = gdal.OpenEx(
+        f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m",
+        gdal.OF_RASTER,
+        open_options=["API=TILES", "CACHE=NO", "TILEMATRIXSET=WorldMercatorWGS84Quad"],
+    )
+    assert ds.RasterCount == 4
+    assert ds.RasterXSize == 82734
+    assert ds.RasterYSize == 106149
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -10902129.741315002,
+            2.388657133911758,
+            0.0,
+            6479743.648362301,
+            0.0,
+            -2.388657133911758,
+        )
+    )
+    assert ds.GetRasterBand(1).GetOverviewCount() == 16
+    assert ds.GetRasterBand(1).GetOverview(15).Checksum() == 5
+    assert ds.GetRasterBand(1).ReadBlock(
+        ds.RasterXSize // 2 // 256, ds.RasterYSize // 2 // 256
+    )

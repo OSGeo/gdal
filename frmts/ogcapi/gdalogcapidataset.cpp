@@ -33,6 +33,7 @@
 #include "tilematrixset.hpp"
 #include "gdal_utils.h"
 #include "ogrsf_frmts.h"
+#include "ogr_spatialref.h"
 
 #ifdef OGR_ENABLE_DRIVER_GML
 #include "parsexsd.h"
@@ -114,7 +115,7 @@ class OGCAPIDataset final : public GDALDataset
                         double dfYMin, double dfXMax, double dfYMax);
     bool InitWithTilesAPI(GDALOpenInfo *poOpenInfo, const CPLString &osTilesURL,
                           bool bIsMap, double dfXMin, double dfYMin,
-                          double dfXMax, double dfYMax,
+                          double dfXMax, double dfYMax, bool bBBOXIsInCRS84,
                           const CPLJSONObject &oJsonCollection);
     bool InitWithCoverageAPI(GDALOpenInfo *poOpenInfo,
                              const CPLString &osTilesURL, double dfXMin,
@@ -725,6 +726,8 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
         CPLError(CE_Failure, CPLE_AppDefined, "Invalid bbox");
         return false;
     }
+    const bool bBBOXIsInCRS84 =
+        CSLFetchNameValue(poOpenInfo->papszOpenOptions, "MINX") == nullptr;
     const double dfXMin =
         CPLAtof(CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MINX",
                                      CPLSPrintf("%.18g", oBbox[0].ToDouble())));
@@ -855,11 +858,12 @@ bool OGCAPIDataset::InitFromCollection(GDALOpenInfo *poOpenInfo,
         bool bRet = false;
         if (!osTilesetsMapURL.empty())
             bRet = InitWithTilesAPI(poOpenInfo, osTilesetsMapURL, true, dfXMin,
-                                    dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+                                    dfYMin, dfXMax, dfYMax, bBBOXIsInCRS84,
+                                    oDoc.GetRoot());
         if (!bRet && !osTilesetsVectorURL.empty())
-            bRet =
-                InitWithTilesAPI(poOpenInfo, osTilesetsVectorURL, false, dfXMin,
-                                 dfYMin, dfXMax, dfYMax, oDoc.GetRoot());
+            bRet = InitWithTilesAPI(poOpenInfo, osTilesetsVectorURL, false,
+                                    dfXMin, dfYMin, dfXMax, dfYMax,
+                                    bBBOXIsInCRS84, oDoc.GetRoot());
         return bRet;
     }
     else if ((EQUAL(pszAPI, "AUTO") || EQUAL(pszAPI, "MAP")) && bFoundMap)
@@ -1522,6 +1526,7 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                                      const CPLString &osTilesURL, bool bIsMap,
                                      double dfXMin, double dfYMin,
                                      double dfXMax, double dfYMax,
+                                     bool bBBOXIsInCRS84,
                                      const CPLJSONObject &oJsonCollection)
 {
     CPLJSONDocument oDoc;
@@ -1844,6 +1849,21 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
 
     if (!osRasterURL.empty() && (poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0)
     {
+        if (bBBOXIsInCRS84)
+        {
+            // Reproject the extent if needed
+            OGRSpatialReference oCRS84;
+            oCRS84.importFromEPSG(4326);
+            oCRS84.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            auto poCT = std::unique_ptr<OGRCoordinateTransformation>(
+                OGRCreateCoordinateTransformation(&oCRS84, &m_oSRS));
+            if (poCT)
+            {
+                poCT->TransformBounds(dfXMin, dfYMin, dfXMax, dfYMax, &dfXMin,
+                                      &dfYMin, &dfXMax, &dfYMax, 21);
+            }
+        }
+
         const bool bCache = CPLTestBool(
             CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "CACHE", "YES"));
         const int nMaxConnections = atoi(CSLFetchNameValueDef(
@@ -1874,6 +1894,15 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                 // Tile matrix level not in known limits
                 continue;
             }
+
+            if (dfXMax - dfXMin < tileMatrix.mResX ||
+                dfYMax - dfYMin < tileMatrix.mResY)
+            {
+                // skip levels for which the extent is smaller than the size
+                // of one pixel
+                continue;
+            }
+
             CPLString osURL(osRasterURL);
             osURL.replaceAll("{tileMatrix}", tileMatrix.mId.c_str());
             osURL.replaceAll("{tileRow}", "${y}");
@@ -1891,16 +1920,6 @@ bool OGCAPIDataset::InitWithTilesAPI(GDALOpenInfo *poOpenInfo,
                 int minCol = 0;
                 int maxCol = tileMatrix.mMatrixWidth - 1;
                 int maxRow = minRow + rowCount - 1;
-                if (oLimitsIter != oMapTileMatrixSetLimits.end())
-                {
-                    // Take into account tileMatrixSetLimits
-                    minCol = std::max(minCol, oLimitsIter->second.minTileCol);
-                    minRow = std::max(minRow, oLimitsIter->second.minTileRow);
-                    maxCol = std::min(maxCol, oLimitsIter->second.maxTileCol);
-                    maxRow = std::min(maxRow, oLimitsIter->second.maxTileRow);
-                    if (minCol > maxCol || minRow > maxRow)
-                        return CPLString();
-                }
                 double dfStripMinX =
                     dfOriX + minCol * tileMatrix.mTileWidth * tileMatrix.mResX;
                 double dfStripMaxX = dfOriX + (maxCol + 1) *
