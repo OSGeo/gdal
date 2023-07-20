@@ -2210,8 +2210,20 @@ Java bindings options
 
 .. option:: GDAL_JAVA_INSTALL_DIR
 
-    Subdirectory into which to install the gdalalljni library and the .jar
+    Subdirectory into which to install the .jar
     files. It defaults to "${CMAKE_INSTALL_DATADIR}/java"
+
+    .. note::
+        Prior to GDAL 3.8, the gdalalljni library was also installed in that
+        directory. Starting with GDAL 3.8, this is controlled by the
+        ``GDAL_JAVA_JNI_INSTALL_DIR`` variable.
+
+.. option:: GDAL_JAVA_JNI_INSTALL_DIR
+
+    .. versionadded:: 3.8
+
+    Subdirectory into which to install the gdalalljni library.
+    It defaults to "${CMAKE_INSTALL_LIBDIR}/jni"
 
 Option only to be used by maintainers:
 
