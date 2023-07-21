@@ -2100,7 +2100,7 @@ TEST_F(test_gdal, TileMatrixSet)
             "\"http://www.opengis.net/def/crs/EPSG/0/4326\","
             "    \"wellKnownScaleSet\" : "
             "\"http://www.opengis.net/def/wkss/OGC/1.0/CDBGlobalGrid\","
-            "    \"tileMatrices\" : ["
+            "    \"tileMatrix\" : ["
             "        {"
             "            \"identifier\" : \"-10\","
             "            \"scaleDenominator\" : 397569609.975977063179,"
@@ -2112,7 +2112,7 @@ TEST_F(test_gdal, TileMatrixSet)
             "                90,"
             "                -180"
             "            ],"
-            "            \"variableMatrixWidths\" : ["
+            "            \"variableMatrixWidth\" : ["
             "                {"
             "                \"coalesce\" : 12,"
             "                \"minTileRow\" : 0,"
@@ -2137,6 +2137,97 @@ TEST_F(test_gdal, TileMatrixSet)
             EXPECT_EQ(vmw.mCoalesce, 12);
             EXPECT_EQ(vmw.mMinTileRow, 0);
             EXPECT_EQ(vmw.mMaxTileRow, 0);
+        }
+    }
+
+    // TMS v2 (truncated version of https://maps.gnosis.earth/ogcapi/tileMatrixSets/GNOSISGlobalGrid?f=json)
+    {
+        auto poTMS = gdal::TileMatrixSet::parse(
+            "{"
+            "   \"id\" : \"GNOSISGlobalGrid\","
+            "   \"title\" : \"GNOSISGlobalGrid\","
+            "   \"uri\" : "
+            "\"http://www.opengis.net/def/tilematrixset/OGC/1.0/"
+            "GNOSISGlobalGrid\","
+            "   \"description\": \"added for testing\","
+            "   \"crs\" : \"http://www.opengis.net/def/crs/EPSG/0/4326\","
+            "   \"orderedAxes\" : ["
+            "      \"Lat\","
+            "      \"Lon\""
+            "   ],"
+            "   \"wellKnownScaleSet\" : "
+            "\"http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad\","
+            "   \"tileMatrices\" : ["
+            "      {"
+            "         \"id\" : \"0\","
+            "         \"scaleDenominator\" : 139770566.0071794390678,"
+            "         \"cellSize\" : 0.3515625,"
+            "         \"cornerOfOrigin\" : \"topLeft\","
+            "         \"pointOfOrigin\" : [ 90, -180 ],"
+            "         \"matrixWidth\" : 4,"
+            "         \"matrixHeight\" : 2,"
+            "         \"tileWidth\" : 256,"
+            "         \"tileHeight\" : 256"
+            "      },"
+            "      {"
+            "         \"id\" : \"1\","
+            "         \"scaleDenominator\" : 69885283.0035897195339,"
+            "         \"cellSize\" : 0.17578125,"
+            "         \"cornerOfOrigin\" : \"topLeft\","
+            "         \"pointOfOrigin\" : [ 90, -180 ],"
+            "         \"matrixWidth\" : 8,"
+            "         \"matrixHeight\" : 4,"
+            "         \"tileWidth\" : 256,"
+            "         \"tileHeight\" : 256,"
+            "         \"variableMatrixWidths\" : ["
+            "            { \"coalesce\" : 2, \"minTileRow\" : 0, "
+            "\"maxTileRow\" : 0 },"
+            "            { \"coalesce\" : 2, \"minTileRow\" : 3, "
+            "\"maxTileRow\" : 3 }"
+            "         ]"
+            "      }"
+            "   ]"
+            "}");
+        EXPECT_TRUE(poTMS != nullptr);
+        if (poTMS)
+        {
+            EXPECT_EQ(poTMS->title(), "GNOSISGlobalGrid");
+            EXPECT_EQ(poTMS->identifier(), "GNOSISGlobalGrid");
+            EXPECT_EQ(poTMS->abstract(), "added for testing");
+            EXPECT_EQ(poTMS->crs(),
+                      "http://www.opengis.net/def/crs/EPSG/0/4326");
+            EXPECT_EQ(
+                poTMS->wellKnownScaleSet(),
+                "http://www.opengis.net/def/wkss/OGC/1.0/GoogleCRS84Quad");
+            ASSERT_EQ(poTMS->tileMatrixList().size(), 2U);
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTopLeft());
+            EXPECT_TRUE(poTMS->haveAllLevelsSameTileSize());
+            EXPECT_TRUE(poTMS->hasOnlyPowerOfTwoVaryingScales());
+            {
+                const auto &tm = poTMS->tileMatrixList()[0];
+                EXPECT_EQ(tm.mId, "0");
+                EXPECT_EQ(tm.mScaleDenominator, 139770566.0071794390678);
+                EXPECT_TRUE(fabs(tm.mResX - tm.mScaleDenominator * 0.28e-3 /
+                                                (6378137. * M_PI / 180)) <
+                            1e-10);
+                EXPECT_EQ(tm.mResY, tm.mResX);
+                EXPECT_EQ(tm.mTopLeftX, 90.0);
+                EXPECT_EQ(tm.mTopLeftY, -180.0);
+                EXPECT_EQ(tm.mTileWidth, 256);
+                EXPECT_EQ(tm.mTileHeight, 256);
+                EXPECT_EQ(tm.mMatrixWidth, 4);
+                EXPECT_EQ(tm.mMatrixHeight, 2);
+            }
+
+            EXPECT_TRUE(poTMS->hasVariableMatrixWidth());
+            {
+                const auto &tm = poTMS->tileMatrixList()[1];
+                EXPECT_EQ(tm.mVariableMatrixWidthList.size(), 2U);
+                const auto &vmw = tm.mVariableMatrixWidthList[1];
+                EXPECT_EQ(vmw.mCoalesce, 2);
+                EXPECT_EQ(vmw.mMinTileRow, 3);
+                EXPECT_EQ(vmw.mMaxTileRow, 3);
+            }
         }
     }
 }
