@@ -519,6 +519,10 @@ bool STACITDataset::SetupDataset(
                 osRet += osFilename;
             }
         }
+        else if (STARTS_WITH(osFilename.c_str(), "file://"))
+        {
+            osRet = osFilename.substr(strlen("file://"));
+        }
         else
         {
             osRet = osFilename;
