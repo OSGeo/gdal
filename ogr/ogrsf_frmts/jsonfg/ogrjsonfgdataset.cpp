@@ -42,10 +42,59 @@ OGRJSONFGDataset::~OGRJSONFGDataset()
     CPLFree(pszGeoData_);
     if (fpOut_)
     {
+        FinishWriting();
+
+        VSIFCloseL(fpOut_);
+    }
+}
+
+/************************************************************************/
+/*                           FinishWriting()                            */
+/************************************************************************/
+
+void OGRJSONFGDataset::FinishWriting()
+{
+    if (m_nPositionBeforeFCClosed == 0)
+    {
+        m_nPositionBeforeFCClosed = fpOut_->Tell();
+
         if (!EmitStartFeaturesIfNeededAndReturnIfFirstFeature())
             VSIFPrintfL(fpOut_, "\n");
         VSIFPrintfL(fpOut_, "]\n}\n");
-        VSIFCloseL(fpOut_);
+        fpOut_->Flush();
+    }
+}
+
+/************************************************************************/
+/*                         SyncToDiskInternal()                         */
+/************************************************************************/
+
+OGRErr OGRJSONFGDataset::SyncToDiskInternal()
+{
+    if (m_nPositionBeforeFCClosed == 0 && GetFpOutputIsSeekable())
+    {
+        FinishWriting();
+    }
+
+    return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                         BeforeCreateFeature()                        */
+/************************************************************************/
+
+void OGRJSONFGDataset::BeforeCreateFeature()
+{
+    if (m_nPositionBeforeFCClosed)
+    {
+        // If we had called SyncToDisk() previously, undo its effects
+        fpOut_->Seek(m_nPositionBeforeFCClosed, SEEK_SET);
+        m_nPositionBeforeFCClosed = 0;
+    }
+
+    if (!EmitStartFeaturesIfNeededAndReturnIfFirstFeature())
+    {
+        VSIFPrintfL(fpOut_, ",\n");
     }
 }
 
@@ -397,6 +446,10 @@ bool OGRJSONFGDataset::Create(const char *pszName, CSLConstList papszOptions)
     CPLAssert(nullptr == fpOut_);
     bSingleOutputLayer_ =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_LAYER", "NO"));
+
+    bFpOutputIsSeekable_ = !(strcmp(pszName, "/vsistdout/") == 0 ||
+                             STARTS_WITH(pszName, "/vsigzip/") ||
+                             STARTS_WITH(pszName, "/vsizip/"));
 
     if (strcmp(pszName, "/dev/stdout") == 0)
         pszName = "/vsistdout/";

@@ -1168,3 +1168,42 @@ def test_jsonfg_write_COORDINATE_PRECISION():
     finally:
         if gdal.VSIStatL(filename):
             gdal.Unlink(filename)
+
+
+###############################################################################
+# Test FlushCache()
+
+
+def test_jsonfg_write_flushcache():
+
+    filename = "/vsimem/test_jsonfg_write_flushcache.json"
+    try:
+        ds = gdal.GetDriverByName("JSONFG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+        lyr1 = ds.CreateLayer("test1", srs=_get_epsg_crs(32631))
+        lyr2 = ds.CreateLayer("test2", srs=_get_epsg_crs(32631))
+        f = ogr.Feature(lyr1.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr1.CreateFeature(f)
+        f = ogr.Feature(lyr2.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr2.CreateFeature(f)
+        ds.FlushCache()
+
+        ds2 = ogr.Open(filename)
+        assert ds2.GetLayer(0).GetFeatureCount() == 1
+        assert ds2.GetLayer(1).GetFeatureCount() == 1
+        ds2 = None
+
+        f = ogr.Feature(lyr1.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr1.CreateFeature(f)
+        ds = None
+
+        ds2 = ogr.Open(filename)
+        assert ds2.GetLayer(0).GetFeatureCount() == 2
+        assert ds2.GetLayer(1).GetFeatureCount() == 1
+        ds2 = None
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.Unlink(filename)

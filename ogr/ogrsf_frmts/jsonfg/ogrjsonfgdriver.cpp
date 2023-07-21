@@ -153,6 +153,7 @@ void RegisterOGRJSONFG()
         "Integer64List RealList StringList Date DateTime");
     poDriver->SetMetadataItem(GDAL_DMD_CREATIONFIELDDATASUBTYPES, "Boolean");
     poDriver->SetMetadataItem(GDAL_DMD_SUPPORTED_SQL_DIALECTS, "OGRSQL SQLITE");
+    poDriver->SetMetadataItem(GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE, "YES");
 
     poDriver->pfnOpen = OGRJSONFGDriverOpen;
     poDriver->pfnIdentify = OGRJSONFGDriverIdentify;
