@@ -4029,6 +4029,62 @@ int GDALCheckBandCount(int nBands, int bIsZeroAllowed)
 CPL_C_END
 
 /************************************************************************/
+/*                     Subataset informational functions                */
+/************************************************************************/
+
+CPL_C_START
+
+bool CPL_STDCALL GDALIsSubdatasetSyntax(const char *pszFileName)
+{
+    // Iterate all drivers
+    GDALDriverManager *poDM = GetGDALDriverManager();
+    const int nDriverCount = poDM->GetDriverCount();
+    for (int iDriver = 0; iDriver < nDriverCount; ++iDriver)
+    {
+        GDALDriver *poDriver = poDM->GetDriver(iDriver);
+        char **papszMD = GDALGetMetadata(poDriver, nullptr);
+        if (!CPLFetchBool(papszMD, GDAL_DMD_SUBDATASETS, false) ||
+            !poDriver->pfnIsSubdatasetSyntax)
+        {
+            continue;
+        }
+
+        if (poDriver->pfnIsSubdatasetSyntax(pszFileName))
+        {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+const char *CPL_STDCALL
+GDALGetFilenameFromSubdatasetName(const char *pszFileName)
+{
+    // Iterate all drivers
+    GDALDriverManager *poDM = GetGDALDriverManager();
+    const int nDriverCount = poDM->GetDriverCount();
+    for (int iDriver = 0; iDriver < nDriverCount; ++iDriver)
+    {
+        GDALDriver *poDriver = poDM->GetDriver(iDriver);
+        char **papszMD = GDALGetMetadata(poDriver, nullptr);
+        if (!CPLFetchBool(papszMD, GDAL_DMD_SUBDATASETS, false) ||
+            !poDriver->pfnIsSubdatasetSyntax ||
+            !poDriver->pfnGetFilenameFromSubdatasetName)
+        {
+            continue;
+        }
+
+        if (poDriver->pfnIsSubdatasetSyntax(pszFileName))
+        {
+            return poDriver->pfnGetFilenameFromSubdatasetName(pszFileName);
+        }
+    }
+    return pszFileName;
+}
+
+CPL_C_END
+
+/************************************************************************/
 /*                     GDALSerializeGCPListToXML()                      */
 /************************************************************************/
 

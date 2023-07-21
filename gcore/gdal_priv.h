@@ -1810,6 +1810,11 @@ class CPL_DLL GDALDriver : public GDALMajorObject
         CSLConstList papszVectorTranslateArguments,
         GDALProgressFunc pfnProgress, void *pProgressData) = nullptr;
 
+    /* Subdataset informational functions */
+    bool (*pfnIsSubdatasetSyntax)(const char *pszFileName) = nullptr;
+    const char *(*pfnGetFilenameFromSubdatasetName)(const char *pszFileName) =
+        nullptr;
+
     //! @endcond
 
     /* -------------------------------------------------------------------- */

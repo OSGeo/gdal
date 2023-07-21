@@ -4110,6 +4110,22 @@ def test_gpkg_byte_nodata_value(band_count):
 
 
 ###############################################################################
+# Test gdal subdataset informational functions
+
+
+@pytest.mark.parametrize(
+    "filename,is_subdataset",
+    (
+        ("/test.gpkg", False),
+        ("/test.gpkg:layername=layer1", True),
+    ),
+)
+def test_gpkg_gdal_subdataset_syntax(filename, is_subdataset):
+
+    assert gdal.IsSubdatasetSyntax() == is_subdataset
+
+
+###############################################################################
 # Test gdal_get_layer_pixel_value() function
 
 

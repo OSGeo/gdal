@@ -1300,6 +1300,31 @@ bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
     void *poQueryLoggerArg);
 
 /* ==================================================================== */
+/*      Informational utilities about subdatasets in file names         */
+/* ==================================================================== */
+
+/**
+ * @brief Checks wether the file name syntax represents a subdataset
+ * @param pszFileName           File name
+ * @note                        This method does not check if the subdataset actually exists but only if the
+ *                              file name syntax represents a subdataset
+ * @return                      true if the file name represents a subdataset
+ * @since                       GDAL 3.8
+ */
+bool CPL_DLL CPL_STDCALL GDALIsSubdatasetSyntax(const char *pszFileName);
+
+/**
+ * @brief Returns the path to the file, stripping any subdataset information from the file name
+ * @param pszFileName           File name
+ * @note                        This method does not check if the subdataset or the file actually exist.
+ *                              If the file name does not represent a subdataset it is returned unmodified.
+ * @return                      The path to the file
+ * @since                       GDAL 3.8
+ */
+const char CPL_DLL *CPL_STDCALL
+GDALGetFilenameFromSubdatasetName(const char *pszFileName);
+
+/* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
 /* ==================================================================== */
 

@@ -374,6 +374,8 @@ $1;
 %rename (ParseXMLString) CPLParseXMLString;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
 %rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
+%rename (IsSubdatasetSyntax) GDALIsSubdatasetSyntax;
+%rename (GetFilenameFromSubdatasetName) GDALGetFilenameFromSubdatasetName;
 
 //************************************************************************
 //
@@ -2083,3 +2085,15 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 
 
 %clear (const char* dest);
+
+//************************************************************************
+// gdal.IsDatasetSyntax()
+//************************************************************************
+
+bool GDALIsSubdatasetSyntax(const char *pszFileName);
+
+//************************************************************************
+// gdal.GetFilenameFromSubdatasetName()
+//************************************************************************
+
+const char* GDALGetFilenameFromSubdatasetName(const char *pszFileName);
