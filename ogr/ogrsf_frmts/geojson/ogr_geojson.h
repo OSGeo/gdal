@@ -170,10 +170,16 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
                    : OGRERR_FAILURE;
     }
 
+    OGRErr SyncToDisk() override;
+
   private:
     OGRGeoJSONDataSource *poDS_;
     OGRFeatureDefn *poFeatureDefn_;
     int nOutCounter_;
+    /** Offset at which the '] }' terminating sequence has already been
+     * written by SyncToDisk(). 0 if it has not been written.
+     */
+    vsi_l_offset m_nPositionBeforeFCClosed = 0;
 
     bool bWriteBBOX;
     bool bBBOX3D;
@@ -190,6 +196,8 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     OGRGeoJSONWriteOptions oWriteOptions_;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONWriteLayer)
+
+    void FinishWriting();
 };
 
 /************************************************************************/

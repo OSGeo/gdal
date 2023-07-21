@@ -30,6 +30,8 @@
 #include "ogr_geojson.h"
 #include "ogrgeojsonwriter.h"
 
+#include "cpl_vsi_virtual.h"
+
 #include <algorithm>
 
 /************************************************************************/
@@ -79,52 +81,7 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
 
 OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
 {
-    VSILFILE *fp = poDS_->GetOutputFile();
-
-    VSIFPrintfL(fp, "\n]");
-
-    if (bWriteFC_BBOX && sEnvelopeLayer.IsInit())
-    {
-        CPLString osBBOX = "[ ";
-        char szFormat[32];
-        if (nCoordPrecision_ >= 0)
-            snprintf(szFormat, sizeof(szFormat), "%%.%df", nCoordPrecision_);
-        else
-            snprintf(szFormat, sizeof(szFormat), "%s", "%.15g");
-
-        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinX);
-        osBBOX += ", ";
-        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinY);
-        osBBOX += ", ";
-        if (bBBOX3D)
-        {
-            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinZ);
-            osBBOX += ", ";
-        }
-        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxX);
-        osBBOX += ", ";
-        osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxY);
-        if (bBBOX3D)
-        {
-            osBBOX += ", ";
-            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxZ);
-        }
-        osBBOX += " ]";
-
-        if (poDS_->GetFpOutputIsSeekable() &&
-            osBBOX.size() + 9 < OGRGeoJSONDataSource::SPACE_FOR_BBOX)
-        {
-            VSIFSeekL(fp, poDS_->GetBBOXInsertLocation(), SEEK_SET);
-            VSIFPrintfL(fp, "\"bbox\": %s,", osBBOX.c_str());
-            VSIFSeekL(fp, 0, SEEK_END);
-        }
-        else
-        {
-            VSIFPrintfL(fp, ",\n\"bbox\": %s", osBBOX.c_str());
-        }
-    }
-
-    VSIFPrintfL(fp, "\n}\n");
+    FinishWriting();
 
     if (nullptr != poFeatureDefn_)
     {
@@ -132,6 +89,81 @@ OGRGeoJSONWriteLayer::~OGRGeoJSONWriteLayer()
     }
 
     delete poCT_;
+}
+
+/************************************************************************/
+/*                           FinishWriting()                            */
+/************************************************************************/
+
+void OGRGeoJSONWriteLayer::FinishWriting()
+{
+    if (m_nPositionBeforeFCClosed == 0)
+    {
+        VSILFILE *fp = poDS_->GetOutputFile();
+
+        m_nPositionBeforeFCClosed = fp->Tell();
+
+        VSIFPrintfL(fp, "\n]");
+
+        if (bWriteFC_BBOX && sEnvelopeLayer.IsInit())
+        {
+            CPLString osBBOX = "[ ";
+            char szFormat[32];
+            if (nCoordPrecision_ >= 0)
+                snprintf(szFormat, sizeof(szFormat), "%%.%df",
+                         nCoordPrecision_);
+            else
+                snprintf(szFormat, sizeof(szFormat), "%s", "%.15g");
+
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinX);
+            osBBOX += ", ";
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinY);
+            osBBOX += ", ";
+            if (bBBOX3D)
+            {
+                osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MinZ);
+                osBBOX += ", ";
+            }
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxX);
+            osBBOX += ", ";
+            osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxY);
+            if (bBBOX3D)
+            {
+                osBBOX += ", ";
+                osBBOX += CPLSPrintf(szFormat, sEnvelopeLayer.MaxZ);
+            }
+            osBBOX += " ]";
+
+            if (poDS_->GetFpOutputIsSeekable() &&
+                osBBOX.size() + 9 < OGRGeoJSONDataSource::SPACE_FOR_BBOX)
+            {
+                VSIFSeekL(fp, poDS_->GetBBOXInsertLocation(), SEEK_SET);
+                VSIFPrintfL(fp, "\"bbox\": %s,", osBBOX.c_str());
+                VSIFSeekL(fp, 0, SEEK_END);
+            }
+            else
+            {
+                VSIFPrintfL(fp, ",\n\"bbox\": %s", osBBOX.c_str());
+            }
+        }
+
+        VSIFPrintfL(fp, "\n}\n");
+        fp->Flush();
+    }
+}
+
+/************************************************************************/
+/*                           SyncToDisk()                               */
+/************************************************************************/
+
+OGRErr OGRGeoJSONWriteLayer::SyncToDisk()
+{
+    if (m_nPositionBeforeFCClosed == 0 && poDS_->GetFpOutputIsSeekable())
+    {
+        FinishWriting();
+    }
+
+    return OGRERR_NONE;
 }
 
 /************************************************************************/
@@ -189,6 +221,13 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     json_object *poObj =
         OGRGeoJSONWriteFeature(poFeatureToWrite, oWriteOptions_);
     CPLAssert(nullptr != poObj);
+
+    if (m_nPositionBeforeFCClosed)
+    {
+        // If we had called SyncToDisk() previously, undo its effects
+        fp->Seek(m_nPositionBeforeFCClosed, SEEK_SET);
+        m_nPositionBeforeFCClosed = 0;
+    }
 
     if (nOutCounter_ > 0)
     {

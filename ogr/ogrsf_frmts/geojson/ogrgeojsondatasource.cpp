@@ -1041,7 +1041,10 @@ void OGRGeoJSONDataSource::AddLayer(OGRGeoJSONLayer *poLayer)
 CPLErr OGRGeoJSONDataSource::FlushCache(bool /*bAtClosing*/)
 {
     if (papoLayersWriter_ != nullptr)
-        return CE_None;
+    {
+        return papoLayersWriter_[0]->SyncToDisk() == OGRERR_NONE ? CE_None
+                                                                 : CE_Failure;
+    }
 
     CPLErr eErr = CE_None;
     for (int i = 0; i < nLayers_; i++)
