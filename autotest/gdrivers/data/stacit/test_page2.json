@@ -31,7 +31,7 @@
               "full_width_half_max": 0.027
             }
           ],
-          "href": "data/int16.tif",
+          "href": "file://data/int16.tif",
           "proj:epsg": 26711,
           "proj:shape": [
             20,
