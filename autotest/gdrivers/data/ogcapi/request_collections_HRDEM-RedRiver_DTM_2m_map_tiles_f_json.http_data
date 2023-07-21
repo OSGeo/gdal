@@ -1,0 +1,360 @@
+HTTP/1.1 200 OK
+Date: Thu, 20 Jul 2023 17:27:39 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Expires: Fri, 19 Jul 2024 17:27:39 GMT
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Type: application/json
+Content-Length: 16353
+Keep-Alive: timeout=5, max=100
+Connection: Keep-Alive
+
+{
+   "links" : [
+      {
+         "rel" : "self",
+         "type" : "application/json",
+         "title" : "The JSON representation of the available map tilesets for 2m",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/?f=json"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/plain",
+         "title" : "The ECON representation of the available map tilesets for 2m",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/?f=econ"
+      },
+      {
+         "rel" : "alternate",
+         "type" : "text/html",
+         "title" : "The HTML representation of the available map tilesets for 2m",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
+         "type" : "application/json",
+         "title" : "Coverage tilesets for 2m (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/coverage/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
+         "type" : "text/plain",
+         "title" : "Coverage tilesets for 2m (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/coverage/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-coverage",
+         "type" : "text/html",
+         "title" : "Coverage tilesets for 2m (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/coverage/tiles?f=html"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "application/json",
+         "title" : "Map tilesets for 2m (hillShade225-300 style) (as JSON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/styles/hillShade225-300/map/tiles?f=json"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/plain",
+         "title" : "Map tilesets for 2m (hillShade225-300 style) (as ECON)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/styles/hillShade225-300/map/tiles?f=econ"
+      },
+      {
+         "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tilesets-map",
+         "type" : "text/html",
+         "title" : "Map tilesets for 2m (hillShade225-300 style) (as HTML)",
+         "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/styles/hillShade225-300/map/tiles?f=html"
+      }
+   ],
+   "tilesets" : [
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/CDB1GlobalGrid",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/4326",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "CDB1GlobalGridTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/CDB1GlobalGrid"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "CDB1GlobalGrid map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/CDB1GlobalGrid?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "CDB1GlobalGrid map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/CDB1GlobalGrid?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "CDB1GlobalGrid map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/CDB1GlobalGrid?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GlobalCRS84Pixel",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GlobalCRS84PixelTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GlobalCRS84Pixel"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GlobalCRS84Pixel map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GlobalCRS84Pixel?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GlobalCRS84Pixel map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GlobalCRS84Pixel?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GlobalCRS84Pixel map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GlobalCRS84Pixel?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GlobalCRS84Scale",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GlobalCRS84ScaleTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GlobalCRS84Scale"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GlobalCRS84Scale map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GlobalCRS84Scale?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GlobalCRS84Scale map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GlobalCRS84Scale?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GlobalCRS84Scale map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GlobalCRS84Scale?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GNOSISGlobalGrid",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/4326",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GNOSISGlobalGridTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GNOSISGlobalGrid"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GNOSISGlobalGrid map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GNOSISGlobalGrid?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GNOSISGlobalGrid map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GNOSISGlobalGrid?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GNOSISGlobalGrid map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GNOSISGlobalGrid?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/GoogleCRS84Quad",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "GoogleCRS84QuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/GoogleCRS84Quad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "GoogleCRS84Quad map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GoogleCRS84Quad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "GoogleCRS84Quad map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GoogleCRS84Quad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "GoogleCRS84Quad map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/GoogleCRS84Quad?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/ISEA9Diamonds",
+         "crs" : "http://www.opengis.net/def/crs/OGC/0/1534",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "ISEA9DiamondsTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/ISEA9Diamonds"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "ISEA9Diamonds map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/ISEA9Diamonds?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "ISEA9Diamonds map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/ISEA9Diamonds?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "ISEA9Diamonds map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/ISEA9Diamonds?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WebMercatorQuad",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/3857",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "WebMercatorQuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WebMercatorQuad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "WebMercatorQuad map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WebMercatorQuad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "WebMercatorQuad map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WebMercatorQuad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "WebMercatorQuad map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WebMercatorQuad?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldCRS84Quad",
+         "crs" : "http://www.opengis.net/def/crs/OGC/1.3/CRS84",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "WorldCRS84QuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldCRS84Quad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "WorldCRS84Quad map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldCRS84Quad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "WorldCRS84Quad map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldCRS84Quad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "WorldCRS84Quad map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldCRS84Quad?f=tilejson"
+            }
+         ]
+      },
+      {
+         "title" : "2m",
+         "tileMatrixSetURI" : "http://www.opengis.net/def/tilematrixset/OGC/1.0/WorldMercatorWGS84Quad",
+         "crs" : "http://www.opengis.net/def/crs/EPSG/0/3395",
+         "dataType" : "map",
+         "links" : [
+            {
+               "rel" : "http://www.opengis.net/def/rel/ogc/1.0/tiling-scheme",
+               "type" : "application/json",
+               "title" : "WorldMercatorWGS84QuadTileMatrixSet definition (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/tileMatrixSets/WorldMercatorWGS84Quad"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json",
+               "title" : "WorldMercatorWGS84Quad map tileset for 2m (as JSON)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad?f=json"
+            },
+            {
+               "rel" : "self",
+               "type" : "text/html",
+               "title" : "WorldMercatorWGS84Quad map tileset for 2m (as HTML)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad?f=html"
+            },
+            {
+               "rel" : "self",
+               "type" : "application/json+tilejson",
+               "title" : "WorldMercatorWGS84Quad map tileset for 2m (in TileJSON format)",
+               "href" : "http://127.0.0.1:8080/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m/map/tiles/WorldMercatorWGS84Quad?f=tilejson"
+            }
+         ]
+      }
+   ]
+}
