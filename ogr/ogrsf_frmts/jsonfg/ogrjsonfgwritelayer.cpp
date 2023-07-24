@@ -245,6 +245,7 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
     }
     else
     {
+        bool bHasStartOrStop = false;
         json_object *poTimeStart = nullptr;
         int nFieldTimeStartIdx =
             poFeatureDefn_->GetFieldIndex("jsonfg_time_start");
@@ -262,6 +263,7 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
                                        poFieldDefnStart->GetNameRef());
                 poTimeStart = json_object_new_string(GetValueAsDateOrDateTime(
                     poFeature->GetRawFieldRef(nFieldTimeStartIdx), eType));
+                bHasStartOrStop = true;
             }
         }
 
@@ -281,21 +283,21 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
                                        poFieldDefnEnd->GetNameRef());
                 poTimeEnd = json_object_new_string(GetValueAsDateOrDateTime(
                     poFeature->GetRawFieldRef(nFieldTimeEndIdx), eType));
+                bHasStartOrStop = true;
             }
         }
 
-        if (poTimeStart && !poTimeEnd)
-            poTimeEnd = json_object_new_string("..");
-        else if (poTimeEnd && !poTimeStart)
-            poTimeStart = json_object_new_string("..");
-
-        if (poTimeStart && poTimeEnd)
+        if (bHasStartOrStop)
         {
             poTime = json_object_new_object();
             json_object *poInterval = json_object_new_array();
             json_object_object_add(poTime, "interval", poInterval);
-            json_object_array_add(poInterval, poTimeStart);
-            json_object_array_add(poInterval, poTimeEnd);
+            json_object_array_add(poInterval,
+                                  poTimeStart ? poTimeStart
+                                              : json_object_new_string(".."));
+            json_object_array_add(poInterval,
+                                  poTimeEnd ? poTimeEnd
+                                            : json_object_new_string(".."));
         }
     }
 
