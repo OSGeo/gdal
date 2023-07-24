@@ -549,8 +549,9 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         if (eGeomType != wkbNone && poSRS != nullptr)
         {
             poLayer->GetLayerDefn()->GetGeomFieldDefn(0)->SetSpatialRef(poSRS);
-            poSRS->Release();
         }
+        if (poSRS)
+            poSRS->Release();
 
         if (bStoreNativeData_)
         {
