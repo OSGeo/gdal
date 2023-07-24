@@ -1039,6 +1039,11 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     void SetSrcMaskBand(GDALRasterBand *);
     void SetSrcWindow(double, double, double, double);
     void SetDstWindow(double, double, double, double);
+    void GetDstWindow(double &, double &, double &, double &);
+    const std::string &GetSourceDatasetName() const
+    {
+        return m_osSrcDSName;
+    }
     const CPLString &GetResampling() const
     {
         return m_osResampling;

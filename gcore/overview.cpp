@@ -4882,6 +4882,10 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
  * @param pProgressData progress function callback data.
  * @param papszOptions (GDAL >= 3.6) NULL terminated list of options as
  *                     key=value pairs, or NULL
+ *                     Starting with GDAL 3.8, the XOFF, YOFF, XSIZE and YSIZE
+ *                     options can be specified to express that overviews should
+ *                     be regenerated only in the specified subset of the source
+ *                     dataset.
  * @return CE_None on success or CE_Failure on failure.
  */
 
@@ -4922,6 +4926,8 @@ CPLErr GDALRegenerateOverviewsMultiBand(
 
     const int nToplevelSrcWidth = papoSrcBands[0]->GetXSize();
     const int nToplevelSrcHeight = papoSrcBands[0]->GetYSize();
+    if (nToplevelSrcWidth <= 0 || nToplevelSrcHeight <= 0)
+        return CE_None;
     GDALDataType eDataType = papoSrcBands[0]->GetRasterDataType();
     for (int iBand = 1; iBand < nBands; ++iBand)
     {
@@ -4972,23 +4978,21 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         }
     }
 
-    // First pass to compute the total number of pixels to read.
+    // First pass to compute the total number of pixels to write.
     double dfTotalPixelCount = 0;
+    const int nSrcXOff = atoi(CSLFetchNameValueDef(papszOptions, "XOFF", "0"));
+    const int nSrcYOff = atoi(CSLFetchNameValueDef(papszOptions, "YOFF", "0"));
+    const int nSrcXSize = atoi(CSLFetchNameValueDef(
+        papszOptions, "XSIZE", CPLSPrintf("%d", nToplevelSrcWidth)));
+    const int nSrcYSize = atoi(CSLFetchNameValueDef(
+        papszOptions, "YSIZE", CPLSPrintf("%d", nToplevelSrcHeight)));
     for (int iOverview = 0; iOverview < nOverviews; ++iOverview)
     {
-        int nSrcWidth = nToplevelSrcWidth;
-        int nSrcHeight = nToplevelSrcHeight;
-        const int nDstWidth = papapoOverviewBands[0][iOverview]->GetXSize();
-        // Try to use previous level of overview as the source to compute
-        // the next level.
-        if (iOverview > 0 &&
-            papapoOverviewBands[0][iOverview - 1]->GetXSize() > nDstWidth)
-        {
-            nSrcWidth = papapoOverviewBands[0][iOverview - 1]->GetXSize();
-            nSrcHeight = papapoOverviewBands[0][iOverview - 1]->GetYSize();
-        }
-
-        dfTotalPixelCount += static_cast<double>(nSrcWidth) * nSrcHeight;
+        dfTotalPixelCount +=
+            static_cast<double>(nSrcXSize) / nToplevelSrcWidth *
+            papapoOverviewBands[0][iOverview]->GetXSize() *
+            static_cast<double>(nSrcYSize) / nToplevelSrcHeight *
+            papapoOverviewBands[0][iOverview]->GetYSize();
     }
 
     const GDALDataType eWrkDataType =
@@ -5048,15 +5052,40 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         papapoOverviewBands[0][iOverview]->GetBlockSize(&nDstChunkXSize,
                                                         &nDstChunkYSize);
 
-        const int nDstWidth = papapoOverviewBands[0][iOverview]->GetXSize();
-        const int nDstHeight = papapoOverviewBands[0][iOverview]->GetYSize();
+        const int nDstTotalWidth =
+            papapoOverviewBands[0][iOverview]->GetXSize();
+        const int nDstTotalHeight =
+            papapoOverviewBands[0][iOverview]->GetYSize();
+
+        // Compute the coordinates of the target region to refresh
+        constexpr double EPS = 1e-8;
+        const int nDstXOffStart = static_cast<int>(
+            static_cast<double>(nSrcXOff) / nToplevelSrcWidth * nDstTotalWidth +
+            EPS);
+        const int nDstXOffEnd =
+            std::min(static_cast<int>(
+                         std::ceil(static_cast<double>(nSrcXOff + nSrcXSize) /
+                                       nToplevelSrcWidth * nDstTotalWidth -
+                                   EPS)),
+                     nDstTotalWidth);
+        const int nDstWidth = nDstXOffEnd - nDstXOffStart;
+        const int nDstYOffStart =
+            static_cast<int>(static_cast<double>(nSrcYOff) /
+                                 nToplevelSrcHeight * nDstTotalHeight +
+                             EPS);
+        const int nDstYOffEnd =
+            std::min(static_cast<int>(
+                         std::ceil(static_cast<double>(nSrcYOff + nSrcYSize) /
+                                       nToplevelSrcHeight * nDstTotalHeight -
+                                   EPS)),
+                     nDstTotalHeight);
 
         // Try to use previous level of overview as the source to compute
         // the next level.
         int nSrcWidth = nToplevelSrcWidth;
         int nSrcHeight = nToplevelSrcHeight;
         if (iOverview > 0 &&
-            papapoOverviewBands[0][iOverview - 1]->GetXSize() > nDstWidth)
+            papapoOverviewBands[0][iOverview - 1]->GetXSize() > nDstTotalWidth)
         {
             nSrcWidth = papapoOverviewBands[0][iOverview - 1]->GetXSize();
             nSrcHeight = papapoOverviewBands[0][iOverview - 1]->GetYSize();
@@ -5064,9 +5093,9 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         }
 
         const double dfXRatioDstToSrc =
-            static_cast<double>(nSrcWidth) / nDstWidth;
+            static_cast<double>(nSrcWidth) / nDstTotalWidth;
         const double dfYRatioDstToSrc =
-            static_cast<double>(nSrcHeight) / nDstHeight;
+            static_cast<double>(nSrcHeight) / nDstTotalHeight;
 
         int nOvrFactor = std::max(static_cast<int>(0.5 + dfXRatioDstToSrc),
                                   static_cast<int>(0.5 + dfYRatioDstToSrc));
@@ -5210,21 +5239,22 @@ CPLErr GDALRegenerateOverviewsMultiBand(
         std::vector<void *> apaChunk(nBands);
         std::vector<GByte *> apabyChunkNoDataMask(nBands);
 
-        int nDstYOff = 0;
         // Iterate on destination overview, block by block.
-        for (nDstYOff = 0; nDstYOff < nDstHeight && eErr == CE_None;
+        for (int nDstYOff = nDstYOffStart;
+             nDstYOff < nDstYOffEnd && eErr == CE_None;
              nDstYOff += nDstChunkYSize)
         {
             int nDstYCount;
-            if (nDstYOff + nDstChunkYSize <= nDstHeight)
+            if (nDstYOff + nDstChunkYSize <= nDstYOffEnd)
                 nDstYCount = nDstChunkYSize;
             else
-                nDstYCount = nDstHeight - nDstYOff;
+                nDstYCount = nDstYOffEnd - nDstYOff;
 
             int nChunkYOff = static_cast<int>(nDstYOff * dfYRatioDstToSrc);
             int nChunkYOff2 = static_cast<int>(
                 ceil((nDstYOff + nDstYCount) * dfYRatioDstToSrc));
-            if (nChunkYOff2 > nSrcHeight || nDstYOff + nDstYCount == nDstHeight)
+            if (nChunkYOff2 > nSrcHeight ||
+                nDstYOff + nDstYCount == nDstTotalHeight)
                 nChunkYOff2 = nSrcHeight;
             int nYCount = nChunkYOff2 - nChunkYOff;
             CPLAssert(nYCount <= nFullResYChunk);
@@ -5247,22 +5277,24 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                 eErr = CE_Failure;
             }
 
-            int nDstXOff = 0;
             // Iterate on destination overview, block by block.
-            for (nDstXOff = 0; nDstXOff < nDstWidth && eErr == CE_None;
+            for (int nDstXOff = nDstXOffStart;
+                 nDstXOff < nDstXOffEnd && eErr == CE_None;
                  nDstXOff += nDstChunkXSize)
             {
                 int nDstXCount = 0;
-                if (nDstXOff + nDstChunkXSize <= nDstWidth)
+                if (nDstXOff + nDstChunkXSize <= nDstXOffEnd)
                     nDstXCount = nDstChunkXSize;
                 else
-                    nDstXCount = nDstWidth - nDstXOff;
+                    nDstXCount = nDstXOffEnd - nDstXOff;
+
+                dfCurPixelCount += static_cast<double>(nDstXCount) * nDstYCount;
 
                 int nChunkXOff = static_cast<int>(nDstXOff * dfXRatioDstToSrc);
                 int nChunkXOff2 = static_cast<int>(
                     ceil((nDstXOff + nDstXCount) * dfXRatioDstToSrc));
                 if (nChunkXOff2 > nSrcWidth ||
-                    nDstXOff + nDstXCount == nDstWidth)
+                    nDstXOff + nDstXCount == nDstTotalWidth)
                     nChunkXOff2 = nSrcWidth;
                 const int nXCount = nChunkXOff2 - nChunkXOff;
                 CPLAssert(nXCount <= nFullResXChunk);
@@ -5418,8 +5450,6 @@ CPLErr GDALRegenerateOverviewsMultiBand(
                     }
                 }
             }
-
-            dfCurPixelCount += static_cast<double>(nYCount) * nSrcWidth;
         }
 
         // Wait for all pending jobs to complete
