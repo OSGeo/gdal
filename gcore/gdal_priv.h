@@ -60,6 +60,7 @@ class GDALRelationship;
 
 #include "gdal.h"
 #include "gdal_frmts.h"
+#include "gdalsubdatasetinfo.h"
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -1810,10 +1811,8 @@ class CPL_DLL GDALDriver : public GDALMajorObject
         CSLConstList papszVectorTranslateArguments,
         GDALProgressFunc pfnProgress, void *pProgressData) = nullptr;
 
-    /* Subdataset informational functions */
-    bool (*pfnIsSubdatasetSyntax)(const char *pszFileName) = nullptr;
-    const char *(*pfnGetFilenameFromSubdatasetName)(const char *pszFileName) =
-        nullptr;
+    /* Returns a (possibly null) pointer to the Subdataset informational function */
+    GDALSubdatasetInfo (*pfnGetSubdatasetInfo)() = nullptr;
 
     //! @endcond
 

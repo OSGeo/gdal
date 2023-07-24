@@ -29,6 +29,8 @@
 #include "ogr_geopackage.h"
 
 #include "tilematrixset.hpp"
+#include <sstream>
+#include <iostream>
 
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr
 // -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
@@ -247,6 +249,39 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 }
 
 /************************************************************************/
+/*                    OGRGeoPackageDriverGetSubdatasetInfo()            */
+/************************************************************************/
+
+static GDALSubdatasetInfo OGRGeoPackageDriverGetSubdatasetInfo()
+{
+    GDALSubdatasetInfo oSubdatasetInfo;
+
+    oSubdatasetInfo.pfnIsSubdatasetSyntax =
+        [](const std::string &fileName) -> bool
+    {
+        GDALOpenInfo poOpenInfo{fileName.c_str(), GA_ReadOnly};
+        if (OGRGeoPackageDriverIdentify(&poOpenInfo) != TRUE)
+        {
+            return false;
+        }
+
+        // Split
+        std::vector<std::string> parts;
+        std::istringstream f(fileName);
+        std::string s;
+        while (std::getline(f, s, ';'))
+        {
+            std::cout << s << std::endl;
+            parts.push_back(s);
+        }
+
+        return parts.size() > 1;
+    };
+
+    return oSubdatasetInfo;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -342,6 +377,8 @@ class GDALGPKGDriver final : public GDALDriver
 
     void InitializeCreationOptionList();
 
+    GDALSubdatasetInfo m_oSubdatasetInfo;
+
   public:
     GDALGPKGDriver() = default;
 
@@ -360,6 +397,8 @@ class GDALGPKGDriver final : public GDALDriver
         InitializeCreationOptionList();
         return GDALDriver::GetMetadata(pszDomain);
     }
+
+    GDALSubdatasetInfo *GetSubdatasetInfo();
 };
 
 #define COMPRESSION_OPTIONS                                                    \
@@ -496,6 +535,11 @@ void GDALGPKGDriver::InitializeCreationOptionList()
     osOptions += pszCOEnd;
 
     SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osOptions.c_str());
+}
+
+GDALSubdatasetInfo *GDALGPKGDriver::GetSubdatasetInfo()
+{
+    return &m_oSubdatasetInfo;
 }
 
 void RegisterOGRGeoPackage()
@@ -662,6 +706,7 @@ void RegisterOGRGeoPackage()
     poDriver->pfnCreate = OGRGeoPackageDriverCreate;
     poDriver->pfnCreateCopy = GDALGeoPackageDataset::CreateCopy;
     poDriver->pfnDelete = OGRGeoPackageDriverDelete;
+    poDriver->pfnGetSubdatasetInfo = OGRGeoPackageDriverGetSubdatasetInfo;
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

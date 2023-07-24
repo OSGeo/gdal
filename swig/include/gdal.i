@@ -2085,15 +2085,3 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 
 
 %clear (const char* dest);
-
-//************************************************************************
-// gdal.IsDatasetSyntax()
-//************************************************************************
-
-bool GDALIsSubdatasetSyntax(const char *pszFileName);
-
-//************************************************************************
-// gdal.GetFilenameFromSubdatasetName()
-//************************************************************************
-
-const char* GDALGetFilenameFromSubdatasetName(const char *pszFileName);

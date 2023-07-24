@@ -1304,25 +1304,22 @@ bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
 /* ==================================================================== */
 
 /**
- * @brief Checks wether the file name syntax represents a subdataset
- * @param pszFileName           File name
- * @note                        This method does not check if the subdataset actually exists but only if the
- *                              file name syntax represents a subdataset
- * @return                      true if the file name represents a subdataset
- * @since                       GDAL 3.8
- */
-bool CPL_DLL CPL_STDCALL GDALIsSubdatasetSyntax(const char *pszFileName);
+ *  Opaque type used for the C bindings of the C++ GDALGetSubdatasetInfoFunc class
+ *  @since GDAL 3.8
+*/
+typedef void *GDALGetSubdatasetInfoFuncH;
 
 /**
- * @brief Returns the path to the file, stripping any subdataset information from the file name
+ * @brief Returns a GetSubdatasetInfoFunc function object with methods to extract
+ *        and manipulate subdataset information.
+ *        The default implemention
  * @param pszFileName           File name
- * @note                        This method does not check if the subdataset or the file actually exist.
- *                              If the file name does not represent a subdataset it is returned unmodified.
- * @return                      The path to the file
+ * @note                        This method does not check if the subdataset actually exists
+ * @return                      Opaque pointer to a GetSubdatasetInfoFunc or NULL if no drivers accepted the file name.
  * @since                       GDAL 3.8
  */
-const char CPL_DLL *CPL_STDCALL
-GDALGetFilenameFromSubdatasetName(const char *pszFileName);
+CPL_DLL GDALGetSubdatasetInfoFuncH CPL_STDCALL
+GDALGetSubdatasetInfoFunc(const char *pszFileName);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */
