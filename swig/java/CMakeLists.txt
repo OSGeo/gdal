@@ -163,14 +163,19 @@ set_directory_properties(PROPERTIES ADDITIONAL_MAKE_CLEAN_FILES "org;org_patched
 add_custom_target(java_binding ALL DEPENDS gdalalljni ${MAVEN_ARTIFACTS})
 
 # Install
-set(GDAL_JAVA_INSTALL_DIR
-    "${CMAKE_INSTALL_DATADIR}/java"
-    CACHE PATH "Installation sub-directory for Java bindings")
+
+set(GDAL_JAVA_JNI_INSTALL_DIR
+    "${CMAKE_INSTALL_LIBDIR}/jni"
+    CACHE PATH "Installation sub-directory for the JNI shared library of Java bindings")
 
 install(
   TARGETS gdalalljni
   COMPONENT java
-  DESTINATION ${GDAL_JAVA_INSTALL_DIR})
+  DESTINATION ${GDAL_JAVA_JNI_INSTALL_DIR})
+
+set(GDAL_JAVA_INSTALL_DIR
+    "${CMAKE_INSTALL_DATADIR}/java"
+    CACHE PATH "Installation sub-directory for .jar files of Java bindings")
 
 install(
   FILES ${GDAL_VERSION_JAR} ${GDAL_VERSION_JAVADOC_JAR} ${GDAL_VERSION_SOURCES_JAR} ${GDAL_VERSION_POM}
