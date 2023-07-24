@@ -410,10 +410,21 @@ bool OGRPMTilesConvertFromMBTiles(const char *pszDestName,
             }
             else
             {
-                const auto sXYZ = pmtiles::tileid_to_zxy(sEntry.nTileId);
-                poTilesLayer->SetAttributeFilter(CPLSPrintf(
-                    "zoom_level = %d AND tile_column = %u AND tile_row = %u",
-                    sXYZ.z, sXYZ.x, (1U << sXYZ.z) - 1U - sXYZ.y));
+                try
+                {
+                    const auto sXYZ = pmtiles::tileid_to_zxy(sEntry.nTileId);
+                    poTilesLayer->SetAttributeFilter(CPLSPrintf(
+                        "zoom_level = %d AND tile_column = %u AND tile_row = "
+                        "%u",
+                        sXYZ.z, sXYZ.x, (1U << sXYZ.z) - 1U - sXYZ.y));
+                }
+                catch (const std::exception &e)
+                {
+                    // shouldn't happen given previous checks
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Cannot compute xyz: %s", e.what());
+                    return false;
+                }
                 poTilesLayer->ResetReading();
                 auto poFeature =
                     std::unique_ptr<OGRFeature>(poTilesLayer->GetNextFeature());
