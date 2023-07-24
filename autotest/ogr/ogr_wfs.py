@@ -3920,9 +3920,108 @@ xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=1.1.
         #    return 'fail'
 
 
+def test_ogr_wfs_vsimem_wfs200_with_no_primary_key(with_and_without_streaming):
+    # This server 'supports' paging, but the datasource doesn't have a primary key,
+    # so in practice doesn't actually support paging.
+    with gdal.config_options(
+        {"OGR_WFS_PAGING_ALLOWED": "ON", "OGR_WFS_PAGE_SIZE": "2"}
+    ):
+        with gdaltest.tempfile(
+            "/vsimem/wfs200_endpoint_no_pk?SERVICE=WFS&REQUEST=GetCapabilities",
+            """
+            <WFS_Capabilities version="2.0.0">
+                <OperationsMetadata>
+                    <ows:Operation name="GetFeature">
+                        <ows:Constraint name="CountDefault">
+                            <ows:NoValues/>
+                            <ows:DefaultValue>2</ows:DefaultValue>
+                        </ows:Constraint>
+                    </ows:Operation>
+                    <ows:Constraint name="ImplementsResultPaging">
+                        <ows:NoValues/><ows:DefaultValue>TRUE</ows:DefaultValue>
+                    </ows:Constraint>
+                </OperationsMetadata>
+                <FeatureTypeList>
+                    <FeatureType>
+                        <Name>my_layer</Name>
+                        <Title>title</Title>
+                        <Abstract>abstract</Abstract>
+                        <Keywords>
+                            <Keyword>keyword</Keyword>
+                        </Keywords>
+                        <DefaultSRS>urn:ogc:def:crs:EPSG::4326</DefaultSRS>
+                        <ows:WGS84BoundingBox>
+                            <ows:LowerCorner>-180.0 -90.0</ows:LowerCorner>
+                            <ows:UpperCorner>180.0 90.0</ows:UpperCorner>
+                        </ows:WGS84BoundingBox>
+                    </FeatureType>
+                </FeatureTypeList>
+            </WFS_Capabilities>
+            """,
+        ), gdaltest.tempfile(
+            "/vsimem/wfs200_endpoint_no_pk?SERVICE=WFS&VERSION=2.0.0&REQUEST=DescribeFeatureType&TYPENAME=my_layer",
+            """
+            <xsd:schema xmlns:foo="http://foo" xmlns:gml="http://www.opengis.net/gml" xmlns:xsd="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://foo">
+            <xsd:import namespace="http://www.opengis.net/gml" schemaLocation="http://foo/schemas/gml/3.2.1/base/gml.xsd"/>
+            <xsd:complexType name="my_layerType">
+                <xsd:complexContent>
+                <xsd:extension base="gml:AbstractFeatureType">
+                    <xsd:sequence>
+                    </xsd:sequence>
+                </xsd:extension>
+                </xsd:complexContent>
+            </xsd:complexType>
+            <xsd:element name="my_layer" substitutionGroup="gml:_Feature" type="foo:my_layerType"/>
+            </xsd:schema>
+            """,
+        ), gdaltest.tempfile(
+            "/vsimem/wfs200_endpoint_no_pk?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&RESULTTYPE=hits",
+            """
+            <wfs:FeatureCollection
+            numberMatched="2" numberReturned="0" timeStamp="2023-07-27T05:19:16.504Z"
+            />
+            """,
+        ), gdaltest.tempfile(
+            "/vsimem/wfs200_endpoint_no_pk?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=my_layer&COUNT=2",
+            """<wfs:FeatureCollection xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:ogc="http://www.opengis.net/ogc"
+    xmlns:foo="http://foo"
+    xmlns:wfs="http://www.opengis.net/wfs"
+    xmlns:ows="http://www.opengis.net/ows"
+    xmlns:xlink="http://www.w3.org/1999/xlink"
+    xmlns:gml="http://www.opengis.net/gml"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    numberMatched="unknown" numberReturned="2"
+    timeStamp="2015-04-17T14:14:24.859Z"
+    xsi:schemaLocation="http://foo /vsimem/wfs_endpoint?SERVICE=WFS&amp;VERSION=2.0.0&amp;REQUEST=DescribeFeatureType&amp;TYPENAME=my_layer
+                        http://www.opengis.net/wfs/2.0 http://schemas.opengis.net/wfs/2.0/wfs.xsd">
+        <gml:featureMembers>
+            <foo:my_layer gml:id="my_layer.1">
+            </foo:my_layer>
+        </gml:featureMembers>
+        <gml:featureMembers>
+            <foo:my_layer gml:id="my_layer.2">
+            </foo:my_layer>
+        </gml:featureMembers>
+    </wfs:FeatureCollection>""",
+        ):
+            ds = ogr.Open("WFS:/vsimem/wfs200_endpoint_no_pk")
+            lyr = ds.GetLayer(0)
+
+            # First, ensure the feature count is known.
+            # This prevents the driver from adding the STARTINDEX parameter to the GetFeature request.
+            assert lyr.GetFeatureCount() == 2
+
+            f = lyr.GetNextFeature()
+            assert f is not None
+            f = lyr.GetNextFeature()
+            assert f is not None
+            f = lyr.GetNextFeature()
+            assert f is None
+
+
 ###############################################################################
 def test_ogr_wfs_vsimem_wfs200_json(with_and_without_streaming):
-
     with gdaltest.tempfile(
         "/vsimem/wfs200_endpoint_json?SERVICE=WFS&REQUEST=GetCapabilities",
         """<WFS_Capabilities version="2.0.0">
