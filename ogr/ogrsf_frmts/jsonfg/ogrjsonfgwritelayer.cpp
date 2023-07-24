@@ -210,7 +210,8 @@ OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
         if (!osCoordRefSys_.empty() && !bIsWGS84CRS_)
         {
             json_object *poCoordRefSys = nullptr;
-            OGRJSonParse(osCoordRefSys_.c_str(), &poCoordRefSys);
+            CPL_IGNORE_RET_VAL(
+                OGRJSonParse(osCoordRefSys_.c_str(), &poCoordRefSys));
             json_object_object_add(poObj, "coordRefSys", poCoordRefSys);
         }
     }
