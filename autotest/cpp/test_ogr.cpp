@@ -2398,6 +2398,7 @@ TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
         // Invalid
         char szInput[] = "2023-07-11T17:2";
         OGRField sField;
+        // coverity[overrun-buffer-val]
         EXPECT_EQ(
             OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
             false);
