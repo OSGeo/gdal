@@ -1,0 +1,25 @@
+{
+  "type": "FeatureCollection",
+  "conformsTo" : [ "[ogc-json-fg-1-0.1:core]" ],
+  "coordRefSys": "[EPSG:32631]",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "coordRefSys": "[EPSG:4326]",
+      "geometry": { "type": "Point", "coordinates": [0, 0] },
+      "properties": {"notes": "coordinates of geometry are not equivalent to place on purpose"},
+      "place": { "type": "Point", "coordinates": [0, 3] },
+      "time": null
+    },
+    {
+      "type": "Feature",
+      "id": 2,
+      "coordRefSys": "[EPSG:32731]",
+      "geometry": { "type": "Point", "coordinates": [-1, -1] },
+      "properties": {"notes": "coordinates of geometry are not equivalent to place on purpose"},
+      "place": { "type": "Point", "coordinates": [0, 10000000] },
+      "time": null
+    }
+  ]
+}

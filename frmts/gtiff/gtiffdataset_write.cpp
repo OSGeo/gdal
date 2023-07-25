@@ -3690,10 +3690,11 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
         char **papszMD = poMDMD->GetMetadata(papszDomainList[iDomain]);
         bool bIsXML = false;
 
-        if (EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE"))
+        if (EQUAL(papszDomainList[iDomain], "IMAGE_STRUCTURE") ||
+            EQUAL(papszDomainList[iDomain], "DERIVED_SUBDATASETS"))
             continue;  // Ignored.
         if (EQUAL(papszDomainList[iDomain], "COLOR_PROFILE"))
-            continue;  // Ignored.
+            continue;  // Handled elsewhere.
         if (EQUAL(papszDomainList[iDomain], MD_DOMAIN_RPC))
             continue;  // Handled elsewhere.
         if (EQUAL(papszDomainList[iDomain], "xml:ESRI") &&
@@ -3852,7 +3853,7 @@ static void WriteMDMetadata(GDALMultiDomainMetadata *poMDMD, TIFF *hTIFF,
 void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                             int bSrcIsGeoTIFF, GTiffProfile eProfile,
                             const char *pszTIFFFilename,
-                            char **l_papszCreationOptions,
+                            CSLConstList papszCreationOptions,
                             bool bWriteOnlyInPAMIfNeeded)
 {
     /* -------------------------------------------------------------------- */
@@ -3874,11 +3875,11 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         // Write RPB file if explicitly asked, or if a non GDAL specific
         // profile is selected and RPCTXT is not asked.
         bool bRPBExplicitlyAsked =
-            CPLFetchBool(l_papszCreationOptions, "RPB", false);
+            CPLFetchBool(papszCreationOptions, "RPB", false);
         bool bRPBExplicitlyDenied =
-            !CPLFetchBool(l_papszCreationOptions, "RPB", true);
+            !CPLFetchBool(papszCreationOptions, "RPB", true);
         if ((eProfile != GTiffProfile::GDALGEOTIFF &&
-             !CPLFetchBool(l_papszCreationOptions, "RPCTXT", false) &&
+             !CPLFetchBool(papszCreationOptions, "RPCTXT", false) &&
              !bRPBExplicitlyDenied) ||
             bRPBExplicitlyAsked)
         {
@@ -3887,7 +3888,7 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             bRPCSerializedOtherWay = true;
         }
 
-        if (CPLFetchBool(l_papszCreationOptions, "RPCTXT", false))
+        if (CPLFetchBool(papszCreationOptions, "RPCTXT", false))
         {
             if (!bWriteOnlyInPAMIfNeeded)
                 GDALWriteRPCTXTFile(pszTIFFFilename, papszRPCMD);
@@ -3907,7 +3908,7 @@ void GTiffDataset::WriteRPC(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
                                  bool bSrcIsGeoTIFF, GTiffProfile eProfile,
                                  const char *pszTIFFFilename,
-                                 char **l_papszCreationOptions,
+                                 CSLConstList papszCreationOptions,
                                  bool bExcludeRPBandIMGFileWriting)
 
 {
@@ -3927,21 +3928,50 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     }
     else
     {
-        char **papszMD = poSrcDS->GetMetadata();
-
-        if (CSLCount(papszMD) > 0)
+        const char *pszCopySrcMDD =
+            CSLFetchNameValueDef(papszCreationOptions, "COPY_SRC_MDD", "AUTO");
+        char **papszSrcMDD =
+            CSLFetchNameValueMultiple(papszCreationOptions, "SRC_MDD");
+        if (EQUAL(pszCopySrcMDD, "AUTO") || CPLTestBool(pszCopySrcMDD) ||
+            papszSrcMDD)
         {
             GDALMultiDomainMetadata l_oMDMD;
-            l_oMDMD.SetMetadata(papszMD);
+            char **papszMD = poSrcDS->GetMetadata();
+            if (CSLCount(papszMD) > 0 &&
+                (!papszSrcMDD || CSLFindString(papszSrcMDD, "") >= 0 ||
+                 CSLFindString(papszSrcMDD, "_DEFAULT_") >= 0))
+            {
+                l_oMDMD.SetMetadata(papszMD);
+            }
+
+            if ((!EQUAL(pszCopySrcMDD, "AUTO") && CPLTestBool(pszCopySrcMDD)) ||
+                papszSrcMDD)
+            {
+                char **papszDomainList = poSrcDS->GetMetadataDomainList();
+                for (char **papszIter = papszDomainList;
+                     papszIter && *papszIter; ++papszIter)
+                {
+                    const char *pszDomain = *papszIter;
+                    if (pszDomain[0] != 0 &&
+                        (!papszSrcMDD ||
+                         CSLFindString(papszSrcMDD, pszDomain) >= 0))
+                    {
+                        l_oMDMD.SetMetadata(poSrcDS->GetMetadata(pszDomain),
+                                            pszDomain);
+                    }
+                }
+                CSLDestroy(papszDomainList);
+            }
 
             WriteMDMetadata(&l_oMDMD, l_hTIFF, &psRoot, &psTail, 0, eProfile);
         }
+        CSLDestroy(papszSrcMDD);
     }
 
     if (!bExcludeRPBandIMGFileWriting)
     {
         WriteRPC(poSrcDS, l_hTIFF, bSrcIsGeoTIFF, eProfile, pszTIFFFilename,
-                 l_papszCreationOptions);
+                 papszCreationOptions);
 
         /* --------------------------------------------------------------------
          */
@@ -3960,7 +3990,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         nPhotometric = PHOTOMETRIC_MINISBLACK;
 
     const bool bStandardColorInterp = GTIFFIsStandardColorInterpretation(
-        GDALDataset::ToHandle(poSrcDS), nPhotometric, l_papszCreationOptions);
+        GDALDataset::ToHandle(poSrcDS), nPhotometric, papszCreationOptions);
 
     /* -------------------------------------------------------------------- */
     /*      We also need to address band specific metadata, and special     */
@@ -4047,7 +4077,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
 
         if (!bStandardColorInterp &&
-            !(nBand <= 3 && EQUAL(CSLFetchNameValueDef(l_papszCreationOptions,
+            !(nBand <= 3 && EQUAL(CSLFetchNameValueDef(papszCreationOptions,
                                                        "PHOTOMETRIC", ""),
                                   "RGB")))
         {
@@ -4059,14 +4089,14 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
     }
 
     const char *pszTilingSchemeName =
-        CSLFetchNameValue(l_papszCreationOptions, "@TILING_SCHEME_NAME");
+        CSLFetchNameValue(papszCreationOptions, "@TILING_SCHEME_NAME");
     if (pszTilingSchemeName)
     {
         AppendMetadataItem(&psRoot, &psTail, "NAME", pszTilingSchemeName, 0,
                            nullptr, "TILING_SCHEME");
 
         const char *pszZoomLevel = CSLFetchNameValue(
-            l_papszCreationOptions, "@TILING_SCHEME_ZOOM_LEVEL");
+            papszCreationOptions, "@TILING_SCHEME_ZOOM_LEVEL");
         if (pszZoomLevel)
         {
             AppendMetadataItem(&psRoot, &psTail, "ZOOM_LEVEL", pszZoomLevel, 0,
@@ -4074,7 +4104,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         }
 
         const char *pszAlignedLevels = CSLFetchNameValue(
-            l_papszCreationOptions, "@TILING_SCHEME_ALIGNED_LEVELS");
+            papszCreationOptions, "@TILING_SCHEME_ALIGNED_LEVELS");
         if (pszAlignedLevels)
         {
             AppendMetadataItem(&psRoot, &psTail, "ALIGNED_LEVELS",
@@ -4089,10 +4119,10 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             CPLGetConfigOption("GTIFF_WRITE_IMAGE_STRUCTURE_METADATA", "YES")))
     {
         const char *pszCompress =
-            CSLFetchNameValue(l_papszCreationOptions, "COMPRESS");
+            CSLFetchNameValue(papszCreationOptions, "COMPRESS");
         if (pszCompress && EQUAL(pszCompress, "WEBP"))
         {
-            if (GTiffGetWebPLossless(l_papszCreationOptions))
+            if (GTiffGetWebPLossless(papszCreationOptions))
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
@@ -4102,7 +4132,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             {
                 AppendMetadataItem(
                     &psRoot, &psTail, "WEBP_LEVEL",
-                    CPLSPrintf("%d", GTiffGetWebPLevel(l_papszCreationOptions)),
+                    CPLSPrintf("%d", GTiffGetWebPLevel(papszCreationOptions)),
                     0, nullptr, "IMAGE_STRUCTURE");
             }
         }
@@ -4110,7 +4140,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
         else if (pszCompress && EQUAL(pszCompress, "JXL"))
         {
             float fDistance = 0.0f;
-            if (GTiffGetJXLLossless(l_papszCreationOptions))
+            if (GTiffGetJXLLossless(papszCreationOptions))
             {
                 AppendMetadataItem(&psRoot, &psTail,
                                    "COMPRESSION_REVERSIBILITY", "LOSSLESS", 0,
@@ -4118,13 +4148,13 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             }
             else
             {
-                fDistance = GTiffGetJXLDistance(l_papszCreationOptions);
+                fDistance = GTiffGetJXLDistance(papszCreationOptions);
                 AppendMetadataItem(&psRoot, &psTail, "JXL_DISTANCE",
                                    CPLSPrintf("%f", fDistance), 0, nullptr,
                                    "IMAGE_STRUCTURE");
             }
             const float fAlphaDistance =
-                GTiffGetJXLAlphaDistance(l_papszCreationOptions);
+                GTiffGetJXLAlphaDistance(papszCreationOptions);
             if (fAlphaDistance >= 0.0f && fAlphaDistance != fDistance)
             {
                 AppendMetadataItem(&psRoot, &psTail, "JXL_ALPHA_DISTANCE",
@@ -4133,7 +4163,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
             }
             AppendMetadataItem(
                 &psRoot, &psTail, "JXL_EFFORT",
-                CPLSPrintf("%d", GTiffGetJXLEffort(l_papszCreationOptions)), 0,
+                CPLSPrintf("%d", GTiffGetJXLEffort(papszCreationOptions)), 0,
                 nullptr, "IMAGE_STRUCTURE");
         }
 #endif

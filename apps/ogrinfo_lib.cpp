@@ -129,6 +129,14 @@ static void Concat(CPLString &osRet, bool bStdoutOutput, const char *pszFormat,
     va_end(args);
 }
 
+static void ConcatStr(CPLString &osRet, bool bStdoutOutput, const char *pszStr)
+{
+    if (bStdoutOutput)
+        fwrite(pszStr, 1, strlen(pszStr), stdout);
+    else
+        osRet += pszStr;
+}
+
 /************************************************************************/
 /*                        ReportFieldDomain()                           */
 /************************************************************************/
@@ -384,6 +392,47 @@ static void ReportFieldDomain(CPLString &osRet, CPLJSONObject &oDomains,
                     }
                 }
             }
+            else if (poDomain->GetFieldType() == OFTDateTime)
+            {
+                if (!OGR_RawField_IsUnset(&sMin))
+                {
+                    const char *pszVal = CPLSPrintf(
+                        "%04d-%02d-%02dT%02d:%02d:%02d", sMin.Date.Year,
+                        sMin.Date.Month, sMin.Date.Day, sMin.Date.Hour,
+                        sMin.Date.Minute,
+                        static_cast<int>(sMin.Date.Second + 0.5));
+                    if (bJson)
+                    {
+                        oDomain.Set("minValue", pszVal);
+                        oDomain.Set("minValueIncluded", bMinIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput,
+                               "  Minimum value: %s%s\n", pszVal,
+                               bMinIsIncluded ? "" : " (excluded)");
+                    }
+                }
+                if (!OGR_RawField_IsUnset(&sMax))
+                {
+                    const char *pszVal = CPLSPrintf(
+                        "%04d-%02d-%02dT%02d:%02d:%02d", sMax.Date.Year,
+                        sMax.Date.Month, sMax.Date.Day, sMax.Date.Hour,
+                        sMax.Date.Minute,
+                        static_cast<int>(sMax.Date.Second + 0.5));
+                    if (bJson)
+                    {
+                        oDomain.Set("maxValue", pszVal);
+                        oDomain.Set("maxValueIncluded", bMaxIsIncluded);
+                    }
+                    else
+                    {
+                        Concat(osRet, psOptions->bStdoutOutput,
+                               "  Maximum value: %s%s\n", pszVal,
+                               bMaxIsIncluded ? "" : " (excluded)");
+                    }
+                }
+            }
             break;
         }
 
@@ -515,10 +564,9 @@ static void ReportRelationships(CPLString &osRet, CPLJSONObject &oRoot,
                 for (const auto &osName : aosList)
                 {
                     if (!bFirstName)
-                        Concat(osRet, psOptions->bStdoutOutput, ", ");
+                        ConcatStr(osRet, psOptions->bStdoutOutput, ", ");
                     bFirstName = false;
-                    Concat(osRet, psOptions->bStdoutOutput, "%s",
-                           osName.c_str());
+                    ConcatStr(osRet, psOptions->bStdoutOutput, osName.c_str());
                 }
                 Concat(osRet, psOptions->bStdoutOutput, "\n");
             };
@@ -1051,8 +1099,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                     }
                     else
                     {
-                        Concat(osRet, psOptions->bStdoutOutput, "%s",
-                               poSupportedSRS->GetName());
+                        ConcatStr(osRet, psOptions->bStdoutOutput,
+                                  poSupportedSRS->GetName());
                     }
                 }
                 Concat(osRet, psOptions->bStdoutOutput, "\n");
@@ -1375,8 +1423,8 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                 }
                 else
                 {
-                    Concat(
-                        osRet, psOptions->bStdoutOutput, "%s",
+                    ConcatStr(
+                        osRet, psOptions->bStdoutOutput,
                         poFeature
                             ->DumpReadableAsString(psOptions->aosOptions.List())
                             .c_str());
@@ -1396,9 +1444,10 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
         }
         else
         {
-            Concat(osRet, psOptions->bStdoutOutput, "%s",
-                   poFeature->DumpReadableAsString(psOptions->aosOptions.List())
-                       .c_str());
+            ConcatStr(
+                osRet, psOptions->bStdoutOutput,
+                poFeature->DumpReadableAsString(psOptions->aosOptions.List())
+                    .c_str());
             OGRFeature::DestroyFeature(poFeature);
         }
     }
@@ -1416,7 +1465,7 @@ static void PrintLayerSummary(CPLString &osRet, CPLJSONObject &oLayer,
     if (bJson)
         oLayer.Set("name", poLayer->GetName());
     else
-        Concat(osRet, psOptions->bStdoutOutput, "%s", poLayer->GetName());
+        ConcatStr(osRet, psOptions->bStdoutOutput, poLayer->GetName());
 
     const char *pszTitle = poLayer->GetMetadataItem("TITLE");
     if (pszTitle)
@@ -1448,8 +1497,8 @@ static void PrintLayerSummary(CPLString &osRet, CPLJSONObject &oLayer,
             {
                 if (iGeom > 0)
                     Concat(osRet, psOptions->bStdoutOutput, ", ");
-                Concat(osRet, psOptions->bStdoutOutput, "%s",
-                       OGRGeometryTypeToName(poGFldDefn->GetType()));
+                ConcatStr(osRet, psOptions->bStdoutOutput,
+                          OGRGeometryTypeToName(poGFldDefn->GetType()));
             }
         }
         if (!bJson)
@@ -1886,14 +1935,15 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
     if (bJson)
     {
         osRet.clear();
-        Concat(osRet, psOptions->bStdoutOutput, "%s",
-               json_object_to_json_string_ext(
-                   static_cast<struct json_object *>(oRoot.GetInternalHandle()),
-                   JSON_C_TO_STRING_PRETTY
+        ConcatStr(
+            osRet, psOptions->bStdoutOutput,
+            json_object_to_json_string_ext(
+                static_cast<struct json_object *>(oRoot.GetInternalHandle()),
+                JSON_C_TO_STRING_PRETTY
 #ifdef JSON_C_TO_STRING_NOSLASHESCAPE
-                       | JSON_C_TO_STRING_NOSLASHESCAPE
+                    | JSON_C_TO_STRING_NOSLASHESCAPE
 #endif
-                   ));
+                ));
     }
 
     return VSI_STRDUP_VERBOSE(osRet);

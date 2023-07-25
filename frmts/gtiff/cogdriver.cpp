@@ -1223,6 +1223,15 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     CPLConfigOptionSetter oSetterInternalMask("GDAL_TIFF_INTERNAL_MASK", "YES",
                                               false);
 
+    const char *pszCopySrcMDD = CSLFetchNameValue(papszOptions, "COPY_SRC_MDD");
+    if (pszCopySrcMDD)
+        aosOptions.SetNameValue("COPY_SRC_MDD", pszCopySrcMDD);
+    char **papszSrcMDD = CSLFetchNameValueMultiple(papszOptions, "SRC_MDD");
+    for (CSLConstList papszSrcMDDIter = papszSrcMDD;
+         papszSrcMDDIter && *papszSrcMDDIter; ++papszSrcMDDIter)
+        aosOptions.AddNameValue("SRC_MDD", *papszSrcMDDIter);
+    CSLDestroy(papszSrcMDD);
+
     CPLDebug("COG", "Generating final product: start");
     auto poRet =
         poGTiffDrv->CreateCopy(pszFilename, poCurDS, false, aosOptions.List(),

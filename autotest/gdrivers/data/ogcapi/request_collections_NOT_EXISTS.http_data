@@ -1,0 +1,12 @@
+HTTP/1.1 400 Bad Request
+Date: Tue, 18 Jul 2023 13:55:20 GMT
+Server: Apache/2.4.52 (Ubuntu)
+Access-Control-Allow-Headers: x-requested-with, Content-Type, origin, authorization, acc$
+Access-Control-Allow-Origin: *
+Vary: Accept,Accept-Encoding,Prefer
+Content-Type: text/html
+Content-Length: 87
+Connection: close
+
+<h1>GNOSIS Map Server (OGCAPI) - 400 Bad Request</h1><h3>Invalid data collection</h3>
+

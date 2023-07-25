@@ -36,6 +36,7 @@
 #include "ogrsqliteutility.h"
 #include "cpl_threadsafe_queue.hpp"
 #include "ograrrowarrayhelper.h"
+#include "ogr_p.h"
 
 #include <condition_variable>
 #include <limits>
@@ -142,6 +143,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool m_bHasEpochColumn =
         false;  // whether gpkg_spatial_ref_sys has a epoch column
     bool m_bNonSpatialTablesNonRegisteredInGpkgContentsFound = false;
+    mutable int m_nHasMetadataTables = -1;  // -1 = unknown, 0 = false, 1 = true
 
     CPLString m_osIdentifier{};
     bool m_bIdentifierAsCO = false;
@@ -179,6 +181,20 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     bool m_bRemoveOGREmptyTable = false;
 
     CPLString m_osTilingScheme = "CUSTOM";
+
+    // To optimize reading table constraints
+    int m_nReadTableDefCount = 0;
+    std::vector<SQLSqliteMasterContent> m_aoSqliteMasterContent{};
+
+    void IncrementReadTableDefCounter()
+    {
+        m_nReadTableDefCount++;
+    }
+    int GetReadTableDefCounter() const
+    {
+        return m_nReadTableDefCount;
+    }
+    const std::vector<SQLSqliteMasterContent> &GetSqliteMasterContent();
 
     bool ComputeTileAndPixelShifts();
     bool AllocCachedTiles();
@@ -684,6 +700,8 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
              // thread
     std::thread m_oThreadRTree{};
 
+    OGRISO8601Format m_sDateTimeFormat = {OGRISO8601Precision::AUTO};
+
     void StartAsyncRTree();
     void CancelAsyncRTree();
     void RemoveAsyncRTreeTempDB();
@@ -838,6 +856,10 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
         m_eASpatialVariant = eASpatialVariant;
         if (eASpatialVariant == GPKG_ATTRIBUTES)
             m_bIsInGpkgContents = true;
+    }
+    void SetDateTimePrecision(OGRISO8601Precision ePrecision)
+    {
+        m_sDateTimeFormat.ePrecision = ePrecision;
     }
 
     void CreateSpatialIndexIfNecessary();

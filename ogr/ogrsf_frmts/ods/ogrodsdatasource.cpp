@@ -212,13 +212,15 @@ int OGRODSLayer::TestCapability(const char *pszCap)
 /*                          OGRODSDataSource()                          */
 /************************************************************************/
 
-OGRODSDataSource::OGRODSDataSource()
+OGRODSDataSource::OGRODSDataSource(CSLConstList papszOpenOptionsIn)
     : pszName(nullptr), bUpdatable(false), bUpdated(false),
       bAnalysedFile(false), nLayers(0), papoLayers(nullptr),
       fpSettings(nullptr), nVerticalSplitFlags(0), fpContent(nullptr),
       bFirstLineIsHeaders(false),
-      bAutodetectTypes(
-          !EQUAL(CPLGetConfigOption("OGR_ODS_FIELD_TYPES", ""), "STRING")),
+      bAutodetectTypes(!EQUAL(
+          CSLFetchNameValueDef(papszOpenOptionsIn, "FIELD_TYPES",
+                               CPLGetConfigOption("OGR_ODS_FIELD_TYPES", "")),
+          "STRING")),
       oParser(nullptr), bStopParsing(false), nWithoutEventCounter(0),
       nDataHandlerCounter(0), nCurLine(0), nEmptyRowsAccumulated(0),
       nRowsRepeated(1), nCurCol(0), nCellsRepeated(0), bEndTableParsing(false),
@@ -636,7 +638,8 @@ void OGRODSDataSource::DetectHeaderLine()
         }
     }
 
-    const char *pszODSHeaders = CPLGetConfigOption("OGR_ODS_HEADERS", "");
+    const char *pszODSHeaders = CSLFetchNameValueDef(
+        papszOpenOptions, "HEADERS", CPLGetConfigOption("OGR_ODS_HEADERS", ""));
     bFirstLineIsHeaders = false;
     if (EQUAL(pszODSHeaders, "FORCE"))
         bFirstLineIsHeaders = true;

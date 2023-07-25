@@ -29,6 +29,7 @@
  ****************************************************************************/
 
 #include "cpl_port.h"
+#include "ogr_geometry.h"
 #include "ogr_p.h"
 
 #include <cassert>
@@ -1177,6 +1178,57 @@ int OGRParseDate(const char *pszInput, OGRField *psField,
 }
 
 /************************************************************************/
+/*               OGRParseDateTimeYYYYMMDDTHHMMZ()                       */
+/************************************************************************/
+
+bool OGRParseDateTimeYYYYMMDDTHHMMZ(const char *pszInput, size_t nLen,
+                                    OGRField *psField)
+{
+    // Detect "YYYY-MM-DDTHH:MM[Z]" (16 or 17 characters)
+    if ((nLen == 16 || (nLen == 17 && pszInput[16] == 'Z')) &&
+        pszInput[4] == '-' && pszInput[7] == '-' && pszInput[10] == 'T' &&
+        pszInput[13] == ':' && static_cast<unsigned>(pszInput[0] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[1] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[2] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[3] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[5] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[6] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[8] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[9] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[11] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[12] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[14] - '0') <= 9 &&
+        static_cast<unsigned>(pszInput[15] - '0') <= 9)
+    {
+        psField->Date.Year = static_cast<GInt16>(
+            ((((pszInput[0] - '0') * 10 + (pszInput[1] - '0')) * 10) +
+             (pszInput[2] - '0')) *
+                10 +
+            (pszInput[3] - '0'));
+        psField->Date.Month =
+            static_cast<GByte>((pszInput[5] - '0') * 10 + (pszInput[6] - '0'));
+        psField->Date.Day =
+            static_cast<GByte>((pszInput[8] - '0') * 10 + (pszInput[9] - '0'));
+        psField->Date.Hour = static_cast<GByte>((pszInput[11] - '0') * 10 +
+                                                (pszInput[12] - '0'));
+        psField->Date.Minute = static_cast<GByte>((pszInput[14] - '0') * 10 +
+                                                  (pszInput[15] - '0'));
+        psField->Date.Second = 0.0f;
+        psField->Date.TZFlag = nLen == 16 ? 0 : 100;
+        psField->Date.Reserved = 0;
+        if (psField->Date.Month == 0 || psField->Date.Month > 12 ||
+            psField->Date.Day == 0 || psField->Date.Day > 31 ||
+            psField->Date.Hour > 23 || psField->Date.Minute > 59)
+        {
+            return false;
+        }
+        return true;
+    }
+
+    return false;
+}
+
+/************************************************************************/
 /*               OGRParseDateTimeYYYYMMDDTHHMMSSZ()                     */
 /************************************************************************/
 
@@ -1486,6 +1538,16 @@ char *OGRGetXMLDateTime(const OGRField *psField, bool bAlwaysMillisecond)
 int OGRGetISO8601DateTime(const OGRField *psField, bool bAlwaysMillisecond,
                           char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER])
 {
+    OGRISO8601Format sFormat;
+    sFormat.ePrecision = bAlwaysMillisecond ? OGRISO8601Precision::MILLISECOND
+                                            : OGRISO8601Precision::AUTO;
+    return OGRGetISO8601DateTime(psField, sFormat, szBuffer);
+}
+
+int OGRGetISO8601DateTime(const OGRField *psField,
+                          const OGRISO8601Format &sFormat,
+                          char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER])
+{
     const GInt16 year = psField->Date.Year;
     const GByte month = psField->Date.Month;
     const GByte day = psField->Date.Day;
@@ -1522,44 +1584,53 @@ int OGRGetISO8601DateTime(const OGRField *psField, bool bAlwaysMillisecond,
     szBuffer[13] = ':';
     szBuffer[14] = ((minute / 10) % 10) + '0';
     szBuffer[15] = (minute % 10) + '0';
-    szBuffer[16] = ':';
-
     int nPos;
-    if (bAlwaysMillisecond || OGR_GET_MS(second))
+    if (sFormat.ePrecision == OGRISO8601Precision::MINUTE)
     {
-        /* Below is equivalent of the below snprintf(), but hand-made for
-         * faster execution. */
-        /* snprintf(szBuffer, nMaxSize,
-                               "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
-                               year, month, day, hour, minute, second,
-                               szTimeZone);
-        */
-        int nMilliSecond = static_cast<int>(second * 1000.0f + 0.5f);
-        szBuffer[22] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[21] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[20] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[19] = '.';
-        szBuffer[18] = (nMilliSecond % 10) + '0';
-        nMilliSecond /= 10;
-        szBuffer[17] = (nMilliSecond % 10) + '0';
-        nPos = 23;
+        nPos = 16;
     }
     else
     {
-        /* Below is equivalent of the below snprintf(), but hand-made for
-         * faster execution. */
-        /* snprintf(szBuffer, nMaxSize,
-                               "%04d-%02u-%02uT%02u:%02u:%02u%s",
-                               year, month, day, hour, minute,
-                               static_cast<GByte>(second), szTimeZone);
-        */
-        int nSecond = static_cast<int>(second + 0.5f);
-        szBuffer[17] = ((nSecond / 10) % 10) + '0';
-        szBuffer[18] = (nSecond % 10) + '0';
-        nPos = 19;
+        szBuffer[16] = ':';
+
+        if (sFormat.ePrecision == OGRISO8601Precision::MILLISECOND ||
+            (sFormat.ePrecision == OGRISO8601Precision::AUTO &&
+             OGR_GET_MS(second)))
+        {
+            /* Below is equivalent of the below snprintf(), but hand-made for
+             * faster execution. */
+            /* snprintf(szBuffer, nMaxSize,
+                                   "%04d-%02u-%02uT%02u:%02u:%06.3f%s",
+                                   year, month, day, hour, minute, second,
+                                   szTimeZone);
+            */
+            int nMilliSecond = static_cast<int>(second * 1000.0f + 0.5f);
+            szBuffer[22] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[21] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[20] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[19] = '.';
+            szBuffer[18] = (nMilliSecond % 10) + '0';
+            nMilliSecond /= 10;
+            szBuffer[17] = (nMilliSecond % 10) + '0';
+            nPos = 23;
+        }
+        else
+        {
+            /* Below is equivalent of the below snprintf(), but hand-made for
+             * faster execution. */
+            /* snprintf(szBuffer, nMaxSize,
+                                   "%04d-%02u-%02uT%02u:%02u:%02u%s",
+                                   year, month, day, hour, minute,
+                                   static_cast<GByte>(second), szTimeZone);
+            */
+            int nSecond = static_cast<int>(second + 0.5f);
+            szBuffer[17] = ((nSecond / 10) % 10) + '0';
+            szBuffer[18] = (nSecond % 10) + '0';
+            nPos = 19;
+        }
     }
 
     switch (TZFlag)

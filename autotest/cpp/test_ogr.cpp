@@ -2364,4 +2364,199 @@ TEST_F(test_ogr, GDALDatasetSetQueryLoggerFunc)
 #endif
 }
 
+TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMZ)
+{
+    {
+        char szInput[] = "2023-07-11T17:27Z";
+        OGRField sField;
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
+            true);
+        EXPECT_EQ(sField.Date.Year, 2023);
+        EXPECT_EQ(sField.Date.Month, 7);
+        EXPECT_EQ(sField.Date.Day, 11);
+        EXPECT_EQ(sField.Date.Hour, 17);
+        EXPECT_EQ(sField.Date.Minute, 27);
+        EXPECT_EQ(sField.Date.Second, 0.0f);
+        EXPECT_EQ(sField.Date.TZFlag, 100);
+    }
+    {
+        char szInput[] = "2023-07-11T17:27";
+        OGRField sField;
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
+            true);
+        EXPECT_EQ(sField.Date.Year, 2023);
+        EXPECT_EQ(sField.Date.Month, 7);
+        EXPECT_EQ(sField.Date.Day, 11);
+        EXPECT_EQ(sField.Date.Hour, 17);
+        EXPECT_EQ(sField.Date.Minute, 27);
+        EXPECT_EQ(sField.Date.Second, 0.0f);
+        EXPECT_EQ(sField.Date.TZFlag, 0);
+    }
+    {
+        // Invalid
+        char szInput[] = "2023-07-11T17:2";
+        OGRField sField;
+        // coverity[overrun-buffer-val]
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
+            false);
+    }
+    {
+        // Invalid
+        char szInput[] = "2023-07-11T17:99";
+        OGRField sField;
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMZ(szInput, strlen(szInput), &sField),
+            false);
+    }
+}
+
+TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSZ)
+{
+    {
+        char szInput[] = "2023-07-11T17:27:34Z";
+        OGRField sField;
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
+            true);
+        EXPECT_EQ(sField.Date.Year, 2023);
+        EXPECT_EQ(sField.Date.Month, 7);
+        EXPECT_EQ(sField.Date.Day, 11);
+        EXPECT_EQ(sField.Date.Hour, 17);
+        EXPECT_EQ(sField.Date.Minute, 27);
+        EXPECT_EQ(sField.Date.Second, 34.0f);
+        EXPECT_EQ(sField.Date.TZFlag, 100);
+    }
+    {
+        char szInput[] = "2023-07-11T17:27:34";
+        OGRField sField;
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
+            true);
+        EXPECT_EQ(sField.Date.Year, 2023);
+        EXPECT_EQ(sField.Date.Month, 7);
+        EXPECT_EQ(sField.Date.Day, 11);
+        EXPECT_EQ(sField.Date.Hour, 17);
+        EXPECT_EQ(sField.Date.Minute, 27);
+        EXPECT_EQ(sField.Date.Second, 34.0f);
+        EXPECT_EQ(sField.Date.TZFlag, 0);
+    }
+    {
+        // Invalid
+        char szInput[] = "2023-07-11T17:27:3";
+        OGRField sField;
+        // coverity[overrun-buffer-val]
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
+            false);
+    }
+    {
+        // Invalid
+        char szInput[] = "2023-07-11T17:27:99";
+        OGRField sField;
+        EXPECT_EQ(
+            OGRParseDateTimeYYYYMMDDTHHMMSSZ(szInput, strlen(szInput), &sField),
+            false);
+    }
+}
+
+TEST_F(test_ogr, OGRParseDateTimeYYYYMMDDTHHMMSSsssZ)
+{
+    {
+        char szInput[] = "2023-07-11T17:27:34.123Z";
+        OGRField sField;
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
+                                                      &sField),
+                  true);
+        EXPECT_EQ(sField.Date.Year, 2023);
+        EXPECT_EQ(sField.Date.Month, 7);
+        EXPECT_EQ(sField.Date.Day, 11);
+        EXPECT_EQ(sField.Date.Hour, 17);
+        EXPECT_EQ(sField.Date.Minute, 27);
+        EXPECT_EQ(sField.Date.Second, 34.123f);
+        EXPECT_EQ(sField.Date.TZFlag, 100);
+    }
+    {
+        char szInput[] = "2023-07-11T17:27:34.123";
+        OGRField sField;
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
+                                                      &sField),
+                  true);
+        EXPECT_EQ(sField.Date.Year, 2023);
+        EXPECT_EQ(sField.Date.Month, 7);
+        EXPECT_EQ(sField.Date.Day, 11);
+        EXPECT_EQ(sField.Date.Hour, 17);
+        EXPECT_EQ(sField.Date.Minute, 27);
+        EXPECT_EQ(sField.Date.Second, 34.123f);
+        EXPECT_EQ(sField.Date.TZFlag, 0);
+    }
+    {
+        // Invalid
+        char szInput[] = "2023-07-11T17:27:34.12";
+        OGRField sField;
+        // coverity[overrun-buffer-val]
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
+                                                      &sField),
+                  false);
+    }
+    {
+        // Invalid
+        char szInput[] = "2023-07-11T17:27:99.123";
+        OGRField sField;
+        EXPECT_EQ(OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(szInput, strlen(szInput),
+                                                      &sField),
+                  false);
+    }
+}
+
+TEST_F(test_ogr, OGRGetISO8601DateTime)
+{
+    OGRField sField;
+    sField.Date.Year = 2023;
+    sField.Date.Month = 7;
+    sField.Date.Day = 11;
+    sField.Date.Hour = 17;
+    sField.Date.Minute = 27;
+    sField.Date.Second = 34.567f;
+    sField.Date.TZFlag = 100;
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::AUTO;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:34.567Z");
+    }
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::MILLISECOND;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:34.567Z");
+    }
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::SECOND;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:35Z");
+    }
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::MINUTE;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27Z");
+    }
+    sField.Date.Second = 34.0f;
+    {
+        char szResult[OGR_SIZEOF_ISO8601_DATETIME_BUFFER];
+        OGRISO8601Format sFormat;
+        sFormat.ePrecision = OGRISO8601Precision::AUTO;
+        OGRGetISO8601DateTime(&sField, sFormat, szResult);
+        EXPECT_STREQ(szResult, "2023-07-11T17:27:34Z");
+    }
+}
+
 }  // namespace

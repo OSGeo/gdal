@@ -277,8 +277,13 @@ def gdal_pansharpen(
         ms_name = spectral_ds[i].GetDescription()
         if driver_name.upper() == "VRT":
             if not os.path.isabs(ms_name):
-                ms_relative = "1"
-                ms_name = os.path.relpath(ms_name, os.path.dirname(dst_filename))
+                try:
+                    ms_name = os.path.relpath(ms_name, os.path.dirname(dst_filename))
+                    ms_relative = "1"
+                except ValueError:
+                    # Thrown if generating a relative path is not possible, e.g. if
+                    # ms_name is on a different Windows drive from dst_filename
+                    pass
 
         vrt_xml += """    <SpectralBand%s>
       <SourceFilename relativeToVRT="%s">%s</SourceFilename>

@@ -135,9 +135,9 @@ def validate(filename, quiet=False):
         open(my_filename, "wb").write(content)
     try:
         _validate_check(my_filename)
-    except Exception as e:
+    except Exception:
         if not quiet:
-            print(e)
+            raise
         return False
     finally:
         if my_filename != filename:
@@ -2494,6 +2494,35 @@ def test_ogr_gpkg_unique():
 
     ds = None
     gdal.Unlink("/vsimem/ogr_gpkg_unique.gpkg")
+
+
+###############################################################################
+# Test unique constraints on fields
+
+
+def test_ogr_gpkg_unique_many_layers():
+
+    filename = "/vsimem/test_ogr_gpkg_unique_many_layers.gpkg"
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    THRESHOLD = 10
+    for i in range(THRESHOLD + 1):
+        lyr_name = "test" + str(i)
+        ds.ExecuteSQL(
+            f'CREATE TABLE IF NOT EXISTS "{lyr_name}" ( "fid" INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, other_field TEXT, "field_unique" TEXT UNIQUE);'
+        )
+        ds.ExecuteSQL(
+            f"CREATE UNIQUE INDEX {lyr_name}_unique_idx ON {lyr_name}(other_field);"
+        )
+    ds = None
+
+    ds = ogr.Open(filename)
+    for i in range(THRESHOLD + 1):
+        lyr = ds.GetLayerByName("test" + str(i))
+        lyr_defn = lyr.GetLayerDefn()
+        assert lyr_defn.GetFieldDefn(0).IsUnique()
+        assert lyr_defn.GetFieldDefn(1).IsUnique()
+    ds = None
+    gdal.Unlink(filename)
 
 
 ###############################################################################
@@ -8909,3 +8938,129 @@ def test_ogr_gpkg_rtree_triggers(gpkg_version):
 
     finally:
         gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test relaxed DATETIME format for GeoPackage 1.4
+# (https://github.com/OSGeo/gdal/issues/8037)
+
+
+def test_ogr_gpkg_1_4_relaxed_datetime_format():
+    dbname = "/vsimem/test_ogr_gpkg_1_4_relaxed_datetime_format.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname, options=["VERSION=1.4"])
+    lyr = ds.CreateLayer("test")
+    lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetField("dt", "2023-11-07T16:03:34Z")
+    lyr.CreateFeature(f)
+    f = None
+
+    # Check we have written without milliseconds
+    with ds.ExecuteSQL("SELECT CAST(dt AS VARCHAR) AS dt FROM test") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["dt"] == "2023-11-07T16:03:34Z"
+
+    # Test datetime without seconds
+    ds.ExecuteSQL("INSERT INTO test (dt) VALUES ('2023-11-07T16:03Z')")
+    ds = None
+
+    validate(dbname)
+
+    ds = ogr.Open(dbname)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f["dt"] == "2023/11/07 16:03:34+00"
+    f = lyr.GetNextFeature()
+    assert f["dt"] == "2023/11/07 16:03:00+00"
+    ds = None
+
+    gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test relaxed DATETIME format for GeoPackage 1.4
+# (https://github.com/OSGeo/gdal/issues/8037)
+
+
+@pytest.mark.parametrize(
+    "version,datetime_precision,input,output",
+    [
+        ("1.4", "AUTO", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.4", "AUTO", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34Z"),
+        ("1.3", "AUTO", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.3", "AUTO", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34.000Z"),
+        ("1.4", "MILLISECOND", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34.123Z"),
+        ("1.4", "MILLISECOND", "2023-11-07T16:03:34Z", "2023-11-07T16:03:34.000Z"),
+        ("1.4", "SECOND", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03:34Z"),
+        ("1.4", "MINUTE", "2023-11-07T16:03:34.123Z", "2023-11-07T16:03Z"),
+        ("1.4", "INVALID", None, None),
+    ],
+)
+@gdaltest.enable_exceptions()
+def test_ogr_gpkg_1_4_DATETIME_PRECISION(version, datetime_precision, input, output):
+    dbname = "/vsimem/test_ogr_gpkg_1_4_DATETIME_PRECISION.gpkg"
+    ds = gdaltest.gpkg_dr.CreateDataSource(dbname, options=["VERSION=" + version])
+    if datetime_precision == "INVALID":
+        with pytest.raises(Exception), gdaltest.error_handler():
+            lyr = ds.CreateLayer(
+                "test", options=["DATETIME_PRECISION=" + datetime_precision]
+            )
+    else:
+        lyr = ds.CreateLayer(
+            "test", options=["DATETIME_PRECISION=" + datetime_precision]
+        )
+        lyr.CreateField(ogr.FieldDefn("dt", ogr.OFTDateTime))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetField("dt", input)
+        lyr.CreateFeature(f)
+        f = None
+
+        # Check we have written what we expected
+        with ds.ExecuteSQL("SELECT CAST(dt AS VARCHAR) AS dt FROM test") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["dt"] == output
+
+    ds = None
+
+    gdal.Unlink(dbname)
+
+
+###############################################################################
+# Test FlushCache()
+
+
+def test_ogr_gpkg_write_flushcache():
+
+    filename = "/vsimem/test_ogr_gpkg_write_flushcache.gpkg"
+    try:
+        ds = gdal.GetDriverByName("GPKG").Create(filename, 0, 0, 0, gdal.GDT_Unknown)
+        lyr1 = ds.CreateLayer(
+            "test1",
+        )
+        lyr2 = ds.CreateLayer("test2")
+        f = ogr.Feature(lyr1.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 2)"))
+        lyr1.CreateFeature(f)
+        f = ogr.Feature(lyr2.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr2.CreateFeature(f)
+        ds.FlushCache()
+
+        ds2 = ogr.Open(filename)
+        assert ds2.GetLayer(0).GetFeatureCount() == 1
+        assert ds2.GetLayer(1).GetFeatureCount() == 1
+        ds2 = None
+
+        f = ogr.Feature(lyr1.GetLayerDefn())
+        f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (3 4)"))
+        lyr1.CreateFeature(f)
+        ds = None
+
+        ds2 = ogr.Open(filename)
+        assert ds2.GetLayer(0).GetFeatureCount() == 2
+        assert ds2.GetLayer(1).GetFeatureCount() == 1
+        ds2 = None
+
+    finally:
+        if gdal.VSIStatL(filename):
+            gdal.Unlink(filename)

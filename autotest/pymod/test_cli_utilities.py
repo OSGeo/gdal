@@ -274,3 +274,11 @@ def get_gnmanalyse_path():
 
 def get_gdal_viewshed_path():
     return get_cli_utility_path("gdal_viewshed")
+
+
+###############################################################################
+#
+
+
+def get_gdal_footprint_path():
+    return get_cli_utility_path("gdal_footprint")

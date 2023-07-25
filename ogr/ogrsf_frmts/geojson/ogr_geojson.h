@@ -123,6 +123,8 @@ class OGRGeoJSONLayer final : public OGRMemLayer
 
     bool IngestAll();
     void TerminateAppendSession();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONLayer)
 };
 
 /************************************************************************/
@@ -168,10 +170,16 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
                    : OGRERR_FAILURE;
     }
 
+    OGRErr SyncToDisk() override;
+
   private:
     OGRGeoJSONDataSource *poDS_;
     OGRFeatureDefn *poFeatureDefn_;
     int nOutCounter_;
+    /** Offset at which the '] }' terminating sequence has already been
+     * written by SyncToDisk(). 0 if it has not been written.
+     */
+    vsi_l_offset m_nPositionBeforeFCClosed = 0;
 
     bool bWriteBBOX;
     bool bBBOX3D;
@@ -186,6 +194,10 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     OGRCoordinateTransformation *poCT_;
     OGRGeometryFactory::TransformWithOptionsCache oTransformCache_;
     OGRGeoJSONWriteOptions oWriteOptions_;
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONWriteLayer)
+
+    void FinishWriting();
 };
 
 /************************************************************************/
@@ -304,6 +316,8 @@ class OGRGeoJSONDataSource final : public OGRDataSource
                             OGRGeoJSONReader *poReader);
     void CheckExceededTransferLimit(json_object *poObj);
     void RemoveJSonPStuff();
+
+    CPL_DISALLOW_COPY_ASSIGN(OGRGeoJSONDataSource)
 };
 
 #endif  // OGR_GEOJSON_H_INCLUDED

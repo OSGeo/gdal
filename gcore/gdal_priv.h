@@ -1578,10 +1578,10 @@ class CPL_DLL GDALAllValidMaskBand : public GDALRasterBand
 class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 {
     friend class GDALRasterBand;
-    double dfNoDataValue = 0;
-    int64_t nNoDataValueInt64 = 0;
-    uint64_t nNoDataValueUInt64 = 0;
-    GDALRasterBand *poParent;
+    double m_dfNoDataValue = 0;
+    int64_t m_nNoDataValueInt64 = 0;
+    uint64_t m_nNoDataValueUInt64 = 0;
+    GDALRasterBand *m_poParent = nullptr;
 
     CPL_DISALLOW_COPY_ASSIGN(GDALNoDataMaskBand)
 
@@ -1593,6 +1593,7 @@ class CPL_DLL GDALNoDataMaskBand : public GDALRasterBand
 
   public:
     explicit GDALNoDataMaskBand(GDALRasterBand *);
+    explicit GDALNoDataMaskBand(GDALRasterBand *, double dfNoDataValue);
     ~GDALNoDataMaskBand() override;
 
     bool IsMaskBand() const override
@@ -1841,6 +1842,9 @@ class CPL_DLL GDALDriver : public GDALMajorObject
     static CPLErr DefaultRename(const char *pszNewName, const char *pszOldName);
     static CPLErr DefaultCopyFiles(const char *pszNewName,
                                    const char *pszOldName);
+    static void DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
+                                    CSLConstList papszOptions,
+                                    CSLConstList papszExcludedDomains);
     //! @endcond
 
     /** Convert a GDALDriver* to a GDALDriverH.

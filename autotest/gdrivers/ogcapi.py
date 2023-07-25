@@ -44,9 +44,15 @@ from osgeo import gdal
 # Source of test data
 TEST_DATA_SOURCE_ENDPOINT = "https://maps.gnosis.earth/ogcapi"
 
-# Set RECORD to TRUE to recreate test data from the https://demo.pygeoapi.io/stable server
-# Note: when RECORD is TRUE control image are also regenerated, the test will always pass.
+# The following RECORD options control the download of test data when developing or debugging
+# this test.
+# Set RECORD to TRUE to recreate test data from the https://maps.gnosis.earth/ogcapi server
 RECORD = False
+# When RECORD is True, RECORD_NEW_ONLY will only download test data if they do not already
+# exist in the test data directory.
+# Note: when RECORD is TRUE and RECORD_NEW_ONLY is False control image are also regenerated
+# making the test always pass.
+RECORD_NEW_ONLY = True
 
 BASE_TEST_DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "ogcapi")
 
@@ -88,42 +94,57 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
 
             if is_fake and RECORD:
 
-                with open(request_data_path, "wb+") as fd:
-                    response = requests.get(
-                        TEST_DATA_SOURCE_ENDPOINT
-                        + self.path.replace("/fakeogcapi", ""),
-                        stream=True,
-                    )
-                    local_uri = (
-                        "http://"
-                        + self.address_string()
-                        + ":"
-                        + str(self.server.server_port)
-                        + "/fakeogcapi"
-                    ).encode("utf8")
-                    content = response.content.replace(
-                        TEST_DATA_SOURCE_ENDPOINT.encode("utf8"), local_uri
-                    )
-                    content = content.replace(ENDPOINT_PATH.encode("utf8"), local_uri)
-                    data = b"HTTP/1.1 200 OK\r\n"
-                    for k, v in response.headers.items():
-                        if k == "Content-Encoding":
-                            continue
-                        if k == "Content-Length":
-                            data += (
-                                k.encode("utf8")
-                                + b": "
-                                + str(len(content)).encode("utf8")
-                                + b"\r\n"
-                            )
-                        else:
-                            data += (
-                                k.encode("utf8") + b": " + v.encode("utf8") + b"\r\n"
-                            )
-                    data += b"\r\n"
-                    data += content
-                    fd.write(data)
-                    self.wfile.write(data)
+                if RECORD_NEW_ONLY and os.path.exists(request_data_path):
+                    with open(request_data_path, "rb") as fd:
+                        data = fd.read()
+                else:
+                    with open(request_data_path, "wb+") as fd:
+
+                        response = requests.get(
+                            TEST_DATA_SOURCE_ENDPOINT
+                            + self.path.replace("/fakeogcapi", ""),
+                            stream=True,
+                        )
+                        local_uri = (
+                            "http://"
+                            + self.address_string()
+                            + ":"
+                            + str(self.server.server_port)
+                            + "/fakeogcapi"
+                        ).encode("utf8")
+                        content = response.content.replace(
+                            TEST_DATA_SOURCE_ENDPOINT.encode("utf8"), local_uri
+                        )
+                        content = content.replace(
+                            ENDPOINT_PATH.encode("utf8"), local_uri
+                        )
+                        data = b"HTTP/1.1 %s %s\r\n" % (
+                            str(response.status_code).encode("utf8"),
+                            response.reason.encode("utf8"),
+                        )
+                        for k, v in response.headers.items():
+                            if k == "Content-Encoding":
+                                continue
+                            if k == "Content-Length":
+                                data += (
+                                    k.encode("utf8")
+                                    + b": "
+                                    + str(len(content)).encode("utf8")
+                                    + b"\r\n"
+                                )
+                            else:
+                                data += (
+                                    k.encode("utf8")
+                                    + b": "
+                                    + v.encode("utf8")
+                                    + b"\r\n"
+                                )
+                        data += b"\r\n"
+                        data += content
+                        fd.write(data)
+
+                self.wfile.write(data)
+                return
 
             elif self.path.find("/fakeogcapi") != -1:
 
@@ -138,13 +159,16 @@ class OGCAPIHTTPHandler(BaseHTTPRequestHandler):
                         fd.read(),
                     )
                     self.wfile.write(response)
-
-            return
+                return
 
         except IOError:
             pass
 
-        self.send_error(404, "File Not Found: %s" % self.path)
+        self.send_error(
+            404,
+            "File Not Found: %s" % self.path,
+            "The requested URL was not found on this server.",
+        )
 
 
 ###############################################################################
@@ -319,3 +343,68 @@ def test_ogr_ogcapi_raster(api, collection):
         with open(control_image_path, "rb") as expected:
             with open(out_path, "rb") as out_data:
                 assert out_data.read() == expected.read()
+
+
+@pytest.mark.parametrize(
+    "api,of_type",
+    (
+        ("MAP", gdal.OF_RASTER),
+        ("TILES", gdal.OF_RASTER),
+        ("COVERAGE", gdal.OF_RASTER),
+        ("TILES", gdal.OF_VECTOR),
+    ),
+)
+def test_ogc_api_wrong_collection(api, of_type):
+
+    with pytest.raises(Exception, match="Invalid data collection"):
+        gdal.OpenEx(
+            f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/NOT_EXISTS",
+            of_type,
+            open_options=["CACHE=NO", f"API={api}"],
+        )
+
+
+@pytest.mark.parametrize(
+    "api,of_type",
+    (
+        ("MAP", gdal.OF_RASTER),
+        ("TILES", gdal.OF_RASTER),
+        ("COVERAGE", gdal.OF_RASTER),
+        ("TILES", gdal.OF_VECTOR),
+    ),
+)
+def test_wrong_url(api, of_type):
+
+    with pytest.raises(Exception, match="File Not Found"):
+        gdal.OpenEx(
+            f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/NOT_FOUND/",
+            of_type,
+            open_options=["CACHE=NO", f"API={api}"],
+        )
+
+
+def test_ogc_api_raster_tiles():
+
+    ds = gdal.OpenEx(
+        f"OGCAPI:http://127.0.0.1:{gdaltest.webserver_port}/fakeogcapi/collections/HRDEM-RedRiver:DTM:2m",
+        gdal.OF_RASTER,
+        open_options=["API=TILES", "CACHE=NO", "TILEMATRIXSET=WorldMercatorWGS84Quad"],
+    )
+    assert ds.RasterCount == 4
+    assert ds.RasterXSize == 82734
+    assert ds.RasterYSize == 106149
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -10902129.741315002,
+            2.388657133911758,
+            0.0,
+            6479743.648362301,
+            0.0,
+            -2.388657133911758,
+        )
+    )
+    assert ds.GetRasterBand(1).GetOverviewCount() == 16
+    assert ds.GetRasterBand(1).GetOverview(15).Checksum() == 5
+    assert ds.GetRasterBand(1).ReadBlock(
+        ds.RasterXSize // 2 // 256, ds.RasterYSize // 2 // 256
+    )

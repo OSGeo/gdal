@@ -2279,6 +2279,24 @@ def SaveArray(src_array, filename, format="GTiff", prototype=None, interleave='b
 
     return driver.CreateCopy(filename, OpenArray(src_array, prototype, interleave))
 
+def _to_primitive_type(x):
+    """Converts an object with a __int__ or __float__ method to the
+       corresponding primitive type, or return x."""
+    if x is None:
+        return x
+    if hasattr(x, "__int__"):
+        if hasattr(x, "is_integer") and x.is_integer():
+            return int(x)
+        elif not hasattr(x, "__float__"):
+            return int(x)
+        else:
+            ret = float(x)
+            if ret == int(ret):
+                ret = int(ret)
+            return ret
+    elif hasattr(x, "__float__"):
+        return float(x)
+    return x
 
 def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_obj=None,
                        buf_xsize=None, buf_ysize=None, buf_type=None,
@@ -2292,6 +2310,13 @@ def DatasetReadAsArray(ds, xoff=0, yoff=0, win_xsize=None, win_ysize=None, buf_o
         win_xsize = ds.RasterXSize
     if win_ysize is None:
         win_ysize = ds.RasterYSize
+
+    xoff = _to_primitive_type(xoff)
+    yoff = _to_primitive_type(yoff)
+    win_xsize = _to_primitive_type(win_xsize)
+    win_ysize = _to_primitive_type(win_ysize)
+    buf_xsize = _to_primitive_type(buf_xsize)
+    buf_ysize = _to_primitive_type(buf_ysize)
 
     if band_list is None:
         band_list = list(range(1, ds.RasterCount + 1))
@@ -2387,6 +2412,9 @@ def DatasetWriteArray(ds, array, xoff=0, yoff=0,
     """Pure python implementation of writing a chunk of a GDAL file
     from a numpy array.  Used by the gdal.Dataset.WriteArray method."""
 
+    xoff = _to_primitive_type(xoff)
+    yoff = _to_primitive_type(yoff)
+
     if band_list is None:
         band_list = list(range(1, ds.RasterCount + 1))
 
@@ -2460,6 +2488,13 @@ def BandReadAsArray(band, xoff=0, yoff=0, win_xsize=None, win_ysize=None,
     if win_ysize is None:
         win_ysize = band.YSize
 
+    xoff = _to_primitive_type(xoff)
+    yoff = _to_primitive_type(yoff)
+    win_xsize = _to_primitive_type(win_xsize)
+    win_ysize = _to_primitive_type(win_ysize)
+    buf_xsize = _to_primitive_type(buf_xsize)
+    buf_ysize = _to_primitive_type(buf_ysize)
+
     if buf_obj is None:
         if buf_xsize is None:
             buf_xsize = win_xsize
@@ -2521,6 +2556,9 @@ def BandWriteArray(band, array, xoff=0, yoff=0,
 
     if array is None or len(array.shape) != 2:
         raise ValueError("expected array of dim 2")
+
+    xoff = _to_primitive_type(xoff)
+    yoff = _to_primitive_type(yoff)
 
     xsize = array.shape[1]
     ysize = array.shape[0]

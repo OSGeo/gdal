@@ -218,15 +218,8 @@ static void ParseAsset(const CPLJSONObject &jAsset,
     };
 
     auto oProjEPSG = GetAssetOrFeatureProperty("proj:epsg");
-    if (!oProjEPSG.IsValid())
-    {
-        CPLDebug("STACIT",
-                 "Skipping asset %s that lacks the 'proj:epsg' member",
-                 osAssetName.c_str());
-        return;
-    }
     std::string osProjUserString;
-    if (oProjEPSG.GetType() != CPLJSONObject::Type::Null)
+    if (oProjEPSG.IsValid() && oProjEPSG.GetType() != CPLJSONObject::Type::Null)
     {
         osProjUserString = "EPSG:" + oProjEPSG.ToString();
     }
@@ -518,6 +511,10 @@ bool STACITDataset::SetupDataset(
                 osRet = "/vsicurl/";
                 osRet += osFilename;
             }
+        }
+        else if (STARTS_WITH(osFilename.c_str(), "file://"))
+        {
+            osRet = osFilename.substr(strlen("file://"));
         }
         else
         {

@@ -1912,7 +1912,10 @@ def runexternal(
     encoding="latin1",
 ):
     # pylint: disable=unused-argument
-    command = shlex.split(cmd)
+    if sys.platform == "win32":
+        command = cmd
+    else:
+        command = shlex.split(cmd)
     if strin is None:
         p = subprocess.Popen(command, stdout=subprocess.PIPE)
     else:
@@ -1949,7 +1952,10 @@ def _read_in_thread(f, q):
 
 def runexternal_out_and_err(cmd, check_memleak=True, encoding="ascii"):
     # pylint: disable=unused-argument
-    command = shlex.split(cmd)
+    if sys.platform == "win32":
+        command = cmd
+    else:
+        command = shlex.split(cmd)
     p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
     if p.stdout is not None:
@@ -2008,7 +2014,41 @@ def validate_json(jsn, schema):
 
     schema = json.loads(open(schema, "rb").read())
 
-    try:
-        jsonschema.validate(instance=jsn, schema=schema)
-    except jsonschema.exceptions.RefResolutionError:
-        pytest.skip("Failed to resolve remote reference in JSON schema")
+    if sys.version_info >= (3, 8):
+        from importlib.metadata import version
+
+        jsonschema_version = version("jsonschema")
+    else:
+        from pkg_resources import get_distribution
+
+        jsonschema_version = get_distribution("jsonschema").version
+
+    def versiontuple(v):
+        return tuple(map(int, (v.split("."))))
+
+    # jsonschema 4.18 deprecates automatic resolution of "$ref" for security
+    # reason. Use a custom retrieve method.
+    # Cf https://python-jsonschema.readthedocs.io/en/latest/referencing/#automatically-retrieving-resources-over-http
+    if versiontuple(jsonschema_version) >= (4, 18):
+        from referencing import Registry, Resource
+
+        def retrieve_remote_file(uri: str):
+            if not uri.startswith("http://") and not uri.startswith("https://"):
+                raise Exception(f"Cannot retrieve {uri}")
+            os.makedirs("tmp/cache", exist_ok=True)
+            filename = "tmp/cache/" + os.path.basename(uri)
+            if not download_file(uri, filename=filename, force_download=True):
+                raise Exception(f"Cannot download {uri}")
+            response = open(filename, "rb").read()
+            return Resource.from_contents(json.loads(response))
+
+        registry = Registry(retrieve=retrieve_remote_file)
+        validator_cls = jsonschema.validators.validator_for(schema)
+        validator_cls(schema, registry=registry).validate(jsn)
+
+    else:
+        # jsonschema < 4.18
+        try:
+            jsonschema.validate(instance=jsn, schema=schema)
+        except jsonschema.exceptions.RefResolutionError:
+            pytest.skip("Failed to resolve remote reference in JSON schema")

@@ -41,8 +41,9 @@
 #include "cpl_minixml.h"
 
 #include "ogr_core.h"
-#include "ogr_geometry.h"
-#include "ogr_feature.h"
+
+class OGRGeometry;
+class OGRFieldDefn;
 
 /* A default name for the default geometry column, instead of '' */
 #define OGR_GEOMETRY_DEFAULT_NON_EMPTY_NAME "_ogr_geometry_"
@@ -97,7 +98,10 @@ std::string CPL_DLL OGRMakeWktCoordinateM(double, double, double, double,
 void CPL_DLL OGRFormatDouble(char *pszBuffer, int nBufferLen, double dfVal,
                              char chDecimalSep, int nPrecision = 15,
                              char chConversionSpecifier = 'f');
+
+#ifdef OGR_GEOMETRY_H_INCLUDED
 std::string CPL_DLL OGRFormatDouble(double val, const OGRWktOptions &opts);
+#endif
 
 int OGRFormatFloat(char *pszBuffer, int nBufferLen, float fVal, int nPrecision,
                    char chConversionSpecifier);
@@ -121,7 +125,33 @@ char CPL_DLL *OGRGetXMLDateTime(const OGRField *psField,
 int CPL_DLL
 OGRGetISO8601DateTime(const OGRField *psField, bool bAlwaysMillisecond,
                       char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER]);
+
+/** Precision of formatting */
+enum class OGRISO8601Precision
+{
+    /** Automated mode: millisecond included if non zero, otherwise truncated at second */
+    AUTO,
+    /** Always include millisecond */
+    MILLISECOND,
+    /** Always include second, but no millisecond */
+    SECOND,
+    /** Always include minute, but no second */
+    MINUTE
+};
+
+/** Configuration of the ISO8601 formatting output */
+struct OGRISO8601Format
+{
+    /** Precision of formatting */
+    OGRISO8601Precision ePrecision;
+};
+
+int CPL_DLL
+OGRGetISO8601DateTime(const OGRField *psField, const OGRISO8601Format &sFormat,
+                      char szBuffer[OGR_SIZEOF_ISO8601_DATETIME_BUFFER]);
 char CPL_DLL *OGRGetXML_UTF8_EscapedString(const char *pszString);
+bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMZ(const char *pszInput, size_t nLen,
+                                            OGRField *psField);
 bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSZ(const char *pszInput, size_t nLen,
                                               OGRField *psField);
 bool CPL_DLL OGRParseDateTimeYYYYMMDDTHHMMSSsssZ(const char *pszInput,

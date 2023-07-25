@@ -3416,6 +3416,27 @@ def test_tiff_read_arcgis93_geodataxform_gcp():
 
 
 ###############################################################################
+# Test reading ArcGIS 10 .aux.xml where we must ignore the GCPs
+
+
+def test_tiff_read_arcgis10_geodataxform_gcp_ignored():
+
+    ds = gdal.Open("data/gtiff/esri_geodataxform_no_resolutionunit.tif")
+    assert ds.GetSpatialRef().GetAuthorityCode(None) == "3857"
+    assert ds.GetGCPCount() == 0
+    assert ds.GetGeoTransform() == pytest.approx(
+        (
+            -13714484.279678488,
+            1.5302973005632299,
+            0.0,
+            6321896.159407652,
+            0.0,
+            -1.5346879055426712,
+        )
+    )
+
+
+###############################################################################
 # Test reading file with block size > signed int 32 bit
 
 

@@ -970,11 +970,6 @@ CPLErr GDALGeoPackageDataset::Close()
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (eAccess == GA_Update || !m_bMetadataDirty)
-        {
-            SetPamFlags(0);
-        }
-
         if (eAccess == GA_Update && m_poParentDS == nullptr &&
             !m_osRasterTable.empty() && !m_bGeoTransformValid)
         {
@@ -986,16 +981,6 @@ CPLErr GDALGeoPackageDataset::Close()
 
         if (GDALGeoPackageDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
-
-        FlushMetadata();
-
-        if (eAccess == GA_Update || !m_bMetadataDirty)
-        {
-            // Needed again as above GDALGeoPackageDataset::FlushCache()
-            // may have call GDALGeoPackageRasterBand::InvalidateStatistics()
-            // which modifies metadata
-            SetPamFlags(0);
-        }
 
         // Destroy bands now since we don't want
         // GDALGPKGMBTilesLikeRasterBand::FlushCache() to run after dataset
@@ -3351,13 +3336,33 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
 CPLErr GDALGeoPackageDataset::FlushCache(bool bAtClosing)
 {
+    if (m_bInFlushCache)
+        return CE_None;
+
+    if (eAccess == GA_Update || !m_bMetadataDirty)
+    {
+        SetPamFlags(0);
+    }
+
     if (m_bRemoveOGREmptyTable)
     {
         m_bRemoveOGREmptyTable = false;
         RemoveOGREmptyTable();
     }
 
-    return IFlushCacheWithErrCode(bAtClosing);
+    CPLErr eErr = IFlushCacheWithErrCode(bAtClosing);
+
+    FlushMetadata();
+
+    if (eAccess == GA_Update || !m_bMetadataDirty)
+    {
+        // Needed again as above IFlushCacheWithErrCode()
+        // may have call GDALGeoPackageRasterBand::InvalidateStatistics()
+        // which modifies metadata
+        SetPamFlags(0);
+    }
+
+    return eErr;
 }
 
 CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode(bool bAtClosing)
@@ -3817,13 +3822,17 @@ const char *GDALGeoPackageDataset::CheckMetadataDomain(const char *pszDomain)
 
 bool GDALGeoPackageDataset::HasMetadataTables() const
 {
-    const int nCount =
-        SQLGetInteger(hDB,
-                      "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
-                      "('gpkg_metadata', 'gpkg_metadata_reference') "
-                      "AND type IN ('table', 'view')",
-                      nullptr);
-    return nCount == 2;
+    if (m_nHasMetadataTables < 0)
+    {
+        const int nCount =
+            SQLGetInteger(hDB,
+                          "SELECT COUNT(*) FROM sqlite_master WHERE name IN "
+                          "('gpkg_metadata', 'gpkg_metadata_reference') "
+                          "AND type IN ('table', 'view')",
+                          nullptr);
+        m_nHasMetadataTables = nCount == 2;
+    }
+    return CPL_TO_BOOL(m_nHasMetadataTables);
 }
 
 /************************************************************************/
@@ -4574,7 +4583,9 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
              "'http://www.geopackage.org/spec120/#extension_metadata', "
              "'read-write')";
 
-    return SQLCommand(hDB, osSQL) == OGRERR_NONE;
+    const bool bOK = SQLCommand(hDB, osSQL) == OGRERR_NONE;
+    m_nHasMetadataTables = bOK;
+    return bOK;
 }
 
 /************************************************************************/
@@ -6604,6 +6615,41 @@ OGRLayer *GDALGeoPackageDataset::ICreateLayer(const char *pszLayerName,
             return nullptr;
         }
         poLayer->SetASpatialVariant(eASpatialVariant);
+    }
+
+    const char *pszDateTimePrecision =
+        CSLFetchNameValueDef(papszOptions, "DATETIME_PRECISION", "AUTO");
+    if (EQUAL(pszDateTimePrecision, "MILLISECOND"))
+    {
+        poLayer->SetDateTimePrecision(OGRISO8601Precision::MILLISECOND);
+    }
+    else if (EQUAL(pszDateTimePrecision, "SECOND"))
+    {
+        if (m_nUserVersion < GPKG_1_4_VERSION)
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "DATETIME_PRECISION=SECOND is only valid since GeoPackage 1.4");
+        poLayer->SetDateTimePrecision(OGRISO8601Precision::SECOND);
+    }
+    else if (EQUAL(pszDateTimePrecision, "MINUTE"))
+    {
+        if (m_nUserVersion < GPKG_1_4_VERSION)
+            CPLError(
+                CE_Warning, CPLE_AppDefined,
+                "DATETIME_PRECISION=MINUTE is only valid since GeoPackage 1.4");
+        poLayer->SetDateTimePrecision(OGRISO8601Precision::MINUTE);
+    }
+    else if (EQUAL(pszDateTimePrecision, "AUTO"))
+    {
+        if (m_nUserVersion < GPKG_1_4_VERSION)
+            poLayer->SetDateTimePrecision(OGRISO8601Precision::MILLISECOND);
+    }
+    else
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "Unsupported value for DATETIME_PRECISION: %s",
+                 pszDateTimePrecision);
+        return nullptr;
     }
 
     // If there was an ogr_empty_table table, we can remove it
@@ -10090,4 +10136,33 @@ bool GDALGeoPackageDataset::UpdateRelationship(
     ClearCachedRelationships();
     LoadRelationships();
     return true;
+}
+
+/************************************************************************/
+/*                    GetSqliteMasterContent()                          */
+/************************************************************************/
+
+const std::vector<SQLSqliteMasterContent> &
+GDALGeoPackageDataset::GetSqliteMasterContent()
+{
+    if (m_aoSqliteMasterContent.empty())
+    {
+        auto oResultTable =
+            SQLQuery(hDB, "SELECT sql, type, tbl_name FROM sqlite_master");
+        if (oResultTable)
+        {
+            for (int rowCnt = 0; rowCnt < oResultTable->RowCount(); ++rowCnt)
+            {
+                SQLSqliteMasterContent row;
+                const char *pszSQL = oResultTable->GetValue(0, rowCnt);
+                row.osSQL = pszSQL ? pszSQL : "";
+                const char *pszType = oResultTable->GetValue(1, rowCnt);
+                row.osType = pszType ? pszType : "";
+                const char *pszTableName = oResultTable->GetValue(2, rowCnt);
+                row.osTableName = pszTableName ? pszTableName : "";
+                m_aoSqliteMasterContent.emplace_back(std::move(row));
+            }
+        }
+    }
+    return m_aoSqliteMasterContent;
 }

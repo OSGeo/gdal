@@ -737,6 +737,13 @@ typedef struct GDALDimensionHS *GDALDimensionH;
  */
 #define GDAL_DCAP_UPDATE_RELATIONSHIP "DCAP_UPDATE_RELATIONSHIP"
 
+/** Capability set by drivers whose FlushCache() implementation returns a
+ * dataset that can be opened afterwards and seen in a consistent state, without
+ * requiring the dataset on which FlushCache() has been called to be closed.
+ * @since GDAL 3.8
+ */
+#define GDAL_DCAP_FLUSHCACHE_CONSISTENT_STATE "DCAP_FLUSHCACHE_CONSISTENT_STATE"
+
 /** List of (space separated) flags indicating the features of relationships are
  * supported by the driver.
  *

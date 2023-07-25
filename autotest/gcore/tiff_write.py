@@ -11245,5 +11245,90 @@ def test_tiff_write_offset_in_GDAL_METADATA_tag_metadata_in_pam():
     gdal.GetDriverByName("GTiff").Delete(filename)
 
 
+@pytest.mark.skipif(
+    not check_libtiff_internal_or_at_least(4, 6, 0),
+    reason="libtiff internal or >=4.6.0 needed",
+)
+@pytest.mark.require_creation_option("GTiff", "WEBP")
+def test_tiff_write_webp_lossless_exact():
+
+    filename = "/vsimem/test_tiff_write_webp_lossless_exact.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename,
+        10,
+        10,
+        4,
+        options=["PHOTOMETRIC=RGB", "ALPHA=YES", "COMPRESS=WEBP", "WEBP_LOSSLESS=YES"],
+    )
+    ds.GetRasterBand(1).Fill(1)
+    ds.GetRasterBand(2).Fill(2)
+    ds.GetRasterBand(3).Fill(3)
+    ds.GetRasterBand(4).Fill(0)
+    ds = None
+    ds = gdal.Open(filename)
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(4)] == [100, 200, 300, 0]
+    ds = None
+    gdal.GetDriverByName("GTiff").Delete(filename)
+
+
+###############################################################################
+def test_tiff_write_copy_mdd():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    src_ds.SetMetadataItem("FOO", "BAR")
+    src_ds.SetMetadataItem("BAR", "BAZ", "OTHER_DOMAIN")
+    src_ds.SetMetadataItem("should_not", "be_copied", "IMAGE_STRUCTURE")
+
+    filename = "/vsimem/test_tiff_write_copy_mdd.tif"
+
+    gdal.GetDriverByName("GTiff").CreateCopy(filename, src_ds)
+    ds = gdal.Open(filename)
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS"]
+    )
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {}
+    assert ds.GetMetadata_Dict("IMAGE_STRUCTURE") == {"INTERLEAVE": "BAND"}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["COPY_SRC_MDD=NO"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["COPY_SRC_MDD=YES"]
+    )
+    ds = gdal.Open(filename)
+    assert set(ds.GetMetadataDomainList()) == set(
+        ["", "IMAGE_STRUCTURE", "DERIVED_SUBDATASETS", "OTHER_DOMAIN"]
+    )
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    assert ds.GetMetadata_Dict("IMAGE_STRUCTURE") == {"INTERLEAVE": "BAND"}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["SRC_MDD=OTHER_DOMAIN"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    ds = None
+
+    gdal.GetDriverByName("GTiff").CreateCopy(
+        filename, src_ds, options=["SRC_MDD=", "SRC_MDD=OTHER_DOMAIN"]
+    )
+    ds = gdal.Open(filename)
+    assert ds.GetMetadata_Dict() == {"FOO": "BAR"}
+    assert ds.GetMetadata_Dict("OTHER_DOMAIN") == {"BAR": "BAZ"}
+    ds = None
+
+    gdal.Unlink(filename)
+
+
 def test_tiff_write_cleanup():
     gdaltest.tiff_drv = None

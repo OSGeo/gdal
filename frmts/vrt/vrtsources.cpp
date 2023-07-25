@@ -268,6 +268,19 @@ void VRTSimpleSource::SetDstWindow(double dfNewXOff, double dfNewYOff,
 }
 
 /************************************************************************/
+/*                            GetDstWindow()                            */
+/************************************************************************/
+
+void VRTSimpleSource::GetDstWindow(double &dfDstXOff, double &dfDstYOff,
+                                   double &dfDstXSize, double &dfDstYSize)
+{
+    dfDstXOff = m_dfDstXOff;
+    dfDstYOff = m_dfDstYOff;
+    dfDstXSize = m_dfDstXSize;
+    dfDstYSize = m_dfDstYSize;
+}
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 

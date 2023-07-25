@@ -969,11 +969,7 @@ def test_gdal_translate_37(gdal_translate_path):
     rat = None
     ds = None
 
-
-# Test RAT is copied round trip back to hfa
-
-
-def test_gdal_translate_38(gdal_translate_path):
+    # Test RAT is copied round trip back to hfa
 
     gdaltest.runexternal(
         gdal_translate_path

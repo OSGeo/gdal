@@ -276,6 +276,34 @@ function(gdal_generate_config)
     endif()
     gdal_join_and_quote(CONFIG_LIBS)
 
+    # For gdal.pc libdir variable. Not strictly needed, but quite standard
+    # to have one in a .pc
+    if(IS_ABSOLUTE "${CMAKE_INSTALL_LIBDIR}")
+        if( "${CMAKE_INSTALL_LIBDIR}" MATCHES "^${CONFIG_PREFIX}.*")
+            file(RELATIVE_PATH _rel_path "${CONFIG_PREFIX}" "${CMAKE_INSTALL_LIBDIR}")
+            set(CONFIG_LIBDIR "\${exec_prefix}/${_rel_path}")
+        else()
+            set(CONFIG_LIBDIR "${CMAKE_INSTALL_LIBDIR}")
+        endif()
+    else()
+        set(CONFIG_LIBDIR "\${exec_prefix}/${CMAKE_INSTALL_LIBDIR}")
+    endif()
+    gdal_join_and_quote(CONFIG_LIBDIR)
+
+    # For gdal.pc includedir variable. Not strictly needed, but quite standard
+    # to have one in a .pc
+    if(IS_ABSOLUTE "${CMAKE_INSTALL_INCLUDEDIR}")
+        if( "${CMAKE_INSTALL_INCLUDEDIR}" MATCHES "^${CONFIG_PREFIX}.*")
+            file(RELATIVE_PATH _rel_path "${CONFIG_PREFIX}" "${CMAKE_INSTALL_INCLUDEDIR}")
+            set(CONFIG_INCLUDEDIR "\${exec_prefix}/${_rel_path}")
+        else()
+            set(CONFIG_INCLUDEDIR "${CMAKE_INSTALL_INCLUDEDIR}")
+        endif()
+    else()
+        set(CONFIG_INCLUDEDIR "\${exec_prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
+    endif()
+    gdal_join_and_quote(CONFIG_INCLUDEDIR)
+
     get_property(libs GLOBAL PROPERTY "${arg_GLOBAL_PROPERTY}")
     if(NOT MSVC AND CMAKE_THREAD_LIBS_INIT)
         list(APPEND libs ${CMAKE_THREAD_LIBS_INIT})
@@ -294,6 +322,17 @@ function(gdal_generate_config)
 
     gdal_join_and_quote(CONFIG_PREFIX)
 
-    configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in" "${arg_GDAL_CONFIG}" @ONLY)
+    # For gdal-config --plugindir
+    set(CONFIG_PLUGINDIR "${INSTALL_PLUGIN_FULL_DIR}")
+    gdal_join_and_quote(CONFIG_PLUGINDIR)
+
+    # Create apps/gdal-config with execution rights from gdal-config.in
+    get_filename_component(GDAL_CONFIG_DIR "${arg_GDAL_CONFIG}" DIRECTORY)
+    file(MAKE_DIRECTORY "${GDAL_CONFIG_DIR}.tmp")
+    configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal-config.in" "${GDAL_CONFIG_DIR}.tmp/gdal-config" @ONLY)
+    file(COPY "${GDAL_CONFIG_DIR}.tmp/gdal-config"
+         DESTINATION "${GDAL_CONFIG_DIR}"
+         FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+
     configure_file("${GDAL_CMAKE_TEMPLATE_PATH}/gdal.pc.in" "${arg_PKG_CONFIG}" @ONLY)
 endfunction()

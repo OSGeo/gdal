@@ -50,4 +50,4 @@ jobs:
             # Emulate a few Travis-CI env variable so that some tests get properly skipped
             TRAVIS: true
             TRAVIS_OS_NAME: osx
-            BUILD_NAME: macos_build
+            BUILD_NAME: macos_build_conda

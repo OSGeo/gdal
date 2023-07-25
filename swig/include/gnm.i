@@ -109,7 +109,6 @@ typedef struct OGRGeomFieldDefnHS OGRGeomFieldDefnShadow;
 
 
 typedef int GNMDirection;
-typedef int CPLErr;
 
 //************************************************************************
 //

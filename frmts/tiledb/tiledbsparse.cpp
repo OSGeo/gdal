@@ -4665,7 +4665,7 @@ void OGRTileDBLayer::SetNullBuffer(
                     {
                         psPrivateData->nullHolder =
                             std::make_shared<std::vector<uint8_t>>(
-                                (nSrcSize + 7) / 8, 0xFF);
+                                (nSrcSize + 7) / 8, static_cast<uint8_t>(0xFF));
                         pabyNull = psPrivateData->nullHolder->data();
                         psChild->buffers[0] = pabyNull;
                     }
@@ -4688,7 +4688,8 @@ void OGRTileDBLayer::SetNullBuffer(
                                 static_cast<size_t>(psChild->length);
                             psPrivateData->nullHolder =
                                 std::make_shared<std::vector<uint8_t>>(
-                                    (nDstSize + 7) / 8, 0xFF);
+                                    (nDstSize + 7) / 8,
+                                    static_cast<uint8_t>(0xFF));
                             pabyNull = psPrivateData->nullHolder->data();
                             psChild->buffers[0] = pabyNull;
                         }
