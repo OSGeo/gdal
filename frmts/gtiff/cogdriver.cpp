@@ -1227,8 +1227,10 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     if (pszCopySrcMDD)
         aosOptions.SetNameValue("COPY_SRC_MDD", pszCopySrcMDD);
     char **papszSrcMDD = CSLFetchNameValueMultiple(papszOptions, "SRC_MDD");
-    for (; papszSrcMDD && *papszSrcMDD; ++papszSrcMDD)
-        aosOptions.AddNameValue("SRC_MDD", *papszSrcMDD);
+    for (CSLConstList papszSrcMDDIter = papszSrcMDD;
+         papszSrcMDDIter && *papszSrcMDDIter; ++papszSrcMDDIter)
+        aosOptions.AddNameValue("SRC_MDD", *papszSrcMDDIter);
+    CSLDestroy(papszSrcMDD);
 
     CPLDebug("COG", "Generating final product: start");
     auto poRet =

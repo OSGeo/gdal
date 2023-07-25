@@ -922,6 +922,7 @@ void GDALDriver::DefaultCopyMetadata(GDALDataset *poSrcDS, GDALDataset *poDstDS,
             CSLDestroy(papszDomainList);
         }
     }
+    CSLDestroy(papszSrcMDD);
 }
 //! @endcond
 

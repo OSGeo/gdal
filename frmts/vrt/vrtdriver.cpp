@@ -371,6 +371,7 @@ static GDALDataset *VRTCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             CSLDestroy(papszDomainList);
         }
     }
+    CSLDestroy(papszSrcMDD);
 
     {
         const char *pszInterleave =

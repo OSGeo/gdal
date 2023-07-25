@@ -185,7 +185,7 @@ OGRJSONFGReadCoordRefSys(json_object *poCoordRefSys, bool bCanRecurse = true)
         }
 
         json_object *poHRef = CPL_json_object_object_get(poCoordRefSys, "href");
-        if (!poType)
+        if (!poHRef)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Missing href member in coordRefSys object");

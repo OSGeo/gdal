@@ -3965,6 +3965,7 @@ bool GTiffDataset::WriteMetadata(GDALDataset *poSrcDS, TIFF *l_hTIFF,
 
             WriteMDMetadata(&l_oMDMD, l_hTIFF, &psRoot, &psTail, 0, eProfile);
         }
+        CSLDestroy(papszSrcMDD);
     }
 
     if (!bExcludeRPBandIMGFileWriting)

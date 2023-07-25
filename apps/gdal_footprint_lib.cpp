@@ -1368,18 +1368,9 @@ GDALFootprintOptionsNew(char **papszArgv,
         else if (!bGotDestFilename)
         {
             bGotDestFilename = true;
-            if (psOptionsForBinary)
-            {
-                psOptionsForBinary->bDestSpecified = true;
-                psOptionsForBinary->osDest = papszArgv[i];
-            }
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported,
-                         "{dest_filename} only supported from gdal_footprint "
-                         "binary.");
-                return nullptr;
-            }
+            CPLAssert(psOptionsForBinary);
+            psOptionsForBinary->bDestSpecified = true;
+            psOptionsForBinary->osDest = papszArgv[i];
         }
         else
         {
