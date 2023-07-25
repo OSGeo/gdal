@@ -3467,6 +3467,12 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
 
     delete poGCPCoordTrans;
 
+    // Note: this guarantees that the file can be opened in a consistent state,
+    // without requiring to close poODS, only if the driver declares
+    // DCAP_FLUSHCACHE_CONSISTENT_STATE
+    if (poODS->FlushCache() != CE_None)
+        nRetCode = 1;
+
     if (nRetCode == 0)
         return GDALDataset::ToHandle(poODS);
 

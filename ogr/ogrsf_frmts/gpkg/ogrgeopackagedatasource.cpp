@@ -970,11 +970,6 @@ CPLErr GDALGeoPackageDataset::Close()
     CPLErr eErr = CE_None;
     if (nOpenFlags != OPEN_FLAGS_CLOSED)
     {
-        if (eAccess == GA_Update || !m_bMetadataDirty)
-        {
-            SetPamFlags(0);
-        }
-
         if (eAccess == GA_Update && m_poParentDS == nullptr &&
             !m_osRasterTable.empty() && !m_bGeoTransformValid)
         {
@@ -986,16 +981,6 @@ CPLErr GDALGeoPackageDataset::Close()
 
         if (GDALGeoPackageDataset::FlushCache(true) != CE_None)
             eErr = CE_Failure;
-
-        FlushMetadata();
-
-        if (eAccess == GA_Update || !m_bMetadataDirty)
-        {
-            // Needed again as above GDALGeoPackageDataset::FlushCache()
-            // may have call GDALGeoPackageRasterBand::InvalidateStatistics()
-            // which modifies metadata
-            SetPamFlags(0);
-        }
 
         // Destroy bands now since we don't want
         // GDALGPKGMBTilesLikeRasterBand::FlushCache() to run after dataset
@@ -3351,13 +3336,33 @@ CPLErr GDALGeoPackageDataset::FinalizeRasterRegistration()
 
 CPLErr GDALGeoPackageDataset::FlushCache(bool bAtClosing)
 {
+    if (m_bInFlushCache)
+        return CE_None;
+
+    if (eAccess == GA_Update || !m_bMetadataDirty)
+    {
+        SetPamFlags(0);
+    }
+
     if (m_bRemoveOGREmptyTable)
     {
         m_bRemoveOGREmptyTable = false;
         RemoveOGREmptyTable();
     }
 
-    return IFlushCacheWithErrCode(bAtClosing);
+    CPLErr eErr = IFlushCacheWithErrCode(bAtClosing);
+
+    FlushMetadata();
+
+    if (eAccess == GA_Update || !m_bMetadataDirty)
+    {
+        // Needed again as above IFlushCacheWithErrCode()
+        // may have call GDALGeoPackageRasterBand::InvalidateStatistics()
+        // which modifies metadata
+        SetPamFlags(0);
+    }
+
+    return eErr;
 }
 
 CPLErr GDALGeoPackageDataset::IFlushCacheWithErrCode(bool bAtClosing)

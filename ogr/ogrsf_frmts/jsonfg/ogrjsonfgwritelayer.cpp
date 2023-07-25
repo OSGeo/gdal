@@ -98,6 +98,15 @@ OGRJSONFGWriteLayer::~OGRJSONFGWriteLayer()
 }
 
 /************************************************************************/
+/*                           SyncToDisk()                               */
+/************************************************************************/
+
+OGRErr OGRJSONFGWriteLayer::SyncToDisk()
+{
+    return poDS_->SyncToDiskInternal();
+}
+
+/************************************************************************/
 /*                       GetValueAsDateOrDateTime()                     */
 /************************************************************************/
 
@@ -183,10 +192,7 @@ OGRJSONFGWriteGeometry(const OGRGeometry *poGeometry,
 OGRErr OGRJSONFGWriteLayer::ICreateFeature(OGRFeature *poFeature)
 {
     VSILFILE *fp = poDS_->GetOutputFile();
-    if (!poDS_->EmitStartFeaturesIfNeededAndReturnIfFirstFeature())
-    {
-        VSIFPrintfL(fp, ",\n");
-    }
+    poDS_->BeforeCreateFeature();
 
     if (oWriteOptions_.bGenerateID && poFeature->GetFID() == OGRNullFID)
     {

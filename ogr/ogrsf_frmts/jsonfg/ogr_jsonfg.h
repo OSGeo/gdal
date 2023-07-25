@@ -208,6 +208,8 @@ class OGRJSONFGWriteLayer final : public OGRLayer
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *pszCap) override;
 
+    OGRErr SyncToDisk() override;
+
   private:
     OGRJSONFGDataset *poDS_{};
     OGRFeatureDefn *poFeatureDefn_ = nullptr;
@@ -259,13 +261,21 @@ class OGRJSONFGDataset final : public GDALDataset
         return bSingleOutputLayer_;
     }
 
-    bool EmitStartFeaturesIfNeededAndReturnIfFirstFeature();
+    //! Return whether the output file is seekable
+    bool GetFpOutputIsSeekable() const
+    {
+        return bFpOutputIsSeekable_;
+    }
+
+    void BeforeCreateFeature();
 
     OGRLayer *ICreateLayer(const char *pszName,
                            OGRSpatialReference *poSRS = nullptr,
                            OGRwkbGeometryType eGType = wkbUnknown,
                            char **papszOptions = nullptr) override;
     int TestCapability(const char *pszCap) override;
+
+    OGRErr SyncToDiskInternal();
 
   protected:
     friend class OGRJSONFGReader;
@@ -283,9 +293,19 @@ class OGRJSONFGDataset final : public GDALDataset
     VSILFILE *fpOut_ = nullptr;
     bool bSingleOutputLayer_ = false;
     bool bHasEmittedFeatures_ = false;
+    bool bFpOutputIsSeekable_ = false;
+
+    /** Offset at which the '] }' terminating sequence has already been
+     * written by SyncToDisk(). 0 if it has not been written.
+     */
+    vsi_l_offset m_nPositionBeforeFCClosed = 0;
 
     bool ReadFromFile(GDALOpenInfo *poOpenInfo, const char *pszUnprefixed);
     bool ReadFromService(GDALOpenInfo *poOpenInfo, const char *pszSource);
+
+    void FinishWriting();
+
+    bool EmitStartFeaturesIfNeededAndReturnIfFirstFeature();
 
     CPL_DISALLOW_COPY_ASSIGN(OGRJSONFGDataset)
 };

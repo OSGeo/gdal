@@ -29,11 +29,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import json
 import tempfile
 
 import gdaltest
 import ogrtest
 import pytest
+import test_cli_utilities
 
 from osgeo import gdal, ogr, osr
 
@@ -1900,3 +1902,36 @@ def test_ogr2ogr_lib_valid_nlt_combinations(nlt_value):
         gdal.VectorTranslate("", src_ds, format="Memory", geometryType=nlt_value)
         is not None
     )
+
+
+###############################################################################
+# Check fix for https://github.com/OSGeo/gdal/issues/8033
+
+
+@pytest.mark.require_driver("GeoJSON")
+@pytest.mark.skipif(
+    test_cli_utilities.get_ogrinfo_path() is None, reason="ogrinfo not available"
+)
+def test_ogr2ogr_lib_geojson_output():
+
+    tmpfilename = "tmp/out.geojson"
+    out_ds = gdal.VectorTranslate(tmpfilename, "../ogr/data/poly.shp")
+
+    # Check that the file can be read at that point. Use an external process
+    # to check flushes are done correctly
+    ogrinfo_path = test_cli_utilities.get_ogrinfo_path()
+    ret = gdaltest.runexternal(ogrinfo_path + f" {tmpfilename} -al -so -json")
+    assert json.loads(ret)["layers"][0]["featureCount"] == 10
+
+    # Add a new feature after synchronization has been done
+    out_lyr = out_ds.GetLayer(0)
+    out_lyr.CreateFeature(ogr.Feature(out_lyr.GetLayerDefn()))
+
+    # Now close output dataset
+    del out_ds
+
+    with ogr.Open(tmpfilename) as ds:
+        lyr = ds.GetLayer(0)
+        assert lyr.GetFeatureCount() == 11
+
+    gdal.Unlink(tmpfilename)
