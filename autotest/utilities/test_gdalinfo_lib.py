@@ -32,7 +32,7 @@
 
 import pytest
 
-from osgeo import gdal
+from osgeo import gdal, osr
 
 ###############################################################################
 # Simple test
@@ -255,3 +255,18 @@ def test_gdalinfo_lib_nodata_full_precision_float64():
 
     ret = gdal.Info(ds, format="json")
     assert ret["bands"][0]["noDataValue"] == float(nodata_str)
+
+
+###############################################################################
+# Test fix for https://github.com/OSGeo/gdal/issues/8137
+
+
+def test_gdalinfo_lib_json_projjson_no_epsg():
+
+    ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
+    srs = osr.SpatialReference()
+    srs.SetLocalCS("foo")
+    ds.SetSpatialRef(srs)
+    ret = gdal.Info(ds, options="-json")
+    assert ret["stac"]["proj:epsg"] is None
+    assert ret["stac"]["proj:wkt2"] is not None
