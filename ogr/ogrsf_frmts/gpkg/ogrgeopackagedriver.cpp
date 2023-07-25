@@ -252,12 +252,12 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 /*                    OGRGeoPackageDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
-static GDALSubdatasetInfo OGRGeoPackageDriverGetSubdatasetInfo()
+struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
 {
-    GDALSubdatasetInfo oSubdatasetInfo;
 
-    oSubdatasetInfo.pfnIsSubdatasetSyntax =
-        [](const std::string &fileName) -> bool
+    virtual ~OGRGeoPackageDriverSubdatasetInfo() = default;
+
+    bool IsSubdatasetSyntax(const std::string &fileName) const override
     {
         GDALOpenInfo poOpenInfo{fileName.c_str(), GA_ReadOnly};
         if (OGRGeoPackageDriverIdentify(&poOpenInfo) != TRUE)
@@ -269,16 +269,25 @@ static GDALSubdatasetInfo OGRGeoPackageDriverGetSubdatasetInfo()
         std::vector<std::string> parts;
         std::istringstream f(fileName);
         std::string s;
-        while (std::getline(f, s, ';'))
+        while (std::getline(f, s, ':'))
         {
             std::cout << s << std::endl;
             parts.push_back(s);
         }
 
         return parts.size() > 1;
-    };
+    }
 
-    return oSubdatasetInfo;
+    std::string
+    GetFilenameFromSubdatasetName(const std::string &fileName) const override
+    {
+        return fileName;
+    }
+};
+
+static GDALSubdatasetInfo *OGRGeoPackageDriverGetSubdatasetInfo()
+{
+    return new OGRGeoPackageDriverSubdatasetInfo();
 }
 
 /************************************************************************/
@@ -376,8 +385,6 @@ class GDALGPKGDriver final : public GDALDriver
     bool m_bInitialized = false;
 
     void InitializeCreationOptionList();
-
-    GDALSubdatasetInfo m_oSubdatasetInfo;
 
   public:
     GDALGPKGDriver() = default;
@@ -535,11 +542,6 @@ void GDALGPKGDriver::InitializeCreationOptionList()
     osOptions += pszCOEnd;
 
     SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, osOptions.c_str());
-}
-
-GDALSubdatasetInfo *GDALGPKGDriver::GetSubdatasetInfo()
-{
-    return &m_oSubdatasetInfo;
 }
 
 void RegisterOGRGeoPackage()
@@ -706,7 +708,7 @@ void RegisterOGRGeoPackage()
     poDriver->pfnCreate = OGRGeoPackageDriverCreate;
     poDriver->pfnCreateCopy = GDALGeoPackageDataset::CreateCopy;
     poDriver->pfnDelete = OGRGeoPackageDriverDelete;
-    poDriver->pfnGetSubdatasetInfo = OGRGeoPackageDriverGetSubdatasetInfo;
+    poDriver->pfnGetSubdatasetInfoFunc = OGRGeoPackageDriverGetSubdatasetInfo;
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");
 

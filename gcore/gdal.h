@@ -1304,13 +1304,13 @@ bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
 /* ==================================================================== */
 
 /**
- *  Opaque type used for the C bindings of the C++ GDALGetSubdatasetInfoFunc class
+ *  Opaque type used for the C bindings of the C++ GDALGetSubdatasetInfo class
  *  @since GDAL 3.8
 */
-typedef void *GDALGetSubdatasetInfoFuncH;
+typedef struct GDALSubdatasetInfo *GDALSubdatasetInfoH;
 
 /**
- * @brief Returns a GetSubdatasetInfoFunc function object with methods to extract
+ * @brief Returns a GetSubdatasetInfo object with methods to extract
  *        and manipulate subdataset information.
  *        The default implemention
  * @param pszFileName           File name
@@ -1318,8 +1318,15 @@ typedef void *GDALGetSubdatasetInfoFuncH;
  * @return                      Opaque pointer to a GetSubdatasetInfoFunc or NULL if no drivers accepted the file name.
  * @since                       GDAL 3.8
  */
-CPL_DLL GDALGetSubdatasetInfoFuncH CPL_STDCALL
-GDALGetSubdatasetInfoFunc(const char *pszFileName);
+GDALSubdatasetInfoH CPL_DLL CPL_STDCALL
+GDALGetSubdatasetInfo(const char *pszFileName);
+const char CPL_DLL *CPL_STDCALL
+GDALSubdatasetInfoGetFileName(GDALSubdatasetInfoH, const char *pszFileName);
+
+bool CPL_DLL CPL_STDCALL GDALSubdatasetInfoIsSubdatasetSyntax(
+    GDALSubdatasetInfoH, const char *pszFileName);
+
+void CPL_DLL CPL_STDCALL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

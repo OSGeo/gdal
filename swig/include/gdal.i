@@ -80,6 +80,7 @@ typedef void GDALDatasetShadow;
 typedef void GDALRasterBandShadow;
 typedef void GDALColorTableShadow;
 typedef void GDALRasterAttributeTableShadow;
+typedef void GDALSubdatasetInfoShadow;
 typedef void GDALTransformerInfoShadow;
 typedef void GDALAsyncReaderShadow;
 typedef void GDALRelationshipShadow;
@@ -374,7 +375,6 @@ $1;
 %rename (ParseXMLString) CPLParseXMLString;
 %rename (SerializeXMLTree) CPLSerializeXMLTree;
 %rename (GetJPEG2000Structure) GDALGetJPEG2000Structure;
-%rename (IsSubdatasetSyntax) GDALIsSubdatasetSyntax;
 %rename (GetFilenameFromSubdatasetName) GDALGetFilenameFromSubdatasetName;
 
 //************************************************************************
@@ -604,6 +604,13 @@ RETURN_NONE GDALGCPsToGeoTransform( int nGCPs, GDAL_GCP const * pGCPs,
 //
 //************************************************************************
 %include "RasterAttributeTable.i"
+
+//************************************************************************
+//
+// Define the SubdatasetInfo object.
+//
+//************************************************************************
+%include "SubdatasetInfo.i"
 
 //************************************************************************
 //
@@ -2085,3 +2092,4 @@ GDALDatasetShadow* wrapper_GDALMultiDimTranslateDestName( const char* dest,
 
 
 %clear (const char* dest);
+

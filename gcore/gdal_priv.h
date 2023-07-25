@@ -1812,7 +1812,7 @@ class CPL_DLL GDALDriver : public GDALMajorObject
         GDALProgressFunc pfnProgress, void *pProgressData) = nullptr;
 
     /* Returns a (possibly null) pointer to the Subdataset informational function */
-    GDALSubdatasetInfo (*pfnGetSubdatasetInfo)() = nullptr;
+    GDALSubdatasetInfo *(*pfnGetSubdatasetInfoFunc)() = nullptr;
 
     //! @endcond
 
