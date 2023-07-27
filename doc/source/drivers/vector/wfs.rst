@@ -108,6 +108,12 @@ If only the N first features must be downloaded and paging through the whole
 layer is not desirable, the :config:`OGR_WFS_PAGING_ALLOWED`
 configuration option should be set to OFF.
 
+Starting with GDAL 3.8, if the feature count is already known before
+fetching the first feature, and the feature count is less than the page
+size, then the WFS driver will not use paging (no ``STARTINDEX`` parameter
+will be used in the requests). (This behavior improves compatibility with
+Geoserver when datasources with no primary key.)
+
 Paging with WFS 1.0 or 1.1
 ++++++++++++++++++++++++++
 
