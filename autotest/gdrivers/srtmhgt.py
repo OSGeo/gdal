@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import struct
 
 import pytest
@@ -38,18 +37,34 @@ from osgeo import gdal
 
 pytestmark = pytest.mark.require_driver("SRTMHGT")
 
+
+def setup_and_cleanup():
+
+    yield
+
+    try:
+        gdal.GetDriverByName("SRTMHGT").Delete("/vsimem/n43w080.hgt")
+        gdal.Unlink("/vsimem/N43W080.SRTMGL1.hgt.zip")
+    except (RuntimeError, OSError):
+        pass
+
+
 ###############################################################################
 # Test a SRTMHGT Level 1 (made from a DTED Level 0)
 
 
-def test_srtmhgt_1():
+@pytest.fixture()
+def n43w080_hgt(tmp_path):
+
+    n43_dt1_tif = str(tmp_path / "n43.dt1.tif")
+    n43w080_hgt_fname = str(tmp_path / "n43w080.hgt")
 
     ds = gdal.Open("data/n43.dt0")
 
     bandSrc = ds.GetRasterBand(1)
 
     driver = gdal.GetDriverByName("GTiff")
-    dsDst = driver.Create("tmp/n43.dt1.tif", 1201, 1201, 1, gdal.GDT_Int16)
+    dsDst = driver.Create(n43_dt1_tif, 1201, 1201, 1, gdal.GDT_Int16)
     dsDst.SetProjection(
         'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
     )
@@ -75,23 +90,31 @@ def test_srtmhgt_1():
     ds = None
     dsDst = None
 
-    ds = gdal.Open("tmp/n43.dt1.tif")
+    ds = gdal.Open(n43_dt1_tif)
     driver = gdal.GetDriverByName("SRTMHGT")
-    dsDst = driver.CreateCopy("tmp/n43w080.hgt", ds)
+    dsDst = driver.CreateCopy(n43w080_hgt_fname, ds)
+    del dsDst
 
-    band = dsDst.GetRasterBand(1)
-    chksum = band.Checksum()
+    return n43w080_hgt_fname
 
-    assert chksum == 60918, "Wrong checksum. Checksum found %d" % chksum
+
+def test_srtmhgt_1(n43w080_hgt):
+
+    with gdal.Open(n43w080_hgt) as ds:
+
+        band = ds.GetRasterBand(1)
+        chksum = band.Checksum()
+
+        assert chksum == 60918, "Wrong checksum. Checksum found %d" % chksum
 
 
 ###############################################################################
 # Test creating an in memory copy.
 
 
-def test_srtmhgt_2():
+def test_srtmhgt_2(n43w080_hgt):
 
-    ds = gdal.Open("tmp/n43w080.hgt")
+    ds = gdal.Open(n43w080_hgt)
     driver = gdal.GetDriverByName("SRTMHGT")
     dsDst = driver.CreateCopy("/vsimem/n43w080.hgt", ds)
 
@@ -114,9 +137,9 @@ def test_srtmhgt_2():
 # Test reading from a .hgt.zip file
 
 
-def test_srtmhgt_3():
+def test_srtmhgt_3(n43w080_hgt):
 
-    ds = gdal.Open("tmp/n43w080.hgt")
+    ds = gdal.Open(n43w080_hgt)
     driver = gdal.GetDriverByName("SRTMHGT")
     driver.CreateCopy("/vsizip//vsimem/N43W080.SRTMGL1.hgt.zip/N43W080.hgt", ds)
 
@@ -168,17 +191,3 @@ def test_srtmhgt_hgts():
 
     assert min_ == 1.25
     assert max_ == 1.25
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_srtmhgt_cleanup():
-    try:
-        gdal.GetDriverByName("SRTMHGT").Delete("tmp/n43w080.hgt")
-        gdal.GetDriverByName("SRTMHGT").Delete("/vsimem/n43w080.hgt")
-        gdal.Unlink("/vsimem/N43W080.SRTMGL1.hgt.zip")
-        os.remove("tmp/n43.dt1.tif")
-    except (RuntimeError, OSError):
-        pass
