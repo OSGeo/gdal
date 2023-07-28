@@ -1304,7 +1304,8 @@ OGRHanaDataSource::GetTablePrimaryKeys(const char *schemaName,
 void OGRHanaDataSource::InitializeLayers(const char *schemaName,
                                          const char *tableNames)
 {
-    std::vector<CPLString> tables = SplitStrings(tableNames, ",");
+    std::vector<CPLString> tablesToFind = SplitStrings(tableNames, ",");
+    const bool hasTablesToFind = !tablesToFind.empty();
 
     auto addLayersFromQuery = [&](const char *query, bool updatable)
     {
@@ -1316,9 +1317,10 @@ void OGRHanaDataSource::InitializeLayers(const char *schemaName,
             odbc::String tableName = rsTables->getString(1);
             if (tableName.isNull())
                 continue;
-            auto pos = std::find(tables.begin(), tables.end(), *tableName);
-            if (pos != tables.end())
-                tables.erase(pos);
+            auto pos =
+                std::find(tablesToFind.begin(), tablesToFind.end(), *tableName);
+            if (pos != tablesToFind.end())
+                tablesToFind.erase(pos);
 
             auto layer = cpl::make_unique<OGRHanaTableLayer>(
                 this, schemaName_.c_str(), tableName->c_str(), updatable);
@@ -1330,23 +1332,26 @@ void OGRHanaDataSource::InitializeLayers(const char *schemaName,
     // Look for layers in Tables
     std::ostringstream osTables;
     osTables << "SELECT TABLE_NAME FROM SYS.TABLES WHERE SCHEMA_NAME = ?";
-    if (!tables.empty())
-        osTables << " AND TABLE_NAME IN (" << JoinStrings(tables, ",", Literal)
-                 << ")";
+    if (!tablesToFind.empty())
+        osTables << " AND TABLE_NAME IN ("
+                 << JoinStrings(tablesToFind, ",", Literal) << ")";
 
     addLayersFromQuery(osTables.str().c_str(), updateMode_);
 
-    // Look for layers in Views
-    std::ostringstream osViews;
-    osViews << "SELECT VIEW_NAME FROM SYS.VIEWS WHERE SCHEMA_NAME = ?";
-    if (!tables.empty())
-        osViews << " AND VIEW_NAME IN (" << JoinStrings(tables, ",", Literal)
-                << ")";
+    if (!(hasTablesToFind && tablesToFind.empty()))
+    {
+        // Look for layers in Views
+        std::ostringstream osViews;
+        osViews << "SELECT VIEW_NAME FROM SYS.VIEWS WHERE SCHEMA_NAME = ?";
+        if (!tablesToFind.empty())
+            osViews << " AND VIEW_NAME IN ("
+                    << JoinStrings(tablesToFind, ",", Literal) << ")";
 
-    addLayersFromQuery(osViews.str().c_str(), false);
+        addLayersFromQuery(osViews.str().c_str(), false);
+    }
 
     // Report about tables that could not be found
-    for (const auto &tableName : tables)
+    for (const auto &tableName : tablesToFind)
     {
         const char *layerName = tableName.c_str();
         if (GetLayerByName(layerName) == nullptr)
