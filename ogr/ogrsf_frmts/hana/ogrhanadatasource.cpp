@@ -1118,7 +1118,6 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
 
     columnDescriptions.reserve(numColumns);
 
-    CPLString tableName = rsmd->getTableName(1);
     odbc::DatabaseMetaDataRef dmd = conn_->getDatabaseMetaData();
     odbc::PreparedStatementRef stmtArrayTypeInfo =
         PrepareStatement("SELECT DATA_TYPE_NAME FROM "
@@ -1135,6 +1134,7 @@ OGRErr OGRHanaDataSource::GetQueryColumns(
 
         bool isArray = false;
         bool isGeometry = false;
+        CPLString tableName = rsmd->getTableName(clmIndex);
         CPLString columnName = rsmd->getColumnName(clmIndex);
         CPLString defaultValue;
         short dataType = rsmd->getColumnType(clmIndex);
