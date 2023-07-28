@@ -41,6 +41,28 @@ pytestmark = pytest.mark.require_driver("MBTILES")
 
 
 ###############################################################################
+#
+
+
+@pytest.mark.require_curl()
+@pytest.fixture(scope="module")
+def server():
+
+    (process, port) = webserver.launch(handler=webserver.DispatcherHttpHandler)
+
+    if port == 0:
+        pytest.skip()
+
+    import collections
+
+    WebServer = collections.namedtuple("WebServer", "process port")
+
+    yield WebServer(process, port)
+
+    webserver.server_stop(process, port)
+
+
+###############################################################################
 # Basic test
 
 
@@ -138,7 +160,9 @@ def test_mbtiles_3():
     )
     if ds is None:
         # Just skip. The service isn't perfectly reliable sometimes
-        pytest.skip()
+        pytest.skip(
+            "Cannot access http://a.tiles.mapbox.com/v3/mapbox.geography-class.mbtiles"
+        )
 
     # long=2,lat=49 in WGS 84 --> x=222638,y=6274861 in Google Mercator
     locationInfo = ds.GetRasterBand(1).GetMetadataItem(
@@ -165,33 +189,14 @@ def test_mbtiles_3():
 
 
 @pytest.mark.require_curl()
-def test_mbtiles_start_webserver():
-
-    (gdaltest.webserver_process, gdaltest.webserver_port) = webserver.launch(
-        handler=webserver.DispatcherHttpHandler
-    )
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
-
-
-###############################################################################
-#
-
-
-@pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_http_jpeg_three_bands():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_mbtiles_http_jpeg_three_bands(server):
 
     handler = webserver.FileHandler(
         {"/world_l1.mbtiles": open("data/mbtiles/world_l1.mbtiles", "rb").read()}
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.Open(
-            "/vsicurl/http://localhost:%d/world_l1.mbtiles" % gdaltest.webserver_port
-        )
+        ds = gdal.Open("/vsicurl/http://localhost:%d/world_l1.mbtiles" % server.port)
     assert ds is not None
 
 
@@ -201,18 +206,13 @@ def test_mbtiles_http_jpeg_three_bands():
 
 @pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_http_jpeg_single_band():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_mbtiles_http_jpeg_single_band(server):
 
     handler = webserver.FileHandler(
         {"/byte_jpeg.mbtiles": open("data/mbtiles/byte_jpeg.mbtiles", "rb").read()}
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.Open(
-            "/vsicurl/http://localhost:%d/byte_jpeg.mbtiles" % gdaltest.webserver_port
-        )
+        ds = gdal.Open("/vsicurl/http://localhost:%d/byte_jpeg.mbtiles" % server.port)
     assert ds is not None
 
 
@@ -222,30 +222,14 @@ def test_mbtiles_http_jpeg_single_band():
 
 @pytest.mark.require_curl()
 @pytest.mark.require_driver("JPEG")
-def test_mbtiles_http_png():
-
-    if gdaltest.webserver_port == 0:
-        pytest.skip()
+def test_mbtiles_http_png(server):
 
     handler = webserver.FileHandler(
         {"/byte.mbtiles": open("data/mbtiles/byte.mbtiles", "rb").read()}
     )
     with webserver.install_http_handler(handler):
-        ds = gdal.Open(
-            "/vsicurl/http://localhost:%d/byte.mbtiles" % gdaltest.webserver_port
-        )
+        ds = gdal.Open("/vsicurl/http://localhost:%d/byte.mbtiles" % server.port)
     assert ds is not None
-
-
-###############################################################################
-#
-
-
-@pytest.mark.require_curl()
-def test_mbtiles_stop_webserver():
-
-    if gdaltest.webserver_port != 0:
-        webserver.server_stop(gdaltest.webserver_process, gdaltest.webserver_port)
 
 
 ###############################################################################
