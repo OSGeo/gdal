@@ -53,11 +53,8 @@ def module_disable_exceptions():
 
 
 @pytest.fixture(scope="module")
-def not_jpeg_9b():
-    import jpeg
-
-    jpeg.test_jpeg_1()
-    if gdaltest.jpeg_version == "9b":
+def not_jpeg_9b(jpeg_version):
+    if jpeg_version == "9b":
         pytest.skip()
 
 

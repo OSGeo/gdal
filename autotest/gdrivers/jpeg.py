@@ -53,22 +53,11 @@ def module_disable_exceptions():
 # Perform simple read test.
 
 
-def test_jpeg_1():
+def test_jpeg_1(jpeg_version):
 
-    ds = gdal.Open("data/jpeg/albania.jpg")
-    assert ds.GetMetadataItem("JPEG_QUALITY", "IMAGE_STRUCTURE") == "80"
-    cs = ds.GetRasterBand(2).Checksum()
-    if cs == 34296:
-        gdaltest.jpeg_version = "9b"
-    elif cs == 34298:
-        gdaltest.jpeg_version = "8"
-    else:
-        gdaltest.jpeg_version = "pre8"
-    ds = None
-
-    if gdaltest.jpeg_version == "9b":
+    if jpeg_version == "9b":
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 34296)
-    elif gdaltest.jpeg_version == "8":
+    elif jpeg_version == "8":
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 34298)
     else:
         tst = gdaltest.GDALTest("JPEG", "jpeg/albania.jpg", 2, 17016)
@@ -383,9 +372,9 @@ def test_jpeg_9():
 # Check reading a 12-bit JPEG
 
 
-def test_jpeg_10():
+def test_jpeg_10(jpeg_version):
 
-    if gdaltest.jpeg_version == "9b":  # Fails for some reason
+    if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -415,9 +404,9 @@ def test_jpeg_10():
 # Check creating a 12-bit JPEG
 
 
-def test_jpeg_11():
+def test_jpeg_11(jpeg_version):
 
-    if gdaltest.jpeg_version == "9b":  # Fails for some reason
+    if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -484,9 +473,9 @@ def test_jpeg_13():
 # Test writing to /vsistdout/
 
 
-def test_jpeg_14():
+def test_jpeg_14(jpeg_version):
 
-    if gdaltest.jpeg_version == "9b":  # Fails for some reason
+    if jpeg_version == "9b":  # Fails for some reason
         pytest.skip()
 
     # Check if JPEG driver supports 12bit JPEG reading/writing
@@ -527,7 +516,7 @@ def test_jpeg_15():
 # Test overview support
 
 
-def test_jpeg_16():
+def test_jpeg_16(jpeg_version):
 
     shutil.copy("data/jpeg/albania.jpg", "tmp/albania.jpg")
     gdal.Unlink("tmp/albania.jpg.ovr")
@@ -540,7 +529,7 @@ def test_jpeg_16():
     # "Internal" overview
 
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg_version in ("8", "9b"):
+    if jpeg_version in ("8", "9b"):
         expected_cs = 34218
     else:
         expected_cs = 31892
@@ -551,7 +540,7 @@ def test_jpeg_16():
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     # Check updated checksum
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg_version in ("8", "9b"):
+    if jpeg_version in ("8", "9b"):
         expected_cs = 33698
     else:
         expected_cs = 32460
@@ -563,7 +552,7 @@ def test_jpeg_16():
     ds = gdal.Open("tmp/albania.jpg")
     assert ds.GetRasterBand(1).GetOverviewCount() == 2
     cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-    if gdaltest.jpeg_version in ("8", "9b"):
+    if jpeg_version in ("8", "9b"):
         expected_cs = 33698
     else:
         expected_cs = 32460
