@@ -4116,13 +4116,54 @@ def test_gpkg_byte_nodata_value(band_count):
 @pytest.mark.parametrize(
     "filename,is_subdataset",
     (
-        ("/test.gpkg", False),
-        ("/test.gpkg:layername=layer1", True),
+        ("GPKG:/test.gpkg", False),
+        ("GPKG:/test.gpkg:layer1", True),
+        ("GPKG:/test.gpkg:layer1:some_extra_arg", True),
+        ("gpkg:/test.gpkg", False),
+        ("gpkg:/test.gpkg:layer1", True),
     ),
 )
 def test_gpkg_gdal_subdataset_syntax(filename, is_subdataset):
 
-    assert gdal.IsSubdatasetSyntax() == is_subdataset
+    info = gdal.GetSubdatasetInfo(filename)
+    assert is_subdataset or info is None
+    if info is None:
+        info = gdal.GetSubdatasetInfo("GPKG:/test.gpkg:layer1")
+
+    assert info.IsSubdatasetSyntax(filename) == is_subdataset
+
+
+@pytest.mark.parametrize(
+    "subdatasetname,filename",
+    (
+        ("GPKG:/test.gpkg", ""),
+        ("GPKG:/test.gpkg:layer1", "GPKG:/test.gpkg"),
+        ("GPKG:/test.gpkg:layer1:some_extra_arg", "GPKG:/test.gpkg"),
+        ("gpkg:/test.gpkg:layer1", "gpkg:/test.gpkg"),
+    ),
+)
+def test_gpkg_gdal_subdataset_get_filename(subdatasetname, filename):
+
+    info = gdal.GetSubdatasetInfo("GPKG:/test.gpkg:layer1")
+    assert info.GetFilenameFromSubdatasetName(subdatasetname) == filename
+
+
+@pytest.mark.parametrize(
+    "subdatasetname,filename",
+    (
+        ("GPKG:/test.gpkg", ""),
+        ("GPKG:/test.gpkg:layer1", "GPKG:/new/test.gpkg:layer1"),
+        (
+            "GPKG:/test.gpkg:layer1:some_extra_arg",
+            "GPKG:/new/test.gpkg:layer1:some_extra_arg",
+        ),
+        ("gpkg:/test.gpkg:layer1", "gpkg:/new/test.gpkg:layer1"),
+    ),
+)
+def test_gpkg_gdal_subdataset_modify_filename(subdatasetname, filename):
+
+    info = gdal.GetSubdatasetInfo("GPKG:/test.gpkg:layer1")
+    assert info.ModifyFileName(subdatasetname, "/new/test.gpkg") == filename
 
 
 ###############################################################################

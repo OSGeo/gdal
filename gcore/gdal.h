@@ -1304,28 +1304,66 @@ bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
 /* ==================================================================== */
 
 /**
- *  Opaque type used for the C bindings of the C++ GDALGetSubdatasetInfo class
+ *  Opaque type used for the C bindings of the C++ GDALSubdatasetInfo class
  *  @since GDAL 3.8
 */
 typedef struct GDALSubdatasetInfo *GDALSubdatasetInfoH;
 
 /**
- * @brief Returns a GetSubdatasetInfo object with methods to extract
+ * @brief Returns a new GDALSubdatasetInfo object with methods to extract
  *        and manipulate subdataset information.
- *        The default implemention
- * @param pszFileName           File name
- * @note                        This method does not check if the subdataset actually exists
- * @return                      Opaque pointer to a GetSubdatasetInfoFunc or NULL if no drivers accepted the file name.
+ *        If the pszFileName argument is not recognized by any driver as
+ *        a subdataset descriptor NULL is returned.
+ *        The returned object must be freed with GDALDestroySubdatasetInfo().
+ * @param pszFileName           File name with subdataset information
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      Opaque pointer to a GDALSubdatasetInfo object or NULL if no drivers accepted the file name.
  * @since                       GDAL 3.8
  */
 GDALSubdatasetInfoH CPL_DLL CPL_STDCALL
 GDALGetSubdatasetInfo(const char *pszFileName);
+
+/**
+ * @brief GDALSubdatasetInfoGetFileName returns the file path (or base) component of a
+ *        subdataset descriptor effectively stripping the information about the subdataset
+ *        and returning the "parent" dataset descriptor.
+ *        The returned string must be freed with CPLFree().
+ * @param pszFileName           File name with subdataset information
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      The original string with the subdataset information removed.
+ * @since                       GDAL 3.8
+ */
 const char CPL_DLL *CPL_STDCALL
 GDALSubdatasetInfoGetFileName(GDALSubdatasetInfoH, const char *pszFileName);
 
+/**
+ * @brief Checks whether the passed file name is recognized by at least one driver
+ *        as a subdataset descriptor.
+ * @param pszFileName           File name with subdataset information
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      TRUE if pszFileName is recognized by at least one driver
+ *                              as a subdataset descriptor.
+ * @since                       GDAL 3.8
+ */
 bool CPL_DLL CPL_STDCALL GDALSubdatasetInfoIsSubdatasetSyntax(
     GDALSubdatasetInfoH, const char *pszFileName);
 
+/**
+ * @brief GDALSubdatasetInfoModifyFileName replaces the base component of a
+ *        file name by keeping the subdataset information unaltered.
+ *        The returned string must be freed with CPLFree().
+ * @param pszFileName           File name with subdataset information
+ * @param pszNewFileName        New file name with no subdataset information
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      The original string with the old file name replaced by newFileName and the subdataset information unaltered.
+ * @since                       GDAL 3.8
+ */
+const char CPL_DLL *CPL_STDCALL GDALSubdatasetInfoModifyFileName(
+    GDALSubdatasetInfoH, const char *pszFileName, const char *pszNewFileName);
+
+/**
+ * @brief GDALDestroySubdatasetInfo destroys a GDALSubdatasetInfo object.
+ */
 void CPL_DLL CPL_STDCALL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH);
 
 /* ==================================================================== */

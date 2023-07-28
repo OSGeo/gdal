@@ -45,7 +45,7 @@ struct GDALSubdatasetInfo
 
     /**
  * @brief Returns the path to the file, stripping any subdataset information from the file name
- * @param fileName           File name
+ * @param fileName              File name
  * @note                        This method does not check if the subdataset or the file actually exist.
  *                              If the file name does not represent a subdataset it is returned unmodified.
  * @return                      The path to the file
@@ -55,6 +55,24 @@ struct GDALSubdatasetInfo
     GetFilenameFromSubdatasetName(const std::string &fileName) const
     {
         (void)fileName;
+        return "";
+    }
+
+    /**
+ * @brief Replaces the base component of a
+ *        file name by keeping the subdataset information unaltered.
+ *        The returned string must be freed with CPLFree()
+ * @param fileName              File name with subdataset information
+ * @param newFileName           New file name with no subdataset information
+ * @note                        This method does not check if the subdataset actually exists.
+ * @return                      The original string with the old file name replaced by newFileName and the subdataset information unaltered.
+ * @since                       GDAL 3.8
+ */
+    virtual std::string ModifyFileName(const std::string &fileName,
+                                       const std::string &newFileName) const
+    {
+        (void)fileName;
+        (void)newFileName;
         return "";
     }
 };

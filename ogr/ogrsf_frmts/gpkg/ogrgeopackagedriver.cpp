@@ -29,8 +29,6 @@
 #include "ogr_geopackage.h"
 
 #include "tilematrixset.hpp"
-#include <sstream>
-#include <iostream>
 
 // g++ -g -Wall -fPIC -shared -o ogr_geopackage.so -Iport -Igcore -Iogr
 // -Iogr/ogrsf_frmts -Iogr/ogrsf_frmts/gpkg ogr/ogrsf_frmts/gpkg/*.c* -L. -lgdal
@@ -254,7 +252,6 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 
 struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
 {
-
     virtual ~OGRGeoPackageDriverSubdatasetInfo() = default;
 
     bool IsSubdatasetSyntax(const std::string &fileName) const override
@@ -266,22 +263,63 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
         }
 
         // Split
-        std::vector<std::string> parts;
-        std::istringstream f(fileName);
-        std::string s;
-        while (std::getline(f, s, ':'))
-        {
-            std::cout << s << std::endl;
-            parts.push_back(s);
-        }
-
-        return parts.size() > 1;
+        char **papszParts{CSLTokenizeString2(fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(papszParts)};
+        CSLDestroy(papszParts);
+        return iPartsCount > 2;
     }
 
     std::string
     GetFilenameFromSubdatasetName(const std::string &fileName) const override
     {
-        return fileName;
+        if (!IsSubdatasetSyntax(fileName))
+        {
+            return std::string();
+        }
+
+        // Split
+        char **papszParts{CSLTokenizeString2(fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(papszParts)};
+        std::string extractedFileName;
+        // Keep second
+        if (iPartsCount > 2)
+        {
+            extractedFileName = papszParts[0];
+            extractedFileName.append(":");
+            extractedFileName.append(papszParts[1]);
+        }
+        CSLDestroy(papszParts);
+
+        return extractedFileName;
+    }
+
+    std::string ModifyFileName(const std::string &fileName,
+                               const std::string &newFileName) const override
+    {
+        if (!IsSubdatasetSyntax(fileName))
+        {
+            return std::string();
+        }
+
+        // Split
+        char **papszParts{CSLTokenizeString2(fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(papszParts)};
+        std::string extractedFileName;
+        // Keep second
+        if (iPartsCount > 2)
+        {
+            extractedFileName = papszParts[0];
+            extractedFileName.append(":");
+            extractedFileName.append(newFileName);
+            for (int i = 2; i < iPartsCount; ++i)
+            {
+                extractedFileName.append(":");
+                extractedFileName.append(papszParts[i]);
+            }
+        }
+        CSLDestroy(papszParts);
+
+        return extractedFileName;
     }
 };
 

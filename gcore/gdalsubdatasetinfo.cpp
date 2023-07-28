@@ -83,3 +83,14 @@ bool CPL_STDCALL GDALSubdatasetInfoIsSubdatasetSyntax(GDALSubdatasetInfoH hInfo,
 {
     return hInfo->IsSubdatasetSyntax(pszFileName);
 }
+
+const char *CPL_STDCALL GDALSubdatasetInfoModifyFileName(
+    GDALSubdatasetInfoH hInfo, const char *pszFileName,
+    const char *pszNewFileName)
+{
+    const std::string fileName{
+        hInfo->ModifyFileName(pszFileName, pszNewFileName)};
+    char *ptr = new char[fileName.size() + 1];
+    strcpy(ptr, fileName.c_str());
+    return ptr;
+}
