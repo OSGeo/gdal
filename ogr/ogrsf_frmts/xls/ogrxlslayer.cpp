@@ -26,7 +26,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
-#include <freexl.h>
+#include "include_freexl.h"
 
 #include "ogr_xls.h"
 #include "cpl_conv.h"
