@@ -103,12 +103,9 @@ def test_ehdr_4():
 
     ds = None
 
+    ###############################################################################
+    # verify dataset's colortable and nodata value.
 
-###############################################################################
-# verify last dataset's colortable and nodata value.
-
-
-def test_ehdr_5():
     ds = gdal.Open("tmp/test_4.bil")
     band = ds.GetRasterBand(1)
 
