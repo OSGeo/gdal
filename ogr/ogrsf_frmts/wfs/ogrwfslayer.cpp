@@ -438,12 +438,22 @@ CPLString OGRWFSLayer::MakeGetFeatureURL(int nRequestMaxFeatures,
 
     if (poDS->IsPagingAllowed() && !bRequestHits)
     {
-        osURL = CPLURLAddKVP(
-            osURL, "STARTINDEX",
-            CPLSPrintf("%d", nPagingStartIndex + poDS->GetBaseStartIndex()));
         nRequestMaxFeatures = poDS->GetPageSize();
+        /* If the feature count is known and is less than the page size, we don't
+         * need to do paging. Skipping the pagination parameters improves compatibility
+         * with remote datasources that don't have a primary key.
+         * Without a primary key, the WFS server can't support paging, since there
+         * is no natural sort order defined. */
+        if (nFeatures < 0 ||
+            (nRequestMaxFeatures && nFeatures > nRequestMaxFeatures))
+        {
+            osURL =
+                CPLURLAddKVP(osURL, "STARTINDEX",
+                             CPLSPrintf("%d", nPagingStartIndex +
+                                                  poDS->GetBaseStartIndex()));
+            bPagingActive = true;
+        }
         nFeatureCountRequested = nRequestMaxFeatures;
-        bPagingActive = true;
     }
 
     if (nRequestMaxFeatures)
