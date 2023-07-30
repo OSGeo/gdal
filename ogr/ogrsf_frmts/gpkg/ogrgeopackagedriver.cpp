@@ -442,8 +442,6 @@ class GDALGPKGDriver final : public GDALDriver
         InitializeCreationOptionList();
         return GDALDriver::GetMetadata(pszDomain);
     }
-
-    GDALSubdatasetInfo *GetSubdatasetInfo();
 };
 
 #define COMPRESSION_OPTIONS                                                    \

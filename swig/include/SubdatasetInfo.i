@@ -47,20 +47,16 @@ class GDALSubdatasetInfoShadow {
 
 %extend {
 
-        GDALSubdatasetInfoShadow(){
-            return new GDALSubdatasetInfo();
-        }
-
         ~GDALSubdatasetInfoShadow() {
             GDALDestroySubdatasetInfo(reinterpret_cast<GDALSubdatasetInfoH>(self));
         }
 
-        const char* GetFilenameFromSubdatasetName(const char *pszFileName)
+        retStringAndCPLFree* GetFilenameFromSubdatasetName(const char *pszFileName)
         {
             return GDALSubdatasetInfoGetFileName(reinterpret_cast<GDALSubdatasetInfoH>(self), pszFileName );
         }
 
-        const char* ModifyFileName(const char *pszFileName, const char *pszNewFileName)
+        retStringAndCPLFree* ModifyFileName(const char *pszFileName, const char *pszNewFileName)
         {
         return GDALSubdatasetInfoModifyFileName(reinterpret_cast<GDALSubdatasetInfoH>(self), pszFileName, pszNewFileName );
         }
@@ -72,7 +68,7 @@ class GDALSubdatasetInfoShadow {
 }
 };
 
-%newobject GetSubdatasetInfo(const char *pszFileName);
+%newobject GetSubdatasetInfo;
 
 %inline %{
 GDALSubdatasetInfoShadow* GetSubdatasetInfo(const char *pszFileName)

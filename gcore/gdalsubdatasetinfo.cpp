@@ -71,11 +71,7 @@ void CPL_STDCALL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo)
 const char *CPL_STDCALL GDALSubdatasetInfoGetFileName(GDALSubdatasetInfoH hInfo,
                                                       const char *pszFileName)
 {
-    const std::string fileName{
-        hInfo->GetFilenameFromSubdatasetName(pszFileName)};
-    char *ptr = new char[fileName.size() + 1];
-    strcpy(ptr, fileName.c_str());
-    return ptr;
+    return CPLStrdup(hInfo->GetFilenameFromSubdatasetName(pszFileName).c_str());
 }
 
 bool CPL_STDCALL GDALSubdatasetInfoIsSubdatasetSyntax(GDALSubdatasetInfoH hInfo,
@@ -88,9 +84,5 @@ const char *CPL_STDCALL GDALSubdatasetInfoModifyFileName(
     GDALSubdatasetInfoH hInfo, const char *pszFileName,
     const char *pszNewFileName)
 {
-    const std::string fileName{
-        hInfo->ModifyFileName(pszFileName, pszNewFileName)};
-    char *ptr = new char[fileName.size() + 1];
-    strcpy(ptr, fileName.c_str());
-    return ptr;
+    return CPLStrdup(hInfo->ModifyFileName(pszFileName, pszNewFileName).c_str());
 }
