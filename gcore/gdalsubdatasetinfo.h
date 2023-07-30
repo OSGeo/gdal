@@ -3,14 +3,27 @@
 
  ---------------------
  begin                : 21.7.2023
- copyright            : (C) 2023 by ale
- email                : [your-email-here]
+ copyright            : (C) 2023 by Alessndro Pasotti
+ email                : elpaso@itopen.it
  ***************************************************************************
  *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
  *                                                                         *
  ***************************************************************************/
 #ifndef GDALSUBDATASETINFO_H
@@ -19,62 +32,57 @@
 #include "cpl_port.h"
 #include <string>
 /**
- * The GDALSubdatasetInfo struct provides methods to extract and
- * manipulate subdataset information from a file name.
+ * The GDALSubdatasetInfo abstract class provides methods to extract and
+ * manipulate subdataset information from a file name that contains subdataset
+ * information.
  *
- * Drivers offering this functionality should override the methods.
+ * Drivers offering this functionality must override the parseFileName() method.
  */
-struct GDALSubdatasetInfo
+class GDALSubdatasetInfo
 {
+
+  public:
+    GDALSubdatasetInfo(const std::string &fileName);
 
     virtual ~GDALSubdatasetInfo() = default;
 
     /**
- * @brief Checks wether the file name syntax represents a subdataset
- * @param fileName           File name
- * @note                        This method does not check if the subdataset actually exists but only if the
- *                              file name syntax represents a subdataset
- * @return                      true if the file name represents a subdataset
- * @since                       GDAL 3.8
- */
-    virtual bool IsSubdatasetSyntax(const std::string &fileName) const
-    {
-        (void)fileName;
-        return false;
-    }
-
-    /**
  * @brief Returns the path to the file, stripping any subdataset information from the file name
- * @param fileName              File name
- * @note                        This method does not check if the subdataset or the file actually exist.
- *                              If the file name does not represent a subdataset it is returned unmodified.
  * @return                      The path to the file
  * @since                       GDAL 3.8
  */
-    virtual std::string
-    GetFilenameFromSubdatasetName(const std::string &fileName) const
-    {
-        (void)fileName;
-        return "";
-    }
+    std::string GetFileName() const;
 
     /**
  * @brief Replaces the base component of a
  *        file name by keeping the subdataset information unaltered.
  *        The returned string must be freed with CPLFree()
- * @param fileName              File name with subdataset information
  * @param newFileName           New file name with no subdataset information
  * @note                        This method does not check if the subdataset actually exists.
  * @return                      The original string with the old file name replaced by newFileName and the subdataset information unaltered.
  * @since                       GDAL 3.8
  */
-    virtual std::string ModifyFileName(const std::string &fileName,
-                                       const std::string &newFileName) const
-    {
-        (void)fileName;
-        (void)newFileName;
-        return "";
-    }
+    std::string ModifyFileName(const std::string &newFileName) const;
+
+    /**
+ * @brief Returns the subdataset component of the file name.
+ *
+ * @return                      The subdataset name
+ * @since                       GDAL 3.8
+ */
+    std::string GetSubdatasetName() const;
+
+  protected:
+    /**
+     * This method is called once to parse the fileName and populate the member variables.
+     * It must be reimplemented by concrete derived classes.
+     */
+    virtual void parseFileName() = 0;
+    mutable bool m_initialized = false;
+    std::string m_fileName;
+    std::string m_baseComponent;
+    std::string m_subdatasetComponent;
+    std::string m_driverPrefixComponent;
 };
 
 #endif  // GDALSUBDATASETINFO_H

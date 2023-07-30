@@ -166,4 +166,6 @@ target_public_header(
   gdalcachedpixelaccessor.h
   rawdataset.h
   gdalgeorefpamdataset.h
-  gdal_mdreader.h)
+  gdal_mdreader.h
+  gdalsubdatasetinfo.h
+)

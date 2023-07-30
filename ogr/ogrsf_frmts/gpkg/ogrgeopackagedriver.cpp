@@ -250,82 +250,79 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 /*                    OGRGeoPackageDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
-struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
+class OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
 {
-    virtual ~OGRGeoPackageDriverSubdatasetInfo() = default;
-
-    bool IsSubdatasetSyntax(const std::string &fileName) const override
+  public:
+    OGRGeoPackageDriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
     {
-        GDALOpenInfo poOpenInfo{fileName.c_str(), GA_ReadOnly};
-        if (OGRGeoPackageDriverIdentify(&poOpenInfo) != TRUE)
-        {
-            return false;
-        }
-
-        // Split
-        char **papszParts{CSLTokenizeString2(fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(papszParts)};
-        CSLDestroy(papszParts);
-        return iPartsCount > 2;
     }
 
-    std::string
-    GetFilenameFromSubdatasetName(const std::string &fileName) const override
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
     {
-        if (!IsSubdatasetSyntax(fileName))
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "GPKG:"))
         {
-            return std::string();
+            return;
         }
 
-        // Split
-        char **papszParts{CSLTokenizeString2(fileName.c_str(), ":", 0)};
+        char **papszParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
         const int iPartsCount{CSLCount(papszParts)};
-        std::string extractedFileName;
-        // Keep second
-        if (iPartsCount > 2)
-        {
-            extractedFileName = papszParts[0];
-            extractedFileName.append(":");
-            extractedFileName.append(papszParts[1]);
-        }
-        CSLDestroy(papszParts);
 
-        return extractedFileName;
-    }
-
-    std::string ModifyFileName(const std::string &fileName,
-                               const std::string &newFileName) const override
-    {
-        if (!IsSubdatasetSyntax(fileName))
+        if (iPartsCount == 3 || iPartsCount == 4)
         {
-            return std::string();
-        }
 
-        // Split
-        char **papszParts{CSLTokenizeString2(fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(papszParts)};
-        std::string extractedFileName;
-        // Keep second
-        if (iPartsCount > 2)
-        {
-            extractedFileName = papszParts[0];
-            extractedFileName.append(":");
-            extractedFileName.append(newFileName);
-            for (int i = 2; i < iPartsCount; ++i)
+            m_driverPrefixComponent = papszParts[0];
+
+            int subdatasetIndex{2};
+            const bool hasDriveLetter{strlen(papszParts[1]) == 1 &&
+                                      std::isalpha(papszParts[1][0])};
+
+            // Check for drive letter
+            if (iPartsCount == 4)
             {
-                extractedFileName.append(":");
-                extractedFileName.append(papszParts[i]);
+                // Invalid
+                if (!hasDriveLetter)
+                {
+                    CSLDestroy(papszParts);
+                    return;
+                }
+                m_baseComponent = papszParts[1];
+                m_baseComponent.append(":");
+                m_baseComponent.append(papszParts[2]);
+                subdatasetIndex++;
             }
+            else  // count is 3
+            {
+                if (hasDriveLetter)
+                {
+                    CSLDestroy(papszParts);
+                    return;
+                }
+                m_baseComponent = papszParts[1];
+            }
+
+            m_subdatasetComponent = papszParts[subdatasetIndex];
         }
         CSLDestroy(papszParts);
-
-        return extractedFileName;
     }
 };
 
-static GDALSubdatasetInfo *OGRGeoPackageDriverGetSubdatasetInfo()
+static GDALSubdatasetInfo *
+OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
 {
-    return new OGRGeoPackageDriverSubdatasetInfo();
+    GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
+    if (OGRGeoPackageDriverIdentify(&poOpenInfo))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            cpl::make_unique<OGRGeoPackageDriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetName().empty() && !info->GetFileName().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
 }
 
 /************************************************************************/

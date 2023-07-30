@@ -1320,8 +1320,7 @@ typedef struct GDALSubdatasetInfo *GDALSubdatasetInfoH;
  * @return                      Opaque pointer to a GDALSubdatasetInfo object or NULL if no drivers accepted the file name.
  * @since                       GDAL 3.8
  */
-GDALSubdatasetInfoH CPL_DLL CPL_STDCALL
-GDALGetSubdatasetInfo(const char *pszFileName);
+GDALSubdatasetInfoH CPL_DLL GDALGetSubdatasetInfo(const char *pszFileName);
 
 /**
  * @brief Returns the file path (or base) component of a
@@ -1329,48 +1328,41 @@ GDALGetSubdatasetInfo(const char *pszFileName);
  *        and returning the "parent" dataset descriptor.
  *        The returned string must be freed with CPLFree().
  * @param hInfo                 Pointer to GDALSubdatasetInfo object
- * @param pszFileName           File name with subdataset information
  * @note                        This method does not check if the subdataset actually exists.
  * @return                      The original string with the subdataset information removed.
  * @since                       GDAL 3.8
  */
-char CPL_DLL *CPL_STDCALL GDALSubdatasetInfoGetFileName(
-    GDALSubdatasetInfoH hInfo, const char *pszFileName);
+char CPL_DLL *GDALSubdatasetInfoGetFileName(GDALSubdatasetInfoH hInfo);
 
 /**
- * @brief Checks whether the passed file name is recognized by at least one driver
- *        as a subdataset descriptor.
+ * @brief Returns the subdataset component of a subdataset file name descriptor.
+ *        The returned string must be freed with CPLFree().
  * @param hInfo                 Pointer to GDALSubdatasetInfo object
- * @param pszFileName           File name with subdataset information
  * @note                        This method does not check if the subdataset actually exists.
- * @return                      TRUE if pszFileName is recognized by at least one driver
- *                              as a subdataset descriptor.
+ * @return                      The subdataset name.
  * @since                       GDAL 3.8
  */
-bool CPL_DLL CPL_STDCALL GDALSubdatasetInfoIsSubdatasetSyntax(
-    GDALSubdatasetInfoH hInfo, const char *pszFileName);
+char CPL_DLL *GDALSubdatasetInfoGetSubdatasetName(GDALSubdatasetInfoH hInfo);
 
 /**
  * @brief Replaces the base component of a
  *        file name by keeping the subdataset information unaltered.
  *        The returned string must be freed with CPLFree().
  * @param hInfo                 Pointer to GDALSubdatasetInfo object
- * @param pszFileName           File name with subdataset information
  * @param pszNewFileName        New file name with no subdataset information
  * @note                        This method does not check if the subdataset actually exists.
  * @return                      The original string with the old file name replaced by newFileName and the subdataset information unaltered.
  * @since                       GDAL 3.8
  */
-char CPL_DLL *CPL_STDCALL GDALSubdatasetInfoModifyFileName(
-    GDALSubdatasetInfoH hInfo, const char *pszFileName,
-    const char *pszNewFileName);
+char CPL_DLL *GDALSubdatasetInfoModifyFileName(GDALSubdatasetInfoH hInfo,
+                                               const char *pszNewFileName);
 
 /**
  * @brief Destroys a GDALSubdatasetInfo object.
  * @param hInfo                 Pointer to GDALSubdatasetInfo object
  * @since                       GDAL 3.8
  */
-void CPL_DLL CPL_STDCALL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo);
+void CPL_DLL GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo);
 
 /* ==================================================================== */
 /*      GDALRasterBand ... one band/channel in a dataset.               */

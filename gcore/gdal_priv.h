@@ -1811,8 +1811,12 @@ class CPL_DLL GDALDriver : public GDALMajorObject
         CSLConstList papszVectorTranslateArguments,
         GDALProgressFunc pfnProgress, void *pProgressData) = nullptr;
 
-    /* Returns a (possibly null) pointer to the Subdataset informational function */
-    GDALSubdatasetInfo *(*pfnGetSubdatasetInfoFunc)() = nullptr;
+    /**
+     * Returns a (possibly null) pointer to the Subdataset informational function
+     * from the subdataset file name.
+     */
+    GDALSubdatasetInfo *(*pfnGetSubdatasetInfoFunc)(const char *pszFileName) =
+        nullptr;
 
     //! @endcond
 
