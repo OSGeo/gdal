@@ -93,7 +93,8 @@ char *GDALSubdatasetInfoModifyFileName(GDALSubdatasetInfoH hInfo,
 }
 
 GDALSubdatasetInfo::GDALSubdatasetInfo(const std::string &fileName)
-    : m_fileName(fileName)
+    : m_fileName(fileName), m_baseComponent(), m_subdatasetComponent(),
+      m_driverPrefixComponent()
 {
 }
 
