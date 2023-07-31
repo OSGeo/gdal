@@ -47,46 +47,44 @@ pytestmark = pytest.mark.require_driver("WMS")
 # Open the WMS dataset
 
 
-def wms_2():
-    # Set the driver so we don't have to search it by name again
-    gdaltest.wms_drv = gdal.GetDriverByName("WMS")
+@pytest.fixture()
+def gpwv3_wms():
 
-    # NOTE - mloskot:
-    # This is a dirty hack checking if remote WMS service is online.
-    # Nothing genuine but helps to keep the buildbot waterfall green.
+    import xml.etree.ElementTree as ET
 
-    srv = "http://sedac.ciesin.columbia.edu/mapserver/map/GPWv3?"
-    gdaltest.wms_srv1_ok = gdaltest.gdalurlopen(srv) is not None
-    gdaltest.wms_ds = None
+    wms_xml = "data/wms/pop_wms.xml"
+    tree = ET.parse(wms_xml)
+    srv = next(tree.iter("ServerUrl")).text
 
-    if not gdaltest.wms_srv1_ok:
-        pytest.skip()
+    wms_srv1_ok = gdaltest.gdalurlopen(srv) is not None
 
-    gdaltest.wms_ds = gdal.Open("data/wms/pop_wms.xml")
+    if not wms_srv1_ok:
+        pytest.skip(f"Could not read from {srv}")
 
-    if gdaltest.wms_ds is None:
+    wms_ds = gdal.Open(wms_xml)
+
+    if wms_ds is None:
         pytest.fail("open failed.")
+
+    return wms_ds
 
 
 ###############################################################################
 # Check various things about the configuration.
 
 
-def wms_3():
-
-    if gdaltest.wms_ds is None or not gdaltest.wms_srv1_ok:
-        pytest.skip()
+def test_wms_3(gpwv3_wms):
 
     assert (
-        gdaltest.wms_ds.RasterXSize == 36000
-        and gdaltest.wms_ds.RasterYSize == 14500
-        and gdaltest.wms_ds.RasterCount == 3
+        gpwv3_wms.RasterXSize == 36000
+        and gpwv3_wms.RasterYSize == 14500
+        and gpwv3_wms.RasterCount == 3
     ), "wrong size or bands"
 
-    wkt = gdaltest.wms_ds.GetProjectionRef()
+    wkt = gpwv3_wms.GetProjectionRef()
     assert wkt[:14] == 'GEOGCS["WGS 84', "Got wrong SRS: " + wkt
 
-    gt = gdaltest.wms_ds.GetGeoTransform()
+    gt = gpwv3_wms.GetGeoTransform()
     assert (
         gt[0] == pytest.approx(-180, abs=0.00001)
         and gt[3] == pytest.approx(85, abs=0.00001)
@@ -96,30 +94,25 @@ def wms_3():
         and gt[4] == pytest.approx(0, abs=0.00001)
     ), "wrong geotransform"
 
-    assert gdaltest.wms_ds.GetRasterBand(1).GetOverviewCount() >= 1, "no overviews!"
+    assert gpwv3_wms.GetRasterBand(1).GetOverviewCount() >= 1, "no overviews!"
 
-    assert (
-        gdaltest.wms_ds.GetRasterBand(1).DataType >= gdal.GDT_Byte
-    ), "wrong band data type"
+    assert gpwv3_wms.GetRasterBand(1).DataType >= gdal.GDT_Byte, "wrong band data type"
 
 
 ###############################################################################
 # Check checksum for a small region.
 
 
-def wms_4():
-
-    if gdaltest.wms_ds is None or not gdaltest.wms_srv1_ok:
-        pytest.skip()
+def test_wms_4(gpwv3_wms):
 
     with gdal.config_option("CPL_ACCUM_ERROR_MSG", "ON"), gdaltest.error_handler():
-        cs = gdaltest.wms_ds.GetRasterBand(1).Checksum(0, 0, 100, 100)
+        cs = gpwv3_wms.GetRasterBand(1).Checksum(0, 0, 100, 100)
 
     msg = gdal.GetLastErrorMsg()
     gdal.ErrorReset()
 
-    if msg is not None and msg.find("Service denied due to system overload") != -1:
-        pytest.skip(msg)
+    if msg and "Service denied due to system overload" not in msg:
+        pytest.fail(msg)
 
     assert cs == 57182, "Wrong checksum: " + str(cs)
 
