@@ -41,14 +41,17 @@
 typedef struct GDALSubdatasetInfo GDALSubdatasetInfoShadow;
 
 %rename (SubdatasetInfo) GDALSubdatasetInfoShadow;
-class GDALSubdatasetInfoShadow {
+
+struct GDALSubdatasetInfoShadow {
+
+    private:
+
+        GDALSubdatasetInfoShadow();
 
     public:
 
 %extend {
 
-        GDALSubdatasetInfoShadow() {
-        }
 
         ~GDALSubdatasetInfoShadow() {
             GDALDestroySubdatasetInfo(reinterpret_cast<GDALSubdatasetInfoH>(self));

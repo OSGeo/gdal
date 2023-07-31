@@ -38,10 +38,14 @@
  *
  * Drivers offering this functionality must override the parseFileName() method.
  */
-class GDALSubdatasetInfo
+struct GDALSubdatasetInfo
 {
 
   public:
+    /**
+     * @brief Construct a GDALSubdatasetInfo object from a subdataset file name descriptor.
+     * @param fileName          The subdataset file name descriptor.
+     */
     GDALSubdatasetInfo(const std::string &fileName);
 
     virtual ~GDALSubdatasetInfo() = default;
@@ -72,6 +76,7 @@ class GDALSubdatasetInfo
  */
     std::string GetSubdatasetName() const;
 
+    //! @cond Doxygen_Suppress
   protected:
     /**
      * This method is called once to parse the fileName and populate the member variables.
@@ -83,6 +88,7 @@ class GDALSubdatasetInfo
     std::string m_baseComponent;
     std::string m_subdatasetComponent;
     std::string m_driverPrefixComponent;
+    //! @endcond
 };
 
 #endif  // GDALSUBDATASETINFO_H

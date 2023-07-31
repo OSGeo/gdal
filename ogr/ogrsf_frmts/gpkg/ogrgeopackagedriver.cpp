@@ -250,10 +250,10 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo)
 /*                    OGRGeoPackageDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
-class OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
 {
   public:
-    OGRGeoPackageDriverSubdatasetInfo(const std::string &fileName)
+    explicit OGRGeoPackageDriverSubdatasetInfo(const std::string &fileName)
         : GDALSubdatasetInfo(fileName)
     {
     }
