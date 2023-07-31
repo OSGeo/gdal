@@ -33,7 +33,6 @@
 import base64
 import hashlib
 import os
-import shutil
 from time import sleep
 
 import gdaltest
@@ -222,7 +221,7 @@ def test_wms_7(metacarta_tms):
 # Test TMS with cache
 
 
-def test_wms_8():
+def test_wms_8(tmp_path):
 
     # server_url = 'http://tilecache.osgeo.org/wms-c/Basic.py'
     # wmstms_version = '/1.0.0/basic'
@@ -274,14 +273,14 @@ def test_wms_8():
     # </GDAL_WMS>""" % server_url_mask
 
     server_url = "http://tile.openstreetmap.org"
+    cache_dir = tmp_path / "gdalwmscache"
     wmstms_version = ""
     zero_tile = "/0/0/0.png"
     server_url_mask = server_url + "/${z}/${x}/${y}.png"
     ovr_upper_level = 16
-    tms = (
-        """<GDAL_WMS>
+    tms = f"""<GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>%s</ServerUrl>
+        <ServerUrl>{server_url_mask}</ServerUrl>
     </Service>
     <DataWindow>
         <UpperLeftX>-20037508.34</UpperLeftX>
@@ -297,15 +296,12 @@ def test_wms_8():
     <BlockSizeX>256</BlockSizeX>
     <BlockSizeY>256</BlockSizeY>
     <BandsCount>3</BandsCount>
-    <Cache><Path>./tmp/gdalwmscache</Path></Cache>
+    <Cache><Path>{cache_dir}</Path></Cache>
 </GDAL_WMS>"""
-        % server_url_mask
-    )
 
-    tms_nocache = (
-        """<GDAL_WMS>
+    tms_nocache = f"""<GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>%s</ServerUrl>
+        <ServerUrl>{server_url_mask}</ServerUrl>
     </Service>
     <DataWindow>
         <UpperLeftX>-20037508.34</UpperLeftX>
@@ -323,16 +319,6 @@ def test_wms_8():
     <BandsCount>3</BandsCount>
     <Cache/> <!-- this is needed for GDAL_DEFAULT_WMS_CACHE_PATH to be triggered -->
 </GDAL_WMS>"""
-        % server_url_mask
-    )
-
-    if gdaltest.gdalurlopen(server_url) is None:
-        pytest.skip(f"Could not read from {server_url}")
-
-    try:
-        shutil.rmtree("tmp/gdalwmscache")
-    except OSError:
-        pass
 
     ds = gdal.Open(tms)
 
@@ -348,7 +334,7 @@ def test_wms_8():
     data = ds.GetRasterBand(1).GetOverview(ovr_upper_level).ReadRaster(0, 0, 512, 512)
     if gdal.GetLastErrorMsg() != "":
         if gdaltest.gdalurlopen(server_url + zero_tile) is None:
-            pytest.skip()
+            pytest.skip(f"Could not read from {server_url + zero_tile}")
 
     ds = None
 
@@ -366,16 +352,13 @@ def test_wms_8():
     ).hexdigest()
 
     expected_files = [
-        "tmp/gdalwmscache/%s/%s/%s/%s" % (cache_subfolder, file1[0], file1[1], file1),
-        "tmp/gdalwmscache/%s/%s/%s/%s" % (cache_subfolder, file2[0], file2[1], file2),
-        "tmp/gdalwmscache/%s/%s/%s/%s" % (cache_subfolder, file3[0], file3[1], file3),
-        "tmp/gdalwmscache/%s/%s/%s/%s" % (cache_subfolder, file4[0], file4[1], file4),
+        cache_dir / cache_subfolder / file1[0] / file1[1] / file1,
+        cache_dir / cache_subfolder / file2[0] / file2[1] / file2,
+        cache_dir / cache_subfolder / file3[0] / file3[1] / file3,
+        cache_dir / cache_subfolder / file4[0] / file4[1] / file4,
     ]
     for expected_file in expected_files:
-        try:
-            os.stat(expected_file)
-        except OSError:
-            pytest.fail("%s should exist" % expected_file)
+        assert expected_file.exists()
 
     # Now, we should read from the cache
     ds = gdal.Open(tms)
@@ -389,7 +372,7 @@ def test_wms_8():
     # Replace the cache with fake data
     for expected_file in expected_files:
 
-        ds = gdal.GetDriverByName("GTiff").Create(expected_file, 256, 256, 4)
+        ds = gdal.GetDriverByName("GTiff").Create(str(expected_file), 256, 256, 4)
         ds.GetRasterBand(1).Fill(0)
         ds.GetRasterBand(2).Fill(0)
         ds.GetRasterBand(3).Fill(0)
@@ -404,7 +387,8 @@ def test_wms_8():
 
     # Test with GDAL_DEFAULT_WMS_CACHE_PATH
     # Now, we should read from the cache
-    with gdaltest.config_option("GDAL_DEFAULT_WMS_CACHE_PATH", "./tmp/gdalwmscache"):
+    with gdaltest.config_option("GDAL_DEFAULT_WMS_CACHE_PATH", str(cache_dir)):
+
         ds = gdal.Open(tms_nocache)
         cs = ds.GetRasterBand(1).GetOverview(ovr_upper_level).Checksum()
         ds = None
@@ -419,10 +403,9 @@ def test_wms_8():
             assert cs != 0, "cs == 0"
 
     # Check maxsize and expired tags
-    tms_expires = (
-        """<GDAL_WMS>
+    tms_expires = f"""<GDAL_WMS>
     <Service name="TMS">
-        <ServerUrl>%s</ServerUrl>
+        <ServerUrl>{server_url_mask}</ServerUrl>
     </Service>
     <DataWindow>
         <UpperLeftX>-20037508.34</UpperLeftX>
@@ -438,10 +421,8 @@ def test_wms_8():
     <BlockSizeX>256</BlockSizeX>
     <BlockSizeY>256</BlockSizeY>
     <BandsCount>3</BandsCount>
-    <Cache><Path>./tmp/gdalwmscache</Path><Expires>1</Expires></Cache>
+    <Cache><Path>{cache_dir}</Path><Expires>1</Expires></Cache>
 </GDAL_WMS>"""
-        % server_url_mask
-    )
 
     mod_time = 0
     for expected_file in expected_files:
@@ -695,6 +676,7 @@ def test_wms_15():
 # Test getting subdatasets from WMS-C Capabilities
 
 # server often returns a 504 after ages; this test can take minutes
+@gdaltest.disable_exceptions()
 @pytest.mark.slow()
 def test_wms_16():
 
@@ -703,7 +685,7 @@ def test_wms_16():
     if ds is None:
         srv = "http://demo.opengeo.org/geoserver/gwc/service/wms?"
         if gdaltest.gdalurlopen(srv) is None:
-            pytest.skip()
+            pytest.skip(f"Cannot read from {srv}")
         pytest.fail("open of %s failed." % name)
 
     subdatasets = ds.GetMetadata("SUBDATASETS")
@@ -982,14 +964,3 @@ def test_twms_inline_configuration():
     assert metadata["Change"] == "${time}=2021-02-10", "Change parameter not captured"
     assert metadata["TiledGroupName"] == tiled_group_name, "TIledGroupName not captured"
     ds = None
-
-
-def test_wms_cleanup():
-
-    gdaltest.wms_ds = None
-    gdaltest.clean_tmp()
-
-    try:
-        shutil.rmtree("gdalwmscache")
-    except OSError:
-        pass
