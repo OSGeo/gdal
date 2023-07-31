@@ -920,106 +920,54 @@ def test_wms_data_via_mrf():
 
 
 def test_twms_wmsmetadriver():
-    gdaltest.gts = """<WMS_Tile_Service version="0.1.0">
-  <TiledPatterns>
-    <OnlineResource xlink:href="https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"/>
-    <LatLonBoundingBox minx="-180" miny="-90" maxx="180" maxy="90" />
-    <TiledGroup>
-        <Name>MODIS Terra CorrectedReflectance TrueColor tileset</Name>
-        <Title>Corrected Reflectance (True Color, MODIS, Terra)</Title>
-        <Abstract>MODIS_Terra_CorrectedReflectance_TrueColor abstract</Abstract>
-        <Projection>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]</Projection>
-        <Pad>0</Pad>
-        <Bands>3</Bands>
-        <LatLonBoundingBox minx="-180" miny="-90" maxx="180" maxy="90" />
-        <Key>${time}</Key>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,88.875,-178.875,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,88.875,-178.875,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,87.75,-177.75,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,87.75,-177.75,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,85.5,-175.5,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,85.5,-175.5,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,81,-171,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,81,-171,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,72,-162,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,72,-162,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,54,-144,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,54,-144,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,18,-108,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,18,-108,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,-54,-36,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,-54,-36,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,-198,108,90 request=GetMap&layers=MODIS_Terra_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,-198,108,90]]></TilePattern>
-    </TiledGroup>
-    <TiledGroup>
-        <Name>MODIS Aqua CorrectedReflectance TrueColor tileset</Name>
-        <Title>Corrected Reflectance (True Color, MODIS, Aqua)</Title>
-        <Abstract>MODIS_Aqua_CorrectedReflectance_TrueColor abstract</Abstract>
-        <Projection>GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AUTHORITY["EPSG","4326"]]</Projection>
-        <Pad>0</Pad>
-        <Bands>3</Bands>
-        <LatLonBoundingBox minx="-180" miny="-90" maxx="180" maxy="90" />
-        <Key>${time}</Key>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,88.875,-178.875,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,88.875,-178.875,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,87.75,-177.75,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,87.75,-177.75,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,85.5,-175.5,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,85.5,-175.5,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,81,-171,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,81,-171,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,72,-162,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,72,-162,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,54,-144,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,54,-144,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,18,-108,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,18,-108,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,-54,-36,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,-54,-36,90]]></TilePattern>
-        <TilePattern><![CDATA[request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&time=${time}&width=512&height=512&bbox=-180,-198,108,90 request=GetMap&layers=MODIS_Aqua_CorrectedReflectance_TrueColor&srs=EPSG:4326&format=image%2Fjpeg&styles=&width=512&height=512&bbox=-180,-198,108,90]]></TilePattern>
-    </TiledGroup>
-  </TiledPatterns>
-</WMS_Tile_Service>"""
-    gdal.FileFromMemBuffer("/vsimem/twms.xml", gdaltest.gts)
-
-    ds = gdal.Open("/vsimem/twms.xml")
+    ds = gdal.Open("data/wms/gibs_twms.xml")
     assert ds is not None, "Open tiledWMS failed"
     gdaltest.subdatasets = ds.GetMetadata("SUBDATASETS")
     assert gdaltest.subdatasets, "Expected subdatasets"
     ds = None
-    gdal.Unlink("/vsimem/twms.xml")
 
 
 # This test requires the GIBS server to be available
+@gdaltest.disable_exceptions()
 def test_twms_GIBS():
-
-    pytest.skip(
-        "Failing because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
-    )
 
     baseURL = "https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"
 
-    try:
-        subdatasets = gdaltest.subdatasets
-    except Exception:
-        pytest.skip()
+    with gdal.Open("data/wms/gibs_twms.xml") as ds:
+        subdatasets = ds.GetMetadata("SUBDATASETS")
 
     # Connects to the server
     ds = gdal.Open(subdatasets["SUBDATASET_1_NAME"])
     if ds is None and gdaltest.gdalurlopen(baseURL + "request=GetTileService"):
-        pytest.fail()
+        pytest.xfail(
+            "May fail because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
+        )
     ds = None
 
     # Connects to the server
     options = ["Change=time:2021-02-10"]
     ds = gdal.OpenEx(subdatasets["SUBDATASET_1_NAME"], open_options=options)
     if ds is None and gdaltest.gdalurlopen(baseURL + "request=GetTileService"):
-        pytest.fail()
+        pytest.xfail(
+            "May fail because of SSL issue. See https://github.com/OSGeo/gdal/issues/3511#issuecomment-840718083"
+        )
     ds = None
 
 
 def test_twms_inline_configuration():
 
     baseURL = "https://gibs.earthdata.nasa.gov/twms/epsg4326/best/twms.cgi?"
-    try:
-        gts = gdaltest.gts
-        baseURL = gdaltest.baseURL
-    except Exception:
-        pytest.skip()
 
     # Try inline base64 configuration
-    wms_base64gts = base64.b64encode(gts.encode())
+    wms_base64gts = base64.b64encode(open("data/wms/gibs_twms.xml").read().encode())
     twms_string = '<GDAL_WMS><Service name="TiledWMS" ServerUrl="{}"><Configuration encoding="base64">{}</Configuration></Service></GDAL_WMS>'.format(
         baseURL, wms_base64gts.decode()
     )
-    gdal.FileFromMemBuffer("/vsimem/twms.xml", twms_string)
+    gdal.FileFromMemBuffer("/vsimem/ttms.xml", twms_string)
 
     # Open fails without a TiledGroupName
-    ds = gdal.Open("/vsimem/twms.xml")
+    with gdaltest.disable_exceptions():
+        ds = gdal.Open("/vsimem/ttms.xml")
     assert ds is None, "Expected failure to open"
 
     tiled_group_name = "MODIS Aqua CorrectedReflectance TrueColor tileset"
@@ -1028,7 +976,7 @@ def test_twms_inline_configuration():
         "TiledGroupName={}".format(tiled_group_name),
         "Change=time:{}".format(date),
     ]
-    ds = gdal.OpenEx("/vsimem/twms.xml", open_options=options)
+    ds = gdal.OpenEx("/vsimem/ttms.xml", open_options=options)
     assert ds is not None, "Open twms with open options failed"
     metadata = ds.GetMetadata("")
     assert metadata["Change"] == "${time}=2021-02-10", "Change parameter not captured"
@@ -1039,11 +987,8 @@ def test_twms_inline_configuration():
 def test_wms_cleanup():
 
     gdaltest.wms_ds = None
-    gdaltest.gts = None
-    gdaltest.subdatasets = None
     gdaltest.clean_tmp()
 
-    gdal.UnlinkBatch(["/vsimem/twms.xml", "/vsimem/twms.xml.aux.xml"])
     try:
         shutil.rmtree("gdalwmscache")
     except OSError:
