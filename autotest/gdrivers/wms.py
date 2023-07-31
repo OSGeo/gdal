@@ -164,13 +164,13 @@ def test_wms_6():
 # Test TMS
 
 
-def test_wms_7():
+@pytest.fixture()
+def metacarta_tms():
 
     srv = "http://tilecache.osgeo.org/wms-c/Basic.py"
-    gdaltest.metacarta_tms = False
+
     if gdaltest.gdalurlopen(srv) is None:
-        pytest.skip()
-    gdaltest.metacarta_tms = True
+        pytest.skip(f"Could not read from {srv}")
 
     tms = """<GDAL_WMS>
     <Service name="TMS">
@@ -193,7 +193,12 @@ def test_wms_7():
     <BandsCount>3</BandsCount>
 </GDAL_WMS>"""
 
-    ds = gdal.Open(tms)
+    return gdal.Open(tms)
+
+
+def test_wms_7(metacarta_tms):
+
+    ds = metacarta_tms
 
     assert ds is not None, "open failed."
 
@@ -322,7 +327,7 @@ def test_wms_8():
     )
 
     if gdaltest.gdalurlopen(server_url) is None:
-        pytest.skip()
+        pytest.skip(f"Could not read from {server_url}")
 
     try:
         shutil.rmtree("tmp/gdalwmscache")
@@ -540,10 +545,8 @@ def wms_11():
 # Test getting subdatasets from a TMS server
 
 
+@pytest.mark.usefixtures("metacarta_tms")
 def test_wms_12():
-
-    if gdaltest.metacarta_tms is not True:
-        pytest.skip()
 
     name = "http://tilecache.osgeo.org/wms-c/Basic.py/1.0.0/"
     ds = gdal.Open(name)
@@ -588,9 +591,9 @@ def test_wms_13():
 
     ds = gdal.Open("data/wms/DNEC_250K.vrt")
     if ds.ReadRaster(0, 0, 1024, 682) is None:
-        srv = "http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GeCapabilities"
+        srv = "http://wms.geobase.ca/wms-bin/cubeserv.cgi?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities"
         if gdaltest.gdalurlopen(srv) is None:
-            pytest.skip()
+            pytest.skip(f"Could not read from {srv}")
         pytest.fail()
     ds = None
 
