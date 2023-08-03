@@ -47,6 +47,16 @@ def module_disable_exceptions():
         yield
 
 
+@pytest.fixture(autouse=True)
+def setup_and_cleanup(tmp_path):
+
+    with gdal.config_option("PL_CACHE_PATH", str(tmp_path)):
+        yield
+
+    for path in gdal.ReadDirRecursive("/vsimem/") or []:
+        gdal.Unlink(path)
+
+
 ###############################################################################
 # Error: no API_KEY
 
@@ -133,7 +143,8 @@ def test_plmosaic_7():
 # Valid root with 2 mosaics
 
 
-def test_plmosaic_8():
+@pytest.fixture()
+def valid_root_with_two_mosaics(tmp_path):
 
     gdal.FileFromMemBuffer(
         "/vsimem/root",
@@ -179,6 +190,12 @@ def test_plmosaic_8():
 }""",
     )
 
+    yield
+
+
+@pytest.mark.usefixtures("valid_root_with_two_mosaics")
+def test_plmosaic_8():
+
     with gdal.config_option("PL_URL", "/vsimem/root"):
         ds = gdal.OpenEx("PLMosaic:", gdal.OF_RASTER, open_options=["API_KEY=foo"])
     assert ds.GetMetadata("SUBDATASETS") == {
@@ -194,6 +211,7 @@ def test_plmosaic_8():
 # Error case: invalid mosaic
 
 
+@pytest.mark.usefixtures("valid_root_with_two_mosaics")
 def test_plmosaic_9():
 
     with gdal.config_option("PL_URL", "/vsimem/root"), gdaltest.error_handler():
@@ -202,16 +220,16 @@ def test_plmosaic_9():
             gdal.OF_RASTER,
             open_options=["API_KEY=foo", "MOSAIC=does_not_exist"],
         )
-    assert (
-        ds is None
-        and gdal.GetLastErrorMsg().find("/vsimem/root/?name__is=does_not_exist") >= 0
-    )
+
+    assert ds is None
+    assert "/vsimem/root/?name__is=does_not_exist" in gdal.GetLastErrorMsg()
 
 
 ###############################################################################
 # Invalid mosaic definition: invalid JSON
 
 
+@pytest.mark.usefixtures("valid_root_with_two_mosaics")
 def test_plmosaic_9bis():
 
     gdal.FileFromMemBuffer("/vsimem/root/?name__is=my_mosaic", """{""")
@@ -228,6 +246,7 @@ def test_plmosaic_9bis():
 # Invalid mosaic definition: JSON without mosaics array
 
 
+@pytest.mark.usefixtures("valid_root_with_two_mosaics")
 def test_plmosaic_9ter():
 
     gdal.FileFromMemBuffer("/vsimem/root/?name__is=my_mosaic", """{}""")
@@ -429,12 +448,8 @@ def test_plmosaic_15():
 # Valid mosaic definition
 
 
-def test_plmosaic_16():
-
-    try:
-        shutil.rmtree("tmp/plmosaic_cache")
-    except OSError:
-        pass
+@pytest.fixture()
+def valid_mosaic():
 
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
@@ -476,6 +491,12 @@ def test_plmosaic_16():
 }""",
     )
 
+    yield
+
+
+@pytest.mark.usefixtures("valid_mosaic")
+def test_plmosaic_16():
+
     with gdal.config_option("PL_URL", "/vsimem/root"), gdaltest.error_handler():
         ds = gdal.OpenEx("PLMosaic:api_key=foo,unsupported_option=val", gdal.OF_RASTER)
     assert (
@@ -498,13 +519,16 @@ def test_plmosaic_16():
 # Open with explicit MOSAIC dataset open option
 
 
-def test_plmosaic_17():
+@pytest.mark.usefixtures("valid_mosaic")
+def test_plmosaic_17(tmp_path):
+
+    cache_path = str(tmp_path / "plmosaic_cache")
 
     with gdal.config_option("PL_URL", "/vsimem/root"):
         ds = gdal.OpenEx(
             "PLMosaic:",
             gdal.OF_RASTER,
-            open_options=["API_KEY=foo", "MOSAIC=my_mosaic", "CACHE_PATH=tmp"],
+            open_options=["API_KEY=foo", "MOSAIC=my_mosaic", f"CACHE_PATH={tmp_path}"],
         )
     assert ds is not None
     assert ds.GetMetadata() == {
@@ -539,7 +563,7 @@ def test_plmosaic_17():
     assert ds.GetRasterBand(1).GetOverview(0) is not None
 
     try:
-        shutil.rmtree("tmp/plmosaic_cache")
+        shutil.rmtree(cache_path)
     except OSError:
         pass
 
@@ -563,10 +587,10 @@ def test_plmosaic_17():
     with gdaltest.error_handler():
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
 
-    os.stat("tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif")
+    os.stat(f"{cache_path}/my_mosaic/my_mosaic_0-2047.tif")
 
     ds.FlushCache()
-    shutil.rmtree("tmp/plmosaic_cache")
+    shutil.rmtree(cache_path)
 
     # GeoTIFF but with wrong dimensions
     gdal.GetDriverByName("GTiff").Create(
@@ -575,10 +599,10 @@ def test_plmosaic_17():
     with gdaltest.error_handler():
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
 
-    os.stat("tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif")
+    os.stat(f"{cache_path}/my_mosaic/my_mosaic_0-2047.tif")
 
     ds.FlushCache()
-    shutil.rmtree("tmp/plmosaic_cache")
+    shutil.rmtree(cache_path)
 
     # Good GeoTIFF
     tmp_ds = gdal.GetDriverByName("GTiff").Create(
@@ -595,7 +619,7 @@ def test_plmosaic_17():
     val = struct.unpack("B", val)[0]
     assert val == 255
 
-    os.stat("tmp/plmosaic_cache/my_mosaic/my_mosaic_0-2047.tif")
+    os.stat(f"{cache_path}/my_mosaic/my_mosaic_0-2047.tif")
 
     ds.FlushCache()
 
@@ -622,7 +646,7 @@ def test_plmosaic_17():
     gdal.Unlink("/vsimem/root/my_mosaic_id/quads/0-2047/full")
     with gdal.config_option("PL_URL", "/vsimem/root"):
         ds = gdal.OpenEx(
-            "PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH=tmp,TRUST_CACHE=YES",
+            f"PLMosaic:API_KEY=foo,MOSAIC=my_mosaic,CACHE_PATH={tmp_path},TRUST_CACHE=YES",
             gdal.OF_RASTER,
         )
 
@@ -636,7 +660,7 @@ def test_plmosaic_17():
         ds = gdal.OpenEx(
             "PLMosaic:",
             gdal.OF_RASTER,
-            open_options=["API_KEY=foo", "MOSAIC=my_mosaic", "CACHE_PATH=tmp"],
+            open_options=["API_KEY=foo", "MOSAIC=my_mosaic", f"CACHE_PATH={tmp_path}"],
         )
 
     tmp_ds = gdal.GetDriverByName("GTiff").Create(
@@ -659,9 +683,8 @@ def test_plmosaic_17():
 # Test location info
 
 
+@pytest.mark.usefixtures("valid_mosaic")
 def test_plmosaic_18():
-
-    shutil.rmtree("tmp/plmosaic_cache")
 
     with gdal.config_option("PL_URL", "/vsimem/root"):
         ds = gdal.OpenEx(
@@ -710,7 +733,17 @@ def test_plmosaic_18():
 # Try error in saving in cache
 
 
+@pytest.mark.usefixtures("valid_mosaic")
 def test_plmosaic_19():
+
+    with gdal.GetDriverByName("GTiff").Create(
+        "/vsimem/root/my_mosaic_id/quads/0-2047/full",
+        4096,
+        4096,
+        4,
+        options=["INTERLEAVE=BAND", "SPARSE_OK=YES"],
+    ) as tmp_ds:
+        tmp_ds.GetRasterBand(1).Fill(254)
 
     with gdal.config_option("PL_URL", "/vsimem/root"):
         ds = gdal.OpenEx(
@@ -737,7 +770,17 @@ def test_plmosaic_19():
 # Try disabling cache
 
 
+@pytest.mark.usefixtures("valid_mosaic")
 def test_plmosaic_20():
+
+    with gdal.GetDriverByName("GTiff").Create(
+        "/vsimem/root/my_mosaic_id/quads/0-2047/full",
+        4096,
+        4096,
+        4,
+        options=["INTERLEAVE=BAND", "SPARSE_OK=YES"],
+    ) as tmp_ds:
+        tmp_ds.GetRasterBand(1).Fill(254)
 
     with gdal.config_option("PL_URL", "/vsimem/root"):
         ds = gdal.OpenEx(
@@ -759,6 +802,7 @@ def test_plmosaic_20():
 # Try use_tiles
 
 
+@pytest.mark.usefixtures("valid_mosaic")
 def test_plmosaic_21():
 
     with gdal.config_option("PL_URL", "/vsimem/root"):
@@ -876,11 +920,6 @@ def test_plmosaic_21():
 
 def test_plmosaic_with_bbox():
 
-    try:
-        shutil.rmtree("tmp/plmosaic_cache")
-    except OSError:
-        pass
-
     gdal.FileFromMemBuffer(
         "/vsimem/root/?name__is=my_mosaic",
         """{
@@ -979,29 +1018,3 @@ def test_plmosaic_with_bbox():
 </LocationInfo>
 """
     )
-
-
-###############################################################################
-#
-
-
-def test_plmosaic_cleanup():
-
-    gdal.Unlink("/vsimem/root_no_mosaics")
-    gdal.Unlink("/vsimem/root")
-    gdal.Unlink("/vsimem/root/?page=2")
-    gdal.Unlink("/vsimem/root/?name__is=my_mosaic")
-    gdal.Unlink("/vsimem/root/my_mosaic_id/quads/0-2047/full")
-    gdal.Unlink("/vsimem/root/my_mosaic_id/quads/0-2047/items")
-    gdal.Unlink("/vsimem/root/my_mosaic_id/quads/455-1272/full")
-    gdal.Unlink("/vsimem/root/my_mosaic_id/quads/455-1272/items")
-    gdal.Unlink("/vsimem/root/?name__is=mosaic_uint16")
-    gdal.Unlink("/vsimem/root/?name__is=mosaic_without_tiles")
-
-    if gdal.ReadDir("/vsimem/root") is not None:
-        print(gdal.ReadDir("/vsimem/root"))
-
-    try:
-        shutil.rmtree("tmp/plmosaic_cache")
-    except OSError:
-        pass
