@@ -205,8 +205,7 @@ public class GDALTestMultiDim
 
         ExtendedDataType dt = ExtendedDataType.Create(gdalconst.GDT_Int16);
 
-        //long[] sizes = new long[]{10,6};
-        long[] sizes = new long[]{2,2};
+        long[] sizes = new long[]{7,23};
 
         Dimension[] inDims = new Dimension[sizes.length];
         
