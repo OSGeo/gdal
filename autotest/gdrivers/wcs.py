@@ -32,6 +32,7 @@
 
 import os
 import re
+import shutil
 import urllib.parse
 from http.server import BaseHTTPRequestHandler
 
@@ -44,62 +45,46 @@ from osgeo import gdal
 pytestmark = pytest.mark.require_driver("WCS")
 
 ###############################################################################
-# Verify we have the driver.
-
-
-def test_wcs_1():
-
-    # NOTE - mloskot:
-    # This is a dirty hack checking if remote WCS service is online.
-    # Nothing genuine but helps to keep the buildbot waterfall green.
-    srv = "http://demo.opengeo.org/geoserver/wcs?"
-    if gdaltest.gdalurlopen(srv) is None:
-        gdaltest.wcs_drv = None
-
-    gdaltest.wcs_ds = None
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
-
-
-###############################################################################
 # Open the GeoServer WCS service.
 
 
-def wcs_2():
+@pytest.fixture(scope="module")
+def geoserver_ds(tmp_path_factory):
 
-    if gdaltest.wcs_drv is None:
-        pytest.skip()
+    wcs_fname = str(tmp_path_factory.mktemp("tmp") / "geoserver.wcs")
 
     # first, copy to tmp directory.
-    open("tmp/geoserver.wcs", "w").write(open("data/geoserver.wcs").read())
+    shutil.copy("data/geoserver.wcs", wcs_fname)
 
-    gdaltest.wcs_ds = None
-    gdaltest.wcs_ds = gdal.Open("tmp/geoserver.wcs")
+    try:
+        with gdal.config_option("GDAL_HTTP_CONNECTTIMEOUT", "3"):
+            return gdal.Open(wcs_fname)
+    except RuntimeError:
+        import xml.etree.ElementTree as ET
 
-    if gdaltest.wcs_ds is not None:
-        return
-    pytest.fail("open failed.")
+        tree = ET.parse(wcs_fname)
+
+        srv = next(tree.iter("ServiceURL")).text
+
+        pytest.skip(f"Could not connect to {srv}")
 
 
 ###############################################################################
 # Check various things about the configuration.
 
 
-def test_wcs_3():
-
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        pytest.skip()
+def test_wcs_3(geoserver_ds):
 
     assert (
-        gdaltest.wcs_ds.RasterXSize == 983
-        and gdaltest.wcs_ds.RasterYSize == 598
-        and gdaltest.wcs_ds.RasterCount == 3
+        geoserver_ds.RasterXSize == 983
+        and geoserver_ds.RasterYSize == 598
+        and geoserver_ds.RasterCount == 3
     ), "wrong size or bands"
 
-    wkt = gdaltest.wcs_ds.GetProjectionRef()
+    wkt = geoserver_ds.GetProjectionRef()
     assert wkt[:14] == 'GEOGCS["WGS 84', "Got wrong SRS: " + wkt
 
-    gt = gdaltest.wcs_ds.GetGeoTransform()
+    gt = geoserver_ds.GetGeoTransform()
     expected_gt = (
         -130.85167999999999,
         0.070036907426246159,
@@ -108,13 +93,10 @@ def test_wcs_3():
         0.0,
         -0.055867725752508368,
     )
-    for i in range(6):
-        assert gt[i] == pytest.approx(expected_gt[i], abs=0.00001), "wrong geotransform"
-
-    assert gdaltest.wcs_ds.GetRasterBand(1).GetOverviewCount() >= 1, "no overviews!"
+    gdaltest.check_geotransform(gt, expected_gt)
 
     assert (
-        gdaltest.wcs_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
+        geoserver_ds.GetRasterBand(1).DataType == gdal.GDT_Byte
     ), "wrong band data type"
 
 
@@ -122,12 +104,9 @@ def test_wcs_3():
 # Check checksum
 
 
-def test_wcs_4():
+def test_wcs_4(geoserver_ds):
 
-    if gdaltest.wcs_drv is None or gdaltest.wcs_ds is None:
-        pytest.skip()
-
-    cs = gdaltest.wcs_ds.GetRasterBand(1).Checksum()
+    cs = geoserver_ds.GetRasterBand(1).Checksum()
     assert cs == 58765, "Wrong checksum: " + str(cs)
 
 
@@ -604,14 +583,3 @@ def test_wcs_6(wcs_server, tmp_path, server, version):
 # parsing Capabilities and DescribeCoverage: test data in metadata and service files?
 
 ###############################################################################
-
-
-def test_wcs_cleanup():
-
-    gdaltest.wcs_drv = None
-    gdaltest.wcs_ds = None
-
-    try:
-        os.remove("tmp/geoserver.wcs")
-    except OSError:
-        pass
