@@ -24,4 +24,4 @@ RUN apk add \
     libxml2-dev
 
 COPY requirements.txt /tmp/
-RUN python3 -m pip install -U -r /tmp/requirements.txt
+RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt
