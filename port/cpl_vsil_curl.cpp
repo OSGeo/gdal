@@ -4030,8 +4030,13 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBase::Open(const char *pszFilename,
         }
         return nullptr;
     }
-    if (!IsAllowedFilename(pszFilename))
-        return nullptr;
+    if (!papszOptions ||
+        !CPLTestBool(CSLFetchNameValueDef(
+            papszOptions, "IGNORE_FILENAME_RESTRICTIONS", "NO")))
+    {
+        if (!IsAllowedFilename(pszFilename))
+            return nullptr;
+    }
 
     bool bListDir = true;
     bool bEmptyDir = false;
