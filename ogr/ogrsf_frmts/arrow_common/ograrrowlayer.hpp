@@ -3273,8 +3273,7 @@ static void OverrideArrowRelease(OGRArrowDataset *poDS, T *obj)
 
 inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
 {
-    if (m_poAttrQuery != nullptr ||
-        CPLTestBool(CPLGetConfigOption("OGR_ARROW_STREAM_BASE_IMPL", "NO")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_ARROW_STREAM_BASE_IMPL", "NO")))
     {
         return true;
     }
@@ -3325,7 +3324,7 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
         }
     }
 
-    if (m_poFilterGeom)
+    if (m_poAttrQuery || m_poFilterGeom)
     {
         struct ArrowSchema *psSchema = &m_sCachedSchema;
         if (psSchema->release)
@@ -3572,7 +3571,7 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         OverrideArrowRelease(m_poArrowDS, out_array);
 
-        if (m_poFilterGeom)
+        if (m_poAttrQuery || m_poFilterGeom)
         {
             PostFilterArrowArray(&m_sCachedSchema, out_array);
             if (out_array->length == 0)
