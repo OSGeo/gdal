@@ -1740,10 +1740,11 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             }
         }
         else if( (strncmp(arrowType, "tsm:", 4) == 0 || // DateTime in milliseconds
-                  strncmp(arrowType, "tsu:", 4) == 0) &&  // DateTime in microseconds
+                  strncmp(arrowType, "tsu:", 4) == 0 || // DateTime in microseconds
+                  strncmp(arrowType, "tsn:", 4) == 0) &&  // DateTime in nanoseconds
                  schemaField->n_children == 0 )
         {
-            // DateTime(64) in milliseconds
+            // DateTime(64)
             if( arrayField->n_buffers != 2 )
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1756,7 +1757,8 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
             // create the dtype string
             PyObject *pDTypeString = PyUnicode_FromString(
                 strncmp(arrowType, "tsm:", 4) == 0 ? "datetime64[ms]" :
-                                                     "datetime64[us]");
+                strncmp(arrowType, "tsu:", 4) == 0 ? "datetime64[us]" :
+                                                     "datetime64[ns]");
             // out type description object
             PyArray_Descr *pDescr = NULL;
             PyArray_DescrConverter(pDTypeString, &pDescr);
