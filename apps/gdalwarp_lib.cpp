@@ -495,7 +495,12 @@ static CPLErr CropToCutline(const OGRGeometry *poCutline, CSLConstList papszTO,
         auto poGeomInSrcSRS =
             std::unique_ptr<OGRGeometry>(poCutlineGeom->clone());
         if (poCTCutlineToSrc)
-            poGeomInSrcSRS->transform(poCTCutlineToSrc.get());
+        {
+            poGeomInSrcSRS.reset(OGRGeometryFactory::transformWithOptions(
+                poGeomInSrcSRS.get(), poCTCutlineToSrc.get(), nullptr));
+            if (!poGeomInSrcSRS)
+                return CE_Failure;
+        }
 
         // Do not use a smaller epsilon, otherwise it could cause useless
         // segmentization (https://github.com/OSGeo/gdal/issues/4826)
@@ -504,7 +509,13 @@ static CPLErr CropToCutline(const OGRGeometry *poCutline, CSLConstList papszTO,
         {
             poTransformedGeom.reset(poGeomInSrcSRS->clone());
             if (poCTSrcToDst)
-                poTransformedGeom->transform(poCTSrcToDst.get());
+            {
+                poTransformedGeom.reset(
+                    OGRGeometryFactory::transformWithOptions(
+                        poTransformedGeom.get(), poCTSrcToDst.get(), nullptr));
+                if (!poTransformedGeom)
+                    return CE_Failure;
+            }
             poTransformedGeom->getEnvelope(&sCurEnvelope);
             if (nIter > 0 || !poCTSrcToDst)
             {
@@ -4698,6 +4709,22 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
         }
     }
 
+    std::unique_ptr<OGRSpatialReference> poDstSRS;
+    const char *pszThisTargetSRS = CSLFetchNameValue(papszTO_In, "DST_SRS");
+    if (pszThisTargetSRS)
+    {
+        poDstSRS = cpl::make_unique<OGRSpatialReference>();
+        poDstSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poDstSRS->SetFromUserInput(pszThisTargetSRS) != OGRERR_NONE)
+        {
+            return CE_Failure;
+        }
+    }
+    else if (poRasterSRS)
+    {
+        poDstSRS.reset(poRasterSRS->Clone());
+    }
+
     /* -------------------------------------------------------------------- */
     /*      Extract the cutline SRS.                                        */
     /* -------------------------------------------------------------------- */
@@ -4748,14 +4775,22 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
                  "Cutline results may be incorrect.");
     }
 
-    CPLStringList aosTO(papszTO_In);
-    if (poCutlineSRS)
+    const OGRSpatialReference *poCutlineOrTargetSRS =
+        poCutlineSRS ? poCutlineSRS : poDstSRS.get();
+    std::unique_ptr<OGRCoordinateTransformation> poCTCutlineToSrc;
+    if (poCutlineOrTargetSRS && poRasterSRS &&
+        !poCutlineOrTargetSRS->IsSame(poRasterSRS.get()))
     {
-        char *pszCutlineSRS_WKT = nullptr;
+        poCTCutlineToSrc.reset(OGRCreateCoordinateTransformation(
+            poCutlineOrTargetSRS, poRasterSRS.get()));
+    }
 
-        poCutlineSRS->exportToWkt(&pszCutlineSRS_WKT);
-        aosTO.SetNameValue("DST_SRS", pszCutlineSRS_WKT);
-        CPLFree(pszCutlineSRS_WKT);
+    CPLStringList aosTO(papszTO_In);
+
+    if (pszThisTargetSRS && !osProjection.empty())
+    {
+        // Avoid any reprojection when using the GenImgProjTransformer
+        aosTO.SetNameValue("DST_SRS", osProjection.c_str());
     }
 
     /* -------------------------------------------------------------------- */
@@ -4769,7 +4804,7 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     /*      Transform the geometry to pixel/line coordinates.               */
     /* -------------------------------------------------------------------- */
     /* The cutline transformer will *invert* the hSrcImageTransformer */
-    /* so it will convert from the cutline SRS to the source pixel/line */
+    /* so it will convert from the source SRS to the source pixel/line */
     /* coordinates */
     CutlineTransformer oTransformer(GDALCreateGenImgProjTransformer2(
         GDALDataset::ToHandle(poSrcDS), nullptr, aosTO.List()));
@@ -4786,7 +4821,20 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
     // we densify the input geometry before doing a new reprojection
     const double dfMaxLengthInSpatUnits =
         GetMaximumSegmentLength(poMultiPolygon.get());
-    OGRErr eErr = poMultiPolygon->transform(&oTransformer);
+    OGRErr eErr = OGRERR_NONE;
+    if (poCTCutlineToSrc)
+    {
+        poMultiPolygon.reset(OGRGeometryFactory::transformWithOptions(
+            poMultiPolygon.get(), poCTCutlineToSrc.get(), nullptr));
+        if (!poMultiPolygon)
+        {
+            eErr = OGRERR_FAILURE;
+            poMultiPolygon.reset(poCutline->clone());
+            poMultiPolygon->transform(poCTCutlineToSrc.get());
+        }
+    }
+    if (poMultiPolygon->transform(&oTransformer) != OGRERR_NONE)
+        eErr = OGRERR_FAILURE;
     const double dfInitialMaxLengthInPixels =
         GetMaximumSegmentLength(poMultiPolygon.get());
 
@@ -4857,7 +4905,19 @@ static CPLErr TransformCutlineToSource(GDALDataset *poSrcDS,
                          dfSegmentSize, pszWKT);
                 CPLFree(pszWKT);
             }
-            eErr = poMultiPolygon->transform(&oTransformer);
+            eErr = OGRERR_NONE;
+            if (poCTCutlineToSrc)
+            {
+                poMultiPolygon.reset(OGRGeometryFactory::transformWithOptions(
+                    poMultiPolygon.get(), poCTCutlineToSrc.get(), nullptr));
+                if (!poMultiPolygon)
+                {
+                    eErr = OGRERR_FAILURE;
+                    break;
+                }
+            }
+            if (poMultiPolygon->transform(&oTransformer) != OGRERR_NONE)
+                eErr = OGRERR_FAILURE;
             if (eErr == OGRERR_NONE)
             {
                 const double dfMaxLengthInPixels =
