@@ -436,6 +436,8 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     VSILFILE *fp = nullptr;
     // This is the number of files returned in a S3 directory listing operation
     constexpr uint64_t MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING = 1000;
+    const char *const apszOpenOptions[] = {"IGNORE_FILENAME_RESTRICTIONS=YES",
+                                           nullptr};
     if ((m_osDimSeparator == "/" && !m_anBlockSize.empty() &&
          m_anBlockSize.back() > MAX_TILES_ALLOWED_FOR_DIRECTORY_LISTING) ||
         (m_osDimSeparator != "/" &&
@@ -444,11 +446,11 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
         // Avoid issuing ReadDir() when a lot of files are expected
         CPLConfigOptionSetter optionSetter("GDAL_DISABLE_READDIR_ON_OPEN",
                                            "YES", true);
-        fp = VSIFOpenL(osFilename.c_str(), "rb");
+        fp = VSIFOpenEx2L(osFilename.c_str(), "rb", 0, apszOpenOptions);
     }
     else
     {
-        fp = VSIFOpenL(osFilename.c_str(), "rb");
+        fp = VSIFOpenEx2L(osFilename.c_str(), "rb", 0, apszOpenOptions);
     }
     if (fp == nullptr)
     {
