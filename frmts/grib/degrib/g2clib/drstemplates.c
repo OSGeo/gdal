@@ -14,7 +14,7 @@ static const struct drstemplate templatesdrs[MAXDRSTEMP] = {
          { 4, 1, 0, {1} },
              // 5.50: Spectral Data - Simple Packing
          { 50, 5, 0, {4,-2,-2,1,4} },
-             // 5.51: Spherical Harmonics data - Complex packing 
+             // 5.51: Spherical Harmonics data - Complex packing
          { 51, 10, 0, {4,-2,-2,1,-4,2,2,2,4,1} },
 //           // 5.1: Matrix values at gridpoint - Simple packing
 //         { 1, 15, 1, {4,-2,-2,1,1,1,4,2,2,1,1,1,1,1,1} },
@@ -22,6 +22,8 @@ static const struct drstemplate templatesdrs[MAXDRSTEMP] = {
          { 40, 7, 0, {4,-2,-2,1,1,1,1} },
              // 5.41: Grid point data - PNG encoding
          { 41, 5, 0, {4,-2,-2,1,1} },
+             // 5.42: Grid point and spectral data - CCSDS szip
+         { 42, 8, 0, {4,-2,-2,1,1,1,1,-2} },
              // 5.40000: Grid point data - JPEG2000 encoding
          { 40000, 7, 0, {4,-2,-2,1,1,1,1} },
              // 5.40010: Grid point data - PNG encoding

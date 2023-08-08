@@ -2230,3 +2230,15 @@ def test_grib_grib2_wrong_earth_shape():
         ds = gdal.Open("data/grib/byte_wrong_earth_shape.grib2")
         assert ds.GetSpatialRef().GetSemiMajor() == 6377563.396
         assert ds.GetSpatialRef().GetSemiMinor() == 6377563.396
+
+
+# Test reading file with template 5.42 / CCSDS szip/aes compression
+
+
+def test_grib_grib2_template_5_42_CCDS_aes_decompression():
+
+    ds = gdal.Open("data/grib/template_5_42_ccsds_aec.grb2")
+    if gdal.GetDriverByName("GRIB").GetMetadataItem("HAVE_AEC"):
+        assert ds.GetRasterBand(1).Checksum() == 41970
+    else:
+        assert ds.GetRasterBand(1).Checksum() == -1

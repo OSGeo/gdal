@@ -21,6 +21,7 @@ RUN apt-get update -y \
     git \
     gnupg \
     lcov \
+    libaec-dev \
     libarmadillo-dev \
     libblosc-dev \
     libboost-dev \

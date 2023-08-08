@@ -67,6 +67,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libdeflate-dev${APT_ARCH_SUFFIX} libblosc-dev${APT_ARCH_SUFFIX} liblz4-dev${APT_ARCH_SUFFIX} libbz2-dev${APT_ARCH_SUFFIX} \
        libbrotli-dev${APT_ARCH_SUFFIX} \
        libarchive-dev${APT_ARCH_SUFFIX} \
+       libaec-dev${APT_ARCH_SUFFIX}
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
@@ -310,6 +311,7 @@ RUN apt-get update \
         libdeflate0 libblosc1 liblz4-1 \
         libbrotli1 \
         libarchive13 \
+        libaec0 \
         python-is-python3 \
         # pil for antialias option of gdal2tiles
         python3-pil \
