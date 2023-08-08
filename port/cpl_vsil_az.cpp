@@ -379,7 +379,9 @@ bool VSIDIRAz::IssueListDir()
     }
 
     poHandleHelper->ResetQueryParameters();
-    const CPLString osBaseURL(poHandleHelper->GetURLNoKVP());
+    std::string osBaseURL(poHandleHelper->GetURLNoKVP());
+    if (osBaseURL.back() == '/')
+        osBaseURL.pop_back();
 
     CURL *hCurlHandle = curl_easy_init();
 
