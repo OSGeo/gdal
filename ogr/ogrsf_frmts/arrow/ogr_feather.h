@@ -96,9 +96,15 @@ class OGRFeatherLayer final : public OGRArrowLayer
                          const std::string &key);
     OGRwkbGeometryType ComputeGeometryColumnType(int iGeomCol, int iCol) const;
     bool ReadNextBatch() override;
+
+    void InvalidateCachedBatches() override;
+
     OGRFeature *GetNextRawFeature();
 
     virtual bool CanRunNonForcedGetExtent() override;
+
+    bool
+    CanPostFilterArrowArray(const struct ArrowSchema *schema) const override;
 
     bool ReadNextBatchFile();
     bool ReadNextBatchStream();

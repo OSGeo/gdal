@@ -172,6 +172,7 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRGeometry *ReadGeometry(int iGeomField, const arrow::Array *array,
                               int64_t nIdxInBatch) const;
     virtual bool ReadNextBatch() = 0;
+    virtual void InvalidateCachedBatches() = 0;
     OGRFeature *GetNextRawFeature();
 
     virtual bool CanRunNonForcedGetExtent()

@@ -584,6 +584,31 @@ void OGRFeatherLayer::TryToCacheFirstTwoBatches()
 }
 
 /************************************************************************/
+/*                          CanPostFilterArrowArray()                   */
+/************************************************************************/
+
+bool OGRFeatherLayer::CanPostFilterArrowArray(
+    const struct ArrowSchema *schema) const
+{
+    if (m_poRecordBatchReader)
+        return false;
+    return OGRArrowLayer::CanPostFilterArrowArray(schema);
+}
+
+/************************************************************************/
+/*                     InvalidateCachedBatches()                        */
+/************************************************************************/
+
+void OGRFeatherLayer::InvalidateCachedBatches()
+{
+    if (m_poRecordBatchFileReader)
+    {
+        m_iRecordBatch = -1;
+        ResetReading();
+    }
+}
+
+/************************************************************************/
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 

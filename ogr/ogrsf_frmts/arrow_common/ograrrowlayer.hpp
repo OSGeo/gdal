@@ -2297,6 +2297,11 @@ inline OGRErr OGRArrowLayer::SetAttributeFilter(const char *pszFilter)
 {
     m_asAttributeFilterConstraints.clear();
 
+    // When changing filters, we need to invalidate cached batches, as
+    // PostFilterArrowArray() has potentially modified array contents
+    if (m_poAttrQuery)
+        InvalidateCachedBatches();
+
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
     if (eErr != OGRERR_NONE)
         return eErr;
@@ -2985,6 +2990,11 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
                                             OGRGeometry *poGeomIn)
 
 {
+    // When changing filters, we need to invalidate cached batches, as
+    // PostFilterArrowArray() has potentially modified array contents
+    if (m_poFilterGeom)
+        InvalidateCachedBatches();
+
     m_bSpatialFilterIntersectsLayerExtent = true;
     if (iGeomField >= 0 && iGeomField < GetLayerDefn()->GetGeomFieldCount())
     {

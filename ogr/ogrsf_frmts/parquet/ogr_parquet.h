@@ -95,6 +95,9 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     void EstablishFeatureDefn();
     bool CreateRecordBatchReader(int iStartingRowGroup);
     bool ReadNextBatch() override;
+
+    void InvalidateCachedBatches() override;
+
     OGRwkbGeometryType ComputeGeometryColumnType(int iGeomCol,
                                                  int iParquetCol) const;
     void CreateFieldFromSchema(
@@ -167,6 +170,9 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
         return "PARQUET";
     }
     bool ReadNextBatch() override;
+
+    void InvalidateCachedBatches() override;
+
     bool GetFastExtent(int iGeomField, OGREnvelope *psExtent) const override;
 
   public:
