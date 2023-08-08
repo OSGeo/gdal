@@ -273,44 +273,56 @@ static void RemoveConflictingMetadata(GDALMajorObjectH hObj,
 static bool GetResampleAlg(const char *pszResampling,
                            GDALResampleAlg &eResampleAlg);
 
-static double GetAverageSegmentLength(OGRGeometryH hGeom)
+static double GetAverageSegmentLength(const OGRGeometry *poGeom)
 {
-    if (hGeom == nullptr)
+    if (!poGeom)
         return 0;
-    switch (wkbFlatten(OGR_G_GetGeometryType(hGeom)))
+    switch (wkbFlatten(poGeom->getGeometryType()))
     {
         case wkbLineString:
         {
-            if (OGR_G_GetPointCount(hGeom) == 0)
-                return 0;
+            const auto *poLS = poGeom->toLineString();
             double dfSum = 0;
-            for (int i = 0; i < OGR_G_GetPointCount(hGeom) - 1; i++)
+            const int nPoints = poLS->getNumPoints();
+            if (nPoints == 0)
+                return 0;
+            for (int i = 0; i < nPoints - 1; i++)
             {
-                double dfX1 = OGR_G_GetX(hGeom, i);
-                double dfY1 = OGR_G_GetY(hGeom, i);
-                double dfX2 = OGR_G_GetX(hGeom, i + 1);
-                double dfY2 = OGR_G_GetY(hGeom, i + 1);
+                double dfX1 = poLS->getX(i);
+                double dfY1 = poLS->getY(i);
+                double dfX2 = poLS->getX(i + 1);
+                double dfY2 = poLS->getY(i + 1);
                 double dfDX = dfX2 - dfX1;
                 double dfDY = dfY2 - dfY1;
                 dfSum += sqrt(dfDX * dfDX + dfDY * dfDY);
             }
-            return dfSum / OGR_G_GetPointCount(hGeom);
+            return dfSum / nPoints;
         }
 
         case wkbPolygon:
+        {
+            if (poGeom->IsEmpty())
+                return 0;
+            double dfSum = 0;
+            for (const auto *poLS : poGeom->toPolygon())
+            {
+                dfSum += GetAverageSegmentLength(poLS);
+            }
+            return dfSum / (1 + poGeom->toPolygon()->getNumInteriorRings());
+        }
+
         case wkbMultiPolygon:
         case wkbMultiLineString:
         case wkbGeometryCollection:
         {
-            if (OGR_G_GetGeometryCount(hGeom) == 0)
+            if (poGeom->IsEmpty())
                 return 0;
             double dfSum = 0;
-            for (int i = 0; i < OGR_G_GetGeometryCount(hGeom); i++)
+            for (const auto *poSubGeom : poGeom->toGeometryCollection())
             {
-                dfSum +=
-                    GetAverageSegmentLength(OGR_G_GetGeometryRef(hGeom, i));
+                dfSum += GetAverageSegmentLength(poSubGeom);
             }
-            return dfSum / OGR_G_GetGeometryCount(hGeom);
+            return dfSum / poGeom->toGeometryCollection()->getNumGeometries();
         }
 
         default:
@@ -392,7 +404,7 @@ static CPLString GetSrcDSProjection(GDALDatasetH hDS, CSLConstList papszTO)
 /*                           CropToCutline()                            */
 /************************************************************************/
 
-static CPLErr CropToCutline(OGRGeometryH hCutline, CSLConstList papszTO,
+static CPLErr CropToCutline(const OGRGeometry *poCutline, CSLConstList papszTO,
                             CSLConstList papszWarpOptions, int nSrcCount,
                             GDALDatasetH *pahSrcDS, double &dfMinX,
                             double &dfMinY, double &dfMaxX, double &dfMaxY,
@@ -403,29 +415,28 @@ static CPLErr CropToCutline(OGRGeometryH hCutline, CSLConstList papszTO,
     // space using the source SRS. To be consistent, we reproject
     // the cutline from cutline SRS to source SRS and then from source SRS to
     // target SRS.
-    OGRSpatialReferenceH hCutlineSRS = OGR_G_GetSpatialReference(hCutline);
+    const OGRSpatialReference *poCutlineSRS = poCutline->getSpatialReference();
     const char *pszThisTargetSRS = CSLFetchNameValue(papszTO, "DST_SRS");
-    OGRSpatialReferenceH hSrcSRS = nullptr;
-    OGRSpatialReferenceH hDstSRS = nullptr;
+    std::unique_ptr<OGRSpatialReference> poSrcSRS;
+    std::unique_ptr<OGRSpatialReference> poDstSRS;
 
     const CPLString osThisSourceSRS =
         GetSrcDSProjection(nSrcCount > 0 ? pahSrcDS[0] : nullptr, papszTO);
     if (!osThisSourceSRS.empty())
     {
-        hSrcSRS = OSRNewSpatialReference(nullptr);
-        OSRSetAxisMappingStrategy(hSrcSRS, OAMS_TRADITIONAL_GIS_ORDER);
-        if (OSRSetFromUserInput(hSrcSRS, osThisSourceSRS) != OGRERR_NONE)
+        poSrcSRS = cpl::make_unique<OGRSpatialReference>();
+        poSrcSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poSrcSRS->SetFromUserInput(osThisSourceSRS) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot compute bounding box of cutline.");
-            OSRDestroySpatialReference(hSrcSRS);
             return CE_Failure;
         }
     }
-    else if (pszThisTargetSRS == nullptr && hCutlineSRS == nullptr)
+    else if (!pszThisTargetSRS && !poCutlineSRS)
     {
         OGREnvelope sEnvelope;
-        OGR_G_GetEnvelope(hCutline, &sEnvelope);
+        poCutline->getEnvelope(&sEnvelope);
 
         dfMinX = sEnvelope.MinX;
         dfMinY = sEnvelope.MinY;
@@ -442,61 +453,60 @@ static CPLErr CropToCutline(OGRGeometryH hCutline, CSLConstList papszTO,
         return CE_Failure;
     }
 
-    if (pszThisTargetSRS != nullptr)
+    if (pszThisTargetSRS)
     {
-        hDstSRS = OSRNewSpatialReference(nullptr);
-        OSRSetAxisMappingStrategy(hDstSRS, OAMS_TRADITIONAL_GIS_ORDER);
-        if (OSRSetFromUserInput(hDstSRS, pszThisTargetSRS) != OGRERR_NONE)
+        poDstSRS = cpl::make_unique<OGRSpatialReference>();
+        poDstSRS->SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+        if (poDstSRS->SetFromUserInput(pszThisTargetSRS) != OGRERR_NONE)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Cannot compute bounding box of cutline.");
-            OSRDestroySpatialReference(hSrcSRS);
-            OSRDestroySpatialReference(hDstSRS);
             return CE_Failure;
         }
     }
     else
-        hDstSRS = OSRClone(hSrcSRS);
+    {
+        poDstSRS.reset(poSrcSRS->Clone());
+    }
 
-    OGRGeometryH hCutlineGeom = OGR_G_Clone(hCutline);
-    OGRSpatialReferenceH hCutlineOrTargetSRS =
-        hCutlineSRS ? hCutlineSRS : hDstSRS;
-    OGRCoordinateTransformationH hCTCutlineToSrc = nullptr;
-    OGRCoordinateTransformationH hCTSrcToDst = nullptr;
+    auto poCutlineGeom = std::unique_ptr<OGRGeometry>(poCutline->clone());
+    const OGRSpatialReference *poCutlineOrTargetSRS =
+        poCutlineSRS ? poCutlineSRS : poDstSRS.get();
+    std::unique_ptr<OGRCoordinateTransformation> poCTCutlineToSrc;
+    std::unique_ptr<OGRCoordinateTransformation> poCTSrcToDst;
 
-    if (!OSRIsSame(hCutlineOrTargetSRS, hSrcSRS))
-        hCTCutlineToSrc =
-            OCTNewCoordinateTransformation(hCutlineOrTargetSRS, hSrcSRS);
-    if (!OSRIsSame(hSrcSRS, hDstSRS))
-        hCTSrcToDst = OCTNewCoordinateTransformation(hSrcSRS, hDstSRS);
-
-    OSRDestroySpatialReference(hSrcSRS);
-    hSrcSRS = nullptr;
-
-    OSRDestroySpatialReference(hDstSRS);
-    hDstSRS = nullptr;
+    if (!poCutlineOrTargetSRS->IsSame(poSrcSRS.get()))
+    {
+        poCTCutlineToSrc.reset(OGRCreateCoordinateTransformation(
+            poCutlineOrTargetSRS, poSrcSRS.get()));
+    }
+    if (!poSrcSRS->IsSame(poDstSRS.get()))
+    {
+        poCTSrcToDst.reset(
+            OGRCreateCoordinateTransformation(poSrcSRS.get(), poDstSRS.get()));
+    }
 
     // Reproject cutline to target SRS, by doing intermediate vertex
     // densification in source SRS.
-    if (hCTSrcToDst != nullptr || hCTCutlineToSrc != nullptr)
+    if (poCTSrcToDst || poCTCutlineToSrc)
     {
         OGREnvelope sLastEnvelope, sCurEnvelope;
-        OGRGeometryH hTransformedGeom = nullptr;
-        OGRGeometryH hGeomInSrcSRS = OGR_G_Clone(hCutlineGeom);
-        if (hCTCutlineToSrc != nullptr)
-            OGR_G_Transform(hGeomInSrcSRS, hCTCutlineToSrc);
+        std::unique_ptr<OGRGeometry> poTransformedGeom;
+        auto poGeomInSrcSRS =
+            std::unique_ptr<OGRGeometry>(poCutlineGeom->clone());
+        if (poCTCutlineToSrc)
+            poGeomInSrcSRS->transform(poCTCutlineToSrc.get());
 
         // Do not use a smaller epsilon, otherwise it could cause useless
         // segmentization (https://github.com/OSGeo/gdal/issues/4826)
         constexpr double epsilon = 1e-10;
         for (int nIter = 0; nIter < 10; nIter++)
         {
-            OGR_G_DestroyGeometry(hTransformedGeom);
-            hTransformedGeom = OGR_G_Clone(hGeomInSrcSRS);
-            if (hCTSrcToDst != nullptr)
-                OGR_G_Transform(hTransformedGeom, hCTSrcToDst);
-            OGR_G_GetEnvelope(hTransformedGeom, &sCurEnvelope);
-            if (nIter > 0 || hCTSrcToDst == nullptr)
+            poTransformedGeom.reset(poGeomInSrcSRS->clone());
+            if (poCTSrcToDst)
+                poTransformedGeom->transform(poCTSrcToDst.get());
+            poTransformedGeom->getEnvelope(&sCurEnvelope);
+            if (nIter > 0 || !poCTSrcToDst)
             {
                 if (std::abs(sCurEnvelope.MinX - sLastEnvelope.MinX) <=
                         epsilon *
@@ -515,31 +525,23 @@ static CPLErr CropToCutline(OGRGeometryH hCutline, CSLConstList papszTO,
                 }
             }
             double dfAverageSegmentLength =
-                GetAverageSegmentLength(hGeomInSrcSRS);
-            OGR_G_Segmentize(hGeomInSrcSRS, dfAverageSegmentLength / 4);
+                GetAverageSegmentLength(poGeomInSrcSRS.get());
+            poGeomInSrcSRS->segmentize(dfAverageSegmentLength / 4);
 
             sLastEnvelope = sCurEnvelope;
         }
 
-        OGR_G_DestroyGeometry(hGeomInSrcSRS);
-
-        OGR_G_DestroyGeometry(hCutlineGeom);
-        hCutlineGeom = hTransformedGeom;
+        poCutlineGeom = std::move(poTransformedGeom);
     }
 
-    if (hCTCutlineToSrc)
-        OCTDestroyCoordinateTransformation(hCTCutlineToSrc);
-    if (hCTSrcToDst)
-        OCTDestroyCoordinateTransformation(hCTSrcToDst);
-
     OGREnvelope sEnvelope;
-    OGR_G_GetEnvelope(hCutlineGeom, &sEnvelope);
+    poCutlineGeom->getEnvelope(&sEnvelope);
 
     dfMinX = sEnvelope.MinX;
     dfMinY = sEnvelope.MinY;
     dfMaxX = sEnvelope.MaxX;
     dfMaxY = sEnvelope.MaxY;
-    if (hCTSrcToDst == nullptr && nSrcCount > 0 && psOptions->dfXRes == 0.0 &&
+    if (!poCTSrcToDst && nSrcCount > 0 && psOptions->dfXRes == 0.0 &&
         psOptions->dfYRes == 0.0)
     {
         // No raster reprojection: stick on exact pixel boundaries of the source
@@ -585,8 +587,6 @@ static CPLErr CropToCutline(OGRGeometryH hCutline, CSLConstList papszTO,
             }
         }
     }
-
-    OGR_G_DestroyGeometry(hCutlineGeom);
 
     return CE_None;
 }
@@ -1569,11 +1569,11 @@ static bool ProcessCutlineOptions(int nSrcCount, GDALDatasetH *pahSrcDS,
     if (psOptions->bCropToCutline && hCutline != nullptr)
     {
         CPLErr eError;
-        eError =
-            CropToCutline(hCutline, psOptions->aosTransformerOptions.List(),
-                          psOptions->aosWarpOptions.List(), nSrcCount, pahSrcDS,
-                          psOptions->dfMinX, psOptions->dfMinY,
-                          psOptions->dfMaxX, psOptions->dfMaxY, psOptions);
+        eError = CropToCutline(OGRGeometry::FromHandle(hCutline),
+                               psOptions->aosTransformerOptions.List(),
+                               psOptions->aosWarpOptions.List(), nSrcCount,
+                               pahSrcDS, psOptions->dfMinX, psOptions->dfMinY,
+                               psOptions->dfMaxX, psOptions->dfMaxY, psOptions);
         if (eError == CE_Failure)
         {
             return false;
