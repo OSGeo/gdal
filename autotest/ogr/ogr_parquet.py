@@ -1210,6 +1210,21 @@ def test_ogr_parquet_statistics():
 
 
 ###############################################################################
+# Test MIN/MAX on a UINT32 field on a Parquet 2 file
+
+
+def test_ogr_parquet_statistics_uint32_parquet2_file_format():
+
+    ds = ogr.Open("data/parquet/uint32_parquet2.parquet")
+    with ds.ExecuteSQL(
+        "SELECT MIN(uint32), MAX(uint32) FROM uint32_parquet2"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_uint32"] == 1
+        assert f["MAX_uint32"] == 4000000001
+
+
+###############################################################################
 # Test setting/getting creator
 
 
