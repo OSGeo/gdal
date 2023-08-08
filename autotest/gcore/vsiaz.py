@@ -389,6 +389,8 @@ def test_vsiaz_fake_readdir():
         dir_contents = gdal.ReadDir("/vsiaz/")
     assert dir_contents == ["mycontainer1", "mycontainer2"]
 
+    assert gdal.VSIStatL("/vsiaz/mycontainer1", gdal.VSI_STAT_CACHE_ONLY) is not None
+
 
 ###############################################################################
 # Test AZURE_STORAGE_SAS_TOKEN option with fake server
