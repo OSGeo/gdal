@@ -3267,17 +3267,30 @@ def test_ogr_shape_74():
 def test_ogr_shape_75():
 
     ds = gdal.OpenEx("data/poly.shp")
-    assert ds.GetFileList() == [
+    filelist_PRJ = [
         "data/poly.shp",
         "data/poly.shx",
         "data/poly.dbf",
         "data/poly.PRJ",
-    ] or ds.GetFileList() == [
+    ]
+    filelist_prj = [
         "data/poly.shp",
         "data/poly.shx",
         "data/poly.dbf",
         "data/poly.prj",
     ]
+
+    if (
+        sys.platform in ("win32", "darwin")
+        and "poly.PRJ" in os.listdir("data")
+        and os.path.exists("data/poly.prj")
+    ):
+        # On Windows & Mac and if the filesystem is case insensitive (we detect
+        # this by checking for the lowercase name...), then expect the uppercase
+        # variant to be returned
+        assert ds.GetFileList() == filelist_PRJ
+    else:
+        assert ds.GetFileList() == filelist_PRJ or ds.GetFileList() == filelist_prj
     ds = None
 
     ds = gdal.OpenEx("data/idlink.dbf")

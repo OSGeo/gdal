@@ -4796,7 +4796,8 @@ TEST_F(test_cpl, VSIGetCanonicalFilename)
 #else
             // On other operating systems, VSIGetCanonicalFilename()
             // could not be implemented, so be laxer in the check
-            EXPECT_STREQ(CPLString(pszRes).tolower().c_str(), osLC.c_str());
+            EXPECT_STREQ(CPLString(pszRes).tolower().c_str(),
+                         CPLString(osLC).tolower().c_str());
 #endif
             CPLFree(pszRes);
         }
