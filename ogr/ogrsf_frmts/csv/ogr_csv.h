@@ -64,7 +64,16 @@ void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS);
 /*                             OGRCSVLayer                              */
 /************************************************************************/
 
-class OGRCSVLayer final : public OGRLayer
+class IOGRCSVLayer CPL_NON_FINAL
+{
+  public:
+    IOGRCSVLayer() = default;
+    virtual ~IOGRCSVLayer() = default;
+
+    virtual OGRLayer *GetLayer() = 0;
+};
+
+class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 {
   public:
     enum class StringQuoting
@@ -144,6 +153,11 @@ class OGRCSVLayer final : public OGRLayer
                 const char *pszFilename, int bNew, int bInWriteMode,
                 char chDelimiter);
     virtual ~OGRCSVLayer() override;
+
+    OGRLayer *GetLayer() override
+    {
+        return this;
+    }
 
     const char *GetFilename() const
     {
@@ -245,16 +259,15 @@ class OGRCSVLayer final : public OGRLayer
 
 class OGRCSVDataSource final : public OGRDataSource
 {
-    char *pszName;
+    char *pszName = nullptr;
 
-    OGRLayer **papoLayers;
-    int nLayers;
+    std::vector<std::unique_ptr<IOGRCSVLayer>> m_apoLayers{};
 
-    bool bUpdate;
+    bool bUpdate = false;
 
-    CPLString osDefaultCSVName;
+    CPLString osDefaultCSVName{};
 
-    bool bEnableGeometryFields;
+    bool bEnableGeometryFields = false;
 
   public:
     OGRCSVDataSource();
@@ -273,7 +286,7 @@ class OGRCSVDataSource final : public OGRDataSource
 
     int GetLayerCount() override
     {
-        return nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
     OGRLayer *GetLayer(int) override;
 
