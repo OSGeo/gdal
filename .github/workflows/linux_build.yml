@@ -152,7 +152,7 @@ jobs:
           docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} || true
           docker pull ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG_CLEAN} || true
           docker pull ${CONTAINER_NAME_FULL} || true
-          echo "DOCKER_BUILD_CACHE_FROM=--cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
+          echo "DOCKER_BUILD_CACHE_FROM=--build-arg BUILDKIT_INLINE_CACHE=1 --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_REGISTRY}/osgeo/${CONTAINER_NAME}:${CACHE_CONTAINER_TAG_CLEAN} --cache-from ${CONTAINER_NAME_FULL}" >>${GITHUB_ENV}
 
       - name: Prepare build context
         run: |
@@ -164,7 +164,6 @@ jobs:
           DOCKER_BUILDKIT: 1
         run: |
           docker build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
             ${DOCKER_BUILD_CACHE_FROM} \
             -t ${CONTAINER_NAME_FULL} \
             -f .github/workflows/${{ matrix.container }}/Dockerfile.ci \
