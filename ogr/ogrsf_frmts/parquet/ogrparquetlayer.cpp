@@ -1079,6 +1079,17 @@ bool OGRParquetLayer::ReadNextBatch()
 }
 
 /************************************************************************/
+/*                     InvalidateCachedBatches()                        */
+/************************************************************************/
+
+void OGRParquetLayer::InvalidateCachedBatches()
+{
+    m_iRecordBatch = -1;
+    m_bSingleBatch = false;
+    ResetReading();
+}
+
+/************************************************************************/
 /*                        SetIgnoredFields()                            */
 /************************************************************************/
 
@@ -1217,9 +1228,7 @@ OGRErr OGRParquetLayer::SetIgnoredFields(const char **papszFields)
     ComputeConstraintsArrayIdx();
 
     // Full invalidation
-    m_iRecordBatch = -1;
-    m_bSingleBatch = false;
-    ResetReading();
+    InvalidateCachedBatches();
 
     return eErr;
 }

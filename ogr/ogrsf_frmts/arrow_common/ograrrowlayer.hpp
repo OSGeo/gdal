@@ -2297,6 +2297,11 @@ inline OGRErr OGRArrowLayer::SetAttributeFilter(const char *pszFilter)
 {
     m_asAttributeFilterConstraints.clear();
 
+    // When changing filters, we need to invalidate cached batches, as
+    // PostFilterArrowArray() has potentially modified array contents
+    if (m_poAttrQuery)
+        InvalidateCachedBatches();
+
     OGRErr eErr = OGRLayer::SetAttributeFilter(pszFilter);
     if (eErr != OGRERR_NONE)
         return eErr;
@@ -2985,6 +2990,11 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
                                             OGRGeometry *poGeomIn)
 
 {
+    // When changing filters, we need to invalidate cached batches, as
+    // PostFilterArrowArray() has potentially modified array contents
+    if (m_poFilterGeom)
+        InvalidateCachedBatches();
+
     m_bSpatialFilterIntersectsLayerExtent = true;
     if (iGeomField >= 0 && iGeomField < GetLayerDefn()->GetGeomFieldCount())
     {
@@ -3263,8 +3273,7 @@ static void OverrideArrowRelease(OGRArrowDataset *poDS, T *obj)
 
 inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
 {
-    if (m_poAttrQuery != nullptr ||
-        CPLTestBool(CPLGetConfigOption("OGR_ARROW_STREAM_BASE_IMPL", "NO")))
+    if (CPLTestBool(CPLGetConfigOption("OGR_ARROW_STREAM_BASE_IMPL", "NO")))
     {
         return true;
     }
@@ -3315,7 +3324,7 @@ inline bool OGRArrowLayer::UseRecordBatchBaseImplementation() const
         }
     }
 
-    if (m_poFilterGeom)
+    if (m_poAttrQuery || m_poFilterGeom)
     {
         struct ArrowSchema *psSchema = &m_sCachedSchema;
         if (psSchema->release)
@@ -3562,7 +3571,7 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         OverrideArrowRelease(m_poArrowDS, out_array);
 
-        if (m_poFilterGeom)
+        if (m_poAttrQuery || m_poFilterGeom)
         {
             PostFilterArrowArray(&m_sCachedSchema, out_array);
             if (out_array->length == 0)

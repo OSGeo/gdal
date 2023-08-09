@@ -120,7 +120,7 @@ def _check_test_parquet(
     assert srs is not None
     assert srs.GetAuthorityCode(None) == "4326"
     assert lyr_defn.GetGeomFieldDefn(0).GetType() == ogr.wkbPoint
-    assert lyr_defn.GetFieldCount() == 71
+    assert lyr_defn.GetFieldCount() == 73
     got_field_defns = [
         (
             lyr_defn.GetFieldDefn(i).GetName(),
@@ -151,6 +151,8 @@ def _check_test_parquet(
         ("timestamp_ms_gmt_plus_2", "DateTime", "None", 0, 0),
         ("timestamp_ms_gmt_minus_0215", "DateTime", "None", 0, 0),
         ("timestamp_s_no_tz", "DateTime", "None", 0, 0),
+        ("timestamp_us_no_tz", "DateTime", "None", 0, 0),
+        ("timestamp_ns_no_tz", "DateTime", "None", 0, 0),
         ("time32_s", "Time", "None", 0, 0),
         ("time32_ms", "Time", "None", 0, 0),
         ("time64_us", "Integer64", "None", 0, 0),
@@ -249,10 +251,12 @@ def _check_test_parquet(
     assert f["float64"] == 1.5
     assert f["string"] == "abcd"
     assert f["large_string"] == "abcd"
-    assert f["timestamp_ms_gmt"] == "2019/01/01 14:00:00+00"
-    assert f["timestamp_ms_gmt_plus_2"] == "2019/01/01 14:00:00+02"
-    assert f["timestamp_ms_gmt_minus_0215"] == "2019/01/01 14:00:00-0215"
+    assert f["timestamp_ms_gmt"] == "2019/01/01 14:00:00.500+00"
+    assert f["timestamp_ms_gmt_plus_2"] == "2019/01/01 14:00:00.500+02"
+    assert f["timestamp_ms_gmt_minus_0215"] == "2019/01/01 14:00:00.500-0215"
     assert f["timestamp_s_no_tz"] == "2019/01/01 14:00:00"
+    assert f["timestamp_us_no_tz"] == "2019/01/01 14:00:00.001"
+    assert f["timestamp_ns_no_tz"] == "2019/01/01 14:00:00"
     assert f["time32_s"] == "01:02:03"
     assert f["time32_ms"] == "01:02:03.456"
     assert f["time64_us"] == 3723000000
@@ -1115,8 +1119,8 @@ def test_ogr_parquet_statistics():
             "timestamp_ms_gmt",
             "DateTime",
             "None",
-            "2019/01/01 14:00:00+00",
-            "2019/01/01 14:00:00+00",
+            "2019/01/01 14:00:00.500+00",
+            "2019/01/01 14:00:00.500+00",
         ),
     ]
 
@@ -1203,6 +1207,21 @@ def test_ogr_parquet_statistics():
 
     finally:
         gdal.Unlink(outfilename)
+
+
+###############################################################################
+# Test MIN/MAX on a UINT32 field on a Parquet 2 file
+
+
+def test_ogr_parquet_statistics_uint32_parquet2_file_format():
+
+    ds = ogr.Open("data/parquet/uint32_parquet2.parquet")
+    with ds.ExecuteSQL(
+        "SELECT MIN(uint32), MAX(uint32) FROM uint32_parquet2"
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert f["MIN_uint32"] == 1
+        assert f["MAX_uint32"] == 4000000001
 
 
 ###############################################################################
@@ -1578,6 +1597,8 @@ def test_ogr_parquet_arrow_stream_numpy():
         "timestamp_ms_gmt_plus_2",
         "timestamp_ms_gmt_minus_0215",
         "timestamp_s_no_tz",
+        "timestamp_us_no_tz",
+        "timestamp_ns_no_tz",
         "time32_s",
         "time32_ms",
         "time64_us",
@@ -1698,7 +1719,6 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
         if (
             fld_defn.GetName().startswith("map_")
             or fld_defn.GetName().startswith("struct_")
-            or fld_defn.GetName().startswith("fixed_size_")
             or fld_defn.GetType()
             not in (
                 ogr.OFTInteger,
@@ -1744,7 +1764,8 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     assert batch["float64"][0] == 4.5
     assert batch["string"][0] == b"c"
     assert batch["large_string"][0] == b"c"
-    assert batch["timestamp_ms_gmt"][0] == numpy.datetime64("2019-01-01T14:00:00.000")
+    assert batch["fixed_size_binary"][0] == b"\x00\x01"
+    assert batch["timestamp_ms_gmt"][0] == numpy.datetime64("2019-01-01T14:00:00.500")
     assert batch["time32_s"][0] == datetime.time(0, 0, 4)
     assert batch["time32_ms"][0] == datetime.time(0, 0, 0, 4000)
     assert batch["time64_us"][0] == datetime.time(0, 0, 0, 4)
@@ -1762,6 +1783,247 @@ def test_ogr_parquet_arrow_stream_numpy_fast_spatial_filter():
     stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
     batches = [batch for batch in stream]
     assert len(batches) == 0
+
+
+###############################################################################
+# Test SetAttributeFilter() and arrow stream interface
+
+
+@pytest.mark.parametrize(
+    "filter",
+    [
+        "boolean = 0",
+        "boolean = 1",
+        "uint8 = 2",
+        "uint8 = -1",
+        "int8 = -1",
+        "int8 = 0",
+        "int8 IS NULL",
+        "int8 IS NOT NULL",
+        "uint16 = 10001",
+        "uint32 = 1000000001",
+        "int32 = -1000000000",
+        "uint64 = 100000000001",
+        "int64 = -100000000000",
+        "float32 = 2.5",
+        "float64 = 2.5",
+        "float64 != 2.5",
+        "string = 'd'",
+        "string != 'd'",
+        "large_string = 'd'",
+        "large_string != 'd'",
+        "binary = '0001'",
+        "large_binary = '0001'",
+        "fixed_size_binary = '0001'",
+        "timestamp_ms_gmt = '2019-01-01T14:00:00.500'",
+        "timestamp_ms_gmt != '2019-01-01T14:00:00.500'",
+        "timestamp_ms_gmt_plus_2 = '2019-01-01T14:00:00.500+02'",
+        "timestamp_ms_gmt_plus_2 != '2019-01-01T14:00:00.500+02'",
+        "timestamp_s_no_tz = '2019-01-01T14:00:00'",
+        "timestamp_s_no_tz != '2019-01-01T14:00:00'",
+        "timestamp_us_no_tz = '2019-01-01T14:00:00.001'",
+        "timestamp_us_no_tz != '2019-01-01T14:00:00.001'",
+        "timestamp_ns_no_tz = '2019-01-01T14:00:00'",
+        "timestamp_ns_no_tz != '2019-01-01T14:00:00'",
+        "time32_s = '00:00:05'",
+        "time32_ms = '00:00:00.002'",
+        "time64_us = 3723000000",
+        # not dealt by GetArrowStreamAsNumPy
+        # "time64_ns = 3723000000456",
+        "date32 = '1970-01-02'",
+        "date64 = '1970-01-02'",
+    ],
+)
+def test_ogr_parquet_arrow_stream_numpy_fast_attribute_filter(filter):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    ignored_fields = ["decimal128", "decimal256", "time64_ns"]
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        fld_defn = lyr_defn.GetFieldDefn(i)
+        if (
+            fld_defn.GetName().startswith("map_")
+            or fld_defn.GetName().startswith("struct_")
+            or fld_defn.GetType()
+            not in (
+                ogr.OFTInteger,
+                ogr.OFTInteger64,
+                ogr.OFTReal,
+                ogr.OFTString,
+                ogr.OFTBinary,
+                ogr.OFTTime,
+                ogr.OFTDate,
+                ogr.OFTDateTime,
+            )
+        ):
+            ignored_fields.append(fld_defn.GetNameRef())
+    lyr.SetIgnoredFields(ignored_fields)
+    lyr.SetAttributeFilter(filter)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fc = 0
+    for batch in stream:
+        fc += len(batch["uint8"])
+    assert fc == lyr.GetFeatureCount()
+    if filter not in ("uint8 = -1", "int8 = 0"):
+        assert fc != 0
+
+
+###############################################################################
+# Test attribute filter through ArrowStream API
+# We use the pyarrow API, to be able to test we correctly deal with decimal
+# data type
+
+
+@pytest.mark.parametrize("OGR_ARROW_STREAM_BASE_IMPL", [None, "YES"])
+@pytest.mark.parametrize(
+    "test_file", ["data/parquet/test.parquet", "data/parquet/test_single_group.parquet"]
+)
+def test_ogr_parquet_arrow_stream_fast_attribute_filter_pyarrow(
+    OGR_ARROW_STREAM_BASE_IMPL, test_file
+):
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.Open(test_file)
+    lyr = ds.GetLayer(0)
+    ignored_fields = []
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        fld_defn = lyr_defn.GetFieldDefn(i)
+        if (
+            fld_defn.GetName().startswith("map_")
+            or fld_defn.GetName().startswith("struct_")
+            or fld_defn.GetType()
+            not in (
+                ogr.OFTInteger,
+                ogr.OFTInteger64,
+                ogr.OFTReal,
+                ogr.OFTString,
+                ogr.OFTBinary,
+                ogr.OFTTime,
+                ogr.OFTDate,
+                ogr.OFTDateTime,
+            )
+        ):
+            ignored_fields.append(fld_defn.GetNameRef())
+    lyr.SetIgnoredFields(ignored_fields)
+
+    lyr.SetAttributeFilter("boolean = 0")
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+    with gdaltest.config_option(
+        "OGR_ARROW_STREAM_BASE_IMPL", OGR_ARROW_STREAM_BASE_IMPL
+    ):
+        stream = lyr.GetArrowStreamAsPyArrow()
+    uint8_vals = []
+    decimal128_vals = []
+    fixed_size_binary_vals = []
+    for batch in stream:
+        for x in batch.field("uint8"):
+            uint8_vals.append(x.as_py())
+        for x in batch.field("decimal128"):
+            decimal128_vals.append(float(x.as_py()))
+        for x in batch.field("fixed_size_binary"):
+            fixed_size_binary_vals.append(x.as_py())
+    assert uint8_vals == [2, 4]
+    assert decimal128_vals == [-1234.567, 1234.567]
+    assert fixed_size_binary_vals == [b"\x00\x00", b"\x01\x00"]
+
+    lyr.SetAttributeFilter("boolean = 1")
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+    with gdaltest.config_option(
+        "OGR_ARROW_STREAM_BASE_IMPL", OGR_ARROW_STREAM_BASE_IMPL
+    ):
+        stream = lyr.GetArrowStreamAsPyArrow()
+    uint8_vals = []
+    decimal128_vals = []
+    fixed_size_binary_vals = []
+    for batch in stream:
+        for x in batch.field("uint8"):
+            uint8_vals.append(x.as_py())
+        for x in batch.field("decimal128"):
+            decimal128_vals.append(float(x.as_py()))
+        for x in batch.field("fixed_size_binary"):
+            fixed_size_binary_vals.append(x.as_py())
+    assert uint8_vals == [1, 5]
+    assert decimal128_vals == [1234.567, -1234.567]
+    assert fixed_size_binary_vals == [b"\x00\x01", b"\x00\x01"]
+
+
+def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_decimal128():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("decimal128 = -1234.567")
+    # Fast filtering on decimal data type not implemented for now
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 0
+    stream = lyr.GetArrowStreamAsPyArrow()
+    batches = [batch for batch in stream]
+    assert len(batches[0].field("uint8")) == 2
+    assert batches[0].field("uint8")[0].as_py() == 2
+    assert batches[0].field("uint8")[1].as_py() == 5
+    assert batches[0].field("decimal128")[0].as_py() == -1234.567
+    assert batches[0].field("decimal128")[1].as_py() == -1234.567
+
+
+def test_ogr_parquet_arrow_stream_fast_attribute_filter_on_time64_ns():
+    pytest.importorskip("pyarrow")
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    lyr.SetAttributeFilter("time64_ns = 3723000000456")
+    # Fast filtering on decimal data type not implemented for now
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 0
+    stream = lyr.GetArrowStreamAsPyArrow()
+    batches = [batch for batch in stream]
+    assert len(batches[0].field("uint8")) == 1
+    assert batches[0].field("uint8")[0].as_py() == 1
+
+
+###############################################################################
+# Combine both spatial and attribute filters through ArrowStream API
+
+
+def test_ogr_parquet_arrow_stream_numpy_fast_spatial_and_attribute_filter():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    ds = ogr.Open("data/parquet/test.parquet")
+    lyr = ds.GetLayer(0)
+    ignored_fields = ["decimal128", "decimal256", "time64_ns"]
+    lyr_defn = lyr.GetLayerDefn()
+    for i in range(lyr_defn.GetFieldCount()):
+        fld_defn = lyr_defn.GetFieldDefn(i)
+        if (
+            fld_defn.GetName().startswith("map_")
+            or fld_defn.GetName().startswith("struct_")
+            or fld_defn.GetType()
+            not in (
+                ogr.OFTInteger,
+                ogr.OFTInteger64,
+                ogr.OFTReal,
+                ogr.OFTString,
+                ogr.OFTBinary,
+                ogr.OFTTime,
+                ogr.OFTDate,
+                ogr.OFTDateTime,
+            )
+        ):
+            ignored_fields.append(fld_defn.GetNameRef())
+    lyr.SetIgnoredFields(ignored_fields)
+    lyr.SetAttributeFilter("uint8 = 4 or uint8 = 5")
+    lyr.SetSpatialFilterRect(0, 2, 3, 2)
+    assert lyr.TestCapability(ogr.OLCFastGetArrowStream) == 1
+
+    stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+    fc = 0
+    for batch in stream:
+        fc += len(batch["uint8"])
+    assert fc == lyr.GetFeatureCount()
 
 
 ###############################################################################

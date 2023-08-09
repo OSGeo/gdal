@@ -245,6 +245,9 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     const auto numRowGroups = metadata->num_row_groups();
                     bool bFound = false;
                     std::string sVal;
+
+                    const auto &arrowType = poLayer->GetArrowFieldTypes()[idx];
+
                     if (numRowGroups > 0)
                     {
                         const auto rowGroup0columnChunk =
@@ -269,13 +272,30 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                                 }
                                 else if (physicalType == parquet::Type::INT32)
                                 {
-                                    eType = OFTInteger;
-                                    if (poFieldDefn->GetSubType() == OFSTInt16)
-                                        eSubType = OFSTInt16;
-                                    sField.Integer =
-                                        GetStats<parquet::Int32Statistics>::min(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
+                                    if (arrowType->id() == arrow::Type::UINT32)
+                                    {
+                                        // With parquet file version 2.0,
+                                        // statistics of uint32 fields are
+                                        // stored as signed int32 values...
+                                        eType = OFTInteger64;
+                                        int nVal =
+                                            GetStats<parquet::Int32Statistics>::
+                                                min(metadata, numRowGroups,
+                                                    iCol, bFound);
+                                        sField.Integer64 =
+                                            static_cast<uint32_t>(nVal);
+                                    }
+                                    else
+                                    {
+                                        eType = OFTInteger;
+                                        if (poFieldDefn->GetSubType() ==
+                                            OFSTInt16)
+                                            eSubType = OFSTInt16;
+                                        sField.Integer =
+                                            GetStats<parquet::Int32Statistics>::
+                                                min(metadata, numRowGroups,
+                                                    iCol, bFound);
+                                    }
                                 }
                                 else if (physicalType == parquet::Type::INT64)
                                 {
@@ -330,13 +350,30 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                                 }
                                 else if (physicalType == parquet::Type::INT32)
                                 {
-                                    eType = OFTInteger;
-                                    if (poFieldDefn->GetSubType() == OFSTInt16)
-                                        eSubType = OFSTInt16;
-                                    sField.Integer =
-                                        GetStats<parquet::Int32Statistics>::max(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
+                                    if (arrowType->id() == arrow::Type::UINT32)
+                                    {
+                                        // With parquet file version 2.0,
+                                        // statistics of uint32 fields are
+                                        // stored as signed int32 values...
+                                        eType = OFTInteger64;
+                                        int nVal =
+                                            GetStats<parquet::Int32Statistics>::
+                                                max(metadata, numRowGroups,
+                                                    iCol, bFound);
+                                        sField.Integer64 =
+                                            static_cast<uint32_t>(nVal);
+                                    }
+                                    else
+                                    {
+                                        eType = OFTInteger;
+                                        if (poFieldDefn->GetSubType() ==
+                                            OFSTInt16)
+                                            eSubType = OFSTInt16;
+                                        sField.Integer =
+                                            GetStats<parquet::Int32Statistics>::
+                                                max(metadata, numRowGroups,
+                                                    iCol, bFound);
+                                    }
                                 }
                                 else if (physicalType == parquet::Type::INT64)
                                 {
@@ -459,7 +496,6 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                         break;
                     }
 
-                    const auto &arrowType = poLayer->GetArrowFieldTypes()[idx];
                     if (eType == OFTInteger64 &&
                         poFieldDefn->GetType() == OFTDateTime &&
                         arrowType->id() == arrow::Type::TIMESTAMP)
