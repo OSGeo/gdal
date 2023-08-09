@@ -31,6 +31,7 @@
 # DEALINGS IN THE SOFTWARE.
 # ***************************************************************************/
 
+import math
 import sys
 
 from osgeo import gdal, osr
@@ -434,7 +435,7 @@ def main(argv=None):
 
         dfNoData = hBand.GetNoDataValue()
         if dfNoData is not None:
-            if dfNoData != dfNoData:
+            if math.isnan(dfNoData):
                 print("  NoData Value=nan")
             else:
                 print("  NoData Value=%.18g" % dfNoData)
