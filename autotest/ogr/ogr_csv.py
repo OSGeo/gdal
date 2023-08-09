@@ -441,9 +441,11 @@ def ogr_csv_check_testcsvt(lyr):
 
 def test_ogr_csv_11():
 
-    csv_ds = ogr.Open("data/csv/testcsvt.csv")
+    csv_ds = gdal.OpenEx("data/csv/testcsvt.csv")
 
     assert csv_ds is not None
+
+    assert csv_ds.GetFileList() == ["data/csv/testcsvt.csv", "data/csv/testcsvt.csvt"]
 
     lyr = csv_ds.GetLayerByName("testcsvt")
 

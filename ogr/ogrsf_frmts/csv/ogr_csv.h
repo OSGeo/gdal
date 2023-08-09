@@ -71,6 +71,8 @@ class IOGRCSVLayer CPL_NON_FINAL
     virtual ~IOGRCSVLayer() = default;
 
     virtual OGRLayer *GetLayer() = 0;
+
+    virtual std::vector<std::string> GetFileList() = 0;
 };
 
 class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
@@ -103,6 +105,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     OGRCSVGeometryFormat eGeometryFormat;
 
     char *pszFilename;
+    std::string m_osCSVTFilename{};
     bool bCreateCSVT;
     bool bWriteBOM;
     char szDelimiter[2] = {0};
@@ -163,6 +166,9 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     {
         return pszFilename;
     }
+
+    std::vector<std::string> GetFileList() override;
+
     char GetDelimiter() const
     {
         return szDelimiter[0];
@@ -289,6 +295,8 @@ class OGRCSVDataSource final : public OGRDataSource
         return static_cast<int>(m_apoLayers.size());
     }
     OGRLayer *GetLayer(int) override;
+
+    char **GetFileList() override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    OGRSpatialReference *poSpatialRef = nullptr,

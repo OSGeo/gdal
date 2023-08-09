@@ -338,14 +338,11 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
         const char *pszExt = CPLGetExtension(pszFilename);
         if (pszExt[0])
         {
-            char *dname = CPLStrdup(CPLGetDirname(pszFilename));
-            char *fname = CPLStrdup(CPLGetBasename(pszFilename));
-            VSILFILE *fpCSVT =
-                VSIFOpenL(CPLFormFilename(dname, fname, ".csvt"), "r");
-            CPLFree(dname);
-            CPLFree(fname);
+            std::string osCSVTFilename = CPLResetExtension(pszFilename, "csvt");
+            VSILFILE *fpCSVT = VSIFOpenL(osCSVTFilename.c_str(), "r");
             if (fpCSVT != nullptr)
             {
+                m_osCSVTFilename = osCSVTFilename;
                 VSIRewindL(fpCSVT);
                 papszFieldTypes =
                     CSVReadParseLine3L(fpCSVT, m_nMaxLineSize, ",",
@@ -858,6 +855,19 @@ void OGRCSVLayer::BuildFeatureDefn(const char *pszNfdcGeomField,
 
     CSLDestroy(papszTokens);
     CSLDestroy(papszFieldTypes);
+}
+
+/************************************************************************/
+/*                             GetFileList()                            */
+/************************************************************************/
+
+std::vector<std::string> OGRCSVLayer::GetFileList()
+{
+    std::vector<std::string> ret;
+    ret.emplace_back(pszFilename);
+    if (!m_osCSVTFilename.empty())
+        ret.emplace_back(m_osCSVTFilename);
+    return ret;
 }
 
 /************************************************************************/

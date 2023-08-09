@@ -68,6 +68,11 @@ class OGRCSVEditableLayerSynchronizer final
 
     virtual OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,
                                       OGRLayer **ppoDecoratedLayer) override;
+
+    std::vector<std::string> GetFileList()
+    {
+        return m_poCSVLayer->GetFileList();
+    }
 };
 
 /************************************************************************/
@@ -315,6 +320,13 @@ class OGRCSVEditableLayer final : public IOGRCSVLayer, public OGREditableLayer
     OGRLayer *GetLayer() override
     {
         return this;
+    }
+
+    std::vector<std::string> GetFileList() override
+    {
+        return cpl::down_cast<OGRCSVEditableLayerSynchronizer *>(
+                   m_poSynchronizer)
+            ->GetFileList();
     }
 
     virtual OGRErr CreateField(OGRFieldDefn *poField,
@@ -1143,19 +1155,12 @@ OGRErr OGRCSVDataSource::DeleteLayer(int iLayer)
         return OGRERR_FAILURE;
     }
 
-    char *pszFilename = CPLStrdup(CPLFormFilename(
-        pszName, m_apoLayers[iLayer]->GetLayer()->GetLayerDefn()->GetName(),
-        "csv"));
-    char *pszFilenameCSVT = CPLStrdup(CPLFormFilename(
-        pszName, m_apoLayers[iLayer]->GetLayer()->GetLayerDefn()->GetName(),
-        "csvt"));
+    for (const auto &osFilename : m_apoLayers[iLayer]->GetFileList())
+    {
+        VSIUnlink(osFilename.c_str());
+    }
 
     m_apoLayers.erase(m_apoLayers.begin() + iLayer);
-
-    VSIUnlink(pszFilename);
-    CPLFree(pszFilename);
-    VSIUnlink(pszFilenameCSVT);
-    CPLFree(pszFilenameCSVT);
 
     return OGRERR_NONE;
 }
@@ -1170,4 +1175,21 @@ void OGRCSVDataSource::CreateForSingleFile(const char *pszDirname,
     pszName = CPLStrdup(pszDirname);
     bUpdate = true;
     osDefaultCSVName = CPLGetFilename(pszFilename);
+}
+
+/************************************************************************/
+/*                            GetFileList()                             */
+/************************************************************************/
+
+char **OGRCSVDataSource::GetFileList()
+{
+    CPLStringList oFileList;
+    for (auto &poLayer : m_apoLayers)
+    {
+        for (const auto &osFilename : poLayer->GetFileList())
+        {
+            oFileList.AddString(osFilename.c_str());
+        }
+    }
+    return oFileList.StealList();
 }
