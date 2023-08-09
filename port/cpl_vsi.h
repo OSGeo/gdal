@@ -227,6 +227,8 @@ int CPL_DLL VSISupportsSparseFiles(const char *pszPath);
 
 bool CPL_DLL VSIIsLocal(const char *pszPath);
 
+char CPL_DLL *VSIGetCanonicalFilename(const char *pszPath);
+
 bool CPL_DLL VSISupportsSequentialWrite(const char *pszPath,
                                         bool bAllowLocalTempFile);
 

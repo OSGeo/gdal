@@ -1040,6 +1040,31 @@ bool VSIIsLocal(const char *pszPath)
 }
 
 /************************************************************************/
+/*                       VSIGetCanonicalFilename()                      */
+/************************************************************************/
+
+/**
+ * \brief Returns the canonical filename.
+ *
+ * May be implemented by case-insensitive filesystems
+ * (currently Win32 and MacOSX) to return the filename with its actual case
+ * (i.e. the one that would be used when listing the content of the directory).
+ *
+ * @param pszPath UTF-8 encoded path
+ *
+ * @return UTF-8 encoded string, to free with VSIFree()
+ *
+ * @since GDAL 3.8
+ */
+
+char *VSIGetCanonicalFilename(const char *pszPath)
+{
+    VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszPath);
+
+    return CPLStrdup(poFSHandler->GetCanonicalFilename(pszPath).c_str());
+}
+
+/************************************************************************/
 /*                      VSISupportsSequentialWrite()                    */
 /************************************************************************/
 

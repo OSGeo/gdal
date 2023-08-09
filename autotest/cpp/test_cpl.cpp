@@ -4755,4 +4755,60 @@ TEST_F(test_cpl, CPLSubscribeToSetConfigOption)
     }
 }
 
+TEST_F(test_cpl, VSIGetCanonicalFilename)
+{
+    std::string osTmp = CPLGenerateTempFilename(nullptr);
+    if (!CPLIsFilenameRelative(osTmp.c_str()))
+    {
+        // Get the canonical filename of the base temporary file
+        // to be able to test afterwards just the differences on the case
+        // of the extension
+        VSILFILE *fp = VSIFOpenL(osTmp.c_str(), "wb");
+        EXPECT_TRUE(fp != nullptr);
+        if (fp)
+        {
+            VSIFCloseL(fp);
+            char *pszRes = VSIGetCanonicalFilename(osTmp.c_str());
+            osTmp = pszRes;
+            CPLFree(pszRes);
+            VSIUnlink(osTmp.c_str());
+        }
+    }
+
+    std::string osLC = osTmp + ".tmp";
+    std::string osUC = osTmp + ".TMP";
+    // Create a file in lower case
+    VSILFILE *fp = VSIFOpenL(osLC.c_str(), "wb");
+    EXPECT_TRUE(fp != nullptr);
+    if (fp)
+    {
+        VSIFCloseL(fp);
+        VSIStatBufL sStat;
+        // And try to stat it in upper case
+        if (VSIStatL(osUC.c_str(), &sStat) == 0)
+        {
+            char *pszRes = VSIGetCanonicalFilename(osUC.c_str());
+            ASSERT_TRUE(pszRes);
+#if defined(_WIN32) || (defined(__MACH__) && defined(__APPLE__))
+            // On Windows or Mac, we should get the real canonical name, i.e.
+            // in lower case
+            EXPECT_STREQ(pszRes, osLC.c_str());
+#else
+            // On other operating systems, VSIGetCanonicalFilename()
+            // could not be implemented, so be laxer in the check
+            EXPECT_STREQ(CPLString(pszRes).tolower().c_str(), osLC.c_str());
+#endif
+            CPLFree(pszRes);
+        }
+
+        {
+            char *pszRes = VSIGetCanonicalFilename(osLC.c_str());
+            ASSERT_TRUE(pszRes);
+            EXPECT_STREQ(pszRes, osLC.c_str());
+            CPLFree(pszRes);
+        }
+    }
+    VSIUnlink(osLC.c_str());
+}
+
 }  // namespace
