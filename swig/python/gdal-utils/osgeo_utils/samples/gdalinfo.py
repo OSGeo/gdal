@@ -320,19 +320,17 @@ def main(argv=None):
             print("  %s" % metadata)
 
     # --------------------------------------------------------------------
-    #      Setup projected to lat/long transform if appropriate.
+    #      Setup projected to long/lat transform if appropriate.
     # --------------------------------------------------------------------
-    if pszProjection:
-        hProj = osr.SpatialReference(pszProjection)
-        if hProj is not None:
-            hLatLong = hProj.CloneGeogCS()
-
+    hProj = hDataset.GetSpatialRef()
+    if hProj:
+        hLatLong = hProj.CloneGeogCS()
         if hLatLong is not None:
+            # To make sure the geographic coordinates are in long, lat order
+            hLatLong.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
             gdal.PushErrorHandler("CPLQuietErrorHandler")
             hTransform = osr.CoordinateTransformation(hProj, hLatLong)
             gdal.PopErrorHandler()
-            if gdal.GetLastErrorMsg().find("Unable to load PROJ.4 library") != -1:
-                hTransform = None
 
     # --------------------------------------------------------------------
     #      Report corners.
