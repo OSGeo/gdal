@@ -251,12 +251,12 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
 
     static const char *GetOptionsStatic();
 
-    static bool IsAllowedFilename(const char *pszFilename);
-
     VSICurlFilesystemHandlerBase();
 
   public:
     ~VSICurlFilesystemHandlerBase() override;
+
+    static bool IsAllowedFilename(const char *pszFilename);
 
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
                            bool bSetError,

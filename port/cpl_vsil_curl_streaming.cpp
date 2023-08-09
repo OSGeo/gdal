@@ -350,7 +350,7 @@ class VSICurlStreamingHandle : public VSIVirtualHandle
         return bHasComputedFileSize;
     }
     vsi_l_offset GetFileSize();
-    int Exists();
+    bool Exists(const char *pszFilename, CSLConstList papszOptions);
     bool IsDirectory() const
     {
         return bIsDirectory;
@@ -718,39 +718,16 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
 /*                                 Exists()                             */
 /************************************************************************/
 
-int VSICurlStreamingHandle::Exists()
+bool VSICurlStreamingHandle::Exists(const char *pszFilename,
+                                    CSLConstList papszOptions)
 {
     if (eExists == EXIST_UNKNOWN)
     {
-        // Consider that only the files whose extension ends up with one that is
-        // listed in CPL_VSIL_CURL_ALLOWED_EXTENSIONS exist on the server.
-        // This can speeds up dramatically open experience, in case the server
-        // cannot return a file list.
-        // For example:
-        // gdalinfo --config CPL_VSIL_CURL_ALLOWED_EXTENSIONS ".tif"
-        // /vsicurl_streaming/http://igskmncngs506.cr.usgs.gov/gmted/Global_tiles_GMTED/075darcsec/bln/W030/30N030W_20101117_gmted_bln075.tif
-        // */
-        const char *pszAllowedExtensions =
-            CPLGetConfigOption("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", nullptr);
-        if (pszAllowedExtensions)
+        if (!papszOptions ||
+            !CPLTestBool(CSLFetchNameValueDef(
+                papszOptions, "IGNORE_FILENAME_RESTRICTIONS", "NO")))
         {
-            char **papszExtensions =
-                CSLTokenizeString2(pszAllowedExtensions, ", ", 0);
-            const size_t nURLLen = strlen(m_pszURL);
-            bool bFound = false;
-            for (int i = 0; papszExtensions[i] != nullptr; i++)
-            {
-                const size_t nExtensionLen = strlen(papszExtensions[i]);
-                if (nURLLen > nExtensionLen &&
-                    EQUAL(m_pszURL + nURLLen - nExtensionLen,
-                          papszExtensions[i]))
-                {
-                    bFound = true;
-                    break;
-                }
-            }
-
-            if (!bFound)
+            if (!VSICurlFilesystemHandlerBase::IsAllowedFilename(pszFilename))
             {
                 eExists = EXIST_NO;
                 fileSize = 0;
@@ -764,12 +741,8 @@ int VSICurlStreamingHandle::Exists()
                 cachedFileProp.nMode = S_IFREG;
                 m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
 
-                CSLDestroy(papszExtensions);
-
-                return 0;
+                return false;
             }
-
-            CSLDestroy(papszExtensions);
         }
 
         char chFirstByte = '\0';
@@ -1555,10 +1528,10 @@ VSICurlStreamingFSHandler::CreateFileHandle(const char *pszURL)
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *
-VSICurlStreamingFSHandler::Open(const char *pszFilename, const char *pszAccess,
-                                bool /* bSetError */,
-                                CSLConstList /* papszOptions */)
+VSIVirtualHandle *VSICurlStreamingFSHandler::Open(const char *pszFilename,
+                                                  const char *pszAccess,
+                                                  bool /* bSetError */,
+                                                  CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
         return nullptr;
@@ -1574,7 +1547,7 @@ VSICurlStreamingFSHandler::Open(const char *pszFilename, const char *pszAccess,
     VSICurlStreamingHandle *poHandle =
         CreateFileHandle(pszFilename + GetFSPrefix().size());
     // If we didn't get a filelist, check that the file really exists.
-    if (poHandle == nullptr || !poHandle->Exists())
+    if (poHandle == nullptr || !poHandle->Exists(pszFilename, papszOptions))
     {
         delete poHandle;
         return nullptr;
@@ -1650,7 +1623,7 @@ int VSICurlStreamingFSHandler::Stat(const char *pszFilename,
         pStatBuf->st_size = poHandle->GetFileSize();
     }
 
-    int nRet = (poHandle->Exists()) ? 0 : -1;
+    int nRet = (poHandle->Exists(pszFilename, nullptr)) ? 0 : -1;
     pStatBuf->st_mode = poHandle->IsDirectory() ? S_IFDIR : S_IFREG;
 
     delete poHandle;
