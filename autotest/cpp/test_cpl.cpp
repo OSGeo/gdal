@@ -1656,8 +1656,16 @@ TEST_F(test_cpl, CPLCopyTree)
     CPLString osTmpPath(CPLGetDirname(CPLGenerateTempFilename(nullptr)));
     CPLString osSrcDir(CPLFormFilename(osTmpPath, "src_dir", nullptr));
     CPLString osNewDir(CPLFormFilename(osTmpPath, "new_dir", nullptr));
-    ASSERT_TRUE(VSIMkdir(osSrcDir, 0755) == 0);
     CPLString osSrcFile(CPLFormFilename(osSrcDir, "my.bin", nullptr));
+    CPLString osNewFile(CPLFormFilename(osNewDir, "my.bin", nullptr));
+
+    // Cleanup if previous test failed
+    VSIUnlink(osNewFile);
+    VSIRmdir(osNewDir);
+    VSIUnlink(osSrcFile);
+    VSIRmdir(osSrcDir);
+
+    ASSERT_TRUE(VSIMkdir(osSrcDir, 0755) == 0);
     VSILFILE *fp = VSIFOpenL(osSrcFile, "wb");
     ASSERT_TRUE(fp != nullptr);
     VSIFCloseL(fp);
@@ -1668,7 +1676,6 @@ TEST_F(test_cpl, CPLCopyTree)
 
     ASSERT_TRUE(CPLCopyTree(osNewDir, osSrcDir) == 0);
     VSIStatBufL sStat;
-    CPLString osNewFile(CPLFormFilename(osNewDir, "my.bin", nullptr));
     ASSERT_TRUE(VSIStatL(osNewFile, &sStat) == 0);
 
     CPLPushErrorHandler(CPLQuietErrorHandler);
