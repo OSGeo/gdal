@@ -124,7 +124,7 @@ edit data.
     fact the 'fid' is a special field recognized by OGR SQL. So, `-where "fid in (1,3,5)"`
     would select features 1, 3 and 5.
 
-.. option:: -fields YES|NO:
+.. option:: -fields=YES|NO:
 
     If set to ``NO``, the feature dump will not display field values. Default value
     is ``YES``.
@@ -135,7 +135,7 @@ edit data.
 
     Display details about a field domain.
 
-.. option:: -geom YES|NO|SUMMARY|WKT|ISO_WKT
+.. option:: -geom=YES|NO|SUMMARY|WKT|ISO_WKT
 
     If set to ``NO``, the feature dump will not display the geometry. If set to
     ``SUMMARY``, only a summary of the geometry will be displayed. If set to
