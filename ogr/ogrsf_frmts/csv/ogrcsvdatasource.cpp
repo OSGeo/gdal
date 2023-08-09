@@ -64,7 +64,7 @@ class OGRCSVEditableLayerSynchronizer final
           m_papszOpenOptions(CSLDuplicate(papszOpenOptions))
     {
     }
-    virtual ~OGRCSVEditableLayerSynchronizer() GDAL_OVERRIDE;
+    virtual ~OGRCSVEditableLayerSynchronizer() override;
 
     virtual OGRErr EditableSyncToDisk(OGRLayer *poEditableLayer,
                                       OGRLayer **ppoDecoratedLayer) override;
