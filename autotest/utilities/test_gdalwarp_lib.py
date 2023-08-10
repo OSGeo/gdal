@@ -2955,6 +2955,30 @@ def test_gdalwarp_lib_from_ob_tran_including_north_pole_to_geographic():
 
 
 ###############################################################################
+# Test warping from a dataset in geographic with longitudes outside [-180,180]
+# to the same CRS doesn't alter the extent
+# (https://github.com/OSGeo/gdal/issues/8194)
+
+
+def test_gdalwarp_lib_geographic_outside_180_no_crs_change():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 36, 18)
+    src_ds.SetGeoTransform([0, 10, 0, 90, 0, -10])
+    srs = osr.SpatialReference()
+    srs.SetAxisMappingStrategy(osr.OAMS_TRADITIONAL_GIS_ORDER)
+    srs.ImportFromEPSG(4326)
+    src_ds.SetSpatialRef(srs)
+    src_ds.GetRasterBand(1).Fill(1)
+
+    ds = gdal.Warp("", src_ds, format="MEM", xRes=20, yRes=20)
+    gt = ds.GetGeoTransform()
+    assert ds.RasterXSize == 18
+    assert ds.RasterYSize == 9
+    assert gt == pytest.approx((0, 20, 0, 90, 0, -20))
+    assert ds.GetRasterBand(1).ComputeRasterMinMax() == (1, 1)
+
+
+###############################################################################
 # Test gdalwarp foo.tif foo.tif.ovr
 
 
