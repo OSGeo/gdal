@@ -81,6 +81,8 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
     virtual GIntBig GetDiskFreeSpace(const char *pszDirname) override;
     virtual int SupportsSparseFiles(const char *pszPath) override;
     virtual bool IsLocal(const char *pszPath) override;
+    std::string
+    GetCanonicalFilename(const std::string &osFilename) const override;
 };
 
 /************************************************************************/
@@ -1066,6 +1068,40 @@ bool VSIWin32FilesystemHandler::IsLocal(const char *pszPath)
         return GetDriveType(osPath.c_str()) != DRIVE_REMOTE;
     }
     return true;
+}
+
+/************************************************************************/
+/*                      GetCanonicalFilename()                          */
+/************************************************************************/
+
+std::string VSIWin32FilesystemHandler::GetCanonicalFilename(
+    const std::string &osFilename) const
+{
+#if defined(_MSC_VER) || __MSVCRT_VERSION__ >= 0x0601
+    if (CPLTestBool(CPLGetConfigOption("GDAL_FILENAME_IS_UTF8", "YES")))
+    {
+        wchar_t *pwszFilename =
+            CPLRecodeToWChar(osFilename.c_str(), CPL_ENC_UTF8, CPL_ENC_UCS2);
+        wchar_t longPath[MAX_PATH];
+        DWORD result = GetLongPathNameW(pwszFilename, longPath, MAX_PATH);
+        CPLFree(pwszFilename);
+        if (result == 0 || result > MAX_PATH)
+            return osFilename;
+        char *pszTmp = CPLRecodeFromWChar(longPath, CPL_ENC_UCS2, CPL_ENC_UTF8);
+        std::string osRet(pszTmp);
+        CPLFree(pszTmp);
+        return osRet;
+    }
+    else
+#endif
+    {
+        char longPath[MAX_PATH];
+        DWORD result = GetLongPathNameA(osFilename.c_str(), longPath, MAX_PATH);
+        if (result == 0 || result > MAX_PATH)
+            return osFilename;
+        std::string osRet(longPath);
+        return osRet;
+    }
 }
 
 /************************************************************************/
