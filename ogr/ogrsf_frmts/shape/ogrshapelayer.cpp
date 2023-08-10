@@ -65,7 +65,8 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
                              const char *pszFullNameIn, SHPHandle hSHPIn,
                              DBFHandle hDBFIn,
                              const OGRSpatialReference *poSRSIn, bool bSRSSetIn,
-                             bool bUpdate, OGRwkbGeometryType eReqType,
+                             const std::string &osPrjFilename, bool bUpdate,
+                             OGRwkbGeometryType eReqType,
                              char **papszCreateOptions)
     : OGRAbstractProxiedLayer(poDSIn->GetPool()), poDS(poDSIn),
       poFeatureDefn(nullptr), iNextShapeId(0), nTotalShapeCount(0),
@@ -218,6 +219,8 @@ OGRShapeLayer::OGRShapeLayer(OGRShapeDataSource *poDSIn,
         }
         auto poGeomFieldDefn = cpl::make_unique<OGRShapeGeomFieldDefn>(
             pszFullName, eType, bSRSSetIn, poSRSClone);
+        if (!osPrjFilename.empty())
+            poGeomFieldDefn->SetPrjFilename(osPrjFilename);
         if (poSRSClone)
             poSRSClone->Release();
         poFeatureDefn->SetGeomType(wkbNone);
