@@ -3315,6 +3315,48 @@ def test_ogr_shape_75():
     ]
     ds = None
 
+    ds = gdal.OpenEx("data/shp/testpoly.shp")
+    assert ds.GetFileList() == [
+        "data/shp/testpoly.shp",
+        "data/shp/testpoly.shx",
+        "data/shp/testpoly.dbf",
+        "data/shp/testpoly.qix",
+    ]
+    ds = None
+
+    # Test that CreateLayer() + GetFileList() list the .prj file when it
+    # exists
+    src_ds = gdal.OpenEx("data/shp/Stacks.shp")
+    driver = gdal.GetDriverByName("ESRI Shapefile")
+    copy_ds = driver.CreateCopy("/vsimem/test_copy.shp", src_ds)
+    src_ds = None
+    try:
+        assert copy_ds.GetFileList() == [
+            "/vsimem/test_copy.shp",
+            "/vsimem/test_copy.shx",
+            "/vsimem/test_copy.dbf",
+            "/vsimem/test_copy.prj",
+        ]
+    finally:
+        copy_ds = None
+        driver.Delete("/vsimem/test_copy.shp")
+
+    # Test that CreateLayer() + GetFileList() don't list the .prj file when it
+    # doesn't exist.
+    src_ds = gdal.OpenEx("data/shp/testpoly.shp")
+    driver = gdal.GetDriverByName("ESRI Shapefile")
+    copy_ds = driver.CreateCopy("/vsimem/test_copy.shp", src_ds)
+    src_ds = None
+    try:
+        assert copy_ds.GetFileList() == [
+            "/vsimem/test_copy.shp",
+            "/vsimem/test_copy.shx",
+            "/vsimem/test_copy.dbf",
+        ]
+    finally:
+        copy_ds = None
+        driver.Delete("/vsimem/test_copy.shp")
+
 
 ###############################################################################
 # Test opening shapefile whose .prj has a UTF-8 BOM marker
