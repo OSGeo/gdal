@@ -345,45 +345,42 @@ def test_hfa_pe_write():
 # Verify we can write and read large metadata items.
 
 
-def test_hfa_metadata_1():
+def test_hfa_metadata_1(tmp_path):
+
+    md1_img = str(tmp_path / "md_1.img")
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create("tmp/md_1.img", 100, 150, 1, gdal.GDT_Byte)
+    ds = drv.Create(md1_img, 100, 150, 1, gdal.GDT_Byte)
 
     md_val = "0123456789" * 60
     md = {"test": md_val}
     ds.GetRasterBand(1).SetMetadata(md)
     ds = None
 
-    ds = gdal.Open("tmp/md_1.img")
+    ds = gdal.Open(md1_img)
     md = ds.GetRasterBand(1).GetMetadata()
     assert md["test"] == md_val, "got wrong metadata back"
     assert ds.FlushCache() == gdal.CE_None
     ds = None
 
+    ###############################################################################
+    # Verify that writing metadata multiple times does not result in duplicate
+    # nodes.
 
-###############################################################################
-# Verify that writing metadata multiple times does not result in duplicate
-# nodes.
-
-
-def test_hfa_metadata_2():
-
-    ds = gdal.Open("tmp/md_1.img", gdal.GA_Update)
+    ds = gdal.Open(md1_img, gdal.GA_Update)
     md = ds.GetRasterBand(1).GetMetadata()
     md["test"] = "0123456789"
     md["xxx"] = "123"
     ds.GetRasterBand(1).SetMetadata(md)
     ds = None
 
-    ds = gdal.Open("tmp/md_1.img")
+    ds = gdal.Open(md1_img)
     md = ds.GetRasterBand(1).GetMetadata()
     assert "xxx" in md, "metadata rewrite seems not to have worked"
 
     assert md["xxx"] == "123" and md["test"] == "0123456789", "got wrong metadata back"
 
     ds = None
-    gdal.GetDriverByName("HFA").Delete("tmp/md_1.img")
 
 
 ###############################################################################
@@ -502,10 +499,12 @@ def test_hfa_mapinformation_units():
 # Write nodata value.
 
 
-def test_hfa_nodata_write():
+def test_hfa_nodata_write(tmp_path):
+
+    nodata_img = str(tmp_path / "nodata.img")
 
     drv = gdal.GetDriverByName("HFA")
-    ds = drv.Create("tmp/nodata.img", 7, 7, 1, gdal.GDT_Byte)
+    ds = drv.Create(nodata_img, 7, 7, 1, gdal.GDT_Byte)
 
     p = [1, 2, 1, 4, 1, 2, 1]
     raw_data = b"".join(struct.pack("h", x) for x in p)
@@ -518,14 +517,10 @@ def test_hfa_nodata_write():
 
     ds = None
 
+    ###############################################################################
+    # Verify written nodata value.
 
-###############################################################################
-# Verify written nodata value.
-
-
-def test_hfa_nodata_read():
-
-    ds = gdal.Open("tmp/nodata.img")
+    ds = gdal.Open(nodata_img)
     b = ds.GetRasterBand(1)
 
     assert b.GetNoDataValue() == 1, "failed to preserve nodata value"
@@ -548,8 +543,6 @@ def test_hfa_nodata_read():
 
     b = None
     ds = None
-
-    gdal.GetDriverByName("HFA").Delete("tmp/nodata.img")
 
 
 ###############################################################################

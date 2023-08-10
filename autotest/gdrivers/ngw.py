@@ -47,6 +47,7 @@ import pytest
 
 pytestmark = [
     pytest.mark.require_driver("NGW"),
+    pytest.mark.random_order(disabled=True),
     pytest.mark.skipif(
         "CI" in os.environ,
         reason="NGW tests are flaky. See https://github.com/OSGeo/gdal/issues/4453",

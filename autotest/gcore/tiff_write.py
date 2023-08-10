@@ -49,6 +49,15 @@ def module_disable_exceptions():
         yield
 
 
+@pytest.fixture(autouse=True, scope="module")
+def setup_and_cleanup():
+    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
+
+    yield
+
+    del gdaltest.tiff_drv
+
+
 ###############################################################################
 
 
@@ -74,7 +83,6 @@ def _check_cog(filename, check_tiled=True, full_check=False):
 
 def test_tiff_write_1():
 
-    gdaltest.tiff_drv = gdal.GetDriverByName("GTiff")
     assert gdaltest.tiff_drv is not None, "GTiff driver not found!"
 
     drv_md = gdaltest.tiff_drv.GetMetadata()
@@ -11328,7 +11336,3 @@ def test_tiff_write_copy_mdd():
     ds = None
 
     gdal.Unlink(filename)
-
-
-def test_tiff_write_cleanup():
-    gdaltest.tiff_drv = None

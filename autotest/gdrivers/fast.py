@@ -55,11 +55,18 @@ def test_fast_2():
 # Verify metadata.
 
 
-def test_fast_3():
+@pytest.fixture()
+def fast_ds():
+    ds = gdal.Open("data/fast/L71118038_03820020111_HPN.FST")
 
-    gdaltest.fast_ds = gdal.Open("data/fast/L71118038_03820020111_HPN.FST")
-    ds = gdaltest.fast_ds
     assert ds is not None, "Missing test dataset"
+
+    return ds
+
+
+def test_fast_3(fast_ds):
+
+    ds = fast_ds
 
     md = ds.GetMetadata()
     assert md is not None, "Missing metadata in test dataset"
@@ -88,15 +95,9 @@ def test_fast_3():
 # Test geotransform data.
 
 
-def test_fast_4():
+def test_fast_4(fast_ds):
 
-    ds = gdaltest.fast_ds
-    assert ds is not None, "Missing test dataset"
-
-    gt = ds.GetGeoTransform()
-
-    gdaltest.fast_ds = None
-    ds = None
+    gt = fast_ds.GetGeoTransform()
 
     tolerance = 0.01
     assert (

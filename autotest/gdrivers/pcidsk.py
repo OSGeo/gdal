@@ -97,50 +97,48 @@ def test_pcidsk_4():
 # Test writing metadata to a newly created file.
 
 
-def test_pcidsk_5():
+def test_pcidsk_5(tmp_path):
+
+    testfile = str(tmp_path / "pcidsk_5.pix")
 
     # Create testing file.
 
-    gdaltest.pcidsk_ds = gdal.GetDriverByName("PCIDSK").Create(
-        "tmp/pcidsk_5.pix", 400, 600, 1, gdal.GDT_Byte
+    pcidsk_ds = gdal.GetDriverByName("PCIDSK").Create(
+        testfile, 400, 600, 1, gdal.GDT_Byte
     )
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
 
-    gdaltest.pcidsk_ds.SetMetadata(["ABC=DEF", "GHI=JKL"])
-    gdaltest.pcidsk_ds.SetMetadataItem("XXX", "YYY")
-    gdaltest.pcidsk_ds.SetMetadataItem("XYZ", "123", "AltDomain")
+    pcidsk_ds.SetMetadata(["ABC=DEF", "GHI=JKL"])
+    pcidsk_ds.SetMetadataItem("XXX", "YYY")
+    pcidsk_ds.SetMetadataItem("XYZ", "123", "AltDomain")
 
     # Close and reopen.
-    gdaltest.pcidsk_ds = None
-    gdaltest.pcidsk_ds = gdal.Open("tmp/pcidsk_5.pix", gdal.GA_Update)
+    pcidsk_ds = None
+    pcidsk_ds = gdal.Open(testfile, gdal.GA_Update)
 
     # Check metadata.
-    mddef = gdaltest.pcidsk_ds.GetMetadata()
+    mddef = pcidsk_ds.GetMetadata()
     assert mddef["GHI"] == "JKL", "file default domain metadata broken. "
     assert mddef["XXX"] == "YYY", "file default domain metadata broken. "
 
-    assert gdaltest.pcidsk_ds.GetMetadataItem("GHI") == "JKL"
-    assert gdaltest.pcidsk_ds.GetMetadataItem("GHI") == "JKL"
-    gdaltest.pcidsk_ds.SetMetadataItem("GHI", "JKL2")
-    assert gdaltest.pcidsk_ds.GetMetadataItem("GHI") == "JKL2"
-    assert gdaltest.pcidsk_ds.GetMetadataItem("I_DONT_EXIST") is None
-    assert gdaltest.pcidsk_ds.GetMetadataItem("I_DONT_EXIST") is None
+    assert pcidsk_ds.GetMetadataItem("GHI") == "JKL"
+    assert pcidsk_ds.GetMetadataItem("GHI") == "JKL"
+    pcidsk_ds.SetMetadataItem("GHI", "JKL2")
+    assert pcidsk_ds.GetMetadataItem("GHI") == "JKL2"
+    assert pcidsk_ds.GetMetadataItem("I_DONT_EXIST") is None
+    assert pcidsk_ds.GetMetadataItem("I_DONT_EXIST") is None
 
-    mdalt = gdaltest.pcidsk_ds.GetMetadata("AltDomain")
+    mdalt = pcidsk_ds.GetMetadata("AltDomain")
     assert mdalt["XYZ"] == "123", "file alt domain metadata broken."
 
-
-###############################################################################
-# Test writing metadata to a band.
-
-
-def test_pcidsk_6():
+    ###############################################################################
+    # Test writing metadata to a band.
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
-    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+    band = pcidsk_ds.GetRasterBand(1)
 
     band.SetMetadata(["ABC=DEF", "GHI=JKL"])
     band.SetMetadataItem("XXX", "YYY")
@@ -148,11 +146,11 @@ def test_pcidsk_6():
     band = None
 
     # Close and reopen.
-    gdaltest.pcidsk_ds = None
-    gdaltest.pcidsk_ds = gdal.Open("tmp/pcidsk_5.pix", gdal.GA_Update)
+    pcidsk_ds = None
+    pcidsk_ds = gdal.Open(testfile, gdal.GA_Update)
 
     # Check metadata.
-    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+    band = pcidsk_ds.GetRasterBand(1)
     mddef = band.GetMetadata()
     assert mddef["GHI"] == "JKL", "channel default domain metadata broken. "
     assert mddef["XXX"] == "YYY", "channel default domain metadata broken. "
@@ -167,16 +165,12 @@ def test_pcidsk_6():
     mdalt = band.GetMetadata("AltDomain")
     assert mdalt["XYZ"] == "123", "channel alt domain metadata broken."
 
-
-###############################################################################
-# Test creating a color table and reading it back.
-
-
-def test_pcidsk_7():
+    ###############################################################################
+    # Test creating a color table and reading it back.
 
     # Write out some metadata to the default and non-default domain and
     # using the set and single methods.
-    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+    band = pcidsk_ds.GetRasterBand(1)
 
     ct = band.GetColorTable()
 
@@ -201,10 +195,10 @@ def test_pcidsk_7():
     band = None
 
     # Close and reopen.
-    gdaltest.pcidsk_ds = None
-    gdaltest.pcidsk_ds = gdal.Open("tmp/pcidsk_5.pix", gdal.GA_Update)
+    pcidsk_ds = None
+    pcidsk_ds = gdal.Open(testfile, gdal.GA_Update)
 
-    band = gdaltest.pcidsk_ds.GetRasterBand(1)
+    band = pcidsk_ds.GetRasterBand(1)
 
     ct = band.GetColorTable()
 
@@ -744,25 +738,15 @@ def test_pcidsk_invalid_files(filename):
 # Test Web Mercator support
 
 
-def test_pcidsk_web_mercator():
+def test_pcidsk_web_mercator(tmp_path):
 
     gdal.Translate(
-        "tmp/test_pcidsk_web_mercator.pix",
+        f"{tmp_path}/test_pcidsk_web_mercator.pix",
         "data/byte.tif",
         options="-of PCIDSK -a_srs EPSG:3857",
     )
-    gdal.Unlink("tmp/test_pcidsk_web_mercator.pix.aux.xml")
-    ds = gdal.Open("tmp/test_pcidsk_web_mercator.pix")
+    gdal.Unlink(f"{tmp_path}/test_pcidsk_web_mercator.pix.aux.xml")
+    ds = gdal.Open(f"{tmp_path}/test_pcidsk_web_mercator.pix")
     expected_srs = osr.SpatialReference()
     expected_srs.ImportFromEPSG(3857)
     assert ds.GetSpatialRef().IsSame(expected_srs)
-    gdal.GetDriverByName("PCIDSK").Delete("tmp/test_pcidsk_web_mercator.pix")
-
-
-###############################################################################
-# Cleanup.
-
-
-def test_pcidsk_cleanup():
-    gdaltest.pcidsk_ds = None
-    gdaltest.clean_tmp()

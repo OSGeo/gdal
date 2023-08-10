@@ -149,19 +149,16 @@ mrf_tests = (
     mrf_tests,
     ids=("{0}-{3}".format(*r) for r in mrf_tests),
 )
-def test_mrf(src_filename, chksum, chksum_after_reopening, options):
+def test_mrf(src_filename, chksum, chksum_after_reopening, options, jpeg_version):
 
     mrf_co = gdal.GetDriverByName("MRF").GetMetadataItem("DMD_CREATIONOPTIONLIST")
 
     for comp in "LERC", "ZSTD", "QB3":
         if ("COMPRESS=" + comp) in options and comp not in mrf_co:
-            pytest.skip()
+            pytest.skip(f"COMPRESS={comp} not supported")
 
     if "jpg" in src_filename:
-        import jpeg
-
-        jpeg.test_jpeg_1()
-        if gdaltest.jpeg_version == "9b":
+        if jpeg_version == "9b":
             pytest.skip()
 
     with gdaltest.error_handler():
