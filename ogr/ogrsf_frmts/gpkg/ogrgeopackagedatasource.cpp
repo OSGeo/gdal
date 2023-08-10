@@ -5812,17 +5812,15 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char **papszOptions)
         const char *pszWKT =
             "GEODCRS[\"WGS 84\","
             "DATUM[\"World Geodetic System 1984\","
-            "  ELLIPSOID[\"WGS "
-            "84\",6378137,298.257223563,LENGTHUNIT[\"metre\",1.0]]],"
+            "  ELLIPSOID[\"WGS 84\",6378137,298.257223563,"
+            "LENGTHUNIT[\"metre\",1.0]]],"
             "CS[ellipsoidal,3],"
-            "  "
-            "AXIS[\"latitude\",north,ORDER[1],ANGLEUNIT[\"degree\",0."
-            "01745329252]],"
-            "  "
-            "AXIS[\"longitude\",east,ORDER[2],ANGLEUNIT[\"degree\",0."
-            "01745329252]],"
-            "  AXIS[\"ellipsoidal "
-            "height\",up,ORDER[3],LENGTHUNIT[\"metre\",1.0]],"
+            "  AXIS[\"latitude\",north,ORDER[1],ANGLEUNIT[\"degree\","
+            "0.0174532925199433]],"
+            "  AXIS[\"longitude\",east,ORDER[2],ANGLEUNIT[\"degree\","
+            "0.0174532925199433]],"
+            "  AXIS[\"ellipsoidal height\",up,ORDER[3],"
+            "LENGTHUNIT[\"metre\",1.0]],"
             "ID[\"EPSG\",4979]]";
 
         pszSQL = sqlite3_mprintf(

@@ -432,7 +432,7 @@ void BSBDataset::ScanForGCPs(bool isNos, const char *pszFilename)
                 "1924\",6378388,297,AUTHORITY[\"EPSG\",\"7022\"]],TOWGS84[-87,-"
                 "98,-121,0,0,0,0],AUTHORITY[\"EPSG\",\"6230\"]],PRIMEM["
                 "\"Greenwich\",0,AUTHORITY[\"EPSG\",\"8901\"]],UNIT[\"degree\","
-                "0.01745329251994328,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY["
+                "0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY["
                 "\"EPSG\",\"4230\"]]";
         }
 

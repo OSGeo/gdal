@@ -36,8 +36,8 @@
 
 #include <cmath>
 
-constexpr double TO_DEGREES = 57.2957795130823208766;
-constexpr double TO_RADIANS = 0.017453292519943295769;
+constexpr double TO_DEGREES = 180.0 / M_PI;
+constexpr double TO_RADIANS = M_PI / 180.0;
 constexpr int NONE_VAL = -1L;
 
 // This function computes zone number from the central meridian parameter.
@@ -350,7 +350,7 @@ OGRErr OSRImportFromPanorama(OGRSpatialReferenceH hSRS, long iProjSys,
  * <li>[6]  False Northing</li>
  * <li>[7]  Zone number</li>
  * </ul>
- * 
+ *
  * @param bNorth If northern hemisphere true, else false. Defaults to true.
  *
  * Particular projection uses different parameters, unused ones may be set to

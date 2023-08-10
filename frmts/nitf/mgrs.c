@@ -104,8 +104,8 @@
 /*
  *                              GLOBAL DECLARATIONS
  */
-#define DEG_TO_RAD 0.017453292519943295 /* PI/180                      */
-#define RAD_TO_DEG 57.29577951308232087 /* 180/PI                      */
+#define DEG_TO_RAD 0.017453292519943296 /* PI/180                      */
+#define RAD_TO_DEG 57.29577951308232088 /* 180/PI                      */
 #define LETTER_A 0        /* ARRAY INDEX FOR LETTER A               */
 #define LETTER_B 1        /* ARRAY INDEX FOR LETTER B               */
 #define LETTER_C 2        /* ARRAY INDEX FOR LETTER C               */
