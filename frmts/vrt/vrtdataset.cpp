@@ -602,24 +602,10 @@ CPLErr VRTDataset::XMLInit(CPLXMLNode *psTree, const char *pszVRTPathIn)
     const char *pszSubClass = CPLGetXMLValue(psTree, "subClass", "");
     if (EQUAL(pszSubClass, ""))
     {
-        CPLStringList aosTokens(
-            CSLTokenizeString(CPLGetXMLValue(psTree, "OverviewList", "")));
+        m_aosOverviewList =
+            CSLTokenizeString(CPLGetXMLValue(psTree, "OverviewList", ""));
         m_osOverviewResampling =
             CPLGetXMLValue(psTree, "OverviewList.resampling", "");
-        for (int iOverview = 0; iOverview < aosTokens.size(); iOverview++)
-        {
-            const int nOvFactor = atoi(aosTokens[iOverview]);
-            if (nOvFactor <= 1)
-            {
-                CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid overview factor");
-                return CE_Failure;
-            }
-
-            AddVirtualOverview(nOvFactor, m_osOverviewResampling.empty()
-                                              ? "nearest"
-                                              : m_osOverviewResampling.c_str());
-        }
     }
 
     return CE_None;
@@ -924,6 +910,50 @@ GDALDataset *VRTDataset::Open(GDALOpenInfo *poOpenInfo)
             if (poOpenInfo->AreSiblingFilesLoaded())
                 poDS->oOvManager.TransferSiblingFiles(
                     poOpenInfo->StealSiblingFiles());
+        }
+
+        // Creating virtual overviews, but only if there is no higher priority
+        // overview source, ie. a Overview element at VRT band level,
+        // or external .vrt.ovr
+        if (!poDS->m_aosOverviewList.empty())
+        {
+            if (poDS->nBands > 0)
+            {
+                auto poBand = dynamic_cast<VRTRasterBand *>(poDS->papoBands[0]);
+                if (poBand && !poBand->m_aoOverviewInfos.empty())
+                {
+                    poDS->m_aosOverviewList.Clear();
+                    CPLDebug("VRT",
+                             "Ignoring virtual overviews of OverviewList "
+                             "because Overview element is present on VRT band");
+                }
+                else if (poBand &&
+                         poBand->GDALRasterBand::GetOverviewCount() > 0)
+                {
+                    poDS->m_aosOverviewList.Clear();
+                    CPLDebug("VRT",
+                             "Ignoring virtual overviews of OverviewList "
+                             "because external .vrt.ovr is available");
+                }
+            }
+            for (int iOverview = 0; iOverview < poDS->m_aosOverviewList.size();
+                 iOverview++)
+            {
+                const int nOvFactor = atoi(poDS->m_aosOverviewList[iOverview]);
+                if (nOvFactor <= 1)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Invalid overview factor");
+                    delete poDS;
+                    return nullptr;
+                }
+
+                poDS->AddVirtualOverview(
+                    nOvFactor, poDS->m_osOverviewResampling.empty()
+                                   ? "nearest"
+                                   : poDS->m_osOverviewResampling.c_str());
+            }
+            poDS->m_aosOverviewList.Clear();
         }
 
         if (poDS->eAccess == GA_Update && poDS->m_poRootGroup &&
