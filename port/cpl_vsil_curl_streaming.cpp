@@ -1653,8 +1653,39 @@ class IVSIS3LikeStreamingFSHandler : public VSICurlStreamingFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeStreamingFSHandler)
 
+  protected:
+    virtual std::string GetNonStreamingPrefix() const = 0;
+
   public:
     IVSIS3LikeStreamingFSHandler() = default;
+
+    char **ReadDir(const char *pszDirname) override
+    {
+        if (STARTS_WITH(pszDirname, GetFSPrefix()))
+        {
+            return VSIReadDir(
+                (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
+                    .c_str());
+        }
+        return nullptr;
+    }
+
+    char **ReadDirEx(const char *pszDirname, int nMaxFiles) override
+    {
+        if (STARTS_WITH(pszDirname, GetFSPrefix()))
+        {
+            return VSIReadDirEx(
+                (GetNonStreamingPrefix() + (pszDirname + GetFSPrefix().size()))
+                    .c_str(),
+                nMaxFiles);
+        }
+        return nullptr;
+    }
+
+    const char *GetOptions() override
+    {
+        return VSIGetFileSystemOptions(GetNonStreamingPrefix().c_str());
+    }
 
     virtual void
     UpdateMapFromHandle(IVSIS3LikeHandleHelper * /*poHandleHelper*/)
@@ -1679,16 +1710,17 @@ class VSIS3StreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsis3_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsis3/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
     VSIS3StreamingFSHandler() = default;
     ~VSIS3StreamingFSHandler() override = default;
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsis3/");
-    }
 
     void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper) override;
     void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper) override;
@@ -1830,6 +1862,12 @@ class VSIGSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsigs_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsigs/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
@@ -1838,11 +1876,6 @@ class VSIGSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     }
     ~VSIGSStreamingFSHandler() override
     {
-    }
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsigs/");
     }
 };
 
@@ -1873,6 +1906,12 @@ class VSIAzureStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsiaz_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsiaz/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
@@ -1881,11 +1920,6 @@ class VSIAzureStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     }
     ~VSIAzureStreamingFSHandler() override
     {
-    }
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsiaz/");
     }
 };
 
@@ -1920,16 +1954,17 @@ class VSIOSSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsioss_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsioss/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
     VSIOSSStreamingFSHandler() = default;
     ~VSIOSSStreamingFSHandler() override = default;
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsioss/");
-    }
 
     void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper) override;
     void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper) override;
@@ -1997,6 +2032,12 @@ class VSISwiftStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     {
         return "/vsiswift_streaming/";
     }
+
+    std::string GetNonStreamingPrefix() const override
+    {
+        return "/vsiswift/";
+    }
+
     VSICurlStreamingHandle *CreateFileHandle(const char *pszURL) override;
 
   public:
@@ -2005,11 +2046,6 @@ class VSISwiftStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     }
     ~VSISwiftStreamingFSHandler() override
     {
-    }
-
-    const char *GetOptions() override
-    {
-        return VSIGetFileSystemOptions("/vsiswift/");
     }
 };
 

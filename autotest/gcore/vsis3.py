@@ -1117,7 +1117,13 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
         dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    expected_dir_contents = ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
+
+    assert (
+        gdal.ReadDir("/vsis3_streaming/s3_fake_bucket2/a_dir with_space")
+        == expected_dir_contents
+    )
 
     assert (
         gdal.VSIStatL(
@@ -1134,7 +1140,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
 
     # Same as above: cached
     dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
 
     # ReadDir on something known to be a file shouldn't cause network access
     dir_contents = gdal.ReadDir(
@@ -1153,7 +1159,7 @@ def test_vsis3_readdir(aws_test_config, webserver_port):
     )
 
     dir_contents = gdal.ReadDir("/vsis3/s3_fake_bucket2/a_dir with_space")
-    assert dir_contents == ["resource3 with_space.bin", "resource4.bin", "subdir"]
+    assert dir_contents == expected_dir_contents
 
     # Test partial clear of the cache
     gdal.VSICurlPartialClearCache("/vsis3/s3_fake_bucket2/a_dir with_space")
