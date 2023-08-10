@@ -3721,14 +3721,10 @@ void GDALRegisterJP2(const std::string &libraryName,
         GDAL_DMD_LONGNAME,
         ("JPEG-2000 driver based on " + libraryName + " library").c_str());
 
-    std::string help = libraryName;
-    std::transform(help.begin(), help.end(), help.begin(),
-                   [](unsigned char c) {
-                       return static_cast<char>(
-                           std::tolower(static_cast<unsigned char>(c)));
-                   });
-    help = "drivers/raster/jp2" + help + ".html";
-    poDriver->SetMetadataItem(GDAL_DMD_HELPTOPIC, help.c_str());
+    poDriver->SetMetadataItem(
+        GDAL_DMD_HELPTOPIC,
+        ("drivers/raster/jp2" + CPLString(libraryName).tolower() + ".html")
+            .c_str());
     poDriver->SetMetadataItem(GDAL_DMD_MIMETYPE, "image/jp2");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSION, "jp2");
     poDriver->SetMetadataItem(GDAL_DMD_EXTENSIONS, "jp2 j2k");
