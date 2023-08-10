@@ -68,6 +68,7 @@ authors:
     affiliation: Koordinates
   - given-names: Hiroshi
     family-names: Miura
+    orcid: https://orcid.org/0000-0001-7754-0433
 
 keywords:
   - GDAL
