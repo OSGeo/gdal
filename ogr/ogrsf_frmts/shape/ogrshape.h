@@ -227,7 +227,8 @@ class OGRShapeLayer final : public OGRAbstractProxiedLayer
 
     OGRShapeLayer(OGRShapeDataSource *poDSIn, const char *pszName,
                   SHPHandle hSHP, DBFHandle hDBF,
-                  const OGRSpatialReference *poSRS, bool bSRSSet, bool bUpdate,
+                  const OGRSpatialReference *poSRS, bool bSRSSet,
+                  const std::string &osPrjFilename, bool bUpdate,
                   OGRwkbGeometryType eReqType,
                   char **papszCreateOptions = nullptr);
     virtual ~OGRShapeLayer();
