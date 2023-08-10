@@ -163,8 +163,19 @@ jobs:
         env:
           DOCKER_BUILDKIT: 1
         run: |
+          # FIXME: for some reason, the fedora rawhide container pushed by
+          # master job is corrupted (looks like it contains an outdated layer
+          # symlinking libssl.so.3 to an older version of the actual file),
+          # once it is pushed. But in the job that generates it,
+          # compilation & tests work fine. It looks like some weird caching
+          # issue
+          if test "${{ matrix.container }}" = "fedora_rawhide"; then
+            DOCKER_BUILD_CACHE_FROM=""
+          else
+            BUILD_ARG_INLINE_CACHE="--build-arg BUILDKIT_INLINE_CACHE=1"
+          fi
           docker build \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
+            ${BUILD_ARG_INLINE_CACHE} \
             ${DOCKER_BUILD_CACHE_FROM} \
             -t ${CONTAINER_NAME_FULL} \
             -f .github/workflows/${{ matrix.container }}/Dockerfile.ci \
