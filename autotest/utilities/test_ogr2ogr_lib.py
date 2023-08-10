@@ -1912,9 +1912,9 @@ def test_ogr2ogr_lib_valid_nlt_combinations(nlt_value):
 @pytest.mark.skipif(
     test_cli_utilities.get_ogrinfo_path() is None, reason="ogrinfo not available"
 )
-def test_ogr2ogr_lib_geojson_output():
+def test_ogr2ogr_lib_geojson_output(tmp_path):
 
-    tmpfilename = "tmp/out.geojson"
+    tmpfilename = str(tmp_path / "out.geojson")
     out_ds = gdal.VectorTranslate(tmpfilename, "../ogr/data/poly.shp")
 
     # Check that the file can be read at that point. Use an external process
@@ -1933,5 +1933,3 @@ def test_ogr2ogr_lib_geojson_output():
     with ogr.Open(tmpfilename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 11
-
-    gdal.Unlink(tmpfilename)
