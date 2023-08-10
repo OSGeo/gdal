@@ -606,6 +606,7 @@ def test_gdaldem_lib_slope_ZevenbergenThorne():
         "slope",
         format="MEM",
         alg="ZevenbergenThorne",
+        slopeFormat="degree",
         scale=111120,
         zFactor=30,
     )

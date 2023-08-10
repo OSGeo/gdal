@@ -2736,7 +2736,7 @@ def DEMProcessingOptions(options=None, colorFilename=None, format=None,
         (hillshade only) whether to compute multi-directional shading. Only one of combined, multiDirectional and igor can be specified.
     igor:
         (hillshade only) whether to use Igor's hillshading from Maperitive.  Only one of combined, multiDirectional and igor can be specified.
-    slopeformat:
+    slopeFormat:
         (slope only) "degree" or "percent".
     trigonometric:
         (aspect only) whether to return trigonometric angle instead of azimuth. Thus 0deg means East, 90deg North, 180deg West, 270deg South.
