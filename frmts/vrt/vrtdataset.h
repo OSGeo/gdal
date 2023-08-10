@@ -201,6 +201,7 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
     // when it is cheap to do it, or explicitly.
     std::vector<GDALDataset *> m_apoOverviews{};
     std::vector<GDALDataset *> m_apoOverviewsBak{};
+    CPLStringList m_aosOverviewList{};  // only temporarily set during Open()
     CPLString m_osOverviewResampling{};
     std::vector<int> m_anOverviewFactors{};
 
