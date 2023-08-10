@@ -64,7 +64,18 @@ void OGRCSVDriverRemoveFromMap(const char *pszName, GDALDataset *poDS);
 /*                             OGRCSVLayer                              */
 /************************************************************************/
 
-class OGRCSVLayer final : public OGRLayer
+class IOGRCSVLayer CPL_NON_FINAL
+{
+  public:
+    IOGRCSVLayer() = default;
+    virtual ~IOGRCSVLayer() = default;
+
+    virtual OGRLayer *GetLayer() = 0;
+
+    virtual std::vector<std::string> GetFileList() = 0;
+};
+
+class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 {
   public:
     enum class StringQuoting
@@ -94,6 +105,7 @@ class OGRCSVLayer final : public OGRLayer
     OGRCSVGeometryFormat eGeometryFormat;
 
     char *pszFilename;
+    std::string m_osCSVTFilename{};
     bool bCreateCSVT;
     bool bWriteBOM;
     char szDelimiter[2] = {0};
@@ -145,10 +157,18 @@ class OGRCSVLayer final : public OGRLayer
                 char chDelimiter);
     virtual ~OGRCSVLayer() override;
 
+    OGRLayer *GetLayer() override
+    {
+        return this;
+    }
+
     const char *GetFilename() const
     {
         return pszFilename;
     }
+
+    std::vector<std::string> GetFileList() override;
+
     char GetDelimiter() const
     {
         return szDelimiter[0];
@@ -245,16 +265,15 @@ class OGRCSVLayer final : public OGRLayer
 
 class OGRCSVDataSource final : public OGRDataSource
 {
-    char *pszName;
+    char *pszName = nullptr;
 
-    OGRLayer **papoLayers;
-    int nLayers;
+    std::vector<std::unique_ptr<IOGRCSVLayer>> m_apoLayers{};
 
-    bool bUpdate;
+    bool bUpdate = false;
 
-    CPLString osDefaultCSVName;
+    CPLString osDefaultCSVName{};
 
-    bool bEnableGeometryFields;
+    bool bEnableGeometryFields = false;
 
   public:
     OGRCSVDataSource();
@@ -273,9 +292,11 @@ class OGRCSVDataSource final : public OGRDataSource
 
     int GetLayerCount() override
     {
-        return nLayers;
+        return static_cast<int>(m_apoLayers.size());
     }
     OGRLayer *GetLayer(int) override;
+
+    char **GetFileList() override;
 
     virtual OGRLayer *ICreateLayer(const char *pszName,
                                    OGRSpatialReference *poSpatialRef = nullptr,
