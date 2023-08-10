@@ -3514,3 +3514,54 @@ def test_gdalwarp_lib_working_data_type_with_source_dataset_of_different_types()
     minval, maxval = out_ds.GetRasterBand(1).ComputeRasterMinMax()
     assert minval == 1
     assert maxval == 1
+
+
+###############################################################################
+# Test scenario of https://github.com/OSGeo/gdal/issues/8163
+# (we need GEOS for the logic to split the cutline geometry in two parts)
+
+
+@pytest.mark.require_geos
+def test_gdalwarp_lib_cutline_crossing_antimeridian_in_EPSG_32601_and_raster_in_EPSG_4326():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32601)
+    cutline_ds = ogr.GetDriverByName("GeoJSON").CreateDataSource("/vsimem/cutline.json")
+    cutline_lyr = cutline_ds.CreateLayer("cutline", srs=srs)
+    f = ogr.Feature(cutline_lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "POLYGON ((300000 7200000,409800 7200000,409800 7090200,300000 7090200,300000 7200000))"
+        )
+    )
+    cutline_lyr.CreateFeature(f)
+    cutline_ds = None
+
+    ds = gdal.Warp(
+        "",
+        "../gdrivers/data/small_world.tif",
+        format="MEM",
+        cutlineDSName="/vsimem/cutline.json",
+        cropToCutline=True,
+    )
+
+    gdal.Unlink("/vsimem/cutline.json")
+
+    assert ds.RasterXSize == 400
+    assert ds.RasterYSize == 1
+    assert ds.GetGeoTransform() == pytest.approx((-180.0, 0.9, 0.0, 64.8, 0.0, -0.9))
+    # Check that left-most and right-most pixels are non zero
+    assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1))[0] == 11
+    assert struct.unpack("B", ds.GetRasterBand(1).ReadRaster(1, 0, 1, 1))[0] == 0
+    assert (
+        struct.unpack("B", ds.GetRasterBand(1).ReadRaster(ds.RasterXSize - 2, 0, 1, 1))[
+            0
+        ]
+        == 0
+    )
+    assert (
+        struct.unpack("B", ds.GetRasterBand(1).ReadRaster(ds.RasterXSize - 1, 0, 1, 1))[
+            0
+        ]
+        == 9
+    )
