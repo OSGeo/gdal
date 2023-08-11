@@ -933,23 +933,23 @@ retry:
                  pGIPTI->adfDstGeoTransform[4] == 0 &&
                  pGIPTI->adfDstGeoTransform[5] == 1)
         {
-            /* --------------------------------------------------------------------
-             */
-            /*  Special case for warping using source geotransform and
-             * reprojection */
-            /*  to deal with the poles. */
-            /* --------------------------------------------------------------------
-             */
+            /* ------------------------------------------------------------- */
+            /* Special case for warping using source geotransform and        */
+            /* reprojection to deal with the poles.                          */
+            /* ------------------------------------------------------------- */
             const GDALReprojectionTransformInfo *psRTI =
                 static_cast<const GDALReprojectionTransformInfo *>(
                     pGIPTI->pReprojectArg);
+            const OGRSpatialReference *poSourceCRS =
+                psRTI->poForwardTransform->GetSourceCS();
             const OGRSpatialReference *poTargetCRS =
                 psRTI->poForwardTransform->GetTargetCS();
             if (poTargetCRS != nullptr &&
                 psRTI->poReverseTransform != nullptr &&
                 poTargetCRS->IsGeographic() &&
                 fabs(poTargetCRS->GetAngularUnits() -
-                     CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9)
+                     CPLAtof(SRS_UA_DEGREE_CONV)) < 1e-9 &&
+                (!poSourceCRS || !poSourceCRS->IsGeographic()))
             {
                 bIsGeographicCoords = true;
 
@@ -1001,12 +1001,12 @@ retry:
                         pTransformArg);
                     psRTI = static_cast<const GDALReprojectionTransformInfo *>(
                         pGIPTI->pReprojectArg);
+                    poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
                     poTargetCRS = psRTI->poForwardTransform->GetTargetCS();
                 }
             }
 
             // Use TransformBounds() to handle more particular cases
-            const auto poSourceCRS = psRTI->poForwardTransform->GetSourceCS();
             if (poSourceCRS != nullptr && poTargetCRS != nullptr &&
                 pGIPTI->adfSrcGeoTransform[1] != 0 &&
                 pGIPTI->adfSrcGeoTransform[2] == 0 &&
