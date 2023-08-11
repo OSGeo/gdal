@@ -1789,6 +1789,7 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
             Concat(osRet, psOptions->bStdoutOutput,
                    "layer names ignored in combination with -sql.\n");
 
+        CPLErrorReset();
         OGRLayer *poResultSet = poDS->ExecuteSQL(
             psOptions->osSQLStatement.c_str(),
             psOptions->osGeomField.empty() ? psOptions->poSpatialFilter.get()
@@ -1826,6 +1827,10 @@ char *GDALVectorInfo(GDALDatasetH hDataset,
                               /*bTakeIntoAccountGeomField = */ false);
 
             poDS->ReleaseResultSet(poResultSet);
+        }
+        else if (CPLGetLastErrorType() != CE_None)
+        {
+            return nullptr;
         }
     }
 
