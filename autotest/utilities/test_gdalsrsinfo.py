@@ -294,7 +294,7 @@ def test_gdalsrsinfo_16(gdalsrsinfo_path):
 # Test -e
 
 
-def test_gdalsrsinfo_17(gdalsrsinfo_path):
+def test_gdalsrsinfo_17(gdalsrsinfo_path, tmp_path):
 
     # Zero match
     ret = gdaltest.runexternal(gdalsrsinfo_path + ' -e "LOCAL_CS[foo]"')
@@ -307,10 +307,12 @@ def test_gdalsrsinfo_17(gdalsrsinfo_path):
     assert "EPSG:32119" in ret
 
     # Two matches
-    open("tmp/test_gdalsrsinfo_17.wkt", "wt").write(
+    open(f"{tmp_path}/test_gdalsrsinfo_17.wkt", "wt").write(
         'GEOGCS["myLKS94",DATUM["Lithuania_1994_ETRS89",SPHEROID["GRS_1980",6378137,298.257222101],TOWGS84[0,0,0,0,0,0,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
     )
-    ret = gdaltest.runexternal(gdalsrsinfo_path + """ -e tmp/test_gdalsrsinfo_17.wkt""")
+    ret = gdaltest.runexternal(
+        f"{gdalsrsinfo_path} -e {tmp_path}/test_gdalsrsinfo_17.wkt"
+    )
     assert "EPSG:4669" in ret
 
 
