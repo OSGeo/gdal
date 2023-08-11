@@ -48,119 +48,20 @@ def gdalwarp_path():
     return test_cli_utilities.get_gdalwarp_path()
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_and_cleanup():
-
-    yield
-
-    # We don't clean up when run in debug mode.
-    if gdal.GetConfigOption("CPL_DEBUG", "OFF") == "ON":
-        return
-
-    for i in range(37):
-        try:
-            os.remove("tmp/testgdalwarp" + str(i + 1) + ".tif")
-        except OSError:
-            pass
-        try:
-            os.remove("tmp/testgdalwarp" + str(i + 1) + ".vrt")
-        except OSError:
-            pass
-        try:
-            os.remove("tmp/testgdalwarp" + str(i + 1) + ".tif.aux.xml")
-        except OSError:
-            pass
-    try:
-        os.remove("tmp/testgdalwarp24src.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp24dst.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp30_1.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp30_2.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp30_3.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp33_mask.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp37.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/testgdalwarp38.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_39.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_40_src.tif")
-        os.remove("tmp/test_gdalwarp_40.tif")
-        os.remove("tmp/test_gdalwarp_40.vrt")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_41_src.tif")
-        os.remove("tmp/test_gdalwarp_41.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/small_world_left.tif")
-        os.remove("tmp/small_world_right.tif")
-        os.remove("tmp/test_gdalwarp_42.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/small_world.tif")
-        os.remove("tmp/test_gdalwarp_43.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_44.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_45.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/test_gdalwarp_46.tif")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/cutline_4326.shp")
-        os.remove("tmp/cutline_4326.shx")
-        os.remove("tmp/cutline_4326.dbf")
-        os.remove("tmp/cutline_4326.prj")
-    except OSError:
-        pass
-
-
 ###############################################################################
 # Simple test
 
 
-def test_gdalwarp_1(gdalwarp_path):
+def test_gdalwarp_1(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp1.tif")
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdalwarp_path + " ../gcore/data/byte.tif tmp/testgdalwarp1.tif"
+        f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif}"
     )
     assert err is None or err == "", "got error/warning"
 
-    ds = gdal.Open("tmp/testgdalwarp1.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -172,13 +73,13 @@ def test_gdalwarp_1(gdalwarp_path):
 # Test -of option
 
 
-def test_gdalwarp_2(gdalwarp_path):
+def test_gdalwarp_2(gdalwarp_path, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + " -of GTiff ../gcore/data/byte.tif tmp/testgdalwarp2.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp2.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp2.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} -of GTiff ../gcore/data/byte.tif {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -190,13 +91,13 @@ def test_gdalwarp_2(gdalwarp_path):
 # Test -ot option
 
 
-def test_gdalwarp_3(gdalwarp_path):
+def test_gdalwarp_3(gdalwarp_path, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + " -ot Int16 ../gcore/data/byte.tif tmp/testgdalwarp3.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp3.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp3.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} -ot Int16 ../gcore/data/byte.tif {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Int16, "Bad data type"
@@ -210,14 +111,15 @@ def test_gdalwarp_3(gdalwarp_path):
 # Test -t_srs option
 
 
-def test_gdalwarp_4(gdalwarp_path):
+def test_gdalwarp_4(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp4.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/testgdalwarp4.tif"
+        f"{gdalwarp_path} -t_srs EPSG:32611 ../gcore/data/byte.tif {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp4.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -247,13 +149,13 @@ def testgdalwarp_gcp_tif(tmp_path_factory):
     yield testgdalwarp_gcp_tif_fname
 
 
-def test_gdalwarp_5(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_5(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + f" {testgdalwarp_gcp_tif} tmp/testgdalwarp5.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp5.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp5.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} {testgdalwarp_gcp_tif} {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -271,13 +173,13 @@ def test_gdalwarp_5(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test warping from GCPs with -tps
 
 
-def test_gdalwarp_6(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_6(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + f" -tps {testgdalwarp_gcp_tif} tmp/testgdalwarp6.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp6.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp6.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} -tps {testgdalwarp_gcp_tif} {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -295,13 +197,15 @@ def test_gdalwarp_6(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -tr
 
 
-def test_gdalwarp_7(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_7(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp7.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + f" -tr 120 120 {testgdalwarp_gcp_tif} tmp/testgdalwarp7.tif"
+        f"{gdalwarp_path} -tr 120 120 {testgdalwarp_gcp_tif} {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp7.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
@@ -314,13 +218,13 @@ def test_gdalwarp_7(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -ts
 
 
-def test_gdalwarp_8(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_8(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + f" -ts 10 10 {testgdalwarp_gcp_tif} tmp/testgdalwarp8.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp8.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp8.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} -ts 10 10 {testgdalwarp_gcp_tif} {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     expected_gt = (440720.0, 120.0, 0.0, 3751320.0, 0.0, -120.0)
@@ -333,14 +237,15 @@ def test_gdalwarp_8(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -te
 
 
-def test_gdalwarp_9(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_9(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp9.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + f" -te 440720.000 3750120.000 441920.000 3751320.000 {testgdalwarp_gcp_tif} tmp/testgdalwarp9.tif"
+        f"{gdalwarp_path} -te 440720.000 3750120.000 441920.000 3751320.000 {testgdalwarp_gcp_tif} {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp9.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     gdaltest.check_geotransform(
@@ -356,13 +261,15 @@ def test_gdalwarp_9(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -rn
 
 
-def test_gdalwarp_10(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_10(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp10.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + f" -ts 40 40 -rn {testgdalwarp_gcp_tif} tmp/testgdalwarp10.tif"
+        f"{gdalwarp_path} -ts 40 40 -rn {testgdalwarp_gcp_tif} {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp10.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 18784, "Bad checksum"
@@ -374,13 +281,15 @@ def test_gdalwarp_10(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -rb
 
 
-def test_gdalwarp_11(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_11(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp11.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + f" -ts 40 40 -rb {testgdalwarp_gcp_tif} tmp/testgdalwarp11.tif"
+        f"{gdalwarp_path} -ts 40 40 -rb {testgdalwarp_gcp_tif} {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp11.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     ref_ds = gdal.Open("ref_data/testgdalwarp11.tif")
@@ -398,13 +307,15 @@ def test_gdalwarp_11(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -rc
 
 
-def test_gdalwarp_12(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_12(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp12.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + f" -ts 40 40 -rc {testgdalwarp_gcp_tif} tmp/testgdalwarp12.tif"
+        f"{gdalwarp_path} -ts 40 40 -rc {testgdalwarp_gcp_tif} {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp12.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     ref_ds = gdal.Open("ref_data/testgdalwarp12.tif")
@@ -423,13 +334,15 @@ def test_gdalwarp_12(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -rcs
 
 
-def test_gdalwarp_13(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_13(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp13.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + f" -ts 40 40 -rcs {testgdalwarp_gcp_tif} tmp/testgdalwarp13.tif"
+        f"{gdalwarp_path} -ts 40 40 -rcs {testgdalwarp_gcp_tif} {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp13.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     ref_ds = gdal.Open("ref_data/testgdalwarp13.tif")
@@ -445,14 +358,15 @@ def test_gdalwarp_13(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -r lanczos
 
 
-def test_gdalwarp_14(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_14(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp14.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + f" -ts 40 40 -r lanczos {testgdalwarp_gcp_tif} tmp/testgdalwarp14.tif"
+        f"{gdalwarp_path} -ts 40 40 -r lanczos {testgdalwarp_gcp_tif} {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp14.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     ref_ds = gdal.Open("ref_data/testgdalwarp14.tif")
@@ -468,13 +382,13 @@ def test_gdalwarp_14(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -of VRT which is a special case
 
 
-def test_gdalwarp_16(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_16(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + f" -of VRT {testgdalwarp_gcp_tif} tmp/testgdalwarp16.vrt"
-    )
+    dst_vrt = str(tmp_path / "testgdalwarp16.vrt")
 
-    ds = gdal.Open("tmp/testgdalwarp16.vrt")
+    gdaltest.runexternal(f"{gdalwarp_path} -of VRT {testgdalwarp_gcp_tif} {dst_vrt}")
+
+    ds = gdal.Open(dst_vrt)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -486,13 +400,15 @@ def test_gdalwarp_16(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -dstalpha
 
 
-def test_gdalwarp_17(gdalwarp_path):
+def test_gdalwarp_17(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp17.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + " -dstalpha ../gcore/data/rgbsmall.tif tmp/testgdalwarp17.tif"
+        f"{gdalwarp_path} -dstalpha ../gcore/data/rgbsmall.tif {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp17.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(4) is not None, "No alpha band generated"
@@ -504,17 +420,19 @@ def test_gdalwarp_17(gdalwarp_path):
 # Test -wm -multi
 
 
-def test_gdalwarp_18(gdalwarp_path):
+def test_gdalwarp_18(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp18.tif")
 
     (_, ret_stderr) = gdaltest.runexternal_out_and_err(
-        gdalwarp_path + " -wm 20 -multi ../gcore/data/byte.tif tmp/testgdalwarp18.tif"
+        f"{gdalwarp_path} -wm 20 -multi ../gcore/data/byte.tif {dst_tif}"
     )
 
     # This error will be returned if GDAL is not compiled with thread support
     if ret_stderr.find("CPLCreateThread() failed in ChunkAndWarpMulti()") != -1:
         pytest.skip("GDAL not compiled with thread support")
 
-    ds = gdal.Open("tmp/testgdalwarp18.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -526,13 +444,13 @@ def test_gdalwarp_18(gdalwarp_path):
 # Test -et 0 which is a special case
 
 
-def test_gdalwarp_19(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_19(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + f" -et 0 {testgdalwarp_gcp_tif} tmp/testgdalwarp19.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp19.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp19.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} -et 0 {testgdalwarp_gcp_tif} {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -544,13 +462,15 @@ def test_gdalwarp_19(gdalwarp_path, testgdalwarp_gcp_tif):
 # Test -of VRT -et 0 which is a special case
 
 
-def test_gdalwarp_20(gdalwarp_path, testgdalwarp_gcp_tif):
+def test_gdalwarp_20(gdalwarp_path, testgdalwarp_gcp_tif, tmp_path):
+
+    dst_vrt = str(tmp_path / "testgdalwarp20.vrt")
 
     gdaltest.runexternal(
-        gdalwarp_path + f" -of VRT -et 0 {testgdalwarp_gcp_tif} tmp/testgdalwarp20.vrt"
+        f"{gdalwarp_path} -of VRT -et 0 {testgdalwarp_gcp_tif} {dst_vrt}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp20.vrt")
+    ds = gdal.Open(dst_vrt)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
@@ -563,14 +483,15 @@ def test_gdalwarp_20(gdalwarp_path, testgdalwarp_gcp_tif):
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalwarp_21(gdalwarp_path):
+def test_gdalwarp_21(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp21.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gcore/data/utmsmall.tif tmp/testgdalwarp21.tif -cutline data/cutline.vrt -cl cutline"
+        f"{gdalwarp_path} ../gcore/data/utmsmall.tif {dst_tif} -cutline data/cutline.vrt -cl cutline"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp21.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 19139, "Bad checksum"
@@ -583,14 +504,15 @@ def test_gdalwarp_21(gdalwarp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalwarp_22(gdalwarp_path):
+def test_gdalwarp_22(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp22.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gcore/data/utmsmall.tif tmp/testgdalwarp22.tif -cutline data/cutline.vrt -cl cutline -tr 30 30"
+        f"{gdalwarp_path} ../gcore/data/utmsmall.tif {dst_tif} -cutline data/cutline.vrt -cl cutline -tr 30 30"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp22.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 14047, "Bad checksum"
@@ -603,14 +525,15 @@ def test_gdalwarp_22(gdalwarp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalwarp_23(gdalwarp_path):
+def test_gdalwarp_23(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp23.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -wo CUTLINE_ALL_TOUCHED=TRUE ../gcore/data/utmsmall.tif tmp/testgdalwarp23.tif -cutline data/cutline.vrt -cl cutline"
+        f"{gdalwarp_path} -wo CUTLINE_ALL_TOUCHED=TRUE ../gcore/data/utmsmall.tif {dst_tif} -cutline data/cutline.vrt -cl cutline"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp23.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 20123, "Bad checksum"
@@ -622,9 +545,12 @@ def test_gdalwarp_23(gdalwarp_path):
 # Test warping an image crossing the 180E/180W longitude (#3206)
 
 
-def test_gdalwarp_24(gdalwarp_path):
+def test_gdalwarp_24(gdalwarp_path, tmp_path):
 
-    ds = gdal.GetDriverByName("GTiff").Create("tmp/testgdalwarp24src.tif", 100, 100)
+    src_tif = str(tmp_path / "testgdalwarp24src.tif")
+    dst_tif = str(tmp_path / "testgdalwarp24dst.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(src_tif, 100, 100)
     ds.SetGeoTransform([179.5, 0.01, 0, 45, 0, -0.01])
     ds.SetProjection(
         'GEOGCS["GCS_WGS_1984",DATUM["D_WGS_1984",SPHEROID["WGS_1984",6378137.0,298.257223563]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]]'
@@ -632,12 +558,9 @@ def test_gdalwarp_24(gdalwarp_path):
     ds.GetRasterBand(1).Fill(255)
     ds = None
 
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " -t_srs EPSG:32660 tmp/testgdalwarp24src.tif tmp/testgdalwarp24dst.tif"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} -t_srs EPSG:32660 {src_tif} {dst_tif}")
 
-    ds = gdal.Open("tmp/testgdalwarp24dst.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 50683, "Bad checksum"
@@ -650,13 +573,15 @@ def test_gdalwarp_24(gdalwarp_path):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_gdalwarp_25(gdalwarp_path):
+def test_gdalwarp_25(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp25.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + ' -t_srs "+proj=sinu" data/w_jpeg.tiff tmp/testgdalwarp25.tif'
+        f'{gdalwarp_path} -t_srs "+proj=sinu" data/w_jpeg.tiff {dst_tif}'
     )
 
-    ds = gdal.Open("tmp/testgdalwarp25.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -682,13 +607,15 @@ def test_gdalwarp_25(gdalwarp_path):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_gdalwarp_26(gdalwarp_path):
+def test_gdalwarp_26(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp26.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path + ' -t_srs "+proj=eck4" data/w_jpeg.tiff tmp/testgdalwarp26.tif'
+        f'{gdalwarp_path} -t_srs "+proj=eck4" data/w_jpeg.tiff {dst_tif}'
     )
 
-    ds = gdal.Open("tmp/testgdalwarp26.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -714,14 +641,15 @@ def test_gdalwarp_26(gdalwarp_path):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_gdalwarp_27(gdalwarp_path):
+def test_gdalwarp_27(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp27.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + ' -t_srs "+proj=vandg" data/w_jpeg.tiff tmp/testgdalwarp27.tif -overwrite'
+        f'{gdalwarp_path} -t_srs "+proj=vandg" data/w_jpeg.tiff {dst_tif} -overwrite'
     )
 
-    ds = gdal.Open("tmp/testgdalwarp27.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -748,14 +676,15 @@ def test_gdalwarp_27(gdalwarp_path):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_gdalwarp_28(gdalwarp_path):
+def test_gdalwarp_28(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp28.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + ' -t_srs "+proj=aeqd +lat_0=45 +lon_0=90" data/w_jpeg.tiff tmp/testgdalwarp28.tif'
+        f'{gdalwarp_path} -t_srs "+proj=aeqd +lat_0=45 +lon_0=90" data/w_jpeg.tiff {dst_tif}'
     )
 
-    ds = gdal.Open("tmp/testgdalwarp28.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     # Check that there is no hole at the south pole location
@@ -783,17 +712,18 @@ def test_gdalwarp_28(gdalwarp_path):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def DISABLED_test_gdalwarp_29(gdalwarp_path):
+@pytest.mark.xfail()
+def test_gdalwarp_29(gdalwarp_path, tmp_path):
 
     # This test has been disabled since PROJ 8 will reproject a coordinates at
     # lat=90 to a finite value, due to 90deg being < PI/2 due to numerical
     # accuracy
 
-    gdaltest.runexternal(
-        gdalwarp_path + " -t_srs EPSG:3785 data/w_jpeg.tiff tmp/testgdalwarp29.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp29.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp29.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} -t_srs EPSG:3785 data/w_jpeg.tiff {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -819,36 +749,40 @@ def DISABLED_test_gdalwarp_29(gdalwarp_path):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_gdalwarp_30(gdalwarp_path):
+def test_gdalwarp_30(gdalwarp_path, tmp_path):
+
+    dst1_tif = str(tmp_path / "testgdalwarp30_1.tif")
+    dst2_tif = str(tmp_path / "testgdalwarp30_2.tif")
+    dst3_tif = str(tmp_path / "testgdalwarp30_3.tif")
 
     te = " -te -20037508.343 -16206629.152 20036845.112 16213801.068"
 
     # First run : no parameter
     gdaltest.runexternal(
         gdalwarp_path
-        + " data/w_jpeg.tiff tmp/testgdalwarp30_1.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES"
+        + f" data/w_jpeg.tiff {dst1_tif}  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES"
         + te
     )
 
     # Second run : with  -wo OPTIMIZE_SIZE=TRUE
     gdaltest.runexternal(
         gdalwarp_path
-        + " data/w_jpeg.tiff tmp/testgdalwarp30_2.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo OPTIMIZE_SIZE=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES"
+        + f" data/w_jpeg.tiff {dst2_tif}  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo OPTIMIZE_SIZE=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES"
         + te
     )
 
     # Third run : with  -wo STREAMABLE_OUTPUT=TRUE
     gdaltest.runexternal(
         gdalwarp_path
-        + " data/w_jpeg.tiff tmp/testgdalwarp30_3.tif  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo STREAMABLE_OUTPUT=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES"
+        + f" data/w_jpeg.tiff {dst3_tif}  -t_srs EPSG:3785 -co COMPRESS=LZW -wm 500000 -wo STREAMABLE_OUTPUT=TRUE  --config GDAL_CACHEMAX 1 -ts 1000 500 -co TILED=YES"
         + te
     )
 
-    file_size1 = os.stat("tmp/testgdalwarp30_1.tif")[stat.ST_SIZE]
-    file_size2 = os.stat("tmp/testgdalwarp30_2.tif")[stat.ST_SIZE]
-    file_size3 = os.stat("tmp/testgdalwarp30_3.tif")[stat.ST_SIZE]
+    file_size1 = os.stat(dst1_tif)[stat.ST_SIZE]
+    file_size2 = os.stat(dst2_tif)[stat.ST_SIZE]
+    file_size3 = os.stat(dst3_tif)[stat.ST_SIZE]
 
-    ds = gdal.Open("tmp/testgdalwarp30_1.tif")
+    ds = gdal.Open(dst1_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -856,7 +790,7 @@ def test_gdalwarp_30(gdalwarp_path):
 
     ds = None
 
-    ds = gdal.Open("tmp/testgdalwarp30_2.tif")
+    ds = gdal.Open(dst2_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -864,7 +798,7 @@ def test_gdalwarp_30(gdalwarp_path):
 
     ds = None
 
-    ds = gdal.Open("tmp/testgdalwarp30_3.tif")
+    ds = gdal.Open(dst3_tif)
     assert ds is not None
 
     cs = ds.GetRasterBand(1).Checksum()
@@ -885,31 +819,29 @@ def test_gdalwarp_30(gdalwarp_path):
 # Test -overwrite (#3759)
 
 
-def test_gdalwarp_31(gdalwarp_path):
+def test_gdalwarp_31(gdalwarp_path, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp31.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp31.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     cs1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
     (_, err) = gdaltest.runexternal_out_and_err(
-        gdalwarp_path
-        + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326"
+        f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif} -t_srs EPSG:4326"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp31.tif")
+    ds = gdal.Open(dst_tif)
     cs2 = ds.GetRasterBand(1).Checksum()
     ds = None
 
     (_, err2) = gdaltest.runexternal_out_and_err(
-        gdalwarp_path
-        + " ../gcore/data/byte.tif tmp/testgdalwarp31.tif -t_srs EPSG:4326 -overwrite"
+        f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif} -t_srs EPSG:4326 -overwrite"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp31.tif")
+    ds = gdal.Open(dst_tif)
     cs3 = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -921,18 +853,20 @@ def test_gdalwarp_31(gdalwarp_path):
 
 
 @pytest.mark.require_creation_option("GTiff", "JPEG")
-def test_gdalwarp_33(gdalwarp_path):
+def test_gdalwarp_33(gdalwarp_path, tmp_path):
 
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip("gdal_translate missing")
 
+    dst_tif = str(tmp_path / "testgdalwarp33.tif")
+    mask_tif = str(tmp_path / "testgdalwarp33_mask.tif")
+
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -dstalpha ../gcore/data/ycbcr_with_mask.tif tmp/testgdalwarp33.tif"
+        f"{gdalwarp_path} -dstalpha ../gcore/data/ycbcr_with_mask.tif {dst_tif}"
     )
 
     src_ds = gdal.Open("../gcore/data/ycbcr_with_mask.tif")
-    ds = gdal.Open("tmp/testgdalwarp33.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     # There are expected diffs because of the artifacts due to JPEG compression in 8x8 blocks
@@ -944,10 +878,10 @@ def test_gdalwarp_33(gdalwarp_path):
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + " -expand gray GTIFF_DIR:2:../gcore/data/ycbcr_with_mask.tif tmp/testgdalwarp33_mask.tif"
+        + f" -expand gray GTIFF_DIR:2:../gcore/data/ycbcr_with_mask.tif {mask_tif}"
     )
 
-    mask_ds = gdal.Open("tmp/testgdalwarp33_mask.tif")
+    mask_ds = gdal.Open(mask_tif)
     expected_cs = mask_ds.GetRasterBand(1).Checksum()
     mask_ds = None
 
@@ -962,39 +896,31 @@ def test_gdalwarp_33(gdalwarp_path):
 # Test warping multiple sources
 
 
-def test_gdalwarp_34(gdalwarp_path):
+def test_gdalwarp_34(gdalwarp_path, tmp_path):
 
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip("gdal_translate missing")
 
-    try:
-        os.remove("tmp/testgdalwarp34.tif")
-    except OSError:
-        pass
+    src1_tif = str(tmp_path / "testgdalwarp34src_1.tif")
+    src2_tif = str(tmp_path / "testgdalwarp34src_2.tif")
+    dst_tif = str(tmp_path / "testgdalwarp34.tif")
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + " ../gcore/data/byte.tif tmp/testgdalwarp34src_1.tif -srcwin 0 0 10 20"
+        + f" ../gcore/data/byte.tif {src1_tif} -srcwin 0 0 10 20"
     )
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + " ../gcore/data/byte.tif tmp/testgdalwarp34src_2.tif -srcwin 10 0 10 20"
+        + f" ../gcore/data/byte.tif {src2_tif} -srcwin 10 0 10 20"
     )
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/testgdalwarp34src_1.tif tmp/testgdalwarp34src_2.tif tmp/testgdalwarp34.tif"
-    )
-    os.remove("tmp/testgdalwarp34src_1.tif")
-    os.remove("tmp/testgdalwarp34src_2.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} {src1_tif} {src2_tif} {dst_tif}")
 
-    ds = gdal.Open("tmp/testgdalwarp34.tif")
+    ds = gdal.Open(dst_tif)
     cs = ds.GetRasterBand(1).Checksum()
     gt = ds.GetGeoTransform()
     xsize = ds.RasterXSize
     ysize = ds.RasterYSize
     ds = None
-
-    os.remove("tmp/testgdalwarp34.tif")
 
     assert xsize == 20 and ysize == 20, "bad dimensions"
 
@@ -1009,14 +935,15 @@ def test_gdalwarp_34(gdalwarp_path):
 # Test -ts and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
 
 
-def test_gdalwarp_35(gdalwarp_path):
+def test_gdalwarp_35(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp35.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -ts 20 20 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif tmp/testgdalwarp35.tif"
+        f"{gdalwarp_path} -ts 20 20 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp35.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     gdaltest.check_geotransform(
@@ -1032,14 +959,15 @@ def test_gdalwarp_35(gdalwarp_path):
 # Test -tr and -te optimization (doesn't need calling GDALSuggestedWarpOutput2, #4804)
 
 
-def test_gdalwarp_36(gdalwarp_path):
+def test_gdalwarp_36(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp36.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -tr 60 60 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif tmp/testgdalwarp36.tif"
+        f"{gdalwarp_path} -tr 60 60 -te 440720.000 3750120.000 441920.000 3751320.000 ../gcore/data/byte.tif {dst_tif}"
     )
 
-    ds = gdal.Open("tmp/testgdalwarp36.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     gdaltest.check_geotransform(
@@ -1055,13 +983,13 @@ def test_gdalwarp_36(gdalwarp_path):
 # Test metadata copying - stats should not be copied (#5319)
 
 
-def test_gdalwarp_37(gdalwarp_path):
+def test_gdalwarp_37(gdalwarp_path, tmp_path):
 
-    gdaltest.runexternal(
-        gdalwarp_path + " -tr 60 60 ./data/utmsmall.tif tmp/testgdalwarp37.tif"
-    )
+    dst_tif = str(tmp_path / "testgdalwarp37.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp37.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} -tr 60 60 ./data/utmsmall.tif {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     md = ds.GetRasterBand(1).GetMetadata()
@@ -1084,11 +1012,13 @@ def test_gdalwarp_37(gdalwarp_path):
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdalwarp_38(gdalwarp_path):
+def test_gdalwarp_38(gdalwarp_path, tmp_path):
 
-    gdaltest.runexternal(gdalwarp_path + " data/withnodata.asc tmp/testgdalwarp38.tif")
+    dst_tif = str(tmp_path / "testgdalwarp38.tif")
 
-    ds = gdal.Open("tmp/testgdalwarp38.tif")
+    gdaltest.runexternal(f"{gdalwarp_path} data/withnodata.asc {dst_tif}")
+
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == 65531
     assert ds.GetRasterBand(1).GetNoDataValue() == -999
     ds = None
@@ -1099,14 +1029,15 @@ def test_gdalwarp_38(gdalwarp_path):
 
 
 @pytest.mark.require_driver("AAIGRID")
-def test_gdalwarp_39(gdalwarp_path):
+def test_gdalwarp_39(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testgdalwarp39.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gdrivers/data/aaigrid/float64.asc tmp/test_gdalwarp_39.tif -oo DATATYPE=Float64 -overwrite"
+        f"{gdalwarp_path} ../gdrivers/data/aaigrid/float64.asc {dst_tif} -oo DATATYPE=Float64 -overwrite"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_39.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).DataType == gdal.GDT_Float64
     ds = None
 
@@ -1115,12 +1046,14 @@ def test_gdalwarp_39(gdalwarp_path):
 # Test -ovr
 
 
-def test_gdalwarp_40(gdalwarp_path):
+def test_gdalwarp_40(gdalwarp_path, tmp_path):
+
+    src_tif = str(tmp_path / "test_gdalwarp_40_src.tif")
+    dst_tif = str(tmp_path / "test_gdalwarp_40.tif")
+    dst_vrt = str(tmp_path / "test_gdalwarp_40.vrt")
 
     src_ds = gdal.Open("../gcore/data/byte.tif")
-    out_ds = gdal.GetDriverByName("GTiff").CreateCopy(
-        "tmp/test_gdalwarp_40_src.tif", src_ds
-    )
+    out_ds = gdal.GetDriverByName("GTiff").CreateCopy(src_tif, src_ds)
     cs_main = out_ds.GetRasterBand(1).Checksum()
     out_ds.BuildOverviews("NONE", overviewlist=[2, 4])
     out_ds.GetRasterBand(1).GetOverview(0).Fill(127)
@@ -1130,170 +1063,136 @@ def test_gdalwarp_40(gdalwarp_path):
     out_ds = None
 
     # Should select main resolution
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == cs_main
     ds = None
 
     # Test -ovr AUTO. Should select main resolution
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ovr AUTO"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ovr AUTO")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == cs_main
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gcore/data/byte.tif tmp/test_gdalwarp_40.tif -overwrite -ts 5 5"
+        f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif} -overwrite -ts 5 5"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     # Test -ovr NONE. Should select main resolution too
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ovr NONE -ts 5 5"
+        f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ovr NONE -ts 5 5"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == expected_cs
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gcore/data/byte.tif tmp/test_gdalwarp_40.tif -overwrite -ts 15 15"
+        f"{gdalwarp_path} ../gcore/data/byte.tif {dst_tif} -overwrite -ts 15 15"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     # Should select main resolution too
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 15 15"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 15 15")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == expected_cs
     ds = None
 
     # Should select overview 0
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 10 10"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 10 10")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == cs_ov0
     ds = None
 
     # Should select overview 0 through VRT
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.vrt -overwrite -ts 10 10 -of VRT"
+        f"{gdalwarp_path} {src_tif} {dst_vrt} -overwrite -ts 10 10 -of VRT"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.vrt")
+    ds = gdal.Open(dst_vrt)
     assert ds.GetRasterBand(1).Checksum() == cs_ov0
     ds = None
 
     # Should select overview 0 through VRT
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.vrt -overwrite -ts 10 10 -te 440720 3750120 441920 3751320 -of VRT"
+        f"{gdalwarp_path} {src_tif} {dst_vrt} -overwrite -ts 10 10 -te 440720 3750120 441920 3751320 -of VRT"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.vrt")
+    ds = gdal.Open(dst_vrt)
     assert ds.GetRasterBand(1).Checksum() == cs_ov0
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif -oo OVERVIEW_LEVEL=0 tmp/test_gdalwarp_40.tif -overwrite -ts 7 7"
+        f"{gdalwarp_path} {src_tif} -oo OVERVIEW_LEVEL=0 {dst_tif} -overwrite -ts 7 7"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     # Should select overview 0 too
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 7 7"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 7 7")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == expected_cs
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif -ovr NONE -oo OVERVIEW_LEVEL=0 tmp/test_gdalwarp_40.tif -overwrite -ts 5 5"
+        f"{gdalwarp_path} {src_tif} -ovr NONE -oo OVERVIEW_LEVEL=0 {dst_tif} -overwrite -ts 5 5"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     # Test AUTO-n. Should select overview 0 too
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 5 5 -ovr AUTO-1"
+        f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 5 5 -ovr AUTO-1"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == expected_cs
     ds = None
 
     # Should select overview 1
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 5 5"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 5 5")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == cs_ov1
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif -oo OVERVIEW_LEVEL=1 tmp/test_gdalwarp_40.tif -overwrite -ts 3 3"
+        f"{gdalwarp_path} {src_tif} -oo OVERVIEW_LEVEL=1 {dst_tif} -overwrite -ts 3 3"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     # Should select overview 1 too
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ts 3 3"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ts 3 3")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == expected_cs
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif -oo OVERVIEW_LEVEL=1 tmp/test_gdalwarp_40.tif -overwrite -ts 20 20"
+        f"{gdalwarp_path} {src_tif} -oo OVERVIEW_LEVEL=1 {dst_tif} -overwrite -ts 20 20"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     expected_cs = ds.GetRasterBand(1).Checksum()
     ds = None
 
     # Specify a level >= number of overviews. Should select overview 1 too
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_40_src.tif tmp/test_gdalwarp_40.tif -overwrite -ovr 5"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -ovr 5")
 
-    ds = gdal.Open("tmp/test_gdalwarp_40.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == expected_cs
     ds = None
 
@@ -1304,11 +1203,12 @@ def test_gdalwarp_40(gdalwarp_path):
 # dataset and target extent
 
 
-def test_gdalwarp_41(gdalwarp_path):
+def test_gdalwarp_41(gdalwarp_path, tmp_path):
 
-    src_ds = gdal.GetDriverByName("GTiff").Create(
-        "tmp/test_gdalwarp_41_src.tif", 666, 666
-    )
+    src_tif = str(tmp_path / "test_gdalwarp_41_src.tif")
+    dst_tif = str(tmp_path / "test_gdalwarp_41.tif")
+
+    src_ds = gdal.GetDriverByName("GTiff").Create(src_tif, 666, 666)
     src_ds.SetGeoTransform(
         [
             -3333500,
@@ -1343,11 +1243,10 @@ def test_gdalwarp_41(gdalwarp_path):
 
     # Check when source fill ratio heuristics is ON
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES"
+        f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_41.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.RasterXSize == 2052
     assert ds.RasterYSize == 1026
     assert ds.GetRasterBand(1).Checksum() == 57091
@@ -1355,11 +1254,10 @@ def test_gdalwarp_41(gdalwarp_path):
 
     # Check when source fill ratio heuristics is OFF
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/test_gdalwarp_41_src.tif tmp/test_gdalwarp_41.tif -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES -wo SRC_FILL_RATIO_HEURISTICS=NO"
+        f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite  -t_srs EPSG:4326 -te -180 -90 180 90  -wo INIT_DEST=127 -wo SKIP_NOSOURCE=YES -wo SRC_FILL_RATIO_HEURISTICS=NO"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_41.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == 31890
     ds = None
 
@@ -1368,29 +1266,32 @@ def test_gdalwarp_41(gdalwarp_path):
 # Test warping multiple source images, in one step or several, with INIT_DEST/nodata (#5909, #5387)
 
 
-def test_gdalwarp_42(gdalwarp_path):
+def test_gdalwarp_42(gdalwarp_path, tmp_path):
+
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip("gdal_translate missing")
 
+    left_tif = str(tmp_path / "small_world_left.tif")
+    right_tif = str(tmp_path / "small_world_right.tif")
+    dst_tif = str(tmp_path / "test_gdalwarp_42.tif")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + " ../gdrivers/data/small_world.tif tmp/small_world_left.tif -srcwin 0 0 200 200 -a_nodata 255"
+        + f" ../gdrivers/data/small_world.tif {left_tif} -srcwin 0 0 200 200 -a_nodata 255"
     )
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + " ../gdrivers/data/small_world.tif tmp/small_world_right.tif -srcwin 200 0 200 200  -a_nodata 255"
+        + f" ../gdrivers/data/small_world.tif {right_tif} -srcwin 200 0 200 200  -a_nodata 255"
     )
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/small_world_left.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
+        f"{gdalwarp_path} {left_tif} {dst_tif} -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
     )
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo UNIFIED_SRC_NODATA=YES"
+        f"{gdalwarp_path} {right_tif} {dst_tif} -wo UNIFIED_SRC_NODATA=YES"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_42.tif")
+    ds = gdal.Open(dst_tif)
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     assert got_cs == expected_cs
@@ -1398,11 +1299,10 @@ def test_gdalwarp_42(gdalwarp_path):
 
     # In one step
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
+        f"{gdalwarp_path} {left_tif} {right_tif} {dst_tif} -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_42.tif")
+    ds = gdal.Open(dst_tif)
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     assert got_cs == expected_cs
@@ -1410,11 +1310,10 @@ def test_gdalwarp_42(gdalwarp_path):
 
     # In one step with -wo INIT_DEST=255,255,255,0
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=255,255,255,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
+        f"{gdalwarp_path} {left_tif} {right_tif} {dst_tif} -wo INIT_DEST=255,255,255,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_42.tif")
+    ds = gdal.Open(dst_tif)
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [30111, 32302, 40026, 59540]
     assert got_cs == expected_cs
@@ -1423,11 +1322,10 @@ def test_gdalwarp_42(gdalwarp_path):
     # In one step with -wo INIT_DEST=0,0,0,0
     # Different checksum since there are source pixels at 255, so they get remap to 0
     gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/small_world_left.tif tmp/small_world_right.tif tmp/test_gdalwarp_42.tif -wo INIT_DEST=0,0,0,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
+        f"{gdalwarp_path} {left_tif} {right_tif} {dst_tif} -wo INIT_DEST=0,0,0,0 -overwrite -te -180 -90 180 90 -dstalpha -wo UNIFIED_SRC_NODATA=YES"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_42.tif")
+    ds = gdal.Open(dst_tif)
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
     expected_cs = [25382, 27573, 35297, 59540]
     assert got_cs == expected_cs
@@ -1438,21 +1336,21 @@ def test_gdalwarp_42(gdalwarp_path):
 # Test that NODATA_VALUES is honoured, but not transferred when adding an alpha channel.
 
 
-def test_gdalwarp_43(gdalwarp_path):
+def test_gdalwarp_43(gdalwarp_path, tmp_path):
     if test_cli_utilities.get_gdal_translate_path() is None:
         pytest.skip("gdal_translate missing")
 
+    src_tif = str(tmp_path / "small_world.tif")
+    dst_tif = str(tmp_path / "test_gdalwarp_43.tif")
+
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_translate_path()
-        + ' ../gdrivers/data/small_world.tif tmp/small_world.tif -mo "FOO=BAR" -mo "NODATA_VALUES=62 93 23"'
+        + f' ../gdrivers/data/small_world.tif {src_tif} -mo "FOO=BAR" -mo "NODATA_VALUES=62 93 23"'
     )
 
-    gdaltest.runexternal(
-        gdalwarp_path
-        + " tmp/small_world.tif tmp/test_gdalwarp_43.tif -overwrite -dstalpha"
-    )
+    gdaltest.runexternal(f"{gdalwarp_path} {src_tif} {dst_tif} -overwrite -dstalpha")
 
-    ds = gdal.Open("tmp/test_gdalwarp_43.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetMetadataItem("NODATA_VALUES") is None
     assert ds.GetMetadataItem("FOO") == "BAR"
     got_cs = [ds.GetRasterBand(i + 1).Checksum() for i in range(4)]
@@ -1464,22 +1362,22 @@ def test_gdalwarp_43(gdalwarp_path):
 # Test effect of -wo SRC_COORD_PRECISION
 
 
-def test_gdalwarp_44(gdalwarp_path):
+def test_gdalwarp_44(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "out.tif")
 
     # Without  -wo SRC_COORD_PRECISION
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 10 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
+        f"{gdalwarp_path} -q ../gcore/data/byte.tif {dst_tif} -wm 10 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_44.tif")
+    ds = gdal.Open(dst_tif)
     cs1 = ds.GetRasterBand(1).Checksum()
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
+        f"{gdalwarp_path} -q ../gcore/data/byte.tif {dst_tif} -wm 0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_44.tif")
+    ds = gdal.Open(dst_tif)
     cs2 = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -1488,18 +1386,16 @@ def test_gdalwarp_44(gdalwarp_path):
 
     # With  -wo SRC_COORD_PRECISION
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 10 -et 0.01 -wo SRC_COORD_PRECISION=0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
+        f"{gdalwarp_path} -q ../gcore/data/byte.tif {dst_tif} -wm 10 -et 0.01 -wo SRC_COORD_PRECISION=0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_44.tif")
+    ds = gdal.Open(dst_tif)
     cs3 = ds.GetRasterBand(1).Checksum()
     ds = None
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -q ../gcore/data/byte.tif tmp/test_gdalwarp_44.tif -wm 0.1 -et 0.01 -wo SRC_COORD_PRECISION=0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
+        f"{gdalwarp_path} -q ../gcore/data/byte.tif {dst_tif} -wm 0.1 -et 0.01 -wo SRC_COORD_PRECISION=0.1 -overwrite -ts 500 500 -r cubic -ot float32 -t_srs EPSG:4326"
     )
-    ds = gdal.Open("tmp/test_gdalwarp_44.tif")
+    ds = gdal.Open(dst_tif)
     cs4 = ds.GetRasterBand(1).Checksum()
     ds = None
 
@@ -1510,24 +1406,29 @@ def test_gdalwarp_44(gdalwarp_path):
 # Test -te_srs
 
 
-def test_gdalwarp_45(gdalwarp_path):
+def test_gdalwarp_45(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "test_gdalwarp_45.tif")
 
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -te_srs EPSG:4267 -te -117.641087629972 33.8915301685897 -117.628190189534 33.9024195619201 ../gcore/data/byte.tif tmp/test_gdalwarp_45.tif -overwrite"
+        f"{gdalwarp_path} -te_srs EPSG:4267 -te -117.641087629972 33.8915301685897 -117.628190189534 33.9024195619201 ../gcore/data/byte.tif {dst_tif} -overwrite"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_45.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == 4672
 
     ds = None
 
+
+def test_gdalwarp_45bis(gdalwarp_path, tmp_path):
+
+    dst_tif = str(tmp_path / "test_gdalwarp_45bis.tif")
+
     gdaltest.runexternal(
-        gdalwarp_path
-        + " -te_srs EPSG:4267 -te -117.641087629972 33.8915301685897 -117.628190189534 33.9024195619201 -t_srs EPSG:32611 ../gcore/data/byte.tif tmp/test_gdalwarp_45.tif -overwrite"
+        f"{gdalwarp_path} -te_srs EPSG:4267 -te -117.641087629972 33.8915301685897 -117.628190189534 33.9024195619201 -t_srs EPSG:32611 ../gcore/data/byte.tif {dst_tif} -overwrite"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_45.tif")
+    ds = gdal.Open(dst_tif)
     assert ds.GetRasterBand(1).Checksum() == 4672
 
     ds = None
@@ -1538,46 +1439,64 @@ def test_gdalwarp_45(gdalwarp_path):
 
 
 @pytest.mark.require_driver("CSV")
-def test_gdalwarp_46(gdalwarp_path):
+def test_gdalwarp_46(gdalwarp_path, tmp_path):
     if test_cli_utilities.get_ogr2ogr_path() is None:
         pytest.skip("ogr2ogr missing")
 
+    dst_tif = str(tmp_path / "testgdalwarp46.tif")
+
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gcore/data/utmsmall.tif tmp/test_gdalwarp_46.tif -cutline data/cutline.vrt -crop_to_cutline -overwrite"
+        f"{gdalwarp_path} ../gcore/data/utmsmall.tif {dst_tif} -cutline data/cutline.vrt -crop_to_cutline -overwrite"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_46.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 18837, "Bad checksum"
 
     ds = None
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalwarp_46bis(gdalwarp_path, tmp_path):
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        pytest.skip("ogr2ogr missing")
+
+    dst_tif = str(tmp_path / "testgdalwarp46bis.tif")
 
     # With explicit -s_srs and -t_srs
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gcore/data/utmsmall.tif tmp/test_gdalwarp_46.tif -cutline data/cutline.vrt -crop_to_cutline -overwrite -s_srs EPSG:26711 -t_srs EPSG:26711"
+        f"{gdalwarp_path} ../gcore/data/utmsmall.tif {dst_tif} -cutline data/cutline.vrt -crop_to_cutline -overwrite -s_srs EPSG:26711 -t_srs EPSG:26711"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_46.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 18837, "Bad checksum"
 
     ds = None
+
+
+@pytest.mark.require_driver("CSV")
+def test_gdalwarp_46ter(gdalwarp_path, tmp_path):
+
+    if test_cli_utilities.get_ogr2ogr_path() is None:
+        pytest.skip("ogr2ogr missing")
+
+    dst_tif = str(tmp_path / "testgdalwarp46ter.tif")
+    cutline_shp = str(tmp_path / "cutline_4326.shp")
 
     # With cutline in another SRS
     gdaltest.runexternal(
         test_cli_utilities.get_ogr2ogr_path()
-        + " tmp/cutline_4326.shp data/cutline.vrt -s_srs EPSG:26711 -t_srs EPSG:4326"
+        + f" {cutline_shp} data/cutline.vrt -s_srs EPSG:26711 -t_srs EPSG:4326"
     )
     gdaltest.runexternal(
-        gdalwarp_path
-        + " ../gcore/data/utmsmall.tif tmp/test_gdalwarp_46.tif -cutline tmp/cutline_4326.shp -crop_to_cutline -overwrite -t_srs EPSG:32711"
+        f"{gdalwarp_path} ../gcore/data/utmsmall.tif {dst_tif} -cutline {cutline_shp} -crop_to_cutline -overwrite -t_srs EPSG:32711"
     )
 
-    ds = gdal.Open("tmp/test_gdalwarp_46.tif")
+    ds = gdal.Open(dst_tif)
     assert ds is not None
 
     assert ds.GetRasterBand(1).Checksum() == 19582, "Bad checksum"
@@ -1589,9 +1508,9 @@ def test_gdalwarp_46(gdalwarp_path):
 # Test gdalwarp -co APPEND_SUBDATASET=YES
 
 
-def test_gdalwarp_47_append_subdataset(gdalwarp_path):
+def test_gdalwarp_47_append_subdataset(gdalwarp_path, tmp_path):
 
-    tmpfilename = "tmp/test_gdalwarp_47_append_subdataset.tif"
+    tmpfilename = str(tmp_path / "test_gdalwarp_47_append_subdataset.tif")
     gdal.Translate(tmpfilename, "../gcore/data/byte.tif")
     gdaltest.runexternal(
         gdalwarp_path
