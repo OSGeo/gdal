@@ -2378,7 +2378,7 @@ int OGRProjCT::TransformWithErrorCodes(int nCount, double *x, double *y,
                         } while (x[i] < -M_PI);
                     }
                 }
-                constexpr double RAD_TO_DEG = 57.29577951308232;
+                constexpr double RAD_TO_DEG = 180. / M_PI;
                 x[i] *= RAD_TO_DEG;
 
                 // Optimization for the case where we are provided a whole line

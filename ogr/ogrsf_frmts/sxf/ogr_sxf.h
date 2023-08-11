@@ -40,8 +40,8 @@
 #include "org_sxf_defs.h"
 
 #define CHECK_BIT(var, pos) (((var) & (1 << (pos))) != 0)
-#define TO_DEGREES 57.2957795130823208766
-#define TO_RADIANS 0.017453292519943295769
+constexpr double TO_DEGREES = 180.0 / M_PI;
+constexpr double TO_RADIANS = M_PI / 180.0;
 
 /************************************************************************/
 /*                         OGRSXFLayer                                */
