@@ -178,6 +178,8 @@ MAIN_START(argc, argv)
 
             if (pszGDALVectorInfoOutput)
                 printf("%s", pszGDALVectorInfoOutput);
+            else
+                nRet = 1;
 
             CPLFree(pszGDALVectorInfoOutput);
         }
