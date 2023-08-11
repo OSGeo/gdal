@@ -263,9 +263,18 @@ void ZarrGroupV2::ExploreDirectory() const
 
     for (int i = 0; i < aosFiles.size(); ++i)
     {
-        if (strcmp(aosFiles[i], ".") != 0 && strcmp(aosFiles[i], "..") != 0 &&
+        if (aosFiles[i][0] != 0 && strcmp(aosFiles[i], ".") != 0 &&
+            strcmp(aosFiles[i], "..") != 0 &&
             strcmp(aosFiles[i], ".zgroup") != 0 &&
-            strcmp(aosFiles[i], ".zattrs") != 0)
+            strcmp(aosFiles[i], ".zattrs") != 0 &&
+            // Exclude filenames ending with '/'. This can happen on some
+            // object storage like S3 where a "foo" file and a "foo/" directory
+            // can coexist. The ending slash is only appended in that situation
+            // where both a file and directory have the same name. So we can
+            // safely ignore the one with an ending slash, as we will also
+            // encounter its version without slash. Cf use case of
+            // https://github.com/OSGeo/gdal/issues/8192
+            aosFiles[i][strlen(aosFiles[i]) - 1] != '/')
         {
             const std::string osSubDir = CPLFormFilename(
                 m_osDirectoryName.c_str(), aosFiles[i], nullptr);
