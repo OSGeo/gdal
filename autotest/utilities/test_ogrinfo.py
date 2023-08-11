@@ -692,3 +692,15 @@ def test_ogrinfo_hiearchical(ogrinfo_path):
     assert "  Layer: fd1_lyr2 (Point)" in ret
     assert "Group fd2:" in ret
     assert "  Layer: fd2_lyr (Point)" in ret
+
+
+###############################################################################
+# Test failed -sql
+
+
+def test_ogrinfo_failed_sql(ogrinfo_path):
+
+    (ret, err) = gdaltest.runexternal_out_and_err(
+        ogrinfo_path + ' ../ogr/data/poly.shp -sql "SELECT bla"'
+    )
+    assert "ERROR ret code = 1" in err
