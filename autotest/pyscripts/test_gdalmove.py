@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import shutil
 
 import pytest
@@ -73,19 +72,19 @@ def test_gdalmove_version(script_path):
 #
 
 
-def test_gdalmove_1(script_path):
+def test_gdalmove_1(script_path, tmp_path):
 
-    shutil.copy(
-        test_py_scripts.get_data_path("gcore") + "byte.tif", "tmp/test_gdalmove_1.tif"
-    )
+    test_tif = str(tmp_path / "test_gdalmove_1.tif")
+
+    shutil.copy(test_py_scripts.get_data_path("gcore") + "byte.tif", test_tif)
 
     test_py_scripts.run_py_script(
         script_path,
         "gdalmove",
-        '-s_srs "+proj=utm +zone=11 +ellps=clrk66 +towgs84=0,0,0 +no_defs" -t_srs EPSG:32611 tmp/test_gdalmove_1.tif -et 1',
+        f'-s_srs "+proj=utm +zone=11 +ellps=clrk66 +towgs84=0,0,0 +no_defs" -t_srs EPSG:32611 {test_tif} -et 1',
     )
 
-    ds = gdal.Open("tmp/test_gdalmove_1.tif")
+    ds = gdal.Open(test_tif)
     got_gt = ds.GetGeoTransform()
     expected_gt = (
         440719.95870935748,
@@ -100,17 +99,3 @@ def test_gdalmove_1(script_path):
     wkt = ds.GetProjection()
     assert "32611" in wkt, "bad geotransform"
     ds = None
-
-
-###############################################################################
-# Cleanup
-
-
-def test_gdalmove_cleanup():
-
-    lst = ["tmp/test_gdalmove_1.tif"]
-    for filename in lst:
-        try:
-            os.remove(filename)
-        except OSError:
-            pass
