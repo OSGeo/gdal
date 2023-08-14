@@ -245,3 +245,20 @@ def pytest_report_header(config):
         gdal_header_info += ' (tests marked as "slow" will be skipped)'
 
     return gdal_header_info
+
+
+@pytest.fixture()
+def tmp_vsimem(request):
+    import pathlib
+    import re
+
+    # sanitize test name using same method as pytest's tmp_path
+    subdir = re.sub(r"[\W]", "_", request.node.name)
+
+    # return a pathlib object so that behavior matches tmp_path
+    # and we can easily switch between the two
+    path = pathlib.PurePosixPath("/vsimem") / subdir
+
+    yield path
+
+    gdal.RmdirRecursive(str(path))
