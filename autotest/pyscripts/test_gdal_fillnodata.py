@@ -72,21 +72,19 @@ def test_gdal_fillnodata_version(script_path):
 # Dummy test : there is no nodata value in the source dataset !
 
 
-def test_gdal_fillnodata_1(script_path):
+def test_gdal_fillnodata_1(script_path, tmp_path):
+
+    result_tif = str(tmp_path / "test_gdal_fillnodata_1.tif")
 
     test_py_scripts.run_py_script(
         script_path,
         "gdal_fillnodata",
-        test_py_scripts.get_data_path("gcore")
-        + "byte.tif tmp/test_gdal_fillnodata_1.tif",
+        test_py_scripts.get_data_path("gcore") + f"byte.tif {result_tif}",
     )
 
-    try:
-        ds = gdal.Open("tmp/test_gdal_fillnodata_1.tif")
-        assert ds.GetRasterBand(1).Checksum() == 4672
-        ds = None
-    finally:
-        gdal.GetDriverByName("GTiff").Delete("tmp/test_gdal_fillnodata_1.tif")
+    ds = gdal.Open(result_tif)
+    assert ds.GetRasterBand(1).Checksum() == 4672
+    ds = None
 
 
 ###############################################################################
@@ -94,35 +92,35 @@ def test_gdal_fillnodata_1(script_path):
 # No data value for nodata_byte.tif is 0.
 
 
-def test_gdal_fillnodata_2(script_path):
+def test_gdal_fillnodata_2(script_path, tmp_path):
+
+    result_tif = str(tmp_path / "test_gdal_fillnodata_2.tif")
 
     test_py_scripts.run_py_script(
         script_path,
         "gdal_fillnodata",
         "-si 0 "
         + test_py_scripts.get_data_path("gcore")
-        + "nodata_byte.tif tmp/test_gdal_fillnodata_2.tif",
+        + f"nodata_byte.tif {result_tif}",
     )
 
-    try:
-        ds = gdal.Open("tmp/test_gdal_fillnodata_2.tif")
-        assert (
-            ds.GetRasterBand(1).GetNoDataValue() == 0
-        ), "Failed to copy No Data Value to dst dataset."
-        ds = None
-    finally:
-        gdal.GetDriverByName("GTiff").Delete("tmp/test_gdal_fillnodata_2.tif")
+    ds = gdal.Open(result_tif)
+    assert (
+        ds.GetRasterBand(1).GetNoDataValue() == 0
+    ), "Failed to copy No Data Value to dst dataset."
+    ds = None
 
 
 ###############################################################################
 # Test -si 1 and -md
 
 
-def test_gdal_fillnodata_smoothing(script_path):
+def test_gdal_fillnodata_smoothing(script_path, tmp_path):
 
-    ds = gdal.GetDriverByName("GTiff").Create(
-        "tmp/test_gdal_fillnodata_smoothing_in.tif", 4, 4
-    )
+    input_tif = str(tmp_path / "test_gdal_fillnodata_smoothing_in.tif")
+    result_tif = str(tmp_path / "test_gdal_fillnodata_smoothing.tif")
+
+    ds = gdal.GetDriverByName("GTiff").Create(input_tif, 4, 4)
     ds.GetRasterBand(1).SetNoDataValue(0)
     input_data = (20, 30, 40, 50, 30, 0, 0, 60, 40, 0, 0, 70, 50, 60, 70, 80)
     ds.GetRasterBand(1).WriteRaster(
@@ -133,18 +131,11 @@ def test_gdal_fillnodata_smoothing(script_path):
     test_py_scripts.run_py_script(
         script_path,
         "gdal_fillnodata",
-        "-md 1 -si 1 tmp/test_gdal_fillnodata_smoothing_in.tif tmp/test_gdal_fillnodata_smoothing.tif",
+        f"-md 1 -si 1 {input_tif} {result_tif}",
     )
 
     expected_data = (20, 30, 40, 50, 30, 40, 50, 60, 40, 50, 60, 70, 50, 60, 70, 80)
-    try:
-        ds = gdal.Open("tmp/test_gdal_fillnodata_smoothing.tif")
-        assert (
-            struct.unpack("B" * 16, ds.GetRasterBand(1).ReadRaster()) == expected_data
-        )
-        ds = None
-    finally:
-        gdal.GetDriverByName("GTiff").Delete(
-            "tmp/test_gdal_fillnodata_smoothing_in.tif"
-        )
-        gdal.GetDriverByName("GTiff").Delete("tmp/test_gdal_fillnodata_smoothing.tif")
+
+    ds = gdal.Open(result_tif)
+    assert struct.unpack("B" * 16, ds.GetRasterBand(1).ReadRaster()) == expected_data
+    ds = None
