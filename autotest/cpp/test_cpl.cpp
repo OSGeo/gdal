@@ -2638,12 +2638,16 @@ TEST_F(test_cpl, CPLJSONDocument)
         oObj.SetNull("null_field");
         ASSERT_TRUE(CPLJSONArray().GetChildren().empty());
         oObj.ToArray();
-        ASSERT_EQ(CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Spaced),
-                  std::string("{ }"));
-        ASSERT_EQ(CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Pretty),
-                  std::string("{\n}"));
-        ASSERT_EQ(CPLJSONObject().Format(CPLJSONObject::PrettyFormat::Plain),
-                  std::string("{}"));
+    }
+    {
+        CPLJSONObject oObj;
+        oObj.Set("foo", "bar");
+        EXPECT_STREQ(oObj.Format(CPLJSONObject::PrettyFormat::Spaced).c_str(),
+                     "{ \"foo\": \"bar\" }");
+        EXPECT_STREQ(oObj.Format(CPLJSONObject::PrettyFormat::Pretty).c_str(),
+                     "{\n  \"foo\":\"bar\"\n}");
+        EXPECT_STREQ(oObj.Format(CPLJSONObject::PrettyFormat::Plain).c_str(),
+                     "{\"foo\":\"bar\"}");
     }
     {
         CPLJSONArray oArrayConstructorString(std::string("foo"));
