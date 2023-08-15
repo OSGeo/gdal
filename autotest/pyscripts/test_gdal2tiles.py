@@ -74,6 +74,18 @@ def test_gdal2tiles_version(script_path):
     )
 
 
+def pil_available():
+    try:
+        import numpy  # noqa
+        from PIL import Image  # noqa
+
+        import osgeo.gdal_array as gdalarray  # noqa
+
+        return True
+    except ImportError:
+        return False
+
+
 def _verify_raster_band_checksums(filename, expected_cs=[]):
     ds = gdal.Open(filename)
     if ds is None:
@@ -89,23 +101,25 @@ def _verify_raster_band_checksums(filename, expected_cs=[]):
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_simple(script_path):
+def test_gdal2tiles_py_simple(script_path, tmp_path):
+
+    input_tif = str(tmp_path / "out_gdal2tiles_smallworld.tif")
 
     shutil.copy(
         test_py_scripts.get_data_path("gdrivers") + "small_world.tif",
-        "tmp/out_gdal2tiles_smallworld.tif",
+        input_tif,
     )
 
-    os.chdir("tmp")
-    test_py_scripts.run_py_script(
-        script_path, "gdal2tiles", "-q out_gdal2tiles_smallworld.tif"
-    )
-    os.chdir("..")
-
-    os.unlink("tmp/out_gdal2tiles_smallworld.tif")
+    # test execution without specifying output directory
+    prev_wd = os.getcwd()
+    try:
+        os.chdir(tmp_path)
+        test_py_scripts.run_py_script(script_path, "gdal2tiles", f"-q {input_tif}")
+    finally:
+        os.chdir(prev_wd)
 
     _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/0/0/0.png",
+        f"{tmp_path}/out_gdal2tiles_smallworld/0/0/0.png",
         expected_cs=[31420, 32522, 16314, 17849],
     )
 
@@ -115,15 +129,15 @@ def test_gdal2tiles_py_simple(script_path):
         "openlayers.html",
         "tilemapresource.xml",
     ]:
-        assert os.path.exists("tmp/out_gdal2tiles_smallworld/" + filename), (
+        assert os.path.exists(f"{tmp_path}/out_gdal2tiles_smallworld/" + filename), (
             "%s missing" % filename
         )
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_zoom_option(script_path):
+def test_gdal2tiles_py_zoom_option(script_path, tmp_path):
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+    tiles_dir = str(tmp_path / "out_gdal2tiles_smallworld")
 
     # Because of multiprocessing, run as external process, to avoid issues with
     # Ubuntu 12.04 and socket.setdefaulttimeout()
@@ -133,28 +147,28 @@ def test_gdal2tiles_py_zoom_option(script_path):
         "gdal2tiles",
         "-q --force-kml --processes=2 -z 0-1 "
         + test_py_scripts.get_data_path("gdrivers")
-        + "small_world.tif tmp/out_gdal2tiles_smallworld",
+        + f"small_world.tif {tiles_dir}",
     )
 
     _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/1/0/0.png",
+        f"{tiles_dir}/1/0/0.png",
         expected_cs=[24063, 23632, 14707, 17849],
     )
 
-    assert not os.path.exists("tmp/out_gdal2tiles_smallworld/0/0/0.png.aux.xml")
-    assert not os.path.exists("tmp/out_gdal2tiles_smallworld/1/0/0.png.aux.xml")
+    assert not os.path.exists(f"{tiles_dir}/0/0/0.png.aux.xml")
+    assert not os.path.exists(f"{tiles_dir}/1/0/0.png.aux.xml")
 
     if gdal.GetDriverByName("KMLSuperOverlay") is None:
         pytest.skip("KMLSuperOverlay driver missing")
 
-    ds = gdal.Open("tmp/out_gdal2tiles_smallworld/doc.kml")
+    ds = gdal.Open(f"{tiles_dir}/doc.kml")
     assert ds is not None, "did not get kml"
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_resampling_option(script_path):
-
-    resampling_list = [
+@pytest.mark.parametrize(
+    "resample",
+    [
         "average",
         "near",
         "bilinear",
@@ -168,120 +182,99 @@ def test_gdal2tiles_py_resampling_option(script_path):
         "med",
         "q1",
         "q3",
-    ]
-    try:
-        import numpy
-        from PIL import Image
+    ],
+)
+def test_gdal2tiles_py_resampling_option(script_path, tmp_path, resample):
 
-        import osgeo.gdal_array as gdalarray
+    if resample == "antialias" and not pil_available():
+        pytest.skip("'antialias' resampling is not available")
 
-        del Image, numpy, gdalarray
-    except ImportError:
-        # 'antialias' resampling is not available
-        resampling_list.remove("antialias")
+    out_dir = str(tmp_path / "out_gdal2tiles_smallworld")
 
-    out_dir = "tmp/out_gdal2tiles_smallworld"
-
-    for resample in resampling_list:
-
-        shutil.rmtree(out_dir, ignore_errors=True)
-
-        test_py_scripts.run_py_script_as_external_script(
-            script_path,
-            "gdal2tiles",
-            "-q --resampling={0} {1} {2}".format(
-                resample,
-                test_py_scripts.get_data_path("gdrivers") + "small_world.tif",
-                out_dir,
-            ),
-        )
-
-        # very basic check
-        ds = gdal.Open("tmp/out_gdal2tiles_smallworld/0/0/0.png")
-        if ds is None:
-            pytest.fail("resample option {0!r} failed".format(resample))
-        ds = None
-
-    shutil.rmtree(out_dir, ignore_errors=True)
-
-
-@pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_xyz(script_path):
-
-    try:
-        shutil.copy(
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        "gdal2tiles",
+        "-q --resampling={0} {1} {2}".format(
+            resample,
             test_py_scripts.get_data_path("gdrivers") + "small_world.tif",
-            "tmp/out_gdal2tiles_smallworld_xyz.tif",
-        )
+            out_dir,
+        ),
+    )
 
-        os.chdir("tmp")
-        ret = test_py_scripts.run_py_script(
-            script_path,
-            "gdal2tiles",
-            "-q --xyz --zoom=0-1 out_gdal2tiles_smallworld_xyz.tif",
-        )
-        os.chdir("..")
-
-        assert "ERROR ret code" not in ret
-
-        os.unlink("tmp/out_gdal2tiles_smallworld_xyz.tif")
-
-        _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld_xyz/0/0/0.png",
-            expected_cs=[31747, 33381, 18447, 17849],
-        )
-        _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld_xyz/1/0/0.png",
-            expected_cs=[15445, 16942, 13681, 17849],
-        )
-
-        for filename in ["googlemaps.html", "leaflet.html", "openlayers.html"]:
-            assert os.path.exists("tmp/out_gdal2tiles_smallworld_xyz/" + filename), (
-                "%s missing" % filename
-            )
-        assert not os.path.exists(
-            "tmp/out_gdal2tiles_smallworld_xyz/tilemapresource.xml"
-        )
-    finally:
-        shutil.rmtree("tmp/out_gdal2tiles_smallworld_xyz")
+    # very basic check
+    ds = gdal.Open(f"{out_dir}/0/0/0.png")
+    assert ds is not None, f"resample option {resample} failed"
+    ds = None
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_invalid_srs(script_path):
+def test_gdal2tiles_py_xyz(script_path, tmp_path):
+
+    input_tif = str(tmp_path / "out_gdal2tiles_smallworld_xyz.tif")
+    out_dir = input_tif.strip(".tif")
+
+    shutil.copy(
+        test_py_scripts.get_data_path("gdrivers") + "small_world.tif",
+        input_tif,
+    )
+
+    ret = test_py_scripts.run_py_script(
+        script_path,
+        "gdal2tiles",
+        f"-q --xyz --zoom=0-1 {input_tif} {out_dir}",
+    )
+
+    assert "ERROR ret code" not in ret
+
+    _verify_raster_band_checksums(
+        f"{out_dir}/0/0/0.png",
+        expected_cs=[31747, 33381, 18447, 17849],
+    )
+    _verify_raster_band_checksums(
+        f"{out_dir}/1/0/0.png",
+        expected_cs=[15445, 16942, 13681, 17849],
+    )
+
+    for filename in ["googlemaps.html", "leaflet.html", "openlayers.html"]:
+        assert os.path.exists(f"{out_dir}/{filename}"), "%s missing" % filename
+    assert not os.path.exists(f"{out_dir}/tilemapresource.xml")
+
+
+@pytest.mark.require_driver("PNG")
+def test_gdal2tiles_py_invalid_srs(script_path, tmp_path):
     """
     Case where the input image is not georeferenced, i.e. it's missing the SRS info,
     and no --s_srs option is provided. The script should fail validation and terminate.
     """
 
+    input_vrt = str(tmp_path / "out_gdal2tiles_test_nosrs.vrt")
+    byte_tif = str(tmp_path / "byte.tif")
+    output_dir = input_vrt.strip(".vrt")
+
     shutil.copy(
         test_py_scripts.get_data_path("gdrivers") + "test_nosrs.vrt",
-        "tmp/out_gdal2tiles_test_nosrs.vrt",
+        input_vrt,
     )
-    shutil.copy(test_py_scripts.get_data_path("gdrivers") + "byte.tif", "tmp/byte.tif")
+    shutil.copy(test_py_scripts.get_data_path("gdrivers") + "byte.tif", byte_tif)
 
-    os.chdir("tmp")
     # try running on image with missing SRS
     ret = test_py_scripts.run_py_script(
-        script_path, "gdal2tiles", "-q --zoom=0-1 out_gdal2tiles_test_nosrs.vrt"
+        script_path, "gdal2tiles", f"-q --zoom=0-1 {input_vrt} {output_dir}"
     )
+
+    assert "ERROR ret code = 2" in ret
 
     # this time pass the spatial reference system via cli options
     ret2 = test_py_scripts.run_py_script(
         script_path,
         "gdal2tiles",
-        "-q --zoom=0-1 --s_srs EPSG:4326 out_gdal2tiles_test_nosrs.vrt",
+        f"-q --zoom=0-1 --s_srs EPSG:4326 {input_vrt}",
     )
-    os.chdir("..")
 
-    os.unlink("tmp/out_gdal2tiles_test_nosrs.vrt")
-    os.unlink("tmp/byte.tif")
-    shutil.rmtree("tmp/out_gdal2tiles_test_nosrs")
-
-    assert "ERROR ret code = 2" in ret
     assert "ERROR ret code" not in ret2
 
 
-def test_does_not_error_when_source_bounds_close_to_tiles_bound(script_path):
+def test_does_not_error_when_source_bounds_close_to_tiles_bound(script_path, tmp_path):
     """
     Case where the border coordinate of the input file is inside a tile T but the first pixel is
     actually assigned to the tile next to T (nearest neighbour), meaning that when the query is done
@@ -291,11 +284,7 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound(script_path):
         "./data/test_bounds_close_to_tile_bounds_x.vrt",
         "./data/test_bounds_close_to_tile_bounds_y.vrt",
     ]
-    out_folder = "tmp/out_gdal2tiles_bounds_approx"
-    try:
-        shutil.rmtree(out_folder)
-    except Exception:
-        pass
+    out_folder = str(tmp_path / "out_gdal2tiles_bounds_approx")
 
     try:
         for in_file in in_files:
@@ -309,17 +298,13 @@ def test_does_not_error_when_source_bounds_close_to_tiles_bound(script_path):
         )
 
 
-def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile(script_path):
+def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile(script_path, tmp_path):
     """
     Case when the highest zoom level asked is actually too low for any pixel of the raster to be
     selected
     """
     in_file = "./data/test_bounds_close_to_tile_bounds_x.vrt"
-    out_folder = "tmp/out_gdal2tiles_bounds_approx"
-    try:
-        shutil.rmtree(out_folder)
-    except OSError:
-        pass
+    out_folder = str(tmp_path / "out_gdal2tiles_bounds_approx")
 
     try:
         test_py_scripts.run_py_script(
@@ -333,15 +318,10 @@ def test_does_not_error_when_nothing_to_put_in_the_low_zoom_tile(script_path):
 
 
 @pytest.mark.require_driver("PNG")
-def test_handle_utf8_filename(script_path):
+def test_handle_utf8_filename(script_path, tmp_path):
     input_file = "data/test_utf8_漢字.vrt"
 
-    out_folder = "tmp/utf8_test"
-
-    try:
-        shutil.rmtree(out_folder)
-    except OSError:
-        pass
+    out_folder = str(tmp_path / "utf8_test")
 
     args = f"-q -z 21 {input_file} {out_folder}"
 
@@ -352,202 +332,171 @@ def test_handle_utf8_filename(script_path):
     ).read()
     assert "<title>test_utf8_漢字.vrt</title>" in openlayers_html
 
-    try:
-        shutil.rmtree(out_folder)
-    except OSError:
-        pass
-
-
-def test_gdal2tiles_py_cleanup():
-
-    lst = ["tmp/out_gdal2tiles_smallworld", "tmp/out_gdal2tiles_bounds_approx"]
-    for filename in lst:
-        try:
-            shutil.rmtree(filename)
-        except Exception:
-            pass
-
 
 @pytest.mark.require_driver("PNG")
-def test_exclude_transparent_tiles(script_path):
+def test_exclude_transparent_tiles(script_path, tmp_path):
 
-    output_folder = "tmp/test_exclude_transparent_tiles"
+    output_folder = str(tmp_path / "test_exclude_transparent_tiles")
     os.makedirs(output_folder)
 
-    try:
-        test_py_scripts.run_py_script_as_external_script(
-            script_path,
-            "gdal2tiles",
-            "-x -z 14-16 data/test_gdal2tiles_exclude_transparent.tif %s"
-            % output_folder,
-        )
+    test_py_scripts.run_py_script_as_external_script(
+        script_path,
+        "gdal2tiles",
+        "-x -z 14-16 data/test_gdal2tiles_exclude_transparent.tif %s" % output_folder,
+    )
 
-        # First row totally transparent - no tiles
-        tiles_folder = os.path.join(output_folder, "15", "21898")
-        dir_files = os.listdir(tiles_folder)
-        assert not dir_files, "Generated empty tiles for row 21898: %s" % dir_files
+    # First row totally transparent - no tiles
+    tiles_folder = os.path.join(output_folder, "15", "21898")
+    dir_files = os.listdir(tiles_folder)
+    assert not dir_files, "Generated empty tiles for row 21898: %s" % dir_files
 
-        # Second row - only 2 non-transparent tiles
-        tiles_folder = os.path.join(output_folder, "15", "21899")
-        dir_files = sorted(os.listdir(tiles_folder))
-        assert ["22704.png", "22705.png"] == dir_files, (
-            "Generated empty tiles for row 21899: %s" % dir_files
-        )
+    # Second row - only 2 non-transparent tiles
+    tiles_folder = os.path.join(output_folder, "15", "21899")
+    dir_files = sorted(os.listdir(tiles_folder))
+    assert ["22704.png", "22705.png"] == dir_files, (
+        "Generated empty tiles for row 21899: %s" % dir_files
+    )
 
-        # Third row - only 1 non-transparent tile
-        tiles_folder = os.path.join(output_folder, "15", "21900")
-        dir_files = os.listdir(tiles_folder)
-        assert ["22705.png"] == dir_files, (
-            "Generated empty tiles for row 21900: %s" % dir_files
-        )
-
-    finally:
-        shutil.rmtree(output_folder)
+    # Third row - only 1 non-transparent tile
+    tiles_folder = os.path.join(output_folder, "15", "21900")
+    dir_files = os.listdir(tiles_folder)
+    assert ["22705.png"] == dir_files, (
+        "Generated empty tiles for row 21900: %s" % dir_files
+    )
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster(script_path):
+def test_gdal2tiles_py_profile_raster(script_path, tmp_path):
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+    out_folder = str(tmp_path / "out_gdal2tiles_smallworld")
 
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         "gdal2tiles",
         "-q -p raster -z 0-1 "
         + test_py_scripts.get_data_path("gdrivers")
-        + "small_world.tif tmp/out_gdal2tiles_smallworld",
+        + f"small_world.tif {out_folder}",
     )
 
-    try:
-        _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/0/0/0.png",
-            expected_cs=[10125, 10802, 27343, 48852],
-        )
-        _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/1/0/0.png",
-            expected_cs=[62125, 59756, 43894, 38539],
-        )
+    _verify_raster_band_checksums(
+        f"{out_folder}/0/0/0.png",
+        expected_cs=[10125, 10802, 27343, 48852],
+    )
+    _verify_raster_band_checksums(
+        f"{out_folder}/1/0/0.png",
+        expected_cs=[62125, 59756, 43894, 38539],
+    )
 
-        if gdal.GetDriverByName("KMLSuperOverlay") is None:
-            pytest.skip("KMLSuperOverlay driver missing")
+    if gdal.GetDriverByName("KMLSuperOverlay") is None:
+        pytest.skip("KMLSuperOverlay driver missing")
 
-        if sys.platform != "win32":
-            # For some reason, the checksums on the kml file on Windows are the ones of the below png
-            _verify_raster_band_checksums(
-                "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
-                expected_cs=[29839, 34244, 42706, 64319],
-            )
-    finally:
-        shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+    if sys.platform != "win32":
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
+        _verify_raster_band_checksums(
+            f"{out_folder}/0/0/0.kml",
+            expected_cs=[29839, 34244, 42706, 64319],
+        )
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster_oversample(script_path):
+def test_gdal2tiles_py_profile_raster_oversample(script_path, tmp_path):
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+    out_folder = str(tmp_path / "out_gdal2tiles_smallworld")
 
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         "gdal2tiles",
         "-q -p raster -z 0-2 "
         + test_py_scripts.get_data_path("gdrivers")
-        + "small_world.tif tmp/out_gdal2tiles_smallworld",
+        + f"small_world.tif {out_folder}",
     )
 
-    assert os.path.exists("tmp/out_gdal2tiles_smallworld/2/0/0.png")
-    assert os.path.exists("tmp/out_gdal2tiles_smallworld/2/3/1.png")
+    assert os.path.exists(f"{out_folder}/2/0/0.png")
+    assert os.path.exists(f"{out_folder}/2/3/1.png")
     _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/2/0/0.png",
+        f"{out_folder}/2/0/0.png",
         expected_cs=[[51434, 55441, 63427, 17849], [51193, 55320, 63324, 17849]],  # icc
     )
     _verify_raster_band_checksums(
-        "tmp/out_gdal2tiles_smallworld/2/3/1.png",
+        f"{out_folder}/2/3/1.png",
         expected_cs=[[44685, 45074, 50871, 56563], [44643, 45116, 50863, 56563]],  # icc
     )
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_raster_xyz(script_path):
+def test_gdal2tiles_py_profile_raster_xyz(script_path, tmp_path):
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+    out_folder = str(tmp_path / "out_gdal2tiles_smallworld")
 
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         "gdal2tiles",
         "-q -p raster --xyz -z 0-1 "
         + test_py_scripts.get_data_path("gdrivers")
-        + "small_world.tif tmp/out_gdal2tiles_smallworld",
+        + f"small_world.tif {out_folder}",
     )
 
-    try:
+    _verify_raster_band_checksums(
+        f"{out_folder}/0/0/0.png",
+        expected_cs=[11468, 10719, 27582, 48827],
+    )
+    _verify_raster_band_checksums(
+        f"{out_folder}/1/0/0.png",
+        expected_cs=[60550, 62572, 46338, 38489],
+    )
+
+    if gdal.GetDriverByName("KMLSuperOverlay") is None:
+        pytest.skip("KMLSuperOverlay driver missing")
+
+    if sys.platform != "win32":
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
         _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/0/0/0.png",
-            expected_cs=[11468, 10719, 27582, 48827],
+            f"{out_folder}/0/0/0.kml",
+            expected_cs=[27644, 31968, 38564, 64301],
         )
-        _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/1/0/0.png",
-            expected_cs=[60550, 62572, 46338, 38489],
-        )
-
-        if gdal.GetDriverByName("KMLSuperOverlay") is None:
-            pytest.skip("KMLSuperOverlay driver missing")
-
-        if sys.platform != "win32":
-            # For some reason, the checksums on the kml file on Windows are the ones of the below png
-            _verify_raster_band_checksums(
-                "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
-                expected_cs=[27644, 31968, 38564, 64301],
-            )
-
-    finally:
-        shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz(script_path):
+def test_gdal2tiles_py_profile_geodetic_tmscompatible_xyz(script_path, tmp_path):
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
+    out_folder = str(tmp_path / "out_gdal2tiles_smallworld")
 
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         "gdal2tiles",
         "-q -p geodetic --tmscompatible --xyz -z 0-1 "
         + test_py_scripts.get_data_path("gdrivers")
-        + "small_world.tif tmp/out_gdal2tiles_smallworld",
+        + f"small_world.tif {out_folder}",
     )
 
-    try:
+    _verify_raster_band_checksums(
+        f"{out_folder}/0/0/0.png",
+        expected_cs=[8560, 8031, 7209, 17849],
+    )
+    _verify_raster_band_checksums(
+        f"{out_folder}/1/0/0.png",
+        expected_cs=[2799, 3468, 8686, 17849],
+    )
+
+    if gdal.GetDriverByName("KMLSuperOverlay") is None:
+        pytest.skip("KMLSuperOverlay driver missing")
+
+    if sys.platform != "win32":
+        # For some reason, the checksums on the kml file on Windows are the ones of the below png
         _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/0/0/0.png",
-            expected_cs=[8560, 8031, 7209, 17849],
+            f"{out_folder}/0/0/0.kml",
+            expected_cs=[12361, 18212, 21827, 5934],
         )
-        _verify_raster_band_checksums(
-            "tmp/out_gdal2tiles_smallworld/1/0/0.png",
-            expected_cs=[2799, 3468, 8686, 17849],
-        )
-
-        if gdal.GetDriverByName("KMLSuperOverlay") is None:
-            pytest.skip("KMLSuperOverlay driver missing")
-
-        if sys.platform != "win32":
-            # For some reason, the checksums on the kml file on Windows are the ones of the below png
-            _verify_raster_band_checksums(
-                "tmp/out_gdal2tiles_smallworld/0/0/0.kml",
-                expected_cs=[12361, 18212, 21827, 5934],
-            )
-
-    finally:
-        shutil.rmtree("tmp/out_gdal2tiles_smallworld", ignore_errors=True)
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdal2tiles_py_mapml(script_path):
+def test_gdal2tiles_py_mapml(script_path, tmp_path):
 
-    shutil.rmtree("tmp/out_gdal2tiles_mapml", ignore_errors=True)
+    input_tif = str(tmp_path / "byte_APS.tif")
+    output_folder = str(tmp_path / "out_gdal2tiles_mapml")
 
     gdal.Translate(
-        "tmp/byte_APS.tif",
+        input_tif,
         test_py_scripts.get_data_path("gcore") + "byte.tif",
         options="-a_srs EPSG:5936 -a_ullr 0 40 40 0",
     )
@@ -555,10 +504,10 @@ def test_gdal2tiles_py_mapml(script_path):
     test_py_scripts.run_py_script_as_external_script(
         script_path,
         "gdal2tiles",
-        '-q -p APSTILE -w mapml -z 16-18 --url "https://foo" tmp/byte_APS.tif tmp/out_gdal2tiles_mapml',
+        f'-q -p APSTILE -w mapml -z 16-18 --url "https://foo" {input_tif} {output_folder}',
     )
 
-    mapml = open("tmp/out_gdal2tiles_mapml/mapml.mapml", "rb").read().decode("utf-8")
+    mapml = open(f"{output_folder}/mapml.mapml", "rb").read().decode("utf-8")
     # print(mapml)
     assert '<extent units="APSTILE">' in mapml
     assert '<input name="z" type="zoom" value="18" min="16" max="18" />' in mapml
@@ -575,9 +524,6 @@ def test_gdal2tiles_py_mapml(script_path):
         in mapml
     )
 
-    shutil.rmtree("tmp/out_gdal2tiles_mapml", ignore_errors=True)
-    gdal.Unlink("tmp/byte_APS.tif")
-
 
 def _convert_png_to_webp(frm, to, quality):
     src_ds = gdal.Open(frm)
@@ -585,11 +531,16 @@ def _convert_png_to_webp(frm, to, quality):
     driver.CreateCopy(to, src_ds, 0, options=["LOSSLESS=True"])
 
 
-def _run_webp_test(script_path, resampling):
+@pytest.mark.require_driver("WEBP")
+@pytest.mark.parametrize("resampling", ("average", "antialias"))
+def test_gdal2tiles_py_webp(script_path, tmp_path, resampling):
 
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld_png", ignore_errors=True)
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld_webp_from_png", ignore_errors=True)
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld_webp", ignore_errors=True)
+    if resampling == "antialias" and not pil_available():
+        pytest.skip("'antialias' resampling is not available")
+
+    out_dir_png = str(tmp_path / "out_gdal2tiles_smallworld_png")
+    out_dir_webp = str(tmp_path / "out_gdal2tiles_smallworld_webp")
+    out_dir_webp_from_png = str(tmp_path / "out_gdal2tiles_smallworld_webp_from_png")
 
     base_args = "-q --processes=2 -z 0-1 -r " + resampling + " "
     test_py_scripts.run_py_script_as_external_script(
@@ -597,7 +548,7 @@ def _run_webp_test(script_path, resampling):
         "gdal2tiles",
         base_args
         + test_py_scripts.get_data_path("gdrivers")
-        + "small_world.tif tmp/out_gdal2tiles_smallworld_png",
+        + f"small_world.tif {out_dir_png}",
     )
 
     quality = 50
@@ -607,14 +558,14 @@ def _run_webp_test(script_path, resampling):
         base_args
         + "--tiledriver=WEBP --webp-lossless "
         + test_py_scripts.get_data_path("gdrivers")
-        + "small_world.tif tmp/out_gdal2tiles_smallworld_webp",
+        + f"small_world.tif {out_dir_webp}",
     )
 
-    to_convert = glob.glob("tmp/out_gdal2tiles_smallworld_png/*/*/*.png")
+    to_convert = glob.glob(f"{out_dir_png}/*/*/*.png")
     for filename in to_convert:
         to_filename = filename.replace(
-            "tmp/out_gdal2tiles_smallworld_png/",
-            "tmp/out_gdal2tiles_smallworld_webp_from_png/",
+            out_dir_png,
+            out_dir_webp_from_png,
         )
         to_filename = to_filename.replace(".png", ".webp")
         to_folder = os.path.dirname(to_filename)
@@ -622,34 +573,11 @@ def _run_webp_test(script_path, resampling):
 
         _convert_png_to_webp(filename, to_filename, quality)
 
-    to_compare = glob.glob("tmp/out_gdal2tiles_smallworld_webp_from_png/*/*/*.webp")
+    to_compare = glob.glob(f"{out_dir_webp_from_png}/*/*/*.webp")
     for filename in to_compare:
         webp_filename = filename.replace(
-            "tmp/out_gdal2tiles_smallworld_webp_from_png/",
-            "tmp/out_gdal2tiles_smallworld_webp/",
+            out_dir_webp_from_png,
+            out_dir_webp,
         )
         diff_found = compare_db(gdal.Open(webp_filename), gdal.Open(filename))
         assert not diff_found, (resampling, filename)
-
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld_png", ignore_errors=True)
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld_webp_from_png", ignore_errors=True)
-    shutil.rmtree("tmp/out_gdal2tiles_smallworld_webp", ignore_errors=True)
-
-
-@pytest.mark.require_driver("WEBP")
-def test_gdal2tiles_py_webp(script_path):
-
-    _run_webp_test(script_path, "average")
-    try:
-        import numpy
-        from PIL import Image
-
-        import osgeo.gdal_array as gdalarray
-
-        del Image, numpy, gdalarray
-        pil_available = True
-    except ImportError:
-        pil_available = False
-
-    if pil_available:
-        _run_webp_test(script_path, "antialias")
