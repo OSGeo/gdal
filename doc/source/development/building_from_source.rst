@@ -99,17 +99,11 @@ Building on MacOS
 
 On MacOS, there are a couple of libraries that do not function properly when the GDAL build requirements are installed using Homebrew.
 
-The `Apache Arrow <https://arrow.apache.org/docs/index.html>`_ library included in the current distribution of CMake is broken, and causes a detection issue. In order to build GDAL successfuly, you must first remove it:
+The `Apache Arrow <https://arrow.apache.org/docs/index.html>`_ library included in the current distribution of CMake is broken, and causes a detection issue. In order to build GDAL successfuly, configure CMake to not find the Arrow package:
 
 .. code-block:: bash
 
-    rm -rf /usr/local/lib/cmake/Arrow
-
-And then set the appropriate options to exclude Arrow from the build:
-
-.. code-block:: bash
-
-    cmake -DGDAL_USE_ARROW=OFF -DGDAL_USE_PARQUET=OFF ..
+    cmake -DCMAKE_DISABLE_FIND_PACKAGE_Arrow=ON ..
 
 
 Similarly, recent versions of Homebrew no longer bundle `Boost <https://www.boost.org/>`_ with libkml, causing a failure to find Boost headers. You should either install Boost manually or disable libkml when building on MacOS:
