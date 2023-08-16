@@ -743,6 +743,11 @@ def ReleaseResultSet(self, sql_lyr):
 
         return self.GetGeometryRef()
 
+
+    def __repr__(self):
+        return self.DumpReadableAsString()
+
+
     def ExportToJson(self, as_object=False, options=None):
         """Exports a GeoJSON object which represents the Feature. The
            as_object parameter determines whether the returned value

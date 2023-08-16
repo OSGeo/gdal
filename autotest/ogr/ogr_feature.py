@@ -965,3 +965,12 @@ def test_ogr_feature_dump_readable():
 
     assert feat_wkt not in out_geometry_summary
     assert "POINT" in out_geometry_summary
+
+
+def test_ogr_feature_repr():
+
+    feat = mk_src_feature()
+
+    out = feat.__repr__()
+
+    assert out.startswith("OGRFeature(src):")
