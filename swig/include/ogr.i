@@ -1983,6 +1983,10 @@ public:
     OGR_F_DumpReadable(self, NULL);
   }
 
+  retStringAndCPLFree* DumpReadableAsString(char** options=NULL) {
+    return OGR_F_DumpReadableAsString(self, options);
+  }
+
   void UnsetField(int id) {
     OGR_F_UnsetField(self, id);
   }
