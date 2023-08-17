@@ -30,8 +30,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import gdaltest
 import ogrtest
 import pytest
@@ -56,8 +54,6 @@ def startup_and_cleanup():
         ogrtest.have_read_kml = ogr.Open("data/kml/samples.kml") is not None
 
     yield
-
-    os.remove("tmp/kml.kml")
 
     # Re-register LIBKML driver if necessary
     if libkml_drv is not None:
@@ -304,11 +300,11 @@ def test_ogr_kml_polygon_read():
 # Write test
 
 
-def test_ogr_kml_write_1():
+def test_ogr_kml_write_1(tmp_path):
 
     srs = osr.SpatialReference()
     srs.SetWellKnownGeogCS("WGS72")
-    ds = ogr.GetDriverByName("KML").CreateDataSource("tmp/kml.kml")
+    ds = ogr.GetDriverByName("KML").CreateDataSource(tmp_path / "kml.kml")
     lyr = ds.CreateLayer("test_wgs72", srs=srs)
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
@@ -368,20 +364,16 @@ def test_ogr_kml_write_1():
 
     ds = None
 
-
-###############################################################################
-# Check previous test
-
-
-def test_ogr_kml_check_write_1():
+    ###############################################################################
+    # Check previous test
 
     if not ogrtest.have_read_kml:
-        pytest.skip()
+        return
 
-    content = open("tmp/kml.kml").read()
+    content = open(tmp_path / "kml.kml").read()
     assert "Schema" not in content, "Did not expect Schema tags."
 
-    ds = ogr.Open("tmp/kml.kml")
+    ds = ogr.Open(tmp_path / "kml.kml")
     lyr = ds.GetLayerByName("test_wgs84")
     assert lyr.GetFeatureCount() == 8, "Bad feature count."
 
@@ -497,10 +489,10 @@ def test_ogr_kml_test_ogrsf():
 # Test fix for #2772
 
 
-def test_ogr_kml_interleaved_writing():
+def test_ogr_kml_interleaved_writing(tmp_vsimem):
 
     ds = ogr.GetDriverByName("KML").CreateDataSource(
-        "/vsimem/ogr_kml_interleaved_writing.kml"
+        tmp_vsimem / "ogr_kml_interleaved_writing.kml"
     )
     lyr1 = ds.CreateLayer("lyr1")
     ds.CreateLayer("lyr2")
@@ -508,8 +500,6 @@ def test_ogr_kml_interleaved_writing():
     with pytest.raises(Exception):
         lyr1.CreateFeature(feat)
     ds = None
-
-    gdal.Unlink("/vsimem/ogr_kml_interleaved_writing.kml")
 
 
 ###############################################################################
@@ -573,9 +563,11 @@ def compare_output(content, expected_content):
 # Test that we can write a schema
 
 
-def test_ogr_kml_write_schema():
+def test_ogr_kml_write_schema(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("KML").CreateDataSource("/vsimem/ogr_kml_write_schema.kml")
+    ds = ogr.GetDriverByName("KML").CreateDataSource(
+        tmp_vsimem / "ogr_kml_write_schema.kml"
+    )
     lyr = ds.CreateLayer("lyr")
     lyr.CreateField(ogr.FieldDefn("strfield", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))
@@ -587,11 +579,9 @@ def test_ogr_kml_write_schema():
     lyr.CreateFeature(feat)
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_kml_write_schema.kml", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_kml_write_schema.kml", "rb")
     content = gdal.VSIFReadL(1, 1000, f).decode("ascii")
     gdal.VSIFCloseL(f)
-
-    gdal.Unlink("/vsimem/ogr_kml_write_schema.kml")
 
     expected_content = """<?xml version="1.0" encoding="utf-8" ?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -612,24 +602,26 @@ def test_ogr_kml_write_schema():
 </Folder>
 </Document></kml>"""
 
-    return compare_output(content, expected_content)
+    compare_output(content, expected_content)
 
 
 ###############################################################################
 #
 
 
-def test_ogr_kml_empty_layer():
+def test_ogr_kml_empty_layer(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("KML").CreateDataSource("/vsimem/ogr_kml_empty_layer.kml")
+    ds = ogr.GetDriverByName("KML").CreateDataSource(
+        tmp_vsimem / "ogr_kml_empty_layer.kml"
+    )
     ds.CreateLayer("empty")
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_kml_empty_layer.kml", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_kml_empty_layer.kml", "rb")
     content = gdal.VSIFReadL(1, 1000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    gdal.Unlink("/vsimem/ogr_kml_empty_layer.kml")
+    gdal.Unlink(tmp_vsimem / "ogr_kml_empty_layer.kml")
 
     expected_content = """<?xml version="1.0" encoding="utf-8" ?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
@@ -645,9 +637,11 @@ def test_ogr_kml_empty_layer():
 # Empty layer followed by regular layer
 
 
-def test_ogr_kml_two_layers():
+def test_ogr_kml_two_layers(tmp_vsimem):
 
-    ds = ogr.GetDriverByName("KML").CreateDataSource("/vsimem/ogr_kml_two_layers.kml")
+    ds = ogr.GetDriverByName("KML").CreateDataSource(
+        tmp_vsimem / "ogr_kml_two_layers.kml"
+    )
     ds.CreateLayer("empty")
     lyr = ds.CreateLayer("lyr")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
@@ -656,11 +650,11 @@ def test_ogr_kml_two_layers():
     lyr.CreateFeature(feat)
     ds = None
 
-    f = gdal.VSIFOpenL("/vsimem/ogr_kml_two_layers.kml", "rb")
+    f = gdal.VSIFOpenL(tmp_vsimem / "ogr_kml_two_layers.kml", "rb")
     content = gdal.VSIFReadL(1, 1000, f).decode("ascii")
     gdal.VSIFCloseL(f)
 
-    gdal.Unlink("/vsimem/ogr_kml_two_layers.kml")
+    gdal.Unlink(tmp_vsimem / "ogr_kml_two_layers.kml")
 
     # FIXME: the schema for lyr should be written before the first Folter for XML compliance
     expected_content = """<?xml version="1.0" encoding="utf-8" ?>
