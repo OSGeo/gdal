@@ -42,9 +42,9 @@ from osgeo import gdal, ogr, osr
 
 def test_ogr_basic_1():
 
-    gdaltest.ds = ogr.Open("data/poly.shp")
+    ds = ogr.Open("data/poly.shp")
 
-    assert gdaltest.ds is not None
+    assert ds is not None
 
 
 ###############################################################################
@@ -53,27 +53,28 @@ def test_ogr_basic_1():
 
 def test_ogr_basic_2():
 
-    gdaltest.lyr = gdaltest.ds.GetLayerByName("poly")
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
 
-    assert gdaltest.lyr.GetName() == "poly"
-    assert gdaltest.lyr.GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetName() == "poly"
+    assert lyr.GetGeomType() == ogr.wkbPolygon
 
-    assert gdaltest.lyr.GetLayerDefn().GetName() == "poly"
-    assert gdaltest.lyr.GetLayerDefn().GetGeomType() == ogr.wkbPolygon
+    assert lyr.GetLayerDefn().GetName() == "poly"
+    assert lyr.GetLayerDefn().GetGeomType() == ogr.wkbPolygon
 
-    count = gdaltest.lyr.GetFeatureCount()
+    count = lyr.GetFeatureCount()
     assert count == 10, (
         "Got wrong count with GetFeatureCount() - %d, expecting 10" % count
     )
 
     # Now actually iterate through counting the features and ensure they agree.
-    gdaltest.lyr.ResetReading()
+    lyr.ResetReading()
 
     count2 = 0
-    feat = gdaltest.lyr.GetNextFeature()
+    feat = lyr.GetNextFeature()
     while feat is not None:
         count2 = count2 + 1
-        feat = gdaltest.lyr.GetNextFeature()
+        feat = lyr.GetNextFeature()
 
     assert count2 == 10, (
         "Got wrong count with GetNextFeature() - %d, expecting 10" % count2
@@ -85,6 +86,9 @@ def test_ogr_basic_2():
 
 
 def test_ogr_basic_3():
+
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
 
     minx = 479405
     miny = 4762826
@@ -104,24 +108,24 @@ def test_ogr_basic_3():
     poly = ogr.Geometry(type=ogr.wkbPolygon)
     poly.AddGeometryDirectly(ring)
 
-    gdaltest.lyr.SetSpatialFilter(poly)
-    gdaltest.lyr.SetSpatialFilter(gdaltest.lyr.GetSpatialFilter())
-    gdaltest.lyr.ResetReading()
+    lyr.SetSpatialFilter(poly)
+    lyr.SetSpatialFilter(lyr.GetSpatialFilter())
+    lyr.ResetReading()
 
-    count = gdaltest.lyr.GetFeatureCount()
+    count = lyr.GetFeatureCount()
     assert count == 1, (
         "Got wrong feature count with spatial filter, expected 1, got %d" % count
     )
 
-    feat1 = gdaltest.lyr.GetNextFeature()
-    feat2 = gdaltest.lyr.GetNextFeature()
+    feat1 = lyr.GetNextFeature()
+    feat2 = lyr.GetNextFeature()
 
     assert (
         feat1 is not None and feat2 is None
     ), "Got too few or too many features with spatial filter."
 
-    gdaltest.lyr.SetSpatialFilter(None)
-    count = gdaltest.lyr.GetFeatureCount()
+    lyr.SetSpatialFilter(None)
+    count = lyr.GetFeatureCount()
     assert count == 10, (
         "Clearing spatial query may not have worked properly, getting\n%d features instead of expected 10 features."
         % count
@@ -133,7 +137,9 @@ def test_ogr_basic_3():
 
 
 def test_ogr_basic_4():
-    driver = gdaltest.ds.GetDriver()
+
+    ds = ogr.Open("data/poly.shp")
+    driver = ds.GetDriver()
     assert driver is not None, "GetDriver() returns None"
 
     assert driver.GetName() == "ESRI Shapefile", (
@@ -147,13 +153,16 @@ def test_ogr_basic_4():
 
 def test_ogr_basic_5():
 
-    gdaltest.lyr.SetAttributeFilter("FID = 3")
-    gdaltest.lyr.ResetReading()
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayerByName("poly")
 
-    feat1 = gdaltest.lyr.GetNextFeature()
-    feat2 = gdaltest.lyr.GetNextFeature()
+    lyr.SetAttributeFilter("FID = 3")
+    lyr.ResetReading()
 
-    gdaltest.lyr.SetAttributeFilter(None)
+    feat1 = lyr.GetNextFeature()
+    feat2 = lyr.GetNextFeature()
+
+    lyr.SetAttributeFilter(None)
 
     assert feat1 is not None and feat2 is None, "unexpected result count."
 
@@ -603,18 +612,15 @@ def test_ogr_basic_13(input, expected):
 # Test ogr.Open(.) in an empty directory
 
 
-def test_ogr_basic_14():
+def test_ogr_basic_14(tmp_path):
 
-    if not os.path.exists("tmp/ogr_basic_14"):
-        os.mkdir("tmp/ogr_basic_14")
-    os.chdir("tmp/ogr_basic_14")
+    old_dir = os.getcwd()
+    os.chdir(tmp_path)
     try:
         with pytest.raises(Exception):
             ogr.Open(".")
     finally:
-        os.chdir("../..")
-
-    os.rmdir("tmp/ogr_basic_14")
+        os.chdir(old_dir)
 
 
 ###############################################################################
@@ -693,7 +699,8 @@ def test_ogr_basic_dataset_slice():
 
 def test_ogr_basic_feature_iterator():
 
-    lyr = gdaltest.ds.GetLayer(0)
+    ds = ogr.Open("data/poly.shp")
+    lyr = ds.GetLayer(0)
 
     count = 0
     for f in lyr:
@@ -978,12 +985,3 @@ def test_layer_use_after_datasource_close_3(tmp_path):
     # Make sure ds.__exit__() has invalidated "lyr2" so we don't crash here
     with pytest.raises(Exception):
         lyr2.GetFeatureCount()
-
-
-###############################################################################
-# cleanup
-
-
-def test_ogr_basic_cleanup():
-    gdaltest.lyr = None
-    gdaltest.ds = None
