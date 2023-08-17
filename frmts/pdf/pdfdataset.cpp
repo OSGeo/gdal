@@ -1675,6 +1675,16 @@ class GDALPDFiumRenderDeviceDriver : public RenderDeviceDriverIface
                                        bAlphaMode);
     }
 
+    bool MultiplyAlpha(float alpha) override
+    {
+        return m_poParent->MultiplyAlpha(alpha);
+    }
+
+    bool MultiplyAlpha(const RetainPtr<CFX_DIBBase> &mask) override
+    {
+        return m_poParent->MultiplyAlpha(mask);
+    }
+
 #if defined(_SKIA_SUPPORT_)
     virtual bool SetBitsWithMask(const RetainPtr<CFX_DIBBase> &pBitmap,
                                  const RetainPtr<CFX_DIBBase> &pMask, int left,
