@@ -920,3 +920,57 @@ def test_ogr_feature_GetFieldAsISO8601DateTime():
 
     feature.SetFieldNull("field_datetime")
     assert feature.GetFieldAsISO8601DateTime("field_datetime") == ""
+
+
+def test_ogr_feature_dump_readable():
+
+    ds = ogr.Open("data/mitab/single_point_mapinfo.tab")
+    lyr = ds.GetLayer(0)
+
+    feature = lyr.GetNextFeature()
+    feat_wkt = feature.GetGeometryRef().ExportToWkt()
+
+    # default output
+
+    out_full = feature.DumpReadableAsString()
+
+    defn = feature.GetDefnRef()
+    for i in range(defn.GetFieldCount()):
+        field_name = defn.GetFieldDefn(i).GetName()
+
+        assert field_name in out_full
+
+    assert "Style = " in out_full
+
+    assert feat_wkt in out_full
+
+    # no fields
+
+    out_no_fields = feature.DumpReadableAsString({"DISPLAY_FIELDS": "NO"})
+
+    for i in range(defn.GetFieldCount()):
+        field_name = defn.GetFieldDefn(i).GetName()
+
+        assert field_name not in out_no_fields
+
+    # no geometry
+
+    out_no_geometry = feature.DumpReadableAsString({"DISPLAY_GEOMETRY": "NO"})
+
+    assert feat_wkt not in out_no_geometry
+
+    # geometry summary only
+
+    out_geometry_summary = feature.DumpReadableAsString({"DISPLAY_GEOMETRY": "SUMMARY"})
+
+    assert feat_wkt not in out_geometry_summary
+    assert "POINT" in out_geometry_summary
+
+
+def test_ogr_feature_repr():
+
+    feat = mk_src_feature()
+
+    out = feat.__repr__()
+
+    assert out.startswith("OGRFeature(src):")
