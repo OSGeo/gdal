@@ -126,6 +126,12 @@ typedef unsigned char Guchar;
 #define PDFIUM_MUTEX_TIMEOUT 0.0f
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+// include/pdfium\core/fxcrt/fx_memcpy_wrappers.h(48,30): warning C4244: 'argument': conversion from 'int' to 'wchar_t', possible loss of data
+#pragma warning(disable : 4244)
+#endif
+
 #include <cstring>
 #include "public/fpdfview.h"
 #include "core/fpdfapi/page/cpdf_page.h"
@@ -144,11 +150,17 @@ typedef unsigned char Guchar;
 #include "core/fpdfdoc/cpdf_annotlist.h"
 #include "core/fxcrt/bytestring.h"
 #include "core/fxge/cfx_defaultrenderdevice.h"
+#include "core/fxge/dib/cfx_dibitmap.h"
 #include "core/fxge/cfx_renderdevice.h"
 #include "core/fxge/agg/fx_agg_driver.h"
 #include "core/fxge/renderdevicedriver_iface.h"
 #include "fpdfsdk/cpdfsdk_helpers.h"
 #include "fpdfsdk/cpdfsdk_pauseadapter.h"
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
+
 #endif  // HAVE_PDFIUM
 
 #endif
