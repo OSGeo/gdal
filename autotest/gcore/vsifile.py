@@ -379,6 +379,39 @@ def test_vsifile_8():
 
 
 ###############################################################################
+# Test implicit directory creation in /vsimem
+
+
+def test_vsifile_implicit_dir_creation_1(tmp_vsimem):
+
+    assert gdal.VSIStatL(str(tmp_vsimem)) is not None
+    assert gdal.VSIStatL(str(tmp_vsimem)).IsDirectory()
+
+    fpath = str(tmp_vsimem / "subdir1" / "subdir2" / "subdir3" / "myfile.txt")
+    fp = gdal.VSIFOpenL(str(fpath), "wb")
+    assert fp is not None
+    gdal.VSIFCloseL(fp)
+
+    assert gdal.VSIStatL(str(tmp_vsimem / "subdir1")).IsDirectory()
+    assert gdal.VSIStatL(str(tmp_vsimem / "subdir1" / "subdir2")).IsDirectory()
+    assert gdal.VSIStatL(
+        str(tmp_vsimem / "subdir1" / "subdir2" / "subdir3")
+    ).IsDirectory()
+
+
+def test_vsifile_implicit_dir_creation_2(tmp_vsimem):
+
+    fpath = str(tmp_vsimem / "afile")
+    fp = gdal.VSIFOpenL(str(fpath), "wb")
+    assert fp is not None
+    gdal.VSIFCloseL(fp)
+
+    fpath = str(tmp_vsimem / "afile" / "anotherfile")
+    fp = gdal.VSIFOpenL(str(fpath), "wb")
+    assert fp is None
+
+
+###############################################################################
 # Test ReadDir()
 
 

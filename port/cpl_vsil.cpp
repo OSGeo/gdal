@@ -373,9 +373,9 @@ int VSIMkdirRecursive(const char *pszPathname, long mode)
 
     const CPLString osPathname(pszPathname);
     VSIStatBufL sStat;
-    if (VSIStatL(osPathname, &sStat) == 0 && VSI_ISDIR(sStat.st_mode))
+    if (VSIStatL(osPathname, &sStat) == 0)
     {
-        return 0;
+        return VSI_ISDIR(sStat.st_mode) ? 0 : -1;
     }
     const CPLString osParentPath(CPLGetPath(osPathname));
 

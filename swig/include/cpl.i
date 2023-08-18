@@ -594,14 +594,22 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
 %apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const char *pabyData )};
 %inline {
-void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const char *pabyData)
+VSI_RETVAL wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const char *pabyData)
 {
     const size_t nSize = static_cast<size_t>(nBytes);
     void* pabyDataDup = VSIMalloc(nSize);
     if (pabyDataDup == NULL)
-            return;
+            return -1;
     memcpy(pabyDataDup, pabyData, nSize);
-    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nSize, TRUE));
+    VSILFILE *fp = VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nSize, TRUE);
+
+    if (fp == NULL) {
+        VSIFree(pabyDataDup);
+        return -1;
+    } else {
+        VSIFCloseL(fp);
+        return 0;
+    }
 }
 }
 %clear ( GIntBig nBytes, const GByte *pabyData );
@@ -610,13 +618,21 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const 
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
 #endif
 %inline {
-void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
+VSI_RETVAL wrapper_VSIFileFromMemBuffer( const char* utf8_path, int nBytes, const GByte *pabyData)
 {
     GByte* pabyDataDup = (GByte*)VSIMalloc(nBytes);
     if (pabyDataDup == NULL)
-            return;
+            return -1;
     memcpy(pabyDataDup, pabyData, nBytes);
-    VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nBytes, TRUE));
+    VSILFILE *fp = VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nBytes, TRUE);
+
+    if (fp == NULL) {
+        VSIFree(pabyDataDup);
+        return -1;
+    } else {
+        VSIFCloseL(fp);
+        return 0;
+    }
 }
 
 }
