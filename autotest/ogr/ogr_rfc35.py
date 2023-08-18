@@ -4,11 +4,11 @@
 # $Id$
 #
 # Project:  GDAL/OGR Test Suite
-# Purpose:  Test RFC35 for MITAB driver
+# Purpose:  Test RFC35 for several drivers
 # Author:   Even Rouault <even dot rouault at spatialys.com>
 #
 ###############################################################################
-# Copyright (c) 2014, Even Rouault <even dot rouault at spatialys.com>
+# Copyright (c) 2011-2014, Even Rouault <even dot rouault at spatialys.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,8 @@
 ###############################################################################
 
 
+import os
+
 import gdaltest
 import pytest
 
@@ -43,42 +45,75 @@ def module_disable_exceptions():
         yield
 
 
+driver_extensions = {
+    "ESRI Shapefile": "dbf",
+    "MapInfo File": "tab",
+    "SQLite": "sqlite",
+    "Memory": None,
+}
+
+
+@pytest.fixture(autouse=True, params=driver_extensions.keys())
+def driver_name(request):
+    return request.param
+
+
 ###############################################################################
 #
 
 
-def CheckFileSize(src_filename):
+def CheckFileSize(src_filename, tmpdir):
+
     import test_py_scripts
+
+    src_ext = os.path.splitext(src_filename)[1]
+
+    for driver_name, ext in driver_extensions.items():
+        if ext is not None and src_ext.endswith(ext):
+            driver = driver_name
+
+    dst_filename = os.path.join(tmpdir, "checkfilesize." + src_ext)
 
     script_path = test_py_scripts.get_py_script("ogr2ogr")
     if script_path is None:
         pytest.skip()
 
     test_py_scripts.run_py_script(
-        script_path,
-        "ogr2ogr",
-        '-f "MapInfo File" tmp/CheckFileSize.tab ' + src_filename,
+        script_path, "ogr2ogr", f'-f "{driver}" {dst_filename} {src_filename}'
     )
+
     statBufSrc = gdal.VSIStatL(
-        src_filename[0:-3] + "dat",
+        src_filename,
         gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG,
     )
     statBufDst = gdal.VSIStatL(
-        "tmp/CheckFileSize.dat",
+        dst_filename,
         gdal.VSI_STAT_EXISTS_FLAG | gdal.VSI_STAT_NATURE_FLAG | gdal.VSI_STAT_SIZE_FLAG,
     )
-    ogr.GetDriverByName("MapInfo File").DeleteDataSource("tmp/CheckFileSize.tab")
 
-    assert statBufSrc.size == statBufDst.size
+    assert statBufSrc.size == statBufDst.size, (
+        "src_size = %d, dst_size = %d",
+        statBufSrc.size,
+        statBufDst.size,
+    )
 
 
 ###############################################################################
 # Initiate the test file
 
 
-def test_ogr_rfc35_mitab_1():
+@pytest.fixture()
+def rfc35_test_input(driver_name, tmp_path):
 
-    ds = ogr.GetDriverByName("MapInfo File").CreateDataSource("tmp/rfc35_test.tab")
+    ext = driver_extensions[driver_name]
+    fname = str(tmp_path / f"rfc35_test.{ext}")
+
+    drv = ogr.GetDriverByName(driver_name)
+
+    if drv is None:
+        pytest.skip(f"Driver {driver_name} not available")
+
+    ds = drv.CreateDataSource(fname)
     lyr = ds.CreateLayer("rfc35_test")
 
     lyr.ReorderFields([])
@@ -117,9 +152,10 @@ def test_ogr_rfc35_mitab_1():
     fd.SetWidth(20)
     lyr.CreateField(fd)
 
-
-###############################################################################
-# Test ReorderField()
+    if driver_name == "Memory":
+        return ds
+    else:
+        return fname
 
 
 def Truncate(val, lyr_defn, fieldname):
@@ -129,73 +165,91 @@ def Truncate(val, lyr_defn, fieldname):
     return val[0 : lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex(fieldname)).GetWidth()]
 
 
-def CheckFeatures(lyr, field1="foo5", field2="bar10", field3="baz15", field4="baw20"):
+def Identity(val, *args):
+    return val
+
+
+def CheckFeatures(
+    ds, lyr, field1="foo5", field2="bar10", field3="baz15", field4="baw20"
+):
+
+    driver_name = ds.GetDriver().GetName()
 
     expected_values = [
-        ["foo0", "", "", ""],
-        ["foo1", "bar1", "", ""],
-        ["foo2", "bar2_01234", "baz2_0123456789", ""],
+        ["foo0", None, None, None],
+        ["foo1", "bar1", None, None],
+        ["foo2", "bar2_01234", "baz2_0123456789", None],
         ["foo3", "bar3_01234", "baz3_0123456789", "baw3_012345678901234"],
     ]
+
+    if driver_name == "MapInfo File":
+        for i in range(len(expected_values)):
+            expected_values[i] = [
+                x if x is not None else "" for x in expected_values[i]
+            ]
+
+    truncate_fn = Identity if driver_name in ("SQLite", "Memory") else Truncate
 
     lyr_defn = lyr.GetLayerDefn()
 
     lyr.ResetReading()
-    feat = lyr.GetNextFeature()
-    i = 0
-    while feat is not None:
-        if (
-            (
-                field1 is not None
-                and feat.GetField(field1)
-                != Truncate(expected_values[i][0], lyr_defn, field1)
+
+    for i, feat in enumerate(lyr):
+        if field1 is not None:
+            assert feat.GetField(field1) == truncate_fn(
+                expected_values[i][0], lyr_defn, field1
             )
-            or (
-                field2 is not None
-                and feat.GetField(field2)
-                != Truncate(expected_values[i][1], lyr_defn, field2)
+        if field2 is not None:
+            assert feat.GetField(field2) == truncate_fn(
+                expected_values[i][1], lyr_defn, field2
             )
-            or (
-                field3 is not None
-                and feat.GetField(field3)
-                != Truncate(expected_values[i][2], lyr_defn, field3)
+        if field3 is not None:
+            assert feat.GetField(field3) == truncate_fn(
+                expected_values[i][2], lyr_defn, field3
             )
-            or (
-                field4 is not None
-                and feat.GetField(field4)
-                != Truncate(expected_values[i][3], lyr_defn, field4)
+        if field4 is not None:
+            assert feat.GetField(field4) == truncate_fn(
+                expected_values[i][3], lyr_defn, field4
             )
-        ):
-            feat.DumpReadable()
-            pytest.fail()
-        feat = lyr.GetNextFeature()
-        i = i + 1
 
 
 def CheckColumnOrder(lyr, expected_order):
+
+    __tracebackhide__ = True
 
     lyr_defn = lyr.GetLayerDefn()
     for i, exp_order in enumerate(expected_order):
         assert lyr_defn.GetFieldDefn(i).GetName() == exp_order
 
 
-def Check(lyr, expected_order):
+def Check(ds, lyr, expected_order):
 
     CheckColumnOrder(lyr, expected_order)
 
-    CheckFeatures(lyr)
+    CheckFeatures(ds, lyr)
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+    if ds.GetDriver().GetName() == "Memory":
+        return
+
+    ds = ogr.Open(ds.GetDescription(), update=1)
     lyr_reopen = ds.GetLayer(0)
 
     CheckColumnOrder(lyr_reopen, expected_order)
 
-    CheckFeatures(lyr_reopen)
+    CheckFeatures(ds, lyr_reopen)
 
 
-def test_ogr_rfc35_mitab_2():
+###############################################################################
+# Test ReorderField()
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+
+def test_ogr_rfc35_2(rfc35_test_input, driver_name):
+
+    if driver_name == "Memory":
+        ds = rfc35_test_input
+    else:
+        ds = ogr.Open(rfc35_test_input, update=1)
+
     lyr = ds.GetLayer(0)
 
     assert lyr.TestCapability(ogr.OLCReorderFields) == 1
@@ -209,74 +263,57 @@ def test_ogr_rfc35_mitab_2():
     feat = None
 
     assert lyr.ReorderField(1, 3) == 0
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["foo5", "baz15", "baw20", "bar10"])
+    Check(ds, lyr, ["foo5", "baz15", "baw20", "bar10"])
 
     lyr.ReorderField(3, 1)
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(ds, lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     lyr.ReorderField(0, 2)
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["bar10", "baz15", "foo5", "baw20"])
+    Check(ds, lyr, ["bar10", "baz15", "foo5", "baw20"])
 
     lyr.ReorderField(2, 0)
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(ds, lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     lyr.ReorderField(0, 1)
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["bar10", "foo5", "baz15", "baw20"])
+    Check(ds, lyr, ["bar10", "foo5", "baz15", "baw20"])
 
     lyr.ReorderField(1, 0)
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(ds, lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["baw20", "baz15", "bar10", "foo5"])
+    Check(ds, lyr, ["baw20", "baz15", "bar10", "foo5"])
 
     lyr.ReorderFields([3, 2, 1, 0])
-    # ds = None
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
-    # lyr = ds.GetLayer(0)
-    Check(lyr, ["foo5", "bar10", "baz15", "baw20"])
+    Check(ds, lyr, ["foo5", "bar10", "baz15", "baw20"])
 
     with gdaltest.error_handler():
         ret = lyr.ReorderFields([0, 0, 0, 0])
     assert ret != 0
 
-    # ds = None
+    if driver_name == "Memory":
+        return
 
-    # ds = ogr.Open('tmp/rfc35_test.tab', update = 1)
+    ds = None
+
+    ds = ogr.Open(rfc35_test_input, update=1)
     lyr = ds.GetLayer(0)
 
     CheckColumnOrder(lyr, ["foo5", "bar10", "baz15", "baw20"])
 
-    CheckFeatures(lyr)
+    CheckFeatures(ds, lyr)
 
 
 ###############################################################################
 # Test AlterFieldDefn() for change of name and width
 
 
-def test_ogr_rfc35_mitab_3():
+def test_ogr_rfc35_3(rfc35_test_input, driver_name):
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+    if driver_name == "Memory":
+        ds = rfc35_test_input
+    else:
+        ds = ogr.Open(rfc35_test_input, update=1)
+
     lyr = ds.GetLayer(0)
 
     fd = ogr.FieldDefn("baz25", ogr.OFTString)
@@ -294,7 +331,7 @@ def test_ogr_rfc35_mitab_3():
 
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz15"), fd, ogr.ALTER_ALL_FLAG)
 
-    CheckFeatures(lyr, field3="baz25")
+    CheckFeatures(ds, lyr, field3="baz25")
 
     fd = ogr.FieldDefn("baz5", ogr.OFTString)
     fd.SetWidth(5)
@@ -302,26 +339,43 @@ def test_ogr_rfc35_mitab_3():
     lyr_defn = lyr.GetLayerDefn()
     lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz25"), fd, ogr.ALTER_ALL_FLAG)
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr, field3="baz5")
 
-    ds = None
+    if driver_name not in ("SQLite", "Memory"):
+        ds = None
+        ds = ogr.Open(rfc35_test_input, update=1)
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
     fld_defn = lyr_defn.GetFieldDefn(lyr_defn.GetFieldIndex("baz5"))
     assert fld_defn.GetWidth() == 5
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr, field3="baz5")
+
+    # Change only name
+    if driver_name == "SQLite":
+        fd = ogr.FieldDefn("baz5_2", ogr.OFTString)
+        fd.SetWidth(5)
+        lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("baz5"), fd, ogr.ALTER_ALL_FLAG)
+        assert fld_defn.GetWidth() == 5
 
 
 ###############################################################################
 # Test AlterFieldDefn() for change of type
 
 
-def test_ogr_rfc35_mitab_4():
+def test_ogr_rfc35_4(rfc35_test_input, driver_name, tmp_path):
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+    if driver_name == "ESRI Shapefile":
+        int_resizing_supported = True
+    else:
+        int_resizing_supported = False
+
+    if driver_name == "Memory":
+        ds = rfc35_test_input
+    else:
+        ds = ogr.Open(rfc35_test_input, update=1)
+
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -339,20 +393,19 @@ def test_ogr_rfc35_mitab_4():
     feat = None
 
     fd.SetWidth(10)
-    with gdaltest.error_handler():
-        ret = lyr.AlterFieldDefn(
-            lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG
-        )
-    assert ret != 0
+    ret = lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
+
+    if driver_name == "MapInfo File":
+        assert ret != 0
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
     assert feat.GetField("intfield") == 12345
     feat = None
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr)
 
-    if False:  # pylint: disable=using-constant-test
+    if int_resizing_supported:
         fd.SetWidth(5)
         lyr.AlterFieldDefn(lyr_defn.GetFieldIndex("intfield"), fd, ogr.ALTER_ALL_FLAG)
 
@@ -361,12 +414,9 @@ def test_ogr_rfc35_mitab_4():
         assert feat.GetField("intfield") == 12345
         feat = None
 
-        CheckFeatures(lyr, field3="baz5")
+        CheckFeatures(ds, lyr)
 
-    ds = None
-
-    if False:  # pylint: disable=using-constant-test
-        ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+        ds = ogr.Open(rfc35_test_input, update=1)
         lyr = ds.GetLayer(0)
         lyr_defn = lyr.GetLayerDefn()
 
@@ -378,16 +428,18 @@ def test_ogr_rfc35_mitab_4():
         assert feat.GetField("intfield") == 1234
         feat = None
 
-        CheckFeatures(lyr, field3="baz5")
+        CheckFeatures(ds, lyr)
 
         ds = None
 
         # Check that the file size has decreased after column shrinking
-        CheckFileSize("tmp/rfc35_test.tab")
+        CheckFileSize(rfc35_test_input, tmp_path)
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
-    lyr = ds.GetLayer(0)
-    lyr_defn = lyr.GetLayerDefn()
+    if driver_name != "Memory":
+        ds = None
+        ds = ogr.Open(rfc35_test_input, update=1)
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
 
     fd = ogr.FieldDefn("oldintfld", ogr.OFTString)
     fd.SetWidth(15)
@@ -395,23 +447,23 @@ def test_ogr_rfc35_mitab_4():
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    assert feat.GetField("oldintfld") == "12345"
+    assert feat.GetField("oldintfld") == "1234" if int_resizing_supported else "12345"
     feat = None
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr)
 
-    ds = None
-
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
-    lyr = ds.GetLayer(0)
-    lyr_defn = lyr.GetLayerDefn()
+    if driver_name != "Memory":
+        ds = None
+        ds = ogr.Open(rfc35_test_input, update=1)
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
 
     lyr.ResetReading()
     feat = lyr.GetNextFeature()
-    assert feat.GetField("oldintfld") == "12345"
+    assert feat.GetField("oldintfld") == "1234" if int_resizing_supported else "12345"
     feat = None
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr)
 
     lyr.DeleteField(lyr_defn.GetFieldIndex("oldintfld"))
 
@@ -436,11 +488,14 @@ def test_ogr_rfc35_mitab_4():
     assert feat.GetField("oldintfld") == "98765"
     feat = None
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr)
+
+    if driver_name == "Memory":
+        return
 
     ds = None
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+    ds = ogr.Open(rfc35_test_input, update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
@@ -449,22 +504,24 @@ def test_ogr_rfc35_mitab_4():
     assert feat.GetField("oldintfld") == "98765"
     feat = None
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr)
 
 
 ###############################################################################
 # Test DeleteField()
 
 
-def test_ogr_rfc35_mitab_5():
+def test_ogr_rfc35_5(rfc35_test_input, driver_name, tmp_path):
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+    if driver_name == "Memory":
+        ds = rfc35_test_input
+    else:
+        ds = ogr.Open(rfc35_test_input, update=1)
+
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
     assert lyr.TestCapability(ogr.OLCDeleteField) == 1
-
-    assert lyr.DeleteField(0) == 0
 
     with gdaltest.error_handler():
         ret = lyr.DeleteField(-1)
@@ -474,47 +531,42 @@ def test_ogr_rfc35_mitab_5():
         ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     assert ret != 0
 
-    CheckFeatures(lyr, field3="baz5")
+    CheckFeatures(ds, lyr)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex("baw20")) == 0
 
-    ds = None
+    if driver_name not in ("Memory", "SQLite"):
+        ds = None
+        # Check that the file size has decreased after column removing
+        CheckFileSize(rfc35_test_input, tmp_path)
 
-    # Check that the file size has decreased after column removing
-    CheckFileSize("tmp/rfc35_test.tab")
+        ds = ogr.Open(rfc35_test_input, update=1)
+        lyr = ds.GetLayer(0)
+        lyr_defn = lyr.GetLayerDefn()
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
-    lyr = ds.GetLayer(0)
-    lyr_defn = lyr.GetLayerDefn()
+    CheckFeatures(ds, lyr, field4=None)
 
-    CheckFeatures(lyr, field3="baz5", field4=None)
+    assert lyr.DeleteField(lyr_defn.GetFieldIndex("baz15")) == 0
 
-    assert lyr.DeleteField(lyr_defn.GetFieldIndex("baz5")) == 0
-
-    CheckFeatures(lyr, field3=None, field4=None)
+    CheckFeatures(ds, lyr, field3=None, field4=None)
 
     assert lyr.DeleteField(lyr_defn.GetFieldIndex("foo5")) == 0
 
-    # We cannot delete the only one remaining field (well MapInfo prohibits that)
-    with gdaltest.error_handler():
-        ret = lyr.DeleteField(lyr_defn.GetFieldIndex("bar10"))
-    assert ret != 0
+    CheckFeatures(ds, lyr, field1=None, field3=None, field4=None)
 
-    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
+    if driver_name != "MapInfo File":
+        # MapInfo does not allow removing the last field
+        assert lyr.DeleteField(lyr_defn.GetFieldIndex("bar10")) == 0
+
+        CheckFeatures(ds, lyr, field1=None, field2=None, field3=None, field4=None)
+
+    if driver_name == "Memory":
+        return
 
     ds = None
 
-    ds = ogr.Open("tmp/rfc35_test.tab", update=1)
+    ds = ogr.Open(rfc35_test_input, update=1)
     lyr = ds.GetLayer(0)
     lyr_defn = lyr.GetLayerDefn()
 
-    CheckFeatures(lyr, field1=None, field2=None, field3=None, field4=None)
-
-
-###############################################################################
-# Initiate the test file
-
-
-def test_ogr_rfc35_mitab_cleanup():
-
-    ogr.GetDriverByName("MapInfo File").DeleteDataSource("tmp/rfc35_test.tab")
+    CheckFeatures(ds, lyr, field1=None, field2=None, field3=None, field4=None)
