@@ -1832,13 +1832,13 @@ CPLErr GDALDataset::RasterIOResampled(GDALRWFlag /* eRWFlag */, int nXOff,
                     {
                         if (bVal == 0)
                         {
-                            float fNoDataValue = 0.0f;
+                            GByte abyZero[16] = {0};
                             for (int iBand = 0; iBand < nBandCount; iBand++)
                             {
                                 for (int j = 0; j < nDstYCount; j++)
                                 {
                                     GDALCopyWords(
-                                        &fNoDataValue, GDT_Float32, 0,
+                                        abyZero, GDT_Byte, 0,
                                         static_cast<GByte *>(pData) +
                                             iBand * nBandSpace +
                                             nLineSpace * (j + nDstYOff) +
