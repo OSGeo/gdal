@@ -352,7 +352,8 @@ template <class T, class Tsquare = T> inline Tsquare SQUARE(T val)
 /************************************************************************/
 // Compute rms = sqrt(sumSquares / weight) in such a way that it is the
 // integer that minimizes abs(rms**2 - sumSquares / weight)
-template <class T> inline T ComputeIntegerRMS(double sumSquares, double weight)
+template <class T, class Twork>
+inline T ComputeIntegerRMS(double sumSquares, double weight)
 {
     const double sumDivWeight = sumSquares / weight;
     T rms = static_cast<T>(sqrt(sumDivWeight));
@@ -360,7 +361,8 @@ template <class T> inline T ComputeIntegerRMS(double sumSquares, double weight)
     // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
     // Naive version:
     // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
-    if (2 * rms * (rms + 1) + 1 < 2 * sumDivWeight)
+    if (static_cast<double>(static_cast<Twork>(2) * rms * (rms + 1) + 1) <
+        2 * sumDivWeight)
         rms += 1;
     return rms;
 }
@@ -1665,11 +1667,25 @@ static CPLErr GDALResampleChunk32R_AverageOrRMS_T(
                             continue;
                         }
                     }
-                    if (eWrkDataType == GDT_Byte || eWrkDataType == GDT_UInt16)
+                    if (eWrkDataType == GDT_Byte)
                     {
                         T nVal;
                         if (bQuadraticMean)
-                            nVal = ComputeIntegerRMS<T>(dfTotal, dfTotalWeight);
+                            nVal = ComputeIntegerRMS<T, int>(dfTotal,
+                                                             dfTotalWeight);
+                        else
+                            nVal =
+                                static_cast<T>(dfTotal / dfTotalWeight + 0.5);
+                        if (bHasNoData && nVal == tNoDataValue)
+                            nVal = tReplacementVal;
+                        pDstScanline[iDstPixel] = nVal;
+                    }
+                    else if (eWrkDataType == GDT_UInt16)
+                    {
+                        T nVal;
+                        if (bQuadraticMean)
+                            nVal = ComputeIntegerRMS<T, uint64_t>(
+                                dfTotal, dfTotalWeight);
                         else
                             nVal =
                                 static_cast<T>(dfTotal / dfTotalWeight + 0.5);
