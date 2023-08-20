@@ -3106,3 +3106,43 @@ def test_rasterio_float64(resample_alg):
     )
     data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3, 2, 2, resample_alg=resample_alg)
     assert struct.unpack("d" * (2 * 2), data) == (nd, nd, nd, valid)
+
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with float data type
+
+
+@pytest.mark.parametrize(
+    "resample_alg",
+    [
+        gdal.GRIORA_NearestNeighbour,
+        gdal.GRIORA_Bilinear,
+        gdal.GRIORA_Cubic,
+        gdal.GRIORA_Mode,
+        gdal.GRIORA_Average,
+        gdal.GRIORA_RMS,
+    ],
+)
+@pytest.mark.parametrize(
+    "dt,struct_type,val",
+    [
+        (gdal.GDT_Byte, "B", 255),
+        (gdal.GDT_UInt16, "H", 65535),
+        (gdal.GDT_Float32, "f", 1.5),
+        (gdal.GDT_Float64, "d", 1.5e100),
+    ],
+)
+def test_rasterio_constant_value(resample_alg, dt, struct_type, val):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, dt)
+    ds.WriteRaster(
+        0,
+        0,
+        3,
+        3,
+        struct.pack(struct_type * (3 * 3), val, val, val, val, val, val, val, val, val),
+    )
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3, 2, 2, resample_alg=resample_alg)
+    assert struct.unpack(struct_type * (2 * 2), data) == pytest.approx(
+        (val, val, val, val), rel=1e-14
+    )
