@@ -2765,6 +2765,267 @@
     </des>
 
     <!-- Defined in STDI-0002_ver_21.1_Vol_1_and_2/Vol-2-App M - GLAS-GFM.pdf -->
+    <!-- Common Sensor Covariance Support Data -->
+    <des name="CSCSDB">
+      <subheader_fields minlength="46">
+        <field name="UUID" length="36" type="string"/>
+        <field name="NUMAIS" length="3" type="string"/> <!-- 001 to 998, or ALL -->
+        <if cond="NUMAIS!=ALL">
+            <loop counter="NUMAIS">
+                <field name="AISDLVL" length="3" type="integer"/>
+            </loop>
+        </if>
+        <field name="NUM_ASSOC_ELEM" length="3" type="integer" minval="0" maxval="276"/>
+        <loop counter="NUM_ASSOC_ELEM" name="ASSOC_ELEM">
+          <field name="ASSOC_ELEM_UUID" length="36" type="string"/>
+        </loop>
+        <field name="RESERVEDSUBH_LEN" length="4" type="integer"/>
+      </subheader_fields>
+      <data_fields>
+        <field name="COV_VERSION_DATE" length="8" type="integer"/>
+        <field name="CORE_SETS" length="1" type="integer" minval="0" maxval="6"/>
+        <loop counter="CORE_SETS" name="CORE_SETS">
+          <field name="REF_FRAME_POSITION" length="1" type="integer" minval="1" maxval="6"/>
+          <field name="REF_FRAME_ATTITUDE" length="1" type="integer" minval="1" maxval="6"/>
+          <field name="NUM_GROUPS" length="1" type="integer" minval="1" maxval="7"/>
+          <loop counter="NUM_GROUPS" name="GROUPS">
+            <field name="CORR_REF_DATE" length="8" type="integer"/>
+            <field name="CORR_REF_TIME" length="16" type="real"/>
+            <field name="NUM_ADJ_PARM" length="1" type="integer" minval="1" maxval="7"/>
+            <loop counter="NUM_ADJ_PARM" name="ADJ_PARM">
+              <field name="ADJ_PARM_ID" length="1" type="integer" minval="1" maxval="7"/>
+            </loop>
+            <field name="BASIC_SUB_ALLOC" length="1" type="integer" minval="0" maxval="1"/>
+            <if cond="BASIC_SUB_ALLOC=1">
+              <loop formula="(NUM_ADJ_PARM+1)*(NUM_ADJ_PARM)/2"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                <field name="ERRCOV_C1" length="21" type="real"/>
+              </loop>
+              <field name="BASIC_PF_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+              <if cond="BASIC_PF_FLAG=1">
+                <field name="NUM_BASIC_PF" length="2" type="integer" minval="01" maxval="99"/>
+                <loop counter="NUM_BASIC_PF" name="BASIC_PF">
+                  <field name="BASIC_PF_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+                  <field name="NUM_PAIRINGS_BASIC_PF" length="2" type="integer" minval="01" maxval="99"/>
+                  <loop counter="NUM_PAIRINGS_BASIC_PF" name="PAIRINGS_BASIC_PF">
+                    <field name="BASIC_PF_SPDCF_SENSOR" length="6" type="string"/>
+                  </loop>
+                </loop>
+              </if>
+              <field name="BASIC_PL_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+              <if cond="BASIC_PL_FLAG=1">
+                <field name="NUM_BASIC_PL" length="2" type="integer" minval="01" maxval="99"/>
+                <loop counter="NUM_BASIC_PL" name="BASIC_PL">
+                  <field name="BASIC_PL_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+                  <field name="NUM_PAIRINGS_BASIC_PL" length="2" type="integer" minval="01" maxval="99"/>
+                  <loop counter="NUM_PAIRINGS_BASIC_PL" name="PAIRINGS_BASIC_PL">
+                    <field name="BASIC_PL_SPDCF_SENSOR" length="6" type="string"/>
+                  </loop>
+                </loop>
+              </if>
+              <field name="BASIC_SR_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+              <if cond="BASIC_SR_FLAG=1">
+                <field name="BASIC_SR_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+              </if>
+            </if>
+            <field name="POST_SUB_ALLOC" length="1" type="integer" minval="0" maxval="1"/>
+            <if cond="POST_SUB_ALLOC=1">
+              <field name="POST_START_DATE" length="8" type="integer"/>
+              <field name="POST_START_TIME" length="15" type="real" minval="00000.000000000" maxval="86399.999999999"/>
+              <field name="POST_DT" length="13" type="real" minval="000.000000000" maxval="999.999999999"/>
+              <field name="NUM_POSTS" length="3" type="integer" minval="002" maxval="999"/>
+              <field name="COMMON_POSTS_COV" length="1" type="integer" minval="0" maxval="1"/>
+              <if cond="COMMON_POSTS_COV=1">
+                <loop formula="(NUM_ADJ_PARM+1)*(NUM_ADJ_PARM)/2"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                  <field name="ERRCOV_C2" length="21" type="real"/>
+                </loop>
+              </if>
+              <if cond="COMMON_POSTS_COV=0">
+                <loop counter="NUM_POSTS" name="POSTS">
+                  <loop formula="(NUM_ADJ_PARM+1)*(NUM_ADJ_PARM)/2"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                    <field name="ERRCOV_C2" length="21" type="real"/>
+                  </loop>
+                </loop>
+              </if>
+              <field name="POST_INTERP" length="1" type="integer"/>
+              <field name="POST_PF_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+              <if cond="POST_PF_FLAG=1">
+                <field name="NUM_POST_PF" length="2" type="integer" minval="01" maxval="99"/>
+                <loop counter="NUM_POST_PF" name="POST_PF">
+                  <field name="POST_PF_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+                  <field name="NUM_PAIRINGS_POST_PF" length="2" type="integer" minval="01" maxval="99"/>
+                  <loop counter="NUM_PAIRINGS_POST_PF" name="PAIRINGS_POST_PF">
+                    <field name="POST_PF_SPDCF_SENSOR" length="6" type="string"/>
+                  </loop>
+                </loop>
+              </if>
+              <field name="POST_PL_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+              <if cond="POST_PL_FLAG=1">
+                <field name="NUM_POST_PL" length="2" type="integer" minval="01" maxval="99"/>
+                <loop counter="NUM_POST_PL" name="POST_PL">
+                  <field name="POST_PL_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+                  <field name="NUM_PAIRINGS_POST_PL" length="2" type="integer" minval="01" maxval="99"/>
+                  <loop counter="NUM_PAIRINGS_POST_PL" name="PAIRINGS_POST_PL">
+                    <field name="POST_PL_SPDCF_SENSOR" length="6" type="string"/>
+                  </loop>
+                </loop>
+              </if>
+              <field name="POST_SR_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+              <if cond="POST_SR_FLAG=1">
+                <field name="POST_SR_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+                <field name="POST_CORR" length="1" type="integer" minval="0" maxval="1"/>
+              </if>
+            </if>
+          </loop>
+        </loop>
+        <field name="IO_CAL_AP" length="1" type="integer" minval="0" maxval="1"/>
+        <if cond="IO_CAL_AP=1">
+          <field name="NUM_SETS_CAL_AP" length="2" type="integer" minval="01" maxval="99"/>
+          <loop counter="NUM_SETS_CAL_AP" name="SETS_CAL_AP">
+            <field name="FOCAL_LENGTH_CAL" length="11" type="real" minval="00.00000000" maxval="99.99999999"/>
+          </loop>
+          <field name="NCAL_CPG" length="2" type="integer" minval="01" maxval="11"/>
+          <loop counter="NCAL_CPG" name="CAL_PG">
+            <field name="CORR_REF_DATE_IO" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_IO" length="16" type="real"/>
+            <field name="N1_CAL" length="2" type="integer" minval="01" maxval="11"/>
+            <loop counter="N1_CAL" name="CAL">
+              <field name="CAL_AP_ID" length="2" type="integer" minval="01" maxval="11"/>
+            </loop>
+            <loop counter="NUM_SETS_CAL_AP" name="SETS_CAL_AP">
+              <loop formula="(N1_CAL+1)*(N1_CAL)/2"> <!--Warning: this condition is currently hardcoded in the interpreter -->
+                <field name="ERRCOV_C3" length="21" type="real"/>
+              </loop>
+            </loop>
+            <field name="CAL_INTERP" length="1" type="integer" minval="0" maxval="1"/>
+            <field name="SPDCF_ID_TIME" length="2" type="integer" minval="01" maxval="99"/>
+            <field name="SPDCF_ID_FL" length="2" type="integer" minval="01" maxval="99"/>
+          </loop>
+        </if>
+        <field name="TS_CAL_AP" length="1" type="integer" minval="0" maxval="1"/>
+        <if cond="TS_CAL_AP=1">
+          <field name="NUM_TS_GRP" length="1" type="integer" minval="1" maxval="5"/>
+          <if cond="NUM_TS_GRP=1">
+            <field name="CORR_REF_DATE_TS" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TS" length="16" type="real"/>
+            <field name="TSRR" length="21" type="real"/>
+            <field name="TSRC" length="21" type="real"/>
+            <field name="TSCC" length="21" type="real"/>
+            <field name="TS_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+          </if>
+          <if cond="NUM_TS_GRP=2">
+            <field name="CORR_REF_DATE_TSP" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TSP" length="16" type="real"/>
+            <field name="TS_POS_COV" length="21" type="real"/>
+            <field name="TS_POS_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+            <field name="CORR_REF_DATE_TSA" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TSA" length="16" type="real"/>
+            <field name="TS_ATT_COV" length="21" type="real"/>
+            <field name="TS_ATT_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+          </if>
+          <if cond="NUM_TS_GRP=3">
+            <field name="CORR_REF_DATE_TS" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TS" length="16" type="real"/>
+            <field name="TS_POS_COV" length="21" type="real"/>
+            <field name="TS_POS_ATT_COV" length="21" type="real"/>
+            <field name="TS_POS_FL_COV" length="21" type="real"/>
+            <field name="TS_ATT_COV" length="21" type="real"/>
+            <field name="TS_ATT_FL_COV" length="21" type="real"/>
+            <field name="TS_FL_COV" length="21" type="real"/>
+            <field name="TS_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+          </if>
+          <if cond="NUM_TS_GRP=4">
+            <field name="CORR_REF_DATE_TSPA" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TSPA" length="16" type="real"/>
+            <field name="TS_POS_COV" length="21" type="real"/>
+            <field name="TS_POS_ATT_COV" length="21" type="real"/>
+            <field name="TS_ATT_COV" length="21" type="real"/>
+            <field name="TS_ATT_FL_COV" length="21" type="real"/>
+            <field name="TS_PA_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+            <field name="CORR_REF_DATE_TSFL" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TSFL" length="16" type="real"/>
+            <field name="TS_FL_COV" length="21" type="real"/>
+            <field name="TS_FL_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+          </if>
+          <if cond="NUM_TS_GRP=5">
+            <field name="CORR_REF_DATE_TSP" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TSP" length="16" type="real"/>
+            <field name="TS_POS_COV" length="21" type="real"/>
+            <field name="TS_POS_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+            <field name="CORR_REF_DATE_TSA" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TSA" length="16" type="real"/>
+            <field name="TS_ATT_COV" length="21" type="real"/>
+            <field name="TS_ATT_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+            <field name="CORR_REF_DATE_TSFL" length="8" type="integer"/>
+            <field name="CORR_REF_TIME_TSFL" length="16" type="real"/>
+            <field name="TS_FL_COV" length="21" type="real"/>
+            <field name="TS_FL_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+          </if>
+        </if>
+        <field name="UE_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <if cond="UE_FLAG=1">
+          <field name="LINE_DIMENSION" length="3" type="integer" minval="001" maxval="999"/>
+          <field name="SAMPLE_DIMENSION" length="2" type="integer" minval="01" maxval="99"/>
+          <loop counter="LINE_DIMENSION" name="LINE">
+            <loop counter="SAMPLE_DIMENSION" name="SAMPLE">
+              <field name="URR" length="21" type="real"/>
+              <field name="URC" length="21" type="real"/>
+              <field name="UCC" length="21" type="real"/>
+            </loop>
+          </loop>
+          <field name="LINE_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+          <field name="SAMPLE_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+        </if>
+        <field name="SPDC_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <if cond="SPDC_FLAG=1">
+          <field name="NUM_SPDCF" length="2" type="integer" minval="01" maxval="99"/>
+          <loop counter="NUM_SPDCF" name="SPDCF">
+            <field name="SPDCF_ID" length="2" type="integer" minval="01" maxval="99"/>
+            <field name="SPDCF_P" length="2" type="integer" minval="01" maxval="99"/>
+            <loop counter="SPDCF_P" name="CONSTITUENT">
+              <field name="SPDCF_FAM" length="1" type="integer" minval="0" maxval="2"/>
+              <field name="SPDCF_WEIGHT" length="5" type="real" minval="0.000" maxval="1.000"/>
+              <if cond="SPDCF_FAM=0">
+                <field name="FP_A" length="8" type="real" minval="0.000001" maxval="1.000000"/>
+                <field name="FP_ALPHA" length="8" type="real" minval="0.000000" maxval="1.000000"/>
+                <field name="FP_BETA" length="9" type="real" minval="00.000000" maxval="10.000000"/>
+                <field name="FP_T" length="21" type="real"/>
+              </if>
+              <if cond="SPDCF_FAM=1">
+                <field name="NUM_SEGS" length="2" type="integer" minval="02" maxval="10"/>
+                <loop counter="NUM_SEGS" name="SEGS">
+                  <field name="PL_MAX_COR" length="8" type="real" minval="0.000001" maxval="1.000000"/>
+                  <field name="PL_TAU_MAX_COR" length="21" type="real"/>
+                </loop>
+              </if>
+              <if cond="SPDCF_FAM=2">
+                <field name="DC_A" length="8" type="real" minval="0.000001" maxval="1.000000"/>
+                <field name="DC_T" length="21" type="real"/>
+                <field name="DC_P" length="21" type="real"/>
+              </if>
+            </loop>
+          </loop>
+        </if>
+        <field name="DIRECT_COVARIANCE_FLAG" length="1" type="integer" minval="0" maxval="1"/>
+        <if cond="DIRECT_COVARIANCE_FLAG=1">
+           <field name="DC_TYPE" length="1" type="string"/>
+           <if cond="DC_TYPE=0">
+             <field name="NUM_PARA" length="4" type="integer" minval="0001" maxval="9999"/>
+             <loop counter="NUM_PARA" name="PARA">
+               <field name="ADJ" length="21" type="real"/>
+             </loop>
+             <loop formula="(NUM_PARA+1)*(NUM_PARA)/2">
+               <field name="ERRCOV_C4" length="21" type="real"/>
+             </loop>
+           </if>
+        </if>
+        <field name="RESERVED_LEN" length="9" type="integer"/>
+        <if cond="RESERVED_LEN!=000000000">
+            <field name="RESERVED" length_var="RESERVED_LEN" type="string"/>
+        </if>
+      </data_fields>
+    </des>
+
+    <!-- Defined in STDI-0002_ver_21.1_Vol_1_and_2/Vol-2-App M - GLAS-GFM.pdf -->
     <des name="CSSFAB">
       <subheader_fields minlength="46">
         <field name="UUID" length="36" type="string"/>
