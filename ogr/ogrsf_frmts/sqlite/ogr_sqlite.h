@@ -531,6 +531,7 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
                                            public IOGRSQLiteSelectLayer
 {
     OGRSQLiteSelectLayerCommonBehaviour *m_poBehavior = nullptr;
+    bool m_bCanReopenBaseDS = false;
 
     virtual OGRErr ResetStatement() override;
 
@@ -539,7 +540,8 @@ class OGRSQLiteSelectLayer CPL_NON_FINAL : public OGRSQLiteLayer,
   public:
     OGRSQLiteSelectLayer(OGRSQLiteDataSource *, const CPLString &osSQL,
                          sqlite3_stmt *, bool bUseStatementForGetNextFeature,
-                         bool bEmptyLayer, bool bAllowMultipleGeomFields);
+                         bool bEmptyLayer, bool bAllowMultipleGeomFields,
+                         bool bCanReopenBaseDS);
     virtual ~OGRSQLiteSelectLayer();
 
     virtual void ResetReading() override;
