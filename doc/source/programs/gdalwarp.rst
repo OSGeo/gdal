@@ -147,6 +147,10 @@ with control information.
     or a urn:ogc:def:coordinateOperation:EPSG::XXXX URN overriding the default
     transformation from the source to the target CRS. It must take into account the
     axis order of the source and target CRS.
+    When creating a new output file, using :option:`-t_srs` is still necessary
+    to have the target CRS written in the metadata of the output file,
+    but the parameters of the CoordinateOperation will override those of the
+    standard transformation.
 
     .. versionadded:: 3.0
 
