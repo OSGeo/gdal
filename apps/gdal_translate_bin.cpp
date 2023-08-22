@@ -61,6 +61,7 @@ static void Usage(const char *pszErrorMsg, int bShort)
         "       [-projwin ulx uly lrx lry] [-projwin_srs srs_def]\n"
         "       [-a_srs srs_def] [-a_coord_epoch epoch]\n"
         "       [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
+        "       [-a_gt gt0 gt1 gt2 gt3 gt4 gt5]\n"
         "       [-a_scale value] [-a_offset value]\n"
         "       [-nogcp] [-gcp pixel line easting northing [elevation]]*\n"
         "       |-colorinterp{_bn} {red|green|blue|alpha|gray|undefined}]\n"
