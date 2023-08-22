@@ -907,31 +907,63 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
             : static_cast<int>(poDS->dims[poDS->GetYIndex()]);  // nRows
     poDS->nRasterXSize =
         static_cast<int>(poDS->dims[poDS->GetXIndex()]);  // nCols
+    int nBands = 1;
     if (poDS->m_nOtherDimIndex >= 0)
     {
-        poDS->nBands = static_cast<int>(poDS->dims[poDS->m_nOtherDimIndex]);
-    }
-    else
-    {
-        poDS->nBands = 1;
+        nBands = static_cast<int>(poDS->dims[poDS->m_nOtherDimIndex]);
     }
 
     CPLStringList aosMetadata;
+    std::map<std::string, CPLStringList> oMapBandSpecificMetadata;
     if (poDS->poH5Objects->nType == H5G_DATASET)
     {
         HDF5Dataset::CreateMetadata(poDS->m_hHDF5, poDS->poH5Objects,
-                                    H5G_DATASET, aosMetadata);
+                                    H5G_DATASET, false, aosMetadata);
+        if (nBands > 1)
+        {
+            // Logic specific of Planet data cubes with per-band metadata items
+            static const struct
+            {
+                const char *pszSrcName;
+                const char *pszDstName;
+            } asItems[] = {
+                {"calibration_coefficients", "calibration_coefficient"},
+                {"center_wavelengths", "center_wavelength"},
+                {"fwhm", "fwhm"},
+                {"bad_band_list", "bad_band"},
+            };
+            for (const auto &sItem : asItems)
+            {
+                const char *pszVal =
+                    aosMetadata.FetchNameValue(sItem.pszSrcName);
+                if (pszVal)
+                {
+                    CPLStringList aosTokens(CSLTokenizeString2(pszVal, " ", 0));
+                    if (aosTokens.size() == nBands)
+                    {
+                        oMapBandSpecificMetadata[sItem.pszDstName] =
+                            std::move(aosTokens);
+                        aosMetadata.SetNameValue(sItem.pszSrcName, nullptr);
+                    }
+                }
+            }
+        }
     }
 
-    for (int i = 1; i <= poDS->nBands; i++)
+    for (int i = 0; i < nBands; i++)
     {
-        HDF5ImageRasterBand *const poBand =
-            new HDF5ImageRasterBand(poDS, i, poDS->GetDataType(poDS->native));
+        HDF5ImageRasterBand *const poBand = new HDF5ImageRasterBand(
+            poDS, i + 1, poDS->GetDataType(poDS->native));
 
-        poDS->SetBand(i, poBand);
+        poDS->SetBand(i + 1, poBand);
+
         if (poDS->poH5Objects->nType == H5G_DATASET)
         {
             poBand->SetMetadata(aosMetadata.List());
+            for (const auto &oIter : oMapBandSpecificMetadata)
+            {
+                poBand->SetMetadataItem(oIter.first.c_str(), oIter.second[i]);
+            }
         }
     }
 

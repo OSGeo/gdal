@@ -255,12 +255,12 @@ def test_hdf5_9():
     ), "file still opened."
 
     ref_metadata = {
-        "TEST_BANDNAMES": "SAA",
-        "TEST_CODING": "0.6666666667 0.0000000000 TRUE",
-        "TEST_FLAGS": "255=noValue",
-        "TEST_MAPPING": "Geographic Lat/Lon 0.5000000000 0.5000000000 27.3154761905 -5.0833333333 0.0029761905 0.0029761905 WGS84 Degrees",
-        "TEST_NOVALUE": "255",
-        "TEST_RANGE": "0 255 0 255",
+        "BANDNAMES": "SAA",
+        "CODING": "0.6666666667 0.0000000000 TRUE",
+        "FLAGS": "255=noValue",
+        "MAPPING": "Geographic Lat/Lon 0.5000000000 0.5000000000 27.3154761905 -5.0833333333 0.0029761905 0.0029761905 WGS84 Degrees",
+        "NOVALUE": "255",
+        "RANGE": "0 255 0 255",
     }
 
     assert len(metadata) == len(
@@ -466,15 +466,15 @@ def test_hdf5_attr_all_datatypes():
     ds = gdal.Open("data/hdf5/attr_all_datatypes.h5")
     assert ds is not None
     assert ds.GetMetadata() == {
-        "attr_float16": "125 ",
-        "attr_float32": "125 ",
-        "attr_float64": "125 ",
-        "attr_int16": "125 ",
-        "attr_int32": "125 ",
-        "attr_int8": "125 ",
-        "attr_uint16": "125 ",
-        "attr_uint32": "125 ",
-        "attr_uint8": "125 ",
+        "attr_float16": "125",
+        "attr_float32": "125",
+        "attr_float64": "125",
+        "attr_int16": "125",
+        "attr_int32": "125",
+        "attr_int8": "125",
+        "attr_uint16": "125",
+        "attr_uint32": "125",
+        "attr_uint8": "125",
     }
 
 
@@ -1196,4 +1196,38 @@ END
     }
     assert gdal.Open(ds.GetMetadataItem("X_DATASET", "GEOLOCATION")) is not None
     assert gdal.Open(ds.GetMetadataItem("Y_DATASET", "GEOLOCATION")) is not None
+    ds = None
+
+
+###############################################################################
+# Test opening a file with band specific attributes
+
+
+def test_hdf5_band_specific_attribute():
+
+    if False:
+
+        import h5py
+
+        f = h5py.File("data/hdf5/fwhm.h5", "w")
+        ds = f.create_dataset("MyDataField", (2, 3, 4), dtype="B")
+        ds.attrs["fwhm"] = [0.01, 0.02]
+        ds.attrs["fwhm_units"] = "Micrometers"
+        ds.attrs["bad_band_list"] = [0, 1]
+        f.close()
+
+    ds = gdal.Open("data/hdf5/fwhm.h5")
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 3
+    assert ds.RasterCount == 2
+    assert ds.GetRasterBand(1).GetMetadata_Dict() == {
+        "fwhm": "0.01",
+        "fwhm_units": "Micrometers",
+        "bad_band": "0",
+    }
+    assert ds.GetRasterBand(2).GetMetadata_Dict() == {
+        "fwhm": "0.02",
+        "fwhm_units": "Micrometers",
+        "bad_band": "1",
+    }
     ds = None
