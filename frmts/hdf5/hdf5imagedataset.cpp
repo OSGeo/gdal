@@ -36,6 +36,7 @@
 #include "gh5_convenience.h"
 #include "hdf5dataset.h"
 #include "ogr_spatialref.h"
+#include "../mem/memdataset.h"
 
 #include <algorithm>
 
@@ -97,6 +98,13 @@ class HDF5ImageDataset final : public HDF5Dataset
     const OGRSpatialReference *GetGCPSpatialRef() const override;
     virtual const GDAL_GCP *GetGCPs() override;
     virtual CPLErr GetGeoTransform(double *padfTransform) override;
+
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, int nBandCount, int *panBandMap,
+                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GSpacing nBandSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 
     Hdf5ProductType GetSubdatasetType() const
     {
@@ -230,6 +238,12 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual double GetNoDataValue(int *) override;
     // virtual CPLErr IWriteBlock( int, int, void * );
+
+    CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
+                     int nYSize, void *pData, int nBufXSize, int nBufYSize,
+                     GDALDataType eBufType, GSpacing nPixelSpace,
+                     GSpacing nLineSpace,
+                     GDALRasterIOExtraArg *psExtraArg) override;
 };
 
 /************************************************************************/
@@ -399,6 +413,282 @@ CPLErr HDF5ImageRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     }
 
     return CE_None;
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                      int nXSize, int nYSize, void *pData,
+                                      int nBufXSize, int nBufYSize,
+                                      GDALDataType eBufType,
+                                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                                      GDALRasterIOExtraArg *psExtraArg)
+
+{
+    HDF5ImageDataset *poGDS = static_cast<HDF5ImageDataset *>(poDS);
+
+    const bool bIsExpectedLayout =
+        ((poGDS->ndims == 3 && poGDS->m_nOtherDimIndex == 0 &&
+          poGDS->GetYIndex() == 1 && poGDS->GetXIndex() == 2) ||
+         (poGDS->ndims == 2 && poGDS->GetYIndex() == 0 &&
+          poGDS->GetXIndex() == 1));
+
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
+
+    if (eRWFlag == GF_Read && bIsExpectedLayout && nXSize == nBufXSize &&
+        nYSize == nBufYSize && eBufType == eDataType &&
+        nPixelSpace == nDTSize && nLineSpace == nXSize * nPixelSpace)
+    {
+        HDF5_GLOBAL_LOCK();
+
+        hsize_t count[3] = {1, static_cast<hsize_t>(nYSize),
+                            static_cast<hsize_t>(nXSize)};
+        H5OFFSET_TYPE offset[3] = {static_cast<H5OFFSET_TYPE>(nBand - 1),
+                                   static_cast<H5OFFSET_TYPE>(nYOff),
+                                   static_cast<H5OFFSET_TYPE>(nXOff)};
+        if (poGDS->ndims == 2)
+        {
+            count[0] = count[1];
+            count[1] = count[2];
+
+            offset[0] = offset[1];
+            offset[1] = offset[2];
+        }
+        herr_t status = H5Sselect_hyperslab(poGDS->dataspace_id, H5S_SELECT_SET,
+                                            offset, nullptr, count, nullptr);
+        if (status < 0)
+            return CE_Failure;
+
+        const hid_t memspace = H5Screate_simple(poGDS->ndims, count, nullptr);
+        H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
+        status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, mem_offset,
+                                     nullptr, count, nullptr);
+        if (status < 0)
+        {
+            H5Sclose(memspace);
+            return CE_Failure;
+        }
+
+        status = H5Dread(poGDS->dataset_id, poGDS->native, memspace,
+                         poGDS->dataspace_id, H5P_DEFAULT, pData);
+
+        H5Sclose(memspace);
+
+        if (status < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "HDF5ImageRasterBand::IRasterIO(): H5Dread() failed");
+            return CE_Failure;
+        }
+
+        return CE_None;
+    }
+
+    // If the request is still small enough, try to read from libhdf5 with
+    // the natural interleaving into a temporary MEMDataset, and then read
+    // frmo it with the requested interleaving and data type.
+    if (eRWFlag == GF_Read && bIsExpectedLayout && nXSize == nBufXSize &&
+        nYSize == nBufYSize &&
+        static_cast<GIntBig>(nXSize) * nYSize < CPLGetUsablePhysicalRAM() / 10)
+    {
+        auto poMemDS = std::unique_ptr<GDALDataset>(
+            MEMDataset::Create("", nXSize, nYSize, 1, eDataType, nullptr));
+        if (poMemDS)
+        {
+            void *pMemData = poMemDS->GetInternalHandle("MEMORY1");
+            CPLAssert(pMemData);
+            // Read from HDF5 into the temporary MEMDataset using the
+            // natural interleaving of the HDF5 dataset
+            if (IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pMemData,
+                          nXSize, nYSize, eDataType, nDTSize,
+                          static_cast<GSpacing>(nXSize) * nDTSize,
+                          psExtraArg) != CE_None)
+            {
+                return CE_Failure;
+            }
+            // Copy to the final buffer using requested data type and spacings.
+            return poMemDS->GetRasterBand(1)->RasterIO(
+                GF_Read, 0, 0, nXSize, nYSize, pData, nXSize, nYSize, eBufType,
+                nPixelSpace, nLineSpace, nullptr);
+        }
+    }
+
+    return GDALPamRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
+                                        pData, nBufXSize, nBufYSize, eBufType,
+                                        nPixelSpace, nLineSpace, psExtraArg);
+}
+
+/************************************************************************/
+/*                             IRasterIO()                              */
+/************************************************************************/
+
+CPLErr HDF5ImageDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                   int nXSize, int nYSize, void *pData,
+                                   int nBufXSize, int nBufYSize,
+                                   GDALDataType eBufType, int nBandCount,
+                                   int *panBandMap, GSpacing nPixelSpace,
+                                   GSpacing nLineSpace, GSpacing nBandSpace,
+                                   GDALRasterIOExtraArg *psExtraArg)
+
+{
+    const auto IsConsecutiveBands = [](const int *panVals, int nCount)
+    {
+        for (int i = 1; i < nCount; ++i)
+        {
+            if (panVals[i] != panVals[i - 1] + 1)
+                return false;
+        }
+        return true;
+    };
+
+    const auto eDT = GetRasterBand(1)->GetRasterDataType();
+    const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
+
+    // Band-interleaved data and request
+    const bool bIsBandInterleavedData = ndims == 3 && m_nOtherDimIndex == 0 &&
+                                        GetYIndex() == 1 && GetXIndex() == 2;
+    if (eRWFlag == GF_Read && bIsBandInterleavedData && nXSize == nBufXSize &&
+        nYSize == nBufYSize && IsConsecutiveBands(panBandMap, nBandCount) &&
+        eBufType == eDT && nPixelSpace == nDTSize &&
+        nLineSpace == nXSize * nPixelSpace && nBandSpace == nYSize * nLineSpace)
+    {
+        HDF5_GLOBAL_LOCK();
+
+        hsize_t count[3] = {static_cast<hsize_t>(nBandCount),
+                            static_cast<hsize_t>(nYSize),
+                            static_cast<hsize_t>(nXSize)};
+        H5OFFSET_TYPE offset[3] = {
+            static_cast<H5OFFSET_TYPE>(panBandMap[0] - 1),
+            static_cast<H5OFFSET_TYPE>(nYOff),
+            static_cast<H5OFFSET_TYPE>(nXOff)};
+        herr_t status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET,
+                                            offset, nullptr, count, nullptr);
+        if (status < 0)
+            return CE_Failure;
+
+        const hid_t memspace = H5Screate_simple(ndims, count, nullptr);
+        H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
+        status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, mem_offset,
+                                     nullptr, count, nullptr);
+        if (status < 0)
+        {
+            H5Sclose(memspace);
+            return CE_Failure;
+        }
+
+        status = H5Dread(dataset_id, native, memspace, dataspace_id,
+                         H5P_DEFAULT, pData);
+
+        H5Sclose(memspace);
+
+        if (status < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "HDF5ImageDataset::IRasterIO(): H5Dread() failed");
+            return CE_Failure;
+        }
+
+        return CE_None;
+    }
+
+    // Pixel-interleaved data and request
+
+    const bool bIsPixelInterleaveData = ndims == 3 && m_nOtherDimIndex == 2 &&
+                                        GetYIndex() == 0 && GetXIndex() == 1;
+    if (eRWFlag == GF_Read && bIsPixelInterleaveData && nXSize == nBufXSize &&
+        nYSize == nBufYSize && IsConsecutiveBands(panBandMap, nBandCount) &&
+        eBufType == eDT && nBandSpace == nDTSize &&
+        nPixelSpace == nBandCount * nBandSpace &&
+        nLineSpace == nXSize * nPixelSpace)
+    {
+        HDF5_GLOBAL_LOCK();
+
+        hsize_t count[3] = {static_cast<hsize_t>(nYSize),
+                            static_cast<hsize_t>(nXSize),
+                            static_cast<hsize_t>(nBandCount)};
+        H5OFFSET_TYPE offset[3] = {
+            static_cast<H5OFFSET_TYPE>(nYOff),
+            static_cast<H5OFFSET_TYPE>(nXOff),
+            static_cast<H5OFFSET_TYPE>(panBandMap[0] - 1)};
+        herr_t status = H5Sselect_hyperslab(dataspace_id, H5S_SELECT_SET,
+                                            offset, nullptr, count, nullptr);
+        if (status < 0)
+            return CE_Failure;
+
+        const hid_t memspace = H5Screate_simple(ndims, count, nullptr);
+        H5OFFSET_TYPE mem_offset[3] = {0, 0, 0};
+        status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, mem_offset,
+                                     nullptr, count, nullptr);
+        if (status < 0)
+        {
+            H5Sclose(memspace);
+            return CE_Failure;
+        }
+
+        status = H5Dread(dataset_id, native, memspace, dataspace_id,
+                         H5P_DEFAULT, pData);
+
+        H5Sclose(memspace);
+
+        if (status < 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "HDF5ImageDataset::IRasterIO(): H5Dread() failed");
+            return CE_Failure;
+        }
+
+        return CE_None;
+    }
+
+    // If the request is still small enough, try to read from libhdf5 with
+    // the natural interleaving into a temporary MEMDataset, and then read
+    // frmo it with the requested interleaving and data type.
+    if (eRWFlag == GF_Read &&
+        (bIsBandInterleavedData || bIsPixelInterleaveData) &&
+        nXSize == nBufXSize && nYSize == nBufYSize &&
+        IsConsecutiveBands(panBandMap, nBandCount) &&
+        static_cast<GIntBig>(nXSize) * nYSize <
+            CPLGetUsablePhysicalRAM() / 10 / nBandCount)
+    {
+        const char *const apszOptions[] = {
+            bIsPixelInterleaveData ? "INTERLEAVE=PIXEL" : nullptr, nullptr};
+        auto poMemDS = std::unique_ptr<GDALDataset>(
+            MEMDataset::Create("", nXSize, nYSize, nBandCount, eDT,
+                               const_cast<char **>(apszOptions)));
+        if (poMemDS)
+        {
+            void *pMemData = poMemDS->GetInternalHandle("MEMORY1");
+            CPLAssert(pMemData);
+            // Read from HDF5 into the temporary MEMDataset using the
+            // natural interleaving of the HDF5 dataset
+            if (IRasterIO(
+                    eRWFlag, nXOff, nYOff, nXSize, nYSize, pMemData, nXSize,
+                    nYSize, eDT, nBandCount, panBandMap,
+                    bIsBandInterleavedData ? nDTSize : nDTSize * nBandCount,
+                    bIsBandInterleavedData
+                        ? static_cast<GSpacing>(nXSize) * nDTSize
+                        : static_cast<GSpacing>(nXSize) * nDTSize * nBandCount,
+                    bIsBandInterleavedData
+                        ? static_cast<GSpacing>(nYSize) * nXSize * nDTSize
+                        : nDTSize,
+                    psExtraArg) != CE_None)
+            {
+                return CE_Failure;
+            }
+            // Copy to the final buffer using requested data type and spacings.
+            return poMemDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, pData,
+                                     nXSize, nYSize, eBufType, nBandCount,
+                                     nullptr, nPixelSpace, nLineSpace,
+                                     nBandSpace, nullptr);
+        }
+    }
+
+    return HDF5Dataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pData,
+                                  nBufXSize, nBufYSize, eBufType, nBandCount,
+                                  panBandMap, nPixelSpace, nLineSpace,
+                                  nBandSpace, psExtraArg);
 }
 
 /************************************************************************/
