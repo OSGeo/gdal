@@ -229,6 +229,7 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
     CPLErr ReadGlobalAttributes(int);
     CPLErr HDF5ListGroupObjects(HDF5GroupObjects *, int);
     static CPLErr CreateMetadata(hid_t hHDF5, HDF5GroupObjects *, int,
+                                 bool bPrefixWithDatasetName,
                                  CPLStringList &aosMetadata);
 
     HDF5GroupObjects *HDF5FindDatasetObjects(HDF5GroupObjects *, const char *);
