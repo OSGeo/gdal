@@ -100,9 +100,10 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                 nChecksum = -1;
                 break;
             }
-            const int nCount = bComplex ? nXSize * 2 : nXSize;
+            const size_t nCount = bComplex ? static_cast<size_t>(nXSize) * 2
+                                           : static_cast<size_t>(nXSize);
 
-            for (int i = 0; i < nCount; i++)
+            for (size_t i = 0; i < nCount; i++)
             {
                 double dfVal = padfLineData[i];
                 int nVal;
@@ -206,15 +207,19 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                     iYBlock = nYBlocks;
                     break;
                 }
-                const int xIters = nValsPerIter * nChunkActualXSize;
+                const size_t xIters =
+                    static_cast<size_t>(nValsPerIter) * nChunkActualXSize;
                 for (int iY = iYStart; iY < iYEnd; ++iY)
                 {
                     // Initialize iPrime so that it is consistent with a
                     // per full line iteration strategy
-                    iPrime = (nValsPerIter * (iY * nXSize + iXStart)) % 11;
-                    const int nOffset =
-                        nValsPerIter * (iY - iYStart) * nChunkActualXSize;
-                    for (int i = 0; i < xIters; ++i)
+                    iPrime = (nValsPerIter *
+                              (static_cast<int64_t>(iY) * nXSize + iXStart)) %
+                             11;
+                    const size_t nOffset = nValsPerIter *
+                                           static_cast<size_t>(iY - iYStart) *
+                                           nChunkActualXSize;
+                    for (size_t i = 0; i < xIters; ++i)
                     {
                         nChecksum +=
                             panChunkData[nOffset + i] % anPrimes[iPrime++];
@@ -251,9 +256,10 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                 nChecksum = -1;
                 break;
             }
-            const int nCount = bComplex ? nXSize * 2 : nXSize;
+            const size_t nCount = bComplex ? static_cast<size_t>(nXSize) * 2
+                                           : static_cast<size_t>(nXSize);
 
-            for (int i = 0; i < nCount; i++)
+            for (size_t i = 0; i < nCount; i++)
             {
                 nChecksum += panLineData[i] % anPrimes[iPrime++];
                 if (iPrime > 10)
