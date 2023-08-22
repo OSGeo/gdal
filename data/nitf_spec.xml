@@ -459,7 +459,7 @@
         <if cond="SENSOR_TYPE=F">
             <field name="TIME_STAMP_LOC" length="1" type="integer" minval="0" maxval="1"/>
             <if cond="TIME_STAMP_LOC=0">
-                <field name="REFERENCE_FRAME_NUM" length="9" type="integer" minval="1" maxval="999999999"/>
+                <field name="REFERENCE_FRAME_NUM" length="9" type="integer"/>
                 <field name="BASE_TIMESTAMP" length="24" type="string"/>
                 <field name="DT_MULTIPLIER" length="8" type="UnsignedInt_BigEndian" />
                 <field name="DT_SIZE" length="1" type="UnsignedInt_BigEndian" minval="1" maxval="8"/>
@@ -486,7 +486,7 @@
         <field name="AZ_OF_OBLIQUITY" length="7" type="real"/>
         <field name="ATM_REFR_FLAG" length="1" type="integer" minval="0" maxval="1"/>
         <field name="VEL_ABER_FLAG" length="1" type="integer" minval="0" maxval="1"/>
-        <field name="GRD_COVER" length="1" type="integer" minval="0" maxval="1" />
+        <field name="GRD_COVER" length="1" type="integer" minval="0" maxval="9" />
         <field name="SNOW_DEPTH_CATEGORY" length="1" type="integer"/>
         <field name="SUN_AZIMUTH" length="7" type="real"/>
         <field name="SUN_ELEVATION" length="7" type="real"/>
