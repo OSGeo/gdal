@@ -89,25 +89,33 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                           col_func == SWQCF_COUNT))
                         break;
 
-                    if (oSelect.column_defs[i].field_name == nullptr)
+                    const char *pszFieldName =
+                        oSelect.column_defs[i].field_name;
+                    if (pszFieldName == nullptr)
                         break;
                     if (oSelect.column_defs[i].target_type != SWQ_OTHER)
                         break;
 
-                    const int idx = poLayerDefn->GetFieldIndex(
-                        oSelect.column_defs[i].field_name);
-                    if (idx < 0)
+                    const int iOGRField =
+                        (EQUAL(pszFieldName, poLayer->GetFIDColumn()) &&
+                         pszFieldName[0])
+                            ? OGRParquetLayer::OGR_FID_INDEX
+                            : poLayerDefn->GetFieldIndex(pszFieldName);
+                    if (iOGRField < 0 &&
+                        iOGRField != OGRParquetLayer::OGR_FID_INDEX)
                         break;
-
-                    const OGRFieldDefn *poFieldDefn =
-                        poLayerDefn->GetFieldDefn(idx);
 
                     OGRField sField;
                     OGR_RawField_SetNull(&sField);
                     OGRFieldType eType = OFTReal;
                     OGRFieldSubType eSubType = OFSTNone;
                     const int iCol =
-                        poLayer->GetMapFieldIndexToParquetColumn()[idx];
+                        iOGRField == OGRParquetLayer::OGR_FID_INDEX
+                            ? poLayer->GetFIDParquetColumn()
+                            : poLayer->GetMapFieldIndexToParquetColumn()
+                                  [iOGRField];
+                    if (iCol < 0)
+                        break;
                     const auto metadata =
                         poLayer->GetReader()->parquet_reader()->metadata();
                     const auto numRowGroups = metadata->num_row_groups();
@@ -131,7 +139,7 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                             {
                                 poLayer->GetMinMaxForField(
                                     /* iRowGroup=*/-1,  // -1 for all
-                                    idx, true, sField, bFound, false,
+                                    iOGRField, true, sField, bFound, false,
                                     sFieldDummy, bFoundDummy, eType, eSubType,
                                     sVal, sValDummy);
                             }
@@ -139,9 +147,9 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                             {
                                 poLayer->GetMinMaxForField(
                                     /* iRowGroup=*/-1,  // -1 for all
-                                    idx, false, sFieldDummy, bFoundDummy, true,
-                                    sField, bFound, eType, eSubType, sValDummy,
-                                    sVal);
+                                    iOGRField, false, sFieldDummy, bFoundDummy,
+                                    true, sField, bFound, eType, eSubType,
+                                    sValDummy, sVal);
                             }
                             else if (col_func == SWQCF_COUNT)
                             {
@@ -216,7 +224,7 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                         {
                             CPLDebug("PARQUET",
                                      "Statistics not available for field %s",
-                                     poFieldDefn->GetNameRef());
+                                     pszFieldName);
                         }
                     }
                     if (!bFound)

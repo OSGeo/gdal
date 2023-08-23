@@ -2374,3 +2374,29 @@ def test_ogr_parquet_read_dataset_with_empty_batch():
     # Check that we don't iterate forever
     lyr.GetExtent()
     assert len([f for f in lyr]) == 1
+
+
+###############################################################################
+# Test MIN() / MAX() on FID column
+
+
+def test_ogr_parquet_statistics_fid_column():
+
+    outfilename = "/vsimem/out.parquet"
+    try:
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=FID"])
+        for fid in (2, 4, 9876543210):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetFID(fid)
+            lyr.CreateFeature(f)
+        ds = None
+        ds = ogr.Open(outfilename)
+        with ds.ExecuteSQL("SELECT MIN(FID), MAX(FID) FROM out") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["MIN_FID"] == 2
+            assert f["MAX_FID"] == 9876543210
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)

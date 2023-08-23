@@ -489,6 +489,7 @@ void OGRParquetLayer::EstablishFeatureDefn()
 
         if (!m_osFIDColumn.empty() && field->name() == m_osFIDColumn)
         {
+            m_poFIDType = field->type();
             m_iFIDArrowColumn = i;
             if (bParquetColValid)
             {
@@ -1613,9 +1614,12 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
                                         std::string &osMinTmp,
                                         std::string &osMaxTmp) const
 {
+    const OGRFieldDefn oDummyFIDFieldDefn(m_osFIDColumn.c_str(), OFTInteger64);
     const OGRFieldDefn *poFieldDefn =
-        const_cast<OGRParquetLayer *>(this)->GetLayerDefn()->GetFieldDefn(
-            iOGRField);
+        iOGRField == OGR_FID_INDEX
+            ? &oDummyFIDFieldDefn
+            : const_cast<OGRParquetLayer *>(this)->GetLayerDefn()->GetFieldDefn(
+                  iOGRField);
 
     OGR_RawField_SetNull(&sMin);
     OGR_RawField_SetNull(&sMax);
@@ -1624,10 +1628,16 @@ bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
     bFoundMin = false;
     bFoundMax = false;
 
-    const int iCol = GetMapFieldIndexToParquetColumn()[iOGRField];
+    const int iCol = iOGRField == OGR_FID_INDEX
+                         ? m_iFIDParquetColumn
+                         : GetMapFieldIndexToParquetColumn()[iOGRField];
+    if (iCol < 0)
+        return false;
     const auto metadata = GetReader()->parquet_reader()->metadata();
     const auto numRowGroups = metadata->num_row_groups();
-    const auto &arrowType = GetArrowFieldTypes()[iOGRField];
+    const auto &arrowType = iOGRField == OGR_FID_INDEX
+                                ? m_poFIDType
+                                : GetArrowFieldTypes()[iOGRField];
 
     if (numRowGroups == 0)
         return false;

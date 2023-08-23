@@ -77,6 +77,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     std::unique_ptr<parquet::arrow::FileReader> m_poArrowReader{};
     bool m_bSingleBatch = false;
     int m_iFIDParquetColumn = -1;
+    std::shared_ptr<arrow::DataType> m_poFIDType{};
     std::vector<std::shared_ptr<arrow::DataType>>
         m_apoArrowDataTypes{};  // .size() == field ocunt
     std::vector<int> m_anMapFieldIndexToParquetColumn{};
@@ -151,12 +152,18 @@ class OGRParquetLayer final : public OGRParquetLayerBase
         return m_apoArrowDataTypes;
     }
 
+    int GetFIDParquetColumn() const
+    {
+        return m_iFIDParquetColumn;
+    }
+
+    static constexpr int OGR_FID_INDEX = -2;
     bool GetMinMaxForField(int iRowGroup,  // -1 for all
-                           int iOGRField, bool bComputeMin, OGRField &sMin,
-                           bool &bFoundMin, bool bComputeMax, OGRField &sMax,
-                           bool &bFoundMax, OGRFieldType &eType,
-                           OGRFieldSubType &eSubType, std::string &osMinTmp,
-                           std::string &osMaxTmp) const;
+                           int iOGRField,  // or OGR_FID_INDEX
+                           bool bComputeMin, OGRField &sMin, bool &bFoundMin,
+                           bool bComputeMax, OGRField &sMax, bool &bFoundMax,
+                           OGRFieldType &eType, OGRFieldSubType &eSubType,
+                           std::string &osMinTmp, std::string &osMaxTmp) const;
 };
 
 /************************************************************************/
