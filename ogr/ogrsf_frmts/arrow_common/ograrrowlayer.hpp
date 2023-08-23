@@ -3541,9 +3541,13 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         if (m_poBatch == nullptr || m_nIdxInBatch == m_poBatch->num_rows())
         {
-            m_bEOF = !ReadNextBatch();
-            if (m_bEOF)
+            if (!ReadNextBatch())
             {
+                if (m_poAttrQuery || m_poFilterGeom)
+                {
+                    InvalidateCachedBatches();
+                }
+                m_bEOF = true;
                 memset(out_array, 0, sizeof(*out_array));
                 return 0;
             }
