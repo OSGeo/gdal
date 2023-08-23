@@ -120,6 +120,9 @@
                     <xs:restriction base="xs:string">
                         <xs:enumeration value="(NPART+1)*(NPART)/2"/>
                         <xs:enumeration value="(NUMOPG+1)*(NUMOPG)/2"/>
+                        <xs:enumeration value="(NUM_ADJ_PARM+1)*(NUM_ADJ_PARM)/2"/>
+                        <xs:enumeration value="(N1_CAL+1)*(N1_CAL)/2"/>
+                        <xs:enumeration value="(NUM_PARA+1)*(NUM_PARA)/2"/>
                         <xs:enumeration value="NPAR*NPARO"/>
                         <xs:enumeration value="NPLN-1"/>
                         <xs:enumeration value="NXPTS*NYPTS"/>
