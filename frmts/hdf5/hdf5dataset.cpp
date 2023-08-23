@@ -301,6 +301,10 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
             return "32-bit integer";
         else if (H5Tequal(H5T_NATIVE_UINT, TypeID))
             return "32-bit unsigned integer";
+        else if (H5Tequal(H5T_NATIVE_INT64, TypeID))
+            return "64-bit integer";
+        else if (H5Tequal(H5T_NATIVE_UINT64, TypeID))
+            return "64-bit unsigned integer";
         else if (H5Tequal(H5T_NATIVE_LONG, TypeID))
             return "32/64-bit integer";
         else if (H5Tequal(H5T_NATIVE_ULONG, TypeID))
@@ -1121,6 +1125,40 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
                              "Header data too long. Truncated");
                     break;
                 }
+                psContext->m_osValue += szData;
+            }
+        }
+        else if (H5Tequal(H5T_NATIVE_INT64, hAttrNativeType) > 0)
+        {
+            for (hsize_t i = 0; i < nAttrElmts; i++)
+            {
+                snprintf(szData, nDataLen, CPL_FRMT_GIB,
+                         static_cast<GIntBig *>(buf)[i]);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
+            }
+        }
+        else if (H5Tequal(H5T_NATIVE_UINT64, hAttrNativeType) > 0)
+        {
+            for (hsize_t i = 0; i < nAttrElmts; i++)
+            {
+                snprintf(szData, nDataLen, CPL_FRMT_GUIB,
+                         static_cast<GUIntBig *>(buf)[i]);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
                 psContext->m_osValue += szData;
             }
         }
