@@ -116,6 +116,10 @@ jobs:
         cp gdal/doc/build/latex/gdal.pdf gdal-docs
         cp gdal/data/gdalicon.png gdal-docs # For GDAL autotest...
         cp -r gdal/resources gdal-docs # Do not change this without changing swig/python/gdal-utils/osgeo_utils/gdal2tiles.py
+        #
+        git clone https://github.com/OSGeo/libgeotiff
+        cp -r libgeotiff/geotiff/html/proj_list gdal-docs/
+        #
         cd gdal-docs
         wget http://download.osgeo.org/gdal/for_doc/javadoc.zip -O /tmp/javadoc.zip
         unzip -q /tmp/javadoc.zip
