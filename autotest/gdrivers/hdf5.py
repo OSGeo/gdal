@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import array
 import shutil
 
 import gdaltest
@@ -586,6 +587,152 @@ def test_hdf5_signature_not_at_beginning():
     ds = gdal.Open(filename)
     assert ds is not None
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test RasterIO() optimizations
+
+
+def test_hdf5_rasterio_optims():
+
+    # Band-interleaved data
+    ds = gdal.Open(
+        'HDF5:"data/hdf5/dummy_HDFEOS_swath.h5"://HDFEOS/SWATHS/MySwath/Data_Fields/MyDataField'
+    )
+    expected = array.array("B", [i for i in range(2 * 3 * 4)]).tobytes()
+    assert ds.ReadRaster() == expected
+    assert (
+        ds.GetRasterBand(1).ReadRaster() + ds.GetRasterBand(2).ReadRaster() == expected
+    )
+
+    # optimization through intermediate MEMDataset: non natural interleaving
+    assert (
+        ds.ReadRaster(buf_pixel_space=ds.RasterCount, buf_band_space=1)
+        == array.array(
+            "B",
+            [
+                0,
+                12,
+                1,
+                13,
+                2,
+                14,
+                3,
+                15,
+                4,
+                16,
+                5,
+                17,
+                6,
+                18,
+                7,
+                19,
+                8,
+                20,
+                9,
+                21,
+                10,
+                22,
+                11,
+                23,
+            ],
+        ).tobytes()
+    )
+
+    # optimization through intermediate MEMDataset: non natural data type
+    expected = array.array("H", [i for i in range(2 * 3 * 4)]).tobytes()
+    assert ds.ReadRaster(buf_type=gdal.GDT_UInt16) == expected
+    assert (
+        ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_UInt16)
+        + ds.GetRasterBand(2).ReadRaster(buf_type=gdal.GDT_UInt16)
+        == expected
+    )
+
+    # non-optimized: out of order bands
+    assert (
+        ds.ReadRaster(band_list=[2, 1])
+        == ds.GetRasterBand(2).ReadRaster() + ds.GetRasterBand(1).ReadRaster()
+    )
+
+    # non-optimized: resampling
+    assert (
+        ds.GetRasterBand(1).ReadRaster(3, 2, 1, 1, buf_xsize=2, buf_ysize=2)
+        == b"\x0b" * 4
+    )
+
+    # Pixel-interleaved data
+    ds = gdal.Open("data/hdf5/dummy_HDFEOS_with_sinu_projection.h5")
+    assert (
+        ds.ReadRaster(buf_pixel_space=ds.RasterCount, buf_band_space=1)
+        == array.array("B", [i for i in range(5 * 4 * 3)]).tobytes()
+    )
+
+    # optimization through intermediate MEMDataset: non natural interleaving
+    assert ds.ReadRaster() == array.array(
+        "B",
+        [
+            0,
+            3,
+            6,
+            9,
+            12,
+            15,
+            18,
+            21,
+            24,
+            27,
+            30,
+            33,
+            36,
+            39,
+            42,
+            45,
+            48,
+            51,
+            54,
+            57,
+            1,
+            4,
+            7,
+            10,
+            13,
+            16,
+            19,
+            22,
+            25,
+            28,
+            31,
+            34,
+            37,
+            40,
+            43,
+            46,
+            49,
+            52,
+            55,
+            58,
+            2,
+            5,
+            8,
+            11,
+            14,
+            17,
+            20,
+            23,
+            26,
+            29,
+            32,
+            35,
+            38,
+            41,
+            44,
+            47,
+            50,
+            53,
+            56,
+            59,
+        ],
+    )
 
 
 ###############################################################################
