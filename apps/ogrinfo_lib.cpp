@@ -1416,7 +1416,7 @@ static void ReportOnLayer(CPLString &osRet, CPLJSONObject oLayer,
                                     }
                                 }
                                 else
-                                    oGeometries.AddNull("geometry");
+                                    oGeometries.AddNull();
                             }
                         }
                     }
