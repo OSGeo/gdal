@@ -267,13 +267,17 @@ resampling, and rescaling pixels in the process.
     georeferenced bounds to the output file, ignoring what would have been
     derived from the source file. So this does not cause reprojection to the
     specified SRS.
+    This is mutually exclusive with :option:`-a_gt`
 
 .. option:: -a_gt <gt(0)> <gt(1)> <gt(2)> <gt(3)> <gt(4)> <gt(5)>
 
-    Assign/override the geotransform of the output file.  This assigns
-    the geotransform to the output file, ignoring what would have been
+    Assign/override the geotransform :ref:`geotransforms_tut` of the output file.
+    This assigns the geotransform to the output file, ignoring what would have been
     derived from the source file. So this does not cause reprojection to the
     specified SRS.
+    This is mutually exclusive with :option:`-a_ullr`
+
+    .. versionadded:: 3.8
 
 .. option:: -a_nodata <value>
 
