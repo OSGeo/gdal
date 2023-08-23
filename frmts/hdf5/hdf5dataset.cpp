@@ -133,9 +133,8 @@ void GDALRegister_HDF5()
 /*                           HDF5Dataset()                              */
 /************************************************************************/
 HDF5Dataset::HDF5Dataset()
-    : hHDF5(-1), hGroupID(-1), papszSubDatasets(nullptr), nDatasetType(-1),
-      nSubDataCount(0), poH5RootGroup(nullptr), papszMetadata(nullptr),
-      poH5CurrentObject(nullptr)
+    : hGroupID(-1), papszSubDatasets(nullptr), nDatasetType(-1),
+      nSubDataCount(0), poH5RootGroup(nullptr)
 {
 }
 
@@ -146,11 +145,10 @@ HDF5Dataset::~HDF5Dataset()
 {
     HDF5_GLOBAL_LOCK();
 
-    CSLDestroy(papszMetadata);
     if (hGroupID > 0)
         H5Gclose(hGroupID);
-    if (hHDF5 > 0)
-        H5Fclose(hHDF5);
+    if (m_hHDF5 > 0)
+        H5Fclose(m_hHDF5);
 
     CSLDestroy(papszSubDatasets);
     if (poH5RootGroup != nullptr)
@@ -303,6 +301,10 @@ const char *HDF5Dataset::GetDataTypeName(hid_t TypeID)
             return "32-bit integer";
         else if (H5Tequal(H5T_NATIVE_UINT, TypeID))
             return "32-bit unsigned integer";
+        else if (H5Tequal(H5T_NATIVE_INT64, TypeID))
+            return "64-bit integer";
+        else if (H5Tequal(H5T_NATIVE_UINT64, TypeID))
+            return "64-bit unsigned integer";
         else if (H5Tequal(H5T_NATIVE_LONG, TypeID))
             return "32/64-bit integer";
         else if (H5Tequal(H5T_NATIVE_ULONG, TypeID))
@@ -546,14 +548,14 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetDescription(poOpenInfo->pszFilename);
 
     // Try opening the dataset.
-    poDS->hHDF5 = GDAL_HDF5Open(poOpenInfo->pszFilename);
-    if (poDS->hHDF5 < 0)
+    poDS->m_hHDF5 = GDAL_HDF5Open(poOpenInfo->pszFilename);
+    if (poDS->m_hHDF5 < 0)
     {
         delete poDS;
         return nullptr;
     }
 
-    poDS->hGroupID = H5Gopen(poDS->hHDF5, "/");
+    poDS->hGroupID = H5Gopen(poDS->m_hHDF5, "/");
     if (poDS->hGroupID < 0)
     {
         delete poDS;
@@ -570,17 +572,16 @@ GDALDataset *HDF5Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     poDS->ReadGlobalAttributes(true);
 
-    poDS->SetMetadata(poDS->papszMetadata);
+    poDS->SetMetadata(poDS->m_aosMetadata.List());
 
-    if (STARTS_WITH(
-            CSLFetchNameValueDef(poDS->papszMetadata, "mission_name", ""),
-            "Sentinel 3") &&
-        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata, "altimeter_sensor_name",
-                                   ""),
-              "SRAL") &&
-        EQUAL(CSLFetchNameValueDef(poDS->papszMetadata,
-                                   "radiometer_sensor_name", ""),
-              "MWR") &&
+    if (STARTS_WITH(poDS->m_aosMetadata.FetchNameValueDef("mission_name", ""),
+                    "Sentinel 3") &&
+        EQUAL(
+            poDS->m_aosMetadata.FetchNameValueDef("altimeter_sensor_name", ""),
+            "SRAL") &&
+        EQUAL(
+            poDS->m_aosMetadata.FetchNameValueDef("radiometer_sensor_name", ""),
+            "MWR") &&
         GDALGetDriverByName("netCDF") != nullptr)
     {
         delete poDS;
@@ -913,44 +914,45 @@ herr_t HDF5CreateGroupObjs(hid_t hHDF5, const char *pszObjName,
 }
 
 /************************************************************************/
+/*                     HDF5DatasetCreateMetadataContext                 */
+/************************************************************************/
+
+struct HDF5DatasetCreateMetadataContext
+{
+    std::string m_osKey{};
+    CPLStringList &m_aosMetadata;
+
+    // Work variables
+    std::string m_osValue{};
+
+    explicit HDF5DatasetCreateMetadataContext(CPLStringList &aosMetadata)
+        : m_aosMetadata(aosMetadata)
+    {
+    }
+};
+
+/************************************************************************/
 /*                          HDF5AttrIterate()                           */
 /************************************************************************/
 
 static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
-                              // TODO(schwehr): void * -> HDF5Dataset *
-                              void *pDS)
+                              void *pContext)
 {
-    char **papszTokens = nullptr;
-    CPLString osKey;
-    HDF5Dataset *const poDS = static_cast<HDF5Dataset *>(pDS);
+    HDF5DatasetCreateMetadataContext *const psContext =
+        static_cast<HDF5DatasetCreateMetadataContext *>(pContext);
 
-    // Convert "/" into "_" for the path component
-    const char *pszPath = poDS->poH5CurrentObject->pszUnderscorePath;
-    if (pszPath != nullptr && strlen(pszPath) > 0)
-    {
-        papszTokens = CSLTokenizeString2(pszPath, "/", CSLT_HONOURSTRINGS);
+    psContext->m_osValue.clear();
 
-        for (hsize_t i = 0; papszTokens != nullptr && papszTokens[i] != nullptr;
-             ++i)
-        {
-            if (i != 0)
-                osKey += '_';
-            osKey += papszTokens[i];
-        }
-        CSLDestroy(papszTokens);
-    }
-
+    std::string osKey(psContext->m_osKey);
     // Convert whitespaces into "_" for the attribute name component
-    papszTokens = CSLTokenizeString2(
-        pszAttrName, " ", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES);
-    for (hsize_t i = 0; papszTokens != nullptr && papszTokens[i] != nullptr;
-         ++i)
+    const CPLStringList aosTokens(CSLTokenizeString2(
+        pszAttrName, " ", CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+    for (int i = 0; i < aosTokens.size(); ++i)
     {
         if (!osKey.empty())
             osKey += '_';
-        osKey += papszTokens[i];
+        osKey += aosTokens[i];
     }
-    CSLDestroy(papszTokens);
 
     const hid_t hAttrID = H5Aopen_name(hH5ObjID, pszAttrName);
     const hid_t hAttrTypeID = H5Aget_type(hAttrID);
@@ -977,9 +979,6 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
         nAttrElmts *= static_cast<int>(nSize[i]);
     }
 
-    char *szData = nullptr;
-    char *szValue = nullptr;
-
     if (H5Tget_class(hAttrNativeType) == H5T_STRING)
     {
         if (H5Tis_variable_str(hAttrNativeType))
@@ -991,15 +990,13 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
             H5Aread(hAttrID, hAttrNativeType, papszStrings);
 
             // Concatenate all values as one string separated by a space.
-            CPLString osVal = papszStrings[0] ? papszStrings[0] : "{NULL}";
+            psContext->m_osValue = papszStrings[0] ? papszStrings[0] : "{NULL}";
             for (hsize_t i = 1; i < nAttrElmts; i++)
             {
-                osVal += " ";
-                osVal += papszStrings[i] ? papszStrings[i] : "{NULL}";
+                psContext->m_osValue += " ";
+                psContext->m_osValue +=
+                    papszStrings[i] ? papszStrings[i] : "{NULL}";
             }
-
-            szValue = static_cast<char *>(CPLMalloc(osVal.length() + 1));
-            strcpy(szValue, osVal.c_str());
 
             H5Dvlen_reclaim(hAttrNativeType, hAttrSpace, H5P_DEFAULT,
                             papszStrings);
@@ -1008,23 +1005,20 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
         else
         {
             const hsize_t nAttrSize = H5Aget_storage_size(hAttrID);
-            szValue = static_cast<char *>(CPLMalloc((size_t)(nAttrSize + 1)));
-            H5Aread(hAttrID, hAttrNativeType, szValue);
-            szValue[nAttrSize] = '\0';
+            psContext->m_osValue.resize(static_cast<size_t>(nAttrSize));
+            H5Aread(hAttrID, hAttrNativeType, &psContext->m_osValue[0]);
         }
     }
     else
     {
-        const size_t nDataLen = 8192;
+        constexpr size_t nDataLen = 32;
+        char szData[nDataLen];
+
         void *buf = nullptr;
 
         if (nAttrElmts > 0)
         {
             buf = CPLMalloc(nAttrElmts * H5Tget_size(hAttrNativeType));
-            szData = static_cast<char *>(CPLMalloc(nDataLen));
-            szValue = static_cast<char *>(CPLMalloc(MAX_METADATA_LEN));
-            szData[0] = '\0';
-            szValue[0] = '\0';
             H5Aread(hAttrID, hAttrNativeType, buf);
         }
         const bool bIsSCHAR = H5Tequal(H5T_NATIVE_SCHAR, hAttrNativeType) > 0;
@@ -1037,127 +1031,214 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
                 snprintf(szData, nDataLen, "%c", static_cast<char *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                psContext->m_osValue += szData;
             }
         }
         else if (bIsSCHAR)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%d ",
+                snprintf(szData, nDataLen, "%d",
                          static_cast<signed char *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (bIsUCHAR)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%u ",
+                snprintf(szData, nDataLen, "%u",
                          static_cast<unsigned char *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_SHORT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%d ", static_cast<short *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                snprintf(szData, nDataLen, "%d", static_cast<short *>(buf)[i]);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_USHORT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%u ",
+                snprintf(szData, nDataLen, "%u",
                          static_cast<unsigned short *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_INT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%d ", static_cast<int *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                snprintf(szData, nDataLen, "%d", static_cast<int *>(buf)[i]);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_UINT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%u ",
+                snprintf(szData, nDataLen, "%u",
                          static_cast<unsigned int *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
+            }
+        }
+        else if (H5Tequal(H5T_NATIVE_INT64, hAttrNativeType) > 0)
+        {
+            for (hsize_t i = 0; i < nAttrElmts; i++)
+            {
+                snprintf(szData, nDataLen, CPL_FRMT_GIB,
+                         static_cast<GIntBig *>(buf)[i]);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
+            }
+        }
+        else if (H5Tequal(H5T_NATIVE_UINT64, hAttrNativeType) > 0)
+        {
+            for (hsize_t i = 0; i < nAttrElmts; i++)
+            {
+                snprintf(szData, nDataLen, CPL_FRMT_GUIB,
+                         static_cast<GUIntBig *>(buf)[i]);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_LONG, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%ld ", static_cast<long *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                snprintf(szData, nDataLen, "%ld", static_cast<long *>(buf)[i]);
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_ULONG, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, "%lu ",
+                snprintf(szData, nDataLen, "%lu",
                          static_cast<unsigned long *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_FLOAT, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                CPLsnprintf(szData, nDataLen, "%.8g ",
+                CPLsnprintf(szData, nDataLen, "%.8g",
                             static_cast<float *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         else if (H5Tequal(H5T_NATIVE_DOUBLE, hAttrNativeType) > 0)
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                CPLsnprintf(szData, nDataLen, "%.15g ",
+                CPLsnprintf(szData, nDataLen, "%.15g",
                             static_cast<double *>(buf)[i]);
-                if (CPLStrlcat(szValue, szData, MAX_METADATA_LEN) >=
-                    MAX_METADATA_LEN)
+                if (psContext->m_osValue.size() > MAX_METADATA_LEN)
+                {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
                              "Header data too long. Truncated");
+                    break;
+                }
+                if (i > 0)
+                    psContext->m_osValue += ' ';
+                psContext->m_osValue += szData;
             }
         }
         CPLFree(buf);
@@ -1166,10 +1247,8 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
     H5Tclose(hAttrNativeType);
     H5Tclose(hAttrTypeID);
     H5Aclose(hAttrID);
-    poDS->papszMetadata = CSLSetNameValue(poDS->papszMetadata, osKey, szValue);
-
-    CPLFree(szData);
-    CPLFree(szValue);
+    psContext->m_aosMetadata.SetNameValue(osKey.c_str(),
+                                          psContext->m_osValue.c_str());
 
     return 0;
 }
@@ -1177,19 +1256,37 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
 /************************************************************************/
 /*                           CreateMetadata()                           */
 /************************************************************************/
-CPLErr HDF5Dataset::CreateMetadata(HDF5GroupObjects *poH5Object, int nType)
+CPLErr HDF5Dataset::CreateMetadata(hid_t hHDF5, HDF5GroupObjects *poH5Object,
+                                   int nType, bool bPrefixWithDatasetName,
+                                   CPLStringList &aosMetadata)
 {
 
     if (!poH5Object->pszPath)
         return CE_None;
 
-    poH5CurrentObject = poH5Object;
-
     if (EQUAL(poH5Object->pszPath, ""))
         return CE_None;
 
-    HDF5Dataset *const poDS = this;
     const int nbAttrs = poH5Object->nbAttrs;
+
+    HDF5DatasetCreateMetadataContext sContext(aosMetadata);
+
+    if (bPrefixWithDatasetName)
+    {
+        // Convert "/" into "_" for the path component
+        const char *pszPath = poH5Object->pszUnderscorePath;
+        if (pszPath != nullptr && strlen(pszPath) > 0)
+        {
+            const CPLStringList aosTokens(
+                CSLTokenizeString2(pszPath, "/", CSLT_HONOURSTRINGS));
+            for (int i = 0; i < aosTokens.size(); ++i)
+            {
+                if (i != 0)
+                    sContext.m_osKey += '_';
+                sContext.m_osKey += aosTokens[i];
+            }
+        }
+    }
 
     switch (nType)
     {
@@ -1198,7 +1295,7 @@ CPLErr HDF5Dataset::CreateMetadata(HDF5GroupObjects *poH5Object, int nType)
             {
                 // Identifier of group.
                 const hid_t l_hGroupID = H5Gopen(hHDF5, poH5Object->pszPath);
-                H5Aiterate(l_hGroupID, nullptr, HDF5AttrIterate, poDS);
+                H5Aiterate(l_hGroupID, nullptr, HDF5AttrIterate, &sContext);
                 H5Gclose(l_hGroupID);
             }
             break;
@@ -1206,7 +1303,7 @@ CPLErr HDF5Dataset::CreateMetadata(HDF5GroupObjects *poH5Object, int nType)
             if (nbAttrs > 0)
             {
                 const hid_t hDatasetID = H5Dopen(hHDF5, poH5Object->pszPath);
-                H5Aiterate(hDatasetID, nullptr, HDF5AttrIterate, poDS);
+                H5Aiterate(hDatasetID, nullptr, HDF5AttrIterate, &sContext);
                 H5Dclose(hDatasetID);
             }
             break;
@@ -1308,7 +1405,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
 
     if (poRootGroup->nType == H5G_GROUP)
     {
-        CreateMetadata(poRootGroup, H5G_GROUP);
+        CreateMetadata(m_hHDF5, poRootGroup, H5G_GROUP, true, m_aosMetadata);
     }
 
     // Create Sub dataset list.
@@ -1326,7 +1423,7 @@ CPLErr HDF5Dataset::HDF5ListGroupObjects(HDF5GroupObjects *poRootGroup,
     }
     else if (poRootGroup->nType == H5G_DATASET && bSUBDATASET)
     {
-        CreateMetadata(poRootGroup, H5G_DATASET);
+        CreateMetadata(m_hHDF5, poRootGroup, H5G_DATASET, true, m_aosMetadata);
 
         CPLString osStr;
         switch (poRootGroup->nRank)
@@ -1489,7 +1586,7 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
     poRootGroup->pszPath = nullptr;
     poRootGroup->pszUnderscorePath = nullptr;
 
-    if (hHDF5 < 0)
+    if (m_hHDF5 < 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "hHDF5 < 0!");
         return CE_None;
@@ -1497,14 +1594,14 @@ CPLErr HDF5Dataset::ReadGlobalAttributes(int bSUBDATASET)
 
     H5G_stat_t oStatbuf = {{0, 0}, {0, 0}, 0, H5G_UNKNOWN, 0, 0, {0, 0, 0, 0}};
 
-    if (H5Gget_objinfo(hHDF5, "/", FALSE, &oStatbuf) < 0)
+    if (H5Gget_objinfo(m_hHDF5, "/", FALSE, &oStatbuf) < 0)
         return CE_Failure;
     poRootGroup->objno[0] = oStatbuf.objno[0];
     poRootGroup->objno[1] = oStatbuf.objno[1];
 
     if (hGroupID > 0)
         H5Gclose(hGroupID);
-    hGroupID = H5Gopen(hHDF5, "/");
+    hGroupID = H5Gopen(m_hHDF5, "/");
     if (hGroupID < 0)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "hGroupId <0!");
@@ -1574,7 +1671,7 @@ CPLErr HDF5Dataset::HDF5ReadDoubleAttr(const char *pszAttrFullPath,
         osAttrName = pszAttrFullPath;
     }
 
-    const hid_t hObjAttrID = H5Oopen(hHDF5, osObjName.c_str(), H5P_DEFAULT);
+    const hid_t hObjAttrID = H5Oopen(m_hHDF5, osObjName.c_str(), H5P_DEFAULT);
 
     CPLErr retVal = CE_Failure;
 
