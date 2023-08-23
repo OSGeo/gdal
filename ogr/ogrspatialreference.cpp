@@ -5502,7 +5502,7 @@ OGRSpatialReference::GetWKT2ProjectionMethod(const char **ppszMethodName,
  *
  * This method is the same as the C function OSRSetProjParm().
  *
- * Please check http://www.remotesensing.org/geotiff/proj_list pages for
+ * Please check https://gdal.org/proj_list pages for
  * legal parameter names for specific projections.
  *
  *
