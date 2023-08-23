@@ -44,7 +44,7 @@ associated with them. This leads to various selection of parameter names
 (and sometimes projection names) from different vendors. I have
 attempted to maintain a list of WKT bindings for different projections
 as part of my `GeoTIFF Projections
-List <https://web.archive.org/web/20130728081442/http://www.remotesensing.org/geotiff/proj_list/>`__
+List <https://gdal.org/proj_list>`__
 registry. Please try to adhere to the projection names and parameters
 listed there. That list also tries to relate the projections to the
 GeoTIFF, EPSG and PROJ.4 formulations where possible.
