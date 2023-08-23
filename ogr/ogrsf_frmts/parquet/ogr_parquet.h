@@ -95,6 +95,7 @@ class OGRParquetLayer final : public OGRParquetLayerBase
 
     void EstablishFeatureDefn();
     bool CreateRecordBatchReader(int iStartingRowGroup);
+    bool CreateRecordBatchReader(const std::vector<int> &anRowGroups);
     bool ReadNextBatch() override;
 
     void InvalidateCachedBatches() override;
