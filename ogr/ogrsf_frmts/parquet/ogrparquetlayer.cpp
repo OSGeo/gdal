@@ -487,7 +487,9 @@ void OGRParquetLayer::EstablishFeatureDefn()
         if (!bParquetColValid)
             m_bHasMissingMappingToParquet = true;
 
-        if (!m_osFIDColumn.empty() && field->name() == m_osFIDColumn)
+        if (!m_osFIDColumn.empty() && field->name() == m_osFIDColumn &&
+            (field->type()->id() == arrow::Type::INT32 ||
+             field->type()->id() == arrow::Type::INT64))
         {
             m_poFIDType = field->type();
             m_iFIDArrowColumn = i;
