@@ -1782,19 +1782,22 @@ def test_rasterio_average_halfsize_downsampling_float32():
 # Test rms downsampling by a factor of 2 on exact boundaries, with float data type
 
 
-def test_rasterio_rms_halfsize_downsampling_float32():
+@pytest.mark.parametrize(
+    "dt,struct_type", [(gdal.GDT_Float32, "f"), (gdal.GDT_Float64, "d")]
+)
+def test_rasterio_rms_halfsize_downsampling_float(dt, struct_type):
 
     inf = float("inf")
     nan = float("nan")
 
-    ds = gdal.GetDriverByName("MEM").Create("", 18, 4, 1, gdal.GDT_Float32)
+    ds = gdal.GetDriverByName("MEM").Create("", 18, 4, 1, dt)
     ds.WriteRaster(
         0,
         0,
         18,
         4,
         struct.pack(
-            "f" * 18 * 4,
+            struct_type * (18 * 4),
             0,
             0,
             nan,
@@ -1873,7 +1876,7 @@ def test_rasterio_rms_halfsize_downsampling_float32():
     data = ds.GetRasterBand(1).ReadRaster(
         0, 0, 18, 4, 9, 2, resample_alg=gdal.GRIORA_RMS
     )
-    got = struct.unpack("f" * 18, data)
+    got = struct.unpack(struct_type * 18, data)
     # print(got)
     expected = (
         32767.5,
@@ -3047,4 +3050,99 @@ def test_rasterio_numpy_datatypes_for_xoff():
             np.int64(1), np.int64(2), np.int64(3), np.int64(4)
         ),
         ds.GetRasterBand(1).ReadAsArray(1, 2, 3, 4),
+    )
+
+
+###############################################################################
+# Test GAUSS resampling with Float64
+
+
+def test_rasterio_gauss_float64():
+
+    nd = -12.3456789012345
+    valid = 1.23456789012345
+    ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, gdal.GDT_Float64)
+    ds.GetRasterBand(1).SetNoDataValue(nd)
+    ds.WriteRaster(
+        0,
+        0,
+        3,
+        3,
+        struct.pack("d" * 3 * 3, nd, nd, nd, nd, valid, nd, nd, nd, nd),
+    )
+    data = ds.GetRasterBand(1).ReadRaster(
+        0, 0, 3, 3, 2, 2, resample_alg=gdal.GRIORA_Gauss
+    )
+    assert struct.unpack("d" * (2 * 2), data) == (valid, nd, nd, nd)
+
+
+###############################################################################
+# Test resampling with Float64
+
+
+@pytest.mark.parametrize(
+    "resample_alg",
+    [
+        gdal.GRIORA_NearestNeighbour,
+        gdal.GRIORA_Bilinear,
+        gdal.GRIORA_Cubic,
+        gdal.GRIORA_Mode,
+        gdal.GRIORA_Average,
+        gdal.GRIORA_RMS,
+    ],
+)
+def test_rasterio_float64(resample_alg):
+
+    nd = -12.3456789012345
+    valid = 1.23456789012345
+    ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, gdal.GDT_Float64)
+    ds.GetRasterBand(1).SetNoDataValue(nd)
+    ds.WriteRaster(
+        0,
+        0,
+        3,
+        3,
+        struct.pack("d" * 3 * 3, nd, nd, nd, nd, nd, nd, nd, nd, valid),
+    )
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3, 2, 2, resample_alg=resample_alg)
+    assert struct.unpack("d" * (2 * 2), data) == (nd, nd, nd, valid)
+
+
+###############################################################################
+# Test rms downsampling by a factor of 2 on exact boundaries, with float data type
+
+
+@pytest.mark.parametrize(
+    "resample_alg",
+    [
+        gdal.GRIORA_NearestNeighbour,
+        gdal.GRIORA_Bilinear,
+        gdal.GRIORA_Cubic,
+        gdal.GRIORA_Mode,
+        gdal.GRIORA_Average,
+        gdal.GRIORA_RMS,
+    ],
+)
+@pytest.mark.parametrize(
+    "dt,struct_type,val",
+    [
+        (gdal.GDT_Byte, "B", 255),
+        (gdal.GDT_UInt16, "H", 65535),
+        (gdal.GDT_Float32, "f", 1.5),
+        (gdal.GDT_Float64, "d", 1.5e100),
+    ],
+)
+def test_rasterio_constant_value(resample_alg, dt, struct_type, val):
+
+    ds = gdal.GetDriverByName("MEM").Create("", 3, 3, 1, dt)
+    ds.WriteRaster(
+        0,
+        0,
+        3,
+        3,
+        struct.pack(struct_type * (3 * 3), val, val, val, val, val, val, val, val, val),
+    )
+    data = ds.GetRasterBand(1).ReadRaster(0, 0, 3, 3, 2, 2, resample_alg=resample_alg)
+    assert struct.unpack(struct_type * (2 * 2), data) == pytest.approx(
+        (val, val, val, val), rel=1e-14
     )
