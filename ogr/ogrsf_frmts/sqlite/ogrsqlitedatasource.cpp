@@ -3328,7 +3328,7 @@ OGRLayer *OGRSQLiteDataSource::ExecuteSQL(const char *pszSQLCommand,
     CPLString osSQL = pszSQLCommand;
     OGRSQLiteSelectLayer *poLayer = new OGRSQLiteSelectLayer(
         this, osSQL, hSQLStmt, bUseStatementForGetNextFeature, bEmptyLayer,
-        true);
+        true, /*bCanReopenBaseDS=*/true);
 
     if (poSpatialFilter != nullptr &&
         poLayer->GetLayerDefn()->GetGeomFieldCount() > 0)

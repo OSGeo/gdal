@@ -498,7 +498,7 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
     OGRSQLiteExecuteSQLLayer(char *pszTmpDBName, OGRSQLiteDataSource *poDS,
                              const CPLString &osSQL, sqlite3_stmt *hStmt,
                              bool bUseStatementForGetNextFeature,
-                             bool bEmptyLayer);
+                             bool bEmptyLayer, bool bCanReopenBaseDS);
     virtual ~OGRSQLiteExecuteSQLLayer();
 };
 
@@ -509,9 +509,10 @@ class OGRSQLiteExecuteSQLLayer final : public OGRSQLiteSelectLayer
 OGRSQLiteExecuteSQLLayer::OGRSQLiteExecuteSQLLayer(
     char *pszTmpDBNameIn, OGRSQLiteDataSource *poDSIn, const CPLString &osSQL,
     sqlite3_stmt *hStmtIn, bool bUseStatementForGetNextFeature,
-    bool bEmptyLayer)
+    bool bEmptyLayer, bool bCanReopenBaseDS)
     : OGRSQLiteSelectLayer(poDSIn, osSQL, hStmtIn,
-                           bUseStatementForGetNextFeature, bEmptyLayer, true),
+                           bUseStatementForGetNextFeature, bEmptyLayer, true,
+                           bCanReopenBaseDS),
       pszTmpDBName(pszTmpDBNameIn)
 {
 }
@@ -1101,9 +1102,13 @@ OGRLayer *OGRSQLiteExecuteSQL(GDALDataset *poDS, const char *pszStatement,
     /* -------------------------------------------------------------------- */
     /*      Create layer.                                                   */
     /* -------------------------------------------------------------------- */
+
+    auto poDrv = poDS->GetDriver();
+    const bool bCanReopenBaseDS =
+        !(poDrv && EQUAL(poDrv->GetDescription(), "Memory"));
     OGRSQLiteSelectLayer *poLayer = new OGRSQLiteExecuteSQLLayer(
         pszTmpDBName, poSQLiteDS, pszStatement, hSQLStmt,
-        bUseStatementForGetNextFeature, bEmptyLayer);
+        bUseStatementForGetNextFeature, bEmptyLayer, bCanReopenBaseDS);
 
     if (poSpatialFilter != nullptr)
         poLayer->SetSpatialFilter(0, poSpatialFilter);

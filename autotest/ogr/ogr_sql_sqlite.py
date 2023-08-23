@@ -2312,3 +2312,42 @@ def test_ogr_sql_sqlite_json_each():
     fc = sql_lyr.GetFeatureCount()
     ds.ReleaseResultSet(sql_lyr)
     assert fc == 0
+
+
+###############################################################################
+@pytest.mark.parametrize("driver", ["memory", "shape"])
+def testogr_sql_sqlite_spatial_filter(driver):
+
+    filename = None
+    if driver == "memory":
+        ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    elif driver == "shape":
+        filename = "/vsimem/test.shp"
+        ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(filename)
+    else:
+        assert False
+    lyr = ds.CreateLayer("test")
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(ogr.CreateGeometryFromWkt("POINT(1 2)"))
+    lyr.CreateFeature(f)
+    f = None
+
+    if driver == "shape":
+        ds = None
+        ds = ogr.Open(filename, update=1)
+
+    spatialFilter = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 10,10 10,10 0,0 0))")
+    with ds.ExecuteSQL(
+        "SELECT * FROM test", spatialFilter=spatialFilter, dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f.GetFID() for f in sql_lyr] == [0]
+
+    spatialFilter = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,1 0,0 0))")
+    with ds.ExecuteSQL(
+        "SELECT * FROM test", spatialFilter=spatialFilter, dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f.GetFID() for f in sql_lyr] == []
+
+    ds = None
+    if driver == "shape":
+        ds = ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filename)
