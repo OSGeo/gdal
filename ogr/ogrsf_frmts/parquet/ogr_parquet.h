@@ -150,6 +150,13 @@ class OGRParquetLayer final : public OGRParquetLayerBase
     {
         return m_apoArrowDataTypes;
     }
+
+    bool GetMinMaxForField(int iRowGroup,  // -1 for all
+                           int iOGRField, bool bComputeMin, OGRField &sMin,
+                           bool &bFoundMin, bool bComputeMax, OGRField &sMax,
+                           bool &bFoundMax, OGRFieldType &eType,
+                           OGRFieldSubType &eSubType, std::string &osMinTmp,
+                           std::string &osMaxTmp) const;
 };
 
 /************************************************************************/

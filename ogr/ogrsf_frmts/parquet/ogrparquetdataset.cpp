@@ -44,138 +44,6 @@ OGRParquetDataset::OGRParquetDataset(
 }
 
 /***********************************************************************/
-/*                            GetStats()                               */
-/***********************************************************************/
-
-template <class STAT_TYPE> struct GetStats
-{
-    using T = typename STAT_TYPE::T;
-
-    static T min(const std::shared_ptr<parquet::FileMetaData> &metadata,
-                 const int numRowGroups, const int iCol, bool &bFound)
-    {
-        T v{};
-        bFound = false;
-        for (int iGroup = 0; iGroup < numRowGroups; iGroup++)
-        {
-            const auto columnChunk =
-                metadata->RowGroup(iGroup)->ColumnChunk(iCol);
-            const auto colStats = columnChunk->statistics();
-            if (columnChunk->is_stats_set() && colStats &&
-                colStats->HasMinMax())
-            {
-                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
-                const auto rowGroupVal = castStats->min();
-                if (iGroup == 0 || rowGroupVal < v)
-                {
-                    bFound = true;
-                    v = rowGroupVal;
-                }
-            }
-        }
-        return v;
-    }
-
-    static T max(const std::shared_ptr<parquet::FileMetaData> &metadata,
-                 const int numRowGroups, const int iCol, bool &bFound)
-    {
-        T v{};
-        bFound = false;
-        for (int iGroup = 0; iGroup < numRowGroups; iGroup++)
-        {
-            const auto columnChunk =
-                metadata->RowGroup(iGroup)->ColumnChunk(iCol);
-            const auto colStats = columnChunk->statistics();
-            if (columnChunk->is_stats_set() && colStats &&
-                colStats->HasMinMax())
-            {
-                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
-                const auto rowGroupVal = castStats->max();
-                if (iGroup == 0 || rowGroupVal > v)
-                {
-                    bFound = true;
-                    v = rowGroupVal;
-                }
-            }
-            else
-            {
-                bFound = false;
-                break;
-            }
-        }
-        return v;
-    }
-};
-
-template <> struct GetStats<parquet::ByteArrayStatistics>
-{
-    static std::string
-    min(const std::shared_ptr<parquet::FileMetaData> &metadata,
-        const int numRowGroups, const int iCol, bool &bFound)
-    {
-        std::string v{};
-        bFound = false;
-        for (int iGroup = 0; iGroup < numRowGroups; iGroup++)
-        {
-            const auto columnChunk =
-                metadata->RowGroup(iGroup)->ColumnChunk(iCol);
-            const auto colStats = columnChunk->statistics();
-            if (columnChunk->is_stats_set() && colStats &&
-                colStats->HasMinMax())
-            {
-                auto castStats =
-                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
-                const auto rowGroupValRaw = castStats->min();
-                const std::string rowGroupVal(
-                    reinterpret_cast<const char *>(rowGroupValRaw.ptr),
-                    rowGroupValRaw.len);
-                if (iGroup == 0 || rowGroupVal < v)
-                {
-                    bFound = true;
-                    v = rowGroupVal;
-                }
-            }
-        }
-        return v;
-    }
-
-    static std::string
-    max(const std::shared_ptr<parquet::FileMetaData> &metadata,
-        const int numRowGroups, const int iCol, bool &bFound)
-    {
-        std::string v{};
-        bFound = false;
-        for (int iGroup = 0; iGroup < numRowGroups; iGroup++)
-        {
-            const auto columnChunk =
-                metadata->RowGroup(iGroup)->ColumnChunk(iCol);
-            const auto colStats = columnChunk->statistics();
-            if (columnChunk->is_stats_set() && colStats &&
-                colStats->HasMinMax())
-            {
-                auto castStats =
-                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
-                const auto rowGroupValRaw = castStats->max();
-                const std::string rowGroupVal(
-                    reinterpret_cast<const char *>(rowGroupValRaw.ptr),
-                    rowGroupValRaw.len);
-                if (iGroup == 0 || rowGroupVal > v)
-                {
-                    bFound = true;
-                    v = rowGroupVal;
-                }
-            }
-            else
-            {
-                bFound = false;
-                break;
-            }
-        }
-        return v;
-    }
-};
-
-/***********************************************************************/
 /*                            ExecuteSQL()                             */
 /***********************************************************************/
 
@@ -246,8 +114,6 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     bool bFound = false;
                     std::string sVal;
 
-                    const auto &arrowType = poLayer->GetArrowFieldTypes()[idx];
-
                     if (numRowGroups > 0)
                     {
                         const auto rowGroup0columnChunk =
@@ -257,163 +123,25 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                         if (rowGroup0columnChunk->is_stats_set() &&
                             rowGroup0Stats)
                         {
-                            const auto physicalType =
-                                rowGroup0Stats->physical_type();
+                            OGRField sFieldDummy;
+                            bool bFoundDummy;
+                            std::string sValDummy;
+
                             if (col_func == SWQCF_MIN)
                             {
-                                if (physicalType == parquet::Type::BOOLEAN)
-                                {
-                                    eType = OFTInteger;
-                                    eSubType = OFSTBoolean;
-                                    sField.Integer =
-                                        GetStats<parquet::BoolStatistics>::min(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
-                                }
-                                else if (physicalType == parquet::Type::INT32)
-                                {
-                                    if (arrowType->id() == arrow::Type::UINT32)
-                                    {
-                                        // With parquet file version 2.0,
-                                        // statistics of uint32 fields are
-                                        // stored as signed int32 values...
-                                        eType = OFTInteger64;
-                                        int nVal =
-                                            GetStats<parquet::Int32Statistics>::
-                                                min(metadata, numRowGroups,
-                                                    iCol, bFound);
-                                        sField.Integer64 =
-                                            static_cast<uint32_t>(nVal);
-                                    }
-                                    else
-                                    {
-                                        eType = OFTInteger;
-                                        if (poFieldDefn->GetSubType() ==
-                                            OFSTInt16)
-                                            eSubType = OFSTInt16;
-                                        sField.Integer =
-                                            GetStats<parquet::Int32Statistics>::
-                                                min(metadata, numRowGroups,
-                                                    iCol, bFound);
-                                    }
-                                }
-                                else if (physicalType == parquet::Type::INT64)
-                                {
-                                    eType = OFTInteger64;
-                                    sField.Integer64 =
-                                        GetStats<parquet::Int64Statistics>::min(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
-                                }
-                                else if (physicalType == parquet::Type::FLOAT)
-                                {
-                                    eType = OFTReal;
-                                    eSubType = OFSTFloat32;
-                                    sField.Real =
-                                        GetStats<parquet::FloatStatistics>::min(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
-                                }
-                                else if (physicalType == parquet::Type::DOUBLE)
-                                {
-                                    eType = OFTReal;
-                                    sField.Real =
-                                        GetStats<parquet::DoubleStatistics>::
-                                            min(metadata, numRowGroups, iCol,
-                                                bFound);
-                                }
-                                else if (poFieldDefn->GetType() == OFTString &&
-                                         physicalType ==
-                                             parquet::Type::BYTE_ARRAY)
-                                {
-                                    sVal =
-                                        GetStats<parquet::ByteArrayStatistics>::
-                                            min(metadata, numRowGroups, iCol,
-                                                bFound);
-                                    if (bFound)
-                                    {
-                                        eType = OFTString;
-                                        sField.String = &sVal[0];
-                                    }
-                                }
+                                poLayer->GetMinMaxForField(
+                                    /* iRowGroup=*/-1,  // -1 for all
+                                    idx, true, sField, bFound, false,
+                                    sFieldDummy, bFoundDummy, eType, eSubType,
+                                    sVal, sValDummy);
                             }
                             else if (col_func == SWQCF_MAX)
                             {
-                                if (physicalType == parquet::Type::BOOLEAN)
-                                {
-                                    eType = OFTInteger;
-                                    eSubType = OFSTBoolean;
-                                    sField.Integer =
-                                        GetStats<parquet::BoolStatistics>::max(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
-                                }
-                                else if (physicalType == parquet::Type::INT32)
-                                {
-                                    if (arrowType->id() == arrow::Type::UINT32)
-                                    {
-                                        // With parquet file version 2.0,
-                                        // statistics of uint32 fields are
-                                        // stored as signed int32 values...
-                                        eType = OFTInteger64;
-                                        int nVal =
-                                            GetStats<parquet::Int32Statistics>::
-                                                max(metadata, numRowGroups,
-                                                    iCol, bFound);
-                                        sField.Integer64 =
-                                            static_cast<uint32_t>(nVal);
-                                    }
-                                    else
-                                    {
-                                        eType = OFTInteger;
-                                        if (poFieldDefn->GetSubType() ==
-                                            OFSTInt16)
-                                            eSubType = OFSTInt16;
-                                        sField.Integer =
-                                            GetStats<parquet::Int32Statistics>::
-                                                max(metadata, numRowGroups,
-                                                    iCol, bFound);
-                                    }
-                                }
-                                else if (physicalType == parquet::Type::INT64)
-                                {
-                                    eType = OFTInteger64;
-                                    sField.Integer64 =
-                                        GetStats<parquet::Int64Statistics>::max(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
-                                }
-                                else if (physicalType == parquet::Type::FLOAT)
-                                {
-                                    eType = OFTReal;
-                                    eSubType = OFSTFloat32;
-                                    sField.Real =
-                                        GetStats<parquet::FloatStatistics>::max(
-                                            metadata, numRowGroups, iCol,
-                                            bFound);
-                                }
-                                else if (physicalType == parquet::Type::DOUBLE)
-                                {
-                                    eType = OFTReal;
-                                    sField.Real =
-                                        GetStats<parquet::DoubleStatistics>::
-                                            max(metadata, numRowGroups, iCol,
-                                                bFound);
-                                }
-                                else if (poFieldDefn->GetType() == OFTString &&
-                                         physicalType ==
-                                             parquet::Type::BYTE_ARRAY)
-                                {
-                                    sVal =
-                                        GetStats<parquet::ByteArrayStatistics>::
-                                            max(metadata, numRowGroups, iCol,
-                                                bFound);
-                                    if (bFound)
-                                    {
-                                        eType = OFTString;
-                                        sField.String = &sVal[0];
-                                    }
-                                }
+                                poLayer->GetMinMaxForField(
+                                    /* iRowGroup=*/-1,  // -1 for all
+                                    idx, false, sFieldDummy, bFoundDummy, true,
+                                    sField, bFound, eType, eSubType, sValDummy,
+                                    sVal);
                             }
                             else if (col_func == SWQCF_COUNT)
                             {
@@ -494,19 +222,6 @@ OGRLayer *OGRParquetDataset::ExecuteSQL(const char *pszSQLCommand,
                     if (!bFound)
                     {
                         break;
-                    }
-
-                    if (eType == OFTInteger64 &&
-                        poFieldDefn->GetType() == OFTDateTime &&
-                        arrowType->id() == arrow::Type::TIMESTAMP)
-                    {
-                        const auto timestampType =
-                            static_cast<arrow::TimestampType *>(
-                                arrowType.get());
-                        const int64_t timestamp = sField.Integer64;
-                        OGRArrowLayer::TimestampToOGR(timestamp, timestampType,
-                                                      &sField);
-                        eType = OFTDateTime;
                     }
 
                     if (poMemLayer == nullptr)

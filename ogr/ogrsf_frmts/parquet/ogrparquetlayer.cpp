@@ -1459,3 +1459,337 @@ OGRErr OGRParquetLayer::SetNextByIndex(GIntBig nIndex)
     ResetReading();
     return OGRERR_FAILURE;
 }
+
+/***********************************************************************/
+/*                            GetStats()                               */
+/***********************************************************************/
+
+template <class STAT_TYPE> struct GetStats
+{
+    using T = typename STAT_TYPE::T;
+
+    static T min(const std::shared_ptr<parquet::FileMetaData> &metadata,
+                 const int iRowGroup, const int numRowGroups, const int iCol,
+                 bool &bFound)
+    {
+        T v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
+                const auto rowGroupVal = castStats->min();
+                if (i == 0 || rowGroupVal < v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+        }
+        return v;
+    }
+
+    static T max(const std::shared_ptr<parquet::FileMetaData> &metadata,
+                 const int iRowGroup, const int numRowGroups, const int iCol,
+                 bool &bFound)
+    {
+        T v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats = static_cast<STAT_TYPE *>(colStats.get());
+                const auto rowGroupVal = castStats->max();
+                if (i == 0 || rowGroupVal > v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+            else
+            {
+                bFound = false;
+                break;
+            }
+        }
+        return v;
+    }
+};
+
+template <> struct GetStats<parquet::ByteArrayStatistics>
+{
+    static std::string
+    min(const std::shared_ptr<parquet::FileMetaData> &metadata,
+        const int iRowGroup, const int numRowGroups, const int iCol,
+        bool &bFound)
+    {
+        std::string v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats =
+                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
+                const auto rowGroupValRaw = castStats->min();
+                const std::string rowGroupVal(
+                    reinterpret_cast<const char *>(rowGroupValRaw.ptr),
+                    rowGroupValRaw.len);
+                if (i == 0 || rowGroupVal < v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+        }
+        return v;
+    }
+
+    static std::string
+    max(const std::shared_ptr<parquet::FileMetaData> &metadata,
+        const int iRowGroup, const int numRowGroups, const int iCol,
+        bool &bFound)
+    {
+        std::string v{};
+        bFound = false;
+        for (int i = 0; i < (iRowGroup < 0 ? numRowGroups : 1); i++)
+        {
+            const auto columnChunk =
+                metadata->RowGroup(iRowGroup < 0 ? i : iRowGroup)
+                    ->ColumnChunk(iCol);
+            const auto colStats = columnChunk->statistics();
+            if (columnChunk->is_stats_set() && colStats &&
+                colStats->HasMinMax())
+            {
+                auto castStats =
+                    static_cast<parquet::ByteArrayStatistics *>(colStats.get());
+                const auto rowGroupValRaw = castStats->max();
+                const std::string rowGroupVal(
+                    reinterpret_cast<const char *>(rowGroupValRaw.ptr),
+                    rowGroupValRaw.len);
+                if (i == 0 || rowGroupVal > v)
+                {
+                    bFound = true;
+                    v = rowGroupVal;
+                }
+            }
+            else
+            {
+                bFound = false;
+                break;
+            }
+        }
+        return v;
+    }
+};
+
+/************************************************************************/
+/*                        GetMinMaxForField()                           */
+/************************************************************************/
+
+bool OGRParquetLayer::GetMinMaxForField(int iRowGroup,  // -1 for all
+                                        int iOGRField, bool bComputeMin,
+                                        OGRField &sMin, bool &bFoundMin,
+                                        bool bComputeMax, OGRField &sMax,
+                                        bool &bFoundMax, OGRFieldType &eType,
+                                        OGRFieldSubType &eSubType,
+                                        std::string &osMinTmp,
+                                        std::string &osMaxTmp) const
+{
+    const OGRFieldDefn *poFieldDefn =
+        const_cast<OGRParquetLayer *>(this)->GetLayerDefn()->GetFieldDefn(
+            iOGRField);
+
+    OGR_RawField_SetNull(&sMin);
+    OGR_RawField_SetNull(&sMax);
+    eType = OFTReal;
+    eSubType = OFSTNone;
+    bFoundMin = false;
+    bFoundMax = false;
+
+    const int iCol = GetMapFieldIndexToParquetColumn()[iOGRField];
+    const auto metadata = GetReader()->parquet_reader()->metadata();
+    const auto numRowGroups = metadata->num_row_groups();
+    const auto &arrowType = GetArrowFieldTypes()[iOGRField];
+
+    if (numRowGroups == 0)
+        return false;
+
+    const auto rowGroup0columnChunk = metadata->RowGroup(0)->ColumnChunk(iCol);
+    const auto rowGroup0Stats = rowGroup0columnChunk->statistics();
+    if (!(rowGroup0columnChunk->is_stats_set() && rowGroup0Stats))
+    {
+        CPLDebug("PARQUET", "Statistics not available for field %s",
+                 poFieldDefn->GetNameRef());
+        return false;
+    }
+
+    const auto physicalType = rowGroup0Stats->physical_type();
+
+    if (bComputeMin)
+    {
+        if (physicalType == parquet::Type::BOOLEAN)
+        {
+            eType = OFTInteger;
+            eSubType = OFSTBoolean;
+            sMin.Integer = GetStats<parquet::BoolStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (physicalType == parquet::Type::INT32)
+        {
+            if (arrowType->id() == arrow::Type::UINT32)
+            {
+                // With parquet file version 2.0,
+                // statistics of uint32 fields are
+                // stored as signed int32 values...
+                eType = OFTInteger64;
+                int nVal = GetStats<parquet::Int32Statistics>::min(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+                if (bFoundMin)
+                {
+                    sMin.Integer64 = static_cast<uint32_t>(nVal);
+                }
+            }
+            else
+            {
+                eType = OFTInteger;
+                if (poFieldDefn->GetSubType() == OFSTInt16)
+                    eSubType = OFSTInt16;
+                sMin.Integer = GetStats<parquet::Int32Statistics>::min(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+            }
+        }
+        else if (physicalType == parquet::Type::INT64)
+        {
+            eType = OFTInteger64;
+            sMin.Integer64 = GetStats<parquet::Int64Statistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (physicalType == parquet::Type::FLOAT)
+        {
+            eType = OFTReal;
+            eSubType = OFSTFloat32;
+            sMin.Real = GetStats<parquet::FloatStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (physicalType == parquet::Type::DOUBLE)
+        {
+            eType = OFTReal;
+            sMin.Real = GetStats<parquet::DoubleStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+        }
+        else if (poFieldDefn->GetType() == OFTString &&
+                 physicalType == parquet::Type::BYTE_ARRAY)
+        {
+            osMinTmp = GetStats<parquet::ByteArrayStatistics>::min(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMin);
+            if (bFoundMin)
+            {
+                eType = OFTString;
+                sMin.String = &osMinTmp[0];
+            }
+        }
+    }
+
+    if (bComputeMax)
+    {
+        if (physicalType == parquet::Type::BOOLEAN)
+        {
+            eType = OFTInteger;
+            eSubType = OFSTBoolean;
+            sMax.Integer = GetStats<parquet::BoolStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (physicalType == parquet::Type::INT32)
+        {
+            if (arrowType->id() == arrow::Type::UINT32)
+            {
+                // With parquet file version 2.0,
+                // statistics of uint32 fields are
+                // stored as signed int32 values...
+                eType = OFTInteger64;
+                int nVal = GetStats<parquet::Int32Statistics>::max(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+                if (bFoundMax)
+                {
+                    sMax.Integer64 = static_cast<uint32_t>(nVal);
+                }
+            }
+            else
+            {
+                eType = OFTInteger;
+                if (poFieldDefn->GetSubType() == OFSTInt16)
+                    eSubType = OFSTInt16;
+                sMax.Integer = GetStats<parquet::Int32Statistics>::max(
+                    metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+            }
+        }
+        else if (physicalType == parquet::Type::INT64)
+        {
+            eType = OFTInteger64;
+            sMax.Integer64 = GetStats<parquet::Int64Statistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (physicalType == parquet::Type::FLOAT)
+        {
+            eType = OFTReal;
+            eSubType = OFSTFloat32;
+            sMax.Real = GetStats<parquet::FloatStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (physicalType == parquet::Type::DOUBLE)
+        {
+            eType = OFTReal;
+            sMax.Real = GetStats<parquet::DoubleStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+        }
+        else if (poFieldDefn->GetType() == OFTString &&
+                 physicalType == parquet::Type::BYTE_ARRAY)
+        {
+            osMaxTmp = GetStats<parquet::ByteArrayStatistics>::max(
+                metadata, iRowGroup, numRowGroups, iCol, bFoundMax);
+            if (bFoundMax)
+            {
+                eType = OFTString;
+                sMax.String = &osMaxTmp[0];
+            }
+        }
+    }
+
+    if (eType == OFTInteger64 && poFieldDefn->GetType() == OFTDateTime &&
+        arrowType->id() == arrow::Type::TIMESTAMP)
+    {
+        const auto timestampType =
+            static_cast<arrow::TimestampType *>(arrowType.get());
+        if (bFoundMin)
+        {
+            const int64_t timestamp = sMin.Integer64;
+            OGRArrowLayer::TimestampToOGR(timestamp, timestampType, &sMin);
+        }
+        if (bFoundMax)
+        {
+            const int64_t timestamp = sMax.Integer64;
+            OGRArrowLayer::TimestampToOGR(timestamp, timestampType, &sMax);
+        }
+        eType = OFTDateTime;
+    }
+
+    return bFoundMin || bFoundMax;
+}
