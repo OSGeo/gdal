@@ -1341,6 +1341,7 @@ def test_ogr_parquet_multiple_geom_columns():
         "boolean = 0 OR boolean = 1",
         "1 = 1",
         "boolean = boolean",
+        "FID = 1",
     ],
 )
 def test_ogr_parquet_attribute_filter(filter):
@@ -2396,6 +2397,11 @@ def test_ogr_parquet_statistics_fid_column():
             f = sql_lyr.GetNextFeature()
             assert f["MIN_FID"] == 2
             assert f["MAX_FID"] == 9876543210
+
+        with ds.ExecuteSQL("SELECT * FROM out WHERE FID = 4") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f
+            assert f.GetFID() == 4
         ds = None
 
     finally:
