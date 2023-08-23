@@ -854,3 +854,19 @@ def test_ovr_band_use_after_dataset_close():
 
     with pytest.raises(Exception):
         ovr.Checksum()
+
+
+@pytest.mark.slow()
+def test_checksum_more_than_2billion_pixels():
+
+    filename = "/vsimem/test_checksum_more_than_2billion_pixels.tif"
+    ds = gdal.GetDriverByName("GTiff").Create(
+        filename,
+        50000,
+        50000,
+        options=["SPARSE_OK=YES"],
+    )
+    ds.GetRasterBand(1).SetNoDataValue(1)
+    assert ds.GetRasterBand(1).Checksum() == 63744
+    ds = None
+    gdal.Unlink(filename)
