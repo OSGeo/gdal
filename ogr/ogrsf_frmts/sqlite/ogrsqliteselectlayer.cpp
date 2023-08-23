@@ -66,15 +66,14 @@ OGRSQLiteSelectLayerCommonBehaviour::OGRSQLiteSelectLayerCommonBehaviour(
 /*                        OGRSQLiteSelectLayer()                        */
 /************************************************************************/
 
-OGRSQLiteSelectLayer::OGRSQLiteSelectLayer(OGRSQLiteDataSource *poDSIn,
-                                           const CPLString &osSQLIn,
-                                           sqlite3_stmt *m_hStmtIn,
-                                           bool bUseStatementForGetNextFeature,
-                                           bool bEmptyLayer,
-                                           bool bAllowMultipleGeomFieldsIn)
+OGRSQLiteSelectLayer::OGRSQLiteSelectLayer(
+    OGRSQLiteDataSource *poDSIn, const CPLString &osSQLIn,
+    sqlite3_stmt *m_hStmtIn, bool bUseStatementForGetNextFeature,
+    bool bEmptyLayer, bool bAllowMultipleGeomFieldsIn, bool bCanReopenBaseDS)
     : OGRSQLiteLayer(poDSIn),
       m_poBehavior(new OGRSQLiteSelectLayerCommonBehaviour(
-          poDSIn, this, osSQLIn, bEmptyLayer))
+          poDSIn, this, osSQLIn, bEmptyLayer)),
+      m_bCanReopenBaseDS(bCanReopenBaseDS)
 {
     m_bAllowMultipleGeomFields = bAllowMultipleGeomFieldsIn;
 
@@ -374,7 +373,17 @@ void OGRSQLiteSelectLayer::SetSpatialFilter(int iGeomField,
                                             OGRGeometry *poGeomIn)
 
 {
-    m_poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
+    if (!m_bCanReopenBaseDS && iGeomField == 0)
+    {
+        // For a Memory datasource, short-circuit
+        // OGRSQLiteExecuteSQL::SetSpatialFilter()
+        // that would try to re-open the Memory datasource, which would fail.
+        OGRLayer::SetSpatialFilter(poGeomIn);
+    }
+    else
+    {
+        m_poBehavior->SetSpatialFilter(iGeomField, poGeomIn);
+    }
 }
 
 void OGRSQLiteSelectLayerCommonBehaviour::SetSpatialFilter(
