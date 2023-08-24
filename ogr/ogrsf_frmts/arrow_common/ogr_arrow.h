@@ -82,7 +82,6 @@ class OGRArrowLayer CPL_NON_FINAL
     OGRArrowLayer(const OGRArrowLayer &) = delete;
     OGRArrowLayer &operator=(const OGRArrowLayer &) = delete;
 
-    std::vector<Constraint> m_asAttributeFilterConstraints{};
     int m_nUseOptimizedAttributeFilter = -1;
     bool m_bSpatialFilterIntersectsLayerExtent = true;
     bool m_bUseRecordBatchBaseImplementation = false;
@@ -130,6 +129,8 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<std::shared_ptr<arrow::Array>>
         m_poBatchColumns{};  // must always be == m_poBatch->columns()
     mutable std::shared_ptr<arrow::Array> m_poReadFeatureTmpArray{};
+
+    std::vector<Constraint> m_asAttributeFilterConstraints{};
 
     std::map<std::string, std::unique_ptr<OGRFieldDefn>>
     LoadGDALMetadata(const arrow::KeyValueMetadata *kv_metadata);

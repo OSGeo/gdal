@@ -33,6 +33,7 @@ import json
 import math
 
 import gdaltest
+import ogrtest
 import pytest
 
 from osgeo import gdal, ogr, osr
@@ -1341,6 +1342,7 @@ def test_ogr_parquet_multiple_geom_columns():
         "boolean = 0 OR boolean = 1",
         "1 = 1",
         "boolean = boolean",
+        "FID = 1",
     ],
 )
 def test_ogr_parquet_attribute_filter(filter):
@@ -1419,6 +1421,40 @@ def test_ogr_parquet_attribute_filter_and_spatial_filter():
     lyr.SetSpatialFilterRect(4, 2, 4, 2)
     assert lyr.SetAttributeFilter(filter) == ogr.OGRERR_NONE
     assert lyr.GetFeatureCount() == ref_fc
+
+
+###############################################################################
+# Test IS NULL / IS NOT NULL
+
+
+def test_ogr_parquet_is_null():
+
+    outfilename = "/vsimem/out.parquet"
+    try:
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+        lyr = ds.CreateLayer(
+            "test", geom_type=ogr.wkbNone, options=["ROW_GROUP_SIZE=1"]
+        )
+        lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
+        f = ogr.Feature(lyr.GetLayerDefn())
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "foo"
+        lyr.CreateFeature(f)
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f["str"] = "bar"
+        lyr.CreateFeature(f)
+        ds = None
+        ds = ogr.Open(outfilename)
+        lyr = ds.GetLayer(0)
+        with ogrtest.attribute_filter(lyr, "str IS NULL"):
+            assert lyr.GetFeatureCount() == 1
+        with ogrtest.attribute_filter(lyr, "str IS NOT NULL"):
+            assert lyr.GetFeatureCount() == 2
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)
 
 
 ###############################################################################
@@ -2374,3 +2410,34 @@ def test_ogr_parquet_read_dataset_with_empty_batch():
     # Check that we don't iterate forever
     lyr.GetExtent()
     assert len([f for f in lyr]) == 1
+
+
+###############################################################################
+# Test MIN() / MAX() on FID column
+
+
+def test_ogr_parquet_statistics_fid_column():
+
+    outfilename = "/vsimem/out.parquet"
+    try:
+        ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
+        lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=FID"])
+        for fid in (2, 4, 9876543210):
+            f = ogr.Feature(lyr.GetLayerDefn())
+            f.SetFID(fid)
+            lyr.CreateFeature(f)
+        ds = None
+        ds = ogr.Open(outfilename)
+        with ds.ExecuteSQL("SELECT MIN(FID), MAX(FID) FROM out") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f["MIN_FID"] == 2
+            assert f["MAX_FID"] == 9876543210
+
+        with ds.ExecuteSQL("SELECT * FROM out WHERE FID = 4") as sql_lyr:
+            f = sql_lyr.GetNextFeature()
+            assert f
+            assert f.GetFID() == 4
+        ds = None
+
+    finally:
+        gdal.Unlink(outfilename)

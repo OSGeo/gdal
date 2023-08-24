@@ -2168,21 +2168,46 @@ inline void OGRArrowLayer::ComputeConstraintsArrayIdx()
     {
         if (m_bIgnoredFields)
         {
-            constraint.iArrayIdx =
-                m_anMapFieldIndexToArrayIndex[constraint.iField];
+            if (constraint.iField == m_poFeatureDefn->GetFieldCount() + SPF_FID)
+            {
+                constraint.iArrayIdx = m_nRequestedFIDColumn;
+            }
+            else
+            {
+                constraint.iArrayIdx =
+                    m_anMapFieldIndexToArrayIndex[constraint.iField];
+            }
             if (constraint.iArrayIdx < 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Constraint on field %s cannot be applied due to "
                          "it being ignored",
-                         m_poFeatureDefn->GetFieldDefn(constraint.iField)
-                             ->GetNameRef());
+                         constraint.iField ==
+                                 m_poFeatureDefn->GetFieldCount() + SPF_FID
+                             ? (m_osFIDColumn.empty() ? "FID"
+                                                      : m_osFIDColumn.c_str())
+                             : m_poFeatureDefn->GetFieldDefn(constraint.iField)
+                                   ->GetNameRef());
             }
         }
         else
         {
-            constraint.iArrayIdx =
-                m_anMapFieldIndexToArrowColumn[constraint.iField][0];
+            if (constraint.iField == m_poFeatureDefn->GetFieldCount() + SPF_FID)
+            {
+                constraint.iArrayIdx = m_iFIDArrowColumn;
+                if (constraint.iArrayIdx < 0)
+                {
+                    CPLDebug(GetDriverUCName().c_str(),
+                             "Constraint on field %s cannot be applied",
+                             m_osFIDColumn.empty() ? "FID"
+                                                   : m_osFIDColumn.c_str());
+                }
+            }
+            else
+            {
+                constraint.iArrayIdx =
+                    m_anMapFieldIndexToArrowColumn[constraint.iField][0];
+            }
         }
     }
 }
@@ -2209,10 +2234,17 @@ inline void OGRArrowLayer::ExploreExprNode(const swq_expr_node *poNode)
         const swq_expr_node *poColumn = GetColumnSubNode(poNode);
         const swq_expr_node *poValue = GetConstantSubNode(poNode);
         if (poColumn != nullptr && poValue != nullptr &&
-            poColumn->field_index < m_poFeatureDefn->GetFieldCount())
+            (poColumn->field_index < m_poFeatureDefn->GetFieldCount() ||
+             poColumn->field_index ==
+                 m_poFeatureDefn->GetFieldCount() + SPF_FID))
         {
+            const OGRFieldDefn oDummyFIDFieldDefn(m_osFIDColumn.c_str(),
+                                                  OFTInteger64);
             const OGRFieldDefn *poFieldDefn =
-                m_poFeatureDefn->GetFieldDefn(poColumn->field_index);
+                (poColumn->field_index ==
+                 m_poFeatureDefn->GetFieldCount() + SPF_FID)
+                    ? &oDummyFIDFieldDefn
+                    : m_poFeatureDefn->GetFieldDefn(poColumn->field_index);
 
             Constraint constraint;
             constraint.iField = poColumn->field_index;
@@ -3509,9 +3541,13 @@ inline int OGRArrowLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         if (m_poBatch == nullptr || m_nIdxInBatch == m_poBatch->num_rows())
         {
-            m_bEOF = !ReadNextBatch();
-            if (m_bEOF)
+            if (!ReadNextBatch())
             {
+                if (m_poAttrQuery || m_poFilterGeom)
+                {
+                    InvalidateCachedBatches();
+                }
+                m_bEOF = true;
                 memset(out_array, 0, sizeof(*out_array));
                 return 0;
             }
