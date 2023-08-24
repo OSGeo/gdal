@@ -619,7 +619,257 @@ def generate_parquet_wkt_with_dict():
     )
 
 
+def generate_nested_types():
+    import pathlib
+
+    import pyarrow as pa
+    import pyarrow.parquet as pq
+
+    map_list_bool = pa.array(
+        [
+            [("x", [True]), ("y", [False, True])],
+            [("z", [])],
+            None,
+            [("w", [True, False])],
+            [("null", None)],
+        ],
+        type=pa.map_(pa.string(), pa.list_(pa.bool_())),
+    )
+
+    map_list_uint8 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.uint8())),
+    )
+
+    map_list_int8 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.int8())),
+    )
+
+    map_list_uint16 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.uint16())),
+    )
+
+    map_list_int16 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.int16())),
+    )
+
+    map_list_uint32 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.uint32())),
+    )
+
+    map_list_int32 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.int32())),
+    )
+
+    map_list_uint64 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.uint64())),
+    )
+
+    map_list_int64 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.int64())),
+    )
+
+    map_list_float32 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.float32())),
+    )
+
+    map_list_float64 = pa.array(
+        [[("x", [2]), ("y", [3, 4])], [("z", [])], None, [("w", [5, 6])], []],
+        type=pa.map_(pa.string(), pa.list_(pa.float64())),
+    )
+
+    map_map_bool = pa.array(
+        [
+            [("a", [("b", True), ("c", None), ("d", None)]), ("e", None)],
+            None,
+            [("f", [("g", False)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.bool_())),
+    )
+
+    map_map_uint8 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.uint8())),
+    )
+
+    map_map_int8 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.int8())),
+    )
+
+    map_map_uint16 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.uint16())),
+    )
+
+    map_map_int16 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.int16())),
+    )
+
+    map_map_uint32 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.uint32())),
+    )
+
+    map_map_int32 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.int32())),
+    )
+
+    map_map_uint64 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.uint64())),
+    )
+
+    map_map_int64 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.int64())),
+    )
+
+    map_map_float32 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.float32())),
+    )
+
+    map_map_float64 = pa.array(
+        [
+            [("a", [("b", 1), ("c", None), ("d", 2)]), ("e", None)],
+            None,
+            [("f", [("g", 3)])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.float64())),
+    )
+
+    map_map_string = pa.array(
+        [
+            [("a", [("b", "c"), ("d", None)]), ("e", None)],
+            None,
+            [("f", [("g", "h")])],
+            None,
+            None,
+        ],
+        type=pa.map_(pa.string(), pa.map_(pa.string(), pa.string())),
+    )
+
+    list_list_string = pa.array(
+        [[["a"], None, ["b", None, "cd"]], None, [["efg"]], [], []],
+        type=pa.list_(pa.list_(pa.string())),
+    )
+
+    list_map_string = pa.array(
+        [[[("a", "b"), ("c", "d")], [("e", "f")]], None, [None], [], []],
+        type=pa.list_(pa.map_(pa.string(), pa.string())),
+    )
+
+    names = [
+        "map_list_bool",
+        "map_list_uint8",
+        "map_list_int8",
+        "map_list_uint16",
+        "map_list_int16",
+        "map_list_uint32",
+        "map_list_int32",
+        "map_list_uint64",
+        "map_list_int64",
+        "map_list_float32",
+        "map_list_float64",
+        "map_map_bool",
+        "map_map_uint8",
+        "map_map_int8",
+        "map_map_uint16",
+        "map_map_int16",
+        "map_map_uint32",
+        "map_map_int32",
+        "map_map_uint64",
+        "map_map_int64",
+        "map_map_float32",
+        "map_map_float64",
+        "map_map_string",
+        "list_list_string",
+        "list_map_string",
+    ]
+
+    locals_ = locals()
+    table = pa.table([locals_[x] for x in names], names=names)
+
+    HERE = pathlib.Path(__file__).parent
+    pq.write_table(
+        table,
+        HERE / "ogr/data/parquet/nested_types.parquet",
+        compression="NONE",
+        row_group_size=3,
+    )
+
+
 if __name__ == "__main__":
     generate_test_parquet()
     generate_all_geoms_parquet()
     generate_parquet_wkt_with_dict()
+    generate_nested_types()

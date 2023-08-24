@@ -140,6 +140,12 @@ class OGRArrowLayer CPL_NON_FINAL
     virtual std::string GetDriverUCName() const = 0;
     static bool IsIntegerArrowType(arrow::Type::type typeId);
     static bool
+    IsHandledListOrMapType(const std::shared_ptr<arrow::DataType> &valueType);
+    static bool
+    IsHandledListType(const std::shared_ptr<arrow::BaseListType> &listType);
+    static bool
+    IsHandledMapType(const std::shared_ptr<arrow::MapType> &mapType);
+    static bool
     IsValidGeometryEncoding(const std::shared_ptr<arrow::Field> &field,
                             const std::string &osEncoding,
                             OGRwkbGeometryType &eGeomTypeOut,
