@@ -486,14 +486,14 @@ static inline bool IsValidField(const OGRField *psRawField)
 
 static uint8_t *AllocValidityBitmap(size_t nSize)
 {
-    auto pabyNull = static_cast<uint8_t *>(
+    auto pabyValidity = static_cast<uint8_t *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE((nSize + 7) / 8));
-    if (pabyNull)
+    if (pabyValidity)
     {
         // All valid initially
-        memset(pabyNull, 0xFF, (nSize + 7) / 8);
+        memset(pabyValidity, 0xFF, (nSize + 7) / 8);
     }
-    return pabyNull;
+    return pabyValidity;
 }
 
 /************************************************************************/
@@ -507,7 +507,7 @@ static bool FillArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     T *panValues = static_cast<T *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * apoFeatures.size()));
     if (panValues == nullptr)
@@ -525,14 +525,14 @@ static bool FillArray(struct ArrowArray *psChild,
         {
             panValues[iFeat] = 0;
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
         else
         {
@@ -553,7 +553,7 @@ static bool FillBoolArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     uint8_t *panValues = static_cast<uint8_t *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE((apoFeatures.size() + 7) / 8));
     if (panValues == nullptr)
@@ -572,14 +572,14 @@ static bool FillBoolArray(struct ArrowArray *psChild,
         else if (bIsNullable)
         {
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
     }
     return true;
@@ -635,7 +635,7 @@ static bool FillListArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     OffsetType *panOffsets =
         static_cast<OffsetType *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
             sizeof(OffsetType) * (1 + apoFeatures.size())));
@@ -660,14 +660,14 @@ static bool FillListArray(struct ArrowArray *psChild,
         else if (bIsNullable)
         {
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
     }
     panOffsets[apoFeatures.size()] = nOffset;
@@ -723,7 +723,7 @@ FillListArrayBool(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     OffsetType *panOffsets =
         static_cast<OffsetType *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
             sizeof(OffsetType) * (1 + apoFeatures.size())));
@@ -748,14 +748,14 @@ FillListArrayBool(struct ArrowArray *psChild,
         else if (bIsNullable)
         {
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
     }
     panOffsets[apoFeatures.size()] = nOffset;
@@ -813,7 +813,7 @@ FillStringArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 3;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     T *panOffsets = static_cast<T *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
     if (panOffsets == nullptr)
@@ -836,14 +836,14 @@ FillStringArray(struct ArrowArray *psChild,
         else if (bIsNullable)
         {
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
     }
     panOffsets[apoFeatures.size()] = static_cast<T>(nOffset);
@@ -882,7 +882,7 @@ FillStringListArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     OffsetType *panOffsets =
         static_cast<OffsetType *>(VSI_MALLOC_ALIGNED_AUTO_VERBOSE(
             sizeof(OffsetType) * (1 + apoFeatures.size())));
@@ -918,14 +918,14 @@ FillStringListArray(struct ArrowArray *psChild,
         else if (bIsNullable)
         {
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
     }
     panOffsets[apoFeatures.size()] = nStrings;
@@ -992,7 +992,7 @@ FillBinaryArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 3;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     T *panOffsets = static_cast<T *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
     if (panOffsets == nullptr)
@@ -1015,14 +1015,14 @@ FillBinaryArray(struct ArrowArray *psChild,
         else if (bIsNullable)
         {
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
     }
     panOffsets[apoFeatures.size()] = nOffset;
@@ -1060,7 +1060,7 @@ FillFixedWidthBinaryArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
 
     if (apoFeatures.size() > std::numeric_limits<size_t>::max() / nWidth)
         return false;
@@ -1094,14 +1094,14 @@ FillFixedWidthBinaryArray(struct ArrowArray *psChild,
             if (bIsNullable)
             {
                 ++psChild->null_count;
-                if (pabyNull == nullptr)
+                if (pabyValidity == nullptr)
                 {
-                    pabyNull = AllocValidityBitmap(apoFeatures.size());
-                    psChild->buffers[0] = pabyNull;
-                    if (pabyNull == nullptr)
+                    pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                    psChild->buffers[0] = pabyValidity;
+                    if (pabyValidity == nullptr)
                         return false;
                 }
-                UnsetBit(pabyNull, iFeat);
+                UnsetBit(pabyValidity, iFeat);
             }
         }
     }
@@ -1122,7 +1122,7 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
     const bool bIsNullable = CPL_TO_BOOL(poFieldDefn->IsNullable());
     psChild->n_buffers = 3;
     psChild->buffers = static_cast<const void **>(CPLCalloc(3, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     T *panOffsets = static_cast<T *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(T) * (1 + apoFeatures.size())));
     if (panOffsets == nullptr)
@@ -1151,14 +1151,14 @@ FillWKBGeometryArray(struct ArrowArray *psChild,
         else if (bIsNullable)
         {
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
         else if (poEmptyGeom)
         {
@@ -1209,7 +1209,7 @@ static bool FillDateArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     int32_t *panValues = static_cast<int32_t *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * apoFeatures.size()));
     if (panValues == nullptr)
@@ -1233,14 +1233,14 @@ static bool FillDateArray(struct ArrowArray *psChild,
         {
             panValues[iFeat] = 0;
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
         else
         {
@@ -1260,7 +1260,7 @@ static bool FillTimeArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     int32_t *panValues = static_cast<int32_t *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int32_t) * apoFeatures.size()));
     if (panValues == nullptr)
@@ -1281,14 +1281,14 @@ static bool FillTimeArray(struct ArrowArray *psChild,
         {
             panValues[iFeat] = 0;
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
         else
         {
@@ -1309,7 +1309,7 @@ FillDateTimeArray(struct ArrowArray *psChild,
 {
     psChild->n_buffers = 2;
     psChild->buffers = static_cast<const void **>(CPLCalloc(2, sizeof(void *)));
-    uint8_t *pabyNull = nullptr;
+    uint8_t *pabyValidity = nullptr;
     int64_t *panValues = static_cast<int64_t *>(
         VSI_MALLOC_ALIGNED_AUTO_VERBOSE(sizeof(int64_t) * apoFeatures.size()));
     if (panValues == nullptr)
@@ -1337,14 +1337,14 @@ FillDateTimeArray(struct ArrowArray *psChild,
         {
             panValues[iFeat] = 0;
             ++psChild->null_count;
-            if (pabyNull == nullptr)
+            if (pabyValidity == nullptr)
             {
-                pabyNull = AllocValidityBitmap(apoFeatures.size());
-                psChild->buffers[0] = pabyNull;
-                if (pabyNull == nullptr)
+                pabyValidity = AllocValidityBitmap(apoFeatures.size());
+                psChild->buffers[0] = pabyValidity;
+                if (pabyValidity == nullptr)
                     return false;
             }
-            UnsetBit(pabyNull, iFeat);
+            UnsetBit(pabyValidity, iFeat);
         }
         else
         {
