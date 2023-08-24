@@ -1520,11 +1520,8 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
         // OuvertureMaps dataset have double bbox.minx, bbox.miny, bbox.maxx,
         // bboxy.maxy fields with statistics. Use that to quickly compute
         // extent.
-        int iMinX, iMinY, iMaxX, iMaxY;
-        if ((iMinX = m_poFeatureDefn->GetFieldIndex("bbox.minx")) >= 0 &&
-            (iMinY = m_poFeatureDefn->GetFieldIndex("bbox.miny")) >= 0 &&
-            (iMaxX = m_poFeatureDefn->GetFieldIndex("bbox.maxx")) >= 0 &&
-            (iMaxY = m_poFeatureDefn->GetFieldIndex("bbox.maxy")) >= 0 &&
+        if (m_iBBOXMinXField >= 0 && m_iBBOXMinYField >= 0 &&
+            m_iBBOXMaxXField >= 0 && m_iBBOXMaxYField >= 0 &&
             CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES")))
         {
             OGREnvelope sExtent;
@@ -1535,30 +1532,32 @@ bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
             OGRFieldType eType = OFTMaxType;
             OGRFieldSubType eSubType = OFSTNone;
             std::string osMinTmp, osMaxTmp;
-            if (GetMinMaxForField(-1, iMinX, true, sMin, bFoundMin, false, sMax,
-                                  bFoundMax, eType, eSubType, osMinTmp,
-                                  osMaxTmp) &&
+            if (GetMinMaxForField(-1, m_iBBOXMinXField, true, sMin, bFoundMin,
+                                  false, sMax, bFoundMax, eType, eSubType,
+                                  osMinTmp, osMaxTmp) &&
                 eType == OFTReal)
             {
                 sExtent.MinX = sMin.Real;
 
-                if (GetMinMaxForField(-1, iMinY, true, sMin, bFoundMin, false,
-                                      sMax, bFoundMax, eType, eSubType,
-                                      osMinTmp, osMaxTmp) &&
+                if (GetMinMaxForField(-1, m_iBBOXMinYField, true, sMin,
+                                      bFoundMin, false, sMax, bFoundMax, eType,
+                                      eSubType, osMinTmp, osMaxTmp) &&
                     eType == OFTReal)
                 {
                     sExtent.MinY = sMin.Real;
 
-                    if (GetMinMaxForField(-1, iMaxX, false, sMin, bFoundMin,
-                                          true, sMax, bFoundMax, eType,
-                                          eSubType, osMinTmp, osMaxTmp) &&
+                    if (GetMinMaxForField(-1, m_iBBOXMaxXField, false, sMin,
+                                          bFoundMin, true, sMax, bFoundMax,
+                                          eType, eSubType, osMinTmp,
+                                          osMaxTmp) &&
                         eType == OFTReal)
                     {
                         sExtent.MaxX = sMax.Real;
 
-                        if (GetMinMaxForField(-1, iMaxY, false, sMin, bFoundMin,
-                                              true, sMax, bFoundMax, eType,
-                                              eSubType, osMinTmp, osMaxTmp) &&
+                        if (GetMinMaxForField(-1, m_iBBOXMaxYField, false, sMin,
+                                              bFoundMin, true, sMax, bFoundMax,
+                                              eType, eSubType, osMinTmp,
+                                              osMaxTmp) &&
                             eType == OFTReal)
                         {
                             sExtent.MaxY = sMax.Real;

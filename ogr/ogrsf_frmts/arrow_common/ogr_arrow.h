@@ -109,6 +109,19 @@ class OGRArrowLayer CPL_NON_FINAL
     std::vector<int> m_anMapGeomFieldIndexToArrowColumn{};
     std::vector<OGRArrowGeomEncoding> m_aeGeomEncoding{};
 
+    // OGR field indexes for bbox.minx/miny/maxx/maxy Real fields
+    int m_iBBOXMinXField = -1;
+    int m_iBBOXMinYField = -1;
+    int m_iBBOXMaxXField = -1;
+    int m_iBBOXMaxYField = -1;
+
+    const arrow::BinaryArray *m_poArrayWKB = nullptr;
+    const arrow::Array *m_poArrayBBOX = nullptr;
+    const arrow::DoubleArray *m_poArrayMinX = nullptr;
+    const arrow::DoubleArray *m_poArrayMinY = nullptr;
+    const arrow::DoubleArray *m_poArrayMaxX = nullptr;
+    const arrow::DoubleArray *m_poArrayMaxY = nullptr;
+
     bool m_bIgnoredFields = false;
     std::vector<int>
         m_anMapFieldIndexToArrayIndex{};  // only valid when m_bIgnoredFields is
@@ -187,11 +200,7 @@ class OGRArrowLayer CPL_NON_FINAL
         return true;
     }
 
-    void SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
-    {
-        m_poBatch = poBatch;
-        m_poBatchColumns = m_poBatch->columns();
-    }
+    void SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch);
 
     // Refreshes Constraint.iArrayIdx from iField. To be called by SetIgnoredFields()
     void ComputeConstraintsArrayIdx();
