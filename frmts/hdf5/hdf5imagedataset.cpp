@@ -253,25 +253,6 @@ HDF5ImageRasterBand::HDF5ImageRasterBand(HDF5ImageDataset *poDSIn, int nBandIn,
     nBlockXSize = poDS->GetRasterXSize();
     nBlockYSize = 1;
 
-    // Take a copy of Global Metadata since  I can't pass Raster
-    // variable to Iterate function.
-    char **papszMetaGlobal = CSLDuplicate(poDSIn->papszMetadata);
-    CSLDestroy(poDSIn->papszMetadata);
-    poDSIn->papszMetadata = nullptr;
-
-    if (poDSIn->poH5Objects->nType == H5G_DATASET)
-    {
-        poDSIn->CreateMetadata(poDSIn->poH5Objects, H5G_DATASET);
-    }
-
-    // Recover Global Metadata and set Band Metadata.
-
-    SetMetadata(poDSIn->papszMetadata);
-
-    CSLDestroy(poDSIn->papszMetadata);
-    poDSIn->papszMetadata = CSLDuplicate(papszMetaGlobal);
-    CSLDestroy(papszMetaGlobal);
-
     // Check for chunksize and set it as the blocksize (optimizes read).
     const hid_t listid = H5Dget_create_plist(poDSIn->dataset_id);
     if (listid > 0)
@@ -474,14 +455,14 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->SetPhysicalFilename(osFilename);
 
     // Try opening the dataset.
-    poDS->hHDF5 = GDAL_HDF5Open(osFilename);
-    if (poDS->hHDF5 < 0)
+    poDS->m_hHDF5 = GDAL_HDF5Open(osFilename);
+    if (poDS->m_hHDF5 < 0)
     {
         delete poDS;
         return nullptr;
     }
 
-    poDS->hGroupID = H5Gopen(poDS->hHDF5, "/");
+    poDS->hGroupID = H5Gopen(poDS->m_hHDF5, "/");
     if (poDS->hGroupID < 0)
     {
         delete poDS;
@@ -502,7 +483,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Retrieve HDF5 data information.
-    poDS->dataset_id = H5Dopen(poDS->hHDF5, poDS->poH5Objects->pszPath);
+    poDS->dataset_id = H5Dopen(poDS->m_hHDF5, poDS->poH5Objects->pszPath);
     poDS->dataspace_id = H5Dget_space(poDS->dataset_id);
     poDS->ndims = H5Sget_simple_extent_ndims(poDS->dataspace_id);
     if (poDS->ndims <= 0)
@@ -522,7 +503,7 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
 
     // CSK code in IdentifyProductType() and CreateProjections()
     // uses dataset metadata.
-    poDS->SetMetadata(poDS->papszMetadata);
+    poDS->SetMetadata(poDS->m_aosMetadata.List());
 
     // Check if the hdf5 is a well known product type
     poDS->IdentifyProductType();
@@ -636,20 +617,64 @@ GDALDataset *HDF5ImageDataset::Open(GDALOpenInfo *poOpenInfo)
             : static_cast<int>(poDS->dims[poDS->GetYIndex()]);  // nRows
     poDS->nRasterXSize =
         static_cast<int>(poDS->dims[poDS->GetXIndex()]);  // nCols
+    int nBands = 1;
     if (poDS->m_nOtherDimIndex >= 0)
     {
-        poDS->nBands = static_cast<int>(poDS->dims[poDS->m_nOtherDimIndex]);
+        nBands = static_cast<int>(poDS->dims[poDS->m_nOtherDimIndex]);
     }
-    else
-    {
-        poDS->nBands = 1;
-    }
-    for (int i = 1; i <= poDS->nBands; i++)
-    {
-        HDF5ImageRasterBand *const poBand =
-            new HDF5ImageRasterBand(poDS, i, poDS->GetDataType(poDS->native));
 
-        poDS->SetBand(i, poBand);
+    CPLStringList aosMetadata;
+    std::map<std::string, CPLStringList> oMapBandSpecificMetadata;
+    if (poDS->poH5Objects->nType == H5G_DATASET)
+    {
+        HDF5Dataset::CreateMetadata(poDS->m_hHDF5, poDS->poH5Objects,
+                                    H5G_DATASET, false, aosMetadata);
+        if (nBands > 1)
+        {
+            // Logic specific of Planet data cubes with per-band metadata items
+            static const struct
+            {
+                const char *pszSrcName;
+                const char *pszDstName;
+            } asItems[] = {
+                {"calibration_coefficients", "calibration_coefficient"},
+                {"center_wavelengths", "center_wavelength"},
+                {"fwhm", "fwhm"},
+                {"bad_band_list", "bad_band"},
+            };
+            for (const auto &sItem : asItems)
+            {
+                const char *pszVal =
+                    aosMetadata.FetchNameValue(sItem.pszSrcName);
+                if (pszVal)
+                {
+                    CPLStringList aosTokens(CSLTokenizeString2(pszVal, " ", 0));
+                    if (aosTokens.size() == nBands)
+                    {
+                        oMapBandSpecificMetadata[sItem.pszDstName] =
+                            std::move(aosTokens);
+                        aosMetadata.SetNameValue(sItem.pszSrcName, nullptr);
+                    }
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < nBands; i++)
+    {
+        HDF5ImageRasterBand *const poBand = new HDF5ImageRasterBand(
+            poDS, i + 1, poDS->GetDataType(poDS->native));
+
+        poDS->SetBand(i + 1, poBand);
+
+        if (poDS->poH5Objects->nType == H5G_DATASET)
+        {
+            poBand->SetMetadata(aosMetadata.List());
+            for (const auto &oIter : oMapBandSpecificMetadata)
+            {
+                poBand->SetMetadataItem(oIter.first.c_str(), oIter.second[i]);
+            }
+        }
     }
 
     if (!poDS->GetMetadata("GEOLOCATION"))
@@ -835,7 +860,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
 
             // Retrieve HDF5 data information.
             const hid_t LatitudeDatasetID =
-                H5Dopen(hHDF5, poH5Objects->pszPath);
+                H5Dopen(m_hHDF5, poH5Objects->pszPath);
             // LatitudeDataspaceID = H5Dget_space(dataset_id);
 
             poH5Objects = HDF5FindDatasetObjects(poH5RootGroup, "Longitude");
@@ -850,7 +875,7 @@ CPLErr HDF5ImageDataset::CreateProjections()
             }
 
             const hid_t LongitudeDatasetID =
-                H5Dopen(hHDF5, poH5Objects->pszPath);
+                H5Dopen(m_hHDF5, poH5Objects->pszPath);
             // LongitudeDataspaceID = H5Dget_space(dataset_id);
 
             if (LatitudeDatasetID > 0 && LongitudeDatasetID > 0)
