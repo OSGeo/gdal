@@ -3004,10 +3004,10 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
         if (iCol >= 0 &&
             m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB)
         {
-            auto array = m_poBatchColumns[iCol];
+            const arrow::Array *array = m_poBatchColumns[iCol].get();
             CPLAssert(array->type_id() == arrow::Type::BINARY);
-            auto castArray =
-                std::static_pointer_cast<arrow::BinaryArray>(array);
+            const arrow::BinaryArray *castArray =
+                static_cast<const arrow::BinaryArray *>(array);
             OGREnvelope sEnvelope;
             while (true)
             {
@@ -3044,10 +3044,9 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     m_bEOF = !ReadNextBatch();
                     if (m_bEOF)
                         return nullptr;
-                    array = m_poBatchColumns[iCol];
+                    array = m_poBatchColumns[iCol].get();
                     CPLAssert(array->type_id() == arrow::Type::BINARY);
-                    castArray =
-                        std::static_pointer_cast<arrow::BinaryArray>(array);
+                    castArray = static_cast<const arrow::BinaryArray *>(array);
                 }
             }
         }

@@ -2595,7 +2595,6 @@ def test_ogr_parquet_nested_types():
 
 def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
 
-    gdal.MkdirRecursive(str(tmp_vsimem), 0o755)
     outfilename = str(tmp_vsimem / "test_ogr_parquet_bbox_minx_miny_maxx_maxy.parquet")
     ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["ROW_GROUP_SIZE=1"])
