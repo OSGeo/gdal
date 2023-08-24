@@ -117,6 +117,8 @@ class OGRParquetLayer final : public OGRParquetLayerBase
         return "PARQUET";
     }
 
+    bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const override;
+
   public:
     OGRParquetLayer(OGRParquetDataset *poDS, const char *pszLayerName,
                     std::unique_ptr<parquet::arrow::FileReader> &&arrow_reader,

@@ -394,26 +394,6 @@ int OGRParquetLayerBase::TestCapability(const char *pszCap)
     if (EQUAL(pszCap, OLCFastFeatureCount))
         return m_poAttrQuery == nullptr && m_poFilterGeom == nullptr;
 
-    if (EQUAL(pszCap, OLCFastGetExtent))
-    {
-        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
-        {
-            auto oIter = m_oMapGeometryColumns.find(
-                m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
-            if (oIter == m_oMapGeometryColumns.end())
-            {
-                return false;
-            }
-            const auto &oJSONDef = oIter->second;
-            const auto oBBox = oJSONDef.GetArray("bbox");
-            if (!(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;
 
@@ -1524,6 +1504,80 @@ GIntBig OGRParquetLayer::GetFeatureCount(int bForce)
             return metadata->num_rows();
     }
     return OGRLayer::GetFeatureCount(bForce);
+}
+
+/************************************************************************/
+/*                         FastGetExtent()                              */
+/************************************************************************/
+
+bool OGRParquetLayer::FastGetExtent(int iGeomField, OGREnvelope *psExtent) const
+{
+    if (OGRParquetLayerBase::FastGetExtent(iGeomField, psExtent))
+        return true;
+
+    if (iGeomField == 0 && m_poFeatureDefn->GetGeomFieldCount() == 1)
+    {
+        // OuvertureMaps dataset have double bbox.minx, bbox.miny, bbox.maxx,
+        // bboxy.maxy fields with statistics. Use that to quickly compute
+        // extent.
+        int iMinX, iMinY, iMaxX, iMaxY;
+        if ((iMinX = m_poFeatureDefn->GetFieldIndex("bbox.minx")) >= 0 &&
+            (iMinY = m_poFeatureDefn->GetFieldIndex("bbox.miny")) >= 0 &&
+            (iMaxX = m_poFeatureDefn->GetFieldIndex("bbox.maxx")) >= 0 &&
+            (iMaxY = m_poFeatureDefn->GetFieldIndex("bbox.maxy")) >= 0 &&
+            CPLTestBool(CPLGetConfigOption("OGR_PARQUET_USE_BBOX", "YES")))
+        {
+            OGREnvelope sExtent;
+            OGRField sMin, sMax;
+            OGR_RawField_SetNull(&sMin);
+            OGR_RawField_SetNull(&sMax);
+            bool bFoundMin, bFoundMax;
+            OGRFieldType eType = OFTMaxType;
+            OGRFieldSubType eSubType = OFSTNone;
+            std::string osMinTmp, osMaxTmp;
+            if (GetMinMaxForField(-1, iMinX, true, sMin, bFoundMin, false, sMax,
+                                  bFoundMax, eType, eSubType, osMinTmp,
+                                  osMaxTmp) &&
+                eType == OFTReal)
+            {
+                sExtent.MinX = sMin.Real;
+
+                if (GetMinMaxForField(-1, iMinY, true, sMin, bFoundMin, false,
+                                      sMax, bFoundMax, eType, eSubType,
+                                      osMinTmp, osMaxTmp) &&
+                    eType == OFTReal)
+                {
+                    sExtent.MinY = sMin.Real;
+
+                    if (GetMinMaxForField(-1, iMaxX, false, sMin, bFoundMin,
+                                          true, sMax, bFoundMax, eType,
+                                          eSubType, osMinTmp, osMaxTmp) &&
+                        eType == OFTReal)
+                    {
+                        sExtent.MaxX = sMax.Real;
+
+                        if (GetMinMaxForField(-1, iMaxY, false, sMin, bFoundMin,
+                                              true, sMax, bFoundMax, eType,
+                                              eSubType, osMinTmp, osMaxTmp) &&
+                            eType == OFTReal)
+                        {
+                            sExtent.MaxY = sMax.Real;
+
+                            CPLDebug(
+                                "PARQUET",
+                                "Using statistics of bbox.minx, bbox.miny, "
+                                "bbox.maxx, bbox.maxy columns to get extent");
+                            m_oMapExtents[iGeomField] = sExtent;
+                            *psExtent = sExtent;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
 }
 
 /************************************************************************/
