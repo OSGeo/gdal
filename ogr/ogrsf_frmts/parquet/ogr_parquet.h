@@ -188,7 +188,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
 
     void InvalidateCachedBatches() override;
 
-    bool GetFastExtent(int iGeomField, OGREnvelope *psExtent) const override;
+    bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const override;
 
   public:
     OGRParquetDatasetLayer(

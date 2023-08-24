@@ -121,7 +121,7 @@ class OGRArrowLayer CPL_NON_FINAL
     int64_t m_nFeatureIdx = 0;
     int64_t m_nIdxInBatch = 0;
     std::map<std::string, CPLJSONObject> m_oMapGeometryColumns{};
-    std::map<int, OGREnvelope> m_oMapExtents{};
+    mutable std::map<int, OGREnvelope> m_oMapExtents{};
     int m_iRecordBatch = -1;
     std::shared_ptr<arrow::RecordBatch> m_poBatch{};
     // m_poBatch->columns() is a relatively costly operation, so cache its
@@ -196,7 +196,7 @@ class OGRArrowLayer CPL_NON_FINAL
     // Refreshes Constraint.iArrayIdx from iField. To be called by SetIgnoredFields()
     void ComputeConstraintsArrayIdx();
 
-    virtual bool GetFastExtent(int iGeomField, OGREnvelope *psExtent) const;
+    virtual bool FastGetExtent(int iGeomField, OGREnvelope *psExtent) const;
     static OGRErr GetExtentFromMetadata(const CPLJSONObject &oJSONDef,
                                         OGREnvelope *psExtent);
 

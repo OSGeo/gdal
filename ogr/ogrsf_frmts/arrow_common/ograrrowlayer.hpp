@@ -3278,7 +3278,7 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
         if (m_poFilterGeom != nullptr)
         {
             OGREnvelope sLayerExtent;
-            if (GetFastExtent(iGeomField, &sLayerExtent))
+            if (FastGetExtent(iGeomField, &sLayerExtent))
             {
                 m_bSpatialFilterIntersectsLayerExtent =
                     m_sFilterEnvelope.Intersects(sLayerExtent);
@@ -3288,10 +3288,10 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
 }
 
 /************************************************************************/
-/*                         GetFastExtent()                              */
+/*                         FastGetExtent()                              */
 /************************************************************************/
 
-inline bool OGRArrowLayer::GetFastExtent(int iGeomField,
+inline bool OGRArrowLayer::FastGetExtent(int iGeomField,
                                          OGREnvelope *psExtent) const
 {
     {
@@ -3336,7 +3336,7 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         return OGRERR_FAILURE;
     }
 
-    if (GetFastExtent(iGeomField, psExtent))
+    if (FastGetExtent(iGeomField, psExtent))
     {
         return OGRERR_NONE;
     }
@@ -4035,6 +4035,17 @@ inline int OGRArrowLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastGetArrowStream) &&
              !UseRecordBatchBaseImplementation())
     {
+        return true;
+    }
+
+    if (EQUAL(pszCap, OLCFastGetExtent))
+    {
+        OGREnvelope sEnvelope;
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
+        {
+            if (!FastGetExtent(i, &sEnvelope))
+                return false;
+        }
         return true;
     }
 
