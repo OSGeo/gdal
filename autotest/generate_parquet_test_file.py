@@ -392,7 +392,7 @@ def generate_test_parquet():
         type=pa.map_(pa.string(), pa.string()),
     )
 
-    indices = pa.array([0, 1, 2, None, 2])
+    indices = pa.array([0, 1, 2, None, 2], type=pa.int32())
     dictionary = pa.array(["foo", "bar", "baz"])
     dict = pa.DictionaryArray.from_arrays(indices, dictionary)
 
@@ -520,6 +520,10 @@ def generate_test_parquet():
         compression="NONE",
         version="1.0",
     )
+
+    import pyarrow.feather as feather
+
+    feather.write_feather(table, HERE / "ogr/data/arrow/test.feather")
 
 
 def generate_all_geoms_parquet():
