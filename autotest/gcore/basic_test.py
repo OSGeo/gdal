@@ -870,3 +870,7 @@ def test_checksum_more_than_2billion_pixels():
     assert ds.GetRasterBand(1).Checksum() == 63744
     ds = None
     gdal.Unlink(filename)
+
+
+def test_tmp_vsimem(tmp_vsimem):
+    assert gdal.VSIStatL(str(tmp_vsimem)) is not None
