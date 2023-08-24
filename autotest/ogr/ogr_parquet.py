@@ -2597,14 +2597,19 @@ def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
 
     outfilename = str(tmp_vsimem / "test_ogr_parquet_bbox_minx_miny_maxx_maxy.parquet")
     ds = ogr.GetDriverByName("Parquet").CreateDataSource(outfilename)
-    lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["ROW_GROUP_SIZE=2"])
+    lyr = ds.CreateLayer(
+        "test", geom_type=ogr.wkbNone, options=["FID=fid", "ROW_GROUP_SIZE=2"]
+    )
     lyr.CreateField(ogr.FieldDefn("bbox.minx", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("bbox.miny", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("bbox.maxx", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("bbox.maxy", ogr.OFTReal))
     lyr.CreateField(ogr.FieldDefn("geometry", ogr.OFTBinary))
+    fid = 0
     for wkt in ["LINESTRING(1 2,3 4)", None, "LINESTRING(-1 0,1 10)"]:
         f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(fid)
+        fid += 1
         if wkt:
             g = ogr.CreateGeometryFromWkt(wkt)
             minx, maxx, miny, maxy = g.GetEnvelope()
@@ -2637,6 +2642,7 @@ def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
             assert lyr.GetNextFeature() is None
         lyr.SetIgnoredFields([])
 
+    # Test dfGroupMaxY < m_sFilterEnvelope.MinY
     with ogrtest.spatial_filter(lyr, 1, 10, 1, 10):
         f = lyr.GetNextFeature()
         assert f.GetFID() == 2
@@ -2647,6 +2653,24 @@ def test_ogr_parquet_bbox_minx_miny_maxx_maxy(tmp_vsimem):
         assert f.GetFID() == 0
         f = lyr.GetNextFeature()
         assert f.GetFID() == 2
+        assert lyr.GetNextFeature() is None
+
+    # Test dfGroupMinX > m_sFilterEnvelope.MaxX
+    with ogrtest.spatial_filter(lyr, -2, 0.5, 0, 9):
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 2
+        assert lyr.GetNextFeature() is None
+
+    # Test dfGroupMinX > m_sFilterEnvelope.MaxX
+    with ogrtest.spatial_filter(lyr, -2, -2, 1, 1):
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 2
+        assert lyr.GetNextFeature() is None
+
+    # Test dfGroupMaxX < m_sFilterEnvelope.MinX
+    with ogrtest.spatial_filter(lyr, 2, -2, 4, 5):
+        f = lyr.GetNextFeature()
+        assert f.GetFID() == 0
         assert lyr.GetNextFeature() is None
 
     ds = None
