@@ -833,7 +833,7 @@ def test_ogr_mem_arrow_stream_numpy():
     f.SetField("float32list", "[-1.25,1.25]")
     f.SetField("float64list", "[-1.250123,1.250123]")
     f.SetField("strlist", '["abc","defghi"]')
-    f.SetFieldBinaryFromHexString("binary", "DEAD")
+    f.SetField("binary", b"\xDE\xAD")
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
