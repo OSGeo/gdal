@@ -259,6 +259,8 @@ def tmp_vsimem(request):
     # and we can easily switch between the two
     path = pathlib.PurePosixPath("/vsimem") / subdir
 
+    gdal.Mkdir(str(path), 0o755)
+
     yield path
 
     gdal.RmdirRecursive(str(path))
