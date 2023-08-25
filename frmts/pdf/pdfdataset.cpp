@@ -52,8 +52,6 @@
 #include <algorithm>
 #include <set>
 
-#define GDAL_DEFAULT_DPI 150.0
-
 #ifdef HAVE_PDFIUM
 // To be able to use
 // https://github.com/rouault/pdfium_build_gdal_3_5/releases/download/v1_pdfium_5106/install-win10-vs2019-x64-rev5106.zip
@@ -606,10 +604,10 @@ PDFRasterBand::PDFRasterBand(PDFDataset *poDSIn, int nBandIn,
         nBlockYSize = 256;
         poDSIn->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     }
-    else if (poDSIn->nBlockXSize)
+    else if (poDSIn->m_nBlockXSize)
     {
-        nBlockXSize = poDSIn->nBlockXSize;
-        nBlockYSize = poDSIn->nBlockYSize;
+        nBlockXSize = poDSIn->m_nBlockXSize;
+        nBlockYSize = poDSIn->m_nBlockYSize;
     }
     else if (poDSIn->GetRasterXSize() <
              64 * 1024 * 1024 / poDSIn->GetRasterYSize())
@@ -634,7 +632,7 @@ void PDFDataset::InitOverviews()
 {
     // Only if used pdfium, make "arbitrary overviews"
     // Blocks are 256x256
-    if (bUseLib.test(PDFLIB_PDFIUM) &&
+    if (m_bUseLib.test(PDFLIB_PDFIUM) &&
         ((GDALPamRasterBand *)GetRasterBand(1))
                 ->GDALPamRasterBand::GetOverviewCount() == 0)
     {
@@ -649,7 +647,7 @@ void PDFDataset::InitOverviews()
             nYSize = (nYSize + 1) / 2;
 
             PDFDataset *poOvrDS = new PDFDataset(this, nXSize, nYSize);
-            apoOvrDS.push_back(poOvrDS);
+            m_apoOvrDS.push_back(poOvrDS);
 
             for (int i = 0; i < nBands; i++)
                 poOvrDS->SetBand(i + 1,
@@ -687,7 +685,7 @@ int PDFRasterBand::GetOverviewCount()
     else
     {
         PDFDataset *poGDS = (PDFDataset *)poDS;
-        return (int)poGDS->apoOvrDS.size();
+        return (int)poGDS->m_apoOvrDS.size();
     }
 }
 
@@ -705,7 +703,7 @@ GDALRasterBand *PDFRasterBand::GetOverview(int iOverviewIndex)
     else
     {
         PDFDataset *poGDS = (PDFDataset *)poDS;
-        return poGDS->apoOvrDS[iOverviewIndex]->GetRasterBand(nBand);
+        return poGDS->m_apoOvrDS[iOverviewIndex]->GetRasterBand(nBand);
     }
 }
 
@@ -737,14 +735,14 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
         nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
 
     int nXBlocks = DIV_ROUND_UP(nRasterXSize, nBlockXSize);
-    int iTile = poGDS->aiTiles[nBlockYOff * nXBlocks + nBlockXOff];
+    int iTile = poGDS->m_aiTiles[nBlockYOff * nXBlocks + nBlockXOff];
     if (iTile < 0)
     {
         memset(pImage, 0, nBlockXSize * nBlockYSize);
         return CE_None;
     }
 
-    GDALPDFTileDesc &sTile = poGDS->asTiles[iTile];
+    GDALPDFTileDesc &sTile = poGDS->m_asTiles[iTile];
     GDALPDFObject *poImage = sTile.poImage;
 
     if (nBand == 4)
@@ -830,8 +828,9 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
         return CE_None;
     }
 
-    if (poGDS->nLastBlockXOff == nBlockXOff &&
-        poGDS->nLastBlockYOff == nBlockYOff && poGDS->pabyCachedData != nullptr)
+    if (poGDS->m_nLastBlockXOff == nBlockXOff &&
+        poGDS->m_nLastBlockYOff == nBlockYOff &&
+        poGDS->m_pabyCachedData != nullptr)
     {
 #ifdef DEBUG
         CPLDebug("PDF", "Using cached block (%d, %d)", nBlockXOff, nBlockYOff);
@@ -840,13 +839,13 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
     }
     else
     {
-        if (poGDS->bTried == FALSE)
+        if (!poGDS->m_bTried)
         {
-            poGDS->bTried = TRUE;
-            poGDS->pabyCachedData =
+            poGDS->m_bTried = true;
+            poGDS->m_pabyCachedData =
                 (GByte *)VSIMalloc3(3, nBlockXSize, nBlockYSize);
         }
-        if (poGDS->pabyCachedData == nullptr)
+        if (poGDS->m_pabyCachedData == nullptr)
             return CE_Failure;
 
         GDALPDFStream *poStream = poImage->GetStream();
@@ -865,10 +864,10 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
             return CE_Failure;
         }
 
-        memcpy(poGDS->pabyCachedData, pabyStream, poStream->GetLength());
+        memcpy(poGDS->m_pabyCachedData, pabyStream, poStream->GetLength());
         VSIFree(pabyStream);
-        poGDS->nLastBlockXOff = nBlockXOff;
-        poGDS->nLastBlockYOff = nBlockYOff;
+        poGDS->m_nLastBlockXOff = nBlockXOff;
+        poGDS->m_nLastBlockYOff = nBlockYOff;
     }
 
     GByte *pabyData = (GByte *)pImage;
@@ -884,7 +883,8 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
             for (int i = 0; i < nReqXSize; i++)
             {
                 pabyData[j * nBlockXSize + i] =
-                    poGDS->pabyCachedData[3 * (j * nReqXSize + i) + nBand - 1];
+                    poGDS
+                        ->m_pabyCachedData[3 * (j * nReqXSize + i) + nBand - 1];
             }
         }
     }
@@ -895,7 +895,7 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
             for (int i = 0; i < nReqXSize; i++)
             {
                 pabyData[j * nBlockXSize + i] =
-                    poGDS->pabyCachedData[j * nReqXSize + i];
+                    poGDS->m_pabyCachedData[j * nReqXSize + i];
             }
         }
     }
@@ -911,7 +911,7 @@ GDALSuggestedBlockAccessPattern
 PDFRasterBand::GetSuggestedBlockAccessPattern() const
 {
     PDFDataset *poGDS = cpl::down_cast<PDFDataset *>(poDS);
-    if (!poGDS->aiTiles.empty())
+    if (!poGDS->m_aiTiles.empty())
         return GSBAP_RANDOM;
     return GSBAP_LARGEST_CHUNK_POSSIBLE;
 }
@@ -925,7 +925,7 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     PDFDataset *poGDS = (PDFDataset *)poDS;
 
-    if (!poGDS->aiTiles.empty())
+    if (!poGDS->m_aiTiles.empty())
     {
         if (IReadBlockFromTile(nBlockXOff, nBlockYOff, pImage) == CE_None)
         {
@@ -933,12 +933,12 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         }
         else
         {
-            poGDS->aiTiles.resize(0);
-            poGDS->bTried = FALSE;
-            CPLFree(poGDS->pabyCachedData);
-            poGDS->pabyCachedData = nullptr;
-            poGDS->nLastBlockXOff = -1;
-            poGDS->nLastBlockYOff = -1;
+            poGDS->m_aiTiles.resize(0);
+            poGDS->m_bTried = false;
+            CPLFree(poGDS->m_pabyCachedData);
+            poGDS->m_pabyCachedData = nullptr;
+            poGDS->m_nLastBlockXOff = -1;
+            poGDS->m_nLastBlockYOff = -1;
         }
     }
 
@@ -951,22 +951,22 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     else if ((nBlockYOff + 1) * nBlockYSize > nRasterYSize)
         nReqYSize = nRasterYSize - nBlockYOff * nBlockYSize;
 
-    if (poGDS->bTried == FALSE)
+    if (!poGDS->m_bTried)
     {
-        poGDS->bTried = TRUE;
+        poGDS->m_bTried = true;
         if (nBlockYSize == 1)
-            poGDS->pabyCachedData = static_cast<GByte *>(VSIMalloc3(
+            poGDS->m_pabyCachedData = static_cast<GByte *>(VSIMalloc3(
                 std::max(3, poGDS->nBands), nRasterXSize, nRasterYSize));
         else
-            poGDS->pabyCachedData = static_cast<GByte *>(VSIMalloc3(
+            poGDS->m_pabyCachedData = static_cast<GByte *>(VSIMalloc3(
                 std::max(3, poGDS->nBands), nBlockXSize, nBlockYSize));
     }
-    if (poGDS->pabyCachedData == nullptr)
+    if (poGDS->m_pabyCachedData == nullptr)
         return CE_Failure;
 
-    if (poGDS->nLastBlockXOff == nBlockXOff &&
-        (nBlockYSize == 1 || poGDS->nLastBlockYOff == nBlockYOff) &&
-        poGDS->pabyCachedData != nullptr)
+    if (poGDS->m_nLastBlockXOff == nBlockXOff &&
+        (nBlockYSize == 1 || poGDS->m_nLastBlockYOff == nBlockYOff) &&
+        poGDS->m_pabyCachedData != nullptr)
     {
         /*CPLDebug("PDF", "Using cached block (%d, %d)",
                  nBlockXOff, nBlockYOff);*/
@@ -975,7 +975,7 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     else
     {
 #ifdef HAVE_PODOFO
-        if (poGDS->bUseLib.test(PDFLIB_PODOFO) && nBand == 4)
+        if (poGDS->m_bUseLib.test(PDFLIB_PODOFO) && nBand == 4)
         {
             memset(pImage, 255, nBlockXSize * nBlockYSize);
             return CE_None;
@@ -992,31 +992,32 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
         CPLErr eErr = poGDS->ReadPixels(nReqXOff, nReqYOff, nReqXSize,
                                         nReqYSize, nPixelSpace, nLineSpace,
-                                        nBandSpace, poGDS->pabyCachedData);
+                                        nBandSpace, poGDS->m_pabyCachedData);
 
         if (eErr == CE_None)
         {
-            poGDS->nLastBlockXOff = nBlockXOff;
-            poGDS->nLastBlockYOff = nBlockYOff;
+            poGDS->m_nLastBlockXOff = nBlockXOff;
+            poGDS->m_nLastBlockYOff = nBlockYOff;
         }
         else
         {
-            CPLFree(poGDS->pabyCachedData);
-            poGDS->pabyCachedData = nullptr;
+            CPLFree(poGDS->m_pabyCachedData);
+            poGDS->m_pabyCachedData = nullptr;
         }
     }
-    if (poGDS->pabyCachedData == nullptr)
+    if (poGDS->m_pabyCachedData == nullptr)
         return CE_Failure;
 
     if (nBlockYSize == 1)
         memcpy(pImage,
-               poGDS->pabyCachedData +
+               poGDS->m_pabyCachedData +
                    (nBand - 1) * nBlockXSize * nRasterYSize +
                    nBlockYOff * nBlockXSize,
                nBlockXSize);
     else
         memcpy(pImage,
-               poGDS->pabyCachedData + (nBand - 1) * nBlockXSize * nBlockYSize,
+               poGDS->m_pabyCachedData +
+                   (nBand - 1) * nBlockXSize * nBlockYSize,
                nBlockXSize * nBlockYSize);
 
     return CE_None;
@@ -1054,7 +1055,7 @@ static const char *PDFEnterPasswordFromConsoleIfNeeded(const char *pszUserPwd)
 /************************************************************************/
 
 // Flag for calling PDFium Init and Destroy methods
-int PDFDataset::bPdfiumInit = FALSE;
+bool PDFDataset::g_bPdfiumInit = false;
 
 // Pdfium global read mutex - Pdfium is not multi-thread
 static CPLMutex *g_oPdfiumReadMutex = nullptr;
@@ -1105,10 +1106,10 @@ static int LoadPdfiumDocumentPage(const char *pszFilename,
     CPLCreateOrAcquireMutex(&g_oPdfiumLoadDocMutex, PDFIUM_MUTEX_TIMEOUT);
 
     // Library can be destroyed if every PDF dataset was closed!
-    if (!PDFDataset::bPdfiumInit)
+    if (!PDFDataset::g_bPdfiumInit)
     {
         FPDF_InitLibrary();
-        PDFDataset::bPdfiumInit = TRUE;
+        PDFDataset::g_bPdfiumInit = TRUE;
     }
 
     TMapPdfiumDatasets::iterator it;
@@ -1374,7 +1375,7 @@ static int UnloadPdfiumDocumentPage(TPdfiumDocumentStruct **doc,
 #endif
     // No document loaded, destroy pdfium
     FPDF_DestroyLibrary();
-    PDFDataset::bPdfiumInit = FALSE;
+    PDFDataset::g_bPdfiumInit = FALSE;
 
     CPLReleaseMutex(g_oPdfiumLoadDocMutex);
 
@@ -1947,7 +1948,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         GetOption(papszOpenOptions, "RENDERING_OPTIONS", nullptr);
 
 #ifdef HAVE_POPPLER
-    if (bUseLib.test(PDFLIB_POPPLER))
+    if (m_bUseLib.test(PDFLIB_POPPLER))
     {
         SplashColor sColor;
         sColor[0] = 255;
@@ -1985,7 +1986,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
             CSLDestroy(papszTokens);
         }
 
-        PDFDoc *poDoc = poDocPoppler;
+        PDFDoc *poDoc = m_poDocPoppler;
         poSplashOut->startDoc(poDoc);
 
         /* EVIL: we modify a private member... */
@@ -2000,9 +2001,9 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
          * rendering */
         Catalog *poCatalog = poDoc->getCatalog();
         OCGs *poOldOCGs = poCatalog->optContent;
-        if (!bUseOCG)
+        if (!m_bUseOCG)
             poCatalog->optContent = nullptr;
-        poDoc->displayPageSlice(poSplashOut, iPage, dfDPI, dfDPI, 0, TRUE,
+        poDoc->displayPageSlice(poSplashOut, m_iPage, m_dfDPI, m_dfDPI, 0, TRUE,
                                 gFalse, gFalse, nReqXOff, nReqYOff, nReqXSize,
                                 nReqYSize);
 
@@ -2059,9 +2060,9 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
 #endif  // HAVE_POPPLER
 
 #ifdef HAVE_PODOFO
-    if (bUseLib.test(PDFLIB_PODOFO))
+    if (m_bUseLib.test(PDFLIB_PODOFO))
     {
-        if (bPdfToPpmFailed)
+        if (m_bPdfToPpmFailed)
             return CE_Failure;
 
         if (pszRenderingOptions != nullptr &&
@@ -2106,7 +2107,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
             char **papszArgs = nullptr;
             papszArgs = CSLAddString(papszArgs, "pdftoppm");
             papszArgs = CSLAddString(papszArgs, "-r");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%f", dfDPI));
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%f", m_dfDPI));
             papszArgs = CSLAddString(papszArgs, "-x");
             papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqXOff));
             papszArgs = CSLAddString(papszArgs, "-y");
@@ -2116,15 +2117,15 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
             papszArgs = CSLAddString(papszArgs, "-H");
             papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", nReqYSize));
             papszArgs = CSLAddString(papszArgs, "-f");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", iPage));
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", m_iPage));
             papszArgs = CSLAddString(papszArgs, "-l");
-            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", iPage));
-            if (!osUserPwd.empty())
+            papszArgs = CSLAddString(papszArgs, CPLSPrintf("%d", m_iPage));
+            if (!m_osUserPwd.empty())
             {
                 papszArgs = CSLAddString(papszArgs, "-upw");
-                papszArgs = CSLAddString(papszArgs, osUserPwd.c_str());
+                papszArgs = CSLAddString(papszArgs, m_osUserPwd.c_str());
             }
-            papszArgs = CSLAddString(papszArgs, osFilename.c_str());
+            papszArgs = CSLAddString(papszArgs, m_osFilename.c_str());
 
             osTmpFilename = CPLSPrintf("/vsimem/pdf/temp_%p.ppm", this);
             VSILFILE *fpOut = VSIFOpenL(osTmpFilename, "wb");
@@ -2158,16 +2159,16 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         else
         {
             CPLDebug("PDF", "Ret code = %d", nRet);
-            bPdfToPpmFailed = TRUE;
+            m_bPdfToPpmFailed = true;
             eErr = CE_Failure;
         }
         VSIUnlink(osTmpFilename);
     }
 #endif  // HAVE_PODOFO
 #ifdef HAVE_PDFIUM
-    if (bUseLib.test(PDFLIB_PDFIUM))
+    if (m_bUseLib.test(PDFLIB_PDFIUM))
     {
-        if (!poPagePdfium)
+        if (!m_poPagePdfium)
         {
             return CE_Failure;
         }
@@ -2175,12 +2176,12 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         // Pdfium does not support multithreading
         CPLCreateOrAcquireMutex(&g_oPdfiumReadMutex, PDFIUM_MUTEX_TIMEOUT);
 
-        CPLCreateOrAcquireMutex(&(poPagePdfium->readMutex),
+        CPLCreateOrAcquireMutex(&(m_poPagePdfium->readMutex),
                                 PDFIUM_MUTEX_TIMEOUT);
 
         // Parsing content required before rastering
         // can takes too long for PDF with large number of objects/layers
-        poPagePdfium->page->ParseContent();
+        m_poPagePdfium->page->ParseContent();
 
         FPDF_BITMAP bitmap =
             FPDFBitmap_Create(nReqXSize, nReqYSize, nBands == 4 /*alpha*/);
@@ -2188,7 +2189,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         if (bitmap == nullptr)
         {
             // Release mutex - following code is thread-safe
-            CPLReleaseMutex(poPagePdfium->readMutex);
+            CPLReleaseMutex(m_poPagePdfium->readMutex);
             CPLReleaseMutex(g_oPdfiumReadMutex);
 
 #ifdef notdef
@@ -2257,16 +2258,16 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
 
         // Part of PDF is render with -x, -y, page_width, page_height
         // (not requested size!)
-        PDFiumRenderPageBitmap(bitmap, FPDFPageFromIPDFPage(poPagePdfium->page),
-                               -nReqXOff, -nReqYOff, nRasterXSize, nRasterYSize,
-                               pszRenderingOptions);
+        PDFiumRenderPageBitmap(
+            bitmap, FPDFPageFromIPDFPage(m_poPagePdfium->page), -nReqXOff,
+            -nReqYOff, nRasterXSize, nRasterYSize, pszRenderingOptions);
 
         int stride = FPDFBitmap_GetStride(bitmap);
         const GByte *buffer =
             reinterpret_cast<const GByte *>(FPDFBitmap_GetBuffer(bitmap));
 
         // Release mutex - following code is thread-safe
-        CPLReleaseMutex(poPagePdfium->readMutex);
+        CPLReleaseMutex(m_poPagePdfium->readMutex);
         CPLReleaseMutex(g_oPdfiumReadMutex);
 
         // Source data is B, G, R, unused.
@@ -2335,29 +2336,29 @@ CPLErr PDFImageRasterBand::IReadBlock(int CPL_UNUSED nBlockXOff, int nBlockYOff,
                                       void *pImage)
 {
     PDFDataset *poGDS = (PDFDataset *)poDS;
-    CPLAssert(poGDS->poImageObj != nullptr);
+    CPLAssert(poGDS->m_poImageObj != nullptr);
 
-    if (poGDS->bTried == FALSE)
+    if (!poGDS->m_bTried)
     {
         int nBands = (poGDS->nBands == 1) ? 1 : 3;
-        poGDS->bTried = TRUE;
+        poGDS->m_bTried = true;
         if (nBands == 3)
         {
-            poGDS->pabyCachedData =
+            poGDS->m_pabyCachedData =
                 (GByte *)VSIMalloc3(nBands, nRasterXSize, nRasterYSize);
-            if (poGDS->pabyCachedData == nullptr)
+            if (poGDS->m_pabyCachedData == nullptr)
                 return CE_Failure;
         }
 
-        GDALPDFStream *poStream = poGDS->poImageObj->GetStream();
+        GDALPDFStream *poStream = poGDS->m_poImageObj->GetStream();
         GByte *pabyStream = nullptr;
 
         if (poStream == nullptr ||
             poStream->GetLength() != nBands * nRasterXSize * nRasterYSize ||
             (pabyStream = (GByte *)poStream->GetBytes()) == nullptr)
         {
-            VSIFree(poGDS->pabyCachedData);
-            poGDS->pabyCachedData = nullptr;
+            VSIFree(poGDS->m_pabyCachedData);
+            poGDS->m_pabyCachedData = nullptr;
             return CE_Failure;
         }
 
@@ -2366,27 +2367,27 @@ CPLErr PDFImageRasterBand::IReadBlock(int CPL_UNUSED nBlockXOff, int nBlockYOff,
             /* pixel interleaved to band interleaved */
             for (int i = 0; i < nRasterXSize * nRasterYSize; i++)
             {
-                poGDS->pabyCachedData[0 * nRasterXSize * nRasterYSize + i] =
+                poGDS->m_pabyCachedData[0 * nRasterXSize * nRasterYSize + i] =
                     pabyStream[3 * i + 0];
-                poGDS->pabyCachedData[1 * nRasterXSize * nRasterYSize + i] =
+                poGDS->m_pabyCachedData[1 * nRasterXSize * nRasterYSize + i] =
                     pabyStream[3 * i + 1];
-                poGDS->pabyCachedData[2 * nRasterXSize * nRasterYSize + i] =
+                poGDS->m_pabyCachedData[2 * nRasterXSize * nRasterYSize + i] =
                     pabyStream[3 * i + 2];
             }
             VSIFree(pabyStream);
         }
         else
-            poGDS->pabyCachedData = pabyStream;
+            poGDS->m_pabyCachedData = pabyStream;
     }
 
-    if (poGDS->pabyCachedData == nullptr)
+    if (poGDS->m_pabyCachedData == nullptr)
         return CE_Failure;
 
     if (nBand == 4)
         memset(pImage, 255, nRasterXSize);
     else
         memcpy(pImage,
-               poGDS->pabyCachedData +
+               poGDS->m_pabyCachedData +
                    (nBand - 1) * nRasterXSize * nRasterYSize +
                    nBlockYOff * nRasterXSize,
                nRasterXSize);
@@ -2399,44 +2400,18 @@ CPLErr PDFImageRasterBand::IReadBlock(int CPL_UNUSED nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 PDFDataset::PDFDataset(PDFDataset *poParentDSIn, int nXSize, int nYSize)
-    : poParentDS(poParentDSIn), dfDPI(GDAL_DEFAULT_DPI), bHasCTM(FALSE),
-      bGeoTransformValid(FALSE), nGCPCount(0), pasGCPList(nullptr),
-      bProjDirty(FALSE), bNeatLineDirty(FALSE), bInfoDirty(FALSE),
-      bXMPDirty(FALSE),
-#ifdef HAVE_POPPLER
-      poDocPoppler(nullptr),
-#endif
-#ifdef HAVE_PODOFO
-      poDocPodofo(nullptr), bPdfToPpmFailed(FALSE),
-#endif
+    : m_poParentDS(poParentDSIn),
 #ifdef HAVE_PDFIUM
-      poDocPdfium(poParentDSIn ? poParentDSIn->poDocPdfium : nullptr),
-      poPagePdfium(poParentDSIn ? poParentDSIn->poPagePdfium : nullptr),
+      m_poDocPdfium(poParentDSIn ? poParentDSIn->m_poDocPdfium : nullptr),
+      m_poPagePdfium(poParentDSIn ? poParentDSIn->m_poPagePdfium : nullptr),
 #endif
-      poPageObj(nullptr), iPage(-1), poImageObj(nullptr), dfMaxArea(0),
-      bTried(FALSE), pabyCachedData(nullptr), nLastBlockXOff(-1),
-      nLastBlockYOff(-1), poNeatLine(nullptr),
-#ifdef HAVE_POPPLER
-      poCatalogObjectPoppler(nullptr),
-#endif
-      poCatalogObject(nullptr), bUseOCG(FALSE), bHasLoadedLayers(FALSE),
-      nLayers(0), papoLayers(nullptr), dfPageWidth(0), dfPageHeight(0),
-      bSetStyle(CPLTestBool(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES")))
+      m_bSetStyle(CPLTestBool(CPLGetConfigOption("OGR_PDF_SET_STYLE", "YES")))
 {
     m_oSRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
-    bUseLib.reset();
     if (poParentDSIn)
-        bUseLib = poParentDS->bUseLib;
-    adfGeoTransform[0] = 0;
-    adfGeoTransform[1] = 1;
-    adfGeoTransform[2] = 0;
-    adfGeoTransform[3] = 0;
-    adfGeoTransform[4] = 0;
-    adfGeoTransform[5] = 1;
-    nBlockXSize = 0;
-    nBlockYSize = 0;
+        m_bUseLib = m_poParentDS->m_bUseLib;
 
     InitMapOperators();
 }
@@ -2460,10 +2435,10 @@ CPLErr PDFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /*      discard any concept of internal overviews when the user         */
     /*      first requests to build external overviews.                     */
     /* -------------------------------------------------------------------- */
-    if (!apoOvrDS.empty())
+    if (!m_apoOvrDS.empty())
     {
-        apoOvrDSBackup = apoOvrDS;
-        apoOvrDS.clear();
+        m_apoOvrDSBackup = m_apoOvrDS;
+        m_apoOvrDS.clear();
     }
 
     return GDALPamDataset::IBuildOverviews(
@@ -2501,31 +2476,32 @@ static void PDFFreeDoc(PDFDoc *poDoc)
 
 GDALPDFObject *PDFDataset::GetCatalog()
 {
-    if (poCatalogObject)
-        return poCatalogObject;
+    if (m_poCatalogObject)
+        return m_poCatalogObject;
 
 #ifdef HAVE_POPPLER
-    if (bUseLib.test(PDFLIB_POPPLER))
+    if (m_bUseLib.test(PDFLIB_POPPLER))
     {
-        poCatalogObjectPoppler = new ObjectAutoFree;
+        m_poCatalogObjectPoppler = new ObjectAutoFree;
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
-        *poCatalogObjectPoppler->getObj() =
-            poDocPoppler->getXRef()->getCatalog();
+        *m_poCatalogObjectPoppler->getObj() =
+            m_poDocPoppler->getXRef()->getCatalog();
 #else
-        poDocPoppler->getXRef()->getCatalog(poCatalogObjectPoppler->getObj());
+        m_poDocPoppler->getXRef()->getCatalog(
+            m_poCatalogObjectPoppler->getObj());
 #endif
-        if (!poCatalogObjectPoppler->getObj()->isNull())
-            poCatalogObject = new GDALPDFObjectPoppler(
-                poCatalogObjectPoppler->getObj(), FALSE);
+        if (!m_poCatalogObjectPoppler->getObj()->isNull())
+            m_poCatalogObject = new GDALPDFObjectPoppler(
+                m_poCatalogObjectPoppler->getObj(), FALSE);
     }
 #endif
 
 #ifdef HAVE_PODOFO
-    if (bUseLib.test(PDFLIB_PODOFO))
+    if (m_bUseLib.test(PDFLIB_PODOFO))
     {
         int nCatalogNum = 0;
         int nCatalogGen = 0;
-        VSILFILE *fp = VSIFOpenL(osFilename.c_str(), "rb");
+        VSILFILE *fp = VSIFOpenL(m_osFilename.c_str(), "rb");
         if (fp != nullptr)
         {
             GDALPDFUpdateWriter oWriter(fp);
@@ -2538,25 +2514,25 @@ GDALPDFObject *PDFDataset::GetCatalog()
         }
 
         PoDoFo::PdfObject *poCatalogPodofo =
-            poDocPodofo->GetObjects().GetObject(
+            m_poDocPodofo->GetObjects().GetObject(
                 PoDoFo::PdfReference(nCatalogNum, nCatalogGen));
         if (poCatalogPodofo)
-            poCatalogObject = new GDALPDFObjectPodofo(
-                poCatalogPodofo, poDocPodofo->GetObjects());
+            m_poCatalogObject = new GDALPDFObjectPodofo(
+                poCatalogPodofo, m_poDocPodofo->GetObjects());
     }
 #endif
 
 #ifdef HAVE_PDFIUM
-    if (bUseLib.test(PDFLIB_PDFIUM))
+    if (m_bUseLib.test(PDFLIB_PDFIUM))
     {
-        const CPDF_Dictionary *catalog = poDocPdfium->doc->GetRoot();
+        const CPDF_Dictionary *catalog = m_poDocPdfium->doc->GetRoot();
         if (catalog)
-            poCatalogObject =
+            m_poCatalogObject =
                 GDALPDFObjectPdfium::Build(pdfium::WrapRetain(catalog));
     }
 #endif  // ~ HAVE_PDFIUM
 
-    return poCatalogObject;
+    return m_poCatalogObject;
 }
 
 /************************************************************************/
@@ -2566,99 +2542,100 @@ GDALPDFObject *PDFDataset::GetCatalog()
 PDFDataset::~PDFDataset()
 {
 #ifdef HAVE_PDFIUM
-    for (size_t i = 0; i < apoOvrDS.size(); i++)
-        delete apoOvrDS[i];
-    apoOvrDS.clear();
-    for (size_t i = 0; i < apoOvrDSBackup.size(); i++)
-        delete apoOvrDSBackup[i];
-    apoOvrDSBackup.clear();
+    for (size_t i = 0; i < m_apoOvrDS.size(); i++)
+        delete m_apoOvrDS[i];
+    m_apoOvrDS.clear();
+    for (size_t i = 0; i < m_apoOvrDSBackup.size(); i++)
+        delete m_apoOvrDSBackup[i];
+    m_apoOvrDSBackup.clear();
 #endif
 
-    CPLFree(pabyCachedData);
-    pabyCachedData = nullptr;
+    CPLFree(m_pabyCachedData);
+    m_pabyCachedData = nullptr;
 
-    delete poNeatLine;
-    poNeatLine = nullptr;
+    delete m_poNeatLine;
+    m_poNeatLine = nullptr;
 
     /* Collect data necessary to update */
     int nNum = 0;
     int nGen = 0;
     GDALPDFDictionaryRW *poPageDictCopy = nullptr;
     GDALPDFDictionaryRW *poCatalogDictCopy = nullptr;
-    if (poPageObj)
+    if (m_poPageObj)
     {
-        nNum = poPageObj->GetRefNum().toInt();
-        nGen = poPageObj->GetRefGen();
+        nNum = m_poPageObj->GetRefNum().toInt();
+        nGen = m_poPageObj->GetRefGen();
         if (eAccess == GA_Update &&
-            (bProjDirty || bNeatLineDirty || bInfoDirty || bXMPDirty) &&
-            nNum != 0 && poPageObj != nullptr &&
-            poPageObj->GetType() == PDFObjectType_Dictionary)
+            (m_bProjDirty || m_bNeatLineDirty || m_bInfoDirty || m_bXMPDirty) &&
+            nNum != 0 && m_poPageObj != nullptr &&
+            m_poPageObj->GetType() == PDFObjectType_Dictionary)
         {
-            poPageDictCopy = poPageObj->GetDictionary()->Clone();
+            poPageDictCopy = m_poPageObj->GetDictionary()->Clone();
 
-            if (bXMPDirty)
+            if (m_bXMPDirty)
             {
                 /* We need the catalog because it points to the XMP Metadata
                  * object */
                 GetCatalog();
-                if (poCatalogObject &&
-                    poCatalogObject->GetType() == PDFObjectType_Dictionary)
+                if (m_poCatalogObject &&
+                    m_poCatalogObject->GetType() == PDFObjectType_Dictionary)
                     poCatalogDictCopy =
-                        poCatalogObject->GetDictionary()->Clone();
+                        m_poCatalogObject->GetDictionary()->Clone();
             }
         }
     }
 
     /* Close document (and file descriptor) to be able to open it */
     /* in read-write mode afterwards */
-    delete poPageObj;
-    poPageObj = nullptr;
-    delete poCatalogObject;
-    poCatalogObject = nullptr;
+    delete m_poPageObj;
+    m_poPageObj = nullptr;
+    delete m_poCatalogObject;
+    m_poCatalogObject = nullptr;
 #ifdef HAVE_POPPLER
-    if (bUseLib.test(PDFLIB_POPPLER))
+    if (m_bUseLib.test(PDFLIB_POPPLER))
     {
-        delete poCatalogObjectPoppler;
-        PDFFreeDoc(poDocPoppler);
+        delete m_poCatalogObjectPoppler;
+        PDFFreeDoc(m_poDocPoppler);
     }
-    poDocPoppler = nullptr;
+    m_poDocPoppler = nullptr;
 #endif
 #ifdef HAVE_PODOFO
-    if (bUseLib.test(PDFLIB_PODOFO))
+    if (m_bUseLib.test(PDFLIB_PODOFO))
     {
-        delete poDocPodofo;
+        delete m_poDocPodofo;
     }
-    poDocPodofo = nullptr;
+    m_poDocPodofo = nullptr;
 #endif
 #ifdef HAVE_PDFIUM
-    if (poParentDS == nullptr)
+    if (m_poParentDS == nullptr)
     {
-        if (bUseLib.test(PDFLIB_PDFIUM))
+        if (m_bUseLib.test(PDFLIB_PDFIUM))
         {
-            UnloadPdfiumDocumentPage(&poDocPdfium, &poPagePdfium);
+            UnloadPdfiumDocumentPage(&m_poDocPdfium, &m_poPagePdfium);
         }
     }
-    poDocPdfium = nullptr;
-    poPagePdfium = nullptr;
+    m_poDocPdfium = nullptr;
+    m_poPagePdfium = nullptr;
 #endif  // ~ HAVE_PDFIUM
 
     /* Now do the update */
     if (poPageDictCopy)
     {
-        VSILFILE *fp = VSIFOpenL(osFilename, "rb+");
+        VSILFILE *fp = VSIFOpenL(m_osFilename, "rb+");
         if (fp != nullptr)
         {
             GDALPDFUpdateWriter oWriter(fp);
             if (oWriter.ParseTrailerAndXRef())
             {
-                if ((bProjDirty || bNeatLineDirty) && poPageDictCopy != nullptr)
-                    oWriter.UpdateProj(this, dfDPI, poPageDictCopy,
+                if ((m_bProjDirty || m_bNeatLineDirty) &&
+                    poPageDictCopy != nullptr)
+                    oWriter.UpdateProj(this, m_dfDPI, poPageDictCopy,
                                        GDALPDFObjectNum(nNum), nGen);
 
-                if (bInfoDirty)
+                if (m_bInfoDirty)
                     oWriter.UpdateInfo(this);
 
-                if (bXMPDirty && poCatalogDictCopy != nullptr)
+                if (m_bXMPDirty && poCatalogDictCopy != nullptr)
                     oWriter.UpdateXMP(this, poCatalogDictCopy);
             }
             oWriter.Close();
@@ -2666,7 +2643,7 @@ PDFDataset::~PDFDataset()
         else
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot open %s in update mode", osFilename.c_str());
+                     "Cannot open %s in update mode", m_osFilename.c_str());
         }
     }
     delete poPageDictCopy;
@@ -2674,19 +2651,19 @@ PDFDataset::~PDFDataset()
     delete poCatalogDictCopy;
     poCatalogDictCopy = nullptr;
 
-    if (nGCPCount > 0)
+    if (m_nGCPCount > 0)
     {
-        GDALDeinitGCPs(nGCPCount, pasGCPList);
-        CPLFree(pasGCPList);
-        pasGCPList = nullptr;
-        nGCPCount = 0;
+        GDALDeinitGCPs(m_nGCPCount, m_pasGCPList);
+        CPLFree(m_pasGCPList);
+        m_pasGCPList = nullptr;
+        m_nGCPCount = 0;
     }
 
     CleanupIntermediateResources();
 
-    for (int i = 0; i < nLayers; i++)
-        delete papoLayers[i];
-    CPLFree(papoLayers);
+    for (int i = 0; i < m_nLayers; i++)
+        delete m_papoLayers[i];
+    CPLFree(m_papoLayers);
 
     // Do that only after having destroyed Poppler objects
     if (m_fp)
@@ -2708,7 +2685,7 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     int nBandBlockXSize, nBandBlockYSize;
     int bReadPixels = FALSE;
     GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
-    if (aiTiles.empty() && eRWFlag == GF_Read && nXSize == nBufXSize &&
+    if (m_aiTiles.empty() && eRWFlag == GF_Read && nXSize == nBufXSize &&
         nYSize == nBufYSize &&
         (nBufXSize > nBandBlockXSize || nBufYSize > nBandBlockYSize) &&
         eBufType == GDT_Byte && nBandCount == nBands &&
@@ -2717,7 +2694,7 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         bReadPixels = TRUE;
 #ifdef HAVE_PODOFO
-        if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4)
+        if (m_bUseLib.test(PDFLIB_PODOFO) && nBands == 4)
         {
             bReadPixels = FALSE;
         }
@@ -2747,17 +2724,17 @@ CPLErr PDFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     PDFDataset *poGDS = (PDFDataset *)poDS;
-    int bReadPixels = FALSE;
+    bool bReadPixels = false;
     if (poGDS->aiTiles.empty() && eRWFlag == GF_Read && nXSize == nBufXSize &&
         nYSize == nBufYSize &&
         (nBufXSize > nBlockXSize || nBufYSize > nBlockYSize) &&
         eBufType == GDT_Byte)
     {
-        bReadPixels = TRUE;
+        bReadPixels = true;
 #ifdef HAVE_PODOFO
-        if (poGDS->bUseLib.test(PDFLIB_PODOFO) && poGDS->nBands == 4)
+        if (poGDS->m_bUseLib.test(PDFLIB_PODOFO) && poGDS->nBands == 4)
         {
-            bReadPixels = FALSE;
+            bReadPixels = false;
         }
 #endif
     }
@@ -3116,30 +3093,30 @@ int PDFDataset::CheckTiledRaster()
     size_t i;
     int l_nBlockXSize = 0;
     int l_nBlockYSize = 0;
-    const double dfUserUnit = dfDPI * USER_UNIT_IN_INCH;
+    const double dfUserUnit = m_dfDPI * USER_UNIT_IN_INCH;
 
     /* First pass : check that all tiles have same DPI, */
     /* are contained entirely in the raster size, */
     /* and determine the block size */
-    for (i = 0; i < asTiles.size(); i++)
+    for (i = 0; i < m_asTiles.size(); i++)
     {
-        double dfDrawWidth = asTiles[i].adfCM[0] * dfUserUnit;
-        double dfDrawHeight = asTiles[i].adfCM[3] * dfUserUnit;
-        double dfX = asTiles[i].adfCM[4] * dfUserUnit;
-        double dfY = asTiles[i].adfCM[5] * dfUserUnit;
+        double dfDrawWidth = m_asTiles[i].adfCM[0] * dfUserUnit;
+        double dfDrawHeight = m_asTiles[i].adfCM[3] * dfUserUnit;
+        double dfX = m_asTiles[i].adfCM[4] * dfUserUnit;
+        double dfY = m_asTiles[i].adfCM[5] * dfUserUnit;
         int nX = (int)(dfX + 0.1);
         int nY = (int)(dfY + 0.1);
-        int nWidth = (int)(asTiles[i].dfWidth + 1e-8);
-        int nHeight = (int)(asTiles[i].dfHeight + 1e-8);
+        int nWidth = (int)(m_asTiles[i].dfWidth + 1e-8);
+        int nHeight = (int)(m_asTiles[i].dfHeight + 1e-8);
 
-        GDALPDFDictionary *poImageDict = asTiles[i].poImage->GetDictionary();
+        GDALPDFDictionary *poImageDict = m_asTiles[i].poImage->GetDictionary();
         GDALPDFObject *poBitsPerComponent =
             poImageDict->Get("BitsPerComponent");
         GDALPDFObject *poColorSpace = poImageDict->Get("ColorSpace");
         GDALPDFObject *poFilter = poImageDict->Get("Filter");
 
         /* Podofo cannot uncompress JPEG2000 streams */
-        if (bUseLib.test(PDFLIB_PODOFO) && poFilter != nullptr &&
+        if (m_bUseLib.test(PDFLIB_PODOFO) && poFilter != nullptr &&
             poFilter->GetType() == PDFObjectType_Name &&
             poFilter->GetName() == "JPXDecode")
         {
@@ -3159,16 +3136,16 @@ int PDFDataset::CheckTiledRaster()
             return FALSE;
         }
 
-        if (fabs(dfDrawWidth - asTiles[i].dfWidth) > 1e-2 ||
-            fabs(dfDrawHeight - asTiles[i].dfHeight) > 1e-2 ||
-            fabs(nWidth - asTiles[i].dfWidth) > 1e-8 ||
-            fabs(nHeight - asTiles[i].dfHeight) > 1e-8 ||
+        if (fabs(dfDrawWidth - m_asTiles[i].dfWidth) > 1e-2 ||
+            fabs(dfDrawHeight - m_asTiles[i].dfHeight) > 1e-2 ||
+            fabs(nWidth - m_asTiles[i].dfWidth) > 1e-8 ||
+            fabs(nHeight - m_asTiles[i].dfHeight) > 1e-8 ||
             fabs(nX - dfX) > 1e-1 || fabs(nY - dfY) > 1e-1 || nX < 0 ||
             nY < 0 || nX + nWidth > nRasterXSize || nY >= nRasterYSize)
         {
             CPLDebug("PDF", "Tile %d : %f %f %f %f %f %f", (int)i, dfX, dfY,
-                     dfDrawWidth, dfDrawHeight, asTiles[i].dfWidth,
-                     asTiles[i].dfHeight);
+                     dfDrawWidth, dfDrawHeight, m_asTiles[i].dfWidth,
+                     m_asTiles[i].dfHeight);
             return FALSE;
         }
         if (l_nBlockXSize == 0 && l_nBlockYSize == 0 && nX == 0 && nY != 0)
@@ -3186,14 +3163,14 @@ int PDFDataset::CheckTiledRaster()
 
     /* Second pass to determine that all tiles are properly aligned on block
      * size */
-    for (i = 0; i < asTiles.size(); i++)
+    for (i = 0; i < m_asTiles.size(); i++)
     {
-        double dfX = asTiles[i].adfCM[4] * dfUserUnit;
-        double dfY = asTiles[i].adfCM[5] * dfUserUnit;
+        double dfX = m_asTiles[i].adfCM[4] * dfUserUnit;
+        double dfY = m_asTiles[i].adfCM[5] * dfUserUnit;
         int nX = (int)(dfX + 0.1);
         int nY = (int)(dfY + 0.1);
-        int nWidth = (int)(asTiles[i].dfWidth + 1e-8);
-        int nHeight = (int)(asTiles[i].dfHeight + 1e-8);
+        int nWidth = (int)(m_asTiles[i].dfWidth + 1e-8);
+        int nHeight = (int)(m_asTiles[i].dfHeight + 1e-8);
         int bOK = TRUE;
         int nBlockXOff = nX / l_nBlockXSize;
         if ((nX % l_nBlockXSize) != 0)
@@ -3217,21 +3194,21 @@ int PDFDataset::CheckTiledRaster()
     }
 
     /* Third pass to set the aiTiles array */
-    aiTiles.resize(nXBlocks * nYBlocks, -1);
-    for (i = 0; i < asTiles.size(); i++)
+    m_aiTiles.resize(nXBlocks * nYBlocks, -1);
+    for (i = 0; i < m_asTiles.size(); i++)
     {
-        double dfX = asTiles[i].adfCM[4] * dfUserUnit;
-        double dfY = asTiles[i].adfCM[5] * dfUserUnit;
-        int nHeight = (int)(asTiles[i].dfHeight + 1e-8);
+        double dfX = m_asTiles[i].adfCM[4] * dfUserUnit;
+        double dfY = m_asTiles[i].adfCM[5] * dfUserUnit;
+        int nHeight = (int)(m_asTiles[i].dfHeight + 1e-8);
         int nX = (int)(dfX + 0.1);
         int nY = nRasterYSize - ((int)(dfY + 0.1) + nHeight);
         int nBlockXOff = nX / l_nBlockXSize;
         int nBlockYOff = nY / l_nBlockYSize;
-        aiTiles[nBlockYOff * nXBlocks + nBlockXOff] = (int)i;
+        m_aiTiles[nBlockYOff * nXBlocks + nBlockXOff] = (int)i;
     }
 
-    this->nBlockXSize = l_nBlockXSize;
-    this->nBlockYSize = l_nBlockYSize;
+    this->m_nBlockXSize = l_nBlockXSize;
+    this->m_nBlockYSize = l_nBlockYSize;
 
     return TRUE;
 }
@@ -3246,7 +3223,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
     if (pszDPI != nullptr)
     {
         // coverity[tainted_data]
-        dfDPI = CPLAtof(pszDPI);
+        m_dfDPI = CPLAtof(pszDPI);
     }
     else
     {
@@ -3472,22 +3449,22 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
                     }
 
                     GDALPDFParseStreamContent(pszContentToParse, poContentDict,
-                                              &(dfDPI), &bDPISet, pnBands,
-                                              asTiles, bResetTiles);
+                                              &(m_dfDPI), &bDPISet, pnBands,
+                                              m_asTiles, bResetTiles);
                     CPLFree(pszContent);
                     if (bDPISet)
                     {
-                        dfDPI *= dfScaleDPI;
+                        m_dfDPI *= dfScaleDPI;
 
                         CPLDebug("PDF",
                                  "DPI guessed from contents stream = %.16g",
-                                 dfDPI);
-                        SetMetadataItem("DPI", CPLSPrintf("%.16g", dfDPI));
+                                 m_dfDPI);
+                        SetMetadataItem("DPI", CPLSPrintf("%.16g", m_dfDPI));
                         if (bResetTiles)
-                            asTiles.resize(0);
+                            m_asTiles.resize(0);
                     }
                     else
-                        asTiles.resize(0);
+                        m_asTiles.resize(0);
                 }
             }
         }
@@ -3497,17 +3474,18 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
             (poUserUnit->GetType() == PDFObjectType_Int ||
              poUserUnit->GetType() == PDFObjectType_Real))
         {
-            dfDPI = ROUND_TO_INT_IF_CLOSE(Get(poUserUnit) * DEFAULT_DPI, 1e-5);
-            CPLDebug("PDF", "Found UserUnit in Page --> DPI = %.16g", dfDPI);
-            SetMetadataItem("DPI", CPLSPrintf("%.16g", dfDPI));
+            m_dfDPI =
+                ROUND_TO_INT_IF_CLOSE(Get(poUserUnit) * DEFAULT_DPI, 1e-5);
+            CPLDebug("PDF", "Found UserUnit in Page --> DPI = %.16g", m_dfDPI);
+            SetMetadataItem("DPI", CPLSPrintf("%.16g", m_dfDPI));
         }
     }
 
-    if (dfDPI < 1 || dfDPI > 7200)
+    if (m_dfDPI < 1 || m_dfDPI > 7200)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Invalid value for GDAL_PDF_DPI. Using default value instead");
-        dfDPI = GDAL_DEFAULT_DPI;
+        m_dfDPI = GDAL_DEFAULT_DPI;
     }
 }
 
@@ -3616,7 +3594,7 @@ void PDFDataset::ParseInfo(GDALPDFObject *poInfoObj)
 
 void PDFDataset::AddLayer(const char *pszLayerName)
 {
-    int nNewIndex = osLayerList.size() /*/ 2*/;
+    int nNewIndex = m_osLayerList.size() /*/ 2*/;
 
     if (nNewIndex == 100)
     {
@@ -3624,17 +3602,18 @@ void PDFDataset::AddLayer(const char *pszLayerName)
         for (int i = 0; i < 100; i++)
         {
             osNewLayerList.AddNameValue(CPLSPrintf("LAYER_%03d_NAME", i),
-                                        osLayerList[/*2 * */ i] +
+                                        m_osLayerList[/*2 * */ i] +
                                             strlen("LAYER_00_NAME="));
         }
-        osLayerList = std::move(osNewLayerList);
+        m_osLayerList = std::move(osNewLayerList);
     }
 
     char szFormatName[64];
     snprintf(szFormatName, sizeof(szFormatName), "LAYER_%%0%dd_NAME",
              nNewIndex >= 100 ? 3 : 2);
 
-    osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex), pszLayerName);
+    m_osLayerList.AddNameValue(CPLSPrintf(szFormatName, nNewIndex),
+                               pszLayerName);
 }
 
 #endif  //  defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
@@ -3676,7 +3655,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
             else
                 osTopLayer = osName;
             AddLayer(osTopLayer.c_str());
-            oLayerOCGListPoppler.push_back(
+            m_oLayerOCGListPoppler.push_back(
                 std::pair<CPLString, OptionalContentGroup *>(osTopLayer,
                                                              nullptr));
         }
@@ -3703,7 +3682,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
                     osCurLayer = osName;
                 // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
-                OCGs *optContentConfig = poDocPoppler->getOptContentConfig();
+                OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
                 struct Ref r;
                 r.num = poObj->GetRefNum().toInt();
                 r.gen = poObj->GetRefGen();
@@ -3711,10 +3690,10 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
                 if (ocg)
                 {
                     AddLayer(osCurLayer.c_str());
-                    oLayerOCGListPoppler.push_back(
+                    m_oLayerOCGListPoppler.push_back(
                         std::make_pair(osCurLayer, ocg));
-                    aoLayerWithRef.emplace_back(osCurLayer.c_str(),
-                                                poObj->GetRefNum(), r.gen);
+                    m_aoLayerWithRef.emplace_back(osCurLayer.c_str(),
+                                                  poObj->GetRefNum(), r.gen);
                 }
             }
         }
@@ -3727,7 +3706,7 @@ void PDFDataset::ExploreLayersPoppler(GDALPDFArray *poArray,
 
 void PDFDataset::FindLayersPoppler()
 {
-    OCGs *optContentConfig = poDocPoppler->getOptContentConfig();
+    OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
     if (optContentConfig == nullptr || !optContentConfig->isOk())
         return;
 
@@ -3762,13 +3741,13 @@ void PDFDataset::FindLayersPoppler()
                     (const char *)ocg->getName()->getCString();
 #endif
                 AddLayer(pszLayerName);
-                oLayerOCGListPoppler.push_back(
+                m_oLayerOCGListPoppler.push_back(
                     std::make_pair(CPLString(pszLayerName), ocg));
             }
         }
     }
 
-    oMDMD_PDF.SetMetadata(osLayerList.List(), "LAYERS");
+    m_oMDMD_PDF.SetMetadata(m_osLayerList.List(), "LAYERS");
 }
 
 /************************************************************************/
@@ -3777,7 +3756,7 @@ void PDFDataset::FindLayersPoppler()
 
 void PDFDataset::TurnLayersOnOffPoppler()
 {
-    OCGs *optContentConfig = poDocPoppler->getOptContentConfig();
+    OCGs *optContentConfig = m_poDocPoppler->getOptContentConfig();
     if (optContentConfig == nullptr || !optContentConfig->isOk())
         return;
 
@@ -3805,8 +3784,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
         for (i = 0; !bAll && papszLayers[i] != nullptr; i++)
         {
             bool isFound = false;
-            for (auto oIter2 = oLayerOCGListPoppler.begin();
-                 oIter2 != oLayerOCGListPoppler.end(); ++oIter2)
+            for (auto oIter2 = m_oLayerOCGListPoppler.begin();
+                 oIter2 != m_oLayerOCGListPoppler.end(); ++oIter2)
             {
                 if (oIter2->first != papszLayers[i])
                     continue;
@@ -3823,8 +3802,9 @@ void PDFDataset::TurnLayersOnOffPoppler()
                 // listed in the list.
                 size_t nLen = strlen(papszLayers[i]);
                 int bFoundChildLayer = FALSE;
-                oIter = oLayerOCGListPoppler.begin();
-                for (; oIter != oLayerOCGListPoppler.end() && !bFoundChildLayer;
+                oIter = m_oLayerOCGListPoppler.begin();
+                for (;
+                     oIter != m_oLayerOCGListPoppler.end() && !bFoundChildLayer;
                      ++oIter)
                 {
                     if (oIter->first.size() > nLen &&
@@ -3846,8 +3826,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
 
                 if (!bFoundChildLayer)
                 {
-                    oIter = oLayerOCGListPoppler.begin();
-                    for (; oIter != oLayerOCGListPoppler.end() &&
+                    oIter = m_oLayerOCGListPoppler.begin();
+                    for (; oIter != m_oLayerOCGListPoppler.end() &&
                            !bFoundChildLayer;
                          ++oIter)
                     {
@@ -3873,8 +3853,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
                 while ((j = layer.find_last_of('.')) != std::string::npos)
                 {
                     layer.resize(j);
-                    oIter = oLayerOCGListPoppler.begin();
-                    for (; oIter != oLayerOCGListPoppler.end(); ++oIter)
+                    oIter = m_oLayerOCGListPoppler.begin();
+                    for (; oIter != m_oLayerOCGListPoppler.end(); ++oIter)
                     {
                         if (oIter->first == layer && oIter->second)
                         {
@@ -3893,7 +3873,7 @@ void PDFDataset::TurnLayersOnOffPoppler()
         }
         CSLDestroy(papszLayers);
 
-        bUseOCG = TRUE;
+        m_bUseOCG = true;
     }
 
     // Which layers to turn OFF ?
@@ -3905,8 +3885,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
         for (int i = 0; papszLayersOFF[i] != nullptr; i++)
         {
             bool isFound = false;
-            for (auto oIter2 = oLayerOCGListPoppler.begin();
-                 oIter2 != oLayerOCGListPoppler.end(); ++oIter2)
+            for (auto oIter2 = m_oLayerOCGListPoppler.begin();
+                 oIter2 != m_oLayerOCGListPoppler.end(); ++oIter2)
             {
                 if (oIter2->first != papszLayersOFF[i])
                     continue;
@@ -3921,8 +3901,8 @@ void PDFDataset::TurnLayersOnOffPoppler()
 
                 // Turn child layers off too
                 size_t nLen = strlen(papszLayersOFF[i]);
-                oIter = oLayerOCGListPoppler.begin();
-                for (; oIter != oLayerOCGListPoppler.end(); ++oIter)
+                oIter = m_oLayerOCGListPoppler.begin();
+                for (; oIter != m_oLayerOCGListPoppler.end(); ++oIter)
                 {
                     if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayersOFF[i],
@@ -3946,7 +3926,7 @@ void PDFDataset::TurnLayersOnOffPoppler()
         }
         CSLDestroy(papszLayersOFF);
 
-        bUseOCG = TRUE;
+        m_bUseOCG = true;
     }
 }
 
@@ -3979,7 +3959,7 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
             else
                 osTopLayer = osName;
             AddLayer(osTopLayer.c_str());
-            oMapLayerNameToOCGNumGenPdfium[osTopLayer] =
+            m_oMapLayerNameToOCGNumGenPdfium[osTopLayer] =
                 std::pair<int, int>(-1, -1);
         }
         else if (poObj->GetType() == PDFObjectType_Array)
@@ -4003,9 +3983,9 @@ void PDFDataset::ExploreLayersPdfium(GDALPDFArray *poArray, int nRecLevel,
                 // CPLDebug("PDF", "Layer %s", osCurLayer.c_str());
 
                 AddLayer(osCurLayer.c_str());
-                aoLayerWithRef.emplace_back(osCurLayer, poObj->GetRefNum(),
-                                            poObj->GetRefGen());
-                oMapLayerNameToOCGNumGenPdfium[osCurLayer] =
+                m_aoLayerWithRef.emplace_back(osCurLayer, poObj->GetRefNum(),
+                                              poObj->GetRefGen());
+                m_oMapLayerNameToOCGNumGenPdfium[osCurLayer] =
                     std::pair<int, int>(poObj->GetRefNum().toInt(),
                                         poObj->GetRefGen());
             }
@@ -4048,7 +4028,7 @@ void PDFDataset::FindLayersPdfium()
     }
 #endif
 
-    oMDMD_PDF.SetMetadata(osLayerList.List(), "LAYERS");
+    m_oMDMD_PDF.SetMetadata(m_osLayerList.List(), "LAYERS");
 }
 
 /************************************************************************/
@@ -4077,7 +4057,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         for (i = 0; i < nLength; i++)
         {
             GDALPDFObject *poOCG = poOCGsArray->Get(i);
-            oMapOCGNumGenToVisibilityStatePdfium[std::pair<int, int>(
+            m_oMapOCGNumGenToVisibilityStatePdfium[std::pair<int, int>(
                 poOCG->GetRefNum().toInt(), poOCG->GetRefGen())] =
                 (bAll) ? VISIBILITY_ON : VISIBILITY_OFF;
         }
@@ -4086,13 +4066,13 @@ void PDFDataset::TurnLayersOnOffPdfium()
         for (i = 0; !bAll && papszLayers[i] != nullptr; i++)
         {
             std::map<CPLString, std::pair<int, int>>::iterator oIter =
-                oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
-            if (oIter != oMapLayerNameToOCGNumGenPdfium.end())
+                m_oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
+            if (oIter != m_oMapLayerNameToOCGNumGenPdfium.end())
             {
                 if (oIter->second.first >= 0)
                 {
                     // CPLDebug("PDF", "Turn '%s' on", papszLayers[i]);
-                    oMapOCGNumGenToVisibilityStatePdfium[oIter->second] =
+                    m_oMapOCGNumGenToVisibilityStatePdfium[oIter->second] =
                         VISIBILITY_ON;
                 }
 
@@ -4100,8 +4080,8 @@ void PDFDataset::TurnLayersOnOffPdfium()
                 // listed in the list.
                 size_t nLen = strlen(papszLayers[i]);
                 int bFoundChildLayer = FALSE;
-                oIter = oMapLayerNameToOCGNumGenPdfium.begin();
-                for (; oIter != oMapLayerNameToOCGNumGenPdfium.end() &&
+                oIter = m_oMapLayerNameToOCGNumGenPdfium.begin();
+                for (; oIter != m_oMapLayerNameToOCGNumGenPdfium.end() &&
                        !bFoundChildLayer;
                      oIter++)
                 {
@@ -4121,8 +4101,8 @@ void PDFDataset::TurnLayersOnOffPdfium()
 
                 if (!bFoundChildLayer)
                 {
-                    oIter = oMapLayerNameToOCGNumGenPdfium.begin();
-                    for (; oIter != oMapLayerNameToOCGNumGenPdfium.end() &&
+                    oIter = m_oMapLayerNameToOCGNumGenPdfium.begin();
+                    for (; oIter != m_oMapLayerNameToOCGNumGenPdfium.end() &&
                            !bFoundChildLayer;
                          oIter++)
                     {
@@ -4135,7 +4115,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
                             {
                                 // CPLDebug("PDF", "Turn '%s' on too",
                                 // oIter->first.c_str());
-                                oMapOCGNumGenToVisibilityStatePdfium
+                                m_oMapOCGNumGenToVisibilityStatePdfium
                                     [oIter->second] = VISIBILITY_ON;
                             }
                         }
@@ -4147,16 +4127,16 @@ void PDFDataset::TurnLayersOnOffPdfium()
                 while ((pszLastDot = strrchr(papszLayers[i], '.')) != nullptr)
                 {
                     *pszLastDot = '\0';
-                    oIter = oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
-                    if (oIter != oMapLayerNameToOCGNumGenPdfium.end())
+                    oIter =
+                        m_oMapLayerNameToOCGNumGenPdfium.find(papszLayers[i]);
+                    if (oIter != m_oMapLayerNameToOCGNumGenPdfium.end())
                     {
                         if (oIter->second.first >= 0)
                         {
                             // CPLDebug("PDF", "Turn '%s' on too",
                             // papszLayers[i]);
-                            oMapOCGNumGenToVisibilityStatePdfium[oIter
-                                                                     ->second] =
-                                VISIBILITY_ON;
+                            m_oMapOCGNumGenToVisibilityStatePdfium
+                                [oIter->second] = VISIBILITY_ON;
                         }
                     }
                 }
@@ -4169,7 +4149,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         }
         CSLDestroy(papszLayers);
 
-        bUseOCG = TRUE;
+        m_bUseOCG = true;
     }
 
     // Which layers to turn OFF ?
@@ -4181,22 +4161,22 @@ void PDFDataset::TurnLayersOnOffPdfium()
         for (int i = 0; papszLayersOFF[i] != nullptr; i++)
         {
             std::map<CPLString, std::pair<int, int>>::iterator oIter =
-                oMapLayerNameToOCGNumGenPdfium.find(papszLayersOFF[i]);
-            if (oIter != oMapLayerNameToOCGNumGenPdfium.end())
+                m_oMapLayerNameToOCGNumGenPdfium.find(papszLayersOFF[i]);
+            if (oIter != m_oMapLayerNameToOCGNumGenPdfium.end())
             {
                 if (oIter->second.first >= 0)
                 {
                     // CPLDebug("PDF", "Turn '%s' (%d,%d) off",
                     // papszLayersOFF[i], oIter->second.first,
                     // oIter->second.second);
-                    oMapOCGNumGenToVisibilityStatePdfium[oIter->second] =
+                    m_oMapOCGNumGenToVisibilityStatePdfium[oIter->second] =
                         VISIBILITY_OFF;
                 }
 
                 // Turn child layers off too
                 size_t nLen = strlen(papszLayersOFF[i]);
-                oIter = oMapLayerNameToOCGNumGenPdfium.begin();
-                for (; oIter != oMapLayerNameToOCGNumGenPdfium.end(); oIter++)
+                oIter = m_oMapLayerNameToOCGNumGenPdfium.begin();
+                for (; oIter != m_oMapLayerNameToOCGNumGenPdfium.end(); oIter++)
                 {
                     if (oIter->first.size() > nLen &&
                         strncmp(oIter->first.c_str(), papszLayersOFF[i],
@@ -4207,9 +4187,8 @@ void PDFDataset::TurnLayersOnOffPdfium()
                         {
                             // CPLDebug("PDF", "Turn '%s' off too",
                             // oIter->first.c_str());
-                            oMapOCGNumGenToVisibilityStatePdfium[oIter
-                                                                     ->second] =
-                                VISIBILITY_OFF;
+                            m_oMapOCGNumGenToVisibilityStatePdfium
+                                [oIter->second] = VISIBILITY_OFF;
                         }
                     }
                 }
@@ -4222,7 +4201,7 @@ void PDFDataset::TurnLayersOnOffPdfium()
         }
         CSLDestroy(papszLayersOFF);
 
-        bUseOCG = TRUE;
+        m_bUseOCG = true;
     }
 }
 
@@ -4234,9 +4213,9 @@ PDFDataset::VisibilityState PDFDataset::GetVisibilityStateForOGCPdfium(int nNum,
                                                                        int nGen)
 {
     std::map<std::pair<int, int>, VisibilityState>::iterator oIter =
-        oMapOCGNumGenToVisibilityStatePdfium.find(
+        m_oMapOCGNumGenToVisibilityStatePdfium.find(
             std::pair<int, int>(nNum, nGen));
-    if (oIter == oMapOCGNumGenToVisibilityStatePdfium.end())
+    if (oIter == m_oMapOCGNumGenToVisibilityStatePdfium.end())
         return VISIBILITY_DEFAULT;
     return oIter->second;
 }
@@ -4311,7 +4290,7 @@ void PDFDataset::FindLayersGeneric(GDALPDFDictionary *poPageDict)
                     poType->GetName() == "OCG" && poName != nullptr &&
                     poName->GetType() == PDFObjectType_String)
                 {
-                    aoLayerWithRef.emplace_back(
+                    m_aoLayerWithRef.emplace_back(
                         PDFSanitizeLayerName(poName->GetString()).c_str(),
                         poObj->GetRefNum(), poObj->GetRefGen());
                 }
@@ -4880,8 +4859,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     PDFDataset *poDS = new PDFDataset();
     poDS->m_fp = fpKeeper.release();
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
-    poDS->bUseLib = bUseLib;
-    poDS->osFilename = pszFilename;
+    poDS->m_bUseLib = bUseLib;
+    poDS->m_osFilename = pszFilename;
     poDS->eAccess = poOpenInfo->eAccess;
 
     if (nPages > 1 && !bOpenSubdataset)
@@ -4902,18 +4881,18 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
 #ifdef HAVE_POPPLER
-    poDS->poDocPoppler = poDocPoppler;
+    poDS->m_poDocPoppler = poDocPoppler;
 #endif
 #ifdef HAVE_PODOFO
-    poDS->poDocPodofo = poDocPodofo;
+    poDS->m_poDocPodofo = poDocPodofo;
 #endif
 #ifdef HAVE_PDFIUM
-    poDS->poDocPdfium = poDocPdfium;
-    poDS->poPagePdfium = poPagePdfium;
+    poDS->m_poDocPdfium = poDocPdfium;
+    poDS->m_poPagePdfium = poPagePdfium;
 #endif
-    poDS->poPageObj = poPageObj;
-    poDS->osUserPwd = pszUserPwd ? pszUserPwd : "";
-    poDS->iPage = iPage;
+    poDS->m_poPageObj = poPageObj;
+    poDS->m_osUserPwd = pszUserPwd ? pszUserPwd : "";
+    poDS->m_iPage = iPage;
 
     const char *pszDumpCatalog =
         CPLGetConfigOption("PDF_DUMP_CATALOG", nullptr);
@@ -4937,7 +4916,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (pszDPI != nullptr)
         {
             // coverity[tainted_data]
-            poDS->dfDPI = CPLAtof(pszDPI);
+            poDS->m_dfDPI = CPLAtof(pszDPI);
         }
     }
 
@@ -4980,9 +4959,9 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 #endif  // ~ HAVE_PDFIUM
 
-    double dfUserUnit = poDS->dfDPI * USER_UNIT_IN_INCH;
-    poDS->dfPageWidth = dfX2 - dfX1;
-    poDS->dfPageHeight = dfY2 - dfY1;
+    double dfUserUnit = poDS->m_dfDPI * USER_UNIT_IN_INCH;
+    poDS->m_dfPageWidth = dfX2 - dfX1;
+    poDS->m_dfPageHeight = dfY2 - dfY1;
     // CPLDebug("PDF", "left=%f right=%f bottom=%f top=%f", dfX1, dfX2, dfY1,
     // dfY2);
     poDS->nRasterXSize = (int)floor((dfX2 - dfX1) * dfUserUnit + 0.5);
@@ -5031,11 +5010,11 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* Check if the PDF is only made of regularly tiled images */
     /* (like some USGS GeoPDF production) */
-    if (dfRotation == 0.0 && !poDS->asTiles.empty() &&
+    if (dfRotation == 0.0 && !poDS->m_asTiles.empty() &&
         EQUAL(GetOption(poOpenInfo->papszOpenOptions, "LAYERS", "ALL"), "ALL"))
     {
         poDS->CheckTiledRaster();
-        if (!poDS->aiTiles.empty())
+        if (!poDS->m_aiTiles.empty())
             poDS->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     }
 
@@ -5048,76 +5027,86 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLDebug("PDF", "OGC Encoding Best Practice style detected");
         if (poDS->ParseLGIDictObject(poLGIDict))
         {
-            if (poDS->bHasCTM)
+            if (poDS->m_bHasCTM)
             {
                 if (dfRotation == 90)
                 {
-                    poDS->adfGeoTransform[0] = poDS->adfCTM[4];
-                    poDS->adfGeoTransform[1] = poDS->adfCTM[2] / dfUserUnit;
-                    poDS->adfGeoTransform[2] = poDS->adfCTM[0] / dfUserUnit;
-                    poDS->adfGeoTransform[3] = poDS->adfCTM[5];
-                    poDS->adfGeoTransform[4] = poDS->adfCTM[3] / dfUserUnit;
-                    poDS->adfGeoTransform[5] = poDS->adfCTM[1] / dfUserUnit;
+                    poDS->m_adfGeoTransform[0] = poDS->m_adfCTM[4];
+                    poDS->m_adfGeoTransform[1] = poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_adfGeoTransform[2] = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_adfGeoTransform[3] = poDS->m_adfCTM[5];
+                    poDS->m_adfGeoTransform[4] = poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_adfGeoTransform[5] = poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else if (dfRotation == -90 || dfRotation == 270)
                 {
-                    poDS->adfGeoTransform[0] =
-                        poDS->adfCTM[4] + poDS->adfCTM[2] * poDS->dfPageHeight +
-                        poDS->adfCTM[0] * poDS->dfPageWidth;
-                    poDS->adfGeoTransform[1] = -poDS->adfCTM[2] / dfUserUnit;
-                    poDS->adfGeoTransform[2] = -poDS->adfCTM[0] / dfUserUnit;
-                    poDS->adfGeoTransform[3] =
-                        poDS->adfCTM[5] + poDS->adfCTM[3] * poDS->dfPageHeight +
-                        poDS->adfCTM[1] * poDS->dfPageWidth;
-                    poDS->adfGeoTransform[4] = -poDS->adfCTM[3] / dfUserUnit;
-                    poDS->adfGeoTransform[5] = -poDS->adfCTM[1] / dfUserUnit;
+                    poDS->m_adfGeoTransform[0] =
+                        poDS->m_adfCTM[4] +
+                        poDS->m_adfCTM[2] * poDS->m_dfPageHeight +
+                        poDS->m_adfCTM[0] * poDS->m_dfPageWidth;
+                    poDS->m_adfGeoTransform[1] =
+                        -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_adfGeoTransform[2] =
+                        -poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_adfGeoTransform[3] =
+                        poDS->m_adfCTM[5] +
+                        poDS->m_adfCTM[3] * poDS->m_dfPageHeight +
+                        poDS->m_adfCTM[1] * poDS->m_dfPageWidth;
+                    poDS->m_adfGeoTransform[4] =
+                        -poDS->m_adfCTM[3] / dfUserUnit;
+                    poDS->m_adfGeoTransform[5] =
+                        -poDS->m_adfCTM[1] / dfUserUnit;
                 }
                 else
                 {
-                    poDS->adfGeoTransform[0] = poDS->adfCTM[4] +
-                                               poDS->adfCTM[2] * dfY2 +
-                                               poDS->adfCTM[0] * dfX1;
-                    poDS->adfGeoTransform[1] = poDS->adfCTM[0] / dfUserUnit;
-                    poDS->adfGeoTransform[2] = -poDS->adfCTM[2] / dfUserUnit;
-                    poDS->adfGeoTransform[3] = poDS->adfCTM[5] +
-                                               poDS->adfCTM[3] * dfY2 +
-                                               poDS->adfCTM[1] * dfX1;
-                    poDS->adfGeoTransform[4] = poDS->adfCTM[1] / dfUserUnit;
-                    poDS->adfGeoTransform[5] = -poDS->adfCTM[3] / dfUserUnit;
+                    poDS->m_adfGeoTransform[0] = poDS->m_adfCTM[4] +
+                                                 poDS->m_adfCTM[2] * dfY2 +
+                                                 poDS->m_adfCTM[0] * dfX1;
+                    poDS->m_adfGeoTransform[1] = poDS->m_adfCTM[0] / dfUserUnit;
+                    poDS->m_adfGeoTransform[2] =
+                        -poDS->m_adfCTM[2] / dfUserUnit;
+                    poDS->m_adfGeoTransform[3] = poDS->m_adfCTM[5] +
+                                                 poDS->m_adfCTM[3] * dfY2 +
+                                                 poDS->m_adfCTM[1] * dfX1;
+                    poDS->m_adfGeoTransform[4] = poDS->m_adfCTM[1] / dfUserUnit;
+                    poDS->m_adfGeoTransform[5] =
+                        -poDS->m_adfCTM[3] / dfUserUnit;
                 }
 
-                poDS->bGeoTransformValid = TRUE;
+                poDS->m_bGeoTransformValid = true;
             }
 
             bIsOGCBP = TRUE;
 
             int i;
-            for (i = 0; i < poDS->nGCPCount; i++)
+            for (i = 0; i < poDS->m_nGCPCount; i++)
             {
                 if (dfRotation == 90)
                 {
                     double dfPixel =
-                        poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
-                    double dfLine = poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
-                    poDS->pasGCPList[i].dfGCPPixel = dfLine;
-                    poDS->pasGCPList[i].dfGCPLine = dfPixel;
+                        poDS->m_pasGCPList[i].dfGCPPixel * dfUserUnit;
+                    double dfLine =
+                        poDS->m_pasGCPList[i].dfGCPLine * dfUserUnit;
+                    poDS->m_pasGCPList[i].dfGCPPixel = dfLine;
+                    poDS->m_pasGCPList[i].dfGCPLine = dfPixel;
                 }
                 else if (dfRotation == -90 || dfRotation == 270)
                 {
                     double dfPixel =
-                        poDS->pasGCPList[i].dfGCPPixel * dfUserUnit;
-                    double dfLine = poDS->pasGCPList[i].dfGCPLine * dfUserUnit;
-                    poDS->pasGCPList[i].dfGCPPixel =
+                        poDS->m_pasGCPList[i].dfGCPPixel * dfUserUnit;
+                    double dfLine =
+                        poDS->m_pasGCPList[i].dfGCPLine * dfUserUnit;
+                    poDS->m_pasGCPList[i].dfGCPPixel =
                         poDS->nRasterXSize - dfLine;
-                    poDS->pasGCPList[i].dfGCPLine =
+                    poDS->m_pasGCPList[i].dfGCPLine =
                         poDS->nRasterYSize - dfPixel;
                 }
                 else
                 {
-                    poDS->pasGCPList[i].dfGCPPixel =
-                        (-dfX1 + poDS->pasGCPList[i].dfGCPPixel) * dfUserUnit;
-                    poDS->pasGCPList[i].dfGCPLine =
-                        (dfY2 - poDS->pasGCPList[i].dfGCPLine) * dfUserUnit;
+                    poDS->m_pasGCPList[i].dfGCPPixel =
+                        (-dfX1 + poDS->m_pasGCPList[i].dfGCPPixel) * dfUserUnit;
+                    poDS->m_pasGCPList[i].dfGCPLine =
+                        (dfY2 - poDS->m_pasGCPList[i].dfGCPLine) * dfUserUnit;
                 }
             }
         }
@@ -5213,7 +5202,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                                 poDS->nRasterYSize = nH;
                                 poDS->ParseMeasure(poMeasure, nW, nH, 0, nH, nW,
                                                    0);
-                                poDS->poImageObj = poObj;
+                                poDS->m_poImageObj = poObj;
                                 if (poColorSpace->GetName() == "DeviceGray")
                                     nBandsGuessed = 1;
                                 break;
@@ -5225,7 +5214,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
-        if (nImageNum >= 0 && poDS->poImageObj == nullptr)
+        if (nImageNum >= 0 && poDS->m_poImageObj == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Cannot find image %d",
                      nImageNum);
@@ -5238,48 +5227,50 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
     /* If pixel size or top left coordinates are very close to an int, round
      * them to the int */
-    double dfEps = (fabs(poDS->adfGeoTransform[0]) > 1e5 &&
-                    fabs(poDS->adfGeoTransform[3]) > 1e5)
+    double dfEps = (fabs(poDS->m_adfGeoTransform[0]) > 1e5 &&
+                    fabs(poDS->m_adfGeoTransform[3]) > 1e5)
                        ? 1e-5
                        : 1e-8;
-    poDS->adfGeoTransform[0] =
-        ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[0], dfEps);
-    poDS->adfGeoTransform[1] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[1]);
-    poDS->adfGeoTransform[3] =
-        ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[3], dfEps);
-    poDS->adfGeoTransform[5] = ROUND_TO_INT_IF_CLOSE(poDS->adfGeoTransform[5]);
+    poDS->m_adfGeoTransform[0] =
+        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[0], dfEps);
+    poDS->m_adfGeoTransform[1] =
+        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[1]);
+    poDS->m_adfGeoTransform[3] =
+        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[3], dfEps);
+    poDS->m_adfGeoTransform[5] =
+        ROUND_TO_INT_IF_CLOSE(poDS->m_adfGeoTransform[5]);
 
     if (bUseLib.test(PDFLIB_PDFIUM))
     {
         // Attempt to "fix" the loss of precision due to the use of float32 for
         // numbers by pdfium
-        if ((fabs(poDS->adfGeoTransform[0]) > 1e5 ||
-             fabs(poDS->adfGeoTransform[3]) > 1e5) &&
-            fabs(poDS->adfGeoTransform[0] -
-                 (int)floor(poDS->adfGeoTransform[0] + 0.5)) <
-                1e-6 * fabs(poDS->adfGeoTransform[0]) &&
-            fabs(poDS->adfGeoTransform[1] -
-                 (int)floor(poDS->adfGeoTransform[1] + 0.5)) <
-                1e-3 * fabs(poDS->adfGeoTransform[1]) &&
-            fabs(poDS->adfGeoTransform[3] -
-                 (int)floor(poDS->adfGeoTransform[3] + 0.5)) <
-                1e-6 * fabs(poDS->adfGeoTransform[3]) &&
-            fabs(poDS->adfGeoTransform[5] -
-                 (int)floor(poDS->adfGeoTransform[5] + 0.5)) <
-                1e-3 * fabs(poDS->adfGeoTransform[5]))
+        if ((fabs(poDS->m_adfGeoTransform[0]) > 1e5 ||
+             fabs(poDS->m_adfGeoTransform[3]) > 1e5) &&
+            fabs(poDS->m_adfGeoTransform[0] -
+                 (int)floor(poDS->m_adfGeoTransform[0] + 0.5)) <
+                1e-6 * fabs(poDS->m_adfGeoTransform[0]) &&
+            fabs(poDS->m_adfGeoTransform[1] -
+                 (int)floor(poDS->m_adfGeoTransform[1] + 0.5)) <
+                1e-3 * fabs(poDS->m_adfGeoTransform[1]) &&
+            fabs(poDS->m_adfGeoTransform[3] -
+                 (int)floor(poDS->m_adfGeoTransform[3] + 0.5)) <
+                1e-6 * fabs(poDS->m_adfGeoTransform[3]) &&
+            fabs(poDS->m_adfGeoTransform[5] -
+                 (int)floor(poDS->m_adfGeoTransform[5] + 0.5)) <
+                1e-3 * fabs(poDS->m_adfGeoTransform[5]))
         {
             for (int i = 0; i < 6; i++)
             {
-                poDS->adfGeoTransform[i] =
-                    (int)floor(poDS->adfGeoTransform[i] + 0.5);
+                poDS->m_adfGeoTransform[i] =
+                    (int)floor(poDS->m_adfGeoTransform[i] + 0.5);
             }
         }
     }
 
-    if (poDS->poNeatLine)
+    if (poDS->m_poNeatLine)
     {
         char *pszNeatLineWkt = nullptr;
-        OGRLinearRing *poRing = poDS->poNeatLine->getExteriorRing();
+        OGRLinearRing *poRing = poDS->m_poNeatLine->getExteriorRing();
         /* Adobe style is already in target SRS units */
         if (bIsOGCBP)
         {
@@ -5304,18 +5295,18 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                     x = (-dfX1 + poRing->getX(i)) * dfUserUnit;
                     y = (dfY2 - poRing->getY(i)) * dfUserUnit;
                 }
-                double X = poDS->adfGeoTransform[0] +
-                           x * poDS->adfGeoTransform[1] +
-                           y * poDS->adfGeoTransform[2];
-                double Y = poDS->adfGeoTransform[3] +
-                           x * poDS->adfGeoTransform[4] +
-                           y * poDS->adfGeoTransform[5];
+                double X = poDS->m_adfGeoTransform[0] +
+                           x * poDS->m_adfGeoTransform[1] +
+                           y * poDS->m_adfGeoTransform[2];
+                double Y = poDS->m_adfGeoTransform[3] +
+                           x * poDS->m_adfGeoTransform[4] +
+                           y * poDS->m_adfGeoTransform[5];
                 poRing->setPoint(i, X, Y);
             }
         }
         poRing->closeRings();
 
-        poDS->poNeatLine->exportToWkt(&pszNeatLineWkt);
+        poDS->m_poNeatLine->exportToWkt(&pszNeatLineWkt);
         if (nImageNum < 0)
             poDS->SetMetadataItem("NEATLINE", pszNeatLineWkt);
         CPLFree(pszNeatLineWkt);
@@ -5462,7 +5453,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 #ifdef HAVE_PODOFO
-    if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4 && poDS->aiTiles.empty())
+    if (bUseLib.test(PDFLIB_PODOFO) && nBands == 4 && poDS->m_aiTiles.empty())
     {
         CPLError(CE_Warning, CPLE_NotSupported,
                  "GDAL_PDF_BANDS=4 not supported when PDF driver is compiled "
@@ -5475,7 +5466,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     int iBand;
     for (iBand = 1; iBand <= nBands; iBand++)
     {
-        if (poDS->poImageObj != nullptr)
+        if (poDS->m_poImageObj != nullptr)
             poDS->SetBand(iBand, new PDFImageRasterBand(poDS, iBand));
         else
             poDS->SetBand(iBand, new PDFRasterBand(poDS, iBand, 0));
@@ -5490,10 +5481,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLDebug("PDF", "This is a raster-only PDF dataset, "
                         "but it has been opened in vector-only mode");
         /* Clear dirty flag */
-        poDS->bProjDirty = FALSE;
-        poDS->bNeatLineDirty = FALSE;
-        poDS->bInfoDirty = FALSE;
-        poDS->bXMPDirty = FALSE;
+        poDS->m_bProjDirty = false;
+        poDS->m_bNeatLineDirty = false;
+        poDS->m_bInfoDirty = false;
+        poDS->m_bXMPDirty = false;
         delete poDS;
         return nullptr;
     }
@@ -5514,10 +5505,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
 
     /* Clear dirty flag */
-    poDS->bProjDirty = FALSE;
-    poDS->bNeatLineDirty = FALSE;
-    poDS->bInfoDirty = FALSE;
-    poDS->bXMPDirty = FALSE;
+    poDS->m_bProjDirty = false;
+    poDS->m_bNeatLineDirty = false;
+    poDS->m_bInfoDirty = false;
+    poDS->m_bXMPDirty = false;
 
     return (poDS);
 }
@@ -5736,7 +5727,7 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
 
             if (EQUAL(poDescription->GetString().c_str(), pszNeatlineToSelect))
             {
-                dfMaxArea = 1e300;
+                m_dfMaxArea = 1e300;
                 bIsAskedNeatline = true;
             }
         }
@@ -5761,14 +5752,14 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
                     dfMaxY = dfY;
             }
             double dfArea = (dfMaxX - dfMinX) * (dfMaxY - dfMinY);
-            if (dfArea < dfMaxArea)
+            if (dfArea < m_dfMaxArea)
             {
                 CPLDebug("PDF", "Not the largest neatline. Skipping it");
                 return TRUE;
             }
 
             CPLDebug("PDF", "This is the largest neatline for now");
-            dfMaxArea = dfArea;
+            m_dfMaxArea = dfArea;
         }
         else
             CPLDebug("PDF", "The \"%s\" registration will be selected",
@@ -5777,8 +5768,8 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
         if (pbIsBestCandidate)
             *pbIsBestCandidate = TRUE;
 
-        delete poNeatLine;
-        poNeatLine = new OGRPolygon();
+        delete m_poNeatLine;
+        m_poNeatLine = new OGRPolygon();
         OGRLinearRing *poRing = new OGRLinearRing();
         if (nLength == 4)
         {
@@ -5801,7 +5792,7 @@ int PDFDataset::ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
                 poRing->addPoint(dfX, dfY);
             }
         }
-        poNeatLine->addRingDirectly(poRing);
+        m_poNeatLine->addRingDirectly(poRing);
     }
 
     return TRUE;
@@ -5829,7 +5820,7 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary *poLGIDict)
     /*      Extract CTM attribute                                           */
     /* -------------------------------------------------------------------- */
     GDALPDFObject *poCTM = poLGIDict->Get("CTM");
-    bHasCTM = FALSE;
+    m_bHasCTM = false;
     if (poCTM != nullptr && poCTM->GetType() == PDFObjectType_Array &&
         CPLTestBool(CPLGetConfigOption("PDF_USE_CTM", "YES")))
     {
@@ -5840,15 +5831,16 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary *poLGIDict)
             return FALSE;
         }
 
-        bHasCTM = TRUE;
+        m_bHasCTM = true;
         for (i = 0; i < nLength; i++)
         {
-            adfCTM[i] = Get(poCTM, i);
+            m_adfCTM[i] = Get(poCTM, i);
             /* Nullify rotation terms that are significantly smaller than */
             /* scaling terms. */
-            if ((i == 1 || i == 2) && fabs(adfCTM[i]) < fabs(adfCTM[0]) * 1e-10)
-                adfCTM[i] = 0;
-            CPLDebug("PDF", "CTM[%d] = %.16g", i, adfCTM[i]);
+            if ((i == 1 || i == 2) &&
+                fabs(m_adfCTM[i]) < fabs(m_adfCTM[0]) * 1e-10)
+                m_adfCTM[i] = 0;
+            CPLDebug("PDF", "CTM[%d] = %.16g", i, m_adfCTM[i]);
         }
     }
 
@@ -5861,11 +5853,11 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary *poLGIDict)
     {
         GDALPDFArray *poRegistrationArray = poRegistration->GetArray();
         int nLength = poRegistrationArray->GetLength();
-        if (nLength > 4 || (!bHasCTM && nLength >= 2) ||
+        if (nLength > 4 || (!m_bHasCTM && nLength >= 2) ||
             CPLTestBool(CPLGetConfigOption("PDF_REPORT_GCPS", "NO")))
         {
-            nGCPCount = 0;
-            pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP), nLength);
+            m_nGCPCount = 0;
+            m_pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP), nLength);
 
             for (i = 0; i < nLength; i++)
             {
@@ -5884,26 +5876,26 @@ int PDFDataset::ParseLGIDictDictSecondPass(GDALPDFDictionary *poLGIDict)
                     CPLDebug("PDF", "GCP[%d].y = %.16g", i, dfY);
 
                     char szID[32];
-                    snprintf(szID, sizeof(szID), "%d", nGCPCount + 1);
-                    pasGCPList[nGCPCount].pszId = CPLStrdup(szID);
-                    pasGCPList[nGCPCount].pszInfo = CPLStrdup("");
-                    pasGCPList[nGCPCount].dfGCPPixel = dfUserX;
-                    pasGCPList[nGCPCount].dfGCPLine = dfUserY;
-                    pasGCPList[nGCPCount].dfGCPX = dfX;
-                    pasGCPList[nGCPCount].dfGCPY = dfY;
-                    nGCPCount++;
+                    snprintf(szID, sizeof(szID), "%d", m_nGCPCount + 1);
+                    m_pasGCPList[m_nGCPCount].pszId = CPLStrdup(szID);
+                    m_pasGCPList[m_nGCPCount].pszInfo = CPLStrdup("");
+                    m_pasGCPList[m_nGCPCount].dfGCPPixel = dfUserX;
+                    m_pasGCPList[m_nGCPCount].dfGCPLine = dfUserY;
+                    m_pasGCPList[m_nGCPCount].dfGCPX = dfX;
+                    m_pasGCPList[m_nGCPCount].dfGCPY = dfY;
+                    m_nGCPCount++;
                 }
             }
 
-            if (nGCPCount == 0)
+            if (m_nGCPCount == 0)
             {
-                CPLFree(pasGCPList);
-                pasGCPList = nullptr;
+                CPLFree(m_pasGCPList);
+                m_pasGCPList = nullptr;
             }
         }
     }
 
-    if (!bHasCTM && nGCPCount == 0)
+    if (!m_bHasCTM && m_nGCPCount == 0)
     {
         CPLDebug("PDF", "Neither CTM nor Registration found");
         return FALSE;
@@ -6997,9 +6989,9 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
     OGRLinearRing *poRing = nullptr;
     if (nGPTSLength == 8)
     {
-        poNeatLine = new OGRPolygon();
+        m_poNeatLine = new OGRPolygon();
         poRing = new OGRLinearRing();
-        poNeatLine->addRingDirectly(poRing);
+        m_poNeatLine->addRingDirectly(poRing);
     }
 
     for (int i = 0; i < nGPTSLength / 2; i++)
@@ -7042,40 +7034,40 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
     delete poSRSGeog;
     delete poCT;
 
-    if (!GDALGCPsToGeoTransform(nGPTSLength / 2, asGCPS.data(), adfGeoTransform,
-                                FALSE))
+    if (!GDALGCPsToGeoTransform(nGPTSLength / 2, asGCPS.data(),
+                                m_adfGeoTransform.data(), FALSE))
     {
         CPLDebug("PDF",
                  "Could not compute GT with exact match. Try with approximate");
         if (!GDALGCPsToGeoTransform(nGPTSLength / 2, asGCPS.data(),
-                                    adfGeoTransform, TRUE))
+                                    m_adfGeoTransform.data(), TRUE))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Could not compute GT with approximate match.");
             return FALSE;
         }
     }
-    bGeoTransformValid = TRUE;
+    m_bGeoTransformValid = true;
 
     // If the non scaling terms of the geotransform are significantly smaller
     // than the pixel size, then nullify them as being just artifacts of
     //  reprojection and GDALGCPsToGeoTransform() numerical imprecisions.
     const double dfPixelSize =
-        std::min(fabs(adfGeoTransform[1]), fabs(adfGeoTransform[5]));
+        std::min(fabs(m_adfGeoTransform[1]), fabs(m_adfGeoTransform[5]));
     const double dfRotationShearTerm =
-        std::max(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4]));
+        std::max(fabs(m_adfGeoTransform[2]), fabs(m_adfGeoTransform[4]));
     if (dfRotationShearTerm < 1e-5 * dfPixelSize ||
-        (bUseLib.test(PDFLIB_PDFIUM) &&
-         std::min(fabs(adfGeoTransform[2]), fabs(adfGeoTransform[4])) <
+        (m_bUseLib.test(PDFLIB_PDFIUM) &&
+         std::min(fabs(m_adfGeoTransform[2]), fabs(m_adfGeoTransform[4])) <
              1e-5 * dfPixelSize))
     {
-        dfLRX = adfGeoTransform[0] + nRasterXSize * adfGeoTransform[1] +
-                nRasterYSize * adfGeoTransform[2];
-        dfLRY = adfGeoTransform[3] + nRasterXSize * adfGeoTransform[4] +
-                nRasterYSize * adfGeoTransform[5];
-        adfGeoTransform[1] = (dfLRX - adfGeoTransform[0]) / nRasterXSize;
-        adfGeoTransform[5] = (dfLRY - adfGeoTransform[3]) / nRasterYSize;
-        adfGeoTransform[2] = adfGeoTransform[4] = 0;
+        dfLRX = m_adfGeoTransform[0] + nRasterXSize * m_adfGeoTransform[1] +
+                nRasterYSize * m_adfGeoTransform[2];
+        dfLRY = m_adfGeoTransform[3] + nRasterXSize * m_adfGeoTransform[4] +
+                nRasterYSize * m_adfGeoTransform[5];
+        m_adfGeoTransform[1] = (dfLRX - m_adfGeoTransform[0]) / nRasterXSize;
+        m_adfGeoTransform[5] = (dfLRY - m_adfGeoTransform[3]) / nRasterYSize;
+        m_adfGeoTransform[2] = m_adfGeoTransform[4] = 0;
     }
 
     return TRUE;
@@ -7091,7 +7083,7 @@ const OGRSpatialReference *PDFDataset::GetSpatialRef() const
     if (poSRS)
         return poSRS;
 
-    if (!m_oSRS.IsEmpty() && bGeoTransformValid)
+    if (!m_oSRS.IsEmpty() && m_bGeoTransformValid)
         return &m_oSRS;
     return nullptr;
 }
@@ -7108,9 +7100,10 @@ CPLErr PDFDataset::GetGeoTransform(double *padfTransform)
         return CE_None;
     }
 
-    memcpy(padfTransform, adfGeoTransform, 6 * sizeof(double));
+    std::copy(std::begin(m_adfGeoTransform), std::end(m_adfGeoTransform),
+              padfTransform);
 
-    return ((bGeoTransformValid) ? CE_None : CE_Failure);
+    return ((m_bGeoTransformValid) ? CE_None : CE_Failure);
 }
 
 /************************************************************************/
@@ -7125,7 +7118,7 @@ CPLErr PDFDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     m_oSRS.Clear();
     if (poSRS)
         m_oSRS = *poSRS;
-    bProjDirty = TRUE;
+    m_bProjDirty = true;
     return CE_None;
 }
 
@@ -7138,12 +7131,13 @@ CPLErr PDFDataset::SetGeoTransform(double *padfGeoTransform)
     if (eAccess == GA_ReadOnly)
         GDALPamDataset::SetGeoTransform(padfGeoTransform);
 
-    memcpy(adfGeoTransform, padfGeoTransform, 6 * sizeof(double));
-    bGeoTransformValid = TRUE;
-    bProjDirty = TRUE;
+    std::copy(padfGeoTransform, padfGeoTransform + 6,
+              std::begin(m_adfGeoTransform));
+    m_bGeoTransformValid = true;
+    m_bProjDirty = true;
 
     /* Reset NEATLINE if not explicitly set by the user */
-    if (!bNeatLineDirty)
+    if (!m_bNeatLineDirty)
         SetMetadataItem("NEATLINE", nullptr);
     return CE_None;
 }
@@ -7167,7 +7161,7 @@ char **PDFDataset::GetMetadata(const char *pszDomain)
 {
     if (pszDomain != nullptr && EQUAL(pszDomain, "EMBEDDED_METADATA"))
     {
-        char **papszRet = oMDMD_PDF.GetMetadata(pszDomain);
+        char **papszRet = m_oMDMD_PDF.GetMetadata(pszDomain);
         if (papszRet)
             return papszRet;
 
@@ -7191,9 +7185,9 @@ char **PDFDataset::GetMetadata(const char *pszDomain)
 
         char *apszMetadata[2] = {nullptr, nullptr};
         apszMetadata[0] = poStream->GetBytes();
-        oMDMD_PDF.SetMetadata(apszMetadata, pszDomain);
+        m_oMDMD_PDF.SetMetadata(apszMetadata, pszDomain);
         VSIFree(apszMetadata[0]);
-        return oMDMD_PDF.GetMetadata(pszDomain);
+        return m_oMDMD_PDF.GetMetadata(pszDomain);
     }
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {
@@ -7205,17 +7199,17 @@ char **PDFDataset::GetMetadata(const char *pszDomain)
             const char *pszValue = CPLParseNameValue(*papszIter, &pszKey);
             if (pszKey && pszValue)
             {
-                if (oMDMD_PDF.GetMetadataItem(pszKey, pszDomain) == nullptr)
-                    oMDMD_PDF.SetMetadataItem(pszKey, pszValue, pszDomain);
+                if (m_oMDMD_PDF.GetMetadataItem(pszKey, pszDomain) == nullptr)
+                    m_oMDMD_PDF.SetMetadataItem(pszKey, pszValue, pszDomain);
             }
             CPLFree(pszKey);
         }
-        return oMDMD_PDF.GetMetadata(pszDomain);
+        return m_oMDMD_PDF.GetMetadata(pszDomain);
     }
     if (EQUAL(pszDomain, "LAYERS") || EQUAL(pszDomain, "xml:XMP") ||
         EQUAL(pszDomain, "SUBDATASETS"))
     {
-        return oMDMD_PDF.GetMetadata(pszDomain);
+        return m_oMDMD_PDF.GetMetadata(pszDomain);
     }
     return GDALPamDataset::GetMetadata(pszDomain);
 }
@@ -7229,7 +7223,7 @@ CPLErr PDFDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
     if (pszDomain == nullptr || EQUAL(pszDomain, ""))
     {
         char **papszMetadataDup = CSLDuplicate(papszMetadata);
-        oMDMD_PDF.SetMetadata(nullptr, pszDomain);
+        m_oMDMD_PDF.SetMetadata(nullptr, pszDomain);
 
         for (char **papszIter = papszMetadataDup; papszIter && *papszIter;
              ++papszIter)
@@ -7247,12 +7241,12 @@ CPLErr PDFDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
     }
     else if (EQUAL(pszDomain, "xml:XMP"))
     {
-        bXMPDirty = TRUE;
-        return oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
+        m_bXMPDirty = true;
+        return m_oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
     else if (EQUAL(pszDomain, "SUBDATASETS"))
     {
-        return oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
+        return m_oMDMD_PDF.SetMetadata(papszMetadata, pszDomain);
     }
     else
     {
@@ -7270,11 +7264,11 @@ const char *PDFDataset::GetMetadataItem(const char *pszName,
     if (pszDomain != nullptr && EQUAL(pszDomain, "_INTERNAL_") &&
         pszName != nullptr && EQUAL(pszName, "PDF_LIB"))
     {
-        if (bUseLib.test(PDFLIB_POPPLER))
+        if (m_bUseLib.test(PDFLIB_POPPLER))
             return "POPPLER";
-        if (bUseLib.test(PDFLIB_PODOFO))
+        if (m_bUseLib.test(PDFLIB_PODOFO))
             return "PODOFO";
-        if (bUseLib.test(PDFLIB_PDFIUM))
+        if (m_bUseLib.test(PDFLIB_PDFIUM))
             return "PDFIUM";
     }
     return CSLFetchNameValue(GetMetadata(pszDomain), pszName);
@@ -7292,16 +7286,16 @@ CPLErr PDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
         if (EQUAL(pszName, "NEATLINE"))
         {
             const char *pszOldValue =
-                oMDMD_PDF.GetMetadataItem(pszName, pszDomain);
+                m_oMDMD_PDF.GetMetadataItem(pszName, pszDomain);
             if ((pszValue == nullptr && pszOldValue != nullptr) ||
                 (pszValue != nullptr && pszOldValue == nullptr) ||
                 (pszValue != nullptr && pszOldValue != nullptr &&
                  strcmp(pszValue, pszOldValue) != 0))
             {
-                bProjDirty = TRUE;
-                bNeatLineDirty = TRUE;
+                m_bProjDirty = true;
+                m_bNeatLineDirty = true;
             }
-            return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
+            return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
         }
         else
         {
@@ -7313,21 +7307,23 @@ CPLErr PDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
                 if (pszValue == nullptr)
                     pszValue = "";
                 const char *pszOldValue =
-                    oMDMD_PDF.GetMetadataItem(pszName, pszDomain);
+                    m_oMDMD_PDF.GetMetadataItem(pszName, pszDomain);
                 if (pszOldValue == nullptr ||
                     strcmp(pszValue, pszOldValue) != 0)
                 {
-                    bInfoDirty = TRUE;
+                    m_bInfoDirty = true;
                 }
-                return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
+                return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue,
+                                                   pszDomain);
             }
             else if (EQUAL(pszName, "DPI"))
             {
-                return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
+                return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue,
+                                                   pszDomain);
             }
             else
             {
-                oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
+                m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
                 return GDALPamDataset::SetMetadataItem(pszName, pszValue,
                                                        pszDomain);
             }
@@ -7335,12 +7331,12 @@ CPLErr PDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
     }
     else if (EQUAL(pszDomain, "xml:XMP"))
     {
-        bXMPDirty = TRUE;
-        return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
+        m_bXMPDirty = true;
+        return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }
     else if (EQUAL(pszDomain, "SUBDATASETS"))
     {
-        return oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
+        return m_oMDMD_PDF.SetMetadataItem(pszName, pszValue, pszDomain);
     }
     else
     {
@@ -7354,7 +7350,7 @@ CPLErr PDFDataset::SetMetadataItem(const char *pszName, const char *pszValue,
 
 int PDFDataset::GetGCPCount()
 {
-    return nGCPCount;
+    return m_nGCPCount;
 }
 
 /************************************************************************/
@@ -7363,7 +7359,7 @@ int PDFDataset::GetGCPCount()
 
 const OGRSpatialReference *PDFDataset::GetGCPSpatialRef() const
 {
-    if (!m_oSRS.IsEmpty() && nGCPCount != 0)
+    if (!m_oSRS.IsEmpty() && m_nGCPCount != 0)
         return &m_oSRS;
     return nullptr;
 }
@@ -7374,7 +7370,7 @@ const OGRSpatialReference *PDFDataset::GetGCPSpatialRef() const
 
 const GDAL_GCP *PDFDataset::GetGCPs()
 {
-    return pasGCPList;
+    return m_pasGCPList;
 }
 
 /************************************************************************/
@@ -7395,21 +7391,21 @@ CPLErr PDFDataset::SetGCPs(int nGCPCountIn, const GDAL_GCP *pasGCPListIn,
     }
 
     /* Free previous GCPs */
-    GDALDeinitGCPs(nGCPCount, pasGCPList);
-    CPLFree(pasGCPList);
+    GDALDeinitGCPs(m_nGCPCount, m_pasGCPList);
+    CPLFree(m_pasGCPList);
 
     /* Duplicate in GCPs */
-    nGCPCount = nGCPCountIn;
-    pasGCPList = GDALDuplicateGCPs(nGCPCount, pasGCPListIn);
+    m_nGCPCount = nGCPCountIn;
+    m_pasGCPList = GDALDuplicateGCPs(m_nGCPCount, pasGCPListIn);
 
     m_oSRS.Clear();
     if (poSRS)
         m_oSRS = *poSRS;
 
-    bProjDirty = TRUE;
+    m_bProjDirty = true;
 
     /* Reset NEATLINE if not explicitly set by the user */
-    if (!bNeatLineDirty)
+    if (!m_bNeatLineDirty)
         SetMetadataItem("NEATLINE", nullptr);
 
     return CE_None;
@@ -7448,7 +7444,7 @@ static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
         CPLDestroyMutex(hGlobalParamsMutex);
 #endif
 #ifdef HAVE_PDFIUM
-    if (PDFDataset::bPdfiumInit)
+    if (PDFDataset::g_bPdfiumInit)
     {
         CPLCreateOrAcquireMutex(&g_oPdfiumLoadDocMutex, PDFIUM_MUTEX_TIMEOUT);
         // Destroy every loaded document or page
@@ -7484,7 +7480,7 @@ static void GDALPDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
         }  // ~ foreach document
         g_mPdfiumDatasets.clear();
         FPDF_DestroyLibrary();
-        PDFDataset::bPdfiumInit = FALSE;
+        PDFDataset::g_bPdfiumInit = FALSE;
 
         CPLReleaseMutex(g_oPdfiumLoadDocMutex);
 

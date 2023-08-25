@@ -43,20 +43,20 @@ constexpr int BEZIER_STEPS = 10;
 
 int PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
 {
-    if (bHasLoadedLayers)
+    if (m_bHasLoadedLayers)
         return TRUE;
-    bHasLoadedLayers = TRUE;
+    m_bHasLoadedLayers = true;
 
     if (poPageDict == nullptr)
     {
-        poPageDict = poPageObj->GetDictionary();
+        poPageDict = m_poPageObj->GetDictionary();
         if (poPageDict == nullptr)
             return FALSE;
     }
 
     GetCatalog();
-    if (poCatalogObject == nullptr ||
-        poCatalogObject->GetType() != PDFObjectType_Dictionary)
+    if (m_poCatalogObject == nullptr ||
+        m_poCatalogObject->GetType() != PDFObjectType_Dictionary)
         return FALSE;
 
     GDALPDFObject *poContents = poPageDict->Get("Contents");
@@ -73,7 +73,7 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
         return FALSE;
 
     GDALPDFObject *poStructTreeRoot =
-        poCatalogObject->GetDictionary()->Get("StructTreeRoot");
+        m_poCatalogObject->GetDictionary()->Get("StructTreeRoot");
     if (CPLTestBool(CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")) ||
         poStructTreeRoot == nullptr ||
         poStructTreeRoot->GetType() != PDFObjectType_Dictionary)
@@ -93,9 +93,9 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
     CleanupIntermediateResources();
 
     int bEmptyDS = TRUE;
-    for (int i = 0; i < nLayers; i++)
+    for (int i = 0; i < m_nLayers; i++)
     {
-        if (papoLayers[i]->GetFeatureCount() != 0)
+        if (m_papoLayers[i]->GetFeatureCount() != 0)
         {
             bEmptyDS = FALSE;
             break;
@@ -110,10 +110,9 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
 
 void PDFDataset::CleanupIntermediateResources()
 {
-    std::map<int, OGRGeometry *>::iterator oMapIter = oMapMCID.begin();
-    for (; oMapIter != oMapMCID.end(); ++oMapIter)
-        delete oMapIter->second;
-    oMapMCID.erase(oMapMCID.begin(), oMapMCID.end());
+    for (const auto &oIter : m_oMapMCID)
+        delete oIter.second;
+    m_oMapMCID.clear();
 }
 
 /************************************************************************/
@@ -204,9 +203,8 @@ static const PDFOperator asPDFOperators[] = {
 
 void PDFDataset::InitMapOperators()
 {
-    for (size_t i = 0; i < sizeof(asPDFOperators) / sizeof(asPDFOperators[0]);
-         i++)
-        oMapOperators[asPDFOperators[i].szOpName] = asPDFOperators[i].nArgs;
+    for (const auto &sPDFOperator : asPDFOperators)
+        m_oMapOperators[sPDFOperator.szOpName] = sPDFOperator.nArgs;
 }
 
 /************************************************************************/
@@ -226,10 +224,10 @@ OGRLayer *PDFDataset::GetLayer(int iLayer)
 
 {
     OpenVectorLayers(nullptr);
-    if (iLayer < 0 || iLayer >= nLayers)
+    if (iLayer < 0 || iLayer >= m_nLayers)
         return nullptr;
 
-    return papoLayers[iLayer];
+    return m_papoLayers[iLayer];
 }
 
 /************************************************************************/
@@ -239,7 +237,7 @@ OGRLayer *PDFDataset::GetLayer(int iLayer)
 int PDFDataset::GetLayerCount()
 {
     OpenVectorLayers(nullptr);
-    return nLayers;
+    return m_nLayers;
 }
 
 /************************************************************************/
@@ -299,7 +297,7 @@ void PDFDataset::ExploreTree(GDALPDFObject *poObj,
                 if (!osS.empty())
                     osLayerName = osS;
                 else
-                    osLayerName = CPLSPrintf("Layer%d", nLayers + 1);
+                    osLayerName = CPLSPrintf("Layer%d", m_nLayers + 1);
             }
 
             auto poSRSOri = GetSpatialRef();
@@ -311,10 +309,10 @@ void PDFDataset::ExploreTree(GDALPDFObject *poObj,
 
             poLayer->Fill(poArray);
 
-            papoLayers = (OGRLayer **)CPLRealloc(
-                papoLayers, (nLayers + 1) * sizeof(OGRLayer *));
-            papoLayers[nLayers] = poLayer;
-            nLayers++;
+            m_papoLayers = (OGRLayer **)CPLRealloc(
+                m_papoLayers, (m_nLayers + 1) * sizeof(OGRLayer *));
+            m_papoLayers[m_nLayers] = poLayer;
+            m_nLayers++;
         }
         else
         {
@@ -340,8 +338,8 @@ void PDFDataset::ExploreTree(GDALPDFObject *poObj,
 
 OGRGeometry *PDFDataset::GetGeometryFromMCID(int nMCID)
 {
-    std::map<int, OGRGeometry *>::iterator oMapIter = oMapMCID.find(nMCID);
-    if (oMapIter != oMapMCID.end())
+    auto oMapIter = m_oMapMCID.find(nMCID);
+    if (oMapIter != m_oMapMCID.end())
         return oMapIter->second;
     else
         return nullptr;
@@ -418,14 +416,16 @@ class GraphicState
 
 void PDFDataset::PDFCoordsToSRSCoords(double x, double y, double &X, double &Y)
 {
-    x = x / dfPageWidth * nRasterXSize;
-    if (bGeoTransformValid)
-        y = (1 - y / dfPageHeight) * nRasterYSize;
+    x = x / m_dfPageWidth * nRasterXSize;
+    if (m_bGeoTransformValid)
+        y = (1 - y / m_dfPageHeight) * nRasterYSize;
     else
-        y = (y / dfPageHeight) * nRasterYSize;
+        y = (y / m_dfPageHeight) * nRasterYSize;
 
-    X = adfGeoTransform[0] + x * adfGeoTransform[1] + y * adfGeoTransform[2];
-    Y = adfGeoTransform[3] + x * adfGeoTransform[4] + y * adfGeoTransform[5];
+    X = m_adfGeoTransform[0] + x * m_adfGeoTransform[1] +
+        y * m_adfGeoTransform[2];
+    Y = m_adfGeoTransform[3] + x * m_adfGeoTransform[4] +
+        y * m_adfGeoTransform[5];
 
     if (fabs(X - (int)floor(X + 0.5)) < 1e-8)
         X = (int)floor(X + 0.5);
@@ -1269,17 +1269,17 @@ OGRGeometry *PDFDataset::ParseContent(
                         return nullptr;
                     }
                 }
-                else if (oMapOperators.find(szToken) != oMapOperators.end())
+                else if (m_oMapOperators.find(szToken) != m_oMapOperators.end())
                 {
-                    int nArgs = oMapOperators[szToken];
+                    int nArgs = m_oMapOperators[szToken];
                     if (nArgs < 0)
                     {
                         while (nTokenStackSize != 0)
                         {
                             CPLString osTopToken =
                                 aszTokenStack[--nTokenStackSize];
-                            if (oMapOperators.find(osTopToken) !=
-                                oMapOperators.end())
+                            if (m_oMapOperators.find(osTopToken) !=
+                                m_oMapOperators.end())
                                 break;
                         }
                     }
@@ -1309,7 +1309,7 @@ OGRGeometry *PDFDataset::ParseContent(
                     {
                         OGRFeature *poFeature =
                             new OGRFeature(poCurLayer->GetLayerDefn());
-                        if (bSetStyle)
+                        if (m_bSetStyle)
                         {
                             OGRwkbGeometryType eType =
                                 wkbFlatten(poGeom->getGeometryType());
@@ -1756,7 +1756,7 @@ void PDFDataset::ExploreContents(GDALPDFObject *poObj,
                 if (poGeom != nullptr)
                 {
                     /* Save geometry in map */
-                    oMapMCID[nMCID] = poGeom;
+                    m_oMapMCID[nMCID] = poGeom;
                 }
             }
         }
@@ -1839,7 +1839,7 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
             poProperties->GetType() == PDFObjectType_Dictionary)
         {
             std::map<std::pair<int, int>, OGRPDFLayer *> oMapNumGenToLayer;
-            for (const auto &oLayerWithref : aoLayerWithRef)
+            for (const auto &oLayerWithref : m_aoLayerWithRef)
             {
                 CPLString osSanitizedName(
                     PDFSanitizeLayerName(oLayerWithref.osName));
@@ -1856,10 +1856,10 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                     if (poSRS)
                         poSRS->Release();
 
-                    papoLayers = (OGRLayer **)CPLRealloc(
-                        papoLayers, (nLayers + 1) * sizeof(OGRLayer *));
-                    papoLayers[nLayers] = poLayer;
-                    nLayers++;
+                    m_papoLayers = (OGRLayer **)CPLRealloc(
+                        m_papoLayers, (m_nLayers + 1) * sizeof(OGRLayer *));
+                    m_papoLayers[m_nLayers] = poLayer;
+                    m_nLayers++;
                 }
 
                 oMapNumGenToLayer[std::pair<int, int>(
@@ -1893,17 +1893,17 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
     }
 
     OGRPDFLayer *poSingleLayer = nullptr;
-    if (nLayers == 0)
+    if (m_nLayers == 0)
     {
         if (CPLTestBool(
                 CPLGetConfigOption("OGR_PDF_READ_NON_STRUCTURED", "NO")))
         {
             OGRPDFLayer *poLayer =
                 new OGRPDFLayer(this, "content", nullptr, wkbUnknown);
-            papoLayers = (OGRLayer **)CPLRealloc(
-                papoLayers, (nLayers + 1) * sizeof(OGRLayer *));
-            papoLayers[nLayers] = poLayer;
-            nLayers++;
+            m_papoLayers = (OGRLayer **)CPLRealloc(
+                m_papoLayers, (m_nLayers + 1) * sizeof(OGRLayer *));
+            m_papoLayers[m_nLayers] = poLayer;
+            m_nLayers++;
             poSingleLayer = poLayer;
         }
         else
@@ -1917,17 +1917,17 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
 
     /* Remove empty layers */
     int i = 0;
-    while (i < nLayers)
+    while (i < m_nLayers)
     {
-        if (papoLayers[i]->GetFeatureCount() == 0)
+        if (m_papoLayers[i]->GetFeatureCount() == 0)
         {
-            delete papoLayers[i];
-            if (i < nLayers - 1)
+            delete m_papoLayers[i];
+            if (i < m_nLayers - 1)
             {
-                memmove(papoLayers + i, papoLayers + i + 1,
-                        (nLayers - 1 - i) * sizeof(OGRPDFLayer *));
+                memmove(m_papoLayers + i, m_papoLayers + i + 1,
+                        (m_nLayers - 1 - i) * sizeof(OGRPDFLayer *));
             }
-            nLayers--;
+            m_nLayers--;
         }
         else
             i++;

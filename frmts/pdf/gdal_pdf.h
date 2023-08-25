@@ -44,6 +44,7 @@
 #define OGR_FEATURESTYLE_INCLUDE
 #include "cpl_port.h"
 
+#include <array>
 #include <map>
 #include <set>
 #include <stack>
@@ -182,6 +183,8 @@ class ObjectAutoFree;
 #define MAX_TOKEN_SIZE 256
 #define TOKEN_STACK_SIZE 8
 
+#define GDAL_DEFAULT_DPI 150.0
+
 #ifdef HAVE_PDF_READ_SUPPORT
 
 class PDFDataset final : public GDALPamDataset
@@ -190,45 +193,46 @@ class PDFDataset final : public GDALPamDataset
     friend class PDFImageRasterBand;
 
     VSILFILE *m_fp = nullptr;
-    PDFDataset *poParentDS;
+    PDFDataset *m_poParentDS = nullptr;
 
-    CPLString osFilename;
-    CPLString osUserPwd;
+    CPLString m_osFilename{};
+    CPLString m_osUserPwd{};
     OGRSpatialReference m_oSRS{};
-    double dfDPI;
-    int bHasCTM;
-    double adfCTM[6];
-    double adfGeoTransform[6];
-    int bGeoTransformValid;
-    int nGCPCount;
-    GDAL_GCP *pasGCPList;
-    int bProjDirty;
-    int bNeatLineDirty;
+    double m_dfDPI = GDAL_DEFAULT_DPI;
+    bool m_bHasCTM = false;
+    std::array<double, 6> m_adfCTM = {{0, 0, 0, 0, 0, 0}};
+    std::array<double, 6> m_adfGeoTransform = {{0, 1, 0, 0, 0, 1}};
+    bool m_bGeoTransformValid = false;
+    int m_nGCPCount = 0;
+    GDAL_GCP *m_pasGCPList = nullptr;
+    bool m_bProjDirty = false;
+    bool m_bNeatLineDirty = false;
 
-    GDALMultiDomainMetadata oMDMD_PDF;
-    int bInfoDirty;
-    int bXMPDirty;
+    GDALMultiDomainMetadata m_oMDMD_PDF{};
+    bool m_bInfoDirty = false;
+    bool m_bXMPDirty = false;
 
-    std::bitset<PDFLIB_COUNT> bUseLib;
+    std::bitset<PDFLIB_COUNT> m_bUseLib{};
 #ifdef HAVE_POPPLER
-    PDFDoc *poDocPoppler;
+    PDFDoc *m_poDocPoppler = nullptr;
 #endif
 #ifdef HAVE_PODOFO
-    PoDoFo::PdfMemDocument *poDocPodofo;
-    int bPdfToPpmFailed;
+    PoDoFo::PdfMemDocument *m_poDocPodofo = nullptr;
+    bool m_bPdfToPpmFailed = false;
 #endif
 #ifdef HAVE_PDFIUM
-    TPdfiumDocumentStruct *poDocPdfium;
-    TPdfiumPageStruct *poPagePdfium;
-    std::vector<PDFDataset *> apoOvrDS, apoOvrDSBackup;
+    TPdfiumDocumentStruct *m_poDocPdfium = nullptr;
+    TPdfiumPageStruct *m_poPagePdfium = nullptr;
+    std::vector<PDFDataset *> m_apoOvrDS{};
+    std::vector<PDFDataset *> m_apoOvrDSBackup{};
 #endif
-    GDALPDFObject *poPageObj;
+    GDALPDFObject *m_poPageObj = nullptr;
 
-    int iPage;
+    int m_iPage = -1;
 
-    GDALPDFObject *poImageObj;
+    GDALPDFObject *m_poImageObj = nullptr;
 
-    double dfMaxArea;
+    double m_dfMaxArea = 0;
     int ParseLGIDictObject(GDALPDFObject *poLGIDict);
     int ParseLGIDictDictFirstPass(GDALPDFDictionary *poLGIDict,
                                   int *pbIsBestCandidate = nullptr);
@@ -240,17 +244,17 @@ class PDFDataset final : public GDALPamDataset
                      double dfMediaBoxHeight, double dfULX, double dfULY,
                      double dfLRX, double dfLRY);
 
-    int bTried;
-    GByte *pabyCachedData;
-    int nLastBlockXOff;
-    int nLastBlockYOff;
+    bool m_bTried = false;
+    GByte *m_pabyCachedData = nullptr;
+    int m_nLastBlockXOff = -1;
+    int m_nLastBlockYOff = -1;
 
-    OGRPolygon *poNeatLine;
+    OGRPolygon *m_poNeatLine = nullptr;
 
-    std::vector<GDALPDFTileDesc> asTiles; /* in the order of the PDF file */
-    std::vector<int> aiTiles;             /* in the order of blocks */
-    int nBlockXSize;
-    int nBlockYSize;
+    std::vector<GDALPDFTileDesc> m_asTiles{}; /* in the order of the PDF file */
+    std::vector<int> m_aiTiles{};             /* in the order of blocks */
+    int m_nBlockXSize = 0;
+    int m_nBlockYSize = 0;
     int CheckTiledRaster();
 
     void GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands);
@@ -258,9 +262,9 @@ class PDFDataset final : public GDALPamDataset
     void ParseInfo(GDALPDFObject *poObj);
 
 #ifdef HAVE_POPPLER
-    ObjectAutoFree *poCatalogObjectPoppler;
+    ObjectAutoFree *m_poCatalogObjectPoppler = nullptr;
 #endif
-    GDALPDFObject *poCatalogObject;
+    GDALPDFObject *m_poCatalogObject = nullptr;
     GDALPDFObject *GetCatalog();
 
 #if defined(HAVE_POPPLER) || defined(HAVE_PDFIUM)
@@ -273,7 +277,7 @@ class PDFDataset final : public GDALPamDataset
     void FindLayersPoppler();
     void TurnLayersOnOffPoppler();
     std::vector<std::pair<CPLString, OptionalContentGroup *>>
-        oLayerOCGListPoppler;
+        m_oLayerOCGListPoppler{};
 #endif
 
 #ifdef HAVE_PDFIUM
@@ -296,12 +300,12 @@ class PDFDataset final : public GDALPamDataset
     VisibilityState GetVisibilityStateForOGCPdfium(int nNum, int nGen);
 
   private:
-    std::map<CPLString, std::pair<int, int>> oMapLayerNameToOCGNumGenPdfium;
+    std::map<CPLString, std::pair<int, int>> m_oMapLayerNameToOCGNumGenPdfium{};
     std::map<std::pair<int, int>, VisibilityState>
-        oMapOCGNumGenToVisibilityStatePdfium;
+        m_oMapOCGNumGenToVisibilityStatePdfium{};
 #endif
 
-    CPLStringList osLayerList;
+    CPLStringList m_osLayerList{};
 
     struct LayerWithRef
     {
@@ -315,33 +319,33 @@ class PDFDataset final : public GDALPamDataset
         {
         }
     };
-    std::vector<LayerWithRef> aoLayerWithRef;
+    std::vector<LayerWithRef> m_aoLayerWithRef{};
 
     CPLString FindLayerOCG(GDALPDFDictionary *poPageDict,
                            const char *pszLayerName);
     void FindLayersGeneric(GDALPDFDictionary *poPageDict);
 
-    int bUseOCG;
+    bool m_bUseOCG = false;
 
     static const char *GetOption(char **papszOpenOptions,
                                  const char *pszOptionName,
                                  const char *pszDefaultVal);
 
-    int bHasLoadedLayers;
-    int nLayers;
-    OGRLayer **papoLayers;
+    bool m_bHasLoadedLayers = false;
+    int m_nLayers = 0;
+    OGRLayer **m_papoLayers = nullptr;
 
-    double dfPageWidth;
-    double dfPageHeight;
+    double m_dfPageWidth = 0;
+    double m_dfPageHeight = 0;
     void PDFCoordsToSRSCoords(double x, double y, double &X, double &Y);
 
-    std::map<int, OGRGeometry *> oMapMCID;
+    std::map<int, OGRGeometry *> m_oMapMCID{};
     void CleanupIntermediateResources();
 
-    std::map<CPLString, int> oMapOperators;
+    std::map<CPLString, int> m_oMapOperators{};
     void InitMapOperators();
 
-    int bSetStyle;
+    bool m_bSetStyle = false;
 
     void ExploreTree(GDALPDFObject *poObj,
                      std::set<std::pair<int, int>> &aoSetAlreadyVisited,
@@ -418,15 +422,15 @@ class PDFDataset final : public GDALPamDataset
 
     GDALPDFObject *GetPageObj()
     {
-        return poPageObj;
+        return m_poPageObj;
     }
     double GetPageWidth() const
     {
-        return dfPageWidth;
+        return m_dfPageWidth;
     }
     double GetPageHeight() const
     {
-        return dfPageHeight;
+        return m_dfPageHeight;
     }
 
     static PDFDataset *Open(GDALOpenInfo *);
@@ -441,7 +445,7 @@ class PDFDataset final : public GDALPamDataset
                                    const int *, GDALProgressFunc, void *,
                                    CSLConstList papszOptions) override;
 
-    static int bPdfiumInit;
+    static bool g_bPdfiumInit;
 #endif
 };
 
