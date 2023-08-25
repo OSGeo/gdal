@@ -1531,7 +1531,7 @@ static char *GooStringToCharStart(GooString &gstr)
     auto nLength = gstr.getLength();
     if (nLength)
     {
-        char *pszContent = (char *)VSIMalloc(nLength + 1);
+        char *pszContent = (char *)VSI_MALLOC_VERBOSE(nLength + 1);
         if (pszContent)
         {
 #if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
@@ -2082,7 +2082,7 @@ char *GDALPDFStreamPodofo::GetBytes()
     {
         return nullptr;
     }
-    char *pszContent = (char *)VSIMalloc(nLen + 1);
+    char *pszContent = (char *)VSI_MALLOC_VERBOSE(nLen + 1);
     if (!pszContent)
     {
         PoDoFo::podofo_free(pBuffer);
@@ -2127,7 +2127,7 @@ char *GDALPDFStreamPodofo::GetRawBytes()
     {
         return nullptr;
     }
-    char *pszContent = (char *)VSIMalloc(nLen + 1);
+    char *pszContent = (char *)VSI_MALLOC_VERBOSE(nLen + 1);
     if (!pszContent)
     {
         PoDoFo::podofo_free(pBuffer);
@@ -2638,8 +2638,11 @@ void GDALPDFStreamPdfium::Decompress()
     }
     if (m_nSize)
     {
-        m_pData.reset(static_cast<uint8_t *>(CPLMalloc(nSize)));
-        memcpy(&m_pData.get()[0], acc->DetachData().data(), nSize);
+        m_pData.reset(static_cast<uint8_t *>(VSI_MALLOC_VERBOSE(nSize)));
+        if (!m_pData)
+            m_nSize = 0;
+        else
+            memcpy(&m_pData.get()[0], acc->DetachData().data(), nSize);
     }
 }
 
@@ -2662,7 +2665,7 @@ char *GDALPDFStreamPdfium::GetBytes()
     size_t nLength = static_cast<size_t>(GetLength());
     if (nLength == 0)
         return nullptr;
-    char *pszContent = (char *)VSIMalloc(sizeof(char) * (nLength + 1));
+    char *pszContent = (char *)VSI_MALLOC_VERBOSE(sizeof(char) * (nLength + 1));
     if (!pszContent)
         return nullptr;
     memcpy(pszContent, m_pData.get(), nLength);
@@ -2689,8 +2692,12 @@ void GDALPDFStreamPdfium::FillRaw()
     }
     if (m_nRawSize)
     {
-        m_pRawData.reset(static_cast<uint8_t *>(CPLMalloc(m_nRawSize)));
-        memcpy(&m_pRawData.get()[0], acc->DetachData().data(), m_nRawSize);
+        m_pRawData.reset(
+            static_cast<uint8_t *>(VSI_MALLOC_VERBOSE(m_nRawSize)));
+        if (!m_pRawData)
+            m_nRawSize = 0;
+        else
+            memcpy(&m_pRawData.get()[0], acc->DetachData().data(), m_nRawSize);
     }
 }
 
@@ -2713,7 +2720,7 @@ char *GDALPDFStreamPdfium::GetRawBytes()
     size_t nLength = static_cast<size_t>(GetRawLength());
     if (nLength == 0)
         return nullptr;
-    char *pszContent = (char *)VSIMalloc(sizeof(char) * (nLength + 1));
+    char *pszContent = (char *)VSI_MALLOC_VERBOSE(sizeof(char) * (nLength + 1));
     if (!pszContent)
         return nullptr;
     memcpy(pszContent, m_pRawData.get(), nLength);
