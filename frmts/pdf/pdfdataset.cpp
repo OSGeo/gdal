@@ -2667,8 +2667,7 @@ PDFDataset::~PDFDataset()
     CPLFree(m_papoLayers);
 
     // Do that only after having destroyed Poppler objects
-    if (m_fp)
-        VSIFCloseL(m_fp);
+    m_fp.reset();
 }
 
 /************************************************************************/
@@ -4416,33 +4415,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     TPdfiumPageStruct *poPagePdfium = nullptr;
 #endif
     int nPages = 0;
-
-    struct FilePointerKeeper
-    {
-        VSILFILE *m_fp;
-
-        FilePointerKeeper(VSILFILE *fp = nullptr) : m_fp(fp)
-        {
-        }
-        ~FilePointerKeeper()
-        {
-            if (m_fp)
-                VSIFCloseL(m_fp);
-        }
-        void reset(VSILFILE *fp)
-        {
-            if (m_fp)
-                VSIFCloseL(m_fp);
-            m_fp = fp;
-        }
-        VSILFILE *release()
-        {
-            VSILFILE *ret = m_fp;
-            m_fp = nullptr;
-            return ret;
-        }
-    };
-    FilePointerKeeper fpKeeper;
+    VSIVirtualHandleUniquePtr fp;
 
 #ifdef HAVE_POPPLER
     if (bUseLib.test(PDFLIB_POPPLER))
@@ -4477,8 +4450,8 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             globalParams->setErrQuiet(false);
         };
 
-        VSILFILE *fp = VSIFOpenL(pszFilename, "rb");
-        if (fp == nullptr)
+        fp.reset(VSIFOpenL(pszFilename, "rb"));
+        if (!fp)
             return nullptr;
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
@@ -4488,7 +4461,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             // https://gitlab.freedesktop.org/poppler/poppler/-/issues/1137
             GByte *pabyRet = nullptr;
             vsi_l_offset nSize = 0;
-            if (VSIIngestFile(fp, pszFilename, &pabyRet, &nSize,
+            if (VSIIngestFile(fp.get(), pszFilename, &pabyRet, &nSize,
                               10 * 1024 * 1024))
             {
                 // Replace nul byte by something else so that strstr() works
@@ -4504,7 +4477,6 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                              "/JBIG2Decode found. Giving up due to potential "
                              "very long processing time.");
                     CPLFree(pabyRet);
-                    VSIFCloseL(fp);
                     return nullptr;
                 }
             }
@@ -4512,22 +4484,21 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 #endif
 
-        fp = (VSILFILE *)VSICreateBufferedReaderHandle((VSIVirtualHandle *)fp);
-        fpKeeper.reset(fp);
+        fp.reset(VSICreateBufferedReaderHandle(fp.release()));
         while (true)
         {
-            VSIFSeekL(fp, 0, SEEK_SET);
+            fp->Seek(0, SEEK_SET);
             g_nPopplerErrors = 0;
             if (globalParamsCreatedByGDAL)
                 registerErrorCallback();
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
             Object oObj;
             auto poStream =
-                new VSIPDFFileStream(fp, pszFilename, std::move(oObj));
+                new VSIPDFFileStream(fp.get(), pszFilename, std::move(oObj));
 #else
             oObj.getObj()->initNull();
             auto poStream =
-                new VSIPDFFileStream(fp, pszFilename, oObj.getObj());
+                new VSIPDFFileStream(fp.get(), pszFilename, oObj.getObj());
 #endif
 #if POPPLER_MAJOR_VERSION > 22 ||                                              \
     (POPPLER_MAJOR_VERSION == 22 && POPPLER_MINOR_VERSION > 2)
@@ -4859,7 +4830,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     PDFDataset *poDS = new PDFDataset();
-    poDS->m_fp = fpKeeper.release();
+    poDS->m_fp = std::move(fp);
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
     poDS->m_bUseLib = bUseLib;
     poDS->m_osFilename = pszFilename;

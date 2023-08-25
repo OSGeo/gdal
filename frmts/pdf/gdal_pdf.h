@@ -54,6 +54,8 @@
 
 #include "pdfsdk_headers.h"
 
+#include "cpl_vsi_virtual.h"
+
 #include "gdal_pam.h"
 #include "ogrsf_frmts.h"
 
@@ -192,7 +194,7 @@ class PDFDataset final : public GDALPamDataset
     friend class PDFRasterBand;
     friend class PDFImageRasterBand;
 
-    VSILFILE *m_fp = nullptr;
+    VSIVirtualHandleUniquePtr m_fp{};
     PDFDataset *m_poParentDS = nullptr;
 
     CPLString m_osFilename{};
