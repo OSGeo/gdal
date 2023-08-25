@@ -3324,7 +3324,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
                 int bResetTiles = FALSE;
                 double dfScaleDPI = 1.0;
 
-                if (nLength < 100000)
+                if (nLength < 10 * 1000 * 1000)
                 {
                     CPLString osForm;
                     pszContent = poPageStream->GetBytes();
