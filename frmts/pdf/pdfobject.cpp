@@ -35,6 +35,7 @@
 
 #include "gdal_pdf.h"
 
+#include <limits>
 #include <vector>
 #include "pdfobject.h"
 
@@ -1022,7 +1023,7 @@ class GDALPDFStreamPoppler : public GDALPDFStream
     {
     }
 
-    virtual int64_t GetLength() override;
+    virtual int64_t GetLength(int64_t nMaxSize = 0) override;
     virtual char *GetBytes() override;
 
     virtual int64_t GetRawLength() override;
@@ -1487,7 +1488,7 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
 /*                               GetLength()                            */
 /************************************************************************/
 
-int64_t GDALPDFStreamPoppler::GetLength()
+int64_t GDALPDFStreamPoppler::GetLength(int64_t nMaxSize)
 {
     if (m_nLength >= 0)
         return m_nLength;
@@ -1501,10 +1502,22 @@ int64_t GDALPDFStreamPoppler::GetLength()
     while ((readChars = m_poStream->doGetChars(4096, readBuf)) != 0)
     {
         m_nLength += readChars;
+        if (nMaxSize != 0 && m_nLength > nMaxSize)
+        {
+            m_nLength = -1;
+            return std::numeric_limits<int64_t>::max();
+        }
     }
 #else
     while (m_poStream->getChar() != EOF)
+    {
         m_nLength++;
+        if (nMaxSize != 0 && m_nLength > nMaxSize)
+        {
+            m_nLength = -1;
+            return std::numeric_limits<int64_t>::max();
+        }
+    }
 #endif
     return m_nLength;
 }
@@ -1671,7 +1684,7 @@ class GDALPDFStreamPodofo : public GDALPDFStream
     {
     }
 
-    virtual int64_t GetLength() override;
+    virtual int64_t GetLength(int64_t nMaxSize = 0) override;
     virtual char *GetBytes() override;
 
     virtual int64_t GetRawLength() override;
@@ -2037,7 +2050,7 @@ GDALPDFObject *GDALPDFArrayPodofo::Get(int nIndex)
 /*                              GetLength()                             */
 /************************************************************************/
 
-int64_t GDALPDFStreamPodofo::GetLength()
+int64_t GDALPDFStreamPodofo::GetLength(int64_t /* nMaxSize */)
 {
     char *pBuffer = nullptr;
     PoDoFo::pdf_long nLen = 0;
@@ -2202,7 +2215,7 @@ class GDALPDFStreamPdfium : public GDALPDFStream
     {
     }
 
-    virtual int64_t GetLength() override;
+    virtual int64_t GetLength(int64_t nMaxSize = 0) override;
     virtual char *GetBytes() override;
 
     virtual int64_t GetRawLength() override;
@@ -2634,7 +2647,7 @@ void GDALPDFStreamPdfium::Decompress()
 /*                              GetLength()                             */
 /************************************************************************/
 
-int64_t GDALPDFStreamPdfium::GetLength()
+int64_t GDALPDFStreamPdfium::GetLength(int64_t /* nMaxSize */)
 {
     Decompress();
     return m_nSize;

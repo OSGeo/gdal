@@ -187,7 +187,10 @@ class GDALPDFStream
   public:
     virtual ~GDALPDFStream();
 
-    virtual int64_t GetLength() = 0;
+    /** Return the uncompressed stream length, or 0 if empty or error.
+     * If nMaxSize > 0, GetLength() will possibly stop the decompression once
+     * the threshold is reached, and return INT64_MAX */
+    virtual int64_t GetLength(int64_t nMaxSize = 0) = 0;
     virtual char *GetBytes() = 0;
 
     virtual int64_t GetRawLength() = 0;

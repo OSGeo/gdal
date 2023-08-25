@@ -3323,11 +3323,12 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
             if (poPageStream != nullptr)
             {
                 char *pszContent = nullptr;
-                int64_t nLength = poPageStream->GetLength();
+                const int64_t MAX_LENGTH = 10 * 1000 * 1000;
+                int64_t nLength = poPageStream->GetLength(MAX_LENGTH);
                 int bResetTiles = FALSE;
                 double dfScaleDPI = 1.0;
 
-                if (nLength < 10 * 1000 * 1000)
+                if (nLength < MAX_LENGTH)
                 {
                     CPLString osForm;
                     pszContent = poPageStream->GetBytes();
@@ -3473,8 +3474,8 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
                                 poSubtype->GetType() == PDFObjectType_Name &&
                                 poSubtype->GetName() == "Form")
                             {
-                                nLength = poPageStream->GetLength();
-                                if (nLength < 100000)
+                                nLength = poPageStream->GetLength(MAX_LENGTH);
+                                if (nLength < MAX_LENGTH)
                                 {
                                     pszContent = poPageStream->GetBytes();
 
