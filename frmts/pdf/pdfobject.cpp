@@ -1010,9 +1010,9 @@ class GDALPDFArrayPoppler : public GDALPDFArray
 class GDALPDFStreamPoppler : public GDALPDFStream
 {
   private:
-    int m_nLength = -1;
+    int64_t m_nLength = -1;
     Stream *m_poStream;
-    int m_nRawLength = -1;
+    int64_t m_nRawLength = -1;
 
   public:
     GDALPDFStreamPoppler(Stream *poStream) : m_poStream(poStream)
@@ -1022,10 +1022,10 @@ class GDALPDFStreamPoppler : public GDALPDFStream
     {
     }
 
-    virtual int GetLength() override;
+    virtual int64_t GetLength() override;
     virtual char *GetBytes() override;
 
-    virtual int GetRawLength() override;
+    virtual int64_t GetRawLength() override;
     virtual char *GetRawBytes() override;
 };
 
@@ -1487,15 +1487,25 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
 /*                               GetLength()                            */
 /************************************************************************/
 
-int GDALPDFStreamPoppler::GetLength()
+int64_t GDALPDFStreamPoppler::GetLength()
 {
     if (m_nLength >= 0)
         return m_nLength;
 
     m_poStream->reset();
     m_nLength = 0;
+    // Not sure if 0.86 is the minimum version, but it does has getChars()
+#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 86)
+    unsigned char readBuf[4096];
+    int readChars;
+    while ((readChars = m_poStream->doGetChars(4096, readBuf)) != 0)
+    {
+        m_nLength += readChars;
+    }
+#else
     while (m_poStream->getChar() != EOF)
         m_nLength++;
+#endif
     return m_nLength;
 }
 
@@ -1531,8 +1541,21 @@ static char *GooStringToCharStart(GooString &gstr)
 char *GDALPDFStreamPoppler::GetBytes()
 {
     GooString gstr;
-    m_poStream->fillGooString(&gstr);
+    try
+    {
+        m_poStream->fillGooString(&gstr);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GDALPDFStreamPoppler::GetBytes(): %s", e.what());
+        return nullptr;
+    }
+#if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
+    m_nLength = static_cast<int64_t>(gstr.toStr().size());
+#else
     m_nLength = gstr.getLength();
+#endif
     return GooStringToCharStart(gstr);
 }
 
@@ -1540,7 +1563,7 @@ char *GDALPDFStreamPoppler::GetBytes()
 /*                            GetRawLength()                            */
 /************************************************************************/
 
-int GDALPDFStreamPoppler::GetRawLength()
+int64_t GDALPDFStreamPoppler::GetRawLength()
 {
     if (m_nRawLength >= 0)
         return m_nRawLength;
@@ -1561,7 +1584,16 @@ char *GDALPDFStreamPoppler::GetRawBytes()
 {
     GooString gstr;
     auto undecodeStream = m_poStream->getUndecodedStream();
-    undecodeStream->fillGooString(&gstr);
+    try
+    {
+        undecodeStream->fillGooString(&gstr);
+    }
+    catch (const std::exception &e)
+    {
+        CPLError(CE_Failure, CPLE_OutOfMemory,
+                 "GDALPDFStreamPoppler::GetRawBytes(): %s", e.what());
+        return nullptr;
+    }
     m_nRawLength = gstr.getLength();
     return GooStringToCharStart(gstr);
 }
@@ -1639,10 +1671,10 @@ class GDALPDFStreamPodofo : public GDALPDFStream
     {
     }
 
-    virtual int GetLength() override;
+    virtual int64_t GetLength() override;
     virtual char *GetBytes() override;
 
-    virtual int GetRawLength() override;
+    virtual int64_t GetRawLength() override;
     virtual char *GetRawBytes() override;
 };
 
@@ -2005,7 +2037,7 @@ GDALPDFObject *GDALPDFArrayPodofo::Get(int nIndex)
 /*                              GetLength()                             */
 /************************************************************************/
 
-int GDALPDFStreamPodofo::GetLength()
+int64_t GDALPDFStreamPodofo::GetLength()
 {
     char *pBuffer = nullptr;
     PoDoFo::pdf_long nLen = 0;
@@ -2013,7 +2045,7 @@ int GDALPDFStreamPodofo::GetLength()
     {
         m_pStream->GetFilteredCopy(&pBuffer, &nLen);
         PoDoFo::podofo_free(pBuffer);
-        return (int)nLen;
+        return static_cast<int64_t>(nLen);
     }
     catch (PoDoFo::PdfError &e)
     {
@@ -2053,12 +2085,12 @@ char *GDALPDFStreamPodofo::GetBytes()
 /*                             GetRawLength()                           */
 /************************************************************************/
 
-int GDALPDFStreamPodofo::GetRawLength()
+int64_t GDALPDFStreamPodofo::GetRawLength()
 {
     try
     {
         auto nLen = m_pStream->GetLength();
-        return (int)nLen;
+        return static_cast<int64_t>(nLen);
     }
     catch (PoDoFo::PdfError &e)
     {
@@ -2153,9 +2185,9 @@ class GDALPDFStreamPdfium : public GDALPDFStream
 {
   private:
     RetainPtr<const CPDF_Stream> m_pStream;
-    int m_nSize = 0;
+    int64_t m_nSize = 0;
     std::unique_ptr<uint8_t, CPLFreeReleaser> m_pData = nullptr;
-    int m_nRawSize = 0;
+    int64_t m_nRawSize = 0;
     std::unique_ptr<uint8_t, CPLFreeReleaser> m_pRawData = nullptr;
 
     void Decompress();
@@ -2170,10 +2202,10 @@ class GDALPDFStreamPdfium : public GDALPDFStream
     {
     }
 
-    virtual int GetLength() override;
+    virtual int64_t GetLength() override;
     virtual char *GetBytes() override;
 
-    virtual int GetRawLength() override;
+    virtual int64_t GetRawLength() override;
     virtual char *GetRawBytes() override;
 };
 
@@ -2584,12 +2616,17 @@ void GDALPDFStreamPdfium::Decompress()
         return;
     auto acc(pdfium::MakeRetain<CPDF_StreamAcc>(m_pStream));
     acc->LoadAllDataFiltered();
-    m_nSize = static_cast<int>(acc->GetSize());
+    m_nSize = static_cast<int64_t>(acc->GetSize());
     m_pData.reset();
+    const auto nSize = static_cast<size_t>(m_nSize);
+    if (static_cast<int64_t>(nSize) != m_nSize)
+    {
+        m_nSize = 0;
+    }
     if (m_nSize)
     {
-        m_pData.reset(static_cast<uint8_t *>(CPLMalloc(m_nSize)));
-        memcpy(&m_pData.get()[0], acc->DetachData().data(), m_nSize);
+        m_pData.reset(static_cast<uint8_t *>(CPLMalloc(nSize)));
+        memcpy(&m_pData.get()[0], acc->DetachData().data(), nSize);
     }
 }
 
@@ -2597,7 +2634,7 @@ void GDALPDFStreamPdfium::Decompress()
 /*                              GetLength()                             */
 /************************************************************************/
 
-int GDALPDFStreamPdfium::GetLength()
+int64_t GDALPDFStreamPdfium::GetLength()
 {
     Decompress();
     return m_nSize;
@@ -2609,7 +2646,7 @@ int GDALPDFStreamPdfium::GetLength()
 
 char *GDALPDFStreamPdfium::GetBytes()
 {
-    int nLength = GetLength();
+    size_t nLength = static_cast<size_t>(GetLength());
     if (nLength == 0)
         return nullptr;
     char *pszContent = (char *)VSIMalloc(sizeof(char) * (nLength + 1));
@@ -2630,8 +2667,13 @@ void GDALPDFStreamPdfium::FillRaw()
         return;
     auto acc(pdfium::MakeRetain<CPDF_StreamAcc>(m_pStream));
     acc->LoadAllDataRaw();
-    m_nRawSize = static_cast<int>(acc->GetSize());
+    m_nRawSize = static_cast<int64_t>(acc->GetSize());
     m_pRawData.reset();
+    const auto nSize = static_cast<size_t>(m_nRawSize);
+    if (static_cast<int64_t>(nSize) != m_nRawSize)
+    {
+        m_nRawSize = 0;
+    }
     if (m_nRawSize)
     {
         m_pRawData.reset(static_cast<uint8_t *>(CPLMalloc(m_nRawSize)));
@@ -2643,7 +2685,7 @@ void GDALPDFStreamPdfium::FillRaw()
 /*                            GetRawLength()                            */
 /************************************************************************/
 
-int GDALPDFStreamPdfium::GetRawLength()
+int64_t GDALPDFStreamPdfium::GetRawLength()
 {
     FillRaw();
     return m_nRawSize;
@@ -2655,7 +2697,7 @@ int GDALPDFStreamPdfium::GetRawLength()
 
 char *GDALPDFStreamPdfium::GetRawBytes()
 {
-    int nLength = GetRawLength();
+    size_t nLength = static_cast<size_t>(GetRawLength());
     if (nLength == 0)
         return nullptr;
     char *pszContent = (char *)VSIMalloc(sizeof(char) * (nLength + 1));

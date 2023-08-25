@@ -187,10 +187,10 @@ class GDALPDFStream
   public:
     virtual ~GDALPDFStream();
 
-    virtual int GetLength() = 0;
+    virtual int64_t GetLength() = 0;
     virtual char *GetBytes() = 0;
 
-    virtual int GetRawLength() = 0;
+    virtual int64_t GetRawLength() = 0;
     virtual char *GetRawBytes() = 0;
 };
 

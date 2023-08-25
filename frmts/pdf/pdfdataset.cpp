@@ -533,9 +533,11 @@ void GDALPDFDumper::Dump(GDALPDFObject *poObj, int nDepth)
     GDALPDFStream *poStream = poObj->GetStream();
     if (poStream != nullptr)
     {
-        fprintf(f, "%sHas stream (%d uncompressed bytes, %d raw bytes)\n",
-                osIndent.c_str(), poStream->GetLength(),
-                poStream->GetRawLength());
+        fprintf(f,
+                "%sHas stream (" CPL_FRMT_GIB
+                " uncompressed bytes, " CPL_FRMT_GIB " raw bytes)\n",
+                osIndent.c_str(), static_cast<GIntBig>(poStream->GetLength()),
+                static_cast<GIntBig>(poStream->GetRawLength()));
     }
 }
 
@@ -893,7 +895,8 @@ CPLErr PDFRasterBand::IReadBlockFromTile(int nBlockXOff, int nBlockYOff,
             return CE_Failure;
         }
 
-        memcpy(poGDS->m_pabyCachedData, pabyStream, poStream->GetLength());
+        memcpy(poGDS->m_pabyCachedData, pabyStream,
+               static_cast<size_t>(poStream->GetLength()));
         VSIFree(pabyStream);
         poGDS->m_nLastBlockXOff = nBlockXOff;
         poGDS->m_nLastBlockYOff = nBlockYOff;
@@ -3320,7 +3323,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
             if (poPageStream != nullptr)
             {
                 char *pszContent = nullptr;
-                int nLength = poPageStream->GetLength();
+                int64_t nLength = poPageStream->GetLength();
                 int bResetTiles = FALSE;
                 double dfScaleDPI = 1.0;
 
@@ -3338,7 +3341,8 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
                             VSILFILE *fpDump = VSIFOpenL(pszDumpStream, "wb");
                             if (fpDump)
                             {
-                                VSIFWriteL(pszContent, 1, nLength, fpDump);
+                                VSIFWriteL(pszContent, 1,
+                                           static_cast<int>(nLength), fpDump);
                                 VSIFCloseL(fpDump);
                             }
                         }
@@ -3580,7 +3584,7 @@ void PDFDataset::FindXMP(GDALPDFObject *poObj)
         return;
 
     char *pszContent = poStream->GetBytes();
-    int nLength = (int)poStream->GetLength();
+    const auto nLength = poStream->GetLength();
     if (pszContent != nullptr && nLength > 15 &&
         STARTS_WITH(pszContent, "<?xpacket begin="))
     {
@@ -5445,7 +5449,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (poStream != nullptr)
                 {
                     char *pszContent = poStream->GetBytes();
-                    int nLength = (int)poStream->GetLength();
+                    const auto nLength = poStream->GetLength();
                     if (pszContent != nullptr && nLength > 15 &&
                         STARTS_WITH(pszContent, "<?xpacket begin="))
                     {
