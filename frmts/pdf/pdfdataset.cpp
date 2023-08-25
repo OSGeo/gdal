@@ -647,13 +647,13 @@ void PDFDataset::InitOverviews()
             nXSize = (nXSize + 1) / 2;
             nYSize = (nYSize + 1) / 2;
 
-            PDFDataset *poOvrDS = new PDFDataset(this, nXSize, nYSize);
-            m_apoOvrDS.push_back(poOvrDS);
+            auto poOvrDS = cpl::make_unique<PDFDataset>(this, nXSize, nYSize);
 
             for (int i = 0; i < nBands; i++)
-                poOvrDS->SetBand(i + 1,
-                                 new PDFRasterBand(poOvrDS, i + 1, nDiscard));
+                poOvrDS->SetBand(
+                    i + 1, new PDFRasterBand(poOvrDS.get(), i + 1, nDiscard));
 
+            m_apoOvrDS.emplace_back(std::move(poOvrDS));
             ++nDiscard;
         }
     }
@@ -685,8 +685,8 @@ int PDFRasterBand::GetOverviewCount()
         return GDALPamRasterBand::GetOverviewCount();
     else
     {
-        PDFDataset *poGDS = (PDFDataset *)poDS;
-        return (int)poGDS->m_apoOvrDS.size();
+        PDFDataset *poGDS = cpl::down_cast<PDFDataset *>(poDS);
+        return static_cast<int>(poGDS->m_apoOvrDS.size());
     }
 }
 
@@ -703,7 +703,7 @@ GDALRasterBand *PDFRasterBand::GetOverview(int iOverviewIndex)
         return nullptr;
     else
     {
-        PDFDataset *poGDS = (PDFDataset *)poDS;
+        PDFDataset *poGDS = cpl::down_cast<PDFDataset *>(poDS);
         return poGDS->m_apoOvrDS[iOverviewIndex]->GetRasterBand(nBand);
     }
 }
@@ -2438,7 +2438,7 @@ CPLErr PDFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
     /* -------------------------------------------------------------------- */
     if (!m_apoOvrDS.empty())
     {
-        m_apoOvrDSBackup = m_apoOvrDS;
+        m_apoOvrDSBackup = std::move(m_apoOvrDS);
         m_apoOvrDS.clear();
     }
 
@@ -2543,11 +2543,7 @@ GDALPDFObject *PDFDataset::GetCatalog()
 PDFDataset::~PDFDataset()
 {
 #ifdef HAVE_PDFIUM
-    for (size_t i = 0; i < m_apoOvrDS.size(); i++)
-        delete m_apoOvrDS[i];
     m_apoOvrDS.clear();
-    for (size_t i = 0; i < m_apoOvrDSBackup.size(); i++)
-        delete m_apoOvrDSBackup[i];
     m_apoOvrDSBackup.clear();
 #endif
 

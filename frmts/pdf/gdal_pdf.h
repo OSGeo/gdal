@@ -225,8 +225,8 @@ class PDFDataset final : public GDALPamDataset
 #ifdef HAVE_PDFIUM
     TPdfiumDocumentStruct *m_poDocPdfium = nullptr;
     TPdfiumPageStruct *m_poPagePdfium = nullptr;
-    std::vector<PDFDataset *> m_apoOvrDS{};
-    std::vector<PDFDataset *> m_apoOvrDSBackup{};
+    std::vector<std::unique_ptr<PDFDataset>> m_apoOvrDS{};
+    std::vector<std::unique_ptr<PDFDataset>> m_apoOvrDSBackup{};
 #endif
     GDALPDFObject *m_poPageObj = nullptr;
 
