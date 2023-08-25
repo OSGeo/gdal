@@ -1466,6 +1466,7 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
 # Test adding a OGR datasource
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr(poppler_or_pdfium):
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
     data = """id,foo,WKT,style
@@ -1570,6 +1571,7 @@ def test_pdf_write_ogr(poppler_or_pdfium):
 # Test adding a OGR datasource with reprojection of OGR SRS to GDAL SRS
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr_with_reprojection(poppler_or_pdfium):
 
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
@@ -1971,6 +1973,7 @@ def test_pdf_pam_georef(poppler_or_pdfium):
 # Test XML composition
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_composition():
 
     xml_content = """<PDFComposition>
