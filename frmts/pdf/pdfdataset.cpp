@@ -609,6 +609,7 @@ PDFRasterBand::PDFRasterBand(PDFDataset *poDSIn, int nBandIn,
     {
         nBlockXSize = poDSIn->m_nBlockXSize;
         nBlockYSize = poDSIn->m_nBlockYSize;
+        poDSIn->SetMetadataItem("INTERLEAVE", "PIXEL", "IMAGE_STRUCTURE");
     }
     else if (poDSIn->GetRasterXSize() <
              64 * 1024 * 1024 / poDSIn->GetRasterYSize())
@@ -1043,10 +1044,40 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                    nBlockYOff * nBlockXSize,
                nBlockXSize);
     else
+    {
         memcpy(pImage,
                poGDS->m_pabyCachedData +
                    (nBand - 1) * nBlockXSize * nBlockYSize,
                nBlockXSize * nBlockYSize);
+
+        if (poGDS->m_bCacheBlocksForOtherBands && nBand == 1)
+        {
+            for (int iBand = 2; iBand <= poGDS->nBands; ++iBand)
+            {
+                auto poOtherBand = cpl::down_cast<PDFRasterBand *>(
+                    poGDS->papoBands[iBand - 1]);
+                GDALRasterBlock *poBlock =
+                    poOtherBand->TryGetLockedBlockRef(nBlockXOff, nBlockYOff);
+                if (poBlock)
+                {
+                    poBlock->DropLock();
+                }
+                else
+                {
+                    poBlock = poOtherBand->GetLockedBlockRef(nBlockXOff,
+                                                             nBlockYOff, TRUE);
+                    if (poBlock)
+                    {
+                        memcpy(poBlock->GetDataRef(),
+                               poGDS->m_pabyCachedData +
+                                   (iBand - 1) * nBlockXSize * nBlockYSize,
+                               nBlockXSize * nBlockYSize);
+                        poBlock->DropLock();
+                    }
+                }
+            }
+        }
+    }
 
     return CE_None;
 }
@@ -2705,6 +2736,18 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
+    // Try to pass the request to the most appropriate overview dataset.
+    if (nBufXSize < nXSize && nBufYSize < nYSize)
+    {
+        int bTried = FALSE;
+        const CPLErr eErr = TryOverviewRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace,
+            nBandSpace, psExtraArg, &bTried);
+        if (bTried)
+            return eErr;
+    }
+
     int nBandBlockXSize, nBandBlockYSize;
     int bReadPixels = FALSE;
     GetRasterBand(1)->GetBlockSize(&nBandBlockXSize, &nBandBlockYSize);
@@ -2728,13 +2771,18 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         return ReadPixels(nXOff, nYOff, nXSize, nYSize, nPixelSpace, nLineSpace,
                           nBandSpace, (GByte *)pData);
 
-    return GDALPamDataset::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                     pData, nBufXSize, nBufYSize, eBufType,
-                                     nBandCount, panBandMap, nPixelSpace,
-                                     nLineSpace, nBandSpace, psExtraArg);
+    if (nBufXSize != nXSize || nBufYSize != nYSize || eBufType != GDT_Byte)
+    {
+        m_bCacheBlocksForOtherBands = true;
+    }
+    CPLErr eErr = GDALPamDataset::IRasterIO(
+        eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+        eBufType, nBandCount, panBandMap, nPixelSpace, nLineSpace, nBandSpace,
+        psExtraArg);
+    m_bCacheBlocksForOtherBands = false;
+    return eErr;
 }
 
-#ifdef notdef
 /************************************************************************/
 /*                            IRasterIO()                               */
 /************************************************************************/
@@ -2747,33 +2795,28 @@ CPLErr PDFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     PDFDataset *poGDS = (PDFDataset *)poDS;
-    bool bReadPixels = false;
-    if (poGDS->aiTiles.empty() && eRWFlag == GF_Read && nXSize == nBufXSize &&
-        nYSize == nBufYSize &&
-        (nBufXSize > nBlockXSize || nBufYSize > nBlockYSize) &&
-        eBufType == GDT_Byte)
+
+    // Try to pass the request to the most appropriate overview dataset.
+    if (nBufXSize < nXSize && nBufYSize < nYSize)
     {
-        bReadPixels = true;
-#ifdef HAVE_PODOFO
-        if (poGDS->m_bUseLib.test(PDFLIB_PODOFO) && poGDS->nBands == 4)
-        {
-            bReadPixels = false;
-        }
-#endif
+        int bTried = FALSE;
+        const CPLErr eErr = TryOverviewRasterIO(
+            eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+            eBufType, nPixelSpace, nLineSpace, psExtraArg, &bTried);
+        if (bTried)
+            return eErr;
     }
 
-    if (bReadPixels)
+    if (nBufXSize != nXSize || nBufYSize != nYSize || eBufType != GDT_Byte)
     {
-        const CPLErr eErr = ReadPixels(nXOff, nYOff, nXSize, nYSize,
-                                       nPixelSpace, nLineSpace, 0, nullptr);
-        return eErr;
+        poGDS->m_bCacheBlocksForOtherBands = true;
     }
-
-    return GDALPamRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
-                                        pData, nBufXSize, nBufYSize, eBufType,
-                                        nPixelSpace, nLineSpace, psExtraArg);
+    CPLErr eErr = GDALPamRasterBand::IRasterIO(
+        eRWFlag, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
+        eBufType, nPixelSpace, nLineSpace, psExtraArg);
+    poGDS->m_bCacheBlocksForOtherBands = false;
+    return eErr;
 }
-#endif
 
 /************************************************************************/
 /*                             Identify()                               */

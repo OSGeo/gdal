@@ -250,6 +250,7 @@ class PDFDataset final : public GDALPamDataset
     GByte *m_pabyCachedData = nullptr;
     int m_nLastBlockXOff = -1;
     int m_nLastBlockYOff = -1;
+    bool m_bCacheBlocksForOtherBands = false;
 
     OGRPolygon *m_poNeatLine = nullptr;
 
@@ -476,12 +477,10 @@ class PDFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual GDALColorInterp GetColorInterpretation() override;
 
-#ifdef notdef
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType, GSpacing nPixelSpace,
                              GSpacing nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
-#endif
 };
 
 #endif /* HAVE_PDF_READ_SUPPORT */
