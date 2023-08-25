@@ -628,21 +628,19 @@ PDFRasterBand::PDFRasterBand(PDFDataset *poDSIn, int nBandIn,
 /*                         InitOverviews()                              */
 /************************************************************************/
 
-#ifdef HAVE_PDFIUM
 void PDFDataset::InitOverviews()
 {
+#ifdef HAVE_PDFIUM
     // Only if used pdfium, make "arbitrary overviews"
     // Blocks are 256x256
-    if (m_bUseLib.test(PDFLIB_PDFIUM) &&
-        ((GDALPamRasterBand *)GetRasterBand(1))
-                ->GDALPamRasterBand::GetOverviewCount() == 0)
+    if (m_bUseLib.test(PDFLIB_PDFIUM) && m_apoOvrDS.empty() &&
+        m_apoOvrDSBackup.empty())
     {
         int nXSize = nRasterXSize;
         int nYSize = nRasterYSize;
-        int blockXSize = 256;
-        int blockYSize = 256;
+        constexpr int minSize = 256;
         int nDiscard = 1;
-        while (nXSize > blockXSize || nYSize > blockYSize)
+        while (nXSize > minSize || nYSize > minSize)
         {
             nXSize = (nXSize + 1) / 2;
             nYSize = (nYSize + 1) / 2;
@@ -657,8 +655,38 @@ void PDFDataset::InitOverviews()
             ++nDiscard;
         }
     }
-}
 #endif
+#if defined(HAVE_POPPLER) || defined(HAVE_PODOFO)
+    if (!m_bUseLib.test(PDFLIB_PDFIUM) && m_apoOvrDS.empty() &&
+        m_apoOvrDSBackup.empty() && m_osUserPwd != "ASK_INTERACTIVE")
+    {
+        int nXSize = nRasterXSize;
+        int nYSize = nRasterYSize;
+        constexpr int minSize = 256;
+        double dfDPI = m_dfDPI;
+        while (nXSize > minSize || nYSize > minSize)
+        {
+            nXSize = (nXSize + 1) / 2;
+            nYSize = (nYSize + 1) / 2;
+            dfDPI /= 2;
+
+            GDALOpenInfo oOpenInfo(GetDescription(), GA_ReadOnly);
+            CPLStringList aosOpenOptions(CSLDuplicate(papszOpenOptions));
+            aosOpenOptions.SetNameValue("DPI", CPLSPrintf("%g", dfDPI));
+            aosOpenOptions.SetNameValue("BANDS", CPLSPrintf("%d", nBands));
+            aosOpenOptions.SetNameValue("@OPEN_FOR_OVERVIEW", "YES");
+            if (!m_osUserPwd.empty())
+                aosOpenOptions.SetNameValue("USER_PWD", m_osUserPwd.c_str());
+            oOpenInfo.papszOpenOptions = aosOpenOptions.List();
+            auto poOvrDS = std::unique_ptr<PDFDataset>(Open(&oOpenInfo));
+            if (!poOvrDS || poOvrDS->nBands != nBands)
+                break;
+            poOvrDS->m_bIsOvrDS = true;
+            m_apoOvrDS.emplace_back(std::move(poOvrDS));
+        }
+    }
+#endif
+}
 
 /************************************************************************/
 /*                        GetColorInterpretation()                      */
@@ -673,19 +701,20 @@ GDALColorInterp PDFRasterBand::GetColorInterpretation()
         return (GDALColorInterp)(GCI_RedBand + (nBand - 1));
 }
 
-#ifdef HAVE_PDFIUM
-
 /************************************************************************/
 /*                          GetOverviewCount()                          */
 /************************************************************************/
 
 int PDFRasterBand::GetOverviewCount()
 {
+    PDFDataset *poGDS = cpl::down_cast<PDFDataset *>(poDS);
+    if (poGDS->m_bIsOvrDS)
+        return 0;
     if (GDALPamRasterBand::GetOverviewCount() > 0)
         return GDALPamRasterBand::GetOverviewCount();
     else
     {
-        PDFDataset *poGDS = cpl::down_cast<PDFDataset *>(poDS);
+        poGDS->InitOverviews();
         return static_cast<int>(poGDS->m_apoOvrDS.size());
     }
 }
@@ -707,8 +736,6 @@ GDALRasterBand *PDFRasterBand::GetOverview(int iOverviewIndex)
         return poGDS->m_apoOvrDS[iOverviewIndex]->GetRasterBand(nBand);
     }
 }
-
-#endif  // ~ HAVE_PDFIUM
 
 /************************************************************************/
 /*                           ~PDFRasterBand()                           */
@@ -2401,7 +2428,7 @@ CPLErr PDFImageRasterBand::IReadBlock(int CPL_UNUSED nBlockXOff, int nBlockYOff,
 /************************************************************************/
 
 PDFDataset::PDFDataset(PDFDataset *poParentDSIn, int nXSize, int nYSize)
-    : m_poParentDS(poParentDSIn),
+    : m_bIsOvrDS(poParentDSIn != nullptr),
 #ifdef HAVE_PDFIUM
       m_poDocPdfium(poParentDSIn ? poParentDSIn->m_poDocPdfium : nullptr),
       m_poPagePdfium(poParentDSIn ? poParentDSIn->m_poPagePdfium : nullptr),
@@ -2412,12 +2439,10 @@ PDFDataset::PDFDataset(PDFDataset *poParentDSIn, int nXSize, int nYSize)
     nRasterXSize = nXSize;
     nRasterYSize = nYSize;
     if (poParentDSIn)
-        m_bUseLib = m_poParentDS->m_bUseLib;
+        m_bUseLib = poParentDSIn->m_bUseLib;
 
     InitMapOperators();
 }
-
-#ifdef HAVE_PDFIUM
 
 /************************************************************************/
 /*                          IBuildOverviews()                           */
@@ -2442,12 +2467,14 @@ CPLErr PDFDataset::IBuildOverviews(const char *pszResampling, int nOverviews,
         m_apoOvrDS.clear();
     }
 
-    return GDALPamDataset::IBuildOverviews(
+    // Prevents InitOverviews() to run
+    m_apoOvrDSBackup.emplace_back(nullptr);
+    const CPLErr eErr = GDALPamDataset::IBuildOverviews(
         pszResampling, nOverviews, panOverviewList, nListBands, panBandList,
         pfnProgress, pProgressData, papszOptions);
+    m_apoOvrDSBackup.pop_back();
+    return eErr;
 }
-
-#endif  // ~ HAVE_PDFIUM
 
 /************************************************************************/
 /*                           PDFFreeDoc()                               */
@@ -2604,7 +2631,7 @@ PDFDataset::~PDFDataset()
     m_poDocPodofo = nullptr;
 #endif
 #ifdef HAVE_PDFIUM
-    if (m_poParentDS == nullptr)
+    if (!m_bIsOvrDS)
     {
         if (m_bUseLib.test(PDFLIB_PDFIUM))
         {
@@ -3477,7 +3504,7 @@ void PDFDataset::GuessDPI(GDALPDFDictionary *poPageDict, int *pnBands)
         }
     }
 
-    if (m_dfDPI < 1 || m_dfDPI > 7200)
+    if (m_dfDPI < 1e-2 || m_dfDPI > 7200)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Invalid value for GDAL_PDF_DPI. Using default value instead");
@@ -4977,10 +5004,16 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
     }
 
+    if (CSLFetchNameValue(poOpenInfo->papszOpenOptions, "@OPEN_FOR_OVERVIEW"))
+    {
+        poDS->m_nBlockXSize = 512;
+        poDS->m_nBlockYSize = 512;
+    }
     /* Check if the PDF is only made of regularly tiled images */
     /* (like some USGS GeoPDF production) */
-    if (dfRotation == 0.0 && !poDS->m_asTiles.empty() &&
-        EQUAL(GetOption(poOpenInfo->papszOpenOptions, "LAYERS", "ALL"), "ALL"))
+    else if (dfRotation == 0.0 && !poDS->m_asTiles.empty() &&
+             EQUAL(GetOption(poOpenInfo->papszOpenOptions, "LAYERS", "ALL"),
+                   "ALL"))
     {
         poDS->CheckTiledRaster();
         if (!poDS->m_aiTiles.empty())
@@ -5467,11 +5500,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*      Support overviews.                                              */
     /* -------------------------------------------------------------------- */
-    poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
-
-#ifdef HAVE_PDFIUM
-    poDS->InitOverviews();
-#endif
+    if (!CSLFetchNameValue(poOpenInfo->papszOpenOptions, "@OPEN_FOR_OVERVIEW"))
+    {
+        poDS->oOvManager.Initialize(poDS, poOpenInfo->pszFilename);
+    }
 
     /* Clear dirty flag */
     poDS->m_bProjDirty = false;

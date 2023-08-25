@@ -1813,12 +1813,9 @@ def test_pdf_overviews(poppler_or_pdfium):
     before = ds.GetRasterBand(1).GetOverviewCount()
     ds.GetRasterBand(1).GetOverview(-1)
     ds.GetRasterBand(1).GetOverview(10)
-    if before >= 1:
-        assert pdf_is_pdfium(), "No overview expected at this point!"
-        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == 5934
-    elif pdf_is_pdfium():
-        pytest.fail("Overview expected at this point!")
+    assert before >= 1
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    assert cs == 5934
     ds.BuildOverviews("NONE", [2])
     after = ds.GetRasterBand(1).GetOverviewCount()
     assert after == 1

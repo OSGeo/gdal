@@ -195,7 +195,7 @@ class PDFDataset final : public GDALPamDataset
     friend class PDFImageRasterBand;
 
     VSIVirtualHandleUniquePtr m_fp{};
-    PDFDataset *m_poParentDS = nullptr;
+    bool m_bIsOvrDS = false;
 
     CPLString m_osFilename{};
     CPLString m_osUserPwd{};
@@ -225,9 +225,9 @@ class PDFDataset final : public GDALPamDataset
 #ifdef HAVE_PDFIUM
     TPdfiumDocumentStruct *m_poDocPdfium = nullptr;
     TPdfiumPageStruct *m_poPagePdfium = nullptr;
+#endif
     std::vector<std::unique_ptr<PDFDataset>> m_apoOvrDS{};
     std::vector<std::unique_ptr<PDFDataset>> m_apoOvrDSBackup{};
-#endif
     GDALPDFObject *m_poPageObj = nullptr;
 
     int m_iPage = -1;
@@ -375,9 +375,7 @@ class PDFDataset final : public GDALPamDataset
 
     int OpenVectorLayers(GDALPDFDictionary *poPageDict);
 
-#ifdef HAVE_PDFIUM
     void InitOverviews();
-#endif  // ~ HAVE_PDFIUM
 
   public:
     PDFDataset(PDFDataset *poParentDS = nullptr, int nXSize = 0,
@@ -442,11 +440,11 @@ class PDFDataset final : public GDALPamDataset
     }
     static int Identify(GDALOpenInfo *);
 
-#ifdef HAVE_PDFIUM
     virtual CPLErr IBuildOverviews(const char *, int, const int *, int,
                                    const int *, GDALProgressFunc, void *,
                                    CSLConstList papszOptions) override;
 
+#ifdef HAVE_PDFIUM
     static bool g_bPdfiumInit;
 #endif
 };
@@ -472,10 +470,8 @@ class PDFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual GDALSuggestedBlockAccessPattern
     GetSuggestedBlockAccessPattern() const override;
 
-#ifdef HAVE_PDFIUM
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
-#endif  // ~ HAVE_PDFIUM
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual GDALColorInterp GetColorInterpretation() override;
