@@ -50,6 +50,7 @@
 #include "pdfcreatecopy.h"
 
 #include <algorithm>
+#include <cassert>
 #include <set>
 
 #ifdef HAVE_PDFIUM
@@ -4472,6 +4473,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #else
             setErrorCallback(PDFDatasetErrorFunction, nullptr);
 #endif
+            assert(globalParams);  // avoid CSA false positive
             globalParams->setErrQuiet(false);
         };
 
