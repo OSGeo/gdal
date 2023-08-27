@@ -67,7 +67,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
        libdeflate-dev${APT_ARCH_SUFFIX} libblosc-dev${APT_ARCH_SUFFIX} liblz4-dev${APT_ARCH_SUFFIX} libbz2-dev${APT_ARCH_SUFFIX} \
        libbrotli-dev${APT_ARCH_SUFFIX} \
        libarchive-dev${APT_ARCH_SUFFIX} \
-       libaec-dev${APT_ARCH_SUFFIX}
+       libaec-dev${APT_ARCH_SUFFIX} \
     && rm -rf /var/lib/apt/lists/*
 
 # Build likbkea
