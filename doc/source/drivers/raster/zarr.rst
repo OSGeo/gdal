@@ -278,6 +278,32 @@ The following dataset open options are available:
       work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
       /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
 
+-  .. oo:: MULTIBAND
+      :choices: YES, NO
+      :default: NO
+      :since: 3.8
+
+      Whether to expose > 3D arrays as GDAL multiband datasets (when using the
+      classic 2D API)
+
+-  .. oo:: DIM_X
+      :choices: <string> or <integer>
+      :since: 3.8
+
+      Name or index of the X dimension (only used when MULTIBAND=YES and with
+      th classic 2D API). If not specified, deduced from dimension type
+      (when equal to "HORIZONTAL_X"), or the last dimension (i.e. fastest
+      varying one), if no dimension type found.
+
+-  .. oo:: DIM_Y
+      :choices: <string> or <integer>
+      :since: 3.8
+
+      Name or index of the Y dimension (only used when MULTIBAND=YES and with
+      th classic 2D API). If not specified, deduced from dimension type
+      (when equal to "HORIZONTAL_Y"), or the before last dimension, if no
+      dimension type found.
+
 Multi-threaded caching
 ----------------------
 

@@ -183,6 +183,101 @@ char **ZarrDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
+/*                      GetXYDimensionIndices()                         */
+/************************************************************************/
+
+static void GetXYDimensionIndices(const std::shared_ptr<GDALMDArray> &poArray,
+                                  const GDALOpenInfo *poOpenInfo, size_t &iXDim,
+                                  size_t &iYDim)
+{
+    const size_t nDims = poArray->GetDimensionCount();
+    iYDim = nDims >= 2 ? nDims - 2 : 0;
+    iXDim = nDims >= 2 ? nDims - 1 : 0;
+
+    if (nDims >= 2)
+    {
+        const char *pszDimX =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DIM_X");
+        const char *pszDimY =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DIM_Y");
+        bool bFoundX = false;
+        bool bFoundY = false;
+        const auto &apoDims = poArray->GetDimensions();
+        for (size_t i = 0; i < nDims; ++i)
+        {
+            if (pszDimX && apoDims[i]->GetName() == pszDimX)
+            {
+                bFoundX = true;
+                iXDim = i;
+            }
+            else if (pszDimY && apoDims[i]->GetName() == pszDimY)
+            {
+                bFoundY = true;
+                iYDim = i;
+            }
+            else if (!pszDimX &&
+                     apoDims[i]->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X)
+                iXDim = i;
+            else if (!pszDimY &&
+                     apoDims[i]->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y)
+                iYDim = i;
+        }
+        if (pszDimX)
+        {
+            if (!bFoundX && CPLGetValueType(pszDimX) == CPL_VALUE_INTEGER)
+            {
+                const int nTmp = atoi(pszDimX);
+                if (nTmp >= 0 && nTmp <= static_cast<int>(nDims))
+                {
+                    iXDim = nTmp;
+                    bFoundX = true;
+                }
+            }
+            if (!bFoundX)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find dimension DIM_X=%s", pszDimX);
+            }
+        }
+        if (pszDimY)
+        {
+            if (!bFoundY && CPLGetValueType(pszDimY) == CPL_VALUE_INTEGER)
+            {
+                const int nTmp = atoi(pszDimY);
+                if (nTmp >= 0 && nTmp <= static_cast<int>(nDims))
+                {
+                    iYDim = nTmp;
+                    bFoundY = true;
+                }
+            }
+            if (!bFoundY)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find dimension DIM_Y=%s", pszDimY);
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                       GetExtraDimSampleCount()                       */
+/************************************************************************/
+
+static uint64_t
+GetExtraDimSampleCount(const std::shared_ptr<GDALMDArray> &poArray,
+                       size_t iXDim, size_t iYDim)
+{
+    uint64_t nExtraDimSamples = 1;
+    const auto &apoDims = poArray->GetDimensions();
+    for (size_t i = 0; i < apoDims.size(); ++i)
+    {
+        if (i != iXDim && i != iYDim)
+            nExtraDimSamples *= apoDims[i]->GetSize();
+    }
+    return nExtraDimSamples;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -253,6 +348,11 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
     std::shared_ptr<GDALMDArray> poMainArray;
     std::vector<std::string> aosArrays;
     std::string osMainArray;
+    const bool bMultiband = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MULTIBAND", "NO"));
+    size_t iXDim = 0;
+    size_t iYDim = 0;
+
     if (!osArrayOfInterest.empty())
     {
         poMainArray = osArrayOfInterest == "/"
@@ -260,15 +360,42 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                           : poRG->OpenMDArrayFromFullname(osArrayOfInterest);
         if (poMainArray == nullptr)
             return nullptr;
+        GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
+
         if (poMainArray->GetDimensionCount() > 2)
         {
             if (anExtraDimIndices.empty())
             {
-                uint64_t nExtraDimSamples = 1;
-                const auto &apoDims = poMainArray->GetDimensions();
-                for (size_t i = 2; i < apoDims.size(); ++i)
-                    nExtraDimSamples *= apoDims[i]->GetSize();
-                if (nExtraDimSamples != 1)
+                const uint64_t nExtraDimSamples =
+                    GetExtraDimSampleCount(poMainArray, iXDim, iYDim);
+                if (bMultiband)
+                {
+                    if (nExtraDimSamples > 65536)  // arbitrary limit
+                    {
+                        if (poMainArray->GetDimensionCount() == 3)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Too many samples along the > 2D "
+                                     "dimensions of %s. "
+                                     "Use ZARR:\"%s\":%s:{i} syntax",
+                                     osArrayOfInterest.c_str(),
+                                     osFilename.c_str(),
+                                     osArrayOfInterest.c_str());
+                        }
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Too many samples along the > 2D "
+                                     "dimensions of %s. "
+                                     "Use ZARR:\"%s\":%s:{i}:{j} syntax",
+                                     osArrayOfInterest.c_str(),
+                                     osFilename.c_str(),
+                                     osArrayOfInterest.c_str());
+                        }
+                        return nullptr;
+                    }
+                }
+                else if (nExtraDimSamples != 1)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Indices of extra dimensions must be specified");
@@ -290,6 +417,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                     if (poMainArray == nullptr)
                         return nullptr;
                 }
+                GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
             }
         }
         else if (!anExtraDimIndices.empty())
@@ -332,15 +460,17 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
+        if (poMainArray)
+            GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
+
         int iCountSubDS = 1;
 
         if (poMainArray && poMainArray->GetDimensionCount() > 2)
         {
-            uint64_t nExtraDimSamples = 1;
             const auto &apoDims = poMainArray->GetDimensions();
-            for (size_t i = 0; i < apoDims.size() - 2; ++i)
-                nExtraDimSamples *= apoDims[i]->GetSize();
-            if (nExtraDimSamples > 1024)  // arbitrary limit
+            const uint64_t nExtraDimSamples =
+                GetExtraDimSampleCount(poMainArray, iXDim, iYDim);
+            if (nExtraDimSamples > 65536)  // arbitrary limit
             {
                 if (apoDims.size() == 3)
                 {
@@ -360,6 +490,10 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                         osMainArray.c_str(), osFilename.c_str(),
                         osMainArray.c_str());
                 }
+            }
+            else if (nExtraDimSamples > 1 && bMultiband)
+            {
+                // nothing to do
             }
             else if (nExtraDimSamples > 1 && apoDims.size() == 3)
             {
@@ -417,13 +551,15 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    if (poMainArray && poMainArray->GetDimensionCount() <= 2)
+    if (poMainArray && (bMultiband || poMainArray->GetDimensionCount() <= 2))
     {
-        std::unique_ptr<GDALDataset> poNewDS;
+        auto poNewDS = std::unique_ptr<GDALDataset>(
+            poMainArray->AsClassicDataset(iXDim, iYDim));
+        if (!poNewDS)
+            return nullptr;
+
         if (poMainArray->GetDimensionCount() == 2)
         {
-            poNewDS.reset(poMainArray->AsClassicDataset(1, 0));
-
             // If we have 3 arrays, check that the 2 ones that are not the main
             // 2D array are indexing variables of its dimensions. If so, don't
             // expose them as subdatasets
@@ -461,12 +597,6 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
         }
-        else
-        {
-            poNewDS.reset(poMainArray->AsClassicDataset(0, 0));
-        }
-        if (!poNewDS)
-            return nullptr;
         if (!poDS->m_aosSubdatasets.empty())
         {
             poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(), "SUBDATASETS");
@@ -1443,6 +1573,14 @@ void GDALRegister_Zarr()
         "   <Option name='CACHE_TILE_PRESENCE' type='boolean' "
         "description='Whether to establish an initial listing of present "
         "tiles' default='NO'/>"
+        "   <Option name='MULTIBAND' type='boolean' default='NO' "
+        "description='Whether to expose >= 3D arrays as GDAL multiband "
+        "datasets "
+        "(when using the classic 2D API)'/>"
+        "   <Option name='DIM_X' type='string' description="
+        "'Name or index of the X dimension (only used when MULTIBAND=YES)'/>"
+        "   <Option name='DIM_Y' type='string' description="
+        "'Name or index of the Y dimension (only used when MULTIBAND=YES)'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(

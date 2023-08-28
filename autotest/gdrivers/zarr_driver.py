@@ -1185,16 +1185,89 @@ def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays():
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
 
+def test_zarr_read_classic_3d_multiband():
+
+    ds = gdal.OpenEx("data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=YES"])
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 3
+    assert ds.RasterCount == 2
+    assert not ds.GetSubDatasets()
+    assert ds.GetRasterBand(1).ReadRaster() == array.array("b", [i for i in range(12)])
+    assert ds.GetRasterBand(2).ReadRaster() == array.array(
+        "b", [12 + i for i in range(12)]
+    )
+
+    ds = gdal.OpenEx(
+        "data/zarr/order_f_u1_3d.zarr",
+        open_options=["MULTIBAND=YES", "DIM_X=dim1", "DIM_Y=dim2"],
+    )
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 4
+    assert ds.RasterCount == 2
+    assert not ds.GetSubDatasets()
+    assert ds.GetRasterBand(1).ReadRaster() == array.array(
+        "b", [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]
+    )
+    assert ds.GetRasterBand(2).ReadRaster() == array.array(
+        "b", [(x + 12) for x in [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]]
+    )
+
+    ds = gdal.OpenEx(
+        "data/zarr/order_f_u1_3d.zarr",
+        open_options=["MULTIBAND=YES", "DIM_X=1", "DIM_Y=2"],
+    )
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 4
+    assert ds.RasterCount == 2
+    assert not ds.GetSubDatasets()
+    assert ds.GetRasterBand(1).ReadRaster() == array.array(
+        "b", [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]
+    )
+    assert ds.GetRasterBand(2).ReadRaster() == array.array(
+        "b", [(x + 12) for x in [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]]
+    )
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=YES", "DIM_X=3"]
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=YES", "DIM_Y=3"]
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr",
+            open_options=["MULTIBAND=YES", "DIM_X=not_found"],
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr",
+            open_options=["MULTIBAND=YES", "DIM_Y=not_found"],
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+
 def test_zarr_read_classic_too_many_samples_3d():
 
     j = {
-        "chunks": [65536, 2, 1],
+        "chunks": [65537, 2, 1],
         "compressor": None,
         "dtype": "!u1",
         "fill_value": None,
         "filters": None,
         "order": "C",
-        "shape": [65536, 2, 1],
+        "shape": [65537, 2, 1],
         "zarr_format": 2,
     }
 
@@ -1206,6 +1279,13 @@ def test_zarr_read_classic_too_many_samples_3d():
             ds = gdal.Open("/vsimem/test.zarr")
         assert gdal.GetLastErrorMsg() != ""
         assert len(ds.GetSubDatasets()) == 0
+
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            assert (
+                gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=YES"]) is None
+            )
+        assert gdal.GetLastErrorMsg() != ""
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
@@ -1238,13 +1318,13 @@ def test_zarr_read_classic_4d():
 def test_zarr_read_classic_too_many_samples_4d():
 
     j = {
-        "chunks": [256, 256, 1, 1],
+        "chunks": [257, 256, 1, 1],
         "compressor": None,
         "dtype": "!u1",
         "fill_value": None,
         "filters": None,
         "order": "C",
-        "shape": [256, 256, 1, 1],
+        "shape": [257, 256, 1, 1],
         "zarr_format": 2,
     }
 
