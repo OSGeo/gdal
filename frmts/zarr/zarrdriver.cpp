@@ -349,7 +349,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
     std::vector<std::string> aosArrays;
     std::string osMainArray;
     const bool bMultiband = CPLTestBool(
-        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MULTIBAND", "NO"));
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MULTIBAND", "YES"));
     size_t iXDim = 0;
     size_t iYDim = 0;
 
@@ -1573,7 +1573,7 @@ void GDALRegister_Zarr()
         "   <Option name='CACHE_TILE_PRESENCE' type='boolean' "
         "description='Whether to establish an initial listing of present "
         "tiles' default='NO'/>"
-        "   <Option name='MULTIBAND' type='boolean' default='NO' "
+        "   <Option name='MULTIBAND' type='boolean' default='YES' "
         "description='Whether to expose >= 3D arrays as GDAL multiband "
         "datasets "
         "(when using the classic 2D API)'/>"

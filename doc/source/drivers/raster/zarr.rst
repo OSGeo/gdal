@@ -280,7 +280,7 @@ The following dataset open options are available:
 
 -  .. oo:: MULTIBAND
       :choices: YES, NO
-      :default: NO
+      :default: YES
       :since: 3.8
 
       Whether to expose > 3D arrays as GDAL multiband datasets (when using the

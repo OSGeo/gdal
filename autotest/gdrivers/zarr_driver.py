@@ -1100,7 +1100,7 @@ def test_zarr_read_classic():
     assert not ds.GetSubDatasets()
     assert ds.ReadRaster() == array.array("b", [1, 2])
 
-    ds = gdal.Open("data/zarr/order_f_u1_3d.zarr")
+    ds = gdal.OpenEx("data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=NO"])
     assert ds
     subds = ds.GetSubDatasets()
     assert len(subds) == 2
@@ -1112,7 +1112,13 @@ def test_zarr_read_classic():
     assert ds.ReadRaster() == array.array("b", [12 + i for i in range(12)])
 
     with gdal.quiet_errors():
-        assert gdal.Open("ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d") is None
+        assert (
+            gdal.OpenEx(
+                "ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d",
+                open_options=["MULTIBAND=NO"],
+            )
+            is None
+        )
         assert gdal.Open("ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d:2") is None
         assert gdal.Open(subds[0][0] + ":0") is None
 
@@ -1276,7 +1282,7 @@ def test_zarr_read_classic_too_many_samples_3d():
         gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
         gdal.ErrorReset()
         with gdal.quiet_errors():
-            ds = gdal.Open("/vsimem/test.zarr")
+            ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
         assert gdal.GetLastErrorMsg() != ""
         assert len(ds.GetSubDatasets()) == 0
 
@@ -1306,7 +1312,7 @@ def test_zarr_read_classic_4d():
     try:
         gdal.Mkdir("/vsimem/test.zarr", 0)
         gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        ds = gdal.Open("/vsimem/test.zarr")
+        ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
         subds = ds.GetSubDatasets()
         assert len(subds) == 6
         for i in range(len(subds)):
@@ -1333,7 +1339,7 @@ def test_zarr_read_classic_too_many_samples_4d():
         gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
         gdal.ErrorReset()
         with gdal.quiet_errors():
-            ds = gdal.Open("/vsimem/test.zarr")
+            ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
         assert gdal.GetLastErrorMsg() != ""
         assert len(ds.GetSubDatasets()) == 0
     finally:
