@@ -136,6 +136,7 @@ class mosaic_info(object):
         Initialize mosaic_info from filename
 
         filename -- Name of file to read.
+        inputDS -- OGR DataSet representing the tile index
 
         """
         self.TempDriver = gdal.GetDriverByName("MEM")
@@ -144,9 +145,12 @@ class mosaic_info(object):
         self.ogrTileIndexDS = inputDS
 
         self.ogrTileIndexDS.GetLayer().ResetReading()
+        # grab the first feature of the temporary tile index created
         feature = self.ogrTileIndexDS.GetLayer().GetNextFeature()
+        # the first field is the filename
         imgLocation = feature.GetField(0)
 
+        # get the first tile that exists, extract metadata abut mosaic
         fhInputTile = self.cache.get(imgLocation)
 
         self.bands = fhInputTile.RasterCount
@@ -182,20 +186,27 @@ class mosaic_info(object):
         del self.ogrTileIndexDS
 
     def getDataSet(self, minx, miny, maxx, maxy):
+        """
+        Find a gdal dataset representing a subset of a mosaic, based on a bounding box. Might overlap multiple tiles of the mosaic
 
+        returns GDALDataset or None
+        """
         self.ogrTileIndexDS.GetLayer().ResetReading()
         self.ogrTileIndexDS.GetLayer().SetSpatialFilterRect(minx, miny, maxx, maxy)
         features = []
         envelope = None
+        # Find the envelope of all features in the dataset
         while True:
             feature = self.ogrTileIndexDS.GetLayer().GetNextFeature()
             if feature is None:
                 break
             features.append(feature)
+            # on first iteration get envelope of the first feature
             if envelope is None:
                 envelope = feature.GetGeometryRef().GetEnvelope()
             else:
                 featureEnv = feature.GetGeometryRef().GetEnvelope()
+                # then expand the envelop as needed based on other features
                 envelope = (
                     min(featureEnv[0], envelope[0]),
                     max(featureEnv[1], envelope[1]),
@@ -206,7 +217,7 @@ class mosaic_info(object):
         if envelope is None:
             return None
 
-        # enlarge to query rect if necessary
+        # get overlap
         envelope = (
             min(minx, envelope[0]),
             max(maxx, envelope[1]),
@@ -232,6 +243,7 @@ class mosaic_info(object):
                 t_band.Fill(self.nodata)
                 t_band.SetNoDataValue(self.nodata)
 
+        # for each tile in the index, find its overlap (if any) with the requested bbox, then add it to the returned GDAL dataset if needed.
         for feature in features:
             featureName = feature.GetField(0)
             sourceDS = self.cache.get(featureName)
@@ -489,7 +501,13 @@ def _renameDataset(g, oldName, newName):
 def createPyramidTile(
     g, levelMosaicInfo, offsetX, offsetY, width, height, tileName, OGRDS, feature_only
 ):
+    """
+    Create an individual tile for the pyramids.
 
+    The levelMosaicInfo object contains data about the mosaic at a given pyramid level.
+
+    Returns None if sucessful and return 1 if there is an error
+    """
     temp_tilename = _createTempFileName(tileName)
 
     sx = levelMosaicInfo.scaleX * 2
@@ -505,19 +523,21 @@ def createPyramidTile(
             sy,
         ]
     )
-
-    if OGRDS is not None:
+    # if -resume flag and the tile is present, add it to the index and exit function
+    if feature_only:
         points = dec.pointsFor(width, height)
         addFeature(g.TileIndexFieldName, OGRDS, tileName, points[0], points[1])
-
-    if feature_only:
         return
 
     s_fh = levelMosaicInfo.getDataSet(
         dec.ulx, dec.uly + height * dec.scaleY, dec.ulx + width * dec.scaleX, dec.uly
     )
+    # if there is no data in that tile area return None
     if s_fh is None:
         return
+    # add the new pyramid tile to the index
+    points = dec.pointsFor(width, height)
+    addFeature(g.TileIndexFieldName, OGRDS, tileName, points[0], points[1])
 
     if g.BandType is None:
         bt = levelMosaicInfo.band_type
@@ -528,6 +548,7 @@ def createPyramidTile(
 
     bands = levelMosaicInfo.bands
 
+    # create target dataset
     if g.MemDriver is None:
         t_fh = g.Driver.Create(temp_tilename, width, height, bands, bt, g.CreateOptions)
     else:
@@ -551,6 +572,7 @@ def createPyramidTile(
             t_band.Fill(levelMosaicInfo.nodata)
             t_band.SetNoDataValue(levelMosaicInfo.nodata)
 
+    # reproject source filehandle to target filehandle
     res = gdal.ReprojectImage(s_fh, t_fh, None, None, g.ResamplingMethod)
     if res != 0:
         print("Reprojection failed for %s, error %d" % (temp_tilename, res))
@@ -558,6 +580,7 @@ def createPyramidTile(
 
     levelMosaicInfo.closeDataSet(s_fh)
 
+    # move the temporary dataset to the final location and path
     if g.MemDriver is None:
         t_fh.FlushCache()
     else:
@@ -587,8 +610,18 @@ def createTile(
     g, minfo, offsetX, offsetY, width, height, tilename, OGRDS, feature_only
 ):
     """
+    Create add a vector feature representing the tile to the index, then recreate the
 
-    Create tile
+    Args:
+        g (RetileGlobals): object with global script variables
+        minfo (mosaic_info): mosiac_info object
+        offsetX (int): The offset in the X direction.
+        offsetY (int): The offset in the Y direction.
+        width (int): The width of the tile.
+        height (int): The height of the tile.
+        tilename (str): The name of the tile.
+        OGRDS (DataSource): The OGR DataSource object containing the tile index
+        feature_only (bool): Whether to only generate features.
 
     """
     temp_tilename = _createTempFileName(tilename)
@@ -611,12 +644,11 @@ def createTile(
         dec.scaleY,
     ]
 
-    if OGRDS is not None:
+    # if -resume flag and the tile is present, add it to the index and exit function
+    if feature_only:
         dec2 = AffineTransformDecorator(geotransform)
         points = dec2.pointsFor(width, height)
         addFeature(g.TileIndexFieldName, OGRDS, tilename, points[0], points[1])
-
-    if feature_only:
         return
 
     s_fh = minfo.getDataSet(
@@ -625,8 +657,14 @@ def createTile(
         dec.ulx + offsetX * dec.scaleX + width * dec.scaleX,
         dec.uly + offsetY * dec.scaleY,
     )
+    # if there is no data in that tile area return None
     if s_fh is None:
         return
+
+    # add the tile to the tile index
+    dec2 = AffineTransformDecorator(geotransform)
+    points = dec2.pointsFor(width, height)
+    addFeature(g.TileIndexFieldName, OGRDS, tilename, points[0], points[1])
 
     bands = minfo.bands
 
@@ -771,6 +809,9 @@ def buildPyramid(g, minfo, createdTileIndexDS, tileWidth, tileHeight, overlap):
 
 
 def buildPyramidLevel(g, levelMosaicInfo, levelOutputTileInfo, level):
+    """
+    Build the pyramids at level N and returns an OGR dataset of the tile index at that level
+    """
     yRange = list(range(1, levelOutputTileInfo.countTilesY + 1))
     xRange = list(range(1, levelOutputTileInfo.countTilesX + 1))
 
