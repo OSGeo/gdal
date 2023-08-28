@@ -524,7 +524,7 @@ def createPyramidTile(
         ]
     )
     # if -resume flag and the tile is present, add it to the index and exit function
-    if OGRDS is not None and feature_only:
+    if feature_only:
         points = dec.pointsFor(width, height)
         addFeature(g.TileIndexFieldName, OGRDS, tileName, points[0], points[1])
         return
@@ -645,7 +645,7 @@ def createTile(
     ]
 
     # if -resume flag and the tile is present, add it to the index and exit function
-    if OGRDS is not None and feature_only:
+    if feature_only:
         dec2 = AffineTransformDecorator(geotransform)
         points = dec2.pointsFor(width, height)
         addFeature(g.TileIndexFieldName, OGRDS, tilename, points[0], points[1])
