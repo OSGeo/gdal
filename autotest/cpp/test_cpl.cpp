@@ -1025,6 +1025,15 @@ TEST_F(test_cpl, CPLsscanf)
     ASSERT_EQ(b, 2.0);
 }
 
+TEST_F(test_cpl, CPLsnprintf)
+{
+    {
+        char buf[32];
+        EXPECT_EQ(CPLsnprintf(buf, sizeof(buf), "a%.*fb", 1, 2.12), 5);
+        EXPECT_STREQ(buf, "a2.1b");
+    }
+}
+
 TEST_F(test_cpl, CPLSetErrorHandler)
 {
     CPLString oldVal = CPLGetConfigOption("CPL_DEBUG", "");
