@@ -2065,9 +2065,21 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
         OCGs *poOldOCGs = poCatalog->optContent;
         if (!m_bUseOCG)
             poCatalog->optContent = nullptr;
-        poDoc->displayPageSlice(poSplashOut, m_iPage, m_dfDPI, m_dfDPI, 0, TRUE,
-                                gFalse, gFalse, nReqXOff, nReqYOff, nReqXSize,
-                                nReqYSize);
+        try
+        {
+            poDoc->displayPageSlice(poSplashOut, m_iPage, m_dfDPI, m_dfDPI, 0,
+                                    TRUE, gFalse, gFalse, nReqXOff, nReqYOff,
+                                    nReqXSize, nReqYSize);
+        }
+        catch (const std::exception &e)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "PDFDoc::displayPageSlice() failed with %s", e.what());
+            /* Restore back */
+            poCatalog->optContent = poOldOCGs;
+            delete poSplashOut;
+            return CE_Failure;
+        }
 
         /* Restore back */
         poCatalog->optContent = poOldOCGs;
@@ -4576,8 +4588,17 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             std::optional<GooString> osUserPwd;
             if (pszUserPwd)
                 osUserPwd = std::optional<GooString>(pszUserPwd);
-            poDocPoppler =
-                new PDFDoc(poStream, std::optional<GooString>(), osUserPwd);
+            try
+            {
+                poDocPoppler =
+                    new PDFDoc(poStream, std::optional<GooString>(), osUserPwd);
+            }
+            catch (const std::exception &e)
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "PDFDoc::PDFDoc() failed with %s", e.what());
+                return nullptr;
+            }
 #else
             GooString *poUserPwd = nullptr;
             if (pszUserPwd)
