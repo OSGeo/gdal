@@ -2823,6 +2823,88 @@ def test_zarr_write_array_content(
 
 
 @pytest.mark.parametrize(
+    "dt,array_type",
+    [
+        (gdal.GDT_Byte, "B"),
+        (gdal.GDT_UInt16, "H"),
+        (gdal.GDT_UInt32, "I"),
+        (gdal.GDT_UInt64, "Q"),
+        (gdal.GDT_CFloat64, "d"),
+    ],
+)
+def test_zarr_write_interleave(dt, array_type):
+
+    try:
+
+        def create():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                "/vsimem/test.zarr"
+            )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 3)
+            dim1 = rg.CreateDimension("dim1", None, None, 2)
+
+            ar = rg.CreateMDArray(
+                "test",
+                [dim0, dim1],
+                gdal.ExtendedDataType.Create(dt),
+                ["BLOCKSIZE=2,2"],
+            )
+            assert (
+                ar.Write(
+                    array.array(
+                        array_type,
+                        [0, 2, 4]
+                        if dt != gdal.GDT_CFloat64
+                        else [0, 0.5, 2, 2.5, 4, 4.5],
+                    ),
+                    array_start_idx=[0, 0],
+                    count=[3, 1],
+                    array_step=[1, 0],
+                )
+                == gdal.CE_None
+            )
+            assert (
+                ar.Write(
+                    array.array(
+                        array_type,
+                        [1, 3, 5]
+                        if dt != gdal.GDT_CFloat64
+                        else [1, 1.5, 3, 3.5, 5, 5.5],
+                    ),
+                    array_start_idx=[0, 1],
+                    count=[3, 1],
+                    array_step=[1, 0],
+                )
+                == gdal.CE_None
+            )
+
+        create()
+
+        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar.Read() == array.array(
+            array_type,
+            [0, 1, 2, 3, 4, 5]
+            if dt != gdal.GDT_CFloat64
+            else [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5],
+        )
+        if dt != gdal.GDT_CFloat64:
+            assert ar.Read(
+                buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            ) == array.array("B", [0, 1, 2, 3, 4, 5])
+
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
     "string_format,input_str,output_str",
     [
         ("ASCII", "0123456789truncated", "0123456789"),
