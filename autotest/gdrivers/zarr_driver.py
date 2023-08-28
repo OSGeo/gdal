@@ -1296,6 +1296,23 @@ def test_zarr_read_classic_too_many_samples_3d():
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
 
+@pytest.mark.parametrize("interleave", ["BAND", "PIXEL"])
+def test_zarr_write_single_array_3d(interleave):
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    gdal.GetDriverByName("ZARR").CreateCopy(
+        "/vsimem/test.zarr", src_ds, options=["INTERLEAVE=" + interleave]
+    )
+    ds = gdal.Open("/vsimem/test.zarr")
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)] == [
+        src_ds.GetRasterBand(i + 1).Checksum() for i in range(src_ds.RasterCount)
+    ]
+    assert [
+        ds.GetRasterBand(i + 1).GetColorInterpretation() for i in range(ds.RasterCount)
+    ] == [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand]
+    gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
 def test_zarr_read_classic_4d():
 
     j = {
@@ -3153,7 +3170,11 @@ def test_zarr_create(format):
 
     try:
         ds = gdal.GetDriverByName("Zarr").Create(
-            "/vsimem/test.zarr", 1, 1, 3, options=["ARRAY_NAME=foo", "FORMAT=" + format]
+            "/vsimem/test.zarr",
+            1,
+            1,
+            3,
+            options=["ARRAY_NAME=foo", "FORMAT=" + format, "SINGLE_ARRAY=NO"],
         )
         assert ds.GetGeoTransform(can_return_null=True) is None
         assert ds.GetSpatialRef() is None

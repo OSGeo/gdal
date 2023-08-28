@@ -489,6 +489,23 @@ The following options are creation options of the classic raster API only:
 
       Whether to append the new dataset to an existing Zarr hierarchy.
 
+-  .. co:: SINGLE_ARRAY
+      :choices: YES, NO
+      :default: YES
+      :since: 3.8
+
+      Whether to write a multi-band dataset as a 3D Zarr array. If false,
+      one 2D Zarr array per band will be written.
+
+-  .. co:: INTERLEAVE
+      :choices: BAND, PIXEL
+      :default: BAND
+      :since: 3.8
+
+      Whe writing a multi-band dataset as a 3D Zarr array, whether the band
+      dimension should be the first one/slowest varying one (BAND), or the
+      last one/fastest varying one (INTERLEAVE)
+
 
 Examples
 --------

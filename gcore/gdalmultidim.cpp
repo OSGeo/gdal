@@ -8233,6 +8233,7 @@ class GDALRasterBandFromArray final : public GDALRasterBand
     double GetOffset(int *pbHasOffset) override;
     double GetScale(int *pbHasScale) override;
     const char *GetUnitType() override;
+    GDALColorInterp GetColorInterpretation() override;
 };
 
 class GDALDatasetFromArray final : public GDALDataset
@@ -8284,23 +8285,26 @@ class GDALDatasetFromArray final : public GDALDataset
         const auto attrs(array->GetAttributes());
         for (const auto &attr : attrs)
         {
-            auto stringArray = attr->ReadAsStringArray();
-            std::string val;
-            if (stringArray.size() > 1)
+            if (attr->GetName() != "COLOR_INTERPRETATION")
             {
-                val += '{';
+                auto stringArray = attr->ReadAsStringArray();
+                std::string val;
+                if (stringArray.size() > 1)
+                {
+                    val += '{';
+                }
+                for (int i = 0; i < stringArray.size(); ++i)
+                {
+                    if (i > 0)
+                        val += ',';
+                    val += stringArray[i];
+                }
+                if (stringArray.size() > 1)
+                {
+                    val += '}';
+                }
+                m_oMDD.SetMetadataItem(attr->GetName().c_str(), val.c_str());
             }
-            for (int i = 0; i < stringArray.size(); ++i)
-            {
-                if (i > 0)
-                    val += ',';
-                val += stringArray[i];
-            }
-            if (stringArray.size() > 1)
-            {
-                val += '}';
-            }
-            m_oMDD.SetMetadataItem(attr->GetName().c_str(), val.c_str());
         }
 
         const char *pszDelay = CSLFetchNameValueDef(
@@ -8449,9 +8453,12 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                                           : nStartDim - (nIndex * -nIncrDim);
                 }
             }
-            SetMetadataItem(
-                CPLSPrintf("DIM_%s_INDEX", dimName.c_str()),
-                CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nIndex)));
+            if (nDimCount != 3 || dimName != "Band")
+            {
+                SetMetadataItem(
+                    CPLSPrintf("DIM_%s_INDEX", dimName.c_str()),
+                    CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nIndex)));
+            }
             auto indexingVar = dims[i]->GetIndexingVariable();
             if (indexingVar && indexingVar->GetDimensionCount() == 1 &&
                 indexingVar->GetDimensions()[0]->GetSize() ==
@@ -8685,6 +8692,61 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
     return GDALRasterBand::IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize,
                                      pData, nBufXSize, nBufYSize, eBufType,
                                      nPixelSpaceBuf, nLineSpaceBuf, psExtraArg);
+}
+
+/************************************************************************/
+/*                      GetColorInterpretation()                        */
+/************************************************************************/
+
+GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
+{
+    auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));
+    const auto &poArray(l_poDS->m_poArray);
+    auto poAttr = poArray->GetAttribute("COLOR_INTERPRETATION");
+    if (poAttr && poAttr->GetDataType().GetClass() == GEDTC_STRING)
+    {
+        bool bOK = false;
+        GUInt64 nStartIndex = 0;
+        if (poArray->GetDimensionCount() == 2 &&
+            poAttr->GetDimensionCount() == 0)
+        {
+            bOK = true;
+        }
+        else if (poArray->GetDimensionCount() == 3)
+        {
+            uint64_t nExtraDimSamples = 1;
+            const auto &apoDims = poArray->GetDimensions();
+            for (size_t i = 0; i < apoDims.size(); ++i)
+            {
+                if (i != l_poDS->m_iXDim && i != l_poDS->m_iYDim)
+                    nExtraDimSamples *= apoDims[i]->GetSize();
+            }
+            if (poAttr->GetDimensionsSize() ==
+                std::vector<GUInt64>{static_cast<GUInt64>(nExtraDimSamples)})
+            {
+                bOK = true;
+            }
+            nStartIndex = nBand - 1;
+        }
+        if (bOK)
+        {
+            const auto oStringDT = GDALExtendedDataType::CreateString();
+            const size_t nCount = 1;
+            const GInt64 arrayStep = 1;
+            const GPtrDiff_t bufferStride = 1;
+            char *pszValue = nullptr;
+            poAttr->Read(&nStartIndex, &nCount, &arrayStep, &bufferStride,
+                         oStringDT, &pszValue);
+            if (pszValue)
+            {
+                const auto eColorInterp =
+                    GDALGetColorInterpretationByName(pszValue);
+                CPLFree(pszValue);
+                return eColorInterp;
+            }
+        }
+    }
+    return GCI_Undefined;
 }
 
 /************************************************************************/
