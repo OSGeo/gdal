@@ -75,7 +75,7 @@ that is used in GitHub Actions:
 
     docker run -it \
         -v $(pwd):/gdal:rw \
-        ghcr.io/osgeo/gdal-deps:ubuntu_20.04-master
+        ghcr.io/osgeo/gdal-deps:ubuntu20.04-master
     cd /gdal
     mkdir build-asan
     cd build-asan
