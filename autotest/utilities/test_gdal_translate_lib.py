@@ -347,6 +347,42 @@ def test_gdal_translate_lib_12(tmp_path):
 
 
 ###############################################################################
+# Test outputGeotransform option
+
+
+def test_gdal_translate_lib_outputGeotransform(tmp_vsimem):
+
+    dst_tif = str(tmp_vsimem / "test_gdal_translate_lib_outputGeotransform.tif")
+
+    with pytest.raises(
+        Exception, match="outputBounds and outputGeotransform are mutually exclusive"
+    ):
+        gdal.Translate(
+            dst_tif,
+            gdal.Open("../gcore/data/byte.tif"),
+            outputBounds=[440720.000, 3751320.000, 441920.000, 3750120.000],
+            outputGeotransform=[1.25, 2, 3, 4, 5, 6],
+        )
+
+    ds = gdal.Translate(
+        dst_tif,
+        gdal.Open("../gcore/data/byte.tif"),
+        outputGeotransform=[1.25, 2, 3, 4, 5, 6],
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
+
+    gdaltest.check_geotransform(
+        (1.25, 2, 3, 4, 5, 6),
+        ds.GetGeoTransform(),
+        1e-9,
+    )
+
+    ds = None
+
+
+###############################################################################
 # Test metadataOptions
 
 
