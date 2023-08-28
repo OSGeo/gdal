@@ -185,10 +185,10 @@ OGRErr OGRParquetDatasetLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 }
 
 /************************************************************************/
-/*                         GetFastExtent()                              */
+/*                         FastGetExtent()                              */
 /************************************************************************/
 
-bool OGRParquetDatasetLayer::GetFastExtent(int iGeomField,
+bool OGRParquetDatasetLayer::FastGetExtent(int iGeomField,
                                            OGREnvelope *psExtent) const
 {
     const auto oIter = m_oMapExtents.find(iGeomField);
@@ -218,7 +218,7 @@ OGRErr OGRParquetDatasetLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         return OGRERR_FAILURE;
     }
 
-    if (GetFastExtent(iGeomField, psExtent))
+    if (FastGetExtent(iGeomField, psExtent))
     {
         return OGRERR_NONE;
     }

@@ -460,6 +460,17 @@ inline bool OGRArrowLayer::MapArrowTypeToOGR(
         }
         oField.SetSubType(eSubType);
         oField.SetNullable(field->nullable());
+        if (type->id() == arrow::Type::DOUBLE)
+        {
+            if (field->name() == "bbox.minx")
+                m_iBBOXMinXField = m_poFeatureDefn->GetFieldCount();
+            else if (field->name() == "bbox.miny")
+                m_iBBOXMinYField = m_poFeatureDefn->GetFieldCount();
+            else if (field->name() == "bbox.maxx")
+                m_iBBOXMaxXField = m_poFeatureDefn->GetFieldCount();
+            else if (field->name() == "bbox.maxy")
+                m_iBBOXMaxYField = m_poFeatureDefn->GetFieldCount();
+        }
         m_poFeatureDefn->AddFieldDefn(&oField);
         m_anMapFieldIndexToArrowColumn.push_back(path);
     }
@@ -2973,6 +2984,125 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
 }
 
 /************************************************************************/
+/*                           SetBatch()                                 */
+/************************************************************************/
+
+inline void
+OGRArrowLayer::SetBatch(const std::shared_ptr<arrow::RecordBatch> &poBatch)
+{
+    m_poBatch = poBatch;
+    m_poBatchColumns.clear();
+    m_poArrayWKB = nullptr;
+    m_poArrayBBOX = nullptr;
+    m_poArrayMinX = nullptr;
+    m_poArrayMinY = nullptr;
+    m_poArrayMaxX = nullptr;
+    m_poArrayMaxY = nullptr;
+
+    if (m_poBatch)
+        m_poBatchColumns = m_poBatch->columns();
+
+    if (m_poBatch && m_poFilterGeom)
+    {
+        int iCol;
+        if (m_bIgnoredFields)
+        {
+            iCol = m_anMapGeomFieldIndexToArrayIndex[m_iGeomFieldFilter];
+        }
+        else
+        {
+            iCol = m_anMapGeomFieldIndexToArrowColumn[m_iGeomFieldFilter];
+        }
+        if (iCol >= 0 &&
+            m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB)
+        {
+            const arrow::Array *poArrayWKB = m_poBatchColumns[iCol].get();
+            CPLAssert(poArrayWKB->type_id() == arrow::Type::BINARY);
+            m_poArrayWKB = static_cast<const arrow::BinaryArray *>(poArrayWKB);
+
+            if (m_iBBOXMinXField >= 0 && m_iBBOXMinYField >= 0 &&
+                m_iBBOXMaxXField >= 0 && m_iBBOXMaxYField >= 0 &&
+                CPLTestBool(CPLGetConfigOption(
+                    ("OGR_" + GetDriverUCName() + "_USE_BBOX").c_str(), "YES")))
+            {
+                const auto GetArray =
+                    [this](int idx, const arrow::Array *&poStructArray)
+                {
+                    if (m_bIgnoredFields)
+                    {
+                        const int arrayIdx = m_anMapFieldIndexToArrayIndex[idx];
+                        if (arrayIdx < 0)
+                            return static_cast<const arrow::DoubleArray *>(
+                                nullptr);
+                        auto array = m_poBatchColumns[arrayIdx].get();
+                        CPLAssert(array->type_id() == arrow::Type::DOUBLE);
+                        return static_cast<const arrow::DoubleArray *>(array);
+                    }
+                    else
+                    {
+                        auto array =
+                            m_poBatchColumns[m_anMapFieldIndexToArrowColumn[idx]
+                                                                           [0]]
+                                .get();
+                        ;
+                        int j = 1;
+                        while (array->type_id() == arrow::Type::STRUCT)
+                        {
+                            if (j == 1)
+                                poStructArray = array;
+                            const auto castArray =
+                                static_cast<const arrow::StructArray *>(array);
+                            const auto &subArrays = castArray->fields();
+                            CPLAssert(j <
+                                      static_cast<int>(
+                                          m_anMapFieldIndexToArrowColumn[idx]
+                                              .size()));
+                            const int iArrowSubcol =
+                                m_anMapFieldIndexToArrowColumn[idx][j];
+                            j++;
+                            CPLAssert(iArrowSubcol <
+                                      static_cast<int>(subArrays.size()));
+                            array = subArrays[iArrowSubcol].get();
+                        }
+                        CPLAssert(array->type_id() == arrow::Type::DOUBLE);
+                        return static_cast<const arrow::DoubleArray *>(array);
+                    }
+                };
+
+                const arrow::Array *poStructArrayMinX = nullptr;
+                const arrow::Array *poStructArrayMinY = nullptr;
+                const arrow::Array *poStructArrayMaxX = nullptr;
+                const arrow::Array *poStructArrayMaxY = nullptr;
+                m_poArrayMinX = GetArray(m_iBBOXMinXField, poStructArrayMinX);
+                m_poArrayMinY = GetArray(m_iBBOXMinYField, poStructArrayMinY);
+                m_poArrayMaxX = GetArray(m_iBBOXMaxXField, poStructArrayMaxX);
+                m_poArrayMaxY = GetArray(m_iBBOXMaxYField, poStructArrayMaxY);
+
+                if (poStructArrayMinX != poStructArrayMinY ||
+                    poStructArrayMinX != poStructArrayMaxX ||
+                    poStructArrayMinX != poStructArrayMaxY)
+                {
+                    m_poArrayBBOX = nullptr;
+                }
+                else
+                {
+                    m_poArrayBBOX = poStructArrayMinX;
+                }
+                if (!m_poArrayMinX || !m_poArrayMinY || !m_poArrayMaxX ||
+                    !m_poArrayMaxY)
+                {
+                    m_poArrayBBOX = nullptr;
+                    m_poArrayMinX = nullptr;
+                    m_poArrayMinY = nullptr;
+                    m_poArrayMaxX = nullptr;
+                    m_poArrayMaxY = nullptr;
+                }
+            }
+        }
+    }
+}
+
+/************************************************************************/
 /*                        GetNextRawFeature()                           */
 /************************************************************************/
 
@@ -3004,27 +3134,42 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
         if (iCol >= 0 &&
             m_aeGeomEncoding[m_iGeomFieldFilter] == OGRArrowGeomEncoding::WKB)
         {
-            auto array = m_poBatchColumns[iCol];
-            CPLAssert(array->type_id() == arrow::Type::BINARY);
-            auto castArray =
-                std::static_pointer_cast<arrow::BinaryArray>(array);
+            CPLAssert(m_poArrayWKB);
             OGREnvelope sEnvelope;
+
             while (true)
             {
                 bool bSkipToNextFeature = false;
-                if (array->IsNull(m_nIdxInBatch))
+                if (m_poArrayWKB->IsNull(m_nIdxInBatch))
                 {
                     bSkipToNextFeature = true;
                 }
                 else
                 {
-                    int out_length = 0;
-                    const uint8_t *data =
-                        castArray->GetValue(m_nIdxInBatch, &out_length);
-                    if (OGRWKBGetBoundingBox(data, out_length, sEnvelope) &&
-                        !m_sFilterEnvelope.Intersects(sEnvelope))
+                    if (m_poArrayMinX &&
+                        (!m_poArrayBBOX ||
+                         !m_poArrayBBOX->IsNull(m_nIdxInBatch)) &&
+                        !m_poArrayMinX->IsNull(m_nIdxInBatch))
                     {
-                        bSkipToNextFeature = true;
+                        sEnvelope.MinX = m_poArrayMinX->Value(m_nIdxInBatch);
+                        sEnvelope.MinY = m_poArrayMinY->Value(m_nIdxInBatch);
+                        sEnvelope.MaxX = m_poArrayMaxX->Value(m_nIdxInBatch);
+                        sEnvelope.MaxY = m_poArrayMaxY->Value(m_nIdxInBatch);
+                        if (!m_sFilterEnvelope.Intersects(sEnvelope))
+                        {
+                            bSkipToNextFeature = true;
+                        }
+                    }
+                    else
+                    {
+                        int out_length = 0;
+                        const uint8_t *data =
+                            m_poArrayWKB->GetValue(m_nIdxInBatch, &out_length);
+                        if (OGRWKBGetBoundingBox(data, out_length, sEnvelope) &&
+                            !m_sFilterEnvelope.Intersects(sEnvelope))
+                        {
+                            bSkipToNextFeature = true;
+                        }
                     }
                 }
                 if (!bSkipToNextFeature)
@@ -3044,10 +3189,6 @@ inline OGRFeature *OGRArrowLayer::GetNextRawFeature()
                     m_bEOF = !ReadNextBatch();
                     if (m_bEOF)
                         return nullptr;
-                    array = m_poBatchColumns[iCol];
-                    CPLAssert(array->type_id() == arrow::Type::BINARY);
-                    castArray =
-                        std::static_pointer_cast<arrow::BinaryArray>(array);
                 }
             }
         }
@@ -3278,20 +3419,22 @@ inline void OGRArrowLayer::SetSpatialFilter(int iGeomField,
         if (m_poFilterGeom != nullptr)
         {
             OGREnvelope sLayerExtent;
-            if (GetFastExtent(iGeomField, &sLayerExtent))
+            if (FastGetExtent(iGeomField, &sLayerExtent))
             {
                 m_bSpatialFilterIntersectsLayerExtent =
                     m_sFilterEnvelope.Intersects(sLayerExtent);
             }
         }
     }
+
+    SetBatch(m_poBatch);
 }
 
 /************************************************************************/
-/*                         GetFastExtent()                              */
+/*                         FastGetExtent()                              */
 /************************************************************************/
 
-inline bool OGRArrowLayer::GetFastExtent(int iGeomField,
+inline bool OGRArrowLayer::FastGetExtent(int iGeomField,
                                          OGREnvelope *psExtent) const
 {
     {
@@ -3336,7 +3479,7 @@ inline OGRErr OGRArrowLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
         return OGRERR_FAILURE;
     }
 
-    if (GetFastExtent(iGeomField, psExtent))
+    if (FastGetExtent(iGeomField, psExtent))
     {
         return OGRERR_NONE;
     }
@@ -4035,6 +4178,17 @@ inline int OGRArrowLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastGetArrowStream) &&
              !UseRecordBatchBaseImplementation())
     {
+        return true;
+    }
+
+    if (EQUAL(pszCap, OLCFastGetExtent))
+    {
+        OGREnvelope sEnvelope;
+        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
+        {
+            if (!FastGetExtent(i, &sEnvelope))
+                return false;
+        }
         return true;
     }
 

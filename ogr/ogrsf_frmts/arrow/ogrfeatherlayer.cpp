@@ -690,26 +690,6 @@ int OGRFeatherLayer::TestCapability(const char *pszCap)
                m_poFilterGeom == nullptr;
     }
 
-    if (EQUAL(pszCap, OLCFastGetExtent))
-    {
-        for (int i = 0; i < m_poFeatureDefn->GetGeomFieldCount(); i++)
-        {
-            auto oIter = m_oMapGeometryColumns.find(
-                m_poFeatureDefn->GetGeomFieldDefn(i)->GetNameRef());
-            if (oIter == m_oMapGeometryColumns.end())
-            {
-                return false;
-            }
-            const auto &oJSONDef = oIter->second;
-            const auto oBBox = oJSONDef.GetArray("bbox");
-            if (!(oBBox.IsValid() && (oBBox.Size() == 4 || oBBox.Size() == 6)))
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
     if (EQUAL(pszCap, OLCMeasuredGeometries))
         return true;
     if (EQUAL(pszCap, OLCZGeometries))
