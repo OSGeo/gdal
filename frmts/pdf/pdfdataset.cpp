@@ -4374,7 +4374,8 @@ void PDFDataset::FindLayersGeneric(GDALPDFDictionary *poPageDict)
                     poName->GetType() == PDFObjectType_String)
                 {
                     m_aoLayerWithRef.emplace_back(
-                        PDFSanitizeLayerName(poName->GetString()).c_str(),
+                        PDFSanitizeLayerName(poName->GetString().c_str())
+                            .c_str(),
                         poObj->GetRefNum(), poObj->GetRefGen());
                 }
             }
@@ -6661,7 +6662,7 @@ int PDFDataset::ParseVP(GDALPDFObject *poVP, double dfMediaBoxWidth,
         }
 
         CPLDebug("PDF", "Subtype = %s", poSubtype->GetName().c_str());
-        if (!EQUAL(poSubtype->GetName(), "GEO"))
+        if (!EQUAL(poSubtype->GetName().c_str(), "GEO"))
         {
             continue;
         }
@@ -6797,7 +6798,7 @@ int PDFDataset::ParseMeasure(GDALPDFObject *poMeasure, double dfMediaBoxWidth,
     }
 
     CPLDebug("PDF", "Subtype = %s", poSubtype->GetName().c_str());
-    if (!EQUAL(poSubtype->GetName(), "GEO"))
+    if (!EQUAL(poSubtype->GetName().c_str(), "GEO"))
         return FALSE;
 
     /* -------------------------------------------------------------------- */

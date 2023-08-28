@@ -61,7 +61,7 @@ double ROUND_TO_INT_IF_CLOSE(double x, double eps)
 static CPLString GDALPDFGetPDFString(const char *pszStr)
 {
     GByte *pabyData = (GByte *)pszStr;
-    int i;
+    size_t i;
     GByte ch;
     for (i = 0; (ch = pabyData[i]) != '\0'; i++)
     {
@@ -112,23 +112,34 @@ static CPLString GDALPDFGetPDFString(const char *pszStr)
 /*                     GDALPDFGetUTF8StringFromBytes()                  */
 /************************************************************************/
 
-static CPLString GDALPDFGetUTF8StringFromBytes(const GByte *pabySrc, int nLen)
+static std::string GDALPDFGetUTF8StringFromBytes(const GByte *pabySrc,
+                                                 size_t nLen)
 {
-    int bLEUnicodeMarker = nLen > 2 && pabySrc[0] == 0xFE && pabySrc[1] == 0xFF;
-    int bBEUnicodeMarker = nLen > 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
+    const bool bLEUnicodeMarker =
+        nLen > 2 && pabySrc[0] == 0xFE && pabySrc[1] == 0xFF;
+    const bool bBEUnicodeMarker =
+        nLen > 2 && pabySrc[0] == 0xFF && pabySrc[1] == 0xFE;
     if (!bLEUnicodeMarker && !bBEUnicodeMarker)
     {
-        CPLString osStr;
-        osStr.resize(nLen + 1);
-        osStr.assign((const char *)pabySrc, (size_t)nLen);
-        osStr[nLen] = 0;
+        std::string osStr;
+        try
+        {
+            osStr.reserve(nLen);
+        }
+        catch (const std::exception &e)
+        {
+            CPLError(CE_Failure, CPLE_OutOfMemory,
+                     "GDALPDFGetUTF8StringFromBytes(): %s", e.what());
+            return osStr;
+        }
+        osStr.assign((const char *)pabySrc, nLen);
         const char *pszStr = osStr.c_str();
         if (CPLIsUTF8(pszStr, -1))
             return osStr;
         else
         {
             char *pszUTF8 = CPLRecode(pszStr, CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
-            CPLString osRet = pszUTF8;
+            std::string osRet = pszUTF8;
             CPLFree(pszUTF8);
             return osRet;
         }
@@ -137,21 +148,22 @@ static CPLString GDALPDFGetUTF8StringFromBytes(const GByte *pabySrc, int nLen)
     /* This is UTF-16 content */
     pabySrc += 2;
     nLen = (nLen - 2) / 2;
-    wchar_t *pwszSource = new wchar_t[nLen + 1];
-    int j = 0;
-    for (int i = 0; i < nLen; i++, j++)
+    std::wstring awszSource;
+    awszSource.resize(nLen + 1);
+    size_t j = 0;
+    for (size_t i = 0; i < nLen; i++, j++)
     {
         if (!bBEUnicodeMarker)
-            pwszSource[j] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
+            awszSource[j] = (pabySrc[2 * i] << 8) + pabySrc[2 * i + 1];
         else
-            pwszSource[j] = (pabySrc[2 * i + 1] << 8) + pabySrc[2 * i];
+            awszSource[j] = (pabySrc[2 * i + 1] << 8) + pabySrc[2 * i];
 #ifndef _WIN32
         /* Is there a surrogate pair ? See http://en.wikipedia.org/wiki/UTF-16
          */
         /* On Windows, CPLRecodeFromWChar does this for us, because wchar_t is
          * only */
         /* 2 bytes wide, whereas on Unix it is 32bits */
-        if (pwszSource[j] >= 0xD800 && pwszSource[j] <= 0xDBFF && i + 1 < nLen)
+        if (awszSource[j] >= 0xD800 && awszSource[j] <= 0xDBFF && i + 1 < nLen)
         {
             /* should be in the range 0xDC00... 0xDFFF */
             wchar_t nTrailSurrogate;
@@ -163,18 +175,19 @@ static CPLString GDALPDFGetUTF8StringFromBytes(const GByte *pabySrc, int nLen)
                     (pabySrc[2 * (i + 1) + 1] << 8) + pabySrc[2 * (i + 1)];
             if (nTrailSurrogate >= 0xDC00 && nTrailSurrogate <= 0xDFFF)
             {
-                pwszSource[j] = ((pwszSource[j] - 0xD800) << 10) +
+                awszSource[j] = ((awszSource[j] - 0xD800) << 10) +
                                 (nTrailSurrogate - 0xDC00) + 0x10000;
                 i++;
             }
         }
 #endif
     }
-    pwszSource[j] = 0;
+    awszSource[j] = 0;
 
-    char *pszUTF8 = CPLRecodeFromWChar(pwszSource, CPL_ENC_UCS2, CPL_ENC_UTF8);
-    delete[] pwszSource;
-    CPLString osStrUTF8(pszUTF8);
+    char *pszUTF8 =
+        CPLRecodeFromWChar(awszSource.data(), CPL_ENC_UCS2, CPL_ENC_UTF8);
+    awszSource.clear();
+    std::string osStrUTF8(pszUTF8);
     CPLFree(pszUTF8);
     return osStrUTF8;
 }
@@ -185,21 +198,18 @@ static CPLString GDALPDFGetUTF8StringFromBytes(const GByte *pabySrc, int nLen)
 /*                          GDALPDFGetPDFName()                         */
 /************************************************************************/
 
-static CPLString GDALPDFGetPDFName(const char *pszStr)
+static std::string GDALPDFGetPDFName(const std::string &osStr)
 {
-    GByte *pabyData = (GByte *)pszStr;
-    int i;
-    GByte ch;
-    CPLString osStr;
-    for (i = 0; (ch = pabyData[i]) != '\0'; i++)
+    std::string osRet;
+    for (const char ch : osStr)
     {
         if (!((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
               (ch >= '0' && ch <= '9') || ch == '-'))
-            osStr += '_';
+            osRet += '_';
         else
-            osStr += ch;
+            osRet += ch;
     }
-    return osStr;
+    return osRet;
 }
 
 /************************************************************************/
@@ -320,7 +330,7 @@ void GDALPDFObject::Serialize(CPLString &osStr, bool bEmitRef)
             return;
         }
         case PDFObjectType_String:
-            osStr.append(GDALPDFGetPDFString(GetString()));
+            osStr.append(GDALPDFGetPDFString(GetString().c_str()));
             return;
         case PDFObjectType_Name:
             osStr.append("/");
@@ -364,9 +374,9 @@ GDALPDFObjectRW *GDALPDFObject::Clone()
         case PDFObjectType_Real:
             return GDALPDFObjectRW::CreateReal(GetReal());
         case PDFObjectType_String:
-            return GDALPDFObjectRW::CreateString(GetString());
+            return GDALPDFObjectRW::CreateString(GetString().c_str());
         case PDFObjectType_Name:
-            return GDALPDFObjectRW::CreateName(GetName());
+            return GDALPDFObjectRW::CreateName(GetName().c_str());
         case PDFObjectType_Array:
             return GDALPDFObjectRW::CreateArray(GetArray()->Clone());
         case PDFObjectType_Dictionary:
@@ -1132,7 +1142,7 @@ double GDALPDFObjectPoppler::GetReal()
 /*                              GetString()                             */
 /************************************************************************/
 
-const CPLString &GDALPDFObjectPoppler::GetString()
+const std::string &GDALPDFObjectPoppler::GetString()
 {
     if (GetType() == PDFObjectType_String)
     {
@@ -1143,13 +1153,35 @@ const CPLString &GDALPDFObjectPoppler::GetString()
         GooString *gooString = m_po->getString();
 #endif
 #if (POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 72)
+        const std::string &osStdStr = gooString->toStr();
+        const bool bLEUnicodeMarker =
+            osStdStr.size() > 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFE &&
+            static_cast<uint8_t>(osStdStr[1]) == 0xFF;
+        const bool bBEUnicodeMarker =
+            osStdStr.size() > 2 && static_cast<uint8_t>(osStdStr[0]) == 0xFF &&
+            static_cast<uint8_t>(osStdStr[1]) == 0xFE;
+        if (!bLEUnicodeMarker && !bBEUnicodeMarker)
+        {
+            if (CPLIsUTF8(osStdStr.c_str(), -1))
+            {
+                return osStdStr;
+            }
+            else
+            {
+                char *pszUTF8 =
+                    CPLRecode(osStdStr.data(), CPL_ENC_ISO8859_1, CPL_ENC_UTF8);
+                osStr = pszUTF8;
+                CPLFree(pszUTF8);
+                return osStr;
+            }
+        }
         return (osStr = GDALPDFGetUTF8StringFromBytes(
-                    reinterpret_cast<const GByte *>(gooString->c_str()),
-                    static_cast<int>(gooString->getLength())));
+                    reinterpret_cast<const GByte *>(osStdStr.data()),
+                    osStdStr.size()));
 #else
         return (osStr = GDALPDFGetUTF8StringFromBytes(
                     reinterpret_cast<const GByte *>(gooString->getCString()),
-                    static_cast<int>(gooString->getLength())));
+                    static_cast<size_t>(gooString->getLength())));
 #endif
     }
     else
@@ -1160,7 +1192,7 @@ const CPLString &GDALPDFObjectPoppler::GetString()
 /*                               GetName()                              */
 /************************************************************************/
 
-const CPLString &GDALPDFObjectPoppler::GetName()
+const std::string &GDALPDFObjectPoppler::GetName()
 {
     if (GetType() == PDFObjectType_Name)
         return (osStr = m_po->getName());
@@ -1832,7 +1864,7 @@ double GDALPDFObjectPodofo::GetReal()
 /*                              GetString()                             */
 /************************************************************************/
 
-const CPLString &GDALPDFObjectPodofo::GetString()
+const std::string &GDALPDFObjectPodofo::GetString()
 {
     if (GetType() == PDFObjectType_String)
         return (osStr = m_po->GetString().GetStringUtf8());
@@ -1844,7 +1876,7 @@ const CPLString &GDALPDFObjectPodofo::GetString()
 /*                              GetName()                               */
 /************************************************************************/
 
-const CPLString &GDALPDFObjectPodofo::GetName()
+const std::string &GDALPDFObjectPodofo::GetName()
 {
     if (GetType() == PDFObjectType_Name)
         return (osStr = m_po->GetName().GetName());
@@ -2396,7 +2428,7 @@ double GDALPDFObjectPdfium::GetReal()
 /*                              GetString()                             */
 /************************************************************************/
 
-const CPLString &GDALPDFObjectPdfium::GetString()
+const std::string &GDALPDFObjectPdfium::GetString()
 {
     if (GetType() == PDFObjectType_String)
     {
@@ -2416,7 +2448,7 @@ const CPLString &GDALPDFObjectPdfium::GetString()
 /*                              GetName()                               */
 /************************************************************************/
 
-const CPLString &GDALPDFObjectPdfium::GetName()
+const std::string &GDALPDFObjectPdfium::GetName()
 {
     if (GetType() == PDFObjectType_Name)
         return (osStr = m_obj->GetString().c_str());
