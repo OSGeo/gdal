@@ -332,6 +332,32 @@ def test_gdal_translate_12(gdal_translate_path, tmp_path):
 
 
 ###############################################################################
+# Test -a_gt option
+
+
+def test_gdal_translate_add_gt(gdal_translate_path, tmp_path):
+
+    dst_tif = str(tmp_path / "testaddgt.tif")
+
+    gdaltest.runexternal(
+        f"{gdal_translate_path} -a_gt 0 1 0 0 0 1 ../gcore/data/byte.tif {dst_tif}"
+    )
+
+    ds = gdal.Open(dst_tif)
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
+
+    gdaltest.check_geotransform(
+        (0, 1, 0, 0, 0, 1),
+        ds.GetGeoTransform(),
+        1e-9,
+    )
+
+    ds = None
+
+
+###############################################################################
 # Test -mo option
 
 
