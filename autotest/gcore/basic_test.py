@@ -123,6 +123,11 @@ def test_basic_test_5():
     pytest.fail()
 
 
+def test_basic_test_5bis():
+    with pytest.raises(RuntimeError, match="not a string"):
+        gdal.Open(12345)
+
+
 ###############################################################################
 # Issue several AllRegister() to check that GDAL drivers are good citizens
 
@@ -800,7 +805,7 @@ def test_basic_test_DontUseExceptions():
 
 
 def test_create_context_manager(tmp_path):
-    fname = str(tmp_path / "out.tif")
+    fname = tmp_path / "out.tif"
 
     drv = gdal.GetDriverByName("GTiff")
     with drv.Create(fname, xsize=10, ysize=10, bands=1, eType=gdal.GDT_Float32) as ds:
@@ -873,4 +878,6 @@ def test_checksum_more_than_2billion_pixels():
 
 
 def test_tmp_vsimem(tmp_vsimem):
-    assert gdal.VSIStatL(str(tmp_vsimem)) is not None
+    assert isinstance(tmp_vsimem, os.PathLike)
+
+    assert gdal.VSIStatL(tmp_vsimem) is not None
