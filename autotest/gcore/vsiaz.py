@@ -65,6 +65,7 @@ def startup_and_cleanup():
         ("AZURE_NO_SIGN_REQUEST", None),
         ("AZURE_CONFIG_DIR", ""),
         ("AZURE_STORAGE_ACCESS_TOKEN", ""),
+        ("AZURE_FEDERATED_TOKEN_FILE", ""),
     ):
         options[var] = reset_val
 
@@ -1877,7 +1878,7 @@ def test_vsiaz_fake_sync_multithreaded_upload_single_file():
 # Read credentials from simulated Azure VM
 
 
-def test_vsiaz_read_credentials_simulated_azure_vm():
+def test_vsiaz_imds_authentication():
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
@@ -1967,7 +1968,7 @@ def test_vsiaz_read_credentials_simulated_azure_vm():
 # Read credentials from simulated Azure VM with expiration
 
 
-def test_vsiaz_read_credentials_simulated_azure_vm_expiration():
+def test_vsiaz_imds_authentication_expiration():
 
     if gdaltest.webserver_port == 0:
         pytest.skip()
@@ -2029,6 +2030,341 @@ def test_vsiaz_read_credentials_simulated_azure_vm_expiration():
             gdal.VSIFCloseL(f)
 
         assert data == "foo"
+
+
+###############################################################################
+# Test support for object_id/client_id/msi_res_id parameters of IMDS
+
+
+def test_vsiaz_imds_authentication_object_id_client_is_msi_res_id():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    try:
+        with gdaltest.config_options(
+            {
+                "AZURE_STORAGE_CONNECTION_STRING": "",
+                "AZURE_STORAGE_ACCOUNT": "myaccount",
+                "CPL_AZURE_ENDPOINT": "http://127.0.0.1:%d/azure/blob/myaccount"
+                % gdaltest.webserver_port,
+                "CPL_AZURE_USE_HTTPS": "NO",
+                "CPL_AZURE_VM_API_ROOT_URL": "http://localhost:%d"
+                % gdaltest.webserver_port,
+            },
+            thread_local=False,
+        ):
+
+            handler = webserver.SequentialHandler()
+            handler.add(
+                "GET",
+                "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F&object_id=my_object_id&client_id=my_client_id&msi_res_id=my_msi_res_id",
+                200,
+                {},
+                """{
+                        "access_token": "my_bearer",
+                        "expires_on": "99999999999",
+                        }""",
+                expected_headers={"Metadata": "true"},
+            )
+            handler.add(
+                "GET",
+                "/azure/blob/myaccount/az_fake_bucket/resource",
+                200,
+                {"Content-Length": 3},
+                "foo",
+                expected_headers={
+                    "Authorization": "Bearer my_bearer",
+                    "x-ms-version": "2019-12-12",
+                },
+            )
+
+            gdal.SetPathSpecificOption(
+                "/vsiaz/az_fake_bucket/", "AZURE_IMDS_OBJECT_ID", "my_object_id"
+            )
+            gdal.SetPathSpecificOption(
+                "/vsiaz/az_fake_bucket/", "AZURE_IMDS_CLIENT_ID", "my_client_id"
+            )
+            gdal.SetPathSpecificOption(
+                "/vsiaz/az_fake_bucket/", "AZURE_IMDS_MSI_RES_ID", "my_msi_res_id"
+            )
+            with webserver.install_http_handler(handler):
+                f = open_for_read("/vsiaz/az_fake_bucket/resource")
+                assert f is not None
+                data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+                gdal.VSIFCloseL(f)
+            assert data == "foo"
+
+            # Query another buckect with different object_id/client_id/msi_res_id
+            handler = webserver.SequentialHandler()
+            handler.add(
+                "GET",
+                "/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%3A%2F%2Fstorage.azure.com%2F&object_id=my_object_id2&client_id=my_client_id2&msi_res_id=my_msi_res_id2",
+                200,
+                {},
+                """{
+                        "access_token": "my_bearer2",
+                        "expires_on": "99999999999",
+                        }""",
+                expected_headers={"Metadata": "true"},
+            )
+            handler.add(
+                "GET",
+                "/azure/blob/myaccount/az_fake_bucket2/resource",
+                200,
+                {"Content-Length": 3},
+                "bar",
+                expected_headers={
+                    "Authorization": "Bearer my_bearer2",
+                    "x-ms-version": "2019-12-12",
+                },
+            )
+
+            gdal.SetPathSpecificOption(
+                "/vsiaz/az_fake_bucket2/", "AZURE_IMDS_OBJECT_ID", "my_object_id2"
+            )
+            gdal.SetPathSpecificOption(
+                "/vsiaz/az_fake_bucket2/", "AZURE_IMDS_CLIENT_ID", "my_client_id2"
+            )
+            gdal.SetPathSpecificOption(
+                "/vsiaz/az_fake_bucket2/", "AZURE_IMDS_MSI_RES_ID", "my_msi_res_id2"
+            )
+            with webserver.install_http_handler(handler):
+                f = open_for_read("/vsiaz/az_fake_bucket2/resource")
+                assert f is not None
+                data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+                gdal.VSIFCloseL(f)
+            assert data == "bar"
+
+            # Check that quering again under /vsiaz/az_fake_bucket/ resuses
+            # the cached token
+            handler.add(
+                "GET",
+                "/azure/blob/myaccount/az_fake_bucket/resource2",
+                200,
+                {"Content-Length": 4},
+                "foo2",
+                expected_headers={
+                    "Authorization": "Bearer my_bearer",
+                    "x-ms-version": "2019-12-12",
+                },
+            )
+            with webserver.install_http_handler(handler):
+                f = open_for_read("/vsiaz/az_fake_bucket/resource2")
+                assert f is not None
+                data = gdal.VSIFReadL(1, 5, f).decode("ascii")
+                gdal.VSIFCloseL(f)
+            assert data == "foo2"
+
+    finally:
+        gdal.ClearPathSpecificOptions("/vsiaz/az_fake_bucket/")
+        gdal.ClearPathSpecificOptions("/vsiaz/az_fake_bucket2/")
+
+
+###############################################################################
+# Get authentication for Workload Identity from simulated Azure VM
+
+
+def test_vsiaz_workload_identity_managed_authentication():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {
+            "AZURE_STORAGE_CONNECTION_STRING": "",
+            "AZURE_STORAGE_ACCOUNT": "myaccount",
+            "CPL_AZURE_ENDPOINT": "http://127.0.0.1:%d/azure/blob/myaccount"
+            % gdaltest.webserver_port,
+            "CPL_AZURE_USE_HTTPS": "NO",
+            "AZURE_AUTHORITY_HOST": "http://localhost:%d/" % gdaltest.webserver_port,
+            "AZURE_TENANT_ID": "tenant_id",
+            "AZURE_CLIENT_ID": "client_id_value",
+            "AZURE_FEDERATED_TOKEN_FILE": "/vsimem/AZURE_FEDERATED_TOKEN_FILE",
+        },
+        thread_local=False,
+    ), gdaltest.tempfile(
+        "/vsimem/AZURE_FEDERATED_TOKEN_FILE", "content_of_AZURE_FEDERATED_TOKEN_FILE"
+    ):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer", "expires_in": "100"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
+
+        handler.add(
+            "GET",
+            "/azure/blob/myaccount/az_fake_bucket/resource",
+            200,
+            {"Content-Length": 3},
+            "foo",
+            expected_headers={
+                "Authorization": "Bearer my_bearer",
+                "x-ms-version": "2019-12-12",
+            },
+        )
+        with webserver.install_http_handler(handler):
+            f = open_for_read("/vsiaz/az_fake_bucket/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+
+        assert data == "foo"
+
+    # Set a fake AZURE_FEDERATED_TOKEN_FILE to check that credentials re-use works
+    with gdaltest.config_options(
+        {
+            "AZURE_STORAGE_CONNECTION_STRING": "",
+            "AZURE_STORAGE_ACCOUNT": "myaccount",
+            "CPL_AZURE_ENDPOINT": "http://127.0.0.1:%d/azure/blob/myaccount"
+            % gdaltest.webserver_port,
+            "CPL_AZURE_USE_HTTPS": "NO",
+            "AZURE_AUTHORITY_HOST": "http://localhost:%d/" % gdaltest.webserver_port,
+            "AZURE_TENANT_ID": "tenant_id",
+            "AZURE_CLIENT_ID": "client_id_value",
+            "AZURE_FEDERATED_TOKEN_FILE": "****invalid******",
+        },
+        thread_local=False,
+    ):
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/azure/blob/myaccount/az_fake_bucket/bar",
+            200,
+            {"Content-Length": 3},
+            "bar",
+            expected_headers={
+                "Authorization": "Bearer my_bearer",
+                "x-ms-version": "2019-12-12",
+            },
+        )
+        with webserver.install_http_handler(handler):
+            f = open_for_read("/vsiaz/az_fake_bucket/bar")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+
+        assert data == "bar"
+
+
+###############################################################################
+# Get authentication for Workload Identity from simulated Azure VM
+
+
+def test_vsiaz_workload_identity_managed_authentication_expiration():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    with gdaltest.config_options(
+        {
+            "AZURE_STORAGE_CONNECTION_STRING": "",
+            "AZURE_STORAGE_ACCOUNT": "myaccount",
+            "CPL_AZURE_ENDPOINT": "http://127.0.0.1:%d/azure/blob/myaccount"
+            % gdaltest.webserver_port,
+            "CPL_AZURE_USE_HTTPS": "NO",
+            "AZURE_AUTHORITY_HOST": "http://localhost:%d/" % gdaltest.webserver_port,
+            "AZURE_TENANT_ID": "tenant_id",
+            "AZURE_CLIENT_ID": "client_id_value",
+            "AZURE_FEDERATED_TOKEN_FILE": "/vsimem/AZURE_FEDERATED_TOKEN_FILE",
+        },
+        thread_local=False,
+    ):
+
+        handler = webserver.SequentialHandler()
+
+        # Done once because of VSICurlClearCache()
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer", "expires_in": "10"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
+
+        # We have a security margin of 60 seconds over the expires_in delay
+        # so we will need to fetch the token again
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer2", "expires_in": "10"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
+
+        handler.add(
+            "GET",
+            "/azure/blob/myaccount/az_fake_bucket/resource",
+            200,
+            {"Content-Length": 3},
+            "foo",
+            expected_headers={
+                "Authorization": "Bearer my_bearer2",
+                "x-ms-version": "2019-12-12",
+            },
+        )
+        with webserver.install_http_handler(handler), gdaltest.tempfile(
+            "/vsimem/AZURE_FEDERATED_TOKEN_FILE",
+            "content_of_AZURE_FEDERATED_TOKEN_FILE",
+        ):
+            f = open_for_read("/vsiaz/az_fake_bucket/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+
+        assert data == "foo"
+
+        # Check that AZURE_FEDERATED_TOKEN_FILE isn't actually read
+
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "POST",
+            "/tenant_id/oauth2/v2.0/token",
+            200,
+            {},
+            """{"access_token": "my_bearer3", "expires_in": "100"}""",
+            expected_headers={"Content-Type": "application/x-www-form-urlencoded"},
+            expected_body=b"client_assertion=content_of_AZURE_FEDERATED_TOKEN_FILE&client_assertion_type=urn:ietf:params:oauth:client-assertion-type:jwt-bearer&client_id=client_id_value&grant_type=client_credentials&scope=https://storage.azure.com/.default",
+        )
+
+        handler.add(
+            "GET",
+            "/azure/blob/myaccount/az_fake_bucket2/resource",
+            200,
+            {"Content-Length": 3},
+            "bar",
+            expected_headers={
+                "Authorization": "Bearer my_bearer3",
+                "x-ms-version": "2019-12-12",
+            },
+        )
+        with webserver.install_http_handler(handler), gdaltest.tempfile(
+            "/vsimem/AZURE_FEDERATED_TOKEN_FILE",
+            "another_content_of_AZURE_FEDERATED_TOKEN_FILE",
+        ):
+            f = open_for_read("/vsiaz/az_fake_bucket2/resource")
+            assert f is not None
+            data = gdal.VSIFReadL(1, 4, f).decode("ascii")
+            gdal.VSIFCloseL(f)
+
+        assert data == "bar"
 
 
 ###############################################################################
