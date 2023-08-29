@@ -703,7 +703,7 @@ def test_ogr_sqlite_14():
     dst_feat.SetField("INTEGER", 1)
     dst_feat.SetField("FLOAT", 1.2)
     dst_feat.SetField("STRING", "myString'a")
-    dst_feat.SetFieldBinaryFromHexString("BLOB", "0001FF")
+    dst_feat.SetField("BLOB", b"\x00\x01\xFF")
 
     gdaltest.sl_lyr.CreateFeature(dst_feat)
 

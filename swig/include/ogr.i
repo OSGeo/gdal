@@ -2102,6 +2102,12 @@ public:
   }
 %clear char**pList;
 
+#if defined(SWIGPYTHON)
+  void _SetFieldBinary(int id, int nLen, char *pBuf) {
+      OGR_F_SetFieldBinary(self, id, nLen, pBuf);
+  }
+#endif
+
   void SetFieldBinaryFromHexString(int id, const char* pszValue)
   {
      int nBytes;

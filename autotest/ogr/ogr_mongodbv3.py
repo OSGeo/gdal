@@ -288,7 +288,7 @@ def test_ogr_mongodbv3_2():
     ] = 1234567890123456  # put a number larger than 1 << 40 so that fromjson() doesn't pick double
     f["real"] = 1.23
     f["dt"] = "1234/12/31 23:59:59.123+00"
-    f.SetFieldBinaryFromHexString("binary", "00FF")
+    f["binary"] = b"\x00\xFF"
     f["strlist"] = ["a", "b"]
     f["intlist"] = [1, 2]
     f["int64list"] = [1234567890123456, 1234567890123456]

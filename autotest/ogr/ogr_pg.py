@@ -5353,7 +5353,7 @@ def test_ogr_pg_86(with_and_without_postgis):
         lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_86")
         lyr.CreateField(ogr.FieldDefn("test", ogr.OFTBinary))
         f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFieldBinaryFromHexString("test", "3020")
+        f["test"] = b"\x30\x20"
         lyr.CreateFeature(f)
         lyr.ResetReading()
         f = lyr.GetNextFeature()
@@ -5365,7 +5365,7 @@ def test_ogr_pg_86(with_and_without_postgis):
         lyr = gdaltest.pg_ds.CreateLayer("ogr_pg_86", options=["OVERWRITE=YES"])
         lyr.CreateField(ogr.FieldDefn("test", ogr.OFTBinary))
         f = ogr.Feature(lyr.GetLayerDefn())
-        f.SetFieldBinaryFromHexString("test", "3020")
+        f["test"] = b"\x30\x20"
         lyr.CreateFeature(f)
         lyr.ResetReading()
         f = lyr.GetNextFeature()

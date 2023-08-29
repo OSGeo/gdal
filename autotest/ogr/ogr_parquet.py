@@ -2357,9 +2357,7 @@ def test_ogr_parquet_recognize_geo_from_geom_possible_names(geom_col_name, is_wk
         f = ogr.Feature(lyr.GetLayerDefn())
         if is_wkb:
             wkb = ogr.CreateGeometryFromWkt("POINT (1 2)").ExportToIsoWkb()
-            f.SetFieldBinaryFromHexString(
-                geom_col_name, "".join("%02X" % x for x in wkb)
-            )
+            f.SetField(geom_col_name, wkb)
         else:
             f[geom_col_name] = "POINT (1 2)"
         lyr.CreateFeature(f)

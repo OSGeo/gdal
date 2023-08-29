@@ -677,6 +677,28 @@ def ReleaseResultSet(self, sql_lyr):
             # For Python3 on non-UTF8 strings
             return self.GetFieldAsBinary(fld_index)
 
+    def SetFieldBinary(self, field_index_or_name, value):
+        """
+        SetFieldBinary(Feature self, field_index_or_name: int | str, value: bytes)
+
+        Set field to binary data.
+        This function currently only has an effect on OFTBinary fields.
+        This function is the same as the C++ method OGRFeature::SetField().
+
+        Parameters
+        -----------
+        field_index_or_name:
+            the field to set, from 0 to GetFieldCount()-1. Or the field name
+        values:
+            the data to apply.
+        """
+
+        if isinstance(field_index_or_name, str):
+            fld_index = self._getfieldindex(field_index_or_name)
+        else:
+            fld_index = field_index_or_name
+        self._SetFieldBinary(fld_index, value)
+
     def _SetField2(self, fld_index, value):
         if isinstance(fld_index, str):
             fld_index = self._getfieldindex(fld_index)
@@ -702,6 +724,10 @@ def ReleaseResultSet(self, sql_lyr):
                 return
             else:
                 raise TypeError('Unsupported type of list in _SetField2(). Type of element is %s' % str(type(value[0])))
+
+        if isinstance(value, (bytes, bytearray, memoryview)) and self.GetFieldType(fld_index) == OFTBinary:
+            self._SetFieldBinary(fld_index, value)
+            return
 
         try:
             self.SetField(fld_index, value)
@@ -800,33 +826,39 @@ def ReleaseResultSet(self, sql_lyr):
     # to the right implementation, so we have to do it at hand
     def SetField(self, *args) -> "OGRErr":
         """
-        SetField(self, int id, char value)
-        SetField(self, char name, char value)
-        SetField(self, int id, int value)
-        SetField(self, char name, int value)
-        SetField(self, int id, double value)
-        SetField(self, char name, double value)
-        SetField(self, int id, int year, int month, int day, int hour, int minute,
-            int second, int tzflag)
-        SetField(self, char name, int year, int month, int day, int hour,
-            int minute, int second, int tzflag)
+        SetField(self, fld_index, value: str)
+        SetField(self, fld_name, value: str)
+        SetField(self, fld_index, value: int)
+        SetField(self, fld_name, value: int)
+        SetField(self, fld_index, value: float)
+        SetField(self, fld_name, value: float)
+        SetField(self, fld_index, year: int, month: int, day: int, hour: int, minute: int, second: int|float, tzflag: int)
+        SetField(self, fld_name, year: int, month: int, day: int, hour: int, minute: int, second: int|float, tzflag: int)
+        SetField(self, fld_index, value: bytes)
+        SetField(self, fld_name, value: bytes)
         """
 
         if len(args) == 2 and args[1] is None:
             return _ogr.Feature_SetFieldNull(self, args[0])
 
-        if len(args) == 2 and (type(args[1]) == type(1) or type(args[1]) == type(12345678901234)):
+        if len(args) == 2 and isinstance(args[1], int):
             fld_index = args[0]
             if isinstance(fld_index, str):
                 fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldInteger64(self, fld_index, args[1])
-
 
         if len(args) == 2 and isinstance(args[1], str):
             fld_index = args[0]
             if isinstance(fld_index, str):
                 fld_index = self._getfieldindex(fld_index)
             return _ogr.Feature_SetFieldString(self, fld_index, args[1])
+
+        if len(args) == 2 and isinstance(args[1], (bytes, bytearray, memoryview)):
+            fld_index = args[0]
+            if isinstance(fld_index, str):
+                fld_index = self._getfieldindex(fld_index)
+            if self.GetFieldType(fld_index) == OFTBinary:
+                return self._SetFieldBinary(fld_index, args[1])
 
         return $action(self, *args)
 %}

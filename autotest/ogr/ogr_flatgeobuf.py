@@ -583,13 +583,13 @@ def test_ogr_flatgeobuf_bool_short_float_binary():
     f["bool"] = True
     f["short"] = -32768
     f["float"] = 1.5
-    f.SetFieldBinaryFromHexString("bin", "01FF")
+    f["bin"] = b"\x01\xFF"
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
     lyr.CreateFeature(f)
 
     # Field of size 0
     f = ogr.Feature(lyr.GetLayerDefn())
-    f.SetFieldBinaryFromHexString("bin", "")
+    f["bin"] = b""
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (0 0)"))
     lyr.CreateFeature(f)
     ds = None
@@ -1013,7 +1013,7 @@ def test_ogr_flatgeobuf_arrow_stream_numpy():
     f.SetField("float64", 1.250123)
     f.SetField("str", "abc")
     f.SetField("datetime", "2022-05-31T12:34:56.789Z")
-    f.SetFieldBinaryFromHexString("binary", "DEAD")
+    f.SetField("binary", b"\xDE\xAD")
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 

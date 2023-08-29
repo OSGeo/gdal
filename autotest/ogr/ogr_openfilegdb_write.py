@@ -196,7 +196,7 @@ def test_ogr_openfilegdb_write_field_types(use_synctodisk):
         f.SetField("float32", 1.25)
         f.SetField("int64", 12345678912345)
         f.SetField("dt", "2022-11-04T12:34:56+02:00")
-        f.SetFieldBinaryFromHexString("binary", "00FF7F")
+        f.SetField("binary", b"\x00\xFF\x7F")
         f.SetField("xml", "<some_elt/>")
         f.SetField("guid", "{12345678-9ABC-DEF0-1234-567890ABCDEF}")
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE

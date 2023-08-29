@@ -507,7 +507,7 @@ def test_ogr_gpkg_8():
         feat.SetField("fld_string", "test string %d test" % i)
         feat.SetField("fld_date", "2014/05/17 ")
         feat.SetField("fld_datetime", "2014/12/31  23:59:59.999Z")
-        feat.SetFieldBinaryFromHexString("fld_binary", "fffe")
+        feat.SetField("fld_binary", b"\xFF\xFE")
         feat.SetField("fld_boolean", 1)
         feat.SetField("fld_smallint", -32768)
         feat.SetField("fld_float", 1.23)
@@ -7588,7 +7588,7 @@ def test_ogr_gpkg_arrow_stream_numpy():
     f.SetField("str", "abc")
     f.SetField("date", "2022-05-31")
     f.SetField("datetime", "2022-05-31T12:34:56.789Z")
-    f.SetFieldBinaryFromHexString("binary", "DEAD")
+    f.SetField("binary", b"\xDE\xAD")
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(1 2)"))
     lyr.CreateFeature(f)
 
