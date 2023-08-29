@@ -103,6 +103,44 @@ static char* GDALPythonObjectToCStr(PyObject* pyObject, int* pbToFree)
   }
 }
 
+static char * GDALPythonPathToCStr(PyObject* pyObject, int* pbToFree) CPL_UNUSED;
+static char * GDALPythonPathToCStr(PyObject* pyObject, int* pbToFree)
+{
+    PyObject* os = PyImport_ImportModule("os");
+    if (os == NULL)
+    {
+        return NULL;
+    }
+
+    PyObject* pathLike = PyObject_GetAttrString(os, "PathLike");
+    if (pathLike == NULL)
+    {
+        Py_DECREF(os);
+        return NULL;
+    }
+
+    if (!PyObject_IsInstance(pyObject, pathLike))
+    {
+        Py_DECREF(pathLike);
+        Py_DECREF(os);
+        return NULL;
+    }
+
+    PyObject* str = PyObject_Str(pyObject);
+    char* ret = NULL;
+    if (str != NULL)
+    {
+        ret = GDALPythonObjectToCStr(str, pbToFree);
+        Py_DECREF(str);
+    }
+
+    Py_DECREF(pathLike);
+    Py_DECREF(os);
+
+    return ret;
+}
+
+
 static void GDALPythonFreeCStr(void* ptr, int bToFree) CPL_UNUSED;
 static void GDALPythonFreeCStr(void* ptr, int bToFree)
 {

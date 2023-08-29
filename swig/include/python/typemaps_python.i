@@ -2146,10 +2146,18 @@ DecomposeSequenceOf4DCoordinates( PyObject *seq, int nCount, double *x, double *
 %typemap(in) (const char *utf8_path) (int bToFree = 0)
 {
     /* %typemap(in) (const char *utf8_path) */
-    $1 = GDALPythonObjectToCStr( $input, &bToFree );
+    if (PyUnicode_Check($input) || PyBytes_Check($input))
+    {
+        $1 = GDALPythonObjectToCStr( $input, &bToFree );
+    }
+    else
+    {
+        $1 = GDALPythonPathToCStr($input, &bToFree);
+
+    }
     if ($1 == NULL)
     {
-        PyErr_SetString( PyExc_RuntimeError, "not a string" );
+        PyErr_SetString( PyExc_RuntimeError, "not a string or os.PathLike" );
         SWIG_fail;
     }
 }
