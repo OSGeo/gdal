@@ -318,7 +318,7 @@ def test_ogr2ogr_lib_14():
 def test_ogr2ogr_lib_15():
 
     srcDS = gdal.OpenEx("../ogr/data/poly.shp")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.VectorTranslate("", srcDS, format="Memory", zField="foo")
     lyr = ds.GetLayer(0)
     assert lyr.GetGeomType() == ogr.wkbPolygon
@@ -1187,7 +1187,7 @@ def test_ogr2ogr_lib_clipsrc_invalid_polygon():
     clip_ds = None
 
     # Intersection of above geometry with clipSrc bounding box is a point
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=clip_path)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
@@ -1228,7 +1228,7 @@ def test_ogr2ogr_lib_clipsrc_3d_polygon():
     clip_layer.CreateFeature(f)
     clip_ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.VectorTranslate("", srcDS, format="Memory", clipSrc=clip_path)
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 2
@@ -1555,7 +1555,7 @@ def test_ogr2ogr_lib_dateTimeTo():
     f = ogr.Feature(src_lyr.GetLayerDefn())
     src_lyr.CreateFeature(f)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             gdal.VectorTranslate("", src_ds, options="-f Memory -dateTimeTo")
         with pytest.raises(Exception):

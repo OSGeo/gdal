@@ -3060,7 +3060,7 @@ def test_ogr_dxf_44():
     with gdaltest.config_option("DXF_MAX_BSPLINE_CONTROL_POINTS", "1"):
         ds = ogr.Open("data/dxf/leader-mleader.dxf")
         lyr = ds.GetLayer(0)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr.GetFeatureCount()
         assert gdal.GetLastErrorMsg().find("DXF_MAX_BSPLINE_CONTROL_POINTS") >= 0
 
@@ -3926,7 +3926,7 @@ def test_ogr_dxf_55():
 ###############################################################################
 def test_ogr_dxf_insert_too_many_errors():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open("data/dxf/insert-too-many-errors.dxf")
 
 
@@ -3940,7 +3940,7 @@ def test_ogr_dxf_write_geometry_collection_of_unsupported_type():
     lyr = ds.CreateLayer("test")
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(TIN EMPTY)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     ds = None
@@ -3993,7 +3993,7 @@ def test_ogr_dxf_polygon_3D():
 def test_ogr_dxf_read_broken_file_1():
     """Test that we don't crash"""
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(
             "data/dxf/clusterfuzz-testcase-minimized-dxf_fuzzer-5400376672124928.dxf"
         )
@@ -4008,7 +4008,7 @@ def test_ogr_dxf_read_broken_file_1():
 def test_ogr_dxf_read_broken_file_2():
     """Test that we don't crash"""
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(
             "data/dxf/clusterfuzz-testcase-minimized-shape_fuzzer-6126814756995072.dxf"
         )

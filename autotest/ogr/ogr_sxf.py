@@ -42,7 +42,7 @@ pytestmark = pytest.mark.require_driver("SXF")
 def test_ogr_sxf_1():
 
     gdaltest.sxf_ds = None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Expect Warning 0 and Warning 6.
         gdaltest.sxf_ds = ogr.Open("data/sxf/100_test.sxf")
 

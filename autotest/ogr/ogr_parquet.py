@@ -1611,7 +1611,7 @@ def test_ogr_parquet_arrow_stream_numpy():
     stream = lyr.GetArrowStreamAsNumPy(
         options=["MAX_FEATURES_IN_BATCH=5", "USE_MASKED_ARRAYS=NO"]
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         batches = [batch for batch in stream]
     assert len(batches) == 2
     batch = batches[0]

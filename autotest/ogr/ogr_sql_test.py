@@ -474,7 +474,7 @@ def test_ogr_sql_17():
 
 def test_ogr_sql_19(data_ds):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert data_ds.ExecuteSQL("") is None
 
 
@@ -812,7 +812,7 @@ def test_ogr_sql_28():
     for query in queries:
         gdal.ErrorReset()
         # print query
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL(query)
         if sql_lyr is not None:
             ds.ReleaseResultSet(sql_lyr)
@@ -985,7 +985,7 @@ def test_ogr_sql_34(data_ds):
 
         assert val == 1
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             data_ds.ExecuteSQL("select count(*) from poly where eas_id in ('a165')")
             is None
@@ -1204,7 +1204,7 @@ def test_ogr_sql_44(data_ds):
         "SELECT hstore_get_value('a') FROM poly",
         "SELECT hstore_get_value(1, 1) FROM poly",
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = data_ds.ExecuteSQL(sql)
         assert sql_lyr is None, sql
 
@@ -1328,7 +1328,7 @@ def test_ogr_sql_46():
         "select max('id') from 'test'",
         "select id as 'id2' from 'test'",
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL("select * from 'test'")
         assert sql_lyr is None, sql
 

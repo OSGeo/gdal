@@ -586,7 +586,7 @@ def test_isis_18():
     sr.SetGeogCS("GEOG_NAME", "D_DATUM_NAME", "", 123456, 200)
     ds = gdal.GetDriverByName("ISIS3").Create("/vsimem/isis_tmp.lbl", 1, 1)
     ds.SetProjection(sr.ExportToWkt())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Will warn that latitude_of_origin, false_easting and false_northing are ignored
         ds = None
     ds = gdal.Open("/vsimem/isis_tmp.lbl")
@@ -772,7 +772,7 @@ def test_isis_19():
 
 def test_isis_20():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Translate(
             "/vsimem/isis_tmp.lbl",
             "data/isis3/isis3_detached.lbl",
@@ -791,7 +791,7 @@ def test_isis_20():
 
 def test_isis_21():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Warp(
             "/vsimem/isis_tmp.lbl", "data/isis3/isis3_detached.lbl", format="ISIS3"
         )
@@ -955,14 +955,14 @@ def cancel_cbk(pct, msg, user_data):
 def test_isis_24():
 
     # For DATA_LOCATION=EXTERNAL, the main filename should have a .lbl extension
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("ISIS3").Create(
             "/vsimem/error.txt", 1, 1, options=["DATA_LOCATION=EXTERNAL"]
         )
     assert ds is None
 
     # cannot create external filename
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("ISIS3").Create(
             "/vsimem/error.lbl",
             1,
@@ -975,7 +975,7 @@ def test_isis_24():
     assert ds is None
 
     # no GTiff driver
-    # with gdaltest.error_handler():
+    # with gdal.quiet_errors():
     #    gtiff_drv = gdal.GetDriverByName('GTiff')
     #    gtiff_drv.Deregister()
     #    ds = gdal.GetDriverByName('ISIS3').Create('/vsimem/error.lbl', 1, 1,
@@ -986,7 +986,7 @@ def test_isis_24():
     #    return 'fail'
 
     # cannot create GeoTIFF
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("ISIS3").Create(
             "/vsimem/error.lbl",
             1,
@@ -1001,7 +1001,7 @@ def test_isis_24():
 
     # Output file has same name as input file
     src_ds = gdal.Translate("/vsimem/out.tif", "data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("ISIS3").CreateCopy(
             "/vsimem/out.lbl", src_ds, options=["DATA_LOCATION=GEOTIFF"]
         )
@@ -1010,15 +1010,15 @@ def test_isis_24():
 
     # Missing /vsimem/out.cub
     src_ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("ISIS3").CreateCopy(
             "/vsimem/out.lbl", src_ds, options=["DATA_LOCATION=EXTERNAL"]
         )
     gdal.Unlink("/vsimem/out.cub")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl", gdal.GA_Update)
     assert ds is None
     # Delete would fail since ds is None
@@ -1026,14 +1026,14 @@ def test_isis_24():
 
     # Missing /vsimem/out.tif
     src_ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("ISIS3").CreateCopy(
             "/vsimem/out.lbl",
             src_ds,
             options=["DATA_LOCATION=GEOTIFF", "GEOTIFF_OPTIONS=COMPRESS=LZW"],
         )
     gdal.Unlink("/vsimem/out.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1068,15 +1068,15 @@ def test_isis_24():
 End_Object
 End""",
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Open("/vsimem/out.lbl")
     gdal.Unlink("/vsimem/out.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("ISIS3").Delete("/vsimem/out.lbl")
 
     gdal.FileFromMemBuffer("/vsimem/out.lbl", "IsisCube")
     assert gdal.IdentifyDriver("/vsimem/out.lbl") is not None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1103,7 +1103,7 @@ End_Object
 End""",
     )
     # Wrong tile dimensions : 0 x 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1130,7 +1130,7 @@ End_Object
 End""",
     )
     # Invalid dataset dimensions : 0 x 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1157,7 +1157,7 @@ End_Object
 End""",
     )
     # Invalid band count : 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1185,7 +1185,7 @@ End""",
     )
 
     # unhandled format
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1213,7 +1213,7 @@ End""",
     )
 
     # bad PDL formatting
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1248,19 +1248,19 @@ End""",
     )
     # /vsimem/out.tif has incompatible characteristics with the ones declared in the label
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 2)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 2, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 1, 2)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 1, 1, gdal.GDT_Int16)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert ds is None
     # Delete would fail since ds is None
@@ -1273,34 +1273,34 @@ End""",
     # /vsimem/out.tif has incompatible characteristics with the ones declared in the label
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 2)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert gdal.GetLastErrorMsg() != ""
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 2, 1)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert gdal.GetLastErrorMsg() != ""
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 1, 2)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert gdal.GetLastErrorMsg() != ""
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 1, 1, gdal.GDT_Int16)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert gdal.GetLastErrorMsg() != ""
     gdal.GetDriverByName("GTiff").Create(
         "/vsimem/out.tif", 1, 1, options=["COMPRESS=LZW"]
     )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert gdal.GetLastErrorMsg() != ""
     gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 1, options=["TILED=YES"])
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert gdal.GetLastErrorMsg() != ""
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/out.tif", 1, 1)
@@ -1308,15 +1308,15 @@ End""",
     ds.SetMetadataItem("foo", "bar")
     ds = None
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.lbl")
     assert gdal.GetLastErrorMsg() != ""
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("ISIS3").Delete("/vsimem/out.lbl")
     gdal.Unlink("/vsimem/out.tif")
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("ISIS3").CreateCopy(
             "/vsimem/out.lbl", mem_ds, callback=cancel_cbk
         )
@@ -1610,7 +1610,7 @@ End""",
 
 def test_isis_29():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Translate("/vsimem/in.lbl", "data/byte.tif", format="ISIS3")
 
     gdal.Translate(
@@ -1687,7 +1687,7 @@ def test_isis_31():
 def test_isis3_write_utm():
 
     src_ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("ISIS3").CreateCopy(
             "/vsimem/temp.lbl", src_ds, options=["DATA_LOCATION=EXTERNAL"]
         )
@@ -1904,7 +1904,7 @@ End""",
     gdal.GetDriverByName("ISIS3").Delete("/vsimem/out.cub")
 
     # Copy ISIS3 to PDS4
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("PDS4").CreateCopy("/vsimem/out.xml", src_ds)
     ds = gdal.Open("/vsimem/out.xml")
     lbl = ds.GetMetadata_List("json:ISIS3")[0]

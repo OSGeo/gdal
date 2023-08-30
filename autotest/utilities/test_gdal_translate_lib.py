@@ -568,7 +568,7 @@ def test_gdal_translate_lib_colorinterp():
     assert ds.GetRasterBand(3).GetColorInterpretation() == gdal.GCI_BlueBand
 
     # More bands specified than available and a unknown color interpretation
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Translate(
             "", src_ds, options="-f MEM -colorinterp alpha,red,undefined,foo"
         )
@@ -584,7 +584,7 @@ def test_gdal_translate_lib_colorinterp():
 
     # Test invalid colorinterp_
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.Translate("", src_ds, options="-f MEM -colorinterp_0 alpha")
 
     # Test colorinterp on a source mask band
@@ -924,7 +924,7 @@ def test_gdal_translate_lib_overview_level():
         src_ds.BuildOverviews("AVERAGE", [2])
         src_ds.BuildOverviews("NONE", [4])
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with pytest.raises(Exception):
                 assert gdal.Translate("", src_ds, format="MEM", overviewLevel="invalid")
 

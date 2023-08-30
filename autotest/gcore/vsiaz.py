@@ -517,7 +517,7 @@ def test_vsiaz_fake_write():
     # Simulate illegal read
     f = gdal.VSIFOpenL("/vsiaz/test_copy/file.tif", "wb")
     assert f is not None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdal.VSIFReadL(1, 1, f)
     assert not ret
     gdal.VSIFCloseL(f)
@@ -525,7 +525,7 @@ def test_vsiaz_fake_write():
     # Simulate illegal seek
     f = gdal.VSIFOpenL("/vsiaz/test_copy/file.tif", "wb")
     assert f is not None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdal.VSIFSeekL(f, 1, 0)
     assert ret != 0
     gdal.VSIFCloseL(f)
@@ -570,7 +570,7 @@ def test_vsiaz_fake_write():
         pytest.fail()
 
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFCloseL(f)
         if ret == 0:
             gdal.VSIFCloseL(f)
@@ -713,7 +713,7 @@ def test_vsiaz_fake_write():
     handler.add("PUT", "/azure/blob/myaccount/test_copy/file.tif", custom_method=method)
 
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFWriteL("0123456789abcdef", 1, 16, f)
         if ret != 0:
             gdal.VSIFCloseL(f)
@@ -729,7 +729,7 @@ def test_vsiaz_fake_write():
     handler.add("PUT", "/azure/blob/myaccount/test_copy/file.tif", 201)
     handler.add("PUT", "/azure/blob/myaccount/test_copy/file.tif?comp=appendblock", 403)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFWriteL("0123456789abcdef", 1, 16, f)
         if ret != 0:
             gdal.VSIFCloseL(f)
@@ -777,7 +777,7 @@ def test_vsiaz_write_blockblob_retry():
         handler.add(
             "PUT", "/azure/blob/myaccount/test_copy/file.bin", custom_method=method
         )
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 assert gdal.VSIFWriteL("foo", 1, 3, f) == 3
                 gdal.VSIFCloseL(f)
@@ -822,7 +822,7 @@ def test_vsiaz_write_appendblob_retry():
             "PUT", "/azure/blob/myaccount/test_copy/file.bin?comp=appendblock", 201
         )
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with webserver.install_http_handler(handler):
                 assert gdal.VSIFWriteL("0123456789abcdef", 1, 16, f) == 16
                 gdal.VSIFCloseL(f)
@@ -870,7 +870,7 @@ def test_vsiaz_fake_unlink():
         {"Connection": "close"},
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsiaz/az_bucket_test_unlink/myfile")
     assert ret == -1
 

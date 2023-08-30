@@ -66,7 +66,7 @@ def test_vrtmultidim_dimension():
     assert dim_0.GetSize() == 2
     assert dim_0.GetType() == "foo"
     assert dim_0.GetDirection() == "bar"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         assert not dim_0.GetIndexingVariable()
         assert gdal.GetLastErrorMsg() == "Cannot find variable X"
@@ -74,7 +74,7 @@ def test_vrtmultidim_dimension():
     assert dim_1.GetName() == "Y"
     assert dim_1.GetSize() == 1234567890123
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group MISSING_name="/">
@@ -84,7 +84,7 @@ def test_vrtmultidim_dimension():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="INVALID">
@@ -94,7 +94,7 @@ def test_vrtmultidim_dimension():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -105,7 +105,7 @@ def test_vrtmultidim_dimension():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -172,7 +172,7 @@ def test_vrtmultidim_attribute():
     attrs = ar.GetAttributes()
     assert len(attrs) == 1
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -186,7 +186,7 @@ def test_vrtmultidim_attribute():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -200,7 +200,7 @@ def test_vrtmultidim_attribute():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -286,7 +286,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
     assert Y.GetDimensionCount() == 1
     assert Y.GetDimensions()[0].GetSize() == 30
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -297,7 +297,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -310,7 +310,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -323,7 +323,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -336,7 +336,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -350,7 +350,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -364,7 +364,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -378,7 +378,7 @@ def test_vrtmultidim_subgroup_and_cross_references():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -490,7 +490,7 @@ def test_vrtmultidim_RegularlySpacedValues():
         "d" * 2, X.Read(array_start_idx=[1], count=[2], array_step=[2])
     ) == (11.0, 32.0)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -506,7 +506,7 @@ def test_vrtmultidim_RegularlySpacedValues():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -561,7 +561,7 @@ def test_vrtmultidim_ConstantValue():
     ar = rg.OpenMDArray("no_dim")
     assert struct.unpack("d", ar.Read()) == (50,)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -580,7 +580,7 @@ def test_vrtmultidim_ConstantValue():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -599,7 +599,7 @@ def test_vrtmultidim_ConstantValue():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -618,7 +618,7 @@ def test_vrtmultidim_ConstantValue():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -637,7 +637,7 @@ def test_vrtmultidim_ConstantValue():
         )
         assert not ds
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -707,7 +707,7 @@ def test_vrtmultidim_InlineValues():
     ar = rg.OpenMDArray("no_dim")
     assert struct.unpack("d", ar.Read()) == (50,)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             """<VRTDataset>
         <Group name="/">
@@ -927,32 +927,32 @@ def test_vrtmultidim_Source():
 
         ar = rg.OpenMDArray("ar_non_existing_source")
         assert ar
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not ar.Read()
 
         ar = rg.OpenMDArray("ar_invalid_source_slab_offset")
         assert ar
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not ar.Read()
 
         ar = rg.OpenMDArray("ar_invalid_number_of_dimensions")
         assert ar
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not ar.Read()
 
         ar = rg.OpenMDArray("ar_non_existing_array_source")
         assert ar
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not ar.Read()
 
         ar = rg.OpenMDArray("ar_view_invalid")
         assert ar
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not ar.Read()
 
         ar = rg.OpenMDArray("ar_transposed_invalid")
         assert ar
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not ar.Read()
 
         gdal.Unlink("/vsimem/src.vrt")
@@ -1010,7 +1010,7 @@ def test_vrtmultidim_Source():
     assert ds2
     rg2 = ds2.GetRootGroup()
     ar2 = rg2.OpenMDArray("ar")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar2.Read()
 
 
@@ -1057,7 +1057,7 @@ def test_vrtmultidim_Source_classic_dataset():
 
     ar_wrong_band = rg.OpenMDArray("ar_wrong_band")
     assert ar_wrong_band
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar_wrong_band.Read()
 
 
@@ -1262,7 +1262,7 @@ def test_vrtmultidim_createcopy():
     attr.Write("bar")
     attr = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("VRT").CreateCopy("/i_do/not_exist", src_ds)
 
     tmpfile = "/vsimem/test.vrt"
@@ -1313,12 +1313,12 @@ def test_vrtmultidim_createmultidimensional():
 
     dim = rg.CreateDimension("dim", "", "", 3)
     assert dim
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateDimension("", "", "", 1)
         assert not rg.CreateDimension("dim", "", "", 1)
 
     assert rg.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateAttribute("", [1], gdal.ExtendedDataType.CreateString())
         assert not rg.CreateAttribute(
             "attr_2dim", [1, 2], gdal.ExtendedDataType.CreateString()
@@ -1330,7 +1330,7 @@ def test_vrtmultidim_createmultidimensional():
 
     ar = rg.CreateMDArray("ar", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32))
     assert ar[0]
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateMDArray(
             "", [dim], gdal.ExtendedDataType.Create(gdal.GDT_Float32)
         )
@@ -1342,13 +1342,13 @@ def test_vrtmultidim_createmultidimensional():
         )
 
     assert ar.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not ar.CreateAttribute("", [1], gdal.ExtendedDataType.CreateString())
         assert not ar.CreateAttribute("attr", [1], gdal.ExtendedDataType.CreateString())
 
     subg = rg.CreateGroup("subgroup")
     assert subg
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not rg.CreateGroup("subgroup")
         assert not rg.CreateGroup("")
 

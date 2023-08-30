@@ -176,13 +176,13 @@ def test_png_8():
     assert b is not None, "band 1 is missing"
 
     # We're not interested in returned value but internal state of GDAL.
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         b.ComputeBandStats()
         err = gdal.GetLastErrorNo()
 
     assert err != 0, "error condition expected"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds_dst = drv.CreateCopy("tmp/idat_broken.png", ds_src)
         err = gdal.GetLastErrorNo()
     ds_src = None
@@ -352,7 +352,7 @@ def test_png_14():
     assert nbits == "2"
 
     # Test (wrong) explicit NBITS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("PNG").CreateCopy(
             "/vsimem/tmp.png", src_ds, options=["NBITS=7"]
         )

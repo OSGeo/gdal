@@ -227,7 +227,7 @@ def test_ogr_pcidsk_add_field_to_non_empty_layer():
     f["foo"] = "bar"
     lyr.CreateFeature(f)
     f = None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.CreateField(ogr.FieldDefn("bar", ogr.OFTString)) != 0
     f = ogr.Feature(lyr.GetLayerDefn())
     f["foo"] = "bar2"
@@ -247,7 +247,7 @@ def test_ogr_pcidsk_too_many_layers():
     ds = ogr.GetDriverByName("PCIDSK").CreateDataSource(tmpfile)
     for i in range(1023):
         ds.CreateLayer("foo%d" % i)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.CreateLayer("foo") is None
     ds = None
 

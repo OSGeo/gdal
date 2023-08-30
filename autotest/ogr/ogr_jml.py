@@ -124,7 +124,7 @@ def test_ogr_jml_1():
 def test_ogr_jml_2():
 
     # Invalid filename
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("JML").CreateDataSource("/foo/ogr_jml.jml")
     ds = None
 
@@ -176,7 +176,7 @@ def test_ogr_jml_2():
     lyr.CreateField(ogr.FieldDefn("datetime", ogr.OFTDateTime))
     lyr.CreateField(ogr.FieldDefn("datetime2", ogr.OFTDateTime))
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.CreateField(ogr.FieldDefn("time_as_str", ogr.OFTTime))
 
     assert lyr.TestCapability(ogr.OLCCreateField) == 1
@@ -456,7 +456,7 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetLayerDefn()
     assert gdal.GetLastErrorType() != 0
     ds = None
@@ -480,7 +480,7 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetLayerDefn()
     assert gdal.GetLastErrorType() != 0
     ds = None
@@ -510,7 +510,7 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetLayerDefn().GetFieldCount()
     assert gdal.GetLastErrorType() != 0
     ds = None
@@ -541,7 +541,7 @@ def test_ogr_jml_4():
 
     ds = ogr.Open("/vsimem/ogr_jml.jml")
     lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetLayerDefn().GetFieldCount()
     assert gdal.GetLastErrorType() != 0
     del ds

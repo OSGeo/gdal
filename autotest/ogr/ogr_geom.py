@@ -187,7 +187,7 @@ def test_ogr_geom_pickle():
     geom_wkt = "MULTIPOLYGON( ((0 0,1 1,1 0,0 0)),((0 0,10 0, 10 10, 0 10),(1 1,1 2,2 2,2 1)) )"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
     p = pickle.dumps(geom)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = pickle.loads(p)
 
     assert geom.Equal(g), "pickled geometries were not equal"
@@ -344,7 +344,7 @@ def test_ogr_geom_tin():
 
     wrong_polygon = ogr.CreateGeometryFromWkt("POLYGON ((0 0 0,0 1 0,1 1 0,0 0 1))")
     geom_count = tin.GetGeometryCount()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         x = tin.AddGeometry(wrong_polygon)
     assert (
         tin.GetGeometryCount() == geom_count
@@ -372,18 +372,18 @@ def test_ogr_geom_tin():
 
     # 4 points
     invalid_wkt = "TIN (((0 0,0 1,1 1,1 0,0 0)))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(invalid_wkt)
     assert g is None
 
     # hole
     invalid_wkt = "TIN(((0 0,0 1,1 1,0 0),(0.1 0.1,0.1 0.2,0.2 0.2,0.1 0.1)))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(invalid_wkt)
     assert g is None
 
     invalid_wkt = "TIN (POLYGON((0 0,0 1,1 1,0 0)))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(invalid_wkt)
     assert g is None
 
@@ -544,7 +544,7 @@ def test_ogr_geom_build_from_edges_3():
 
     src_geom = ogr.CreateGeometryFromWkt("POINT (0 1)")
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             poly = ogr.BuildPolygonFromEdges(src_geom)
         assert poly is None
     except Exception:
@@ -554,7 +554,7 @@ def test_ogr_geom_build_from_edges_3():
         "GEOMETRYCOLLECTION (LINESTRING(0 1,2 3),POINT(0 1),LINESTRING(0 1,-2 3),LINESTRING(-2 3,2 3))"
     )
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             poly = ogr.BuildPolygonFromEdges(src_geom)
         assert poly is None
     except Exception:
@@ -641,7 +641,7 @@ def test_ogr_geom_transform_to():
     # Geometry without SRS
     geom = ogr.CreateGeometryFromWkt("POINT(2 49)")
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = geom.TransformTo(sr2)
     assert not (ret == 0 or gdal.GetLastErrorMsg() == "")
 
@@ -852,7 +852,7 @@ def test_ogr_geom_segmentize():
 
     # Test extremely small threshold
     geom = ogr.CreateGeometryFromWkt("LINESTRING(0 0,0 1)")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.Segmentize(1e-30)
     assert gdal.GetLastErrorMsg() != ""
 
@@ -956,42 +956,42 @@ def test_ogr_geom_linestring_limits():
     assert geom.Length() == 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.GetPoint(-1)
     assert gdal.GetLastErrorType() != 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.GetPoint(0)
     assert gdal.GetLastErrorType() != 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.GetPoint_2D(-1)
     assert gdal.GetLastErrorType() != 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.GetPoint_2D(0)
     assert gdal.GetLastErrorType() != 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.SetPoint(-1, 5, 6, 7)
     assert gdal.GetLastErrorType() != 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.SetPoint_2D(-1, 5, 6)
     assert gdal.GetLastErrorType() != 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.SetPoint(2147000000, 5, 6, 7)
     assert gdal.GetLastErrorType() != 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom.SetPoint_2D(2147000000, 5, 6)
     assert gdal.GetLastErrorType() != 0
 
@@ -1030,7 +1030,7 @@ def test_ogr_geom_area_point():
     geom_wkt = "POINT(0 0)"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         area = geom.Area()
     assert area == 0, "Area() result wrong, got %g." % area
 
@@ -1045,7 +1045,7 @@ def test_ogr_geom_length_point():
     geom_wkt = "POINT(0 0)"
     geom = ogr.CreateGeometryFromWkt(geom_wkt)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         length = geom.Length()
     assert length == 0, "Length() result wrong, got %g." % length
 
@@ -1357,27 +1357,27 @@ def test_ogr_geom_triangle():
 def test_ogr_geom_triangle_invalid_wkt():
 
     geom_wkt = "TRIANGLE (0 0)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkt(geom_wkt)
     assert geom is None
 
     geom_wkt = "TRIANGLE ((0 0))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkt(geom_wkt)
     assert geom is None
 
     geom_wkt = "TRIANGLE ((0 0,0 1,1 1,1 0))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkt(geom_wkt)
     assert geom is None
 
     geom_wkt = "TRIANGLE ((0 0,0 1,1 1,1 0,0 0))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkt(geom_wkt)
     assert geom is None
 
     geom_wkt = "TRIANGLE ((0 0,0 1,1 1,0 0),(0 0,0 1,1 1,0 0))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geom = ogr.CreateGeometryFromWkt(geom_wkt)
     assert geom is None
 
@@ -1800,7 +1800,7 @@ def test_ogr_geom_circularstring():
 
     # Error case : not enough points
     in_wkt = "CIRCULARSTRING (0 0)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
@@ -1982,31 +1982,31 @@ def test_ogr_geom_compoundcurve():
 
     # Error case : not enough points
     in_wkt = "COMPOUNDCURVE ((0 0))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
     # Error case : invalid curve
     in_wkt = "COMPOUNDCURVE (COMPOUNDCURVE EMPTY)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
     # Error case : non contiguous curves
     in_wkt = "COMPOUNDCURVE ((0 0,1 1),(2 2,3 3))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
     # Error case : non contiguous curves
     in_wkt = "COMPOUNDCURVE (EMPTY,(2 2,3 3))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
     # Error case : non contiguous curves
     in_wkt = "COMPOUNDCURVE ((2 2,3 3), EMPTY)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
@@ -2014,7 +2014,7 @@ def test_ogr_geom_compoundcurve():
     g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1))"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g.AddGeometry(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))"
 
@@ -2022,13 +2022,13 @@ def test_ogr_geom_compoundcurve():
     g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1))"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("LINESTRING(0 0,1 1)"))
     assert g.ExportToWkt() == "COMPOUNDCURVE ((0 0,1 1),(1 1,0 0))"
 
     # Cannot add compoundcurve in compoundcurve
     g = ogr.Geometry(ogr.wkbCompoundCurve)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g.AddGeometryDirectly(ogr.CreateGeometryFromWkt("COMPOUNDCURVE((1 1,2 2))"))
     assert g.ExportToWkt() == "COMPOUNDCURVE EMPTY"
 
@@ -2068,7 +2068,7 @@ def test_ogr_geom_compoundcurve():
         "\x01\x09\x00\x00\x00\x01\x00\x00\x00\x01\x09\x00\x00\x00\x00\x00\x00\x00",  # subgeometry invalid: compoundcurve
     ]
     for wkb in wkb_list:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             g = ogr.CreateGeometryFromWkb(wkb)
         assert g is None, wkb
 
@@ -2217,19 +2217,19 @@ def test_ogr_geom_curvepolygon():
 
     # Error case : not enough points
     in_wkt = "CURVEPOLYGON ((0 0,0 1,0 0))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
     # Error case : wrong sub-geometry type
     in_wkt = "CURVEPOLYGON (POINT EMPTY)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
     # Error case: non closed ring
     in_wkt = "CURVEPOLYGON ((0 0,0 1,1 1,1 0))"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with gdaltest.config_option("OGR_GEOMETRY_ACCEPT_UNCLOSED_RING", "NO"):
             g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
@@ -2432,7 +2432,7 @@ def test_ogr_geom_multicurve():
 
     # Error case : wrong sub-geometry type
     in_wkt = "MULTILINESTRING (POINT EMPTY)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
@@ -2517,7 +2517,7 @@ def test_ogr_geom_multisurface():
 
     # Error case : wrong sub-geometry type
     in_wkt = "MULTIPOLYGON (POINT EMPTY)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = ogr.CreateGeometryFromWkt(in_wkt)
     assert g is None
 
@@ -2834,7 +2834,7 @@ def test_ogr_geom_getcurvegeometry():
     ogrtest.check_feature_geometry(g3, g1_expected)
 
     # Test with unrecognized options
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g2_new = g1.GetLinearGeometry(
             options=["bla", "ADD_INTERMEDIATE_POINT=FALSE", "foo=bar"]
         )
@@ -3225,7 +3225,7 @@ def test_ogr_geom_api_limit_tests():
     lyr = ogr.Geometry(ogr.wkbLineString)
     poly = ogr.Geometry(ogr.wkbPolygon)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         p.GetX(1)
         p.GetY(1)
         p.GetZ(1)
@@ -3525,7 +3525,7 @@ def test_ogr_geom_import_corrupted_wkb():
                     wkb[i] = 127 + 2 - (method - 8)
                 else:
                     wkb[i] = 255 - wkb[i]
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     g = ogr.CreateGeometryFromWkb(bytes(wkb))
                 if g:
                     g2 = ogr.CreateGeometryFromWkb(g.ExportToIsoWkb())
@@ -3534,7 +3534,7 @@ def test_ogr_geom_import_corrupted_wkb():
 
         # Test truncation of the WKB
         for i in range(len(wkb)):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 g = ogr.CreateGeometryFromWkb(bytes(wkb[0:i]))
             assert g is None, (wkt, i)
 
@@ -3876,7 +3876,7 @@ def test_ogr_geom_makevalid():
     assert g is None or g.ExportToWkt() == "POINT EMPTY"
 
     g = ogr.CreateGeometryFromWkt("LINESTRING (0 0)")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         g = g.MakeValid()
     assert not g
 

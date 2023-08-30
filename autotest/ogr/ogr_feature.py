@@ -29,7 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import gdaltest
 import pytest
 
 from osgeo import gdal, ogr
@@ -128,7 +127,7 @@ def test_ogr_feature_cp_integer():
     src_feature.field_reallist = [17.5]
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTInteger)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         dst_feature.SetFrom(src_feature)
 
     assert dst_feature.GetField("field_integer") == 17
@@ -178,7 +177,7 @@ def test_ogr_feature_cp_integer64():
     assert dst_feature.GetField("field_integer") == 17
     assert dst_feature.GetField("field_integer64") == 9876543210
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         int32_ovflw = dst_feature.GetFieldAsInteger("field_integer64")
     assert int32_ovflw == 2147483647
 
@@ -204,7 +203,7 @@ def test_ogr_feature_cp_real():
     src_feature.field_reallist = [17.5]
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTReal)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         dst_feature.SetFrom(src_feature)
 
     assert dst_feature.GetField("field_integer") == 17.0
@@ -357,7 +356,7 @@ def test_ogr_feature_cp_integerlist():
     src_feature = mk_src_feature()
 
     dst_feature = mk_dst_feature(src_feature, ogr.OFTIntegerList)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         dst_feature.SetFrom(src_feature)
 
     assert dst_feature.GetField("field_integer") == [17]
@@ -493,12 +492,12 @@ def test_ogr_feature_overflow_64bit_integer():
     feat_def = ogr.FeatureDefn("test")
     feat_def.AddFieldDefn(ogr.FieldDefn("test", ogr.OFTInteger64))
     f = ogr.Feature(feat_def)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetField(0, "9999999999999999999")
     if f.GetField(0) != 9223372036854775807:
         f.DumpReadable()
         pytest.fail()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetField(0, "-9999999999999999999")
     if f.GetField(0) != -9223372036854775808:
         f.DumpReadable()
@@ -812,13 +811,13 @@ def test_ogr_feature_int32_overflow():
     feat_def.AddFieldDefn(field_def)
     f = ogr.Feature(feat_def)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         f.SetField("field", "123456789012345")
         assert gdal.GetLastErrorMsg() != ""
         assert f.GetField("field") == 2147483647
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         f.SetField("field", "-123456789012345")
         assert gdal.GetLastErrorMsg() != ""
@@ -876,7 +875,7 @@ def test_ogr_feature_set_boolean_through_string_warning(input_val, output_val):
     f = ogr.Feature(feat_def)
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetField("field", input_val)
     assert gdal.GetLastErrorMsg() != ""
     assert f.GetField("field") == output_val

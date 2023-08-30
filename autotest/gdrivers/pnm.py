@@ -83,7 +83,7 @@ def test_pnm_4():
 @gdaltest.disable_exceptions()
 def test_pnm_write_non_standard_extension(nbands):
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("PNM").Create("foo.foo", 1, 1, nbands)
     assert gdal.GetLastErrorType() != 0
     gdal.Unlink("foo.foo")

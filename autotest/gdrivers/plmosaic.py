@@ -594,7 +594,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
 
     # Invalid tile content
     gdal.FileFromMemBuffer(f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full", "garbage")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
 
     os.stat(f"{cache_path}/my_mosaic/my_mosaic_0-2047.tif")
@@ -606,7 +606,7 @@ def test_plmosaic_17(tmp_path, valid_mosaic):
     gdal.GetDriverByName("GTiff").Create(
         f"{valid_mosaic}/my_mosaic_id/quads/0-2047/full", 1, 1, 1
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)
 
     os.stat(f"{cache_path}/my_mosaic/my_mosaic_0-2047.tif")
@@ -763,7 +763,7 @@ def test_plmosaic_19(valid_mosaic):
                 "CACHE_PATH=/does_not_exist",
             ],
         )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         val = ds.ReadRaster(0, 0, 1, 1)
     val = struct.unpack("B" * 4, val)
     assert val == (254, 0, 0, 0)
@@ -824,17 +824,17 @@ def test_plmosaic_21(valid_mosaic):
         )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.ReadRaster(256, 512, 1, 1)
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetRasterBand(1).ReadRaster(256, 512, 1, 1)
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetRasterBand(1).ReadBlock(1, 2)
     assert gdal.GetLastErrorMsg() != ""
 

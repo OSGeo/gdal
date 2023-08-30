@@ -49,7 +49,7 @@ def osr_url_test(url, expected_wkt):
     srs = osr.SpatialReference()
     from osgeo import gdal
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         try:
             srs.ImportFromUrl(url)
         except AttributeError:  # old-gen bindings don't have this method yet

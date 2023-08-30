@@ -29,7 +29,6 @@
 
 import struct
 
-import gdaltest
 import pytest
 
 from osgeo import gdal
@@ -186,7 +185,7 @@ def test_openfilegb_raster_jpeg():
 def test_openfilegb_raster_jpeg_driver_not_available():
 
     ds = gdal.Open("OpenFileGDB:data/filegdb/gdal_test_data.gdb.zip:small_world_jpeg")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetRasterBand(1).Checksum() == -1
 
 

@@ -456,7 +456,7 @@ def test_ogr_pgdump_non_nullable_unique_comment():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -464,7 +464,7 @@ def test_ogr_pgdump_non_nullable_unique_comment():
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -633,7 +633,7 @@ def test_ogr_pgdump_7():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
@@ -669,7 +669,7 @@ def test_ogr_pgdump_7():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(feat)
     assert ret != 0
 
@@ -742,7 +742,7 @@ def test_ogr_pgdump_8():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
@@ -1548,7 +1548,7 @@ def test_ogr_pgdump_long_identifiers():
     long_name = "test_" + ("X" * 64) + "_long_name"
     short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.CreateLayer(long_name, geom_type=ogr.wkbPoint)
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
     f = ogr.Feature(lyr.GetLayerDefn())

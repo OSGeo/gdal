@@ -328,7 +328,7 @@ def test_ogr_flatgeobuf_9():
 def test_ogr_flatgeobuf_directory():
 
     ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/vsimem/multi_layer")
-    with gdaltest.error_handler():  # name will be laundered
+    with gdal.quiet_errors():  # name will be laundered
         ds.CreateLayer("foo<", geom_type=ogr.wkbPoint)
     ds.CreateLayer("bar", geom_type=ogr.wkbPoint)
     ds = None
@@ -648,7 +648,7 @@ def test_ogr_flatgeobuf_huge_number_of_columns():
             lyr.CreateField(ogr.FieldDefn("col%d" % i, ogr.OFTInteger))
             == ogr.OGRERR_NONE
         ), i
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             lyr.CreateField(ogr.FieldDefn("col65536", ogr.OFTInteger))
             == ogr.OGRERR_FAILURE
@@ -797,7 +797,7 @@ def test_ogr_flatgeobuf_editing():
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometry(ogr.CreateGeometryFromWkt("POINT (1 1)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
 
     ogr.GetDriverByName("FlatGeobuf").DeleteDataSource("/vsimem/test.fgb")
@@ -868,7 +868,7 @@ def test_ogr_flatgeobuf_ossfuzz_bug_29462():
     ],
 )
 def test_ogr_flatgeobuf_read_invalid_geometries(filename):
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(filename)
         lyr = ds.GetLayer(0)
         for f in lyr:
@@ -959,7 +959,7 @@ def test_ogr_flatgeobuf_coordinate_epoch_custom_wkt():
 def test_ogr_flatgeobuf_invalid_output_filename():
 
     ds = ogr.GetDriverByName("FlatGeobuf").CreateDataSource("/i_do/not_exist/my.fgb")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.CreateLayer("foo") is None
 
 

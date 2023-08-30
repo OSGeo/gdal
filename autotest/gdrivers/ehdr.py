@@ -356,7 +356,7 @@ def test_ehdr_rat():
     assert not (
         ds.GetRasterBand(1).GetDefaultRAT() or ds.GetRasterBand(1).GetColorTable()
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.GetRasterBand(1).SetDefaultRAT(gdal.RasterAttributeTable())
     assert ret != 0
     ds = None

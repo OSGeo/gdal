@@ -193,7 +193,7 @@ def test_usgsdem_7():
     ds = gdal.Open("data/n43.dt0")
 
     # To avoid warning about 'Unable to find NTS mapsheet lookup file: NTS-50kindex.csv'
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds2 = gdal.GetDriverByName("USGSDEM").CreateCopy(
             "tmp/000a00DEMz",
             ds,

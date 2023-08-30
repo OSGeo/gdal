@@ -998,7 +998,7 @@ def test_jp2openjpeg_26():
 
     # Warning case: disabling JPX
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2", src_ds, options=["INSPIRE_TG=YES", "JPX=NO"]
         )
@@ -1036,7 +1036,7 @@ def test_jp2openjpeg_26():
     src_ds = gdal.GetDriverByName("MEM").Create("", 2048, 2048, 1)
 
     # Error case: too big tile
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2",
             src_ds,
@@ -1045,7 +1045,7 @@ def test_jp2openjpeg_26():
     assert out_ds is None
 
     # Error case: non square tile
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2",
             src_ds,
@@ -1054,7 +1054,7 @@ def test_jp2openjpeg_26():
     assert out_ds is None
 
     # Error case: incompatible PROFILE
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2",
             src_ds,
@@ -1063,7 +1063,7 @@ def test_jp2openjpeg_26():
     assert out_ds is None
 
     # Error case: valid, but too small number of resolutions regarding PROFILE_1
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2",
             src_ds,
@@ -1072,7 +1072,7 @@ def test_jp2openjpeg_26():
     assert out_ds is None
 
     # Too big resolution number. Will fallback to default one
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2",
             src_ds,
@@ -1083,28 +1083,28 @@ def test_jp2openjpeg_26():
     gdal.Unlink("/vsimem/jp2openjpeg_26.jp2")
 
     # Error case: unsupported NBITS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2", src_ds, options=["INSPIRE_TG=YES", "NBITS=2"]
         )
     assert out_ds is None
 
     # Error case: unsupported CODEC (J2K)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.j2k", src_ds, options=["INSPIRE_TG=YES"]
         )
     assert out_ds is None
 
     # Error case: invalid CODEBLOCK_WIDTH/HEIGHT
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2",
             src_ds,
             options=["INSPIRE_TG=YES", "CODEBLOCK_WIDTH=128", "CODEBLOCK_HEIGHT=32"],
         )
     assert out_ds is None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_26.jp2",
             src_ds,
@@ -1237,7 +1237,7 @@ def test_jp2openjpeg_28():
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
                 "/vsimem/jp2openjpeg_28.jp2", src_ds, options=options
             )
@@ -1273,7 +1273,7 @@ def test_jp2openjpeg_29():
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             options.append("BLOCKXSIZE=64")
             options.append("BLOCKYSIZE=64")
             out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
@@ -1312,7 +1312,7 @@ def test_jp2openjpeg_30():
 
     for (options, warning_expected) in tests:
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
                 "/vsimem/jp2openjpeg_30.jp2", src_ds, options=options
             )
@@ -1380,7 +1380,7 @@ def test_jp2openjpeg_30():
     ct = gdal.ColorTable()
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_30.jp2", src_ds
         )
@@ -1432,7 +1432,7 @@ def test_jp2openjpeg_31():
 def test_jp2openjpeg_32():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 10, 10, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_32.jp2", src_ds, options=["JP2C_XLBOX=YES"]
         )
@@ -1453,7 +1453,7 @@ def test_jp2openjpeg_33():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Limit number of resolutions, because of
         # https://github.com/uclouvain/openjpeg/issues/493
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
@@ -1472,7 +1472,7 @@ def test_jp2openjpeg_33():
 
 def test_jp2openjpeg_34():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/jpeg2000/dimensions_above_31bit.jp2")
     assert ds is None
 
@@ -1483,7 +1483,7 @@ def test_jp2openjpeg_34():
 
 def test_jp2openjpeg_35():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/jpeg2000/truncated.jp2")
     assert ds is None
 
@@ -1495,7 +1495,7 @@ def test_jp2openjpeg_35():
 def test_jp2openjpeg_36():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 16385)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_36.jp2", src_ds
         )
@@ -1827,7 +1827,7 @@ def test_jp2openjpeg_41():
 
     # Warning if ignored option
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_41.jp2",
             src_ds,
@@ -1841,7 +1841,7 @@ def test_jp2openjpeg_41():
     # Warning if source is not JPEG2000
     src_ds = gdal.Open("data/byte.tif")
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_41.jp2", src_ds, options=["USE_SRC_CODESTREAM=YES"]
         )
@@ -1857,7 +1857,7 @@ def test_jp2openjpeg_41():
 def test_jp2openjpeg_42():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 20, 20)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_42.jp2", src_ds, options=["JP2C_LENGTH_ZERO=YES"]
         )
@@ -2020,11 +2020,11 @@ def test_jp2openjpeg_44():
 
 def test_jp2openjpeg_45():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         if ogr.Open("../ogr/data/gml/ionic_wfs.gml") is None:
             pytest.skip("GML read support missing")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         if ogr.Open("../ogr/data/kml/empty.kml") is None:
             pytest.skip("KML support missing")
 
@@ -2117,7 +2117,7 @@ def test_jp2openjpeg_45():
 
     # Invalid JSon
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_45.jp2", src_ds, options=["GMLJP2V2_DEF={"]
         )
@@ -2125,7 +2125,7 @@ def test_jp2openjpeg_45():
 
     # Non existing file
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_45.jp2",
             src_ds,
@@ -2179,7 +2179,7 @@ def test_jp2openjpeg_45():
         "/vsimem/conf.json",
         '{ "root_instance": { "grid_coverage_range_type_field_predefined_name": "invalid" } }',
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_45.jp2",
             src_ds,
@@ -2230,7 +2230,7 @@ def test_jp2openjpeg_45():
     }
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_45.jp2",
             src_ds,
@@ -2280,7 +2280,7 @@ def test_jp2openjpeg_45():
             {"file": "/vsimem/i_dont_exist_too.xsd", "label": "i_dont_exist.xsd"},
         ],
     }
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_45.jp2",
             src_ds,
@@ -2895,7 +2895,7 @@ yeah: """
         gdal.FileFromMemBuffer("/vsimem/source.xml", """<A/>""")
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
                 "/vsimem/jp2openjpeg_46.jp2",
                 src_ds,
@@ -2929,7 +2929,7 @@ yeah: """
         }
     }
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_46.jp2",
             src_ds,
@@ -2956,7 +2956,7 @@ yeah: """
         }
     }
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_46.jp2",
             src_ds,
@@ -2984,7 +2984,7 @@ yeah: """
         }
     }
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2openjpeg_drv.CreateCopy(
             "/vsimem/jp2openjpeg_46.jp2",
             src_ds,
@@ -3524,7 +3524,7 @@ def test_jp2openjpeg_49():
     ), "Did not get expected filelist"
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             "data/jpeg2000/inconsitant_geojp2_gmljp2.jp2",
             open_options=["GEOREF_SOURCES=unhandled"],
@@ -3573,13 +3573,13 @@ def test_jp2openjpeg_codeblock_style():
         ds = None
         assert cs == 4672
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.jp2openjpeg_drv.CreateCopy(
             filename, gdal.Open("data/byte.tif"), options=["CODEBLOCK_STYLE=64"]
         )
     assert gdal.GetLastErrorMsg() != ""
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.jp2openjpeg_drv.CreateCopy(
             filename,
             gdal.Open("data/byte.tif"),
@@ -3756,12 +3756,12 @@ def test_jp2openjpeg_STRICT_NO():
     filename = "data/jpeg2000/small_world_truncated.jp2"
 
     ds = gdal.Open(filename)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetRasterBand(1).Checksum() == -1
     ds = None
 
     ds = gdal.OpenEx(filename, open_options=["STRICT=NO"])
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetRasterBand(1).Checksum() == 5058
     ds = None
 

@@ -643,7 +643,7 @@ def test_vsiadls_fake_unlink():
         {"Connection": "close"},
     )
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsiadls/az_bucket_test_unlink/myfile")
     assert ret == -1
 
@@ -825,7 +825,7 @@ def test_vsiadls_fake_sync_copyobject():
     handler.add("HEAD", "/azure/blob/myaccount/test_bucket/dst.txt", 404)
     handler.add("PUT", "/azure/blob/myaccount/test_bucket/dst.txt", 400)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not gdal.Sync(
                 "/vsiadls/test_bucket/src.txt", "/vsiadls/test_bucket/dst.txt"
             )

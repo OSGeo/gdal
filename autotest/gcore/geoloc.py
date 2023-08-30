@@ -610,7 +610,7 @@ def test_geoloc_warnings_inconsistent_size(
     }
     ds.SetMetadata(md, "GEOLOCATION")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         tr = gdal.Transformer(ds, None, [])
         if warning_expected:

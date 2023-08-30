@@ -52,7 +52,7 @@ def test_osr_ct_1():
     ll_srs.SetWellKnownGeogCS("WGS84")
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ct = osr.CoordinateTransformation(ll_srs, utm_srs)
         if gdal.GetLastErrorMsg().find("Unable to load PROJ.4") != -1:
             pytest.skip("PROJ.4 missing, transforms not available.")
@@ -559,7 +559,7 @@ def test_osr_ct_options_accuracy():
     t.SetFromUserInput("EPSG:4258")  # ETRS89
     options = osr.CoordinateTransformationOptions()
     options.SetDesiredAccuracy(0.05)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with osr.ExceptionMgr(useExceptions=False):
             ct = osr.CoordinateTransformation(s, t, options)
     with pytest.raises(Exception):
@@ -578,7 +578,7 @@ def test_osr_ct_options_ballpark_disallowed():
     t.SetFromUserInput("EPSG:4258")  # ETRS89
     options = osr.CoordinateTransformationOptions()
     options.SetBallparkAllowed(False)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with osr.ExceptionMgr(useExceptions=False):
             ct = osr.CoordinateTransformation(s, t, options)
     with pytest.raises(Exception):
@@ -669,7 +669,7 @@ def test_osr_ct_take_into_account_srs_coordinate_epoch():
     assert y == pytest.approx(150, abs=1e-10)
 
     # Not properly supported currently
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         osr.CoordinateTransformation(t_2020, t_2030)
 
 

@@ -127,7 +127,7 @@ def test_multidim_getresampled(resampling):
     assert ar
 
     if resampling == gdal.GRIORA_Gauss:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             resampled_ar = ar.GetResampled(
                 [None] * ar.GetDimensionCount(), resampling, None
             )
@@ -323,7 +323,7 @@ def test_multidim_getresampled_error_single_dim():
     rg = mem_ds.GetRootGroup()
     dimX = rg.CreateDimension("X", None, None, 3)
     ar = rg.CreateMDArray("ar", [dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         resampled_ar = ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
         assert resampled_ar is None
 
@@ -339,7 +339,7 @@ def test_multidim_getresampled_error_too_large_y():
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     )
     new_dimY = rg.CreateDimension("Y", None, None, 4 * 1000 * 1000 * 1000)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         resampled_ar = ar.GetResampled(
             [new_dimY, None], gdal.GRIORA_NearestNeighbour, None
         )
@@ -357,7 +357,7 @@ def test_multidim_getresampled_error_too_large_x():
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     )
     new_dimX = rg.CreateDimension("Y", None, None, 4 * 1000 * 1000 * 1000)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         resampled_ar = ar.GetResampled(
             [None, new_dimX], gdal.GRIORA_NearestNeighbour, None
         )
@@ -374,7 +374,7 @@ def test_multidim_getresampled_error_no_geotransform():
     ar = rg.CreateMDArray(
         "ar", [dimY, dimX], gdal.ExtendedDataType.Create(gdal.GDT_Byte)
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         resampled_ar = ar.GetResampled([None, None], gdal.GRIORA_NearestNeighbour, None)
         assert resampled_ar is None
 
@@ -395,7 +395,7 @@ def test_multidim_getresampled_error_extra_dim_not_same():
     )
 
     dimOtherNew = rg.CreateDimension("otherNew", None, None, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         resampled_ar = ar.GetResampled(
             [dimOtherNew, None, None], gdal.GRIORA_NearestNeighbour, None
         )
@@ -409,11 +409,11 @@ def test_multidim_getresampled_bad_input_dim_count():
     ar = band.AsMDArray()
     assert ar
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         resampled_ar = ar.GetResampled([None], gdal.GRIORA_NearestNeighbour, None)
         assert resampled_ar is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         resampled_ar = ar.GetResampled(
             [None, None, None], gdal.GRIORA_NearestNeighbour, None
         )
@@ -452,7 +452,7 @@ def test_multidim_getgridded():
         == gdal.CE_None
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ar.GetGridded("invdist") is None
         assert ar.GetGridded("invdist", varX) is None
         assert ar.GetGridded("invdist", None, varY) is None
@@ -524,17 +524,17 @@ def test_multidim_getgridded():
 
     # Not enough coordinate variables
     assert coordinates.WriteString("other varY") == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ar.GetGridded("invdist:nodata=nan") is None
 
     # Too many coordinate variables
     assert coordinates.WriteString("other unrelated varY varX") == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ar.GetGridded("invdist:nodata=nan") is None
 
     # poYArray->GetDimensions()[0]->GetFullName() != poXArray->GetDimensions()[0]->GetFullName()
     assert coordinates.WriteString("other unrelated varX") == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ar.GetGridded("invdist:nodata=nan") is None
 
     assert coordinates.WriteString("other varY varX") == 0
@@ -575,7 +575,7 @@ def test_multidim_getgridded():
         "d", [20, 20, 20, 30, 30, 30]
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Cannot read more than one sample in the non X/Y dimensions
         assert gridded.Read() is None
 

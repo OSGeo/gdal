@@ -463,7 +463,7 @@ def test_ogr_basic_12():
     f.SetField("fld", 0)
     f.SetField("fld", 1)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetField("fld", 2)
     assert gdal.GetLastErrorMsg() != ""
     assert isinstance(f.GetField("fld"), bool)
@@ -472,13 +472,13 @@ def test_ogr_basic_12():
     f.SetField("fld", "0")
     f.SetField("fld", "1")
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetField("fld", "2")
     assert gdal.GetLastErrorMsg() != ""
     assert f.GetField("fld") == True
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         field_def = ogr.FieldDefn("fld", ogr.OFTString)
         field_def.SetSubType(ogr.OFSTBoolean)
     assert gdal.GetLastErrorMsg() != ""
@@ -494,7 +494,7 @@ def test_ogr_basic_12():
     f = ogr.Feature(feat_def)
     f.SetFieldIntegerList(0, [False, True])
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetFieldIntegerList(0, [0, 1, 2, 1])
     assert gdal.GetLastErrorMsg() != ""
     for x in f.GetField("fld"):
@@ -513,18 +513,18 @@ def test_ogr_basic_12():
     f.SetField("fld", -32768)
     f.SetField("fld", 32767)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetField("fld", -32769)
     assert gdal.GetLastErrorMsg() != ""
     assert f.GetField("fld") == -32768
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f.SetField("fld", 32768)
     assert gdal.GetLastErrorMsg() != ""
     assert f.GetField("fld") == 32767
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         field_def = ogr.FieldDefn("fld", ogr.OFTString)
         field_def.SetSubType(ogr.OFSTInt16)
     assert gdal.GetLastErrorMsg() != ""
@@ -544,7 +544,7 @@ def test_ogr_basic_12():
         f.SetField("fld", "1.23")
         assert gdal.GetLastErrorMsg() == ""
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f.SetField("fld", 1.230000000001)
         assert gdal.GetLastErrorMsg() != ""
         if f.GetField("fld") == pytest.approx(1.23, abs=1e-8):
@@ -552,7 +552,7 @@ def test_ogr_basic_12():
             pytest.fail()
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         field_def = ogr.FieldDefn("fld", ogr.OFSTFloat32)
         field_def.SetSubType(ogr.OFSTInt16)
     assert gdal.GetLastErrorMsg() != ""
@@ -857,11 +857,11 @@ def test_ogr_basic_get_geometry_types():
         ogr.wkbTINZ: 1,
     }
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             lyr.GetGeometryTypes(callback=lambda x, y, z: 0)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             lyr.GetGeometryTypes(geom_field=2)
 

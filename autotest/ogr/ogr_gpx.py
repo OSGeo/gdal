@@ -30,7 +30,6 @@
 
 import os
 
-import gdaltest
 import ogrtest
 import pytest
 
@@ -43,7 +42,7 @@ pytestmark = pytest.mark.require_driver("GPX")
 def startup_and_cleanup():
 
     # Check that the GPX driver has read support
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         if ogr.Open("data/gpx/test.gpx") is None:
             assert "Expat" in gdal.GetLastErrorMsg()
             pytest.skip("GDAL build without Expat support")
@@ -69,7 +68,7 @@ def test_ogr_gpx_1():
 
     expect = [2, None]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogrtest.check_features_against_list(lyr, "ele", expect)
 
     lyr.ResetReading()
@@ -211,7 +210,7 @@ def test_ogr_gpx_5():
 def test_ogr_gpx_6():
     gpx_ds = ogr.Open("data/gpx/test.gpx")
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ogr.GetDriverByName("CSV").DeleteDataSource("tmp/gpx.gpx")
     except Exception:
         pass

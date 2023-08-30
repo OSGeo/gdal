@@ -91,19 +91,19 @@ def wmts_CleanCache():
 
 def test_wmts_2():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:")
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("<GDAL_WMTS>")
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("<GDAL_WMTSxxx/>")
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("<GDAL_WMTS></GDAL_WMTS>")
     assert ds is None
 
@@ -114,7 +114,7 @@ def test_wmts_2():
 
 def test_wmts_3():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:https://non_existing")
     assert ds is None
 
@@ -125,7 +125,7 @@ def test_wmts_3():
 
 def test_wmts_4():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/non_existing")
     assert ds is None
 
@@ -138,7 +138,7 @@ def test_wmts_5():
 
     gdal.FileFromMemBuffer("/vsimem/invalid_getcapabilities.xml", "<invalid_xml")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/invalid_getcapabilities.xml")
     assert ds is None
 
@@ -151,7 +151,7 @@ def test_wmts_6():
 
     gdal.FileFromMemBuffer("/vsimem/invalid_getcapabilities.xml", "<Capabilities/>")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/invalid_getcapabilities.xml")
     assert ds is None
 
@@ -166,7 +166,7 @@ def test_wmts_7():
         "/vsimem/empty_getcapabilities.xml", "<Capabilities><Contents/></Capabilities>"
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/empty_getcapabilities.xml")
     assert ds is None
 
@@ -188,7 +188,7 @@ def test_wmts_8():
 </Capabilities>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/missing.xml")
     assert ds is None
 
@@ -217,7 +217,7 @@ def test_wmts_9():
 </Capabilities>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/missing_tms.xml")
     assert ds is None
 
@@ -249,7 +249,7 @@ def test_wmts_10():
 </Capabilities>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/missing_SupportedCRS.xml")
     assert ds is None
 
@@ -282,7 +282,7 @@ def test_wmts_11():
 </Capabilities>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/no_tilematrix.xml")
     assert ds is None
 
@@ -316,7 +316,7 @@ def test_wmts_12():
 </Capabilities>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/missing_required_element_in_tilematrix.xml")
     assert ds is None
 
@@ -357,7 +357,7 @@ def test_wmts_12bis():
 </Capabilities>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("WMTS:/vsimem/wmts_12bis.xml")
     assert ds is None
 
@@ -458,7 +458,7 @@ def test_wmts_13():
         assert ds.GetRasterBand(i + 1).GetColorInterpretation() == gdal.GCI_RedBand + i
     assert ds.GetRasterBand(1).GetOverviewCount() == 0
     assert ds.GetRasterBand(1).GetOverview(0) is None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == 0
     assert ds.GetSubDatasets() == []
@@ -485,7 +485,7 @@ def test_wmts_13():
         "WMTS:/vsimem/minimal.xml,tilematrix=baw",
         "WMTS:/vsimem/minimal.xml,zoom_level=30",
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(connection_str)
         assert ds is None, connection_str
         ds = None
@@ -628,12 +628,12 @@ def test_wmts_14():
         ),
     ]
     assert ds.RasterXSize == 67108864
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
     assert res == ""
     assert ds.GetMetadata() == {"ABSTRACT": "My abstract", "TITLE": "My layer1"}
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.wmts_drv.CreateCopy(
             "/vsimem/gdal_nominal.xml", gdal.GetDriverByName("MEM").Create("", 1, 1)
         )
@@ -694,7 +694,7 @@ def test_wmts_14():
         ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "TILEMATRIX=30"],
         ["URL=/vsimem/nominal.xml", "STYLE=style=auto", "ZOOM_LEVEL=30"],
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.OpenEx("WMTS:", open_options=open_options)
         assert ds is None
 
@@ -885,7 +885,7 @@ def test_wmts_15():
     ds = gdal.Open("/vsimem/nominal_kvp.xml?service=WMTS&request=GetCapabilities")
     assert ds is not None
     assert ds.RasterXSize == 67108864
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         res = ds.GetRasterBand(1).GetMetadataItem("Pixel_1_2", "LocationInfo")
     assert res == ""
 

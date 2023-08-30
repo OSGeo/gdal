@@ -116,7 +116,7 @@ def test_netcdf_multidim_single_group():
     got_data = struct.unpack("B" * 400, var.Read())
     assert got_data == ref_data
 
-    with gdaltest.error_handler():  # Write to read only
+    with gdal.quiet_errors():  # Write to read only
         assert not rg.CreateDimension("X", None, None, 2)
         assert not rg.CreateAttribute(
             "att_text", [], gdal.ExtendedDataType.CreateString()
@@ -552,7 +552,7 @@ def test_netcdf_multidim_attr_alldatatypes():
     assert map_attrs["attr_char"].GetDimensionCount() == 0
     assert map_attrs["attr_char"].Read() == "x"
     assert map_attrs["attr_char"].ReadAsStringArray() == ["x"]
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not map_attrs["attr_char"].ReadAsRaw()
 
     assert (
@@ -617,7 +617,7 @@ def test_netcdf_multidim_attr_alldatatypes():
     assert len(map_attrs["attr_custom_type_2_elts"].ReadAsRaw()) == 8
 
     # Compound type contains a string
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not map_attrs["attr_custom_with_string"].ReadAsRaw()
 
 
@@ -684,7 +684,7 @@ def test_netcdf_multidim_read_netcdf_4d():
 def test_netcdf_multidim_create_nc3():
 
     drv = gdal.GetDriverByName("netCDF")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not drv.CreateMultiDimensional("/i_do/not_exist.nc")
 
     def f():
@@ -696,7 +696,7 @@ def test_netcdf_multidim_create_nc3():
         assert not rg.GetDimensions()
 
         # not support on NC3
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not rg.CreateGroup("subgroup")
 
         dim_x = rg.CreateDimension("X", None, None, 2)
@@ -708,12 +708,12 @@ def test_netcdf_multidim_create_nc3():
         assert dim_y_unlimited
         assert dim_y_unlimited.GetSize() == 123
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not rg.CreateDimension(
                 "unlimited2", None, None, 123, ["UNLIMITED=YES"]
             )
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not rg.CreateDimension("too_big", None, None, (1 << 31) - 1)
 
         var = rg.CreateMDArray(
@@ -768,7 +768,7 @@ def test_netcdf_multidim_create_nc3():
 
         att = rg.CreateAttribute("att_text", [], gdal.ExtendedDataType.CreateString())
         assert att
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not att.Read()
         assert att.Write("f") == gdal.CE_None
         assert att.Write("foo") == gdal.CE_None
@@ -779,7 +779,7 @@ def test_netcdf_multidim_create_nc3():
         assert att.Read() == "foo"
 
         # netCDF 3 cannot support NC_STRING. Needs fixed size strings
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             var = rg.CreateMDArray(
                 "my_var_string_array", [dim_x], gdal.ExtendedDataType.CreateString()
             )
@@ -864,10 +864,10 @@ def test_netcdf_multidim_create_nc4():
         assert subgroup
         assert subgroup.GetName() == "subgroup"
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not rg.CreateGroup("")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not rg.CreateGroup("subgroup")
 
         subgroup = rg.OpenGroup("subgroup")
@@ -930,7 +930,7 @@ def test_netcdf_multidim_create_nc4():
 
         # Try with random filter id. Just to test that FILTER is taken
         # into account
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             var = rg.CreateMDArray(
                 "my_var_x",
                 [dim_x],
@@ -959,7 +959,7 @@ def test_netcdf_multidim_create_nc4():
             dim_z_from_mem = mem_rg.CreateDimension(
                 "Z", None, None, dim_z.GetSize() + 1
             )
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 var = rg.CreateMDArray(
                     "my_var_x_y",
                     [dim_x_from_mem, dim_y_from_mem, dim_z_from_mem],
@@ -1090,7 +1090,7 @@ def test_netcdf_multidim_create_nc4():
         )
         assert att.Read() == "foo_of_var"
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not rg.CreateAttribute(
                 "attr_too_many_dimensions", [2, 3], gdal.ExtendedDataType.CreateString()
             )
@@ -1131,7 +1131,7 @@ def test_netcdf_multidim_create_nc4():
                 "att_two_strings", [2], gdal.ExtendedDataType.CreateString()
             )
             assert att
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 assert att.Write(["not_enough_elements"]) != gdal.CE_None
             assert att.Write([1, 2]) == gdal.CE_None
             assert att.Read() == ["1", "2"]
@@ -1337,7 +1337,7 @@ def test_netcdf_multidim_create_nc4():
         assert var.GetDimensions()[1].GetType() == gdal.DIM_TYPE_HORIZONTAL_X
 
     create_georeferenced_projected("georeferenced_projected_with_dim_type", True)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         create_georeferenced_projected(
             "georeferenced_projected_without_dim_type", False
         )
@@ -1389,7 +1389,7 @@ def test_netcdf_multidim_create_nc4():
         assert var.GetDimensions()[1].GetType() == gdal.DIM_TYPE_HORIZONTAL_X
 
     create_georeferenced_geographic("georeferenced_geographic_with_dim_type", True)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         create_georeferenced_geographic(
             "georeferenced_geographic_without_dim_type", False
         )
@@ -1973,7 +1973,7 @@ def test_netcdf_multidim_advise_read():
     got_data = struct.unpack("B" * 20 * 20, transposed.Read())
     assert got_data == ref_data_transposed
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert var.AdviseRead(array_start_idx=[2, 3], count=[20, 5]) == gdal.CE_Failure
 
 
@@ -2017,7 +2017,7 @@ def test_netcdf_multidim_createcopy_array_options():
 
     src_ds = gdal.OpenEx("data/netcdf/byte_no_cf.nc", gdal.OF_MULTIDIM_RASTER)
     tmpfilename = "tmp/test_netcdf_multidim_createcopy_array_options.nc"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("netCDF").CreateCopy(
             tmpfilename,
             src_ds,
@@ -2046,7 +2046,7 @@ def test_netcdf_multidim_createcopy_array_options_if_name_fullname():
     tmpfilename = (
         "tmp/test_netcdf_multidim_createcopy_array_options_if_name_fullname.nc"
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("netCDF").CreateCopy(
             tmpfilename, src_ds, options=["ARRAY:IF(NAME=/Band1):COMPRESS=DEFLATE"]
         )
@@ -2135,7 +2135,7 @@ def test_netcdf_multidim_cache():
         assert ar
         transpose = ar.Transpose([1, 0])
         assert transpose.Cache(["BLOCKSIZE=2,1"])
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # Cannot cache twice the same array
             assert transpose.Cache() is False
 
@@ -2290,7 +2290,7 @@ def test_netcdf_multidim_open_userfaultfd():
             is not None
         )
     else:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 gdal.OpenEx(
                     "/vsizip/tmp/test_netcdf_open_userfaultfd.zip/test.nc",
@@ -2670,7 +2670,7 @@ def test_netcdf_read_missing_value_text_non_numeric():
     )
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("Band1")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         assert var.GetNoDataValue() is None
         assert gdal.GetLastErrorMsg() != ""
@@ -2687,7 +2687,7 @@ def test_netcdf_read_missing_value_text_numeric_not_in_range():
     )
     rg = ds.GetRootGroup()
     var = rg.OpenMDArray("Band1")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         assert var.GetNoDataValue() is None
         assert gdal.GetLastErrorMsg() != ""
@@ -2760,7 +2760,7 @@ def test_netcdf_read_missing_value_of_different_type_not_in_range():
             var.GetAttribute("missing_value").GetDataType().GetNumericDataType()
             == gdal.GDT_Float64
         )
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.ErrorReset()
             assert var.GetNoDataValue() is None
             assert gdal.GetLastErrorMsg() != ""
@@ -2841,7 +2841,7 @@ def test_netcdf_multidim_update_missing_value_and_FillValue():
         rg = ds.GetRootGroup()
         var = rg.OpenMDArray("var")
         assert var.GetNoDataValue() == 1
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert var.SetNoDataValueDouble(2) != gdal.CE_None
 
     update()
@@ -2924,7 +2924,7 @@ def test_netcdf_multidim_resize_fill():
         rg = ds.GetRootGroup()
         var = rg.OpenMDArray("var")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert var.Resize([4, 3]) == gdal.CE_Failure
 
     update_read_only()
@@ -2934,7 +2934,7 @@ def test_netcdf_multidim_resize_fill():
         rg = ds.GetRootGroup()
         var = rg.OpenMDArray("var")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # 0 size
             assert var.Resize([0, 3]) == gdal.CE_Failure
 
@@ -3056,7 +3056,7 @@ def test_netcdf_multidim_resize_dim_referenced_twice():
         )
         assert var.Write(struct.pack("h" * 4, 1, 2, 3, 4)) == gdal.CE_None
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert var.Resize([3, 4]) == gdal.CE_Failure
             assert var.Resize([4, 3]) == gdal.CE_Failure
 

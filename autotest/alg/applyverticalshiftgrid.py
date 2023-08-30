@@ -102,7 +102,7 @@ def test_applyverticalshiftgrid_2():
             grid_ds.SetProjection(sr.ExportToWkt())
         if i == 5:
             grid_ds.AddBand(gdal.GDT_Byte)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
         assert out_ds is None, i
 
@@ -113,7 +113,7 @@ def test_applyverticalshiftgrid_2():
     grid_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     grid_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     grid_ds.SetProjection(sr.ExportToWkt())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     assert out_ds is None
 
@@ -124,7 +124,7 @@ def test_applyverticalshiftgrid_2():
     grid_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     grid_ds.SetGeoTransform([0, 0, 0, 0, 0, 0])
     grid_ds.SetProjection(sr.ExportToWkt())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     assert out_ds is None
 
@@ -136,7 +136,7 @@ def test_applyverticalshiftgrid_2():
     grid_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     grid_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     grid_ds.SetProjection('LOCAL_CS["foo"]')
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds)
     assert out_ds is None
 
@@ -148,7 +148,7 @@ def test_applyverticalshiftgrid_2():
         grid_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
         grid_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
         grid_ds.SetProjection(sr.ExportToWkt())
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdal.ApplyVerticalShiftGrid(
                 src_ds, grid_ds, options=["BLOCKSIZE=2000000000"]
             )
@@ -161,7 +161,7 @@ def test_applyverticalshiftgrid_2():
     grid_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     grid_ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     grid_ds.SetProjection(sr.ExportToWkt())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.ApplyVerticalShiftGrid(src_ds, grid_ds, options=["DATATYPE=x"])
     assert out_ds is None
 

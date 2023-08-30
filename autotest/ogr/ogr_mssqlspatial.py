@@ -567,7 +567,7 @@ def test_ogr_mssqlspatial_bulk_insert():
         assert source_ds
 
         try:
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ds = gdal.VectorTranslate(
                     gdaltest.mssqlspatial_dsname,
                     "data/poly.shp",
@@ -599,7 +599,7 @@ def test_ogr_mssqlspatial_geography_polygon_vertex_order():
     assert source_ds
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.VectorTranslate(
                 gdaltest.mssqlspatial_dsname,
                 "data/shp/testpoly.shp",

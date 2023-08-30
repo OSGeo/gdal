@@ -286,7 +286,7 @@ def test_ogr_rfc35_2(rfc35_test_input, driver_name):
     lyr.ReorderFields([3, 2, 1, 0])
     Check(ds, lyr, ["foo5", "bar10", "baz15", "baw20"])
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.ReorderFields([0, 0, 0, 0])
     assert ret != 0
 
@@ -321,11 +321,11 @@ def test_ogr_rfc35_3(rfc35_test_input, driver_name):
 
     lyr_defn = lyr.GetLayerDefn()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.AlterFieldDefn(-1, fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.AlterFieldDefn(lyr_defn.GetFieldCount(), fd, ogr.ALTER_ALL_FLAG)
     assert ret != 0
 
@@ -523,11 +523,11 @@ def test_ogr_rfc35_5(rfc35_test_input, driver_name, tmp_path):
 
     assert lyr.TestCapability(ogr.OLCDeleteField) == 1
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.DeleteField(-1)
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.DeleteField(lyr.GetLayerDefn().GetFieldCount())
     assert ret != 0
 

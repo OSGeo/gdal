@@ -430,7 +430,7 @@ def test_ogr_georss_10():
     srs.ImportFromEPSG(32631)
 
     ds = ogr.GetDriverByName("GeoRSS").CreateDataSource("tmp/test32631.rss")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         try:
             lyr = ds.CreateLayer("georss", srs=srs)
         except Exception:

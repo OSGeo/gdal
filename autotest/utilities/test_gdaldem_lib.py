@@ -514,7 +514,7 @@ def test_gdaldem_lib_color_relief_nodata_value():
     colorFilename = "/vsimem/color_file.txt"
     gdal.FileFromMemBuffer(colorFilename, """nv 255 255 255""")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.DEMProcessing(
             "", src_ds, "color-relief", format="MEM", colorFilename=colorFilename
         )

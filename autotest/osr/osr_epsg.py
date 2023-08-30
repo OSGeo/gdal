@@ -43,7 +43,7 @@ from osgeo import gdal, osr
 def test_osr_epsg_1():
 
     srs = osr.SpatialReference()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         srs.ImportFromEPSG(26591)
         assert "OSR_USE_NON_DEPRECATED" in gdal.GetLastErrorMsg()
     assert srs.GetAuthorityCode(None) == "3003"

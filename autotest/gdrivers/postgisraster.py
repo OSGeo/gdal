@@ -74,7 +74,7 @@ def setup_and_cleanup():
     )
 
     # Make sure we have SRID=26711 in spatial_ref_sys
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(gdaltest.postgisraster_connection_string, update=1)
     if ds is None:
         if val:
@@ -104,14 +104,14 @@ def setup_and_cleanup():
 
     gdaltest.postgisraster_connection_string += " schema='gis_schema' "
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
 
     # If we cannot open the table, try force loading the data
     if ds is None:
         gdaltest.runexternal("bash data/load_postgisraster_test_data.sh")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
 
     if ds is None:
@@ -129,7 +129,7 @@ def setup_and_cleanup():
 
 def test_postgisraster_test_open_error1():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='nonexistent'")
     if ds is None:
         return
@@ -143,7 +143,7 @@ def test_postgisraster_test_open_error1():
 def test_postgisraster_test_open_error2():
 
     # removed mode, as it defaults to one raster per row
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
     assert ds is not None
 
@@ -155,7 +155,7 @@ def test_postgisraster_test_open_error2():
 def test_postgisraster_compare_utm():
 
     src_ds = gdal.Open("data/utm.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         dst_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
 
     # dataset actually contains many sub-datasets. test the first one
@@ -172,7 +172,7 @@ def test_postgisraster_compare_utm():
 def test_postgisraster_compare_small_world():
 
     src_ds = gdal.Open("data/small_world.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         dst_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -200,7 +200,7 @@ def test_postgisraster_test_utm_open():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         main_ds = gdal.Open(gdaltest.postgisraster_connection_string + "table='utm'")
 
         # Try to open PostGISRaster with the same data than original tif file
@@ -230,7 +230,7 @@ def test_postgisraster_test_small_world_open_b1():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         main_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -262,7 +262,7 @@ def test_postgisraster_test_small_world_open_b2():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         main_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -294,7 +294,7 @@ def test_postgisraster_test_small_world_open_b3():
     rb.GetStatistics(0, 1)
     cs = rb.Checksum()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         main_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -313,7 +313,7 @@ def test_postgisraster_test_small_world_open_b3():
 
 def test_postgisraster_test_create_copy_bad_conn_string():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -327,7 +327,7 @@ def test_postgisraster_test_create_copy_bad_conn_string():
 
 def test_postgisraster_test_create_copy_no_dbname():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -345,7 +345,7 @@ def test_postgisraster_test_create_copy_no_dbname():
 
 def test_postgisraster_test_create_copy_no_tablename():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -370,7 +370,7 @@ def test_postgisraster_test_create_copy_and_delete():
     Why, test "Delete", of course!
     """
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -395,7 +395,7 @@ def test_postgisraster_test_create_copy_and_delete_phases():
     Create a copy of the dataset, then delete it in phases.
     """
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world'"
         )
@@ -486,7 +486,7 @@ def test_postgisraster_test_norid():
     Test the ability to connect to a data source if it has no 'rid' column.
     """
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world_noid'"
         )
@@ -503,7 +503,7 @@ def test_postgisraster_test_norid():
                 and src_md[k].find("ST_UpperLeftY") >= 0
             )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world_noid' mode=2"
         )
@@ -517,7 +517,7 @@ def test_postgisraster_test_serial():
     but uses a sequence instead.
     """
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world_serial'"
         )
@@ -537,7 +537,7 @@ def test_postgisraster_test_serial():
                 src_md[k],
             )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             gdaltest.postgisraster_connection_string
             + "table='small_world_serial' mode=2"
@@ -552,7 +552,7 @@ def test_postgisraster_test_unique():
     but uses a unique constraint instead.
     """
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         src_ds = gdal.Open(
             gdaltest.postgisraster_connection_string + "table='small_world_unique'"
         )
@@ -572,7 +572,7 @@ def test_postgisraster_test_unique():
                 src_md[k],
             )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             gdaltest.postgisraster_connection_string
             + "table='small_world_unique' mode=2"

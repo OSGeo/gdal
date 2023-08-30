@@ -61,7 +61,7 @@ def matches_non_existing_error_msg(msg):
 
 
 def test_basic_test_1():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("non_existing_ds", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -90,7 +90,7 @@ def test_basic_test_strace_non_existing_file():
 
 
 def test_basic_test_2():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("non_existing_ds", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -98,7 +98,7 @@ def test_basic_test_2():
 
 
 def test_basic_test_3():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("", gdal.GA_ReadOnly)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -106,7 +106,7 @@ def test_basic_test_3():
 
 
 def test_basic_test_4():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("", gdal.GA_Update)
     if ds is None and matches_non_existing_error_msg(gdal.GetLastErrorMsg()):
         return
@@ -114,7 +114,7 @@ def test_basic_test_4():
 
 
 def test_basic_test_5():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/doctype.xml", gdal.GA_ReadOnly)
     last_error = gdal.GetLastErrorMsg()
     expected = "`data/doctype.xml' not recognized as a supported file format"
@@ -298,7 +298,7 @@ def test_basic_test_11():
     ds = gdal.OpenEx("data/byte.tif", allowed_drivers=["PNG"])
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx("data/byte.tif", open_options=["FOO"])
     assert ds is not None
 
@@ -324,7 +324,7 @@ def test_basic_test_11():
     ds = gdal.OpenEx("non existing")
     assert ds is None and gdal.GetLastErrorMsg() == ""
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx("non existing", gdal.OF_VERBOSE_ERROR)
     assert ds is None and gdal.GetLastErrorMsg() != ""
 
@@ -419,7 +419,7 @@ def test_basic_test_14():
     ds.SetMetadata(["foo=bar"])
     assert ds.GetMetadata_List() == ["foo=bar"]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             ds.SetMetadata([5])
 
@@ -429,7 +429,7 @@ def test_basic_test_14():
     ds.SetMetadata({"foo": b"baz"})
     assert ds.GetMetadata_List() == ["foo=baz"]
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             ds.SetMetadata({"foo": b"zero_byte_in_string\0"})
 
@@ -495,24 +495,24 @@ def test_basic_test_15():
     mem_driver = gdal.GetDriverByName("MEM")
 
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.GetDriverByName("MEM").CreateCopy(
                 "", gdal.GetDriverByName("MEM").Create("", 1, 1), callback="foo"
             )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = mem_driver.CreateCopy(
             "", mem_driver.Create("", 1, 1), callback=basic_test_15_cbk_no_argument
         )
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = mem_driver.CreateCopy(
             "", mem_driver.Create("", 1, 1), callback=basic_test_15_cbk_no_ret
         )
     assert ds is not None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = mem_driver.CreateCopy(
             "", mem_driver.Create("", 1, 1), callback=basic_test_15_cbk_bad_ret
         )
@@ -531,7 +531,7 @@ def test_basic_test_16():
 
     gdal.ErrorReset()
     gdal.Translate("/vsimem/temp.tif", "data/byte.tif", options="-co BLOCKYSIZE=10")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             "/vsimem/temp.tif", gdal.OF_UPDATE, open_options=["@NUM_THREADS=INVALID"]
         )

@@ -80,19 +80,19 @@ def test_vsiaz_real_server_errors():
 
     # Missing AZURE_STORAGE_ACCOUNT
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsiaz/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("AZURE_STORAGE_ACCOUNT") >= 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsiaz_streaming/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("AZURE_STORAGE_ACCOUNT") >= 0
 
     # Invalid AZURE_STORAGE_CONNECTION_STRING
     with gdaltest.config_option("AZURE_STORAGE_CONNECTION_STRING", "invalid"):
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsiaz/foo/bar")
         assert f is None
 
@@ -104,7 +104,7 @@ def test_vsiaz_real_server_errors():
             "CPL_AZURE_VM_API_ROOT_URL": "disabled",
         }
     ):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsiaz/foo/bar")
         assert (
             f is None
@@ -119,7 +119,7 @@ def test_vsiaz_real_server_errors():
             "AZURE_STORAGE_ACCESS_KEY": "AZURE_STORAGE_ACCESS_KEY",
         }
     ):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsiaz/foo/bar.baz")
         if f is not None:
             if f is not None:
@@ -129,7 +129,7 @@ def test_vsiaz_real_server_errors():
             pytest.fail(gdal.VSIGetLastErrorMsg())
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsiaz_streaming/foo/bar.baz")
         assert f is None, gdal.VSIGetLastErrorMsg()
 

@@ -69,7 +69,7 @@ def test_isg_approx_georeferencing_with_warning():
     gdal.ErrorReset()
     # Header of https://www.isgeoid.polimi.it/Geoid/America/Argentina/public/GEOIDEAR16_20160419.isg
     # with delta_lon modified
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/isg/approx_georeferencing_warning.isg")
         assert gdal.GetLastErrorMsg() != ""
     expected_gt = [

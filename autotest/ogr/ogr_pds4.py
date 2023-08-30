@@ -355,7 +355,7 @@ def test_ogr_pds4_create_table_character(line_ending):
     if line_ending:
         layer_creation_options.append("LINE_ENDING=" + line_ending)
     if line_ending == "error":
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr = ds.CreateLayer("0f:oo", options=layer_creation_options)
     else:
         lyr = ds.CreateLayer("0f:oo", options=layer_creation_options)
@@ -653,7 +653,7 @@ def test_ogr_pds4_create_table_delimited(line_ending):
     if line_ending:
         layer_creation_options.append("LINE_ENDING=" + line_ending)
     if line_ending == "error":
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr = ds.CreateLayer("foo", options=layer_creation_options)
     else:
         lyr = ds.CreateLayer("foo", options=layer_creation_options)

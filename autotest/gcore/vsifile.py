@@ -343,7 +343,7 @@ def test_vsifile_7():
     fp = gdal.VSIFOpenL("/vsimem/vsifile_7.bin", "wb")
     assert gdal.VSIFSeekL(fp, 0x7FFFFFFFFFFFFFFF, 0) == 0
     assert gdal.VSIStatL("/vsimem/vsifile_7.bin").size == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdal.VSIFWriteL("a", 1, 1, fp)
     assert ret == 0
     assert gdal.VSIStatL("/vsimem/vsifile_7.bin").size == 0
@@ -600,7 +600,7 @@ def test_vsifile_13():
 
 def test_vsifile_14():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.VSIFOpenL(
             "/vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar//vsitar/a.tgzb.tgzc.tgzd.tgze.tgzf.tgz.h.tgz.i.tgz",
             "rb",
@@ -617,15 +617,15 @@ def test_vsifile_15():
     assert fp is not None
     file_len = 0
     while not gdal.VSIFEofL(fp):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             file_len += len(gdal.VSIFReadL(1, 4, fp))
     assert file_len == 6469
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         file_len += len(gdal.VSIFReadL(1, 4, fp))
     assert file_len == 6469
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.VSIFSeekL(fp, 0, 2) != 0
 
     assert gdal.VSIFSeekL(fp, 0, 0) == 0
@@ -725,7 +725,7 @@ def test_vsifile_21():
     gdal.VSIFCloseL(vsifile_write)
     gdal.Unlink(filename)
     gdal.Unlink(filename_write)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         data3 = gdal.VSIGetMemFileBuffer_unsafe(filename)
         assert data3 == None
 
@@ -801,10 +801,10 @@ def test_vsigzip_multi_thread():
 
 def test_vsisync():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdal.Sync("/i_do/not/exist", "/vsimem/")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdal.Sync("vsifile.py", "/i_do/not/exist")
 
     # Test copying a file
@@ -822,7 +822,7 @@ def test_vsisync():
     gdal.FileFromMemBuffer("/vsimem/test_sync/subdir/bar.txt", "baz")
 
     if sys.platform == "linux":
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # even root cannot write into /proc
             assert not gdal.Sync("/vsimem/test_sync/", "/proc/i_do_not/exist")
 
@@ -1050,7 +1050,7 @@ def test_unlink_batch():
 
     gdal.FileFromMemBuffer("/vsimem/foo", "foo")
     open("tmp/bar", "wt").write("bar")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert not gdal.UnlinkBatch(["/vsimem/foo", "tmp/bar"])
     gdal.Unlink("/vsimem/foo")
     gdal.Unlink("tmp/bar")
@@ -1077,7 +1077,7 @@ def test_vsifile_vsizip_error():
 
     for i in range(128):
         filename = "/vsimem/tmp||maxlength=%d.zip" % i
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = gdal.VSIFOpenL("/vsizip/%s/out.bin" % filename, "wb")
             if f is not None:
                 assert gdal.VSIFCloseL(f) < 0

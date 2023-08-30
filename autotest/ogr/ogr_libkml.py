@@ -800,7 +800,7 @@ def test_ogr_libkml_camera():
     dst_feat.SetField("heading", 70)
     dst_feat.SetField("tilt", 75)
     dst_feat.SetField("roll", 10)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.CreateFeature(dst_feat)
 
     dst_feat = ogr.Feature(lyr.GetLayerDefn())
@@ -963,7 +963,7 @@ def test_ogr_libkml_write_multigeometry():
     feat = ogr.Feature(lyr.GetLayerDefn())
     # Warning emitted per ATC 66
     feat.SetGeometry(ogr.CreateGeometryFromWkt("MULTIPOINT EMPTY"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.CreateFeature(feat)
 
     ds = None
@@ -1596,7 +1596,7 @@ def test_ogr_libkml_write_update():
         )
         lyr = ds.CreateLayer("layer_to_edit")
         feat = ogr.Feature(lyr.GetLayerDefn())
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr.CreateFeature(feat)
         feat.SetFID(10)
         assert lyr.CreateFeature(feat) == 0
@@ -1712,7 +1712,7 @@ def test_ogr_libkml_write_liststyle():
     ds.CreateLayer(
         "test_checkHideChildren", options=["LISTSTYLE_TYPE=checkHideChildren"]
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.CreateLayer("test_error", options=["LISTSTYLE_TYPE=error"])
         ds = None
 

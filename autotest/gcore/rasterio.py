@@ -243,7 +243,7 @@ def test_rasterio_5():
 
     for band_number in [-1, 0, 2]:
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             res = ds.ReadRaster(0, 0, 1, 1, band_list=[band_number])
         error_msg = gdal.GetLastErrorMsg()
         assert res is None, "expected None"
@@ -256,7 +256,7 @@ def test_rasterio_5():
 
     for obj in [ds, ds.GetRasterBand(1)]:
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             res = obj.ReadRaster(0, 0, 21, 21)
         error_msg = gdal.GetLastErrorMsg()
         assert res is None, "expected None"
@@ -276,7 +276,7 @@ def test_rasterio_5():
         # to detect win64 better.
         if maxsize == 2147483647 and sys.platform != "win32":
             gdal.ErrorReset()
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 res = obj.ReadRaster(0, 0, 1, 1, 1000000, 1000000)
             error_msg = gdal.GetLastErrorMsg()
             assert res is None, "expected None"
@@ -285,7 +285,7 @@ def test_rasterio_5():
             ), "did not get expected error msg (2)"
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             res = obj.ReadRaster(0, 0, 0, 1)
         error_msg = gdal.GetLastErrorMsg()
         assert res is None, "expected None"
@@ -309,7 +309,7 @@ def test_rasterio_6():
             obj.WriteRaster(0, 0, 2, 2, None)
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             obj.WriteRaster(0, 0, 2, 2, " ")
         error_msg = gdal.GetLastErrorMsg()
         assert (
@@ -317,7 +317,7 @@ def test_rasterio_6():
         ), "did not get expected error msg (1)"
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             obj.WriteRaster(-1, 0, 1, 1, " ")
         error_msg = gdal.GetLastErrorMsg()
         assert (
@@ -325,7 +325,7 @@ def test_rasterio_6():
         ), "did not get expected error msg (2)"
 
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             obj.WriteRaster(0, 0, 0, 1, " ")
         error_msg = gdal.GetLastErrorMsg()
         assert (
@@ -603,7 +603,7 @@ def test_rasterio_9():
 
     # Test interruption
     tab = [0, 0.5]
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         data = ds.GetRasterBand(1).ReadRaster(
             buf_xsize=10,
             buf_ysize=10,
@@ -733,17 +733,17 @@ def test_rasterio_9():
 def test_rasterio_10():
     ds = gdal.Open("data/byte_truncated.tif")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         data = ds.GetRasterBand(1).ReadRaster()
     assert data is None
 
     # Change buffer type
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         data = ds.GetRasterBand(1).ReadRaster(buf_type=gdal.GDT_Int16)
     assert data is None
 
     # Resampling case
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         data = ds.GetRasterBand(1).ReadRaster(buf_xsize=10, buf_ysize=10)
     assert data is None
 
@@ -1284,7 +1284,7 @@ def test_rasterio_rasterband_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
     band = ds.GetRasterBand(1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         err = band.WriteRaster(0, 0, 20, 20, band.ReadRaster())
     assert err != 0
 
@@ -1292,7 +1292,7 @@ def test_rasterio_rasterband_write_on_readonly():
 def test_rasterio_dataset_write_on_readonly():
 
     ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         err = ds.WriteRaster(0, 0, 20, 20, ds.ReadRaster())
     assert err != 0
 
@@ -1301,7 +1301,7 @@ def test_rasterio_dataset_write_on_readonly():
 def test_rasterio_dataset_invalid_resample_alg(resample_alg):
 
     mem_ds = gdal.GetDriverByName("MEM").Create("", 2, 2)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with pytest.raises(Exception):
             assert (
                 mem_ds.ReadRaster(buf_xsize=1, buf_ysize=1, resample_alg=resample_alg)
@@ -2884,7 +2884,7 @@ def test_rasterio_readraster_in_existing_buffer():
     assert ds.ReadRaster(buf_obj=bytearray([0, 0])) == ar
     # buf_obj is larger than expected
     assert ds.ReadRaster(buf_obj=bytearray([0, 0, 10])) == bytearray([1, 2, 10])
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # buf_obj is a wrong object type
         assert ds.ReadRaster(buf_obj=123) is None
         # buf_obj is not large enough
@@ -2896,7 +2896,7 @@ def test_rasterio_readraster_in_existing_buffer():
     assert band.ReadRaster(buf_obj=bytearray([0, 0])) == ar
     # buf_obj is larger than expected
     assert band.ReadRaster(buf_obj=bytearray([0, 0, 10])) == bytearray([1, 2, 10])
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # buf_obj is a wrong object type
         assert band.ReadRaster(buf_obj=123) is None
         # buf_obj is not large enough
@@ -2922,7 +2922,7 @@ def test_rasterio_readblock_in_existing_buffer():
     assert band.ReadBlock(0, 0, buf_obj=bytearray([0, 0])) == ar
     # buf_obj is larger than expected
     assert band.ReadBlock(0, 0, buf_obj=bytearray([0, 0, 10])) == bytearray([1, 2, 10])
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # buf_obj is a wrong object type
         assert band.ReadBlock(0, 0, buf_obj=123) is None
         # buf_obj is not large enough
@@ -2962,7 +2962,7 @@ def test_rasterio_readraster_in_existing_buffer_alignment_issues(datatype):
     # buf_obj has appropriate alignment
     assert ds.ReadRaster(buf_obj=bytearray([0] * buffer_size)) == ar
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # buf_obj has not appropriate alignment
         assert (
             ds.ReadRaster(buf_obj=memoryview(bytearray([0] * (buffer_size + 1)))[1:])
@@ -2972,7 +2972,7 @@ def test_rasterio_readraster_in_existing_buffer_alignment_issues(datatype):
     # buf_obj has appropriate alignment
     assert band.ReadRaster(buf_obj=bytearray([0] * buffer_size)) == ar
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # buf_obj has not appropriate alignment
         assert (
             band.ReadRaster(buf_obj=memoryview(bytearray([0] * (buffer_size + 1)))[1:])
@@ -2982,7 +2982,7 @@ def test_rasterio_readraster_in_existing_buffer_alignment_issues(datatype):
     # buf_obj has appropriate alignment
     assert band.ReadBlock(0, 0, buf_obj=bytearray([0] * buffer_size)) == ar
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # buf_obj has not appropriate alignment
         assert (
             band.ReadBlock(0, 0, buf_obj=memoryview(bytearray([0] * (2 * 8 + 1)))[1:])

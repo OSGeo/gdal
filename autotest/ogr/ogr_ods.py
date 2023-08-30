@@ -286,7 +286,7 @@ def test_ogr_ods_6():
 
     src_ds = ogr.Open("ODS:data/ods/content_formulas.xml")
     filepath = "/vsimem/content_formulas.csv"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = ogr.GetDriverByName("CSV").CopyDataSource(src_ds, filepath)
     assert out_ds is not None, "Unable to create %s." % filepath
     out_ds = None

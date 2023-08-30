@@ -173,7 +173,7 @@ def create_tiledb_dataset(nullable, batch_size, include_bool, extra_feature=Fals
     f["intfieldextra"] = 2
     f.SetGeometry(ogr.CreateGeometryFromWkt("POLYGON ((1 2,1 3,4 3,1 2))"))
     if not nullable:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.CreateFeature(f) == ogr.OGRERR_NONE
     else:
         assert lyr.CreateFeature(f) == ogr.OGRERR_NONE

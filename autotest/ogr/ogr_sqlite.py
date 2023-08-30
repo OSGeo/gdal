@@ -57,7 +57,7 @@ def module_disable_exceptions():
 
 @pytest.fixture(autouse=True, scope="module")
 def setup():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("SQLite").CreateDataSource(
             "/vsimem/foo.db", options=["SPATIALITE=YES"]
         )
@@ -123,17 +123,17 @@ def test_ogr_sqlite_2():
     if gdaltest.sl_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.sl_ds.ExecuteSQL("DELLAYER:tpoly")
 
     # Test invalid FORMAT
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = gdaltest.sl_ds.CreateLayer("will_fail", options=["FORMAT=FOO"])
     assert lyr is None, "layer creation should have failed"
 
     # Test creating a layer with an existing name
     lyr = gdaltest.sl_ds.CreateLayer("a_layer")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = gdaltest.sl_ds.CreateLayer("a_layer")
     assert lyr is None, "layer creation should have failed"
 
@@ -744,7 +744,7 @@ def test_ogr_sqlite_15():
 
     ######################################################
     # Create Layer with SPATIALITE geometry
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.sl_lyr = gdaltest.sl_ds.CreateLayer(
             "geomspatialite", options=["FORMAT=SPATIALITE"]
         )
@@ -786,7 +786,7 @@ def test_ogr_sqlite_15():
     gdaltest.sl_ds = ogr.Open("tmp/sqlite_test.db")
 
     # Test creating a layer on a read-only DB
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = gdaltest.sl_ds.CreateLayer("will_fail")
     assert lyr is None, "layer creation should have failed"
 
@@ -928,12 +928,12 @@ def test_ogr_sqlite_17(require_spatialite):
     ######################################################
     # Create dataset with SPATIALITE geometry
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("SQLite").CreateDataSource(
             "tmp/spatialite_test.db", options=["SPATIALITE=YES"]
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.CreateLayer("will_fail", options=["FORMAT=WKB"])
     assert lyr is None, "layer creation should have failed"
 
@@ -1210,7 +1210,7 @@ def test_ogr_sqlite_24():
 
     ds = ogr.Open("tmp/test24.sqlite")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.ExecuteSQL("select OGR_GEOMETRY from test")
     if lyr is not None:
         ds.ReleaseResultSet(lyr)
@@ -1224,7 +1224,7 @@ def test_ogr_sqlite_24():
 
     lyr = ds.GetLayerByName("test")
     lyr.SetAttributeFilter("OGR_GEOMETRY = 'POLYGON'")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = lyr.GetNextFeature()
     assert feat is None, "a feature was not expected (3)"
 
@@ -1269,7 +1269,7 @@ def test_ogr_sqlite_25():
         pytest.skip()
 
     # Check that we have SQLite VFS support
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/ogr_sqlite_25.db")
     if ds is None:
         pytest.skip()
@@ -2154,7 +2154,7 @@ def test_ogr_spatialite_8(require_spatialite):
     feat = None
     ds.ReleaseResultSet(sql_lyr)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.GetLayerByName("invalid_layer_name(geom1)")
     assert lyr is None
 
@@ -2337,7 +2337,7 @@ def test_ogr_sqlite_33(with_and_without_spatialite):
     lyr = ds.CreateLayer("test2", options=["SRID=4326"])
 
     # Test with non-existing entry
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.CreateLayer("test3", options=["SRID=123456"])
     ds = None
 
@@ -2375,7 +2375,7 @@ def test_ogr_sqlite_34():
     if gdaltest.sl_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP 'a'")
     if sql_lyr is None:
         pytest.skip()
@@ -2399,12 +2399,12 @@ def test_ogr_sqlite_34():
     assert val == 0
 
     # NULL regexp
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP NULL")
     assert sql_lyr is None
 
     # Invalid regexp
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = gdaltest.sl_ds.ExecuteSQL("SELECT 'a' REGEXP '['")
     assert sql_lyr is None
 
@@ -2597,7 +2597,7 @@ def test_ogr_sqlite_37():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -2605,7 +2605,7 @@ def test_ogr_sqlite_37():
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -2995,7 +2995,7 @@ def test_ogr_sqlite_39():
     lyr = ds.CreateLayer("test", geom_type=ogr.wkbNone, options=["FID=myfid"])
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
@@ -3029,16 +3029,16 @@ def test_ogr_sqlite_39():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(feat)
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
 
     feat.UnsetField("myfid")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
 
@@ -3080,7 +3080,7 @@ def test_ogr_sqlite_40(with_and_without_spatialite):
 
     ret = ds.StartTransaction()
     assert ret == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.StartTransaction()
     assert ret != 0
 
@@ -3088,7 +3088,7 @@ def test_ogr_sqlite_40(with_and_without_spatialite):
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ret = ds.RollbackTransaction()
     assert ret == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.RollbackTransaction()
     assert ret != 0
     ds = None
@@ -3097,7 +3097,7 @@ def test_ogr_sqlite_40(with_and_without_spatialite):
     assert ds.GetLayerCount() == 0
     ret = ds.StartTransaction()
     assert ret == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.StartTransaction()
     assert ret != 0
 
@@ -3105,7 +3105,7 @@ def test_ogr_sqlite_40(with_and_without_spatialite):
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     ret = ds.CommitTransaction()
     assert ret == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.CommitTransaction()
     assert ret != 0
     ds = None
@@ -3390,7 +3390,7 @@ def test_ogr_spatialite_11(require_spatialite):
     f = None
 
     lyr = ds.CreateLayer("test2", geom_type=ogr.wkbNone)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         res = lyr.CreateGeomField(ogr.GeomFieldDefn("foo", ogr.wkbCurvePolygon))
     assert res != 0
 
@@ -4123,7 +4123,7 @@ def test_ogr_sqlite_ogr_layer_Extent():
         feat = None
 
         # Test with invalid parameter
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent(12)")
         feat = sql_lyr.GetNextFeature()
         geom = feat.GetGeometryRef()
@@ -4132,7 +4132,7 @@ def test_ogr_sqlite_ogr_layer_Extent():
         assert geom is None
 
         # Test on non existing layer
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             sql_lyr = ds.ExecuteSQL("SELECT ogr_layer_Extent('foo')")
         feat = sql_lyr.GetNextFeature()
         geom = feat.GetGeometryRef()

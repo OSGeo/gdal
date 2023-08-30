@@ -548,7 +548,7 @@ def test_hdf5_multidim_read_missing_value_of_different_type_not_in_range():
         gdal.OF_MULTIDIM_RASTER,
     )
     rg = ds.GetRootGroup()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         var = rg.OpenMDArray("test")
         assert gdal.GetLastErrorMsg() != ""

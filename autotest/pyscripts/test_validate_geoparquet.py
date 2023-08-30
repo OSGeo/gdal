@@ -36,7 +36,7 @@ import gdaltest
 import pytest
 import test_py_scripts
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 CURRENT_VERSION = "1.0.0-beta.1"
 PARQUET_JSON_SCHEMA = "../ogr/data/parquet/schema.json"
@@ -133,7 +133,7 @@ def test_validate_geoparquet_invalid_json():
         ds = None
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = _validate("tmp/tmp.parquet")
         assert ret and """'geo' metadata item is not valid JSON""" in str(ret)
     finally:

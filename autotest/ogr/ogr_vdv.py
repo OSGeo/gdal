@@ -378,7 +378,7 @@ def test_ogr_vdv_7():
 
         ds = ogr.GetDriverByName("VDV").CreateDataSource(out_filename)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr = ds.CreateLayer(
                 "UNKNOWN",
                 options=["PROFILE=" + profile, "PROFILE_STRICT=" + str(strict)],
@@ -397,7 +397,7 @@ def test_ogr_vdv_7():
             lyr_name, options=["PROFILE=" + profile, "PROFILE_STRICT=" + str(strict)]
         )
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = lyr.CreateField(ogr.FieldDefn("UNKNOWN"))
         assert gdal.GetLastErrorMsg() != ""
         if strict and ret == 0:
@@ -416,11 +416,11 @@ def test_ogr_vdv_7():
 
 def test_ogr_vdv_8():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("VDV").CreateDataSource("/does/not_exist")
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("VDV").CreateDataSource(
             "/does/not_exist", options=["SINGLE_FILE=FALSE"]
         )
@@ -442,7 +442,7 @@ def test_ogr_vdv_8():
             do_test = True
         if do_test:
             ds = ogr.Open("tmp/ogr_vdv_8", update=1)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 lyr = ds.CreateLayer("another_layer")
             # 0755 = 493
             os.chmod("tmp/ogr_vdv_8", 493)
@@ -454,7 +454,7 @@ def test_ogr_vdv_8():
     ds = ogr.GetDriverByName("VDV").CreateDataSource(out_filename)
 
     # File already exists
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds2 = ogr.GetDriverByName("VDV").CreateDataSource(out_filename)
     assert ds2 is None
 
@@ -466,7 +466,7 @@ def test_ogr_vdv_8():
 
     lyr1.ResetReading()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr1.GetNextFeature()
 
     lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
@@ -474,7 +474,7 @@ def test_ogr_vdv_8():
     # Layer structure is now frozen
     assert lyr1.TestCapability(ogr.OLCCreateField) == 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr1.CreateField(ogr.FieldDefn("not_allowed"))
     assert ret != 0
 
@@ -485,7 +485,7 @@ def test_ogr_vdv_8():
 
     assert lyr1.TestCapability(ogr.OLCSequentialWrite) == 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr1.CreateFeature(ogr.Feature(lyr1.GetLayerDefn()))
     assert ret != 0
 

@@ -191,7 +191,7 @@ def test_validate_jp2_3():
     build_jp2_from_xml.build_file(
         "data/test_validate_jp2/stefan_full_rgba_corrupted.xml", "/vsimem/out.jp2"
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         error_report = validate(
             "/vsimem/out.jp2", oidoc="data/test_validate_jp2/stefan_full_rgba_oi.xml"
         )
@@ -249,7 +249,7 @@ def test_validate_jp2_4():
     build_jp2_from_xml.build_file(
         "data/test_validate_jp2/almost_nojp2box.xml", "/vsimem/out.jp2"
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         error_report = validate("/vsimem/out.jp2", expected_gmljp2=False)
     gdal.Unlink("/vsimem/out.jp2")
 
@@ -291,7 +291,7 @@ def test_validate_jp2_5():
     build_jp2_from_xml.build_file(
         "data/test_validate_jp2/utmsmall_pct_corrupted.xml", "/vsimem/out.jp2"
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         error_report = validate(
             "/vsimem/out.jp2", oidoc="data/test_validate_jp2/utmsmall_pct_oi.xml"
         )

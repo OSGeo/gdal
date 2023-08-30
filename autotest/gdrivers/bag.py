@@ -233,7 +233,7 @@ def test_bag_vr_normal():
             pp.pprint(got_md)
             pytest.fail(key)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "data/bag/test_vr.bag", open_options=["MODE=LOW_RES_GRID", "MINX=0"]
         )
@@ -256,7 +256,7 @@ def test_bag_vr_list_supergrids():
 
     assert sub_ds[0][0] == 'BAG:"data/bag/test_vr.bag":supergrid:0:0'
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Bounding box filter ignored since only part of MINX, MINY, MAXX and
         # MAXY has been specified
         ds = gdal.OpenEx(
@@ -304,7 +304,7 @@ def test_bag_vr_list_supergrids():
 
     # Test invalid values for SUPERGRIDS_INDICES
     for invalid_val in ["", "x", "(", "(1", "(1,", "(1,)", "(1,2),", "(x,2)", "(2,x)"]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.OpenEx(
                 "data/bag/test_vr.bag",
                 open_options=["SUPERGRIDS_INDICES=" + invalid_val],
@@ -378,19 +378,19 @@ def test_bag_vr_open_supergrids():
             pp.pprint(got_md)
             pytest.fail(key)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open('BAG:"/vsimem/unexisting.bag":supergrid:0:0')
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open('BAG:"data/bag/test_vr.bag":supergrid:4:0')
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open('BAG:"data/bag/test_vr.bag":supergrid:0:6')
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             'BAG:"data/bag/test_vr.bag":supergrid:0:0', open_options=["MINX=0"]
         )
@@ -596,7 +596,7 @@ def test_bag_vr_resampled():
     assert got == (165, 205)
 
     # Too big RES_FILTER_MIN
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "data/bag/test_vr.bag",
             open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MIN=32"],
@@ -604,7 +604,7 @@ def test_bag_vr_resampled():
     assert ds is None
 
     # Too small RES_FILTER_MAX
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "data/bag/test_vr.bag",
             open_options=["MODE=RESAMPLED_GRID", "RES_FILTER_MAX=4"],
@@ -612,7 +612,7 @@ def test_bag_vr_resampled():
     assert ds is None
 
     # RES_FILTER_MIN >= RES_FILTER_MAX
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "data/bag/test_vr.bag",
             open_options=[
@@ -836,7 +836,7 @@ def test_bag_read_georef_metadata():
         == 'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:layer_with_keys_values:0:0'
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.Open(
                 'BAG:"data/bag/test_georef_metadata.bag":georef_metadata:not_existing'

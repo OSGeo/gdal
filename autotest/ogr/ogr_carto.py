@@ -422,7 +422,7 @@ Error""",
     lyr.ResetReading()
     f = lyr.GetNextFeature()
     assert f.GetFID() == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = lyr.GetNextFeature()
     assert f is None
 
@@ -995,12 +995,12 @@ def ogr_carto_rw_1():
     lyr_name = "LAYER_" + a_uuid
 
     # No-op
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.CreateLayer(lyr_name)
     ds.DeleteLayer(ds.GetLayerCount() - 1)
 
     # Deferred table creation
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.CreateLayer(lyr_name)
     lyr.CreateField(ogr.FieldDefn("STRFIELD", ogr.OFTString))
     lyr.CreateField(ogr.FieldDefn("intfield", ogr.OFTInteger))

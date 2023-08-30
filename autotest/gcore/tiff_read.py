@@ -148,7 +148,7 @@ def test_tiff_read_off_errors(filename):
 def test_tiff_read_off_error_update():
     # Opening a specific TIFF directory is not supported in update mode.
     # Switching to read-only
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("GTIFF_DIR:1:data/byte.tif", gdal.GA_Update)
     assert ds is not None
 
@@ -264,7 +264,7 @@ def test_tiff_read_cmyk_raw():
 @pytest.mark.require_creation_option("GTiff", "JPEG")
 def test_tiff_read_ojpeg():
     with gdal.ExceptionMgr(useExceptions=False):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open("data/zackthecat.tif")
             if ds is None:
                 assert (
@@ -273,7 +273,7 @@ def test_tiff_read_ojpeg():
                 )
                 pytest.skip("OJPEG codec missing")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         got_cs = ds.GetRasterBand(1).Checksum()
     expected_cs = 61570
     assert got_cs == expected_cs, "Expected checksum = %d. Got = %d" % (
@@ -282,14 +282,14 @@ def test_tiff_read_ojpeg():
     )
 
     # should fail with internal libtiff
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/zackthecat_corrupted.tif")
     if gdal.GetDriverByName("GTiff").GetMetadataItem("LIBTIFF") == "INTERNAL":
         with pytest.raises(Exception):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ds.GetRasterBand(1).Checksum()
     else:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with gdal.ExceptionMgr(useExceptions=False):
                 ds.GetRasterBand(1).Checksum()
 
@@ -931,7 +931,7 @@ def test_tiff_read_tiepoints_pixelispoint():
 
 def test_tiff_read_corrupted_gtiff():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Open("data/corrupted_gtiff_tags.tif")
 
 
@@ -959,13 +959,13 @@ def test_tiff_read_buggy_packbits():
     with gdal.config_option("GTIFF_IGNORE_READ_ERRORS", None):
         ds = gdal.Open("data/byte_buggy_packbits.tif")
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds.ReadRaster(0, 0, 20, 20)
     ds = None
 
     with gdal.config_option("GTIFF_IGNORE_READ_ERRORS", "YES"):
         ds = gdal.Open("data/byte_buggy_packbits.tif")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with gdal.ExceptionMgr(useExceptions=False):
                 ret = ds.ReadRaster(0, 0, 20, 20)
         assert ret is not None, "expected a valid result"
@@ -1047,7 +1047,7 @@ def test_tiff_small():
 
 def test_tiff_dos_strip_chop():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/tiff_dos_strip_chop.tif")
     del ds
 
@@ -2794,7 +2794,7 @@ def test_tiff_read_scanline_more_than_2GB():
 def test_tiff_read_wrong_number_extrasamples():
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/6band_wrong_number_extrasamples.tif")
         assert "Wrong number of ExtraSamples" in gdal.GetLastErrorMsg()
     assert ds.GetRasterBand(6).GetRasterColorInterpretation() == gdal.GCI_AlphaBand
@@ -2806,7 +2806,7 @@ def test_tiff_read_wrong_number_extrasamples():
 
 def test_tiff_read_one_strip_no_bytecount():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/one_strip_nobytecount.tif")
     assert ds.GetRasterBand(1).Checksum() == 1
 
@@ -3315,7 +3315,7 @@ def test_tiff_read_corrupted_jpeg_cloud_optimized():
     cs0 = ds.GetRasterBand(1).Checksum()
     assert cs0 == 4743
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs1 = ds.GetRasterBand(1).GetOverview(0).Checksum()
     if cs1 == -1:
         print("Expected error while writing overview with libjpeg-6b")
@@ -3490,7 +3490,7 @@ def test_tiff_read_minimum_tiff_tags_no_warning():
 def test_tiff_read_minimum_tiff_tags_with_warning():
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/minimum_tiff_tags_with_warning.tif")
     assert gdal.GetLastErrorMsg() != ""
     gdal.ErrorReset()
@@ -3542,7 +3542,7 @@ def test_tiff_read_leak_ZIPSetupDecode():
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/leak-ZIPSetupDecode.tif")
         for i in range(ds.RasterCount):
             with pytest.raises(Exception):
@@ -3557,7 +3557,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip():
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/excessive-memory-TIFFFillStrip.tif")
         for i in range(ds.RasterCount):
             with pytest.raises(Exception):
@@ -3572,7 +3572,7 @@ def test_tiff_read_excessive_memory_TIFFFillStrip2():
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/excessive-memory-TIFFFillStrip2.tif")
         with pytest.raises(Exception):
             ds.GetRasterBand(1).Checksum()
@@ -3586,7 +3586,7 @@ def test_tiff_read_excessive_memory_TIFFFillTile():
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/excessive-memory-TIFFFillTile.tif")
         with pytest.raises(Exception):
             ds.GetRasterBand(1).Checksum()
@@ -3670,7 +3670,7 @@ def test_tiff_read_huge_number_strips():
     if md["LIBTIFF"] != "INTERNAL":
         pytest.skip("Test for internal libtiff")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/huge-number-strips.tif")
         with pytest.raises(Exception):
             ds.GetRasterBand(1).Checksum()
@@ -3684,7 +3684,7 @@ def test_tiff_read_huge_implied_number_strips():
     if not check_libtiff_internal_or_at_least(4, 0, 10):
         pytest.skip("Test for internal libtiff or external libtiff >= 4.0.10")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with gdal.ExceptionMgr(useExceptions=False):
             gdal.Open("data/huge-implied-number-strips.tif")
 
@@ -3742,7 +3742,7 @@ def test_tiff_read_corrupted_deflate_singlestrip():
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/corrupted_deflate_singlestrip.tif")
         with pytest.raises(Exception):
             ds.GetRasterBand(1).Checksum()
@@ -3757,7 +3757,7 @@ def test_tiff_read_packbits_not_enough_data():
     if not check_libtiff_internal_or_at_least(4, 0, 8):
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/packbits-not-enough-data.tif")
         with pytest.raises(Exception):
             ds.GetRasterBand(1).Checksum()
@@ -3844,7 +3844,7 @@ def test_tiff_read_stripoffset_types():
         ds = gdal.Open(filename)
         offsets = []
         for row in range(4):
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 mdi = ds.GetRasterBand(1).GetMetadataItem(
                     "BLOCK_OFFSET_0_%d" % row, "TIFF"
                 )
@@ -3870,7 +3870,7 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
     # Should error out with 'JPEGPreDecode:Reading this strip would require
     # libjpeg to allocate at least...'
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         os.environ["JPEGMEM"] = "10M"
         os.environ["LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER"] = "1000"
         ds = gdal.Open("/vsizip/data/eofloop_valid_huff.tif.zip")
@@ -3882,7 +3882,7 @@ def test_tiff_read_progressive_jpeg_denial_of_service():
     # Should error out with 'TIFFjpeg_progress_monitor:Scan number...
     gdal.ErrorReset()
     ds = gdal.Open("/vsizip/data/eofloop_valid_huff.tif.zip")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         os.environ["LIBTIFF_ALLOW_LARGE_LIBJPEG_MEM_ALLOC"] = "YES"
         os.environ["LIBTIFF_JPEG_MAX_ALLOWED_SCAN_NUMBER"] = "10"
         with pytest.raises(Exception):
@@ -3902,7 +3902,7 @@ def test_tiff_read_old_style_lzw():
 
     ds = gdal.Open("data/quad-lzw-old-style.tif")
     # Shut down warning about old style LZW
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == 34282
 
@@ -3949,12 +3949,12 @@ def test_tiff_read_jpeg_too_big_last_stripe():
         pytest.skip()
 
     ds = gdal.Open("data/tif_jpeg_too_big_last_stripe.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4557
 
     ds = gdal.Open("data/tif_jpeg_ycbcr_too_big_last_stripe.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == 4557
 
@@ -3966,7 +3966,7 @@ def test_tiff_read_jpeg_too_big_last_stripe():
 def test_tiff_read_negative_scaley():
 
     ds = gdal.Open("data/negative_scaley.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetGeoTransform()[5] == -60
 
     ds = gdal.Open("data/negative_scaley.tif")
@@ -4573,7 +4573,7 @@ def test_tiff_read_unhandled_codec_unknown_name():
 @pytest.mark.require_creation_option("GTiff", "JXL")
 def test_tiff_jxl_read_for_files_created_before_6393():
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/gtiff/jxl-rgbi.tif")
         dsorig = gdal.Open("data/rgba.tif")
 
@@ -5005,7 +5005,7 @@ def test_tiff_read_multi_threaded_vsicurl_window_not_aligned_on_blocks():
 def test_tiff_warning_get_metadata_item_PIXELTYPE():
 
     ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetRasterBand(1).GetMetadataItem("PIXELTYPE", "IMAGE_STRUCTURE")
     assert (
         gdal.GetLastErrorMsg()

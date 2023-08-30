@@ -461,7 +461,7 @@ def test_lcp_8():
     assert mem_drv is not None
     lcp_drv = gdal.GetDriverByName("LCP")
     assert lcp_drv is not None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         co = ["LATITUDE=0", "LINEAR_UNIT=METER"]
         for i in [0, 1, 2, 3, 4, 6, 9, 11]:
             src_ds = mem_drv.Create("", 10, 10, i, gdal.GDT_Int16)
@@ -910,7 +910,7 @@ def test_lcp_23():
     assert src_ds is not None
 
     bad = "NOT_A_REAL_OPTION"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         for option in [
             "ELEVATION_UNIT",
             "SLOPE_UNIT",
