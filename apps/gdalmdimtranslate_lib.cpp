@@ -904,20 +904,7 @@ static bool TranslateArray(
             }
         }
 
-        auto srcDimForGetDimensionDesc(srcDim);
-        if (idxSliceSpec >= 0)
-        {
-            const auto &viewSpec(viewSpecs[idxSliceSpec]);
-            auto iParentDim = viewSpec.m_mapDimIdxToParentDimIdx[i];
-            if (iParentDim != static_cast<size_t>(-1))
-                srcDimForGetDimensionDesc = srcArrayDims[iParentDim];
-        }
-
-        const auto poDimDesc = GetDimensionDesc(oDimRemapper, psOptions,
-                                                srcDimForGetDimensionDesc);
-        if (poDimDesc == nullptr)
-            return false;
-
+        const auto nDimSize = srcDim->GetSize();
         std::string newDimNameFullName(srcDimFullName);
         std::string newDimName(srcDim->GetName());
         int nIncr = 2;
@@ -927,7 +914,7 @@ static bool TranslateArray(
         auto oIter2 = mapDstDimFullNames.find(osDstGroupFullName + '/' +
                                               srcDim->GetName());
         while (oIter2 != mapDstDimFullNames.end() &&
-               oIter2->second->GetSize() != poDimDesc->nSize)
+               oIter2->second->GetSize() != nDimSize)
         {
             newDimName = srcDim->GetName() + CPLSPrintf("_%d", nIncr);
             newDimNameFullName = osDstGroupFullName + '/' + srcDim->GetName() +
@@ -936,15 +923,14 @@ static bool TranslateArray(
             oIter2 = mapDstDimFullNames.find(newDimNameFullName);
         }
         if (oIter2 != mapDstDimFullNames.end() &&
-            oIter2->second->GetSize() == poDimDesc->nSize)
+            oIter2->second->GetSize() == nDimSize)
         {
             dstArrayDims.emplace_back(oIter2->second);
             continue;
         }
 
         dstDim = poDstGroup->CreateDimension(newDimName, srcDim->GetType(),
-                                             srcDim->GetDirection(),
-                                             poDimDesc->nSize);
+                                             srcDim->GetDirection(), nDimSize);
         if (!dstDim)
             return false;
         if (!srcDimFullName.empty() && srcDimFullName[0] == '/')
@@ -1236,20 +1222,24 @@ static bool CopyGroup(
         }
     }
 
-    auto attrs = poSrcGroup->GetAttributes();
-    for (const auto &attr : attrs)
+    if (!(poSrcGroup == poSrcRootGroup && psOptions->aosGroup.empty()))
     {
-        auto dstAttr = poDstGroup->CreateAttribute(
-            attr->GetName(), attr->GetDimensionsSize(), attr->GetDataType());
-        if (!dstAttr)
+        auto attrs = poSrcGroup->GetAttributes();
+        for (const auto &attr : attrs)
         {
-            if (!psOptions->bStrict)
-                continue;
-            return false;
+            auto dstAttr = poDstGroup->CreateAttribute(
+                attr->GetName(), attr->GetDimensionsSize(),
+                attr->GetDataType());
+            if (!dstAttr)
+            {
+                if (!psOptions->bStrict)
+                    continue;
+                return false;
+            }
+            auto raw(attr->ReadAsRaw());
+            if (!dstAttr->Write(raw.data(), raw.size()) && !psOptions->bStrict)
+                return false;
         }
-        auto raw(attr->ReadAsRaw());
-        if (!dstAttr->Write(raw.data(), raw.size()) && !psOptions->bStrict)
-            return false;
     }
 
     auto arrayNames = poSrcGroup->GetMDArrayNames();
