@@ -30,7 +30,6 @@
 
 import struct
 
-import gdaltest
 import ogrtest
 import pytest
 
@@ -121,7 +120,7 @@ def test_rasterize_2():
 
     # Run the algorithm.
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         err = gdal.RasterizeLayer(
             target_ds,
             [3, 2, 1],
@@ -467,7 +466,7 @@ def test_rasterize_7():
 
     # Run the algorithm.
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         err = gdal.RasterizeLayer(
             target_ds,
             [1],

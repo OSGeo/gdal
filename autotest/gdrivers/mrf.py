@@ -161,7 +161,7 @@ def test_mrf(src_filename, chksum, chksum_after_reopening, options, jpeg_version
         if jpeg_version == "9b":
             pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/" + src_filename)
     if ds is None:
         pytest.skip()
@@ -399,7 +399,7 @@ def test_mrf_overview_nnb_implicit_level():
     assert cs == expected_cs
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.mrf:MRF:L3")
     assert ds is None
 
@@ -476,7 +476,7 @@ def test_raw_lerc():
             "/vsimem/out.mrf", "data/byte.tif", format="MRF", creationOptions=co
         )
         ds = gdal.Open("/vsimem/out.lrc")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             cs = ds.GetRasterBand(1).Checksum()
         expected_cs = 4819
         assert cs == expected_cs
@@ -486,7 +486,7 @@ def test_raw_lerc():
             ds = gdal.OpenEx(
                 "/vsimem/out.lrc", open_options=["@NDV=100, @datatype=UInt32"]
             )
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 cs = ds.GetRasterBand(1).Checksum()
             print(cs, opt)
             assert cs == 60065
@@ -504,7 +504,7 @@ def test_mrf_cached_source():
         creationOptions=["CACHEDSOURCE=invalid_source", "NOCOPY=TRUE"],
     )
     ds = gdal.Open("/vsimem/out.mrf")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     expected_cs = -1
     assert cs == expected_cs
@@ -623,7 +623,7 @@ def test_mrf_versioned():
     assert cs == expected_cs
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/out.mrf:MRF:V2")
     assert ds is None
 

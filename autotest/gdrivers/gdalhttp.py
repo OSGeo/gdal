@@ -162,7 +162,7 @@ def test_http_6():
 
 def test_http_ssl_verifystatus():
     with gdaltest.config_option("GDAL_HTTP_SSL_VERIFYSTATUS", "YES"):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # For now this URL doesn't support OCSP stapling...
             gdal.OpenEx("https://google.com", allowed_drivers=["HTTP"])
     last_err = gdal.GetLastErrorMsg()
@@ -192,7 +192,7 @@ def test_http_ssl_verifystatus():
 
 def test_http_use_capi_store():
     if sys.platform != "win32":
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             return test_http_use_capi_store_sub()
 
     # Prints this to stderr in many cases (but doesn't error)

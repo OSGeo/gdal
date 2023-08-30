@@ -141,10 +141,10 @@ def test_vrtderived_2():
     md["source_0"] = simpleSourceXML
 
     vrt_ds.GetRasterBand(1).SetMetadata(md, "vrt_sources")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = vrt_ds.GetRasterBand(1).Checksum()
     assert cs == -1
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = vrt_ds.GetRasterBand(1).WriteRaster(0, 0, 1, 1, " ")
     assert ret != 0
     vrt_ds = None
@@ -211,7 +211,7 @@ def test_vrtderived_4():
         "PixelFunctionType=dummy",
         "SourceTransferType=Invalid",
     ]
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = vrt_ds.AddBand(gdal.GDT_Byte, options)
     assert ret != 0, "invalid SourceTransferType value not detected"
 
@@ -341,12 +341,12 @@ def test_vrtderived_8():
 
     with gdal.config_option("GDAL_VRT_ENABLE_PYTHON", "NO"):
         ds = gdal.Open("data/vrt/n43_hillshade.vrt")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             cs = ds.GetRasterBand(1).Checksum()
     assert cs == -1, "invalid checksum"
 
     ds = gdal.Open("data/vrt/n43_hillshade.vrt")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     assert cs == -1, "invalid checksum"
 
@@ -365,7 +365,7 @@ def test_vrtderived_9():
         pytest.skip()
 
     # Missing PixelFunctionType
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -377,7 +377,7 @@ def test_vrtderived_9():
     assert ds is None
 
     # Unsupported PixelFunctionLanguage
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -390,7 +390,7 @@ def test_vrtderived_9():
     assert ds is None
 
     # PixelFunctionCode can only be used with Python
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -407,7 +407,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
     assert ds is None
 
     # BufferRadius can only be used with Python
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -420,7 +420,7 @@ def identity(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize
     assert ds is None
 
     # Invalid BufferRadius
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             """<VRTDataset rasterXSize="10" rasterYSize="10">
   <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
@@ -593,7 +593,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
 </VRTDataset>
 """
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != -1:
         print(gdal.GetLastErrorMsg())
@@ -614,7 +614,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
 </VRTDataset>
 """
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != -1:
         print(gdal.GetLastErrorMsg())
@@ -630,7 +630,7 @@ def my_func(in_ar, out_ar, xoff, yoff, xsize, ysize, raster_xsize, raster_ysize,
 </VRTDataset>
 """
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != -1:
         print(gdal.GetLastErrorMsg())
@@ -675,7 +675,7 @@ def test_vrtderived_10():
 
     # GDAL_VRT_TRUSTED_MODULES not defined
     ds = gdal.Open(content)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         cs = ds.GetRasterBand(1).Checksum()
     if cs != -1:
         print(gdal.GetLastErrorMsg())

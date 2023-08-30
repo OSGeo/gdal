@@ -51,7 +51,7 @@ def module_disable_exceptions():
 
 def test_ogr_vrt_1():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Complains about dummySrcDataSource as expected.
         gdaltest.vrt_ds = ogr.Open("data/vrt/vrt_test.vrt")
 
@@ -358,7 +358,7 @@ def test_ogr_vrt_11():
 
     # The x and y fields are considered as string by default, so spatial
     # filter cannot be turned into attribute filter
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_lyr.SetSpatialFilterRect(0, 40, 10, 49.5)
         ret = vrt_lyr.GetFeatureCount()
     assert gdal.GetLastErrorMsg().find("not declared as numeric fields") != -1
@@ -480,7 +480,7 @@ def test_ogr_vrt_14():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         try:
             ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
         except AttributeError:
@@ -821,7 +821,7 @@ def test_ogr_vrt_20():
     if gdaltest.vrt_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         try:
             ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/test.shp")
         except AttributeError:
@@ -1028,7 +1028,7 @@ def ogr_vrt_21_internal():
 
 
 def test_ogr_vrt_21():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr_vrt_21_internal()
 
 
@@ -1147,7 +1147,7 @@ def ogr_vrt_22_internal():
 
 
 def test_ogr_vrt_22():
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr_vrt_22_internal()
 
 
@@ -1187,7 +1187,7 @@ def test_ogr_vrt_23(shared_ds_flag=""):
     assert ds is not None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetLayer(0).GetLayerDefn()
         ds.GetLayer(0).GetFeatureCount()
     assert gdal.GetLastErrorMsg() != "", "error expected !"
@@ -1223,7 +1223,7 @@ def test_ogr_vrt_24():
     assert ds is not None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetLayer(0).GetLayerDefn()
         ds.GetLayer(0).GetFeatureCount()
     assert gdal.GetLastErrorMsg() != "", "error expected !"
@@ -1238,7 +1238,7 @@ def test_ogr_vrt_24():
 
 def test_ogr_vrt_25():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/vrt_test.vrt")
 
     # test3 layer just declares fid, and implicit fields (so all source
@@ -1370,7 +1370,7 @@ def test_ogr_vrt_27():
 
 def test_ogr_vrt_28():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("<OGRVRTDataSource></foo>")
     assert ds is None
 
@@ -1378,18 +1378,18 @@ def test_ogr_vrt_28():
         "/vsimem/ogr_vrt_28_invalid.vrt",
         "<bla><OGRVRTDataSource></OGRVRTDataSource></bla>",
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("/vsimem/ogr_vrt_28_invalid.vrt")
     assert ds is None
     gdal.Unlink("/vsimem/ogr_vrt_28_invalid.vrt")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/invalid.vrt")
     assert ds is not None
 
     for i in range(ds.GetLayerCount()):
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr = ds.GetLayer(i)
             lyr.GetNextFeature()
         assert (
@@ -1398,15 +1398,15 @@ def test_ogr_vrt_28():
 
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open("<OGRVRTDataSource><OGRVRTLayer/></OGRVRTDataSource>")
     assert gdal.GetLastErrorMsg() != "", "expected error message on datasource opening"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/invalid2.vrt")
     assert gdal.GetLastErrorMsg() != "", "expected error message on datasource opening"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/invalid3.vrt")
     assert gdal.GetLastErrorMsg() != "", "expected error message on datasource opening"
 
@@ -1441,7 +1441,7 @@ def test_ogr_vrt_29():
     ds = None
 
     # Invalid source layer
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
             """<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
@@ -1455,7 +1455,7 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Non-spatial layer
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
             """<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
@@ -1469,7 +1469,7 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Missing TargetSRS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
             """<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
@@ -1482,7 +1482,7 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Invalid TargetSRS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
             """<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
@@ -1496,7 +1496,7 @@ def test_ogr_vrt_29():
     assert gdal.GetLastErrorMsg() != ""
 
     # Invalid SrcSRS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(
             """<OGRVRTDataSource>
         <OGRVRTWarpedLayer>
@@ -1616,20 +1616,20 @@ def test_ogr_vrt_29():
     ds = ogr.Open("tmp/ogr_vrt_29.vrt")
     lyr = ds.GetLayer(0)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.DeleteFeature(1)
     assert ret != 0
 
     feat = lyr.GetNextFeature()
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
     feat = None
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(500000 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(feat)
     assert ret != 0
     feat = None
@@ -1670,14 +1670,14 @@ def test_ogr_vrt_29():
     lyr.SetAttributeFilter("id = 1000")
 
     # Reprojection will fail
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = lyr.GetNextFeature()
     fid = feat.GetFID()
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
         pytest.fail()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = lyr.GetFeature(fid)
     if feat.GetGeometryRef() is not None:
         feat.DumpReadable()
@@ -1706,14 +1706,14 @@ def test_ogr_vrt_29():
 
     feat = lyr.GetNextFeature()
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-180 91)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
     feat = None
 
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometry(ogr.CreateGeometryFromWkt("POINT(-180 91)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(feat)
     assert ret != 0
     feat = None
@@ -1932,7 +1932,7 @@ def test_ogr_vrt_30():
             # CreateFeature() should fail
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -1941,7 +1941,7 @@ def test_ogr_vrt_30():
             lyr.ResetReading()
             feat = lyr.GetNextFeature()
             feat.SetField("id2", 45321)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2091,7 +2091,7 @@ def test_ogr_vrt_30():
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("source_layer", "random_name")
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2099,7 +2099,7 @@ def test_ogr_vrt_30():
             # unset source_layer name with CreateFeature()
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2109,7 +2109,7 @@ def test_ogr_vrt_30():
             feat.SetFID(999999)
             feat.SetField("source_layer", "ogr_vrt_30_2")
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.CreateFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2126,13 +2126,13 @@ def test_ogr_vrt_30():
 
             # invalid source_layer name with SetFeature()
             feat.SetField("source_layer", "random_name")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
 
             # unset source_layer name with SetFeature()
             feat.UnsetField("source_layer")
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
 
@@ -2140,7 +2140,7 @@ def test_ogr_vrt_30():
             feat = ogr.Feature(lyr.GetLayerDefn())
             feat.SetField("source_layer", "ogr_vrt_30_2")
             feat.SetField("id2", 12345)
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = lyr.SetFeature(feat)
             assert ret != 0, "should have failed"
             feat = None
@@ -2233,7 +2233,7 @@ def test_ogr_vrt_31(shared_ds_flag=""):
     assert ds is not None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.GetLayer(0).GetLayerDefn()
         ds.GetLayer(0).GetFeatureCount()
     assert gdal.GetLastErrorMsg() != "", "error expected !"
@@ -2581,7 +2581,7 @@ def test_ogr_vrt_33():
         <TargetSRS>EPSG:32631</TargetSRS>
     </OGRVRTWarpedLayer>
 </OGRVRTDataSource>"""
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open(ds_str)
     assert gdal.GetLastErrorMsg() != ""
 
@@ -3211,13 +3211,13 @@ def test_ogr_vrt_36():
 
 def test_ogr_vrt_37():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/vrt_test.vrt")
 
     lyr = ds.GetLayerByName("test6")
     assert lyr.GetGeomType() == ogr.wkbNone
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/vrt/vrt_test.vrt")
 
     lyr = ds.GetLayerByName("test6")
@@ -3387,7 +3387,7 @@ def test_ogr_vrt_41():
 </OGRVRTDataSource>"""
     )
     lyr = ds.GetLayer(0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetExtent()
 
 

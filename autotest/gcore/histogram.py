@@ -747,7 +747,7 @@ def test_histogram_errors():
 def test_histogram_invalid_min_max(min, max):
 
     ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         ret = ds.GetRasterBand(1).GetHistogram(
             buckets=2, min=min, max=max, include_out_of_range=1, approx_ok=0

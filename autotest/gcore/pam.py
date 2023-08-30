@@ -372,7 +372,7 @@ def test_pam_11():
     stats = ds.GetRasterBand(1).ComputeStatistics(False)
     assert stats[0] == 74, "did not get expected minimum"
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = None
     error_msg = gdal.GetLastErrorMsg()
     assert error_msg.startswith(

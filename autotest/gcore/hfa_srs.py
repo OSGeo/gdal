@@ -259,7 +259,7 @@ def test_hfa_srs_NAD83_CORS96_UTM():
 
 def test_hfa_srs_esri_54049_pe_string_only_broken():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("../gdrivers/data/hfa/esri_54049_pe_string_only_broken.img")
     assert gdal.GetLastErrorType() == gdal.CE_Warning
     srs_got = ds.GetSpatialRef()

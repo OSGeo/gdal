@@ -175,7 +175,7 @@ def test_dted_7():
     ds = gdal.Open("data/dted/n43_wgs72.dt0")
 
     # a warning is issued
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         prj = ds.GetProjection()
 
     assert gdal.GetLastErrorMsg() is not None, "An expected warning was not emitted"

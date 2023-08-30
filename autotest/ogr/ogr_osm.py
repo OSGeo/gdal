@@ -296,7 +296,7 @@ def test_ogr_osm_3(options=None, all_layers=False):
         layers = ""
     else:
         layers = "points lines multipolygons multilinestrings "
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.VectorTranslate(
             "tmp/ogr_osm_3", "data/osm/test.pbf", options=layers + options
         )
@@ -358,7 +358,7 @@ def test_ogr_osm_4():
     feat = lyr.GetNextFeature()
     assert feat is None, "Zero filter "
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.SetSpatialFilter(None)
 
         # Change layer
@@ -555,7 +555,7 @@ def test_ogr_osm_10():
         ds = ogr.Open("/vsimem/foo.osm")
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             feat = lyr.GetNextFeature()
         assert gdal.GetLastErrorMsg() != ""
         ds = None
@@ -571,7 +571,7 @@ def test_ogr_osm_10():
     ds = ogr.Open("/vsimem/foo.pbf")
     lyr = ds.GetLayer(0)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = lyr.GetNextFeature()
     assert gdal.GetLastErrorMsg() != ""
     ds = None
@@ -583,7 +583,7 @@ def test_ogr_osm_10():
         ds = ogr.Open("data/osm/billionlaugh.osm")
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             feat = lyr.GetNextFeature()
         assert feat is None and gdal.GetLastErrorMsg() != ""
 
@@ -666,7 +666,7 @@ def test_ogr_osm_13():
         """<osm><node id="123" lon="2" lat="49"><tag k="osm_id" v="0"/></node></osm>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("/vsimem/ogr_osm_13.osm")
     if ds is None:
         gdal.Unlink("/vsimem/ogr_osm_13.osm")
@@ -711,7 +711,7 @@ def test_ogr_osm_14():
 </osm>""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("/vsimem/ogr_osm_14.osm")
     if ds is None:
         gdal.Unlink("/vsimem/ogr_osm_14.osm")
@@ -855,7 +855,7 @@ def test_ogr_osm_17():
     if not ogrtest.osm_drv_parse_osm:
         pytest.skip("Expat support missing")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.VectorTranslate(
             "/vsimem/ogr_osm_17", "data/osm/empty.osm", options="-skip"
         )

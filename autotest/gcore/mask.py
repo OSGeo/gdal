@@ -481,7 +481,7 @@ def test_mask_14():
     src_ds = None
 
     # The only flag value supported for internal mask is GMF_PER_DATASET
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
             ret = ds.CreateMaskBand(0)
     assert ret != 0, "Error expected"
@@ -500,13 +500,13 @@ def test_mask_14():
     assert cs == 400, "Got wrong checksum for the mask (2)"
 
     # This TIFF dataset has already an internal mask band
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
             ret = ds.CreateMaskBand(gdal.GMF_PER_DATASET)
     assert ret != 0, "Error expected"
 
     # This TIFF dataset has already an internal mask band
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         with gdaltest.config_option("GDAL_TIFF_INTERNAL_MASK", "YES"):
             ret = ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
     assert ret != 0, "Error expected"
@@ -916,7 +916,7 @@ def test_mask_25():
     ds.SetMetadataItem("INTERNAL_MASK_FLAGS_2", "0")
     ds = None
     ds = gdal.Open("/vsimem/mask_25.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetRasterBand(2).GetMaskFlags() == gdal.GMF_ALL_VALID
     ds = None
     gdal.Unlink("/vsimem/mask_25.tif")
@@ -925,14 +925,14 @@ def test_mask_25():
     # Invalid sequences of CreateMaskBand() calls
     ds = gdal.GetDriverByName("GTiff").Create("/vsimem/mask_25.tif", 1, 1, 2)
     ds.GetRasterBand(1).CreateMaskBand(gdal.GMF_PER_DATASET)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.GetRasterBand(2).CreateMaskBand(0) != 0
     ds = None
     gdal.Unlink("/vsimem/mask_25.tif")
     gdal.Unlink("/vsimem/mask_25.tif.msk")
 
     # CreateMaskBand not supported by this dataset
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
         ds.CreateMaskBand(0)
 

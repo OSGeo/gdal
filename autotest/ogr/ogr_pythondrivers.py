@@ -108,7 +108,7 @@ def test_pythondrivers_missing_metadata():
     with gdaltest.config_option(
         "GDAL_PYTHON_DRIVER_PATH", "data/pydrivers/missingmetadata"
     ):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.AllRegister()
     assert gdal.GetLastErrorMsg() != ""
     assert gdal.GetDriverCount() == count_before
@@ -130,7 +130,7 @@ def test_pythondrivers_no_driver_class():
         gdal.AllRegister()
     drv = ogr.GetDriverByName("NO_DRIVER_CLASS")
     assert drv
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open("FOO:")
     assert gdal.GetLastErrorMsg() != ""
 
@@ -145,7 +145,7 @@ def test_pythondrivers_missing_identify():
         gdal.AllRegister()
     drv = ogr.GetDriverByName("MISSING_IDENTIFY")
     assert drv
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.Open("FOO:")
     assert gdal.GetLastErrorMsg() != ""
 

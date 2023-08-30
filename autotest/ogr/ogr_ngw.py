@@ -120,7 +120,7 @@ def startup_and_cleanup():
 def test_ogr_ngw_2():
 
     create_url = "NGW:" + gdaltest.ngw_test_server + "/resource/0/" + get_new_name()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.ngw_ds = gdal.GetDriverByName("NGW").Create(
             create_url,
             0,
@@ -286,7 +286,7 @@ def test_ogr_ngw_5():
 
     # Test forbidden field names.
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         fld_defn = ogr.FieldDefn("id", ogr.OFTInteger)
         lyr.CreateField(fld_defn)
     assert gdal.GetLastErrorMsg() != "", "Expecting a warning"
@@ -474,7 +474,7 @@ def test_ogr_ngw_7():
     lyr.DeleteFeature(f.GetFID())
 
     # Expected fail to get feature
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = lyr.GetFeature(f.GetFID())
     assert f is None, "Failed to delete feature #{}.".format(f.GetFID())
 

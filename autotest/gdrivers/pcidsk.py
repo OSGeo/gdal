@@ -246,7 +246,7 @@ def pcidsk_9():
     ds.CreateLayer("foo")
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/pcidsk_9.pix")
     assert ds is None
     ds = None
@@ -729,7 +729,7 @@ def test_pcidsk_online_rpc():
 )
 def test_pcidsk_invalid_files(filename):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.VSIStatL(filename) is not None
         assert gdal.Open(filename) is None
 

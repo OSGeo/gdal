@@ -416,7 +416,7 @@ def test_ogr_gml_9():
     dst_feat.SetFieldBinaryFromHexString("test", "80626164")  # \x80bad'
 
     # Avoid the warning
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(dst_feat)
 
     assert ret == 0, "CreateFeature failed."
@@ -681,7 +681,7 @@ def test_ogr_gml_14():
             "GML_SAVE_RESOLVED_TO": "tmp/cache/xlink1resolved.gml",
         }
     ):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gml_ds = ogr.Open("tmp/cache/xlink1.gml")
     gml_ds = None
 
@@ -3560,7 +3560,7 @@ def test_ogr_gml_69():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -3568,7 +3568,7 @@ def test_ogr_gml_69():
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -3907,7 +3907,7 @@ def test_ogr_gml_76():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("/vsisparse/data/gml/huge_attribute_gml_sparse.xml")
         if ds is not None:
             lyr = ds.GetLayer(0)
@@ -4176,7 +4176,7 @@ def test_ogr_gml_gml2_write_geometry_error():
     f.SetGeometry(
         ogr.CreateGeometryFromWkt("GEOMETRYCOLLECTION(POINT(0 0), TIN EMPTY)")
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.CreateFeature(f)
     ds = None
 
@@ -4316,7 +4316,7 @@ def test_ogr_gml_unique(gml_format, constraint_met):
             if constraint_met:
                 validate("/vsimem/test_ogr_gml_unique.gml")
             else:
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     with pytest.raises(Exception):
                         validate("/vsimem/test_ogr_gml_unique.gml")
 
@@ -4496,7 +4496,7 @@ def test_ogr_gml_too_nested():
 
     gdal.Unlink("data/gml/too_nested.gfs")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/gml/too_nested.gml")
         lyr = ds.GetLayer(0)
         assert lyr.GetNextFeature() is None
@@ -4718,7 +4718,7 @@ def test_ogr_gml_read_boundedby_invalid():
     if not gdaltest.have_gml_reader:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "data/gml/only_boundedby_invalid.gml", open_options=["USE_BBOX=YES"]
         )

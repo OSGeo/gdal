@@ -1558,7 +1558,7 @@ def test_gml_invalid_geoms():
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             # print gml
             geom = ogr.CreateGeometryFromGML(gml)
         if geom is None:

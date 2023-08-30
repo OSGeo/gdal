@@ -72,7 +72,7 @@ def test_georaster_init():
     if gdaltest.oci_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         rs = gdaltest.oci_ds.ExecuteSQL("select owner from all_sdo_geor_sysdata")
 
     err_msg = gdal.GetLastErrorMsg()

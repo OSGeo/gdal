@@ -484,7 +484,7 @@ def test_hfa_mapinformation_units():
     # NOTE: we depend on being able to open .aux files as a weak sort of
     # dataset.
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/hfa/fg118-91.aux")
 
     wkt = ds.GetProjectionRef()
@@ -932,7 +932,7 @@ def test_hfa_ov_nodata():
     assert ovb.GetMaskFlags() == gdal.GMF_NODATA, "mask flag not as expected."
 
     # Confirm that a .ovr file was *not* produced.
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         try:
             wrk3_ds = gdal.Open("/vsimem/ov_nodata.img.ovr")
         except Exception:

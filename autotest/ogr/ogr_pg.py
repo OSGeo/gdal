@@ -109,7 +109,7 @@ def test_ogr_pg_1():
     # gdaltest.pg_connection_string='dbname=autotest port=5436 user=postgres'
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdaltest.pg_ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
     except Exception:
         gdaltest.pg_ds = None
@@ -147,12 +147,12 @@ def test_ogr_pg_1():
         if gdaltest.pg_version >= (8, 2):
             gdaltest.pg_retrieve_fid = True
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = gdaltest.pg_ds.ExecuteSQL("SHOW standard_conforming_strings")
     gdaltest.pg_quote_with_E = sql_lyr is not None
     gdaltest.pg_ds.ReleaseResultSet(sql_lyr)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT postgis_version()")
         gdaltest.pg_has_postgis = sql_lyr is not None
         gdaltest.pg_has_postgis_2 = False
@@ -186,7 +186,7 @@ def test_ogr_pg_2():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpoly")
 
     ######################################################
@@ -622,7 +622,7 @@ def test_ogr_pg_update_feature():
         assert feat.GetGeometryRef() is None
 
         feat = ogr.Feature(lyr.GetLayerDefn())
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert lyr.UpdateFeature(feat, [], [0], False) != ogr.OGRERR_NONE
 
         feat = ogr.Feature(lyr.GetLayerDefn())
@@ -677,7 +677,7 @@ def test_ogr_pg_11():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpolycopy")
 
     with gdal.config_option("PG_USE_COPY", "NO"):
@@ -762,7 +762,7 @@ def test_ogr_pg_13():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:datetest")
 
     ######################################################
@@ -1256,7 +1256,7 @@ def test_ogr_pg_23():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:datatypetest")
 
     ######################################################
@@ -1579,7 +1579,7 @@ def test_ogr_pg_28():
 
         ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds.ExecuteSQL("DELLAYER:datatypetest2")
 
         ds.ExecuteSQL('set timezone to "UTC"')
@@ -1651,7 +1651,7 @@ def test_ogr_pg_30():
 
         ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds.ExecuteSQL("DELLAYER:datatypetest2")
 
         ds.ExecuteSQL('set timezone to "UTC"')
@@ -1918,7 +1918,7 @@ def test_ogr_pg_35():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         try:
             gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer("testoverflows")
             ogrtest.quick_create_layer_def(
@@ -1929,7 +1929,7 @@ def test_ogr_pg_35():
         except Exception:
             pass
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         try:
             gdaltest.pg_lyr = gdaltest.pg_ds.CreateLayer(
                 "testoverflows",
@@ -2245,7 +2245,7 @@ def test_ogr_pg_41():
     layer = ds.GetLayerByName("public.tpoly")
     assert layer.GetFeatureCount() == 19, "wrong feature count"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:test41")
 
     ds.CreateLayer("test41")
@@ -2355,7 +2355,7 @@ def test_ogr_pg_44():
     feat.Destroy()
 
     gdaltest.pg_ds.ExecuteSQL('ALTER TABLE "select" RENAME COLUMN "ogc_fid" to "AND"')
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:from")
 
     ds = ogr.Open("PG:" + gdaltest.pg_connection_string, update=1)
@@ -2387,7 +2387,7 @@ def test_ogr_pg_44():
     layer.ResetReading()
     feat = layer.GetNextFeature()
     assert feat.GetGeometryRef().ExportToWkt() == "POINT (0.5 0.5 1)"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert layer.Rename("from") != ogr.OGRERR_NONE
     assert layer.Rename("select") == ogr.OGRERR_NONE
 
@@ -2522,7 +2522,7 @@ def test_ogr_pg_47():
 
     # Only geographic SRS is supported
     srs.ImportFromEPSG(32631)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = gdaltest.pg_ds.CreateLayer(
             "test_geog",
             srs=srs,
@@ -2890,7 +2890,7 @@ def test_ogr_pg_53():
     feat = lyr.GetNextFeature()
     assert feat.GetField(0) == "bar"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.CreateLayer("no_geometry_table", geom_type=ogr.wkbNone)
     assert lyr is None, "layer creation should have failed"
 
@@ -3997,7 +3997,7 @@ def test_ogr_pg_73():
         # Error case: missing geometry
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetField("field_not_nullable", "not_null")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = lyr.CreateFeature(f)
         assert ret != 0
         f = None
@@ -4005,7 +4005,7 @@ def test_ogr_pg_73():
         # Error case: missing non-nullable field
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = lyr.CreateFeature(f)
         assert ret != 0
         f = None
@@ -4342,7 +4342,7 @@ def test_ogr_pg_75():
     )
 
     lyr.CreateField(ogr.FieldDefn("str", ogr.OFTString))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateField(ogr.FieldDefn("myfid", ogr.OFTString))
     assert ret != 0
 
@@ -4376,16 +4376,16 @@ def test_ogr_pg_75():
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetFID(1)
     feat.SetField("myfid", 10)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(feat)
     assert ret != 0
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
 
     feat.UnsetField("myfid")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(feat)
     assert ret != 0
 
@@ -4570,7 +4570,7 @@ def ogr_pg_76_scenario2(lyr1, lyr2):
 
     # Try to re-enter a transaction
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdaltest.pg_ds.StartTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(
@@ -4633,7 +4633,7 @@ def ogr_pg_76_scenario2(lyr1, lyr2):
 
     # Try to re-commit a transaction
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdaltest.pg_ds.CommitTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(
@@ -4643,7 +4643,7 @@ def ogr_pg_76_scenario2(lyr1, lyr2):
 
     # Try to rollback a non-transaction
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdaltest.pg_ds.RollbackTransaction()
     assert not (gdal.GetLastErrorMsg() == "" or ret == 0)
     (lastcmd, level, savepoint, usertransac) = ogr_pg_76_get_transaction_state(
@@ -4677,7 +4677,7 @@ def ogr_pg_76_scenario3(lyr1, lyr2):
     assert (lastcmd, level, savepoint, usertransac) == ("COMMIT", 0, 0, 0)
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = lyr1.GetNextFeature()
     assert gdal.GetLastErrorMsg() != "" and f is None
 
@@ -5009,7 +5009,7 @@ def test_ogr_pg_79():
     assert gdal.GetLastErrorMsg() == ""
 
     # Test wrong PRELUDE_STATEMENTS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenEx(
             "PG:" + gdaltest.pg_connection_string,
             gdal.OF_VECTOR | gdal.OF_UPDATE,
@@ -5030,7 +5030,7 @@ def test_ogr_pg_79():
         ],
     )
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = None
     assert gdal.GetLastErrorMsg() != ""
 
@@ -5045,7 +5045,7 @@ def test_ogr_pg_80(with_and_without_postgis):
         pytest.skip()
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         sql_lyr = gdaltest.pg_ds.ExecuteSQL("SELECT FROM")
     assert gdal.GetLastErrorMsg() != ""
     assert sql_lyr is None
@@ -5095,7 +5095,7 @@ def test_ogr_pg_81(with_and_without_postgis):
 2,2""",
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.VectorTranslate(
             "PG:" + gdaltest.pg_connection_string,
             "/vsimem/ogr_pg_81",
@@ -5589,7 +5589,7 @@ def test_ogr_pg_unique():
     fld_defn = ogr.FieldDefn("without_unique", ogr.OFTString)
     fld_defn.SetUnique(False)
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             lyr.AlterFieldDefn(
                 feat_defn.GetFieldIndex(fld_defn.GetName()),
@@ -5868,7 +5868,7 @@ def test_ogr_pg_alter_geom_field_defn():
     test_ds = None
 
     # Error cases
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Invalid index
         assert (
             lyr.AlterGeomFieldDefn(
@@ -6000,12 +6000,12 @@ def test_ogr_pg_get_geometry_types():
         assert ogr.wkbNone in res
         assert len(res) == 3
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with gdaltest.config_option("OGR_PG_DEBUG_GGT_CANCEL", "YES"):
                 with pytest.raises(Exception):
                     lyr.GetGeometryTypes(callback=lambda x, y, z: 0)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             with pytest.raises(Exception):
                 lyr.GetGeometryTypes(geom_field=2)
 
@@ -6315,7 +6315,7 @@ def test_ogr_pg_long_identifiers():
     long_name = "test_" + ("X" * 64) + "_long_name"
     short_name = "test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr = gdaltest.pg_ds.CreateLayer(long_name)
         assert lyr.GetName() == short_name
         f = ogr.Feature(lyr.GetLayerDefn())
@@ -6340,7 +6340,7 @@ def _test_ogr_pg_table_cleanup():
     if gdaltest.pg_ds is None:
         pytest.skip()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpoly")
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:tpolycopy")
         gdaltest.pg_ds.ExecuteSQL("DELLAYER:test_for_tables_equal_param")

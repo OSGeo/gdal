@@ -33,7 +33,6 @@
 import random
 import shutil
 
-import gdaltest
 import ogrtest
 import pytest
 
@@ -118,7 +117,7 @@ def test_ogr_fgdb_stress_1():
                 f.SetFID(fid)
                 f.SetField(0, "%d" % random.randrange(0, 1000))
                 f.SetGeometry(ogr.CreateGeometryFromWkt(wkt))
-                with gdaltest.error_handler():
+                with gdal.quiet_errors():
                     ret.append(lyr.CreateFeature(f))
                 # So to ensure lyr_ref will use the same FID as the tested layer
                 fid = f.GetFID()

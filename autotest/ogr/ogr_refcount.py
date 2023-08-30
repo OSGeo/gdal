@@ -30,7 +30,7 @@
 import gdaltest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 
 ###############################################################################
@@ -96,7 +96,7 @@ def test_ogr_refcount_3():
 
 def test_ogr_refcount_4():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogr.GetOpenDS(0)
 
 

@@ -108,7 +108,7 @@ def test_pds_2():
 def test_pds_3():
 
     # Shut down warning about missing projection
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         tst = gdaltest.GDALTest("PDS", "pds/EN0001426030M_truncated.IMG", 1, 1367)
 

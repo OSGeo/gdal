@@ -81,12 +81,12 @@ def test_misc_2():
 @pytest.mark.require_driver("PAUX")
 def test_misc_3():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.OpenShared("../gdrivers/data/paux/small16.aux")
     ds.GetRasterBand(1).Checksum()
     cache_size = gdal.GetCacheUsed()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds2 = gdal.OpenShared("../gdrivers/data/paux/small16.aux")
     ds2.GetRasterBand(1).Checksum()
     cache_size2 = gdal.GetCacheUsed()
@@ -104,7 +104,7 @@ def test_misc_3():
 
 def test_misc_4():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         # Test a few invalid argument
         drv = gdal.GetDriverByName("GTiff")
@@ -205,7 +205,7 @@ def _misc_5_internal(drv, datatype, nBands):
 
 def test_misc_5():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         try:
             shutil.rmtree("tmp/tmp")
@@ -457,7 +457,7 @@ def misc_6_internal(datatype, nBands, setDriversDone):
 
 def test_misc_6():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
 
         try:
             shutil.rmtree("tmp/tmp")
@@ -669,7 +669,7 @@ def test_misc_12():
             )
 
             # Test to detect crashes
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ds = drv.CreateCopy("/nonexistingpath" + get_filename(drv, ""), src_ds)
             if ds is None and gdal.GetLastErrorMsg() == "":
                 gdal.Unlink("/vsimem/misc_12_src.tif")
@@ -720,7 +720,7 @@ def test_misc_13():
 
     # Raster-only -> vector-only
     ds = gdal.Open("data/byte.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("ESRI Shapefile").CreateCopy(
             "/vsimem/out.shp", ds
         )
@@ -728,7 +728,7 @@ def test_misc_13():
 
     # Raster-only -> vector-only
     ds = gdal.OpenEx("../ogr/data/poly.shp", gdal.OF_VECTOR)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.GetDriverByName("GTiff").CreateCopy("/vsimem/out.tif", ds)
     assert out_ds is None
 

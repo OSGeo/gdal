@@ -147,7 +147,7 @@ def test_sentinel2_l1c_1():
         "SENTINEL2_L1C:%s:50m:EPSG_32632" % filename_xml,
         "SENTINEL2_L1C:%s:10m:EPSG_32633" % filename_xml,
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(name)
         assert ds is None, name
 
@@ -339,11 +339,11 @@ def test_sentinel2_l1c_5():
 """,
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632")
     assert ds is None
 
@@ -418,12 +418,12 @@ def test_sentinel2_l1c_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Open("/vsimem/test.xml")
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632")
     assert ds is None
 
@@ -437,12 +437,12 @@ def test_sentinel2_l1c_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632")
     assert ds is None
 
@@ -457,12 +457,12 @@ def test_sentinel2_l1c_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1C:/vsimem/test.xml:10m:EPSG_32632")
     assert ds is None
 
@@ -480,7 +480,7 @@ def test_sentinel2_l1c_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
@@ -503,7 +503,7 @@ def test_sentinel2_l1c_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
@@ -588,7 +588,7 @@ def test_sentinel2_l1c_7():
     )
 
     # Open with missing tile
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1C:/vsimem/test.xml:60m:EPSG_32753")
     ds = None
 
@@ -695,7 +695,7 @@ def test_sentinel2_l1c_tile_1():
         "SENTINEL2_L1C_TILE:%s" % filename_xml,
         "SENTINEL2_L1C_TILE:%s:" % filename_xml,
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(name)
         assert ds is None, name
 
@@ -982,11 +982,11 @@ def test_sentinel2_l1c_tile_6():
 """,
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1C_TILE:/vsimem/test.xml:10m")
     assert ds is None
 
@@ -1020,7 +1020,7 @@ def test_sentinel2_l1c_tile_6():
     # Just tell it doesn't crash without any tile
     gdal.Open("/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             "SENTINEL2_L1C_TILE:/vsimem/GRANULE/S2A_OPER_MSI_L1C_bla_N01.03/S2A_OPER_MTD_L1C_bla.xml:10m"
         )
@@ -1108,7 +1108,7 @@ def test_sentinel2_l1b_1():
         "SENTINEL2_L1B:%s:" % filename_xml,
         "SENTINEL2_L1B:%s:30m" % filename_xml,
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(name)
         assert ds is None, name
 
@@ -1378,7 +1378,7 @@ def test_sentinel2_l1b_4():
     )
 
     # Open with missing tile
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(
             "SENTINEL2_L1B:/vsimem/foo/GRANULE/S2B_OPER_MTD_L1B_N01.03/S2B_OPER_MTD_L1B.xml:60m"
         )
@@ -1475,7 +1475,7 @@ def test_sentinel2_l1b_5():
 """,
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
@@ -1489,7 +1489,7 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
@@ -1504,12 +1504,12 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1B:/vsimem/test.xml:10m")
     assert ds is None
 
@@ -1527,7 +1527,7 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
@@ -1550,7 +1550,7 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
@@ -1561,12 +1561,12 @@ def test_sentinel2_l1b_5():
 """,
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1B:/vsimem/test.xml:10m")
     assert ds is None
 
@@ -1582,7 +1582,7 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1B:/vsimem/test.xml:10m")
     assert ds is None
 
@@ -1604,7 +1604,7 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1B:/vsimem/test.xml:10m")
     assert ds is None
 
@@ -1626,7 +1626,7 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1B:/vsimem/test.xml:10m")
     assert ds is None
 
@@ -1644,7 +1644,7 @@ def test_sentinel2_l1b_5():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L1B:/vsimem/test.xml:10m")
     assert ds is None
     gdal.Unlink("/vsimem/test.xml")
@@ -1757,7 +1757,7 @@ def test_sentinel2_l2a_1():
         "SENTINEL2_L2A:%s:50m:EPSG_32632" % filename_xml,
         "SENTINEL2_L2A:%s:10m:EPSG_32633" % filename_xml,
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(name)
         assert ds is None, name
 
@@ -1925,11 +1925,11 @@ def test_sentinel2_l2a_3():
 """,
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/test.xml")
     assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L2A:/vsimem/test.xml:10m:EPSG_32632")
     assert ds is None
 
@@ -1975,12 +1975,12 @@ def test_sentinel2_l2a_3():
     )
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Open("/vsimem/test.xml")
     assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("SENTINEL2_L2A:/vsimem/test.xml:10m:EPSG_32632")
     assert ds is None
 
@@ -2092,7 +2092,7 @@ def test_sentinel2_l2a_4():
         "SENTINEL2_L2A:%s:50m:EPSG_32632" % filename_xml,
         "SENTINEL2_L2A:%s:10m:EPSG_32633" % filename_xml,
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(name)
         assert ds is None, name
 
@@ -2314,7 +2314,7 @@ def test_sentinel2_l2a_6():
         "SENTINEL2_L2A:%s:50m:EPSG_32632" % filename_xml,
         "SENTINEL2_L2A:%s:10m:EPSG_32633" % filename_xml,
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(name)
         assert ds is None, name
 
@@ -2518,7 +2518,7 @@ def test_sentinel2_l1c_safe_compact_1():
         "SENTINEL2_L1C:%s:50m:EPSG_32632" % filename_xml,
         "SENTINEL2_L1C:%s:10m:EPSG_32633" % filename_xml,
     ]:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = gdal.Open(name)
         assert ds is None, name
 

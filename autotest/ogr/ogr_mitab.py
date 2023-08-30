@@ -756,7 +756,7 @@ def test_ogr_mitab_21():
     lyr = ds.CreateLayer("test")
     feat = ogr.Feature(lyr.GetLayerDefn())
     feat.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT (0 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.CreateFeature(feat)
     ds = None
 
@@ -1054,14 +1054,14 @@ def test_ogr_mitab_27():
 
     # Invalid call : feature without FID
     f = ogr.Feature(lyr.GetLayerDefn())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(f)
     assert ret != 0
 
     # Invalid call : feature with FID <= 0
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(f)
     assert ret != 0
 
@@ -1076,7 +1076,7 @@ def test_ogr_mitab_27():
     # Invalid call : feature with FID > feature_count
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetFID(2)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.SetFeature(f)
     assert ret != 0
 
@@ -1967,7 +1967,7 @@ def test_ogr_mitab_40():
 
     for i in range(len(content)):
         gdal.FileFromMemBuffer("/vsimem/ogr_mitab_40.mif", content[0:i])
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = ogr.Open("/vsimem/ogr_mitab_40.mif")
             if ds is not None:
                 lyr = ds.GetLayer(0)
@@ -2039,7 +2039,7 @@ def test_ogr_mitab_43():
         format="MapInfo File",
         datasetCreationOptions=["BLOCKSIZE=32256"],
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.VectorTranslate(
             "/vsimem/all_geoms_block_invalid.tab",
             src_ds,
@@ -2367,7 +2367,7 @@ def test_ogr_mitab_tab_field_index_creation():
     lyr = ds.CreateLayer(layername)
     lyr.CreateField(ogr.FieldDefn("id", ogr.OFTInteger))
     lyr.CreateField(ogr.FieldDefn("other_field", ogr.OFTInteger))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.ExecuteSQL("CREATE INDEX ON foo USING id")
         ds.ExecuteSQL("CREATE INDEX ON " + layername + " USING foo")
     ds.ExecuteSQL("CREATE INDEX ON " + layername + " USING id")
@@ -2383,7 +2383,7 @@ def test_ogr_mitab_tab_field_index_creation():
     assert gdal.VSIStatL("/vsimem/" + layername + ".ind") is not None, "no ind file"
 
     ds = ogr.Open(filename)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds.ExecuteSQL("CREATE INDEX ON " + layername + " USING other_field")
     lyr = ds.GetLayer(0)
     lyr.SetAttributeFilter("id = 200")
@@ -2482,7 +2482,7 @@ def test_ogr_mitab_tab_write_field_name_with_dot():
     f["with.dot"] = 1
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(2 3)"))
     lyr.CreateFeature(f)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = None
 
     ds = ogr.Open(tmpfile)
@@ -2578,7 +2578,7 @@ def test_ogr_mitab_too_large_value_for_decimal_field():
 
     f = ogr.Feature(lyr.GetLayerDefn())
     f["f"] = 123456789.012
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.CreateFeature(f) != ogr.OGRERR_NONE
     f = None
 

@@ -743,7 +743,7 @@ def test_ogr_rfc28_union_all_three_branch_and(data_ds):
 
 def test_ogr_rfc28_33(data_ds):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = data_ds.ExecuteSQL("select * from idlink where name='foo")
 
     assert lyr is None
@@ -755,7 +755,7 @@ def test_ogr_rfc28_33(data_ds):
 
 def test_ogr_rfc28_34(data_ds):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = data_ds.ExecuteSQL("select foo.* from idlink")
     assert gdal.GetLastErrorMsg().startswith(
         "Table foo not recognised from foo.* definition"
@@ -770,7 +770,7 @@ def test_ogr_rfc28_34(data_ds):
 
 def test_ogr_rfc28_35(data_ds):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = data_ds.ExecuteSQL("select distinct eas_id, distinct name from idlink")
     assert gdal.GetLastErrorMsg().startswith("SQL Expression Parsing Error")
 
@@ -783,7 +783,7 @@ def test_ogr_rfc28_35(data_ds):
 
 def test_ogr_rfc28_35_bis(data_ds):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = data_ds.ExecuteSQL("select distinct eas_id, name from idlink")
     assert gdal.GetLastErrorMsg().startswith(
         "SELECT DISTINCT not supported on multiple columns"
@@ -798,7 +798,7 @@ def test_ogr_rfc28_35_bis(data_ds):
 
 def test_ogr_rfc28_35_ter(data_ds):
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = data_ds.ExecuteSQL("select distinct * from idlink")
     assert gdal.GetLastErrorMsg().startswith(
         "SELECT DISTINCT not supported on multiple columns"
@@ -852,7 +852,7 @@ def test_ogr_rfc28_37(data_ds):
 def test_ogr_rfc28_38(data_ds):
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = data_ds.ExecuteSQL("SELECT SUBSTR(PRFEDEA) from poly")
         assert (
             gdal.GetLastErrorMsg().find(
@@ -863,7 +863,7 @@ def test_ogr_rfc28_38(data_ds):
         assert lyr is None
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = data_ds.ExecuteSQL("SELECT SUBSTR(1,2) from poly")
         assert gdal.GetLastErrorMsg().find("Wrong argument type for SUBSTR()") == 0
         assert lyr is None
@@ -1114,7 +1114,7 @@ def test_ogr_rfc28_44():
     lyr.CreateField(fld_defn)
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr = ds.ExecuteSQL(
             'SELECT * FROM "lyr.withpoint" JOIN field ON "lyr.withpoint".foo = field.id WHERE field.withpoint = 1'
         )
@@ -1296,19 +1296,19 @@ def test_ogr_rfc28_48():
     feat.SetField("dt", "2017/02/17 11:06:34")
     lyr.CreateFeature(feat)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.SetAttributeFilter("dt >= 2500000000") != 0
 
     lyr.SetAttributeFilter("dt >= 'a'")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("'a' <= dt")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt BETWEEN dt AND 'a'")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.GetFeatureCount() == 0
 
     lyr.SetAttributeFilter("dt >= '2017/02/17 11:06:34'")
@@ -1426,7 +1426,7 @@ def test_ogr_rfc28_int_overflows():
     for sql, res in tests:
         sql_lyr = ds.ExecuteSQL(sql)
         if res is None:
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 f = sql_lyr.GetNextFeature()
         else:
             f = sql_lyr.GetNextFeature()

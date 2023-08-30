@@ -32,7 +32,7 @@ import gdaltest
 import ogrtest
 import pytest
 
-from osgeo import ogr, osr
+from osgeo import gdal, ogr, osr
 
 pytestmark = [
     pytest.mark.skipif(
@@ -81,7 +81,7 @@ def setup_tests():
 
 def test_ogr_oci_2():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.oci_ds.ExecuteSQL("DELLAYER:tpoly")
 
     ######################################################
@@ -290,7 +290,7 @@ def test_ogr_oci_8():
     #######################################################
     # Preclean.
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs")
 
     #######################################################
@@ -337,7 +337,7 @@ def test_ogr_oci_9():
     #######################################################
     # Preclean.
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.oci_ds.ExecuteSQL("DELLAYER:testsrs2")
 
     #######################################################
@@ -373,7 +373,7 @@ def test_ogr_oci_9():
 def test_ogr_oci_10():
 
     # Create a test table.
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.oci_ds.ExecuteSQL("drop table geom_test")
 
     gdaltest.oci_ds.ExecuteSQL(
@@ -797,7 +797,7 @@ def test_ogr_oci_20():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -805,7 +805,7 @@ def test_ogr_oci_20():
     # Error case: missing non-nullable field
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None

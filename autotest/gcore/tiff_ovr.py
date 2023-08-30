@@ -837,7 +837,7 @@ def test_tiff_ovr_22(tmp_path, both_endian):
     # 170 k * 100 k = 17 GB. 17 GB / (2^2) = 4.25 GB > 4.2 GB
     # so BigTIFF is needed
     with gdaltest.config_option("BIGTIFF_OVERVIEW", "NO"):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             err = ds.BuildOverviews("NONE", overviewlist=[2])
 
     ds = None
@@ -1615,7 +1615,7 @@ def test_tiff_ovr_43(tmp_path, both_endian):
 
     with gdaltest.config_option("CPL_ACCUM_ERROR_MSG", "ON"):
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             try:
                 ds = gdal.Open("data/mandrilmini_12bitjpeg.tif")
                 ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1)

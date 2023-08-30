@@ -73,7 +73,7 @@ def startup_and_cleanup():
 def test_vrtpansharpen_1():
 
     # Missing PansharpeningOptions
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -90,7 +90,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # PanchroBand missing
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -128,7 +128,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # PanchroBand.SourceFilename missing
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -168,7 +168,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Invalid dataset name
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -210,7 +210,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Inconsistent declared VRT dimensions with panchro dataset.
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="1800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -252,7 +252,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # VRTRasterBand of unrecognized subclass 'blabla'
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="blabla">
@@ -294,7 +294,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Algorithm unsupported_alg unsupported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -336,7 +336,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # 10 invalid band of tmp/small_world_pan.tif
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -378,7 +378,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # SpectralBand.dstBand = '-1' invalid
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -420,7 +420,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # SpectralBand.SourceFilename missing
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -461,7 +461,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Invalid dataset name
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -503,7 +503,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # 10 invalid band of data/small_world.tif
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -545,7 +545,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Another spectral band is already mapped to output band 1
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -587,7 +587,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # No spectral band defined
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -617,7 +617,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Hole in SpectralBand.dstBand numbering
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
@@ -650,7 +650,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Band 4 of type VRTPansharpenedRasterBand, but no corresponding SpectralBand
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -694,7 +694,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # SpectralBand.dstBand = '3' invalid
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -733,7 +733,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # 2 weights defined, but 3 input spectral bands
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <VRTRasterBand dataType="Byte" band="1" subClass="VRTPansharpenedRasterBand">
@@ -775,7 +775,7 @@ def test_vrtpansharpen_1():
     assert vrt_ds is None
 
     # Dimensions of input spectral band 1 different from first spectral band
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
@@ -801,7 +801,7 @@ def test_vrtpansharpen_1():
     # Georeferencing of top-left corner of pan dataset and data/byte.tif do not match
     # Georeferencing of bottom-right corner of pan dataset and data/byte.tif do not match
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
@@ -824,7 +824,7 @@ def test_vrtpansharpen_1():
     # No spectral band is mapped to an output band
     # No output pansharpened band defined
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.Open(
             """<VRTDataset rasterXSize="800" rasterYSize="400" subClass="VRTPansharpenedDataset">
         <PansharpeningOptions>
@@ -858,7 +858,7 @@ def test_vrtpansharpen_1():
     assert gdal.GetLastErrorMsg() != ""
 
     # Unsupported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = vrt_ds.AddBand(gdal.GDT_Byte)
     assert ret != 0
 
@@ -1466,7 +1466,7 @@ def test_vrtpansharpen_7():
     </PansharpeningOptions>
 </VRTDataset>"""
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(xml)
     assert (
         ds.GetGeoTransform() == (100.0, 1.0, 0.0, 100.0, 0.0, -1.0)
@@ -1507,7 +1507,7 @@ def test_vrtpansharpen_7():
     </PansharpeningOptions>
 </VRTDataset>"""
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(xml)
     assert (
         ds.GetGeoTransform() == (120.0, 1.0, 0.0, 80.0, 0.0, -1.0)
@@ -1554,7 +1554,7 @@ def test_vrtpansharpen_7():
         </SpectralBand>
     </PansharpeningOptions>
 </VRTDataset>"""
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(xml)
     assert ds is None
     ds = None
@@ -2124,7 +2124,7 @@ def test_vrtpansharpen_11():
     vrt_ds = None
 
     # Test error cases as well
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.CreatePansharpenedVRT(
             """<invalid_xml""",
             pan_mem_ds.GetRasterBand(1),
@@ -2133,7 +2133,7 @@ def test_vrtpansharpen_11():
     assert vrt_ds is None
 
     # Not enough bands
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.CreatePansharpenedVRT(
             """<VRTDataset subClass="VRTPansharpenedDataset">
             <PansharpeningOptions>
@@ -2149,7 +2149,7 @@ def test_vrtpansharpen_11():
     assert vrt_ds is None
 
     # Too many bands
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         vrt_ds = gdal.CreatePansharpenedVRT(
             """<VRTDataset subClass="VRTPansharpenedDataset">
             <PansharpeningOptions>

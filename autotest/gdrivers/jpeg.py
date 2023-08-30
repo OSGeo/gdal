@@ -993,7 +993,7 @@ def test_jpeg_25():
 def test_jpeg_26():
 
     src_ds = gdal.GetDriverByName("Mem").Create("", 70000, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("JPEG").CreateCopy("/vsimem/jpeg_26.jpg", src_ds)
     assert ds is None
     gdal.Unlink("/vsimem/jpeg_26.jpg")
@@ -1011,7 +1011,7 @@ def test_jpeg_27_max_memory():
     # Should error out with 'Reading this image would require
     # libjpeg to allocate at least...'
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         os.environ["JPEGMEM"] = "10M"
         with gdal.config_option("GDAL_JPEG_MAX_ALLOWED_SCAN_NUMBER", "1000"):
             ds = gdal.Open(
@@ -1090,7 +1090,7 @@ def test_jpeg_28():
     src_ds.SetMetadataItem("EXIF_CompressedBitsPerPixel", "nan")  # invalid RATIONAL
     src_ds.SetMetadataItem("EXIF_ApertureValue", "-1")  # invalid RATIONAL
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     src_ds = None
     assert gdal.VSIStatL(tmpfilename + ".aux.xml") is None
@@ -1173,7 +1173,7 @@ def test_jpeg_28():
     src_ds.SetMetadataItem("EXIF_ExifVersion", "0231")
     src_ds.SetMetadataItem("EXIF_invalid", "foo")
     src_ds.SetMetadataItem("FOO", "BAR")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     src_ds = None
     assert gdal.VSIStatL(tmpfilename + ".aux.xml") is not None
@@ -1185,7 +1185,7 @@ def test_jpeg_28():
     # Too much content for EXIF
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1)
     src_ds.SetMetadataItem("EXIF_UserComment", "x" * 65535)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy(tmpfilename, src_ds)
     src_ds = None
     ds = None
@@ -1350,15 +1350,15 @@ def test_jpeg_flir_raw():
 
 def test_jpeg_flir_error_flir_subds():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("JPEG:foo.jpg")
         assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("JPEG:foo.jpg:BAR")
         assert ds is None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("JPEG:data/jpeg/masked.jpg:FLIR_RAW_THERMAL_IMAGE")
         assert ds is None
 
@@ -1392,7 +1392,7 @@ def test_jpeg_write_cmyk():
 def test_jpeg_write_4band_not_cmyk():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 8, 8, 4)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("JPEG").CreateCopy("/vsimem/out.jpg", src_ds)
     assert gdal.GetLastErrorMsg() != ""
     gdal.GetDriverByName("JPEG").Delete("/vsimem/out.jpg")
@@ -1527,7 +1527,7 @@ def test_jpeg_read_lossless_16bit():
         is None
     ):
         pytest.skip("lossless jpeg not supported")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/jpeg/uint16_lossless.jpg")
         assert ds is None
 

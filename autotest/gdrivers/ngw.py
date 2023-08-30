@@ -125,7 +125,7 @@ def get_new_name():
 def test_ngw_2():
 
     create_url = "NGW:" + gdaltest.ngw_test_server + "/resource/0/" + get_new_name()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         description = "GDAL Raster test group"
         gdaltest.ngw_ds = gdal.GetDriverByName("NGW").Create(
             create_url,

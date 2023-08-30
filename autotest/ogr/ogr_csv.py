@@ -58,13 +58,13 @@ def startup_and_cleanup():
     yield
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ogr.GetDriverByName("CSV").DeleteDataSource("tmp/csvwrk")
     except Exception:
         pass
 
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ogr.GetDriverByName("CSV").DeleteDataSource("tmp/ogr_csv_29")
     except Exception:
         pass
@@ -105,14 +105,14 @@ def ogr_csv_check_layer(lyr, expect_code_as_numeric):
 def test_ogr_csv_2():
     csv_ds = ogr.Open("data/prime_meridian.csv")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert csv_ds.CreateLayer("foo") is None
         assert csv_ds.DeleteLayer(0) != 0
 
     lyr = csv_ds.GetLayerByName("prime_meridian")
 
     f = ogr.Feature(lyr.GetLayerDefn())
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.CreateField(ogr.FieldDefn("foo")) != 0
         assert lyr.CreateFeature(f) != 0
 
@@ -172,7 +172,7 @@ def test_ogr_csv_3():
     #######################################################
     # Ensure any old copy of our working datasource is cleaned up
     try:
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ogr.GetDriverByName("CSV").DeleteDataSource("tmp/csvwrk")
     except Exception:
         pass
@@ -190,7 +190,7 @@ def test_ogr_csv_3():
         # Check that we cannot add a new field now
         assert csv_lyr1.TestCapability(ogr.OLCCreateField) == 0
         field_defn = ogr.FieldDefn("dummy", ogr.OFTString)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = csv_lyr1.CreateField(field_defn)
         assert ret != 0
 
@@ -254,7 +254,7 @@ def test_ogr_csv_7():
         csv_tmpds.GetLayerCount() == 1 and csv_tmpds.GetLayer(0).GetName() == "pm2"
     ), "Layer not destroyed properly?"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert csv_tmpds.DeleteLayer(-1) != 0
         assert csv_tmpds.DeleteLayer(csv_tmpds.GetLayerCount()) != 0
 
@@ -473,7 +473,7 @@ def test_ogr_csv_12():
     # Setup Schema
     for i in range(srclyr.GetLayerDefn().GetFieldCount()):
         field_defn = srclyr.GetLayerDefn().GetFieldDefn(i)
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             csv_lyr2.CreateField(field_defn)
 
     #######################################################
@@ -491,7 +491,7 @@ def test_ogr_csv_12():
 
         feat = srclyr.GetNextFeature()
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert csv_tmpds.CreateLayer("testcsvt_copy") is None
 
     #######################################################
@@ -766,7 +766,7 @@ def test_ogr_csv_19():
     lyr = csv_ds.GetLayerByName("testnull")
 
     lyr.ResetReading()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ogrtest.check_features_against_list(lyr, "INTCOL", [12])
     lyr.ResetReading()
     ogrtest.check_features_against_list(lyr, "REALCOL", [5.7])
@@ -1100,7 +1100,7 @@ def test_ogr_csv_29():
         )
         == 0
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             lyr.CreateGeomField(
                 ogr.GeomFieldDefn("geom__WKT_lyr2_EPSG_32632", ogr.wkbPolygon)
@@ -1247,7 +1247,7 @@ def test_ogr_csv_32():
 
     check_size_limit_0()
     with gdaltest.config_option("OGR_CSV_SIMULATE_VSISTDIN", "YES"):
-        with gdaltest.error_handler():  # a warning will be emitted
+        with gdal.quiet_errors():  # a warning will be emitted
             check_size_limit_0()
 
     # We limit to the first "1.5" line
@@ -1529,7 +1529,7 @@ def test_ogr_csv_32():
         )
         lyr = ds.GetLayer(0)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr.GetFeature(fid)
         if gdal.GetLastErrorType() != gdal.CE_Warning:
             f.DumpReadable()
@@ -2187,7 +2187,7 @@ def test_ogr_csv_43():
 
     assert lyr.TestCapability(ogr.OLCCreateField) == 1
     assert lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString)) == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString)) != 0
     f = lyr.GetFeature(1)
     f.SetField("foo", "bar")
@@ -2226,7 +2226,7 @@ def test_ogr_csv_43():
     assert f.GetGeometryRef().ExportToWkt() == "POINT (2 49)"
 
     # Invalid index
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.UpdateFeature(f, [-1], [], False) == ogr.OGRERR_FAILURE
         assert (
             lyr.UpdateFeature(f, [lyr.GetLayerDefn().GetFieldCount()], [], False)
@@ -2296,7 +2296,7 @@ def test_ogr_csv_43():
         pytest.fail()
     f = None
     assert lyr.TestCapability(ogr.OLCDeleteField) == 1
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.DeleteField(-1) != 0
     assert lyr.DeleteField(lyr.GetLayerDefn().GetFieldIndex("foo")) == 0
     assert lyr.TestCapability(ogr.OLCDeleteFeature) == 1
@@ -2341,9 +2341,9 @@ def test_ogr_csv_43():
     assert lyr.DeleteFeature(f.GetFID()) == 0
     assert lyr.GetFeatureCount() == 2
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.SetSpatialFilter(-1, None)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.SetSpatialFilter(1, None)
     lyr.SetSpatialFilterRect(0, 0, 100, 100)
     lyr.SetSpatialFilterRect(0, 0, 0, 100, 100)
@@ -2352,7 +2352,7 @@ def test_ogr_csv_43():
     assert lyr.GetFeatureCount() == 1
     assert lyr.GetExtent() == (2.0, 2.0, 49.0, 49.0)
     assert lyr.GetExtent(geom_field=0) == (2.0, 2.0, 49.0, 49.0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         lyr.GetExtent(geom_field=-1)
     lyr.SetAttributeFilter(None)
 
@@ -2367,13 +2367,13 @@ def test_ogr_csv_43():
 
     assert lyr.TestCapability(ogr.OLCReorderFields) == 1
     assert lyr.ReorderFields([0, 1]) == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.ReorderFields([0, -1]) != 0
 
     assert lyr.TestCapability(ogr.OLCAlterFieldDefn) == 1
     fld_defn = lyr.GetLayerDefn().GetFieldDefn(0)
     assert lyr.AlterFieldDefn(0, fld_defn, 0) == 0
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert lyr.AlterFieldDefn(-1, fld_defn, 0) != 0
 
     f = lyr.GetFeature(2)
@@ -2663,7 +2663,7 @@ def test_ogr_csv_49():
 
 def test_ogr_csv_more_than_100_geom_fields():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/csv/more_than_100_geom_fields.csv")
     lyr = ds.GetLayer(0)
     lyr.GetNextFeature()
@@ -2938,7 +2938,7 @@ def test_ogr_csv_separator_with_other_sep(sep, other_sep):
         "/vsimem/test.csv", f"foo{sep}bar{other_sep}rr{sep}baz\n1{sep}2{sep}3\n"
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("/vsimem/test.csv")
         assert "other candidate separator" in gdal.GetLastErrorMsg()
     lyr = ds.GetLayer(0)

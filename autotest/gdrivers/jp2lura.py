@@ -1052,7 +1052,7 @@ def test_jp2lura_28():
 
     for (options, expected_cbkw, expected_cbkh, warning_expected) in tests:
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdaltest.jp2lura_drv.CreateCopy(
                 "/vsimem/jp2lura_28.jp2", src_ds, options=options
             )
@@ -1084,7 +1084,7 @@ def test_jp2lura_30():
     src_ds.GetRasterBand(1).SetRasterColorTable(ct)
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2lura_drv.CreateCopy("/vsimem/jp2lura_30.jp2", src_ds)
     assert out_ds is None
 
@@ -1139,7 +1139,7 @@ def DISABLED_jp2lura_33():
   </VRTRasterBand>
 </VRTDataset>"""
     )
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2lura_drv.CreateCopy(
             "/vsimem/jp2lura_33.jp2",
             src_ds,
@@ -1156,7 +1156,7 @@ def DISABLED_jp2lura_33():
 
 def test_jp2lura_34():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/jpeg2000/dimensions_above_31bit.jp2")
     assert ds is None
 
@@ -1167,7 +1167,7 @@ def test_jp2lura_34():
 
 def test_jp2lura_35():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/jpeg2000/truncated.jp2")
     assert ds is None
 
@@ -1179,7 +1179,7 @@ def test_jp2lura_35():
 def test_jp2lura_36():
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 2, 2, 16385)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2lura_drv.CreateCopy("/vsimem/jp2lura_36.jp2", src_ds)
     assert out_ds is None and gdal.VSIStatL("/vsimem/jp2lura_36.jp2") is None
 
@@ -1501,7 +1501,7 @@ def test_jp2lura_41():
 
     # Warning if ignored option
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2lura_drv.CreateCopy(
             "/vsimem/jp2lura_41.jp2",
             src_ds,
@@ -1517,7 +1517,7 @@ def test_jp2lura_41():
     # Warning if source is not JPEG2000
     src_ds = gdal.Open("data/byte.tif")
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdaltest.jp2lura_drv.CreateCopy(
             "/vsimem/jp2lura_41.jp2", src_ds, options=["USE_SRC_CODESTREAM=YES"]
         )
@@ -2117,7 +2117,7 @@ def test_jp2lura_49():
     ), "Did not get expected filelist"
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             "data/jpeg2000/inconsitant_geojp2_gmljp2.jp2",
             open_options=["GEOREF_SOURCES=unhandled"],
@@ -2145,7 +2145,7 @@ def test_jp2lura_51():
 
     # Don't allow it by default
     src_ds = gdal.Open("data/float32.tif")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.jp2lura_drv.CreateCopy("/vsimem/jp2lura_51.jp2", src_ds)
     assert ds is None
 
@@ -2162,7 +2162,7 @@ def test_jp2lura_51():
     assert maxdiff <= 0.01
 
     # QUALITY
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdaltest.jp2lura_drv.CreateCopy(
             "/vsimem/jp2lura_51.jp2",
             src_ds,
@@ -2175,7 +2175,7 @@ def test_jp2lura_51():
 
         assert validate("/vsimem/jp2lura_51.jp2", inspire_tg=False) != "fail"
     ds = None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.jp2lura_drv.Delete("/vsimem/jp2lura_51.jp2")
     gdal.Unlink("/vsimem/jp2lura_51.jp2")
 

@@ -197,7 +197,7 @@ def test_cog_creation_options():
 
     if "<Value>WEBP" in colist:
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert not gdal.GetDriverByName("COG").CreateCopy(
                 filename, src_ds, options=["COMPRESS=WEBP"]
             )
@@ -242,7 +242,7 @@ def test_cog_creation_options():
             assert filesize_lerc_zstd_level_1 > filesize_lerc_zstd
 
     src_ds = None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("GTiff").Delete(filename)
 
 
@@ -772,11 +772,11 @@ def test_cog_invalidation_by_data_change():
     src_ds = gdal.Open("data/byte.tif")
     data = src_ds.ReadRaster()
     ds.GetRasterBand(1).WriteRaster(0, 0, 20, 20, data)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert ds.FlushCache() == gdal.CE_None
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(filename)
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
     ds = None
@@ -786,7 +786,7 @@ def test_cog_invalidation_by_data_change():
     ):
         _check_cog(filename)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("GTiff").Delete(filename)
 
 
@@ -809,12 +809,12 @@ def test_cog_invalidation_by_metadata_change():
     ds.GetRasterBand(1).ComputeStatistics(False)
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(filename)
     assert ds.GetMetadataItem("LAYOUT", "IMAGE_STRUCTURE") is None
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.GetDriverByName("GTiff").Delete(filename)
 
 
@@ -1319,7 +1319,7 @@ def test_cog_zoom_level():
     filename = "/vsimem/test_cog_zoom_level.tif"
     src_ds = gdal.Open("data/byte.tif")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("COG").CreateCopy(
                 filename,
@@ -1425,7 +1425,7 @@ def test_cog_invalid_warp_resampling():
     filename = "/vsimem/test_cog_invalid_warp_resampling.tif"
     src_ds = gdal.Open("data/byte.tif")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("COG").CreateCopy(
                 filename,
@@ -1481,7 +1481,7 @@ def test_cog_float32_color_table():
     src_ds.GetRasterBand(1).SetColorTable(ct)
     filename = "/vsimem/test_cog_float32_color_table.tif"
     # Silence warning about color table not being copied
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.GetDriverByName("COG").CreateCopy(filename, src_ds)  # segfault
     assert ds
     assert ds.GetRasterBand(1).GetColorTable() is None
@@ -1617,7 +1617,7 @@ def test_cog_overview_count(options, expected_count):
 
     tmpfilename = "/vsimem/test_cog_overview_count.tif"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Translate(
             tmpfilename,
             "../gdrivers/data/small_world.tif",

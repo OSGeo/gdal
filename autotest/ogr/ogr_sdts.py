@@ -32,7 +32,7 @@
 import gdaltest
 import pytest
 
-from osgeo import ogr
+from osgeo import gdal, ogr
 
 pytestmark = pytest.mark.require_driver("OGR_SDTS")
 
@@ -77,7 +77,7 @@ def test_ogr_sdts_1():
     for layer in layers:
         lyr = ds.GetLayerByName(layer[0])
         assert lyr is not None, "could not get layer %s" % (layer[0])
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert (
                 lyr.GetFeatureCount() == layer[1]
             ), "wrong number of features for layer %s : %d. %d were expected " % (
@@ -95,7 +95,7 @@ def test_ogr_sdts_1():
 
     # Check that we get non-empty polygons
     lyr = ds.GetLayerByName("PC01")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = lyr.GetNextFeature()
     g = f.GetGeometryRef()
     assert g

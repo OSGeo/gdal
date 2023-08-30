@@ -90,7 +90,7 @@ def test_grib_2():
 def test_grib_read_different_sizes_messages():
 
     tst = gdaltest.GDALTest("GRIB", "grib/bug3246.grb", 4, 4081)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         tst.testOpen()
 
     msg = gdal.GetLastErrorMsg()
@@ -435,7 +435,7 @@ def test_grib_grib2_read_template_4_40():
 
 def test_grib_grib2_read_template_4_unhandled():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/grib/template_4_65535.grb2")
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {"GRIB_PDS_TEMPLATE_NUMBERS": "0 1 2 3 4 5", "GRIB_PDS_PDTN": "65535"}
@@ -657,7 +657,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_NUMBERS and more elements than needed (warning)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -681,7 +681,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and insufficient number of elements
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -716,7 +716,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and more elements than needed (warning)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -740,7 +740,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES and insufficient number of elements
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -775,7 +775,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements, and insufficient number of elements in the variable section
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -789,7 +789,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_TEMPLATE_ASSEMBLED_VALUES with variable number of elements, and extra elements
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -832,7 +832,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with unknown PDS_PDTN with PDS_TEMPLATE_NUMBERS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -841,7 +841,7 @@ def test_grib_grib2_write_creation_options():
         )
     assert out_ds is not None
     out_ds = None
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open(tmpfilename)
     md = ds.GetRasterBand(1).GetMetadata()
     expected_md = {"GRIB_PDS_PDTN": "65535", "GRIB_PDS_TEMPLATE_NUMBERS": "1 2 3 4 5"}
@@ -851,7 +851,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with unknown PDS_PDTN with PDS_TEMPLATE_ASSEMBLED_VALUES
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -865,7 +865,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with PDS_PDTN != 0 without template numbers
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename, "data/byte.tif", format="GRIB", creationOptions=["PDS_PDTN=32"]
         )
@@ -873,7 +873,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with invalid values in PDS_TEMPLATE_NUMBERS
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -885,7 +885,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with invalid values in PDS_TEMPLATE_ASSEMBLED_VALUES
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -901,7 +901,7 @@ def test_grib_grib2_write_creation_options():
     gdal.Unlink(tmpfilename)
 
     # Test with both PDS_TEMPLATE_NUMBERS and PDS_TEMPLATE_ASSEMBLED_VALUES
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate(
             tmpfilename,
             "data/byte.tif",
@@ -1410,7 +1410,7 @@ def test_grib_grib2_write_data_encodings():
         gdal.ErrorReset()
         options = ["DATA_ENCODING=" + encoding]
         if encoding == "COMPLEX_PACKING":
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 success = gdal.Translate(
                     tmpfilename, test_ds, format="GRIB", creationOptions=options
                 )
@@ -1560,7 +1560,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
         tmpfilename = "/vsimem/out.grb2"
         src_ds = gdal.Open(filename)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
         error_msg = gdal.GetLastErrorMsg()
@@ -1611,7 +1611,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
         tmpfilename = "/vsimem/out.grb2"
         src_ds = gdal.Open(filename)
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             out_ds = gdaltest.grib_drv.CreateCopy(tmpfilename, src_ds, options=options)
 
         error_msg = gdal.GetLastErrorMsg()
@@ -1628,7 +1628,7 @@ def test_grib_grib2_write_data_encodings_warnings_and_errors():
 
     gdal.Unlink("/vsimem/huge.tif")
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         out_ds = gdal.Translate("/i/do_not/exist.grb2", "data/byte.tif", format="GRIB")
     assert out_ds is None, "expected null return"
 
@@ -2218,7 +2218,7 @@ def test_grib_grib2_wrong_earth_shape():
     # Byte=1 (spherical sphere)
     # Byte=255 (invalid scale)
     # UInt32=-1 (invalid scaled radius)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("data/grib/byte_wrong_earth_shape.grib2")
         assert (
             "The GRIB file contains invalid values for the spheroid"

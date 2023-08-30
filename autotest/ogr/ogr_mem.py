@@ -242,7 +242,7 @@ def test_ogr_mem_8():
     # Test expected failed case of SetFeature()
     new_feat = ogr.Feature(gdaltest.mem_lyr.GetLayerDefn())
     new_feat.SetFID(-2)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdaltest.mem_lyr.SetFeature(new_feat)
     assert ret != 0
     new_feat = None
@@ -739,7 +739,7 @@ def test_ogr_mem_arrow_stream_numpy():
     stream = lyr.GetArrowStreamAsNumPy()
 
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr.GetArrowStreamAsNumPy()
 
     it = iter(stream)
@@ -933,7 +933,7 @@ def test_ogr_mem_arrow_stream_pyarrow():
     stream = lyr.GetArrowStreamAsPyArrow()
 
     with pytest.raises(Exception):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             lyr.GetArrowStreamAsPyArrow()
 
     it = iter(stream)

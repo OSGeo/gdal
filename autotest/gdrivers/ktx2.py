@@ -106,7 +106,7 @@ def test_ktx2_read_two_layers():
     ],
 )
 def test_ktx2_read_wrong_subds(filename):
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.Open(filename) is None
 
 
@@ -312,7 +312,7 @@ def test_ktx2_write_etc1s_clusters_options():
     gdal.Unlink(out_filename)
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("KTX2").CreateCopy(
                 out_filename,
@@ -370,7 +370,7 @@ def test_ktx2_write_etc1s_incompatible_or_missing_options():
     out_filename = "/vsimem/out.ktx2"
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("KTX2").CreateCopy(
                 out_filename, src_ds, options=["ETC1S_MAX_ENDPOINTS_CLUSTERS=16128"]
@@ -380,7 +380,7 @@ def test_ktx2_write_etc1s_incompatible_or_missing_options():
         assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("KTX2").CreateCopy(
                 out_filename, src_ds, options=["ETC1S_MAX_SELECTOR_CLUSTERS=16128"]
@@ -390,7 +390,7 @@ def test_ktx2_write_etc1s_incompatible_or_missing_options():
         assert gdal.GetLastErrorMsg() != ""
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("KTX2").CreateCopy(
                 out_filename,
@@ -403,7 +403,7 @@ def test_ktx2_write_etc1s_incompatible_or_missing_options():
     gdal.Unlink(out_filename)
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert (
             gdal.GetDriverByName("KTX2").CreateCopy(
                 out_filename,
@@ -421,13 +421,13 @@ def test_ktx2_write_incompatible_source():
     out_filename = "/vsimem/out.ktx2"
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.GetDriverByName("KTX2").CreateCopy(out_filename, src_ds) is None
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 5)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.GetDriverByName("KTX2").CreateCopy(out_filename, src_ds) is None
 
     src_ds = gdal.GetDriverByName("MEM").Create("", 1, 1, 1, gdal.GDT_UInt16)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.GetDriverByName("KTX2").CreateCopy(out_filename, src_ds) is None

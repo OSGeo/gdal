@@ -461,7 +461,7 @@ def test_ogr_geojson_13():
 @gdaltest.disable_exceptions()
 def test_ogr_geojson_14():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open("data/geojson/ogr_geojson_14.geojson")
     lyr = ds.GetLayer(0)
 
@@ -471,7 +471,7 @@ def test_ogr_geojson_14():
         )
         out_lyr = out_ds.CreateLayer("lyr")
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             for feat in lyr:
                 geom = feat.GetGeometryRef()
                 if geom is not None:
@@ -550,7 +550,7 @@ def test_ogr_geojson_20():
         gdal.VSIFWriteL(data, 1, len(data), f)
         gdal.VSIFCloseL(f)
 
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ds = ogr.Open("/vsimem/testgj")
         if ds is None:
             print(gj)
@@ -803,7 +803,7 @@ def test_ogr_geojson_26():
 
 def test_ogr_geojson_27():
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         # Warning 1: Integer values probably ranging out of 64bit integer range
         # have been found. Will be clamped to INT64_MIN/INT64_MAX
         ds = ogr.Open(
@@ -849,7 +849,7 @@ def test_ogr_geojson_35():
     feat.SetGeometry(geom)
     lyr.CreateFeature(feat)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         feat = ogr.Feature(lyr.GetLayerDefn())
         feat.SetFID(2)
         geom = ogr.Geometry(ogr.wkbPoint)
@@ -1189,7 +1189,7 @@ def test_ogr_geojson_39():
 
     # Test handling of duplicated id
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(
             """{"type": "FeatureCollection", "features": [
 { "type": "Feature", "id" : 1, "properties": { "foo": "bar" }, "geometry": null },
@@ -1604,7 +1604,7 @@ def test_ogr_geojson_46():
 def test_ogr_geojson_47():
 
     # ERROR 6: Update from inline definition not supported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open('{"type": "FeatureCollection", "features":[]}', update=1)
     assert ds is None
 
@@ -2904,12 +2904,12 @@ def test_ogr_geojson_62():
         """{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":null} }, "features":[] }"""
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":1} }, "features":[] }"""
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"EPSG", "properties":{"code":"x"} }, "features":[] }"""
         )
@@ -2938,12 +2938,12 @@ def test_ogr_geojson_62():
         """{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href":null} }, "features":[] }"""
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href":1} }, "features":[] }"""
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"link", "properties":{"href": "1"} }, "features":[] }"""
         )
@@ -2965,12 +2965,12 @@ def test_ogr_geojson_62():
         """{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":null} }, "features":[] }"""
     )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":1} }, "features":[] }"""
         )
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.OpenEx(
             """{ "type": "FeatureCollection", "crs": { "type":"OGC", "properties":{"urn":"x"} }, "features":[] }"""
         )
@@ -3305,7 +3305,7 @@ def test_ogr_geojson_geom_export_failure():
 
     g = ogr.Geometry(ogr.wkbLineString)
     g.AddPoint_2D(float("nan"), 0)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geojson = g.ExportToJson()
     assert geojson is None
 
@@ -3322,7 +3322,7 @@ def test_ogr_geojson_geom_export_failure():
     lr.AddPoint_2D(1, 1)
     lr.AddPoint_2D(0, 0)
     g.AddGeometry(lr)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         geojson = g.ExportToJson()
     assert geojson is None
 
@@ -3474,7 +3474,7 @@ def test_ogr_geojson_non_finite():
       { "type": "Feature", "properties": { "inf_prop": infinity, "minus_inf_prop": -infinity, "nan_prop": nan }, "geometry": null }
   ]
 }"""
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.Open(json_content)
     if ds is None:
         # Might fail with older libjson-c versions
@@ -3497,7 +3497,7 @@ def test_ogr_geojson_non_finite():
 
     tmpfilename = "/vsimem/out.json"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.VectorTranslate(tmpfilename, json_content, options="-f GeoJSON")
     ds = ogr.Open(tmpfilename)
     lyr = ds.GetLayer(0)
@@ -3960,7 +3960,7 @@ def test_ogr_geojson_feature_large():
     with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0"):
         assert ogr.Open(filename) is not None
     with gdaltest.config_option("OGR_GEOJSON_MAX_OBJ_SIZE", "0.1"):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             assert ogr.Open(filename) is None
     gdal.Unlink(filename)
 
@@ -4072,7 +4072,7 @@ def test_ogr_geojson_ids_0_1_null_1_null(read_from_file):
     connection_name = "data/geojson/ids_0_1_null_1_null.json"
     if not read_from_file:
         connection_name = open(connection_name, "rb").read().decode("ascii")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdal.ErrorReset()
         ds = ogr.Open(connection_name)
         assert ds

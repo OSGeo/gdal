@@ -166,7 +166,7 @@ def test_ogr_interlis1_5():
     driver = ogr.GetDriverByName("Interlis 1")
     outfile = "tmp/interlis1_5.itf"
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         dst_ds = driver.CreateDataSource(outfile)
 
     dst_lyr = dst_ds.CreateLayer("FormatTests__FormatTable")

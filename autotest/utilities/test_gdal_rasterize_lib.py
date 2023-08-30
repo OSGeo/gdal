@@ -432,7 +432,7 @@ def test_gdal_rasterize_lib_inverse():
     target_ds.SetGeoTransform((-0.5, 1, 0, 10.5, 0, -1))
     target_ds.SetSpatialRef(sr)
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = gdal.Rasterize(target_ds, vector_ds, burnValues=[9], inverse=True)
     assert ret == 1
 

@@ -148,7 +148,7 @@ def test_mbtiles_2():
 def test_mbtiles_3():
 
     # Check that we have SQLite VFS support
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = ogr.GetDriverByName("SQLite").CreateDataSource("/vsimem/mbtiles_3.db")
     if ds is None:
         pytest.skip()
@@ -480,7 +480,7 @@ def test_mbtiles_9():
     ds.ExecuteSQL("UPDATE metadata SET value='invalid' WHERE name='bounds'")
     ds = None
 
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ds = gdal.Open("/vsimem/mbtiles_9.mbtiles")
     assert ds.RasterXSize == 256 and ds.RasterYSize == 256
     assert ds.GetGeoTransform()[0] == pytest.approx(-13110479.091473430395126, abs=1e-6)
@@ -544,7 +544,7 @@ def test_mbtiles_create():
 
     filename = "/vsimem/mbtiles_create.mbtiles"
     gdaltest.mbtiles_drv.Create(filename, 1, 1, 1)
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         assert gdal.Open(filename) is None
 
     # Nominal case
@@ -557,18 +557,18 @@ def test_mbtiles_create():
     ds.SetProjection(src_ds.GetProjectionRef())
 
     # Cannot modify geotransform once set"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
     assert ret != 0
     ds = None
 
     ds = gdal.Open("data/mbtiles/byte.mbtiles")
     # SetGeoTransform() not supported on read-only dataset"
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform(src_ds.GetGeoTransform())
     assert ret != 0
     # SetProjection() not supported on read-only dataset
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetProjection(src_ds.GetProjectionRef())
     assert ret != 0
     ds = None
@@ -576,7 +576,7 @@ def test_mbtiles_create():
     gdal.Unlink(filename)
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Only EPSG:3857 supported on MBTiles dataset
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetProjection('LOCAL_CS["foo"]')
     assert ret != 0
     ds = None
@@ -584,7 +584,7 @@ def test_mbtiles_create():
     gdal.Unlink(filename)
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Only north-up non rotated geotransform supported
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, 1])
     assert ret != 0
     ds = None
@@ -592,7 +592,7 @@ def test_mbtiles_create():
     gdal.Unlink(filename)
     ds = gdaltest.mbtiles_drv.Create(filename, src_ds.RasterXSize, src_ds.RasterYSize)
     # Could not find an appropriate zoom level that matches raster pixel size
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = ds.SetGeoTransform([0, 1, 0, 0, 0, -1])
     assert ret != 0
     ds = None

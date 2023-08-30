@@ -76,12 +76,12 @@ def test_vsioss_1():
 
     # Missing OSS_SECRET_ACCESS_KEY
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsioss/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("OSS_SECRET_ACCESS_KEY") >= 0
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsioss_streaming/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("OSS_SECRET_ACCESS_KEY") >= 0
 
@@ -89,7 +89,7 @@ def test_vsioss_1():
 
     # Missing OSS_ACCESS_KEY_ID
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsioss/foo/bar")
     assert f is None and gdal.VSIGetLastErrorMsg().find("OSS_ACCESS_KEY_ID") >= 0
 
@@ -102,7 +102,7 @@ def test_vsioss_real_test():
 
     # ERROR 1: The OSS Access Key Id you provided does not exist in our records.
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsioss/foo/bar.baz")
     if f is not None or gdal.VSIGetLastErrorMsg() == "":
         if f is not None:
@@ -112,7 +112,7 @@ def test_vsioss_real_test():
         pytest.fail(gdal.VSIGetLastErrorMsg())
 
     gdal.ErrorReset()
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         f = open_for_read("/vsioss_streaming/foo/bar.baz")
     assert f is None and gdal.VSIGetLastErrorMsg() != ""
 
@@ -298,7 +298,7 @@ def test_vsioss_2():
 
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsioss_streaming/oss_fake_bucket/non_xml_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("bla") >= 0
 
@@ -318,7 +318,7 @@ def test_vsioss_2():
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsioss_streaming/oss_fake_bucket/invalid_xml_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<oops>") >= 0
 
@@ -338,7 +338,7 @@ def test_vsioss_2():
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsioss_streaming/oss_fake_bucket/no_code_in_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<Error/>") >= 0
 
@@ -358,7 +358,7 @@ def test_vsioss_2():
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read(
                 "/vsioss_streaming/oss_fake_bucket/no_region_in_AuthorizationHeaderMalformed_error"
             )
@@ -380,7 +380,7 @@ def test_vsioss_2():
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read(
                 "/vsioss_streaming/oss_fake_bucket/no_endpoint_in_PermanentRedirect_error"
             )
@@ -402,7 +402,7 @@ def test_vsioss_2():
     )
     gdal.ErrorReset()
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = open_for_read("/vsioss_streaming/oss_fake_bucket/no_message_in_error")
     assert f is None and gdal.VSIGetLastErrorMsg().find("<Error>") >= 0
 
@@ -634,7 +634,7 @@ def test_vsioss_4():
         pytest.skip()
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             f = gdal.VSIFOpenL("/vsioss/oss_fake_bucket3", "wb")
     assert f is None
 
@@ -681,7 +681,7 @@ def test_vsioss_4():
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL("/vsioss/oss_fake_bucket3/empty_file.bin", "wb")
         assert f is not None
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFSeekL(f, 1, 0)
         assert ret != 0
         gdal.VSIFCloseL(f)
@@ -691,7 +691,7 @@ def test_vsioss_4():
     with webserver.install_http_handler(handler):
         f = gdal.VSIFOpenL("/vsioss/oss_fake_bucket3/empty_file.bin", "wb")
         assert f is not None
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFReadL(1, 1, f)
         assert not ret
         gdal.VSIFCloseL(f)
@@ -703,7 +703,7 @@ def test_vsioss_4():
         f = gdal.VSIFOpenL("/vsioss/oss_fake_bucket3/empty_file_error.bin", "wb")
         assert f is not None
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFCloseL(f)
     assert gdal.GetLastErrorMsg() != ""
 
@@ -763,7 +763,7 @@ def test_vsioss_5():
         pytest.skip()
 
     with webserver.install_http_handler(webserver.SequentialHandler()):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsioss/foo")
     assert ret != 0
 
@@ -801,7 +801,7 @@ def test_vsioss_5():
     handler.add("GET", "/oss_delete_bucket/delete_file_error", 200)
     handler.add("DELETE", "/oss_delete_bucket/delete_file_error", 403)
     with webserver.install_http_handler(handler):
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.Unlink("/vsioss/oss_delete_bucket/delete_file_error")
     assert ret != 0
 
@@ -956,7 +956,7 @@ def test_vsioss_6():
             with gdaltest.config_option("VSIOSS_CHUNK_SIZE", "1"):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == 0
             gdal.ErrorReset()
@@ -1008,7 +1008,7 @@ def test_vsioss_6():
             with gdaltest.config_option("VSIOSS_CHUNK_SIZE", "1"):  # 1 MB
                 f = gdal.VSIFOpenL(filename, "wb")
             assert f is not None, filename
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == 0, filename
             gdal.ErrorReset()
@@ -1040,11 +1040,11 @@ def test_vsioss_6():
         with gdaltest.config_option("VSIOSS_CHUNK_SIZE", "1"):  # 1 MB
             f = gdal.VSIFOpenL(filename, "wb")
         assert f is not None, filename
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
         assert ret == 0, filename
         gdal.ErrorReset()
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFCloseL(f)
         assert gdal.GetLastErrorMsg() != "", filename
 
@@ -1086,7 +1086,7 @@ def test_vsioss_6():
             ret = gdal.VSIFWriteL(big_buffer, 1, size, f)
             assert ret == size, filename
             gdal.ErrorReset()
-            with gdaltest.error_handler():
+            with gdal.quiet_errors():
                 gdal.VSIFCloseL(f)
             assert gdal.GetLastErrorMsg() != "", filename
 
@@ -1326,7 +1326,7 @@ def test_vsioss_extra_1():
         # Invalid bucket : "The specified bucket does not exist"
         gdal.ErrorReset()
         f = open_for_read("/vsioss/not_existing_bucket/foo")
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             gdal.VSIFReadL(1, 1, f)
         gdal.VSIFCloseL(f)
         assert gdal.VSIGetLastErrorMsg() != ""

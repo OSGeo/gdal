@@ -601,7 +601,7 @@ def test_ogr_mysql_21():
     dst_feat.SetField("name", "name")
 
     # The insertion MUST fail
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         layer.CreateFeature(dst_feat)
 
     dst_feat.Destroy()
@@ -780,7 +780,7 @@ def test_ogr_mysql_25():
     # Error case: missing geometry
     f = ogr.Feature(lyr.GetLayerDefn())
     f.SetField("field_not_nullable", "not_null")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         ret = lyr.CreateFeature(f)
     assert ret != 0
     f = None
@@ -790,7 +790,7 @@ def test_ogr_mysql_25():
         # hum mysql seems OK with unset non-nullable fields ??
         f = ogr.Feature(lyr.GetLayerDefn())
         f.SetGeometryDirectly(ogr.CreateGeometryFromWkt("POINT(0 0)"))
-        with gdaltest.error_handler():
+        with gdal.quiet_errors():
             ret = lyr.CreateFeature(f)
         assert ret != 0
         f = None
@@ -1123,7 +1123,7 @@ def test_ogr_mysql_cleanup():
     gdaltest.mysql_ds.ExecuteSQL("DROP TABLE tpoly")
     gdaltest.mysql_ds.ExecuteSQL("DROP TABLE `select`")
     gdaltest.mysql_ds.ExecuteSQL("DROP TABLE tablewithspatialindex")
-    with gdaltest.error_handler():
+    with gdal.quiet_errors():
         gdaltest.mysql_ds.ExecuteSQL("DROP TABLE tablewithoutspatialindex")
     gdaltest.mysql_ds.ExecuteSQL("DROP TABLE geometry_columns")
     if not gdaltest.is_mysql_8_or_later:
