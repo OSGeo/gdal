@@ -304,6 +304,18 @@ The following dataset open options are available:
       (when equal to "HORIZONTAL_Y"), or the before last dimension, if no
       dimension type found.
 
+-  .. oo:: LOAD_EXTRA_DIM_METADATA_DELAY
+      :choices: <integer> or "unlimited"
+      :default: 5
+      :since: 3.8
+
+      Maximum delay in seconds allowed to set the DIM_{dimname}_VALUE band
+      metadata items from the indexing variable of the dimensions.
+      Default value is 5. ``unlimited`` can be used to mean unlimited delay.
+      Can also be defined globally with the GDAL_LOAD_EXTRA_DIM_METADATA_DELAY
+      configuration` option.
+      Only used through the classic 2D API.
+
 Multi-threaded caching
 ----------------------
 

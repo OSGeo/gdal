@@ -33,6 +33,7 @@
 #include <limits>
 #include <queue>
 #include <set>
+#include <time.h>
 
 #include <ctype.h>  // isalnum
 
@@ -8223,7 +8224,8 @@ class GDALRasterBandFromArray final : public GDALRasterBand
   public:
     explicit GDALRasterBandFromArray(
         GDALDatasetFromArray *poDSIn,
-        const std::vector<GUInt64> &anOtherDimCoord);
+        const std::vector<GUInt64> &anOtherDimCoord, double dfDelay,
+        time_t nStartTime, bool &bHasWarned);
 
     double GetNoDataValue(int *pbHasNoData) override;
     int64_t GetNoDataValueAsInt64(int *pbHasNoData) override;
@@ -8247,7 +8249,7 @@ class GDALDatasetFromArray final : public GDALDataset
 
   public:
     GDALDatasetFromArray(const std::shared_ptr<GDALMDArray> &array,
-                         size_t iXDim, size_t iYDim)
+                         size_t iXDim, size_t iYDim, CSLConstList papszOptions)
         : m_poArray(array), m_iXDim(iXDim), m_iYDim(iYDim)
     {
         eAccess = array->IsWritable() ? GA_Update : GA_ReadOnly;
@@ -8301,6 +8303,13 @@ class GDALDatasetFromArray final : public GDALDataset
             m_oMDD.SetMetadataItem(attr->GetName().c_str(), val.c_str());
         }
 
+        const char *pszDelay = CSLFetchNameValueDef(
+            papszOptions, "LOAD_EXTRA_DIM_METADATA_DELAY",
+            CPLGetConfigOption("GDAL_LOAD_EXTRA_DIM_METADATA_DELAY", "5"));
+        const double dfDelay =
+            EQUAL(pszDelay, "unlimited") ? -1 : CPLAtof(pszDelay);
+        const auto nStartTime = time(nullptr);
+        bool bHasWarned = false;
         // Instantiate bands by iterating over non-XY variables
         size_t iDim = 0;
     lbl_next_depth:
@@ -8323,7 +8332,8 @@ class GDALDatasetFromArray final : public GDALDataset
         else
         {
             SetBand(nBands + 1,
-                    new GDALRasterBandFromArray(this, anOtherDimCoord));
+                    new GDALRasterBandFromArray(this, anOtherDimCoord, dfDelay,
+                                                nStartTime, bHasWarned));
         }
         if (iDim > 0)
             goto lbl_return_to_caller;
@@ -8397,7 +8407,8 @@ class GDALDatasetFromArray final : public GDALDataset
 /************************************************************************/
 
 GDALRasterBandFromArray::GDALRasterBandFromArray(
-    GDALDatasetFromArray *poDSIn, const std::vector<GUInt64> &anOtherDimCoord)
+    GDALDatasetFromArray *poDSIn, const std::vector<GUInt64> &anOtherDimCoord,
+    double dfDelay, time_t nStartTime, bool &bHasWarned)
 {
     const auto &poArray(poDSIn->m_poArray);
     const auto &dims(poArray->GetDimensions());
@@ -8446,30 +8457,51 @@ GDALRasterBandFromArray::GDALRasterBandFromArray(
                 indexingVar->GetDimensions()[0]->GetSize() ==
                     dims[i]->GetSize())
             {
-                size_t nCount = 1;
-                const auto &dt(indexingVar->GetDataType());
-                std::vector<GByte> abyTmp(dt.GetSize());
-                if (indexingVar->Read(&(anOtherDimCoord[j]), &nCount, nullptr,
-                                      nullptr, dt, &abyTmp[0]))
+                if (dfDelay >= 0 && time(nullptr) - nStartTime > dfDelay)
                 {
-                    char *pszTmp = nullptr;
-                    GDALExtendedDataType::CopyValue(
-                        &abyTmp[0], dt, &pszTmp,
-                        GDALExtendedDataType::CreateString());
-                    if (pszTmp)
+                    if (!bHasWarned)
                     {
-                        SetMetadataItem(
-                            CPLSPrintf("DIM_%s_VALUE", dimName.c_str()),
-                            pszTmp);
-                        CPLFree(pszTmp);
+                        CPLError(
+                            CE_Warning, CPLE_AppDefined,
+                            "Maximum delay to load band metadata from "
+                            "dimension indexing variables has expired. "
+                            "Increase the value of the "
+                            "LOAD_EXTRA_DIM_METADATA_DELAY "
+                            "option of GDALMDArray::AsClassicDataset() "
+                            "(also accessible as the "
+                            "GDAL_LOAD_EXTRA_DIM_METADATA_DELAY "
+                            "configuration option), "
+                            "or set it to 'unlimited' for unlimited delay. ");
+                        bHasWarned = true;
                     }
-
-                    const auto unit(indexingVar->GetUnit());
-                    if (!unit.empty())
+                }
+                else
+                {
+                    size_t nCount = 1;
+                    const auto &dt(indexingVar->GetDataType());
+                    std::vector<GByte> abyTmp(dt.GetSize());
+                    if (indexingVar->Read(&(anOtherDimCoord[j]), &nCount,
+                                          nullptr, nullptr, dt, &abyTmp[0]))
                     {
-                        SetMetadataItem(
-                            CPLSPrintf("DIM_%s_UNIT", dimName.c_str()),
-                            unit.c_str());
+                        char *pszTmp = nullptr;
+                        GDALExtendedDataType::CopyValue(
+                            &abyTmp[0], dt, &pszTmp,
+                            GDALExtendedDataType::CreateString());
+                        if (pszTmp)
+                        {
+                            SetMetadataItem(
+                                CPLSPrintf("DIM_%s_VALUE", dimName.c_str()),
+                                pszTmp);
+                            CPLFree(pszTmp);
+                        }
+
+                        const auto unit(indexingVar->GetUnit());
+                        if (!unit.empty())
+                        {
+                            SetMetadataItem(
+                                CPLSPrintf("DIM_%s_UNIT", dimName.c_str()),
+                                unit.c_str());
+                        }
                     }
                 }
             }
@@ -8671,9 +8703,22 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
  * @param iXDim Index of the dimension that will be used as the X/width axis.
  * @param iYDim Index of the dimension that will be used as the Y/height axis.
  *              Ignored if the dimension count is 1.
+ * @param papszOptions (Added in GDAL 3.8) Null-terminated list of options, or
+ *                     nullptr. Current supported options are:
+ *                     <ul>
+ *                     <li>LOAD_EXTRA_DIM_METADATA_DELAY: Maximum delay in
+ *                         seconds allowed to set the DIM_{dimname}_VALUE band
+ *                         metadata items from the indexing variable of the
+ *                         dimensions.
+ *                         Default value is 5. 'unlimited' can be used to mean
+ *                         unlimited delay. Can also be defined globally with
+ *                         the GDAL_LOAD_EXTRA_DIM_METADATA_DELAY configuration
+ *                         option.</li>
+ *                     </ul>
  * @return a new GDALDataset that must be freed with GDALClose(), or nullptr
  */
-GDALDataset *GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
+GDALDataset *GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim,
+                                           CSLConstList papszOptions) const
 {
     auto self = std::dynamic_pointer_cast<GDALMDArray>(m_pSelf.lock());
     if (!self)
@@ -8718,7 +8763,7 @@ GDALDataset *GDALMDArray::AsClassicDataset(size_t iXDim, size_t iYDim) const
             nBands *= dims[i]->GetSize();
         }
     }
-    return new GDALDatasetFromArray(self, iXDim, iYDim);
+    return new GDALDatasetFromArray(self, iXDim, iYDim, papszOptions);
 }
 
 /************************************************************************/

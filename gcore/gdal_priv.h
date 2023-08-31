@@ -2985,7 +2985,9 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
                const std::shared_ptr<GDALMDArray> &poYArray = nullptr,
                CSLConstList papszOptions = nullptr) const;
 
-    virtual GDALDataset *AsClassicDataset(size_t iXDim, size_t iYDim) const;
+    virtual GDALDataset *
+    AsClassicDataset(size_t iXDim, size_t iYDim,
+                     CSLConstList papszOptions = nullptr) const;
 
     virtual CPLErr GetStatistics(bool bApproxOK, bool bForce, double *pdfMin,
                                  double *pdfMax, double *pdfMean,

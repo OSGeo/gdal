@@ -553,8 +553,10 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
 
     if (poMainArray && (bMultiband || poMainArray->GetDimensionCount() <= 2))
     {
-        auto poNewDS = std::unique_ptr<GDALDataset>(
-            poMainArray->AsClassicDataset(iXDim, iYDim));
+        // Pass papszOpenOptions for LOAD_EXTRA_DIM_METADATA_DELAY
+        auto poNewDS =
+            std::unique_ptr<GDALDataset>(poMainArray->AsClassicDataset(
+                iXDim, iYDim, poOpenInfo->papszOpenOptions));
         if (!poNewDS)
             return nullptr;
 
@@ -1581,6 +1583,10 @@ void GDALRegister_Zarr()
         "'Name or index of the X dimension (only used when MULTIBAND=YES)'/>"
         "   <Option name='DIM_Y' type='string' description="
         "'Name or index of the Y dimension (only used when MULTIBAND=YES)'/>"
+        "   <Option name='LOAD_EXTRA_DIM_METADATA_DELAY' type='string' "
+        "description="
+        "'Maximum delay in seconds allowed to set the DIM_{dimname}_VALUE band "
+        "metadata items'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(
