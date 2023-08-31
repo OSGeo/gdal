@@ -108,14 +108,14 @@ def test_gdal_rasterize_lib_1():
 # Test creating an output file
 
 
-def test_gdal_rasterize_lib_3(tmp_path):
+def test_gdal_rasterize_lib_3(tmp_path, tmp_vsimem):
 
     import test_cli_utilities
 
     if test_cli_utilities.get_gdal_contour_path() is None:
         pytest.skip()
 
-    dst_shp = str(tmp_path / "n43dt0.shp")
+    dst_shp = tmp_path / "n43dt0.shp"
 
     gdaltest.runexternal(
         test_cli_utilities.get_gdal_contour_path()
@@ -123,7 +123,7 @@ def test_gdal_rasterize_lib_3(tmp_path):
     )
 
     with pytest.raises(Exception):
-        gdal.Rasterize("/vsimem/bogus.tif", dst_shp)
+        gdal.Rasterize(tmp_vsimem / "bogus.tif", dst_shp)
 
     ds = gdal.Rasterize(
         "",

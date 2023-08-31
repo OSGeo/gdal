@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pathlib
 import struct
 
 import gdaltest
@@ -65,15 +66,17 @@ def test_gdalmdimtranslate_multidim_to_mem():
 ###############################################################################
 
 
-def test_gdalmdimtranslate_multidim_to_classic():
+def test_gdalmdimtranslate_multidim_to_classic(tmp_vsimem):
 
-    tmpfile = "/vsimem/out.tif"
+    tmpfile = tmp_vsimem / "out.tif"
 
     with pytest.raises(Exception):
         gdal.MultiDimTranslate(tmpfile, "data/mdim.vrt")
 
     assert gdal.MultiDimTranslate(
-        tmpfile, "data/mdim.vrt", arraySpecs=["/my_subgroup/array_in_subgroup"]
+        tmpfile,
+        pathlib.Path("data/mdim.vrt"),
+        arraySpecs=["/my_subgroup/array_in_subgroup"],
     )
 
     gdal.Unlink(tmpfile)

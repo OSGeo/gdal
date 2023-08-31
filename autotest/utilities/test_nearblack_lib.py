@@ -31,6 +31,7 @@
 
 
 import array
+import pathlib
 
 import pytest
 
@@ -135,11 +136,11 @@ def test_nearblack_lib_4(alg):
 
 
 @pytest.mark.parametrize("alg", ["twopasses", "floodfill"])
-def test_nearblack_lib_5(alg):
+def test_nearblack_lib_5(tmp_vsimem, alg):
 
     ds = gdal.Nearblack(
-        "/vsimem/test_nearblack_lib_5.tif",
-        "../gdrivers/data/rgbsmall.tif",
+        tmp_vsimem / "test_nearblack_lib_5.tif",
+        pathlib.Path("../gdrivers/data/rgbsmall.tif"),
         format="GTiff",
         maxNonBlack=0,
         setMask=True,
@@ -152,9 +153,6 @@ def test_nearblack_lib_5(alg):
     ), "Bad checksum mask band"
 
     ds = None
-
-    gdal.Unlink("/vsimem/test_nearblack_lib_5.tif")
-    gdal.Unlink("/vsimem/test_nearblack_lib_5.tif.msk")
 
 
 ###############################################################################

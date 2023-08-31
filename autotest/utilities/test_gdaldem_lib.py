@@ -104,7 +104,7 @@ def test_gdaldem_lib_hillshade_float():
 
 
 @pytest.mark.require_driver("PNG")
-def test_gdaldem_lib_hillshade_float_png():
+def test_gdaldem_lib_hillshade_float_png(tmp_vsimem):
 
     src_ds = gdal.Translate(
         "",
@@ -113,7 +113,7 @@ def test_gdaldem_lib_hillshade_float_png():
         outputType=gdal.GDT_Float32,
     )
     ds = gdal.DEMProcessing(
-        "/vsimem/test_gdaldem_lib_hillshade_float_png.png",
+        tmp_vsimem / "test_gdaldem_lib_hillshade_float_png.png",
         src_ds,
         "hillshade",
         format="PNG",
@@ -137,10 +137,6 @@ def test_gdaldem_lib_hillshade_float_png():
 
     src_ds = None
     ds = None
-
-    gdal.GetDriverByName("PNG").Delete(
-        "/vsimem/test_gdaldem_lib_hillshade_float_png.png"
-    )
 
 
 ###############################################################################

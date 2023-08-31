@@ -30,6 +30,8 @@
 ###############################################################################
 
 
+import pathlib
+
 import gdaltest
 import pytest
 
@@ -44,6 +46,18 @@ def test_gdalinfo_lib_1():
     ds = gdal.Open("../gcore/data/byte.tif")
 
     ret = gdal.Info(ds)
+    assert ret.find("Driver: GTiff/GeoTIFF") != -1, "did not get expected string."
+
+
+def test_gdalinfo_lib_1_str():
+
+    ret = gdal.Info("../gcore/data/byte.tif")
+    assert ret.find("Driver: GTiff/GeoTIFF") != -1, "did not get expected string."
+
+
+def test_gdalinfo_lib_1_path():
+
+    ret = gdal.Info(pathlib.Path("../gcore/data/byte.tif"))
     assert ret.find("Driver: GTiff/GeoTIFF") != -1, "did not get expected string."
 
 

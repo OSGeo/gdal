@@ -29,6 +29,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pathlib
+
 import ogrtest
 import pytest
 
@@ -366,12 +368,12 @@ def test_gdal_footprint_lib_ovr_georef():
 
 
 @pytest.mark.require_driver("GPKG")
-def test_gdal_footprint_lib_dsco_lco():
+def test_gdal_footprint_lib_dsco_lco(tmp_vsimem):
 
-    out_filename = "/vsimem/out.gpkg"
+    out_filename = tmp_vsimem / "out.gpkg"
     out_ds = gdal.Footprint(
         out_filename,
-        "../gcore/data/byte.tif",
+        pathlib.Path("../gcore/data/byte.tif"),
         format="GPKG",
         datasetCreationOptions=["ADD_GPKG_OGR_CONTENTS=NO"],
         layerCreationOptions=["GEOMETRY_NAME=my_geom"],

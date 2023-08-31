@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pathlib
 import struct
 
 import gdaltest
@@ -96,10 +97,10 @@ def test_gdalbuildvrt_lib_2():
 # Test creating overviews
 
 
-def test_gdalbuildvrt_lib_ovr():
+def test_gdalbuildvrt_lib_ovr(tmp_vsimem):
 
-    tmpfilename = "/vsimem/my.vrt"
-    ds = gdal.BuildVRT(tmpfilename, "../gcore/data/byte.tif")
+    tmpfilename = tmp_vsimem / "my.vrt"
+    ds = gdal.BuildVRT(tmpfilename, pathlib.Path("../gcore/data/byte.tif"))
     ds.BuildOverviews("NEAR", [2])
     ds = None
     ds = gdal.Open(tmpfilename)
