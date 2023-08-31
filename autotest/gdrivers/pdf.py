@@ -1466,6 +1466,7 @@ def test_pdf_extra_rasters(poppler_or_pdfium):
 # Test adding a OGR datasource
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr(poppler_or_pdfium):
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
     data = """id,foo,WKT,style
@@ -1570,6 +1571,7 @@ def test_pdf_write_ogr(poppler_or_pdfium):
 # Test adding a OGR datasource with reprojection of OGR SRS to GDAL SRS
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_write_ogr_with_reprojection(poppler_or_pdfium):
 
     f = gdal.VSIFOpenL("tmp/test.csv", "wb")
@@ -1811,12 +1813,9 @@ def test_pdf_overviews(poppler_or_pdfium):
     before = ds.GetRasterBand(1).GetOverviewCount()
     ds.GetRasterBand(1).GetOverview(-1)
     ds.GetRasterBand(1).GetOverview(10)
-    if before >= 1:
-        assert pdf_is_pdfium(), "No overview expected at this point!"
-        cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
-        assert cs == 5934
-    elif pdf_is_pdfium():
-        pytest.fail("Overview expected at this point!")
+    assert before >= 1
+    cs = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    assert cs == 5934
     ds.BuildOverviews("NONE", [2])
     after = ds.GetRasterBand(1).GetOverviewCount()
     assert after == 1
@@ -1971,6 +1970,7 @@ def test_pdf_pam_georef(poppler_or_pdfium):
 # Test XML composition
 
 
+@pytest.mark.require_driver("CSV")
 def test_pdf_composition():
 
     xml_content = """<PDFComposition>

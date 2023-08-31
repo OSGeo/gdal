@@ -120,8 +120,8 @@ class GDALPDFObject
     {
         return FALSE;
     }
-    virtual const CPLString &GetString() = 0;
-    virtual const CPLString &GetName() = 0;
+    virtual const std::string &GetString() = 0;
+    virtual const std::string &GetName() = 0;
     virtual GDALPDFDictionary *GetDictionary() = 0;
     virtual GDALPDFArray *GetArray() = 0;
     virtual GDALPDFStream *GetStream() = 0;
@@ -187,10 +187,13 @@ class GDALPDFStream
   public:
     virtual ~GDALPDFStream();
 
-    virtual int GetLength() = 0;
+    /** Return the uncompressed stream length, or 0 if empty or error.
+     * If nMaxSize > 0, GetLength() will possibly stop the decompression once
+     * the threshold is reached, and return INT64_MAX */
+    virtual int64_t GetLength(int64_t nMaxSize = 0) = 0;
     virtual char *GetBytes() = 0;
 
-    virtual int GetRawLength() = 0;
+    virtual int64_t GetRawLength() = 0;
     virtual char *GetRawBytes() = 0;
 };
 
@@ -351,7 +354,7 @@ class GDALPDFObjectPoppler : public GDALPDFObject
     GDALPDFDictionary *m_poDict;
     GDALPDFArray *m_poArray;
     GDALPDFStream *m_poStream;
-    CPLString osStr;
+    std::string osStr;
     GDALPDFObjectNum m_nRefNum;
     int m_nRefGen;
 
@@ -373,8 +376,8 @@ class GDALPDFObjectPoppler : public GDALPDFObject
     virtual int GetBool() override;
     virtual int GetInt() override;
     virtual double GetReal() override;
-    virtual const CPLString &GetString() override;
-    virtual const CPLString &GetName() override;
+    virtual const std::string &GetString() override;
+    virtual const std::string &GetName() override;
     virtual GDALPDFDictionary *GetDictionary() override;
     virtual GDALPDFArray *GetArray() override;
     virtual GDALPDFStream *GetStream() override;
@@ -396,7 +399,7 @@ class GDALPDFObjectPodofo : public GDALPDFObject
     GDALPDFDictionary *m_poDict;
     GDALPDFArray *m_poArray;
     GDALPDFStream *m_poStream;
-    CPLString osStr;
+    std::string osStr;
 
   protected:
     virtual const char *GetTypeNameNative() override;
@@ -411,8 +414,8 @@ class GDALPDFObjectPodofo : public GDALPDFObject
     virtual int GetBool() override;
     virtual int GetInt() override;
     virtual double GetReal() override;
-    virtual const CPLString &GetString() override;
-    virtual const CPLString &GetName() override;
+    virtual const std::string &GetString() override;
+    virtual const std::string &GetName() override;
     virtual GDALPDFDictionary *GetDictionary() override;
     virtual GDALPDFArray *GetArray() override;
     virtual GDALPDFStream *GetStream() override;
@@ -431,7 +434,7 @@ class GDALPDFObjectPdfium : public GDALPDFObject
     GDALPDFDictionary *m_poDict;
     GDALPDFArray *m_poArray;
     GDALPDFStream *m_poStream;
-    CPLString osStr;
+    std::string osStr;
 
     GDALPDFObjectPdfium(RetainPtr<const CPDF_Object> obj);
 
@@ -447,8 +450,8 @@ class GDALPDFObjectPdfium : public GDALPDFObject
     virtual int GetBool() override;
     virtual int GetInt() override;
     virtual double GetReal() override;
-    virtual const CPLString &GetString() override;
-    virtual const CPLString &GetName() override;
+    virtual const std::string &GetString() override;
+    virtual const std::string &GetName() override;
     virtual GDALPDFDictionary *GetDictionary() override;
     virtual GDALPDFArray *GetArray() override;
     virtual GDALPDFStream *GetStream() override;
