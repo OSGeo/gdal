@@ -30,6 +30,7 @@
 ###############################################################################
 
 import json
+import pathlib
 import tempfile
 
 import gdaltest
@@ -1914,8 +1915,8 @@ def test_ogr2ogr_lib_valid_nlt_combinations(nlt_value):
 )
 def test_ogr2ogr_lib_geojson_output(tmp_path):
 
-    tmpfilename = str(tmp_path / "out.geojson")
-    out_ds = gdal.VectorTranslate(tmpfilename, "../ogr/data/poly.shp")
+    tmpfilename = tmp_path / "out.geojson"
+    out_ds = gdal.VectorTranslate(tmpfilename, pathlib.Path("../ogr/data/poly.shp"))
 
     # Check that the file can be read at that point. Use an external process
     # to check flushes are done correctly

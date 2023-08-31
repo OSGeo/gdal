@@ -27,6 +27,8 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pathlib
+
 import gdaltest
 import pytest
 
@@ -41,6 +43,18 @@ def test_ogrinfo_lib_1():
     ds = gdal.OpenEx("../ogr/data/poly.shp")
 
     ret = gdal.VectorInfo(ds)
+    assert "ESRI Shapefile" in ret
+
+
+def test_ogrinfo_lib_1_str():
+
+    ret = gdal.VectorInfo("../ogr/data/poly.shp")
+    assert "ESRI Shapefile" in ret
+
+
+def test_ogrinfo_lib_1_path():
+
+    ret = gdal.VectorInfo(pathlib.Path("../ogr/data/poly.shp"))
     assert "ESRI Shapefile" in ret
 
 

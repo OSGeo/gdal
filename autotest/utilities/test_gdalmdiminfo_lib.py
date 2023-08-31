@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import pathlib
 import struct
 
 import gdaltest
@@ -261,6 +262,17 @@ def test_gdalmdiminfo_lib_arrayoption():
         "../gdrivers/data/netcdf/with_bounds.nc", arrayoptions=["SHOW_BOUNDS=NO"]
     )
     assert len(ret["arrays"]) == 1
+
+
+###############################################################################
+# Test path argument
+
+
+@pytest.mark.require_driver("netCDF")
+def test_gdalmdiminfo_lib_path_input():
+
+    ret = gdal.MultiDimInfo(pathlib.Path("../gdrivers/data/netcdf/with_bounds.nc"))
+    assert ret is not None
 
 
 ###############################################################################

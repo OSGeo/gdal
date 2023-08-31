@@ -44,7 +44,7 @@ from osgeo import gdal, osr
 
 def test_gdal_translate_lib_1(tmp_path):
 
-    dst_tif = str(tmp_path / "test1.tif")
+    dst_tif = tmp_path / "test1.tif"
 
     ds = gdal.Open("../gcore/data/byte.tif")
 

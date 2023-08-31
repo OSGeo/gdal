@@ -46,7 +46,7 @@ from osgeo import gdal, ogr, osr
 def test_gdalwarp_lib_1(tmp_path):
 
     ds1 = gdal.Open("../gcore/data/byte.tif")
-    dstDS = gdal.Warp(f"{tmp_path}/testgdalwarp1.tif", ds1)
+    dstDS = gdal.Warp(tmp_path / "testgdalwarp1.tif", ds1)
 
     assert dstDS.GetRasterBand(1).Checksum() == 4672, "Bad checksum"
 
@@ -61,7 +61,7 @@ def test_gdalwarp_lib_2(tmp_path):
 
     ds1 = gdal.Open("../gcore/data/byte.tif")
     dstDS = gdal.Warp(
-        f"{tmp_path}/testgdalwarp2.tif".encode("ascii").decode("ascii"),
+        tmp_path / "testgdalwarp2.tif".encode("ascii").decode("ascii"),
         [ds1],
         format="GTiff",
     )
@@ -108,9 +108,7 @@ def test_gdalwarp_lib_4():
 @pytest.fixture(scope="module")
 def testgdalwarp_gcp_tif(tmp_path_factory):
 
-    testgdalwarp_gcp_tif_fname = str(
-        tmp_path_factory.mktemp("tmp") / "testgdalwarp_gcp.tif"
-    )
+    testgdalwarp_gcp_tif_fname = tmp_path_factory.mktemp("tmp") / "testgdalwarp_gcp.tif"
 
     ds = gdal.Open("../gcore/data/byte.tif")
     gcpList = [
@@ -405,7 +403,7 @@ def test_gdalwarp_lib_15(testgdalwarp_gcp_tif):
 def test_gdalwarp_lib_16(testgdalwarp_gcp_tif):
 
     ds = gdal.Warp(
-        "/vsimem/test_gdalwarp_lib_16.vrt", testgdalwarp_gcp_tif, format="VRT"
+        "/vsimem/test_gdalwarp_lib_16.vrt", [testgdalwarp_gcp_tif], format="VRT"
     )
     assert ds is not None
 
