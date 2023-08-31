@@ -1884,7 +1884,7 @@ def TranslateOptions(options=None, format=None,
               xRes = 0.0, yRes = 0.0,
               creationOptions=None, srcWin=None, projWin=None, projWinSRS=None, strict = False,
               unscale = False, scaleParams=None, exponents=None,
-              outputBounds=None, metadataOptions=None,
+              outputBounds=None, outputGeotransform=None, metadataOptions=None,
               outputSRS=None, nogcp=False, GCPs=None,
               noData=None, rgbExpand=None,
               stats = False, rat = True, xmp = True, resampleAlg=None,
@@ -1934,6 +1934,8 @@ def TranslateOptions(options=None, format=None,
         list of exponentiation parameters
     outputBounds:
         assigned output bounds: [ulx, uly, lrx, lry]
+    outputGeotransform:
+        assigned geotransform matrix (array of 6 values) (mutually exclusive with outputBounds)
     metadataOptions:
         list of metadata options
     outputSRS:
@@ -2008,6 +2010,13 @@ def TranslateOptions(options=None, format=None,
                 new_options += ['-exponent', _strHighPrec(exponent)]
         if outputBounds is not None:
             new_options += ['-a_ullr', _strHighPrec(outputBounds[0]), _strHighPrec(outputBounds[1]), _strHighPrec(outputBounds[2]), _strHighPrec(outputBounds[3])]
+        if outputGeotransform:
+            if outputBounds:
+                raise Exception("outputBounds and outputGeotransform are mutually exclusive")
+            assert len(outputGeotransform) == 6
+            new_options += ['-a_gt']
+            for val in outputGeotransform:
+                new_options += [_strHighPrec(val)]
         if metadataOptions is not None:
             if isinstance(metadataOptions, str):
                 new_options += ['-mo', metadataOptions]
