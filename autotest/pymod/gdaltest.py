@@ -1350,7 +1350,7 @@ def filesystem_supports_sparse_files(path):
         return False
 
     try:
-        (ret, err) = runexternal_out_and_err('stat -f -c "%T" ' + path)
+        (ret, err) = runexternal_out_and_err(f'stat -f -c "%T" {path}')
     except OSError:
         return False
 
