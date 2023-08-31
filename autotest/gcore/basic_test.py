@@ -548,36 +548,51 @@ def test_basic_dict_open_options():
     assert ds1.GetGeoTransform() != ds2.GetGeoTransform()
 
 
-def test_basic_dict_create_options():
+@pytest.mark.parametrize(
+    "create_tfw", (True, False, "TRUE", "FALSE", "YES", "NO", "ON", "OFF")
+)
+def test_basic_dict_create_options(tmp_vsimem, create_tfw):
 
     with gdal.GetDriverByName("GTiff").Create(
-        "/vsimem/test_basic_dict_create_options.tif", 1, 1, options={"TFW": "YES"}
+        tmp_vsimem / "test_basic_dict_create_options.tif",
+        1,
+        1,
+        options={"TFW": create_tfw},
     ) as ds:
         gt = (0.0, 5.0, 0.0, 5.0, 0.0, -5.0)
         ds.SetGeoTransform(gt)
 
-    assert gdal.VSIStatL("/vsimem/test_basic_dict_create_options.tfw") is not None
+    if create_tfw in (True, "TRUE", "YES", "ON"):
+        assert (
+            gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_options.tfw") is not None
+        )
+    else:
+        assert gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_options.tfw") is None
 
-    gdal.Unlink("/vsimem/test_basic_dict_create_options.tif")
-    gdal.Unlink("/vsimem/test_basic_dict_create_options.tfw")
 
-
-def test_basic_dict_create_copy_options():
+@pytest.mark.parametrize("create_tfw", (True, False))
+def test_basic_dict_create_copy_options(tmp_vsimem, create_tfw):
 
     src_ds = gdal.Open("data/byte.tif")
 
     with gdal.GetDriverByName("GTiff").CreateCopy(
-        "/vsimem/test_basic_dict_create_copy_options.tif",
+        tmp_vsimem / "test_basic_dict_create_copy_options.tif",
         src_ds,
-        options={"TFW": "YES"},
+        options={"TFW": create_tfw},
     ) as ds:
         gt = (0.0, 5.0, 0.0, 5.0, 0.0, -5.0)
         ds.SetGeoTransform(gt)
 
-    assert gdal.VSIStatL("/vsimem/test_basic_dict_create_copy_options.tfw") is not None
-
-    gdal.Unlink("/vsimem/test_basic_dict_create_copy_options.tif")
-    gdal.Unlink("/vsimem/test_basic_dict_create_copy_options.tfw")
+    if create_tfw:
+        assert (
+            gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_copy_options.tfw")
+            is not None
+        )
+    else:
+        assert (
+            gdal.VSIStatL(tmp_vsimem / "test_basic_dict_create_copy_options.tfw")
+            is None
+        )
 
 
 def test_gdal_getspatialref():
