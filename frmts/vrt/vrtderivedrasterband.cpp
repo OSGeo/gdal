@@ -797,6 +797,10 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
                     }
                     if (!success)
                     {
+                        if (CPLTestBool(
+                                CPLGetXMLValue(psIter, "optional", "false")))
+                            continue;
+
                         CPLError(CE_Failure, CPLE_AppDefined,
                                  "Raster has no %s", osValue.c_str());
                         return CE_Failure;
