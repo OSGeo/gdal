@@ -89,7 +89,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongo-c-driver
-ARG MONGO_C_DRIVER_VERSION=1.23.2
+ARG MONGO_C_DRIVER_VERSION=1.24.3
 RUN . /buildscripts/bh-set-envvars.sh \
     && mkdir mongo-c-driver \
     && wget -q https://github.com/mongodb/mongo-c-driver/releases/download/${MONGO_C_DRIVER_VERSION}/mongo-c-driver-${MONGO_C_DRIVER_VERSION}.tar.gz -O - \
@@ -108,7 +108,7 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build mongocxx
-ARG MONGOCXX_VERSION=3.7.0
+ARG MONGOCXX_VERSION=3.8.0
 RUN . /buildscripts/bh-set-envvars.sh \
     && mkdir mongocxx \
     && wget -q https://github.com/mongodb/mongo-cxx-driver/archive/r${MONGOCXX_VERSION}.tar.gz -O - \
@@ -126,8 +126,11 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && for i in /build_thirdparty/usr/bin/*; do strip -s $i 2>/dev/null || /bin/true; done
 
 # Build tiledb
-ARG TILEDB_VERSION=2.15.3
+ARG TILEDB_VERSION=2.16.3
 RUN . /buildscripts/bh-set-envvars.sh \
+    && apt-get update -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        libspdlog-dev${APT_ARCH_SUFFIX} \
     && mkdir tiledb \
     && wget -q https://github.com/TileDB-Inc/TileDB/archive/${TILEDB_VERSION}.tar.gz -O - \
         | tar xz -C tiledb --strip-components=1 \
@@ -224,9 +227,9 @@ RUN . /buildscripts/bh-set-envvars.sh \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Arrow C++
-ARG ARROW_VERSION=11.0.0-1
+ARG ARROW_VERSION=13.0.0-1
 # ARROW_SOVERSION to be updated in the "Build final image" section too
-ARG ARROW_SOVERSION=1100
+ARG ARROW_SOVERSION=1300
 RUN . /buildscripts/bh-set-envvars.sh \
     && apt-get update -y \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y -V ca-certificates lsb-release wget \
@@ -285,7 +288,7 @@ FROM $TARGET_BASE_IMAGE as runner
 USER root
 RUN date
 ARG JAVA_VERSION=17
-ARG ARROW_SOVERSION=1100
+ARG ARROW_SOVERSION=1300
 
 # Update distro
 RUN apt-get update -y && apt-get upgrade -y \
@@ -312,6 +315,7 @@ RUN apt-get update \
         libbrotli1 \
         libarchive13 \
         libaec0 \
+        libspdlog1 \
         python-is-python3 \
         # pil for antialias option of gdal2tiles
         python3-pil \
