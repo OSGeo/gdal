@@ -183,6 +183,103 @@ char **ZarrDataset::GetMetadata(const char *pszDomain)
 }
 
 /************************************************************************/
+/*                      GetXYDimensionIndices()                         */
+/************************************************************************/
+
+static void GetXYDimensionIndices(const std::shared_ptr<GDALMDArray> &poArray,
+                                  const GDALOpenInfo *poOpenInfo, size_t &iXDim,
+                                  size_t &iYDim)
+{
+    const size_t nDims = poArray->GetDimensionCount();
+    iYDim = nDims >= 2 ? nDims - 2 : 0;
+    iXDim = nDims >= 2 ? nDims - 1 : 0;
+
+    if (nDims >= 2)
+    {
+        const char *pszDimX =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DIM_X");
+        const char *pszDimY =
+            CSLFetchNameValue(poOpenInfo->papszOpenOptions, "DIM_Y");
+        bool bFoundX = false;
+        bool bFoundY = false;
+        const auto &apoDims = poArray->GetDimensions();
+        for (size_t i = 0; i < nDims; ++i)
+        {
+            if (pszDimX && apoDims[i]->GetName() == pszDimX)
+            {
+                bFoundX = true;
+                iXDim = i;
+            }
+            else if (pszDimY && apoDims[i]->GetName() == pszDimY)
+            {
+                bFoundY = true;
+                iYDim = i;
+            }
+            else if (!pszDimX &&
+                     (apoDims[i]->GetType() == GDAL_DIM_TYPE_HORIZONTAL_X ||
+                      apoDims[i]->GetName() == "X"))
+                iXDim = i;
+            else if (!pszDimY &&
+                     (apoDims[i]->GetType() == GDAL_DIM_TYPE_HORIZONTAL_Y ||
+                      apoDims[i]->GetName() == "Y"))
+                iYDim = i;
+        }
+        if (pszDimX)
+        {
+            if (!bFoundX && CPLGetValueType(pszDimX) == CPL_VALUE_INTEGER)
+            {
+                const int nTmp = atoi(pszDimX);
+                if (nTmp >= 0 && nTmp <= static_cast<int>(nDims))
+                {
+                    iXDim = nTmp;
+                    bFoundX = true;
+                }
+            }
+            if (!bFoundX)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find dimension DIM_X=%s", pszDimX);
+            }
+        }
+        if (pszDimY)
+        {
+            if (!bFoundY && CPLGetValueType(pszDimY) == CPL_VALUE_INTEGER)
+            {
+                const int nTmp = atoi(pszDimY);
+                if (nTmp >= 0 && nTmp <= static_cast<int>(nDims))
+                {
+                    iYDim = nTmp;
+                    bFoundY = true;
+                }
+            }
+            if (!bFoundY)
+            {
+                CPLError(CE_Warning, CPLE_AppDefined,
+                         "Cannot find dimension DIM_Y=%s", pszDimY);
+            }
+        }
+    }
+}
+
+/************************************************************************/
+/*                       GetExtraDimSampleCount()                       */
+/************************************************************************/
+
+static uint64_t
+GetExtraDimSampleCount(const std::shared_ptr<GDALMDArray> &poArray,
+                       size_t iXDim, size_t iYDim)
+{
+    uint64_t nExtraDimSamples = 1;
+    const auto &apoDims = poArray->GetDimensions();
+    for (size_t i = 0; i < apoDims.size(); ++i)
+    {
+        if (i != iXDim && i != iYDim)
+            nExtraDimSamples *= apoDims[i]->GetSize();
+    }
+    return nExtraDimSamples;
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
@@ -253,6 +350,11 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
     std::shared_ptr<GDALMDArray> poMainArray;
     std::vector<std::string> aosArrays;
     std::string osMainArray;
+    const bool bMultiband = CPLTestBool(
+        CSLFetchNameValueDef(poOpenInfo->papszOpenOptions, "MULTIBAND", "YES"));
+    size_t iXDim = 0;
+    size_t iYDim = 0;
+
     if (!osArrayOfInterest.empty())
     {
         poMainArray = osArrayOfInterest == "/"
@@ -260,15 +362,42 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                           : poRG->OpenMDArrayFromFullname(osArrayOfInterest);
         if (poMainArray == nullptr)
             return nullptr;
+        GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
+
         if (poMainArray->GetDimensionCount() > 2)
         {
             if (anExtraDimIndices.empty())
             {
-                uint64_t nExtraDimSamples = 1;
-                const auto &apoDims = poMainArray->GetDimensions();
-                for (size_t i = 2; i < apoDims.size(); ++i)
-                    nExtraDimSamples *= apoDims[i]->GetSize();
-                if (nExtraDimSamples != 1)
+                const uint64_t nExtraDimSamples =
+                    GetExtraDimSampleCount(poMainArray, iXDim, iYDim);
+                if (bMultiband)
+                {
+                    if (nExtraDimSamples > 65536)  // arbitrary limit
+                    {
+                        if (poMainArray->GetDimensionCount() == 3)
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Too many samples along the > 2D "
+                                     "dimensions of %s. "
+                                     "Use ZARR:\"%s\":%s:{i} syntax",
+                                     osArrayOfInterest.c_str(),
+                                     osFilename.c_str(),
+                                     osArrayOfInterest.c_str());
+                        }
+                        else
+                        {
+                            CPLError(CE_Warning, CPLE_AppDefined,
+                                     "Too many samples along the > 2D "
+                                     "dimensions of %s. "
+                                     "Use ZARR:\"%s\":%s:{i}:{j} syntax",
+                                     osArrayOfInterest.c_str(),
+                                     osFilename.c_str(),
+                                     osArrayOfInterest.c_str());
+                        }
+                        return nullptr;
+                    }
+                }
+                else if (nExtraDimSamples != 1)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Indices of extra dimensions must be specified");
@@ -290,6 +419,7 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                     if (poMainArray == nullptr)
                         return nullptr;
                 }
+                GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
             }
         }
         else if (!anExtraDimIndices.empty())
@@ -332,15 +462,17 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
             }
         }
 
+        if (poMainArray)
+            GetXYDimensionIndices(poMainArray, poOpenInfo, iXDim, iYDim);
+
         int iCountSubDS = 1;
 
         if (poMainArray && poMainArray->GetDimensionCount() > 2)
         {
-            uint64_t nExtraDimSamples = 1;
             const auto &apoDims = poMainArray->GetDimensions();
-            for (size_t i = 0; i < apoDims.size() - 2; ++i)
-                nExtraDimSamples *= apoDims[i]->GetSize();
-            if (nExtraDimSamples > 1024)  // arbitrary limit
+            const uint64_t nExtraDimSamples =
+                GetExtraDimSampleCount(poMainArray, iXDim, iYDim);
+            if (nExtraDimSamples > 65536)  // arbitrary limit
             {
                 if (apoDims.size() == 3)
                 {
@@ -360,6 +492,10 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                         osMainArray.c_str(), osFilename.c_str(),
                         osMainArray.c_str());
                 }
+            }
+            else if (nExtraDimSamples > 1 && bMultiband)
+            {
+                // nothing to do
             }
             else if (nExtraDimSamples > 1 && apoDims.size() == 3)
             {
@@ -417,13 +553,17 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
-    if (poMainArray && poMainArray->GetDimensionCount() <= 2)
+    if (poMainArray && (bMultiband || poMainArray->GetDimensionCount() <= 2))
     {
-        std::unique_ptr<GDALDataset> poNewDS;
-        if (poMainArray->GetDimensionCount() == 2)
-        {
-            poNewDS.reset(poMainArray->AsClassicDataset(1, 0));
+        // Pass papszOpenOptions for LOAD_EXTRA_DIM_METADATA_DELAY
+        auto poNewDS =
+            std::unique_ptr<GDALDataset>(poMainArray->AsClassicDataset(
+                iXDim, iYDim, poOpenInfo->papszOpenOptions));
+        if (!poNewDS)
+            return nullptr;
 
+        if (poMainArray->GetDimensionCount() >= 2)
+        {
             // If we have 3 arrays, check that the 2 ones that are not the main
             // 2D array are indexing variables of its dimensions. If so, don't
             // expose them as subdatasets
@@ -441,7 +581,8 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                 for (int i = 0; i < 2; i++)
                 {
                     auto poIndexingVar =
-                        poMainArray->GetDimensions()[i]->GetIndexingVariable();
+                        poMainArray->GetDimensions()[i == 0 ? iXDim : iYDim]
+                            ->GetIndexingVariable();
                     if (poIndexingVar)
                     {
                         for (int j = 0; j < 2; j++)
@@ -461,12 +602,6 @@ GDALDataset *ZarrDataset::Open(GDALOpenInfo *poOpenInfo)
                 }
             }
         }
-        else
-        {
-            poNewDS.reset(poMainArray->AsClassicDataset(0, 0));
-        }
-        if (!poNewDS)
-            return nullptr;
         if (!poDS->m_aosSubdatasets.empty())
         {
             poNewDS->SetMetadata(poDS->m_aosSubdatasets.List(), "SUBDATASETS");
@@ -841,6 +976,34 @@ void ZarrDriver::InitMetadata()
                 "V2 only)");
             CPLAddXMLAttributeAndValue(psCreateZMetadata, "default", "YES");
 
+            auto psSingleArrayNode =
+                CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+            CPLAddXMLAttributeAndValue(psSingleArrayNode, "name",
+                                       "SINGLE_ARRAY");
+            CPLAddXMLAttributeAndValue(psSingleArrayNode, "type", "boolean");
+            CPLAddXMLAttributeAndValue(
+                psSingleArrayNode, "description",
+                "Whether to write a multi-band dataset as a single array, or "
+                "one array per band");
+            CPLAddXMLAttributeAndValue(psSingleArrayNode, "default", "YES");
+
+            auto psInterleaveNode =
+                CPLCreateXMLNode(oTree.get(), CXT_Element, "Option");
+            CPLAddXMLAttributeAndValue(psInterleaveNode, "name", "INTERLEAVE");
+            CPLAddXMLAttributeAndValue(psInterleaveNode, "type",
+                                       "string-select");
+            CPLAddXMLAttributeAndValue(psInterleaveNode, "default", "BAND");
+            {
+                auto poValueNode =
+                    CPLCreateXMLNode(psInterleaveNode, CXT_Element, "Value");
+                CPLCreateXMLNode(poValueNode, CXT_Text, "BAND");
+            }
+            {
+                auto poValueNode =
+                    CPLCreateXMLNode(psInterleaveNode, CXT_Element, "Value");
+                CPLCreateXMLNode(poValueNode, CXT_Text, "PIXEL");
+            }
+
             char *pszXML = CPLSerializeXMLTree(oTree.get());
             GDALDriver::SetMetadataItem(GDAL_DMD_CREATIONOPTIONLIST, pszXML);
             CPLFree(pszXML);
@@ -996,24 +1159,113 @@ GDALDataset *ZarrDataset::Create(const char *pszName, int nXSize, int nYSize,
     }
     if (poDS->m_poDimY == nullptr || poDS->m_poDimX == nullptr)
         return nullptr;
-    const auto aoDims = std::vector<std::shared_ptr<GDALDimension>>{
-        poDS->m_poDimY, poDS->m_poDimX};
 
-    for (int i = 0; i < nBandsIn; i++)
+    const bool bSingleArray =
+        CPLTestBool(CSLFetchNameValueDef(papszOptions, "SINGLE_ARRAY", "YES"));
+    const bool bBandInterleave =
+        EQUAL(CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BAND"), "BAND");
+    std::shared_ptr<GDALDimension> poBandDim;
+    if (bSingleArray && nBandsIn > 1)
+        poBandDim = poRG->CreateDimension("Band", std::string(), std::string(),
+                                          nBandsIn);
+
+    const char *pszNonNullArrayName =
+        pszArrayName ? pszArrayName : CPLGetBasename(pszName);
+    if (poBandDim)
     {
-        auto poArray = poRG->CreateMDArray(
-            pszArrayName
-                ? (nBandsIn == 1 ? pszArrayName
-                                 : CPLSPrintf("%s_band%d", pszArrayName, i + 1))
-                : (nBandsIn == 1 ? CPLGetBasename(pszName)
-                                 : CPLSPrintf("Band%d", i + 1)),
-            aoDims, GDALExtendedDataType::Create(eType), papszOptions);
-        if (poArray == nullptr)
+        const auto apoDims =
+            bBandInterleave
+                ? std::vector<std::shared_ptr<GDALDimension>>{poBandDim,
+                                                              poDS->m_poDimY,
+                                                              poDS->m_poDimX}
+                : std::vector<std::shared_ptr<GDALDimension>>{
+                      poDS->m_poDimY, poDS->m_poDimX, poBandDim};
+        poDS->m_poSingleArray = poRG->CreateMDArray(
+            pszNonNullArrayName, apoDims, GDALExtendedDataType::Create(eType),
+            papszOptions);
+        if (!poDS->m_poSingleArray)
             return nullptr;
-        poDS->SetBand(i + 1, new ZarrRasterBand(poArray));
+        poDS->SetMetadataItem("INTERLEAVE", bBandInterleave ? "BAND" : "PIXEL",
+                              "IMAGE_STRUCTURE");
+        for (int i = 0; i < nBandsIn; i++)
+        {
+            auto poSlicedArray = poDS->m_poSingleArray->GetView(
+                CPLSPrintf(bBandInterleave ? "[%d,::,::]" : "[::,::,%d]", i));
+            poDS->SetBand(i + 1, new ZarrRasterBand(poSlicedArray));
+        }
+    }
+    else
+    {
+        const auto apoDims = std::vector<std::shared_ptr<GDALDimension>>{
+            poDS->m_poDimY, poDS->m_poDimX};
+        for (int i = 0; i < nBandsIn; i++)
+        {
+            auto poArray = poRG->CreateMDArray(
+                nBandsIn == 1  ? pszNonNullArrayName
+                : pszArrayName ? CPLSPrintf("%s_band%d", pszArrayName, i + 1)
+                               : CPLSPrintf("Band%d", i + 1),
+                apoDims, GDALExtendedDataType::Create(eType), papszOptions);
+            if (poArray == nullptr)
+                return nullptr;
+            poDS->SetBand(i + 1, new ZarrRasterBand(poArray));
+        }
     }
 
     return poDS.release();
+}
+
+/************************************************************************/
+/*                           ~ZarrDataset()                             */
+/************************************************************************/
+
+ZarrDataset::~ZarrDataset()
+{
+    ZarrDataset::FlushCache(true);
+}
+
+/************************************************************************/
+/*                            FlushCache()                              */
+/************************************************************************/
+
+CPLErr ZarrDataset::FlushCache(bool bAtClosing)
+{
+    CPLErr eErr = GDALDataset::FlushCache(bAtClosing);
+    if (m_poSingleArray)
+    {
+        bool bFound = false;
+        for (int i = 0; i < nBands; ++i)
+        {
+            if (papoBands[i]->GetColorInterpretation() != GCI_Undefined)
+                bFound = true;
+        }
+        if (bFound)
+        {
+            const auto oStringDT = GDALExtendedDataType::CreateString();
+            auto poAttr = m_poSingleArray->GetAttribute("COLOR_INTERPRETATION");
+            if (!poAttr)
+                poAttr = m_poSingleArray->CreateAttribute(
+                    "COLOR_INTERPRETATION", {static_cast<GUInt64>(nBands)},
+                    oStringDT);
+            if (poAttr)
+            {
+                const GUInt64 nStartIndex = 0;
+                const size_t nCount = nBands;
+                const GInt64 arrayStep = 1;
+                const GPtrDiff_t bufferStride = 1;
+                std::vector<const char *> apszValues;
+                for (int i = 0; i < nBands; ++i)
+                {
+                    const auto eColorInterp =
+                        papoBands[i]->GetColorInterpretation();
+                    apszValues.push_back(
+                        GDALGetColorInterpretationName(eColorInterp));
+                }
+                poAttr->Write(&nStartIndex, &nCount, &arrayStep, &bufferStride,
+                              oStringDT, apszValues.data());
+            }
+        }
+    }
+    return eErr;
 }
 
 /************************************************************************/
@@ -1150,10 +1402,14 @@ CPLErr ZarrDataset::SetMetadata(char **papszMetadata, const char *pszDomain)
     if (nBands >= 1 && (pszDomain == nullptr || pszDomain[0] == '\0'))
     {
         const auto oStringDT = GDALExtendedDataType::CreateString();
-        for (int i = 0; i < nBands; ++i)
+        const auto bSingleArray = m_poSingleArray != nullptr;
+        const int nIters = bSingleArray ? 1 : nBands;
+        for (int i = 0; i < nIters; ++i)
         {
-            auto &poArray =
-                cpl::down_cast<ZarrRasterBand *>(papoBands[i])->m_poArray;
+            auto *poArray = bSingleArray
+                                ? m_poSingleArray.get()
+                                : cpl::down_cast<ZarrRasterBand *>(papoBands[i])
+                                      ->m_poArray.get();
             for (auto iter = papszMetadata; iter && *iter; ++iter)
             {
                 char *pszKey = nullptr;
@@ -1322,6 +1578,47 @@ CPLErr ZarrRasterBand::SetUnitType(const char *pszNewValue)
 }
 
 /************************************************************************/
+/*                      GetColorInterpretation()                        */
+/************************************************************************/
+
+GDALColorInterp ZarrRasterBand::GetColorInterpretation()
+{
+    return m_eColorInterp;
+}
+
+/************************************************************************/
+/*                      SetColorInterpretation()                        */
+/************************************************************************/
+
+CPLErr ZarrRasterBand::SetColorInterpretation(GDALColorInterp eColorInterp)
+{
+    auto poGDS = cpl::down_cast<ZarrDataset *>(poDS);
+    m_eColorInterp = eColorInterp;
+    if (!poGDS->m_poSingleArray)
+    {
+        const auto oStringDT = GDALExtendedDataType::CreateString();
+        auto poAttr = m_poArray->GetAttribute("COLOR_INTERPRETATION");
+        if (poAttr && (poAttr->GetDimensionCount() != 0 ||
+                       poAttr->GetDataType().GetClass() != GEDTC_STRING))
+            return CE_None;
+        if (!poAttr)
+            poAttr = m_poArray->CreateAttribute("COLOR_INTERPRETATION", {},
+                                                oStringDT);
+        if (poAttr)
+        {
+            const GUInt64 nStartIndex = 0;
+            const size_t nCount = 1;
+            const GInt64 arrayStep = 1;
+            const GPtrDiff_t bufferStride = 1;
+            const char *pszValue = GDALGetColorInterpretationName(eColorInterp);
+            poAttr->Write(&nStartIndex, &nCount, &arrayStep, &bufferStride,
+                          oStringDT, &pszValue);
+        }
+    }
+    return CE_None;
+}
+
+/************************************************************************/
 /*                    ZarrRasterBand::IReadBlock()                      */
 /************************************************************************/
 
@@ -1443,6 +1740,18 @@ void GDALRegister_Zarr()
         "   <Option name='CACHE_TILE_PRESENCE' type='boolean' "
         "description='Whether to establish an initial listing of present "
         "tiles' default='NO'/>"
+        "   <Option name='MULTIBAND' type='boolean' default='YES' "
+        "description='Whether to expose >= 3D arrays as GDAL multiband "
+        "datasets "
+        "(when using the classic 2D API)'/>"
+        "   <Option name='DIM_X' type='string' description="
+        "'Name or index of the X dimension (only used when MULTIBAND=YES)'/>"
+        "   <Option name='DIM_Y' type='string' description="
+        "'Name or index of the Y dimension (only used when MULTIBAND=YES)'/>"
+        "   <Option name='LOAD_EXTRA_DIM_METADATA_DELAY' type='string' "
+        "description="
+        "'Maximum delay in seconds allowed to set the DIM_{dimname}_VALUE band "
+        "metadata items'/>"
         "</OpenOptionList>");
 
     poDriver->SetMetadataItem(

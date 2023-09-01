@@ -278,6 +278,44 @@ The following dataset open options are available:
       work for /vsicurl/ itself, but more cloud-based file systems (such as /vsis3/,
       /vsigs/, /vsiaz/, etc) which have a dedicated directory listing operation.
 
+-  .. oo:: MULTIBAND
+      :choices: YES, NO
+      :default: YES
+      :since: 3.8
+
+      Whether to expose > 3D arrays as GDAL multiband datasets (when using the
+      classic 2D API)
+
+-  .. oo:: DIM_X
+      :choices: <string> or <integer>
+      :since: 3.8
+
+      Name or index of the X dimension (only used when MULTIBAND=YES and with
+      th classic 2D API). If not specified, deduced from dimension type
+      (when equal to "HORIZONTAL_X"), or the last dimension (i.e. fastest
+      varying one), if no dimension type found.
+
+-  .. oo:: DIM_Y
+      :choices: <string> or <integer>
+      :since: 3.8
+
+      Name or index of the Y dimension (only used when MULTIBAND=YES and with
+      th classic 2D API). If not specified, deduced from dimension type
+      (when equal to "HORIZONTAL_Y"), or the before last dimension, if no
+      dimension type found.
+
+-  .. oo:: LOAD_EXTRA_DIM_METADATA_DELAY
+      :choices: <integer> or "unlimited"
+      :default: 5
+      :since: 3.8
+
+      Maximum delay in seconds allowed to set the DIM_{dimname}_VALUE band
+      metadata items from the indexing variable of the dimensions.
+      Default value is 5. ``unlimited`` can be used to mean unlimited delay.
+      Can also be defined globally with the GDAL_LOAD_EXTRA_DIM_METADATA_DELAY
+      configuration` option.
+      Only used through the classic 2D API.
+
 Multi-threaded caching
 ----------------------
 
@@ -450,6 +488,23 @@ The following options are creation options of the classic raster API only:
       :default: NO
 
       Whether to append the new dataset to an existing Zarr hierarchy.
+
+-  .. co:: SINGLE_ARRAY
+      :choices: YES, NO
+      :default: YES
+      :since: 3.8
+
+      Whether to write a multi-band dataset as a 3D Zarr array. If false,
+      one 2D Zarr array per band will be written.
+
+-  .. co:: INTERLEAVE
+      :choices: BAND, PIXEL
+      :default: BAND
+      :since: 3.8
+
+      Whe writing a multi-band dataset as a 3D Zarr array, whether the band
+      dimension should be the first one/slowest varying one (BAND), or the
+      last one/fastest varying one (INTERLEAVE)
 
 
 Examples

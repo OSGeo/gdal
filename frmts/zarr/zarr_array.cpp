@@ -1541,13 +1541,17 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
 
     const size_t nDims = m_aoDims.size();
     bool negativeStep = false;
+    bool bWriteWholeTileInit = true;
     for (size_t i = 0; i < nDims; ++i)
     {
         if (arrayStep[i] < 0)
         {
             negativeStep = true;
-            break;
+            if (arrayStep[i] != -1 && count[i] > 1)
+                bWriteWholeTileInit = false;
         }
+        else if (arrayStep[i] != 1 && count[i] > 1)
+            bWriteWholeTileInit = false;
     }
 
     const auto nBufferDTSize = static_cast<int>(bufferDataType.GetSize());
@@ -1586,7 +1590,7 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
     std::vector<uint64_t> indicesOuterLoop(nDims + 1);
     std::vector<const GByte *> srcPtrStackOuterLoop(nDims + 1);
 
-    std::vector<uint64_t> indicesInnerLoop(nDims + 1);
+    std::vector<size_t> offsetDstBuffer(nDims + 1);
     std::vector<const GByte *> srcPtrStackInnerLoop(nDims + 1);
 
     std::vector<GPtrDiff_t> srcBufferStrideBytes;
@@ -1617,11 +1621,18 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
         !m_oType.NeedsFreeDynamicMemory();
 
     size_t dimIdx = 0;
+    size_t dimIdxForCopy = nDims == 0 ? 0 : nDims - 1;
+    if (nDims)
+    {
+        while (dimIdxForCopy > 0 && count[dimIdxForCopy] == 1)
+            --dimIdxForCopy;
+    }
+
     srcPtrStackOuterLoop[0] = static_cast<const GByte *>(pSrcBuffer);
 lbl_next_depth:
     if (dimIdx == nDims)
     {
-        bool bWriteWholeTile = true;
+        bool bWriteWholeTile = bWriteWholeTileInit;
         bool bPartialTile = false;
         for (size_t i = 0; i < nDims; ++i)
         {
@@ -1639,8 +1650,8 @@ lbl_next_depth:
             if (bWriteWholeTile)
             {
                 const bool bWholePartialTileThisDim =
-                    indicesOuterLoop[i] + countInnerLoopInit[i] ==
-                    m_aoDims[i]->GetSize();
+                    indicesOuterLoop[i] == 0 &&
+                    countInnerLoopInit[i] == m_aoDims[i]->GetSize();
                 bWriteWholeTile = (countInnerLoopInit[i] == m_anBlockSize[i] ||
                                    bWholePartialTileThisDim);
                 if (bWholePartialTileThisDim)
@@ -1725,38 +1736,76 @@ lbl_next_depth:
         }
         m_bDirtyTile = true;
         m_bCachedTiledEmpty = false;
+        if (nDims)
+            offsetDstBuffer[0] = static_cast<size_t>(
+                indicesOuterLoop[0] - tileIndices[0] * m_anBlockSize[0]);
 
         GByte *pabyTile = &abyTile[0];
 
     lbl_next_depth_inner_loop:
-        if (nDims == 0 || dimIdxSubLoop == nDims - 1)
+        if (dimIdxSubLoop == dimIdxForCopy)
         {
-            indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
-            const void *src_ptr = srcPtrStackInnerLoop[dimIdxSubLoop];
-
-            size_t nOffset = 0;
-            for (size_t i = 0; i < nDims; i++)
+            size_t nOffset = offsetDstBuffer[dimIdxSubLoop];
+            GInt64 step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
+            for (size_t i = dimIdxSubLoop + 1; i < nDims; ++i)
             {
                 nOffset = static_cast<size_t>(
                     nOffset * m_anBlockSize[i] +
-                    (indicesInnerLoop[i] - tileIndices[i] * m_anBlockSize[i]));
+                    (indicesOuterLoop[i] - tileIndices[i] * m_anBlockSize[i]));
+                step *= m_anBlockSize[i];
             }
+            const void *src_ptr = srcPtrStackInnerLoop[dimIdxSubLoop];
             GByte *dst_ptr = pabyTile + nOffset * nCacheDTSize;
-            const auto step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
 
-            if (m_bUseOptimizedCodePaths && bBothAreNumericDT &&
-                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() /
-                                             nDTSize) &&
-                srcBufferStrideBytes[dimIdxSubLoop] <=
-                    std::numeric_limits<int>::max())
+            if (m_bUseOptimizedCodePaths && bBothAreNumericDT)
             {
-                GDALCopyWords64(
-                    src_ptr, bufferDataType.GetNumericDataType(),
-                    static_cast<int>(srcBufferStrideBytes[dimIdxSubLoop]),
-                    dst_ptr, m_oType.GetNumericDataType(),
-                    static_cast<int>(step * nDTSize),
-                    static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]));
-
+                if (countInnerLoopInit[dimIdxSubLoop] == 1 && bSameNumericDT)
+                {
+                    void *dst_ptr_v = dst_ptr;
+                    if (nSameDTSize == 1)
+                        *static_cast<uint8_t *>(dst_ptr_v) =
+                            *static_cast<const uint8_t *>(src_ptr);
+                    else if (nSameDTSize == 2)
+                    {
+                        *static_cast<uint16_t *>(dst_ptr_v) =
+                            *static_cast<const uint16_t *>(src_ptr);
+                    }
+                    else if (nSameDTSize == 4)
+                    {
+                        *static_cast<uint32_t *>(dst_ptr_v) =
+                            *static_cast<const uint32_t *>(src_ptr);
+                    }
+                    else if (nSameDTSize == 8)
+                    {
+                        *static_cast<uint64_t *>(dst_ptr_v) =
+                            *static_cast<const uint64_t *>(src_ptr);
+                    }
+                    else if (nSameDTSize == 16)
+                    {
+                        static_cast<uint64_t *>(dst_ptr_v)[0] =
+                            static_cast<const uint64_t *>(src_ptr)[0];
+                        static_cast<uint64_t *>(dst_ptr_v)[1] =
+                            static_cast<const uint64_t *>(src_ptr)[1];
+                    }
+                    else
+                    {
+                        CPLAssert(false);
+                    }
+                }
+                else if (step <=
+                             static_cast<GIntBig>(
+                                 std::numeric_limits<int>::max() / nDTSize) &&
+                         srcBufferStrideBytes[dimIdxSubLoop] <=
+                             std::numeric_limits<int>::max())
+                {
+                    GDALCopyWords64(
+                        src_ptr, bufferDataType.GetNumericDataType(),
+                        static_cast<int>(srcBufferStrideBytes[dimIdxSubLoop]),
+                        dst_ptr, m_oType.GetNumericDataType(),
+                        static_cast<int>(step * nDTSize),
+                        static_cast<GPtrDiff_t>(
+                            countInnerLoopInit[dimIdxSubLoop]));
+                }
                 goto end_inner_loop;
             }
 
@@ -1862,13 +1911,18 @@ lbl_next_depth:
         {
             // This level of loop loops over individual samples, within a
             // block
-            indicesInnerLoop[dimIdxSubLoop] = indicesOuterLoop[dimIdxSubLoop];
             countInnerLoop[dimIdxSubLoop] = countInnerLoopInit[dimIdxSubLoop];
             while (true)
             {
                 dimIdxSubLoop++;
                 srcPtrStackInnerLoop[dimIdxSubLoop] =
                     srcPtrStackInnerLoop[dimIdxSubLoop - 1];
+                offsetDstBuffer[dimIdxSubLoop] =
+                    static_cast<size_t>(offsetDstBuffer[dimIdxSubLoop - 1] *
+                                            m_anBlockSize[dimIdxSubLoop] +
+                                        (indicesOuterLoop[dimIdxSubLoop] -
+                                         tileIndices[dimIdxSubLoop] *
+                                             m_anBlockSize[dimIdxSubLoop]));
                 goto lbl_next_depth_inner_loop;
             lbl_return_to_caller_inner_loop:
                 dimIdxSubLoop--;
@@ -1877,9 +1931,10 @@ lbl_next_depth:
                 {
                     break;
                 }
-                indicesInnerLoop[dimIdxSubLoop] += arrayStep[dimIdxSubLoop];
                 srcPtrStackInnerLoop[dimIdxSubLoop] +=
                     srcBufferStrideBytes[dimIdxSubLoop];
+                offsetDstBuffer[dimIdxSubLoop] +=
+                    static_cast<size_t>(arrayStep[dimIdxSubLoop]);
             }
         }
     end_inner_loop:

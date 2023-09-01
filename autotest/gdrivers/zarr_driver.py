@@ -1100,7 +1100,7 @@ def test_zarr_read_classic():
     assert not ds.GetSubDatasets()
     assert ds.ReadRaster() == array.array("b", [1, 2])
 
-    ds = gdal.Open("data/zarr/order_f_u1_3d.zarr")
+    ds = gdal.OpenEx("data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=NO"])
     assert ds
     subds = ds.GetSubDatasets()
     assert len(subds) == 2
@@ -1112,7 +1112,13 @@ def test_zarr_read_classic():
     assert ds.ReadRaster() == array.array("b", [12 + i for i in range(12)])
 
     with gdal.quiet_errors():
-        assert gdal.Open("ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d") is None
+        assert (
+            gdal.OpenEx(
+                "ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d",
+                open_options=["MULTIBAND=NO"],
+            )
+            is None
+        )
         assert gdal.Open("ZARR:data/zarr/order_f_u1_3d.zarr:/order_f_u1_3d:2") is None
         assert gdal.Open(subds[0][0] + ":0") is None
 
@@ -1185,16 +1191,89 @@ def test_zarr_read_classic_2d_with_unrelated_auxiliary_1D_arrays():
         gdal.RmdirRecursive("/vsimem/test.zarr")
 
 
+def test_zarr_read_classic_3d_multiband():
+
+    ds = gdal.OpenEx("data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=YES"])
+    assert ds.RasterXSize == 4
+    assert ds.RasterYSize == 3
+    assert ds.RasterCount == 2
+    assert not ds.GetSubDatasets()
+    assert ds.GetRasterBand(1).ReadRaster() == array.array("b", [i for i in range(12)])
+    assert ds.GetRasterBand(2).ReadRaster() == array.array(
+        "b", [12 + i for i in range(12)]
+    )
+
+    ds = gdal.OpenEx(
+        "data/zarr/order_f_u1_3d.zarr",
+        open_options=["MULTIBAND=YES", "DIM_X=dim1", "DIM_Y=dim2"],
+    )
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 4
+    assert ds.RasterCount == 2
+    assert not ds.GetSubDatasets()
+    assert ds.GetRasterBand(1).ReadRaster() == array.array(
+        "b", [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]
+    )
+    assert ds.GetRasterBand(2).ReadRaster() == array.array(
+        "b", [(x + 12) for x in [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]]
+    )
+
+    ds = gdal.OpenEx(
+        "data/zarr/order_f_u1_3d.zarr",
+        open_options=["MULTIBAND=YES", "DIM_X=1", "DIM_Y=2"],
+    )
+    assert ds.RasterXSize == 3
+    assert ds.RasterYSize == 4
+    assert ds.RasterCount == 2
+    assert not ds.GetSubDatasets()
+    assert ds.GetRasterBand(1).ReadRaster() == array.array(
+        "b", [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]
+    )
+    assert ds.GetRasterBand(2).ReadRaster() == array.array(
+        "b", [(x + 12) for x in [0, 4, 8, 1, 5, 9, 2, 6, 10, 3, 7, 11]]
+    )
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=YES", "DIM_X=3"]
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr", open_options=["MULTIBAND=YES", "DIM_Y=3"]
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr",
+            open_options=["MULTIBAND=YES", "DIM_X=not_found"],
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+    gdal.ErrorReset()
+    with gdaltest.error_handler():
+        gdal.OpenEx(
+            "data/zarr/order_f_u1_3d.zarr",
+            open_options=["MULTIBAND=YES", "DIM_Y=not_found"],
+        )
+    assert gdal.GetLastErrorMsg() != ""
+
+
 def test_zarr_read_classic_too_many_samples_3d():
 
     j = {
-        "chunks": [65536, 2, 1],
+        "chunks": [65537, 2, 1],
         "compressor": None,
         "dtype": "!u1",
         "fill_value": None,
         "filters": None,
         "order": "C",
-        "shape": [65536, 2, 1],
+        "shape": [65537, 2, 1],
         "zarr_format": 2,
     }
 
@@ -1203,11 +1282,35 @@ def test_zarr_read_classic_too_many_samples_3d():
         gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
         gdal.ErrorReset()
         with gdal.quiet_errors():
-            ds = gdal.Open("/vsimem/test.zarr")
+            ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
         assert gdal.GetLastErrorMsg() != ""
         assert len(ds.GetSubDatasets()) == 0
+
+        gdal.ErrorReset()
+        with gdaltest.error_handler():
+            assert (
+                gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=YES"]) is None
+            )
+        assert gdal.GetLastErrorMsg() != ""
     finally:
         gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize("interleave", ["BAND", "PIXEL"])
+def test_zarr_write_single_array_3d(interleave):
+
+    src_ds = gdal.Open("data/rgbsmall.tif")
+    gdal.GetDriverByName("ZARR").CreateCopy(
+        "/vsimem/test.zarr", src_ds, options=["INTERLEAVE=" + interleave]
+    )
+    ds = gdal.Open("/vsimem/test.zarr")
+    assert [ds.GetRasterBand(i + 1).Checksum() for i in range(ds.RasterCount)] == [
+        src_ds.GetRasterBand(i + 1).Checksum() for i in range(src_ds.RasterCount)
+    ]
+    assert [
+        ds.GetRasterBand(i + 1).GetColorInterpretation() for i in range(ds.RasterCount)
+    ] == [gdal.GCI_RedBand, gdal.GCI_GreenBand, gdal.GCI_BlueBand]
+    gdal.RmdirRecursive("/vsimem/test.zarr")
 
 
 def test_zarr_read_classic_4d():
@@ -1226,7 +1329,7 @@ def test_zarr_read_classic_4d():
     try:
         gdal.Mkdir("/vsimem/test.zarr", 0)
         gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
-        ds = gdal.Open("/vsimem/test.zarr")
+        ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
         subds = ds.GetSubDatasets()
         assert len(subds) == 6
         for i in range(len(subds)):
@@ -1238,13 +1341,13 @@ def test_zarr_read_classic_4d():
 def test_zarr_read_classic_too_many_samples_4d():
 
     j = {
-        "chunks": [256, 256, 1, 1],
+        "chunks": [257, 256, 1, 1],
         "compressor": None,
         "dtype": "!u1",
         "fill_value": None,
         "filters": None,
         "order": "C",
-        "shape": [256, 256, 1, 1],
+        "shape": [257, 256, 1, 1],
         "zarr_format": 2,
     }
 
@@ -1253,7 +1356,7 @@ def test_zarr_read_classic_too_many_samples_4d():
         gdal.FileFromMemBuffer("/vsimem/test.zarr/.zarray", json.dumps(j))
         gdal.ErrorReset()
         with gdal.quiet_errors():
-            ds = gdal.Open("/vsimem/test.zarr")
+            ds = gdal.OpenEx("/vsimem/test.zarr", open_options=["MULTIBAND=NO"])
         assert gdal.GetLastErrorMsg() != ""
         assert len(ds.GetSubDatasets()) == 0
     finally:
@@ -2737,6 +2840,88 @@ def test_zarr_write_array_content(
 
 
 @pytest.mark.parametrize(
+    "dt,array_type",
+    [
+        (gdal.GDT_Byte, "B"),
+        (gdal.GDT_UInt16, "H"),
+        (gdal.GDT_UInt32, "I"),
+        (gdal.GDT_UInt64, "Q"),
+        (gdal.GDT_CFloat64, "d"),
+    ],
+)
+def test_zarr_write_interleave(dt, array_type):
+
+    try:
+
+        def create():
+            ds = gdal.GetDriverByName("ZARR").CreateMultiDimensional(
+                "/vsimem/test.zarr"
+            )
+            assert ds is not None
+            rg = ds.GetRootGroup()
+            assert rg
+
+            dim0 = rg.CreateDimension("dim0", None, None, 3)
+            dim1 = rg.CreateDimension("dim1", None, None, 2)
+
+            ar = rg.CreateMDArray(
+                "test",
+                [dim0, dim1],
+                gdal.ExtendedDataType.Create(dt),
+                ["BLOCKSIZE=2,2"],
+            )
+            assert (
+                ar.Write(
+                    array.array(
+                        array_type,
+                        [0, 2, 4]
+                        if dt != gdal.GDT_CFloat64
+                        else [0, 0.5, 2, 2.5, 4, 4.5],
+                    ),
+                    array_start_idx=[0, 0],
+                    count=[3, 1],
+                    array_step=[1, 0],
+                )
+                == gdal.CE_None
+            )
+            assert (
+                ar.Write(
+                    array.array(
+                        array_type,
+                        [1, 3, 5]
+                        if dt != gdal.GDT_CFloat64
+                        else [1, 1.5, 3, 3.5, 5, 5.5],
+                    ),
+                    array_start_idx=[0, 1],
+                    count=[3, 1],
+                    array_step=[1, 0],
+                )
+                == gdal.CE_None
+            )
+
+        create()
+
+        ds = gdal.OpenEx("/vsimem/test.zarr", gdal.OF_MULTIDIM_RASTER | gdal.OF_UPDATE)
+        assert ds
+        rg = ds.GetRootGroup()
+        assert rg
+        ar = rg.OpenMDArray(rg.GetMDArrayNames()[0])
+        assert ar.Read() == array.array(
+            array_type,
+            [0, 1, 2, 3, 4, 5]
+            if dt != gdal.GDT_CFloat64
+            else [0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5],
+        )
+        if dt != gdal.GDT_CFloat64:
+            assert ar.Read(
+                buffer_datatype=gdal.ExtendedDataType.Create(gdal.GDT_Byte)
+            ) == array.array("B", [0, 1, 2, 3, 4, 5])
+
+    finally:
+        gdal.RmdirRecursive("/vsimem/test.zarr")
+
+
+@pytest.mark.parametrize(
     "string_format,input_str,output_str",
     [
         ("ASCII", "0123456789truncated", "0123456789"),
@@ -2985,7 +3170,11 @@ def test_zarr_create(format):
 
     try:
         ds = gdal.GetDriverByName("Zarr").Create(
-            "/vsimem/test.zarr", 1, 1, 3, options=["ARRAY_NAME=foo", "FORMAT=" + format]
+            "/vsimem/test.zarr",
+            1,
+            1,
+            3,
+            options=["ARRAY_NAME=foo", "FORMAT=" + format, "SINGLE_ARRAY=NO"],
         )
         assert ds.GetGeoTransform(can_return_null=True) is None
         assert ds.GetSpatialRef() is None
