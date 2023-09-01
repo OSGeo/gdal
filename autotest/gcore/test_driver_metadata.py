@@ -29,10 +29,21 @@
 ###############################################################################
 
 
+import gdaltest
 import pytest
 from lxml import etree
 
 from osgeo import gdal
+
+# For unknown reason on mingw64 CI, this now crashes
+# on File "D:/a/gdal/gdal/build/autotest/gcore/test_driver_metadata.py", line 396 in test_metadata_openoptionlist
+# This used to work previously, so likely related to some update in a
+# mingw64 component, although the diff between a broken and working CI run
+# does not show an obvious culprit. And this works in a local VM...
+pytestmark = pytest.mark.skipif(
+    gdaltest.is_travis_branch("mingw64"), reason="Crashes for unknown reason"
+)
+
 
 all_driver_names = [
     gdal.GetDriver(i).GetDescription() for i in range(gdal.GetDriverCount())
