@@ -370,7 +370,6 @@
         }
       },
       "required": [
-        "description",
         "type",
         "fieldType",
         "splitPolicy",
@@ -382,6 +381,9 @@
     "group": {
       "type": "object",
       "properties": {
+        "name": {
+          "type": "string"
+        },
         "layerNames": {
           "type": "array",
           "items": {
