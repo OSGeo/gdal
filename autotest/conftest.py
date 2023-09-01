@@ -223,6 +223,20 @@ def pytest_configure(config):
         )
 
 
+def list_loaded_dlls():
+    try:
+        import psutil
+    except ImportError:
+        return None
+    process = psutil.Process()
+    loaded_dlls = []
+    for dll in process.memory_maps():
+        if os.path.exists(dll.path):
+            loaded_dlls.append(dll.path)
+    loaded_dlls = sorted(loaded_dlls)
+    return "\n".join(loaded_dlls)
+
+
 def pytest_report_header(config):
     gdal_header_info = "GDAL Build Info:"
     for item in gdal.VersionInfo("BUILD_INFO").strip().split("\n"):
@@ -243,6 +257,11 @@ def pytest_report_header(config):
     gdal_header_info += f"\nGDAL_RUN_SLOW_TESTS: {gdal_run_slow_tests}"
     if not gdaltest.run_slow_tests():
         gdal_header_info += ' (tests marked as "slow" will be skipped)'
+
+    if gdal.GetConfigOption("CI"):
+        loaded_dlls = list_loaded_dlls()
+        if loaded_dlls:
+            gdal_header_info += "\nLoaded shared objects:\n" + loaded_dlls
 
     return gdal_header_info
 
