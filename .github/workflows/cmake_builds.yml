@@ -382,6 +382,7 @@ jobs:
         run: |
           ctest --test-dir $GITHUB_WORKSPACE/build -C Release -V -j 3
         env:
+          BUILD_NAME: mingw64
           SKIP_OGR_GMLAS_HUGE_PROCESSING_TIME: YES
           SKIP_OGR_GMLAS_HTTP_RELATED: YES
           SKIP_TIFF_JPEG12: YES
