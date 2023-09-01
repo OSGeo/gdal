@@ -663,6 +663,11 @@ def test_numpy_rw_16():
         ds = gdal_array.OpenArray(array)
     assert ds is None
 
+    with gdaltest.enable_exceptions(), pytest.raises(
+        Exception, match="Illegal numpy array rank 1"
+    ):
+        gdal_array.OpenArray(array)
+
     # 4D
     array = numpy.empty([1, 1, 1, 1], numpy.uint8)
     with gdal.quiet_errors():

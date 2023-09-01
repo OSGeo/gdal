@@ -123,6 +123,12 @@ def test_numpy_rw_multidim_numpy_array_as_dataset():
         assert myarray
         assert np.array_equal(myarray.ReadAsArray(), ar)
 
+    ar = np.array([[1, 2, 3], [4, 5, 6]], dtype=np.unicode_)
+    with pytest.raises(
+        Exception, match="Unable to access numpy arrays of typecode `U'"
+    ):
+        gdal_array.OpenMultiDimensionalNumPyArray(ar)
+
 
 ###############################################################################
 
