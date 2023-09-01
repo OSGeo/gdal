@@ -4059,13 +4059,131 @@ def test_ogr_isclockwise():
     with pytest.raises(Exception, match="Incompatible geometry for operation"):
         assert not geom.IsClockwise()
 
-    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,0 1,1 1,0 0))")
+    geom = ogr.CreateGeometryFromWkt("POLYGON((10 100,10 101,11 101,10 100))")
     ring = geom.GetGeometryRef(0)
     assert ring.IsClockwise()
 
-    geom = ogr.CreateGeometryFromWkt("POLYGON((0 0,1 0,1 1,0 0))")
+    geom = ogr.CreateGeometryFromWkt("POLYGON((10 100,11 100,11 101,10 100))")
     ring = geom.GetGeometryRef(0)
     assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((1334 547,1341 551,1338 557,1334 547))")
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((1341 551,1338 557,1334 547,1341 551))")
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((1338 557,1334 547,1341 551,1338 557))")
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((1334 547,1338 557,1341 551,1334 547))")
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((1341 551,1334 547,1338 557,1341 551))")
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt("POLYGON((1338 557,1341 551,1334 547,1338 557))")
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+    # Two vertex with same coordinates are the lowest rightmost vertex
+    geom = ogr.CreateGeometryFromWkt(
+        "POLYGON((1334 547,1334 547,1341 551,1338 557,1334 547))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "POLYGON((1334 547,1341 551,1338 557,1334 547,1334 547))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "POLYGON((1341 551,1338 557,1334 547,1334 547,1341 551))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "POLYGON((1334 547,1338 557,1341 551,1334 547,1334 547))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+
+###############################################################################
+# Test OGRCurve::isClockwise()
+
+
+@gdaltest.enable_exceptions()
+def test_ogr_isclockwise_on_compoundcurve():
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1334 547,1341 551,1338 557,1334 547)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1341 551,1338 557,1334 547,1341 551)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1338 557,1334 547,1341 551,1338 557)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1334 547,1338 557,1341 551,1334 547)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1341 551,1334 547,1338 557,1341 551)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1338 557,1341 551,1334 547,1338 557)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
+
+    # Two vertex with same coordinates are the lowest rightmost vertex
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1334 547,1334 547,1341 551,1338 557,1334 547)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1334 547,1341 551,1338 557,1334 547,1334 547)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1341 551,1338 557,1334 547,1334 547,1341 551)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert not ring.IsClockwise()
+
+    geom = ogr.CreateGeometryFromWkt(
+        "CURVEPOLYGON(COMPOUNDCURVE((1334 547,1338 557,1341 551,1334 547,1334 547)))"
+    )
+    ring = geom.GetGeometryRef(0)
+    assert ring.IsClockwise()
 
 
 ###############################################################################
