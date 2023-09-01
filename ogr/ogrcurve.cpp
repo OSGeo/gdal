@@ -724,7 +724,7 @@ int OGRCurve::isClockwise() const
     OGRPoint oPointBeforeSel;
     OGRPoint oPointSel = oStartPoint;
     OGRPoint oPointNextSel;
-    bool bNextPointIsNextSel = false;
+    bool bNextPointIsNextSel = true;
     int v = 0;
 
     for (int i = 1; i < nPointCount - 1; i++)
