@@ -749,6 +749,10 @@ OGRErr OGRPolyhedralSurface::addGeometry(const OGRGeometry *poNewGeom)
 /**
  * \brief Add a geometry directly to the container.
  *
+ * Ownership of the passed geometry is taken by the container rather than
+ * cloning as addCurve() does, but only if the method is successful.
+ * If the method fails, ownership still belongs to the caller.
+ *
  * This method is the same as the C function OGR_G_AddGeometryDirectly().
  *
  * There is no SFCOM analog to this method.
@@ -779,6 +783,30 @@ OGRErr OGRPolyhedralSurface::addGeometryDirectly(OGRGeometry *poNewGeom)
     oMP.nGeomCount++;
 
     return OGRERR_NONE;
+}
+
+/************************************************************************/
+/*                            addGeometry()                             */
+/************************************************************************/
+
+/**
+ * \brief Add a geometry directly to the container.
+ *
+ * There is no SFCOM analog to this method.
+ *
+ * @param geom geometry to add to the container.
+ *
+ * @return OGRERR_NONE if successful, or OGRERR_UNSUPPORTED_GEOMETRY_TYPE if
+ * the geometry type is illegal for the type of geometry container.
+ */
+
+OGRErr OGRPolyhedralSurface::addGeometry(std::unique_ptr<OGRGeometry> geom)
+{
+    OGRGeometry *poGeom = geom.release();
+    OGRErr eErr = addGeometryDirectly(poGeom);
+    if (eErr != OGRERR_NONE)
+        delete poGeom;
+    return eErr;
 }
 
 /************************************************************************/
