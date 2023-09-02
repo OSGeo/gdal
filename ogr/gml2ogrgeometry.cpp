@@ -674,7 +674,7 @@ static bool ParseGMLCoordinates(const CPLXMLNode *psGeomNode,
 /*      consequently ignored at all.                                    */
 /************************************************************************/
 
-static OGRPolygon *GML2FaceExtRing(const OGRGeometry *poGeom)
+static std::unique_ptr<OGRPolygon> GML2FaceExtRing(const OGRGeometry *poGeom)
 {
     const OGRGeometryCollection *poColl =
         dynamic_cast<const OGRGeometryCollection *>(poGeom);
@@ -685,62 +685,47 @@ static OGRPolygon *GML2FaceExtRing(const OGRGeometry *poGeom)
         return nullptr;
     }
 
-    OGRPolygon *poPolygon = nullptr;
-    bool bError = false;
-    int iCount = poColl->getNumGeometries();
+    const OGRPolygon *poPolygonExterior = nullptr;
+    const OGRPolygon *poPolygonInterior = nullptr;
     int iExterior = 0;
     int iInterior = 0;
 
-    for (int ig = 0; ig < iCount; ig++)
+    for (const auto *poChild : *poColl)
     {
         // A collection of Polygons is expected to be found.
-        const OGRGeometry *poChild = poColl->getGeometryRef(ig);
-        if (poChild == nullptr)
-        {
-            bError = true;
-            continue;
-        }
         if (wkbFlatten(poChild->getGeometryType()) == wkbPolygon)
         {
-            const OGRPolygon *poPg = poChild->toPolygon();
-            if (poPg->getNumInteriorRings() > 0)
-                iExterior++;
-            else
-                iInterior++;
-        }
-        else
-        {
-            bError = true;
-        }
-    }
-
-    if (!bError && iCount > 0)
-    {
-        if (iCount == 1 && iExterior == 0 && iInterior == 1)
-        {
-            // There is a single Polygon within the collection.
-            const OGRPolygon *poPg = poColl->getGeometryRef(0)->toPolygon();
-            poPolygon = poPg->clone();
-        }
-        else
-        {
-            if (iExterior == 1 && iInterior == iCount - 1)
+            const OGRPolygon *poPoly = poChild->toPolygon();
+            if (poPoly->getNumInteriorRings() > 0)
             {
-                // Searching the unique Polygon containing holes.
-                for (int ig = 0; ig < iCount; ig++)
-                {
-                    const OGRPolygon *poPg =
-                        poColl->getGeometryRef(ig)->toPolygon();
-                    if (poPg->getNumInteriorRings() > 0)
-                    {
-                        poPolygon = poPg->clone();
-                    }
-                }
+                poPolygonExterior = poPoly;
+                iExterior++;
+            }
+            else
+            {
+                poPolygonInterior = poPoly;
+                iInterior++;
             }
         }
+        else
+        {
+            return nullptr;
+        }
     }
 
-    return poPolygon;
+    if (poPolygonInterior && iExterior == 0 && iInterior == 1)
+    {
+        // There is a single Polygon within the collection.
+        return std::unique_ptr<OGRPolygon>(poPolygonInterior->clone());
+    }
+    else if (poPolygonExterior && iExterior == 1 &&
+             iInterior == poColl->getNumGeometries() - 1)
+    {
+        // Return the unique Polygon containing holes.
+        return std::unique_ptr<OGRPolygon>(poPolygonExterior->clone());
+    }
+
+    return nullptr;
 }
 #endif
 
@@ -3104,8 +3089,8 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
                         return nullptr;
                     }
 
-                    auto poFaceGeom = std::unique_ptr<OGRPolygon>(
-                        GML2FaceExtRing(poFaceCollectionGeom.get()));
+                    auto poFaceGeom =
+                        GML2FaceExtRing(poFaceCollectionGeom.get());
 
                     if (poFaceGeom == nullptr)
                     {
