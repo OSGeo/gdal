@@ -1100,9 +1100,9 @@ static std::unique_ptr<OGRGeometry> GML2OGRGeometry_XMLNode_Internal(
     if (EQUAL(pszBaseGeometry, "Triangle"))
     {
         // Find outer ring.
-        const CPLXMLNode *psChild = FindBareXMLChild(psNode, "outerBoundaryIs");
-        if (psChild == nullptr)
-            psChild = FindBareXMLChild(psNode, "exterior");
+        const CPLXMLNode *psChild = FindBareXMLChild(psNode, "exterior");
+        if (!psChild)
+            return nullptr;
 
         psChild = GetChildElement(psChild);
         if (psChild == nullptr)

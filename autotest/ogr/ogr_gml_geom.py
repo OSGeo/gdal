@@ -1711,6 +1711,10 @@ def test_gml_invalid_geoms():
             None,
         ),
         ("<gml:TriangulatedSurface></gml:TriangulatedSurface>", None),
+        (
+            "<gml:TriangulatedSurface><gml:patches><gml:Triangle/></gml:patches></gml:TriangulatedSurface>",
+            None,
+        ),
     ]
 
     for (gml, expected_wkt) in gml_expected_wkt_list:
