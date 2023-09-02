@@ -52,22 +52,14 @@ def module_disable_exceptions():
 # Verify we can open the test file.
 
 
-def test_ogr_s57_1():
+def test_ogr_s57_check_layers(fname="data/s57/1B5X02NE.000"):
 
-    gdaltest.s57_ds = None
+    s57_ds = ogr.Open(fname)
+    assert s57_ds is not None, "failed to open test file."
 
-    gdaltest.s57_ds = ogr.Open("data/s57/1B5X02NE.000")
-    assert gdaltest.s57_ds is not None, "failed to open test file."
-
-
-###############################################################################
-# Verify we have the set of expected layers and that some rough information
-# matches our expectations.
-
-
-def test_ogr_s57_check_layers():
-    if gdaltest.s57_ds is None:
-        pytest.skip()
+    ###############################################################################
+    # Verify we have the set of expected layers and that some rough information
+    # matches our expectations.
 
     layer_list = [
         ("DSID", ogr.wkbNone, 1),
@@ -85,12 +77,12 @@ def test_ogr_s57_check_layers():
         ("M_QUAL", ogr.wkbPolygon, 1),
     ]
 
-    assert gdaltest.s57_ds.GetLayerCount() == len(
+    assert s57_ds.GetLayerCount() == len(
         layer_list
     ), "Did not get expected number of layers, likely cannot find support files."
 
     for i, lyr_info in enumerate(layer_list):
-        lyr = gdaltest.s57_ds.GetLayer(i)
+        lyr = s57_ds.GetLayer(i)
 
         assert (
             lyr.GetName() == lyr_info[0]
@@ -120,11 +112,11 @@ def test_ogr_s57_check_layers():
 # Check the COALNE feature.
 
 
-def test_ogr_s57_COALNE():
-    if gdaltest.s57_ds is None:
-        pytest.skip()
+def test_ogr_s57_COALNE(fname="data/s57/1B5X02NE.000"):
 
-    feat = gdaltest.s57_ds.GetLayerByName("COALNE").GetNextFeature()
+    s57_ds = ogr.Open(fname)
+
+    feat = s57_ds.GetLayerByName("COALNE").GetNextFeature()
 
     assert feat is not None, "Did not get expected COALNE feature at all."
 
@@ -144,11 +136,11 @@ def test_ogr_s57_COALNE():
 # Check the M_QUAL feature.
 
 
-def test_ogr_s57_M_QUAL():
-    if gdaltest.s57_ds is None:
-        pytest.skip()
+def test_ogr_s57_M_QUAL(fname="data/s57/1B5X02NE.000"):
 
-    feat = gdaltest.s57_ds.GetLayerByName("M_QUAL").GetNextFeature()
+    s57_ds = ogr.Open(fname)
+
+    feat = s57_ds.GetLayerByName("M_QUAL").GetNextFeature()
 
     assert feat is not None, "Did not get expected M_QUAL feature at all."
 
@@ -167,11 +159,11 @@ def test_ogr_s57_M_QUAL():
 # Check the SOUNDG feature.
 
 
-def test_ogr_s57_SOUNDG():
-    if gdaltest.s57_ds is None:
-        pytest.skip()
+def test_ogr_s57_SOUNDG(fname="data/s57/1B5X02NE.000"):
 
-    feat = gdaltest.s57_ds.GetLayerByName("SOUNDG").GetNextFeature()
+    s57_ds = ogr.Open(fname)
+
+    feat = s57_ds.GetLayerByName("SOUNDG").GetNextFeature()
 
     assert feat is not None, "Did not get expected SOUNDG feature at all."
 
@@ -186,8 +178,6 @@ def test_ogr_s57_SOUNDG():
     wkt = "MULTIPOINT (60.98164400 -32.49449000 3.400,60.98134400 -32.49642400 1.400,60.97814200 -32.49487400 -3.200,60.98071200 -32.49519600 1.200)"
 
     ogrtest.check_feature_geometry(feat, wkt)
-
-    gdaltest.s57_ds = None
 
 
 ###############################################################################
@@ -248,14 +238,14 @@ def test_ogr_s57_test_ogrsf():
 # Test S57 to S57 conversion
 
 
-def test_ogr_s57_write():
+def test_ogr_s57_write_1(tmp_path):
 
-    gdal.Unlink("tmp/ogr_s57_9.000")
+    dst_filename = tmp_path / "ogr_s57_9.000"
 
     with gdal.config_option(
         "OGR_S57_OPTIONS", "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
     ):
-        ds = ogr.GetDriverByName("S57").CreateDataSource("tmp/ogr_s57_9.000")
+        ds = ogr.GetDriverByName("S57").CreateDataSource(dst_filename)
         src_ds = ogr.Open("data/s57/1B5X02NE.000")
 
     for src_lyr in src_ds:
@@ -269,40 +259,33 @@ def test_ogr_s57_write():
     src_ds = None
     ds = None
 
-    ds = ogr.Open("tmp/ogr_s57_9.000")
-    assert ds is not None
+    test_ogr_s57_check_layers(dst_filename)
+    test_ogr_s57_COALNE(dst_filename)
+    test_ogr_s57_M_QUAL(dst_filename)
+    test_ogr_s57_SOUNDG(dst_filename)
 
-    gdaltest.s57_ds = ds
-    test_ogr_s57_check_layers()
-    test_ogr_s57_COALNE()
-    test_ogr_s57_M_QUAL()
-    test_ogr_s57_SOUNDG()
 
-    gdaltest.s57_ds = None
+def test_ogr_s57_write_2(tmp_path):
 
-    gdal.Unlink("tmp/ogr_s57_9.000")
+    dst_filename = tmp_path / "ogr_s57_9.000"
 
     with gdal.config_option(
         "OGR_S57_OPTIONS", "RETURN_PRIMITIVES=ON,RETURN_LINKAGES=ON,LNAM_REFS=ON"
     ):
         gdal.VectorTranslate(
-            "tmp/ogr_s57_9.000",
+            dst_filename,
             "data/s57/1B5X02NE.000",
             options="-f S57 IsolatedNode ConnectedNode Edge Face M_QUAL SOUNDG",
         )
 
-    ds = gdal.OpenEx("tmp/ogr_s57_9.000", open_options=["RETURN_PRIMITIVES=ON"])
+    ds = gdal.OpenEx(dst_filename, open_options=["RETURN_PRIMITIVES=ON"])
+
     assert ds is not None
 
     assert ds.GetLayerByName("IsolatedNode") is not None
 
-    gdaltest.s57_ds = ds
-    test_ogr_s57_M_QUAL()
-    test_ogr_s57_SOUNDG()
-
-    gdaltest.s57_ds = None
-
-    gdal.Unlink("tmp/ogr_s57_9.000")
+    test_ogr_s57_M_QUAL(dst_filename)
+    test_ogr_s57_SOUNDG(dst_filename)
 
 
 ###############################################################################
@@ -359,15 +342,15 @@ def test_ogr_s57_online_1():
 # Test with ENC 3.0 TDS - tile without updates.
 
 
-def test_ogr_s57_online_2():
+def test_ogr_s57_online_2(tmp_path):
 
     gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.000", "GB5X01SW.000"
     )
 
     gdaltest.clean_tmp()
-    shutil.copy("tmp/cache/GB5X01SW.000", "tmp/GB5X01SW.000")
-    ds = ogr.Open("tmp/GB5X01SW.000")
+    shutil.copy("tmp/cache/GB5X01SW.000", tmp_path)
+    ds = ogr.Open(tmp_path / "GB5X01SW.000")
     assert ds is not None
 
     lyr = ds.GetLayerByName("LIGHTS")
@@ -390,14 +373,18 @@ def test_ogr_s57_online_2():
 # Test with ENC 3.0 TDS - tile with updates.
 
 
-def test_ogr_s57_online_3():
+# This test appears to have had a typo since it was added in bf50149
+# In that commit, the file GB5X01SW.001 is added, but GB5X01SW.000 leftover
+# from the previous tests is opened.
+@pytest.mark.xfail()
+def test_ogr_s57_online_3(tmp_path):
 
     gdaltest.download_or_skip(
         "http://download.osgeo.org/gdal/data/s57/enctds/GB5X01SW.001", "GB5X01SW.001"
     )
 
-    shutil.copy("tmp/cache/GB5X01SW.001", "tmp/GB5X01SW.001")
-    ds = ogr.Open("tmp/GB5X01SW.000")
+    shutil.copy("tmp/cache/GB5X01SW.001", tmp_path)
+    ds = ogr.Open(tmp_path / "GB5X01SW.001")
     assert ds is not None
 
     lyr = ds.GetLayerByName("LIGHTS")
@@ -490,12 +477,3 @@ def test_ogr_s57_more_than_255_updates_to_feature():
     ds = ogr.Open("tmp/cache/US5ME51M/ENC_ROOT/US5ME51M/US5ME51M.000")
     assert ds is not None
     assert gdal.GetLastErrorMsg() == ""
-
-
-###############################################################################
-#  Cleanup
-
-
-def test_ogr_s57_cleanup():
-
-    gdaltest.s57_ds = None
