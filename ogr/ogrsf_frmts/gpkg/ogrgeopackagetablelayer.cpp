@@ -136,9 +136,7 @@ OGRErr OGRGeoPackageTableLayer::UpdateExtent(const OGREnvelope *poExtent)
 //
 OGRErr OGRGeoPackageTableLayer::BuildColumns()
 {
-    CPLFree(panFieldOrdinals);
-    panFieldOrdinals = static_cast<int *>(
-        CPLMalloc(sizeof(int) * m_poFeatureDefn->GetFieldCount()));
+    m_anFieldOrdinals.resize(m_poFeatureDefn->GetFieldCount());
     int iCurCol = 0;
 
     /* Always start with a primary key */
@@ -149,7 +147,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
         soColumns += m_pszFidColumn
                          ? "\"" + SQLEscapeName(m_pszFidColumn) + "\""
                          : "_rowid_";
-        iFIDCol = iCurCol;
+        m_iFIDCol = iCurCol;
         iCurCol++;
     }
 
@@ -159,7 +157,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
         const auto poFieldDefn = m_poFeatureDefn->GetGeomFieldDefn(0);
         if (poFieldDefn->IsIgnored())
         {
-            iGeomCol = -1;
+            m_iGeomCol = -1;
         }
         else
         {
@@ -168,7 +166,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
             soColumns += "m.\"";
             soColumns += SQLEscapeName(poFieldDefn->GetNameRef());
             soColumns += "\"";
-            iGeomCol = iCurCol;
+            m_iGeomCol = iCurCol;
             iCurCol++;
         }
     }
@@ -179,7 +177,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
         const auto poFieldDefn = m_poFeatureDefn->GetFieldDefn(i);
         if (poFieldDefn->IsIgnored())
         {
-            panFieldOrdinals[i] = -1;
+            m_anFieldOrdinals[i] = -1;
         }
         else
         {
@@ -188,7 +186,7 @@ OGRErr OGRGeoPackageTableLayer::BuildColumns()
             soColumns += "m.\"";
             soColumns += SQLEscapeName(poFieldDefn->GetNameRef());
             soColumns += "\"";
-            panFieldOrdinals[i] = iCurCol;
+            m_anFieldOrdinals[i] = iCurCol;
             iCurCol++;
         }
     }
@@ -5173,9 +5171,10 @@ void OGRGeoPackageTableLayer::SetSpatialFilter(OGRGeometry *poGeomIn)
 /*                        HasFastSpatialFilter()                        */
 /************************************************************************/
 
-bool OGRGeoPackageTableLayer::HasFastSpatialFilter(int iGeomColIn)
+bool OGRGeoPackageTableLayer::HasFastSpatialFilter(int m_iGeomColIn)
 {
-    if (iGeomColIn < 0 || iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount())
+    if (m_iGeomColIn < 0 ||
+        m_iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount())
         return false;
     return HasSpatialIndex();
 }
@@ -5184,12 +5183,13 @@ bool OGRGeoPackageTableLayer::HasFastSpatialFilter(int iGeomColIn)
 /*                           GetSpatialWhere()                          */
 /************************************************************************/
 
-CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
+CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int m_iGeomColIn,
                                                    OGRGeometry *poFilterGeom)
 {
     CPLString osSpatialWHERE;
 
-    if (iGeomColIn < 0 || iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount())
+    if (m_iGeomColIn < 0 ||
+        m_iGeomColIn >= m_poFeatureDefn->GetGeomFieldCount())
         return osSpatialWHERE;
 
     if (poFilterGeom != nullptr)
@@ -5199,7 +5199,7 @@ CPLString OGRGeoPackageTableLayer::GetSpatialWhere(int iGeomColIn,
         poFilterGeom->getEnvelope(&sEnvelope);
 
         const char *pszC =
-            m_poFeatureDefn->GetGeomFieldDefn(iGeomColIn)->GetNameRef();
+            m_poFeatureDefn->GetGeomFieldDefn(m_iGeomColIn)->GetNameRef();
 
         if (CPLIsInf(sEnvelope.MinX) && sEnvelope.MinX < 0 &&
             CPLIsInf(sEnvelope.MinY) && sEnvelope.MinY < 0 &&
@@ -7830,7 +7830,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         m_nIsCompatOfOptimizedGetNextArrowArray = TRUE;
     }
 
-    // CPLDebug("GPKG", "iNextShapeId = " CPL_FRMT_GIB, iNextShapeId);
+    // CPLDebug("GPKG", "m_iNextShapeId = " CPL_FRMT_GIB, m_iNextShapeId);
 
     const int nMaxBatchSize = OGRArrowArrayHelper::GetMaxFeaturesInBatch(
         m_aosArrowArrayStreamOptions);
@@ -7863,7 +7863,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                 task->m_oThread.join();
         };
 
-        if (task->m_iStartShapeId != iNextShapeId)
+        if (task->m_iStartShapeId != m_iNextShapeId)
         {
             // Should not normally happen, unless the user messes with
             // GetNextFeature()
@@ -7877,7 +7877,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         }
         else if (task->m_psArrowArray->release)
         {
-            iNextShapeId += task->m_psArrowArray->length;
+            m_iNextShapeId += task->m_psArrowArray->length;
 
             // Transfer the task ArrowArray to the client array
             memcpy(out_array, task->m_psArrowArray.get(),
@@ -7892,7 +7892,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             {
                 task->m_iStartShapeId +=
                     static_cast<GIntBig>(nTasks) * nMaxBatchSize;
-                task->m_poLayer->iNextShapeId = task->m_iStartShapeId;
+                task->m_poLayer->m_iNextShapeId = task->m_iStartShapeId;
                 try
                 {
                     // Wake-up thread with new task
@@ -7935,12 +7935,12 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     // Start asynchronous tasks to prefetch the next ArrowArray
     if (m_poDS->GetAccess() == GA_ReadOnly &&
         m_oQueueArrowArrayPrefetchTasks.empty() &&
-        iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <=
+        m_iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <=
             m_nTotalFeatureCount &&
         sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2)
     {
         const int nMaxTasks = static_cast<int>(std::min<GIntBig>(
-            DIV_ROUND_UP(m_nTotalFeatureCount - iNextShapeId, nMaxBatchSize),
+            DIV_ROUND_UP(m_nTotalFeatureCount - m_iNextShapeId, nMaxBatchSize),
             GetThreadsAvailable()));
         GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
         oOpenInfo.papszOpenOptions = m_poDS->GetOpenOptions();
@@ -7949,7 +7949,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         {
             auto task = cpl::make_unique<ArrowArrayPrefetchTask>();
             task->m_iStartShapeId =
-                iNextShapeId + static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
+                m_iNextShapeId +
+                static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
             task->m_poDS = cpl::make_unique<GDALGeoPackageDataset>();
             if (!task->m_poDS->Open(&oOpenInfo, m_poDS->m_osFilenameInZip))
             {
@@ -7990,7 +7991,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                     m_poFeatureDefn->GetFieldDefn(i)->IsIgnored());
             }
 
-            poOtherLayer->iNextShapeId = task->m_iStartShapeId;
+            poOtherLayer->m_iNextShapeId = task->m_iStartShapeId;
 
             auto taskPtr = task.get();
             auto taskRunner = [taskPtr]()
@@ -8038,7 +8039,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
 {
     memset(out_array, 0, sizeof(*out_array));
 
-    if (iNextShapeId >= m_nTotalFeatureCount)
+    if (m_iNextShapeId >= m_nTotalFeatureCount)
     {
         return 0;
     }
@@ -8099,10 +8100,10 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
     osSQL += "\" WHERE \"";
     osSQL += SQLEscapeName(m_pszFidColumn);
     osSQL += "\" BETWEEN ";
-    osSQL += std::to_string(iNextShapeId + 1);
+    osSQL += std::to_string(m_iNextShapeId + 1);
     osSQL += " AND ";
-    osSQL +=
-        std::to_string(iNextShapeId + sFillArrowArray.psHelper->nMaxBatchSize);
+    osSQL += std::to_string(m_iNextShapeId +
+                            sFillArrowArray.psHelper->nMaxBatchSize);
 
     // CPLDebug("GPKG", "%s", osSQL.c_str());
 
@@ -8131,7 +8132,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayInternal(
 
     sFillArrowArray.psHelper->Shrink(sFillArrowArray.nCountRows);
 
-    iNextShapeId += sFillArrowArray.nCountRows;
+    m_iNextShapeId += sFillArrowArray.nCountRows;
 
     return 0;
 }

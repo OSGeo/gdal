@@ -539,20 +539,20 @@ class OGRGeoPackageLayer CPL_NON_FINAL : public OGRLayer,
                                              int /*argc*/,
                                              sqlite3_value **argv);
 
-    GDALGeoPackageDataset *m_poDS;
+    GDALGeoPackageDataset *m_poDS = nullptr;
 
-    OGRFeatureDefn *m_poFeatureDefn;
-    GIntBig iNextShapeId;
+    OGRFeatureDefn *m_poFeatureDefn = nullptr;
+    GIntBig m_iNextShapeId = 0;
 
-    sqlite3_stmt *m_poQueryStatement;
-    bool bDoStep;
+    sqlite3_stmt *m_poQueryStatement = nullptr;
+    bool m_bDoStep = true;
     bool m_bEOF = false;
 
-    char *m_pszFidColumn;
+    char *m_pszFidColumn = nullptr;
 
-    int iFIDCol;
-    int iGeomCol;
-    int *panFieldOrdinals;
+    int m_iFIDCol = -1;
+    int m_iGeomCol = -1;
+    std::vector<int> m_anFieldOrdinals{};
 
     void ClearStatement();
     virtual OGRErr ResetStatement() = 0;
@@ -1032,7 +1032,7 @@ class OGRGeoPackageSelectLayer final : public OGRGeoPackageLayer,
     }
     virtual int HasReadFeature() override
     {
-        return iNextShapeId > 0;
+        return m_iNextShapeId > 0;
     }
     virtual void BaseResetReading() override
     {
