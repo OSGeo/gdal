@@ -667,6 +667,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     std::set<OGRwkbGeometryType> m_eSetBadGeomTypeWarned{};
 
     int m_nIsCompatOfOptimizedGetNextArrowArray = -1;
+    bool m_bGetNextArrowArrayCalledSinceResetReading = false;
 
     int m_nCountInsertInTransactionThreshold = -1;
     GIntBig m_nCountInsertInTransaction = 0;

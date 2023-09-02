@@ -3174,6 +3174,8 @@ void OGRGeoPackageTableLayer::ResetReading()
 
     CancelAsyncNextArrowArray();
 
+    m_bGetNextArrowArrayCalledSinceResetReading = false;
+
     BuildColumns();
 }
 
@@ -3276,6 +3278,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(GIntBig nStartIndex)
     }
 
     m_iNextShapeId = nStartIndex;
+    m_bGetNextArrowArrayCalledSinceResetReading = false;
 
     return OGRERR_NONE;
 }
@@ -7616,6 +7619,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
 {
     memset(out_array, 0, sizeof(*out_array));
 
+    m_bGetNextArrowArrayCalledSinceResetReading = true;
+
     if (m_poFillArrowArray && m_poFillArrowArray->bIsFinished)
     {
         return 0;
@@ -7713,39 +7718,53 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     std::string osSQL;
     osSQL = "SELECT OGR_GPKG_FillArrowArray_INTERNAL(";
 
-    if (m_pszFidColumn)
+    const auto AddFields = [this, &osSQL]()
     {
-        osSQL += "m.\"";
-        osSQL += SQLEscapeName(m_pszFidColumn);
-        osSQL += '"';
-    }
-    else
-    {
-        osSQL += "NULL";
-    }
-
-    if (!m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField.empty() &&
-        m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
-    {
-        osSQL += ",m.\"";
-        osSQL += SQLEscapeName(GetGeometryColumn());
-        osSQL += '"';
-    }
-    for (int iField = 0; iField < m_poFillArrowArray->psHelper->nFieldCount;
-         iField++)
-    {
-        const int iArrowField =
-            m_poFillArrowArray->psHelper->mapOGRFieldToArrowField[iField];
-        if (iArrowField >= 0)
+        if (m_pszFidColumn)
         {
-            const OGRFieldDefn *poFieldDefn =
-                m_poFeatureDefn->GetFieldDefnUnsafe(iField);
-            osSQL += ",m.\"";
-            osSQL += SQLEscapeName(poFieldDefn->GetNameRef());
+            osSQL += "m.\"";
+            osSQL += SQLEscapeName(m_pszFidColumn);
             osSQL += '"';
         }
+        else
+        {
+            osSQL += "NULL";
+        }
+
+        if (!m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField
+                 .empty() &&
+            m_poFillArrowArray->psHelper->mapOGRGeomFieldToArrowField[0] >= 0)
+        {
+            osSQL += ",m.\"";
+            osSQL += SQLEscapeName(GetGeometryColumn());
+            osSQL += '"';
+        }
+        for (int iField = 0; iField < m_poFillArrowArray->psHelper->nFieldCount;
+             iField++)
+        {
+            const int iArrowField =
+                m_poFillArrowArray->psHelper->mapOGRFieldToArrowField[iField];
+            if (iArrowField >= 0)
+            {
+                const OGRFieldDefn *poFieldDefn =
+                    m_poFeatureDefn->GetFieldDefnUnsafe(iField);
+                osSQL += ",m.\"";
+                osSQL += SQLEscapeName(poFieldDefn->GetNameRef());
+                osSQL += '"';
+            }
+        }
+    };
+
+    AddFields();
+
+    osSQL += ") FROM ";
+    if (m_iNextShapeId > 0)
+    {
+        osSQL += "(SELECT ";
+        AddFields();
+        osSQL += " FROM ";
     }
-    osSQL += ") FROM \"";
+    osSQL += '\"';
     osSQL += SQLEscapeName(m_pszTableName);
     osSQL += "\" m";
     if (!m_soFilter.empty())
@@ -7792,6 +7811,10 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
         }
     }
 
+    if (m_iNextShapeId > 0)
+        osSQL +=
+            CPLSPrintf(" LIMIT -1 OFFSET " CPL_FRMT_GIB ") m", m_iNextShapeId);
+
     // CPLDebug("GPKG", "%s", osSQL.c_str());
 
     char *pszErrMsg = nullptr;
@@ -7831,7 +7854,9 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     }
 
     if (m_nIsCompatOfOptimizedGetNextArrowArray == FALSE ||
-        m_pszFidColumn == nullptr || !m_soFilter.empty())
+        m_pszFidColumn == nullptr || !m_soFilter.empty() ||
+        m_poFillArrowArray ||
+        (!m_bGetNextArrowArrayCalledSinceResetReading && m_iNextShapeId > 0))
     {
         return GetNextArrowArrayAsynchronous(out_array);
     }
@@ -7864,6 +7889,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
         }
         m_nIsCompatOfOptimizedGetNextArrowArray = TRUE;
     }
+
+    m_bGetNextArrowArrayCalledSinceResetReading = true;
 
     // CPLDebug("GPKG", "m_iNextShapeId = " CPL_FRMT_GIB, m_iNextShapeId);
 
