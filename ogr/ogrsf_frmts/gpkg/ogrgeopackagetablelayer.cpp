@@ -3369,7 +3369,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 
     if (m_bThreadRTreeStarted)
         CancelAsyncRTree();
-    CancelAsyncNextArrowArray();
+
     if (!RunDeferredSpatialIndexUpdate())
         return OGRERR_FAILURE;
 
