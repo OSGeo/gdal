@@ -3178,10 +3178,33 @@ void OGRGeoPackageTableLayer::ResetReading()
 }
 
 /************************************************************************/
+/*                           SetNextByIndex()                           */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::SetNextByIndex(GIntBig nIndex)
+{
+    if (nIndex < 0)
+        return OGRERR_FAILURE;
+    if (m_soColumns.empty())
+        BuildColumns();
+    return ResetStatementInternal(nIndex);
+}
+
+/************************************************************************/
 /*                           ResetStatement()                           */
 /************************************************************************/
 
 OGRErr OGRGeoPackageTableLayer::ResetStatement()
+
+{
+    return ResetStatementInternal(0);
+}
+
+/************************************************************************/
+/*                       ResetStatementInternal()                       */
+/************************************************************************/
+
+OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(GIntBig nStartIndex)
 
 {
     ClearStatement();
@@ -3236,6 +3259,10 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
     else
         soSQL.Printf("SELECT %s FROM \"%s\" m", m_soColumns.c_str(),
                      SQLEscapeName(m_pszTableName).c_str());
+    if (nStartIndex > 0)
+    {
+        soSQL += CPLSPrintf(" LIMIT -1 OFFSET " CPL_FRMT_GIB, nStartIndex);
+    }
 
     CPLDebug("GPKG", "ResetStatement(%s)", soSQL.c_str());
 
@@ -3247,6 +3274,8 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
                  soSQL.c_str());
         return OGRERR_FAILURE;
     }
+
+    m_iNextShapeId = nStartIndex;
 
     return OGRERR_NONE;
 }
@@ -3983,6 +4012,12 @@ int OGRGeoPackageTableLayer::TestCapability(const char *pszCap)
     else if (EQUAL(pszCap, OLCFastSpatialFilter))
     {
         return HasSpatialIndex() || m_bDeferredSpatialIndexCreation;
+    }
+    else if (EQUAL(pszCap, OLCFastSetNextByIndex))
+    {
+        // Fast may not be that true on large layers, but better than the
+        // default implementation for sure...
+        return TRUE;
     }
     else if (EQUAL(pszCap, OLCFastGetExtent))
     {

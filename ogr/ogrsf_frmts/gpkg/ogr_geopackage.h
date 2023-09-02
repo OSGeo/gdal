@@ -707,6 +707,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
     void RemoveAsyncRTreeTempDB();
     void AsyncRTreeThreadFunction();
 
+    OGRErr ResetStatementInternal(GIntBig nStartIndex);
     virtual OGRErr ResetStatement() override;
 
     void BuildWhere();
@@ -803,6 +804,7 @@ class OGRGeoPackageTableLayer final : public OGRGeoPackageLayer
                        int nFlagsIn) override;
     virtual OGRErr ReorderFields(int *panMap) override;
     void ResetReading() override;
+    OGRErr SetNextByIndex(GIntBig nIndex) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
     OGRErr IUpsertFeature(OGRFeature *poFeature) override;
