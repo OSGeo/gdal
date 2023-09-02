@@ -56,7 +56,7 @@ gdal_version = tuple(int(s) for s in str(gdal_version_str).split(".") if s.isdig
 
 def DoesDriverHandleExtension(drv: gdal.Driver, ext: str) -> bool:
     exts = drv.GetMetadataItem(gdal.DMD_EXTENSIONS)
-    return exts is not None and exts.lower().find(ext.lower()) >= 0
+    return exts is not None and ext.lower() in exts.lower().split(" ")
 
 
 def GetOutputDriversFor(filename: PathLikeOrStr, is_raster=True) -> List[str]:
