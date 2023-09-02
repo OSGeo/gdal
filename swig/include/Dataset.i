@@ -563,11 +563,11 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
 %feature("kwargs") BeginAsyncReader;
 %newobject BeginAsyncReader;
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
-%apply (int nLenKeepObject, char *pBufKeepObject, void* pyObject) { (int buf_len, char *buf_string, void* pyObject) };
+%apply (size_t nLenKeepObject, char *pBufKeepObject, void* pyObject) { (size_t buf_len, char *buf_string, void* pyObject) };
 %apply (int *optional_int) { (int*) };
   GDALAsyncReaderShadow* BeginAsyncReader(
        int xOff, int yOff, int xSize, int ySize,
-       int buf_len, char *buf_string, void* pyObject,
+       size_t buf_len, char *buf_string, void* pyObject,
        int buf_xsize, int buf_ysize, GDALDataType bufType = (GDALDataType)0,
        int band_list = 0, int *pband_list = 0, int nPixelSpace = 0,
        int nLineSpace = 0, int nBandSpace = 0, char **options = 0)  {
@@ -605,7 +605,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
     }
 
     int nBCount = (band_list) != 0 ? band_list : GDALGetRasterCount(self);
-    int nMinSize = nxsize * nysize * nBCount * (GDALGetDataTypeSize(ntype) / 8);
+    uint64_t nMinSize = (uint64_t)nxsize * nysize * nBCount * GDALGetDataTypeSizeBytes(ntype);
     if (buf_string == NULL || buf_len < nMinSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Buffer is too small");
@@ -648,7 +648,7 @@ CPLErr AdviseRead(  int xoff, int yoff, int xsize, int ysize,
   }
 
 %clear(int band_list, int *pband_list);
-%clear (int buf_len, char *buf_string, void* pyObject);
+%clear (size_t buf_len, char *buf_string, void* pyObject);
 %clear(int*);
 
   void EndAsyncReader(GDALAsyncReaderShadow* ario){
