@@ -40,7 +40,8 @@ from osgeo import gdal, ogr, osr
 def Usage():
     print(
         """
-Usage: ogr_layer_algebra.py Union|Intersection|SymDifference|Identity|Update|Clip|Erase
+Usage: ogr_layer_algebra.py [--help] [--help-general]
+                            Union|Intersection|SymDifference|Identity|Update|Clip|Erase
                             -input_ds name [-input_lyr name]
                             -method_ds [-method_lyr name]
                             -output_ds name [-output_lyr name] [-overwrite]
@@ -195,7 +196,10 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-f" and i + 1 < len(argv):
+        if arg == "--help":
+            return Usage()
+
+        elif arg == "-f" and i + 1 < len(argv):
             i = i + 1
             driver_name = argv[i]
 

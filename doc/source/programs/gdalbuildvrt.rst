@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdalbuildvrt [-tileindex field_name]
+    gdalbuildvrt [--help] [--help-general]
+                [-tileindex field_name]
                 [-resolution {highest|lowest|average|user}]
                 [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]
                 [-separate] [-b band]* [-sd subdataset]
@@ -28,7 +29,7 @@ Synopsis
                 [-oo NAME=VALUE]*
                 [-input_file_list my_list.txt] [-overwrite]
                 [-strict | -non_strict]
-                output.vrt [gdalfile]*
+                <output.vrt> [<gdalfile>]*
 
 Description
 -----------
@@ -60,6 +61,8 @@ appearing on top of another source will override is content). This might be
 changed in later versions.
 
 .. program:: gdalbuildvrt
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -tileindex
 

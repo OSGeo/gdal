@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gnmmanage [--help][-q][-quiet][--long-usage]
+    gnmmanage [--help] [--help-general] [-q] [-quiet] [--long-usage]
             [info]
             [create [-f <format_name>] [-t_srs <srs_name>] [-dsco NAME=VALUE]... ]
             [import src_dataset_name] [-l layer_name]
@@ -34,6 +34,8 @@ Description
 The :program:`gnmmanage` program can perform various managing operations on geographical networks in GDAL. In addition to creating and deleting networks this includes capabilities of managing network's features, topology and rules.
 
 .. program:: gnmmanage
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -info
 
@@ -67,7 +69,7 @@ The :program:`gnmmanage` program can perform various managing operations on geog
 
     Make a topological connection, where the gfid_src and gfid_tgt are vertices and gfid_con is edge (gfid_con can be -1, so the system edge will be inserted).
 
-    Manually assign the following values: 
+    Manually assign the following values:
 
     .. option:: -c <cost>
 

@@ -37,8 +37,9 @@
 
 static void Usage(const char *pszErrorMsg = nullptr)
 {
-    printf("nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near "
-           "dist] [-nb non_black_pixels]\n"
+    printf("nearblack [--help] [--help-general]\n"
+           "          [-of format] [-white | [-color c1,c2,c3...cn]*]\n"
+           "          [-near dist] [-nb non_black_pixels]\n"
            "          [-setalpha] [-setmask] [-alg twopasses|floodfill]\n"
            "          [-o outfile] [-q] [-co \"NAME=VALUE\"]* infile\n");
 

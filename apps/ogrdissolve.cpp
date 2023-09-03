@@ -96,6 +96,10 @@ MAIN_START(nArgc, papszArgv)
 
     for (int iArg = 1; iArg < nArgc; iArg++)
     {
+        if (EQUAL(papszArgv[iArg], "--help"))
+        {
+            Usage();
+        }
         if ((EQUAL(papszArgv[iArg], "-f") || EQUAL(papszArgv[iArg], "-of")) &&
             iArg < nArgc - 1)
         {
@@ -469,20 +473,20 @@ static void Usage()
 {
     OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf(
-        "Usage: ogr2ogr [--help-general] [-skipfailures] [-append] [-update]\n"
-        "               [-select field_list] [-where restricted_where] \n"
-        "               [-sql <sql statement>] \n"
-        "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid "
-        "FID]\n"
-        "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
-        "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] "
-        "...]\n"
-        "               dst_datasource_name src_datasource_name\n"
-        "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer "
-        "[layer ...]]\n"
-        "\n"
-        " -f format_name: output file format name, possible values are:\n");
+    printf("Usage: ogr2ogr [--help] [--help-general]\n"
+           "               [-skipfailures] [-append] [-update]\n"
+           "               [-select field_list] [-where restricted_where] \n"
+           "               [-sql <sql statement>] \n"
+           "               [-spat xmin ymin xmax ymax] [-preserve_fid] [-fid "
+           "FID]\n"
+           "               [-a_srs srs_def] [-t_srs srs_def] [-s_srs srs_def]\n"
+           "               [-f format_name] [-overwrite] [[-dsco NAME=VALUE] "
+           "...]\n"
+           "               dst_datasource_name src_datasource_name\n"
+           "               [-lco NAME=VALUE] [-nln name] [-nlt type] [layer "
+           "[layer ...]]\n"
+           "\n"
+           " -f format_name: output file format name, possible values are:\n");
 
     for (int iDriver = 0; iDriver < poR->GetDriverCount(); iDriver++)
     {

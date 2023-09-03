@@ -365,7 +365,8 @@ class file_info(object):
 
 # =============================================================================
 def Usage():
-    print("Usage: gdal_merge.py [-o out_filename] [-of out_format] [-co NAME=VALUE]*")
+    print("Usage: gdal_merge.py [--help] [--help-general]")
+    print("                     [-o out_filename] [-of out_format] [-co NAME=VALUE]*")
     print(
         "                     [-ps pixelsize_x pixelsize_y] [-tap] [-separate] [-q] [-v] [-pct]"
     )
@@ -408,7 +409,10 @@ def gdal_merge(argv=None):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-o":
+        if arg == "--help":
+            return Usage()
+
+        elif arg == "-o":
             i = i + 1
             out_file = argv[i]
 

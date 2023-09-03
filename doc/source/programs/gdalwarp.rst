@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdalwarp [--help-general] [--formats]
+    gdalwarp [--help] [--help-general] [--formats]
         [-b|-srcband n]* [-dstband n]*
         [-s_srs srs_def] [-t_srs srs_def] [-ct string]
         [-to "NAME=VALUE"]* [-vshift | -novshift]
@@ -44,6 +44,8 @@ and can also apply GCPs stored with the image if the image is "raw"
 with control information.
 
 .. program:: gdalwarp
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -b <n>
 

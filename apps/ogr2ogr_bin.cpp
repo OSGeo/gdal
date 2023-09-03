@@ -65,8 +65,8 @@ static bool StringCISortFunction(const CPLString &a, const CPLString &b)
 static void Usage(const char *pszAdditionalMsg = nullptr, bool bShort = true)
 {
     printf(
-        "Usage: ogr2ogr [--help-general] [-skipfailures] [-append | -upsert] "
-        "[-update]\n"
+        "Usage: ogr2ogr [--help] [--help-general]\n"
+        "               [-skipfailures] [-append | -upsert] [-update]\n"
         "               [-select field_list] [-where "
         "restricted_where|@filename]\n"
         "               [-progress] [-sql <sql statement>|@filename] [-dialect "

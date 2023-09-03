@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_contour [-b <band>] [-a <attribute_name>] [-amin <attribute_name>] [-amax <attribute_name>]
+    gdal_contour [--help] [--help-general]
+                 [-b <band>] [-a <attribute_name>] [-amin <attribute_name>] [-amax <attribute_name>]
                  [-3d] [-inodata]
                  [-snodata n] [-i <interval>]
                  [-f <formatname>] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]
@@ -33,6 +34,8 @@ The contour line-strings are oriented consistently and the high side will
 be on the right, i.e. a line string goes clockwise around a top.
 
 .. program:: gdal_contour
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -b <band>
 

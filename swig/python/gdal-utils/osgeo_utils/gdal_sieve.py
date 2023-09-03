@@ -40,8 +40,9 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 def Usage():
     print(
-        """Usage: gdal_sieve [-q] [-st threshold] [-4] [-8] [-o name=value]
-           srcfile [-nomask] [-mask filename] [-of format] [dstfile]"""
+        """Usage: gdal_sieve [--help] [--help-general]
+                             [-q] [-st threshold] [-4] [-8] [-o name=value]
+                             <srcfile> [-nomask] [-mask filename] [-of format] [<dstfile>]"""
     )
     return 2
 
@@ -66,7 +67,10 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-of" or arg == "-f":
+        if arg == "--help":
+            return Usage()
+
+        elif arg == "-of" or arg == "-f":
             i = i + 1
             driver_name = argv[i]
 

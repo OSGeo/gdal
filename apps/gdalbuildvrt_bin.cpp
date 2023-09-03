@@ -44,7 +44,8 @@ static void Usage(const char *pszErrorMsg)
 {
     fprintf(
         stdout, "%s",
-        "Usage: gdalbuildvrt [-tileindex field_name]\n"
+        "Usage: gdalbuildvrt [--help] [--help-general]\n"
+        "                    [-tileindex field_name]\n"
         "                    [-resolution {highest|lowest|average|user}]\n"
         "                    [-te xmin ymin xmax ymax] [-tr xres yres] [-tap]\n"
         "                    [-separate] [-b band]* [-sd subdataset]\n"

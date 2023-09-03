@@ -685,8 +685,8 @@ class GDALCalc(GDALScript):
             Note that all files must have the same dimensions (unless extent option is used),
             but no projection checking is performed (unless projectionCheck option is used)."""
         )
-        # add an explicit --help option because the standard -h/--help option is not valid as -h is an alpha option
-        self.add_help = "--help"
+        # -h is an alpha option
+        self.disable_h_option = True
         self.optfile_arg = "--optfile"
 
         self.add_example(
@@ -763,6 +763,7 @@ class GDALCalc(GDALScript):
 
     def get_parser(self, argv) -> GDALArgumentParser:
         parser = self.parser
+
         parser.add_argument(
             "--calc",
             dest="calc",

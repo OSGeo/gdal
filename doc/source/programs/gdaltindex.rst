@@ -15,10 +15,11 @@ Synopsis
 
 .. code-block::
 
-    gdaltindex [-f format] [-tileindex field_name] [-write_absolute_path]
-            [-skip_different_projection] [-t_srs target_srs]
-            [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
-            [-lyr_name name] index_file [gdal_file]*
+    gdaltindex [--help] [--help-general]
+            [-f <format>] [-tileindex <field_name>] [-write_absolute_path]
+            [-skip_different_projection] [-t_srs <target_srs>]
+            [-src_srs_name <field_name>] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
+            [-lyr_name <name>] <index_file> [<gdal_file>]*
 
 Description
 -----------
@@ -29,6 +30,8 @@ raster.  This output is suitable for use with `MapServer <http://mapserver.org/>
 tileindex.
 
 .. program:: ogrtindex
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -f <format>
 
@@ -74,7 +77,7 @@ tileindex.
 
     Layer name to create/append to in the output tile index file.
 
-.. option:: index_file
+.. option:: <index_file>
 
     The name of the output file to create/append to. The default dataset will
     be created if it doesn't already exist, otherwise it will append to the
@@ -98,7 +101,7 @@ Examples
 
     gdaltindex doq_index.shp doq/*.tif
 
-- Perform the same command as before, but now we create a GeoPackage instead of a Shapefile. 
+- Perform the same command as before, but now we create a GeoPackage instead of a Shapefile.
 
 ::
 

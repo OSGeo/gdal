@@ -18,7 +18,7 @@ Synopsis
 .. code-block::
 
 
-    gdal_create [--help-general]
+    gdal_create [--help] [--help-general]
        [-of format]
        [-outsize xsize ysize]
        [-bands count]
@@ -40,6 +40,8 @@ geotransform, nodata value, metadata. It can be used also in special cases,
 like creating a PDF file from a XML composition file.
 
 .. program:: gdal_create
+
+.. include:: options/help_and_help_general.rst
 
 .. include:: options/ot.rst
 

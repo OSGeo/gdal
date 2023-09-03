@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal2xyz [-help]
+    gdal2xyz [--help] [--help-general]
         [-skip factor]
         [-srcwin xoff yoff xsize ysize]
         [-b band]* [-allbands]
@@ -36,6 +36,8 @@ for example:
     * Return the output as numpy arrays.
 
 .. program:: gdal2xyz
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -skip
 

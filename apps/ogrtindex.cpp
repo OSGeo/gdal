@@ -56,7 +56,8 @@ static void Usage()
 
 {
     printf(
-        "Usage: ogrtindex [-lnum n]... [-lname name]... [-f output_format]\n"
+        "Usage: ogrtindex [--help] [--help-general]\n"
+        "                 [-lnum n]... [-lname name]... [-f output_format]\n"
         "                 [-write_absolute_path] [-skip_different_projection]\n"
         "                 [-t_srs target_srs]\n"
         "                 [-src_srs_name field_name] [-src_srs_format "
@@ -146,6 +147,10 @@ MAIN_START(nArgc, papszArgv)
                    papszArgv[0], GDAL_RELEASE_NAME,
                    GDALVersionInfo("RELEASE_NAME"));
             return 0;
+        }
+        else if (EQUAL(papszArgv[iArg], "--help"))
+        {
+            Usage();
         }
         else if (iArg < nArgc - 1 && (EQUAL(papszArgv[iArg], "-f") ||
                                       EQUAL(papszArgv[iArg], "-of")))

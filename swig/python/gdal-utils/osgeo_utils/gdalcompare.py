@@ -325,7 +325,8 @@ def find_diff(
 
 
 def Usage():
-    print("Usage: gdalcompare.py [-sds] <golden_file> <new_file>")
+    print("Usage: gdalcompare.py [--help] [--help-general]")
+    print("                      [-sds] <golden_file> <new_file>")
     return 2
 
 
@@ -352,7 +353,10 @@ def main(argv=sys.argv):
     i = 1
     while i < len(argv):
 
-        if argv[i] == "-sds":
+        if argv[i] == "--help":
+            return Usage()
+
+        elif argv[i] == "-sds":
             check_sds = 1
 
         elif golden_file is None:

@@ -33,7 +33,6 @@ import shlex
 import sys
 from abc import ABC, abstractmethod
 from gettext import gettext
-from typing import Union
 from warnings import warn
 
 
@@ -51,10 +50,10 @@ class GDALArgumentParser(argparse.ArgumentParser):
         description=None,
         formatter_class=None,
         fromfile_prefix_chars="@",
-        add_help: Union[str, bool] = True,
+        disable_h_option: bool = False,
+        add_gdal_generic_options: bool = False,
         **kwargs,
     ):
-        custom_help = isinstance(add_help, str)
         if title:
             if not description:
                 description = title
@@ -67,21 +66,49 @@ class GDALArgumentParser(argparse.ArgumentParser):
             fromfile_prefix_chars=fromfile_prefix_chars,
             description=description,
             formatter_class=formatter_class,
-            add_help=add_help and not custom_help,
+            add_help=not disable_h_option and not add_gdal_generic_options,
             **kwargs,
         )
-        if custom_help:
+
+        self.add_gdal_generic_options = add_gdal_generic_options
+        if add_gdal_generic_options:
+            if disable_h_option:
+                self.add_argument(
+                    "--help",
+                    action="help",
+                    default=argparse.SUPPRESS,
+                    help=gettext("show this help message and exit"),
+                )
+            else:
+                self.add_argument(
+                    "--help",
+                    "-h",
+                    action="help",
+                    default=argparse.SUPPRESS,
+                    help=gettext("show this help message and exit"),
+                )
+
             self.add_argument(
-                add_help,
-                action="help",
+                "--help-general",
+                action="store_true",
                 default=argparse.SUPPRESS,
-                help=gettext("show this help message and exit"),
+                help="Gives a brief usage message for the generic GDAL OGR command line options and exit",
             )
+
         if sys.version_info < (3, 8):
             # extend was introduced to the stdlib in Python 3.8
             self.register("action", "extend", ExtendAction)
 
     def parse_args(self, args=None, optfile_arg=None, **kwargs):
+
+        if self.add_gdal_generic_options:
+            from osgeo import gdal
+
+            args = gdal.GeneralCmdLineProcessor(["dummy"] + args)
+            if args is None:
+                sys.exit(0)
+            args = args[1:]
+
         if (
             args is not None
             and optfile_arg in args
@@ -123,7 +150,7 @@ class GDALScript(ABC):
         self.title = None
         self.description = None
         self.examples = None
-        self.add_help = True
+        self.disable_h_option = False
         self.optfile_arg = None
         self._parser = None
         self.examples = []
@@ -141,7 +168,8 @@ class GDALScript(ABC):
                 prog=self.prog,
                 title=self.title,
                 description=self.description,
-                add_help=self.add_help,
+                disable_h_option=self.disable_h_option,
+                add_gdal_generic_options=True,
                 epilog=self.get_epilog(),
                 **self.kwargs,
             )

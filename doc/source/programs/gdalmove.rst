@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
+    gdalmove.py [--help] [--help-general]
+                [-s_srs <srs_defn>] -t_srs <srs_defn>
                 [-et <max_pixel_err>] <target_file>
 
 Description
@@ -36,6 +37,8 @@ being introduced is less than the indicate threshold (in pixels).
 Currently the transformed geotransform is computed based on the transformation
 of the top left, top right, and bottom left corners. A reduced overall error
 could be produced using a least squares fit of at least all four corner points.
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -s_srs <srs_defn>
 

@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gnmanalyse [--help][-q][-quiet][--long-usage]
+    gnmanalyse [--help] [--help-general] [-q] [-quiet] [--long-usage]
             [dijkstra <start_gfid> <end_gfid> [[-alo NAME=VALUE] ...]]]
             [kpaths <start_gfid> <end_gfid> <k> [[-alo NAME=VALUE] ...]]]
             [resource [[-alo NAME=VALUE] ...]]]
@@ -29,6 +29,8 @@ Description
 The :program:`gnmanalyse` program provides analysing capabilities of geographical networks in GDAL. The results of calculations are return in an OGRLayer format or as a console text output if such layer is undefined. All calculations are made considering the blocking state of features.
 
 .. program:: gnmanalyse
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: dijkstra <start_gfid> <end_gfid>
 

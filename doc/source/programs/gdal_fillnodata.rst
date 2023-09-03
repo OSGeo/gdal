@@ -28,6 +28,8 @@ nodata areas) by interpolating from valid pixels around the edges of the area.
 Additional details on the algorithm are available in the
 :cpp:func:`GDALFillNodata` docs.
 
+.. include:: options/help_and_help_general.rst
+
 .. option:: -q
 
     The script runs in quiet mode. The progress monitor is suppressed and

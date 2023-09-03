@@ -43,7 +43,8 @@
 static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdal_viewshed [-b <band>]\n"
+    printf("Usage: gdal_viewshed [--help] [--help-general]\n"
+           "                     [-b <band>]\n"
            "                     [-a_nodata <value>] [-f <formatname>]\n"
            "                     [-oz <observer_height>] [-tz <target_height>] "
            "[-md <max_distance>]\n"

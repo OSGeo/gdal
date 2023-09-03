@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_proximity.py <srcfile> <dstfile> [-srcband n] [-dstband n]
+    gdal_proximity.py [--help] [--help-general]
+                      <srcfile> <dstfile> [-srcband n] [-dstband n]
                       [-of format] [-co name=value]*
                       [-ot Byte/UInt16/UInt32/Float32/etc]
                       [-values n,n,n] [-distunits PIXEL/GEO]
@@ -31,6 +32,8 @@ pixel identified as a target pixel.  Target pixels are those in the source
 raster for which the raster pixel value is in the set of target pixel values.
 
 .. program:: gdal_proximity
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: <srcfile>
 

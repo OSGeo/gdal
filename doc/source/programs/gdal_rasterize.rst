@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal_rasterize [-b band]* [-i] [-at]
+    gdal_rasterize [--help] [--help-general] [-b band]* [-i] [-at]
         [-oo NAME=VALUE]*
         {[-burn value]* | [-a attribute_name] | [-3d]} [-add]
         [-l layername]* [-where expression] [-sql select_statement|@filename]
@@ -38,6 +38,8 @@ Note that on the fly reprojection of vector data to the coordinate system of the
 raster data is only supported since GDAL 2.1.0.
 
 .. program:: gdal_rasterize
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -b <band>
 

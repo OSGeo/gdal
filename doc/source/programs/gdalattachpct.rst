@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdalattachpct.py [-of format] palette_file source_file dest_file
+    gdalattachpct.py [--help] [--help-general]
+                     [-of format] <palette_file> <source_file> <dest_file>
 
 Description
 -----------
@@ -23,6 +24,8 @@ Description
 This utility will attach a color table file from an input raster file or a color table file to another raster.
 
 .. program:: gdalattachpct
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -of <format>
 

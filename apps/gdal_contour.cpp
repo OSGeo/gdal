@@ -55,11 +55,13 @@ static void Usage(const char *pszErrorMsg = nullptr)
 
 {
     printf(
-        "Usage: gdal_contour [-b <band>] [-a <attribute_name>] [-amin "
+        "Usage: gdal_contour [--help] [--help-general]\n"
+        "                    [-b <band>] [-a <attribute_name>] [-amin "
         "<attribute_name>] [-amax <attribute_name>]\n"
         "                    [-3d] [-inodata] [-snodata n] [-f <formatname>] "
         "[-i <interval>]\n"
-        "                    [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE] ...]\n"
+        "                    [[-dsco <NAME=VALUE>] ...] [[-lco <NAME=VALUE>] "
+        "...]\n"
         "                    [-off <offset>] [-fl <level> <level>...] [-e "
         "<exp_base>]\n"
         "                    [-nln <outlayername>] [-q] [-p]\n"

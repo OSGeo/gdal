@@ -59,7 +59,7 @@
 static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdaltransform [--help-general]\n"
+    printf("Usage: gdaltransform [--help] [--help-general]\n"
            "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
            "    [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc] \n"
            "    [-gcp pixel line easting northing [elevation]]* [-output_xy]\n"

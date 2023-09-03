@@ -43,7 +43,8 @@ static void Usage(const char *pszErrorMsg = nullptr)
 
 {
     printf(
-        "Usage: gdaladdo [-r "
+        "Usage: gdaladdo [--help] [--help-general]\n"
+        "                [-r "
         "{nearest,average,rms,gauss,cubic,cubicspline,lanczos,average_mp,"
         "average_magphase,mode}]\n"
         "                [-ro] [-clean] [-q] [-oo NAME=VALUE]* [-minsize val]\n"
@@ -51,7 +52,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
         "                [--partial-refresh-from-projwin ulx uly lrx lry]\n"
         "                [--partial-refresh-from-source-extent "
         "filename1,...,filenameN]\n"
-        "                [--help-general] filename [levels]\n"
+        "                <filename> [levels]\n"
         "\n"
         "  -r : choice of resampling method (default: nearest)\n"
         "  -ro : open the dataset in read-only mode, in order to generate\n"

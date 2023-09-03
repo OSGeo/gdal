@@ -42,7 +42,7 @@
 static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: sozip [--quiet|--verbose]\n"
+    printf("Usage: sozip [--help] [--help-general] [--quiet|--verbose]\n"
            "             [[-g|--grow] | [--overwrite]]\n"
            "             [-r|--recurse-paths]\n"
            "             [-j|--junk]\n"

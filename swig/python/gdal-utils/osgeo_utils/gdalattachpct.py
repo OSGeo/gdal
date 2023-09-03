@@ -41,7 +41,8 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor, open_ds
 
 
 def Usage():
-    print("Usage: gdalattachpct.py <pctfile> <infile> <outfile>")
+    print("Usage: gdalattachpct.py [--help] [--help-general]")
+    print("                        <pctfile> <infile> <outfile>")
     return 2
 
 
@@ -62,7 +63,10 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-of" or arg == "-f":
+        if arg == "--help":
+            return Usage()
+
+        elif arg == "-of" or arg == "-f":
             i = i + 1
             driver_name = argv[i]
 

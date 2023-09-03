@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_calc.py --calc=expression --outfile=out_filename [-A filename]
+    gdal_calc.py [--help] [--help-general]
+                 --calc=expression --outfile=out_filename [-A filename]
                  [--A_band=n] [-B...-Z filename] [other_options]
 
 .. rubric::  DESCRIPTION
@@ -27,13 +28,7 @@ arithmetic supported by numpy arrays such as ``+``, ``-``, ``*``, and
 Note that all files must have the same dimensions (unless extent option is used),
 but no projection checking is performed (unless projectionCheck option is used).
 
-.. option:: --help
-
-    Show this help message and exit
-
-.. option:: -h
-
-    The same as :option:`--help`.
+.. include:: options/help_and_help_general.rst
 
 .. option:: --calc=expression
 

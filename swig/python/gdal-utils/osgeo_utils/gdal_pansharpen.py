@@ -41,8 +41,9 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
 def Usage():
+    print("Usage: gdal_pansharpen [--help] [--help-general]")
     print(
-        "Usage: gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset"
+        "                       pan_dataset {spectral_dataset[,band=num]}+ out_dataset"
     )
     print("                       [-of format] [-b band]* [-w weight]*")
     print(
@@ -115,6 +116,8 @@ def main(argv=sys.argv):
             progress_callback = None
         elif argv[i] == "-verbose_vrt":
             verbose_vrt = True
+        elif argv[i] == "--help":
+            return Usage()
         elif argv[i][0] == "-":
             sys.stderr.write("Unrecognized option : %s\n" % argv[i])
             return Usage()

@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_polygonize.py [-8] [-o name=value]* [-nomask] [-mask filename] <raster_file> [-b band]
+    gdal_polygonize.py [--help] [--help-general]
+                       [-8] [-o name=value]* [-nomask] [-mask filename] <raster_file> [-b band]
                        [-q] [-f ogr_format] [-lco name=value]* [-overwrite]
                        <out_file> [layer] [fieldname]
 
@@ -33,6 +34,8 @@ The utility is based on the ::cpp:func:`GDALPolygonize` function which has addit
 details on the algorithm.
 
 .. program:: gdal_polygonize
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -8
 

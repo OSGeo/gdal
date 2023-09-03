@@ -15,9 +15,11 @@ Synopsis
 
 .. code-block::
 
-    nearblack [-of format] [-white | [-color c1,c2,c3...cn]*] [-near dist] [-nb non_black_pixels]
-              [-setalpha] [-setmask] [-o outfile] [-q] [-alg twopasses|floodfill]
-              [-co "NAME=VALUE"]* infile
+    nearblack [--help] [--help-general]
+              [-of format] [-white | [-color c1,c2,c3...cn]*]
+              [-near <dist>] [-nb <non_black_pixels>]
+              [-setalpha] [-setmask] [-o <outfile>] [-q] [-alg twopasses|floodfill]
+              [-co "NAME=VALUE"]* <infile>
 
 Description
 -----------
@@ -29,6 +31,8 @@ treated as transparent when mosaicing. The output format must use lossless compr
 if either alpha band or mask band is not set.
 
 .. program:: nearblack
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -o <outfile>
 

@@ -36,7 +36,8 @@
 
 static void Usage()
 {
-    printf("Usage: gdalflattenmask [--help-general] [-of output_format] \n"
+    printf("Usage: gdalflattenmask [--help] [--help-general] [-of "
+           "output_format] \n"
            "                       [-co \"NAME=VALUE\"]* [-set_alpha] "
            "[-a_nodata val] \n"
            "                       srcdatasetname dstdatasetname\n"
@@ -92,6 +93,10 @@ int main(int argc, char *argv[])
         if (EQUAL(argv[i], "-of") && i + 1 < argc)
         {
             pszFormat = argv[++i];
+        }
+        else if (EQUAL(argv[i], "--help"))
+        {
+            Usage();
         }
         else if (EQUAL(argv[i], "-co") && i < argc - 1)
         {

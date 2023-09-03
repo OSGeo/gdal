@@ -40,7 +40,7 @@
 static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdal_footprint [--help-general]\n"
+    printf("Usage: gdal_footprint [--help] [--help-general]\n"
            "       [-b band]* [-combine_bands union|intersection]\n"
            "       [-oo NAME=VALUE]* [-ovr <index>]\n"
            "       [-srcnodata \"value [value...]\"]\n"

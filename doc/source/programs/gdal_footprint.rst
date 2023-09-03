@@ -18,7 +18,7 @@ Synopsis
 .. code-block::
 
 
-    gdal_footprint [--help-general]
+    gdal_footprint [--help] [--help-general]
        [-b band]* [-combine_bands union|intersection]
        [-oo NAME=VALUE]* [-ovr <index>]
        [-srcnodata \"value [value...]\"]
@@ -43,6 +43,8 @@ proper mask bands.
 
 
 .. program:: gdal_footprint
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -b <band>
 

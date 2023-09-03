@@ -61,19 +61,20 @@ static void Usage(const char *pszAdditionalMsg,
 
 static void Usage(const char *pszAdditionalMsg, int bShort)
 {
-    printf("Usage: gnmmanage [--help][-q][-quiet][--long-usage]\n"
-           "                 [info]\n"
-           "                 [create [-f format_name] [-t_srs srs_name] [-dsco "
-           "NAME=VALUE]... ]\n"
-           "                 [import src_dataset_name] [-l layer_name]\n"
-           "                 [connect gfid_src gfid_tgt gfid_con [-c cost] "
-           "[-ic inv_cost] [-dir dir]]\n"
-           "                 [disconnect gfid_src gfid_tgt gfid_con]\n"
-           "                 [rule rule_str]\n"
-           "                 [autoconnect tolerance]\n"
-           "                 [delete]\n"
-           "                 [change [-bl gfid][-unbl gfid][-unblall]]\n"
-           "                 gnm_name [layer [layer ...]]\n");
+    printf(
+        "Usage: gnmmanage [--help][--help-general][-q][-quiet][--long-usage]\n"
+        "                 [info]\n"
+        "                 [create [-f format_name] [-t_srs srs_name] [-dsco "
+        "NAME=VALUE]... ]\n"
+        "                 [import src_dataset_name] [-l layer_name]\n"
+        "                 [connect gfid_src gfid_tgt gfid_con [-c cost] "
+        "[-ic inv_cost] [-dir dir]]\n"
+        "                 [disconnect gfid_src gfid_tgt gfid_con]\n"
+        "                 [rule rule_str]\n"
+        "                 [autoconnect tolerance]\n"
+        "                 [delete]\n"
+        "                 [change [-bl gfid][-unbl gfid][-unblall]]\n"
+        "                 gnm_name [layer [layer ...]]\n");
 
     if (bShort)
     {
