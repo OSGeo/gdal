@@ -416,15 +416,34 @@ int ISGDataset::Identify(GDALOpenInfo *poOpenInfo)
 {
     // Does this look like a ISG grid file?
     if (poOpenInfo->nHeaderBytes < 40 ||
-        !(strstr((const char *)poOpenInfo->pabyHeader, "model name") !=
-              nullptr &&
-          strstr((const char *)poOpenInfo->pabyHeader, "lat min") != nullptr &&
-          strstr((const char *)poOpenInfo->pabyHeader, "lat max") != nullptr &&
-          strstr((const char *)poOpenInfo->pabyHeader, "lon min") != nullptr &&
-          strstr((const char *)poOpenInfo->pabyHeader, "lon max") != nullptr &&
-          strstr((const char *)poOpenInfo->pabyHeader, "nrows") != nullptr &&
-          strstr((const char *)poOpenInfo->pabyHeader, "ncols") != nullptr))
+        !strstr((const char *)poOpenInfo->pabyHeader, "model name"))
+    {
         return FALSE;
+    }
+    for (int i = 0; i < 2; ++i)
+    {
+        if (strstr((const char *)poOpenInfo->pabyHeader, "lat min") !=
+                nullptr &&
+            strstr((const char *)poOpenInfo->pabyHeader, "lat max") !=
+                nullptr &&
+            strstr((const char *)poOpenInfo->pabyHeader, "lon min") !=
+                nullptr &&
+            strstr((const char *)poOpenInfo->pabyHeader, "lon max") !=
+                nullptr &&
+            strstr((const char *)poOpenInfo->pabyHeader, "nrows") != nullptr &&
+            strstr((const char *)poOpenInfo->pabyHeader, "ncols") != nullptr)
+        {
+            return TRUE;
+        }
+        // Some files like https://isgeoid.polimi.it/Geoid/Europe/Slovenia/public/Slovenia_2016_SLO_VRP2016_Koper_hybrQ_20221122.isg
+        // have initial comment lines, so we may need to ingest more bytes
+        if (i == 0)
+        {
+            if (poOpenInfo->nHeaderBytes >= 8192)
+                break;
+            poOpenInfo->TryToIngest(8192);
+        }
+    }
 
     return TRUE;
 }
