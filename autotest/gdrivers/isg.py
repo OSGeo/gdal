@@ -121,12 +121,5 @@ def test_isg_header_larger_than_1024bytes():
     # Header of https://isgeoid.polimi.it/Geoid/Europe/Slovenia/public/Slovenia_2016_SLO_VRP2016_Koper_hybrQ_20221122.isg
     with gdal.quiet_errors():
         ds = gdal.Open("data/isg/header_larger_than_1024bytes.isg")
-    expected_gt = [
-        13.0,
-        0.012461059190031152,
-        0.0,
-        47.0,
-        0.0,
-        -0.008298755186721992,
-    ]
+    expected_gt = [12.99375, 0.0125, 0.0, 47.00416666666666, 0.0, -0.008333333333333333]
     assert ds.GetGeoTransform() == pytest.approx(expected_gt, rel=1e-8)

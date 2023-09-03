@@ -772,7 +772,9 @@ GDALDataset *ISGDataset::Open(GDALOpenInfo *poOpenInfo)
 
 int ISGDataset::ParseHeader(const char *pszHeader, const char *)
 {
-    // See http://www.isgeoid.polimi.it/Geoid/ISG_format_20160121.pdf
+    // See https://www.isgeoid.polimi.it/Geoid/ISG_format_v10_20160121.pdf
+    //     https://www.isgeoid.polimi.it/Geoid/ISG_format_v101_20180915.pdf
+    //     https://www.isgeoid.polimi.it/Geoid/ISG_format_v20_20200625.pdf
 
     CPLStringList aosLines(CSLTokenizeString2(pszHeader, "\n\r", 0));
     CPLString osLatMin;
@@ -784,6 +786,11 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
     CPLString osRows;
     CPLString osCols;
     CPLString osNodata;
+    std::string osISGFormat;
+    std::string osDataFormat;    // ISG 2.0
+    std::string osDataOrdering;  // ISG 2.0
+    std::string osCoordType;     // ISG 2.0
+    std::string osCoordUnits;    // ISG 2.0
     for (int iLine = 0; iLine < aosLines.size(); iLine++)
     {
         CPLStringList aosTokens(CSLTokenizeString2(aosLines[iLine], ":=", 0));
@@ -815,14 +822,51 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
                 SetMetadataItem("MODEL_NAME", osRight);
             else if (osLeft == "model type")
                 SetMetadataItem("MODEL_TYPE", osRight);
-            else if (osLeft == "units")
+            else if (osLeft == "units" || osLeft == "data units")
                 osUnits = osRight;
+            else if (osLeft == "ISG format")
+                osISGFormat = osRight;
+            else if (osLeft == "data format")
+                osDataFormat = osRight;
+            else if (osLeft == "data ordering")
+                osDataOrdering = osRight;
+            else if (osLeft == "coord type")
+                osCoordType = osRight;
+            else if (osLeft == "coord units")
+                osCoordUnits = osRight;
         }
     }
+    const double dfVersion =
+        osISGFormat.empty() ? 0.0 : CPLAtof(osISGFormat.c_str());
     if (osLatMin.empty() || osLatMax.empty() || osLonMin.empty() ||
         osLonMax.empty() || osDeltaLat.empty() || osDeltaLon.empty() ||
         osRows.empty() || osCols.empty())
     {
+        return FALSE;
+    }
+    if (!osDataFormat.empty() && osDataFormat != "grid")
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ISG: data format = %s not supported", osDataFormat.c_str());
+        return FALSE;
+    }
+    if (!osDataOrdering.empty() && osDataOrdering != "N-to-S, W-to-E")
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ISG: data ordering = %s not supported",
+                 osDataOrdering.c_str());
+        return FALSE;
+    }
+    if (!osCoordType.empty() && osCoordType != "geodetic")
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ISG: coord type = %s not supported", osCoordType.c_str());
+        return FALSE;
+    }
+    if (!osCoordUnits.empty() && osCoordUnits != "deg")
+    {
+        CPLError(CE_Failure, CPLE_NotSupported,
+                 "ISG: coord units = %s not supported", osCoordUnits.c_str());
         return FALSE;
     }
     double dfLatMin = CPLAtof(osLatMin);
@@ -831,6 +875,13 @@ int ISGDataset::ParseHeader(const char *pszHeader, const char *)
     double dfLonMax = CPLAtof(osLonMax);
     double dfDeltaLon = CPLAtof(osDeltaLon);
     double dfDeltaLat = CPLAtof(osDeltaLat);
+    if (dfVersion >= 2.0)
+    {
+        dfLatMin -= dfDeltaLat / 2.0;
+        dfLatMax += dfDeltaLat / 2.0;
+        dfLonMin -= dfDeltaLon / 2.0;
+        dfLonMax += dfDeltaLon / 2.0;
+    }
     const int nRows = atoi(osRows);
     const int nCols = atoi(osCols);
     if (nRows <= 0 || nCols <= 0 ||
