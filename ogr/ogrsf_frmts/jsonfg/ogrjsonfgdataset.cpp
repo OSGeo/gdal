@@ -218,26 +218,30 @@ bool OGRJSONFGDataset::Open(GDALOpenInfo *poOpenInfo,
                     this, fp.get(), osDefaultLayerName,
                     bCanTryWithNonStreamingParserOut))
             {
-                for (size_t i = 0; i < apoLayers_.size(); ++i)
+                if (!apoLayers_.empty())
+                {
+                    auto poLayer = cpl::down_cast<OGRJSONFGStreamedLayer *>(
+                        apoLayers_[0].get());
+                    poLayer->SetFile(std::move(fp));
+                    auto poParser = cpl::make_unique<OGRJSONFGStreamingParser>(
+                        *(poReader.get()), false);
+                    poLayer->SetStreamingParser(std::move(poParser));
+                }
+
+                for (size_t i = 1; i < apoLayers_.size(); ++i)
                 {
                     auto poLayer = cpl::down_cast<OGRJSONFGStreamedLayer *>(
                         apoLayers_[i].get());
-                    if (i == 0)
+
+                    auto fpNew = VSIVirtualHandleUniquePtr(
+                        VSIFOpenL(pszUnprefixed, "rb"));
+                    if (!fpNew)
                     {
-                        poLayer->SetFile(std::move(fp));
+                        CPLError(CE_Failure, CPLE_FileIO,
+                                 "Cannot open %s again", pszUnprefixed);
+                        return false;
                     }
-                    else
-                    {
-                        auto fpNew = VSIVirtualHandleUniquePtr(
-                            VSIFOpenL(pszUnprefixed, "rb"));
-                        if (!fpNew)
-                        {
-                            CPLError(CE_Failure, CPLE_FileIO,
-                                     "Cannot open %s again", pszUnprefixed);
-                            return false;
-                        }
-                        poLayer->SetFile(std::move(fpNew));
-                    }
+                    poLayer->SetFile(std::move(fpNew));
 
                     auto poParser = cpl::make_unique<OGRJSONFGStreamingParser>(
                         *(poReader.get()), false);

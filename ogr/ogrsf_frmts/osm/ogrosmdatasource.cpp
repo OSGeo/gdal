@@ -1714,14 +1714,14 @@ void OGROSMDataSource::ProcessWaysBatch()
 
         if (bIsArea && m_papoLayers[IDX_LYR_MULTIPOLYGONS]->IsUserInterested())
         {
-            IndexWay(psWayFeaturePairs->nWayID, bIsArea != 0,
+            IndexWay(psWayFeaturePairs->nWayID, /*bIsArea = */ true,
                      psWayFeaturePairs->nTags, psWayFeaturePairs->pasTags,
                      m_asLonLatCache.data(),
                      static_cast<int>(m_asLonLatCache.size()),
                      &psWayFeaturePairs->sInfo);
         }
         else
-            IndexWay(psWayFeaturePairs->nWayID, bIsArea != 0, 0, nullptr,
+            IndexWay(psWayFeaturePairs->nWayID, bIsArea, 0, nullptr,
                      m_asLonLatCache.data(),
                      static_cast<int>(m_asLonLatCache.size()), nullptr);
 

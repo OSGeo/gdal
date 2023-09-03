@@ -102,7 +102,7 @@ struct GDALNearblackFloodFillAlg
     bool Fill(int iX, int iY);
     bool LoadLine(int iY);
     bool MustSet(int iX, int iY);
-    bool Set(int iX, int iY);
+    void Set(int iX, int iY);
 };
 
 /************************************************************************/
@@ -315,8 +315,7 @@ bool GDALNearblackFloodFillAlg::LoadLine(int iY)
 /************************************************************************/
 
 // Mark the pixel as transparent
-// Returns true if no error
-bool GDALNearblackFloodFillAlg::Set(int iX, int iY)
+void GDALNearblackFloodFillAlg::Set(int iX, int iY)
 {
     CPLAssert(iY == m_nLoadedLine);
     CPL_IGNORE_RET_VAL(iY);
@@ -333,8 +332,6 @@ bool GDALNearblackFloodFillAlg::Set(int iX, int iY)
 
     if (m_bSetMask)
         m_abyMask[iX] = 0;
-
-    return true;
 }
 
 /************************************************************************/
@@ -411,8 +408,7 @@ bool GDALNearblackFloodFillAlg::Fill(int iXInit, int iYInit)
         {
             while (MustSet(iX - 1, iY))
             {
-                if (!Set(iX - 1, iY))
-                    return false;
+                Set(iX - 1, iY);
                 iX--;
                 if (iX == 0)
                     break;
@@ -428,8 +424,7 @@ bool GDALNearblackFloodFillAlg::Fill(int iXInit, int iYInit)
         {
             while (MustSet(iX1, iY))
             {
-                if (!Set(iX1, iY))
-                    return false;
+                Set(iX1, iY);
                 iX1++;
                 if (iX1 == nXSize)
                     break;

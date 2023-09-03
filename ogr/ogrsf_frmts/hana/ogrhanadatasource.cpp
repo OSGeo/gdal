@@ -1343,6 +1343,7 @@ void OGRHanaDataSource::InitializeLayers(const char *schemaName,
         // Look for layers in Views
         std::ostringstream osViews;
         osViews << "SELECT VIEW_NAME FROM SYS.VIEWS WHERE SCHEMA_NAME = ?";
+        // cppcheck-suppress knownConditionTrueFalse
         if (!tablesToFind.empty())
             osViews << " AND VIEW_NAME IN ("
                     << JoinStrings(tablesToFind, ",", Literal) << ")";

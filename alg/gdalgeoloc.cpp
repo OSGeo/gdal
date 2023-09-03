@@ -173,7 +173,7 @@ inline double Clamp(double v, double minV, double maxV)
 /*! @cond Doxygen_Suppress */
 
 template <class Accessors>
-bool GDALGeoLoc<Accessors>::LoadGeolocFinish(
+void GDALGeoLoc<Accessors>::LoadGeolocFinish(
     GDALGeoLocTransformInfo *psTransform)
 {
     auto pAccessors = static_cast<Accessors *>(psTransform->pAccessors);
@@ -377,8 +377,6 @@ bool GDALGeoLoc<Accessors>::LoadGeolocFinish(
             UpdateMinMax(psTransform, dfGeoLocX, dfGeoLocY);
         }
     }
-
-    return true;
 }
 
 /************************************************************************/

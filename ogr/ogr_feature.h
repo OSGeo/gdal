@@ -1673,10 +1673,10 @@ class CPL_DLL OGRFeatureQuery
 
     char **FieldCollector(void *, char **);
 
-    GIntBig *EvaluateAgainstIndices(swq_expr_node *, OGRLayer *,
-                                    GIntBig &nFIDCount);
+    static GIntBig *EvaluateAgainstIndices(const swq_expr_node *, OGRLayer *,
+                                           GIntBig &nFIDCount);
 
-    int CanUseIndex(swq_expr_node *, OGRLayer *);
+    static int CanUseIndex(const swq_expr_node *, OGRLayer *);
 
     OGRErr Compile(OGRLayer *, OGRFeatureDefn *, const char *, int bCheck,
                    swq_custom_func_registrar *poCustomFuncRegistrar);

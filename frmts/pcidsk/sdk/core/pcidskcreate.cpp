@@ -579,9 +579,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
 /* -------------------------------------------------------------------- */
     oHandleAutoPtr.Close();
 
-    PCIDSKFile *file = Open( filename, "r+", interfaces );
-
-    std::unique_ptr<PCIDSKFile> oFileAutoPtr(file);
+    auto file = std::unique_ptr<PCIDSKFile>(Open( filename, "r+", interfaces ));
 
     if(oLinkFilename.size() > 64)
     {
@@ -614,9 +612,8 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
             file->WriteToFile( ih.buffer, ih_offset, 1024 );
         }
 
-        oFileAutoPtr.reset(nullptr);
-        file = Open( filename, "r+", interfaces );
-        oFileAutoPtr.reset(file);
+        file.reset();
+        file.reset(Open( filename, "r+", interfaces ));
     }
 
 /* -------------------------------------------------------------------- */
@@ -633,7 +630,7 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
     {
         file->SetMetadataValue( "_DBLayout", options );
 
-        CPCIDSKBlockFile oBlockFile(file);
+        CPCIDSKBlockFile oBlockFile(file.get());
 
         SysTileDir * poTileDir = oBlockFile.CreateTileDir();
 
@@ -693,7 +690,5 @@ PCIDSK::Create( std::string filename, int pixels, int lines,
         }
     }
 
-    oFileAutoPtr.release();
-
-    return file;
+    return file.release();
 }

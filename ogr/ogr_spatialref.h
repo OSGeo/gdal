@@ -299,6 +299,7 @@ class CPL_DLL OGRSpatialReference
     const char *GetAttrValue(const char *, int = 0) const;
 
     OGRErr SetNode(const char *, const char *);
+    // cppcheck-suppress functionStatic
     OGRErr SetNode(const char *, double);
 
     OGRErr

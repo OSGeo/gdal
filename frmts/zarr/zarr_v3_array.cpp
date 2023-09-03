@@ -1314,6 +1314,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         }
 
         oIter = m_oMapDimensions.find(osDimName);
+        // cppcheck-suppress knownConditionTrueFalse
         if (oIter != m_oMapDimensions.end() &&
             oIter->second->GetSize() == poDim->GetSize())
         {
