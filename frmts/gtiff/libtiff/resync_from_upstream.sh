@@ -2,6 +2,10 @@
 
 rm -rf tmp_libtiff
 git clone --depth 1 https://gitlab.com/libtiff/libtiff tmp_libtiff
+cd tmp_libtiff
+./autogen.sh
+./configure
+cd ..
 for i in *.c; do
   if test "$i" != "tif_vsi.c"; then
     echo "Resync $i"

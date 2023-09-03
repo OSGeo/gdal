@@ -1,7 +1,12 @@
+/* tiffvers.h version information is updated according to version information
+ * in configure.ac */
+
 /* clang-format off */
 
 /* clang-format disabled because FindTIFF.cmake is very sensitive to the
  * formatting of below line being a single line.
+ * Furthermore, configure_file variables of type "@VAR@" are
+ * modified by clang-format and won't be substituted by CMake.
  */
 #define TIFFLIB_VERSION_STR "LIBTIFF, Version 4.5.1\nCopyright (c) 1988-1996 Sam Leffler\nCopyright (c) 1991-1996 Silicon Graphics, Inc."
 /*
@@ -17,6 +22,7 @@
 #define TIFFLIB_MAJOR_VERSION 4
 #define TIFFLIB_MINOR_VERSION 5
 #define TIFFLIB_MICRO_VERSION 1
+#define TIFFLIB_VERSION_STR_MAJ_MIN_MIC "4.5.1"
 
 /* Macro added in 4.5.0. Returns TRUE if the current libtiff version is
  * greater or equal to major.minor.micro
