@@ -59,10 +59,13 @@ def get_suffix(filename: PathLikeOrStr) -> str:
 def get_extension(filename: PathLikeOrStr) -> str:
     """
     returns the suffix without the leading dot.
-    special case for shp.zip
+    special case for shp.zip and gpkg.zip
     """
-    if os.fspath(filename).lower().endswith(".shp.zip"):
+    lower_filename = os.fspath(filename).lower()
+    if lower_filename.endswith(".shp.zip"):
         return "shp.zip"
+    if lower_filename.endswith(".gpkg.zip"):
+        return "gpkg.zip"
     ext = get_suffix(filename)
     if ext.startswith("."):
         ext = ext[1:]
