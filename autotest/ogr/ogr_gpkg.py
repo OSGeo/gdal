@@ -4096,36 +4096,117 @@ def test_ogr_gpkg_43():
 # Test GeoPackage without metadata table
 
 
-def test_ogr_gpkg_44():
+def test_ogr_gpkg_METADATA_TABLES_NO(tmp_vsimem):
 
-    with gdal.config_option("CREATE_METADATA_TABLES", "NO"):
-        ds = gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_44.gpkg")
-        ds.CreateLayer("foo")
-        ds = None
+    filename = str(tmp_vsimem / "test_ogr_gpkg_METADATA_TABLES_NO.gpkg")
 
-    assert validate("/vsimem/ogr_gpkg_44.gpkg"), "validation failed"
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename, options=["METADATA_TABLES=NO"])
+    ds.CreateLayer("foo")
+    ds.SetMetadataItem("FOO", "BAR")  # will not be written
+    ds = None
 
-    ds = ogr.Open("/vsimem/ogr_gpkg_44.gpkg")
+    assert validate(filename), "validation failed"
+
+    ds = ogr.Open(filename)
     md = ds.GetMetadata()
     assert md == {}
     md = ds.GetLayer(0).GetMetadata()
     assert md == {}
-    sql_lyr = ds.ExecuteSQL("SELECT * FROM sqlite_master WHERE name = 'gpkg_metadata'")
-    fc = sql_lyr.GetFeatureCount()
-    ds.ReleaseResultSet(sql_lyr)
+    with ds.ExecuteSQL(
+        "SELECT * FROM sqlite_master WHERE name = 'gpkg_metadata'"
+    ) as sql_lyr:
+        fc = sql_lyr.GetFeatureCount()
     assert fc == 0
     ds = None
 
-    ds = ogr.Open("/vsimem/ogr_gpkg_44.gpkg", update=1)
+    ds = ogr.Open(filename, update=1)
     ds.SetMetadataItem("FOO", "BAR")
     ds = None
 
-    ds = ogr.Open("/vsimem/ogr_gpkg_44.gpkg")
+    ds = ogr.Open(filename)
     md = ds.GetMetadata()
     assert md == {"FOO": "BAR"}
     ds = None
 
-    gdaltest.gpkg_dr.DeleteDataSource("/vsimem/ogr_gpkg_44.gpkg")
+    gdaltest.gpkg_dr.DeleteDataSource(filename)
+
+
+###############################################################################
+# Test GeoPackage with forced metadata table
+
+
+def test_ogr_gpkg_METADATA_TABLES_YES(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_gpkg_METADATA_TABLES_YES.gpkg")
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename, options=["METADATA_TABLES=YES"])
+    ds.CreateLayer("foo")
+    ds = None
+
+    assert validate(filename), "validation failed"
+
+    ds = ogr.Open(filename)
+    with ds.ExecuteSQL(
+        "SELECT * FROM sqlite_master WHERE name = 'gpkg_metadata'"
+    ) as sql_lyr:
+        fc = sql_lyr.GetFeatureCount()
+    assert fc == 1
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource(filename)
+
+
+###############################################################################
+# Test GeoPackage with automatic metadata table creation
+
+
+def test_ogr_gpkg_METADATA_TABLES_AUTO(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_gpkg_METADATA_TABLES_AUTO.gpkg")
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    lyr = ds.CreateLayer("foo")
+    lyr.SetMetadataItem("foo", "bar")
+    ds = None
+
+    assert validate(filename), "validation failed"
+
+    ds = ogr.Open(filename)
+    with ds.ExecuteSQL(
+        "SELECT * FROM sqlite_master WHERE name = 'gpkg_metadata'"
+    ) as sql_lyr:
+        fc = sql_lyr.GetFeatureCount()
+    assert fc == 1
+    md = ds.GetLayer(0).GetMetadata()
+    assert md == {"foo": "bar"}
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource(filename)
+
+
+###############################################################################
+# Test GeoPackage with automatic metadata table creation
+
+
+def test_ogr_gpkg_METADATA_TABLES_AUTO_not_needed(tmp_vsimem):
+
+    filename = str(tmp_vsimem / "test_ogr_gpkg_METADATA_TABLES_AUTO_not_needed.gpkg")
+
+    ds = gdaltest.gpkg_dr.CreateDataSource(filename)
+    ds.CreateLayer("foo")
+    ds = None
+
+    assert validate(filename), "validation failed"
+
+    ds = ogr.Open(filename)
+    with ds.ExecuteSQL(
+        "SELECT * FROM sqlite_master WHERE name = 'gpkg_metadata'"
+    ) as sql_lyr:
+        fc = sql_lyr.GetFeatureCount()
+    assert fc == 0
+    ds = None
+
+    gdaltest.gpkg_dr.DeleteDataSource(filename)
 
 
 ###############################################################################

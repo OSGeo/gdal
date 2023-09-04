@@ -248,8 +248,9 @@ def test_gpkg_1():
     )[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=PNG"])
+    gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=PNG", "METADATA_TABLES=NO"]
+    )
     ds = None
 
     assert validate("/vsimem/tmp.gpkg"), "validation failed"
@@ -349,10 +350,9 @@ def test_gpkg_2():
     )
     clamped_expected_cs.append(17849)
 
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        gdaltest.gpkg_dr.CreateCopy(
-            "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=JPEG"]
-        )
+    gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=JPEG", "METADATA_TABLES=NO"]
+    )
 
     out_ds = gdal.Open("/vsimem/tmp.gpkg")
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
@@ -1525,8 +1525,9 @@ def test_gpkg_17():
 
     # Without padding, after reopening
     ds = gdal.Open("data/byte.tif")
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", ds, options=["BLOCKSIZE=10"])
+    gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg", ds, options=["BLOCKSIZE=10", "METADATA_TABLES=NO"]
+    )
     out_ds = gdal.OpenEx(
         "/vsimem/tmp.gpkg",
         gdal.OF_RASTER | gdal.OF_UPDATE,
@@ -1697,16 +1698,20 @@ def test_gpkg_18():
 
     # Without padding, immediately after create copy
     ds = gdal.Open("data/small_world.tif")
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        out_ds = gdaltest.gpkg_dr.CreateCopy(
-            "/vsimem/tmp.gpkg",
-            ds,
-            options=["TILE_FORMAT=PNG", "BLOCKXSIZE=100", "BLOCKYSIZE=100"],
-        )
-        # Should not result in gpkg_zoom_other
-        ret = out_ds.BuildOverviews("NEAR", [8])
-        assert ret == 0
-        out_ds = None
+    out_ds = gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg",
+        ds,
+        options=[
+            "TILE_FORMAT=PNG",
+            "BLOCKXSIZE=100",
+            "BLOCKYSIZE=100",
+            "METADATA_TABLES=NO",
+        ],
+    )
+    # Should not result in gpkg_zoom_other
+    ret = out_ds.BuildOverviews("NEAR", [8])
+    assert ret == 0
+    out_ds = None
 
     # Check that there's no extensions
     out_ds = gdal.Open("/vsimem/tmp.gpkg")

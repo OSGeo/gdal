@@ -474,6 +474,8 @@ void GDALGPKGDriver::InitializeCreationOptionList()
         "  <Option name='CRS_WKT_EXTENSION' type='boolean' "
         "description='Whether to create the database with the crs_wkt "
         "extension'/>"
+        "  <Option name='METADATA_TABLES' type='boolean' "
+        "description='Whether to create the metadata related system tables'/>"
         "</CreationOptionList>";
 
     std::string osOptions(pszCOBegin);

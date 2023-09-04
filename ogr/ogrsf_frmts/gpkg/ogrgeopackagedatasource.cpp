@@ -4631,7 +4631,7 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
 void GDALGeoPackageDataset::FlushMetadata()
 {
     if (!m_bMetadataDirty || m_poParentDS != nullptr ||
-        !CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")))
+        m_nCreateMetadataTables == FALSE)
         return;
     m_bMetadataDirty = false;
 
@@ -5409,8 +5409,12 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
     if (!bFileExists)
     {
-        if (CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "NO")) &&
-            !CreateMetadataTables())
+        const char *pszMetadataTables =
+            CSLFetchNameValue(papszOptions, "METADATA_TABLES");
+        if (pszMetadataTables)
+            m_nCreateMetadataTables = int(CPLTestBool(pszMetadataTables));
+
+        if (m_nCreateMetadataTables == TRUE && !CreateMetadataTables())
             return FALSE;
 
         if (m_bHasDefinition12_063)

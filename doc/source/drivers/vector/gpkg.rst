@@ -303,6 +303,15 @@ raster) are available:
       it may be useful to create GeoPackage datasets matching the expections of
       other software or profiles (such as the DGIWG-GPKG profile).
 
+-  .. co:: METADATA_TABLES
+      :choices: YES, NO
+      :since: 3.8
+
+      Defines whether to add the metadata system tables.
+      By default, they are created on demand.
+      If NO is specified, they are not created, even if metadata is set.
+      If YES is specified, they are always created.
+
 
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
 documentation page.

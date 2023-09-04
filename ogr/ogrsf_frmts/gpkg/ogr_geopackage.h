@@ -144,6 +144,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
         false;  // whether gpkg_spatial_ref_sys has a epoch column
     bool m_bNonSpatialTablesNonRegisteredInGpkgContentsFound = false;
     mutable int m_nHasMetadataTables = -1;  // -1 = unknown, 0 = false, 1 = true
+    int m_nCreateMetadataTables = -1;  // -1 = on demand, 0 = false, 1 = true
 
     CPLString m_osIdentifier{};
     bool m_bIdentifierAsCO = false;
