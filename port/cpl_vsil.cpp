@@ -506,6 +506,14 @@ int VSIRename(const char *oldpath, const char *newpath)
  * For a /vsizip/foo.zip/bar target, the options available are those of
  * CPLAddFileInZip()
  *
+ * The following copies are made fully on the target server, without local
+ * download from source and upload to target:
+ * - /vsis3/ -> /vsis3/
+ * - /vsigs/ -> /vsigs/
+ * - /vsiaz/ -> /vsiaz/
+ * - /vsiadls/ -> /vsiadls/
+ * - any of the above or /vsicurl/ -> /vsiaz/ (starting with GDAL 3.8)
+ *
  * @param pszSource Source filename. UTF-8 encoded. May be NULL if fpSource is
  * not NULL.
  * @param pszTarget Target filename.  UTF-8 encoded. Must not be NULL
@@ -565,7 +573,8 @@ int VSICopyFile(const char *pszSource, const char *pszTarget,
  * <li> local filesystem <--> remote filesystem.</li>
  * <li> remote filesystem <--> remote filesystem (starting with GDAL 3.1).
  * Where the source and target remote filesystems are the same and one of
- * /vsis3/, /vsigs/ or /vsiaz/</li>
+ * /vsis3/, /vsigs/ or /vsiaz/. Or when the target is /vsiaz/ and the source
+ * is /vsis3/, /vsigs/, /vsiadls/ or /vsicurl/ (starting with GDAL 3.8)</li>
  * </ul>
  *
  * Similarly to rsync behavior, if the source filename ends with a slash,

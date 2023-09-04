@@ -517,6 +517,11 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     void InvalidateRecursive(const CPLString &osDirnameIn);
 
+    int CopyFile(const char *pszSource, const char *pszTarget,
+                 VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                 const char *const *papszOptions,
+                 GDALProgressFunc pProgressFunc, void *pProgressData) override;
+
     int CopyObject(const char *oldpath, const char *newpath,
                    CSLConstList papszMetadata) override;
     int MkdirInternal(const char *pszDirname, long nMode,
@@ -2018,6 +2023,42 @@ int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
 }
 
 /************************************************************************/
+/*                           CopyFile()                                 */
+/************************************************************************/
+
+int VSIAzureFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
+                                VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                                CSLConstList papszOptions,
+                                GDALProgressFunc pProgressFunc,
+                                void *pProgressData)
+{
+    const CPLString osPrefix(GetFSPrefix());
+    if ((STARTS_WITH(pszSource, "/vsis3/") ||
+         STARTS_WITH(pszSource, "/vsigs/") ||
+         STARTS_WITH(pszSource, "/vsiadls/") ||
+         STARTS_WITH(pszSource, "/vsicurl/")) &&
+        STARTS_WITH(pszTarget, osPrefix))
+    {
+        CPLString osMsg;
+        osMsg.Printf("Copying of %s", pszSource);
+
+        NetworkStatisticsFileSystem oContextFS(GetFSPrefix());
+        NetworkStatisticsAction oContextAction("CopyFile");
+
+        bool bRet = CopyObject(pszSource, pszTarget, papszOptions) == 0;
+        if (bRet && pProgressFunc)
+        {
+            bRet = pProgressFunc(1.0, osMsg.c_str(), pProgressData) != 0;
+        }
+        return bRet ? 0 : -1;
+    }
+
+    return IVSIS3LikeFSHandler::CopyFile(pszSource, pszTarget, fpSource,
+                                         nSourceSize, papszOptions,
+                                         pProgressFunc, pProgressData);
+}
+
+/************************************************************************/
 /*                            CopyObject()                              */
 /************************************************************************/
 
@@ -2035,16 +2076,40 @@ int VSIAzureFSHandler::CopyObject(const char *oldpath, const char *newpath,
         return -1;
     }
 
-    CPLString osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
-    auto poS3HandleHelperSource = std::unique_ptr<IVSIS3LikeHandleHelper>(
-        CreateHandleHelper(osSourceNameWithoutPrefix, false));
-    if (poS3HandleHelperSource == nullptr)
-    {
-        return -1;
-    }
-
     CPLString osSourceHeader("x-ms-copy-source: ");
-    osSourceHeader += poS3HandleHelperSource->GetURLNoKVP();
+    if (STARTS_WITH(oldpath, GetFSPrefix().c_str()))
+    {
+        CPLString osSourceNameWithoutPrefix = oldpath + GetFSPrefix().size();
+        auto poS3HandleHelperSource = std::unique_ptr<IVSIS3LikeHandleHelper>(
+            CreateHandleHelper(osSourceNameWithoutPrefix, false));
+        if (poS3HandleHelperSource == nullptr)
+        {
+            return -1;
+        }
+
+        osSourceHeader += poS3HandleHelperSource->GetURLNoKVP();
+    }
+    else
+    {
+        VSIStatBufL sStat;
+        // This has the effect of making sure that the S3 region is correct
+        // if copying from /vsis3/
+        if (VSIStatExL(oldpath, &sStat, VSI_STAT_EXISTS_FLAG) != 0)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined, "%s does not exist", oldpath);
+            return -1;
+        }
+
+        char *pszSignedURL = VSIGetSignedURL(oldpath, nullptr);
+        if (!pszSignedURL)
+        {
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Cannot get signed URL for %s", oldpath);
+            return -1;
+        }
+        osSourceHeader += pszSignedURL;
+        VSIFree(pszSignedURL);
+    }
 
     int nRet = 0;
 
