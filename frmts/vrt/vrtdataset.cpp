@@ -1223,6 +1223,12 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString(aosProjWin[2]);
                 argv.AddString(aosProjWin[3]);
             }
+            else if (EQUAL(pszKey, "projwin_srs"))
+            {
+                argv.AddString("-projwin_srs");
+                argv.AddString(pszValue);
+            }
+
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
