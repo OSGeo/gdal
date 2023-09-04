@@ -33,7 +33,7 @@
 /*                     Subdataset informational functions               */
 /************************************************************************/
 
-GDALSubdatasetInfoH CPL_STDCALL GDALGetSubdatasetInfo(const char *pszFileName)
+GDALSubdatasetInfoH GDALGetSubdatasetInfo(const char *pszFileName)
 {
     // Iterate all drivers
     GDALDriverManager *poDM_ = GetGDALDriverManager();
