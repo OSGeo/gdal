@@ -3098,8 +3098,6 @@ def test_gpkg_39():
     assert ds.GetRasterBand(1).GetMetadata() == expected_md
     ds = None
 
-    gdal.Unlink("/vsimem/gpkg_39.gpkg")
-
     # With nodata: statistics available
     gdal.Translate("/vsimem/gpkg_39.gpkg", src_ds, format="GPKG", noData=0)
 
