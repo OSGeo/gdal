@@ -1442,7 +1442,7 @@ def test_vsiaz_opendir():
     assert entry.mtime == 1
 
     entry = gdal.GetNextDirEntry(d)
-    assert entry.name == "subdir/"
+    assert entry.name == "subdir"
     assert entry.mode == 16384
 
     entry = gdal.GetNextDirEntry(d)

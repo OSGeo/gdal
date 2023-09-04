@@ -151,6 +151,9 @@ bool VSIDIRAz::AnalyseAzureFileList(const CPLString &osBaseURL,
                 bNonEmpty = true;
         }
 
+        std::string GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH("/");
+        GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH += GDAL_MARKER_FOR_DIR;
+
         // Count the number of occurrences of a path. Can be 1 or 2. 2 in the
         // case that both a filename and directory exist
         std::map<CPLString, int> aoNameCount;
@@ -164,6 +167,20 @@ bool VSIDIRAz::AnalyseAzureFileList(const CPLString &osBaseURL,
                 const char *pszKey = CPLGetXMLValue(psIter, "Name", nullptr);
                 if (pszKey && strstr(pszKey, GDAL_MARKER_FOR_DIR) != nullptr)
                 {
+                    if (nRecurseDepth < 0)
+                    {
+                        if (strcmp(pszKey + osPrefix.size(),
+                                   GDAL_MARKER_FOR_DIR) == 0)
+                            continue;
+                        char *pszName = CPLStrdup(pszKey + osPrefix.size());
+                        char *pszMarker = strstr(
+                            pszName,
+                            GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH.c_str());
+                        if (pszMarker)
+                            *pszMarker = '\0';
+                        aoNameCount[pszName]++;
+                        CPLFree(pszName);
+                    }
                     bNonEmpty = true;
                 }
                 else if (pszKey && strlen(pszKey) > osPrefix.size())
@@ -203,12 +220,16 @@ bool VSIDIRAz::AnalyseAzureFileList(const CPLString &osBaseURL,
                 {
                     if (nRecurseDepth < 0)
                     {
+                        if (strcmp(pszKey + osPrefix.size(),
+                                   GDAL_MARKER_FOR_DIR) == 0)
+                            continue;
                         aoEntries.push_back(
                             std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
                         auto &entry = aoEntries.back();
                         entry->pszName = CPLStrdup(pszKey + osPrefix.size());
-                        char *pszMarker =
-                            strstr(entry->pszName, GDAL_MARKER_FOR_DIR);
+                        char *pszMarker = strstr(
+                            entry->pszName,
+                            GDAL_MARKER_FOR_DIR_WITH_LEADING_SLASH.c_str());
                         if (pszMarker)
                             *pszMarker = '\0';
                         entry->nMode = S_IFDIR;
