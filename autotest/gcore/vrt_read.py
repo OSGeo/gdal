@@ -1517,6 +1517,16 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).XSize == 10
     assert ds.GetRasterBand(1).YSize == 5
 
+    with gdal.quiet_errors():
+        ds = gdal.Open("vrt://data/float32.tif?projwin=440840,441920,3750120")
+        assert ds is None
+
+    ds = gdal.Open("vrt://data/float32.tif?projwin=440840,3751080,441920,3750120")
+    assert ds.GetGeoTransform()[0] == 440840.0
+    assert ds.GetGeoTransform()[3] == 3751080.0
+    assert ds.GetRasterBand(1).XSize == 18
+    assert ds.GetRasterBand(1).YSize == 16
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():

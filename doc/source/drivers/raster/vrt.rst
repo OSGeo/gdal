@@ -1688,7 +1688,7 @@ For example:
 
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
-``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, and ``outsize``.
+``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, and ``projwin``.
 
 Other options may be added in the future.
 
@@ -1740,6 +1740,11 @@ a single value to be used with the ``scale`` option. The same ``exponent_bn`` sy
 target specific band/s as per (:ref:`gdal_translate`).
 
 The effect of the ``outsize`` option (added in GDAL 3.7) is to set the size of the output, in numbers `pixel,line` or in fraction `pixel%,line%` as per (:ref:`gdal_translate`).
+
+The effect of the ``projwin`` option (added in GDAL 3.8) is to select a subwindow from the source image in georeferenced
+coordinates in the same way as (:ref:`gdal_translate`). The value consists of four numeric values separated by commas, in
+the order 'xmin,ymax,xmax,ymin'.
+
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
