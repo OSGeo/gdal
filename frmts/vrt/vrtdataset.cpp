@@ -1202,6 +1202,27 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString(aosOutSize[0]);
                 argv.AddString(aosOutSize[1]);
             }
+            else if (EQUAL(pszKey, "projwin"))
+            {
+
+                // Parse the limits
+                CPLStringList aosProjWin(CSLTokenizeString2(pszValue, ",", 0));
+                // fail if not four values
+                if (aosProjWin.size() != 4)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid projwin option: %s", pszValue);
+                    poSrcDS->ReleaseRef();
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+
+                argv.AddString("-projwin");
+                argv.AddString(aosProjWin[0]);
+                argv.AddString(aosProjWin[1]);
+                argv.AddString(aosProjWin[2]);
+                argv.AddString(aosProjWin[3]);
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
