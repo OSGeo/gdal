@@ -793,6 +793,7 @@ def test_vsiadls_fake_sync_copyobject():
             "Content-Length": "3",
             "x-ms-permissions": "rwxrwxrwx",
             "x-ms-resource-type": "file",
+            "Last-Modified": "Mon, 04 Sep 2023 22:00:00 GMT",
         },
     )
     handler.add("HEAD", "/azure/blob/myaccount/test_bucket/dst.txt", 404)
@@ -808,9 +809,195 @@ def test_vsiadls_fake_sync_copyobject():
     with webserver.install_http_handler(handler):
         assert gdal.Sync("/vsiadls/test_bucket/src.txt", "/vsiadls/test_bucket/dst.txt")
 
+
+###############################################################################
+# Test sync again, but this is a no-op because of the date time
+
+
+def test_vsiadls_fake_sync_no_op_because_of_data_time():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
     gdal.VSICurlClearCache()
 
-    # Error case
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/azure/blob/myaccount/test_bucket/src.txt",
+        200,
+        {
+            "Content-Length": "3",
+            "x-ms-permissions": "rwxrwxrwx",
+            "x-ms-resource-type": "file",
+            "Last-Modified": "Mon, 04 Sep 2023 22:00:00 GMT",
+        },
+    )
+    handler.add(
+        "HEAD",
+        "/azure/blob/myaccount/test_bucket/dst.txt",
+        200,
+        {
+            "Content-Length": "3",
+            "x-ms-permissions": "rwxrwxrwx",
+            "x-ms-resource-type": "file",
+            "Last-Modified": "Mon, 04 Sep 2023 23:00:00 GMT",
+        },
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync("/vsiadls/test_bucket/src.txt", "/vsiadls/test_bucket/dst.txt")
+
+
+###############################################################################
+# Test sync again, but overwrite because of the date time
+
+
+def test_vsiadls_fake_sync_overwite_because_of_data_time():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "HEAD",
+        "/azure/blob/myaccount/test_bucket/src.txt",
+        200,
+        {
+            "Content-Length": "3",
+            "x-ms-permissions": "rwxrwxrwx",
+            "x-ms-resource-type": "file",
+            "Last-Modified": "Mon, 04 Sep 2023 22:00:00 GMT",
+        },
+    )
+    handler.add(
+        "HEAD",
+        "/azure/blob/myaccount/test_bucket/dst.txt",
+        200,
+        {
+            "Content-Length": "3",
+            "x-ms-permissions": "rwxrwxrwx",
+            "x-ms-resource-type": "file",
+            "Last-Modified": "Mon, 04 Sep 1980 23:00:00 GMT",
+        },
+    )
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_bucket/dst.txt",
+        202,
+        expected_headers={
+            "x-ms-copy-source": "http://127.0.0.1:%d/azure/blob/myaccount/test_bucket/src.txt"
+            % gdaltest.webserver_port
+        },
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync("/vsiadls/test_bucket/src.txt", "/vsiadls/test_bucket/dst.txt")
+
+
+###############################################################################
+# Test sync again on directories, but this is a no-op because of the date time
+
+
+def test_vsiadls_fake_sync_on_dir_no_op_because_of_data_time():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/test_bucket?recursive=true&resource=filesystem",
+        200,
+        {
+            "Content-type": "application/json;charset=utf-8",
+            "x-ms-continuation": "",
+        },
+        """
+                {"paths":[{"name":"test.bin","contentLength":"3","lastModified": "Mon, 01 Jan 2010 00:00:01"}]}
+                """,
+    )
+    handler.add("HEAD", "/azure/blob/myaccount/test_bucket?resource=filesystem", 200)
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/test_bucket2?recursive=true&resource=filesystem",
+        200,
+        {
+            "Content-type": "application/json;charset=utf-8",
+            "x-ms-continuation": "",
+        },
+        """
+                {"paths":[{"name":"test.bin","contentLength":"3","lastModified": "Mon, 01 Jan 2020 00:00:01"}]}
+                """,
+    )
+
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync("/vsiadls/test_bucket/", "/vsiadls/test_bucket2/")
+
+
+###############################################################################
+# Test sync again on directories, but overwrite because of the date time
+
+
+def test_vsiadls_fake_sync_on_dir_overwrite_because_of_data_time():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/test_bucket?recursive=true&resource=filesystem",
+        200,
+        {
+            "Content-type": "application/json;charset=utf-8",
+            "x-ms-continuation": "",
+        },
+        """
+                {"paths":[{"name":"test.bin","contentLength":"3","lastModified": "Mon, 01 Jan 2010 00:00:01"}]}
+                """,
+    )
+    handler.add("HEAD", "/azure/blob/myaccount/test_bucket?resource=filesystem", 200)
+    handler.add(
+        "GET",
+        "/azure/blob/myaccount/test_bucket2?recursive=true&resource=filesystem",
+        200,
+        {
+            "Content-type": "application/json;charset=utf-8",
+            "x-ms-continuation": "",
+        },
+        """
+                {"paths":[{"name":"test.bin","contentLength":"3","lastModified": "Mon, 01 Jan 2000 00:00:01"}]}
+                """,
+    )
+    handler.add(
+        "PUT",
+        "/azure/blob/myaccount/test_bucket2/test.bin",
+        202,
+        expected_headers={
+            "x-ms-copy-source": "http://127.0.0.1:%d/azure/blob/myaccount/test_bucket/test.bin"
+            % gdaltest.webserver_port
+        },
+    )
+    with webserver.install_http_handler(handler):
+        assert gdal.Sync("/vsiadls/test_bucket/", "/vsiadls/test_bucket2/")
+
+
+###############################################################################
+# Test Sync() error
+
+
+def test_vsiadls_fake_sync_error_case():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
     handler = webserver.SequentialHandler()
     handler.add(
         "HEAD",

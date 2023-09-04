@@ -4167,6 +4167,23 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     if (fpIn)
                         VSIFCloseL(fpIn);
                 }
+                else
+                {
+
+                    if (eSyncStrategy == SyncStrategy::TIMESTAMP &&
+                        chunk.nMTime < oIterExistingTarget->second.nMTime)
+                    {
+                        // The target is more recent than the source.
+                        // Nothing to do
+                        CPLDebug(GetDebugKey(),
+                                 "%s is older than %s. "
+                                 "Do not replace %s assuming it was used to "
+                                 "upload %s",
+                                 osSubSource.c_str(), osSubTarget.c_str(),
+                                 osSubTarget.c_str(), osSubSource.c_str());
+                        bSkip = true;
+                    }
+                }
             }
 
             if (!bSkip)
@@ -4274,6 +4291,25 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                 bTargetIsFile = VSIStatL(osTarget, &sTarget) == 0 &&
                                 !CPL_TO_BOOL(VSI_ISDIR(sTarget.st_mode));
             }
+        }
+
+        if (eSyncStrategy == SyncStrategy::TIMESTAMP && bTargetIsFile &&
+            !bDownloadFromNetworkToLocal && !bUploadFromLocalToNetwork &&
+            sSource.st_size == sTarget.st_size &&
+            sSource.st_mtime < sTarget.st_mtime)
+        {
+            // The target is more recent than the source. Nothing to do
+            CPLDebug(GetDebugKey(),
+                     "%s is older than %s. "
+                     "Do not replace %s assuming it was used to "
+                     "upload %s",
+                     osSource.c_str(), osTarget.c_str(), osTarget.c_str(),
+                     osSource.c_str());
+            if (pProgressFunc)
+            {
+                pProgressFunc(1.0, osMsg.c_str(), pProgressData);
+            }
+            return true;
         }
 
         // Download from network to local file system ?
