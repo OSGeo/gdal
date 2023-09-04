@@ -1743,7 +1743,10 @@ The effect of the ``outsize`` option (added in GDAL 3.7) is to set the size of t
 
 The effect of the ``projwin`` option (added in GDAL 3.8) is to select a subwindow from the source image in georeferenced
 coordinates in the same way as (:ref:`gdal_translate`). The value consists of four numeric values separated by commas, in
-the order 'xmin,ymax,xmax,ymin'.
+the order 'xmin,ymax,xmax,ymin', these are in the native georeferenced coordinates of the source unless ``projwin_srs`` is also
+provided.
+
+The effect of the ``projwin_srs`` option (added in GDAL 3.8) is to specify the SRS in which to interpret the coordinates given with ``projwin`` in the same way as (:ref:`gdal_translate`). This option only applies if ``projwin`` is also supplied.
 
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
