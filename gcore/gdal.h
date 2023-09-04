@@ -1346,12 +1346,12 @@ char CPL_DLL *
 GDALSubdatasetInfoGetSubdatasetComponent(GDALSubdatasetInfoH hInfo);
 
 /**
- * @brief Replaces the path component of a subdataset descriptor by keeping the subdataset information unaltered.
+ * @brief Replaces the path component of a subdataset descriptor.
  *        The returned string must be freed with CPLFree().
  * @param hInfo                 Pointer to GDALSubdatasetInfo object
- * @param pszNewFileName        New file name with no subdataset information
+ * @param pszNewPath            New path.
  * @note                        This method does not check if the subdataset actually exists.
- * @return                      The original string with the old file name replaced by newFileName and the subdataset information unaltered.
+ * @return                      The original subdataset descriptor with the old path component replaced by newPath.
  * @since                       GDAL 3.8
  */
 char CPL_DLL *GDALSubdatasetInfoModifyPathComponent(GDALSubdatasetInfoH hInfo,
