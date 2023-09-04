@@ -1342,7 +1342,7 @@ char CPL_DLL *GDALSubdatasetInfoGetFileName(GDALSubdatasetInfoH hInfo);
  * @return                      The subdataset name.
  * @since                       GDAL 3.8
  */
-char CPL_DLL *GDALSubdatasetInfoGetSubdatasetName(GDALSubdatasetInfoH hInfo);
+char CPL_DLL *GDALSubdatasetInfoGetSubdatasetComponent(GDALSubdatasetInfoH hInfo);
 
 /**
  * @brief Replaces the base component of a
