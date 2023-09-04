@@ -4486,13 +4486,16 @@ def test_ogr_gpkg_49():
 
 
 ###############################################################################
-# Test minimalistic support of definition_12_063
+# Test CRS_WKT_EXTENSION creation option
 
 
-def test_ogr_gpkg_50():
+@pytest.mark.parametrize("gpkg_version", ["1.2", "1.4"])
+def test_ogr_gpkg_CRS_WKT_EXTENSION(gpkg_version):
 
-    with gdal.config_option("GPKG_ADD_DEFINITION_12_063", "YES"):
-        gdaltest.gpkg_dr.CreateDataSource("/vsimem/ogr_gpkg_50.gpkg")
+    gdaltest.gpkg_dr.CreateDataSource(
+        "/vsimem/ogr_gpkg_50.gpkg",
+        options=["CRS_WKT_EXTENSION=YES", "VERSION=" + gpkg_version],
+    )
 
     ds = ogr.Open("/vsimem/ogr_gpkg_50.gpkg", update=1)
     srs32631 = osr.SpatialReference()
@@ -4517,12 +4520,21 @@ def test_ogr_gpkg_50():
     assert lyr.GetSpatialRef().IsSame(srs32631)
     lyr = ds.GetLayer("without_org")
     assert lyr.GetSpatialRef().IsSame(srs_without_org)
-    sql_lyr = ds.ExecuteSQL(
+    with ds.ExecuteSQL(
         "SELECT definition_12_063 FROM gpkg_spatial_ref_sys WHERE srs_id = 32631"
-    )
-    f = sql_lyr.GetNextFeature()
+    ) as sql_lyr:
+        f = sql_lyr.GetNextFeature()
     assert f.GetField(0).startswith('PROJCRS["WGS 84 / UTM zone 31N"')
-    ds.ReleaseResultSet(sql_lyr)
+
+    with ds.ExecuteSQL("PRAGMA table_info(gpkg_spatial_ref_sys)") as sql_lyr:
+        has_epoch = False
+        for f in sql_lyr:
+            if f["name"] == "epoch":
+                has_epoch = True
+        if gpkg_version == "1.2":
+            assert not has_epoch
+        else:
+            assert has_epoch
     ds = None
 
     gdaltest.gpkg_dr.DeleteDataSource("/vsimem/ogr_gpkg_50.gpkg")

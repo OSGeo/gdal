@@ -465,6 +465,9 @@ void GDALGPKGDriver::InitializeCreationOptionList()
         "description='Whether to add a gpkg_ogr_contents table to keep feature "
         "count' default='YES'/>"
 #endif
+        "  <Option name='CRS_WKT_EXTENSION' type='boolean' "
+        "description='Whether to create the database with the crs_wkt "
+        "extension'/>"
         "</CreationOptionList>";
 
     std::string osOptions(pszCOBegin);

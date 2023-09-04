@@ -258,7 +258,7 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
     OGRErr DeleteRasterLayer(const char *pszLayerName);
     bool DeleteVectorOrRasterLayer(const char *pszLayerName);
 
-    bool ConvertGpkgSpatialRefSysToExtensionWkt2();
+    bool ConvertGpkgSpatialRefSysToExtensionWkt2(bool bForceEpoch);
     void DetectSpatialRefSysColumns();
 
     std::map<int, bool> m_oSetGPKGLayerWarnings{};
