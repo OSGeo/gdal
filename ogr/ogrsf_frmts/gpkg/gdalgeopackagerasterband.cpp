@@ -3793,7 +3793,8 @@ char **GDALGeoPackageRasterBand::GetMetadata(const char *pszDomain)
         !GDALGPKGMBTilesLikeRasterBand::GetMetadataItem("STATISTICS_MINIMUM") &&
         !GDALGPKGMBTilesLikeRasterBand::GetMetadataItem("STATISTICS_MAXIMUM"))
     {
-        m_aosMD = GDALGPKGMBTilesLikeRasterBand::GetMetadata(pszDomain);
+        m_aosMD.Assign(CSLDuplicate(
+            GDALGPKGMBTilesLikeRasterBand::GetMetadata(pszDomain)));
         if (!std::isnan(m_dfStatsMinFromTileAncillary))
         {
             m_aosMD.SetNameValue(
