@@ -306,7 +306,7 @@ CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             for (auto const &poAttrDS : poGDS->lpoAttributeDS)
             {
-                GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(nBandIdx);
+                GDALRasterBand *poAttrBand = poAttrDS->GetRasterBand(nBand);
                 GDALDataType eAttrType = poAttrBand->GetRasterDataType();
                 int nBytes = GDALGetDataTypeSizeBytes(eAttrType);
                 size_t nValues = static_cast<size_t>(nBufXSize) * nBufYSize;
