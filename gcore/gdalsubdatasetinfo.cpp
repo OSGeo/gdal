@@ -76,29 +76,29 @@ void GDALDestroySubdatasetInfo(GDALSubdatasetInfoH hInfo)
     delete hInfo;
 }
 
-char *GDALSubdatasetInfoGetFileName(GDALSubdatasetInfoH hInfo)
+char *GDALSubdatasetInfoGetPathComponent(GDALSubdatasetInfoH hInfo)
 {
-    return CPLStrdup(hInfo->GetFileName().c_str());
+    return CPLStrdup(hInfo->GetPathComponent().c_str());
 }
 
-char *GDALSubdatasetInfoGetSubdatasetName(GDALSubdatasetInfoH hInfo)
+char *GDALSubdatasetInfoGetSubdatasetComponent(GDALSubdatasetInfoH hInfo)
 {
-    return CPLStrdup(hInfo->GetSubdatasetName().c_str());
+    return CPLStrdup(hInfo->GetSubdatasetComponent().c_str());
 }
 
-char *GDALSubdatasetInfoModifyFileName(GDALSubdatasetInfoH hInfo,
-                                       const char *pszNewFileName)
+char *GDALSubdatasetInfoModifyPathComponent(GDALSubdatasetInfoH hInfo,
+                                            const char *pszNewFileName)
 {
-    return CPLStrdup(hInfo->ModifyFileName(pszNewFileName).c_str());
+    return CPLStrdup(hInfo->ModifyPathComponent(pszNewFileName).c_str());
 }
 
 GDALSubdatasetInfo::GDALSubdatasetInfo(const std::string &fileName)
-    : m_fileName(fileName), m_baseComponent(), m_subdatasetComponent(),
+    : m_fileName(fileName), m_pathComponent(), m_subdatasetComponent(),
       m_driverPrefixComponent()
 {
 }
 
-std::string GDALSubdatasetInfo::GetFileName() const
+std::string GDALSubdatasetInfo::GetPathComponent() const
 {
     if (!m_initialized)
     {
@@ -106,11 +106,11 @@ std::string GDALSubdatasetInfo::GetFileName() const
         this_->parseFileName();
         m_initialized = true;
     }
-    return m_driverPrefixComponent + ":" + m_baseComponent;
+    return m_pathComponent;
 }
 
 std::string
-GDALSubdatasetInfo::ModifyFileName(const std::string &newFileName) const
+GDALSubdatasetInfo::ModifyPathComponent(const std::string &newPathName) const
 {
     if (!m_initialized)
     {
@@ -120,12 +120,12 @@ GDALSubdatasetInfo::ModifyFileName(const std::string &newFileName) const
     }
 
     std::string replaced{m_fileName};
-    replaced.replace(replaced.find(m_baseComponent), m_baseComponent.length(),
-                     newFileName);
+    replaced.replace(replaced.find(m_pathComponent), m_pathComponent.length(),
+                     newPathName);
     return replaced;
 }
 
-std::string GDALSubdatasetInfo::GetSubdatasetName() const
+std::string GDALSubdatasetInfo::GetSubdatasetComponent() const
 {
     if (!m_initialized)
     {

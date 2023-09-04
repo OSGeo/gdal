@@ -1323,7 +1323,7 @@ typedef struct GDALSubdatasetInfo *GDALSubdatasetInfoH;
 GDALSubdatasetInfoH CPL_DLL GDALGetSubdatasetInfo(const char *pszFileName);
 
 /**
- * @brief Returns the file path (or base) component of a
+ * @brief Returns the file path component of a
  *        subdataset descriptor effectively stripping the information about the subdataset
  *        and returning the "parent" dataset descriptor.
  *        The returned string must be freed with CPLFree().
@@ -1332,21 +1332,21 @@ GDALSubdatasetInfoH CPL_DLL GDALGetSubdatasetInfo(const char *pszFileName);
  * @return                      The original string with the subdataset information removed.
  * @since                       GDAL 3.8
  */
-char CPL_DLL *GDALSubdatasetInfoGetFileName(GDALSubdatasetInfoH hInfo);
+char CPL_DLL *GDALSubdatasetInfoGetPathComponent(GDALSubdatasetInfoH hInfo);
 
 /**
- * @brief Returns the subdataset component of a subdataset file name descriptor.
+ * @brief Returns the subdataset component of a subdataset descriptor descriptor.
  *        The returned string must be freed with CPLFree().
  * @param hInfo                 Pointer to GDALSubdatasetInfo object
  * @note                        This method does not check if the subdataset actually exists.
  * @return                      The subdataset name.
  * @since                       GDAL 3.8
  */
-char CPL_DLL *GDALSubdatasetInfoGetSubdatasetComponent(GDALSubdatasetInfoH hInfo);
+char CPL_DLL *
+GDALSubdatasetInfoGetSubdatasetComponent(GDALSubdatasetInfoH hInfo);
 
 /**
- * @brief Replaces the base component of a
- *        file name by keeping the subdataset information unaltered.
+ * @brief Replaces the path component of a subdataset descriptor by keeping the subdataset information unaltered.
  *        The returned string must be freed with CPLFree().
  * @param hInfo                 Pointer to GDALSubdatasetInfo object
  * @param pszNewFileName        New file name with no subdataset information
@@ -1354,8 +1354,8 @@ char CPL_DLL *GDALSubdatasetInfoGetSubdatasetComponent(GDALSubdatasetInfoH hInfo
  * @return                      The original string with the old file name replaced by newFileName and the subdataset information unaltered.
  * @since                       GDAL 3.8
  */
-char CPL_DLL *GDALSubdatasetInfoModifyFileName(GDALSubdatasetInfoH hInfo,
-                                               const char *pszNewFileName);
+char CPL_DLL *GDALSubdatasetInfoModifyPathComponent(GDALSubdatasetInfoH hInfo,
+                                                    const char *pszNewPath);
 
 /**
  * @brief Destroys a GDALSubdatasetInfo object.

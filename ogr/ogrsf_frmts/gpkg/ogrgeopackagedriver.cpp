@@ -288,9 +288,9 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
                     CSLDestroy(papszParts);
                     return;
                 }
-                m_baseComponent = papszParts[1];
-                m_baseComponent.append(":");
-                m_baseComponent.append(papszParts[2]);
+                m_pathComponent = papszParts[1];
+                m_pathComponent.append(":");
+                m_pathComponent.append(papszParts[2]);
                 subdatasetIndex++;
             }
             else  // count is 3
@@ -300,7 +300,7 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
                     CSLDestroy(papszParts);
                     return;
                 }
-                m_baseComponent = papszParts[1];
+                m_pathComponent = papszParts[1];
             }
 
             m_subdatasetComponent = papszParts[subdatasetIndex];
@@ -317,7 +317,8 @@ OGRGeoPackageDriverGetSubdatasetInfo(const char *pszFileName)
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
             cpl::make_unique<OGRGeoPackageDriverSubdatasetInfo>(pszFileName);
-        if (!info->GetSubdatasetName().empty() && !info->GetFileName().empty())
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
         {
             return info.release();
         }

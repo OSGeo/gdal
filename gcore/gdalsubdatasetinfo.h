@@ -43,7 +43,7 @@ struct GDALSubdatasetInfo
 
   public:
     /**
-     * @brief Construct a GDALSubdatasetInfo object from a subdataset file name descriptor.
+     * @brief Construct a GDALSubdatasetInfo object from a subdataset file descriptor.
      * @param fileName          The subdataset file name descriptor.
      */
     GDALSubdatasetInfo(const std::string &fileName);
@@ -51,22 +51,23 @@ struct GDALSubdatasetInfo
     virtual ~GDALSubdatasetInfo() = default;
 
     /**
- * @brief Returns the path to the file, stripping any subdataset information from the file name
+ * @brief Returns the path component of the complete file descriptor,
+ *        stripping any subdataset, prefix and additional information.
  * @return                      The path to the file
  * @since                       GDAL 3.8
  */
-    std::string GetFileName() const;
+    std::string GetPathComponent() const;
 
     /**
- * @brief Replaces the base component of a
- *        file name by keeping the subdataset information unaltered.
+ * @brief Replaces the path component of complete file descriptor
+ *        by keeping the subdataset and any other component unaltered.
  *        The returned string must be freed with CPLFree()
- * @param newFileName           New file name with no subdataset information
+ * @param newPathName           New path name with no subdataset information
  * @note                        This method does not check if the subdataset actually exists.
- * @return                      The original string with the old file name replaced by newFileName and the subdataset information unaltered.
+ * @return                      The original file name with the old path component replaced by newPathName.
  * @since                       GDAL 3.8
  */
-    std::string ModifyFileName(const std::string &newFileName) const;
+    std::string ModifyPathComponent(const std::string &newPathName) const;
 
     /**
  * @brief Returns the subdataset component of the file name.
@@ -74,7 +75,7 @@ struct GDALSubdatasetInfo
  * @return                      The subdataset name
  * @since                       GDAL 3.8
  */
-    std::string GetSubdatasetName() const;
+    std::string GetSubdatasetComponent() const;
 
     //! @cond Doxygen_Suppress
   protected:
@@ -84,9 +85,14 @@ struct GDALSubdatasetInfo
      */
     virtual void parseFileName() = 0;
     mutable bool m_initialized = false;
+
+    //! The original unparsed complete file name passed to the constructor (e.g. GPKG:/path/to/file.gpkg:layer_name)
     std::string m_fileName;
-    std::string m_baseComponent;
+    //! The path component of the file name (e.g. /path/to/file.gpkg)
+    std::string m_pathComponent;
+    //! The subdataset component (e.g. layer_name)
     std::string m_subdatasetComponent;
+    //! The driver prefix component (e.g. GPKG)
     std::string m_driverPrefixComponent;
     //! @endcond
 };

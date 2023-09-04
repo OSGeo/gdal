@@ -57,19 +57,19 @@ struct GDALSubdatasetInfoShadow {
             GDALDestroySubdatasetInfo(reinterpret_cast<GDALSubdatasetInfoH>(self));
         }
 
-        retStringAndCPLFree* GetFileName()
+        retStringAndCPLFree* GetPathComponent()
         {
-            return GDALSubdatasetInfoGetFileName(reinterpret_cast<GDALSubdatasetInfoH>(self) );
+            return GDALSubdatasetInfoGetPathComponent(reinterpret_cast<GDALSubdatasetInfoH>(self) );
         }
 
-        retStringAndCPLFree* GetSubdatasetName()
+        retStringAndCPLFree* GetSubdatasetComponent()
         {
-        return GDALSubdatasetInfoGetSubdatasetName(reinterpret_cast<GDALSubdatasetInfoH>(self) );
+        return GDALSubdatasetInfoGetSubdatasetComponent(reinterpret_cast<GDALSubdatasetInfoH>(self) );
         }
 
-        retStringAndCPLFree* ModifyFileName(const char *pszNewFileName)
+        retStringAndCPLFree* ModifyPathComponent(const char *pszNewFileName)
         {
-        return GDALSubdatasetInfoModifyFileName(reinterpret_cast<GDALSubdatasetInfoH>(self), pszNewFileName );
+        return GDALSubdatasetInfoModifyPathComponent(reinterpret_cast<GDALSubdatasetInfoH>(self), pszNewFileName );
         }
 
 }

@@ -4114,29 +4114,31 @@ def test_gpkg_byte_nodata_value(band_count):
 
 
 @pytest.mark.parametrize(
-    "filename,basename,subdatasetname",
+    "filename,path_component,subdataset_component",
     (
         ("XXXXXXXXX:/test.gpkg:layer1", "", ""),
         ("GPKG:/test.gpkg", "", ""),
-        ("GPKG:/test.gpkg:layer1", "GPKG:/test.gpkg", "layer1"),
-        ("gpkg:/test.gpkg:layer1", "gpkg:/test.gpkg", "layer1"),
+        ("GPKG:/test.gpkg:layer1", "/test.gpkg", "layer1"),
+        ("gpkg:/test.gpkg:layer1", "/test.gpkg", "layer1"),
         (r"GPKG:c:\test.gpkg", "", ""),
-        (r"GPKG:c:\test.gpkg:layer1", r"GPKG:c:\test.gpkg", "layer1"),
-        (r"gpkg:c:\test.gpkg:layer1", r"gpkg:c:\test.gpkg", "layer1"),
+        (r"GPKG:c:\test.gpkg:layer1", r"c:\test.gpkg", "layer1"),
+        (r"gpkg:c:\test.gpkg:layer1", r"c:\test.gpkg", "layer1"),
     ),
 )
-def test_gpkg_gdal_subdataset_get_filename(filename, basename, subdatasetname):
+def test_gpkg_gdal_subdataset_get_filename(
+    filename, path_component, subdataset_component
+):
 
     info = gdal.GetSubdatasetInfo(filename)
-    if basename == "":
+    if path_component == "":
         assert info is None
     else:
-        assert info.GetFileName() == basename
-        assert info.GetSubdatasetName() == subdatasetname
+        assert info.GetPathComponent() == path_component
+        assert info.GetSubdatasetComponent() == subdataset_component
 
 
 @pytest.mark.parametrize(
-    "subdatasetname,newfilename",
+    "subdataset_component,new_path",
     (
         ("GPKG:/test.gpkg", ""),
         ("GPKG:/test.gpkg:layer1", "GPKG:/new/test.gpkg:layer1"),
@@ -4145,13 +4147,13 @@ def test_gpkg_gdal_subdataset_get_filename(filename, basename, subdatasetname):
         (r"gpkg:c:\test.gpkg:layer1", "gpkg:/new/test.gpkg:layer1"),
     ),
 )
-def test_gpkg_gdal_subdataset_modify_filename(subdatasetname, newfilename):
+def test_gpkg_gdal_subdataset_modify_filename(subdataset_component, new_path):
 
-    info = gdal.GetSubdatasetInfo(subdatasetname)
-    if newfilename == "":
+    info = gdal.GetSubdatasetInfo(subdataset_component)
+    if new_path == "":
         assert info is None
     else:
-        assert info.ModifyFileName("/new/test.gpkg") == newfilename
+        assert info.ModifyPathComponent("/new/test.gpkg") == new_path
 
 
 ###############################################################################
