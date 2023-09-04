@@ -267,7 +267,24 @@ def test_vsioss_2():
         pytest.fail(data)
 
     # Test region and endpoint 'redirects'
-    handler.req_count = 0
+
+    handler = webserver.SequentialHandler()
+
+    def method(request):
+        request.protocol_version = "HTTP/1.1"
+        if request.headers["Host"].startswith("localhost"):
+            request.send_response(200)
+            request.send_header("Content-type", "text/plain")
+            request.send_header("Content-Length", 3)
+            request.send_header("Connection", "close")
+            request.end_headers()
+            request.wfile.write("""foo""".encode("ascii"))
+        else:
+            sys.stderr.write("Bad headers: %s\n" % str(request.headers))
+            request.send_response(403)
+
+    handler.add("GET", "/oss_fake_bucket/redirect", custom_method=method)
+
     with webserver.install_http_handler(handler):
         f = open_for_read("/vsioss_streaming/oss_fake_bucket/redirect")
         assert f is not None

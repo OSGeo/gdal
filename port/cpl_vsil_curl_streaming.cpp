@@ -1686,15 +1686,6 @@ class IVSIS3LikeStreamingFSHandler : public VSICurlStreamingFSHandler
     {
         return VSIGetFileSystemOptions(GetNonStreamingPrefix().c_str());
     }
-
-    virtual void
-    UpdateMapFromHandle(IVSIS3LikeHandleHelper * /*poHandleHelper*/)
-    {
-    }
-    virtual void
-    UpdateHandleFromMap(IVSIS3LikeHandleHelper * /*poHandleHelper*/)
-    {
-    }
 };
 
 /************************************************************************/
@@ -1722,35 +1713,12 @@ class VSIS3StreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     VSIS3StreamingFSHandler() = default;
     ~VSIS3StreamingFSHandler() override = default;
 
-    void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper) override;
-    void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper) override;
-
     void ClearCache() override
     {
         IVSIS3LikeStreamingFSHandler::ClearCache();
         VSIS3UpdateParams::ClearCache();
     }
 };
-
-/************************************************************************/
-/*                         UpdateMapFromHandle()                        */
-/************************************************************************/
-
-void VSIS3StreamingFSHandler::UpdateMapFromHandle(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    VSIS3UpdateParams::UpdateMapFromHandle(poHandleHelper);
-}
-
-/************************************************************************/
-/*                         UpdateHandleFromMap()                        */
-/************************************************************************/
-
-void VSIS3StreamingFSHandler::UpdateHandleFromMap(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    VSIS3UpdateParams::UpdateHandleFromMap(poHandleHelper);
-}
 
 /************************************************************************/
 /*                          VSIS3LikeStreamingHandle                    */
@@ -1794,7 +1762,6 @@ VSIS3StreamingFSHandler::CreateFileHandle(const char *pszURL)
         VSIS3HandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if (poS3HandleHelper)
     {
-        UpdateHandleFromMap(poS3HandleHelper);
         return new VSIS3LikeStreamingHandle(this, poS3HandleHelper);
     }
     return nullptr;
@@ -1842,9 +1809,6 @@ bool VSIS3LikeStreamingHandle::CanRestartOnError(const char *pszErrorMsg,
     if (m_poS3HandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders,
                                               bSetError))
     {
-        static_cast<IVSIS3LikeStreamingFSHandler *>(m_poFS)
-            ->UpdateMapFromHandle(m_poS3HandleHelper);
-
         SetURL(m_poS3HandleHelper->GetURL());
         return true;
     }
@@ -1947,8 +1911,6 @@ class VSIOSSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIOSSStreamingFSHandler)
 
-    std::map<CPLString, VSIOSSUpdateParams> oMapBucketsToOSSParams{};
-
   protected:
     CPLString GetFSPrefix() override
     {
@@ -1966,43 +1928,12 @@ class VSIOSSStreamingFSHandler final : public IVSIS3LikeStreamingFSHandler
     VSIOSSStreamingFSHandler() = default;
     ~VSIOSSStreamingFSHandler() override = default;
 
-    void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper) override;
-    void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper) override;
-};
-
-/************************************************************************/
-/*                         UpdateMapFromHandle()                        */
-/************************************************************************/
-
-void VSIOSSStreamingFSHandler::UpdateMapFromHandle(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    CPLMutexHolder oHolder(&hMutex);
-
-    VSIOSSHandleHelper *poOSSHandleHelper =
-        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    oMapBucketsToOSSParams[poOSSHandleHelper->GetBucket()] =
-        VSIOSSUpdateParams(poOSSHandleHelper);
-}
-
-/************************************************************************/
-/*                         UpdateHandleFromMap()                        */
-/************************************************************************/
-
-void VSIOSSStreamingFSHandler::UpdateHandleFromMap(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    CPLMutexHolder oHolder(&hMutex);
-
-    VSIOSSHandleHelper *poOSSHandleHelper =
-        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    std::map<CPLString, VSIOSSUpdateParams>::iterator oIter =
-        oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
-    if (oIter != oMapBucketsToOSSParams.end())
+    void ClearCache() override
     {
-        oIter->second.UpdateHandlerHelper(poOSSHandleHelper);
+        IVSIS3LikeStreamingFSHandler::ClearCache();
+        VSIOSSUpdateParams::ClearCache();
     }
-}
+};
 
 /************************************************************************/
 /*                          CreateFileHandle()                          */
@@ -2015,7 +1946,6 @@ VSIOSSStreamingFSHandler::CreateFileHandle(const char *pszURL)
         VSIOSSHandleHelper::BuildFromURI(pszURL, GetFSPrefix().c_str(), false);
     if (poOSSHandleHelper)
     {
-        UpdateHandleFromMap(poOSSHandleHelper);
         return new VSIS3LikeStreamingHandle(this, poOSSHandleHelper);
     }
     return nullptr;

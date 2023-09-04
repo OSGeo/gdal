@@ -100,8 +100,7 @@ class IVSIS3LikeHandleHelper
         return true;
     }
     virtual bool CanRestartOnError(const char *, const char * /* pszHeaders*/,
-                                   bool /*bSetError*/,
-                                   bool * /*pbUpdateMap*/ = nullptr)
+                                   bool /*bSetError*/)
     {
         return false;
     }
@@ -233,8 +232,8 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
     {
         return false;
     }
-    bool CanRestartOnError(const char *, const char *pszHeaders, bool bSetError,
-                           bool *pbUpdateMap = nullptr) override;
+    bool CanRestartOnError(const char *, const char *pszHeaders,
+                           bool bSetError) override;
 
     const CPLString &GetURL() const override
     {
@@ -286,13 +285,11 @@ class VSIS3HandleHelper final : public IVSIS3LikeHandleHelper
 
 class VSIS3UpdateParams
 {
-  public:
+  private:
     CPLString m_osRegion{};
     CPLString m_osEndpoint{};
     CPLString m_osRequestPayer{};
     bool m_bUseVirtualHosting = false;
-
-    VSIS3UpdateParams() = default;
 
     explicit VSIS3UpdateParams(const VSIS3HandleHelper *poHelper)
         : m_osRegion(poHelper->GetRegion()),
@@ -312,8 +309,12 @@ class VSIS3UpdateParams
 
     static std::mutex gsMutex;
     static std::map<CPLString, VSIS3UpdateParams> goMapBucketsToS3Params;
-    static void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper);
-    static void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper);
+
+  public:
+    VSIS3UpdateParams() = default;
+
+    static void UpdateMapFromHandle(VSIS3HandleHelper *poS3HandleHelper);
+    static void UpdateHandleFromMap(VSIS3HandleHelper *poS3HandleHelper);
     static void ClearCache();
 };
 

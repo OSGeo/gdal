@@ -86,8 +86,8 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
                    const void *pabyDataContent = nullptr,
                    size_t nBytesContent = 0) const override;
 
-    bool CanRestartOnError(const char *, const char *pszHeaders, bool bSetError,
-                           bool *pbUpdateMap = nullptr) override;
+    bool CanRestartOnError(const char *, const char *pszHeaders,
+                           bool bSetError) override;
 
     const CPLString &GetURL() const override
     {
@@ -123,10 +123,8 @@ class VSIOSSHandleHelper final : public IVSIS3LikeHandleHelper
 
 class VSIOSSUpdateParams
 {
-  public:
+  private:
     CPLString m_osEndpoint{};
-
-    VSIOSSUpdateParams() = default;
 
     explicit VSIOSSUpdateParams(const VSIOSSHandleHelper *poHelper)
         : m_osEndpoint(poHelper->GetEndpoint())
@@ -137,6 +135,16 @@ class VSIOSSUpdateParams
     {
         poHelper->SetEndpoint(m_osEndpoint);
     }
+
+    static std::mutex gsMutex;
+    static std::map<CPLString, VSIOSSUpdateParams> goMapBucketsToOSSParams;
+
+  public:
+    VSIOSSUpdateParams() = default;
+
+    static void UpdateMapFromHandle(VSIOSSHandleHelper *poHandleHelper);
+    static void UpdateHandleFromMap(VSIOSSHandleHelper *poHandleHelper);
+    static void ClearCache();
 };
 
 #endif /* HAVE_CURL */

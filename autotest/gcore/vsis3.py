@@ -370,6 +370,9 @@ def get_s3_fake_bucket_resource_method_with_security_token(request):
 
 
 def test_vsis3_2(aws_test_config_as_config_options_or_credentials, webserver_port):
+
+    gdal.VSICurlClearCache()
+
     signed_url = gdal.GetSignedURL("/vsis3/s3_fake_bucket/resource")
     expected_url_8080 = (
         "http://127.0.0.1:8080/s3_fake_bucket/resource"
