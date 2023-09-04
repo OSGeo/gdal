@@ -123,7 +123,7 @@ CPLErr JP2OPJLikeRasterBand<CODEC, BASE>::IReadBlock(int nBlockXOff,
     int nYOff = nBlockYOff * nBlockYSize;
     int nXSize = std::min(nBlockXSize, nRasterXSize - nXOff);
     int nYSize = std::min(nBlockYSize, nRasterYSize - nYOff);
-    if (poGDS_->iLevel == 0)
+    if (poGDS->iLevel == 0)
     {
         CPLDebug(CODEC::debugId(),
                  "ds.GetRasterBand(%d).ReadRaster(%d,%d,%d,%d)", nBand, nXOff,
@@ -133,7 +133,7 @@ CPLErr JP2OPJLikeRasterBand<CODEC, BASE>::IReadBlock(int nBlockXOff,
     {
         CPLDebug(CODEC::debugId(),
                  "ds.GetRasterBand(%d).GetOverview(%d).ReadRaster(%d,%d,%d,%d)",
-                 nBand, poGDS_->iLevel - 1, nXOff, nYOff, nXSize, nYSize);
+                 nBand, poGDS->iLevel - 1, nXOff, nYOff, nXSize, nYSize);
     }
 #endif
 
