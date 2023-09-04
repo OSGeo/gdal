@@ -32,6 +32,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import difflib
 import os
 import os.path
 from http.server import BaseHTTPRequestHandler
@@ -86,7 +87,6 @@ def compare_ogrinfo_output(gmlfile, reffile, options=""):
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    tmpfilename = "tmp/" + os.path.basename(gmlfile) + ".txt"
     ret = gdaltest.runexternal(
         test_cli_utilities.get_ogrinfo_path()
         + " -ro -al GMLAS:"
@@ -105,12 +105,20 @@ def compare_ogrinfo_output(gmlfile, reffile, options=""):
     expected = open(reffile, "rb").read().decode("utf-8")
     expected = expected.replace("\r\n", "\n")
     if ret != expected:
-        print(ret.encode("utf-8"))
-        open(tmpfilename, "wb").write(ret.encode("utf-8"))
-        print("Diff:")
-        os.system("diff -u " + reffile + " " + tmpfilename)
-        # os.unlink(tmpfilename)
-        pytest.fail("Got:")
+        xml_diff = "\n".join(
+            [
+                line
+                for line in difflib.unified_diff(
+                    ret.splitlines(),
+                    expected.splitlines(),
+                    fromfile="expected",
+                    tofile="got",
+                    lineterm="",
+                )
+            ]
+        )
+
+        pytest.fail("ogrinfo output does not match.\n" + xml_diff)
 
 
 ###############################################################################
@@ -2167,26 +2175,30 @@ def test_ogr_gmlas_identifier_case_ambiguity():
 # Test writing support
 
 
-@pytest.mark.require_driver("SQLite")
-def test_ogr_gmlas_writer():
+@pytest.fixture()
+def gmlas_test1_generated_xml(tmp_path, tmp_vsimem):
+
+    if ogr.GetDriverByName("SQLite") is None:
+        pytest.skip("SQLite support required")
 
     src_ds = gdal.OpenEx(
         "GMLAS:data/gmlas/gmlas_test1.xml", open_options=["EXPOSE_METADATA_LAYERS=YES"]
     )
     tmp_ds = gdal.VectorTranslate(
-        "/vsimem/ogr_gmlas_writer.db", src_ds, format="SQLite"
+        tmp_vsimem / "ogr_gmlas_writer.db", src_ds, format="SQLite"
     )
     src_ds = None
+
     ret_ds = gdal.VectorTranslate(
-        "tmp/gmlas_test1_generated.xml",
+        tmp_path / "gmlas_test1_generated.xml",
         tmp_ds,
         format="GMLAS",
         datasetCreationOptions=["WRAPPING=GMLAS_FEATURECOLLECTION"],
     )
-    tmp_ds = None
-    gdal.Unlink("/vsimem/ogr_gmlas_writer.db")
 
     assert ret_ds is not None
+
+    return tmp_path / "gmlas_test1_generated.xml"
 
 
 ###############################################################################
@@ -2194,9 +2206,9 @@ def test_ogr_gmlas_writer():
 
 
 @pytest.mark.require_driver("SQLite")
-def test_ogr_gmlas_writer_check_xml_xsd():
+def test_ogr_gmlas_writer_check_xml_xsd(gmlas_test1_generated_xml):
 
-    got = open("tmp/gmlas_test1_generated.xml", "rt").read()
+    got = open(gmlas_test1_generated_xml, "rt").read()
     got = got.replace("\r\n", "\n")
     pos = got.find("http://myns ") + len("http://myns ")
     pos_end = got.find('"', pos)
@@ -2217,7 +2229,7 @@ def test_ogr_gmlas_writer_check_xml_xsd():
         )
         pytest.fail("Got:")
 
-    got = open("tmp/gmlas_test1_generated.xsd", "rt").read()
+    got = open(gmlas_test1_generated_xml.with_suffix(".xsd"), "rt").read()
     got = got.replace("\r\n", "\n")
     pos = got.find('schemaLocation="') + len('schemaLocation="')
     pos_end = got.find('"', pos)
@@ -2245,7 +2257,7 @@ def test_ogr_gmlas_writer_check_xml_xsd():
 
 
 @pytest.mark.require_driver("SQLite")
-def test_ogr_gmlas_writer_check_xml_read_back():
+def test_ogr_gmlas_writer_check_xml_read_back(gmlas_test1_generated_xml):
 
     # Skip tests when -fsanitize is used
     if gdaltest.is_travis_branch("sanitize"):
@@ -2254,14 +2266,12 @@ def test_ogr_gmlas_writer_check_xml_read_back():
     import test_cli_utilities
 
     if test_cli_utilities.get_ogrinfo_path() is None:
-        gdal.Unlink("tmp/gmlas_test1_generated.xml")
-        gdal.Unlink("tmp/gmlas_test1_generated.xsd")
         pytest.skip()
 
     # Compare the ogrinfo dump of the generated .xml with a reference one
     ret = gdaltest.runexternal(
         test_cli_utilities.get_ogrinfo_path()
-        + " -ro -al GMLAS:tmp/gmlas_test1_generated.xml -oo VALIDATE=YES "
+        + f" -ro -al GMLAS:{gmlas_test1_generated_xml} -oo VALIDATE=YES "
         + "-oo EXPOSE_METADATA_LAYERS=YES "
         + "-oo @KEEP_RELATIVE_PATHS_FOR_METADATA=YES "
         + "-oo @EXPOSE_SCHEMAS_NAME_IN_METADATA=NO "
@@ -2270,7 +2280,7 @@ def test_ogr_gmlas_writer_check_xml_read_back():
     expected = open("data/gmlas/gmlas_test1.txt", "rt").read()
     expected = expected.replace("\r\n", "\n")
     expected = expected.replace(
-        "data/gmlas/gmlas_test1.xml", "tmp/gmlas_test1_generated.xml"
+        "data/gmlas/gmlas_test1.xml", str(gmlas_test1_generated_xml)
     )
     expected = expected.replace(
         "data/gmlas/gmlas_test1.xsd",
@@ -2284,30 +2294,19 @@ def test_ogr_gmlas_writer_check_xml_read_back():
     )
 
     if ret_for_comparison != expected:
-        print(open("tmp/gmlas_test1_generated.xml", "rt").read())
-        print("")
-
-        print("XSD:")
-        print(open("tmp/gmlas_test1_generated.xsd", "rt").read())
-        print("")
-
-        print("ogrinfo dump:")
-        print(ret)
-        print("")
-
-        open("tmp/gmlas_test1_generated_got.txt", "wt").write(ret_for_comparison)
-        open("tmp/gmlas_test1_generated_expected.txt", "wt").write(expected)
-        print("Diff:")
-        os.system(
-            "diff -u tmp/gmlas_test1_generated_expected.txt tmp/gmlas_test1_generated_got.txt"
+        xml_diff = "\n".join(
+            [
+                line
+                for line in difflib.unified_diff(
+                    ret_for_comparison.splitlines(),
+                    expected.splitlines(),
+                    fromfile="expected",
+                    tofile="got",
+                    lineterm="",
+                )
+            ]
         )
-
-        os.unlink("tmp/gmlas_test1_generated_expected.txt")
-        os.unlink("tmp/gmlas_test1_generated_got.txt")
-        pytest.fail("XML:")
-
-    gdal.Unlink("tmp/gmlas_test1_generated.xml")
-    gdal.Unlink("tmp/gmlas_test1_generated.xsd")
+        pytest.fail("XML output does not match.\n" + xml_diff)
 
 
 ###############################################################################
