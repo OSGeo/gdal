@@ -22,6 +22,7 @@ target_include_directories(ogr_OpenFileGDB PRIVATE $<TARGET_PROPERTY:ogr_MEM,SOU
 
 add_executable(test_ofgdb_write EXCLUDE_FROM_ALL
                test_ofgdb_write.cpp
+               filegdbindex.cpp
                filegdbtable.cpp
                filegdbtable_write.cpp
                filegdbtable_write_fields.cpp
