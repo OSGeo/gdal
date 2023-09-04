@@ -320,6 +320,12 @@ static GDALDataset *OGRGeoPackageDriverCreate(const char *pszFilename,
 static CPLErr OGRGeoPackageDriverDelete(const char *pszFilename)
 
 {
+    std::string osAuxXml(pszFilename);
+    osAuxXml += ".aux.xml";
+    VSIStatBufL sStat;
+    if (VSIStatL(osAuxXml.c_str(), &sStat) == 0)
+        CPL_IGNORE_RET_VAL(VSIUnlink(osAuxXml.c_str()));
+
     if (VSIUnlink(pszFilename) == 0)
         return CE_None;
     else
