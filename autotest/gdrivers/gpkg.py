@@ -3057,6 +3057,8 @@ def test_gpkg_39():
     ds = None
 
     # Test GRID_CELL_ENCODING=grid-value-is-corner
+    if os.path.exists("data/byte.tif.aux.xml"):
+        os.unlink("data/byte.tif.aux.xml")
     gdal.Translate(
         "/vsimem/gpkg_39.gpkg",
         "data/byte.tif",
@@ -3066,10 +3068,9 @@ def test_gpkg_39():
     )
     ds = gdal.Open("/vsimem/gpkg_39.gpkg")
     assert ds.GetMetadataItem("AREA_OR_POINT") == "Point", ds.GetMetadata()
-    assert (
-        ds.GetRasterBand(1).GetMetadataItem("GRID_CELL_ENCODING")
-        == "grid-value-is-corner"
-    )
+    assert ds.GetRasterBand(1).GetMetadata() == {
+        "GRID_CELL_ENCODING": "grid-value-is-corner"
+    }
 
     # No metadata for now
     sql_lyr = ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_metadata'")
@@ -3077,8 +3078,27 @@ def test_gpkg_39():
     ds.ReleaseResultSet(sql_lyr)
     feat_is_none = feat is None
     assert feat_is_none
-
     ds = None
+
+    # Test GRID_CELL_ENCODING=grid-value-is-corner
+    src_with_stats = gdal.Translate("", "data/byte.tif", format="MEM")
+    src_with_stats.GetRasterBand(1).ComputeStatistics(approx_ok=False)
+    gdal.Translate(
+        "/vsimem/gpkg_39.gpkg",
+        src_with_stats,
+        format="GPKG",
+        outputType=gdal.GDT_UInt16,
+        creationOptions=["GRID_CELL_ENCODING=grid-value-is-corner"],
+    )
+    assert gdal.VSIStatL("/vsimem/gpkg_39.gpkg.aux.xml") is None
+    ds = gdal.Open("/vsimem/gpkg_39.gpkg")
+    assert ds.GetMetadataItem("AREA_OR_POINT") == "Point", ds.GetMetadata()
+    expected_md = src_with_stats.GetRasterBand(1).GetMetadata()
+    expected_md.update({"GRID_CELL_ENCODING": "grid-value-is-corner"})
+    assert ds.GetRasterBand(1).GetMetadata() == expected_md
+    ds = None
+
+    gdal.Unlink("/vsimem/gpkg_39.gpkg")
 
     # With nodata: statistics available
     gdal.Translate("/vsimem/gpkg_39.gpkg", src_ds, format="GPKG", noData=0)

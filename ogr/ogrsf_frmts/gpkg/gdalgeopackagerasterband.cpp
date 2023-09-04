@@ -3683,8 +3683,14 @@ void GDALGeoPackageRasterBand::LoadBandMetadata()
                                 cpl::down_cast<GDALGeoPackageRasterBand *>(
                                     poGDS->GetRasterBand(l_nBand));
                             l_poBand->m_bHasReadMetadataFromStorage = true;
-                            l_poBand->GDALPamRasterBand::SetMetadata(
+
+                            char **papszMD = CSLDuplicate(
                                 oLocalMDMD.GetMetadata(*papszIter));
+                            papszMD = CSLMerge(
+                                papszMD,
+                                GDALGPKGMBTilesLikeRasterBand::GetMetadata(""));
+                            l_poBand->GDALPamRasterBand::SetMetadata(papszMD);
+                            CSLDestroy(papszMD);
                         }
                     }
                 }
