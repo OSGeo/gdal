@@ -506,7 +506,7 @@ def createPyramidTile(
 
     The levelMosaicInfo object contains data about the mosaic at a given pyramid level.
 
-    Returns None if sucessful and return 1 if there is an error
+    Returns None if successful and return 1 if there is an error
     """
     temp_tilename = _createTempFileName(tileName)
 

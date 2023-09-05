@@ -332,7 +332,7 @@ GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
 static GIntBig gnLastReadFederatedTokenFile = 0;
 static std::string gosFederatedToken{};
 
-// Azure Active Directoy Workload Identity, typically for Azure Kubernetes
+// Azure Active Directory Workload Identity, typically for Azure Kubernetes
 // Cf https://github.com/Azure/azure-sdk-for-python/blob/main/sdk/identity/azure-identity/azure/identity/_credentials/workload_identity.py
 static bool GetConfigurationFromWorkloadIdentity(CPLString &osAccessToken)
 {
