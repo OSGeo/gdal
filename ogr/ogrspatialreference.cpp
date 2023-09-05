@@ -92,6 +92,7 @@ struct OGRSpatialReference::Private
         }
     };
 
+    OGRSpatialReference *m_poSelf = nullptr;
     PJ *m_pj_crs = nullptr;
 
     // Temporary state used for object construction
@@ -138,7 +139,7 @@ struct OGRSpatialReference::Private
 
     double m_coordinateEpoch = 0;  // as decimal year
 
-    Private();
+    explicit Private(OGRSpatialReference *poSelf);
     ~Private();
     Private(const Private &) = delete;
     Private &operator=(const Private &) = delete;
@@ -192,8 +193,9 @@ static OSRAxisMappingStrategy GetDefaultAxisMappingStrategy()
     return OAMS_AUTHORITY_COMPLIANT;
 }
 
-OGRSpatialReference::Private::Private()
-    : m_poListener(std::shared_ptr<Listener>(new Listener(this)))
+OGRSpatialReference::Private::Private(OGRSpatialReference *poSelf)
+    : m_poSelf(poSelf),
+      m_poListener(std::shared_ptr<Listener>(new Listener(this)))
 {
     // Get the default value for m_axisMappingStrategy from the
     // OSR_DEFAULT_AXIS_MAPPING_STRATEGY configuration option, if set.
@@ -273,7 +275,24 @@ void OGRSpatialReference::Private::setRoot(OGR_SRSNode *poRoot)
 void OGRSpatialReference::Private::setPjCRS(PJ *pj_crsIn,
                                             bool doRefreshAxisMapping)
 {
-    proj_assign_context(m_pj_crs, getPROJContext());
+    auto ctxt = getPROJContext();
+
+#if PROJ_AT_LEAST_VERSION(9, 2, 0)
+    if (proj_get_type(pj_crsIn) == PJ_TYPE_COORDINATE_METADATA)
+    {
+        const double dfEpoch =
+            proj_coordinate_metadata_get_epoch(ctxt, pj_crsIn);
+        if (!std::isnan(dfEpoch))
+        {
+            m_poSelf->SetCoordinateEpoch(dfEpoch);
+        }
+        auto crs = proj_get_source_crs(ctxt, pj_crsIn);
+        proj_destroy(pj_crsIn);
+        pj_crsIn = crs;
+    }
+#endif
+
+    proj_assign_context(m_pj_crs, ctxt);
     proj_destroy(m_pj_crs);
     m_pj_crs = pj_crsIn;
     if (m_pj_crs)
@@ -768,7 +787,8 @@ void OGRsnPrintDouble(char *pszStrBuf, size_t size, double dfValue)
  * be initialized, or NULL (the default).
  */
 
-OGRSpatialReference::OGRSpatialReference(const char *pszWKT) : d(new Private())
+OGRSpatialReference::OGRSpatialReference(const char *pszWKT)
+    : d(new Private(this))
 {
     if (pszWKT != nullptr)
         importFromWkt(pszWKT);
@@ -821,7 +841,7 @@ OGRSpatialReferenceH CPL_STDCALL OSRNewSpatialReference(const char *pszWKT)
  * @param oOther other spatial reference
  */
 OGRSpatialReference::OGRSpatialReference(const OGRSpatialReference &oOther)
-    : d(new Private())
+    : d(new Private(this))
 {
     *this = oOther;
 }
@@ -1952,21 +1972,6 @@ OGRErr OGRSpatialReference::importFromWkt(const char **ppszInput,
             auto ctxt = d->getPROJContext();
             auto pj = proj_create_from_wkt(ctxt, *ppszInput, aosOptions.List(),
                                            &warnings, &errors);
-
-#if PROJ_AT_LEAST_VERSION(9, 2, 0)
-            if (pj && proj_get_type(pj) == PJ_TYPE_COORDINATE_METADATA)
-            {
-                const double dfEpoch =
-                    proj_coordinate_metadata_get_epoch(ctxt, pj);
-                if (!std::isnan(dfEpoch))
-                {
-                    SetCoordinateEpoch(dfEpoch);
-                }
-                auto crs = proj_get_source_crs(ctxt, pj);
-                proj_destroy(pj);
-                pj = crs;
-            }
-#endif
             d->setPjCRS(pj);
 
             for (auto iter = warnings; iter && *iter; ++iter)
@@ -3814,7 +3819,8 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
         STARTS_WITH_CI(pszDefinition, "urn:ogc:def:crs,crs:") ||
         STARTS_WITH_CI(pszDefinition, "urn:x-ogc:def:crs:") ||
         STARTS_WITH_CI(pszDefinition, "urn:opengis:crs:") ||
-        STARTS_WITH_CI(pszDefinition, "urn:opengis:def:crs:"))
+        STARTS_WITH_CI(pszDefinition, "urn:opengis:def:crs:") ||
+        STARTS_WITH_CI(pszDefinition, "urn:ogc:def:coordinateMetadata:"))
         return importFromURN(pszDefinition);
 
     if (STARTS_WITH_CI(pszDefinition, "http://opengis.net/def/crs") ||

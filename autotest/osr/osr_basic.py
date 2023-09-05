@@ -2472,3 +2472,20 @@ def test_osr_basic_default_axis_mapping_strategy():
 
     assert crs1.GetAxisMappingStrategy() == osr.OAMS_TRADITIONAL_GIS_ORDER
     assert crs2.GetAxisMappingStrategy() == osr.OAMS_AUTHORITY_COMPLIANT
+
+
+###############################################################################
+
+
+@pytest.mark.require_proj(9, 4)
+def test_osr_basic_urn_coordinateMetadata():
+
+    srs = osr.SpatialReference()
+    assert (
+        srs.SetFromUserInput(
+            "urn:ogc:def:coordinateMetadata:NRCAN::NAD83_CSRS_1997_MTM7_HT2_1997"
+        )
+        == ogr.OGRERR_NONE
+    )
+    assert srs.GetName() == "NAD83(CSRS)v7 / MTM zone 7 + CGVD28 height"
+    assert srs.GetCoordinateEpoch() == 1997.0
