@@ -179,9 +179,7 @@ edit data.
 
     .. versionadded:: 3.1
 
-.. option:: --formats
-
-    List the format drivers that are enabled.
+.. include:: options/formats_vector.rst
 
 .. option:: -wkt_format <format>
 
