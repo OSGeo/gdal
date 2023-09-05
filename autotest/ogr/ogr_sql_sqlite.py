@@ -2351,3 +2351,57 @@ def testogr_sql_sqlite_spatial_filter(driver):
     ds = None
     if driver == "shape":
         ds = ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource(filename)
+
+
+###############################################################################
+@gdaltest.enable_exceptions()
+def testogr_sql_sqlite_named_FID_column():
+
+    ds = ogr.GetDriverByName("Memory").CreateDataSource("")
+    lyr = ds.CreateLayer("test", options=["FID=myfid"])
+    lyr.CreateField(ogr.FieldDefn("foo"))
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(10)
+    lyr.CreateFeature(f)
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetFID(20)
+    lyr.CreateFeature(f)
+    f = None
+
+    with ds.ExecuteSQL("SELECT myfid, * FROM test", dialect="SQLITE") as sql_lyr:
+        assert [f["myfid"] for f in sql_lyr] == [10, 20]
+
+    with ds.ExecuteSQL(
+        "SELECT rowid FROM test WHERE myfid = 20", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["rowid"] for f in sql_lyr] == [20]
+
+    ds.ExecuteSQL("INSERT INTO test (foo) VALUES ('bar')", dialect="SQLITE")
+
+    with ds.ExecuteSQL(
+        "SELECT myfid, * FROM test WHERE foo = 'bar'", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["foo"] for f in sql_lyr] == ["bar"]
+
+    ds.ExecuteSQL("INSERT INTO test (foo, myfid) VALUES ('baz', 30)", dialect="SQLITE")
+
+    with ds.ExecuteSQL(
+        "SELECT myfid, * FROM test WHERE foo = 'baz'", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["myfid"] for f in sql_lyr] == [30]
+
+    with pytest.raises(Exception):
+        # Value provided through ROWID and myfid are different
+        ds.ExecuteSQL(
+            "INSERT INTO test (foo, myfid, rowid) VALUES ('baz', 40, 41)",
+            dialect="SQLITE",
+        )
+
+    ds.ExecuteSQL("UPDATE test SET foo = 'baz2' WHERE myfid = 30", dialect="SQLITE")
+
+    with ds.ExecuteSQL(
+        "SELECT myfid, * FROM test WHERE foo = 'baz2'", dialect="SQLITE"
+    ) as sql_lyr:
+        assert [f["myfid"] for f in sql_lyr] == [30]
+
+    ds.ExecuteSQL("DELETE FROM test WHERE myfid = 30", dialect="SQLITE")

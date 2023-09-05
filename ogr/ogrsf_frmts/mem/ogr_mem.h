@@ -68,6 +68,8 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     bool m_bUpdated;
 
+    std::string m_osFIDColumn{};
+
     // Only use it in the lifetime of a function where the list of features
     // doesn't change.
     IOGRMemLayerFeatureIterator *GetIterator();
@@ -117,6 +119,11 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
 
     int TestCapability(const char *) override;
 
+    const char *GetFIDColumn() override
+    {
+        return m_osFIDColumn.c_str();
+    }
+
     bool IsUpdatable() const
     {
         return m_bUpdatable;
@@ -128,6 +135,11 @@ class CPL_DLL OGRMemLayer CPL_NON_FINAL : public OGRLayer
     void SetAdvertizeUTF8(bool bAdvertizeUTF8In)
     {
         m_bAdvertizeUTF8 = bAdvertizeUTF8In;
+    }
+
+    void SetFIDColumn(const char *pszFIDColumn)
+    {
+        m_osFIDColumn = pszFIDColumn;
     }
 
     bool HasBeenUpdated() const

@@ -123,6 +123,8 @@ void RegisterOGRMEM()
         "<LayerCreationOptionList>"
         "  <Option name='ADVERTIZE_UTF8' type='boolean' description='Whether "
         "the layer will contain UTF-8 strings' default='NO'/>"
+        "  <Option name='FID' type='string' description="
+        "'Name of the FID column to create' default='' />"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_COORDINATE_EPOCH, "YES");

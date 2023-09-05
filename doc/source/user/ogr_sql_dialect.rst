@@ -524,14 +524,18 @@ the SELECT list.
 When accessing field values, the special fields will take precedence over
 other fields in the data source with the same names.
 
-FID
-+++
+Feature id (FID)
+++++++++++++++++
 
 Normally the feature id is a special property of a feature and not treated
 as an attribute of the feature.  In some cases it is convenient to be able to
 utilize the feature id in queries and result sets as a regular field.  To do
-so use the name ``FID``.  The field wildcard expansions will not include
-the feature id, but it may be explicitly included using a syntax like:
+so use the name ``FID``. If the layer has a named FID column
+(:cpp:func:`OGRLayer::GetFIDColumn` != ""),
+this name may also be used.
+
+The field wildcard expansions will not include the feature id, but it may be
+explicitly included using a syntax like:
 
 .. code-block::
 
