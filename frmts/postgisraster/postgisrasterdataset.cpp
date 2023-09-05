@@ -4096,10 +4096,10 @@ GBool PostGISRasterDataset::PolygonFromCoords(int nXOff, int nYOff,
 /*                    OGRPostGISRasterDriverGetSubdatasetInfo()            */
 /************************************************************************/
 
-struct OGRPostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
 {
   public:
-    explicit OGRPostGISRasterDriverSubdatasetInfo(const std::string &fileName)
+    explicit PostGISRasterDriverSubdatasetInfo(const std::string &fileName)
         : GDALSubdatasetInfo(fileName)
     {
     }
@@ -4162,7 +4162,7 @@ OGRPostGISRasterDriverGetSubdatasetInfo(const char *pszFileName)
     if (PostGISRasterDataset::Identify(&poOpenInfo))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<OGRPostGISRasterDriverSubdatasetInfo>(pszFileName);
+            cpl::make_unique<PostGISRasterDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {

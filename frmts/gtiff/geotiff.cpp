@@ -1158,16 +1158,16 @@ struct OGRGTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
             return;
         }
 
-        char **papszParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(papszParts)};
+        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(aosParts)};
 
         if (iPartsCount == 3 || iPartsCount == 4)
         {
 
-            m_driverPrefixComponent = papszParts[0];
+            m_driverPrefixComponent = aosParts[0];
 
-            const bool hasDriveLetter{strlen(papszParts[2]) == 1 &&
-                                      std::isalpha(papszParts[2][0])};
+            const bool hasDriveLetter{strlen(aosParts[2]) == 1 &&
+                                      std::isalpha(aosParts[2][0])};
 
             // Check for drive letter
             if (iPartsCount == 4)
@@ -1175,31 +1175,29 @@ struct OGRGTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
                 // Invalid
                 if (!hasDriveLetter)
                 {
-                    CSLDestroy(papszParts);
+                    CSLDestroy(aosParts);
                     return;
                 }
-                m_pathComponent = papszParts[2];
+                m_pathComponent = aosParts[2];
                 m_pathComponent.append(":");
-                m_pathComponent.append(papszParts[3]);
+                m_pathComponent.append(aosParts[3]);
             }
             else  // count is 3
             {
                 if (hasDriveLetter)
                 {
-                    CSLDestroy(papszParts);
+                    CSLDestroy(aosParts);
                     return;
                 }
-                m_pathComponent = papszParts[2];
+                m_pathComponent = aosParts[2];
             }
 
-            m_subdatasetComponent = papszParts[1];
+            m_subdatasetComponent = aosParts[1];
         }
-        CSLDestroy(papszParts);
     }
 };
 
-static GDALSubdatasetInfo *
-OGRGTiffDriverGetSubdatasetInfo(const char *pszFileName)
+static GDALSubdatasetInfo *GTiffDriverGetSubdatasetInfo(const char *pszFileName)
 {
     GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
     if (GTiffDataset::Identify(&poOpenInfo))
@@ -1503,7 +1501,7 @@ void GDALRegister_GTiff()
     poDriver->pfnCreateCopy = GTiffDataset::CreateCopy;
     poDriver->pfnUnloadDriver = GDALDeregister_GTiff;
     poDriver->pfnIdentify = GTiffDataset::Identify;
-    poDriver->pfnGetSubdatasetInfoFunc = OGRGTiffDriverGetSubdatasetInfo;
+    poDriver->pfnGetSubdatasetInfoFunc = GTiffDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

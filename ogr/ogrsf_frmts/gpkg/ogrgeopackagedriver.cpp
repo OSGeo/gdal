@@ -267,17 +267,17 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
             return;
         }
 
-        char **papszParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
-        const int iPartsCount{CSLCount(papszParts)};
+        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(aosParts)};
 
         if (iPartsCount == 3 || iPartsCount == 4)
         {
 
-            m_driverPrefixComponent = papszParts[0];
+            m_driverPrefixComponent = aosParts[0];
 
             int subdatasetIndex{2};
-            const bool hasDriveLetter{strlen(papszParts[1]) == 1 &&
-                                      std::isalpha(papszParts[1][0])};
+            const bool hasDriveLetter{strlen(aosParts[1]) == 1 &&
+                                      std::isalpha(aosParts[1][0])};
 
             // Check for drive letter
             if (iPartsCount == 4)
@@ -285,27 +285,26 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
                 // Invalid
                 if (!hasDriveLetter)
                 {
-                    CSLDestroy(papszParts);
+                    CSLDestroy(aosParts);
                     return;
                 }
-                m_pathComponent = papszParts[1];
+                m_pathComponent = aosParts[1];
                 m_pathComponent.append(":");
-                m_pathComponent.append(papszParts[2]);
+                m_pathComponent.append(aosParts[2]);
                 subdatasetIndex++;
             }
             else  // count is 3
             {
                 if (hasDriveLetter)
                 {
-                    CSLDestroy(papszParts);
+                    CSLDestroy(aosParts);
                     return;
                 }
-                m_pathComponent = papszParts[1];
+                m_pathComponent = aosParts[1];
             }
 
-            m_subdatasetComponent = papszParts[subdatasetIndex];
+            m_subdatasetComponent = aosParts[subdatasetIndex];
         }
-        CSLDestroy(papszParts);
     }
 };
 
