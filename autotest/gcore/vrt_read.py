@@ -1553,8 +1553,8 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(1).YSize == 5
 
     ds = gdal.Open("vrt://data/float32.tif?r=bilinear&tr=120,240")
-    assert ds.ReadRaster(0, 0, 1, 1) == bytearray(
-        b"?\xf4\x00C"
+    assert struct.unpack("f", ds.ReadRaster(0, 0, 1, 1)) == pytest.approx(
+        128.95408630371094)
     )  ## check values changed via bilinear
 
     with gdal.quiet_errors():

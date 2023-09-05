@@ -1235,7 +1235,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 if (aosTargetResolution.size() != 2)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid tr option: %s, must be two"
+                             "Invalid tr option: %s, must be two "
                              "values separated by comma xres,yres",
                              pszValue);
                     poSrcDS->ReleaseRef();
@@ -1261,7 +1261,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 if (aosSrcWin.size() != 4)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid srcwin option: %s, must be four",
+                             "Invalid srcwin option: %s, must be four "
                              "values separated by comma xoff,yoff,xsize,ysize",
                              pszValue);
                     poSrcDS->ReleaseRef();
