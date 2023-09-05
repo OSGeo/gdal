@@ -248,8 +248,9 @@ def test_gpkg_1():
     )[0]
     expected_gt = ds.GetGeoTransform()
     expected_wkt = ds.GetProjectionRef()
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=PNG"])
+    gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=PNG", "METADATA_TABLES=NO"]
+    )
     ds = None
 
     assert validate("/vsimem/tmp.gpkg"), "validation failed"
@@ -349,10 +350,9 @@ def test_gpkg_2():
     )
     clamped_expected_cs.append(17849)
 
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        gdaltest.gpkg_dr.CreateCopy(
-            "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=JPEG"]
-        )
+    gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg", ds, options=["TILE_FORMAT=JPEG", "METADATA_TABLES=NO"]
+    )
 
     out_ds = gdal.Open("/vsimem/tmp.gpkg")
     expected_cs = [expected_cs, expected_cs, expected_cs, 4873]
@@ -1525,8 +1525,9 @@ def test_gpkg_17():
 
     # Without padding, after reopening
     ds = gdal.Open("data/byte.tif")
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        gdaltest.gpkg_dr.CreateCopy("/vsimem/tmp.gpkg", ds, options=["BLOCKSIZE=10"])
+    gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg", ds, options=["BLOCKSIZE=10", "METADATA_TABLES=NO"]
+    )
     out_ds = gdal.OpenEx(
         "/vsimem/tmp.gpkg",
         gdal.OF_RASTER | gdal.OF_UPDATE,
@@ -1697,16 +1698,20 @@ def test_gpkg_18():
 
     # Without padding, immediately after create copy
     ds = gdal.Open("data/small_world.tif")
-    with gdaltest.config_option("CREATE_METADATA_TABLES", "NO"):
-        out_ds = gdaltest.gpkg_dr.CreateCopy(
-            "/vsimem/tmp.gpkg",
-            ds,
-            options=["TILE_FORMAT=PNG", "BLOCKXSIZE=100", "BLOCKYSIZE=100"],
-        )
-        # Should not result in gpkg_zoom_other
-        ret = out_ds.BuildOverviews("NEAR", [8])
-        assert ret == 0
-        out_ds = None
+    out_ds = gdaltest.gpkg_dr.CreateCopy(
+        "/vsimem/tmp.gpkg",
+        ds,
+        options=[
+            "TILE_FORMAT=PNG",
+            "BLOCKXSIZE=100",
+            "BLOCKYSIZE=100",
+            "METADATA_TABLES=NO",
+        ],
+    )
+    # Should not result in gpkg_zoom_other
+    ret = out_ds.BuildOverviews("NEAR", [8])
+    assert ret == 0
+    out_ds = None
 
     # Check that there's no extensions
     out_ds = gdal.Open("/vsimem/tmp.gpkg")
@@ -2874,6 +2879,8 @@ def test_gpkg_39():
     ds = None
 
     # Test GRID_CELL_ENCODING=grid-value-is-corner
+    if os.path.exists("data/byte.tif.aux.xml"):
+        os.unlink("data/byte.tif.aux.xml")
     gdal.Translate(
         "/vsimem/gpkg_39.gpkg",
         "data/byte.tif",
@@ -2883,10 +2890,9 @@ def test_gpkg_39():
     )
     ds = gdal.Open("/vsimem/gpkg_39.gpkg")
     assert ds.GetMetadataItem("AREA_OR_POINT") == "Point", ds.GetMetadata()
-    assert (
-        ds.GetRasterBand(1).GetMetadataItem("GRID_CELL_ENCODING")
-        == "grid-value-is-corner"
-    )
+    assert ds.GetRasterBand(1).GetMetadata() == {
+        "GRID_CELL_ENCODING": "grid-value-is-corner"
+    }
 
     # No metadata for now
     sql_lyr = ds.ExecuteSQL("SELECT 1 FROM sqlite_master WHERE name = 'gpkg_metadata'")
@@ -2894,7 +2900,24 @@ def test_gpkg_39():
     ds.ReleaseResultSet(sql_lyr)
     feat_is_none = feat is None
     assert feat_is_none
+    ds = None
 
+    # Test GRID_CELL_ENCODING=grid-value-is-corner
+    src_with_stats = gdal.Translate("", "data/byte.tif", format="MEM")
+    src_with_stats.GetRasterBand(1).ComputeStatistics(approx_ok=False)
+    gdal.Translate(
+        "/vsimem/gpkg_39.gpkg",
+        src_with_stats,
+        format="GPKG",
+        outputType=gdal.GDT_UInt16,
+        creationOptions=["GRID_CELL_ENCODING=grid-value-is-corner"],
+    )
+    assert gdal.VSIStatL("/vsimem/gpkg_39.gpkg.aux.xml") is None
+    ds = gdal.Open("/vsimem/gpkg_39.gpkg")
+    assert ds.GetMetadataItem("AREA_OR_POINT") == "Point", ds.GetMetadata()
+    expected_md = src_with_stats.GetRasterBand(1).GetMetadata()
+    expected_md.update({"GRID_CELL_ENCODING": "grid-value-is-corner"})
+    assert ds.GetRasterBand(1).GetMetadata() == expected_md
     ds = None
 
     # With nodata: statistics available

@@ -283,6 +283,36 @@ raster) are available:
       by GeoPackage v1.3 (see https://github.com/opengeospatial/geopackage/issues/530).
       When using UTC format, with a unspecified timezone, UTC will be assumed.
 
+-  .. dsco:: CRS_WKT_EXTENSION
+      :choices: YES, NO
+      :default: NO
+      :since: 3.8
+
+      Defines whether to add the ``definition_12_063`` column to the
+      ``gpkg_spatial_ref_sys`` system table, according to
+      http://www.geopackage.org/spec/#extension_crs_wkt . The default is NO,
+      unless the tile gridded coverage extension is used.
+      With VERSION >= 1.4, a ``epoch`` column is also added.
+      WKT strings in ``definition_12_063`` will follow the
+      `WKT2:2015 standard <https://docs.ogc.org/is/12-063r5/12-063r5.html>`__
+      when possible, but may use the
+      `WKT2:2019 standard <https://docs.ogc.org/is/18-010r7/18-010r7.html>`__
+      for specific cases (dynamic CRS with coordinate epoch).
+      This option generally does not need to be specified, as the driver will
+      automatically update the ``gpkg_spatial_ref_sys`` table when needed, but
+      it may be useful to create GeoPackage datasets matching the expections of
+      other software or profiles (such as the DGIWG-GPKG profile).
+
+-  .. co:: METADATA_TABLES
+      :choices: YES, NO
+      :since: 3.8
+
+      Defines whether to add the metadata system tables.
+      By default, they are created on demand.
+      If NO is specified, they are not created, even if metadata is set.
+      If YES is specified, they are always created.
+
+
 Other options are available for raster. See the :ref:`GeoPackage raster <raster.gpkg>`
 documentation page.
 

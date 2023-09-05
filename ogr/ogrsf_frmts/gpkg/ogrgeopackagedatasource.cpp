@@ -408,8 +408,10 @@ const char *GDALGeoPackageDataset::GetSrsName(const OGRSpatialReference &oSRS)
 }
 
 /* Add the definition_12_063 column to an existing gpkg_spatial_ref_sys table */
-bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
+bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2(
+    bool bForceEpoch)
 {
+    const bool bAddEpoch = (m_nUserVersion >= GPKG_1_4_VERSION || bForceEpoch);
     auto oResultTable = SQLQuery(
         hDB, "SELECT srs_name, srs_id, organization, organization_coordsys_id, "
              "definition, description FROM gpkg_spatial_ref_sys LIMIT 100000");
@@ -420,15 +422,18 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
 
     if (bRet)
     {
-        bRet =
-            SQLCommand(hDB, "CREATE TABLE gpkg_spatial_ref_sys_temp ("
-                            "srs_name TEXT NOT NULL,"
-                            "srs_id INTEGER NOT NULL PRIMARY KEY,"
-                            "organization TEXT NOT NULL,"
-                            "organization_coordsys_id INTEGER NOT NULL,"
-                            "definition TEXT NOT NULL,"
-                            "description TEXT, "
-                            "definition_12_063 TEXT NOT NULL)") == OGRERR_NONE;
+        std::string osSQL("CREATE TABLE gpkg_spatial_ref_sys_temp ("
+                          "srs_name TEXT NOT NULL,"
+                          "srs_id INTEGER NOT NULL PRIMARY KEY,"
+                          "organization TEXT NOT NULL,"
+                          "organization_coordsys_id INTEGER NOT NULL,"
+                          "definition TEXT NOT NULL,"
+                          "description TEXT, "
+                          "definition_12_063 TEXT NOT NULL");
+        if (bAddEpoch)
+            osSQL += ", epoch DOUBLE";
+        osSQL += ")";
+        bRet = SQLCommand(hDB, osSQL.c_str()) == OGRERR_NONE;
     }
 
     if (bRet)
@@ -531,10 +536,30 @@ bool GDALGeoPackageDataset::ConvertGpkgSpatialRefSysToExtensionWkt2()
                                          "'http://www.geopackage.org/spec120/"
                                          "#extension_crs_wkt', 'read-write')");
     }
+    if (bRet && bAddEpoch)
+    {
+        bRet =
+            OGRERR_NONE ==
+                SQLCommand(hDB, "UPDATE gpkg_extensions SET extension_name = "
+                                "'gpkg_crs_wkt_1_1' "
+                                "WHERE extension_name = 'gpkg_crs_wkt'") &&
+            OGRERR_NONE ==
+                SQLCommand(
+                    hDB,
+                    "INSERT INTO gpkg_extensions "
+                    "(table_name, column_name, extension_name, definition, "
+                    "scope) "
+                    "VALUES "
+                    "('gpkg_spatial_ref_sys', 'epoch', 'gpkg_crs_wkt_1_1', "
+                    "'http://www.geopackage.org/spec/#extension_crs_wkt', "
+                    "'read-write')");
+    }
     if (bRet)
     {
         SoftCommitTransaction();
         m_bHasDefinition12_063 = true;
+        if (bAddEpoch)
+            m_bHasEpochColumn = true;
     }
     else
     {
@@ -794,46 +819,57 @@ int GDALGeoPackageDataset::GetSrsId(const OGRSpatialReference &oSRS)
         }
     }
 
+    bool bConvertGpkgSpatialRefSysToExtensionWkt2 = false;
+    bool bForceEpoch = false;
     if (!m_bHasDefinition12_063 && pszWKT1 == nullptr &&
         (pszWKT2_2015 != nullptr || pszWKT2_2019 != nullptr))
     {
-        if (!ConvertGpkgSpatialRefSysToExtensionWkt2())
-        {
-            return DEFAULT_SRID;
-        }
+        bConvertGpkgSpatialRefSysToExtensionWkt2 = true;
     }
 
     // Add epoch column if needed
     if (oSRS.GetCoordinateEpoch() > 0 && !m_bHasEpochColumn)
     {
-        if (SoftStartTransaction() != OGRERR_NONE)
-            return DEFAULT_SRID;
-
-        if ((!m_bHasDefinition12_063 &&
-             !ConvertGpkgSpatialRefSysToExtensionWkt2()) ||
-            SQLCommand(hDB, "ALTER TABLE gpkg_spatial_ref_sys "
-                            "ADD COLUMN epoch DOUBLE") != OGRERR_NONE ||
-            SQLCommand(hDB, "UPDATE gpkg_extensions SET extension_name = "
-                            "'gpkg_crs_wkt_1_1' "
-                            "WHERE extension_name = 'gpkg_crs_wkt'") !=
-                OGRERR_NONE ||
-            SQLCommand(
-                hDB,
-                "INSERT INTO gpkg_extensions "
-                "(table_name, column_name, extension_name, definition, scope) "
-                "VALUES "
-                "('gpkg_spatial_ref_sys', 'epoch', 'gpkg_crs_wkt_1_1', "
-                "'http://www.geopackage.org/spec/#extension_crs_wkt', "
-                "'read-write')") != OGRERR_NONE)
+        if (m_bHasDefinition12_063)
         {
-            SoftRollbackTransaction();
-            return DEFAULT_SRID;
+            if (SoftStartTransaction() != OGRERR_NONE)
+                return DEFAULT_SRID;
+            if (SQLCommand(hDB, "ALTER TABLE gpkg_spatial_ref_sys "
+                                "ADD COLUMN epoch DOUBLE") != OGRERR_NONE ||
+                SQLCommand(hDB, "UPDATE gpkg_extensions SET extension_name = "
+                                "'gpkg_crs_wkt_1_1' "
+                                "WHERE extension_name = 'gpkg_crs_wkt'") !=
+                    OGRERR_NONE ||
+                SQLCommand(
+                    hDB,
+                    "INSERT INTO gpkg_extensions "
+                    "(table_name, column_name, extension_name, definition, "
+                    "scope) "
+                    "VALUES "
+                    "('gpkg_spatial_ref_sys', 'epoch', 'gpkg_crs_wkt_1_1', "
+                    "'http://www.geopackage.org/spec/#extension_crs_wkt', "
+                    "'read-write')") != OGRERR_NONE)
+            {
+                SoftRollbackTransaction();
+                return DEFAULT_SRID;
+            }
+
+            if (SoftCommitTransaction() != OGRERR_NONE)
+                return DEFAULT_SRID;
+
+            m_bHasEpochColumn = true;
         }
+        else
+        {
+            bConvertGpkgSpatialRefSysToExtensionWkt2 = true;
+            bForceEpoch = true;
+        }
+    }
 
-        if (SoftCommitTransaction() != OGRERR_NONE)
-            return DEFAULT_SRID;
-
-        m_bHasEpochColumn = true;
+    if (bConvertGpkgSpatialRefSysToExtensionWkt2 &&
+        !ConvertGpkgSpatialRefSysToExtensionWkt2(bForceEpoch))
+    {
+        return DEFAULT_SRID;
     }
 
     // Reuse the authority code number as SRS_ID if we can
@@ -4595,7 +4631,7 @@ bool GDALGeoPackageDataset::CreateMetadataTables()
 void GDALGeoPackageDataset::FlushMetadata()
 {
     if (!m_bMetadataDirty || m_poParentDS != nullptr ||
-        !CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "YES")))
+        m_nCreateMetadataTables == FALSE)
         return;
     m_bMetadataDirty = false;
 
@@ -5112,10 +5148,17 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                 "organization_coordsys_id INTEGER NOT NULL,"
                 "definition  TEXT NOT NULL,"
                 "description TEXT";
-        if (CPLTestBool(CPLGetConfigOption("GPKG_ADD_DEFINITION_12_063", "NO")))
+        if (CPLTestBool(CSLFetchNameValueDef(papszOptions, "CRS_WKT_EXTENSION",
+                                             "NO")) ||
+            (nBandsIn != 0 && eDT != GDT_Byte))
         {
             m_bHasDefinition12_063 = true;
             osSQL += ", definition_12_063 TEXT NOT NULL";
+            if (m_nUserVersion >= GPKG_1_4_VERSION)
+            {
+                osSQL += ", epoch DOUBLE";
+                m_bHasEpochColumn = true;
+            }
         }
         osSQL += ")"
                  ";"
@@ -5366,8 +5409,12 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
 
     if (!bFileExists)
     {
-        if (CPLTestBool(CPLGetConfigOption("CREATE_METADATA_TABLES", "NO")) &&
-            !CreateMetadataTables())
+        const char *pszMetadataTables =
+            CSLFetchNameValue(papszOptions, "METADATA_TABLES");
+        if (pszMetadataTables)
+            m_nCreateMetadataTables = int(CPLTestBool(pszMetadataTables));
+
+        if (m_nCreateMetadataTables == TRUE && !CreateMetadataTables())
             return FALSE;
 
         if (m_bHasDefinition12_063)
@@ -5384,6 +5431,27 @@ int GDALGeoPackageDataset::Create(const char *pszFilename, int nXSize,
                                     "#extension_crs_wkt', 'read-write')"))
             {
                 return FALSE;
+            }
+            if (m_bHasEpochColumn)
+            {
+                if (OGRERR_NONE !=
+                        SQLCommand(
+                            hDB, "UPDATE gpkg_extensions SET extension_name = "
+                                 "'gpkg_crs_wkt_1_1' "
+                                 "WHERE extension_name = 'gpkg_crs_wkt'") ||
+                    OGRERR_NONE !=
+                        SQLCommand(hDB, "INSERT INTO gpkg_extensions "
+                                        "(table_name, column_name, "
+                                        "extension_name, definition, scope) "
+                                        "VALUES "
+                                        "('gpkg_spatial_ref_sys', 'epoch', "
+                                        "'gpkg_crs_wkt_1_1', "
+                                        "'http://www.geopackage.org/spec/"
+                                        "#extension_crs_wkt', "
+                                        "'read-write')"))
+                {
+                    return FALSE;
+                }
             }
         }
     }
@@ -5803,7 +5871,7 @@ bool GDALGeoPackageDataset::CreateTileGriddedTable(char **papszOptions)
     if (!bHasEPSG4979)
     {
         if (!m_bHasDefinition12_063 &&
-            !ConvertGpkgSpatialRefSysToExtensionWkt2())
+            !ConvertGpkgSpatialRefSysToExtensionWkt2(/*bForceEpoch=*/false))
         {
             return false;
         }

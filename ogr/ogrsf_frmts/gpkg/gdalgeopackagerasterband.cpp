@@ -3683,8 +3683,14 @@ void GDALGeoPackageRasterBand::LoadBandMetadata()
                                 cpl::down_cast<GDALGeoPackageRasterBand *>(
                                     poGDS->GetRasterBand(l_nBand));
                             l_poBand->m_bHasReadMetadataFromStorage = true;
-                            l_poBand->GDALPamRasterBand::SetMetadata(
+
+                            char **papszMD = CSLDuplicate(
                                 oLocalMDMD.GetMetadata(*papszIter));
+                            papszMD = CSLMerge(
+                                papszMD,
+                                GDALGPKGMBTilesLikeRasterBand::GetMetadata(""));
+                            l_poBand->GDALPamRasterBand::SetMetadata(papszMD);
+                            CSLDestroy(papszMD);
                         }
                     }
                 }
@@ -3793,7 +3799,8 @@ char **GDALGeoPackageRasterBand::GetMetadata(const char *pszDomain)
         !GDALGPKGMBTilesLikeRasterBand::GetMetadataItem("STATISTICS_MINIMUM") &&
         !GDALGPKGMBTilesLikeRasterBand::GetMetadataItem("STATISTICS_MAXIMUM"))
     {
-        m_aosMD = GDALGPKGMBTilesLikeRasterBand::GetMetadata(pszDomain);
+        m_aosMD.Assign(CSLDuplicate(
+            GDALGPKGMBTilesLikeRasterBand::GetMetadata(pszDomain)));
         if (!std::isnan(m_dfStatsMinFromTileAncillary))
         {
             m_aosMD.SetNameValue(
