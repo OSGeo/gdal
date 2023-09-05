@@ -64,6 +64,7 @@
 typedef int CPLErr;
 typedef int GDALRIOResampleAlg;
 
+%include "python_exceptions.i"
 %include "python_strings.i"
 
 %{
@@ -662,6 +663,31 @@ int GDALTermProgress( double, const char *, void * );
   }
 }
 
+%feature("except") OpenNumPyArray {
+    const int bLocalUseExceptions = GetUseExceptions();
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
+    }
+    $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
+%#ifndef SED_HACKS
+    if( result == NULL && bLocalUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+%#endif
+    if( result != NULL && bLocalUseExceptions ) {
+        StoreLastException();
+%#ifdef SED_HACKS
+        bLocalUseExceptionsCode = FALSE;
+%#endif
+    }
+}
+
 %newobject OpenNumPyArray;
 %inline %{
 GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray, bool binterleave)
@@ -669,6 +695,31 @@ GDALDatasetShadow* OpenNumPyArray(PyArrayObject *psArray, bool binterleave)
     return NUMPYDataset::Open( psArray, binterleave );
 }
 %}
+
+%feature("except") OpenMultiDimensionalNumPyArray {
+    const int bLocalUseExceptions = GetUseExceptions();
+    if ( bLocalUseExceptions ) {
+        pushErrorHandler();
+    }
+    $action
+    if ( bLocalUseExceptions ) {
+        popErrorHandler();
+    }
+%#ifndef SED_HACKS
+    if( result == NULL && bLocalUseExceptions ) {
+      CPLErr eclass = CPLGetLastErrorType();
+      if ( eclass == CE_Failure || eclass == CE_Fatal ) {
+        SWIG_exception( SWIG_RuntimeError, CPLGetLastErrorMsg() );
+      }
+    }
+%#endif
+    if( result != NULL && bLocalUseExceptions ) {
+        StoreLastException();
+%#ifdef SED_HACKS
+        bLocalUseExceptionsCode = FALSE;
+%#endif
+    }
+}
 
 %newobject OpenMultiDimensionalNumPyArray;
 %inline %{
