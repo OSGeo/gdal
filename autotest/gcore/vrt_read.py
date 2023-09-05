@@ -1529,7 +1529,7 @@ def test_vrt_protocol():
 
     ## no op, simply ignored as with gdal_translate
     ds = gdal.Open("vrt://data/float32.tif?projwin_srs=OGC:CRS84")
-    assert ds
+    assert ds is not None
 
     ds = gdal.Open(
         "vrt://data/float32.tif?projwin_srs=OGC:CRS84&projwin=-117.6407,33.90027,-117.6292,33.89181"
@@ -1539,6 +1539,45 @@ def test_vrt_protocol():
     assert ds.GetGeoTransform()[3] == 3751140.0
     assert ds.GetRasterBand(1).XSize == 18
     assert ds.GetRasterBand(1).YSize == 16
+
+    with gdal.quiet_errors():
+        ds = gdal.Open("vrt://data/float32.tif?tr=120")
+        assert ds is None
+
+    ds = gdal.Open("vrt://data/float32.tif?tr=120,240")
+
+    assert ds.GetGeoTransform()[0] == 440720.0
+    assert ds.GetGeoTransform()[1] == 120.0
+    assert ds.GetGeoTransform()[5] == -240.0
+    assert ds.GetRasterBand(1).XSize == 10
+    assert ds.GetRasterBand(1).YSize == 5
+
+    ds = gdal.Open("vrt://data/float32.tif?r=bilinear&tr=120,240")
+    assert struct.unpack("f", ds.ReadRaster(0, 0, 1, 1))[0] == pytest.approx(
+        128.95408630371094
+    )  ## check values changed via bilinear
+
+    with gdal.quiet_errors():
+        ds = gdal.Open("vrt://data/float32.tif?srcwin=0,0,3")
+        assert ds is None
+
+    ds = gdal.Open("vrt://data/float32.tif?srcwin=2,3,8,5")
+    assert ds.GetRasterBand(1).XSize == 8
+    assert ds.GetRasterBand(1).YSize == 5
+    assert struct.unpack("f", ds.ReadRaster(0, 0, 1, 1))[0] == pytest.approx(
+        123.0
+    )  ## check value is correct
+
+    with gdal.quiet_errors():
+        ds = gdal.Open("vrt://data/float32.tif?a_gt=1,0,0,0,1")
+        assert ds is None
+
+    ds = gdal.Open("vrt://data/float32.tif?a_gt=0,1,0,0,0,1")
+    gdaltest.check_geotransform(
+        (0, 1, 0, 0, 0, 1),
+        ds.GetGeoTransform(),
+        1e-9,
+    )
 
 
 @pytest.mark.require_driver("BMP")

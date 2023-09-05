@@ -1228,7 +1228,78 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString("-projwin_srs");
                 argv.AddString(pszValue);
             }
+            else if (EQUAL(pszKey, "tr"))
+            {
+                CPLStringList aosTargetResolution(
+                    CSLTokenizeString2(pszValue, ",", 0));
+                if (aosTargetResolution.size() != 2)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid tr option: %s, must be two "
+                             "values separated by comma xres,yres",
+                             pszValue);
+                    poSrcDS->ReleaseRef();
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                argv.AddString("-tr");
+                argv.AddString(aosTargetResolution[0]);
+                argv.AddString(aosTargetResolution[1]);
+            }
+            else if (EQUAL(pszKey, "r"))
+            {
+                argv.AddString("-r");
+                argv.AddString(pszValue);
+            }
 
+            else if (EQUAL(pszKey, "srcwin"))
+            {
+
+                // Parse the limits
+                CPLStringList aosSrcWin(CSLTokenizeString2(pszValue, ",", 0));
+                // fail if not four values
+                if (aosSrcWin.size() != 4)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid srcwin option: %s, must be four "
+                             "values separated by comma xoff,yoff,xsize,ysize",
+                             pszValue);
+                    poSrcDS->ReleaseRef();
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+
+                argv.AddString("-srcwin");
+                argv.AddString(aosSrcWin[0]);
+                argv.AddString(aosSrcWin[1]);
+                argv.AddString(aosSrcWin[2]);
+                argv.AddString(aosSrcWin[3]);
+            }
+
+            else if (EQUAL(pszKey, "a_gt"))
+            {
+
+                // Parse the limits
+                CPLStringList aosAGeoTransform(
+                    CSLTokenizeString2(pszValue, ",", 0));
+                // fail if not six values
+                if (aosAGeoTransform.size() != 6)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "Invalid a_gt option: %s", pszValue);
+                    poSrcDS->ReleaseRef();
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+
+                argv.AddString("-a_gt");
+                argv.AddString(aosAGeoTransform[0]);
+                argv.AddString(aosAGeoTransform[1]);
+                argv.AddString(aosAGeoTransform[2]);
+                argv.AddString(aosAGeoTransform[3]);
+                argv.AddString(aosAGeoTransform[4]);
+                argv.AddString(aosAGeoTransform[5]);
+            }
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",

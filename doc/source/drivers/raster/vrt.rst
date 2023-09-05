@@ -1688,7 +1688,8 @@ For example:
 
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
-``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, and ``projwin``.
+``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
+``tr``, ``r``, ``srcwin``, and ``a_gt``.
 
 Other options may be added in the future.
 
@@ -1747,6 +1748,16 @@ the order 'xmin,ymax,xmax,ymin', these are in the native georeferenced coordinat
 provided.
 
 The effect of the ``projwin_srs`` option (added in GDAL 3.8) is to specify the SRS in which to interpret the coordinates given with ``projwin`` in the same way as (:ref:`gdal_translate`). This option only applies if ``projwin`` is also supplied.
+
+The effect of the ``tr`` option (added in GDAL 3.8) is to set the target resolution, two positive values in georeferenced coordinates, applied in the same way as (:ref:`gdal_translate`). The value consists of two numeric values separated by commas in the order 'xres,yres'.
+
+The effect of the ``r`` option (added in GDAL 3.8) is to set the resampling algorithm used, with 'nearest' as the default. This is applied in the same way as (:ref:`gdal_translate`).
+
+The effect of the ``srcwin`` option (added in GDAL 3.8) is to select a subwindow from the source image based on pixel/line location as with (:ref:`gdal_translate`). The value consists of four integer values separated by commas, in
+the order 'xoff,yoff,xsize,ysize'.
+
+The effect of the ``a_gt`` option (added in GDAL 3.8) is to override/assign the geotransform of the output as with (:ref:`gdal_translate`). The value consists of six numeric values separated by commas, in
+the order 'gt(0),gt(1),gt(2),gt(3),gt(4),gt(5)'.
 
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
