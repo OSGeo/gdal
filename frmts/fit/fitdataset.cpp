@@ -1248,9 +1248,9 @@ static GDALDataset *FITCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     /* -------------------------------------------------------------------- */
     /*      Loop over image, copying image data.                            */
     /* -------------------------------------------------------------------- */
-    unsigned long bytesPerPixel = nBands * nDTSize;
+    const size_t bytesPerPixel = static_cast<size_t>(nBands) * nDTSize;
 
-    size_t pageBytes = blockX * blockY * bytesPerPixel;
+    const size_t pageBytes = blockX * blockY * bytesPerPixel;
     char *output = (char *)calloc(1, pageBytes);
     if (!output)
     {

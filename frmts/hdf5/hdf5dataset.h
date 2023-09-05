@@ -236,7 +236,7 @@ class HDF5Dataset CPL_NON_FINAL : public GDALPamDataset
     HDF5GroupObjects *HDF5FindDatasetObjectsbyPath(HDF5GroupObjects *,
                                                    const char *);
     char *CreatePath(HDF5GroupObjects *);
-    void DestroyH5Objects(HDF5GroupObjects *);
+    static void DestroyH5Objects(HDF5GroupObjects *);
 
     static const char *GetDataTypeName(hid_t);
 

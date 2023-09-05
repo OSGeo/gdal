@@ -5017,10 +5017,8 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
             GDALm256i ymm_max = ymm_neutral;
             const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
 
-            const GUInt32 nMinThreshold =
-                (bHasNoData && nNoDataValue == 0) ? 1 : 0;
-            const GUInt32 nMaxThreshold =
-                (bHasNoData && nNoDataValue == 255) ? 254 : 255;
+            const GUInt32 nMinThreshold = (nNoDataValue == 0) ? 1 : 0;
+            const GUInt32 nMaxThreshold = (nNoDataValue == 255) ? 254 : 255;
             const bool bComputeMinMax =
                 nMin > nMinThreshold || nMax < nMaxThreshold;
 

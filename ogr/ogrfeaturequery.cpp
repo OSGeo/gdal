@@ -349,7 +349,7 @@ int OGRFeatureQuery::CanUseIndex(OGRLayer *poLayer)
     return CanUseIndex(psExpr, poLayer);
 }
 
-int OGRFeatureQuery::CanUseIndex(swq_expr_node *psExpr, OGRLayer *poLayer)
+int OGRFeatureQuery::CanUseIndex(const swq_expr_node *psExpr, OGRLayer *poLayer)
 {
     // Does the expression meet our requirements?
     if (psExpr == nullptr || psExpr->eNodeType != SNT_OPERATION)
@@ -548,7 +548,7 @@ static GIntBig *OGRANDGIntBigArray(GIntBig panFIDList1[], GIntBig nFIDCount1,
     return panFIDList;
 }
 
-GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(swq_expr_node *psExpr,
+GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(const swq_expr_node *psExpr,
                                                  OGRLayer *poLayer,
                                                  GIntBig &nFIDCount)
 {
@@ -589,8 +589,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(swq_expr_node *psExpr,
         psExpr->nSubExprCount < 2)
         return nullptr;
 
-    swq_expr_node *poColumn = psExpr->papoSubExpr[0];
-    swq_expr_node *poValue = psExpr->papoSubExpr[1];
+    const swq_expr_node *poColumn = psExpr->papoSubExpr[0];
+    const swq_expr_node *poValue = psExpr->papoSubExpr[1];
 
     if (poColumn->eNodeType != SNT_COLUMN || poValue->eNodeType != SNT_CONSTANT)
         return nullptr;
@@ -604,7 +604,8 @@ GIntBig *OGRFeatureQuery::EvaluateAgainstIndices(swq_expr_node *psExpr,
 
     // Have an index, now we need to query it.
     OGRField sValue;
-    OGRFieldDefn *poFieldDefn = poLayer->GetLayerDefn()->GetFieldDefn(nIdx);
+    const OGRFieldDefn *poFieldDefn =
+        poLayer->GetLayerDefn()->GetFieldDefn(nIdx);
 
     // Handle the case of an IN operation.
     if (psExpr->nOperation == SWQ_IN)

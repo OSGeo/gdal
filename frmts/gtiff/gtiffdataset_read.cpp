@@ -1444,6 +1444,7 @@ class FetchBufferVirtualMemIO final
         return true;
     }
 
+    // cppcheck-suppress unusedStructMember
     static const bool bMinimizeIO = false;
 };
 

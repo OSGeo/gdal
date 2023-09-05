@@ -8036,8 +8036,8 @@ bool netCDFDataset::GrowDim(int nLayerId, int nDimIdToGrow, size_t nNewSize)
                 GDAL_nc_close(new_cdfid);
                 return false;
             }
-            if (!CloneGrp(panGroupIds[i], nNewGrpId, eFormat == NCDF_FORMAT_NC4,
-                          nLayerId, nDimIdToGrow, nNewSize))
+            if (!CloneGrp(panGroupIds[i], nNewGrpId, /*bIsNC4=*/true, nLayerId,
+                          nDimIdToGrow, nNewSize))
             {
                 CPLFree(panGroupIds);
                 GDAL_nc_close(new_cdfid);

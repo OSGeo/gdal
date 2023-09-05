@@ -133,7 +133,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
         return OGRERR_FAILURE;
     }
 
-    double dfValues[4];
+    double dfValues[4] = {0};
     int iNumValues = 0;
     {
         std::istringstream iss(pszLine);

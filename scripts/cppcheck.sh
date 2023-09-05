@@ -147,6 +147,10 @@ mv ${LOG_FILE}.tmp ${LOG_FILE}
 grep -v -e "frmts/png/libpng/png.c" ${LOG_FILE} > ${LOG_FILE}.tmp
 mv ${LOG_FILE}.tmp ${LOG_FILE}
 
+# Ignore duplInheritedMember warning
+grep -v -e "duplInheritedMember" ${LOG_FILE} > ${LOG_FILE}.tmp
+mv ${LOG_FILE}.tmp ${LOG_FILE}
+
 if grep "null pointer" ${LOG_FILE} ; then
     echo "Null pointer check failed"
     ret_code=1

@@ -4570,13 +4570,13 @@ OGRGeometry *OGRGeometryFactory::forceTo(OGRGeometry *poGeom,
 
     if (eTargetTypeFlat != eTargetType && (eType == eTypeFlat))
     {
-        poGeom = forceTo(poGeom, eTargetTypeFlat, papszOptions);
-        if (poGeom)
+        auto poGeomNew = forceTo(poGeom, eTargetTypeFlat, papszOptions);
+        if (poGeomNew)
         {
-            poGeom->set3D(OGR_GT_HasZ(eTargetType));
-            poGeom->setMeasured(OGR_GT_HasM(eTargetType));
+            poGeomNew->set3D(OGR_GT_HasZ(eTargetType));
+            poGeomNew->setMeasured(OGR_GT_HasM(eTargetType));
         }
-        return poGeom;
+        return poGeomNew;
     }
 
     if (eTypeFlat == eTargetTypeFlat)

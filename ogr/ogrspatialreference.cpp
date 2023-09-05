@@ -1635,6 +1635,7 @@ OGRErr OGRSpatialReference::exportToWkt(char **ppszResult,
     }
     else if (pszFormat[0] == '\0')
     {
+        // cppcheck-suppress knownConditionTrueFalse
         if (IsDerivedGeographic())
         {
             wktFormat = PJ_WKT2_2018;

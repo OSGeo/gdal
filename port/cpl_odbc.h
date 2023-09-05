@@ -320,6 +320,7 @@ class CPL_DLL CPLODBCStatement
     void Clear();
     void AppendEscaped(const char *);
     void Append(const char *);
+    // cppcheck-suppress functionStatic
     void Append(int);
     void Append(double);
     int Appendf(CPL_FORMAT_STRING(const char *), ...)

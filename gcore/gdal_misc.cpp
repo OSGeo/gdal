@@ -1479,6 +1479,7 @@ CPLString GDALFindAssociatedFile(const char *pszBaseFilename,
     CPLString osTarget = CPLResetExtension(pszBaseFilename, pszExt);
 
     if (papszSiblingFiles == nullptr ||
+        // cppcheck-suppress knownConditionTrueFalse
         !GDALCanReliablyUseSiblingFileList(osTarget.c_str()))
     {
         VSIStatBufL sStatBuf;
@@ -1951,7 +1952,9 @@ int GDALReadTabFile2(const char *pszBaseFilename, double *padfGeoTransform,
 
     const char *pszTAB = CPLResetExtension(pszBaseFilename, "tab");
 
-    if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(pszTAB))
+    if (papszSiblingFiles &&
+        // cppcheck-suppress knownConditionTrueFalse
+        GDALCanReliablyUseSiblingFileList(pszTAB))
     {
         int iSibling = CSLFindString(papszSiblingFiles, CPLGetFilename(pszTAB));
         if (iSibling >= 0)
@@ -2205,7 +2208,9 @@ int GDALReadWorldFile2(const char *pszBaseFilename, const char *pszExtension,
 
     const char *pszTFW = CPLResetExtension(pszBaseFilename, szExtLower);
 
-    if (papszSiblingFiles && GDALCanReliablyUseSiblingFileList(pszTFW))
+    if (papszSiblingFiles &&
+        // cppcheck-suppress knownConditionTrueFalse
+        GDALCanReliablyUseSiblingFileList(pszTFW))
     {
         const int iSibling =
             CSLFindString(papszSiblingFiles, CPLGetFilename(pszTFW));
