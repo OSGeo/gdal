@@ -120,8 +120,17 @@ GDALSubdatasetInfo::ModifyPathComponent(const std::string &newPathName) const
     }
 
     std::string replaced{m_fileName};
-    replaced.replace(replaced.find(m_pathComponent), m_pathComponent.length(),
-                     newPathName);
+
+    try
+    {
+        replaced.replace(replaced.find(m_pathComponent),
+                         m_pathComponent.length(), newPathName);
+    }
+    catch (const std::out_of_range &)
+    {
+        return "";
+    }
+
     return replaced;
 }
 

@@ -4147,8 +4147,8 @@ struct OGRPostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
             }
 
             m_pathComponent = m_fileName;
-            m_pathComponent.replace(nTableStart, nPathLength, "");
-            m_pathComponent.replace(0, 3, "");
+            m_pathComponent.erase(nTableStart, nPathLength);
+            m_pathComponent.erase(0, 3);
         }
 
         CSLDestroy(papszParams);
