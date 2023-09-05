@@ -30,6 +30,7 @@
 ###############################################################################
 
 import array
+import collections
 import struct
 
 import gdaltest
@@ -1028,3 +1029,21 @@ def test_gdal_grid_lib_skip_nan_zvalue():
             10,
         )
     )
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdal_grid_lib_dict_arguments():
+
+    opt = gdal.GridOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import os
 import shutil
 import struct
@@ -1125,3 +1126,33 @@ def test_gdal_translate_lib_scale_and_unscale_incompatible():
             unscale=True,
             outputType=gdal.GDT_UInt16,
         )
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdal_translate_lib_dict_arguments():
+
+    opt = gdal.TranslateOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+        metadataOptions=collections.OrderedDict(
+            (("AREA_OR_POINT", "Area"), ("TIFFTAG_XRESOLUTION", 123))
+        ),
+    )
+
+    co_idx = opt.index("-co")
+
+    assert opt[co_idx : co_idx + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+    mo_idx = opt.index("-mo")
+
+    assert opt[mo_idx : mo_idx + 4] == [
+        "-mo",
+        "AREA_OR_POINT=Area",
+        "-mo",
+        "TIFFTAG_XRESOLUTION=123",
+    ]

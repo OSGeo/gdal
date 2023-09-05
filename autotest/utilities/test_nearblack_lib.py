@@ -31,6 +31,7 @@
 
 
 import array
+import collections
 import pathlib
 
 import pytest
@@ -557,3 +558,17 @@ def test_nearblack_lib_floodfill_concave_from_bottom_non_black():
         maxNonBlack=1,
         alg="floodfill",
     )
+
+
+def test_nearblack_lib_dict_arguments():
+
+    opt = gdal.NearblackOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import struct
 
 import gdaltest
@@ -641,3 +642,21 @@ def test_gdal_rasterize_lib_too_small_resolution():
 
     with pytest.raises(Exception, match="Invalid computed output raster size"):
         gdal.Rasterize("", vector_ds, format="MEM", xRes=1, yRes=1e-20)
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdal_rasterize_lib_dict_arguments():
+
+    opt = gdal.RasterizeOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
