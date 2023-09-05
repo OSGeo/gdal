@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import json
 import pathlib
 import tempfile
@@ -1934,3 +1935,38 @@ def test_ogr2ogr_lib_geojson_output(tmp_path):
     with ogr.Open(tmpfilename) as ds:
         lyr = ds.GetLayer(0)
         assert lyr.GetFeatureCount() == 11
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_ogr2ogr_lib_dict_arguments():
+
+    opt = gdal.VectorTranslateOptions(
+        "__RETURN_OPTION_LIST__",
+        datasetCreationOptions=collections.OrderedDict(
+            (("GEOMETRY_ENCODING", "WKT"), ("FORMAT", "NC4"))
+        ),
+        layerCreationOptions=collections.OrderedDict(
+            (("RECORD_DIM_NAME", "record"), ("STRING_DEFAULT_WIDTH", 10))
+        ),
+    )
+
+    dsco_idx = opt.index("-dsco")
+
+    assert opt[dsco_idx : dsco_idx + 4] == [
+        "-dsco",
+        "GEOMETRY_ENCODING=WKT",
+        "-dsco",
+        "FORMAT=NC4",
+    ]
+
+    lco_idx = opt.index("-lco")
+
+    assert opt[lco_idx : lco_idx + 4] == [
+        "-lco",
+        "RECORD_DIM_NAME=record",
+        "-lco",
+        "STRING_DEFAULT_WIDTH=10",
+    ]

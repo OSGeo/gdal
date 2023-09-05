@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import struct
 
 import gdaltest
@@ -696,3 +697,21 @@ def test_gdaldem_lib_nodata():
     if cs != 10:
         print(ds.ReadAsArray())  # Should be 0 0 0 0 181 0 0 0 0
         pytest.fail("Bad checksum")
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdaldem_lib_dict_arguments():
+
+    opt = gdal.DEMProcessingOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    ind = opt.index("-co")
+
+    assert opt[ind : ind + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

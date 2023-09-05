@@ -29,6 +29,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import pathlib
 import struct
 
@@ -882,3 +883,21 @@ def XXXX_test_all():
         test_gdalmdimtranslate_two_groups()
         test_gdalmdimtranslate_subset()
         test_gdalmdimtranslate_scaleaxes()
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdalmdimtranslate_dict_arguments():
+
+    opt = gdal.MultiDimTranslateOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    co_idx = opt.index("-co")
+
+    assert opt[co_idx : co_idx + 4] == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]

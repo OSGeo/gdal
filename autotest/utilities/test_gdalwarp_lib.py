@@ -30,6 +30,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import collections
 import shutil
 import struct
 
@@ -3659,3 +3660,28 @@ def test_gdalwarp_lib_cutline_crossing_antimeridian_in_EPSG_32601_and_raster_in_
         ]
         == 9
     )
+
+
+###############################################################################
+# Test option argument handling
+
+
+def test_gdalwarp_lib_dict_arguments():
+
+    opt = gdal.WarpOptions(
+        "__RETURN_OPTION_LIST__",
+        creationOptions=collections.OrderedDict(
+            (("COMPRESS", "DEFLATE"), ("LEVEL", 4))
+        ),
+    )
+
+    assert opt == ["-co", "COMPRESS=DEFLATE", "-co", "LEVEL=4"]
+
+    opt = gdal.WarpOptions(
+        "__RETURN_OPTION_LIST__",
+        warpOptions=collections.OrderedDict(
+            (("SKIP_NOSOURCE", "YES"), ("NUM_THREADS", 2))
+        ),
+    )
+
+    assert opt == ["-wo", "SKIP_NOSOURCE=YES", "-wo", "NUM_THREADS=2"]
