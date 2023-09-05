@@ -922,6 +922,14 @@ GDAL provides a set of default pixel functions that can be used without writing 
      - 1
      - -
      - compute the logarithm (base 10) of the abs of a single raster band (real or complex): ``log10( abs( x ) )``
+   * - **max**
+     - >= 2
+     - ``propagateNoData`` (optional)
+     - (GDAL >= 3.8) maximum of 2 or more raster bands, ignoring by default pixels at nodata. If the optional ``propagateNoData`` parameter is set to ``true``, then if a nodata pixel is found in one of the bands, if will be propagated to the output value.
+   * - **min**
+     - >= 2
+     - ``propagateNoData`` (optional)
+     - (GDAL >= 3.8) minimum of 2 or more raster bands, ignoring by default pixels at nodata. If the optional ``propagateNoData`` parameter is set to ``true``, then if a nodata pixel is found in one of the bands, if will be propagated to the output value.
    * - **mod**
      - 1
      - -

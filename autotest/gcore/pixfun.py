@@ -1318,4 +1318,150 @@ def test_pixfun_missing_builtin():
         band_vrt.ReadAsArray(buf_type=gdal.GDT_Float32)
 
 
+def test_pixfun_min():
+
+    vrt_ds = gdal.Open(
+        """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <NoDataValue>0</NoDataValue>
+    <PixelFunctionType>min</PixelFunctionType>
+    <SourceTransferType>Byte</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    ar = vrt_ds.GetRasterBand(1).ReadAsArray()
+    assert ar[10][9] == 0
+    assert ar[10][10] == 32
+    assert ar[10][11] == 32
+    assert ar[10][12] == 32
+
+
+def test_pixfun_min_propagateNoData():
+
+    vrt_ds = gdal.Open(
+        """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <NoDataValue>0</NoDataValue>
+    <PixelFunctionType>min</PixelFunctionType>
+    <PixelFunctionArguments propagateNoData="true" />
+    <SourceTransferType>Byte</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    ar = vrt_ds.GetRasterBand(1).ReadAsArray()
+    assert ar[10][9] == 0
+    assert ar[10][10] == 32
+    assert ar[10][11] == 0
+    assert ar[10][12] == 32
+
+
+def test_pixfun_max():
+
+    vrt_ds = gdal.Open(
+        """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <NoDataValue>0</NoDataValue>
+    <PixelFunctionType>max</PixelFunctionType>
+    <SourceTransferType>Byte</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    ar = vrt_ds.GetRasterBand(1).ReadAsArray()
+    assert ar[10][9] == 0
+    assert ar[10][10] == 255
+    assert ar[10][11] == 255
+    assert ar[10][12] == 255
+
+
+def test_pixfun_max_nodata_255():
+
+    vrt_ds = gdal.Open(
+        """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <NoDataValue>255</NoDataValue>
+    <PixelFunctionType>max</PixelFunctionType>
+    <SourceTransferType>Byte</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    ar = vrt_ds.GetRasterBand(1).ReadAsArray()
+    assert ar[10][9] == 0
+    assert ar[10][10] == 32
+    assert ar[10][11] == 32
+    assert ar[10][12] == 32
+
+
+def test_pixfun_max_no_nodata():
+
+    vrt_ds = gdal.Open(
+        """<VRTDataset rasterXSize="50" rasterYSize="50">
+  <VRTRasterBand dataType="Byte" band="1" subClass="VRTDerivedRasterBand">
+    <PixelFunctionType>max</PixelFunctionType>
+    <SourceTransferType>Byte</SourceTransferType>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>3</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+    </SimpleSource>
+    <SimpleSource>
+      <SourceFilename relativeToVRT="0">data/test_nodatavalues.tif</SourceFilename>
+      <SourceBand>2</SourceBand>
+    </SimpleSource>
+  </VRTRasterBand>
+</VRTDataset>"""
+    )
+    ar = vrt_ds.GetRasterBand(1).ReadAsArray()
+    assert ar[10][9] == 0
+    assert ar[10][10] == 255
+    assert ar[10][11] == 255
+    assert ar[10][12] == 255
+
+
 ###############################################################################
