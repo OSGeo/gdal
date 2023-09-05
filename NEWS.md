@@ -1,3 +1,133 @@
+# GDAL/OGR 3.7.2 Release Notes
+
+GDAL 3.7.2 is a bugfix release.
+
+## Build
+
+* Ccache.cmake: fix warning
+* XLS: avoid compiler warning when building against freexl 2.0
+* FindSPATIALITE.cmake: updated for SpatiaLite 5.1.0
+* CMakeLists.txt: update maximum range to 3.27
+* fix building test_ofgdb_write (#8321)
+
+## GDAL 3.7.2
+
+### Port
+
+* /vsiaz/: fix cached URL names when listing /vsiaz/
+* /vsiaz/: add options to pass object_id/client_id/msi_res_id in IMDS
+  authentication requests (AZURE_IMDS_OBJECT_ID, AZURE_IMDS_CLIENT_ID,
+  AZURE_IMDS_MSI_RES_ID)
+* /vsiaz/: implement Azure Active Directory Workload Identity authentication,
+  typically for Azure Kubernetes
+
+### Core
+
+* TileMatrixSet::parse(): add support for OGC 2D Tile Matrix Set v2 (#6882)
+
+### Algorithms
+
+* Warper: do not modify bounds when doing geographic->geographic on a dataset
+  with world extent but not in [-180,180] (#8194)
+* RMS resampling: avoid potential integer overflow with UInt16 values
+* GDALChecksumImage(): fix 3.6.0 regression regarding integer overflow on
+  images with more than 2 billion pixels (#8254)
+
+### Utilities
+
+* gdalinfo -json output: emit a stac['proj:epsg'] = null object when emitting
+  proj:wkt2 or proj:projjson (#8137)
+* gdalmdimtranslate: fix wrong output dimension size when using syntax like
+  '-array name=XXX,view=[::factor_gt_1]'
+* gdal2tiles: fix exception with dataset in EPSG:4326 with longitudes > 180 in
+  WebMercator profile (#8100)
+* gdal_retile.py: allow gaps in input files larger than grid size (#8260)
+
+### Raster drivers
+
+GeoPackage driver:
+ * GDALGeoPackageRasterBand::GetMetadata(): fix use after free
+ * fix missing GRID_CELL_ENCODING metadata item when there is other metadata
+ * remove .aux.xml file in Delete()
+
+GTiff driver:
+ * fix reading .tif + .tif.aux.xml file with xml:ESRI SourceGCPs without
+   TIFFTAG_RESOLUTIONUNIT (#8083)
+
+HDF5 driver:
+ * more efficient metadata collection (no functional change)
+ * deal with int64/uint64 attributes
+ * remove trailing space in multi-valued metadata items
+ * remove dataset name prefix in band level metadata
+ * address Planet's datacube band-specific metadata
+
+NITF driver:
+ * fix MIN/MAX_LONG/LAT when reading RPC00B
+ * add support for CSCSDB (Common Sensor Covariance Support Data) DES from
+   GLAS/GFM SDEs
+ * nitf_spec.xml: corrections to CSEXRB TRE
+
+OGCAPI driver:
+ * make it work when the media type of links (expected to be application/json)
+   is missing, using Accept content negotiation (#7970)
+ * do not try to use the 'uri' member of a tilematrixset definition document
+ * reproject bounding box from CRS84 to tile matrix set CRS
+ * skip too small overview levels
+ * remove erroneous taking into account of tilematrixset limits
+
+STACIT driver:
+ * correctly process asset 'href' starting with 'file://' (#8135)
+ * make it tolerant to missing proj:epsg if proj:wkt2 or proj:projjson are
+   provided (#8137)
+ * apply vsis3 protocol to s3:// items
+
+WEBP driver:
+ * fix build against libwebp < 0.4.0 (#8111)
+
+Zarr driver:
+ * Zarr V2: fix duplicate array listing when both a 'foo' file and 'foo/'
+   directory exist on the object storage (#8192)
+
+## OGR 3.7.2
+
+### Core
+
+* Fix ExecuteSQL(dialect='SQLITE', spatialFilter=...) on a Memory datasource
+* OGRCurve::isClockwise(): fix wrong result when lowest rightmost vertex is the
+  first one (#8296)
+
+### Utilities
+
+* ogrinfo: return non-zero ret code if -sql failed (#8215)
+* ogrinfo_output.schema.json: reflect actual output of ogrinfo (#8300)
+* ogr2ogr: support -nlt GEOMETRY -nlt CONVERT_TO_LINEAR (#8101)
+
+### Vector drivers
+
+HANA driver:
+ * Fix incorrect detection of table name for view columns
+ * Don't process layers that are not in TABLES list
+
+OGCAPI driver:
+ * vector tiles: avoid potential infinite time to establish layer definition
+
+OpenFileGDB driver:
+ * make Open() to fail if requested to open in update mode and that files are
+   in read-only (qgis/QGIS#53715)
+
+Shapefile driver:
+ * make CreateLayer() + GetFileList() list the .prj file when it exists (#8167)
+
+WFS driver:
+ * do not surround selected fields names in PROPERTYNAME with open and close
+   parenthesis (#8089)
+
+## Python bindings
+
+* fix typo on slopeFormat parameter (#8154)
+* osgeo_utils: align base.get_extension() and util.DoesDriverHandleExtension()
+  on C++ versions (#8277)
+
 # GDAL/OGR 3.7.1 Release Notes
 
 GDAL 3.7.1 is a bugfix release.
