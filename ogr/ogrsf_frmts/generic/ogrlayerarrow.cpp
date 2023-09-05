@@ -1729,6 +1729,8 @@ void OGRLayer::ReleaseStream(struct ArrowArrayStream *stream)
         static_cast<ArrowArrayStreamPrivateDataSharedDataWrapper *>(
             stream->private_data);
     poPrivate->poShared->m_bArrowArrayStreamInProgress = false;
+    if (poPrivate->poShared->m_poLayer)
+        poPrivate->poShared->m_poLayer->ResetReading();
     delete poPrivate;
     stream->private_data = nullptr;
     stream->release = nullptr;
@@ -1864,8 +1866,6 @@ bool OGRLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
         return false;
     }
     m_aosArrowArrayStreamOptions.Assign(CSLDuplicate(papszOptions), true);
-
-    ResetReading();
 
     out_stream->get_schema = OGRLayer::StaticGetArrowSchema;
     out_stream->get_next = OGRLayer::StaticGetNextArrowArray;

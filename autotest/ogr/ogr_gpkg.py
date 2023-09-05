@@ -7687,6 +7687,19 @@ def test_ogr_gpkg_arrow_stream_numpy():
             assert batch["int16"][0] == 123
             assert len(batch["fid"]) == 1
 
+            assert lyr.SetNextByIndex(1) == ogr.OGRERR_NONE
+            stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+            batches = [batch for batch in stream]
+            assert len(batches) == 1
+            assert list(batches[0]["fid"]) == [2, 3]
+
+    with ds.ExecuteSQL("SELECT * FROM test") as sql_lyr:
+        assert sql_lyr.SetNextByIndex(1) == ogr.OGRERR_NONE
+        stream = sql_lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        assert len(batches) == 1
+        assert list(batches[0]["fid"]) == [2, 3]
+
     with lyr.GetArrowStreamAsNumPy(options=["MAX_FEATURES_IN_BATCH=1"]) as stream:
         batches = [batch for batch in stream]
         assert len(batches) == 3

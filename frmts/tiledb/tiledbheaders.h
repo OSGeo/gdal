@@ -264,7 +264,7 @@ class OGRTileDBLayer final : public OGRLayer,
     bool m_bInitialized = false;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
     std::string m_osFIDColumn{};
-    GIntBig m_nNextFID = -1;
+    GIntBig m_nNextFID = 1;
     int64_t m_nTotalFeatureCount = -1;
     bool m_bStats = false;
     bool m_bQueryComplete = false;
@@ -345,6 +345,7 @@ class OGRTileDBLayer final : public OGRLayer,
     const char *GetDatabaseGeomColName();
     void InitializeSchemaAndArray();
     void FlushArrays();
+    void AllocateNewBuffers();
     void ResetBuffers();
     void SwitchToReadingMode();
     void SwitchToWritingMode();
