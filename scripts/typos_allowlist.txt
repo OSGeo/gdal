@@ -295,3 +295,4 @@ The effect of the ``ot`` option (added in GDAL 3.7) is to force the output image
         "HE5_GCTP_ROBIN",  "HE5_GCTP_SOM",    "HE5_GCTP_ALASKA",
             else if (EQUAL(pszKey, "ot"))
     ds = gdal.Open("vrt://data/float32.tif?ot=Int32")
+                    "NUM_ADJ_PARM", "(NUM_ADJ_PARM+1)*(NUM_ADJ_PARM)/2",
