@@ -986,50 +986,50 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     }
 
     // Parse query string, get args required for initial Open()
-    CPLStringList aosTokens0(CSLTokenizeString2(osQueryString, "&", 0));
+    CPLStringList aosTokens(CSLTokenizeString2(osQueryString, "&", 0));
     CPLStringList aosAllowedDrivers;
-    int iRemoveOpt = -1;  // not allowed to have multiple &if=drv1&if=drv2
-    for (int i = 0; i < aosTokens0.size(); i++)
+    CPLStringList aosOpenOptions;
+
+    for (int i = 0; i < aosTokens.size(); i++)
     {
         char *pszKey = nullptr;
-        const char *pszValue = CPLParseNameValue(aosTokens0[i], &pszKey);
+        const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
         if (pszKey)
         {
             if (EQUAL(pszKey, "if"))
             {
-                if (iRemoveOpt > -1)
+                if (aosAllowedDrivers.size() > 0)
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid vrt:// 'if' format, must not occur "
-                             "multiple times (use comma separated list)\n");
+                             "'if' option should be specified once, use commas "
+                             "to input multiple values.");
                     CPLFree(pszKey);
                     return nullptr;
                 }
                 aosAllowedDrivers = CSLTokenizeString2(pszValue, ",", 0);
-                iRemoveOpt =
-                    i;  // we must avoid finding this 'if' option again below
+            }
+            if (EQUAL(pszKey, "oo"))
+            {
+                if (aosOpenOptions.size() > 0)
+                {
+                    CPLError(CE_Failure, CPLE_IllegalArg,
+                             "'oo' option should be specified once, use commas "
+                             "to input multiple values.");
+                    CPLFree(pszKey);
+                    return nullptr;
+                }
+                aosOpenOptions = CSLTokenizeString2(pszValue, ",", 0);
             }
             CPLFree(pszKey);
-        }
-    }
-    CPLStringList aosTokens;
-    for (int i = 0; i < aosTokens0.size(); i++)
-    {
-        if (i != iRemoveOpt)
-        {
-            aosTokens.AddString(aosTokens0[i]);
-        }
-        else
-        {
-            CPLDebug("VRT", "Removed 'if' arg at position: %i\n", iRemoveOpt);
         }
     }
 
     // We don't open in GDAL_OF_SHARED mode to avoid issues when we open a
     // http://.jp2 file with the JP2OpenJPEG driver through the HTTP driver,
     // which returns a /vsimem/ file
-    auto poSrcDS = GDALDataset::Open(
-        osFilename, GDAL_OF_RASTER, aosAllowedDrivers.List(), nullptr, nullptr);
+    auto poSrcDS =
+        GDALDataset::Open(osFilename, GDAL_OF_RASTER, aosAllowedDrivers.List(),
+                          aosOpenOptions.List(), nullptr);
     if (poSrcDS == nullptr)
     {
         return nullptr;
@@ -1299,6 +1299,14 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString(aosAGeoTransform[3]);
                 argv.AddString(aosAGeoTransform[4]);
                 argv.AddString(aosAGeoTransform[5]);
+            }
+            else if (EQUAL(pszKey, "oo"))
+            {
+                // do nothing, we passed this in earlier
+            }
+            else if (EQUAL(pszKey, "if"))
+            {
+                // do nothing, we passed this in earlier
             }
             else
             {
