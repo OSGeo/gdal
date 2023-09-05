@@ -8968,6 +8968,8 @@ int OSRIsVertical(OGRSpatialReferenceH hSRS)
  * @return true if the CRS is dynamic
  *
  * @since OGR 3.4.0
+ *
+ * @see HasPointMotionOperation()
  */
 
 bool OGRSpatialReference::IsDynamic() const
@@ -9057,6 +9059,64 @@ int OSRIsDynamic(OGRSpatialReferenceH hSRS)
     VALIDATE_POINTER1(hSRS, "OSRIsDynamic", 0);
 
     return ToPointer(hSRS)->IsDynamic();
+}
+
+/************************************************************************/
+/*                         HasPointMotionOperation()                    */
+/************************************************************************/
+
+/**
+ * \brief Check if a CRS has at least an associated point motion operation.
+ *
+ * Some CRS are not formally declared as dynamic, but may behave as such
+ * in practice due to the prsence of point motion operation, to perform
+ * coordinate epoch changes within the CRS. Typically NAD83(CSRS)v7
+ *
+ * @return true if the CRS has at least an associated point motion operation.
+ *
+ * @since OGR 3.8.0 and PROJ 9.4.0
+ *
+ * @see IsDynamic()
+ */
+
+bool OGRSpatialReference::HasPointMotionOperation() const
+
+{
+#if PROJ_VERSION_MAJOR > 9 ||                                                  \
+    (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR >= 4)
+    d->refreshProjObj();
+    d->demoteFromBoundCRS();
+    auto ctxt = d->getPROJContext();
+    auto res =
+        CPL_TO_BOOL(proj_crs_has_point_motion_operation(ctxt, d->m_pj_crs));
+    d->undoDemoteFromBoundCRS();
+    return res;
+#else
+    return false;
+#endif
+}
+
+/************************************************************************/
+/*                      OSRHasPointMotionOperation()                    */
+/************************************************************************/
+
+/**
+ * \brief Check if a CRS has at least an associated point motion operation.
+ *
+ * Some CRS are not formally declared as dynamic, but may behave as such
+ * in practice due to the prsence of point motion operation, to perform
+ * coordinate epoch changes within the CRS. Typically NAD83(CSRS)v7
+ *
+ * This function is the same as OGRSpatialReference::HasPointMotionOperation().
+ *
+ * @since OGR 3.8.0 and PROJ 9.4.0
+ */
+int OSRHasPointMotionOperation(OGRSpatialReferenceH hSRS)
+
+{
+    VALIDATE_POINTER1(hSRS, "OSRHasPointMotionOperation", 0);
+
+    return ToPointer(hSRS)->HasPointMotionOperation();
 }
 
 /************************************************************************/

@@ -383,6 +383,10 @@ public:
     return OSRIsDynamic(self);
   }
 
+  bool HasPointMotionOperation() {
+    return OSRHasPointMotionOperation(self);
+  }
+
   double GetCoordinateEpoch() {
     return OSRGetCoordinateEpoch(self);
   }

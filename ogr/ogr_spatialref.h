@@ -375,6 +375,10 @@ class CPL_DLL OGRSpatialReference
     int IsProjected() const;
     int IsGeocentric() const;
     bool IsDynamic() const;
+
+    // cppcheck-suppress functionStatic
+    bool HasPointMotionOperation() const;
+
     int IsLocal() const;
     int IsVertical() const;
     int IsCompound() const;

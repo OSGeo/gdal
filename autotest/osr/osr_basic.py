@@ -2501,3 +2501,14 @@ def test_osr_basic_set_from_user_input_EPSG_8254_at_something():
     srs.SetFromUserInput("EPSG:8255 @ 2002.5")  # NAD83(CSRS)v7
     assert srs.GetName() == "NAD83(CSRS)v7"
     assert srs.GetCoordinateEpoch() == 2002.5
+
+
+###############################################################################
+
+
+@pytest.mark.require_proj(9, 4)
+def test_osr_basic_has_point_motion_operation():
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(8255)  # NAD83(CSRS)v7
+    assert srs.HasPointMotionOperation()
