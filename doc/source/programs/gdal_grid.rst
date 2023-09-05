@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_grid [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
+    gdal_grid [--help] [--help-general]
+              [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/
               CInt16/CInt32/CFloat32/CFloat64}]
               [-oo NAME=VALUE]*
               [-of format] [-co "NAME=VALUE"]
@@ -42,6 +43,8 @@ the number of worker threads, or ``ALL_CPUS`` to use all the cores/CPUs of the
 computer.
 
 .. program:: gdal_grid
+
+.. include:: options/help_and_help_general.rst
 
 .. include:: options/ot.rst
 

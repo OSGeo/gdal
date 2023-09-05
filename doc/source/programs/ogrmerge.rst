@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    ogrmerge.py -o out_dsname src_dsname [src_dsname]*
+    ogrmerge.py [--help] [--help-general]
+                -o <out_dsname> <src_dsname> [<src_dsname>]*
                 [-f format] [-single] [-nln layer_name_template]
                 [-update | -overwrite_ds] [-append | -overwrite_layer]
                 [-src_geom_type geom_type_name[,geom_type_name]*]
@@ -56,6 +57,8 @@ or :py:func:`gdal.VectorTranslate`. So, for advanced uses, output to VRT,
 potential manual editing of it and :program:`ogr2ogr` can be done.
 
 .. program:: ogrmerge.py
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -o <out_dsname>
 

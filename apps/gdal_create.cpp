@@ -41,19 +41,20 @@ static void Usage()
 
 {
     printf(
-        "Usage: gdal_create [--help-general]\n"
-        "       [-of format]\n"
-        "       [-outsize xsize ysize]\n"
-        "       [-bands count]\n"
-        "       [-burn value]*\n"
+        "Usage: gdal_create [--help] [--help-general]\n"
+        "       [-of <format>]\n"
+        "       [-outsize <xsize< <ysize>]\n"
+        "       [-bands <count>]\n"
+        "       [-burn <value>]*\n"
         "       [-ot "
         "{Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/\n"
         "             CInt16/CInt32/CFloat32/CFloat64}] [-strict]\n"
-        "       [-a_srs srs_def] [-a_ullr ulx uly lrx lry] [-a_nodata value]\n"
+        "       [-a_srs <srs_def>] [-a_ullr <ulx> <uly> <lrx> <lry>] "
+        "[-a_nodata <value>]\n"
         "       [-mo \"META-TAG=VALUE\"]* [-q]\n"
         "       [-co \"NAME=VALUE\"]*\n"
-        "       [-if input_dataset]\n"
-        "       out_dataset\n");
+        "       [-if <input_dataset>]\n"
+        "       <out_dataset>\n");
 
     exit(1);
 }

@@ -39,8 +39,9 @@
 static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdalmdimtranslate [--help-general] [-co \"NAME=VALUE\"]*\n"
+    printf("Usage: gdalmdimtranslate [--help] [--help-general]\n"
            "                         [-if format]* [-of format]\n"
+           "                         [-co \"NAME=VALUE\"]*\n"
            "                         [-array <array_spec>]*\n"
            "                         [-group <group_spec>]* \n"
            "                         [-subset <subset_spec>]* \n"

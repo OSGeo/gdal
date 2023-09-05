@@ -235,8 +235,9 @@ def move(
 
 def Usage():
     print(
-        """Usage: gdalmove.py [-s_srs <srs_defn>] -t_srs <srs_defn>
-            [-et <max_pixel_err>] target_file"""
+        """Usage: gdalmove.py [--help] [--help-general]
+                   [-s_srs <srs_defn>] -t_srs <srs_defn>
+                   [-et <max_pixel_err>] <target_file>"""
     )
     return 2
 
@@ -262,7 +263,10 @@ def main(argv=sys.argv):
     i = 1
     while i < len(argv):
 
-        if argv[i] == "-s_srs" and i < len(argv) - 1:
+        if argv[i] == "--help":
+            return Usage()
+
+        elif argv[i] == "-s_srs" and i < len(argv) - 1:
             s_srs = argv[i + 1]
             i += 1
 

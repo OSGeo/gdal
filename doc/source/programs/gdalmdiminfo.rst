@@ -17,8 +17,9 @@ Synopsis
 
 .. code-block::
 
-    gdalmdiminfo [--help-general] [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*
-                 [-detailed] [-nopretty] [-array {array_name}] [-limit {number}]
+    gdalmdiminfo [--help] [--help-general]
+                 [-oo NAME=VALUE]* [-arrayoption NAME=VALUE]*
+                 [-detailed] [-nopretty] [-array <array_name>] [-limit <number>]
                  [-stats] [-if format]* <datasetname>
 
 Description
@@ -32,6 +33,8 @@ The following command line parameters can appear in any order
 
 .. program:: gdalmdiminfo
 
+.. include:: options/help_and_help_general.rst
+
 .. option:: -detailed
 
     Most verbose output. Report attribute data types and array values.
@@ -40,11 +43,11 @@ The following command line parameters can appear in any order
 
     Outputs on a single line without any indentation.
 
-.. option:: -array {array_name}
+.. option:: -array <array_name>
 
     Name of the array used to restrict the output to the specified array.
 
-.. option:: -limit {number}
+.. option:: -limit <number>
 
     Number of values in each dimension that is used to limit the display of
     array values. By default, unlimited. Only taken into account if used with

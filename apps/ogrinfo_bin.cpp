@@ -42,7 +42,8 @@
 
 static void Usage(const char *pszErrorMsg = nullptr)
 {
-    printf("Usage: ogrinfo [--help-general] [-json] [-ro] [-q] [-where "
+    printf("Usage: ogrinfo [--help] [--help-general]\n"
+           "               [-json] [-ro] [-q] [-where "
            "restricted_where|@filename]\n"
            "               [-spat xmin ymin xmax ymax] [-geomfield field] "
            "[-fid fid]\n"

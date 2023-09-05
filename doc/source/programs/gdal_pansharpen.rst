@@ -17,7 +17,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_pansharpen [--help-general] pan_dataset {spectral_dataset[,band=num]}+ out_dataset
+    gdal_pansharpen [--help] [--help-general]
+                    pan_dataset {spectral_dataset[,band=num]}+ out_dataset
                     [-of format] [-b band]* [-w weight_val]*
                     [-r {nearest,bilinear,cubic,cubicspline,lanczos,average}]
                     [-threads {ALL_CPUS|number}] [-bitdepth val] [-nodata val]
@@ -32,6 +33,8 @@ can create a "classic" output dataset (such as GeoTIFF), or a VRT
 dataset describing the pan-sharpening operation.
 
 More details can be found in the :ref:`gdal_vrttut_pansharpen` section.
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -of <format>:
 

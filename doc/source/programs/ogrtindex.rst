@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    ogrtindex [-lnum n]... [-lname name]... [-f output_format]
+    ogrtindex [--help] [--help-general]
+              [-lnum n]... [-lname name]... [-f output_format]
               [-write_absolute_path] [-skip_different_projection]
               [-t_srs target_srs]
               [-src_srs_name field_name] [-src_srs_format [AUTO|WKT|EPSG|PROJ]
@@ -32,6 +33,8 @@ their spatial extents. This is primarily intended to be used with
 the OGR connection type.
 
 .. program:: ogrtindex
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -lnum <n>
 

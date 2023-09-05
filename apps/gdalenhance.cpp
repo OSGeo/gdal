@@ -62,7 +62,7 @@ typedef struct
 static void Usage()
 
 {
-    printf("Usage: gdalenhance [--help-general]\n"
+    printf("Usage: gdalenhance [--help] [--help-general]\n"
            "       [-of format] [-co \"NAME=VALUE\"]*\n"
            "       [-ot {Byte/Int16/UInt16/UInt32/Int32/Float32/Float64/\n"
            "             CInt16/CInt32/CFloat32/CFloat64}]\n"
@@ -124,6 +124,10 @@ MAIN_START(argc, argv)
                    "GDAL %s\n",
                    argv[0], GDAL_RELEASE_NAME, GDALVersionInfo("RELEASE_NAME"));
             return 0;
+        }
+        else if (EQUAL(argv[i], "--help"))
+        {
+            Usage();
         }
         else if (i < argc - 1 &&
                  (EQUAL(argv[i], "-of") || EQUAL(argv[i], "-f")))

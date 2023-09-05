@@ -40,11 +40,12 @@
 static void Usage(const char *pszErrorMsg = nullptr)
 
 {
-    printf("Usage: gdalmdiminfo [--help-general] [-oo NAME=VALUE]* "
-           "[-arrayoption NAME=VALUE]*\n"
-           "                    [-detailed] [-nopretty] [-array {array_name}] "
-           "[-limit {number}]\n"
-           "                    [-stats] [-if format]* datasetname\n");
+    printf(
+        "Usage: gdalmdiminfo [--help] [--help-general]\n"
+        "                    [-oo NAME=VALUE]* [-arrayoption <NAME=VALUE>]*\n"
+        "                    [-detailed] [-nopretty] [-array <array_name>]\n"
+        "                    [-limit <number>] [-stats] [-if <format>]*\n"
+        "                    <datasetname>\n");
 
     if (pszErrorMsg != nullptr)
         fprintf(stderr, "\nFAILURE: %s\n", pszErrorMsg);

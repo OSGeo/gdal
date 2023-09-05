@@ -41,7 +41,8 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 def Usage():
     print(
         """
-Usage: gdal_proximity.py srcfile dstfile [-srcband n] [-dstband n]
+Usage: gdal_proximity.py [--help] [--help-general]
+                  <srcfile> <dstfile> [-srcband n] [-dstband n]
                   [-of format] [-co name=value]*
                   [-ot Byte/UInt16/UInt32/Float32/etc]
                   [-values n,n,n] [-distunits PIXEL/GEO]
@@ -71,7 +72,10 @@ def main(argv=sys.argv):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-of" or arg == "-f":
+        if arg == "--help":
+            return Usage()
+
+        elif arg == "-of" or arg == "-f":
             i = i + 1
             driver_name = argv[i]
 
@@ -118,6 +122,10 @@ def main(argv=sys.argv):
         elif arg == "-q" or arg == "-quiet":
             quiet = True
 
+        elif arg[0] == "-":
+            sys.stderr.write("Unrecognized option : %s\n" % argv[i])
+            return Usage()
+
         elif src_filename is None:
             src_filename = argv[i]
 
@@ -129,7 +137,12 @@ def main(argv=sys.argv):
 
         i = i + 1
 
-    if src_filename is None or dst_filename is None:
+    if src_filename is None:
+        sys.stderr.write("Missing <srcfile>\n")
+        return Usage()
+
+    if dst_filename is None:
+        sys.stderr.write("Missing <dstfile>\n")
         return Usage()
 
     return gdal_proximity(

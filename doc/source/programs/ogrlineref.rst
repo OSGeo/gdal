@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    ogrlineref [--help-general] [-progress] [-quiet]
+    ogrlineref [--help] [--help-general] [-progress] [-quiet]
            [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco NAME=VALUE]...]
            [-create]
            [-l src_line_datasource_name] [-ln layer_name] [-lf field_name]
@@ -49,9 +49,7 @@ The utility not required the ``M`` or ``Z`` values in geometry.
 The results can be stored in any OGR supported format.
 Also some information is written to the stdout.
 
-.. option:: --help-general
-
-    Show the usage.
+.. include:: options/help_and_help_general.rst
 
 .. option:: -progress
 

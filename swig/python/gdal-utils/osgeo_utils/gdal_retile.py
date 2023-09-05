@@ -921,7 +921,7 @@ def UsageFormat():
 
 
 def Usage():
-    print("Usage: gdal_retile.py ")
+    print("Usage: gdal_retile.py [--help] [--help-general]")
     print("        [-v] [-q] [-co NAME=VALUE]* [-of out_format]")
     print("        [-ps pixelWidth pixelHeight]")
     print("        [-overlap val_in_pixel]")
@@ -951,7 +951,9 @@ def main(args=None, g=None):
     while i < len(argv):
         arg = argv[i]
 
-        if arg == "-of" or arg == "-f":
+        if arg == "--help":
+            return Usage()
+        elif arg == "-of" or arg == "-f":
             i += 1
             g.Format = argv[i]
         elif arg == "-ot":

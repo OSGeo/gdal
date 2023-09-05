@@ -17,7 +17,8 @@ Synopsis
 
 .. code-block::
 
-    gdalmdimtranslate [--help-general] [-co "NAME=VALUE"]*
+    gdalmdimtranslate [--help] [--help-general]
+                      [-co "NAME=VALUE"]*
                       [-if format]* [-of format]
                       [-array <array_spec>]*
                       [-group <group_spec>]*
@@ -37,6 +38,8 @@ and groups, and/or subsetting operations.
 The following command line parameters can appear in any order.
 
 .. program:: gdalmdimtranslate
+
+.. include:: options/help_and_help_general.rst
 
 .. include:: options/if.rst
 

@@ -16,7 +16,7 @@ Synopsis
 .. code-block::
 
 
-    gdal_translate [--help-general]
+    gdal_translate [--help] [--help-general]
         [-ot {Byte/Int8/Int16/UInt16/UInt32/Int32/UInt64/Int64/Float32/Float64/
                 CInt16/CInt32/CFloat32/CFloat64}] [-strict]
         [-if format]* [-of format]
@@ -47,6 +47,8 @@ different formats, potentially performing some operations like subsettings,
 resampling, and rescaling pixels in the process.
 
 .. program:: gdal_translate
+
+.. include:: options/help_and_help_general.rst
 
 .. include:: options/ot.rst
 

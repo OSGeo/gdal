@@ -48,8 +48,8 @@
 static void Usage()
 
 {
-    printf("Usage: gdallocationinfo [--help-general] [-xml] [-lifonly] "
-           "[-valonly]\n"
+    printf("Usage: gdallocationinfo [--help] [--help-general]\n"
+           "                        [-xml] [-lifonly] [-valonly]\n"
            "                        [-b band]* [-overview overview_level]\n"
            "                        [-l_srs srs_def] [-geoloc] [-wgs84]\n"
            "                        [-oo NAME=VALUE]* srcfile x y\n"
@@ -117,6 +117,10 @@ MAIN_START(argc, argv)
             GDALDestroyDriverManager();
             CSLDestroy(argv);
             return 0;
+        }
+        else if (EQUAL(argv[i], "--help"))
+        {
+            Usage();
         }
         else if (i < argc - 1 && EQUAL(argv[i], "-b"))
         {

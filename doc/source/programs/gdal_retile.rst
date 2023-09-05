@@ -15,7 +15,8 @@ Synopsis
 
 .. code-block::
 
-    gdal_retile.py [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeight]
+    gdal_retile.py [--help] [--help-general]
+                   [-v] [-co NAME=VALUE]* [-of out_format] [-ps pixelWidth pixelHeight]
                    [-overlap val_in_pixel]
                    [-ot  {Byte/Int8/Int16/UInt16/UInt32/Int32/Float32/Float64/
                            CInt16/CInt32/CFloat32/CFloat64}]'
@@ -42,6 +43,8 @@ If your number of input tiles exhausts the command line buffer, use the general
 :ref:`--optfile <raster_common_options_optfile>` option
 
 .. program:: gdal_retile
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -targetDir <directory>
 

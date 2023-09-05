@@ -17,7 +17,8 @@ Synopsis
 
 .. code-block::
 
-    sozip [--quiet|--verbose]
+    sozip [--help] [--help-general]
+          [--quiet|--verbose]
           [[-g|--grow] | [--overwrite]]
           [-r|--recurse-paths]
           [-j|--junk-paths]
@@ -44,6 +45,8 @@ The :program:`sozip` utility can be used to:
 
 
 .. program:: sozip
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: --quiet
 

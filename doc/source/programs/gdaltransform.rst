@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdaltransform [--help-general]
+    gdaltransform [--help] [--help-general]
         [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
         [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc]
         [-gcp pixel line easting northing [elevation]]* [-output_xy]
@@ -28,6 +28,8 @@ The gdaltransform utility reprojects a list of coordinates into any supported
 projection,including GCP-based transformations.
 
 .. program:: gdaltransform
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -s_srs <srs_def>
 
@@ -92,11 +94,11 @@ projection,including GCP-based transformations.
 
     File with source projection definition or GCP's. If
     not given, source projection is read from the command-line :option:`-s_srs`
-    or :option:`-gcp` parameters 
+    or :option:`-gcp` parameters
 
 .. option:: <dstfile>
 
-    File with destination projection definition. 
+    File with destination projection definition.
 
 Coordinates are read as pairs, triples (for 3D,) or (since GDAL 3.0.0,) quadruplets
 (for X,Y,Z,time) of numbers per line from standard

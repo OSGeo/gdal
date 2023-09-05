@@ -16,7 +16,8 @@ Synopsis
 
 .. code-block::
 
-    ogrinfo [--help-general] [-json] [-ro] [-q] [-where restricted_where|@filename]
+    ogrinfo [--help] [--help-general]
+            [-json] [-ro] [-q] [-where restricted_where|@filename]
             [-spat xmin ymin xmax ymax] [-geomfield field] [-fid fid]
             [-sql statement|@filename] [-dialect dialect] [-al] [-rl]
             [-so|-features] [-fields={YES/NO}]
@@ -34,6 +35,8 @@ source to stdout (the terminal). By executing SQL statements it is also possible
 edit data.
 
 .. program:: ogrinfo
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -json
 

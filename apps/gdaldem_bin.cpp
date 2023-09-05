@@ -45,7 +45,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
 
 {
     printf(
-        " Usage: \n"
+        " Usage: [--help] [--help-general]\n"
         " - To generate a shaded relief map from any GDAL-supported elevation "
         "raster : \n\n"
         "     gdaldem hillshade input_dem output_hillshade \n"

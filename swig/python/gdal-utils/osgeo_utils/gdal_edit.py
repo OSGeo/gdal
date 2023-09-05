@@ -35,7 +35,7 @@ from osgeo import gdal, osr
 
 
 def Usage():
-    print("Usage: gdal_edit [--help-general] [-ro] [-a_srs srs_def]")
+    print("Usage: gdal_edit [--help] [--help-general] [-ro] [-a_srs srs_def]")
     print(
         "                 [-a_ullr ulx uly lrx lry] [-a_ulurll ulx uly urx ury llx lly]"
     )
@@ -111,7 +111,9 @@ def gdal_edit(argv):
     i = 1
     argc = len(argv)
     while i < argc:
-        if argv[i] == "-ro":
+        if argv[i] == "--help":
+            return Usage()
+        elif argv[i] == "-ro":
             ro = True
         elif argv[i] == "-a_srs" and i < len(argv) - 1:
             srs = argv[i + 1]

@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdal_edit [--help-general] [-ro] [-a_srs srs_def]
+    gdal_edit [--help] [--help-general] [-ro] [-a_srs srs_def]
             [-a_ullr ulx uly lrx lry] [-a_ulurll ulx uly urx ury llx lly]
             [-tr xres yres] [-unsetgt] [-unsetrpc] [-a_nodata value] [-unsetnodata]
             [-unsetstats] [-stats] [-approx_stats]
@@ -41,9 +41,7 @@ It works only with raster formats that support update access to existing dataset
     through the GDAL API. This is for example the case of the :ref:`raster.gtiff`
     format (this is not a exhaustive list).
 
-.. option:: --help-general
-
-    Gives a brief usage message for the generic GDAL commandline options and exit.
+.. include:: options/help_and_help_general.rst
 
 .. option:: -ro
 

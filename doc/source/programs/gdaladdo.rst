@@ -15,12 +15,13 @@ Synopsis
 
 .. code-block::
 
-    gdaladdo [-r {nearest,average,rms,bilinear,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
+    gdaladdo [--help] [--help-general]
+             [-r {nearest,average,rms,bilinear,gauss,cubic,cubicspline,lanczos,average_magphase,mode}]
              [-b band]* [-minsize val]
              [--partial-refresh-from-source-timestamp]
              [--partial-refresh-from-projwin <ulx> <uly> <lrx> <lry>]
              [--partial-refresh-from-source-extent <filename1,...,filenameN>]
-             [-ro] [-clean] [-oo NAME=VALUE]* [--help-general] filename [levels]
+             [-ro] [-clean] [-oo NAME=VALUE]* <filename> [levels]
 
 Description
 -----------
@@ -29,6 +30,8 @@ The :program:`gdaladdo` utility can be used to build or rebuild overview images 
 most supported file formats with one of several downsampling algorithms.
 
 .. program:: gdaladdo
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: -r {nearest (default),average,rms,gauss,cubic,cubicspline,lanczos,average_magphase,mode}
 

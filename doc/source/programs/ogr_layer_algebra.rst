@@ -17,7 +17,8 @@ Synopsis
 
 .. code-block::
 
-    ogr_layer_algebra.py Union|Intersection|SymDifference|Identity|Update|Clip|Erase
+    ogr_layer_algebra.py [--help] [--help-general]
+                        Union|Intersection|SymDifference|Identity|Update|Clip|Erase
                         -input_ds name [-input_lyr name]
                         -method_ds [-method_lyr name]
                         -output_ds name [-output_lyr name] [-overwrite]
@@ -29,10 +30,12 @@ Synopsis
 Description
 -----------
 
-The :program:`ogr_layer_algebra.py` provides a command line utility to perform various vector layer algebraic operations. The utility takes a vector 
+The :program:`ogr_layer_algebra.py` provides a command line utility to perform various vector layer algebraic operations. The utility takes a vector
 input source , a method source and generates the output of the operation in the specified output file
 
 .. program:: ogr_layer_algebra
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: <mode>
 
@@ -40,36 +43,36 @@ input source , a method source and generates the output of the operation in the 
 
     * ``Union``
 
-        A union is a set of features, which represent areas that are in either of the operand layers. 
+        A union is a set of features, which represent areas that are in either of the operand layers.
 
     * ``Intersection``
 
-        An intersection is a set of features, which represent the common areas of two layers. 
+        An intersection is a set of features, which represent the common areas of two layers.
 
     * ``SymDifference``
 
-        A symmetric difference is a set of features, which represent areas that are in operand layers but which do not intersect. 
+        A symmetric difference is a set of features, which represent areas that are in operand layers but which do not intersect.
 
     * ``Identity``
 
-        The identity method identifies features in the input layer with features in the method layer possibly splitting features into several features. 
-        By default the result layer has attributes from both operand layers. 
+        The identity method identifies features in the input layer with features in the method layer possibly splitting features into several features.
+        By default the result layer has attributes from both operand layers.
 
     * ``Update``
 
-        The update method creates a layer, which add features into the input layer from the method layer possibly cutting features in the input layer. 
-        By default the result layer has attributes only from the input layer. 
+        The update method creates a layer, which add features into the input layer from the method layer possibly cutting features in the input layer.
+        By default the result layer has attributes only from the input layer.
 
     * ``Clip``
 
-        The clip method creates a layer, which has features from the input layer clipped to the areas of the features in the method layer. 
-        By default the result layer has attributes of the input layer. 
+        The clip method creates a layer, which has features from the input layer clipped to the areas of the features in the method layer.
+        By default the result layer has attributes of the input layer.
 
     * ``Erase``
 
-        The erase method creates a layer, which has features from the input layer whose areas are erased by the features in the method layer. 
-        By default the result layer has attributes of the input layer. 
-        
+        The erase method creates a layer, which has features from the input layer whose areas are erased by the features in the method layer.
+        By default the result layer has attributes of the input layer.
+
 .. option:: -input_ds <path>
 
     Input data set path for the operation to be performed.
@@ -81,7 +84,7 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -method_ds <path>
 
-    Method data set path for the operation to be performed. 
+    Method data set path for the operation to be performed.
     This is usually the conditional data set supplied to the operation ( ex: clip , erase , update )
     This is the Second data set in the operation ( ex : Union, Intersection , SymDifference )
 
@@ -112,11 +115,11 @@ input source , a method source and generates the output of the operation in the 
     Use the short format name
 
 .. option:: -dsco <NAME=VALUE>
-    
+
     Dataset creation option (format specific)
 
 .. option:: -lco <NAME=VALUE>
-    
+
     Layer creation option (format specific)
 
 .. option:: -input_fields <NONE|ALL|fld1,fld2,fld3...>
@@ -131,7 +134,7 @@ input source , a method source and generates the output of the operation in the 
 
 .. option:: -nlt <geom_type>
 
-    Define the geometry type for the created layer. 
+    Define the geometry type for the created layer.
     One of NONE, GEOMETRY, POINT, LINESTRING, POLYGON, GEOMETRYCOLLECTION,
     MULTIPOINT, MULTIPOLYGON, GEOMETRY25D, POINT25D, LINESTRING25D, POLYGON25D,
     GEOMETRYCOLLECTION25D, MULTIPOINT25D, MULTIPOLYGON25D.
@@ -142,7 +145,7 @@ input source , a method source and generates the output of the operation in the 
 
     The coordinate reference systems that can be passed are anything supported by the
     OGRSpatialReference.SetFromUserInput() call, which includes EPSG Projected,
-    Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition, 
+    Geographic or Compound CRS (i.e. EPSG:4296), a well known text (WKT) CRS definition,
     PROJ.4 declarations, or the name of a .prj file containing a WKT CRS definition.
 
 

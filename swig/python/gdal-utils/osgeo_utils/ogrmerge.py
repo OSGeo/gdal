@@ -42,7 +42,8 @@ from osgeo_utils.auxiliary.util import GetOutputDriverFor
 
 
 def Usage():
-    print("Usage: ogrmerge.py -o out_dsname src_dsname [src_dsname]*")
+    print("Usage: ogrmerge.py [--help] [--help-general]")
+    print("            -o <out_dsname> <src_dsname> [<src_dsname>]*")
     print("            [-f format] [-single] [-nln layer_name_template]")
     print("            [-update | -overwrite_ds] [-append | -overwrite_layer]")
     print("            [-src_geom_type geom_type_name[,geom_type_name]*]")
@@ -189,7 +190,9 @@ def process(argv, progress=None, progress_arg=None):
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if (arg == "-f" or arg == "-of") and i + 1 < len(argv):
+        if arg == "--help":
+            return Usage()
+        elif (arg == "-f" or arg == "-of") and i + 1 < len(argv):
             i = i + 1
             driver_name = argv[i]
         elif arg == "-o" and i + 1 < len(argv):

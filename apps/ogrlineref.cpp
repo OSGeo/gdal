@@ -81,7 +81,7 @@ static void Usage(const char *pszAdditionalMsg, bool bShort)
 {
     OGRSFDriverRegistrar *poR = OGRSFDriverRegistrar::GetRegistrar();
 
-    printf("Usage: ogrlineref [--help-general] [-progress] [-quiet]\n"
+    printf("Usage: ogrlineref [--help] [--help-general] [-progress] [-quiet]\n"
            "               [-f format_name] [[-dsco NAME=VALUE] ...] [[-lco "
            "NAME=VALUE]...]\n"
            "               [-create]\n"

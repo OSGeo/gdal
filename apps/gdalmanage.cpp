@@ -41,7 +41,8 @@
 static void Usage()
 
 {
-    printf("Usage: gdalmanage identify [-r|-fr] [-u] files*\n"
+    printf("Usage: gdalmanage [--help] [--help-general]\n"
+           "    or gdalmanage identify [-r|-fr] [-u] files*\n"
            "    or gdalmanage copy [-f driver] oldname newname\n"
            "    or gdalmanage rename [-f driver] oldname newname\n"
            "    or gdalmanage delete [-f driver] datasetname\n");

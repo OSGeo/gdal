@@ -46,15 +46,16 @@ enum operation
 /************************************************************************/
 static void Usage(const char *pszAdditionalMsg, int bShort = TRUE)
 {
-    printf("Usage: gnmanalyse [--help][-q][-quiet][--long-usage]\n"
-           "                  [dijkstra start_gfid end_gfid [[-alo NAME=VALUE] "
-           "...]]\n"
-           "                  [kpaths start_gfid end_gfid k [[-alo NAME=VALUE] "
-           "...]]\n"
-           "                  [resource [[-alo NAME=VALUE] ...]]\n"
-           "                  [-ds ds_name][-f ds_format][-l layer_name]\n"
-           "                  [[-dsco NAME=VALUE] ...][-lco NAME=VALUE]\n"
-           "                  gnm_name\n");
+    printf(
+        "Usage: gnmanalyse [--help][--help-general][-q][-quiet][--long-usage]\n"
+        "                  [dijkstra start_gfid end_gfid [[-alo NAME=VALUE] "
+        "...]]\n"
+        "                  [kpaths start_gfid end_gfid k [[-alo NAME=VALUE] "
+        "...]]\n"
+        "                  [resource [[-alo NAME=VALUE] ...]]\n"
+        "                  [-ds ds_name][-f ds_format][-l layer_name]\n"
+        "                  [[-dsco NAME=VALUE] ...][-lco NAME=VALUE]\n"
+        "                  gnm_name\n");
 
     if (bShort)
     {

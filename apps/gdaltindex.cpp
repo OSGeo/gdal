@@ -48,7 +48,8 @@ static void Usage(const char *pszErrorMsg)
     fprintf(
         stdout, "%s",
         "\n"
-        "Usage: gdaltindex [-f format] [-tileindex field_name] "
+        "Usage: gdaltindex [--help] [--help-general]\n"
+        "                  [-f format] [-tileindex field_name] "
         "[-write_absolute_path] \n"
         "                  [-skip_different_projection] [-t_srs target_srs]\n"
         "                  [-src_srs_name field_name] [-src_srs_format "

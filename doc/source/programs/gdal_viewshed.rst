@@ -17,7 +17,7 @@ Synopsis
 
 .. code-block::
 
-   gdal_viewshed [-b <band>]
+   gdal_viewshed [--help] [--help-general] [-b <band>]
                  [-a_nodata <value>] [-f <formatname>]
                  [-oz <observer_height>] [-tz <target_height>] [-md <max_distance>]
                  -ox <observer_x> -oy <observer_y>
@@ -39,6 +39,8 @@ Byte. With the -mode flag can also return a minimum visible height raster of typ
     if the georeferencing is in a projected coordinate reference system.
 
 .. program:: gdal_viewshed
+
+.. include:: options/help_and_help_general.rst
 
 .. include:: options/co.rst
 

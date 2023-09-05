@@ -15,7 +15,7 @@ Synopsis
 
 .. code-block::
 
-    gdaldem <mode> <input> <output> <options>
+    gdaldem [--help] [--help-general] <mode> <input> <output> <options>
 
 Generate a shaded relief map from any GDAL-supported elevation raster:
 
@@ -123,6 +123,8 @@ grid using gdalwarp before using gdaldem.
         Generate a map of roughness from any GDAL-supported elevation raster.
 
 The following general options are available:
+
+.. include:: options/help_and_help_general.rst
 
 .. option:: input_dem
 
