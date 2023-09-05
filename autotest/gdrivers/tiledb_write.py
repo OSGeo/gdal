@@ -34,8 +34,9 @@ import pytest
 
 from osgeo import gdal
 
+pytestmark = pytest.mark.require_driver("TileDB")
 
-@pytest.mark.require_driver("TileDB")
+
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_complex(mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -58,7 +59,6 @@ def test_tiledb_write_complex(mode):
     gdaltest.tiledb_drv.Delete("tmp/tiledb_complex64")
 
 
-@pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
 def test_tiledb_write_custom_blocksize(mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -83,7 +83,6 @@ def test_tiledb_write_custom_blocksize(mode):
     gdaltest.tiledb_drv.Delete("tmp/tiledb_custom")
 
 
-@pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_update(mode):
     np = pytest.importorskip("numpy")
@@ -116,7 +115,6 @@ def test_tiledb_write_update(mode):
     gdaltest.tiledb_drv.Delete("tmp/tiledb_update")
 
 
-@pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
 def test_tiledb_write_rgb(mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -136,7 +134,6 @@ def test_tiledb_write_rgb(mode):
     gdaltest.tiledb_drv.Delete("tmp/tiledb_rgb")
 
 
-@pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_attributes(mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -206,7 +203,6 @@ def test_tiledb_write_attributes(mode):
     gdal.GetDriverByName("GTiff").Delete("/vsimem/temp2.tif")
 
 
-@pytest.mark.require_driver("TileDB")
 @pytest.mark.require_driver("HDF5")
 def test_tiledb_write_subdatasets():
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -231,7 +227,6 @@ def test_tiledb_write_subdatasets():
     gdaltest.tiledb_drv.Delete("tmp/test_sds_array")
 
 
-@pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL", "ATTRIBUTES"])
 def test_tiledb_write_band_meta(mode):
     gdaltest.tiledb_drv = gdal.GetDriverByName("TileDB")
@@ -263,7 +258,6 @@ def test_tiledb_write_band_meta(mode):
     src_ds = None
 
 
-@pytest.mark.require_driver("TileDB")
 @pytest.mark.parametrize("mode", ["BAND", "PIXEL"])
 def test_tiledb_write_history(mode):
     np = pytest.importorskip("numpy")
@@ -314,3 +308,44 @@ def test_tiledb_write_history(mode):
     ds = None
 
     gdaltest.tiledb_drv.Delete("tmp/tiledb_versioning")
+
+
+@pytest.mark.parametrize(
+    "outputType",
+    [
+        gdal.GDT_Byte,
+        gdal.GDT_Int8,
+        gdal.GDT_UInt16,
+        gdal.GDT_Int16,
+        gdal.GDT_UInt32,
+        gdal.GDT_Int32,
+        gdal.GDT_UInt64,
+        gdal.GDT_Int64,
+        gdal.GDT_Float32,
+        gdal.GDT_Float64,
+        gdal.GDT_CInt16,
+        gdal.GDT_CInt32,
+        gdal.GDT_CFloat32,
+        gdal.GDT_CFloat64,
+    ],
+)
+def test_tiledb_read_arbitrary_array(outputType, tmp_path):
+
+    dsname = str(tmp_path / "test_tiledb_read_arbitrary_array.tiledb")
+    src_ds = gdal.Open("data/byte.tif")
+    with gdaltest.config_options(
+        {"TILEDB_WRITE_IMAGE_STRUCTURE": "NO", "TILEDB_ATTRIBUTE": "foo"}
+    ):
+        gdal.Translate(dsname, src_ds, format="TileDB", outputType=outputType)
+
+    ds = gdal.Open(dsname)
+    assert ds.RasterXSize == 256
+    assert ds.RasterYSize == 256
+    assert ds.RasterCount == 1
+    assert ds.GetRasterBand(1).DataType == outputType
+    assert ds.ReadRaster(0, 0, 20, 20, buf_type=outputType) == src_ds.ReadRaster(
+        buf_type=outputType
+    )
+    ds = None
+
+    gdal.GetDriverByName("TileDB").Delete(dsname)
