@@ -1136,10 +1136,10 @@ void WMSDeregister(CPL_UNUSED GDALDriver *d)
 /*                    OGRWMSDriverGetSubdatasetInfo()                   */
 /************************************************************************/
 
-struct OGRWMSDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct WMSDriverSubdatasetInfo : public GDALSubdatasetInfo
 {
   public:
-    explicit OGRWMSDriverSubdatasetInfo(const std::string &fileName)
+    explicit WMSDriverSubdatasetInfo(const std::string &fileName)
         : GDALSubdatasetInfo(fileName)
     {
     }
@@ -1176,14 +1176,13 @@ struct OGRWMSDriverSubdatasetInfo : public GDALSubdatasetInfo
     }
 };
 
-static GDALSubdatasetInfo *
-OGRWMSDriverGetSubdatasetInfo(const char *pszFileName)
+static GDALSubdatasetInfo *WMSDriverGetSubdatasetInfo(const char *pszFileName)
 {
     GDALOpenInfo poOpenInfo{pszFileName, GA_ReadOnly};
     if (GDALWMSDataset::Identify(&poOpenInfo))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<OGRWMSDriverSubdatasetInfo>(pszFileName);
+            cpl::make_unique<WMSDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {
@@ -1235,7 +1234,7 @@ void GDALRegister_WMS()
     poDriver->pfnIdentify = GDALWMSDataset::Identify;
     poDriver->pfnUnloadDriver = WMSDeregister;
     poDriver->pfnCreateCopy = GDALWMSDataset::CreateCopy;
-    poDriver->pfnGetSubdatasetInfoFunc = OGRWMSDriverGetSubdatasetInfo;
+    poDriver->pfnGetSubdatasetInfoFunc = WMSDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }

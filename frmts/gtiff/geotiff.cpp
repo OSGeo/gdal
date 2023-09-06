@@ -1141,10 +1141,10 @@ CPLString GTiffGetCompressValues(bool &bHasLZW, bool &bHasDEFLATE,
 /*                    OGRGTiffDriverGetSubdatasetInfo()                 */
 /************************************************************************/
 
-struct OGRGTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
+struct GTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
 {
   public:
-    explicit OGRGTiffDriverSubdatasetInfo(const std::string &fileName)
+    explicit GTiffDriverSubdatasetInfo(const std::string &fileName)
         : GDALSubdatasetInfo(fileName)
     {
     }
@@ -1201,7 +1201,7 @@ static GDALSubdatasetInfo *GTiffDriverGetSubdatasetInfo(const char *pszFileName)
     if (GTiffDataset::Identify(&poOpenInfo))
     {
         std::unique_ptr<GDALSubdatasetInfo> info =
-            cpl::make_unique<OGRGTiffDriverSubdatasetInfo>(pszFileName);
+            cpl::make_unique<GTiffDriverSubdatasetInfo>(pszFileName);
         if (!info->GetSubdatasetComponent().empty() &&
             !info->GetPathComponent().empty())
         {
