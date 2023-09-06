@@ -3353,6 +3353,28 @@ inline int OGRArrowLayer::GetArrowSchema(struct ArrowArrayStream *stream,
         int j = 0;
         for (int i = 0; i < out_schema->n_children; ++i)
         {
+            if (fieldDesc[i].nIdx < 0)
+            {
+                if (m_iFIDArrowColumn == i)
+                {
+                    j++;
+                }
+                else
+                {
+                    // shouldn't happen
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "fieldDesc[%d].nIdx < 0 not expected", i);
+                    for (; i < out_schema->n_children; ++i, ++j)
+                        out_schema->children[j] = out_schema->children[i];
+                    out_schema->n_children = j;
+
+                    OverrideArrowRelease(m_poArrowDS, out_schema);
+
+                    return EIO;
+                }
+                continue;
+            }
+
             const auto bIsIgnored =
                 fieldDesc[i].bIsRegularField
                     ? m_poFeatureDefn->GetFieldDefn(fieldDesc[i].nIdx)
