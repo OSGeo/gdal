@@ -32,6 +32,7 @@
 
 import os
 import shutil
+import sys
 
 import gdaltest
 import ogrtest
@@ -4199,3 +4200,45 @@ def test_ogr_gml_field_comment_from_gfs():
         == "my comment"
     )
     ds = None
+
+
+###############################################################################
+# Test modification-time-dependent reading of GFS file
+
+
+def test_ogr_gml_ignore_old_gfs(tmp_path):
+
+    if sys.platform != "linux":
+        pytest.skip("Requires Linux")
+
+    shutil.copy("data/gml/ionic_wfs.gml", tmp_path)
+
+    gml_fname = tmp_path / "ionic_wfs.gml"
+    gfs_fname = gml_fname.with_suffix(".gfs")
+
+    with open(gfs_fname, "w") as gfs_out:
+        gfs_contents = open("data/gml/ionic_wfs.gfs", "r").read()
+
+        gfs_contents = gfs_contents.replace("<Width>0</Width>", "<Width>22</Width>")
+
+        gfs_out.write(gfs_contents)
+
+    with ogr.Open(gml_fname) as ds:
+        lyr = ds.GetLayer(0)
+        defn = lyr.GetLayerDefn()
+
+        width = defn.GetFieldDefn(1).GetWidth()
+
+        assert width == 22
+
+    os.system(f'touch -d "1970-01-01 00:00:01" {gfs_fname}')
+
+    # When gfs file is older than the gml, we ignore it
+
+    with ogr.Open(gml_fname) as ds:
+        lyr = ds.GetLayer(0)
+        defn = lyr.GetLayerDefn()
+
+        width = defn.GetFieldDefn(1).GetWidth()
+
+        assert width == 10
