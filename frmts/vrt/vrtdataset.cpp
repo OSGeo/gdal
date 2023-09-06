@@ -1320,6 +1320,29 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         CPLFree(pszKey);
     }
 
+    for (int i = 0; i < aosTokens.size(); i++)
+    {
+        CPLString pszArg = aosTokens[i];
+        if (pszArg.ifind("=") == std::string::npos)
+        {
+            if (EQUAL(pszArg, "unscale"))
+            {
+                argv.AddString("-unscale");
+            }
+            else if (EQUAL(pszArg, "scale"))
+            {
+                argv.AddString("-scale");
+            }
+
+            else
+            {
+                CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
+                         pszArg.c_str());
+                poSrcDS->ReleaseRef();
+                return nullptr;
+            }
+        }
+    }
     GDALTranslateOptions *psOptions =
         GDALTranslateOptionsNew(argv.List(), nullptr);
 
