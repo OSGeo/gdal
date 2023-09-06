@@ -60,7 +60,7 @@ def mapinfo_ds(request, tmp_path, poly_feat):
 
     if hasattr(request, "param"):
         if request.param == "MIF":
-            ds_loc = tmp_path
+            ds_loc = tmp_path / "wrk.mif"
         else:
             assert request.param == "TAB"
 
