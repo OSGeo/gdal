@@ -1280,28 +1280,31 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     }
 #endif
 
-    GByte *pabyData = static_cast<GByte *>(VSI_CALLOC_VERBOSE(1, nGlobalSize));
-    if (!pabyData)
-    {
-        return nullptr;
-    }
-
     std::vector<GByte *> apbyBandData;
-
-    if (bPixelInterleaved)
+    if (nBandsIn > 0)
     {
-        for (int iBand = 0; iBand < nBandsIn; iBand++)
+        GByte *pabyData =
+            static_cast<GByte *>(VSI_CALLOC_VERBOSE(1, nGlobalSize));
+        if (!pabyData)
         {
-            apbyBandData.push_back(pabyData + iBand * nWordSize);
+            return nullptr;
         }
-    }
-    else
-    {
-        for (int iBand = 0; iBand < nBandsIn; iBand++)
+
+        if (bPixelInterleaved)
         {
-            apbyBandData.push_back(
-                pabyData +
-                (static_cast<size_t>(nWordSize) * nXSize * nYSize) * iBand);
+            for (int iBand = 0; iBand < nBandsIn; iBand++)
+            {
+                apbyBandData.push_back(pabyData + iBand * nWordSize);
+            }
+        }
+        else
+        {
+            for (int iBand = 0; iBand < nBandsIn; iBand++)
+            {
+                apbyBandData.push_back(
+                    pabyData +
+                    (static_cast<size_t>(nWordSize) * nXSize * nYSize) * iBand);
+            }
         }
     }
 
