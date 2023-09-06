@@ -3759,7 +3759,7 @@ OGRErr OGRSpatialReference::SetFromUserInput(const char *pszDefinition,
         OGRErr eStatus = OGRERR_NONE;
 
 #if PROJ_VERSION_MAJOR > 6 || PROJ_VERSION_MINOR >= 1
-        if (strchr(pszDefinition, '+') != nullptr)
+        if (strchr(pszDefinition, '+') || strchr(pszDefinition, '@'))
         {
             // Use proj_create() as it allows things like EPSG:3157+4617
             // that are not normally supported by the below code that
