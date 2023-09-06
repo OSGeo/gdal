@@ -1486,6 +1486,10 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/float32.tif?if=AAIGrid,GTiff")
     assert ds is not None
 
+    ## separated if not allowed
+    with gdal.quiet_errors():
+        assert not gdal.Open("vrt://data/float32.tif?if=AAIGrid&if=GTiff")
+
     ## check exponent and scale
     ds = gdal.Open("vrt://data/float32.tif?scale=0,255,255,255")
     assert ds.GetRasterBand(1).Checksum() == 4873
@@ -1578,6 +1582,24 @@ def test_vrt_protocol():
         ds.GetGeoTransform(),
         1e-9,
     )
+
+    ## multiple open options
+    ds = gdal.Open(
+        "vrt://data/byte_with_ovr.tif?oo=GEOREF_SOURCES=TABFILE,OVERVIEW_LEVEL=0"
+    )
+    gdaltest.check_geotransform(
+        (0, 1, 0, 0, 0, 1),
+        ds.GetGeoTransform(),
+        1e-9,
+    )
+    assert ds.GetRasterBand(1).XSize == 10
+    assert ds.GetRasterBand(1).YSize == 10
+
+    ## separated oo instances not allowed
+    with gdal.quiet_errors():
+        assert not gdal.Open(
+            "vrt://data/byte_with_ovr.tif?oo=GEOREF_SOURCES=TABFILE&oo=OVERVIEW_LEVEL=0"
+        )
 
 
 @pytest.mark.require_driver("BMP")

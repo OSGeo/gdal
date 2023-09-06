@@ -1697,7 +1697,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``tr``, ``r``, ``srcwin``, and ``a_gt``.
+``tr``, ``r``, ``srcwin``, ``a_gt`` and ``oo``.
 
 Other options may be added in the future.
 
@@ -1767,6 +1767,8 @@ the order 'xoff,yoff,xsize,ysize'.
 The effect of the ``a_gt`` option (added in GDAL 3.8) is to override/assign the geotransform of the output as with (:ref:`gdal_translate`). The value consists of six numeric values separated by commas, in
 the order 'gt(0),gt(1),gt(2),gt(3),gt(4),gt(5)'.
 
+The effect of the ``oo`` option (added in GDAL 3.8) is to set driver-specific dataset open options, multiple values are allowed. The value
+consists of string key value pairs with multiple pairs separated by commas e.g. ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
