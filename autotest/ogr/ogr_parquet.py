@@ -1651,6 +1651,36 @@ def test_ogr_parquet_arrow_stream_numpy():
 
 
 ###############################################################################
+
+
+def test_ogr_parquet_arrow_stream_numpy_with_fid_column():
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = "/vsimem/test_ogr_parquet_arrow_stream_numpy_with_fid_column.parquet"
+    gdal.VectorTranslate(
+        filename, "data/poly.shp", options="-unsetFieldWidth -lco FID=fid"
+    )
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [batch for batch in stream]
+    batch = batches[0]
+    assert batch.keys() == set(["fid", "AREA", "EAS_ID", "PRFEDEA", "geometry"])
+
+    lyr.SetIgnoredFields(["geometry"])
+
+    stream = lyr.GetArrowStreamAsNumPy()
+    batches = [batch for batch in stream]
+    batch = batches[0]
+    assert batch.keys() == set(["fid", "AREA", "EAS_ID", "PRFEDEA"])
+
+    ds = None
+    gdal.Unlink(filename)
+
+
+###############################################################################
 # Test bbox
 
 
