@@ -38,6 +38,7 @@ import threading
 import time
 
 import gdaltest
+import ogrtest
 import pytest
 from test_py_scripts import samples_path
 
@@ -7882,6 +7883,112 @@ def test_ogr_gpkg_arrow_stream_numpy():
     ds = None
 
     ogr.GetDriverByName("GPKG").DeleteDataSource("/vsimem/test.gpkg")
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize("layer_type", ["direct", "sql"])
+def test_ogr_gpkg_arrow_stream_numpy_detailed_spatial_filter(tmp_vsimem, layer_type):
+    pytest.importorskip("osgeo.gdal_array")
+    pytest.importorskip("numpy")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_parquet_arrow_stream_numpy_detailed_spatial_filter.gpkg"
+    )
+    ds = ogr.GetDriverByName("GPKG").CreateDataSource(filename)
+    lyr = ds.CreateLayer("test", options=["FID=fid"])
+    for idx, wkt in enumerate(
+        [
+            "POINT(1 2)",
+            "MULTIPOINT(0 0,1 2)",
+            "LINESTRING(3 4,5 6)",
+            "MULTILINESTRING((7 8,7.5 8.5),(3 4,5 6))",
+            "POLYGON((10 20,10 30,20 30,10 20),(11 21,11 29,19 29,11 21))",
+            "MULTIPOLYGON(((100 100,100 200,200 200,100 100)),((10 20,10 30,20 30,10 20),(11 21,11 29,19 29,11 21)))",
+            "LINESTRING EMPTY",
+            "MULTILINESTRING EMPTY",
+            "POLYGON EMPTY",
+            "MULTIPOLYGON EMPTY",
+            "GEOMETRYCOLLECTION EMPTY",
+        ]
+    ):
+        f = ogr.Feature(lyr.GetLayerDefn())
+        f.SetFID(idx)
+        f.SetGeometryDirectly(ogr.CreateGeometryFromWkt(wkt))
+        lyr.CreateFeature(f)
+    ds = None
+
+    ds = ogr.Open(filename)
+    if layer_type == "direct":
+        lyr = ds.GetLayer(0)
+    else:
+        lyr = ds.ExecuteSQL("SELECT * FROM test")
+
+    eps = 1e-1
+
+    # Select nothing
+    with ogrtest.spatial_filter(lyr, 6, 0, 8, 1):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        assert list(batches[0]["fid"]) == []
+
+    # Select POINT and MULTIPOINT
+    with ogrtest.spatial_filter(lyr, 1 - eps, 2 - eps, 1 + eps, 2 + eps):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        assert len(batches) == 1
+        assert list(batches[0]["fid"]) == [0, 1]
+        assert [f.GetFID() for f in lyr] == [0, 1]
+
+    # Select LINESTRING and MULTILINESTRING due to point falling in bbox
+    with ogrtest.spatial_filter(lyr, 3 - eps, 4 - eps, 3 + eps, 4 + eps):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        assert len(batches) == 1
+        assert list(batches[0]["fid"]) == [2, 3]
+        assert [f.GetFID() for f in lyr] == [2, 3]
+
+    # Select LINESTRING and MULTILINESTRING due to point falling in bbox
+    with ogrtest.spatial_filter(lyr, 5 - eps, 6 - eps, 5 + eps, 6 + eps):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        assert len(batches) == 1
+        assert list(batches[0]["fid"]) == [2, 3]
+        assert [f.GetFID() for f in lyr] == [2, 3]
+
+    # Select LINESTRING and MULTILINESTRING due to more generic intersection
+    with ogrtest.spatial_filter(lyr, 4 - eps, 5 - eps, 4 + eps, 5 + eps):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        assert len(batches) == 1
+        assert list(batches[0]["fid"]) == [2, 3]
+        assert [f.GetFID() for f in lyr] == [2, 3]
+
+    # Select POLYGON and MULTIPOLYGON due to point falling in bbox
+    with ogrtest.spatial_filter(lyr, 10 - eps, 20 - eps, 10 + eps, 20 + eps):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        assert len(batches) == 1
+        assert list(batches[0]["fid"]) == [4, 5]
+        assert [f.GetFID() for f in lyr] == [4, 5]
+
+    # bbox with polygon hole
+    with ogrtest.spatial_filter(lyr, 12 - eps, 20.5 - eps, 12 + eps, 20.5 + eps):
+        stream = lyr.GetArrowStreamAsNumPy(options=["USE_MASKED_ARRAYS=NO"])
+        batches = [batch for batch in stream]
+        if ogrtest.have_geos():
+            assert list(batches[0]["fid"]) == []
+        else:
+            assert len(batches) == 1
+            assert list(batches[0]["fid"]) == [4, 5]
+            assert [f.GetFID() for f in lyr] == [4, 5]
+
+    if layer_type != "direct":
+        ds.ReleaseResultSet(lyr)
+
+    ds = None
+    gdal.Unlink(filename)
 
 
 ###############################################################################

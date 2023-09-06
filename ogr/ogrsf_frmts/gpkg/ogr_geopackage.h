@@ -111,6 +111,8 @@ struct OGRGPKGTableLayerFillArrowArray
     std::mutex oMutex{};
     std::condition_variable oCV{};
     bool bIsFinished = false;
+    // For spatial filtering
+    const OGRLayer *poLayerForFilterGeom = nullptr;
 };
 
 /************************************************************************/

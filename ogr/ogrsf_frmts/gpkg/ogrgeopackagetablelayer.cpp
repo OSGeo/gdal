@@ -7367,17 +7367,18 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
         const int nSqlite3ColType = sqlite3_value_type(argv[iCol]);
         if (nSqlite3ColType == SQLITE_BLOB)
         {
+            GPkgHeader oHeader;
+            memset(&oHeader, 0, sizeof(oHeader));
+
             const GByte *pabyWkb = nullptr;
             const int nBlobSize = sqlite3_value_bytes(argv[iCol]);
             // coverity[tainted_data_return]
             const GByte *pabyBlob =
                 static_cast<const GByte *>(sqlite3_value_blob(argv[iCol]));
-            GByte *pabyWkbToFree = nullptr;
+            std::vector<GByte> abyWkb;
             if (nBlobSize >= 8 && pabyBlob && pabyBlob[0] == 'G' &&
                 pabyBlob[1] == 'P')
             {
-                GPkgHeader oHeader;
-
                 /* Read header */
                 OGRErr err = GPkgHeaderFromWKB(pabyBlob, nBlobSize, &oHeader);
                 if (err == OGRERR_NONE)
@@ -7401,15 +7402,15 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
                 else
                 {
                     nWKBSize = poGeomPtr->WkbSize();
-                    pabyWkbToFree = static_cast<GByte *>(CPLMalloc(nWKBSize));
-                    if (poGeomPtr->exportToWkb(wkbNDR, pabyWkbToFree,
+                    abyWkb.resize(nWKBSize);
+                    if (poGeomPtr->exportToWkb(wkbNDR, abyWkb.data(),
                                                wkbVariantIso) != OGRERR_NONE)
                     {
                         nWKBSize = 0;
                     }
                     else
                     {
-                        pabyWkb = pabyWkbToFree;
+                        pabyWkb = abyWkb.data();
                     }
                 }
                 delete poGeomPtr;
@@ -7417,6 +7418,33 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
 
             if (nWKBSize != 0)
             {
+                // Deal with spatial filter
+                if (psFillArrowArray->poLayerForFilterGeom)
+                {
+                    OGREnvelope sEnvelope;
+                    bool bEnvelopeAlreadySet = false;
+                    if (oHeader.bEmpty)
+                    {
+                        bEnvelopeAlreadySet = true;
+                    }
+                    else if (oHeader.bExtentHasXY)
+                    {
+                        bEnvelopeAlreadySet = true;
+                        sEnvelope.MinX = oHeader.MinX;
+                        sEnvelope.MinY = oHeader.MinY;
+                        sEnvelope.MaxX = oHeader.MaxX;
+                        sEnvelope.MaxY = oHeader.MaxY;
+                    }
+
+                    if (!psFillArrowArray->poLayerForFilterGeom
+                             ->FilterWKBGeometry(pabyWkb, nWKBSize,
+                                                 bEnvelopeAlreadySet,
+                                                 sEnvelope))
+                    {
+                        return;
+                    }
+                }
+
                 GByte *outPtr = psHelper->GetPtrForStringOrBinary(
                     iArrowField, iFeat, nWKBSize);
                 if (outPtr == nullptr)
@@ -7429,7 +7457,6 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
             {
                 psHelper->SetEmptyStringOrBinary(psArray, iFeat);
             }
-            CPLFree(pabyWkbToFree);
         }
 
         if (nWKBSize == 0)
@@ -7649,6 +7676,8 @@ int OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronous(
             OGRArrowArrayHelper::GetMaxFeaturesInBatch(
                 m_aosArrowArrayStreamOptions);
         m_poFillArrowArray->bAsynchronousMode = true;
+        if (m_poFilterGeom)
+            m_poFillArrowArray->poLayerForFilterGeom = this;
 
         try
         {
