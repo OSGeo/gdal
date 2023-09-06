@@ -1016,7 +1016,10 @@ def setup_input_srs(
 
     if options.s_srs:
         input_srs = osr.SpatialReference()
-        input_srs.SetFromUserInput(options.s_srs)
+        try:
+            input_srs.SetFromUserInput(options.s_srs)
+        except RuntimeError:
+            raise ValueError("Invalid value for --s_srs option")
         input_srs_wkt = input_srs.ExportToWkt()
     else:
         input_srs_wkt = input_dataset.GetProjection()
