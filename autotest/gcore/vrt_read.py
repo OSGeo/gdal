@@ -1601,6 +1601,16 @@ def test_vrt_protocol():
             "vrt://data/byte_with_ovr.tif?oo=GEOREF_SOURCES=TABFILE&oo=OVERVIEW_LEVEL=0"
         )
 
+    dsn_unscale = "/vsimem/scale2.tif"
+    gdal.Translate(dsn_unscale, "vrt://data/byte.tif?a_scale=2")
+    ds = gdal.Open("vrt://" + dsn_unscale + "?unscale&ot=int16")
+    assert struct.unpack("h", ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1))[0] == 214
+
+    ds = gdal.Open("vrt://data/minfloat.tif?scale")
+    assert struct.unpack("f", ds.GetRasterBand(1).ReadRaster(2, 0, 1, 1))[
+        0
+    ] == pytest.approx(255.99899291992188)
+
 
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
