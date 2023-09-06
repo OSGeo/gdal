@@ -28,7 +28,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
 import struct
 
 import gdaltest
@@ -37,32 +36,19 @@ import pytest
 
 from osgeo import gdal, ogr
 
-###############################################################################
-# Test with -a and -i options
+size = 160
+precision = 1.0 / size
 
 
-def test_contour_1():
+@pytest.fixture()
+def input_tif(tmp_path):
 
-    try:
-        os.remove("tmp/contour.shp")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/contour.dbf")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/contour.shx")
-    except OSError:
-        pass
+    tif_fname = str(tmp_path / "gdal_contour.tif")
 
     drv = gdal.GetDriverByName("GTiff")
     wkt = 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]'
 
-    size = 160
-    precision = 1.0 / size
-
-    ds = drv.Create("tmp/gdal_contour.tif", size, size, 1)
+    ds = drv.Create(tif_fname, size, size, 1)
     ds.SetProjection(wkt)
     ds.SetGeoTransform([1, precision, 0, 50, 0, -precision])
 
@@ -102,12 +88,25 @@ def test_contour_1():
             band_list=[1],
         )
 
-    ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/contour.shp")
+    return tif_fname
+
+
+###############################################################################
+# Test with -a and -i options
+
+
+def test_contour_1(input_tif, tmp_path):
+
+    output_shp = str(tmp_path / "contour.shp")
+
+    ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(output_shp)
     ogr_lyr = ogr_ds.CreateLayer("contour")
     field_defn = ogr.FieldDefn("ID", ogr.OFTInteger)
     ogr_lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn("elev", ogr.OFTReal)
     ogr_lyr.CreateField(field_defn)
+
+    ds = gdal.Open(input_tif)
 
     gdal.ContourGenerate(ds.GetRasterBand(1), 10, 0, [], 0, 0, ogr_lyr, 0, 1)
 
@@ -148,34 +147,20 @@ def test_contour_1():
 # Test with -fl option and -3d option
 
 
-def test_contour_2():
+def test_contour_2(input_tif, tmp_path):
 
-    try:
-        os.remove("tmp/contour.shp")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/contour.dbf")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/contour.shx")
-    except OSError:
-        pass
+    output_shp = str(tmp_path / "contour.shp")
 
-    ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/contour.shp")
+    ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(output_shp)
     ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbLineString25D)
     field_defn = ogr.FieldDefn("ID", ogr.OFTInteger)
     ogr_lyr.CreateField(field_defn)
     field_defn = ogr.FieldDefn("elev", ogr.OFTReal)
     ogr_lyr.CreateField(field_defn)
 
-    ds = gdal.Open("tmp/gdal_contour.tif")
+    ds = gdal.Open(input_tif)
     gdal.ContourGenerate(ds.GetRasterBand(1), 0, 0, [10, 20, 25], 0, 0, ogr_lyr, 0, 1)
     ds = None
-
-    size = 160
-    precision = 1.0 / size
 
     expected_envelopes = [
         [1.25, 1.75, 49.25, 49.75],
@@ -245,22 +230,11 @@ def test_contour_real_world_case():
 # Test with -p option (polygonize)
 
 
-def test_contour_3():
+def test_contour_3(input_tif, tmp_path):
 
-    try:
-        os.remove("tmp/contour.shp")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/contour.dbf")
-    except OSError:
-        pass
-    try:
-        os.remove("tmp/contour.shx")
-    except OSError:
-        pass
+    output_shp = str(tmp_path / "contour.shp")
 
-    ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource("tmp/contour.shp")
+    ogr_ds = ogr.GetDriverByName("ESRI Shapefile").CreateDataSource(output_shp)
     ogr_lyr = ogr_ds.CreateLayer("contour", geom_type=ogr.wkbMultiPolygon)
     field_defn = ogr.FieldDefn("ID", ogr.OFTInteger)
     ogr_lyr.CreateField(field_defn)
@@ -269,7 +243,7 @@ def test_contour_3():
     field_defn = ogr.FieldDefn("elevMax", ogr.OFTReal)
     ogr_lyr.CreateField(field_defn)
 
-    ds = gdal.Open("tmp/gdal_contour.tif")
+    ds = gdal.Open(input_tif)
     # gdal.ContourGenerateEx(ds.GetRasterBand(1), 0, 0, 0, [10, 20, 25], 0, 0, ogr_lyr, 0, 1, 1)
     gdal.ContourGenerateEx(
         ds.GetRasterBand(1),
@@ -283,9 +257,6 @@ def test_contour_3():
         ],
     )
     ds = None
-
-    size = 160
-    precision = 1.0 / size
 
     expected_envelopes = [
         [1.0, 2.0, 49.0, 50.0],
@@ -429,15 +400,3 @@ def test_contour_raster_acquisition_error():
         gdal.ContourGenerateEx(
             ds.GetRasterBand(1), ogr_lyr, options=["LEVEL_INTERVAL=1", "ID_FIELD=0"]
         )
-
-
-###############################################################################
-# Cleanup
-
-
-def test_contour_cleanup():
-    ogr.GetDriverByName("ESRI Shapefile").DeleteDataSource("tmp/contour.shp")
-    try:
-        os.remove("tmp/gdal_contour.tif")
-    except OSError:
-        pass

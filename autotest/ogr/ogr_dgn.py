@@ -161,7 +161,7 @@ def test_ogr_dgn_6():
 # Copy our small dgn file to a new dgn file.
 
 
-def test_ogr_dgn_7():
+def test_ogr_dgn_7(tmp_path):
 
     co_opts = [
         "UOR_PER_SUB_UNIT=100",
@@ -170,7 +170,7 @@ def test_ogr_dgn_7():
     ]
 
     dgn2_ds = ogr.GetDriverByName("DGN").CreateDataSource(
-        "tmp/dgn7.dgn", options=co_opts
+        tmp_path / "dgn7.dgn", options=co_opts
     )
 
     dgn2_lyr = dgn2_ds.CreateLayer("elements")
@@ -206,18 +206,14 @@ def test_ogr_dgn_7():
     with pytest.raises(Exception):
         assert dgn2_lyr.CreateFeature(dst_feat) != 0
 
+    ###############################################################################
+    # Verify that our copy is pretty similar.
+    #
+    # Currently the styling information is not well preserved.  Eventually
+    # this should be fixed up and the test made more stringent.
+    #
 
-###############################################################################
-# Verify that our copy is pretty similar.
-#
-# Currently the styling information is not well preserved.  Eventually
-# this should be fixed up and the test made more stringent.
-#
-
-
-def test_ogr_dgn_8():
-
-    dgn2_ds = ogr.Open("tmp/dgn7.dgn")
+    dgn2_ds = ogr.Open(tmp_path / "dgn7.dgn")
 
     dgn2_lyr = dgn2_ds.GetLayerByName("elements")
 

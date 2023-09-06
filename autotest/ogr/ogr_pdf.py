@@ -29,8 +29,6 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
-import os
-
 import gdaltest
 import ogrtest
 import pytest
@@ -54,23 +52,47 @@ def has_read_support():
     return True
 
 
+@pytest.fixture(params=("DEFAULT", "PODOFO"))
+def pdf_lib(request):
+
+    lib_name = request.param
+
+    # use "DEFAULT" instead of "None" to get a better test name
+    if lib_name == "DEFAULT":
+        lib_name = None
+
+    if lib_name is not None:
+        md = gdal.GetDriverByName("PDF").GetMetadata()
+
+        if f"HAVE_{lib_name}" not in md:
+            pytest.skip(f"{lib_name} not available")
+
+    with gdal.config_option("GDAL_PDF_LIB", lib_name):
+        yield
+
+
 ###############################################################################
 # Test write support
 
 
-def test_ogr_pdf_1(name="tmp/ogr_pdf_1.pdf", write_attributes="YES"):
+@pytest.mark.parametrize(
+    "write_attributes", (True, False), ids=("attributes", "no_attributes")
+)
+def test_ogr_pdf_1(tmp_path, pdf_lib, write_attributes):
+
+    name = tmp_path / "out.pdf"
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
     ds = ogr.GetDriverByName("PDF").CreateDataSource(
         name,
-        options=[
-            "STREAM_COMPRESS=NONE",
-            "MARGIN=10",
-            "OGR_WRITE_ATTRIBUTES=%s" % write_attributes,
-            "OGR_LINK_FIELD=linkfield",
-        ],
+        options={
+            "STREAM_COMPRESS": "NONE",
+            "MARGIN": 10,
+            "OGR_WRITE_ATTRIBUTES": write_attributes,
+            "OGR_LINK_FIELD": "linkfield",
+        },
     )
 
     lyr = ds.CreateLayer("first_layer", srs=sr)
@@ -136,13 +158,14 @@ def test_ogr_pdf_1(name="tmp/ogr_pdf_1.pdf", write_attributes="YES"):
             wantedstream.encode("utf-8") in data
         ), "Wrong text data in written PDF stream"
 
+    ###############################################################################
+    # Test read support
 
-###############################################################################
-# Test read support
+    if has_read_support():
+        check_pdf_read(name, write_attributes)
 
 
-@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
-def test_ogr_pdf_2(name="tmp/ogr_pdf_1.pdf", has_attributes=True):
+def check_pdf_read(name, has_attributes):
 
     ds = ogr.Open(name)
     assert ds is not None
@@ -216,42 +239,6 @@ def test_ogr_pdf_2(name="tmp/ogr_pdf_1.pdf", has_attributes=True):
     )
 
     ds = None
-
-
-###############################################################################
-# Test write support without writing attributes
-
-
-def test_ogr_pdf_3():
-    return test_ogr_pdf_1("tmp/ogr_pdf_2.pdf", "NO")
-
-
-###############################################################################
-# Check read support without writing attributes
-
-
-@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
-def test_ogr_pdf_4():
-    return test_ogr_pdf_2("tmp/ogr_pdf_2.pdf", False)
-
-
-###############################################################################
-# Switch from poppler to podofo if both are available
-
-
-def test_ogr_pdf_4_podofo():
-
-    gdal_pdf_drv = gdal.GetDriverByName("PDF")
-    if gdal_pdf_drv is None:
-        pytest.skip()
-
-    md = gdal_pdf_drv.GetMetadata()
-    if "HAVE_POPPLER" in md and "HAVE_PODOFO" in md:
-        with gdal.config_option("GDAL_PDF_LIB", "PODOFO"):
-            print("Using podofo now")
-            ret = test_ogr_pdf_4()
-        return ret
-    pytest.skip()
 
 
 ###############################################################################
@@ -410,12 +397,12 @@ def test_ogr_pdf_online_2():
 
 
 @pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
-def test_ogr_pdf_no_attributes():
+def test_ogr_pdf_no_attributes(tmp_vsimem):
 
     sr = osr.SpatialReference()
     sr.ImportFromEPSG(4326)
 
-    filename = "/vsimem/test_ogr_pdf_no_attributes.pdf"
+    filename = tmp_vsimem / "test_ogr_pdf_no_attributes.pdf"
     ds = ogr.GetDriverByName("PDF").CreateDataSource(
         filename, options=["STREAM_COMPRESS=NONE"]
     )
@@ -429,17 +416,3 @@ def test_ogr_pdf_no_attributes():
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
-
-    gdal.Unlink(filename)
-
-
-###############################################################################
-# Cleanup
-
-
-def test_ogr_pdf_cleanup():
-
-    if os.path.exists("tmp/ogr_pdf_1.pdf"):
-        os.unlink("tmp/ogr_pdf_1.pdf")
-    if os.path.exists("tmp/ogr_pdf_2.pdf"):
-        os.unlink("tmp/ogr_pdf_2.pdf")

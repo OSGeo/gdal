@@ -42,10 +42,17 @@ def module_disable_exceptions():
         yield
 
 
-def test_pythondrivers_init():
+@pytest.fixture(autouse=True, scope="module")
+def setup_and_cleanup():
     with gdaltest.config_option("GDAL_PYTHON_DRIVER_PATH", "data/pydrivers"):
         gdal.AllRegister()
     assert ogr.GetDriverByName("DUMMY")
+
+    yield
+
+    with gdaltest.config_option("GDAL_SKIP", "DUMMY"):
+        gdal.AllRegister()
+    assert not ogr.GetDriverByName("DUMMY")
 
 
 def test_pythondrivers_test_dummy():
@@ -151,9 +158,3 @@ def test_pythondrivers_missing_identify():
 
     with gdaltest.config_option("GDAL_SKIP", "MISSING_IDENTIFY"):
         gdal.AllRegister()
-
-
-def test_pythondrivers_cleanup():
-    with gdaltest.config_option("GDAL_SKIP", "DUMMY"):
-        gdal.AllRegister()
-    assert not ogr.GetDriverByName("DUMMY")
