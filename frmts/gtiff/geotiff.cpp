@@ -1175,7 +1175,6 @@ struct OGRGTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
                 // Invalid
                 if (!hasDriveLetter)
                 {
-                    CSLDestroy(aosParts);
                     return;
                 }
                 m_pathComponent = aosParts[2];
@@ -1186,7 +1185,6 @@ struct OGRGTiffDriverSubdatasetInfo : public GDALSubdatasetInfo
             {
                 if (hasDriveLetter)
                 {
-                    CSLDestroy(aosParts);
                     return;
                 }
                 m_pathComponent = aosParts[2];

@@ -285,7 +285,6 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
                 // Invalid
                 if (!hasDriveLetter)
                 {
-                    CSLDestroy(aosParts);
                     return;
                 }
                 m_pathComponent = aosParts[1];
@@ -297,7 +296,6 @@ struct OGRGeoPackageDriverSubdatasetInfo : public GDALSubdatasetInfo
             {
                 if (hasDriveLetter)
                 {
-                    CSLDestroy(aosParts);
                     return;
                 }
                 m_pathComponent = aosParts[1];
