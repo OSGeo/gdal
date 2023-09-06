@@ -33,6 +33,7 @@
 #include "ogr_attrind.h"
 #include "ogr_swq.h"
 #include "ograpispy.h"
+#include "ogr_wkb.h"
 
 #include "cpl_time.h"
 #include <cassert>
@@ -1653,6 +1654,61 @@ int OGRLayer::FilterGeometry(OGRGeometry *poGeometry)
             return TRUE;
     }
 }
+
+/************************************************************************/
+/*                         FilterWKBGeometry()                          */
+/************************************************************************/
+
+bool OGRLayer::FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
+                                 bool bEnvelopeAlreadySet,
+                                 OGREnvelope &sEnvelope) const
+{
+    if (!m_poFilterGeom)
+        return true;
+
+    if ((bEnvelopeAlreadySet ||
+         OGRWKBGetBoundingBox(pabyWKB, nWKBSize, sEnvelope)) &&
+        m_sFilterEnvelope.Intersects(sEnvelope))
+    {
+        if (m_bFilterIsEnvelope && m_sFilterEnvelope.Contains(sEnvelope))
+        {
+            return true;
+        }
+        else if (m_sFilterEnvelope.Intersects(sEnvelope))
+        {
+            if (m_bFilterIsEnvelope &&
+                OGRWKBIsWithinPessimistic(pabyWKB, nWKBSize, m_sFilterEnvelope))
+            {
+                return true;
+            }
+            else if (OGRGeometryFactory::haveGEOS())
+            {
+                OGRGeometry *poGeom = nullptr;
+                int ret = FALSE;
+                if (OGRGeometryFactory::createFromWkb(pabyWKB, nullptr, &poGeom,
+                                                      nWKBSize) == OGRERR_NONE)
+                {
+                    if (m_pPreparedFilterGeom)
+                        ret = OGRPreparedGeometryIntersects(
+                            m_pPreparedFilterGeom,
+                            OGRGeometry::ToHandle(poGeom));
+                    else
+                        ret = m_poFilterGeom->Intersects(poGeom);
+                }
+                delete poGeom;
+                return CPL_TO_BOOL(ret);
+            }
+            else
+            {
+                // Assume intersection
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 //! @endcond
 
 /************************************************************************/

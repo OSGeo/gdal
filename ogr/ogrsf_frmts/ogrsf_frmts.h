@@ -346,6 +346,12 @@ class CPL_DLL OGRLayer : public GDALMajorObject
         return reinterpret_cast<OGRLayer *>(hLayer);
     }
 
+    //! @cond Doxygen_Suppress
+    bool FilterWKBGeometry(const GByte *pabyWKB, size_t nWKBSize,
+                           bool bEnvelopeAlreadySet,
+                           OGREnvelope &sEnvelope) const;
+    //! @endcond
+
   protected:
     //! @cond Doxygen_Suppress
     OGRStyleTable *m_poStyleTable;
