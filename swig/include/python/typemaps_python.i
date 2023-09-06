@@ -1139,12 +1139,20 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
   }
 
   Py_ssize_t size = PySequence_Size(pySeq);
-  if( size != (int)size ) {
+  if( size > (Py_ssize_t)(INT_MAX - 1) ) {
     PyErr_SetString(PyExc_TypeError, "too big sequence");
     *pbErr = TRUE;
     return NULL;
   }
-  char** papszRet = NULL;
+  if( size == 0 ) {
+    return NULL;
+  }
+  char** papszRet = (char**) VSICalloc((int)size + 1, sizeof(char*));
+  if( !papszRet ) {
+    PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+    *pbErr = TRUE;
+    return NULL;
+  }
   for (int i = 0; i < (int)size; i++) {
     PyObject* pyObj = PySequence_GetItem(pySeq,i);
     if (PyUnicode_Check(pyObj))
@@ -1161,11 +1169,11 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         return NULL;
       }
       PyBytes_AsStringAndSize(pyUTF8Str, &pszStr, &nLen);
-      papszRet = CSLAddString( papszRet, pszStr );
+      papszRet[i] = VSIStrdup(pszStr);
       Py_XDECREF(pyUTF8Str);
     }
     else if (PyBytes_Check(pyObj))
-      papszRet = CSLAddString( papszRet, PyBytes_AsString(pyObj) );
+      papszRet[i] = VSIStrdup(PyBytes_AsString(pyObj));
     else
     {
         Py_DECREF(pyObj);
@@ -1175,6 +1183,13 @@ static char **CSLFromPySequence( PyObject *pySeq, int *pbErr )
         return NULL;
     }
     Py_DECREF(pyObj);
+    if( !papszRet[i] )
+    {
+        PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
+        CSLDestroy(papszRet);
+        *pbErr = TRUE;
+        return NULL;
+    }
   }
   return papszRet;
 }
