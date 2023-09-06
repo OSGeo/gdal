@@ -879,7 +879,8 @@ def test_ogr_gml_22(tmp_path):
 
 def test_ogr_gml_23(tmp_path):
 
-    shutil.copy("data/gml/global_geometry.xml", tmp_path)
+    for ext in ("xml", "xsd"):
+        shutil.copy(f"data/gml/global_geometry.{ext}", tmp_path)
 
     # Here we use only the .xml file
     ds = ogr.Open(tmp_path / "global_geometry.xml")
@@ -1644,7 +1645,8 @@ def test_ogr_gml_validate_wfs(have_gml_validation, filename):
 
 def test_ogr_gml_48(tmp_path):
 
-    shutil.copy("data/gml/schema_with_geom_in_complextype.xml", tmp_path)
+    for ext in ("xml", "xsd"):
+        shutil.copy(f"data/gml/schema_with_geom_in_complextype.{ext}", tmp_path)
 
     ds = ogr.Open(tmp_path / "schema_with_geom_in_complextype.xml")
     lyr = ds.GetLayer(0)
@@ -1925,11 +1927,16 @@ def test_ogr_gml_54(tmp_path):
 def test_ogr_gml_55(tmp_path):
 
     shutil.copy("data/gml/ogr_gml_55.gml", tmp_path)
+    shutil.copy("data/gml/ogr_gml_55.xsd", tmp_path)
+    shutil.copy("data/gml/ogr_gml_55_included1.xsd", tmp_path)
+    shutil.copy("data/gml/ogr_gml_55_included2.xsd", tmp_path)
 
     ds = ogr.Open(tmp_path / "ogr_gml_55.gml")
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldDefn(0).GetType() == ogr.OFTString
     ds = None
+
+    assert not os.path.exists(tmp_path / "ogr_gml_55.gfs")
 
 
 ###############################################################################
