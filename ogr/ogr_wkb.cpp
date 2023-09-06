@@ -393,10 +393,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         return ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
                                     sEnvelope);
@@ -404,10 +401,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbPolygon)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         return ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
                                    sEnvelope);
@@ -415,10 +409,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbMultiPoint)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         uint32_t nParts = OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
         if (nParts >
@@ -447,10 +438,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbMultiLineString)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -470,10 +458,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbMultiPolygon)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -498,10 +483,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
     {
         if (nRec == 128)
             return false;
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
