@@ -542,7 +542,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     memset(&brokenDown, 0, sizeof(brokenDown));
 
     int iFeat = 0;
-    for (; iFeat < sHelper.nMaxBatchSize; iFeat++)
+    while (iFeat < sHelper.nMaxBatchSize)
     {
         /* --------------------------------------------------------------------
          */
@@ -838,6 +838,8 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
                     break;
             }
         }
+
+        ++iFeat;
     }
 
     sHelper.Shrink(iFeat);
