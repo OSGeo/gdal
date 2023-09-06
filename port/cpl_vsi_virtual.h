@@ -181,14 +181,13 @@ class CPL_DLL VSIFilesystemHandler
         return -1;
     }
     virtual int RmdirRecursive(const char *pszDirname);
-    virtual char **ReadDir(const char *pszDirname)
+    char **ReadDir(const char *pszDirname)
     {
-        (void)pszDirname;
-        return nullptr;
+        return ReadDirEx(pszDirname, 0);
     }
-    virtual char **ReadDirEx(const char *pszDirname, int /* nMaxFiles */)
+    virtual char **ReadDirEx(const char * /*pszDirname*/, int /* nMaxFiles */)
     {
-        return ReadDir(pszDirname);
+        return nullptr;
     }
     virtual char **SiblingFiles(const char * /*pszFilename*/)
     {
