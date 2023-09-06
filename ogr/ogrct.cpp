@@ -1630,7 +1630,13 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
 #endif
 #ifdef DEBUG
         CPLDebug("OGR_CT", "Source CRS: '%s'", pszSrcSRS);
+        if (dfSourceCoordinateEpoch > 0)
+            CPLDebug("OGR_CT", "Source coordinate epoch: %.3f",
+                     dfSourceCoordinateEpoch);
         CPLDebug("OGR_CT", "Target CRS: '%s'", pszTargetSRS);
+        if (dfTargetCoordinateEpoch > 0)
+            CPLDebug("OGR_CT", "Target coordinate epoch: %.3f",
+                     dfTargetCoordinateEpoch);
 #endif
 
         if (m_eStrategy == Strategy::PROJ)
