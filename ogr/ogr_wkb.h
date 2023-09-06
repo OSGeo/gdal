@@ -42,6 +42,9 @@ bool OGRWKBMultiPolygonGetArea(const GByte *&pabyWkb, size_t &nWKBSize,
 bool CPL_DLL OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
                                   OGREnvelope &sEnvelope);
 
+bool CPL_DLL OGRWKBIsWithinPessimistic(const GByte *pabyWkb, size_t nWKBSize,
+                                       const OGREnvelope &sEnvelope);
+
 /** Modifies a PostGIS-style Extended WKB geometry to a regular WKB one.
  * pabyEWKB will be modified in place.
  * The return value will be either at the beginning of pabyEWKB or 4 bytes
