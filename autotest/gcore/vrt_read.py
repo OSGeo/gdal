@@ -1603,13 +1603,18 @@ def test_vrt_protocol():
 
     dsn_unscale = "/vsimem/scale2.tif"
     gdal.Translate(dsn_unscale, "vrt://data/byte.tif?a_scale=2")
-    ds = gdal.Open("vrt://" + dsn_unscale + "?unscale&ot=int16")
+    ds = gdal.Open("vrt://" + dsn_unscale + "?unscale=true&ot=int16")
     assert struct.unpack("h", ds.GetRasterBand(1).ReadRaster(0, 0, 1, 1))[0] == 214
 
-    ds = gdal.Open("vrt://data/minfloat.tif?scale")
+    ds = gdal.Open("vrt://data/minfloat.tif?scale=true")
     assert struct.unpack("f", ds.GetRasterBand(1).ReadRaster(2, 0, 1, 1))[
         0
     ] == pytest.approx(255.99899291992188)
+
+    # test that 'key=value' form is used
+    with gdal.quiet_errors():
+        assert not gdal.Open("vrt://data/minfloat.tif?scale")
+        assert not gdal.Open("vrt://data/minfloat.tif?a_ullr=0,1,1,0&unscale&")
 
 
 @pytest.mark.require_driver("BMP")

@@ -994,7 +994,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     {
         char *pszKey = nullptr;
         const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
-        if (pszKey)
+        if (pszKey && pszValue)
         {
             if (EQUAL(pszKey, "if"))
             {
@@ -1022,6 +1022,17 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             }
             CPLFree(pszKey);
         }
+
+        if (!pszKey)
+        {
+
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid option specification: %s\n"
+                     "must be in the form 'key=value'",
+                     aosTokens[i]);
+            //CPLFree(pszKey);
+            return nullptr;
+        }
     }
 
     // We don't open in GDAL_OF_SHARED mode to avoid issues when we open a
@@ -1045,6 +1056,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     {
         char *pszKey = nullptr;
         const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
+
         if (pszKey && pszValue)
         {
             if (EQUAL(pszKey, "bands"))
@@ -1181,7 +1193,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 else
                 {
                     // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
-                    argv.AddString(CPLSPrintf("-%s", "-scale"));
+                    argv.AddString(CPLSPrintf("-%s", "scale"));
                     // add remaing params (length 2 or 4)
                     if (aosScaleParams.size() > 1)
                     {
@@ -1338,6 +1350,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 return nullptr;
             }
         }
+
         CPLFree(pszKey);
     }
 
