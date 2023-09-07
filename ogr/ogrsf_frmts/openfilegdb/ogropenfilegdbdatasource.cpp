@@ -190,11 +190,15 @@ bool OGROpenFileGDBDataSource::Open(const GDALOpenInfo *poOpenInfo)
 
     FileGDBTable oTable;
 
+    // Whether to open directly a given .gdbtable file (mostly for debugging
+    // purposes)
     int nInterestTable = 0;
     unsigned int unInterestTable = 0;
     const char *pszFilenameWithoutPath = CPLGetFilename(m_osDirName.c_str());
-    if (strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
+    if (poOpenInfo->nHeaderBytes > 0 &&
+        strlen(pszFilenameWithoutPath) == strlen("a00000000.gdbtable") &&
         pszFilenameWithoutPath[0] == 'a' &&
+        EQUAL(pszFilenameWithoutPath + strlen("a00000000"), ".gdbtable") &&
         sscanf(pszFilenameWithoutPath, "a%08x.gdbtable", &unInterestTable) == 1)
     {
         nInterestTable = static_cast<int>(unInterestTable);
