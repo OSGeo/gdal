@@ -1156,11 +1156,12 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             }
             else if (EQUAL(pszKey, "scale") || STARTS_WITH_CI(pszKey, "scale_"))
             {
-                argv.AddString(CPLSPrintf("-%s", pszKey));
+
                 CPLStringList aosScaleParams(
                     CSLTokenizeString2(pszValue, ",", 0));
                 if (!(aosScaleParams.size() == 2) &&
-                    !(aosScaleParams.size() == 4))
+                    !(aosScaleParams.size() == 4) &&
+                    !(aosScaleParams.size() == 1))
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
                              "Invalid value for explicit scale or scale_bn: "
@@ -1173,9 +1174,22 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                     CPLFree(pszKey);
                     return nullptr;
                 }
-                for (int j = 0; j < aosScaleParams.size(); j++)
+                if (aosScaleParams.size() == 1 && !CPLTestBool(pszValue))
                 {
-                    argv.AddString(aosScaleParams[j]);
+                    // do nothing, because scale=false
+                }
+                else
+                {
+                    // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
+                    argv.AddString(CPLSPrintf("-%s", "-scale"));
+                    // add remaing params (length 2 or 4)
+                    if (aosScaleParams.size() > 1)
+                    {
+                        for (int j = 0; j < aosScaleParams.size(); j++)
+                        {
+                            argv.AddString(aosScaleParams[j]);
+                        }
+                    }
                 }
             }
             else if (EQUAL(pszKey, "exponent") ||
@@ -1300,6 +1314,13 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString(aosAGeoTransform[4]);
                 argv.AddString(aosAGeoTransform[5]);
             }
+            else if (EQUAL(pszKey, "unscale"))
+            {
+                if (CPLTestBool(pszValue))
+                {
+                    argv.AddString("-unscale");
+                }
+            }
             else if (EQUAL(pszKey, "oo"))
             {
                 // do nothing, we passed this in earlier
@@ -1320,29 +1341,6 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
         CPLFree(pszKey);
     }
 
-    for (int i = 0; i < aosTokens.size(); i++)
-    {
-        CPLString pszArg = aosTokens[i];
-        if (pszArg.ifind("=") == std::string::npos)
-        {
-            if (EQUAL(pszArg, "unscale"))
-            {
-                argv.AddString("-unscale");
-            }
-            else if (EQUAL(pszArg, "scale"))
-            {
-                argv.AddString("-scale");
-            }
-
-            else
-            {
-                CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
-                         pszArg.c_str());
-                poSrcDS->ReleaseRef();
-                return nullptr;
-            }
-        }
-    }
     GDALTranslateOptions *psOptions =
         GDALTranslateOptionsNew(argv.List(), nullptr);
 
