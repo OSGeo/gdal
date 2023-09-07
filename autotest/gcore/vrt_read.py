@@ -2094,9 +2094,14 @@ def test_vrt_read_req_coordinates_almost_integer():
 
 
 @pytest.mark.parametrize("approx_ok,use_threads", [(False, True), (True, False)])
-def test_vrt_read_compute_statistics_mosaic_optimization(approx_ok, use_threads):
+def test_vrt_read_compute_statistics_mosaic_optimization(
+    tmp_vsimem, approx_ok, use_threads
+):
 
-    src_ds = gdal.Translate("", gdal.Open("data/byte.tif"), format="MEM")
+    # To avoid using a byte.aux.xml file with existing statistics
+    src_filename = str(tmp_vsimem / "byte.tif")
+    gdal.FileFromMemBuffer(src_filename, open("data/byte.tif", "rb").read())
+    src_ds = gdal.Translate("", src_filename, format="MEM")
     src_ds1 = gdal.Translate("", src_ds, options="-of MEM -srcwin 0 0 8 20")
     src_ds2 = gdal.Translate("", src_ds, options="-of MEM -srcwin 8 0 12 20")
     vrt_ds = gdal.BuildVRT("", [src_ds1, src_ds2])
