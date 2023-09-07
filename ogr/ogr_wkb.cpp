@@ -402,10 +402,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         return ReadWKBPointSequence(data, size, eByteOrder, nDim, iOffset,
                                     sEnvelope);
@@ -413,10 +410,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbPolygon)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         return ReadWKBRingSequence(data, size, eByteOrder, nDim, iOffset,
                                    sEnvelope);
@@ -424,10 +418,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbMultiPoint)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         uint32_t nParts = OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
         if (nParts >
@@ -456,10 +447,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbMultiLineString)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -479,10 +467,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
 
     if (eFlatType == wkbMultiPolygon)
     {
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -507,10 +492,7 @@ static bool OGRWKBGetBoundingBox(const uint8_t *data, size_t size,
     {
         if (nRec == 128)
             return false;
-        sEnvelope.MinX = std::numeric_limits<double>::max();
-        sEnvelope.MinY = std::numeric_limits<double>::max();
-        sEnvelope.MaxX = -std::numeric_limits<double>::max();
-        sEnvelope.MaxY = -std::numeric_limits<double>::max();
+        sEnvelope = OGREnvelope();
 
         const uint32_t nParts =
             OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffset);
@@ -539,6 +521,260 @@ bool OGRWKBGetBoundingBox(const GByte *pabyWkb, size_t nWKBSize,
 {
     size_t iOffset = 0;
     return OGRWKBGetBoundingBox(pabyWkb, nWKBSize, iOffset, sEnvelope, 0);
+}
+
+/************************************************************************/
+/*              OGRWKBIsWithinPointSequencePessimistic()                */
+/************************************************************************/
+
+static bool OGRWKBIsWithinPointSequencePessimistic(
+    const uint8_t *data, const size_t size, const OGRwkbByteOrder eByteOrder,
+    const int nDim, size_t &iOffsetInOut, const OGREnvelope &sEnvelope,
+    bool &bErrorOut)
+{
+    const uint32_t nPoints =
+        OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+    if (nPoints > (size - iOffsetInOut) / (nDim * sizeof(double)))
+    {
+        bErrorOut = true;
+        return false;
+    }
+
+    double dfX = 0;
+    double dfY = 0;
+    for (uint32_t j = 0; j < nPoints; j++)
+    {
+        memcpy(&dfX, data + iOffsetInOut, sizeof(double));
+        memcpy(&dfY, data + iOffsetInOut + sizeof(double), sizeof(double));
+        iOffsetInOut += nDim * sizeof(double);
+        if (OGR_SWAP(eByteOrder))
+        {
+            CPL_SWAP64PTR(&dfX);
+            CPL_SWAP64PTR(&dfY);
+        }
+        if (dfX >= sEnvelope.MinX && dfY >= sEnvelope.MinY &&
+            dfX <= sEnvelope.MaxX && dfY <= sEnvelope.MaxY)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/************************************************************************/
+/*               OGRWKBIsWithinRingSequencePessimistic()                */
+/************************************************************************/
+
+static bool OGRWKBIsWithinRingSequencePessimistic(
+    const uint8_t *data, const size_t size, const OGRwkbByteOrder eByteOrder,
+    const int nDim, size_t &iOffsetInOut, const OGREnvelope &sEnvelope,
+    bool &bErrorOut)
+{
+    const uint32_t nRings =
+        OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+    if (nRings > (size - iOffsetInOut) / sizeof(uint32_t))
+    {
+        bErrorOut = true;
+        return false;
+    }
+    if (nRings == 0)
+        return false;
+    if (iOffsetInOut + sizeof(uint32_t) > size)
+    {
+        bErrorOut = true;
+        return false;
+    }
+    if (OGRWKBIsWithinPointSequencePessimistic(
+            data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut))
+    {
+        return true;
+    }
+    if (bErrorOut)
+        return false;
+
+    // skip inner rings
+    for (uint32_t i = 1; i < nRings; ++i)
+    {
+        if (iOffsetInOut + sizeof(uint32_t) > size)
+        {
+            bErrorOut = true;
+            return false;
+        }
+        const uint32_t nPoints =
+            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+        if (nPoints > (size - iOffsetInOut) / (nDim * sizeof(double)))
+        {
+            bErrorOut = true;
+            return false;
+        }
+        iOffsetInOut += nPoints * nDim * sizeof(double);
+    }
+    return false;
+}
+
+/************************************************************************/
+/*                  OGRWKBIsWithinPessimistic()                         */
+/************************************************************************/
+
+static bool OGRWKBIsWithinPessimistic(const GByte *data, const size_t size,
+                                      size_t &iOffsetInOut,
+                                      const OGREnvelope &sEnvelope,
+                                      const int nRec, bool &bErrorOut)
+{
+    if (size - iOffsetInOut < MIN_WKB_SIZE)
+    {
+        bErrorOut = true;
+        return false;
+    }
+    const int nByteOrder = DB2_V72_FIX_BYTE_ORDER(data[iOffsetInOut]);
+    if (!(nByteOrder == wkbXDR || nByteOrder == wkbNDR))
+    {
+        bErrorOut = true;
+        return false;
+    }
+    const OGRwkbByteOrder eByteOrder = static_cast<OGRwkbByteOrder>(nByteOrder);
+
+    OGRwkbGeometryType eGeometryType = wkbUnknown;
+    OGRReadWKBGeometryType(data + iOffsetInOut, wkbVariantIso, &eGeometryType);
+    iOffsetInOut += 5;
+    const auto eFlatType = wkbFlatten(eGeometryType);
+    const int nDim = 2 + (OGR_GT_HasZ(eGeometryType) ? 1 : 0) +
+                     (OGR_GT_HasM(eGeometryType) ? 1 : 0);
+
+    if (eFlatType == wkbLineString || eFlatType == wkbCircularString)
+    {
+        return OGRWKBIsWithinPointSequencePessimistic(
+            data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut);
+    }
+
+    if (eFlatType == wkbPolygon)
+    {
+        return OGRWKBIsWithinRingSequencePessimistic(
+            data, size, eByteOrder, nDim, iOffsetInOut, sEnvelope, bErrorOut);
+    }
+
+    if (eFlatType == wkbMultiLineString)
+    {
+        const uint32_t nParts =
+            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+        if (nParts > (size - iOffsetInOut) / MIN_WKB_SIZE)
+        {
+            bErrorOut = true;
+            return false;
+        }
+        for (uint32_t k = 0; k < nParts; k++)
+        {
+            if (iOffsetInOut + MIN_WKB_SIZE > size)
+            {
+                bErrorOut = true;
+                return false;
+            }
+            iOffsetInOut += WKB_PREFIX_SIZE;
+            if (OGRWKBIsWithinPointSequencePessimistic(data, size, eByteOrder,
+                                                       nDim, iOffsetInOut,
+                                                       sEnvelope, bErrorOut))
+            {
+                return true;
+            }
+            else if (bErrorOut)
+            {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    if (eFlatType == wkbMultiPolygon)
+    {
+        const uint32_t nParts =
+            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+        if (nParts > (size - iOffsetInOut) / MIN_WKB_SIZE)
+        {
+            bErrorOut = true;
+            return false;
+        }
+        for (uint32_t k = 0; k < nParts; k++)
+        {
+            if (iOffsetInOut + MIN_WKB_SIZE > size)
+            {
+                bErrorOut = true;
+                return false;
+            }
+            CPLAssert(data[iOffsetInOut] == eByteOrder);
+            iOffsetInOut += WKB_PREFIX_SIZE;
+            if (OGRWKBIsWithinRingSequencePessimistic(data, size, eByteOrder,
+                                                      nDim, iOffsetInOut,
+                                                      sEnvelope, bErrorOut))
+            {
+                return true;
+            }
+            else if (bErrorOut)
+            {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    if (eFlatType == wkbGeometryCollection || eFlatType == wkbCompoundCurve ||
+        eFlatType == wkbCurvePolygon || eFlatType == wkbMultiCurve ||
+        eFlatType == wkbMultiSurface)
+    {
+        if (nRec == 128)
+        {
+            bErrorOut = true;
+            return false;
+        }
+        const uint32_t nParts =
+            OGRWKBReadUInt32AtOffset(data, eByteOrder, iOffsetInOut);
+        if (nParts > (size - iOffsetInOut) / MIN_WKB_SIZE)
+        {
+            bErrorOut = true;
+            return false;
+        }
+        for (uint32_t k = 0; k < nParts; k++)
+        {
+            if (OGRWKBIsWithinPessimistic(data, size, iOffsetInOut, sEnvelope,
+                                          nRec + 1, bErrorOut))
+            {
+                return true;
+            }
+            else if (bErrorOut)
+            {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    bErrorOut = true;
+    return false;
+}
+
+/************************************************************************/
+/*                  OGRWKBIsWithinPessimistic()                         */
+/************************************************************************/
+
+/* Returns whether the geometry (pabyWkb, nWKBSize) is, for sure, within
+ * the passed envelope.
+ * When it returns true, the geometry is within the envelope.
+ * When it returns false, the geometry may or may not be within the envelope.
+ */
+bool OGRWKBIsWithinPessimistic(const GByte *pabyWkb, size_t nWKBSize,
+                               const OGREnvelope &sEnvelope)
+{
+    size_t iOffsetInOut = 0;
+    bool bErrorOut = false;
+    bool bRet = OGRWKBIsWithinPessimistic(pabyWkb, nWKBSize, iOffsetInOut,
+                                          sEnvelope, 0, bErrorOut);
+    if (!bRet && !bErrorOut)
+    {
+        // The following assert only holds if there is no trailing data
+        // after the WKB
+        // CPLAssert(iOffsetInOut == nWKBSize);
+    }
+    return bRet;
 }
 
 /************************************************************************/

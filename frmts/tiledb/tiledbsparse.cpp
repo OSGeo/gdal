@@ -33,7 +33,6 @@
 #include "ogr_p.h"
 #include "ogr_recordbatch.h"
 #include "ogr_swq.h"
-#include "ogr_wkb.h"
 
 #include <algorithm>
 #include <limits>
@@ -5192,9 +5191,11 @@ int OGRTileDBLayer::GetNextArrowArray(struct ArrowArrayStream *,
                 const auto nNextOffset =
                     static_cast<size_t>((*m_anGeometryOffsets)[i + 1]);
                 const auto nItemLen = nNextOffset - nSrcOffset;
-                if (OGRWKBGetBoundingBox(m_abyGeometries->data() + nSrcOffset,
-                                         nItemLen, sEnvelope) &&
-                    m_sFilterEnvelope.Intersects(sEnvelope))
+                const GByte *pabyWKB = m_abyGeometries->data() + nSrcOffset;
+                const size_t nWKBSize = nItemLen;
+                if (FilterWKBGeometry(pabyWKB, nWKBSize,
+                                      /* bEnvelopeAlreadySet=*/false,
+                                      sEnvelope))
                 {
                     abyValidityFromFilters[i] = true;
                     (*m_anGeometryOffsets)[nCountIntersecting] = nAccLen;
