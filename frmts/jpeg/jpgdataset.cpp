@@ -1246,7 +1246,18 @@ bool JPGDatasetCommon::EXIFInit(VSILFILE *fp)
                 STARTS_WITH(reinterpret_cast<char *>(abyChunkHeader) + 4,
                             "Exif"))
             {
-                nTIFFHEADER = nChunkLoc + 10;
+                if (nTIFFHEADER < 0)
+                {
+                    nTIFFHEADER = nChunkLoc + 10;
+                }
+                else
+                {
+                    CPLDebug(
+                        "JPEG",
+                        "Another Exif directory found at offset %u. Ignoring "
+                        "it and only taking into account the one at offset %u",
+                        unsigned(nChunkLoc + 10), unsigned(nTIFFHEADER));
+                }
             }
         }
 
