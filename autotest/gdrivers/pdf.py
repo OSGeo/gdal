@@ -2301,6 +2301,7 @@ def test_pdf_composition_error_pdf_content_missing_contents_stream(
         )
     assert not out_ds
     assert gdal.GetLastErrorMsg() in (
+        "Missing Contents",
         "Missing Contents stream",
         "data/pdf/missing_stream.pdf is not a valid PDF file",
     )
