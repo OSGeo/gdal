@@ -522,19 +522,11 @@ def test_gdal_subdataset_get_filename(filename, path_component):
 @pytest.mark.parametrize(
     "filename",
     (
-        (
-            'HDF4_EOS:EOS_SWATH:"AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst'
-        ),
-        (
-            r'HDF4_EOS:EOS_SWATH:"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst'
-        ),
-        (
-            "HDF4_EOS:EOS_SWATH:AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst"
-        ),
-        (
-            r"HDF4_EOS:EOS_SWATH:C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst"
-        ),
-        (""),
+        'HDF4_EOS:EOS_SWATH:"AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
+        r'HDF4_EOS:EOS_SWATH:"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
+        "HDF4_EOS:EOS_SWATH:AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
+        r"HDF4_EOS:EOS_SWATH:C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
+        "",
     ),
 )
 def test_gdal_subdataset_modify_filename(filename):

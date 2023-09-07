@@ -1325,7 +1325,7 @@ static void HDF4UnloadDriver(GDALDriver * /* poDriver */)
 }
 
 /************************************************************************/
-/*                    OGRHDF4DriverGetSubdatasetInfo()            */
+/*                    HDF4DriverGetSubdatasetInfo()                     */
 /************************************************************************/
 
 struct HDF4DriverSubdatasetInfo : public GDALSubdatasetInfo
