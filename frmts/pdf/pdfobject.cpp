@@ -1579,13 +1579,13 @@ char *GDALPDFStreamPoppler::GetRawBytes()
 class GDALPDFDictionaryPodofo : public GDALPDFDictionary
 {
   private:
-    PoDoFo::PdfDictionary *m_poDict;
-    PoDoFo::PdfVecObjects &m_poObjects;
+    const PoDoFo::PdfDictionary *m_poDict;
+    const PoDoFo::PdfVecObjects &m_poObjects;
     std::map<CPLString, GDALPDFObject *> m_map;
 
   public:
-    GDALPDFDictionaryPodofo(PoDoFo::PdfDictionary *poDict,
-                            PoDoFo::PdfVecObjects &poObjects)
+    GDALPDFDictionaryPodofo(const PoDoFo::PdfDictionary *poDict,
+                            const PoDoFo::PdfVecObjects &poObjects)
         : m_poDict(poDict), m_poObjects(poObjects)
     {
     }
@@ -1604,13 +1604,13 @@ class GDALPDFDictionaryPodofo : public GDALPDFDictionary
 class GDALPDFArrayPodofo : public GDALPDFArray
 {
   private:
-    PoDoFo::PdfArray *m_poArray;
-    PoDoFo::PdfVecObjects &m_poObjects;
+    const PoDoFo::PdfArray *m_poArray;
+    const PoDoFo::PdfVecObjects &m_poObjects;
     std::vector<GDALPDFObject *> m_v;
 
   public:
-    GDALPDFArrayPodofo(PoDoFo::PdfArray *poArray,
-                       PoDoFo::PdfVecObjects &poObjects)
+    GDALPDFArrayPodofo(const PoDoFo::PdfArray *poArray,
+                       const PoDoFo::PdfVecObjects &poObjects)
         : m_poArray(poArray), m_poObjects(poObjects)
     {
     }
@@ -1629,10 +1629,23 @@ class GDALPDFArrayPodofo : public GDALPDFArray
 class GDALPDFStreamPodofo : public GDALPDFStream
 {
   private:
-    PoDoFo::PdfStream *m_pStream;
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    const PoDoFo::PdfObjectStream *m_pStream;
+#else
+    const PoDoFo::PdfStream *m_pStream;
+#endif
 
   public:
-    GDALPDFStreamPodofo(PoDoFo::PdfStream *pStream) : m_pStream(pStream)
+    GDALPDFStreamPodofo(
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        const PoDoFo::PdfObjectStream *
+#else
+        const PoDoFo::PdfStream *
+#endif
+            pStream)
+        : m_pStream(pStream)
     {
     }
     virtual ~GDALPDFStreamPodofo()
@@ -1656,13 +1669,23 @@ class GDALPDFStreamPodofo : public GDALPDFStream
 /*                          GDALPDFObjectPodofo()                       */
 /************************************************************************/
 
-GDALPDFObjectPodofo::GDALPDFObjectPodofo(PoDoFo::PdfObject *po,
-                                         PoDoFo::PdfVecObjects &poObjects)
+GDALPDFObjectPodofo::GDALPDFObjectPodofo(const PoDoFo::PdfObject *po,
+                                         const PoDoFo::PdfVecObjects &poObjects)
     : m_po(po), m_poObjects(poObjects), m_poDict(nullptr), m_poArray(nullptr),
       m_poStream(nullptr)
 {
     try
     {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        if (m_po->GetDataType() == PoDoFo::PdfDataType::Reference)
+        {
+            PoDoFo::PdfObject *poObj =
+                m_poObjects.GetObject(m_po->GetReference());
+            if (poObj)
+                m_po = poObj;
+        }
+#else
         if (m_po->GetDataType() == PoDoFo::ePdfDataType_Reference)
         {
             PoDoFo::PdfObject *poObj =
@@ -1670,6 +1693,7 @@ GDALPDFObjectPodofo::GDALPDFObjectPodofo(PoDoFo::PdfObject *po,
             if (poObj)
                 m_po = poObj;
         }
+#endif
     }
     catch (PoDoFo::PdfError &oError)
     {
@@ -1699,6 +1723,27 @@ GDALPDFObjectType GDALPDFObjectPodofo::GetType()
     {
         switch (m_po->GetDataType())
         {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+            case PoDoFo::PdfDataType::Null:
+                return PDFObjectType_Null;
+            case PoDoFo::PdfDataType::Bool:
+                return PDFObjectType_Bool;
+            case PoDoFo::PdfDataType::Number:
+                return PDFObjectType_Int;
+            case PoDoFo::PdfDataType::Real:
+                return PDFObjectType_Real;
+            case PoDoFo::PdfDataType::String:
+                return PDFObjectType_String;
+            case PoDoFo::PdfDataType::Name:
+                return PDFObjectType_Name;
+            case PoDoFo::PdfDataType::Array:
+                return PDFObjectType_Array;
+            case PoDoFo::PdfDataType::Dictionary:
+                return PDFObjectType_Dictionary;
+            default:
+                return PDFObjectType_Unknown;
+#else
             case PoDoFo::ePdfDataType_Null:
                 return PDFObjectType_Null;
             case PoDoFo::ePdfDataType_Bool:
@@ -1719,6 +1764,7 @@ GDALPDFObjectType GDALPDFObjectPodofo::GetType()
                 return PDFObjectType_Dictionary;
             default:
                 return PDFObjectType_Unknown;
+#endif
         }
     }
     catch (PoDoFo::PdfError &oError)
@@ -1753,7 +1799,12 @@ const char *GDALPDFObjectPodofo::GetTypeNameNative()
 
 int GDALPDFObjectPodofo::GetBool()
 {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    if (m_po->GetDataType() == PoDoFo::PdfDataType::Bool)
+#else
     if (m_po->GetDataType() == PoDoFo::ePdfDataType_Bool)
+#endif
         return m_po->GetBool();
     else
         return 0;
@@ -1765,7 +1816,12 @@ int GDALPDFObjectPodofo::GetBool()
 
 int GDALPDFObjectPodofo::GetInt()
 {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    if (m_po->GetDataType() == PoDoFo::PdfDataType::Number)
+#else
     if (m_po->GetDataType() == PoDoFo::ePdfDataType_Number)
+#endif
         return static_cast<int>(m_po->GetNumber());
     else
         return 0;
@@ -1790,7 +1846,12 @@ double GDALPDFObjectPodofo::GetReal()
 const CPLString &GDALPDFObjectPodofo::GetString()
 {
     if (GetType() == PDFObjectType_String)
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        return (osStr = m_po->GetString().GetString());
+#else
         return (osStr = m_po->GetString().GetStringUtf8());
+#endif
     else
         return (osStr = "");
 }
@@ -1802,7 +1863,12 @@ const CPLString &GDALPDFObjectPodofo::GetString()
 const CPLString &GDALPDFObjectPodofo::GetName()
 {
     if (GetType() == PDFObjectType_Name)
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        return (osStr = m_po->GetName().GetString());
+#else
         return (osStr = m_po->GetName().GetName());
+#endif
     else
         return (osStr = "");
 }
@@ -1873,7 +1939,12 @@ GDALPDFStream *GDALPDFObjectPodofo::GetStream()
 
 GDALPDFObjectNum GDALPDFObjectPodofo::GetRefNum()
 {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    return GDALPDFObjectNum(m_po->GetIndirectReference().ObjectNumber());
+#else
     return GDALPDFObjectNum(m_po->Reference().ObjectNumber());
+#endif
 }
 
 /************************************************************************/
@@ -1882,7 +1953,12 @@ GDALPDFObjectNum GDALPDFObjectPodofo::GetRefNum()
 
 int GDALPDFObjectPodofo::GetRefGen()
 {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    return m_po->GetIndirectReference().GenerationNumber();
+#else
     return m_po->Reference().GenerationNumber();
+#endif
 }
 
 /************************************************************************/
@@ -1913,7 +1989,7 @@ GDALPDFObject *GDALPDFDictionaryPodofo::Get(const char *pszKey)
     if (oIter != m_map.end())
         return oIter->second;
 
-    PoDoFo::PdfObject *poVal = m_poDict->GetKey(PoDoFo::PdfName(pszKey));
+    const PoDoFo::PdfObject *poVal = m_poDict->GetKey(PoDoFo::PdfName(pszKey));
     if (poVal)
     {
         GDALPDFObjectPodofo *poObj =
@@ -1933,14 +2009,18 @@ GDALPDFObject *GDALPDFDictionaryPodofo::Get(const char *pszKey)
 
 std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPodofo::GetValues()
 {
-    PoDoFo::TKeyMap::iterator oIter = m_poDict->GetKeys().begin();
-    PoDoFo::TKeyMap::iterator oEnd = m_poDict->GetKeys().end();
-    for (; oIter != oEnd; ++oIter)
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    for (const auto &oIter : *m_poDict)
     {
-        const char *pszKey = oIter->first.GetName().c_str();
-        Get(pszKey);
+        Get(oIter.first.GetString().c_str());
     }
-
+#else
+    for (const auto &oIter : m_poDict->GetKeys())
+    {
+        Get(oIter.first.GetName().c_str());
+    }
+#endif
     return m_map;
 }
 
@@ -1989,7 +2069,7 @@ GDALPDFObject *GDALPDFArrayPodofo::Get(int nIndex)
     if (m_v[nIndex] != nullptr)
         return m_v[nIndex];
 
-    PoDoFo::PdfObject &oVal = (*m_poArray)[nIndex];
+    const PoDoFo::PdfObject &oVal = (*m_poArray)[nIndex];
     GDALPDFObjectPodofo *poObj = new GDALPDFObjectPodofo(&oVal, m_poObjects);
     m_v[nIndex] = poObj;
     return poObj;
@@ -2007,6 +2087,21 @@ GDALPDFObject *GDALPDFArrayPodofo::Get(int nIndex)
 
 int GDALPDFStreamPodofo::GetLength()
 {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    PoDoFo::charbuff str;
+    try
+    {
+        m_pStream->CopyToSafe(str);
+    }
+    catch (PoDoFo::PdfError &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "CopyToSafe() failed: %s",
+                 e.what());
+        return 0;
+    }
+    return static_cast<int64_t>(str.size());
+#else
     char *pBuffer = nullptr;
     PoDoFo::pdf_long nLen = 0;
     try
@@ -2019,6 +2114,7 @@ int GDALPDFStreamPodofo::GetLength()
     {
     }
     return 0;
+#endif
 }
 
 /************************************************************************/
@@ -2027,6 +2123,28 @@ int GDALPDFStreamPodofo::GetLength()
 
 char *GDALPDFStreamPodofo::GetBytes()
 {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    PoDoFo::charbuff str;
+    try
+    {
+        m_pStream->CopyToSafe(str);
+    }
+    catch (PoDoFo::PdfError &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "CopyToSafe() failed: %s",
+                 e.what());
+        return nullptr;
+    }
+    char *pszContent = (char *)VSI_MALLOC_VERBOSE(str.size() + 1);
+    if (!pszContent)
+    {
+        return nullptr;
+    }
+    memcpy(pszContent, str.data(), str.size());
+    pszContent[str.size()] = '\0';
+    return pszContent;
+#else
     char *pBuffer = nullptr;
     PoDoFo::pdf_long nLen = 0;
     try
@@ -2047,6 +2165,7 @@ char *GDALPDFStreamPodofo::GetBytes()
     PoDoFo::podofo_free(pBuffer);
     pszContent[nLen] = '\0';
     return pszContent;
+#endif
 }
 
 /************************************************************************/
@@ -2072,6 +2191,41 @@ int GDALPDFStreamPodofo::GetRawLength()
 
 char *GDALPDFStreamPodofo::GetRawBytes()
 {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+    PoDoFo::charbuff str;
+    try
+    {
+        PoDoFo::StringStreamDevice stream(str);
+#ifdef USE_HACK_BECAUSE_PdfInputStream_constructor_is_not_exported_in_podofo_0_11
+        auto *poNonConstStream =
+            const_cast<PoDoFo::PdfObjectStream *>(m_pStream);
+        auto inputStream = poNonConstStream->GetProvider().GetInputStream(
+            poNonConstStream->GetParent());
+        inputStream->CopyTo(stream);
+#else
+        // Should work but fails to link because PdfInputStream destructor
+        // is not exported
+        auto inputStream = m_pStream->GetInputStream(/*raw=*/true);
+        inputStream.CopyTo(stream);
+#endif
+        stream.Flush();
+    }
+    catch (PoDoFo::PdfError &e)
+    {
+        CPLError(CE_Failure, CPLE_AppDefined, "CopyToSafe() failed: %s",
+                 e.what());
+        return nullptr;
+    }
+    char *pszContent = (char *)VSI_MALLOC_VERBOSE(str.size() + 1);
+    if (!pszContent)
+    {
+        return nullptr;
+    }
+    memcpy(pszContent, str.data(), str.size());
+    pszContent[str.size()] = '\0';
+    return pszContent;
+#else
     char *pBuffer = nullptr;
     PoDoFo::pdf_long nLen = 0;
     try
@@ -2092,6 +2246,7 @@ char *GDALPDFStreamPodofo::GetRawBytes()
     PoDoFo::podofo_free(pBuffer);
     pszContent[nLen] = '\0';
     return pszContent;
+#endif
 }
 
 #endif  // HAVE_PODOFO

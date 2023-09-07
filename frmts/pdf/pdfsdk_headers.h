@@ -108,7 +108,25 @@ typedef unsigned char Guchar;
 #undef GetObject
 #endif
 
+// Related fix submitted per https://github.com/podofo/podofo/pull/98
+#ifdef HAVE_PODOFO_0_10_OR_LATER
+#define USE_HACK_BECAUSE_PdfInputStream_constructor_is_not_exported_in_podofo_0_11
+#endif
+
+#ifdef USE_HACK_BECAUSE_PdfInputStream_constructor_is_not_exported_in_podofo_0_11
+// Ugly! PfdObjectStream::GetParent() is private but we need it...
+#define private public
+#endif
 #include "podofo.h"
+#ifdef private
+#undef private
+#endif
+
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+#define PdfVecObjects PdfIndirectObjectList
+#endif
+
 #endif  // HAVE_PODOFO
 
 #ifdef HAVE_PDFIUM
