@@ -21,7 +21,8 @@ RUN apk add \
     qhull-dev \
     unixodbc-dev \
     libpq-dev \
-    libxml2-dev
+    libxml2-dev \
+    podofo-dev
 
 COPY requirements.txt /tmp/
 RUN python3 -m pip install --break-system-packages -U -r /tmp/requirements.txt
