@@ -37,6 +37,12 @@ the health of the project:
            :width: 250 px
            :target: https://www.planet.com
 
+    .. container:: horizontal-logo
+
+        .. image:: ../../images/sponsors/logo-nasa.png
+           :class: img-logos
+           :width: 250 px
+           :target: https://www.nasa.gov
 
 - Silver level:
 
