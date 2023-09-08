@@ -994,7 +994,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
     {
         char *pszKey = nullptr;
         const char *pszValue = CPLParseNameValue(aosTokens[i], &pszKey);
-        if (pszKey)
+        if (pszKey && pszValue)
         {
             if (EQUAL(pszKey, "if"))
             {
@@ -1020,8 +1020,17 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 }
                 aosOpenOptions = CSLTokenizeString2(pszValue, ",", 0);
             }
-            CPLFree(pszKey);
         }
+        if (!pszKey)
+        {
+
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid option specification: %s\n"
+                     "must be in the form 'key=value'",
+                     aosTokens[i]);
+            return nullptr;
+        }
+        CPLFree(pszKey);
     }
 
     // We don't open in GDAL_OF_SHARED mode to avoid issues when we open a
@@ -1156,26 +1165,39 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             }
             else if (EQUAL(pszKey, "scale") || STARTS_WITH_CI(pszKey, "scale_"))
             {
-                argv.AddString(CPLSPrintf("-%s", pszKey));
                 CPLStringList aosScaleParams(
                     CSLTokenizeString2(pszValue, ",", 0));
+
                 if (!(aosScaleParams.size() == 2) &&
-                    !(aosScaleParams.size() == 4))
+                    !(aosScaleParams.size() == 4) &&
+                    !(aosScaleParams.size() == 1))
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid value for explicit scale or scale_bn: "
-                             "%s\n  need 2, or 4 "
+                             "Invalid value for scale, (or scale_bn): "
+                             "%s\n  need 'scale=true', or 2 or 4 "
                              "numbers, comma separated: "
-                             "'scale=src_min,src_max[,dst_min,dst_max]'"
+                             "'scale=src_min,src_max[,dst_min,dst_max]' or "
                              "'scale_bn=src_min,src_max[,dst_min,dst_max]'",
                              pszValue);
                     poSrcDS->ReleaseRef();
                     CPLFree(pszKey);
                     return nullptr;
                 }
-                for (int j = 0; j < aosScaleParams.size(); j++)
+
+                // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
+                if (aosScaleParams.size() == 1 &&
+                    CPLTestBool(aosScaleParams[0]))
                 {
-                    argv.AddString(aosScaleParams[j]);
+                    argv.AddString(CPLSPrintf("-%s", pszKey));
+                }
+                // add remaining params (length 2 or 4)
+                if (aosScaleParams.size() > 1)
+                {
+                    argv.AddString(CPLSPrintf("-%s", pszKey));
+                    for (int j = 0; j < aosScaleParams.size(); j++)
+                    {
+                        argv.AddString(aosScaleParams[j]);
+                    }
                 }
             }
             else if (EQUAL(pszKey, "exponent") ||
@@ -1308,6 +1330,14 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             {
                 // do nothing, we passed this in earlier
             }
+            else if (EQUAL(pszKey, "unscale"))
+            {
+                if (CPLTestBool(pszValue))
+                {
+                    argv.AddString("-unscale");
+                }
+            }
+
             else
             {
                 CPLError(CE_Failure, CPLE_NotSupported, "Unknown option: %s",
