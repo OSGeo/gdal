@@ -317,7 +317,7 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eBandDataType, int nXOff,
         const bool bIsComplex =
             CPL_TO_BOOL(GDALDataTypeIsComplex(eOperDataType));
         const CPLErr eErr = VRTComplexSource::RasterIOInternal<float>(
-            nFileXOff, nFileYOff, nFileXSize, nFileYSize,
+            eBandDataType, nFileXOff, nFileYOff, nFileXSize, nFileYSize,
             pabyWorkData + nLineOffset * nTopFill + nPixelOffset * nLeftFill,
             nFileXSize, nFileYSize, eOperDataType, nPixelOffset, nLineOffset,
             &sExtraArgs, bIsComplex ? GDT_CFloat32 : GDT_Float32);

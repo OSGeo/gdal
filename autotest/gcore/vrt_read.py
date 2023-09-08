@@ -2267,3 +2267,36 @@ def test_vrt_read_compute_statistics_mosaic_optimization_not_triggered():
 
     vrt_stats = vrt_ds.GetRasterBand(1).ComputeStatistics(False)
     assert vrt_stats == src_ds.GetRasterBand(1).ComputeStatistics(False)
+
+
+###############################################################################
+# Test complex source with requesting a buffer with a type "larger" than
+# the VRT data type
+
+
+@pytest.mark.parametrize("obj_type", ["ds", "band"])
+@pytest.mark.parametrize(
+    "struct_type,gdal_type ", [("B", gdal.GDT_Byte), ("i", gdal.GDT_Int32)]
+)
+def test_vrt_read_complex_source_use_band_data_type_constraint(
+    obj_type, struct_type, gdal_type
+):
+
+    complex_xml = """<VRTDataset rasterXSize="20" rasterYSize="20">
+  <VRTRasterBand dataType="Byte" band="1">
+    <ComplexSource>
+      <SourceFilename relativeToVRT="0">data/byte.tif</SourceFilename>
+      <SourceBand>1</SourceBand>
+      <ScaleOffset>0</ScaleOffset>
+      <ScaleRatio>1.5</ScaleRatio>
+    </ComplexSource>
+  </VRTRasterBand>
+</VRTDataset>
+"""
+
+    ds = gdal.Open(complex_xml)
+    obj = ds if obj_type == "ds" else ds.GetRasterBand(1)
+    scaleddata = struct.unpack(
+        struct_type * (20 * 20), obj.ReadRaster(buf_type=gdal_type)
+    )
+    assert max(scaleddata) == 255
