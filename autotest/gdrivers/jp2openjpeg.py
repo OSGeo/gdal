@@ -2575,8 +2575,10 @@ def test_jp2openjpeg_45():
     del out_ds
 
     # Now do the checks
-    dircontent = gdal.ReadDir("/vsimem/gmljp2")
-    assert dircontent is None
+    dircontent = gdal.ReadDir("/vsimem/")
+    if dircontent:
+        for filename in dircontent:
+            assert not filename.startswith("gmljp2")
 
     ds = gdal.Open("/vsimem/jp2openjpeg_45.jp2")
     gmljp2 = ds.GetMetadata_List("xml:gml.root-instance")[0]
@@ -2741,8 +2743,10 @@ def test_jp2openjpeg_45():
     )
     del out_ds
 
-    dircontent = gdal.ReadDir("/vsimem/gmljp2")
-    assert dircontent is None
+    dircontent = gdal.ReadDir("/vsimem/")
+    if dircontent:
+        for filename in dircontent:
+            assert not filename.startswith("gmljp2")
 
     ds = ogr.Open("/vsimem/jp2openjpeg_45.jp2")
     assert ds.GetLayerCount() == 1
