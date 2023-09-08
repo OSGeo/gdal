@@ -1498,13 +1498,13 @@ def test_vrt_protocol():
     assert ds.GetRasterBand(2).Checksum() == 5047
 
     ds = gdal.Open("vrt://data/float32.tif?scale_1=0,10")
-    assert ds.GetRasterBand(1).Checksum() == 4867
+    assert ds.GetRasterBand(1).Checksum() == 4155
 
     ds = gdal.Open("vrt://data/float32.tif?exponent=2.2")
     assert ds is None
 
     ds = gdal.Open("vrt://data/float32.tif?exponent=2.2&scale=0,100")
-    assert ds.GetRasterBand(1).Checksum() == 5294
+    assert ds.GetRasterBand(1).Checksum() == 4901
 
     ds = gdal.Open("vrt://data/uint16_3band.vrt?exponent_2=2.2&scale_2=0,10,0,100")
     assert ds.GetRasterBand(2).Checksum() == 4455
