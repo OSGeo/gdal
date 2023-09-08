@@ -675,6 +675,7 @@ CPLHTTPResult *OGRElasticDataSource::HTTPFetch(const char *pszURL,
         }
         aosOptions.SetNameValue("HEADERS", osHeaders.c_str());
     }
+
     return CPLHTTPFetch(pszURL, aosOptions);
 }
 

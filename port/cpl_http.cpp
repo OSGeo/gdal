@@ -1113,6 +1113,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
         CPLTestBool(CPLGetConfigOption("CPL_CURL_ENABLE_VSIMEM", "FALSE")))
     {
         CPLString osURL(pszURL);
+
         const char *pszCustomRequest =
             CSLFetchNameValue(papszOptions, "CUSTOMREQUEST");
         if (pszCustomRequest != nullptr)
@@ -1140,6 +1141,19 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
             osURL += "&HEADERS=";
             osURL += pszHeaders;
         }
+
+        if (osURL.find('?') == std::string::npos &&
+            osURL.find('&') == std::string::npos)
+        {
+            const char *pszDefaultQueryParams = CPLGetConfigOption(
+                "CPL_CURL_VSIMEM_DEFAULT_QUERY_PARAMETERS", nullptr);
+            if (pszDefaultQueryParams != nullptr)
+            {
+                osURL += "?";
+                osURL += pszDefaultQueryParams;
+            }
+        }
+
         vsi_l_offset nLength = 0;
         CPLHTTPResult *psResult =
             static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));
