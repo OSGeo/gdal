@@ -273,6 +273,11 @@ json_object *OGRPLScenesDataV1Dataset::RunRequest(const char *pszURL,
             osURL += "&POSTFIELDS=";
             osURL += pszPostContent;
         }
+        else if (osURL.find('?') == std::string::npos &&
+                 osURL.find('&') == std::string::npos)
+        {
+            osURL += "?fortest=true";
+        }
         CPLDebug("PLSCENES", "Fetching %s", osURL.c_str());
         GByte *pabyBuf = VSIGetMemFileBuffer(osURL, &nDataLengthLarge, FALSE);
         size_t nDataLength = static_cast<size_t>(nDataLengthLarge);
