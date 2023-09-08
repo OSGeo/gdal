@@ -1697,7 +1697,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-  ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo`` and ``unscale``.
+``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo`` and ``unscale``.
 
 Other options may be added in the future.
 

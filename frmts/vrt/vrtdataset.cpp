@@ -1020,7 +1020,6 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 }
                 aosOpenOptions = CSLTokenizeString2(pszValue, ",", 0);
             }
-            CPLFree(pszKey);
         }
         if (!pszKey)
         {
@@ -1031,6 +1030,7 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                      aosTokens[i]);
             return nullptr;
         }
+        CPLFree(pszKey);
     }
 
     // We don't open in GDAL_OF_SHARED mode to avoid issues when we open a
@@ -1168,8 +1168,6 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 CPLStringList aosScaleParams(
                     CSLTokenizeString2(pszValue, ",", 0));
 
-                CPLDebug("VRT", "aosScaleParams.size(): %i",
-                         aosScaleParams.size());
                 if (!(aosScaleParams.size() == 2) &&
                     !(aosScaleParams.size() == 4) &&
                     !(aosScaleParams.size() == 1))
