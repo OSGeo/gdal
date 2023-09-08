@@ -6,6 +6,16 @@ MIGRATION GUIDE FROM GDAL 3.7 to GDAL 3.8
     of a OGRSpatialReference*. Drivers should clone the passed SRS if they need
     to keep it.
 
+- The /vsimem virtual file system is modified to automatically create parent
+  directories when a file is created. (e.g., creating /vsimem/parent/child.txt
+  would cause the directory /vsimem/parent to be created.) If the parent
+  directory cannot be created because the file /vsimem/parent exists, file
+  creation will now fail.
+
+- In SWIG bindings, the function FileFromMemBuffer now returns an error code
+  if the file could not be created.
+
+
 MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
 -----------------------------------------
 
