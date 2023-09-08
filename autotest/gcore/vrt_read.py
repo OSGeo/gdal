@@ -1611,6 +1611,21 @@ def test_vrt_protocol():
         0
     ] == pytest.approx(255.99899291992188)
 
+    ds = gdal.Open("vrt://data/minfloat.tif?scale_2=true&bands=1,1")
+    assert struct.unpack("f", ds.GetRasterBand(2).ReadRaster(2, 0, 1, 1))[
+        0
+    ] == pytest.approx(255.99899291992188)
+    assert struct.unpack("f", ds.GetRasterBand(1).ReadRaster(2, 0, 1, 1))[
+        0
+    ] == pytest.approx(5.0)
+
+    ds = gdal.GetDriverByName("GTiff").Create(
+        "/vsimem/i01.tif", 1, 2, 1, gdal.GDT_Float32
+    )
+    ds.GetRasterBand(1).WriteRaster(
+        0, 0, 1, 2, b"".join(struct.pack("f", v) for v in range(2))
+    )
+
     # test that 'key=value' form is used
     with gdal.quiet_errors():
         assert not gdal.Open("vrt://data/minfloat.tif?scale")

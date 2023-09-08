@@ -1030,7 +1030,6 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                      "Invalid option specification: %s\n"
                      "must be in the form 'key=value'",
                      aosTokens[i]);
-            //CPLFree(pszKey);
             return nullptr;
         }
     }
@@ -1168,39 +1167,40 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
             }
             else if (EQUAL(pszKey, "scale") || STARTS_WITH_CI(pszKey, "scale_"))
             {
-
                 CPLStringList aosScaleParams(
                     CSLTokenizeString2(pszValue, ",", 0));
+
+                CPLDebug("VRT", "aosScaleParams.size(): %i",
+                         aosScaleParams.size());
                 if (!(aosScaleParams.size() == 2) &&
                     !(aosScaleParams.size() == 4) &&
                     !(aosScaleParams.size() == 1))
                 {
                     CPLError(CE_Failure, CPLE_IllegalArg,
-                             "Invalid value for explicit scale or scale_bn: "
-                             "%s\n  need 2, or 4 "
+                             "Invalid value for scale, (or scale_bn): "
+                             "%s\n  need 'scale=true', or 2 or 4 "
                              "numbers, comma separated: "
-                             "'scale=src_min,src_max[,dst_min,dst_max]'"
+                             "'scale=src_min,src_max[,dst_min,dst_max]' or "
                              "'scale_bn=src_min,src_max[,dst_min,dst_max]'",
                              pszValue);
                     poSrcDS->ReleaseRef();
                     CPLFree(pszKey);
                     return nullptr;
                 }
-                if (aosScaleParams.size() == 1 && !CPLTestBool(pszValue))
+
+                // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
+                if (aosScaleParams.size() == 1 &&
+                    CPLTestBool(aosScaleParams[0]))
                 {
-                    // do nothing, because scale=false
+                    argv.AddString(CPLSPrintf("-%s", pszKey));
                 }
-                else
+                // add remaining params (length 2 or 4)
+                if (aosScaleParams.size() > 1)
                 {
-                    // -scale because scale=true or scale=min,max or scale=min,max,dstmin,dstmax
-                    argv.AddString(CPLSPrintf("-%s", "scale"));
-                    // add remaing params (length 2 or 4)
-                    if (aosScaleParams.size() > 1)
+                    argv.AddString(CPLSPrintf("-%s", pszKey));
+                    for (int j = 0; j < aosScaleParams.size(); j++)
                     {
-                        for (int j = 0; j < aosScaleParams.size(); j++)
-                        {
-                            argv.AddString(aosScaleParams[j]);
-                        }
+                        argv.AddString(aosScaleParams[j]);
                     }
                 }
             }
