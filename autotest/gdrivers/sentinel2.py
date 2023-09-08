@@ -2719,3 +2719,106 @@ def test_sentinel2_zipped():
         assert os.path.exists(zipwpath)
         ds = gdal.Open(zipwpath)
         assert ds is not None
+
+
+###############################################################################
+# Test opening a L1C subdataset (processing baseline 05.09) on the 10m bands
+
+def test_sentinel2_l1c_baseline_greater_than_4_0__1():
+    filename_xml = (
+        "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
+    )
+    gdal.ErrorReset()
+    ds = gdal.Open("SENTINEL2_L1C:%s:10m:EPSG_32634" % filename_xml)
+    assert ds is not None and gdal.GetLastErrorMsg() == ""
+
+    expected_md = {
+        'CLOUD_COVERAGE_ASSESSMENT': '3.34127623995939',
+        'DATATAKE_1_DATATAKE_SENSING_START': '2023-08-23T09:55:59.024Z',
+        'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
+        'DATATAKE_1_ID': 'GS2B_20230823T095559_033753_N05.09',
+        'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'ASCENDING',
+        'DATATAKE_1_SENSING_ORBIT_NUMBER': '122',
+        'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
+        'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
+        'DEGRADED_MSI_DATA_PERCENTAGE': '0',
+        'FORMAT_CORRECTNESS': 'PASSED',
+        'GENERAL_QUALITY': 'PASSED',
+        'GENERATION_TIME': '2023-08-23T12:02:34.000000Z',
+        'GEOMETRIC_QUALITY': 'PASSED',
+        'PREVIEW_GEO_INFO': 'Not applicable',
+        'PREVIEW_IMAGE_URL': 'Not applicable',
+        'PROCESSING_BASELINE': '05.09',
+        'PROCESSING_LEVEL': 'Level-1C',
+        'PRODUCT_DOI': 'https://doi.org/10.5270/S2_-742ikth',
+        'PRODUCT_START_TIME': '2023-08-23T09:55:59.024Z',
+        'PRODUCT_STOP_TIME': '2023-08-23T09:55:59.024Z',
+        'PRODUCT_TYPE': 'S2MSI1C',
+        'PRODUCT_URI': 'S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE',
+        'QUANTIFICATION_VALUE': '10000',
+        'RADIOMETRIC_QUALITY': 'PASSED',
+        'REFLECTANCE_CONVERSION_U': '0.97659423426857',
+        'SENSOR_QUALITY': 'PASSED',
+        'SPECIAL_VALUE_NODATA': '0',
+        'SPECIAL_VALUE_SATURATED': '65535'
+    }
+    got_md = ds.GetMetadata()
+    if got_md != expected_md:
+        import pprint
+
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    assert ds.RasterXSize == 10980 and ds.RasterYSize == 10980
+
+    assert ds.GetProjectionRef().find("32634") >= 0
+
+    got_gt = ds.GetGeoTransform()
+    assert got_gt == (300000.0, 10.0, 0.0, 6100020.0, 0.0, -10.0)
+
+    assert ds.RasterCount == 4
+
+    assert ds.GetMetadata("xml:SENTINEL2") is not None
+
+    band = ds.GetRasterBand(1)
+    got_md = band.GetMetadata()
+    expected_md = {
+        'BANDNAME': 'B4',
+        'BANDWIDTH': '30',
+        'BANDWIDTH_UNIT': 'nm',
+        'RADIO_ADD_OFFSET': '-1000',
+        'SOLAR_IRRADIANCE': '1512.79',
+        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+        'WAVELENGTH': '665',
+        'WAVELENGTH_UNIT': 'nm'
+    }
+    if got_md != expected_md:
+        import pprint
+
+        pprint.pprint(got_md)
+        pytest.fail()
+
+    assert band.GetColorInterpretation() == gdal.GCI_RedBand
+
+    assert band.DataType == gdal.GDT_UInt16
+
+    band = ds.GetRasterBand(4)
+
+    assert band.GetColorInterpretation() == gdal.GCI_Undefined
+
+    got_md = band.GetMetadata()
+    expected_md = {
+        'BANDNAME': 'B8',
+        'BANDWIDTH': '115',
+        'BANDWIDTH_UNIT': 'nm',
+        'RADIO_ADD_OFFSET': '-1000',
+        'SOLAR_IRRADIANCE': '1041.28',
+        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
+        'WAVELENGTH': '842',
+        'WAVELENGTH_UNIT': 'nm'
+    }
+    if got_md != expected_md:
+        import pprint
+
+        pprint.pprint(got_md)
+        pytest.fail()

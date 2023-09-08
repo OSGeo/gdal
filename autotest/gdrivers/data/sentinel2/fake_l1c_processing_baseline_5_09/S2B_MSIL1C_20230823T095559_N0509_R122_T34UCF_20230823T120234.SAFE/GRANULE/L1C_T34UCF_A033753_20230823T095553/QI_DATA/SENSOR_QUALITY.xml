@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?><Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>GRANULE/L1C_T34UCF_A033753_20230823T095553/QI_DATA/SENSOR_QUALITY.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes/>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2022-08-30T00:25:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>06.01.00</Creator_Version>
+                <Creation_Date>UTC=2023-08-23T13:27:27</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report date="2023-08-23T13:27:27.507Z" gippVersion="1.0" globalStatus="PASSED">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20220715T000042_V20220830T002500</parentID>
+                <name>SENSOR_QUALITY</name>
+                <version>1.0</version>
+                <item class="http://www.esa.int/s2#pdi_level_1c_tile_container" className="PDI Level 1C Tile Folder" name="S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09" url="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/"/>
+                <check>
+                    <inspection creation="2023-08-23T13:27:27.344Z" duration="149" execution="2023-08-23T13:27:27.354Z" id="checkMetadata" item="S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/" name="Metadata file check. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Metadata file is present.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T13:27:29.478Z" duration="0" execution="2023-08-23T13:27:29.494Z" id="Missing_Lines" item="S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" name="Check the number of missing lines. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">No missing lines </message>
+                    <extraValues>
+                        <value name="MISSING_LINES">0</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T13:27:29.496Z" duration="0" execution="2023-08-23T13:27:29.511Z" id="Sensing_Time" item="S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" name="Check the consistency of the sensing time. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Sensing time is valid </message>
+                    <extraValues>
+                        <value name="SENSING_TIME">2023-08-23T10:05:35.271949Z</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T13:27:29.513Z" duration="0" execution="2023-08-23T13:27:29.527Z" id="Corrupted_ISP" item="S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" name="Check the consistency of the granules. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">No Error detected. </message>
+                    <extraValues>
+                        <value name="CORRUPTED_ISP">0</value>
+                    </extraValues>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>
