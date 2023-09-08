@@ -52,7 +52,8 @@ def module_disable_exceptions():
 def test_ogr_plscenes_data_v1_catalog_no_paging():
 
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types", '{ "item_types": [ { "id": "PSScene3Band" } ] }'
+        "/vsimem/data_v1/item-types?fortest=true",
+        '{ "item_types": [ { "id": "PSScene3Band" } ] }',
     )
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"):
         ds = gdal.OpenEx(
@@ -66,7 +67,7 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
     with gdal.quiet_errors():
         assert ds.GetLayerByName("non_existing") is None
 
-    gdal.Unlink("/vsimem/data_v1/item-types")
+    gdal.Unlink("/vsimem/data_v1/item-types?fortest=true")
 
 
 ###############################################################################
@@ -76,11 +77,11 @@ def test_ogr_plscenes_data_v1_catalog_no_paging():
 def test_ogr_plscenes_data_v1_catalog_paging():
 
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types",
+        "/vsimem/data_v1/item-types?fortest=true",
         '{"_links": { "_next" : "/vsimem/data_v1/item-types/page_2"}, "item_types": [ { "id": "PSScene3Band" } ] }',
     )
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/page_2",
+        "/vsimem/data_v1/item-types/page_2?fortest=true",
         '{ "item_types": [ { "id": "PSScene4Band" } ] }',
     )
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"):
@@ -92,7 +93,8 @@ def test_ogr_plscenes_data_v1_catalog_paging():
         assert ds.GetLayerByName("non_existing") is None
     assert ds.GetLayerByName("PSScene3Band") is not None
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/PSScene4Band", '{ "id": "PSScene4Band"} }'
+        "/vsimem/data_v1/item-types/PSScene4Band?fortest=true",
+        '{ "id": "PSScene4Band"} }',
     )
     assert ds.GetLayerByName("PSScene4Band") is not None
     assert ds.GetLayerCount() == 2
@@ -100,7 +102,7 @@ def test_ogr_plscenes_data_v1_catalog_paging():
     with gdal.quiet_errors():
         assert ds.GetLayerByName("non_existing") is None
 
-    gdal.Unlink("/vsimem/data_v1/item-types")
+    gdal.Unlink("/vsimem/data_v1/item-types?fortest=true")
     gdal.Unlink("/vsimem/data_v1/item-types/page_2")
     gdal.Unlink("/vsimem/data_v1/item-types/PSScene4Band")
 
@@ -112,7 +114,7 @@ def test_ogr_plscenes_data_v1_catalog_paging():
 def test_ogr_plscenes_data_v1_nominal():
 
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types",
+        "/vsimem/data_v1/item-types?fortest=true",
         """{ "item_types": [
     {"display_description" : "display_description",
      "display_name" : "display_name",
@@ -193,7 +195,7 @@ def test_ogr_plscenes_data_v1_nominal():
     )
 
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets",
+        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets?fortest=true",
         """{
   "analytic" : {
       "_permissions": ["download"],
@@ -431,7 +433,7 @@ def test_ogr_plscenes_data_v1_nominal():
 
     # visual not an object
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets",
+        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets?fortest=true",
         """{ "visual": false }""",
     )
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"), gdaltest.error_handler():
@@ -449,7 +451,7 @@ def test_ogr_plscenes_data_v1_nominal():
 
     # Inactive file, and activation link not working
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets",
+        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets?fortest=true",
         """{
   "analytic" : {
       "_links": {
@@ -478,7 +480,7 @@ def test_ogr_plscenes_data_v1_nominal():
 
     # File in activation
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets",
+        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets?fortest=true",
         """{
   "analytic" : {
       "_links": {
@@ -506,7 +508,7 @@ def test_ogr_plscenes_data_v1_nominal():
     assert ds_raster is None
 
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets",
+        "/vsimem/data_v1/item-types/PSOrthoTile/items/id/assets?fortest=true",
         """{
   "analytic" : {
       "_permissions": ["download"],
@@ -580,7 +582,8 @@ def test_ogr_plscenes_data_v1_nominal():
 
     # Failed filter by scene id
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types/PSOrthoTile", """{"id": "PSOrthoTile"}"""
+        "/vsimem/data_v1/item-types/PSOrthoTile?fortest=true",
+        """{"id": "PSOrthoTile"}""",
     )
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"):
         ds_raster = gdal.OpenEx(
@@ -707,7 +710,9 @@ def test_ogr_plscenes_data_v1_errors():
     assert ds is None
 
     # Invalid option
-    gdal.FileFromMemBuffer("/vsimem/data_v1/item-types", '{ "item-types": [] }')
+    gdal.FileFromMemBuffer(
+        "/vsimem/data_v1/item-types?fortest=true", '{ "item-types": [] }'
+    )
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"), gdaltest.error_handler():
         ds = gdal.OpenEx(
             "PLScenes:version=data_v1,api_key=foo,invalid=invalid", gdal.OF_VECTOR
@@ -715,7 +720,7 @@ def test_ogr_plscenes_data_v1_errors():
     assert ds is None
 
     # Invalid JSON
-    gdal.FileFromMemBuffer("/vsimem/data_v1/item-types", "{invalid_json")
+    gdal.FileFromMemBuffer("/vsimem/data_v1/item-types?fortest=true", "{invalid_json")
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"), gdaltest.error_handler():
         ds = gdal.OpenEx(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
@@ -723,7 +728,7 @@ def test_ogr_plscenes_data_v1_errors():
     assert ds is None
 
     # Not an object
-    gdal.FileFromMemBuffer("/vsimem/data_v1/item-types", "false")
+    gdal.FileFromMemBuffer("/vsimem/data_v1/item-types?fortest=true", "false")
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"), gdaltest.error_handler():
         ds = gdal.OpenEx(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
@@ -731,7 +736,7 @@ def test_ogr_plscenes_data_v1_errors():
     assert ds is None
 
     # Lack of "item_types"
-    gdal.FileFromMemBuffer("/vsimem/data_v1/item-types", "{}")
+    gdal.FileFromMemBuffer("/vsimem/data_v1/item-types?fortest=true", "{}")
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"), gdaltest.error_handler():
         ds = gdal.OpenEx(
             "PLScenes:", gdal.OF_VECTOR, open_options=["VERSION=data_v1", "API_KEY=foo"]
@@ -740,7 +745,7 @@ def test_ogr_plscenes_data_v1_errors():
 
     # Invalid catalog objects
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types",
+        "/vsimem/data_v1/item-types?fortest=true",
         """{"item_types": [{}, [], null, {"id":null},
     {"id":"foo"}]}""",
     )
@@ -752,7 +757,7 @@ def test_ogr_plscenes_data_v1_errors():
 
     # Invalid next URL
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types",
+        "/vsimem/data_v1/item-types?fortest=true",
         '{"_links": { "_next": "/vsimem/inexisting" }, "item_types": [{"id": "my_catalog"}]}',
     )
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"):
@@ -764,7 +769,8 @@ def test_ogr_plscenes_data_v1_errors():
     assert lyr_count == 1
 
     gdal.FileFromMemBuffer(
-        "/vsimem/data_v1/item-types", '{"item_types": [{"id": "PSScene3Band"}]}'
+        "/vsimem/data_v1/item-types?fortest=true",
+        '{"item_types": [{"id": "PSScene3Band"}]}',
     )
     with gdal.config_option("PL_URL", "/vsimem/data_v1/"):
         ds = gdal.OpenEx(
@@ -799,7 +805,7 @@ def test_ogr_plscenes_data_v1_errors():
     lyr.ResetReading()
     lyr.GetNextFeature()
 
-    gdal.Unlink("/vsimem/data_v1/item-types")
+    gdal.Unlink("/vsimem/data_v1/item-types?fortest=true")
     gdal.Unlink(
         '/vsimem/data_v1/quick-search?_page_size=250&POSTFIELDS={"item_types":["PSScene3Band"],"filter":{"type":"AndFilter","config":[]}}'
     )
