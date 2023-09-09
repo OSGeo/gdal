@@ -1000,13 +1000,12 @@ class GDALPDFArrayPoppler : public GDALPDFArray
 {
   private:
     Array *m_poArray;
-    std::vector<GDALPDFObject *> m_v;
+    std::vector<std::unique_ptr<GDALPDFObject>> m_v;
 
   public:
     GDALPDFArrayPoppler(Array *poArray) : m_poArray(poArray)
     {
     }
-    virtual ~GDALPDFArrayPoppler();
 
     virtual int GetLength() override;
     virtual GDALPDFObject *Get(int nIndex) override;
@@ -1406,18 +1405,6 @@ GDALPDFArray *GDALPDFCreateArray(Array *array)
 }
 
 /************************************************************************/
-/*                           ~GDALPDFArrayPoppler()                     */
-/************************************************************************/
-
-GDALPDFArrayPoppler::~GDALPDFArrayPoppler()
-{
-    for (size_t i = 0; i < m_v.size(); i++)
-    {
-        delete m_v[i];
-    }
-}
-
-/************************************************************************/
 /*                               GetLength()                            */
 /************************************************************************/
 
@@ -1435,18 +1422,11 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
     if (nIndex < 0 || nIndex >= GetLength())
         return nullptr;
 
-    int nOldSize = static_cast<int>(m_v.size());
-    if (nIndex >= nOldSize)
-    {
-        m_v.resize(nIndex + 1);
-        for (int i = nOldSize; i <= nIndex; i++)
-        {
-            m_v[i] = nullptr;
-        }
-    }
+    if (m_v.empty())
+        m_v.resize(GetLength());
 
     if (m_v[nIndex] != nullptr)
-        return m_v[nIndex];
+        return m_v[nIndex].get();
 
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
     auto &&o(m_poArray->getNF(nIndex));
@@ -1461,20 +1441,20 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
             Object o2(m_poArray->get(nIndex));
             if (!o2.isNull())
             {
-                GDALPDFObjectPoppler *poObj =
-                    new GDALPDFObjectPoppler(new Object(std::move(o2)), TRUE);
+                auto poObj = cpl::make_unique<GDALPDFObjectPoppler>(
+                    new Object(std::move(o2)), TRUE);
                 poObj->SetRefNumAndGen(nRefNum, nRefGen);
-                m_v[nIndex] = poObj;
-                return poObj;
+                m_v[nIndex] = std::move(poObj);
+                return m_v[nIndex].get();
             }
         }
         else
         {
-            GDALPDFObjectPoppler *poObj =
-                new GDALPDFObjectPoppler(new Object(o.copy()), TRUE);
+            auto poObj = cpl::make_unique<GDALPDFObjectPoppler>(
+                new Object(o.copy()), TRUE);
             poObj->SetRefNumAndGen(nRefNum, nRefGen);
-            m_v[nIndex] = poObj;
-            return poObj;
+            m_v[nIndex] = std::move(poObj);
+            return m_v[nIndex].get();
         }
     }
     return nullptr;
@@ -1491,10 +1471,10 @@ GDALPDFObject *GDALPDFArrayPoppler::Get(int nIndex)
         }
         if (!po->isRef() || (m_poArray->get(nIndex, po)))
         {
-            GDALPDFObjectPoppler *poObj = new GDALPDFObjectPoppler(po, TRUE);
+            auto poObj = cpl::make_unique<GDALPDFObjectPoppler>(po, TRUE);
             poObj->SetRefNumAndGen(nRefNum, nRefGen);
-            m_v[nIndex] = poObj;
-            return poObj;
+            m_v[nIndex] = std::move(poObj);
+            return m_v[nIndex].get();
         }
         else
         {
@@ -1683,7 +1663,7 @@ class GDALPDFArrayPodofo : public GDALPDFArray
   private:
     const PoDoFo::PdfArray *m_poArray;
     const PoDoFo::PdfVecObjects &m_poObjects;
-    std::vector<GDALPDFObject *> m_v;
+    std::vector<std::unique_ptr<GDALPDFObject>> m_v;
 
   public:
     GDALPDFArrayPodofo(const PoDoFo::PdfArray *poArray,
@@ -1691,7 +1671,6 @@ class GDALPDFArrayPodofo : public GDALPDFArray
         : m_poArray(poArray), m_poObjects(poObjects)
     {
     }
-    virtual ~GDALPDFArrayPodofo();
 
     virtual int GetLength() override;
     virtual GDALPDFObject *Get(int nIndex) override;
@@ -2107,14 +2086,6 @@ std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPodofo::GetValues()
 /* ==================================================================== */
 /************************************************************************/
 
-GDALPDFArrayPodofo::~GDALPDFArrayPodofo()
-{
-    for (size_t i = 0; i < m_v.size(); i++)
-    {
-        delete m_v[i];
-    }
-}
-
 /************************************************************************/
 /*                              GetLength()                             */
 /************************************************************************/
@@ -2133,23 +2104,15 @@ GDALPDFObject *GDALPDFArrayPodofo::Get(int nIndex)
     if (nIndex < 0 || nIndex >= GetLength())
         return nullptr;
 
-    int nOldSize = static_cast<int>(m_v.size());
-    if (nIndex >= nOldSize)
-    {
-        m_v.resize(nIndex + 1);
-        for (int i = nOldSize; i <= nIndex; i++)
-        {
-            m_v[i] = nullptr;
-        }
-    }
+    if (m_v.empty())
+        m_v.resize(GetLength());
 
     if (m_v[nIndex] != nullptr)
-        return m_v[nIndex];
+        return m_v[nIndex].get();
 
     const PoDoFo::PdfObject &oVal = (*m_poArray)[nIndex];
-    GDALPDFObjectPodofo *poObj = new GDALPDFObjectPodofo(&oVal, m_poObjects);
-    m_v[nIndex] = poObj;
-    return poObj;
+    m_v[nIndex] = cpl::make_unique<GDALPDFObjectPodofo>(&oVal, m_poObjects);
+    return m_v[nIndex].get();
 }
 
 /************************************************************************/
@@ -2363,13 +2326,12 @@ class GDALPDFArrayPdfium : public GDALPDFArray
 {
   private:
     const CPDF_Array *m_poArray;
-    std::vector<GDALPDFObject *> m_v;
+    std::vector<std::unique_ptr<GDALPDFObject>> m_v;
 
   public:
     GDALPDFArrayPdfium(const CPDF_Array *poArray) : m_poArray(poArray)
     {
     }
-    virtual ~GDALPDFArrayPdfium();
 
     virtual int GetLength() override;
     virtual GDALPDFObject *Get(int nIndex) override;
@@ -2757,14 +2719,6 @@ std::map<CPLString, GDALPDFObject *> &GDALPDFDictionaryPdfium::GetValues()
 /* ==================================================================== */
 /************************************************************************/
 
-GDALPDFArrayPdfium::~GDALPDFArrayPdfium()
-{
-    for (size_t i = 0; i < m_v.size(); i++)
-    {
-        delete m_v[i];
-    }
-}
-
 /************************************************************************/
 /*                              GetLength()                             */
 /************************************************************************/
@@ -2783,25 +2737,18 @@ GDALPDFObject *GDALPDFArrayPdfium::Get(int nIndex)
     if (nIndex < 0 || nIndex >= GetLength())
         return nullptr;
 
-    int nOldSize = static_cast<int>(m_v.size());
-    if (nIndex >= nOldSize)
-    {
-        m_v.resize(nIndex + 1);
-        for (int i = nOldSize; i <= nIndex; i++)
-        {
-            m_v[i] = nullptr;
-        }
-    }
+    if (m_v.empty())
+        m_v.resize(GetLength());
 
     if (m_v[nIndex] != nullptr)
-        return m_v[nIndex];
+        return m_v[nIndex].get();
 
-    GDALPDFObjectPdfium *poObj =
-        GDALPDFObjectPdfium::Build(m_poArray->GetObjectAt(nIndex));
+    auto poObj = std::unique_ptr<GDALPDFObjectPdfium>(
+        GDALPDFObjectPdfium::Build(m_poArray->GetObjectAt(nIndex)));
     if (poObj == nullptr)
         return nullptr;
-    m_v[nIndex] = poObj;
-    return poObj;
+    m_v[nIndex] = std::move(poObj);
+    return m_v[nIndex].get();
 }
 
 /************************************************************************/
