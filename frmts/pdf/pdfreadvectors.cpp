@@ -683,7 +683,7 @@ OGRGeometry *PDFDataset::ParseContent(
     char aszTokenStack[TOKEN_STACK_SIZE][MAX_TOKEN_SIZE];
     int nTokenStackSize = 0;
     int bInString = FALSE;
-    int nBDCLevel = 0;
+    int nBDCOrBMCLevel = 0;
     int nParenthesisLevel = 0;
     int nArrayLevel = 0;
     int nBTLevel = 0;
@@ -895,7 +895,7 @@ OGRGeometry *PDFDataset::ParseContent(
                 const char *pszOC = aszTokenStack[nTokenStackSize];
                 const char *pszOCGName = aszTokenStack[nTokenStackSize + 1];
 
-                nBDCLevel++;
+                nBDCOrBMCLevel++;
 
                 if (EQUAL3(pszOC, "/OC") && pszOCGName[0] == '/')
                 {
@@ -911,6 +911,18 @@ OGRGeometry *PDFDataset::ParseContent(
                          pszOCGName,
                          poCurLayer ? poCurLayer->GetName() : "(null)");
 #endif
+                oLayerStack.push(poCurLayer);
+            }
+            else if (EQUAL3(szToken, "BMC"))
+            {
+                if (nTokenStackSize < 1)
+                {
+                    CPLDebug("PDF", "not enough arguments for %s", szToken);
+                    return nullptr;
+                }
+                nTokenStackSize -= 1;
+
+                nBDCOrBMCLevel++;
                 oLayerStack.push(poCurLayer);
             }
             else if (EQUAL3(szToken, "EMC"))
@@ -939,8 +951,8 @@ OGRGeometry *PDFDataset::ParseContent(
                     // return NULL;
                 }
 
-                nBDCLevel--;
-                if (nBDCLevel == 0 && bInitBDCStack)
+                nBDCOrBMCLevel--;
+                if (nBDCOrBMCLevel == 0 && bInitBDCStack)
                     break;
             }
 
