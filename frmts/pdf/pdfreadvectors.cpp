@@ -28,6 +28,7 @@
 
 #include "gdal_pdf.h"
 
+#include <algorithm>
 #include <array>
 
 #define SQUARE(x) ((x) * (x))
@@ -1881,6 +1882,207 @@ void PDFDataset::ExploreContentsNonStructuredInternal(
     CPLFree(pszStr);
 }
 
+/************************************************************************/
+/*                         ExploreResourceProperty()                    */
+/************************************************************************/
+
+static void ExploreResourceProperty(
+    const char *pszKey, GDALPDFObject *poObj, const std::string &osType,
+    const std::map<std::pair<int, int>, OGRPDFLayer *> &oMapNumGenToLayer,
+    std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer)
+{
+    if (osType == "OCG" && poObj->GetRefNum().toBool())
+    {
+        const auto oIterNumGenToLayer =
+            oMapNumGenToLayer.find(std::pair<int, int>(
+                poObj->GetRefNum().toInt(), poObj->GetRefGen()));
+        if (oIterNumGenToLayer != oMapNumGenToLayer.end())
+        {
+            auto poLayer = oIterNumGenToLayer->second;
+#ifdef DEBUG_VERBOSE
+            CPLDebug("PDF", "Associating OCG %s to layer %s", pszKey,
+                     poLayer->GetName());
+#endif
+            oMapPropertyToLayer[pszKey] = poLayer;
+        }
+        else
+        {
+            CPLDebug("PDF",
+                     "Resource.Properties[%s] referencing "
+                     "OGC %d not tied with a layer",
+                     pszKey, poObj->GetRefNum().toInt());
+        }
+    }
+    else if (osType == "OCMD")
+    {
+        // Optional Content Group Membership Dictionary
+        // Deal with constructs like
+        /*
+             Item[0] : MC0
+              Type = dictionary, Num = 331, Gen = 0
+               Item[0] : OCGs
+                Type = array
+                 Item[0]:
+                  Type = dictionary, Num = 251, Gen = 0
+                   Item[0] : Intent = View (name)
+                   Item[1] : Name = Orthoimage (string)
+                   Item[2] : Type = OCG (name)
+                 Item[1]:
+                  Type = dictionary, Num = 250, Gen = 0
+                   Item[0] : Intent = View (name)
+                   Item[1] : Name = Images (string)
+                   Item[2] : Type = OCG (name)
+               Item[1] : P = AllOn (name)
+               Item[2] : Type = OCMD (name)
+        */
+        // where the OCG Orthoimage is actually a child
+        // of Images (which will be named Orthoimage.Images)
+        // In which case we only associate MC0 to
+        // Orthoimage.Images
+        // Cf https://github.com/OSGeo/gdal/issues/8372
+        // and https://prd-tnm.s3.amazonaws.com/StagedProducts/Maps/USTopo/PDF/ID/ID_Big_Baldy_20200409_TM_geo.pdf
+        auto poOCGs = poObj->GetDictionary()->Get("OCGs");
+        if (poOCGs && poOCGs->GetType() == PDFObjectType_Array)
+        {
+            auto poOCGsArray = poOCGs->GetArray();
+            const int nLength = poOCGsArray->GetLength();
+            size_t nMaxNameLength = 0;
+            OGRPDFLayer *poCandidateLayer = nullptr;
+            std::vector<std::string> aosLayerNames;
+            for (int i = 0; i < nLength; ++i)
+            {
+                auto poOCG = poOCGsArray->Get(i);
+                if (poOCG && poOCG->GetType() == PDFObjectType_Dictionary)
+                {
+                    auto poP = poOCG->GetDictionary()->Get("P");
+                    if (poP && poP->GetType() == PDFObjectType_Name)
+                    {
+                        // Visibility Policy
+                        const auto &osP = poP->GetName();
+                        if (osP != "AllOn" && osP != "AnyOn")
+                        {
+                            CPLDebug("PDF",
+                                     "Resource.Properties[%s] "
+                                     "has unhandled visibility policy %s",
+                                     pszKey, osP.c_str());
+                        }
+                    }
+                    auto poOCGType = poOCG->GetDictionary()->Get("Type");
+                    if (poOCGType && poOCGType->GetType() == PDFObjectType_Name)
+                    {
+                        const std::string &osOCGType = poOCGType->GetName();
+                        if (osOCGType == "OCG" && poOCG->GetRefNum().toBool())
+                        {
+                            const auto oIterNumGenToLayer =
+                                oMapNumGenToLayer.find(std::pair<int, int>(
+                                    poOCG->GetRefNum().toInt(),
+                                    poOCG->GetRefGen()));
+                            if (oIterNumGenToLayer != oMapNumGenToLayer.end())
+                            {
+                                auto poLayer = oIterNumGenToLayer->second;
+                                aosLayerNames.emplace_back(poLayer->GetName());
+                                if (strlen(poLayer->GetName()) > nMaxNameLength)
+                                {
+                                    nMaxNameLength = strlen(poLayer->GetName());
+                                    poCandidateLayer = poLayer;
+                                }
+                            }
+                            else
+                            {
+                                CPLDebug("PDF",
+                                         "Resource.Properties[%s][%d] "
+                                         "referencing OGC %d not tied with "
+                                         "a layer",
+                                         pszKey, i, poOCG->GetRefNum().toInt());
+                            }
+                        }
+                        else
+                        {
+                            CPLDebug(
+                                "PDF",
+                                "Resource.Properties[%s][%d] has unhandled "
+                                "Type member: %s",
+                                pszKey, i, osOCGType.c_str());
+                        }
+                    }
+                }
+            }
+
+            if (!aosLayerNames.empty())
+            {
+                // Sort layer names and if each one starts
+                // with the previous ones, then the OCGs
+                // are part of a hierarchy, and we can
+                // associate the property name with the
+                // last one.
+                std::sort(aosLayerNames.begin(), aosLayerNames.end());
+                bool bOK = true;
+                for (size_t i = 1; i < aosLayerNames.size(); ++i)
+                {
+                    if (aosLayerNames[i].find(aosLayerNames[i - 1]) != 0)
+                    {
+                        bOK = false;
+                        break;
+                    }
+                }
+                if (bOK)
+                {
+                    CPLAssert(poCandidateLayer);
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("PDF", "Associating OCG %s to layer %s", pszKey,
+                             poCandidateLayer->GetName());
+#endif
+                    oMapPropertyToLayer[pszKey] = poCandidateLayer;
+                }
+                else
+                {
+                    CPLDebug("PDF",
+                             "Resource.Properties[%s] "
+                             "contains a OCMD that cannot "
+                             "be mapped to a single layer",
+                             pszKey);
+                }
+            }
+            else
+            {
+                CPLDebug("PDF",
+                         "Resource.Properties[%s] contains "
+                         "a OCMD without OCGs",
+                         pszKey);
+            }
+        }
+        else if (poOCGs)
+        {
+            // The spec allows OGCs to be dictionary, but
+            // not sure how to handle that
+            CPLDebug("PDF",
+                     "Resource.Properties[%s] contains a OCMD "
+                     "with a OGCs member of unhandled type: %s",
+                     pszKey, poOCGs->GetTypeName());
+        }
+        else
+        {
+            // Could have a VE (visibility expression)
+            // expression instead, but  we don't handle that
+            CPLDebug("PDF",
+                     "Resource.Properties[%s] contains a "
+                     "OCMD with a missing OGC (perhaps has a VE?)",
+                     pszKey);
+        }
+    }
+    else
+    {
+        CPLDebug("PDF",
+                 "Resource.Properties[%s] has unhandled "
+                 "Type member: %s",
+                 pszKey, osType.c_str());
+    }
+}
+
+/************************************************************************/
+/*                   ExploreContentsNonStructured()                     */
+/************************************************************************/
+
 void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                                               GDALPDFObject *poResources)
 {
@@ -1922,25 +2124,25 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                     poLayer;
             }
 
-            std::map<CPLString, GDALPDFObject *> &oMap =
-                poProperties->GetDictionary()->GetValues();
-            std::map<CPLString, GDALPDFObject *>::iterator oIter = oMap.begin();
-            std::map<CPLString, GDALPDFObject *>::iterator oEnd = oMap.end();
-
-            for (; oIter != oEnd; ++oIter)
+            for (const auto &oIter : poProperties->GetDictionary()->GetValues())
             {
-                const char *pszKey = oIter->first.c_str();
-                GDALPDFObject *poObj = oIter->second;
-                if (poObj->GetRefNum().toBool())
+                const char *pszKey = oIter.first.c_str();
+                GDALPDFObject *poObj = oIter.second;
+                if (poObj->GetType() == PDFObjectType_Dictionary)
                 {
-                    std::map<std::pair<int, int>, OGRPDFLayer *>::iterator
-                        oIterNumGenToLayer = oMapNumGenToLayer.find(
-                            std::pair<int, int>(poObj->GetRefNum().toInt(),
-                                                poObj->GetRefGen()));
-                    if (oIterNumGenToLayer != oMapNumGenToLayer.end())
+                    auto poType = poObj->GetDictionary()->Get("Type");
+                    if (poType && poType->GetType() == PDFObjectType_Name)
                     {
-                        oMapPropertyToLayer[pszKey] =
-                            oIterNumGenToLayer->second;
+                        const auto &osType = poType->GetName();
+                        ExploreResourceProperty(pszKey, poObj, osType,
+                                                oMapNumGenToLayer,
+                                                oMapPropertyToLayer);
+                    }
+                    else
+                    {
+                        CPLDebug("PDF",
+                                 "Resource.Properties[%s] has no Type member",
+                                 pszKey);
                     }
                 }
             }
