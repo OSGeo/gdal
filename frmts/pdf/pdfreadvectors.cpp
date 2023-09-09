@@ -33,6 +33,8 @@
 #define SQUARE(x) ((x) * (x))
 #define EPSILON 1e-5
 
+// #define DEBUG_VERBOSE
+
 #ifdef HAVE_PDF_READ_SUPPORT
 
 constexpr int BEZIER_STEPS = 10;
@@ -633,6 +635,19 @@ OGRGeometry *PDFDataset::ParseContent(
     int bMatchQ, std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer,
     OGRPDFLayer *poCurLayer)
 {
+    if (CPLTestBool(CPLGetConfigOption("PDF_DUMP_CONTENT", "NO")))
+    {
+        static int counter = 1;
+        FILE *f = fopen(CPLSPrintf("content%d.txt", counter), "wb");
+        ++counter;
+        fwrite(pszContent, 1, strlen(pszContent), f);
+        fclose(f);
+    }
+    const char *pszContentIni = pszContent;
+#ifdef DEBUG_VERBOSE
+    CPLDebug("PDF", "Initial layer: %s",
+             poCurLayer ? poCurLayer->GetName() : "(null)");
+#endif
 
 #define PUSH(aszTokenStack, str, strlen)                                       \
     do                                                                         \
@@ -889,14 +904,14 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (oIter != oMapPropertyToLayer.end())
                     {
                         poCurLayer = oIter->second;
-                        // CPLDebug("PDF", "Cur layer : %s",
-                        // poCurLayer->GetName());
                     }
                 }
-
+#ifdef DEBUG_VERBOSE
+                CPLDebug("PDF", "%s %s BDC -> Cur layer : %s", pszOC,
+                         pszOCGName,
+                         poCurLayer ? poCurLayer->GetName() : "(null)");
+#endif
                 oLayerStack.push(poCurLayer);
-                // CPLDebug("PDF", "%s %s BDC", osOC.c_str(),
-                // osOCGName.c_str());
             }
             else if (EQUAL3(szToken, "EMC"))
             {
@@ -909,15 +924,17 @@ OGRGeometry *PDFDataset::ParseContent(
                     else
                         poCurLayer = nullptr;
 
-                    /*if (poCurLayer)
-                    {
-                        CPLDebug("PDF", "Cur layer : %s",
-                    poCurLayer->GetName());
-                    }*/
+#ifdef DEBUG_VERBOSE
+                    CPLDebug("PDF", "EMC -> Cur layer : %s",
+                             poCurLayer ? poCurLayer->GetName() : "(null)");
+#endif
                 }
                 else
                 {
-                    CPLDebug("PDF", "Should not happen at line %d", __LINE__);
+                    CPLDebug(
+                        "PDF",
+                        "Should not happen at line %d: offset %d in stream",
+                        __LINE__, int(pszContent - pszContentIni));
                     poCurLayer = nullptr;
                     // return NULL;
                 }
@@ -935,7 +952,10 @@ OGRGeometry *PDFDataset::ParseContent(
                 nBTLevel--;
                 if (nBTLevel < 0)
                 {
-                    CPLDebug("PDF", "Should not happen at line %d", __LINE__);
+                    CPLDebug(
+                        "PDF",
+                        "Should not happen at line %d: offset %d in stream",
+                        __LINE__, int(pszContent - pszContentIni));
                     return nullptr;
                 }
             }
@@ -971,8 +991,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (!UnstackTokens(szToken, 6, aszTokenStack,
                                        nTokenStackSize, adfMatrix))
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
 
@@ -1044,8 +1066,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (!UnstackTokens(szToken, 2, aszTokenStack,
                                        nTokenStackSize, adfCoords))
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
 
@@ -1067,8 +1091,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (!UnstackTokens(szToken, 6, aszTokenStack,
                                        nTokenStackSize, adfCoords))
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
 
@@ -1087,8 +1113,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (!UnstackTokens(szToken, 4, aszTokenStack,
                                        nTokenStackSize, adfCoords))
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
 
@@ -1108,8 +1136,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (!UnstackTokens(szToken, 4, aszTokenStack,
                                        nTokenStackSize, adfCoords))
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
 
@@ -1127,8 +1157,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (!UnstackTokens(szToken, 4, aszTokenStack,
                                        nTokenStackSize, adfCoords))
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
 
@@ -1166,8 +1198,10 @@ OGRGeometry *PDFDataset::ParseContent(
 
                     if (osObjectName[0] != '/')
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
 
@@ -1201,8 +1235,10 @@ OGRGeometry *PDFDataset::ParseContent(
                         if (poXObject == nullptr ||
                             poXObject->GetType() != PDFObjectType_Dictionary)
                         {
-                            CPLDebug("PDF", "Should not happen at line %d",
-                                     __LINE__);
+                            CPLDebug("PDF",
+                                     "Should not happen at line %d: offset %d "
+                                     "in stream",
+                                     __LINE__, int(pszContent - pszContentIni));
                             return nullptr;
                         }
 
@@ -1211,8 +1247,10 @@ OGRGeometry *PDFDataset::ParseContent(
                                 osObjectName.c_str() + 1);
                         if (poObject == nullptr)
                         {
-                            CPLDebug("PDF", "Should not happen at line %d",
-                                     __LINE__);
+                            CPLDebug("PDF",
+                                     "Should not happen at line %d: offset %d "
+                                     "in stream",
+                                     __LINE__, int(pszContent - pszContentIni));
                             return nullptr;
                         }
 
@@ -1237,8 +1275,11 @@ OGRGeometry *PDFDataset::ParseContent(
                             GDALPDFStream *poStream = poObject->GetStream();
                             if (!poStream)
                             {
-                                CPLDebug("PDF", "Should not happen at line %d",
-                                         __LINE__);
+                                CPLDebug("PDF",
+                                         "Should not happen at line %d: offset "
+                                         "%d in stream",
+                                         __LINE__,
+                                         int(pszContent - pszContentIni));
                                 return nullptr;
                             }
 
@@ -1264,8 +1305,10 @@ OGRGeometry *PDFDataset::ParseContent(
                     if (!UnstackTokens(szToken, 3, aszTokenStack,
                                        nTokenStackSize, padf))
                     {
-                        CPLDebug("PDF", "Should not happen at line %d",
-                                 __LINE__);
+                        CPLDebug(
+                            "PDF",
+                            "Should not happen at line %d: offset %d in stream",
+                            __LINE__, int(pszContent - pszContentIni));
                         return nullptr;
                     }
                 }
