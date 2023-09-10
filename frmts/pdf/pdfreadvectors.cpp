@@ -85,12 +85,26 @@ int PDFDataset::OpenVectorLayers(GDALPDFDictionary *poPageDict)
     }
     else
     {
-        int nDepth = 0;
-        int nVisited = 0;
-        bool bStop = false;
-        ExploreContents(poContents, poResources, nDepth, nVisited, bStop);
-        std::set<std::pair<int, int>> aoSetAlreadyVisited;
-        ExploreTree(poStructTreeRoot, aoSetAlreadyVisited, 0);
+        bool bHasFeatures;
+        {
+            std::set<std::pair<int, int>> aoSetAlreadyVisited;
+            bHasFeatures = ExploreTree(poStructTreeRoot, aoSetAlreadyVisited, 0,
+                                       /* bDryRun = */ true);
+        }
+        if (bHasFeatures)
+        {
+            int nDepth = 0;
+            int nVisited = 0;
+            bool bStop = false;
+            ExploreContents(poContents, poResources, nDepth, nVisited, bStop);
+            std::set<std::pair<int, int>> aoSetAlreadyVisited;
+            ExploreTree(poStructTreeRoot, aoSetAlreadyVisited, 0,
+                        /* bDryRun = */ false);
+        }
+        else
+        {
+            ExploreContentsNonStructured(poContents, poResources);
+        }
     }
 
     CleanupIntermediateResources();
@@ -247,21 +261,21 @@ int PDFDataset::GetLayerCount()
 /*                            ExploreTree()                             */
 /************************************************************************/
 
-void PDFDataset::ExploreTree(GDALPDFObject *poObj,
+bool PDFDataset::ExploreTree(GDALPDFObject *poObj,
                              std::set<std::pair<int, int>> &aoSetAlreadyVisited,
-                             int nRecLevel)
+                             int nRecLevel, bool bDryRun)
 {
     if (nRecLevel == 16)
-        return;
+        return false;
 
     std::pair<int, int> oObjPair(poObj->GetRefNum().toInt(),
                                  poObj->GetRefGen());
     if (aoSetAlreadyVisited.find(oObjPair) != aoSetAlreadyVisited.end())
-        return;
+        return false;
     aoSetAlreadyVisited.insert(oObjPair);
 
     if (poObj->GetType() != PDFObjectType_Dictionary)
-        return;
+        return false;
 
     GDALPDFDictionary *poDict = poObj->GetDictionary();
 
@@ -281,8 +295,9 @@ void PDFDataset::ExploreTree(GDALPDFObject *poObj,
 
     GDALPDFObject *poK = poDict->Get("K");
     if (poK == nullptr)
-        return;
+        return false;
 
+    bool bRet = false;
     if (poK->GetType() == PDFObjectType_Array)
     {
         GDALPDFArray *poArray = poK->GetArray();
@@ -292,6 +307,29 @@ void PDFDataset::ExploreTree(GDALPDFObject *poObj,
             poArray->Get(0)->GetDictionary()->Get("K")->GetType() ==
                 PDFObjectType_Int)
         {
+            if (bDryRun)
+            {
+                for (int i = 0; i < poArray->GetLength(); i++)
+                {
+                    auto poFeatureObj = poArray->Get(i);
+                    if (poFeatureObj &&
+                        poFeatureObj->GetType() == PDFObjectType_Dictionary)
+                    {
+                        auto poA = poFeatureObj->GetDictionary()->Get("A");
+                        if (poA && poA->GetType() == PDFObjectType_Dictionary)
+                        {
+                            auto poO = poA->GetDictionary()->Get("O");
+                            if (poO && poO->GetType() == PDFObjectType_Name &&
+                                poO->GetName() == "UserProperties")
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+
             CPLString osLayerName;
             if (!osT.empty())
                 osLayerName = osT;
@@ -316,6 +354,7 @@ void PDFDataset::ExploreTree(GDALPDFObject *poObj,
                 m_papoLayers, (m_nLayers + 1) * sizeof(OGRLayer *));
             m_papoLayers[m_nLayers] = poLayer;
             m_nLayers++;
+            bRet = true;
         }
         else
         {
@@ -324,15 +363,22 @@ void PDFDataset::ExploreTree(GDALPDFObject *poObj,
                 auto poSubObj = poArray->Get(i);
                 if (poSubObj)
                 {
-                    ExploreTree(poSubObj, aoSetAlreadyVisited, nRecLevel + 1);
+                    if (ExploreTree(poSubObj, aoSetAlreadyVisited,
+                                    nRecLevel + 1, bDryRun) &&
+                        bDryRun)
+                        return true;
                 }
             }
         }
     }
     else if (poK->GetType() == PDFObjectType_Dictionary)
     {
-        ExploreTree(poK, aoSetAlreadyVisited, nRecLevel + 1);
+        if (ExploreTree(poK, aoSetAlreadyVisited, nRecLevel + 1, bDryRun) &&
+            bDryRun)
+            return true;
     }
+
+    return bRet;
 }
 
 /************************************************************************/
@@ -1889,8 +1935,11 @@ void PDFDataset::ExploreContentsNonStructuredInternal(
 static void ExploreResourceProperty(
     const char *pszKey, GDALPDFObject *poObj, const std::string &osType,
     const std::map<std::pair<int, int>, OGRPDFLayer *> &oMapNumGenToLayer,
-    std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer)
+    std::map<CPLString, OGRPDFLayer *> &oMapPropertyToLayer, int nRecLevel)
 {
+    if (nRecLevel == 2)
+        return;
+
     if (osType == "OCG" && poObj->GetRefNum().toBool())
     {
         const auto oIterNumGenToLayer =
@@ -2051,10 +2100,25 @@ static void ExploreResourceProperty(
                          pszKey);
             }
         }
+        else if (poOCGs && poOCGs->GetType() == PDFObjectType_Dictionary)
+        {
+            auto poOGGsType = poOCGs->GetDictionary()->Get("Type");
+            if (poOGGsType && poOGGsType->GetType() == PDFObjectType_Name)
+            {
+                ExploreResourceProperty(pszKey, poOCGs, poOGGsType->GetName(),
+                                        oMapNumGenToLayer, oMapPropertyToLayer,
+                                        nRecLevel + 1);
+            }
+            else
+            {
+                CPLDebug("PDF",
+                         "Resource.Properties[%s] contains a OGCs member with "
+                         "no Type member",
+                         pszKey);
+            }
+        }
         else if (poOCGs)
         {
-            // The spec allows OGCs to be dictionary, but
-            // not sure how to handle that
             CPLDebug("PDF",
                      "Resource.Properties[%s] contains a OCMD "
                      "with a OGCs member of unhandled type: %s",
@@ -2136,7 +2200,7 @@ void PDFDataset::ExploreContentsNonStructured(GDALPDFObject *poContents,
                         const auto &osType = poType->GetName();
                         ExploreResourceProperty(pszKey, poObj, osType,
                                                 oMapNumGenToLayer,
-                                                oMapPropertyToLayer);
+                                                oMapPropertyToLayer, 0);
                     }
                     else
                     {

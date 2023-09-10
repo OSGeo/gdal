@@ -350,9 +350,9 @@ class PDFDataset final : public GDALPamDataset
 
     bool m_bSetStyle = false;
 
-    void ExploreTree(GDALPDFObject *poObj,
+    bool ExploreTree(GDALPDFObject *poObj,
                      std::set<std::pair<int, int>> &aoSetAlreadyVisited,
-                     int nRecLevel);
+                     int nRecLevel, bool bDryRun);
     void ExploreContents(GDALPDFObject *poObj, GDALPDFObject *poResources,
                          int nDepth, int &nVisited, bool &bStop);
 
