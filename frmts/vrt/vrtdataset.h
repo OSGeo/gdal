@@ -309,6 +309,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
 
     std::shared_ptr<GDALGroup> GetRootGroup() const override;
 
+    void ClearStatistics() override;
+
     /* Used by PDF driver for example */
     GDALDataset *GetSingleSimpleSource();
     void BuildVirtualOverviews();

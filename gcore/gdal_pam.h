@@ -188,10 +188,7 @@ class CPL_DLL GDALPamDataset : public GDALDataset
                            CSLConstList papszOptions) override;
 
     // "semi private" methods.
-    void MarkPamDirty()
-    {
-        nPamFlags |= GPF_DIRTY;
-    }
+    void MarkPamDirty();
     GDALDatasetPamInfo *GetPamInfo()
     {
         return psPam;

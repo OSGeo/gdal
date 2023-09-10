@@ -326,6 +326,17 @@ General creation options
      may cause optimized readers to have to issue an extra GET request to the
      TileByteCounts array.
 
+- .. co:: STATISTICS
+     :choices: AUTO, YES, NO
+     :default: AUTO
+     :since: 3.7
+
+     Whether band statistics should be included in the output file.
+     In ``AUTO`` mode, they will be included only if available in the source
+     dataset.
+     If setting to ``YES``, they will always be included.
+     If setting to ``NO``, they will be never included.
+
 Reprojection related creation options
 *************************************
 
