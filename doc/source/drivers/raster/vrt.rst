@@ -1697,7 +1697,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo`` and ``unscale``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, and ``a_coord_epoch``.
 
 Other options may be added in the future.
 
@@ -1770,6 +1770,9 @@ The effect of the ``oo`` option (added in GDAL 3.8) is to set driver-specific da
 consists of string key value pairs with multiple pairs separated by commas e.g. ``oo=<key>=<val>`` or . ``oo=<key1>=<val1>,<key2>=<val2>,...``. This is applied in the same way as (:ref:`gdal_translate`).
 
 The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/offset metadata for the bands to convert scaled values to unscaled values. Do apply this use syntax ``unscale=true``, or ``unscale=false`` which is the default behaviour if not specified. Do consider the need for also using ``ot`` option in order to accomodate the intended output range, see more details for the same argument as with (:ref:`gdal_translate`).
+
+The effect of the ``a_coord_epoch`` option (added in GDAL 3.8) is to assign a coordinate epoch, linked with the output SRS as
+with (:ref:`gdal_translate`).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
