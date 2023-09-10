@@ -1627,7 +1627,7 @@ def test_vrt_protocol():
 
 @pytest.mark.require_proj(7, 2)
 def test_vrt_protocol_a_coord_epoch_option():
-    ds = gdal.Open("vrt://data/byte.tif?a_coord_epoch=2021.3")
+    ds = gdal.Open("vrt://data/byte.tif?a_srs=EPSG:4326&a_coord_epoch=2021.3")
     srs = ds.GetSpatialRef()
     assert srs.IsDynamic()
     assert srs.GetCoordinateEpoch() == 2021.3
