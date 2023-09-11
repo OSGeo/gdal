@@ -4118,7 +4118,7 @@ struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
         const int nTableIdx = CSLFindName(papszParams, "table");
         if (nTableIdx != -1)
         {
-            int nTableStart = m_fileName.find("table=");
+            size_t nTableStart = m_fileName.find("table=");
             bool bHasQuotes{false};
             try
             {
@@ -4139,7 +4139,7 @@ struct PostGISRasterDriverSubdatasetInfo : public GDALSubdatasetInfo
 
             m_driverPrefixComponent = "PG";
 
-            int nPathLength = m_subdatasetComponent.length();
+            size_t nPathLength = m_subdatasetComponent.length();
             if (nTableStart != 0)
             {
                 nPathLength++;

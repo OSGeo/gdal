@@ -871,7 +871,7 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
 void netCDFRasterBand::SetBlockSize()
 {
     // Check for variable chunking (netcdf-4 only).
-    // GDAL block size should be set to hdf5 chunk size.
+    // GDAL block size should be set to NCDF chunk size.
 #ifdef NETCDF_HAS_NC4
     int nTmpFormat = 0;
     int status = nc_inq_format(cdfid, &nTmpFormat);
@@ -7492,7 +7492,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
     }
 #endif
 
-    constexpr char achHDF5Signature[] = "\211HDF\r\n\032\n";
+    constexpr char achNCDFSignature[] = "\211HDF\r\n\032\n";
 
     if (STARTS_WITH_CI(pszHeader, "CDF\001"))
     {
@@ -7524,19 +7524,19 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
     {
         return NCDF_FORMAT_NC2;
     }
-    else if (STARTS_WITH_CI(pszHeader, achHDF5Signature) ||
+    else if (STARTS_WITH_CI(pszHeader, achNCDFSignature) ||
              (poOpenInfo->nHeaderBytes > 512 + 8 &&
-              memcmp(pszHeader + 512, achHDF5Signature, 8) == 0))
+              memcmp(pszHeader + 512, achNCDFSignature, 8) == 0))
     {
-        // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
-        // If HDF5 is not supported in GDAL, this driver will try to open the
-        // file Else, make sure this driver does not try to open HDF5 files If
+        // Requires netCDF-4/NCDF support in libnetcdf (not just libnetcdf-v4).
+        // If NCDF is not supported in GDAL, this driver will try to open the
+        // file Else, make sure this driver does not try to open NCDF files If
         // user really wants to open with this driver, use NETCDF:file.h5
         // format.  This check should be relaxed, but there is no clear way to
         // make a difference.
 
-        // Check for HDF5 support in GDAL.
-#ifdef HAVE_HDF5
+        // Check for NCDF support in GDAL.
+#ifdef HAVE_NCDF
         if (bCheckExt)
         {
             // Check by default.
@@ -7546,9 +7546,9 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
                   EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd") ||
                   EQUAL(pszExtension, "gmac")))
             {
-                if (GDALGetDriverByName("HDF5") != nullptr)
+                if (GDALGetDriverByName("NCDF") != nullptr)
                 {
-                    return NCDF_FORMAT_HDF5;
+                    return NCDF_FORMAT_NCDF;
                 }
             }
         }
@@ -7558,7 +7558,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
 #ifdef NETCDF_HAS_NC4
         return NCDF_FORMAT_NC4;
 #else
-        return NCDF_FORMAT_HDF5;
+        return NCDF_FORMAT_NCDF;
 #endif
     }
     else if (STARTS_WITH_CI(pszHeader, "\016\003\023\001"))
@@ -7586,7 +7586,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
 #endif
     }
 
-    // The HDF5 signature of netCDF 4 files can be at offsets 512, 1024, 2048,
+    // The NCDF signature of netCDF 4 files can be at offsets 512, 1024, 2048,
     // etc.
     const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
     if (poOpenInfo->fpL != nullptr &&
@@ -7602,12 +7602,12 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
             {
                 break;
             }
-            if (memcmp(abyBuf, achHDF5Signature, 8) == 0)
+            if (memcmp(abyBuf, achNCDFSignature, 8) == 0)
             {
 #ifdef NETCDF_HAS_NC4
                 return NCDF_FORMAT_NC4;
 #else
-                return NCDF_FORMAT_HDF5;
+                return NCDF_FORMAT_NCDF;
 #endif
             }
             nOffset *= 2;
@@ -11183,6 +11183,78 @@ static void NCDFUnloadDriver(CPL_UNUSED GDALDriver *poDriver)
 }
 
 /************************************************************************/
+/*                    NCDFDriverGetSubdatasetInfo()                     */
+/************************************************************************/
+
+struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
+{
+  public:
+    explicit NCDFDriverSubdatasetInfo(const std::string &fileName)
+        : GDALSubdatasetInfo(fileName)
+    {
+    }
+
+    // GDALSubdatasetInfo interface
+  private:
+    void parseFileName() override
+    {
+
+        if (!STARTS_WITH_CI(m_fileName.c_str(), "NETCDF:"))
+        {
+            return;
+        }
+
+        CPLStringList aosParts{CSLTokenizeString2(m_fileName.c_str(), ":", 0)};
+        const int iPartsCount{CSLCount(aosParts)};
+
+        if (iPartsCount >= 3)
+        {
+
+            m_driverPrefixComponent = aosParts[0];
+
+            int subdatasetIndex{2};
+            const bool hasDriveLetter{
+                (strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
+                (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
+
+            if (iPartsCount >= 3)
+            {
+                m_pathComponent = aosParts[1];
+                if (hasDriveLetter)
+                {
+                    m_pathComponent.append(":");
+                    m_pathComponent.append(aosParts[2]);
+                    subdatasetIndex++;
+                }
+            }
+            m_subdatasetComponent = aosParts[subdatasetIndex];
+
+            // Append any remaining part
+            for (int i = subdatasetIndex + 1; i < iPartsCount; ++i)
+            {
+                m_subdatasetComponent.append(":");
+                m_subdatasetComponent.append(aosParts[i]);
+            }
+        }
+    }
+};
+
+static GDALSubdatasetInfo *NCDFDriverGetSubdatasetInfo(const char *pszFileName)
+{
+    if (STARTS_WITH_CI(pszFileName, "NETCDF:"))
+    {
+        std::unique_ptr<GDALSubdatasetInfo> info =
+            cpl::make_unique<NCDFDriverSubdatasetInfo>(pszFileName);
+        if (!info->GetSubdatasetComponent().empty() &&
+            !info->GetPathComponent().empty())
+        {
+            return info.release();
+        }
+    }
+    return nullptr;
+}
+
+/************************************************************************/
 /*                          GDALRegister_netCDF()                       */
 /************************************************************************/
 
@@ -11378,8 +11450,8 @@ void GDALRegister_netCDF()
 #ifdef HAVE_HDF4
     poDriver->SetMetadataItem("GDAL_HAS_HDF4", "YES");
 #endif
-#ifdef HAVE_HDF5
-    poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
+#ifdef HAVE_NCDF
+    poDriver->SetMetadataItem("GDAL_HAS_NCDF", "YES");
 #endif
 #ifdef HAVE_NETCDF_MEM
     poDriver->SetMetadataItem("NETCDF_HAS_NETCDF_MEM", "YES");
@@ -11478,6 +11550,7 @@ void GDALRegister_netCDF()
 #endif
     poDriver->pfnIdentify = netCDFDataset::Identify;
     poDriver->pfnUnloadDriver = NCDFUnloadDriver;
+    poDriver->pfnGetSubdatasetInfoFunc = NCDFDriverGetSubdatasetInfo;
 
     GetGDALDriverManager()->RegisterDriver(poDriver);
 }
