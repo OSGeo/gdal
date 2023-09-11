@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>SENSOR_QUALITY.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes></Notes>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2022-08-30T00:25:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>06.01.00</Creator_Version>
+                <Creation_Date>UTC=2023-08-23T12:48:10</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report gippVersion="1.0" globalStatus="PASSED" date="2023-08-23T12:48:10.642Z">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20220715T000042_V20220830T002500</parentID>
+                <name>SENSOR_QUALITY</name>
+                <version>1.0</version>
+                <item url="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/" className="PDI Level 2A Datastrip Folder" name="S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09" class="http://www.esa.int/s2#pdi_level_2a_datastrip_container"/>
+                <check>
+                    <inspection creation="2023-08-23T12:48:10.625Z" duration="0" execution="2023-08-23T12:48:10.638Z" id="Datation_Model_RMOY" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check the correctness of the Datation model with RMOY. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">RMOY not found in dataset</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:11.407Z" duration="0" execution="2023-08-23T12:48:11.414Z" id="Datation_Model_GPS_SYNC" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check the correctness of the Datation model with GPS_SYNC. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">GPS is synchronized.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:14.650Z" duration="0" execution="2023-08-23T12:48:14.657Z" id="Degraded_SAD" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check the consistency of relative orbit. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">No Degraded SAD</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:14.692Z" duration="447" execution="2023-08-23T12:48:14.703Z" id="checkMetadata" item="S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/" name="Metadata file check. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Metadata file is present.</message>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>
