@@ -176,7 +176,7 @@ def netcdf_test_copy_timeout(
 
 
 ###############################################################################
-# check support for DEFLATE compression, requires NETCDF and zlib
+# check support for DEFLATE compression, requires HDF5 and zlib
 
 
 def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
@@ -211,7 +211,7 @@ def netcdf_test_deflate(ifile, checksum, zlevel=1, timeout=None):
 
     assert (
         size2 < size1
-    ), "Compressed file is not smaller than reference, check your netcdf-4, NETCDF and zlib installation"
+    ), "Compressed file is not smaller than reference, check your netcdf-4, HDF5 and zlib installation"
 
 
 ###############################################################################
@@ -747,7 +747,7 @@ def test_netcdf_16():
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
-            # return fail if did not open with the netCDF driver (i.e. NETCDFImage)
+            # return fail if did not open with the netCDF driver (i.e. HDF5Image)
             assert name == "netCDF", "netcdf driver did not open file"
 
         # test with Identify()
@@ -759,30 +759,30 @@ def test_netcdf_16():
 
 
 ###############################################################################
-# check support for netcdf-4 - make sure NETCDF is not read by netcdf driver
+# check support for netcdf-4 - make sure HDF5 is not read by netcdf driver
 
 
-@pytest.mark.require_driver("NETCDF")
-@pytest.mark.require_driver("NETCDFImage")
+@pytest.mark.require_driver("HDF5")
+@pytest.mark.require_driver("HDF5Image")
 def test_netcdf_17():
 
-    ifile = "data/NETCDF/groups.h5"
+    ifile = "data/hdf5/groups.h5"
 
     if gdaltest.netcdf_drv_has_nc4:
 
         # test with Open()
         ds = gdal.Open(ifile)
         if ds is None:
-            pytest.fail("GDAL did not open NETCDF file")
+            pytest.fail("GDAL did not open HDF5 file")
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
             # return fail if opened with the netCDF driver
-            assert name != "netCDF", "netcdf driver opened NETCDF file"
+            assert name != "netCDF", "netcdf driver opened HDF5 file"
 
         # test with Identify()
         name = gdal.IdentifyDriver(ifile).GetDescription()
-        assert name != "netCDF", "netcdf driver was identified for NETCDF file"
+        assert name != "netCDF", "netcdf driver was identified for HDF5 file"
 
     else:
         pytest.skip()
@@ -805,7 +805,7 @@ def test_netcdf_18():
         else:
             name = ds.GetDriver().GetDescription()
             ds = None
-            # return fail if did not open with the netCDF driver (i.e. NETCDFImage)
+            # return fail if did not open with the netCDF driver (i.e. HDF5Image)
             assert name == "netCDF"
 
         # test with Identify()
@@ -5719,10 +5719,10 @@ def test_netcdf_sg1_8_max_variable_with_max_width_string_field_no_warning():
 
 
 ###############################################################################
-# Test opening a netCDF 4 file whose NETCDF signature is not at the beginning
+# Test opening a netCDF 4 file whose HDF5 signature is not at the beginning
 
 
-def test_netcdf_NETCDF_signature_not_at_beginning():
+def test_netcdf_hdf5_signature_not_at_beginning():
 
     if not gdaltest.netcdf_drv_has_nc4:
         pytest.skip()
@@ -5732,7 +5732,7 @@ def test_netcdf_NETCDF_signature_not_at_beginning():
     if int(version[0]) * 100 + int(version[1]) < 407:
         pytest.skip()
 
-    ds = gdal.Open("data/netcdf/byte_NETCDF_starting_at_offset_1024.nc")
+    ds = gdal.Open("data/netcdf/byte_hdf5_starting_at_offset_1024.nc")
     assert ds is not None
 
 

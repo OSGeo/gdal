@@ -871,7 +871,7 @@ netCDFRasterBand::netCDFRasterBand(const netCDFRasterBand::CONSTRUCTOR_OPEN &,
 void netCDFRasterBand::SetBlockSize()
 {
     // Check for variable chunking (netcdf-4 only).
-    // GDAL block size should be set to NCDF chunk size.
+    // GDAL block size should be set to hdf5 chunk size.
 #ifdef NETCDF_HAS_NC4
     int nTmpFormat = 0;
     int status = nc_inq_format(cdfid, &nTmpFormat);
@@ -3333,7 +3333,7 @@ void netCDFDataset::SetProjectionFromVar(
     // Look for grid_mapping metadata.
     const char *pszValue = pszGivenGM;
     CPLString osTmpGridMapping;  // let is in this outer scope as pszValue may
-                                 // point to it
+        // point to it
     if (pszValue == nullptr)
     {
         pszValue = FetchAttr(nGroupId, nVarId, CF_GRD_MAPPING);
@@ -5092,12 +5092,12 @@ void netCDFDataset::SetProjectionFromVar(
         }
     }
 
-    // Search for Well-known GeogCS if got only CF WKT
-    // Disabled for now, as a named datum also include control points
-    // (see mailing list and bug#4281
-    // For example, WGS84 vs. GDA94 (EPSG:3577) - AEA in netcdf_cf.py
+// Search for Well-known GeogCS if got only CF WKT
+// Disabled for now, as a named datum also include control points
+// (see mailing list and bug#4281
+// For example, WGS84 vs. GDA94 (EPSG:3577) - AEA in netcdf_cf.py
 
-    // Disabled for now, but could be set in a config option.
+// Disabled for now, but could be set in a config option.
 #if 0
     bool bLookForWellKnownGCS = false;  // This could be a Config Option.
 
@@ -7492,7 +7492,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
     }
 #endif
 
-    constexpr char achNCDFSignature[] = "\211HDF\r\n\032\n";
+    constexpr char achHDF5Signature[] = "\211HDF\r\n\032\n";
 
     if (STARTS_WITH_CI(pszHeader, "CDF\001"))
     {
@@ -7524,19 +7524,19 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
     {
         return NCDF_FORMAT_NC2;
     }
-    else if (STARTS_WITH_CI(pszHeader, achNCDFSignature) ||
+    else if (STARTS_WITH_CI(pszHeader, achHDF5Signature) ||
              (poOpenInfo->nHeaderBytes > 512 + 8 &&
-              memcmp(pszHeader + 512, achNCDFSignature, 8) == 0))
+              memcmp(pszHeader + 512, achHDF5Signature, 8) == 0))
     {
-        // Requires netCDF-4/NCDF support in libnetcdf (not just libnetcdf-v4).
-        // If NCDF is not supported in GDAL, this driver will try to open the
-        // file Else, make sure this driver does not try to open NCDF files If
+        // Requires netCDF-4/HDF5 support in libnetcdf (not just libnetcdf-v4).
+        // If HDF5 is not supported in GDAL, this driver will try to open the
+        // file Else, make sure this driver does not try to open HDF5 files If
         // user really wants to open with this driver, use NETCDF:file.h5
         // format.  This check should be relaxed, but there is no clear way to
         // make a difference.
 
-        // Check for NCDF support in GDAL.
-#ifdef HAVE_NCDF
+// Check for HDF5 support in GDAL.
+#ifdef HAVE_HDF5
         if (bCheckExt)
         {
             // Check by default.
@@ -7546,19 +7546,19 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
                   EQUAL(pszExtension, "nc3") || EQUAL(pszExtension, "grd") ||
                   EQUAL(pszExtension, "gmac")))
             {
-                if (GDALGetDriverByName("NCDF") != nullptr)
+                if (GDALGetDriverByName("HDF5") != nullptr)
                 {
-                    return NCDF_FORMAT_NCDF;
+                    return NCDF_FORMAT_HDF5;
                 }
             }
         }
 #endif
 
-        // Check for netcdf-4 support in libnetcdf.
+// Check for netcdf-4 support in libnetcdf.
 #ifdef NETCDF_HAS_NC4
         return NCDF_FORMAT_NC4;
 #else
-        return NCDF_FORMAT_NCDF;
+        return NCDF_FORMAT_HDF5;
 #endif
     }
     else if (STARTS_WITH_CI(pszHeader, "\016\003\023\001"))
@@ -7568,7 +7568,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
         // If user really wants to open with this driver, use NETCDF:file.hdf
         // syntax.
 
-        // Check for HDF4 support in GDAL.
+// Check for HDF4 support in GDAL.
 #ifdef HAVE_HDF4
         if (bCheckExt && GDALGetDriverByName("HDF4") != nullptr)
         {
@@ -7578,7 +7578,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
         }
 #endif
 
-        // Check for HDF4 support in libnetcdf.
+// Check for HDF4 support in libnetcdf.
 #ifdef NETCDF_HAS_HDF4
         return NCDF_FORMAT_NC4;
 #else
@@ -7586,7 +7586,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
 #endif
     }
 
-    // The NCDF signature of netCDF 4 files can be at offsets 512, 1024, 2048,
+    // The HDF5 signature of netCDF 4 files can be at offsets 512, 1024, 2048,
     // etc.
     const char *pszExtension = CPLGetExtension(poOpenInfo->pszFilename);
     if (poOpenInfo->fpL != nullptr &&
@@ -7602,12 +7602,12 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
             {
                 break;
             }
-            if (memcmp(abyBuf, achNCDFSignature, 8) == 0)
+            if (memcmp(abyBuf, achHDF5Signature, 8) == 0)
             {
 #ifdef NETCDF_HAS_NC4
                 return NCDF_FORMAT_NC4;
 #else
-                return NCDF_FORMAT_NCDF;
+                return NCDF_FORMAT_HDF5;
 #endif
             }
             nOffset *= 2;
@@ -9067,8 +9067,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "identified format %d", eTmpFormat);
 #endif
-        // Note: not calling Identify() directly, because we want the file type.
-        // Only support NCDF_FORMAT* formats.
+        // Note: not calling Identify() directly, because we want the file type. \
+    // Only support NCDF_FORMAT* formats.
         if (!(NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
               NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat))
             return nullptr;
@@ -9094,7 +9094,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLMutexHolderD(&hNCMutex);
 
     CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-                                // GDALDataset own mutex.
+        // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
     poDS->papszOpenOptions = CSLDuplicate(poOpenInfo->papszOpenOptions);
     CPLAcquireMutex(hNCMutex, 1000.0);
@@ -9124,7 +9124,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                                          poOpenInfo->fpL))
         {
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
@@ -9179,7 +9179,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CSLDestroy(papszName);
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             CPLError(CE_Failure, CPLE_AppDefined,
@@ -9215,7 +9215,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->eFormat = eTmpFormat;
     }
 
-    // Try opening the dataset.
+// Try opening the dataset.
 #if defined(NCDF_DEBUG) && defined(ENABLE_UFFD)
     CPLDebug("GDAL_netCDF", "calling nc_open_mem(%s)",
              poDS->osFilename.c_str());
@@ -9342,7 +9342,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLDebug("GDAL_netCDF", "error opening");
 #endif
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+            // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
@@ -9371,7 +9371,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (status != NC_NOERR)
     {
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+            // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
@@ -9424,7 +9424,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             NETCDF_UFFD_UNMAP(pCtx);
 #endif
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
@@ -9504,7 +9504,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->eAccess == GA_Update)
         {
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             delete poDS;
             return nullptr;
         }
@@ -9526,7 +9526,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+            // with GDALDataset own mutex.
         poDS->TryLoadXML();
         // If the dataset has been opened in raster mode only, exit
         if ((poOpenInfo->nOpenFlags & GDAL_OF_RASTER) != 0 &&
@@ -9566,7 +9566,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
             poDS->CreateSubDatasetList(cdfid);
             poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             poDS->TryLoadXML();
             CPLAcquireMutex(hNCMutex, 1000.0);
             return poDS;
@@ -9615,7 +9615,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Variable has %d dimension(s) - not supported.", nd);
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+            // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
@@ -9741,7 +9741,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                  "Invalid raster dimensions: " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB,
                  static_cast<GUIntBig>(xdim), static_cast<GUIntBig>(ydim));
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+            // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
@@ -9768,7 +9768,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if ((nd >= 2 && k != 2) || (nd == 1 && k != 1))
     {
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+            // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
@@ -9813,8 +9813,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (status != NC_NOERR)
                 {
                     CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                                // deadlock with GDALDataset own
-                                                // mutex.
+                        // deadlock with GDALDataset own
+                        // mutex.
                     delete poDS;
                     CPLAcquireMutex(hNCMutex, 1000.0);
                     return nullptr;
@@ -9987,7 +9987,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             CPLFree(panBandZLev);
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
@@ -10030,7 +10030,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-                                // GDALDataset own mutex.
+        // GDALDataset own mutex.
     poDS->TryLoadXML();
 
     if (bTreatAsSubdataset)
@@ -10208,7 +10208,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
     }
 
     CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock with
-                                // GDALDataset own mutex.
+        // GDALDataset own mutex.
     netCDFDataset *poDS = new netCDFDataset();
     CPLAcquireMutex(hNCMutex, 1000.0);
 
@@ -10241,8 +10241,8 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
                          "%s is an existing file, but not a directory",
                          pszFilename);
                 CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                            // deadlock with GDALDataset own
-                                            // mutex.
+                    // deadlock with GDALDataset own
+                    // mutex.
                 delete poDS;
                 CPLAcquireMutex(hNCMutex, 1000.0);
                 return nullptr;
@@ -10253,7 +10253,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
             CPLError(CE_Failure, CPLE_FileIO, "Cannot create %s directory",
                      pszFilename);
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
@@ -10287,7 +10287,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
                      "directory",
                      pszFilename);
             CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll
-                                        // deadlock with GDALDataset own mutex.
+                // deadlock with GDALDataset own mutex.
             delete poDS;
             CPLAcquireMutex(hNCMutex, 1000.0);
             return nullptr;
@@ -10307,7 +10307,7 @@ netCDFDataset *netCDFDataset::CreateLL(const char *pszFilename, int nXSize,
                  "Unable to create netCDF file %s (Error code %d): %s .",
                  pszFilename, status, nc_strerror(status));
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
-                                    // with GDALDataset own mutex.
+            // with GDALDataset own mutex.
         delete poDS;
         CPLAcquireMutex(hNCMutex, 1000.0);
         return nullptr;
@@ -10992,7 +10992,7 @@ void netCDFDataset::ProcessCreationOptions()
         }
     }
 
-    // Compression only available for NC4.
+// Compression only available for NC4.
 #ifdef NETCDF_HAS_NC4
 
     // COMPRESS option.
@@ -11218,7 +11218,6 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
                 (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
 
             m_pathComponent = aosParts[1];
-
             if (hasDriveLetter)
             {
                 m_pathComponent.append(":");
@@ -11449,8 +11448,8 @@ void GDALRegister_netCDF()
 #ifdef HAVE_HDF4
     poDriver->SetMetadataItem("GDAL_HAS_HDF4", "YES");
 #endif
-#ifdef HAVE_NCDF
-    poDriver->SetMetadataItem("GDAL_HAS_NCDF", "YES");
+#ifdef HAVE_HDF5
+    poDriver->SetMetadataItem("GDAL_HAS_HDF5", "YES");
 #endif
 #ifdef HAVE_NETCDF_MEM
     poDriver->SetMetadataItem("NETCDF_HAS_NETCDF_MEM", "YES");
@@ -12897,8 +12896,8 @@ double NCDFGetDefaultNoDataValue(int nCdfId, int nVarId, int nVarType,
 #ifdef NETCDF_HAS_NC4
         case NC_UBYTE:
 #endif
-            // Don't do default fill-values for bytes, too risky.
-            // This function should not be called in those cases.
+            // Don't do default fill-values for bytes, too risky. \
+    // This function should not be called in those cases.
             CPLAssert(false);
             break;
         case NC_SHORT:
