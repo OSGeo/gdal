@@ -9067,8 +9067,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef NCDF_DEBUG
         CPLDebug("GDAL_netCDF", "identified format %d", eTmpFormat);
 #endif
-        // Note: not calling Identify() directly, because we want the file type. \
-    // Only support NCDF_FORMAT* formats.
+        // Note: not calling Identify() directly, because we want the file type.
+        // Only support NCDF_FORMAT* formats.
         if (!(NCDF_FORMAT_NC == eTmpFormat || NCDF_FORMAT_NC2 == eTmpFormat ||
               NCDF_FORMAT_NC4 == eTmpFormat || NCDF_FORMAT_NC4C == eTmpFormat))
             return nullptr;
@@ -12896,8 +12896,8 @@ double NCDFGetDefaultNoDataValue(int nCdfId, int nVarId, int nVarType,
 #ifdef NETCDF_HAS_NC4
         case NC_UBYTE:
 #endif
-            // Don't do default fill-values for bytes, too risky. \
-    // This function should not be called in those cases.
+            // Don't do default fill-values for bytes, too risky.
+            // This function should not be called in those cases.
             CPLAssert(false);
             break;
         case NC_SHORT:
