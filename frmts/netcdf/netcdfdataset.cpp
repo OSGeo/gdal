@@ -11217,16 +11217,15 @@ struct NCDFDriverSubdatasetInfo : public GDALSubdatasetInfo
                 (strlen(aosParts[1]) == 2 && std::isalpha(aosParts[1][1])) ||
                 (strlen(aosParts[1]) == 1 && std::isalpha(aosParts[1][0]))};
 
-            if (iPartsCount > 3)
+            m_pathComponent = aosParts[1];
+
+            if (hasDriveLetter)
             {
-                m_pathComponent = aosParts[1];
-                if (hasDriveLetter)
-                {
-                    m_pathComponent.append(":");
-                    m_pathComponent.append(aosParts[2]);
-                    subdatasetIndex++;
-                }
+                m_pathComponent.append(":");
+                m_pathComponent.append(aosParts[2]);
+                subdatasetIndex++;
             }
+
             m_subdatasetComponent = aosParts[subdatasetIndex];
 
             // Append any remaining part
