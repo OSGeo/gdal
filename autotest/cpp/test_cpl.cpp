@@ -417,6 +417,18 @@ TEST_F(test_cpl, CSLTokenizeString2)
         ASSERT_TRUE(EQUAL(aosStringList[3], "four"));
         ASSERT_TRUE(EQUAL(aosStringList[4], "five"));
     }
+
+    {
+        CPLStringList aosStringList(CSLTokenizeString2(
+            "one=one,two_comma=\"two,\",three_comma_four=\"three,four\" five",
+            ",",
+            CSLT_HONOURSTRINGS | CSLT_STRIPLEADSPACES | CSLT_STRIPENDSPACES));
+        ASSERT_EQ(aosStringList.size(), 4);
+        ASSERT_TRUE(EQUAL(aosStringList[0], "one=one"));
+        ASSERT_TRUE(EQUAL(aosStringList[1], "two_comma=two,"));
+        ASSERT_TRUE(EQUAL(aosStringList[2], "three_comma_four=three,four"));
+        ASSERT_TRUE(EQUAL(aosStringList[3], "five"));
+    }
 }
 
 typedef struct

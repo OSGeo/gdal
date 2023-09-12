@@ -894,6 +894,13 @@ char **CSLTokenizeString2(const char *pszString, const char *pszDelimiters,
                 }
 
                 bInString = !bInString;
+
+                if (!bInString)
+                {
+                    ++pszString;
+                    break;
+                }
+
                 continue;
             }
 
