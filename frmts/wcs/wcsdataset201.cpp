@@ -374,7 +374,6 @@ CPLString WCSDataset201::DescribeCoverageRequest()
                            CPLGetXMLValue(psService, "Version", "2.0.1"));
     request = CPLURLAddKVP(request, "COVERAGEID",
                            CPLGetXMLValue(psService, "CoverageName", ""));
-    request = CPLURLAddKVP(request, "FORMAT", "text/xml");
     CPLString extra = CPLGetXMLValue(psService, "Parameters", "");
     if (extra != "")
     {
