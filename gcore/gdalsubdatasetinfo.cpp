@@ -28,6 +28,7 @@
  ***************************************************************************/
 #include "gdalsubdatasetinfo.h"
 #include "gdal_priv.h"
+#include <stdexcept>
 
 /************************************************************************/
 /*                     Subdataset informational functions               */
