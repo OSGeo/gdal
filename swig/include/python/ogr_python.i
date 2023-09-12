@@ -373,7 +373,7 @@ def ReleaseResultSet(self, sql_lyr):
         """Method called when using Dataset.ExecuteSQL() as a context manager"""
         if hasattr(self, "_dataset_weak_ref"):
             self._dataset_strong_ref = self._dataset_weak_ref()
-            assert self._dataset_strong_ref
+            assert self._dataset_strong_ref is not None
             del self._dataset_weak_ref
             return self
         raise Exception("__enter__() called in unexpected situation")

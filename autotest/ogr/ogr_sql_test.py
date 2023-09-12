@@ -122,6 +122,16 @@ def test_ogr_sql_execute_sql(use_gdal):
         os.unlink("tmp/test_ogr_sql_execute_sql.shx")
 
 
+@pytest.mark.require_driver("SQLite")
+def test_ogr_sql_execute_sql_empty_database(tmp_vsimem):
+
+    ds = ogr.GetDriverByName("SQLite").CreateDataSource(tmp_vsimem / "test.sqlite")
+
+    with ds.ExecuteSQL("SELECT sqlite_version() AS version") as sql_lyr:
+        f = sql_lyr.GetNextFeature()
+        assert type(f["version"]) is str
+
+
 ###############################################################################
 # Test invalid use of ReleaseResultSet()
 
