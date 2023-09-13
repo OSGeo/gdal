@@ -3526,6 +3526,58 @@ def test_ogr_geojson_non_finite():
 
 
 ###############################################################################
+# Test writing fields with and without automatic JSON interpretation
+
+
+def test_ogr_geojson_json_string_autodetect():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "properties": { "jsonish": "[nan]" }, "geometry": null }
+  ]
+}"""
+    with gdal.quiet_errors():
+        ds = ogr.Open(json_content)
+    if ds is None:
+        # Might fail with older libjson-c versions
+        pytest.skip()
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in range(1):
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
+
+    if f["jsonish"] != "[nan]":
+        f.DumpReadable()
+        pytest.fail()
+    ds = None
+
+    tmpfilename = "/vsimem/out.json"
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(tmpfilename, json_content, options="-f GeoJSON")
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTRealList
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(tmpfilename, json_content, options="-f GeoJSON -lco AUTODETECT_JSON_STRINGS=FALSE")
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
+    f = lyr.GetNextFeature()
+    if f["jsonish"] != "[nan]":
+        f.DumpReadable()
+        pytest.fail()
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
 
 
 def test_ogr_geojson_random_reading_with_id():

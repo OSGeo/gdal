@@ -73,6 +73,8 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
     oWriteOptions_.SetIDOptions(papszOptions);
     oWriteOptions_.bAllowNonFiniteValues = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "WRITE_NON_FINITE_VALUES", "FALSE"));
+    oWriteOptions_.bAutodetectJsonStrings = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "AUTODETECT_JSON_STRINGS", "TRUE"));
 }
 
 /************************************************************************/

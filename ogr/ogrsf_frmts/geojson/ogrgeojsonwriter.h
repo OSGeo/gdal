@@ -85,6 +85,7 @@ class OGRGeoJSONWriteOptions
     bool bGenerateID = false;
     OGRFieldType eForcedIDFieldType = OFTString;
     bool bAllowNonFiniteValues = false;
+    bool bAutodetectJsonStrings = true;
 
     void SetRFC7946Settings();
     void SetIDOptions(CSLConstList papszOptions);
