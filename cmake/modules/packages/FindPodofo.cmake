@@ -51,7 +51,11 @@ find_library(PODOFO_LIBRARY
 mark_as_advanced(PODOFO_INCLUDE_DIR PODOFO_LIBRARY)
 
 if(PODOFO_INCLUDE_DIR)
-  set(version_hdr ${PODOFO_INCLUDE_DIR}/base/podofo_config.h)
+  set(version_hdr "${PODOFO_INCLUDE_DIR}/base/podofo_config.h")
+  if(NOT EXISTS ${version_hdr})
+    # PoDoFo >= 0.10
+    set(version_hdr "${PODOFO_INCLUDE_DIR}/auxiliary/podofo_config.h")
+  endif()
   if(EXISTS ${version_hdr})
     file(STRINGS ${version_hdr} _contents REGEX "^[ \t]*#define PODOFO_VERSION_.*")
     if(_contents)
@@ -70,12 +74,13 @@ find_package_handle_standard_args(Podofo
                                   VERSION_VAR PODOFO_VERSION_STRING)
 
 if(PODOFO_FOUND)
-  set(PODOFO_INCLUDE_DIRS "${PODOFO_INCLUDE_DIR}")
+  get_filename_component(PODOFO_PARENT_INCLUDE_DIR ${PODOFO_INCLUDE_DIR} DIRECTORY)
+  set(PODOFO_INCLUDE_DIRS "${PODOFO_INCLUDE_DIR};${PODOFO_PARENT_INCLUDE_DIR}")
   set(PODOFO_LIBRARIES "${PDOFO_LIBRARY}")
   if(NOT TARGET PODOFO::Podofo)
     add_library(PODOFO::Podofo UNKNOWN IMPORTED)
     set_target_properties(PODOFO::Podofo PROPERTIES
-                          INTERFACE_INCLUDE_DIRECTORIES "${PODOFO_INCLUDE_DIR}"
+                          INTERFACE_INCLUDE_DIRECTORIES "${PODOFO_INCLUDE_DIRS}"
                           IMPORTED_LINK_INTERFACE_LANGUAGES "C"
                           IMPORTED_LOCATION "${PODOFO_LIBRARY}")
   endif()

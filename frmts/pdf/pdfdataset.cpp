@@ -4491,7 +4491,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     Catalog *poCatalogPoppler = nullptr;
 #endif
 #ifdef HAVE_PODOFO
-    PoDoFo::PdfMemDocument *poDocPodofo = nullptr;
+    std::unique_ptr<PoDoFo::PdfMemDocument> poDocPodofo;
     PoDoFo::PdfPage *poPagePodofo = nullptr;
 #endif
 #ifdef HAVE_PDFIUM
@@ -4752,17 +4752,25 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_PODOFO
     if (bUseLib.test(PDFLIB_PODOFO) && poPageObj == nullptr)
     {
+#if !(PODOFO_VERSION_MAJOR > 0 ||                                              \
+      (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10))
         PoDoFo::PdfError::EnableDebug(false);
         PoDoFo::PdfError::EnableLogging(false);
+#endif
 
-        poDocPodofo = new PoDoFo::PdfMemDocument();
+        poDocPodofo = cpl::make_unique<PoDoFo::PdfMemDocument>();
         try
         {
             poDocPodofo->Load(pszFilename);
         }
         catch (PoDoFo::PdfError &oError)
         {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+            if (oError.GetCode() == PoDoFo::PdfErrorCode::InvalidPassword)
+#else
             if (oError.GetError() == PoDoFo::ePdfError_InvalidPassword)
+#endif
             {
                 if (pszUserPwd)
                 {
@@ -4771,12 +4779,25 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 
                     try
                     {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+                        poDocPodofo =
+                            cpl::make_unique<PoDoFo::PdfMemDocument>();
+                        poDocPodofo->Load(pszFilename, pszUserPwd);
+#else
                         poDocPodofo->SetPassword(pszUserPwd);
+#endif
                     }
                     catch (PoDoFo::PdfError &oError2)
                     {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+                        if (oError2.GetCode() ==
+                            PoDoFo::PdfErrorCode::InvalidPassword)
+#else
                         if (oError2.GetError() ==
                             PoDoFo::ePdfError_InvalidPassword)
+#endif
                         {
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Invalid password");
@@ -4786,13 +4807,11 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                             CPLError(CE_Failure, CPLE_AppDefined,
                                      "Invalid PDF : %s", oError2.what());
                         }
-                        delete poDocPodofo;
                         return nullptr;
                     }
                     catch (...)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
-                        delete poDocPodofo;
                         return nullptr;
                     }
                 }
@@ -4803,7 +4822,6 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
                              "the PDF_USER_PWD "
                              "configuration option / USER_PWD open option "
                              "(that can be set to ASK_INTERACTIVE)");
-                    delete poDocPodofo;
                     return nullptr;
                 }
             }
@@ -4811,56 +4829,70 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s",
                          oError.what());
-                delete poDocPodofo;
                 return nullptr;
             }
         }
         catch (...)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
-            delete poDocPodofo;
             return nullptr;
         }
 
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        auto &oPageCollections = poDocPodofo->GetPages();
+        nPages = static_cast<int>(oPageCollections.GetCount());
+#else
         nPages = poDocPodofo->GetPageCount();
+#endif
         if (iPage < 1 || iPage > nPages)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid page number (%d/%d)",
                      iPage, nPages);
-            delete poDocPodofo;
             return nullptr;
         }
 
         try
         {
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+            /* Sanity check to validate page count */
+            if (iPage != nPages)
+                CPL_IGNORE_RET_VAL(oPageCollections.GetPageAt(nPages - 1));
+
+            poPagePodofo = &oPageCollections.GetPageAt(iPage - 1);
+#else
             /* Sanity check to validate page count */
             if (iPage != nPages)
                 CPL_IGNORE_RET_VAL(poDocPodofo->GetPage(nPages - 1));
 
             poPagePodofo = poDocPodofo->GetPage(iPage - 1);
+#endif
         }
         catch (PoDoFo::PdfError &oError)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : %s",
                      oError.what());
-            delete poDocPodofo;
             return nullptr;
         }
         catch (...)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF");
-            delete poDocPodofo;
             return nullptr;
         }
 
         if (poPagePodofo == nullptr)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid PDF : invalid page");
-            delete poDocPodofo;
             return nullptr;
         }
 
-        PoDoFo::PdfObject *pObj = poPagePodofo->GetObject();
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        const PoDoFo::PdfObject *pObj = &poPagePodofo->GetObject();
+#else
+        const PoDoFo::PdfObject *pObj = poPagePodofo->GetObject();
+#endif
         poPageObj = new GDALPDFObjectPodofo(pObj, poDocPodofo->GetObjects());
     }
 #endif  // ~ HAVE_PODOFO
@@ -4899,12 +4931,6 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_POPPLER
         if (bUseLib.test(PDFLIB_POPPLER))
             PDFFreeDoc(poDocPoppler);
-#endif
-#ifdef HAVE_PODOFO
-        if (bUseLib.test(PDFLIB_PODOFO))
-        {
-            delete poDocPodofo;
-        }
 #endif
 #ifdef HAVE_PDFIUM
         if (bUseLib.test(PDFLIB_PDFIUM))
@@ -4950,7 +4976,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->m_poDocPoppler = poDocPoppler;
 #endif
 #ifdef HAVE_PODOFO
-    poDS->m_poDocPodofo = poDocPodofo;
+    poDS->m_poDocPodofo = poDocPodofo.release();
 #endif
 #ifdef HAVE_PDFIUM
     poDS->m_poDocPdfium = poDocPdfium;
@@ -5006,11 +5032,17 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bUseLib.test(PDFLIB_PODOFO))
     {
         CPLAssert(poPagePodofo);
-        PoDoFo::PdfRect oMediaBox = poPagePodofo->GetMediaBox();
+        auto oMediaBox = poPagePodofo->GetMediaBox();
         dfX1 = oMediaBox.GetLeft();
         dfY1 = oMediaBox.GetBottom();
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        dfX2 = dfX1 + oMediaBox.Width;
+        dfY2 = dfY1 + oMediaBox.Height;
+#else
         dfX2 = dfX1 + oMediaBox.GetWidth();
         dfY2 = dfY1 + oMediaBox.GetHeight();
+#endif
     }
 #endif
 
@@ -5049,7 +5081,12 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (bUseLib.test(PDFLIB_PODOFO))
     {
         CPLAssert(poPagePodofo);
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+        dfRotation = poPagePodofo->GetRotationRaw();
+#else
         dfRotation = poPagePodofo->GetRotation();
+#endif
     }
 #endif
 
@@ -5437,10 +5474,10 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
 #ifdef HAVE_PODOFO
     if (bUseLib.test(PDFLIB_PODOFO))
     {
-        PoDoFo::TIVecObjects it = poDocPodofo->GetObjects().begin();
-        for (; it != poDocPodofo->GetObjects().end(); ++it)
+        for (const auto &obj : poDS->m_poDocPodofo->GetObjects())
         {
-            GDALPDFObjectPodofo oObjPodofo((*it), poDocPodofo->GetObjects());
+            GDALPDFObjectPodofo oObjPodofo(obj,
+                                           poDS->m_poDocPodofo->GetObjects());
             poDS->FindXMP(&oObjPodofo);
         }
 
@@ -5448,11 +5485,17 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
         poDS->FindLayersGeneric(poPageDict);
 
         /* Read Info object */
-        PoDoFo::PdfInfo *poInfo = poDocPodofo->GetInfo();
+        const PoDoFo::PdfInfo *poInfo = poDS->m_poDocPodofo->GetInfo();
         if (poInfo != nullptr)
         {
-            GDALPDFObjectPodofo oInfoObjPodofo(poInfo->GetObject(),
-                                               poDocPodofo->GetObjects());
+            GDALPDFObjectPodofo oInfoObjPodofo(
+#if PODOFO_VERSION_MAJOR > 0 ||                                                \
+    (PODOFO_VERSION_MAJOR == 0 && PODOFO_VERSION_MINOR >= 10)
+                &(poInfo->GetObject()),
+#else
+                poInfo->GetObject(),
+#endif
+                poDS->m_poDocPodofo->GetObjects());
             poDS->ParseInfo(&oInfoObjPodofo);
         }
     }

@@ -394,8 +394,8 @@ GDALPDFArray *GDALPDFCreateArray(Array *array);
 class GDALPDFObjectPodofo : public GDALPDFObject
 {
   private:
-    PoDoFo::PdfObject *m_po;
-    PoDoFo::PdfVecObjects &m_poObjects;
+    const PoDoFo::PdfObject *m_po;
+    const PoDoFo::PdfVecObjects &m_poObjects;
     GDALPDFDictionary *m_poDict;
     GDALPDFArray *m_poArray;
     GDALPDFStream *m_poStream;
@@ -405,8 +405,8 @@ class GDALPDFObjectPodofo : public GDALPDFObject
     virtual const char *GetTypeNameNative() override;
 
   public:
-    GDALPDFObjectPodofo(PoDoFo::PdfObject *po,
-                        PoDoFo::PdfVecObjects &poObjects);
+    GDALPDFObjectPodofo(const PoDoFo::PdfObject *po,
+                        const PoDoFo::PdfVecObjects &poObjects);
 
     virtual ~GDALPDFObjectPodofo();
 
