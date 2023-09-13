@@ -3558,7 +3558,11 @@ def test_ogr_geojson_json_string_autodetect():
     gdal.Unlink(tmpfilename)
 
     with gdal.quiet_errors():
-        gdal.VectorTranslate(tmpfilename, json_content, options="-f GeoJSON -lco AUTODETECT_JSON_STRINGS=FALSE")
+        gdal.VectorTranslate(
+            tmpfilename,
+            json_content,
+            options="-f GeoJSON -lco AUTODETECT_JSON_STRINGS=FALSE",
+        )
     ds = ogr.Open(tmpfilename)
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 1
