@@ -363,12 +363,11 @@ DGifGetImageDesc(GifFileType * GifFile) {
     }
     BitsPerPixel = (Buf[0] & 0x07) + 1;
     GifFile->Image.Interlace = (Buf[0] & 0x40);
+    if (GifFile->Image.ColorMap) {
+        FreeMapObject(GifFile->Image.ColorMap);
+        GifFile->Image.ColorMap = NULL;
+    }
     if (Buf[0] & 0x80) {    /* Does this image have local color map? */
-
-        /*** FIXME: Why do we check both of these in order to do this?
-         * Why do we have both Image and SavedImages? */
-        if (GifFile->Image.ColorMap && GifFile->SavedImages == NULL)
-            FreeMapObject(GifFile->Image.ColorMap);
 
         GifFile->Image.ColorMap = MakeMapObject(1 << BitsPerPixel, NULL);
         if (GifFile->Image.ColorMap == NULL) {
@@ -389,9 +388,6 @@ DGifGetImageDesc(GifFileType * GifFile) {
             GifFile->Image.ColorMap->Colors[i].Green = Buf[1];
             GifFile->Image.ColorMap->Colors[i].Blue = Buf[2];
         }
-    } else if (GifFile->Image.ColorMap) {
-        FreeMapObject(GifFile->Image.ColorMap);
-        GifFile->Image.ColorMap = NULL;
     }
 
     if (GifFile->SavedImages) {
