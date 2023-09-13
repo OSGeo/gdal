@@ -1625,6 +1625,14 @@ def test_vrt_protocol():
         assert not gdal.Open("vrt://data/minfloat.tif?a_ullr=0,1,1,0&unscale&")
 
 
+@pytest.mark.require_proj(7, 2)
+def test_vrt_protocol_a_coord_epoch_option():
+    ds = gdal.Open("vrt://data/byte.tif?a_srs=EPSG:4326&a_coord_epoch=2021.3")
+    srs = ds.GetSpatialRef()
+    assert srs.IsDynamic()
+    assert srs.GetCoordinateEpoch() == 2021.3
+
+
 @pytest.mark.require_driver("BMP")
 def test_vrt_protocol_expand_option():
     ds = gdal.Open("vrt://data/8bit_pal.bmp?expand=rgb")
