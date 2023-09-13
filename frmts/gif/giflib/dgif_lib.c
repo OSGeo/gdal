@@ -1047,18 +1047,23 @@ DGifSlurp(GifFileType * GifFile) {
     SavedImage *sp;
     GifByteType *ExtData;
     SavedImage temp_save;
+    int ret = GIF_OK;
 
     temp_save.ExtensionBlocks = NULL;
     temp_save.ExtensionBlockCount = 0;
 
     do {
-        if (DGifGetRecordType(GifFile, &RecordType) == GIF_ERROR)
-            return (GIF_ERROR);
+        if (DGifGetRecordType(GifFile, &RecordType) == GIF_ERROR) {
+            ret = GIF_ERROR;
+            break;
+        }
 
         switch (RecordType) {
           case IMAGE_DESC_RECORD_TYPE:
-              if (DGifGetImageDesc(GifFile) == GIF_ERROR)
-                  return (GIF_ERROR);
+              if (DGifGetImageDesc(GifFile) == GIF_ERROR){
+                ret = GIF_ERROR;
+                break;
+              }
 
               sp = &GifFile->SavedImages[GifFile->ImageCount - 1];
 
@@ -1067,7 +1072,8 @@ DGifSlurp(GifFileType * GifFile) {
              {
                 /* for GDAL we prefer to not process very large images. */
                 /* http://trac.osgeo.org/gdal/ticket/2542 */
-                return D_GIF_ERR_DATA_TOO_BIG;
+                ret = D_GIF_ERR_DATA_TOO_BIG;
+                break;
              }
 
               ImageSize = sp->ImageDesc.Width * sp->ImageDesc.Height;
@@ -1075,11 +1081,14 @@ DGifSlurp(GifFileType * GifFile) {
               sp->RasterBits = (unsigned char *)malloc(ImageSize *
                                                        sizeof(GifPixelType));
               if (sp->RasterBits == NULL) {
-                  return GIF_ERROR;
+                  ret = GIF_ERROR;
+                  break;
               }
               if (DGifGetLine(GifFile, sp->RasterBits, ImageSize) ==
-                  GIF_ERROR)
-                  return (GIF_ERROR);
+                  GIF_ERROR) {
+                  ret = GIF_ERROR;
+                  break;
+              }
               if (temp_save.ExtensionBlocks) {
                   sp->ExtensionBlocks = temp_save.ExtensionBlocks;
                   sp->ExtensionBlockCount = temp_save.ExtensionBlockCount;
@@ -1096,17 +1105,23 @@ DGifSlurp(GifFileType * GifFile) {
 
           case EXTENSION_RECORD_TYPE:
               if (DGifGetExtension(GifFile, &temp_save.Function, &ExtData) ==
-                  GIF_ERROR)
-                  return (GIF_ERROR);
+                  GIF_ERROR) {
+                  ret = GIF_ERROR;
+                  break;
+              }
               while (ExtData != NULL) {
 
                   /* Create an extension block with our data */
                   if (AddExtensionBlock(&temp_save, ExtData[0], &ExtData[1])
-                      == GIF_ERROR)
-                      return (GIF_ERROR);
+                      == GIF_ERROR) {
+                      ret = GIF_ERROR;
+                      break;
+                  }
 
-                  if (DGifGetExtensionNext(GifFile, &ExtData) == GIF_ERROR)
-                      return (GIF_ERROR);
+                  if (DGifGetExtensionNext(GifFile, &ExtData) == GIF_ERROR) {
+                      ret = GIF_ERROR;
+                      break;
+                  }
                   temp_save.Function = 0;
               }
               break;
@@ -1126,6 +1141,6 @@ DGifSlurp(GifFileType * GifFile) {
     if (temp_save.ExtensionBlocks)
         FreeExtension(&temp_save);
 
-    return (GIF_OK);
+    return ret;
 }
 #endif /* _GBA_NO_FILEIO */
