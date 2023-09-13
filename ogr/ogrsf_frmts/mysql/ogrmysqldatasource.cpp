@@ -161,8 +161,9 @@ int OGRMySQLDataSource::Open(const char *pszNewName, char **papszOpenOptionsIn,
     /* -------------------------------------------------------------------- */
     /*      Parse out connection information.                               */
     /* -------------------------------------------------------------------- */
-    char **papszItems =
-        CSLTokenizeString2(osNewName + 6, ",", CSLT_HONOURSTRINGS);
+    char **papszItems = CSLTokenizeString2(
+        osNewName + 6, ",",
+        CSLT_HONOURSTRINGS | CSLT_PRESERVEQUOTES | CSLT_PRESERVEESCAPES);
 
     if (CSLCount(papszItems) < 1)
     {
