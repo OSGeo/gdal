@@ -586,13 +586,6 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
 
     virtual int DeleteObject(const char *pszFilename);
 
-    virtual void UpdateMapFromHandle(IVSIS3LikeHandleHelper *)
-    {
-    }
-    virtual void UpdateHandleFromMap(IVSIS3LikeHandleHelper *)
-    {
-    }
-
     bool Sync(const char *pszSource, const char *pszTarget,
               const char *const *papszOptions, GDALProgressFunc pProgressFunc,
               void *pProgressData, char ***ppapszOutputs) override;

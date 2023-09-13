@@ -66,8 +66,6 @@ class VSIOSSFSHandler final : public IVSIS3LikeFSHandler
 {
     CPL_DISALLOW_COPY_ASSIGN(VSIOSSFSHandler)
 
-    std::map<CPLString, VSIOSSUpdateParams> oMapBucketsToOSSParams{};
-
   protected:
     VSICurlHandle *CreateFileHandle(const char *pszFilename) override;
     CPLString GetURLFromFilename(const CPLString &osFilename) override;
@@ -95,9 +93,6 @@ class VSIOSSFSHandler final : public IVSIS3LikeFSHandler
                            bool bSetError, CSLConstList papszOptions) override;
 
     const char *GetOptions() override;
-
-    void UpdateMapFromHandle(IVSIS3LikeHandleHelper *poHandleHelper) override;
-    void UpdateHandleFromMap(IVSIS3LikeHandleHelper *poHandleHelper) override;
 
     char *GetSignedURL(const char *pszFilename,
                        CSLConstList papszOptions) override;
@@ -166,7 +161,7 @@ VSIVirtualHandle *VSIOSSFSHandler::Open(const char *pszFilename,
             pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(), false);
         if (poHandleHelper == nullptr)
             return nullptr;
-        UpdateHandleFromMap(poHandleHelper);
+
         VSIS3WriteHandle *poHandle = new VSIS3WriteHandle(
             this, pszFilename, poHandleHelper, false, papszOptions);
         if (!poHandle->IsOK())
@@ -214,7 +209,7 @@ void VSIOSSFSHandler::ClearCache()
 {
     VSICurlFilesystemHandlerBase::ClearCache();
 
-    oMapBucketsToOSSParams.clear();
+    VSIOSSUpdateParams::ClearCache();
 }
 
 /************************************************************************/
@@ -273,7 +268,6 @@ VSICurlHandle *VSIOSSFSHandler::CreateFileHandle(const char *pszFilename)
         pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(), false);
     if (poHandleHelper)
     {
-        UpdateHandleFromMap(poHandleHelper);
         return new VSIOSSHandle(this, pszFilename, poHandleHelper);
     }
     return nullptr;
@@ -293,7 +287,7 @@ CPLString VSIOSSFSHandler::GetURLFromFilename(const CPLString &osFilename)
     {
         return "";
     }
-    UpdateHandleFromMap(poHandleHelper);
+
     CPLString osBaseURL(poHandleHelper->GetURL());
     if (!osBaseURL.empty() && osBaseURL.back() == '/')
         osBaseURL.resize(osBaseURL.size() - 1);
@@ -311,40 +305,6 @@ IVSIS3LikeHandleHelper *VSIOSSFSHandler::CreateHandleHelper(const char *pszURI,
 {
     return VSIOSSHandleHelper::BuildFromURI(pszURI, GetFSPrefix().c_str(),
                                             bAllowNoObject);
-}
-
-/************************************************************************/
-/*                         UpdateMapFromHandle()                        */
-/************************************************************************/
-
-void VSIOSSFSHandler::UpdateMapFromHandle(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    CPLMutexHolder oHolder(&hMutex);
-
-    VSIOSSHandleHelper *poOSSHandleHelper =
-        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    oMapBucketsToOSSParams[poOSSHandleHelper->GetBucket()] =
-        VSIOSSUpdateParams(poOSSHandleHelper);
-}
-
-/************************************************************************/
-/*                         UpdateHandleFromMap()                        */
-/************************************************************************/
-
-void VSIOSSFSHandler::UpdateHandleFromMap(
-    IVSIS3LikeHandleHelper *poHandleHelper)
-{
-    CPLMutexHolder oHolder(&hMutex);
-
-    VSIOSSHandleHelper *poOSSHandleHelper =
-        cpl::down_cast<VSIOSSHandleHelper *>(poHandleHelper);
-    std::map<CPLString, VSIOSSUpdateParams>::iterator oIter =
-        oMapBucketsToOSSParams.find(poOSSHandleHelper->GetBucket());
-    if (oIter != oMapBucketsToOSSParams.end())
-    {
-        oIter->second.UpdateHandlerHelper(poOSSHandleHelper);
-    }
 }
 
 /************************************************************************/
@@ -385,12 +345,8 @@ VSIOSSHandle::GetCurlHeaders(const CPLString &osVerb,
 bool VSIOSSHandle::CanRestartOnError(const char *pszErrorMsg,
                                      const char *pszHeaders, bool bSetError)
 {
-    if (m_poHandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders, bSetError,
-                                            nullptr))
+    if (m_poHandleHelper->CanRestartOnError(pszErrorMsg, pszHeaders, bSetError))
     {
-        static_cast<VSIOSSFSHandler *>(poFS)->UpdateMapFromHandle(
-            m_poHandleHelper);
-
         SetURL(m_poHandleHelper->GetURL());
         return true;
     }

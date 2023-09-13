@@ -28,6 +28,7 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import copy
 import sys
 
 import gdaltest
@@ -35,6 +36,8 @@ import pytest
 import webserver
 
 from osgeo import gdal
+
+from .vsis3 import general_s3_options
 
 pytestmark = pytest.mark.require_curl()
 
@@ -1442,7 +1445,7 @@ def test_vsiaz_opendir():
     assert entry.mtime == 1
 
     entry = gdal.GetNextDirEntry(d)
-    assert entry.name == "subdir/"
+    assert entry.name == "subdir"
     assert entry.mode == 16384
 
     entry = gdal.GetNextDirEntry(d)
@@ -2684,3 +2687,56 @@ def test_vsiaz_access_token():
             gdal.VSIFCloseL(f)
 
         assert data == "foo"
+
+
+###############################################################################
+# Test server-side copy from S3 to Azure
+
+
+def test_vsiaz_copy_from_vsis3():
+
+    if gdaltest.webserver_port == 0:
+        pytest.skip()
+
+    gdal.VSICurlClearCache()
+
+    options = copy.copy(general_s3_options)
+    options["AWS_S3_ENDPOINT"] = f"127.0.0.1:{gdaltest.webserver_port}"
+
+    with gdaltest.config_options(options, thread_local=False):
+        handler = webserver.SequentialHandler()
+        handler.add(
+            "GET",
+            "/s3_bucket/test.bin",
+            200,
+            {"Content-Length": "3"},
+            "foo",
+        )
+
+        if gdaltest.webserver_port == 8080:
+            expected_headers = {
+                "x-ms-copy-source": "http://127.0.0.1:%d/s3_bucket/test.bin?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%%2F20150101%%2Fus-east-1%%2Fs3%%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-Expires=3600&X-Amz-Signature=49294bd260338188b336ff2ed2c202e95d503439aca8fd9b2982c91992fa584d&X-Amz-SignedHeaders=host"
+                % gdaltest.webserver_port
+            }
+        elif gdaltest.webserver_port == 8081:
+            expected_headers = {
+                "x-ms-copy-source": "http://127.0.0.1:%d/s3_bucket/test.bin?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AWS_ACCESS_KEY_ID%%2F20150101%%2Fus-east-1%%2Fs3%%2Faws4_request&X-Amz-Date=20150101T000000Z&X-Amz-Expires=3600&X-Amz-Signature=20dfcb6bdd7a4e55fc58a171b7a25dcce55244f990e4d1e0361eed1bbb729a07&X-Amz-SignedHeaders=host"
+                % gdaltest.webserver_port
+            }
+        else:
+            expected_headers = {}
+
+        handler.add(
+            "PUT",
+            "/azure/blob/myaccount/az_container/test.bin",
+            202,
+            expected_headers=expected_headers,
+        )
+
+        with webserver.install_http_handler(handler):
+            assert (
+                gdal.CopyFile(
+                    "/vsis3/s3_bucket/test.bin", "/vsiaz/az_container/test.bin"
+                )
+                == 0
+            )

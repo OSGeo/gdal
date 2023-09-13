@@ -323,7 +323,7 @@ VSIVirtualHandle *VSISwiftFSHandler::Open(const char *pszFilename,
                 pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
         if (poHandleHelper == nullptr)
             return nullptr;
-        UpdateHandleFromMap(poHandleHelper);
+
         VSIS3WriteHandle *poHandle = new VSIS3WriteHandle(
             this, pszFilename, poHandleHelper, true, papszOptions);
         if (!poHandle->IsOK())
@@ -424,7 +424,6 @@ VSICurlHandle *VSISwiftFSHandler::CreateFileHandle(const char *pszFilename)
         pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
     if (poHandleHelper)
     {
-        UpdateHandleFromMap(poHandleHelper);
         return new VSISwiftHandle(this, pszFilename, poHandleHelper);
     }
     return nullptr;
