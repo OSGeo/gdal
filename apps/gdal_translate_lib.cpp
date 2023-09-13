@@ -1867,11 +1867,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     if (bSpatialArrangementPreserved)
     {
-        char **papszMD = poSrcDSOri->GetMetadata("RPC");
+        char **papszMD = poSrcDS->GetMetadata("RPC");
         if (papszMD != nullptr)
             poVDS->SetMetadata(papszMD, "RPC");
 
-        papszMD = poSrcDSOri->GetMetadata("GEOLOCATION");
+        papszMD = poSrcDS->GetMetadata("GEOLOCATION");
         if (papszMD != nullptr)
             poVDS->SetMetadata(papszMD, "GEOLOCATION");
     }
