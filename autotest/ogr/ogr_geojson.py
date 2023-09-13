@@ -3543,9 +3543,7 @@ def test_ogr_geojson_json_string_autodetect():
     f = lyr.GetNextFeature()
     for i in range(1):
         assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
-    if f["jsonish"] != "[5]":
-        f.DumpReadable()
-        pytest.fail()
+    assert f["jsonish"] == "[5]"
     ds = None
 
     tmpfilename = "/vsimem/out.json"
@@ -3566,9 +3564,7 @@ def test_ogr_geojson_json_string_autodetect():
     assert lyr.GetLayerDefn().GetFieldCount() == 1
     assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
     f = lyr.GetNextFeature()
-    if f["jsonish"] != "[5]":
-        f.DumpReadable()
-        pytest.fail()
+    assert f["jsonish"] == "[5]"
     ds = None
     gdal.Unlink(tmpfilename)
 
