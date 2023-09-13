@@ -1373,7 +1373,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
 
     // Builds the format string used for printing float values.
     char szFormatFloat[32] = {'\0'};
-    strcpy(szFormatFloat, " %.20g");
+    strcpy(szFormatFloat, "%.20g");
     const char *pszDecimalPrecision =
         CSLFetchNameValue(papszOptions, "DECIMAL_PRECISION");
     const char *pszSignificantDigits =
@@ -1390,7 +1390,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
     {
         nPrecision = atoi(pszSignificantDigits);
         if (nPrecision >= 0)
-            snprintf(szFormatFloat, sizeof(szFormatFloat), " %%.%dg",
+            snprintf(szFormatFloat, sizeof(szFormatFloat), "%%.%dg",
                      nPrecision);
         CPLDebug("AAIGrid", "Setting precision format: %s", szFormatFloat);
     }
@@ -1398,7 +1398,7 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
     {
         nPrecision = atoi(pszDecimalPrecision);
         if (nPrecision >= 0)
-            snprintf(szFormatFloat, sizeof(szFormatFloat), " %%.%df",
+            snprintf(szFormatFloat, sizeof(szFormatFloat), "%%.%df",
                      nPrecision);
         CPLDebug("AAIGrid", "Setting precision format: %s", szFormatFloat);
     }
@@ -1466,10 +1466,11 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
         {
             for (int iPixel = 0; iPixel < nXSize; iPixel++)
             {
-                snprintf(szHeader, sizeof(szHeader), " %d",
-                         panScanline[iPixel]);
+                snprintf(szHeader, sizeof(szHeader), "%d", panScanline[iPixel]);
                 osBuf += szHeader;
-                if ((iPixel & 1023) == 0 || iPixel == nXSize - 1)
+                osBuf += ' ';
+                if ((iPixel > 0 && (iPixel % 1024) == 0) ||
+                    iPixel == nXSize - 1)
                 {
                     if (VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
                                    fpImage) != 1)
@@ -1509,7 +1510,9 @@ GDALDataset *AAIGDataset::CreateCopy(const char *pszFilename,
                 }
 
                 osBuf += szHeader;
-                if ((iPixel & 1023) == 0 || iPixel == nXSize - 1)
+                osBuf += ' ';
+                if ((iPixel > 0 && (iPixel % 1024) == 0) ||
+                    iPixel == nXSize - 1)
                 {
                     if (VSIFWriteL(osBuf, static_cast<int>(osBuf.size()), 1,
                                    fpImage) != 1)
