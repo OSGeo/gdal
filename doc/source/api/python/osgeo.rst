@@ -1,3 +1,5 @@
+.. _python_osgeo:
+
 osgeo package
 =============
 
