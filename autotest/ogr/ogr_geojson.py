@@ -3534,20 +3534,16 @@ def test_ogr_geojson_json_string_autodetect():
     json_content = """{
   "type": "FeatureCollection",
   "features": [
-      { "type": "Feature", "properties": { "jsonish": "[nan]" }, "geometry": null }
+      { "type": "Feature", "properties": { "jsonish": "[5]" }, "geometry": null }
   ]
 }"""
     with gdal.quiet_errors():
         ds = ogr.Open(json_content)
-    if ds is None:
-        # Might fail with older libjson-c versions
-        pytest.skip()
     lyr = ds.GetLayer(0)
     f = lyr.GetNextFeature()
     for i in range(1):
         assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
-
-    if f["jsonish"] != "[nan]":
+    if f["jsonish"] != "[5]":
         f.DumpReadable()
         pytest.fail()
     ds = None
@@ -3559,7 +3555,7 @@ def test_ogr_geojson_json_string_autodetect():
     ds = ogr.Open(tmpfilename)
     lyr = ds.GetLayer(0)
     assert lyr.GetLayerDefn().GetFieldCount() == 1
-    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTRealList
+    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTIntegerList
     ds = None
     gdal.Unlink(tmpfilename)
 
@@ -3570,7 +3566,7 @@ def test_ogr_geojson_json_string_autodetect():
     assert lyr.GetLayerDefn().GetFieldCount() == 1
     assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
     f = lyr.GetNextFeature()
-    if f["jsonish"] != "[nan]":
+    if f["jsonish"] != "[5]":
         f.DumpReadable()
         pytest.fail()
     ds = None
