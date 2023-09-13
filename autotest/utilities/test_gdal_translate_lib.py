@@ -514,6 +514,19 @@ def test_gdal_translate_lib_102():
 
 
 ###############################################################################
+# Test -scale preserves [0,255] input range
+
+
+def test_gdal_translate_lib_scale_0_255_input_range():
+
+    src_ds = gdal.GetDriverByName("MEM").Create("", 3, 1)
+    expected_data = struct.pack("B" * 3, 0, 254, 255)
+    src_ds.WriteRaster(0, 0, 3, 1, expected_data)
+    ds = gdal.Translate("", src_ds, options="-of MEM -scale")
+    assert ds.ReadRaster() == expected_data
+
+
+###############################################################################
 # Test that -projwin with nearest neighbor resampling uses integer source
 # pixel boundaries (#6610)
 

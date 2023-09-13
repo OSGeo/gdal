@@ -3070,7 +3070,7 @@ GDALTranslateOptionsNew(char **papszArgv,
             else
             {
                 psOptions->asScaleParams[nIndex].dfScaleDstMin = 0.0;
-                psOptions->asScaleParams[nIndex].dfScaleDstMax = 255.999;
+                psOptions->asScaleParams[nIndex].dfScaleDstMax = 255.0;
             }
         }
 
