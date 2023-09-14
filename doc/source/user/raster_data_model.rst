@@ -22,8 +22,8 @@ Dataset coordinate systems are represented as OpenGIS Well Known Text strings. T
 - A datum identifier.
 - An ellipsoid name, semi-major axis, and inverse flattening.
 - A prime meridian name and offset from Greenwich.
-- A projection method type (i.e. Transverse Mercator).
-- A list of projection parameters (i.e. central_meridian).
+- A projection method type (e.g., Transverse Mercator).
+- A list of projection parameters (e.g., central_meridian).
 - A units name, and conversion factor to meters or radians.
 - Names and ordering for the axes.
 - Codes for most of the above in terms of predefined coordinate systems from authorities such as EPSG.
@@ -224,7 +224,7 @@ A raster band has the following properties:
     * STATISTICS_APPROXIMATE: only present if GDAL has computed approximate statistics
     * STATISTICS_VALID_PERCENT: percentage of valid (not nodata) pixel
 
-- An optional offset and scale for transforming raster values into meaning full values (i.e. translate height to meters).
+- An optional offset and scale for transforming raster values into meaning full values (e.g., translate height to meters).
 - An optional raster unit name. For instance, this might indicate linear units for elevation data.
 - A color interpretation for the band. This is one of:
 
