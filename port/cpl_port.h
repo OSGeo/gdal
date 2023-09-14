@@ -196,21 +196,14 @@ typedef short GInt16;
 typedef unsigned short GUInt16;
 /** Signed int8 type */
 typedef signed char GInt8;
+
+/** Type for boolean values (alias to int) */
+typedef int GBool;
+
 #endif
 
 /** Unsigned byte type */
 typedef unsigned char GByte;
-
-/* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef
- * bool GBool" */
-/* in include/poppler/goo/gtypes.h */
-#ifndef CPL_GBOOL_DEFINED
-/*! @cond Doxygen_Suppress */
-#define CPL_GBOOL_DEFINED
-/*! @endcond */
-/** Type for boolean values (alias to int) */
-typedef int GBool;
-#endif
 
 /*! @cond Doxygen_Suppress */
 #ifdef __cplusplus
