@@ -569,6 +569,14 @@ Creation Options
       for LERC/LERC_DEFLATE/LERC_ZSTD compression. The default is 0
       (lossless).
 
+-  .. co:: MAX_Z_ERROR_OVERVIEW
+      :choices: <threshold>
+      :since: 3.8
+
+      Set the maximum error threshold on values
+      for LERC/LERC_DEFLATE/LERC_ZSTD compression, on overviews.
+      The default is the value of :co:`MAX_Z_ERROR`
+
 -  .. co:: WEBP_LEVEL
       :choices: [1-100]
       :default: 75

@@ -5414,6 +5414,8 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
             psRoot ? CPLGetXMLNode(psRoot, "=GDALMetadata") : nullptr;
         if (psItem)
             psItem = psItem->psChild;
+        bool bMaxZErrorFound = false;
+        bool bMaxZErrorOverviewFound = false;
         for (; psItem != nullptr; psItem = psItem->psNext)
         {
 
@@ -5454,6 +5456,18 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                         m_bWebPLossless = false;
                         m_nWebPLevel = static_cast<signed char>(nLevel);
                     }
+                }
+                else if (m_nCompression == COMPRESSION_LERC &&
+                         EQUAL(pszKey, "MAX_Z_ERROR"))
+                {
+                    bMaxZErrorFound = true;
+                    m_dfMaxZError = CPLAtof(pszValue);
+                }
+                else if (m_nCompression == COMPRESSION_LERC &&
+                         EQUAL(pszKey, "MAX_Z_ERROR_OVERVIEW"))
+                {
+                    bMaxZErrorOverviewFound = true;
+                    m_dfMaxZErrorOverview = CPLAtof(pszValue);
                 }
 #if HAVE_JXL
                 else if (m_nCompression == COMPRESSION_JXL &&
@@ -5574,6 +5588,11 @@ CPLErr GTiffDataset::OpenOffset(TIFF *hTIFFIn, toff_t nDirOffsetIn,
                 }
             }
             CPLFree(pszUnescapedValue);
+        }
+
+        if (bMaxZErrorFound && !bMaxZErrorOverviewFound)
+        {
+            m_dfMaxZErrorOverview = m_dfMaxZError;
         }
 
         CPLDestroyXMLNode(psRoot);
@@ -6379,6 +6398,14 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
         else if (EQUAL(pszName, "WEBP_LEVEL"))
         {
             return CPLSPrintf("%d", m_nWebPLevel);
+        }
+        else if (EQUAL(pszName, "MAX_Z_ERROR"))
+        {
+            return CPLSPrintf("%f", m_dfMaxZError);
+        }
+        else if (EQUAL(pszName, "MAX_Z_ERROR_OVERVIEW"))
+        {
+            return CPLSPrintf("%f", m_dfMaxZErrorOverview);
         }
 #if HAVE_JXL
         else if (EQUAL(pszName, "JXL_LOSSLESS"))

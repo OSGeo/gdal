@@ -1115,6 +1115,9 @@ GDALDataset *GDALCOGCreator::Create(const char *pszFilename,
     {
         aosOptions.SetNameValue("MAX_Z_ERROR",
                                 CSLFetchNameValue(papszOptions, "MAX_Z_ERROR"));
+        aosOptions.SetNameValue(
+            "MAX_Z_ERROR_OVERVIEW",
+            CSLFetchNameValue(papszOptions, "MAX_Z_ERROR_OVERVIEW"));
     }
 
     if (STARTS_WITH_CI(osCompress, "JXL"))
@@ -1376,7 +1379,10 @@ void GDALCOGDriver::InitializeCreationOptionList()
         osOptions +=
             ""
             "   <Option name='MAX_Z_ERROR' type='float' description='Maximum "
-            "error for LERC compression' default='0'/>";
+            "error for LERC compression' default='0'/>"
+            "   <Option name='MAX_Z_ERROR_OVERVIEW' type='float' "
+            "description='Maximum error for LERC compression in overviews' "
+            "default='0'/>";
     }
 #ifdef HAVE_JXL
     osOptions +=
