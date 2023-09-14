@@ -131,6 +131,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <ctype.h>
 #include <limits.h>
@@ -268,7 +269,6 @@ typedef int GPtrDiff_t;
 #endif
 
 #ifdef GDAL_COMPILATION
-#include <stdint.h>
 typedef uintptr_t GUIntptr_t;
 #define CPL_IS_ALIGNED(ptr, quant)                                             \
     ((CPL_REINTERPRET_CAST(GUIntptr_t, CPL_STATIC_CAST(const void *, ptr)) %   \
