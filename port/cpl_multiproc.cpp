@@ -440,10 +440,6 @@ void CPLCleanupMasterMutex()
 static void CPLCleanupTLSList(void **papTLSList)
 
 {
-#ifdef DEBUG_VERBOSE
-    printf("CPLCleanupTLSList(%p)\n", papTLSList); /*ok*/
-#endif
-
     if (papTLSList == nullptr)
         return;
 
