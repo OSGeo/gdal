@@ -290,7 +290,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
             for (int iLine = 0; iLine < nBufYSize; iLine++)
             {
                 memset(static_cast<GByte *>(pData) +
-                           static_cast<GIntBig>(iLine) * nLineSpace,
+                           static_cast<int64_t>(iLine) * nLineSpace,
                        0, static_cast<size_t>(nBufXSize * nPixelSpace));
             }
         }
@@ -305,7 +305,7 @@ CPLErr VRTSourcedRasterBand::IRasterIO(
         {
             GDALCopyWords(&dfWriteValue, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GIntBig>(nLineSpace) * iLine,
+                              static_cast<int64_t>(nLineSpace) * iLine,
                           eBufType, static_cast<int>(nPixelSpace), nBufXSize);
         }
     }
@@ -1541,7 +1541,7 @@ CPLErr VRTSourcedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 /************************************************************************/
 
 CPLErr VRTSourcedRasterBand::GetHistogram(double dfMin, double dfMax,
-                                          int nBuckets, GUIntBig *panHistogram,
+                                          int nBuckets, uint64_t *panHistogram,
                                           int bIncludeOutOfRange, int bApproxOK,
                                           GDALProgressFunc pfnProgress,
                                           void *pProgressData)

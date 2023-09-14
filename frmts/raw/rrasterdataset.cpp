@@ -506,8 +506,8 @@ void RRASTERDataset::InitImageIfNeeded()
         GByte abyNoDataValue[16];
         GDALCopyWords(&dfNoDataValue, GDT_Float64, 0, abyNoDataValue, eDT, 0,
                       1);
-        for (GUIntBig i = 0;
-             i < static_cast<GUIntBig>(nRasterXSize) * nRasterYSize * nBands;
+        for (uint64_t i = 0;
+             i < static_cast<uint64_t>(nRasterXSize) * nRasterYSize * nBands;
              i++)
         {
             VSIFWriteL(abyNoDataValue, 1, nDTSize, m_fpImage);

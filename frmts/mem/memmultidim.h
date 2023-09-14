@@ -118,7 +118,7 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
 
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &, const std::string &,
-                    const std::string &, GUInt64,
+                    const std::string &, uint64_t,
                     CSLConstList papszOptions) override;
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
@@ -147,7 +147,7 @@ class CPL_DLL MEMGroup CPL_NON_FINAL : public GDALGroup,
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
 
@@ -192,17 +192,17 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
     std::vector<GPtrDiff_t> m_anStrides{};
 
     bool
-    IRead(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
+    IRead(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
           const size_t *count,             // array of size GetDimensionCount()
-          const GInt64 *arrayStep,         // step in elements
+          const int64_t *arrayStep,        // step in elements
           const GPtrDiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const override;
 
     bool
-    IWrite(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
+    IWrite(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
            const size_t *count,             // array of size GetDimensionCount()
-           const GInt64 *arrayStep,         // step in elements
+           const int64_t *arrayStep,        // step in elements
            const GPtrDiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType,
            const void *pSrcBuffer) override;
@@ -277,7 +277,7 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
     MEMMDArray(const MEMMDArray &) = delete;
     MEMMDArray &operator=(const MEMMDArray &) = delete;
 
-    bool Resize(const std::vector<GUInt64> &anNewDimSizes,
+    bool Resize(const std::vector<uint64_t> &anNewDimSizes,
                 bool bResizeOtherArrays);
 
     void NotifyChildrenOfRenaming() override;
@@ -331,7 +331,7 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
 
@@ -403,7 +403,7 @@ class CPL_DLL MEMMDArray CPL_NON_FINAL : public MEMAbstractMDArray,
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
 
-    bool Resize(const std::vector<GUInt64> &anNewDimSizes,
+    bool Resize(const std::vector<uint64_t> &anNewDimSizes,
                 CSLConstList) override;
 
     bool Rename(const std::string &osNewName) override;
@@ -420,7 +420,7 @@ class CPL_DLL MEMAttribute CPL_NON_FINAL : public MEMAbstractMDArray,
 
   protected:
     MEMAttribute(const std::string &osParentName, const std::string &osName,
-                 const std::vector<GUInt64> &anDimensions,
+                 const std::vector<uint64_t> &anDimensions,
                  const GDALExtendedDataType &oType);
 
   public:
@@ -428,17 +428,17 @@ class CPL_DLL MEMAttribute CPL_NON_FINAL : public MEMAbstractMDArray,
     // fail
     static std::shared_ptr<MEMAttribute>
     Create(const std::string &osParentName, const std::string &osName,
-           const std::vector<GUInt64> &anDimensions,
+           const std::vector<uint64_t> &anDimensions,
            const GDALExtendedDataType &oType);
 
     static std::shared_ptr<MEMAttribute>
     Create(const std::shared_ptr<MEMGroup> &poParentGroup,
-           const std::string &osName, const std::vector<GUInt64> &anDimensions,
+           const std::string &osName, const std::vector<uint64_t> &anDimensions,
            const GDALExtendedDataType &oType);
 
     static std::shared_ptr<MEMAttribute>
     Create(const std::shared_ptr<MEMMDArray> &poParentArray,
-           const std::string &osName, const std::vector<GUInt64> &anDimensions,
+           const std::string &osName, const std::vector<uint64_t> &anDimensions,
            const GDALExtendedDataType &oType);
 
     bool Rename(const std::string &osNewName) override;
@@ -460,12 +460,12 @@ class MEMDimension CPL_NON_FINAL : public GDALDimensionWeakIndexingVar
   public:
     MEMDimension(const std::string &osParentName, const std::string &osName,
                  const std::string &osType, const std::string &osDirection,
-                 GUInt64 nSize);
+                 uint64_t nSize);
 
     static std::shared_ptr<MEMDimension>
     Create(const std::shared_ptr<MEMGroup> &poParentGroupy,
            const std::string &osName, const std::string &osType,
-           const std::string &osDirection, GUInt64 nSize);
+           const std::string &osDirection, uint64_t nSize);
 
     void RegisterUsingArray(MEMMDArray *poArray);
     void UnRegisterUsingArray(MEMMDArray *poArray);

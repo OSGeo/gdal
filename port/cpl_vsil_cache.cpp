@@ -124,7 +124,7 @@ static size_t GetCacheMax(size_t nCacheSize)
 {
     return nCacheSize ? nCacheSize
                       : static_cast<size_t>(std::min(
-                            static_cast<GUIntBig>(
+                            static_cast<uint64_t>(
                                 std::numeric_limits<size_t>::max() / 2),
                             CPLScanUIntBig(CPLGetConfigOption("VSI_CACHE_SIZE",
                                                               "25000000"),

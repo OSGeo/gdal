@@ -31,6 +31,7 @@
 #include "ogr_vrt.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -1669,7 +1670,7 @@ retry:
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRVRTLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRVRTLayer::GetFeature(int64_t nFeatureId)
 
 {
     if (!bHasFullInitialized)
@@ -1696,7 +1697,7 @@ OGRFeature *OGRVRTLayer::GetFeature(GIntBig nFeatureId)
         char *pszFIDQuery = static_cast<char *>(CPLMalloc(strlen(pszFID) + 64));
 
         poSrcLayer->ResetReading();
-        snprintf(pszFIDQuery, strlen(pszFID) + 64, "%s = " CPL_FRMT_GIB, pszFID,
+        snprintf(pszFIDQuery, strlen(pszFID) + 64, "%s = %" PRId64, pszFID,
                  nFeatureId);
         poSrcLayer->SetSpatialFilter(nullptr);
         poSrcLayer->SetAttributeFilter(pszFIDQuery);
@@ -1727,7 +1728,7 @@ OGRFeature *OGRVRTLayer::GetFeature(GIntBig nFeatureId)
 /*                          SetNextByIndex()                            */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRVRTLayer::SetNextByIndex(int64_t nIndex)
 {
     if (!bHasFullInitialized)
         FullInitialize();
@@ -2005,7 +2006,7 @@ OGRErr OGRVRTLayer::ISetFeature(OGRFeature *poVRTFeature)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRVRTLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRVRTLayer::DeleteFeature(int64_t nFID)
 
 {
     if (!bHasFullInitialized)
@@ -2197,7 +2198,7 @@ OGRErr OGRVRTLayer::GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRVRTLayer::GetFeatureCount(int bForce)
+int64_t OGRVRTLayer::GetFeatureCount(int bForce)
 
 {
     if (nFeatureCount >= 0 && m_poFilterGeom == nullptr &&

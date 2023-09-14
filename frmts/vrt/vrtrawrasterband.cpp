@@ -32,6 +32,7 @@
 #include "vrtdataset.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -323,7 +324,7 @@ void VRTRawRasterBand::ClearRawLink()
 
 CPLVirtualMem *VRTRawRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                    int *pnPixelSpace,
-                                                   GIntBig *pnLineSpace,
+                                                   int64_t *pnLineSpace,
                                                    char **papszOptions)
 
 {
@@ -467,7 +468,7 @@ CPLXMLNode *VRTRawRasterBand::SerializeToXML(const char *pszVRTPath)
 
     CPLCreateXMLElementAndValue(
         psTree, "ImageOffset",
-        CPLSPrintf(CPL_FRMT_GUIB, m_poRawRaster->GetImgOffset()));
+        CPLSPrintf("%" PRIu64, m_poRawRaster->GetImgOffset()));
 
     CPLCreateXMLElementAndValue(
         psTree, "PixelOffset",

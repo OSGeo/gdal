@@ -2976,7 +2976,7 @@ static bool SENTINEL2GetTileInfo(const char *pszFilename, int *pnWidth,
                         if (EQUAL(oChildBox.GetType(), "ihdr"))
                         {
                             GByte *pabyData = oChildBox.ReadBoxData();
-                            GIntBig nLength = oChildBox.GetDataLength();
+                            int64_t nLength = oChildBox.GetDataLength();
                             if (pabyData != nullptr && nLength >= 4 + 4 + 2 + 1)
                             {
                                 bRet = true;

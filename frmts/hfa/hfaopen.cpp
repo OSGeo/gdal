@@ -40,6 +40,7 @@
 #include "hfa_p.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -2010,7 +2011,7 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
                    int bDependentLayer, int nXSize, int nYSize,
                    EPTType eDataType, char ** /* papszOptions */,
                    // These are only related to external (large) files.
-                   GIntBig nStackValidFlagsOffset, GIntBig nStackDataOffset,
+                   int64_t nStackValidFlagsOffset, int64_t nStackDataOffset,
                    int nStackCount, int nStackIndex)
 
 {
@@ -2277,8 +2278,8 @@ HFAHandle HFACreate(const char *pszFilename, int nXSize, int nYSize, int nBands,
         return nullptr;
     }
     const int nBlocks = nBlocksPerRow * nBlocksPerColumn;
-    const GInt64 nBytesPerBlock64 =
-        (static_cast<GInt64>(nBlockSize) * nBlockSize *
+    const int64_t nBytesPerBlock64 =
+        (static_cast<int64_t>(nBlockSize) * nBlockSize *
              HFAGetDataTypeBits(eDataType) +
          7) /
         8;
@@ -2350,8 +2351,8 @@ HFAHandle HFACreate(const char *pszFilename, int nXSize, int nYSize, int nBands,
     }
 
     // Create external file and write its header.
-    GIntBig nValidFlagsOffset = 0;
-    GIntBig nDataOffset = 0;
+    int64_t nValidFlagsOffset = 0;
+    int64_t nDataOffset = 0;
 
     if (bCreateLargeRaster)
     {
@@ -2959,7 +2960,7 @@ const char *HFAGetIGEFilename(HFAHandle hHFA)
 
 bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
                          int nBlockSize, EPTType eDataType,
-                         GIntBig *pnValidFlagsOffset, GIntBig *pnDataOffset)
+                         int64_t *pnValidFlagsOffset, int64_t *pnDataOffset)
 
 {
     // Form .ige filename.
@@ -3088,7 +3089,7 @@ bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
     pabyBlockMap = nullptr;
 
     // Extend the file to account for all the imagery space.
-    const GIntBig nTileDataSize = static_cast<GIntBig>(nBytesPerBlock) *
+    const int64_t nTileDataSize = static_cast<int64_t>(nBytesPerBlock) *
                                   nBlocksPerRow * nBlocksPerColumn * nLayers;
 
     *pnDataOffset = VSIFTellL(fpVSIL);
@@ -3096,7 +3097,7 @@ bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
     if (!bRet || VSIFTruncateL(fpVSIL, nTileDataSize + *pnDataOffset) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed to extend %s to full size (" CPL_FRMT_GIB " bytes), "
+                 "Failed to extend %s to full size (%" PRId64 " bytes), "
                  "likely out of disk space.\n%s",
                  psInfo->pszIGEFilename, nTileDataSize + *pnDataOffset,
                  VSIStrerror(errno));

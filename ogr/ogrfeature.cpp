@@ -32,6 +32,7 @@
 #include "ogr_feature.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -2002,7 +2003,7 @@ int OGRFeature::GetFieldAsInteger(int iField) const
                                  : nFID < INT_MIN ? INT_MIN
                                                   : static_cast<int>(nFID);
 
-                if (static_cast<GIntBig>(nVal) != nFID)
+                if (static_cast<int64_t>(nVal) != nFID)
                 {
                     CPLError(
                         CE_Warning, CPLE_AppDefined,
@@ -2038,12 +2039,12 @@ int OGRFeature::GetFieldAsInteger(int iField) const
     }
     else if (eType == OFTInteger64)
     {
-        const GIntBig nVal64 = pauFields[iField].Integer64;
+        const int64_t nVal64 = pauFields[iField].Integer64;
         const int nVal = nVal64 > INT_MAX   ? INT_MAX
                          : nVal64 < INT_MIN ? INT_MIN
                                             : static_cast<int>(nVal64);
 
-        if (static_cast<GIntBig>(nVal) != nVal64)
+        if (static_cast<int64_t>(nVal) != nVal64)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Integer overflow occurred when trying to return 64bit "
@@ -2127,7 +2128,7 @@ int OGR_F_GetFieldAsInteger(OGRFeatureH hFeat, int iField)
  * @since GDAL 2.0
  */
 
-GIntBig OGRFeature::GetFieldAsInteger64(int iField) const
+int64_t OGRFeature::GetFieldAsInteger64(int iField) const
 
 {
     const int iSpecialField = iField - poDefn->GetFieldCount();
@@ -2161,7 +2162,7 @@ GIntBig OGRFeature::GetFieldAsInteger64(int iField) const
     OGRFieldType eType = poFDefn->GetType();
     if (eType == OFTInteger)
     {
-        return static_cast<GIntBig>(pauFields[iField].Integer);
+        return static_cast<int64_t>(pauFields[iField].Integer);
     }
     else if (eType == OFTInteger64)
     {
@@ -2169,7 +2170,7 @@ GIntBig OGRFeature::GetFieldAsInteger64(int iField) const
     }
     else if (eType == OFTReal)
     {
-        return static_cast<GIntBig>(pauFields[iField].Real);
+        return static_cast<int64_t>(pauFields[iField].Real);
     }
     else if (eType == OFTString)
     {
@@ -2206,7 +2207,7 @@ GIntBig OGRFeature::GetFieldAsInteger64(int iField) const
  * @since GDAL 2.0
  */
 
-GIntBig OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
+int64_t OGR_F_GetFieldAsInteger64(OGRFeatureH hFeat, int iField)
 
 {
     VALIDATE_POINTER1(hFeat, "OGR_F_GetFieldAsInteger64", 0);
@@ -2445,8 +2446,7 @@ const char *OGRFeature::GetFieldAsString(int iField) const
             {
                 constexpr size_t MAX_SIZE = 20 + 1;
                 m_pszTmpFieldValue = static_cast<char *>(CPLMalloc(MAX_SIZE));
-                CPLsnprintf(m_pszTmpFieldValue, MAX_SIZE, CPL_FRMT_GIB,
-                            GetFID());
+                CPLsnprintf(m_pszTmpFieldValue, MAX_SIZE, "%" PRId64, GetFID());
                 return m_pszTmpFieldValue;
             }
 
@@ -2519,7 +2519,7 @@ const char *OGRFeature::GetFieldAsString(int iField) const
     {
         constexpr size_t MAX_SIZE = 20 + 1;
         m_pszTmpFieldValue = static_cast<char *>(CPLMalloc(MAX_SIZE));
-        CPLsnprintf(m_pszTmpFieldValue, MAX_SIZE, CPL_FRMT_GIB,
+        CPLsnprintf(m_pszTmpFieldValue, MAX_SIZE, "%" PRId64,
                     pauFields[iField].Integer64);
         return m_pszTmpFieldValue;
     }
@@ -2633,7 +2633,7 @@ const char *OGRFeature::GetFieldAsString(int iField) const
         osBuffer.Printf("(%d:", nCount);
         for (int i = 0; i < nCount; i++)
         {
-            CPLsnprintf(szItem, sizeof(szItem), CPL_FRMT_GIB,
+            CPLsnprintf(szItem, sizeof(szItem), "%" PRId64,
                         pauFields[iField].Integer64List.paList[i]);
             if (i > 0)
                 osBuffer += ',';
@@ -2990,7 +2990,7 @@ const int *OGR_F_GetFieldAsIntegerList(OGRFeatureH hFeat, int iField,
  * @since GDAL 2.0
  */
 
-const GIntBig *OGRFeature::GetFieldAsInteger64List(int iField,
+const int64_t *OGRFeature::GetFieldAsInteger64List(int iField,
                                                    int *pnCount) const
 
 {
@@ -3033,7 +3033,7 @@ const GIntBig *OGRFeature::GetFieldAsInteger64List(int iField,
  * @since GDAL 2.0
  */
 
-const GIntBig *OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField,
+const int64_t *OGR_F_GetFieldAsInteger64List(OGRFeatureH hFeat, int iField,
                                              int *pnCount)
 
 {
@@ -3580,7 +3580,7 @@ char *OGRFeature::GetFieldAsSerializedJSon(int iField) const
     {
         json_object *poObj = json_object_new_array();
         int nCount = 0;
-        const GIntBig *panValues = GetFieldAsInteger64List(iField, &nCount);
+        const int64_t *panValues = GetFieldAsInteger64List(iField, &nCount);
         for (int i = 0; i < nCount; i++)
         {
             json_object_array_add(poObj, json_object_new_int64(panValues[i]));
@@ -3674,7 +3674,7 @@ void OGRFeature::SetField(int iField, int nValue)
     }
     else if (eType == OFTInteger64List)
     {
-        GIntBig nVal64 = nValue;
+        int64_t nVal64 = nValue;
         SetField(iField, 1, &nVal64);
     }
     else if (eType == OFTRealList)
@@ -3748,7 +3748,7 @@ void OGR_F_SetFieldInteger(OGRFeatureH hFeat, int iField, int nValue)
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, GIntBig nValue )
+ * \fn OGRFeature::SetField( const char* pszFName, int64_t nValue )
  * \brief Set field to 64 bit integer value.
  * OFTInteger, OFTInteger64 and OFTReal fields will be set directly.  OFTString
  * fields will be assigned a string representation of the value, but not
@@ -3784,7 +3784,7 @@ void OGR_F_SetFieldInteger(OGRFeatureH hFeat, int iField, int nValue)
  * @since GDAL 2.0
  */
 
-void OGRFeature::SetField(int iField, GIntBig nValue)
+void OGRFeature::SetField(int iField, int64_t nValue)
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
@@ -3799,7 +3799,7 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
                            : nValue > INT_MAX ? INT_MAX
                                               : static_cast<int>(nValue);
 
-        if (static_cast<GIntBig>(nVal32) != nValue)
+        if (static_cast<int64_t>(nVal32) != nValue)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Integer overflow occurred when trying to set "
@@ -3821,7 +3821,7 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
                      : nValue > INT_MAX ? INT_MAX
                                         : static_cast<int>(nValue);
 
-        if (static_cast<GIntBig>(nVal32) != nValue)
+        if (static_cast<int64_t>(nVal32) != nValue)
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Integer overflow occurred when trying to set "
@@ -3842,7 +3842,7 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
     {
         char szTempBuffer[64] = {};
 
-        CPLsnprintf(szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue);
+        CPLsnprintf(szTempBuffer, sizeof(szTempBuffer), "%" PRId64, nValue);
 
         if (IsFieldSetAndNotNullUnsafe(iField))
             CPLFree(pauFields[iField].String);
@@ -3857,7 +3857,7 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
     {
         char szTempBuffer[64] = {};
 
-        CPLsnprintf(szTempBuffer, sizeof(szTempBuffer), CPL_FRMT_GIB, nValue);
+        CPLsnprintf(szTempBuffer, sizeof(szTempBuffer), "%" PRId64, nValue);
         char *apszValues[2] = {szTempBuffer, nullptr};
         SetField(iField, apszValues);
     }
@@ -3892,7 +3892,7 @@ void OGRFeature::SetField(int iField, GIntBig nValue)
  * @since GDAL 2.0
  */
 
-void OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, GIntBig nValue)
+void OGR_F_SetFieldInteger64(OGRFeatureH hFeat, int iField, int64_t nValue)
 
 {
     VALIDATE_POINTER0(hFeat, "OGR_F_SetFieldInteger64");
@@ -3975,7 +3975,7 @@ void OGRFeature::SetField(int iField, double dfValue)
     }
     else if (eType == OFTInteger64)
     {
-        pauFields[iField].Integer64 = static_cast<GIntBig>(dfValue);
+        pauFields[iField].Integer64 = static_cast<int64_t>(dfValue);
         pauFields[iField].Set.nMarker3 = 0;
     }
     else if (eType == OFTRealList)
@@ -3989,7 +3989,7 @@ void OGRFeature::SetField(int iField, double dfValue)
     }
     else if (eType == OFTInteger64List)
     {
-        GIntBig nValue = static_cast<GIntBig>(dfValue);
+        int64_t nValue = static_cast<int64_t>(dfValue);
         SetField(iField, 1, &nValue);
     }
     else if (eType == OFTString)
@@ -4232,7 +4232,7 @@ void OGRFeature::SetField(int iField, const char *pszValue)
             }
             else if (eType == OFTInteger64List && nLength > 0)
             {
-                std::vector<GIntBig> anValues;
+                std::vector<int64_t> anValues;
                 for (auto i = decltype(nLength){0}; i < nLength; i++)
                 {
                     json_object *poItem =
@@ -4297,12 +4297,12 @@ void OGRFeature::SetField(int iField, const char *pszValue)
             else if (eType == OFTInteger64List)
             {
                 const int nCount = atoi(papszValueList[0]);
-                std::vector<GIntBig> anValues;
+                std::vector<int64_t> anValues;
                 if (nCount == CSLCount(papszValueList) - 1)
                 {
                     for (int i = 0; i < nCount; i++)
                     {
-                        const GIntBig nVal = CPLAtoGIntBigEx(
+                        const int64_t nVal = CPLAtoGIntBigEx(
                             papszValueList[i + 1], TRUE, nullptr);
                         anValues.push_back(nVal);
                     }
@@ -4498,7 +4498,7 @@ void OGRFeature::SetField(int iField, int nCount, const int *panValues)
     }
     else if (eType == OFTInteger64List)
     {
-        std::vector<GIntBig> anValues;
+        std::vector<int64_t> anValues;
         anValues.reserve(nCount);
         for (int i = 0; i < nCount; i++)
             anValues.push_back(panValues[i]);
@@ -4571,7 +4571,7 @@ void OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,
 /************************************************************************/
 
 /**
- * \fn OGRFeature::SetField( const char* pszFName, int nCount, const GIntBig
+ * \fn OGRFeature::SetField( const char* pszFName, int nCount, const int64_t
  * *panValues )
  * \brief Set field to list of 64 bit integers value.
  *
@@ -4607,7 +4607,7 @@ void OGR_F_SetFieldIntegerList(OGRFeatureH hFeat, int iField, int nCount,
  * @since GDAL 2.0
  */
 
-void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
+void OGRFeature::SetField(int iField, int nCount, const int64_t *panValues)
 
 {
     OGRFieldDefn *poFDefn = poDefn->GetFieldDefn(iField);
@@ -4622,12 +4622,12 @@ void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
 
         for (int i = 0; i < nCount; i++)
         {
-            const GIntBig nValue = panValues[i];
+            const int64_t nValue = panValues[i];
             const int nVal32 = nValue < INT_MIN   ? INT_MIN
                                : nValue > INT_MAX ? INT_MAX
                                                   : static_cast<int>(nValue);
 
-            if (static_cast<GIntBig>(nVal32) != nValue)
+            if (static_cast<int64_t>(nVal32) != nValue)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "Integer overflow occurred when trying to set "
@@ -4644,7 +4644,7 @@ void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
         uField.Integer64List.nCount = nCount;
         uField.Set.nMarker2 = 0;
         uField.Set.nMarker3 = 0;
-        uField.Integer64List.paList = const_cast<GIntBig *>(panValues);
+        uField.Integer64List.paList = const_cast<int64_t *>(panValues);
 
         SetField(iField, &uField);
     }
@@ -4671,7 +4671,7 @@ void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
             return;
         for (int i = 0; i < nCount; i++)
             papszValues[i] =
-                VSI_STRDUP_VERBOSE(CPLSPrintf(CPL_FRMT_GIB, panValues[i]));
+                VSI_STRDUP_VERBOSE(CPLSPrintf("%" PRId64, panValues[i]));
         papszValues[nCount] = nullptr;
         SetField(iField, papszValues);
         CSLDestroy(papszValues);
@@ -4703,7 +4703,7 @@ void OGRFeature::SetField(int iField, int nCount, const GIntBig *panValues)
  */
 
 void OGR_F_SetFieldInteger64List(OGRFeatureH hFeat, int iField, int nCount,
-                                 const GIntBig *panValues)
+                                 const int64_t *panValues)
 
 {
     VALIDATE_POINTER0(hFeat, "OGR_F_SetFieldInteger64List");
@@ -4782,10 +4782,10 @@ void OGRFeature::SetField(int iField, int nCount, const double *padfValues)
     }
     else if (eType == OFTInteger64List)
     {
-        std::vector<GIntBig> anValues;
+        std::vector<int64_t> anValues;
         anValues.reserve(nCount);
         for (int i = 0; i < nCount; i++)
-            anValues.push_back(static_cast<GIntBig>(padfValues[i]));
+            anValues.push_back(static_cast<int64_t>(padfValues[i]));
         if (nCount > 0)
             SetField(iField, nCount, &anValues[0]);
     }
@@ -4935,8 +4935,8 @@ void OGRFeature::SetField(int iField, const char *const *papszValues)
     else if (eType == OFTInteger64List)
     {
         const int nValues = CSLCount(papszValues);
-        GIntBig *panValues = static_cast<GIntBig *>(
-            VSI_MALLOC_VERBOSE(nValues * sizeof(GIntBig)));
+        int64_t *panValues = static_cast<int64_t *>(
+            VSI_MALLOC_VERBOSE(nValues * sizeof(int64_t)));
         if (panValues == nullptr)
             return;
         for (int i = 0; i < nValues; i++)
@@ -5379,8 +5379,8 @@ bool OGRFeature::SetFieldInternal(int iField, const OGRField *puValue)
         }
         else
         {
-            pauFields[iField].Integer64List.paList = static_cast<GIntBig *>(
-                VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nCount));
+            pauFields[iField].Integer64List.paList = static_cast<int64_t *>(
+                VSI_MALLOC_VERBOSE(sizeof(int64_t) * nCount));
             if (pauFields[iField].Integer64List.paList == nullptr)
             {
                 OGR_RawField_SetUnset(&pauFields[iField]);
@@ -5389,7 +5389,7 @@ bool OGRFeature::SetFieldInternal(int iField, const OGRField *puValue)
             if (nCount > 0)
             {
                 memcpy(pauFields[iField].Integer64List.paList,
-                       puValue->Integer64List.paList, sizeof(GIntBig) * nCount);
+                       puValue->Integer64List.paList, sizeof(int64_t) * nCount);
             }
             pauFields[iField].Integer64List.nCount = nCount;
         }
@@ -5582,8 +5582,8 @@ std::string OGRFeature::DumpReadableAsString(CSLConstList papszOptions) const
 {
     std::string osRet;
 
-    osRet += CPLOPrintf("OGRFeature(%s):" CPL_FRMT_GIB "\n", poDefn->GetName(),
-                        GetFID());
+    osRet +=
+        CPLOPrintf("OGRFeature(%s):%" PRId64 "\n", poDefn->GetName(), GetFID());
 
     const char *pszDisplayFields =
         CSLFetchNameValue(papszOptions, "DISPLAY_FIELDS");
@@ -5714,12 +5714,12 @@ char *OGR_F_DumpReadableAsString(OGRFeatureH hFeat, CSLConstList papszOptions)
 /************************************************************************/
 
 /**
- * \fn GIntBig OGRFeature::GetFID() const;
+ * \fn int64_t OGRFeature::GetFID() const;
  *
  * \brief Get feature identifier.
  *
  * This method is the same as the C function OGR_F_GetFID().
- * Note: since GDAL 2.0, this method returns a GIntBig (previously a long)
+ * Note: since GDAL 2.0, this method returns a int64_t (previously a long)
  *
  * @return feature id or OGRNullFID if none has been assigned.
  */
@@ -5732,14 +5732,14 @@ char *OGR_F_DumpReadableAsString(OGRFeatureH hFeat, CSLConstList papszOptions)
  * \brief Get feature identifier.
  *
  * This function is the same as the C++ method OGRFeature::GetFID().
- * Note: since GDAL 2.0, this method returns a GIntBig (previously a long)
+ * Note: since GDAL 2.0, this method returns a int64_t (previously a long)
  *
  * @param hFeat handle to the feature from which to get the feature
  * identifier.
  * @return feature id or OGRNullFID if none has been assigned.
  */
 
-GIntBig OGR_F_GetFID(OGRFeatureH hFeat)
+int64_t OGR_F_GetFID(OGRFeatureH hFeat)
 
 {
     VALIDATE_POINTER1(hFeat, "OGR_F_GetFID", 0);
@@ -5766,7 +5766,7 @@ GIntBig OGR_F_GetFID(OGRFeatureH hFeat)
  * @return On success OGRERR_NONE, or on failure some other value.
  */
 
-OGRErr OGRFeature::SetFID(GIntBig nFIDIn)
+OGRErr OGRFeature::SetFID(int64_t nFIDIn)
 
 {
     nFID = nFIDIn;
@@ -5794,7 +5794,7 @@ OGRErr OGRFeature::SetFID(GIntBig nFIDIn)
  * @return On success OGRERR_NONE, or on failure some other value.
  */
 
-OGRErr OGR_F_SetFID(OGRFeatureH hFeat, GIntBig nFID)
+OGRErr OGR_F_SetFID(OGRFeatureH hFeat, int64_t nFID)
 
 {
     VALIDATE_POINTER1(hFeat, "OGR_F_SetFID", OGRERR_FAILURE);
@@ -5901,8 +5901,8 @@ OGRBoolean OGRFeature::Equal(const OGRFeature *poFeature) const
             {
                 int nCount1 = 0;
                 int nCount2 = 0;
-                const GIntBig *pnList1 = GetFieldAsInteger64List(i, &nCount1);
-                const GIntBig *pnList2 =
+                const int64_t *pnList1 = GetFieldAsInteger64List(i, &nCount1);
+                const int64_t *pnList2 =
                     poFeature->GetFieldAsInteger64List(i, &nCount2);
                 if (nCount1 != nCount2)
                     return FALSE;
@@ -6439,7 +6439,7 @@ OGRErr OGRFeature::SetFieldsFrom(const OGRFeature *poSrcFeature,
                 else
                 {
                     int nCount = 0;
-                    const GIntBig *panValues =
+                    const int64_t *panValues =
                         poSrcFeature->GetFieldAsInteger64List(iField, &nCount);
                     SetField(iDstField, nCount, panValues);
                 }
@@ -7430,7 +7430,7 @@ struct OGRFeature::FieldValue::Private
     OGRFeature *m_poSelf = nullptr;
     int m_nPos = 0;
     mutable std::vector<int> m_anList{};
-    mutable std::vector<GIntBig> m_anList64{};
+    mutable std::vector<int64_t> m_anList64{};
     mutable std::vector<double> m_adfList{};
     mutable std::vector<std::string> m_aosList{};
 
@@ -7591,7 +7591,7 @@ OGRFeature::FieldValue &OGRFeature::FieldValue::operator=(int nVal)
     return *this;
 }
 
-OGRFeature::FieldValue &OGRFeature::FieldValue::operator=(GIntBig nVal)
+OGRFeature::FieldValue &OGRFeature::FieldValue::operator=(int64_t nVal)
 {
     m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos, nVal);
     return *this;
@@ -7626,7 +7626,7 @@ OGRFeature::FieldValue::operator=(const std::vector<int> &oArray)
 }
 
 OGRFeature::FieldValue &
-OGRFeature::FieldValue::operator=(const std::vector<GIntBig> &oArray)
+OGRFeature::FieldValue::operator=(const std::vector<int64_t> &oArray)
 {
     m_poPrivate->m_poSelf->SetField(m_poPrivate->m_nPos,
                                     static_cast<int>(oArray.size()),
@@ -7714,7 +7714,7 @@ int OGRFeature::FieldValue::GetAsInteger() const
         ->GetFieldAsInteger(GetIndex());
 }
 
-GIntBig OGRFeature::FieldValue::GetAsInteger64() const
+int64_t OGRFeature::FieldValue::GetAsInteger64() const
 {
     return const_cast<OGRFeature *>(m_poPrivate->m_poSelf)
         ->GetFieldAsInteger64(GetIndex());
@@ -7751,7 +7751,7 @@ const std::vector<int> &OGRFeature::FieldValue::GetAsIntegerList() const
     return m_poPrivate->m_anList;
 }
 
-const std::vector<GIntBig> &OGRFeature::FieldValue::GetAsInteger64List() const
+const std::vector<int64_t> &OGRFeature::FieldValue::GetAsInteger64List() const
 {
     int nCount = 0;
     auto &&panList = const_cast<OGRFeature *>(m_poPrivate->m_poSelf)

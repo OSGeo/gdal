@@ -31,6 +31,8 @@
 #include "ogrsf_frmts.h"
 #include "ogr_recordbatch.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                               Usage()                                */
 /************************************************************************/
@@ -173,7 +175,7 @@ int main(int argc, char *argv[])
 #if 0
     int64_t lastId = 0;
 #endif
-    GUIntBig nFeatureCount = 0;
+    uint64_t nFeatureCount = 0;
     while (true)
     {
         struct ArrowArray array;
@@ -188,7 +190,7 @@ int main(int argc, char *argv[])
         {
             int64_t id = fid_col[i];
             if( id != lastId + 1 )
-                printf(CPL_FRMT_GIB "\n", static_cast<GIntBig>(id));
+                printf("%" PRId64 "\n", id);
             lastId = id;
         }
 #endif
@@ -198,7 +200,7 @@ int main(int argc, char *argv[])
 
     if (bVerbose)
     {
-        printf(CPL_FRMT_GUIB " features/rows selected\n", nFeatureCount);
+        printf("%" PRIu64 " features/rows selected\n", nFeatureCount);
     }
 
     poDS.reset();

@@ -128,9 +128,9 @@ inline int ReadVarUInt32(const GByte **ppabyData)
 /*                          ReadVarUInt64()                             */
 /************************************************************************/
 
-inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
+inline uint64_t ReadVarUInt64(const GByte **ppabyData)
 {
-    GUIntBig nVal = 0;
+    uint64_t nVal = 0;
     int nShift = 0;
     const GByte *pabyData = *ppabyData;
 
@@ -140,9 +140,9 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
         if (!(nByte & 0x80))
         {
             *ppabyData = pabyData + 1;
-            return nVal | ((GUIntBig)nByte << nShift);
+            return nVal | ((uint64_t)nByte << nShift);
         }
-        nVal |= ((GUIntBig)(nByte & 0x7f)) << nShift;
+        nVal |= ((uint64_t)(nByte & 0x7f)) << nShift;
         pabyData++;
         nShift += 7;
         if (nShift == 63)
@@ -151,7 +151,7 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
             if (!(nByte & 0x80))
             {
                 *ppabyData = pabyData + 1;
-                return nVal | (((GUIntBig)nByte & 1) << nShift);
+                return nVal | (((uint64_t)nByte & 1) << nShift);
             }
             *ppabyData = pabyData;
             return nVal;
@@ -177,9 +177,9 @@ inline GUIntBig ReadVarUInt64(const GByte **ppabyData)
 /*                           ReadVarInt64()                             */
 /************************************************************************/
 
-inline GIntBig ReadVarInt64(const GByte **ppabyData)
+inline int64_t ReadVarInt64(const GByte **ppabyData)
 {
-    return static_cast<GIntBig>(ReadVarUInt64(ppabyData));
+    return static_cast<int64_t>(ReadVarUInt64(ppabyData));
 }
 
 #define READ_VARINT64(pabyData, pabyDataLimit, nVal)                           \
@@ -193,10 +193,10 @@ inline GIntBig ReadVarInt64(const GByte **ppabyData)
 /*                            DecodeSInt()                              */
 /************************************************************************/
 
-inline GIntBig DecodeSInt(GUIntBig nVal)
+inline int64_t DecodeSInt(uint64_t nVal)
 {
-    return ((nVal & 1) == 0) ? static_cast<GIntBig>(nVal >> 1)
-                             : -static_cast<GIntBig>(nVal >> 1) - 1;
+    return ((nVal & 1) == 0) ? static_cast<int64_t>(nVal >> 1)
+                             : -static_cast<int64_t>(nVal >> 1) - 1;
 }
 
 inline int32_t DecodeSInt(uint32_t nVal)
@@ -209,7 +209,7 @@ inline int32_t DecodeSInt(uint32_t nVal)
 /*                            ReadVarSInt64()                           */
 /************************************************************************/
 
-inline GIntBig ReadVarSInt64(const GByte **ppabyPtr)
+inline int64_t ReadVarSInt64(const GByte **ppabyPtr)
 {
     return DecodeSInt(ReadVarUInt64(ppabyPtr));
 }
@@ -234,7 +234,7 @@ inline int ReadVarInt32(const GByte **ppabyData)
 {
     /*  If you use int32 or int64 as the type for a negative number, */
     /* the resulting varint is always ten bytes long */
-    GIntBig nVal = static_cast<GIntBig>(ReadVarUInt64(ppabyData));
+    int64_t nVal = static_cast<int64_t>(ReadVarUInt64(ppabyData));
     return static_cast<int>(nVal);
 }
 
@@ -405,7 +405,7 @@ inline int SkipUnknownField(int nKey, const GByte *pabyData,
 /*                          GetVarUIntSize()                            */
 /************************************************************************/
 
-inline int GetVarUIntSize(GUIntBig nVal)
+inline int GetVarUIntSize(uint64_t nVal)
 {
     int nBytes = 1;
     while (nVal > 127)
@@ -420,12 +420,12 @@ inline int GetVarUIntSize(GUIntBig nVal)
 /*                            EncodeSInt()                              */
 /************************************************************************/
 
-inline GUIntBig EncodeSInt(GIntBig nVal)
+inline uint64_t EncodeSInt(int64_t nVal)
 {
     if (nVal < 0)
-        return (static_cast<GUIntBig>(-(nVal + 1)) << 1) | 1;
+        return (static_cast<uint64_t>(-(nVal + 1)) << 1) | 1;
     else
-        return static_cast<GUIntBig>(nVal) << 1;
+        return static_cast<uint64_t>(nVal) << 1;
 }
 
 inline uint32_t EncodeSInt(int32_t nVal)
@@ -440,16 +440,16 @@ inline uint32_t EncodeSInt(int32_t nVal)
 /*                          GetVarIntSize()                             */
 /************************************************************************/
 
-inline int GetVarIntSize(GIntBig nVal)
+inline int GetVarIntSize(int64_t nVal)
 {
-    return GetVarUIntSize(static_cast<GUIntBig>(nVal));
+    return GetVarUIntSize(static_cast<uint64_t>(nVal));
 }
 
 /************************************************************************/
 /*                          GetVarSIntSize()                            */
 /************************************************************************/
 
-inline int GetVarSIntSize(GIntBig nVal)
+inline int GetVarSIntSize(int64_t nVal)
 {
     return GetVarUIntSize(EncodeSInt(nVal));
 }
@@ -458,7 +458,7 @@ inline int GetVarSIntSize(GIntBig nVal)
 /*                           WriteVarUInt()                             */
 /************************************************************************/
 
-inline void WriteVarUInt(GByte **ppabyData, GUIntBig nVal)
+inline void WriteVarUInt(GByte **ppabyData, uint64_t nVal)
 {
     GByte *pabyData = *ppabyData;
     while (nVal > 127)
@@ -476,7 +476,7 @@ inline void WriteVarUInt(GByte **ppabyData, GUIntBig nVal)
 /*                        WriteVarUIntSingleByte()                      */
 /************************************************************************/
 
-inline void WriteVarUIntSingleByte(GByte **ppabyData, GUIntBig nVal)
+inline void WriteVarUIntSingleByte(GByte **ppabyData, uint64_t nVal)
 {
     GByte *pabyData = *ppabyData;
     CPLAssert(nVal < 128);
@@ -489,16 +489,16 @@ inline void WriteVarUIntSingleByte(GByte **ppabyData, GUIntBig nVal)
 /*                           WriteVarInt()                              */
 /************************************************************************/
 
-inline void WriteVarInt(GByte **ppabyData, GIntBig nVal)
+inline void WriteVarInt(GByte **ppabyData, int64_t nVal)
 {
-    WriteVarUInt(ppabyData, static_cast<GUIntBig>(nVal));
+    WriteVarUInt(ppabyData, static_cast<uint64_t>(nVal));
 }
 
 /************************************************************************/
 /*                           WriteVarSInt()                             */
 /************************************************************************/
 
-inline void WriteVarSInt(GByte **ppabyData, GIntBig nVal)
+inline void WriteVarSInt(GByte **ppabyData, int64_t nVal)
 {
     WriteVarUInt(ppabyData, EncodeSInt(nVal));
 }

@@ -34,6 +34,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <cstdlib>
 #include <limits>
 
@@ -548,15 +549,14 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
                 JxlDecoderGetBoxSizeRaw(m_decoder.get(), &nRawSize);
                 if (nRawSize > nMaxBoxBufferSize)
                 {
-                    CPLError(
-                        CE_Warning, CPLE_OutOfMemory,
-                        "Reading a '%s' box involves at least " CPL_FRMT_GUIB
-                        " bytes, "
-                        "but the current limitation of the "
-                        "GDAL_JPEGXL_MAX_BOX_BUFFER_SIZE "
-                        "configuration option is " CPL_FRMT_GUIB " bytes",
-                        szType, static_cast<GUIntBig>(nRawSize),
-                        static_cast<GUIntBig>(nMaxBoxBufferSize));
+                    CPLError(CE_Warning, CPLE_OutOfMemory,
+                             "Reading a '%s' box involves at least %" PRIu64
+                             " bytes, "
+                             "but the current limitation of the "
+                             "GDAL_JPEGXL_MAX_BOX_BUFFER_SIZE "
+                             "configuration option is %" PRIu64 " bytes",
+                             szType, static_cast<uint64_t>(nRawSize),
+                             static_cast<uint64_t>(nMaxBoxBufferSize));
                     continue;
                 }
                 if (nRawSize > abyBoxBuffer.size())
@@ -712,14 +712,14 @@ bool JPEGXLDataset::Open(GDALOpenInfo *poOpenInfo)
             if (nNewBoxBufferSize > nMaxBoxBufferSize)
             {
                 CPLError(CE_Warning, CPLE_OutOfMemory,
-                         "Reading a '%s' box involves at least " CPL_FRMT_GUIB
+                         "Reading a '%s' box involves at least %" PRIu64
                          " bytes, "
                          "but the current limitation of the "
                          "GDAL_JPEGXL_MAX_BOX_BUFFER_SIZE "
-                         "configuration option is " CPL_FRMT_GUIB " bytes",
+                         "configuration option is %" PRIu64 " bytes",
                          osCurrentBox.c_str(),
-                         static_cast<GUIntBig>(nNewBoxBufferSize),
-                         static_cast<GUIntBig>(nMaxBoxBufferSize));
+                         static_cast<uint64_t>(nNewBoxBufferSize),
+                         static_cast<uint64_t>(nMaxBoxBufferSize));
                 osCurrentBox.clear();
                 continue;
             }

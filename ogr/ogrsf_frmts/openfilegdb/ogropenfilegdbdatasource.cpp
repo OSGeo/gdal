@@ -1301,22 +1301,22 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     OGRLayer *poBaseLayer;
     FileGDBIterator *poIter;
     OGRFeatureDefn *poFeatureDefn;
-    GIntBig m_nOffset;
-    GIntBig m_nLimit;
-    GIntBig m_nSkipped = 0;
-    GIntBig m_nIterated = 0;
+    int64_t m_nOffset;
+    int64_t m_nLimit;
+    int64_t m_nSkipped = 0;
+    int64_t m_nIterated = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(OGROpenFileGDBSimpleSQLLayer)
 
   public:
     OGROpenFileGDBSimpleSQLLayer(OGRLayer *poBaseLayer, FileGDBIterator *poIter,
                                  int nColumns, const swq_col_def *pasColDefs,
-                                 GIntBig nOffset, GIntBig nLimit);
+                                 int64_t nOffset, int64_t nLimit);
     virtual ~OGROpenFileGDBSimpleSQLLayer();
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
@@ -1335,7 +1335,7 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
     {
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
 };
 
 /***********************************************************************/
@@ -1344,7 +1344,7 @@ class OGROpenFileGDBSimpleSQLLayer final : public OGRLayer
 
 OGROpenFileGDBSimpleSQLLayer::OGROpenFileGDBSimpleSQLLayer(
     OGRLayer *poBaseLayerIn, FileGDBIterator *poIterIn, int nColumns,
-    const swq_col_def *pasColDefs, GIntBig nOffset, GIntBig nLimit)
+    const swq_col_def *pasColDefs, int64_t nOffset, int64_t nLimit)
     : poBaseLayer(poBaseLayerIn), poIter(poIterIn), poFeatureDefn(nullptr),
       m_nOffset(nOffset), m_nLimit(nLimit)
 {
@@ -1417,7 +1417,7 @@ void OGROpenFileGDBSimpleSQLLayer::ResetReading()
 /*                          GetFeature()                               */
 /***********************************************************************/
 
-OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetFeature(int64_t nFeatureId)
 {
     OGRFeature *poSrcFeature = poBaseLayer->GetFeature(nFeatureId);
     if (poSrcFeature == nullptr)
@@ -1475,13 +1475,13 @@ OGRFeature *OGROpenFileGDBSimpleSQLLayer::GetNextFeature()
 /*                         GetFeatureCount()                           */
 /***********************************************************************/
 
-GIntBig OGROpenFileGDBSimpleSQLLayer::GetFeatureCount(int bForce)
+int64_t OGROpenFileGDBSimpleSQLLayer::GetFeatureCount(int bForce)
 {
 
     /* No filter */
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
-        GIntBig nRowCount = poIter->GetRowCount();
+        int64_t nRowCount = poIter->GetRowCount();
         if (m_nOffset > 0)
         {
             if (m_nOffset <= nRowCount)

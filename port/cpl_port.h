@@ -215,9 +215,10 @@ typedef unsigned char GByte;
 #endif
 /*! @endcond */
 
-/* -------------------------------------------------------------------- */
-/*      64bit support                                                   */
-/* -------------------------------------------------------------------- */
+#ifndef GDAL_COMPILATION
+/*---------------------------------------------------------------------
+ *        Deprecated types for 64bit integers
+ * -------------------------------------------------------------------- */
 
 /** Large signed integer type (generally 64-bit integer type).
  *  Use GInt64 when exactly 64 bit is needed */
@@ -238,9 +239,6 @@ typedef unsigned long long GUIntBig;
 #define CPL_HAS_GINT64 1
 /*! @endcond */
 
-/* Note: we might want to use instead int64_t / uint64_t if they are available
- */
-
 /** Signed 64 bit integer type */
 typedef GIntBig GInt64;
 /** Unsigned 64 bit integer type */
@@ -253,13 +251,15 @@ typedef GUIntBig GUInt64;
 /** Minimum GUInt64 value */
 #define GUINT64_MAX GUINTBIG_MAX
 
+#endif
+
 #if SIZEOF_VOIDP > 8
 #include <stddef.h>  // ptrdiff_t
 /** Integer type large enough to hold the difference between 2 addresses */
 typedef ptrdiff_t GPtrDiff_t;
 #elif SIZEOF_VOIDP == 8
 /** Integer type large enough to hold the difference between 2 addresses */
-typedef GIntBig GPtrDiff_t;
+typedef int64_t GPtrDiff_t;
 #else
 /** Integer type large enough to hold the difference between 2 addresses */
 typedef int GPtrDiff_t;
@@ -273,6 +273,7 @@ typedef uintptr_t GUIntptr_t;
 
 #endif
 
+#ifndef GDAL_COMPILATION
 #if (defined(__MSVCRT__) && !(defined(__MINGW64__) && __GNUC__ >= 10)) ||      \
     (defined(WIN32) && defined(_MSC_VER))
 #define CPL_FRMT_GB_WITHOUT_PREFIX "I64"
@@ -285,13 +286,14 @@ typedef uintptr_t GUIntptr_t;
 #define CPL_FRMT_GIB "%" CPL_FRMT_GB_WITHOUT_PREFIX "d"
 /** Printf formatting for GUIntBig */
 #define CPL_FRMT_GUIB "%" CPL_FRMT_GB_WITHOUT_PREFIX "u"
+#endif
 
 /*! @cond Doxygen_Suppress */
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
 #define CPL_INT64_FITS_ON_INT32(x) ((x) >= INT_MIN && (x) <= INT_MAX)
 #else
 #define CPL_INT64_FITS_ON_INT32(x)                                             \
-    (CPL_STATIC_CAST(GIntBig, CPL_STATIC_CAST(int, x)) == (x))
+    (CPL_STATIC_CAST(int64_t, CPL_STATIC_CAST(int, x)) == (x))
 #endif
 /*! @endcond */
 
@@ -745,12 +747,12 @@ extern "C++"
     CPL_STATIC_CAST(uint32_t, __builtin_bswap32(CPL_STATIC_CAST(uint32_t, x)))
 /** Byte-swap a 64bit unsigned integer */
 #define CPL_SWAP64(x)                                                          \
-    CPL_STATIC_CAST(GUInt64, __builtin_bswap64(CPL_STATIC_CAST(GUInt64, x)))
+    CPL_STATIC_CAST(uint64_t, __builtin_bswap64(CPL_STATIC_CAST(uint64_t, x)))
 #elif defined(_MSC_VER)
 #define CPL_SWAP32(x)                                                          \
     CPL_STATIC_CAST(uint32_t, _byteswap_ulong(CPL_STATIC_CAST(uint32_t, x)))
 #define CPL_SWAP64(x)                                                          \
-    CPL_STATIC_CAST(GUInt64, _byteswap_uint64(CPL_STATIC_CAST(GUInt64, x)))
+    CPL_STATIC_CAST(uint64_t, _byteswap_uint64(CPL_STATIC_CAST(uint64_t, x)))
 #else
 /** Byte-swap a 32bit unsigned integer */
 #define CPL_SWAP32(x)                                                          \
@@ -762,11 +764,11 @@ extern "C++"
 
 /** Byte-swap a 64bit unsigned integer */
 #define CPL_SWAP64(x)                                                          \
-    ((CPL_STATIC_CAST(GUInt64, CPL_SWAP32(CPL_STATIC_CAST(uint32_t, x)))       \
+    ((CPL_STATIC_CAST(uint64_t, CPL_SWAP32(CPL_STATIC_CAST(uint32_t, x)))      \
       << 32) |                                                                 \
-     (CPL_STATIC_CAST(GUInt64,                                                 \
+     (CPL_STATIC_CAST(uint64_t,                                                \
                       CPL_SWAP32(CPL_STATIC_CAST(                              \
-                          uint32_t, CPL_STATIC_CAST(GUInt64, x) >> 32)))))
+                          uint32_t, CPL_STATIC_CAST(uint64_t, x) >> 32)))))
 
 #endif
 
@@ -800,7 +802,7 @@ extern "C++"
 #define CPL_SWAP64PTR(x)                                                       \
     do                                                                         \
     {                                                                          \
-        GUInt64 _n64;                                                          \
+        uint64_t _n64;                                                         \
         void *_lx = x;                                                         \
         memcpy(&_n64, _lx, 8);                                                 \
         CPL_STATIC_ASSERT_IF_AVAILABLE(sizeof(*(x)) == 1 ||                    \

@@ -311,7 +311,7 @@ int GDALDitherRGB2PCTInternal(
     else
     {
         pabyColorMap = nullptr;
-        if (nBits == 8 && static_cast<GIntBig>(nXSize) * nYSize <= 65536)
+        if (nBits == 8 && static_cast<int64_t>(nXSize) * nYSize <= 65536)
         {
             // If the image is small enough, then the number of colors
             // will be limited and using a hashmap, rather than a full table

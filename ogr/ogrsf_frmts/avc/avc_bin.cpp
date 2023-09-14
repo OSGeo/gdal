@@ -633,12 +633,12 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex)
      *----------------------------------------------------------------*/
     if (bIndexed)
     {
-        GIntBig nIndexOffsetBig;
+        int64_t nIndexOffsetBig;
 
         if (psFile->eCoverType == AVCCoverPC)
-            nIndexOffsetBig = 356 + static_cast<GIntBig>(iObjIndex - 1) * 8;
+            nIndexOffsetBig = 356 + static_cast<int64_t>(iObjIndex - 1) * 8;
         else
-            nIndexOffsetBig = 100 + static_cast<GIntBig>(iObjIndex - 1) * 8;
+            nIndexOffsetBig = 100 + static_cast<int64_t>(iObjIndex - 1) * 8;
         if (nIndexOffsetBig < INT_MIN || nIndexOffsetBig > INT_MAX)
             return nullptr;
 
@@ -657,8 +657,8 @@ void *AVCBinReadObject(AVCBinFile *psFile, int iObjIndex)
     }
     else
     {
-        GIntBig nObjectOffsetBig =
-            nRecordStart + nRecordSize * static_cast<GIntBig>(iObjIndex - 1);
+        int64_t nObjectOffsetBig =
+            nRecordStart + nRecordSize * static_cast<int64_t>(iObjIndex - 1);
         if (nObjectOffsetBig < INT_MIN || nObjectOffsetBig > INT_MAX)
             return nullptr;
         nObjectOffset = static_cast<int>(nObjectOffsetBig);

@@ -1120,7 +1120,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
                                       std::numeric_limits<int>::max()));
                         const int nVal = (int)fIntVal;
                         const int nDiff = nVal - nLastVal;
-                        CPLAssert((int)((GIntBig)nVal - nLastVal) == nDiff);
+                        CPLAssert((int)((int64_t)nVal - nLastVal) == nDiff);
                         if (nDiff < -32768 || nDiff > 32767)
                         {
                             nWordSize = 4;
@@ -1147,7 +1147,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
                         float fIntVal = (fVal - fOffset) / fScale;
                         int nVal = (int)fIntVal;
                         int nDiff = nVal - nLastVal;
-                        CPLAssert((int)((GIntBig)nVal - nLastVal) == nDiff);
+                        CPLAssert((int)((int64_t)nVal - nLastVal) == nDiff);
                         if (nWordSize == 1)
                         {
                             CPLAssert(nDiff >= -128 && nDiff <= 127);

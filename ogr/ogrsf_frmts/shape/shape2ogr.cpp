@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "ogrshape.h"
 
+#include <cinttypes>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -1103,7 +1104,7 @@ OGRFeatureDefn *SHPReadOGRFeatureDefn(const char *pszName, SHPHandle hSHP,
                     if (nValueLength >= 10)
                     {
                         int bOverflow = FALSE;
-                        const GIntBig nVal =
+                        const int64_t nVal =
                             CPLAtoGIntBigEx(pszValue, FALSE, &bOverflow);
                         if (bOverflow)
                         {
@@ -1582,8 +1583,7 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
             {
                 char szValue[32] = {};
                 const int nFieldWidth = poFieldDefn->GetWidth();
-                snprintf(szValue, sizeof(szValue),
-                         "%*" CPL_FRMT_GB_WITHOUT_PREFIX "d",
+                snprintf(szValue, sizeof(szValue), "%*" PRId64,
                          std::min(nFieldWidth,
                                   static_cast<int>(sizeof(szValue)) - 1),
                          poFeature->GetFieldAsInteger64(iField));
@@ -1611,15 +1611,14 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                 // IEEE754 doubles can store exact values of all integers
                 // below 2^53.
                 if (poFieldDefn->GetPrecision() == 0 &&
-                    fabs(dfVal) > (static_cast<GIntBig>(1) << 53))
+                    fabs(dfVal) > (static_cast<int64_t>(1) << 53))
                 {
                     static int nCounter = 0;
                     if (nCounter <= 10)
                     {
                         CPLError(CE_Warning, CPLE_AppDefined,
                                  "Value %.18g of field %s with 0 decimal of "
-                                 "feature " CPL_FRMT_GIB
-                                 " is bigger than 2^53. "
+                                 "feature %" PRId64 " is bigger than 2^53. "
                                  "Precision loss likely occurred or going to "
                                  "happen.%s",
                                  dfVal, poFieldDefn->GetNameRef(),
@@ -1634,14 +1633,13 @@ OGRErr SHPWriteOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                     hDBF, static_cast<int>(poFeature->GetFID()), iField, dfVal);
                 if (!ret)
                 {
-                    CPLError(CE_Warning, CPLE_AppDefined,
-                             "Value %.18g of field %s of feature " CPL_FRMT_GIB
-                             " not "
-                             "successfully written. Possibly due to too larger "
-                             "number "
-                             "with respect to field width",
-                             dfVal, poFieldDefn->GetNameRef(),
-                             poFeature->GetFID());
+                    CPLError(
+                        CE_Warning, CPLE_AppDefined,
+                        "Value %.18g of field %s of feature %" PRId64 " not "
+                        "successfully written. Possibly due to too larger "
+                        "number "
+                        "with respect to field width",
+                        dfVal, poFieldDefn->GetNameRef(), poFeature->GetFID());
                 }
                 break;
             }

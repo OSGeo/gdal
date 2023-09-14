@@ -34,6 +34,7 @@
 #include "jpgdataset.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -742,7 +743,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
         const auto nSS = ReadUInt32(nRecOffset + 904) & 0xffff;
         const auto nTZ = ReadInt16(nRecOffset + 908);
         struct tm brokenDown;
-        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(nUnixTime) - nTZ * 60,
+        CPLUnixTimeToYMDHMS(static_cast<int64_t>(nUnixTime) - nTZ * 60,
                             &brokenDown);
         std::string osDateTime(CPLSPrintf(
             "%04d-%02d-%02dT%02d:%02d:%02d.%03d", brokenDown.tm_year + 1900,
@@ -1726,7 +1727,7 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
             sizeof(uint16_t))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error reading EXIF Directory count at " CPL_FRMT_GUIB,
+                 "Error reading EXIF Directory count at %" PRIu64,
                  static_cast<vsi_l_offset>(nTiffDirStart) + nTIFFHEADER);
         return nullptr;
     }
@@ -2112,17 +2113,16 @@ CPLErr JPGDataset::StartDecompress()
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Reading this image would require libjpeg to allocate "
-                     "at least " CPL_FRMT_GUIB " bytes. "
-                     "This is disabled since above the " CPL_FRMT_GUIB
-                     " threshold. "
+                     "at least %" PRIu64 " bytes. "
+                     "This is disabled since above the %" PRIu64 " threshold. "
                      "You may override this restriction by defining the "
                      "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
                      "or setting the JPEGMEM environment variable to a value "
                      "greater "
-                     "or equal to '" CPL_FRMT_GUIB "M'",
-                     static_cast<GUIntBig>(nRequiredMemory),
-                     static_cast<GUIntBig>(sDInfo.mem->max_memory_to_use),
-                     static_cast<GUIntBig>((nRequiredMemory + 1000000 - 1) /
+                     "or equal to '%" PRIu64 "M'",
+                     static_cast<uint64_t>(nRequiredMemory),
+                     static_cast<uint64_t>(sDInfo.mem->max_memory_to_use),
+                     static_cast<uint64_t>((nRequiredMemory + 1000000 - 1) /
                                            1000000));
             return CE_Failure;
         }
@@ -2937,8 +2937,8 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
 
     // If it is a subfile, read the JPEG header.
     bool bIsSubfile = false;
-    GUIntBig subfile_offset = 0;
-    GUIntBig subfile_size = 0;
+    uint64_t subfile_offset = 0;
+    uint64_t subfile_size = 0;
     const char *real_filename = pszFilename;
     int nQLevel = -1;
 
@@ -2998,8 +2998,7 @@ JPGDatasetCommon *JPGDataset::OpenStage2(JPGDatasetOpenArgs *psArgs,
         }
 
         CPLDebug("JPG",
-                 "real_filename %s, offset=" CPL_FRMT_GUIB
-                 ", size=" CPL_FRMT_GUIB "\n",
+                 "real_filename %s, offset=%" PRIu64 ", size=%" PRIu64 "\n",
                  real_filename, subfile_offset, subfile_size);
 
         bIsSubfile = true;
@@ -3291,7 +3290,7 @@ void JPGDatasetCommon::CheckForMask()
     // Go to the end of the file, pull off four bytes, and see if
     // it is plausibly the size of the real image data.
     VSIFSeekL(m_fpImage, 0, SEEK_END);
-    GIntBig nFileSize = VSIFTellL(m_fpImage);
+    int64_t nFileSize = VSIFTellL(m_fpImage);
     VSIFSeekL(m_fpImage, nFileSize - 4, SEEK_SET);
 
     uint32_t nImageSize = 0;
@@ -4001,7 +4000,7 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
     }
     if (nOvrWidth == 0)
     {
-        nOvrWidth = static_cast<int>(static_cast<GIntBig>(nOvrHeight) * nXSize /
+        nOvrWidth = static_cast<int>(static_cast<int64_t>(nOvrHeight) * nXSize /
                                      nYSize);
         if (nOvrWidth == 0)
             nOvrWidth = 1;
@@ -4009,7 +4008,7 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
     else if (nOvrHeight == 0)
     {
         nOvrHeight =
-            static_cast<int>(static_cast<GIntBig>(nOvrWidth) * nYSize / nXSize);
+            static_cast<int>(static_cast<int64_t>(nOvrWidth) * nYSize / nXSize);
         if (nOvrHeight == 0)
             nOvrHeight = 1;
     }

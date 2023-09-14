@@ -87,7 +87,7 @@ OGREditableLayer::~OGREditableLayer()
 /*                           SetNextFID()                               */
 /************************************************************************/
 
-void OGREditableLayer::SetNextFID(GIntBig nNextFID)
+void OGREditableLayer::SetNextFID(int64_t nNextFID)
 {
     m_nNextFID = nNextFID;
 }
@@ -254,7 +254,7 @@ OGRFeature *OGREditableLayer::GetNextFeature()
         bool bHideDeletedFields = true;
         if (poSrcFeature != nullptr)
         {
-            const GIntBig nFID = poSrcFeature->GetFID();
+            const int64_t nFID = poSrcFeature->GetFID();
             if (m_oSetDeleted.find(nFID) != m_oSetDeleted.end())
             {
                 delete poSrcFeature;
@@ -299,7 +299,7 @@ OGRFeature *OGREditableLayer::GetNextFeature()
 /*                          SetNextByIndex()                            */
 /************************************************************************/
 
-OGRErr OGREditableLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGREditableLayer::SetNextByIndex(int64_t nIndex)
 {
     if (m_poDecoratedLayer != nullptr && m_oSetCreated.empty() &&
         m_oSetDeleted.empty() && m_oSetEdited.empty())
@@ -314,7 +314,7 @@ OGRErr OGREditableLayer::SetNextByIndex(GIntBig nIndex)
 /*                              GetFeature()                            */
 /************************************************************************/
 
-OGRFeature *OGREditableLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGREditableLayer::GetFeature(int64_t nFID)
 {
     if (!m_poDecoratedLayer)
         return nullptr;
@@ -366,7 +366,7 @@ OGRErr OGREditableLayer::ISetFeature(OGRFeature *poFeature)
     OGRErr eErr = m_poMemLayer->SetFeature(poMemFeature);
     if (eErr == OGRERR_NONE)
     {
-        const GIntBig nFID = poMemFeature->GetFID();
+        const int64_t nFID = poMemFeature->GetFID();
         m_oSetDeleted.erase(nFID);
         // If the feature isn't in the created list, insert it in the edited
         // list
@@ -411,7 +411,7 @@ OGRErr OGREditableLayer::ICreateFeature(OGRFeature *poFeature)
     OGRErr eErr = m_poMemLayer->CreateFeature(poMemFeature);
     if (eErr == OGRERR_NONE)
     {
-        const GIntBig nFID = poMemFeature->GetFID();
+        const int64_t nFID = poMemFeature->GetFID();
         m_oSetDeleted.erase(nFID);
         m_oSetEdited.erase(nFID);
         m_oSetCreated.insert(nFID);
@@ -464,7 +464,7 @@ OGRErr OGREditableLayer::IUpdateFeature(OGRFeature *poFeature,
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGREditableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGREditableLayer::DeleteFeature(int64_t nFID)
 {
     if (!m_poDecoratedLayer)
         return OGRERR_FAILURE;
@@ -613,14 +613,14 @@ void OGREditableLayer::SetSpatialFilterRect(int iGeomField, double dfMinX,
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGREditableLayer::GetFeatureCount(int bForce)
+int64_t OGREditableLayer::GetFeatureCount(int bForce)
 {
     if (!m_poDecoratedLayer)
         return 0;
     if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr &&
         m_oSetDeleted.empty() && m_oSetEdited.empty())
     {
-        GIntBig nFC = m_poDecoratedLayer->GetFeatureCount(bForce);
+        int64_t nFC = m_poDecoratedLayer->GetFeatureCount(bForce);
         if (nFC >= 0)
         {
             nFC += m_oSetCreated.size();

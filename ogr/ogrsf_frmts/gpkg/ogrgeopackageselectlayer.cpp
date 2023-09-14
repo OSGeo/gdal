@@ -87,7 +87,7 @@ OGRFeature *OGRGeoPackageSelectLayer::GetNextFeature()
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-GIntBig OGRGeoPackageSelectLayer::GetFeatureCount(int bForce)
+int64_t OGRGeoPackageSelectLayer::GetFeatureCount(int bForce)
 {
     return poBehavior->GetFeatureCount(bForce);
 }

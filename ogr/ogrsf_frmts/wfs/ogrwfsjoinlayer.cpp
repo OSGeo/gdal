@@ -624,7 +624,7 @@ OGRFeature *OGRWFSJoinLayer::GetNextFeature()
                     }
                     else if (eType == OFTInteger64)
                     {
-                        GIntBig nVal = poNewFeature->GetFieldAsInteger64(i);
+                        int64_t nVal = poNewFeature->GetFieldAsInteger64(i);
                         CPLMD5Update(&sMD5Context, &nVal, sizeof(nVal));
                     }
                     else if (eType == OFTReal)
@@ -693,7 +693,7 @@ OGRFeature *OGRWFSJoinLayer::GetNextFeature()
 /*                  ExecuteGetFeatureResultTypeHits()                   */
 /************************************************************************/
 
-GIntBig OGRWFSJoinLayer::ExecuteGetFeatureResultTypeHits()
+int64_t OGRWFSJoinLayer::ExecuteGetFeatureResultTypeHits()
 {
     char *pabyData = nullptr;
     CPLString osURL = MakeGetFeatureURL(TRUE);
@@ -751,7 +751,7 @@ GIntBig OGRWFSJoinLayer::ExecuteGetFeatureResultTypeHits()
         return -1;
     }
 
-    GIntBig nFeatures = CPLAtoGIntBig(pszValue);
+    int64_t nFeatures = CPLAtoGIntBig(pszValue);
 
     CPLDestroyXMLNode(psXML);
     CPLHTTPDestroyResult(psResult);
@@ -764,16 +764,16 @@ GIntBig OGRWFSJoinLayer::ExecuteGetFeatureResultTypeHits()
 /*                           GetFeatureCount()                          */
 /************************************************************************/
 
-GIntBig OGRWFSJoinLayer::GetFeatureCount(int bForce)
+int64_t OGRWFSJoinLayer::GetFeatureCount(int bForce)
 {
     if (!bDistinct)
     {
-        const GIntBig nFeatures = ExecuteGetFeatureResultTypeHits();
+        const int64_t nFeatures = ExecuteGetFeatureResultTypeHits();
         if (nFeatures >= 0)
             return nFeatures;
     }
 
-    const GIntBig nFeatures = OGRLayer::GetFeatureCount(bForce);
+    const int64_t nFeatures = OGRLayer::GetFeatureCount(bForce);
     return nFeatures;
 }
 

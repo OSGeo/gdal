@@ -533,7 +533,7 @@ static unsigned char *ParseXPM(const char *pszInput, unsigned int nFileSize,
                &nCharsPerPixel) != 4 ||
         *pnXSize <= 0 || *pnYSize <= 0 || nColorCount <= 0 ||
         nColorCount > 256 ||
-        static_cast<GUIntBig>(*pnXSize) * static_cast<GUIntBig>(*pnYSize) >
+        static_cast<uint64_t>(*pnXSize) * static_cast<uint64_t>(*pnYSize) >
             nFileSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,

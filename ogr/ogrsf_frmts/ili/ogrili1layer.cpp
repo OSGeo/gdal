@@ -32,6 +32,7 @@
 #include "ogr_geos.h"
 #include "ogr_ili1.h"
 
+#include <cinttypes>
 #include <map>
 #include <vector>
 
@@ -124,7 +125,7 @@ OGRFeature *OGRILI1Layer::GetNextFeatureRef()
 /*                             GetFeatureRef()                          */
 /************************************************************************/
 
-OGRFeature *OGRILI1Layer::GetFeatureRef(GIntBig nFID)
+OGRFeature *OGRILI1Layer::GetFeatureRef(int64_t nFID)
 
 {
     ResetReading();
@@ -158,7 +159,7 @@ OGRFeature *OGRILI1Layer::GetFeatureRef(const char *fid)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRILI1Layer::GetFeatureCount(int bForce)
+int64_t OGRILI1Layer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr
         /* && poAreaLineLayer == NULL*/)
@@ -516,7 +517,7 @@ void OGRILI1Layer::JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,
         }
         else
         {
-            GIntBig reftid = linefeature->GetFieldAsInteger64(1);
+            int64_t reftid = linefeature->GetFieldAsInteger64(1);
             feature = GetFeatureRef(reftid);
         }
         if (feature)
@@ -535,7 +536,7 @@ void OGRILI1Layer::JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,
         else
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Couldn't join feature FID " CPL_FRMT_GIB,
+                     "Couldn't join feature FID %" PRId64,
                      linefeature->GetFieldAsInteger64(1));
         }
     }
@@ -646,7 +647,7 @@ void OGRILI1Layer::JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,
             {
                 char *pszJSon = poCC->exportToJson();
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "A ring %s for feature " CPL_FRMT_GIB " in layer %s "
+                         "A ring %s for feature %" PRId64 " in layer %s "
                          "was not closed. Dropping it",
                          pszJSon, feature->GetFID(), GetName());
                 delete poCC;
@@ -690,7 +691,7 @@ void OGRILI1Layer::JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,
             {
                 char *pszJSon = poLargestCurve->exportToJson();
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Cannot add ring %s to feature " CPL_FRMT_GIB
+                         "Cannot add ring %s to feature %" PRId64
                          " in layer %s",
                          pszJSon, feature->GetFID(), GetName());
                 CPLFree(pszJSon);
@@ -709,7 +710,7 @@ void OGRILI1Layer::JoinSurfaceLayer(OGRILI1Layer *poSurfaceLineLayer,
                 {
                     char *pszJSon = poCurve->exportToJson();
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Cannot add ring %s to feature " CPL_FRMT_GIB
+                             "Cannot add ring %s to feature %" PRId64
                              " in layer %s",
                              pszJSon, feature->GetFID(), GetName());
                     CPLFree(pszJSon);
@@ -833,7 +834,7 @@ void OGRILI1Layer::PolygonizeAreaLayer(OGRILI1Layer *poAreaLineLayer,
     CPLDebug("OGR_ILI", "Resulting polygons: %d", polys->getNumGeometries());
     if (polys->getNumGeometries() != GetFeatureCount())
     {
-        CPLDebug("OGR_ILI", "Feature count of layer %s: " CPL_FRMT_GIB,
+        CPLDebug("OGR_ILI", "Feature count of layer %s: %" PRId64,
                  GetLayerDefn()->GetName(), GetFeatureCount());
         CPLDebug("OGR_ILI", "Polygonizing again with crossing line fix");
         delete polys;

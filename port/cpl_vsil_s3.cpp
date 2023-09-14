@@ -303,7 +303,7 @@ bool VSIDIRS3::AnalyseS3FileList(
                         std::unique_ptr<VSIDIREntry>(new VSIDIREntry()));
                     auto &entry = aoEntries.back();
                     entry->pszName = CPLStrdup(osKeySuffix.c_str());
-                    entry->nSize = static_cast<GUIntBig>(
+                    entry->nSize = static_cast<uint64_t>(
                         CPLAtoGIntBig(CPLGetXMLValue(psIter, "Size", "0")));
                     entry->bSizeKnown = true;
                     entry->nMode =
@@ -3785,7 +3785,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     const auto CanSkipDownloadFromNetworkToLocal =
         [this, eSyncStrategy](
             const char *l_pszSource, const char *l_pszTarget,
-            GIntBig sourceTime, GIntBig targetTime,
+            int64_t sourceTime, int64_t targetTime,
             const std::function<CPLString(const char *)> &getETAGSourceFile)
     {
         switch (eSyncStrategy)
@@ -3836,7 +3836,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     const auto CanSkipUploadFromLocalToNetwork =
         [this, eSyncStrategy](
             VSILFILE *&l_fpIn, const char *l_pszSource, const char *l_pszTarget,
-            GIntBig sourceTime, GIntBig targetTime,
+            int64_t sourceTime, int64_t targetTime,
             const std::function<CPLString(const char *)> &getETAGTargetFile)
     {
         switch (eSyncStrategy)
@@ -3884,7 +3884,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
     struct ChunkToCopy
     {
         CPLString osFilename{};
-        GIntBig nMTime = 0;
+        int64_t nMTime = 0;
         CPLString osETag{};
         vsi_l_offset nTotalSize = 0;
         vsi_l_offset nStartOffset = 0;

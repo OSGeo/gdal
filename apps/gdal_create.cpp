@@ -33,6 +33,7 @@
 #include "commonutils.h"
 #include "ogr_spatialref.h"
 
+#include <cinttypes>
 #include <cstdlib>
 #include <memory>
 #include <vector>
@@ -311,8 +312,8 @@ MAIN_START(argc, argv)
                     poInputDS->GetRasterBand(1)->GetNoDataValueAsInt64(
                         &bSetNoData);
                 if (bSetNoData)
-                    osNoData = CPLSPrintf(CPL_FRMT_GIB,
-                                          static_cast<GIntBig>(nNoDataValue));
+                    osNoData = CPLSPrintf("%" PRId64,
+                                          static_cast<int64_t>(nNoDataValue));
             }
             else if (eDT == GDT_UInt64)
             {
@@ -320,8 +321,8 @@ MAIN_START(argc, argv)
                     poInputDS->GetRasterBand(1)->GetNoDataValueAsUInt64(
                         &bSetNoData);
                 if (bSetNoData)
-                    osNoData = CPLSPrintf(CPL_FRMT_GUIB,
-                                          static_cast<GUIntBig>(nNoDataValue));
+                    osNoData = CPLSPrintf("%" PRIu64,
+                                          static_cast<uint64_t>(nNoDataValue));
             }
             else
             {

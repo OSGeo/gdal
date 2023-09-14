@@ -31,6 +31,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -237,13 +238,13 @@ int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Backward Seek() unsupported on /vsistdin beyond "
-                 "maximum buffer limit (" CPL_FRMT_GUIB " bytes).\n"
+                 "maximum buffer limit (%" PRIu64 " bytes).\n"
                  "This limit can be extended by setting the "
                  "CPL_VSISTDIN_BUFFER_LIMIT "
                  "configuration option to a number of bytes, or by using the "
                  "'/vsistdin?buffer_limit=number_of_bytes' filename.\n"
                  "A limit of -1 means unlimited.",
-                 static_cast<GUIntBig>(gnBufferLimit));
+                 static_cast<uint64_t>(gnBufferLimit));
         return -1;
     }
 
@@ -256,8 +257,8 @@ int VSIStdinHandle::Seek(vsi_l_offset nOffset, int nWhence)
     if (nOffset == m_nCurOff)
         return 0;
 
-    CPLDebug("VSI", "Forward seek from " CPL_FRMT_GUIB " to " CPL_FRMT_GUIB,
-             static_cast<GUIntBig>(m_nCurOff), nOffset);
+    CPLDebug("VSI", "Forward seek from %" PRIu64 " to %" PRIu64,
+             static_cast<uint64_t>(m_nCurOff), nOffset);
 
     char abyTemp[8192] = {};
     m_nCurOff = gnRealPos;
@@ -306,13 +307,13 @@ size_t VSIStdinHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "Backward Seek() unsupported on /vsistdin beyond "
-                 "maximum buffer limit (" CPL_FRMT_GUIB " bytes).\n"
+                 "maximum buffer limit (%" PRIu64 " bytes).\n"
                  "This limit can be extended by setting the "
                  "CPL_VSISTDIN_BUFFER_LIMIT "
                  "configuration option to a number of bytes, or by using the "
                  "'/vsistdin?buffer_limit=number_of_bytes' filename.\n"
                  "A limit of -1 means unlimited.",
-                 static_cast<GUIntBig>(gnBufferLimit));
+                 static_cast<uint64_t>(gnBufferLimit));
         return 0;
     }
 

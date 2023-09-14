@@ -100,11 +100,11 @@ class NITFDataset final : public GDALPamDataset
     bool InitializeTREMetadata(bool bValidate);
     void InitializeImageStructureMetadata();
 
-    GIntBig *panJPEGBlockOffset;
+    int64_t *panJPEGBlockOffset;
     GByte *pabyJPEGBlock;
     int nQLevel;
 
-    int ScanJPEGQLevel(GUIntBig *pnDataStart, bool *pbError);
+    int ScanJPEGQLevel(uint64_t *pnDataStart, bool *pbError);
     CPLErr ScanJPEGBlocks();
     CPLErr ReadJPEGBlock(int, int);
     void CheckGeoSDEInfo();
@@ -300,7 +300,7 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual int HasArbitraryOverviews() override;
     virtual int GetOverviewCount() override;
     virtual GDALRasterBand *GetOverview(int) override;
-    virtual GDALRasterBand *GetRasterSampleOverview(GUIntBig) override;
+    virtual GDALRasterBand *GetRasterSampleOverview(uint64_t) override;
     virtual CPLErr BuildOverviews(const char *, int, const int *,
                                   GDALProgressFunc, void *,
                                   CSLConstList papszOptions) override;
@@ -310,15 +310,15 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
                               char **papszOptions) override;
 
     /*virtual CPLErr  GetHistogram( double dfMin, double dfMax,
-                        int nBuckets, GUIntBig * panHistogram,
+                        int nBuckets, uint64_t * panHistogram,
                         int bIncludeOutOfRange, int bApproxOK,
                         GDALProgressFunc, void *pProgressData );
 
     virtual CPLErr GetDefaultHistogram( double *pdfMin, double *pdfMax,
-                                        int *pnBuckets, GUIntBig **
+                                        int *pnBuckets, uint64_t **
     ppanHistogram, int bForce, GDALProgressFunc, void *pProgressData); virtual
     CPLErr SetDefaultHistogram( double dfMin, double dfMax, int nBuckets,
-    GUIntBig *panHistogram );*/
+    uint64_t *panHistogram );*/
 
     /*virtual const GDALRasterAttributeTable *GetDefaultRAT();
     virtual CPLErr SetDefaultRAT( const GDALRasterAttributeTable * );*/

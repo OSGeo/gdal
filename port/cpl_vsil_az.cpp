@@ -36,6 +36,7 @@
 #include <errno.h>
 
 #include <algorithm>
+#include <cinttypes>
 #include <set>
 #include <map>
 #include <memory>
@@ -261,7 +262,7 @@ bool VSIDIRAz::AnalyseAzureFileList(const CPLString &osBaseURL,
                     auto &entry = aoEntries.back();
                     entry->pszName = CPLStrdup(osKeySuffix.c_str());
                     entry->nSize =
-                        static_cast<GUIntBig>(CPLAtoGIntBig(CPLGetXMLValue(
+                        static_cast<uint64_t>(CPLAtoGIntBig(CPLGetXMLValue(
                             psIter, "Properties.Content-Length", "0")));
                     entry->bSizeKnown = true;
                     entry->nMode = S_IFREG;
@@ -1280,7 +1281,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             headers = curl_slist_append(headers, osContentLength.c_str());
             CPLString osAppendPos;
             vsi_l_offset nStartOffset = m_nCurOffset - m_nBufferOff;
-            osAppendPos.Printf("x-ms-blob-condition-appendpos: " CPL_FRMT_GUIB,
+            osAppendPos.Printf("x-ms-blob-condition-appendpos: %" PRIu64,
                                nStartOffset);
             headers = curl_slist_append(headers, osAppendPos.c_str());
         }

@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -102,13 +103,13 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
         }
         if (nBand >= 2)
         {
-            GIntBig nBandRowBytes =
+            int64_t nBandRowBytes =
                 CPLAtoGIntBig(poEDS->GetKeyValue("BANDROWBYTES"));
             if (nBandRowBytes < 0)
             {
                 m_bValid = false;
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Invalid BANDROWBYTES: " CPL_FRMT_GIB, nBandRowBytes);
+                         "Invalid BANDROWBYTES: %" PRId64, nBandRowBytes);
                 nBandRowBytes = 0;
             }
             vsi_l_offset nRowBytes = 0;
@@ -124,14 +125,15 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
         }
 
         nPixelOffsetBits = nBits;
-        GIntBig nTotalRowBytes =
+        int64_t nTotalRowBytes =
             CPLAtoGIntBig(poEDS->GetKeyValue("TOTALROWBYTES"));
         if (nTotalRowBytes < 0 ||
-            nTotalRowBytes > GINTBIG_MAX / 8 / poDS->GetRasterYSize())
+            nTotalRowBytes > std::numeric_limits<int64_t>::max() / 8 /
+                                 poDS->GetRasterYSize())
         {
             m_bValid = false;
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Invalid TOTALROWBYTES: " CPL_FRMT_GIB, nTotalRowBytes);
+                     "Invalid TOTALROWBYTES: %" PRId64, nTotalRowBytes);
             nTotalRowBytes = 0;
         }
         if (nTotalRowBytes > 0)

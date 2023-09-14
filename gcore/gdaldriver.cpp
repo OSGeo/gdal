@@ -380,7 +380,7 @@ CPLErr GDALDriver::DefaultCreateCopyMultiDimensional(
     auto poDstRG = poDstDS->GetRootGroup();
     if (!poDstRG)
         return CE_Failure;
-    GUInt64 nCurCost = 0;
+    uint64_t nCurCost = 0;
     return poDstRG->CopyFrom(poDstRG, poSrcDS, poSrcRG, bStrict, nCurCost,
                              poSrcRG->GetTotalCopyCost(), pfnProgress,
                              pProgressData, papszOptions)
@@ -759,7 +759,7 @@ GDALDataset *GDALDriver::DefaultCreateCopy(const char *pszFilename,
 
         // Only copy RAT if it is of reasonable size to fit in memory
         GDALRasterAttributeTable *poRAT = poSrcBand->GetDefaultRAT();
-        if (poRAT != nullptr && static_cast<GIntBig>(poRAT->GetColumnCount()) *
+        if (poRAT != nullptr && static_cast<int64_t>(poRAT->GetColumnCount()) *
                                         poRAT->GetRowCount() <
                                     1024 * 1024)
         {

@@ -30,6 +30,8 @@
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                         OGRCARTOLayer()                            */
 /************************************************************************/
@@ -136,7 +138,7 @@ OGRFeature *OGRCARTOLayer::BuildFeature(json_object *poRowObj)
             else if (json_object_get_type(poVal) == json_type_int ||
                      json_object_get_type(poVal) == json_type_boolean)
             {
-                poFeature->SetField(i, (GIntBig)json_object_get_int64(poVal));
+                poFeature->SetField(i, (int64_t)json_object_get_int64(poVal));
             }
             else if (json_object_get_type(poVal) == json_type_double)
             {
@@ -178,7 +180,7 @@ json_object *OGRCARTOLayer::FetchNewFeatures()
         osSQL += " LIMIT ";
         osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
         osSQL += " OFFSET ";
-        osSQL += CPLSPrintf(CPL_FRMT_GIB, m_nNextOffset);
+        osSQL += CPLSPrintf("%" PRId64, m_nNextOffset);
     }
     return poDS->RunSQL(osSQL);
 }

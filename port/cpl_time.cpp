@@ -24,6 +24,7 @@
 #include "cpl_time.h"
 #include "cpl_string.h"
 
+#include <cinttypes>
 #include <cstring>
 #include <ctime>
 
@@ -75,17 +76,17 @@ constexpr int year_lengths[2] = {DAYSPERNYEAR, DAYSPERLYEAR};
  * @return the structure pointed by pRet filled with a broken-down UTC time.
  */
 
-struct tm *CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
+struct tm *CPLUnixTimeToYMDHMS(int64_t unixTime, struct tm *pRet)
 {
-    GIntBig days = unixTime / SECSPERDAY;
-    GIntBig rem = unixTime % SECSPERDAY;
+    int64_t days = unixTime / SECSPERDAY;
+    int64_t rem = unixTime % SECSPERDAY;
 
-    constexpr GIntBig TEN_THOUSAND_YEARS =
-        static_cast<GIntBig>(10000) * SECSPERDAY * DAYSPERLYEAR;
+    constexpr int64_t TEN_THOUSAND_YEARS =
+        static_cast<int64_t>(10000) * SECSPERDAY * DAYSPERLYEAR;
     if (unixTime < -TEN_THOUSAND_YEARS || unixTime > TEN_THOUSAND_YEARS)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Invalid unixTime = " CPL_FRMT_GIB, unixTime);
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid unixTime = %" PRId64,
+                 unixTime);
         memset(pRet, 0, sizeof(*pRet));
         return pRet;
     }
@@ -113,20 +114,20 @@ struct tm *CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
     int iters = 0;
     while (iters < 1000 &&
            (days < 0 ||
-            days >= static_cast<GIntBig>(year_lengths[yleap = isleap(y)])))
+            days >= static_cast<int64_t>(year_lengths[yleap = isleap(y)])))
     {
         int newy = y + static_cast<int>(days / DAYSPERNYEAR);
         if (days < 0)
             --newy;
-        days -= static_cast<GIntBig>(newy - y) * DAYSPERNYEAR +
+        days -= static_cast<int64_t>(newy - y) * DAYSPERNYEAR +
                 LEAPS_THROUGH_END_OF(newy - 1) - LEAPS_THROUGH_END_OF(y - 1);
         y = newy;
         iters++;
     }
     if (iters == 1000)
     {
-        CPLError(CE_Failure, CPLE_NotSupported,
-                 "Invalid unixTime = " CPL_FRMT_GIB, unixTime);
+        CPLError(CE_Failure, CPLE_NotSupported, "Invalid unixTime = %" PRId64,
+                 unixTime);
         memset(pRet, 0, sizeof(*pRet));
         return pRet;
     }
@@ -135,9 +136,9 @@ struct tm *CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
     pRet->tm_yday = static_cast<int>(days);
     const int *ip = mon_lengths[yleap];
 
-    for (pRet->tm_mon = 0; days >= static_cast<GIntBig>(ip[pRet->tm_mon]);
+    for (pRet->tm_mon = 0; days >= static_cast<int64_t>(ip[pRet->tm_mon]);
          ++(pRet->tm_mon))
-        days = days - static_cast<GIntBig>(ip[pRet->tm_mon]);
+        days = days - static_cast<int64_t>(ip[pRet->tm_mon]);
 
     pRet->tm_mday = static_cast<int>((days + 1));
     pRet->tm_isdst = 0;
@@ -159,17 +160,17 @@ struct tm *CPLUnixTimeToYMDHMS(GIntBig unixTime, struct tm *pRet)
  * @param brokendowntime broken-downtime UTC time.
  *
  * @return a number of seconds since the Epoch encoded as a value of type
- *         GIntBig, or -1 if the time cannot be represented.
+ *         int64_t, or -1 if the time cannot be represented.
  */
 
-GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
+int64_t CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
 {
 
     if (brokendowntime->tm_mon < 0 || brokendowntime->tm_mon >= 12)
         return -1;
 
     // Number of days of the current month.
-    GIntBig days = brokendowntime->tm_mday - 1;
+    int64_t days = brokendowntime->tm_mday - 1;
 
     // Add the number of days of the current year.
     const int *ip = mon_lengths[static_cast<int>(
@@ -178,7 +179,7 @@ GIntBig CPLYMDHMSToUnixTime(const struct tm *brokendowntime)
         days += ip[mon];
 
     // Add the number of days of the other years.
-    days += (TM_YEAR_BASE + static_cast<GIntBig>(brokendowntime->tm_year) -
+    days += (TM_YEAR_BASE + static_cast<int64_t>(brokendowntime->tm_year) -
              EPOCH_YEAR) *
                 DAYSPERNYEAR +
             LEAPS_THROUGH_END_OF(static_cast<int>(TM_YEAR_BASE) +

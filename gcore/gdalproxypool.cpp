@@ -67,11 +67,11 @@ void GDALNullifyProxyPoolSingleton()
 
 struct _GDALProxyPoolCacheEntry
 {
-    GIntBig responsiblePID;
+    int64_t responsiblePID;
     char *pszFileNameAndOpenOptions;
     char *pszOwner;
     GDALDataset *poDS;
-    GIntBig nRAMUsage;
+    int64_t nRAMUsage;
 
     /* Ref count of the cached dataset */
     int refCount;
@@ -169,7 +169,7 @@ GDALDatasetPool::~GDALDatasetPool()
 {
     bInDestruction = true;
     GDALProxyPoolCacheEntry *cur = firstEntry;
-    GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
+    int64_t responsiblePID = GDALGetResponsiblePIDForCurrentThread();
     while (cur)
     {
         GDALProxyPoolCacheEntry *next = cur->next;
@@ -259,7 +259,7 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     if (bInDestruction)
         return nullptr;
 
-    const GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
+    const int64_t responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 
     const auto EvictEntryWithZeroRefCount =
         [this, responsiblePID](bool evictEntryWithOpenedDataset)
@@ -428,7 +428,7 @@ GDALDatasetPool::_RefDataset(const char *pszFileName, GDALAccess eAccess,
     if (cur->poDS)
     {
         cur->nRAMUsage =
-            std::max<GIntBig>(0, cur->poDS->GetEstimatedRAMUsage());
+            std::max<int64_t>(0, cur->poDS->GetEstimatedRAMUsage());
         nRAMUsage += cur->nRAMUsage;
     }
 
@@ -458,7 +458,7 @@ void GDALDatasetPool::_CloseDatasetIfZeroRefCount(const char *pszFileName,
         return;
 
     GDALProxyPoolCacheEntry *cur = firstEntry;
-    GIntBig responsiblePID = GDALGetResponsiblePIDForCurrentThread();
+    int64_t responsiblePID = GDALGetResponsiblePIDForCurrentThread();
 
     const std::string osFilenameAndOO =
         GetFilenameAndOpenOptions(pszFileName, papszOpenOptions);
@@ -518,7 +518,7 @@ void GDALDatasetPool::Ref()
             l_maxSize = 1000;
 
         // Try to not consume more than 25% of the usable RAM
-        GIntBig l_nMaxRAMUsage =
+        int64_t l_nMaxRAMUsage =
             (CPLGetUsablePhysicalRAM() - GDALGetCacheMax64()) / 4;
         const char *pszMaxRAMUsage =
             CPLGetConfigOption("GDAL_MAX_DATASET_POOL_RAM_USAGE", nullptr);
@@ -925,7 +925,7 @@ GDALDataset *GDALProxyPoolDataset::RefUnderlyingDataset(bool bForceOpen) const
     /* To make a long story short : this is necessary when warping with
      * ChunkAndWarpMulti */
     /* a VRT of GeoTIFFs that have associated .aux files */
-    GIntBig curResponsiblePID = GDALGetResponsiblePIDForCurrentThread();
+    int64_t curResponsiblePID = GDALGetResponsiblePIDForCurrentThread();
     GDALSetResponsiblePIDForCurrentThread(responsiblePID);
     cacheEntry =
         GDALDatasetPool::RefDataset(GetDescription(), eAccess, papszOpenOptions,
@@ -1524,7 +1524,7 @@ GDALRasterBand *GDALProxyPoolRasterBand::GetOverview(int nOverviewBand)
 /* ******************************************************************** */
 
 GDALRasterBand *
-GDALProxyPoolRasterBand::GetRasterSampleOverview(GUIntBig /* nDesiredSamples */)
+GDALProxyPoolRasterBand::GetRasterSampleOverview(uint64_t /* nDesiredSamples */)
 {
     CPLError(CE_Failure, CPLE_AppDefined,
              "GDALProxyPoolRasterBand::GetRasterSampleOverview : not "

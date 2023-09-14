@@ -555,7 +555,7 @@ OGRFeature *OGRMSSQLSpatialLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMSSQLSpatialLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRMSSQLSpatialLayer::GetFeature(int64_t nFeatureId)
 
 {
     /* This should be implemented directly! */

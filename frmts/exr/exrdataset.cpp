@@ -1029,7 +1029,7 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
         {
             const int previewWidth = 100;
             const int previewHeight = std::max(
-                1, static_cast<int>(static_cast<GIntBig>(previewWidth) *
+                1, static_cast<int>(static_cast<int64_t>(previewWidth) *
                                     nYSize / nXSize));
             std::vector<PreviewRgba> pixels(previewWidth * previewHeight);
             if (poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, &pixels[0],

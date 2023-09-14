@@ -26,6 +26,7 @@
  ****************************************************************************/
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <map>
 
@@ -309,7 +310,7 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
 
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
-                    const std::string &osDirection, GUInt64 nSize,
+                    const std::string &osDirection, uint64_t nSize,
                     CSLConstList papszOptions) override;
 
     std::shared_ptr<GDALMDArray> CreateMDArray(
@@ -320,7 +321,7 @@ class netCDFGroup final : public GDALGroup, public netCDFAttributeHolder
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
 
@@ -375,7 +376,7 @@ class netCDFDimension final : public GDALDimension
         return szName;
     }
 
-    static GUInt64 retrieveSize(int cfid, int dimid)
+    static uint64_t retrieveSize(int cfid, int dimid)
     {
         CPLMutexHolderD(&hNCMutex);
         size_t nDimLen = 0;
@@ -402,12 +403,12 @@ class netCDFDimension final : public GDALDimension
         return m_dimid;
     }
 
-    GUInt64 GetActualSize() const
+    uint64_t GetActualSize() const
     {
         return retrieveSize(m_gid, m_dimid);
     }
 
-    void SetSize(GUInt64 nNewSize)
+    void SetSize(uint64_t nNewSize)
     {
         m_nSize = nNewSize;
     }
@@ -439,22 +440,22 @@ class netCDFAttribute final : public GDALAttribute
 
     netCDFAttribute(const std::shared_ptr<netCDFSharedResources> &poShared,
                     int gid, int varid, const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions);
 
     bool
-    IRead(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
+    IRead(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
           const size_t *count,             // array of size GetDimensionCount()
-          const GInt64 *arrayStep,         // step in elements
+          const int64_t *arrayStep,        // step in elements
           const GPtrDiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const override;
 
     bool
-    IWrite(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
+    IWrite(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
            const size_t *count,             // array of size GetDimensionCount()
-           const GInt64 *arrayStep,         // step in elements
+           const int64_t *arrayStep,        // step in elements
            const GPtrDiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType,
            const void *pSrcBuffer) override;
@@ -471,7 +472,7 @@ class netCDFAttribute final : public GDALAttribute
     Create(const std::shared_ptr<netCDFSharedResources> &poShared,
            const std::shared_ptr<netCDFAttributeHolder> &poParent, int gid,
            int varid, const std::string &osName,
-           const std::vector<GUInt64> &anDimensions,
+           const std::vector<uint64_t> &anDimensions,
            const GDALExtendedDataType &oDataType, CSLConstList papszOptions);
 
     const std::vector<std::shared_ptr<GDALDimension>> &
@@ -510,7 +511,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
     bool m_bWriteGDALTags = true;
     size_t m_nTextLength = 0;
-    mutable std::vector<GUInt64> m_cachedArrayStartIdx{};
+    mutable std::vector<uint64_t> m_cachedArrayStartIdx{};
     mutable std::vector<size_t> m_cachedCount{};
     mutable std::shared_ptr<GDALMDArray> m_poCachedArray{};
 
@@ -529,7 +530,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
               typename ReadOrWriteOneElementType>
     bool
     IReadWriteGeneric(const size_t *arrayStartIdx, const size_t *count,
-                      const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       BufferType buffer, NCGetPutVar1FuncType NCGetPutVar1Func,
                       ReadOrWriteOneElementType ReadOrWriteOneElement) const;
@@ -537,8 +538,8 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
     template <typename BufferType, typename NCGetPutVar1FuncType,
               typename NCGetPutVaraFuncType, typename NCGetPutVarmFuncType,
               typename ReadOrWriteOneElementType>
-    bool IReadWrite(const bool bIsRead, const GUInt64 *arrayStartIdx,
-                    const size_t *count, const GInt64 *arrayStep,
+    bool IReadWrite(const bool bIsRead, const uint64_t *arrayStartIdx,
+                    const size_t *count, const int64_t *arrayStep,
                     const GPtrDiff_t *bufferStride,
                     const GDALExtendedDataType &bufferDataType,
                     BufferType buffer, NCGetPutVar1FuncType NCGetPutVar1Func,
@@ -553,28 +554,28 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
                    CSLConstList papszOptions);
 
     bool
-    IRead(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
+    IRead(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
           const size_t *count,             // array of size GetDimensionCount()
-          const GInt64 *arrayStep,         // step in elements
+          const int64_t *arrayStep,        // step in elements
           const GPtrDiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const override;
 
     bool
-    IWrite(const GUInt64 *arrayStartIdx,    // array of size GetDimensionCount()
+    IWrite(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
            const size_t *count,             // array of size GetDimensionCount()
-           const GInt64 *arrayStep,         // step in elements
+           const int64_t *arrayStep,        // step in elements
            const GPtrDiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType,
            const void *pSrcBuffer) override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
 
     void NotifyChildrenOfRenaming() override;
 
     bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
-                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       double dfMean, double dfStdDev, uint64_t nValidCount,
                        CSLConstList papszOptions) override;
 
   public:
@@ -624,7 +625,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions) override;
 
@@ -635,7 +636,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
 
     bool SetRawNoDataValue(const void *) override;
 
-    std::vector<GUInt64> GetBlockSize() const override;
+    std::vector<uint64_t> GetBlockSize() const override;
 
     CSLConstList GetStructuralInfo() const override;
 
@@ -663,7 +664,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
 
-    bool Resize(const std::vector<GUInt64> &anNewDimSizes,
+    bool Resize(const std::vector<uint64_t> &anNewDimSizes,
                 CSLConstList) override;
 
     int GetGroupId() const
@@ -831,7 +832,7 @@ netCDFGroup::CreateGroup(const std::string &osName,
 std::shared_ptr<GDALDimension>
 netCDFGroup::CreateDimension(const std::string &osName,
                              const std::string &osType, const std::string &,
-                             GUInt64 nSize, CSLConstList papszOptions)
+                             uint64_t nSize, CSLConstList papszOptions)
 {
     const bool bUnlimited =
         CPLTestBool(CSLFetchNameValueDef(papszOptions, "UNLIMITED", "FALSE"));
@@ -1033,9 +1034,9 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
                              "Dimension %s already exists, "
-                             "but with a size of " CPL_FRMT_GUIB,
+                             "but with a size of %" PRIu64,
                              dim->GetName().c_str(),
-                             static_cast<GUIntBig>(netCDFDim->GetSize()));
+                             static_cast<uint64_t>(netCDFDim->GetSize()));
                 }
             }
             else
@@ -1183,7 +1184,7 @@ std::shared_ptr<GDALMDArray> netCDFGroup::CreateMDArray(
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> netCDFGroup::CreateAttribute(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
     return netCDFAttribute::Create(m_poShared, m_poSelf.lock(), m_gid,
@@ -2094,9 +2095,9 @@ netCDFVariable::~netCDFVariable()
             if (pNoData == nullptr)
                 pNoData = abyDummy.data();
             const auto nDimCount = m_dims.size();
-            std::vector<GUInt64> arrayStartIdx(nDimCount);
+            std::vector<uint64_t> arrayStartIdx(nDimCount);
             std::vector<size_t> count(nDimCount, 1);
-            std::vector<GInt64> arrayStep(nDimCount, 0);
+            std::vector<int64_t> arrayStep(nDimCount, 0);
             std::vector<GPtrDiff_t> bufferStride(nDimCount, 0);
             for (size_t i = 0; i < nDimCount; ++i)
             {
@@ -2718,7 +2719,7 @@ bool netCDFVariable::SetSpatialRef(const OGRSpatialReference *poSRS)
 
 bool netCDFVariable::SetStatistics(bool bApproxStats, double dfMin,
                                    double dfMax, double dfMean, double dfStdDev,
-                                   GUInt64 nValidCount,
+                                   uint64_t nValidCount,
                                    CSLConstList papszOptions)
 {
     if (!bApproxStats && !m_poShared->IsReadOnly() &&
@@ -2733,7 +2734,7 @@ bool netCDFVariable::SetStatistics(bool bApproxStats, double dfMin,
         }
         if (poAttr)
         {
-            std::vector<GUInt64> startIdx = {0};
+            std::vector<uint64_t> startIdx = {0};
             std::vector<size_t> count = {2};
             std::vector<double> values = {dfMin, dfMax};
             poAttr->Write(startIdx.data(), count.data(), nullptr, nullptr,
@@ -2763,12 +2764,12 @@ static size_t GetNCTypeSize(const GDALExtendedDataType &dt,
         else if (nAttType == NC_INT64)
         {
             CPLAssert(dt.GetNumericDataType() == GDT_Float64);
-            nElementSize = sizeof(GInt64);
+            nElementSize = sizeof(int64_t);
         }
         else if (nAttType == NC_UINT64)
         {
             CPLAssert(dt.GetNumericDataType() == GDT_Float64);
-            nElementSize = sizeof(GUInt64);
+            nElementSize = sizeof(uint64_t);
         }
         else
         {
@@ -2879,7 +2880,7 @@ template <> struct GetGByteType<const void *>
 template <typename BufferType, typename NCGetPutVar1FuncType,
           typename ReadOrWriteOneElementType>
 bool netCDFVariable::IReadWriteGeneric(
-    const size_t *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
+    const size_t *arrayStartIdx, const size_t *count, const int64_t *arrayStep,
     const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
     BufferType buffer, NCGetPutVar1FuncType NCGetPutVar1Func,
     ReadOrWriteOneElementType ReadOrWriteOneElement) const
@@ -3079,8 +3080,8 @@ template <typename BufferType, typename NCGetPutVar1FuncType,
           typename NCGetPutVaraFuncType, typename NCGetPutVarmFuncType,
           typename ReadOrWriteOneElementType>
 bool netCDFVariable::IReadWrite(
-    const bool bIsRead, const GUInt64 *arrayStartIdx, const size_t *count,
-    const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    const bool bIsRead, const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, BufferType buffer,
     NCGetPutVar1FuncType NCGetPutVar1Func,
     NCGetPutVaraFuncType NCGetPutVaraFunc,
@@ -3308,13 +3309,13 @@ void netCDFVariable::ConvertNCToGDAL(GByte *buffer) const
         else if (m_nVarType == NC_INT64)
         {
             double v =
-                static_cast<double>(reinterpret_cast<GInt64 *>(buffer)[0]);
+                static_cast<double>(reinterpret_cast<int64_t *>(buffer)[0]);
             memcpy(buffer, &v, sizeof(v));
         }
         else if (m_nVarType == NC_UINT64)
         {
             double v =
-                static_cast<double>(reinterpret_cast<GUInt64 *>(buffer)[0]);
+                static_cast<double>(reinterpret_cast<uint64_t *>(buffer)[0]);
             memcpy(buffer, &v, sizeof(v));
         }
     }
@@ -3362,8 +3363,8 @@ bool netCDFVariable::ReadOneElement(const GDALExtendedDataType &src_datatype,
 /*                                   IRead()                            */
 /************************************************************************/
 
-bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                           const GInt64 *arrayStep,
+bool netCDFVariable::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                           const int64_t *arrayStep,
                            const GPtrDiff_t *bufferStride,
                            const GDALExtendedDataType &bufferDataType,
                            void *pDstBuffer) const
@@ -3399,7 +3400,7 @@ bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
     if (m_poCachedArray)
     {
         const auto nDims = GetDimensionCount();
-        std::vector<GUInt64> modifiedArrayStartIdx(nDims);
+        std::vector<uint64_t> modifiedArrayStartIdx(nDims);
         bool canUseCache = true;
         for (size_t i = 0; i < nDims; i++)
         {
@@ -3440,7 +3441,7 @@ bool netCDFVariable::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /*                             IAdviseRead()                            */
 /************************************************************************/
 
-bool netCDFVariable::IAdviseRead(const GUInt64 *arrayStartIdx,
+bool netCDFVariable::IAdviseRead(const uint64_t *arrayStartIdx,
                                  const size_t *count,
                                  CSLConstList /* papszOptions */) const
 {
@@ -3485,10 +3486,10 @@ bool netCDFVariable::IAdviseRead(const GUInt64 *arrayStartIdx,
     }
     m_poCachedArray =
         poGroup->CreateMDArray(GetName(), apoMemDims, eDT, nullptr);
-    m_poCachedArray->Write(std::vector<GUInt64>(nDims).data(), count, nullptr,
+    m_poCachedArray->Write(std::vector<uint64_t>(nDims).data(), count, nullptr,
                            nullptr, eDT, pData);
     m_cachedArrayStartIdx.resize(nDims);
-    memcpy(&m_cachedArrayStartIdx[0], arrayStartIdx, nDims * sizeof(GUInt64));
+    memcpy(&m_cachedArrayStartIdx[0], arrayStartIdx, nDims * sizeof(uint64_t));
     m_cachedCount.resize(nDims);
     memcpy(&m_cachedCount[0], count, nDims * sizeof(size_t));
     VSIFree(pData);
@@ -3512,13 +3513,13 @@ void netCDFVariable::ConvertGDALToNC(GByte *buffer) const
         else if (m_nVarType == NC_INT64)
         {
             const auto v =
-                static_cast<GInt64>(reinterpret_cast<double *>(buffer)[0]);
+                static_cast<int64_t>(reinterpret_cast<double *>(buffer)[0]);
             memcpy(buffer, &v, sizeof(v));
         }
         else if (m_nVarType == NC_UINT64)
         {
             const auto v =
-                static_cast<GUInt64>(reinterpret_cast<double *>(buffer)[0]);
+                static_cast<uint64_t>(reinterpret_cast<double *>(buffer)[0]);
             memcpy(buffer, &v, sizeof(v));
         }
     }
@@ -3556,8 +3557,8 @@ bool netCDFVariable::WriteOneElement(const GDALExtendedDataType &dst_datatype,
 /*                                IWrite()                              */
 /************************************************************************/
 
-bool netCDFVariable::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                            const GInt64 *arrayStep,
+bool netCDFVariable::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                            const int64_t *arrayStep,
                             const GPtrDiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             const void *pSrcBuffer)
@@ -3888,10 +3889,10 @@ double netCDFVariable::GetOffset(bool *pbHasOffset,
 /*                           GetBlockSize()                             */
 /************************************************************************/
 
-std::vector<GUInt64> netCDFVariable::GetBlockSize() const
+std::vector<uint64_t> netCDFVariable::GetBlockSize() const
 {
     const auto nDimCount = GetDimensionCount();
-    std::vector<GUInt64> res(nDimCount);
+    std::vector<uint64_t> res(nDimCount);
     if (res.empty())
         return res;
     int nStorageType = 0;
@@ -3966,7 +3967,7 @@ netCDFVariable::GetAttributes(CSLConstList papszOptions) const
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> netCDFVariable::CreateAttribute(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
     return netCDFAttribute::Create(
@@ -4047,7 +4048,7 @@ netCDFVariable::GetCoordinateVariables() const
 /*                            Resize()                                  */
 /************************************************************************/
 
-bool netCDFVariable::Resize(const std::vector<GUInt64> &anNewDimSizes,
+bool netCDFVariable::Resize(const std::vector<uint64_t> &anNewDimSizes,
                             CSLConstList /* papszOptions */)
 {
     if (!IsWritable())
@@ -4067,7 +4068,7 @@ bool netCDFVariable::Resize(const std::vector<GUInt64> &anNewDimSizes,
 
     auto &dims = GetDimensions();
     std::vector<size_t> anGrownDimIdx;
-    std::map<GDALDimension *, GUInt64> oMapDimToSize;
+    std::map<GDALDimension *, uint64_t> oMapDimToSize;
     for (size_t i = 0; i < nDimCount; ++i)
     {
         auto oIter = oMapDimToSize.find(dims[i].get());
@@ -4238,7 +4239,7 @@ netCDFAttribute::netCDFAttribute(
 
 netCDFAttribute::netCDFAttribute(
     const std::shared_ptr<netCDFSharedResources> &poShared, int gid, int varid,
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
     : GDALAbstractMDArray(retrieveAttributeParentName(gid, varid), osName),
       GDALAttribute(retrieveAttributeParentName(gid, varid), osName),
@@ -4323,7 +4324,7 @@ netCDFAttribute::Create(const std::shared_ptr<netCDFSharedResources> &poShared,
 std::shared_ptr<netCDFAttribute> netCDFAttribute::Create(
     const std::shared_ptr<netCDFSharedResources> &poShared,
     const std::shared_ptr<netCDFAttributeHolder> &poParent, int gid, int varid,
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
     if (poShared->IsReadOnly())
@@ -4390,8 +4391,8 @@ const GDALExtendedDataType &netCDFAttribute::GetDataType() const
 /*                                   IRead()                            */
 /************************************************************************/
 
-bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                            const GInt64 *arrayStep,
+bool netCDFAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                            const int64_t *arrayStep,
                             const GPtrDiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
@@ -4525,14 +4526,14 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             else if (m_nAttType == NC_INT64)
             {
                 double v = static_cast<double>(
-                    reinterpret_cast<const GInt64 *>(pabySrcBuffer)[0]);
+                    reinterpret_cast<const int64_t *>(pabySrcBuffer)[0]);
                 memcpy(abyTmpBuffer, &v, sizeof(v));
                 pabySrcElement = abyTmpBuffer;
             }
             else if (m_nAttType == NC_UINT64)
             {
                 double v = static_cast<double>(
-                    reinterpret_cast<const GUInt64 *>(pabySrcBuffer)[0]);
+                    reinterpret_cast<const uint64_t *>(pabySrcBuffer)[0]);
                 memcpy(abyTmpBuffer, &v, sizeof(v));
                 pabySrcElement = abyTmpBuffer;
             }
@@ -4559,8 +4560,8 @@ bool netCDFAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /*                                IWrite()                              */
 /************************************************************************/
 
-bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                             const GInt64 *arrayStep,
+bool netCDFAttribute::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                             const int64_t *arrayStep,
                              const GPtrDiff_t *bufferStride,
                              const GDALExtendedDataType &bufferDataType,
                              const void *pSrcBuffer)
@@ -4709,7 +4710,7 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                 double d;
                 GDALExtendedDataType::CopyValue(pabySrcBuffer, bufferDataType,
                                                 &d, dt);
-                GInt64 v = static_cast<GInt64>(d);
+                int64_t v = static_cast<int64_t>(d);
                 memcpy(pabyDstBuffer, &v, sizeof(v));
             }
             else if (m_nAttType == NC_UINT64)
@@ -4717,7 +4718,7 @@ bool netCDFAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
                 double d;
                 GDALExtendedDataType::CopyValue(pabySrcBuffer, bufferDataType,
                                                 &d, dt);
-                GUInt64 v = static_cast<GUInt64>(d);
+                uint64_t v = static_cast<uint64_t>(d);
                 memcpy(pabyDstBuffer, &v, sizeof(v));
             }
             else

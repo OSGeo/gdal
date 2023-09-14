@@ -62,6 +62,7 @@ PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <cinttypes>
 #include <limits>
 
 #define PQexec this_is_an_error
@@ -92,7 +93,7 @@ OGRPGLayer::~OGRPGLayer()
 {
     if (m_nFeaturesRead > 0 && poFeatureDefn != nullptr)
     {
-        CPLDebug("PG", CPL_FRMT_GIB " features read on layer '%s'.",
+        CPLDebug("PG", "%" PRId64 " features read on layer '%s'.",
                  m_nFeaturesRead, poFeatureDefn->GetName());
     }
 
@@ -326,21 +327,21 @@ static void OGRPGj2date(int jd, int *year, int *month, int *day)
 /************************************************************************/
 
 #define USECS_PER_SEC 1000000
-#define USECS_PER_MIN ((GIntBig)60 * USECS_PER_SEC)
-#define USECS_PER_HOUR ((GIntBig)3600 * USECS_PER_SEC)
-#define USECS_PER_DAY ((GIntBig)3600 * 24 * USECS_PER_SEC)
+#define USECS_PER_MIN ((int64_t)60 * USECS_PER_SEC)
+#define USECS_PER_HOUR ((int64_t)3600 * USECS_PER_SEC)
+#define USECS_PER_DAY ((int64_t)3600 * 24 * USECS_PER_SEC)
 
 /* Coming from dt2time() in pgsql/src/backend/utils/adt/timestamp.c */
 
-static void OGRPGdt2timeInt8(GIntBig jd, int *hour, int *min, int *sec,
+static void OGRPGdt2timeInt8(int64_t jd, int *hour, int *min, int *sec,
                              double *fsec)
 {
-    GIntBig time = jd;
+    int64_t time = jd;
 
     *hour = (int)(time / USECS_PER_HOUR);
-    time -= (GIntBig)(*hour) * USECS_PER_HOUR;
+    time -= (int64_t)(*hour) * USECS_PER_HOUR;
     *min = (int)(time / USECS_PER_MIN);
-    time -= (GIntBig)(*min) * USECS_PER_MIN;
+    time -= (int64_t)(*min) * USECS_PER_MIN;
     *sec = (int)time / USECS_PER_SEC;
     *fsec = (double)(time - *sec * USECS_PER_SEC);
 } /* dt2time() */
@@ -372,11 +373,11 @@ static void OGRPGdt2timeFloat8(double jd, int *hour, int *min, int *sec,
 
 /* Coming from timestamp2tm() in pgsql/src/backend/utils/adt/timestamp.c */
 
-static int OGRPGTimeStamp2DMYHMS(GIntBig dt, int *year, int *month, int *day,
+static int OGRPGTimeStamp2DMYHMS(int64_t dt, int *year, int *month, int *day,
                                  int *hour, int *min, double *pdfSec)
 {
-    GIntBig time = dt;
-    GIntBig date = 0;
+    int64_t time = dt;
+    int64_t date = 0;
     TMODULO(time, date, USECS_PER_DAY);
 
     if (time < 0)
@@ -589,11 +590,11 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                 }
                 else if (nTypeOID == INT8OID)
                 {
-                    GIntBig nVal = 0;
+                    int64_t nVal = 0;
                     CPLAssert(PQgetlength(hResult, iRecord, iField) ==
-                              sizeof(GIntBig));
+                              sizeof(int64_t));
                     memcpy(&nVal, PQgetvalue(hResult, iRecord, iField),
-                           sizeof(GIntBig));
+                           sizeof(int64_t));
                     CPL_MSBPTR64(&nVal);
                     poFeature->SetFID(nVal);
                 }
@@ -939,7 +940,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
         else if (eOGRType == OFTInteger64List)
         {
             int nCount = 0;
-            GIntBig *panList = nullptr;
+            int64_t *panList = nullptr;
 
 #if defined(BINARY_CURSOR_ENABLED)
             if (PQfformat(hResult, iField) == 1)  // Binary data representation
@@ -953,8 +954,8 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                     memcpy(&nCount, pData, sizeof(int));
                     CPL_MSBPTR32(&nCount);
 
-                    panList = static_cast<GIntBig *>(
-                        CPLCalloc(sizeof(GIntBig), nCount));
+                    panList = static_cast<int64_t *>(
+                        CPLCalloc(sizeof(int64_t), nCount));
 
                     // goto first array element
                     pData += 2 * sizeof(int);
@@ -965,7 +966,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                         int nSize = *(int *)(pData);
                         CPL_MSBPTR32(&nSize);
 
-                        CPLAssert(nSize == sizeof(GIntBig));
+                        CPLAssert(nSize == sizeof(int64_t));
 
                         pData += sizeof(int);
 
@@ -992,7 +993,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
 
                 nCount = CSLCount(papszTokens);
                 panList =
-                    static_cast<GIntBig *>(CPLCalloc(sizeof(GIntBig), nCount));
+                    static_cast<int64_t *>(CPLCalloc(sizeof(int64_t), nCount));
 
                 if (poFeatureDefn->GetFieldDefn(iOGRField)->GetSubType() ==
                     OFSTBoolean)
@@ -1179,12 +1180,12 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                     if (poDS->bBinaryTimeFormatIsInt8)
                     {
                         unsigned int nVal[2];
-                        GIntBig llVal = 0;
+                        int64_t llVal = 0;
                         memcpy(nVal, PQgetvalue(hResult, iRecord, iField), 8);
                         CPL_MSBPTR32(&nVal[0]);
                         CPL_MSBPTR32(&nVal[1]);
                         llVal =
-                            (GIntBig)((((GUIntBig)nVal[0]) << 32) | nVal[1]);
+                            (int64_t)((((uint64_t)nVal[0]) << 32) | nVal[1]);
                         OGRPGdt2timeInt8(llVal, &nHour, &nMinute, &nSecond,
                                          &dfsec);
                     }
@@ -1203,7 +1204,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                 else if (nTypeOID == TIMESTAMPOID || nTypeOID == TIMESTAMPTZOID)
                 {
                     unsigned int nVal[2];
-                    GIntBig llVal = 0;
+                    int64_t llVal = 0;
                     int nYear = 0;
                     int nMonth = 0;
                     int nDay = 0;
@@ -1214,7 +1215,7 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                     memcpy(nVal, PQgetvalue(hResult, iRecord, iField), 8);
                     CPL_MSBPTR32(&nVal[0]);
                     CPL_MSBPTR32(&nVal[1]);
-                    llVal = (GIntBig)((((GUIntBig)nVal[0]) << 32) | nVal[1]);
+                    llVal = (int64_t)((((uint64_t)nVal[0]) << 32) | nVal[1]);
                     if (OGRPGTimeStamp2DMYHMS(llVal, &nYear, &nMonth, &nDay,
                                               &nHour, &nMinute, &dfSecond) == 0)
                         poFeature->SetField(iOGRField, nYear, nMonth, nDay,
@@ -1342,8 +1343,8 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                     memcpy(nVal, PQgetvalue(hResult, iRecord, iField), 8);
                     CPL_MSBPTR32(&nVal[0]);
                     CPL_MSBPTR32(&nVal[1]);
-                    GIntBig llVal =
-                        (GIntBig)((((GUIntBig)nVal[0]) << 32) | nVal[1]);
+                    int64_t llVal =
+                        (int64_t)((((uint64_t)nVal[0]) << 32) | nVal[1]);
                     poFeature->SetField(iOGRField, llVal);
                 }
                 else if (nTypeOID == FLOAT4OID)
@@ -1612,7 +1613,7 @@ OGRFeature *OGRPGLayer::GetNextRawFeature()
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRPGLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRPGLayer::SetNextByIndex(int64_t nIndex)
 
 {
     GetLayerDefn();
@@ -1647,7 +1648,7 @@ OGRErr OGRPGLayer::SetNextByIndex(GIntBig nIndex)
 
     OGRPGClearResult(hCursorResult);
 
-    osCommand.Printf("FETCH ABSOLUTE " CPL_FRMT_GIB " in %s", nIndex + 1,
+    osCommand.Printf("FETCH ABSOLUTE %" PRId64 " in %s", nIndex + 1,
                      pszCursorName);
     hCursorResult = OGRPG_PQexec(hPGConn, osCommand);
 
@@ -1655,7 +1656,7 @@ OGRErr OGRPGLayer::SetNextByIndex(GIntBig nIndex)
         PQntuples(hCursorResult) != 1)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Attempt to read feature at invalid index (" CPL_FRMT_GIB ").",
+                 "Attempt to read feature at invalid index (%" PRId64 ").",
                  nIndex);
 
         CloseCursor();

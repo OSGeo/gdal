@@ -109,8 +109,8 @@ class OGRParquetLayer final : public OGRParquetLayerBase
             &oMapFieldNameToGDALSchemaFieldDefn);
     bool CheckMatchArrowParquetColumnNames(
         int &iParquetCol, const std::shared_ptr<arrow::Field> &field) const;
-    OGRFeature *GetFeatureExplicitFID(GIntBig nFID);
-    OGRFeature *GetFeatureByIndex(GIntBig nFID);
+    OGRFeature *GetFeatureExplicitFID(int64_t nFID);
+    OGRFeature *GetFeatureByIndex(int64_t nFID);
 
     virtual std::string GetDriverUCName() const override
     {
@@ -125,14 +125,14 @@ class OGRParquetLayer final : public OGRParquetLayerBase
                     CSLConstList papszOpenOptions);
 
     void ResetReading() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
+    int64_t GetFeatureCount(int bForce) override;
     int TestCapability(const char *pszCap) override;
     OGRErr SetIgnoredFields(const char **papszFields) override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
     char **GetMetadata(const char *pszDomain = "") override;
-    OGRErr SetNextByIndex(GIntBig nIndex) override;
+    OGRErr SetNextByIndex(int64_t nIndex) override;
 
     GDALDataset *GetDataset() override;
     bool GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -200,7 +200,7 @@ class OGRParquetDatasetLayer final : public OGRParquetLayerBase
         CSLConstList papszOpenOptions);
 
     void ResetReading() override;
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                      int bForce = TRUE) override;

@@ -347,10 +347,10 @@ static void cpl_uffd_fault_handler(void *ptr)
                 VSIFReadL(ctx->page_ptr, bytes_needed, 1, file) != 1)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Cannot get %d bytes at offset " CPL_FRMT_GUIB " of "
+                         "Cannot get %d bytes at offset %" PRIu64 " of "
                          "file %s",
                          static_cast<int>(bytes_needed),
-                         static_cast<GUIntBig>(offset), ctx->filename.c_str());
+                         static_cast<uint64_t>(offset), ctx->filename.c_str());
                 memset(ctx->page_ptr, 0, bytes_needed);
             }
             ctx->pages_used++;

@@ -34,6 +34,7 @@
 #include "cpl_time.h"
 
 #include <algorithm>
+#include <cinttypes>
 
 namespace GMLAS
 {
@@ -66,7 +67,7 @@ class LayerDescription
     std::vector<PairLayerNameColName> aoReferencingLayers;
 
     // NOTE: this doesn't scale to arbitrarily large datasets
-    std::set<GIntBig> aoSetReferencedFIDs;
+    std::set<int64_t> aoSetReferencedFIDs;
 
     LayerDescription()
         : bIsSelected(false), bIsTopLevel(false), bIsJunction(false)
@@ -124,7 +125,7 @@ class GMLASWriter
 
     bool WriteXSD(const CPLString &osXSDFilenameIn,
                   const std::vector<PairURIFilename> &aoXSDs);
-    bool WriteXMLHeader(bool bWFS2FeatureCollection, GIntBig nTotalFeatures,
+    bool WriteXMLHeader(bool bWFS2FeatureCollection, int64_t nTotalFeatures,
                         bool bGenerateXSD, const CPLString &osXSDFilenameIn,
                         const std::vector<PairURIFilename> &aoXSDs,
                         const std::map<CPLString, CPLString> &oMapURIToPrefix);
@@ -133,7 +134,7 @@ class GMLASWriter
     bool CollectRelationships();
     void ComputeTopLevelFIDs();
     bool WriteLayer(bool bWFS2FeatureCollection, const LayerDescription &oDesc,
-                    GIntBig &nFeaturesWritten, GIntBig nTotalTopLevelFeatures,
+                    int64_t &nFeaturesWritten, int64_t nTotalTopLevelFeatures,
                     GDALProgressFunc pfnProgress, void *pProgressData);
 
     bool WriteFeature(OGRFeature *poFeature, const LayerDescription &oLayerDesc,
@@ -475,7 +476,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
     if (pfnProgress == GDALDummyProgress)
         pfnProgress = nullptr;
     // Compute total number of top level features
-    GIntBig nTotalTopLevelFeatures = -1;
+    int64_t nTotalTopLevelFeatures = -1;
     if (pfnProgress != nullptr || bWFS2FeatureCollection)
     {
         nTotalTopLevelFeatures = 0;
@@ -487,10 +488,10 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
             {
                 nTotalTopLevelFeatures += poSrcLayer->GetFeatureCount(true);
                 nTotalTopLevelFeatures -=
-                    static_cast<GIntBig>(oDesc.aoSetReferencedFIDs.size());
+                    static_cast<int64_t>(oDesc.aoSetReferencedFIDs.size());
             }
         }
-        CPLDebug("GMLAS", CPL_FRMT_GIB " top level features to be written",
+        CPLDebug("GMLAS", "%" PRId64 " top level features to be written",
                  nTotalTopLevelFeatures);
     }
 
@@ -547,7 +548,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
         return false;
 
     // Iterate over layers
-    GIntBig nFeaturesWritten = 0;
+    int64_t nFeaturesWritten = 0;
     bool bRet = true;
     for (const auto &oLayerIter : m_oMapLayerNameToIdx)
     {
@@ -561,7 +562,7 @@ bool GMLASWriter::Write(GDALProgressFunc pfnProgress, void *pProgressData)
                 break;
         }
     }
-    CPLDebug("GMLAS", CPL_FRMT_GIB " top level features written",
+    CPLDebug("GMLAS", "%" PRId64 " top level features written",
              nFeaturesWritten);
 
     // Epilogue of .xml file
@@ -692,7 +693,7 @@ bool GMLASWriter::WriteXSD(const CPLString &osXSDFilenameIn,
 /************************************************************************/
 
 bool GMLASWriter::WriteXMLHeader(
-    bool bWFS2FeatureCollection, GIntBig nTotalFeatures, bool bGenerateXSD,
+    bool bWFS2FeatureCollection, int64_t nTotalFeatures, bool bGenerateXSD,
     const CPLString &osXSDFilenameIn,
     const std::vector<PairURIFilename> &aoXSDs,
     const std::map<CPLString, CPLString> &oMapURIToPrefix)
@@ -732,7 +733,7 @@ bool GMLASWriter::WriteXMLHeader(
             PrintLine(m_fpXML, "    timeStamp=\"%s\"", osTimestamp.c_str());
         }
         PrintLine(m_fpXML, "    numberMatched=\"unknown\"");
-        PrintLine(m_fpXML, "    numberReturned=\"" CPL_FRMT_GIB "\"",
+        PrintLine(m_fpXML, "    numberReturned=\"%" PRId64 "\"",
                   nTotalFeatures);
         PrintLine(m_fpXML, "    xmlns:%s=\"%s\"", szWFS_PREFIX, szWFS20_URI);
         aoWrittenPrefixes[szWFS_PREFIX] = szWFS20_URI;
@@ -1292,7 +1293,7 @@ void GMLASWriter::ComputeTopLevelFIDs()
                         if (poFeature == nullptr)
                             break;
 
-                        const GIntBig nFID = poFeature->GetFieldAsInteger64(0);
+                        const int64_t nFID = poFeature->GetFieldAsInteger64(0);
                         oDesc.aoSetReferencedFIDs.insert(nFID);
 
                         delete poFeature;
@@ -1388,8 +1389,8 @@ static CPLString MakeXPath(const PairNSElement &pair)
 
 bool GMLASWriter::WriteLayer(bool bWFS2FeatureCollection,
                              const LayerDescription &oDesc,
-                             GIntBig &nFeaturesWritten,
-                             GIntBig nTotalTopLevelFeatures,
+                             int64_t &nFeaturesWritten,
+                             int64_t nTotalTopLevelFeatures,
                              GDALProgressFunc pfnProgress, void *pProgressData)
 {
     OGRLayer *poSrcLayer = GetLayerByName(oDesc.osName);
@@ -2294,7 +2295,7 @@ bool GMLASWriter::WriteFieldRegular(
                     else if (eOGRType == OFTInteger64List)
                     {
                         int nCount = 0;
-                        const GIntBig *panValues =
+                        const int64_t *panValues =
                             poFeature->GetFieldAsInteger64List(nFieldIdx,
                                                                &nCount);
                         for (int j = 0; j < nCount; ++j)
@@ -2302,7 +2303,7 @@ bool GMLASWriter::WriteFieldRegular(
                             if (j > 0)
                                 PrintMultipleValuesSeparator(oField,
                                                              aoFieldComponents);
-                            VSIFPrintfL(m_fpXML, CPL_FRMT_GIB, panValues[j]);
+                            VSIFPrintfL(m_fpXML, "%" PRId64, panValues[j]);
                         }
                     }
                 }
@@ -2383,7 +2384,7 @@ bool GMLASWriter::WriteFieldNoLink(
     if (!poFeature->IsFieldSetAndNotNull(nParentPKIDIdx))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Missing value of %s field for feature " CPL_FRMT_GIB
+                 "Missing value of %s field for feature %" PRId64
                  " of layer %s",
                  oLayerDesc.osPKIDName.c_str(), poFeature->GetFID(),
                  oLayerDesc.osName.c_str());
@@ -2745,7 +2746,7 @@ bool GMLASWriter::WriteFieldJunctionTable(
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Field '%s' in layer %s is not set for "
-                 "feature " CPL_FRMT_GIB,
+                 "feature %" PRId64,
                  oLayerDesc.osPKIDName.c_str(), oLayerDesc.osName.c_str(),
                  poFeature->GetFID());
         return true;

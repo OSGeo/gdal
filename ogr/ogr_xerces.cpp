@@ -100,7 +100,7 @@ static int nCounter = 0;
 static bool bXercesWasAlreadyInitializedBeforeUs = false;
 static OGRXercesStandardMemoryManager *gpExceptionMemoryManager = nullptr;
 static OGRXercesInstrumentedMemoryManager *gpMemoryManager = nullptr;
-static std::map<GIntBig, LimitationStruct> *gpoMapThreadTimeout = nullptr;
+static std::map<int64_t, LimitationStruct> *gpoMapThreadTimeout = nullptr;
 
 /************************************************************************/
 /*                    OGRXercesStandardMemoryManager                    */
@@ -296,7 +296,7 @@ void OGRStartXercesLimitsForThisThread(size_t nMaxMemAlloc,
     CPLMutexHolderD(&hMutex);
     if (gpoMapThreadTimeout == nullptr)
     {
-        gpoMapThreadTimeout = new std::map<GIntBig, LimitationStruct>();
+        gpoMapThreadTimeout = new std::map<int64_t, LimitationStruct>();
     }
     LimitationStruct limitation;
     limitation.maxMemAlloc = nMaxMemAlloc;

@@ -33,6 +33,7 @@
 #include "gdal_priv.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <climits>
 #include <cstring>
 
@@ -45,8 +46,8 @@
 
 static bool bCacheMaxInitialized = false;
 // Will later be overridden by the default 5% if GDAL_CACHEMAX not defined.
-static GIntBig nCacheMax = 40 * 1024 * 1024;
-static GIntBig nCacheUsed = 0;
+static int64_t nCacheMax = 40 * 1024 * 1024;
+static int64_t nCacheUsed = 0;
 
 static GDALRasterBlock *poOldest = nullptr;  // Tail.
 static GDALRasterBlock *poNewest = nullptr;  // Head.
@@ -142,7 +143,7 @@ void CPL_STDCALL GDALSetCacheMax(int nNewSizeInBytes)
  * @since GDAL 1.8.0
  */
 
-void CPL_STDCALL GDALSetCacheMax64(GIntBig nNewSizeInBytes)
+void CPL_STDCALL GDALSetCacheMax64(int64_t nNewSizeInBytes)
 
 {
 #if 0
@@ -165,7 +166,7 @@ void CPL_STDCALL GDALSetCacheMax64(GIntBig nNewSizeInBytes)
     /* -------------------------------------------------------------------- */
     while (nCacheUsed > nCacheMax)
     {
-        const GIntBig nOldCacheUsed = nCacheUsed;
+        const int64_t nOldCacheUsed = nCacheUsed;
 
         GDALFlushCacheBlock();
 
@@ -198,7 +199,7 @@ void CPL_STDCALL GDALSetCacheMax64(GIntBig nNewSizeInBytes)
 
 int CPL_STDCALL GDALGetCacheMax()
 {
-    GIntBig nRes = GDALGetCacheMax64();
+    int64_t nRes = GDALGetCacheMax64();
     if (nRes > INT_MAX)
     {
         static bool bHasWarned = false;
@@ -235,7 +236,7 @@ int CPL_STDCALL GDALGetCacheMax()
  * @since GDAL 1.8.0
  */
 
-GIntBig CPL_STDCALL GDALGetCacheMax64()
+int64_t CPL_STDCALL GDALGetCacheMax64()
 {
     if (!bCacheMaxInitialized)
     {
@@ -247,10 +248,10 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
 
         const char *pszCacheMax = CPLGetConfigOption("GDAL_CACHEMAX", "5%");
 
-        GIntBig nNewCacheMax;
+        int64_t nNewCacheMax;
         if (strchr(pszCacheMax, '%') != nullptr)
         {
-            GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+            int64_t nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
             if (nUsablePhysicalRAM > 0)
             {
                 // For some reason, coverity pretends that this will overflow.
@@ -263,7 +264,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                 double dfCacheMax = static_cast<double>(nUsablePhysicalRAM) *
                                     CPLAtof(pszCacheMax) / 100.0;
                 if (dfCacheMax >= 0 && dfCacheMax < 1e15)
-                    nNewCacheMax = static_cast<GIntBig>(dfCacheMax);
+                    nNewCacheMax = static_cast<int64_t>(dfCacheMax);
                 else
                     nNewCacheMax = nCacheMax;
             }
@@ -283,7 +284,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Invalid value for GDAL_CACHEMAX. "
                              "Using default value.");
-                    GIntBig nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
+                    int64_t nUsablePhysicalRAM = CPLGetUsablePhysicalRAM();
                     if (nUsablePhysicalRAM)
                         nNewCacheMax = nUsablePhysicalRAM / 20;
                     else
@@ -300,7 +301,7 @@ GIntBig CPL_STDCALL GDALGetCacheMax64()
             }
         }
         nCacheMax = nNewCacheMax;
-        CPLDebug("GDAL", "GDAL_CACHEMAX = " CPL_FRMT_GIB " MB",
+        CPLDebug("GDAL", "GDAL_CACHEMAX = %" PRId64 " MB",
                  nCacheMax / (1024 * 1024));
         bCacheMaxInitialized = true;
     }
@@ -349,7 +350,7 @@ int CPL_STDCALL GDALGetCacheUsed()
  * @since GDAL 1.8.0
  */
 
-GIntBig CPL_STDCALL GDALGetCacheUsed64()
+int64_t CPL_STDCALL GDALGetCacheUsed64()
 {
     return nCacheUsed;
 }
@@ -675,8 +676,8 @@ static size_t GetEffectiveBlockSize(GPtrDiff_t nBlockSize)
     // As we allocate with 64-byte alignment, use 64 as a multiple.
     // We arbitrarily add 2 * sizeof(GDALRasterBlock) to account for that
     return static_cast<size_t>(
-        std::min(static_cast<GUIntBig>(UINT_MAX),
-                 static_cast<GUIntBig>(DIV_ROUND_UP(nBlockSize, 64)) * 64 +
+        std::min(static_cast<uint64_t>(UINT_MAX),
+                 static_cast<uint64_t>(DIV_ROUND_UP(nBlockSize, 64)) * 64 +
                      2 * sizeof(GDALRasterBlock)));
 }
 
@@ -927,7 +928,7 @@ CPLErr GDALRasterBlock::Internalize()
 
     // This call will initialize the hRBLock mutex. Other call places can
     // only be called if we have go through there.
-    const GIntBig nCurCacheMax = GDALGetCacheMax64();
+    const int64_t nCurCacheMax = GDALGetCacheMax64();
 
     // No risk of overflow as it is checked in GDALRasterBand::InitBlockInfo().
     const auto nSizeInBytes = GetBlockSize();

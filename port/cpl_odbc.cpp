@@ -34,6 +34,7 @@
 #include "cpl_string.h"
 #include "cpl_error.h"
 
+#include <cinttypes>
 #include <limits>
 #include <mutex>
 
@@ -574,9 +575,8 @@ int CPLODBCSession::Failed(int nRetCode, HSTMT hStmt)
             }
             pachCurErrMsg[nTextLength] = '\0';
             m_osLastError += CPLString().Printf(
-                "%s[%5s]%s(" CPL_FRMT_GIB ")",
-                (m_osLastError.empty() ? "" : ", "), achSQLState, pachCurErrMsg,
-                static_cast<GIntBig>(nNativeError));
+                "%s[%5s]%s(%" PRId64 ")", (m_osLastError.empty() ? "" : ", "),
+                achSQLState, pachCurErrMsg, static_cast<int64_t>(nNativeError));
         }
         CPLFree(pachCurErrMsg);
     }

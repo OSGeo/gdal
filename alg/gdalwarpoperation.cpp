@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "gdalwarper.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -1846,12 +1847,12 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
     oWK.dfSrcXExtraSize = dfSrcXExtraSize;
     oWK.dfSrcYExtraSize = dfSrcYExtraSize;
 
-    GInt64 nAlloc64 =
+    int64_t nAlloc64 =
         nWordSize *
-        (static_cast<GInt64>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
+        (static_cast<int64_t>(nSrcXSize) * nSrcYSize + WARP_EXTRA_ELTS) *
         psOptions->nBandCount;
 #if SIZEOF_VOIDP == 4
-    if (nAlloc64 != static_cast<GInt64>(static_cast<size_t>(nAlloc64)))
+    if (nAlloc64 != static_cast<int64_t>(static_cast<size_t>(nAlloc64)))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow : nSrcXSize=%d, nSrcYSize=%d", nSrcXSize,
@@ -2410,17 +2411,17 @@ CPLErr GDALWarpOperation::CreateKernelMask(GDALWarpKernel *poKernel, int iBand,
     /* -------------------------------------------------------------------- */
     if (*ppMask == nullptr)
     {
-        const GIntBig nBytes =
+        const int64_t nBytes =
             nBitsPerPixel == 32
-                ? (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts) * 4
-                : (static_cast<GIntBig>(nXSize) * nYSize + nExtraElts + 31) / 8;
+                ? (static_cast<int64_t>(nXSize) * nYSize + nExtraElts) * 4
+                : (static_cast<int64_t>(nXSize) * nYSize + nExtraElts + 31) / 8;
 
         const size_t nByteSize_t = static_cast<size_t>(nBytes);
 #if SIZEOF_VOIDP == 4
-        if (static_cast<GIntBig>(nByteSize_t) != nBytes)
+        if (static_cast<int64_t>(nByteSize_t) != nBytes)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate " CPL_FRMT_GIB " bytes", nBytes);
+                     "Cannot allocate %" PRId64 " bytes", nBytes);
             return CE_Failure;
         }
 #endif

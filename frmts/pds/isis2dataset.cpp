@@ -45,6 +45,7 @@ constexpr int RECORD_SIZE = 512;
 #include "nasakeywordhandler.h"
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
+#include <cinttypes>
 
 /************************************************************************/
 /* ==================================================================== */
@@ -94,14 +95,14 @@ class ISIS2Dataset final : public RawDataset
 
     // Write related.
     static int WriteRaster(CPLString osFilename, bool includeLabel,
-                           GUIntBig iRecord, GUIntBig iLabelRecords,
+                           uint64_t iRecord, uint64_t iLabelRecords,
                            GDALDataType eType, const char *pszInterleaving);
 
     static int WriteLabel(CPLString osFilename, CPLString osRasterFile,
                           CPLString sObjectTag, unsigned int nXSize,
                           unsigned int nYSize, unsigned int nBandsIn,
-                          GDALDataType eType, GUIntBig iRecords,
-                          const char *pszInterleaving, GUIntBig &iLabelRecords,
+                          GDALDataType eType, uint64_t iRecords,
+                          const char *pszInterleaving, uint64_t &iLabelRecords,
                           bool bRelaunch = false);
     static int WriteQUBE_Information(VSILFILE *fpLabel, unsigned int iLevel,
                                      unsigned int &nWritingBytes,
@@ -112,7 +113,7 @@ class ISIS2Dataset final : public RawDataset
     static unsigned int WriteKeyword(VSILFILE *fpLabel, unsigned int iLevel,
                                      CPLString key, CPLString value);
     static unsigned int WriteFormatting(VSILFILE *fpLabel, CPLString data);
-    static GUIntBig RecordSizeCalculation(unsigned int nXSize,
+    static uint64_t RecordSizeCalculation(unsigned int nXSize,
                                           unsigned int nYSize,
                                           unsigned int nBands,
                                           GDALDataType eType);
@@ -344,11 +345,11 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    GUIntBig nSkipBytes = 0;
+    uint64_t nSkipBytes = 0;
     if (nQube > 0 && bByteLocation)
         nSkipBytes = (nQube - 1);
     else if (nQube > 0)
-        nSkipBytes = static_cast<GUIntBig>(nQube - 1) * record_bytes;
+        nSkipBytes = static_cast<uint64_t>(nQube - 1) * record_bytes;
     else
         nSkipBytes = 0;
 
@@ -970,9 +971,9 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
         }
     }
 
-    GUIntBig iRecords =
+    uint64_t iRecords =
         ISIS2Dataset::RecordSizeCalculation(nXSize, nYSize, nBandsIn, eType);
-    GUIntBig iLabelRecords(2);
+    uint64_t iLabelRecords(2);
 
     CPLDebug("ISIS2", "irecord = %i", static_cast<int>(iRecords));
 
@@ -1002,7 +1003,7 @@ GDALDataset *ISIS2Dataset::Create(const char *pszFilename, int nXSize,
 /************************************************************************/
 
 int ISIS2Dataset::WriteRaster(CPLString osFilename, bool includeLabel,
-                              GUIntBig iRecords, GUIntBig iLabelRecords,
+                              uint64_t iRecords, uint64_t iLabelRecords,
                               CPL_UNUSED GDALDataType eType,
                               CPL_UNUSED const char *pszInterleaving)
 {
@@ -1018,7 +1019,7 @@ int ISIS2Dataset::WriteRaster(CPLString osFilename, bool includeLabel,
         return FALSE;
     }
 
-    GUIntBig nSize = iRecords * RECORD_SIZE;
+    uint64_t nSize = iRecords * RECORD_SIZE;
     CPLDebug("ISIS2", "nSize = %i", static_cast<int>(nSize));
 
     if (includeLabel)
@@ -1042,13 +1043,13 @@ int ISIS2Dataset::WriteRaster(CPLString osFilename, bool includeLabel,
 /************************************************************************/
 /*                       RecordSizeCalculation()                        */
 /************************************************************************/
-GUIntBig ISIS2Dataset::RecordSizeCalculation(unsigned int nXSize,
+uint64_t ISIS2Dataset::RecordSizeCalculation(unsigned int nXSize,
                                              unsigned int nYSize,
                                              unsigned int nBandsIn,
                                              GDALDataType eType)
 
 {
-    const GUIntBig n = static_cast<GUIntBig>(nXSize) * nYSize * nBandsIn *
+    const uint64_t n = static_cast<uint64_t>(nXSize) * nYSize * nBandsIn *
                        (GDALGetDataTypeSize(eType) / 8);
     // size of pds file is a multiple of RECORD_SIZE Bytes.
     CPLDebug("ISIS2", "n = %i", static_cast<int>(n));
@@ -1057,7 +1058,7 @@ GUIntBig ISIS2Dataset::RecordSizeCalculation(unsigned int nXSize,
     CPLDebug("ISIS2", "nYSize = %i", nYSize);
     CPLDebug("ISIS2", "nBands = %i", nBandsIn);
     CPLDebug("ISIS2", "DataTypeSize = %i", GDALGetDataTypeSize(eType));
-    return static_cast<GUIntBig>(ceil(static_cast<float>(n) / RECORD_SIZE));
+    return static_cast<uint64_t>(ceil(static_cast<float>(n) / RECORD_SIZE));
 }
 
 /************************************************************************/
@@ -1160,9 +1161,9 @@ int ISIS2Dataset::WriteQUBE_Information(
 int ISIS2Dataset::WriteLabel(CPLString osFilename, CPLString osRasterFile,
                              CPLString sObjectTag, unsigned int nXSize,
                              unsigned int nYSize, unsigned int nBandsIn,
-                             GDALDataType eType, GUIntBig iRecords,
+                             GDALDataType eType, uint64_t iRecords,
                              const char *pszInterleaving,
-                             GUIntBig &iLabelRecords, CPL_UNUSED bool bRelaunch)
+                             uint64_t &iLabelRecords, CPL_UNUSED bool bRelaunch)
 {
     CPLDebug("ISIS2", "Write Label filename = %s, rasterfile = %s",
              osFilename.c_str(), osRasterFile.c_str());
@@ -1192,10 +1193,10 @@ int ISIS2Dataset::WriteLabel(CPLString osFilename, CPLString osRasterFile,
         fpLabel, iLevel, "RECORD_BYTES", CPLString().Printf("%d", RECORD_SIZE));
     nWritingBytes +=
         ISIS2Dataset::WriteKeyword(fpLabel, iLevel, "FILE_RECORDS",
-                                   CPLString().Printf(CPL_FRMT_GUIB, iRecords));
+                                   CPLString().Printf("%" PRIu64, iRecords));
     nWritingBytes += ISIS2Dataset::WriteKeyword(
         fpLabel, iLevel, "LABEL_RECORDS",
-        CPLString().Printf(CPL_FRMT_GUIB, iLabelRecords));
+        CPLString().Printf("%" PRIu64, iLabelRecords));
     if (!bAttachedLabel)
     {
         nWritingBytes += ISIS2Dataset::WriteKeyword(
@@ -1210,7 +1211,7 @@ int ISIS2Dataset::WriteLabel(CPLString osFilename, CPLString osRasterFile,
     {
         nWritingBytes += ISIS2Dataset::WriteKeyword(
             fpLabel, iLevel, CPLString().Printf("^%s", sObjectTag.c_str()),
-            CPLString().Printf(CPL_FRMT_GUIB, iLabelRecords + 1));
+            CPLString().Printf("%" PRIu64, iLabelRecords + 1));
     }
     else
     {

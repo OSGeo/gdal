@@ -1909,15 +1909,15 @@ yyreduce:
                 {
                     yyval = yyvsp[0];
                     yyval->field_type = SWQ_INTEGER64;
-                    yyval->int_value = std::numeric_limits<GIntBig>::min();
+                    yyval->int_value = std::numeric_limits<int64_t>::min();
                     yyval->float_value = static_cast<double>(
-                        std::numeric_limits<GIntBig>::min());
+                        std::numeric_limits<int64_t>::min());
                 }
                 // - (-9223372036854775808) cannot be represented on int64
                 // the classic overflow is that its negation is itself.
                 else if (yyvsp[0]->field_type == SWQ_INTEGER64 &&
                          yyvsp[0]->int_value ==
-                             std::numeric_limits<GIntBig>::min())
+                             std::numeric_limits<int64_t>::min())
                 {
                     yyval = yyvsp[0];
                 }

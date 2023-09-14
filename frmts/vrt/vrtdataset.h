@@ -121,7 +121,7 @@ class CPL_DLL VRTSource
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) = 0;
     virtual CPLErr GetHistogram(int nXSize, int nYSize, double dfMin,
                                 double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) = 0;
 
@@ -575,17 +575,17 @@ class CPL_DLL VRTRasterBand CPL_NON_FINAL : public GDALRasterBand
     virtual GDALRasterBand *GetOverview(int) override;
 
     virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc,
                                 void *pProgressData) override;
 
     virtual CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax,
-                                       int *pnBuckets, GUIntBig **ppanHistogram,
+                                       int *pnBuckets, uint64_t **ppanHistogram,
                                        int bForce, GDALProgressFunc,
                                        void *pProgressData) override;
 
     virtual CPLErr SetDefaultHistogram(double dfMin, double dfMax, int nBuckets,
-                                       GUIntBig *panHistogram) override;
+                                       uint64_t *panHistogram) override;
 
     CPLErr CopyCommonInfoFrom(GDALRasterBand *);
 
@@ -687,7 +687,7 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData) override;
     virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
 
@@ -884,7 +884,7 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData) override;
     virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
 
@@ -931,7 +931,7 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
     void ClearRawLink();
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
-                                     GIntBig *pnLineSpace,
+                                     int64_t *pnLineSpace,
                                      char **papszOptions) override;
 
     virtual void GetFileList(char ***ppapszFileList, int *pnSize,
@@ -1069,7 +1069,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual CPLErr GetHistogram(int nXSize, int nYSize, double dfMin,
                                 double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
 
@@ -1130,7 +1130,7 @@ class VRTAveragedSource final : public VRTSimpleSource
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual CPLErr GetHistogram(int nXSize, int nYSize, double dfMin,
                                 double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
 
@@ -1211,7 +1211,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual CPLErr GetHistogram(int nXSize, int nYSize, double dfMin,
                                 double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
 
@@ -1351,7 +1351,7 @@ class VRTFuncSource final : public VRTSource
     virtual double GetMaximum(int nXSize, int nYSize, int *pbSuccess) override;
     virtual CPLErr GetHistogram(int nXSize, int nYSize, double dfMin,
                                 double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc pfnProgress,
                                 void *pProgressData) override;
 
@@ -1449,12 +1449,12 @@ class VRTGroup final : public GDALGroup
 
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
-                    const std::string &osDirection, GUInt64 nSize,
+                    const std::string &osDirection, uint64_t nSize,
                     CSLConstList papszOptions = nullptr) override;
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
 
@@ -1503,7 +1503,7 @@ class VRTDimension final : public GDALDimension
     VRTDimension(const std::shared_ptr<VRTGroup::Ref> &poGroupRef,
                  const std::string &osParentName, const std::string &osName,
                  const std::string &osType, const std::string &osDirection,
-                 GUInt64 nSize, const std::string &osIndexingVariableName)
+                 uint64_t nSize, const std::string &osIndexingVariableName)
         : GDALDimension(osParentName, osName, osType, osDirection, nSize),
           m_poGroupRef(poGroupRef),
           m_osIndexingVariableName(osIndexingVariableName)
@@ -1535,13 +1535,13 @@ class VRTAttribute final : public GDALAttribute
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
 
   protected:
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -1562,7 +1562,7 @@ class VRTAttribute final : public GDALAttribute
     }
 
     VRTAttribute(const std::string &osParentName, const std::string &osName,
-                 GUInt64 nDim, const GDALExtendedDataType &dt)
+                 uint64_t nDim, const GDALExtendedDataType &dt)
         : GDALAbstractMDArray(osParentName, osName),
           GDALAttribute(osParentName, osName), m_dt(dt)
     {
@@ -1574,7 +1574,7 @@ class VRTAttribute final : public GDALAttribute
     }
 
     static bool CreationCommonChecks(
-        const std::string &osName, const std::vector<GUInt64> &anDimensions,
+        const std::string &osName, const std::vector<uint64_t> &anDimensions,
         const std::map<std::string, std::shared_ptr<VRTAttribute>>
             &oMapAttributes);
 
@@ -1604,8 +1604,8 @@ class VRTMDArraySource
   public:
     virtual ~VRTMDArraySource() = default;
 
-    virtual bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
-                      const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    virtual bool Read(const uint64_t *arrayStartIdx, const size_t *count,
+                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const = 0;
 
@@ -1638,8 +1638,8 @@ class VRTMDArray final : public GDALMDArray
     bool m_bHasOffset = false;
     std::string m_osFilename{};
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -1763,12 +1763,12 @@ class VRTMDArray final : public GDALMDArray
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
 
     bool CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
-                  bool bStrict, GUInt64 &nCurCost, const GUInt64 nTotalCost,
+                  bool bStrict, uint64_t &nCurCost, const uint64_t nTotalCost,
                   GDALProgressFunc pfnProgress, void *pProgressData) override;
 
     void Serialize(CPLXMLNode *psParent, const char *pszVRTPathIn) const;
@@ -1789,7 +1789,7 @@ class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
 {
     const VRTMDArray *m_poDstArray = nullptr;
     bool m_bIsConstantValue;
-    std::vector<GUInt64> m_anOffset{};
+    std::vector<uint64_t> m_anOffset{};
     std::vector<size_t> m_anCount{};
     std::vector<GByte> m_abyValues{};
     std::vector<size_t> m_anInlinedArrayStrideInBytes{};
@@ -1803,7 +1803,7 @@ class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
   public:
     VRTMDArraySourceInlinedValues(const VRTMDArray *poDstArray,
                                   bool bIsConstantValue,
-                                  std::vector<GUInt64> &&anOffset,
+                                  std::vector<uint64_t> &&anOffset,
                                   std::vector<size_t> &&anCount,
                                   std::vector<GByte> &&abyValues)
         : m_poDstArray(poDstArray), m_bIsConstantValue(bIsConstantValue),
@@ -1830,8 +1830,8 @@ class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
     static std::unique_ptr<VRTMDArraySourceInlinedValues>
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
 
-    bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
-              const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool Read(const uint64_t *arrayStartIdx, const size_t *count,
+              const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
               void *pDstBuffer) const override;
 
@@ -1853,8 +1853,8 @@ class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
     {
     }
 
-    bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
-              const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool Read(const uint64_t *arrayStartIdx, const size_t *count,
+              const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
               void *pDstBuffer) const override;
 
@@ -1875,10 +1875,10 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
     std::string m_osBand{};
     std::vector<int> m_anTransposedAxis{};
     std::string m_osViewExpr{};
-    std::vector<GUInt64> m_anSrcOffset{};
-    mutable std::vector<GUInt64> m_anCount{};
-    std::vector<GUInt64> m_anStep{};
-    std::vector<GUInt64> m_anDstOffset{};
+    std::vector<uint64_t> m_anSrcOffset{};
+    mutable std::vector<uint64_t> m_anCount{};
+    std::vector<uint64_t> m_anStep{};
+    std::vector<uint64_t> m_anDstOffset{};
 
     VRTMDArraySourceFromArray(const VRTMDArraySourceFromArray &) = delete;
     VRTMDArraySourceFromArray &
@@ -1890,8 +1890,8 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
         bool bRelativeToVRT, const std::string &osFilename,
         const std::string &osArray, const std::string &osBand,
         std::vector<int> &&anTransposedAxis, const std::string &osViewExpr,
-        std::vector<GUInt64> &&anSrcOffset, std::vector<GUInt64> &&anCount,
-        std::vector<GUInt64> &&anStep, std::vector<GUInt64> &&anDstOffset)
+        std::vector<uint64_t> &&anSrcOffset, std::vector<uint64_t> &&anCount,
+        std::vector<uint64_t> &&anStep, std::vector<uint64_t> &&anDstOffset)
         : m_poDstArray(poDstArray), m_bRelativeToVRTSet(bRelativeToVRTSet),
           m_bRelativeToVRT(bRelativeToVRT), m_osFilename(osFilename),
           m_osArray(osArray), m_osBand(osBand),
@@ -1907,8 +1907,8 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
     static std::unique_ptr<VRTMDArraySourceFromArray>
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
 
-    bool Read(const GUInt64 *arrayStartIdx, const size_t *count,
-              const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool Read(const uint64_t *arrayStartIdx, const size_t *count,
+              const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
               void *pDstBuffer) const override;
 

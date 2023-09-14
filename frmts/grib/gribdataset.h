@@ -120,8 +120,8 @@ class GRIBDataset final : public GDALPamDataset
     // Calculate and store once as GetGeoTransform may be called multiple times.
     double adfGeoTransform[6];
 
-    GIntBig nCachedBytes;
-    GIntBig nCachedBytesThreshold;
+    int64_t nCachedBytes;
+    int64_t nCachedBytesThreshold;
     int bCacheOnlyOneBand;
 
     // Split&Swap: transparent rewrap around the prime meridian instead of the

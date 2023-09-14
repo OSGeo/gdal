@@ -32,6 +32,7 @@
 #include "gtiffjpegoverviewds.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <map>
 #include <set>
@@ -58,7 +59,7 @@ GDALRasterAttributeTable *GTiffRasterBand::GetDefaultRAT()
 /************************************************************************/
 
 CPLErr GTiffRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                     GUIntBig *panHistogram,
+                                     uint64_t *panHistogram,
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
@@ -74,7 +75,7 @@ CPLErr GTiffRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
 /************************************************************************/
 
 CPLErr GTiffRasterBand::GetDefaultHistogram(
-    double *pdfMin, double *pdfMax, int *pnBuckets, GUIntBig **ppanHistogram,
+    double *pdfMin, double *pdfMax, int *pnBuckets, uint64_t **ppanHistogram,
     int bForce, GDALProgressFunc pfnProgress, void *pProgressData)
 {
     m_poGDS->LoadGeoreferencingAndPamIfNeeded();
@@ -315,7 +316,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 CPLVirtualMem *GTiffRasterBand::GetVirtualMemAuto(GDALRWFlag eRWFlag,
                                                   int *pnPixelSpace,
-                                                  GIntBig *pnLineSpace,
+                                                  int64_t *pnLineSpace,
                                                   char **papszOptions)
 {
     const char *pszImpl = CSLFetchNameValueDef(
@@ -377,7 +378,7 @@ void GTiffRasterBand::DropReferenceVirtualMem(void *pUserData)
 
 CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
                                                           int *pnPixelSpace,
-                                                          GIntBig *pnLineSpace,
+                                                          int64_t *pnLineSpace,
                                                           char **papszOptions)
 {
     int nLineSize = nBlockXSize * GDALGetDataTypeSizeBytes(eDataType);
@@ -527,7 +528,7 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         }
     }
 
-    GIntBig nBlockSpacing = 0;
+    int64_t nBlockSpacing = 0;
     bool bCompatibleSpacing = true;
     toff_t nPrevOffset = 0;
     for (i = 0; i < m_poGDS->m_nBlocksPerBand; ++i)
@@ -545,11 +546,11 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         }
         if (i > 0)
         {
-            const GIntBig nCurSpacing = nCurOffset - nPrevOffset;
+            const int64_t nCurSpacing = nCurOffset - nPrevOffset;
             if (i == 1)
             {
                 if (nCurSpacing !=
-                    static_cast<GIntBig>(nBlockYSize) * nLineSize)
+                    static_cast<int64_t>(nBlockYSize) * nLineSize)
                 {
                     bCompatibleSpacing = false;
                     break;
@@ -849,8 +850,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 const vsi_l_offset nRealSize = nSizeFromLeader;
 #ifdef DEBUG_VERBOSE
                 CPLDebug("GTiff",
-                         "Block %d found at offset " CPL_FRMT_GUIB
-                         " with size " CPL_FRMT_GUIB,
+                         "Block %d found at offset %" PRIu64
+                         " with size %" PRIu64,
                          nBlockId, nRealOffset, nRealSize);
 #endif
                 m_poGDS->m_oCacheStrileToOffsetByteCount.insert(
@@ -908,8 +909,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                     const vsi_l_offset nRealSize = nMaskSizeFromLeader;
 #ifdef DEBUG_VERBOSE
                     CPLDebug("GTiff",
-                             "Mask of block %d found at offset " CPL_FRMT_GUIB
-                             " with size " CPL_FRMT_GUIB,
+                             "Mask of block %d found at offset %" PRIu64
+                             " with size %" PRIu64,
                              nBlockId, nRealOffset, nRealSize);
 #endif
 
@@ -977,8 +978,8 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                     {
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GTiff",
-                                 "Precaching for block (%d, %d), " CPL_FRMT_GUIB
-                                 "-" CPL_FRMT_GUIB,
+                                 "Precaching for block (%d, %d), %" PRIu64
+                                 "-%" PRIu64,
                                  iX, iY, nOffset,
                                  nOffset + static_cast<size_t>(nSize) - 1);
 #endif
@@ -1032,8 +1033,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                         anSizes.push_back(nChunkSize);
 #ifdef DEBUG_VERBOSE
                         CPLDebug("GTiff",
-                                 "Requesting range [" CPL_FRMT_GUIB
-                                 "-" CPL_FRMT_GUIB "]",
+                                 "Requesting range [%" PRIu64 "-%" PRIu64 "]",
                                  anOffsets.back(),
                                  anOffsets.back() + anSizes.back() - 1);
 #endif
@@ -1048,10 +1048,9 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
                 // terminate last block
                 anSizes.push_back(nChunkSize);
 #ifdef DEBUG_VERBOSE
-                CPLDebug(
-                    "GTiff",
-                    "Requesting range [" CPL_FRMT_GUIB "-" CPL_FRMT_GUIB "]",
-                    anOffsets.back(), anOffsets.back() + anSizes.back() - 1);
+                CPLDebug("GTiff", "Requesting range [%" PRIu64 "-%" PRIu64 "]",
+                         anOffsets.back(),
+                         anOffsets.back() + anSizes.back() - 1);
 #endif
 
                 VSILFILE *fp = VSI_TIFFGetVSILFile(th);
@@ -1103,7 +1102,7 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     const int iYBlockEnd = (nYOff + nYSize - 1) / nBlockYSize;
     int nStatus = 0;
     VSILFILE *fp = VSI_TIFFGetVSILFile(TIFFClientdata(m_poGDS->m_hTIFF));
-    GIntBig nPixelsData = 0;
+    int64_t nPixelsData = 0;
     for (int iY = iYBlockStart; iY <= iYBlockEnd; ++iY)
     {
         for (int iX = iXBlockStart; iX <= iXBlockEnd; ++iX)
@@ -1157,7 +1156,7 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
                         ? INT_MAX
                         : (iY + 1) * nBlockYSize;
 
-                nPixelsData += (static_cast<GIntBig>(
+                nPixelsData += (static_cast<int64_t>(
                                     std::min(nXBlockRight, nXOff + nXSize)) -
                                 std::max(iX * nBlockXSize, nXOff)) *
                                (std::min(nYBlockBottom, nYOff + nYSize) -
@@ -1174,7 +1173,7 @@ int GTiffRasterBand::IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
     }
     if (pdfDataPct)
         *pdfDataPct =
-            100.0 * nPixelsData / (static_cast<GIntBig>(nXSize) * nYSize);
+            100.0 * nPixelsData / (static_cast<int64_t>(nXSize) * nYSize);
     return nStatus;
 }
 
@@ -1214,7 +1213,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             (nBlockBufSize / nBlockYSize) *
             (nBlockYSize -
              static_cast<int>(
-                 (static_cast<GIntBig>(nBlockYOff + 1) * nBlockYSize) %
+                 (static_cast<int64_t>(nBlockYOff + 1) * nBlockYSize) %
                  nRasterYSize));
     }
 
@@ -1241,11 +1240,11 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         if (nOffset < VSIFTellL(m_poGDS->m_fpL))
         {
             ReportError(CE_Failure, CPLE_NotSupported,
-                        "Trying to load block %d at offset " CPL_FRMT_GUIB
-                        " whereas current pos is " CPL_FRMT_GUIB
+                        "Trying to load block %d at offset %" PRIu64
+                        " whereas current pos is %" PRIu64
                         " (backward read not supported)",
-                        nBlockId, static_cast<GUIntBig>(nOffset),
-                        static_cast<GUIntBig>(VSIFTellL(m_poGDS->m_fpL)));
+                        nBlockId, static_cast<uint64_t>(nOffset),
+                        static_cast<uint64_t>(VSIFTellL(m_poGDS->m_fpL)));
             return CE_Failure;
         }
     }
@@ -1556,8 +1555,8 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
 
         if (EQUAL(pszName, "IFD_OFFSET"))
         {
-            return CPLSPrintf(CPL_FRMT_GUIB,
-                              static_cast<GUIntBig>(m_poGDS->m_nDirOffset));
+            return CPLSPrintf("%" PRIu64,
+                              static_cast<uint64_t>(m_poGDS->m_nDirOffset));
         }
 
         if (sscanf(pszName, "BLOCK_OFFSET_%d_%d", &nBlockXOff, &nBlockYOff) ==
@@ -1579,7 +1578,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
                 return nullptr;
             }
 
-            return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nOffset));
+            return CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nOffset));
         }
 
         if (sscanf(pszName, "BLOCK_SIZE_%d_%d", &nBlockXOff, &nBlockYOff) == 2)
@@ -1600,7 +1599,7 @@ const char *GTiffRasterBand::GetMetadataItem(const char *pszName,
                 return nullptr;
             }
 
-            return CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nByteCount));
+            return CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nByteCount));
         }
     }
     else if (pszDomain != nullptr && EQUAL(pszDomain, "_DEBUG_"))

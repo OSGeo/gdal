@@ -105,7 +105,7 @@ class OGRJSONFGStreamedLayer final
     }
 
     //! Set the total feature count
-    void SetFeatureCount(GIntBig nCount)
+    void SetFeatureCount(int64_t nCount)
     {
         nFeatureCount_ = nCount;
     }
@@ -137,7 +137,7 @@ class OGRJSONFGStreamedLayer final
 
     int TestCapability(const char *pszCap) override;
 
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
 
     void ResetReading() override;
 
@@ -148,7 +148,7 @@ class OGRJSONFGStreamedLayer final
     std::string osFIDColumn_{};
 
     /** Total number of features. */
-    GIntBig nFeatureCount_ = -1;
+    int64_t nFeatureCount_ = -1;
 
     VSIVirtualHandleUniquePtr poFile_{};
 
@@ -158,7 +158,7 @@ class OGRJSONFGStreamedLayer final
      * modified */
     bool bOriginalIdModified_ = false;
     /** Set of feature IDs read/allocated up to that point */
-    std::set<GIntBig> oSetUsedFIDs_{};
+    std::set<int64_t> oSetUsedFIDs_{};
 
     /** Ensure the FID of the feature is unique */
     OGRFeature *EnsureUniqueFID(OGRFeature *poFeat);
@@ -434,7 +434,7 @@ class OGRJSONFGReader
         std::unique_ptr<OGRCoordinateTransformation> poCTWGS84ToLayerCRS{};
 
         /** Feature count */
-        GIntBig nFeatureCount = 0;
+        int64_t nFeatureCount = 0;
 
         //! Whether the Feature.id should be mapped to a OGR field.
         bool bFeatureLevelIdAsAttribute = false;

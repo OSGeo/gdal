@@ -376,7 +376,7 @@ int TABFeature::ReadRecordFromDATFile(TABDATFile *poDATFile)
             }
             case TABFLargeInt:
             {
-                const GInt64 nValue = poDATFile->ReadLargeIntField(
+                const int64_t nValue = poDATFile->ReadLargeIntField(
                     poDATFile->GetFieldWidth(iField));
                 SetField(iField, nValue);
                 break;
@@ -549,8 +549,8 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
                 break;
             case TABFLargeInt:
                 nStatus = poDATFile->WriteLargeIntField(
-                    static_cast<GInt64>(GetFieldAsInteger64(iField)), poINDFile,
-                    panIndexNo[iField]);
+                    static_cast<int64_t>(GetFieldAsInteger64(iField)),
+                    poINDFile, panIndexNo[iField]);
                 break;
             case TABFFloat:
                 nStatus = poDATFile->WriteFloatField(
@@ -751,15 +751,15 @@ bool TABFeature::ValidateCoordType(TABMAPFile *poMapFile)
         /* Test for max range < 65535 here instead of < 65536 to avoid
          * compressed coordinate overflows in some boundary situations
          */
-        if ((static_cast<GIntBig>(m_nXMax) - m_nXMin) < 65535 &&
-            (static_cast<GIntBig>(m_nYMax) - m_nYMin) < 65535)
+        if ((static_cast<int64_t>(m_nXMax) - m_nXMin) < 65535 &&
+            (static_cast<int64_t>(m_nYMax) - m_nYMin) < 65535)
         {
             bCompr = TRUE;
         }
         m_nComprOrgX =
-            static_cast<int>((static_cast<GIntBig>(m_nXMin) + m_nXMax) / 2);
+            static_cast<int>((static_cast<int64_t>(m_nXMin) + m_nXMax) / 2);
         m_nComprOrgY =
-            static_cast<int>((static_cast<GIntBig>(m_nYMin) + m_nYMax) / 2);
+            static_cast<int>((static_cast<int64_t>(m_nYMin) + m_nYMax) / 2);
     }
 
     /*-------------------------------------------------------------

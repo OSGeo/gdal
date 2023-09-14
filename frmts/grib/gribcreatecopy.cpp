@@ -37,6 +37,7 @@
 #include "memdataset.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #include "degrib/degrib/meta.h"
@@ -2102,12 +2103,12 @@ static void WriteAssembledPDS(VSILFILE *fp, const gtemplate *mappds,
         }
         else if (nEltSize == 4)
         {
-            GIntBig nBigVal = CPLAtoGIntBig(papszTokens[i]);
+            int64_t nBigVal = CPLAtoGIntBig(papszTokens[i]);
             anVals[anVals.size() - 1] = static_cast<int>(nBigVal);
-            if (nBigVal < 0 || nBigVal > static_cast<GIntBig>(UINT_MAX))
+            if (nBigVal < 0 || nBigVal > static_cast<int64_t>(UINT_MAX))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Value " CPL_FRMT_GIB " of index %d in PDS should be "
+                         "Value %" PRId64 " of index %d in PDS should be "
                          "in [0,%d] range",
                          nBigVal, i, INT_MAX);
             }
@@ -2137,11 +2138,11 @@ static void WriteAssembledPDS(VSILFILE *fp, const gtemplate *mappds,
         }
         else if (nEltSize == -4)
         {
-            GIntBig nBigVal = CPLAtoGIntBig(papszTokens[i]);
+            int64_t nBigVal = CPLAtoGIntBig(papszTokens[i]);
             if (nBigVal < INT_MIN || nBigVal > INT_MAX)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Value " CPL_FRMT_GIB " of index %d in PDS should be "
+                         "Value %" PRId64 " of index %d in PDS should be "
                          "in [%d,%d] range",
                          nBigVal, i, INT_MIN, INT_MAX);
             }

@@ -32,6 +32,7 @@
 #include "cpl_vsi.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <cstdarg>
 #include <cstddef>
 #include <cstring>
@@ -1312,7 +1313,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
     int ret = 0;
     constexpr size_t nBufferSize = 10 * 4096;
     std::vector<GByte> abyBuffer(nBufferSize, 0);
-    GUIntBig nOffset = 0;
+    uint64_t nOffset = 0;
     while (true)
     {
         size_t nRead = VSIFReadL(&abyBuffer[0], 1, nBufferSize, fpSource);
@@ -1489,7 +1490,7 @@ bool VSIFilesystemHandler::Sync(const char *pszSource, const char *pszTarget,
     bool ret = true;
     constexpr size_t nBufferSize = 10 * 4096;
     std::vector<GByte> abyBuffer(nBufferSize, 0);
-    GUIntBig nOffset = 0;
+    uint64_t nOffset = 0;
     CPLString osMsg;
     osMsg.Printf("Copying of %s", osSourceWithoutSlash.c_str());
     while (true)
@@ -2535,7 +2536,7 @@ VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nOffset,
  */
 
 int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
-                  vsi_l_offset *pnSize, GIntBig nMaxSize)
+                  vsi_l_offset *pnSize, int64_t nMaxSize)
 {
     if (fp == nullptr && pszFilename == nullptr)
         return FALSE;
@@ -2596,8 +2597,7 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
                 if (pabyNew == nullptr)
                 {
                     CPLError(CE_Failure, CPLE_OutOfMemory,
-                             "Cannot allocate " CPL_FRMT_GIB " bytes",
-                             nDataAlloc);
+                             "Cannot allocate %" PRId64 " bytes", nDataAlloc);
                     VSIFree(*ppabyRet);
                     *ppabyRet = nullptr;
                     if (bFreeFP)
@@ -2669,7 +2669,7 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
         if (nullptr == *ppabyRet)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate " CPL_FRMT_GIB " bytes", nDataLen + 1);
+                     "Cannot allocate %" PRId64 " bytes", nDataLen + 1);
             if (bFreeFP)
                 CPL_IGNORE_RET_VAL(VSIFCloseL(fp));
             return FALSE;
@@ -2679,8 +2679,8 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
         if (nDataLen !=
             VSIFReadL(*ppabyRet, 1, static_cast<size_t>(nDataLen), fp))
         {
-            CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot read " CPL_FRMT_GIB " bytes", nDataLen);
+            CPLError(CE_Failure, CPLE_FileIO, "Cannot read %" PRId64 " bytes",
+                     nDataLen);
             VSIFree(*ppabyRet);
             *ppabyRet = nullptr;
             if (bFreeFP)
@@ -2800,7 +2800,7 @@ void *VSIFGetNativeFileDescriptorL(VSILFILE *fp)
  * @since GDAL 2.1
  */
 
-GIntBig VSIGetDiskFreeSpace(const char *pszDirname)
+int64_t VSIGetDiskFreeSpace(const char *pszDirname)
 {
     VSIFilesystemHandler *poFSHandler = VSIFileManager::GetHandler(pszDirname);
 

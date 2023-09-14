@@ -129,7 +129,7 @@ void OGRAVCE00Layer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRAVCE00Layer::GetFeature(GIntBig nFID)
+OGRFeature *OGRAVCE00Layer::GetFeature(int64_t nFID)
 
 {
     if (nFID < 0 && nFID != SERIAL_ACCESS_FID)
@@ -523,7 +523,7 @@ bool OGRAVCE00Layer::AppendTableFields(OGRFeature *poFeature)
                                 static_cast<AVCField *>(hRecord));
 }
 
-GIntBig OGRAVCE00Layer::GetFeatureCount(int bForce)
+int64_t OGRAVCE00Layer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery != nullptr || m_poFilterGeom != nullptr)
         return OGRAVCLayer::GetFeatureCount(bForce);

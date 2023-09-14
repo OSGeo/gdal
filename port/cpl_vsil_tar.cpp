@@ -31,7 +31,9 @@
 #include "cpl_port.h"
 #include "cpl_vsi.h"
 
+#include <cinttypes>
 #include <cstring>
+#include <limits>
 
 #if HAVE_FCNTL_H
 #include <fcntl.h>
@@ -67,18 +69,18 @@ constexpr int BUFFER_SIZE = 2 * HALF_BUFFER_SIZE;
 class VSITarEntryFileOffset final : public VSIArchiveEntryFileOffset
 {
   public:
-    GUIntBig m_nOffset = 0;
+    uint64_t m_nOffset = 0;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-    GUIntBig m_nFileSize = 0;
+    uint64_t m_nFileSize = 0;
     CPLString m_osFileName{};
 #endif
 
-    explicit VSITarEntryFileOffset(GUIntBig nOffset) : m_nOffset(nOffset)
+    explicit VSITarEntryFileOffset(uint64_t nOffset) : m_nOffset(nOffset)
     {
     }
 
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
-    VSITarEntryFileOffset(GUIntBig nOffset, GUIntBig nFileSize,
+    VSITarEntryFileOffset(uint64_t nOffset, uint64_t nFileSize,
                           const CPLString &osFileName)
         : m_nOffset(nOffset), m_nFileSize(nFileSize), m_osFileName(osFileName)
     {
@@ -98,16 +100,16 @@ class VSITarReader final : public VSIArchiveReader
     CPL_DISALLOW_COPY_ASSIGN(VSITarReader)
 
     VSILFILE *fp = nullptr;
-    GUIntBig nCurOffset = 0;
-    GUIntBig nNextFileSize = 0;
+    uint64_t nCurOffset = 0;
+    uint64_t nNextFileSize = 0;
     CPLString osNextFileName{};
-    GIntBig nModifiedTime = 0;
+    int64_t nModifiedTime = 0;
 #ifdef HAVE_FUZZER_FRIENDLY_ARCHIVE
     bool m_bIsFuzzerFriendly = false;
     GByte m_abyBuffer[BUFFER_SIZE + 1] = {};
     int m_abyBufferIdx = 0;
     int m_abyBufferSize = 0;
-    GUIntBig m_nCurOffsetOld = 0;
+    uint64_t m_nCurOffsetOld = 0;
 #endif
 
   public:
@@ -122,7 +124,7 @@ class VSITarReader final : public VSIArchiveReader
     int GotoFirstFile() override;
     int GotoNextFile() override;
     VSIArchiveEntryFileOffset *GetFileOffset() override;
-    GUIntBig GetFileSize() override
+    uint64_t GetFileSize() override
     {
         return nNextFileSize;
     }
@@ -130,7 +132,7 @@ class VSITarReader final : public VSIArchiveReader
     {
         return osNextFileName;
     }
-    GIntBig GetModifiedTime() override
+    int64_t GetModifiedTime() override
     {
         return nModifiedTime;
     }
@@ -387,7 +389,9 @@ int VSITarReader::GotoNextFile()
         {
             if (abyHeader[124 + i] != ' ')
             {
-                if (nNextFileSize > static_cast<GUIntBig>(GINTBIG_MAX / 8) ||
+                if (nNextFileSize >
+                        static_cast<uint64_t>(
+                            std::numeric_limits<int64_t>::max() / 8) ||
                     abyHeader[124 + i] < '0' || abyHeader[124 + i] >= '8')
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -398,7 +402,8 @@ int VSITarReader::GotoNextFile()
                 nNextFileSize = nNextFileSize * 8 + (abyHeader[124 + i] - '0');
             }
         }
-        if (nNextFileSize > GINTBIG_MAX)
+        if (nNextFileSize >
+            static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid file size for %s",
                      osNextFileName.c_str());
@@ -410,10 +415,10 @@ int VSITarReader::GotoNextFile()
         {
             if (abyHeader[136 + i] != ' ')
             {
-                if (nModifiedTime > GINTBIG_MAX / 8 ||
+                if (nModifiedTime > std::numeric_limits<int64_t>::max() / 8 ||
                     abyHeader[136 + i] < '0' || abyHeader[136 + i] >= '8' ||
-                    nModifiedTime * 8 >
-                        GINTBIG_MAX - (abyHeader[136 + i] - '0'))
+                    nModifiedTime * 8 > std::numeric_limits<int64_t>::max() -
+                                            (abyHeader[136 + i] - '0'))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Invalid mtime for %s", osNextFileName.c_str());
@@ -457,8 +462,8 @@ int VSITarReader::GotoNextFile()
 
     nCurOffset = VSIFTellL(fp);
 
-    const GUIntBig nBytesToSkip = ((nNextFileSize + 511) / 512) * 512;
-    if (nBytesToSkip > (~(static_cast<GUIntBig>(0))) - nCurOffset)
+    const uint64_t nBytesToSkip = ((nNextFileSize + 511) / 512) * 512;
+    if (nBytesToSkip > (~(static_cast<uint64_t>(0))) - nCurOffset)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Bad .tar structure");
         return FALSE;
@@ -619,9 +624,9 @@ VSIVirtualHandle *VSITarFilesystemHandler::Open(const char *pszFilename,
     CPLString osSubFileName("/vsisubfile/");
     VSITarEntryFileOffset *pOffset =
         reinterpret_cast<VSITarEntryFileOffset *>(poReader->GetFileOffset());
-    osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, pOffset->m_nOffset);
+    osSubFileName += CPLString().Printf("%" PRIu64, pOffset->m_nOffset);
     osSubFileName += "_";
-    osSubFileName += CPLString().Printf(CPL_FRMT_GUIB, poReader->GetFileSize());
+    osSubFileName += CPLString().Printf("%" PRIu64, poReader->GetFileSize());
     osSubFileName += ",";
     delete pOffset;
 

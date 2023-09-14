@@ -472,7 +472,7 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // frmo it with the requested interleaving and data type.
     if (eRWFlag == GF_Read && bIsExpectedLayout && nXSize == nBufXSize &&
         nYSize == nBufYSize &&
-        static_cast<GIntBig>(nXSize) * nYSize < CPLGetUsablePhysicalRAM() / 10)
+        static_cast<int64_t>(nXSize) * nYSize < CPLGetUsablePhysicalRAM() / 10)
     {
         auto poMemDS = std::unique_ptr<GDALDataset>(
             MEMDataset::Create("", nXSize, nYSize, 1, eDataType, nullptr));
@@ -630,7 +630,7 @@ CPLErr HDF5ImageDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         (bIsBandInterleavedData || bIsPixelInterleaveData) &&
         nXSize == nBufXSize && nYSize == nBufYSize &&
         IsConsecutiveBands(panBandMap, nBandCount) &&
-        static_cast<GIntBig>(nXSize) * nYSize <
+        static_cast<int64_t>(nXSize) * nYSize <
             CPLGetUsablePhysicalRAM() / 10 / nBandCount)
     {
         const char *const apszOptions[] = {

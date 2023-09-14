@@ -33,6 +33,7 @@
 #include "cpl_port.h"
 #include "mitab.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -1426,7 +1427,7 @@ int TABDATFile::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
             }
             else if (m_pasFieldDef[iField].eTABType == TABFLargeInt)
             {
-                snprintf(pabyNewField, sFieldDef.byLength, CPL_FRMT_GIB,
+                snprintf(pabyNewField, sFieldDef.byLength, "%" PRId64,
                          ReadLargeIntField(m_pasFieldDef[iField].byLength));
             }
             else if (m_pasFieldDef[iField].eTABType == TABFFloat)
@@ -1689,7 +1690,7 @@ int16_t TABDATFile::ReadSmallIntField(int nWidth)
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-GInt64 TABDATFile::ReadLargeIntField(int nWidth)
+int64_t TABDATFile::ReadLargeIntField(int nWidth)
 {
     // If current record has been deleted, then return an acceptable
     // default value.
@@ -1704,7 +1705,7 @@ GInt64 TABDATFile::ReadLargeIntField(int nWidth)
     }
 
     if (m_eTableType == TABTableDBF)
-        return static_cast<GIntBig>(CPLAtoGIntBig(ReadCharField(nWidth)));
+        return static_cast<int64_t>(CPLAtoGIntBig(ReadCharField(nWidth)));
 
     return m_poRecordBlock->ReadInt64();
 }
@@ -2159,7 +2160,7 @@ int TABDATFile::WriteSmallIntField(int16_t nValue, TABINDFile *poINDFile,
  *
  * CPLError() will have been called if something fails.
  **********************************************************************/
-int TABDATFile::WriteLargeIntField(GInt64 nValue, TABINDFile *poINDFile,
+int TABDATFile::WriteLargeIntField(int64_t nValue, TABINDFile *poINDFile,
                                    int nIndexNo)
 {
     if (m_poRecordBlock == nullptr)

@@ -198,7 +198,7 @@ void GDALMDReaderLandsat::LoadMetadata()
             pszTime = "00:00:00.000000Z";
 
         char buffer[80];
-        GIntBig timeMid =
+        int64_t timeMid =
             GetAcquisitionTimeFromString(CPLSPrintf("%sT%s", pszDate, pszTime));
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,

@@ -190,12 +190,12 @@ OGRFlatGeobufEditableLayer::OGRFlatGeobufEditableLayer(
 {
 }
 
-GIntBig OGRFlatGeobufEditableLayer::GetFeatureCount(int bForce)
+int64_t OGRFlatGeobufEditableLayer::GetFeatureCount(int bForce)
 {
-    const GIntBig nRet = OGREditableLayer::GetFeatureCount(bForce);
+    const int64_t nRet = OGREditableLayer::GetFeatureCount(bForce);
     if (m_poDecoratedLayer != nullptr && m_nNextFID <= 0)
     {
-        const GIntBig nTotalFeatureCount =
+        const int64_t nTotalFeatureCount =
             static_cast<OGRFlatGeobufLayer *>(m_poDecoratedLayer)
                 ->GetFeatureCount(false);
         if (nTotalFeatureCount >= 0)

@@ -647,7 +647,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         // Wasteful, but that's the only choice given by the LERC C API
         // This will only work if the Lerc2 file is under the constant defined
         // here
-        static const GIntBig MAX_L2SIZE(10 * 1024 * 1024);  // 10MB
+        static const int64_t MAX_L2SIZE(10 * 1024 * 1024);  // 10MB
         GByte *buffer = nullptr;
         vsi_l_offset l2size;
 

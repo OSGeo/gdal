@@ -55,7 +55,7 @@ static CPLString gosIAMRole;
 static CPLString gosGlobalAccessKeyId;
 static CPLString gosGlobalSecretAccessKey;
 static CPLString gosGlobalSessionToken;
-static GIntBig gnGlobalExpiration = 0;
+static int64_t gnGlobalExpiration = 0;
 static std::string gosRegion;
 
 // The below variables are used for credentials retrieved through a STS
@@ -346,7 +346,7 @@ CPLString CPLGetAWS_SIGN4_Authorization(
 /*                        CPLGetAWS_SIGN4_Timestamp()                   */
 /************************************************************************/
 
-CPLString CPLGetAWS_SIGN4_Timestamp(GIntBig timestamp)
+CPLString CPLGetAWS_SIGN4_Timestamp(int64_t timestamp)
 {
     struct tm brokenDown;
     CPLUnixTimeToYMDHMS(timestamp, &brokenDown);
@@ -510,7 +510,7 @@ CPLString IVSIS3LikeHandleHelper::GetRFC822DateTime()
 /*                        Iso8601ToUnixTime()                           */
 /************************************************************************/
 
-static bool Iso8601ToUnixTime(const char *pszDT, GIntBig *pnUnixTime)
+static bool Iso8601ToUnixTime(const char *pszDT, int64_t *pnUnixTime)
 {
     int nYear;
     int nMonth;
@@ -791,7 +791,7 @@ bool VSIS3HandleHelper::GetConfigurationFromAssumeRoleWithWebIdentity(
         }
     }
 
-    GIntBig nExpirationUnix = 0;
+    int64_t nExpirationUnix = 0;
     if (!osAccessKeyId.empty() && !osSecretAccessKey.empty() &&
         !osSessionToken.empty() &&
         Iso8601ToUnixTime(osExpiration.c_str(), &nExpirationUnix))
@@ -993,7 +993,7 @@ bool VSIS3HandleHelper::GetConfigurationFromEC2(
     osSessionToken = oResponse.FetchNameValueDef("Token", "");
     const CPLString osExpiration =
         oResponse.FetchNameValueDef("Expiration", "");
-    GIntBig nExpirationUnix = 0;
+    int64_t nExpirationUnix = 0;
     if (!osAccessKeyId.empty() && !osSecretAccessKey.empty() &&
         Iso8601ToUnixTime(osExpiration, &nExpirationUnix))
     {
@@ -2166,7 +2166,7 @@ CPLString VSIS3HandleHelper::GetSignedURL(CSLConstList papszOptions)
         brokendowntime.tm_hour = nHour;
         brokendowntime.tm_min = nMin;
         brokendowntime.tm_sec = nSec;
-        const GIntBig nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
+        const int64_t nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
 
         {
             CPLMutexHolder oHolder(&ghMutex);

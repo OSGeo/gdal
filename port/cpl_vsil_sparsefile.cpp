@@ -56,9 +56,9 @@ class SFRegion
   public:
     CPLString osFilename{};
     VSILFILE *fp = nullptr;
-    GUIntBig nDstOffset = 0;
-    GUIntBig nSrcOffset = 0;
-    GUIntBig nLength = 0;
+    uint64_t nDstOffset = 0;
+    uint64_t nSrcOffset = 0;
+    uint64_t nLength = 0;
     GByte byValue = 0;
     bool bTriedOpen = false;
 };
@@ -84,8 +84,8 @@ class VSISparseFileHandle : public VSIVirtualHandle
     {
     }
 
-    GUIntBig nOverallLength = 0;
-    GUIntBig nCurOffset = 0;
+    uint64_t nOverallLength = 0;
+    uint64_t nCurOffset = 0;
 
     std::vector<SFRegion> aoRegions{};
 
@@ -105,7 +105,7 @@ class VSISparseFileHandle : public VSIVirtualHandle
 
 class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
 {
-    std::map<GIntBig, int> oRecOpenCount{};
+    std::map<int64_t, int> oRecOpenCount{};
     CPL_DISALLOW_COPY_ASSIGN(VSISparseFileFilesystemHandler)
 
   public:
@@ -257,7 +257,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
     /*      requests.                                                       */
     /* -------------------------------------------------------------------- */
     size_t nBytesReturnCount = 0;
-    const GUIntBig nEndOffsetOfRegion =
+    const uint64_t nEndOffsetOfRegion =
         aoRegions[iRegion].nDstOffset + aoRegions[iRegion].nLength;
 
     if (nCurOffset + nBytesRequested > nEndOffsetOfRegion)
@@ -266,7 +266,7 @@ size_t VSISparseFileHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
             nCurOffset + nBytesRequested - nEndOffsetOfRegion);
         // Recurse to get the rest of the request.
 
-        const GUIntBig nCurOffsetSave = nCurOffset;
+        const uint64_t nCurOffsetSave = nCurOffset;
         nCurOffset += nBytesRequested - nExtraBytes;
         bool bEOFSave = bEOF;
         bEOF = false;

@@ -5118,7 +5118,7 @@ static void OGRGeometryFactoryStrokeArc(OGRLineString *poLine, double cx,
 // TODO(schwehr): Cleanup these static constants.
 constexpr int HIDDEN_ALPHA_WIDTH = 32;
 constexpr uint32_t HIDDEN_ALPHA_SCALE =
-    static_cast<uint32_t>((static_cast<GUIntBig>(1) << HIDDEN_ALPHA_WIDTH) - 2);
+    static_cast<uint32_t>((static_cast<uint64_t>(1) << HIDDEN_ALPHA_WIDTH) - 2);
 constexpr int HIDDEN_ALPHA_HALF_WIDTH = (HIDDEN_ALPHA_WIDTH / 2);
 constexpr int HIDDEN_ALPHA_HALF_MASK = (1 << HIDDEN_ALPHA_HALF_WIDTH) - 1;
 
@@ -5893,13 +5893,13 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
                 if (fabs(dfXMid) < 100000000.0)
                 {
                     dfXMid =
-                        static_cast<GIntBig>(floor(dfXMid * 100000000 + 0.5)) /
+                        static_cast<int64_t>(floor(dfXMid * 100000000 + 0.5)) /
                         100000000.0;
                 }
                 if (fabs(dfYMid) < 100000000.0)
                 {
                     dfYMid =
-                        static_cast<GIntBig>(floor(dfYMid * 100000000 + 0.5)) /
+                        static_cast<int64_t>(floor(dfYMid * 100000000 + 0.5)) /
                         100000000.0;
                 }
             }

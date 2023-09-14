@@ -170,7 +170,7 @@ static int USGSDEMReadIntFromBuffer(Buffer *psBuffer, int *pbSuccess = nullptr)
             break;
     }
 
-    GIntBig nVal = 0;
+    int64_t nVal = 0;
     int nSign = 1;
     if (c == '-')
         nSign = -1;

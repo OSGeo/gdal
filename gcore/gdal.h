@@ -312,7 +312,7 @@ typedef void *GDALAsyncReaderH;
 typedef void *GDALRelationshipH;
 
 /** Type to express pixel, line or band spacing. Signed 64 bit integer. */
-typedef GIntBig GSpacing;
+typedef int64_t GSpacing;
 
 /** Enumeration giving the class of a GDALExtendedDataType.
  * @since GDAL 3.1
@@ -1484,7 +1484,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogram(
     ;
 CPLErr CPL_DLL CPL_STDCALL GDALGetRasterHistogramEx(
     GDALRasterBandH hBand, double dfMin, double dfMax, int nBuckets,
-    GUIntBig *panHistogram, int bIncludeOutOfRange, int bApproxOK,
+    uint64_t *panHistogram, int bIncludeOutOfRange, int bApproxOK,
     GDALProgressFunc pfnProgress, void *pProgressData);
 CPLErr CPL_DLL CPL_STDCALL
 GDALGetDefaultHistogram(GDALRasterBandH hBand, double *pdfMin, double *pdfMax,
@@ -1496,7 +1496,7 @@ GDALGetDefaultHistogram(GDALRasterBandH hBand, double *pdfMin, double *pdfMax,
     ;
 CPLErr CPL_DLL CPL_STDCALL
 GDALGetDefaultHistogramEx(GDALRasterBandH hBand, double *pdfMin, double *pdfMax,
-                          int *pnBuckets, GUIntBig **ppanHistogram, int bForce,
+                          int *pnBuckets, uint64_t **ppanHistogram, int bForce,
                           GDALProgressFunc pfnProgress, void *pProgressData);
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogram(GDALRasterBandH hBand,
                                                    double dfMin, double dfMax,
@@ -1509,13 +1509,13 @@ CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogram(GDALRasterBandH hBand,
 CPLErr CPL_DLL CPL_STDCALL GDALSetDefaultHistogramEx(GDALRasterBandH hBand,
                                                      double dfMin, double dfMax,
                                                      int nBuckets,
-                                                     GUIntBig *panHistogram);
+                                                     uint64_t *panHistogram);
 int CPL_DLL CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH, int,
                                                   float *);
 GDALRasterBandH CPL_DLL CPL_STDCALL GDALGetRasterSampleOverview(GDALRasterBandH,
                                                                 int);
 GDALRasterBandH CPL_DLL CPL_STDCALL
-    GDALGetRasterSampleOverviewEx(GDALRasterBandH, GUIntBig);
+    GDALGetRasterSampleOverviewEx(GDALRasterBandH, uint64_t);
 CPLErr CPL_DLL CPL_STDCALL GDALFillRaster(GDALRasterBandH hBand,
                                           double dfRealValue,
                                           double dfImaginaryValue);
@@ -1967,9 +1967,9 @@ void CPL_DLL GDALRelationshipSetRelatedTableType(GDALRelationshipH,
 void CPL_DLL CPL_STDCALL GDALSetCacheMax(int nBytes);
 int CPL_DLL CPL_STDCALL GDALGetCacheMax(void);
 int CPL_DLL CPL_STDCALL GDALGetCacheUsed(void);
-void CPL_DLL CPL_STDCALL GDALSetCacheMax64(GIntBig nBytes);
-GIntBig CPL_DLL CPL_STDCALL GDALGetCacheMax64(void);
-GIntBig CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
+void CPL_DLL CPL_STDCALL GDALSetCacheMax64(int64_t nBytes);
+int64_t CPL_DLL CPL_STDCALL GDALGetCacheMax64(void);
+int64_t CPL_DLL CPL_STDCALL GDALGetCacheUsed64(void);
 
 int CPL_DLL CPL_STDCALL GDALFlushCacheBlock(void);
 
@@ -1980,20 +1980,20 @@ int CPL_DLL CPL_STDCALL GDALFlushCacheBlock(void);
 CPLVirtualMem CPL_DLL *GDALDatasetGetVirtualMem(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     int nYSize, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, int nPixelSpace, GIntBig nLineSpace,
-    GIntBig nBandSpace, size_t nCacheSize, size_t nPageSizeHint,
+    int nBandCount, int *panBandMap, int nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, size_t nCacheSize, size_t nPageSizeHint,
     int bSingleThreadUsage, CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
 CPLVirtualMem CPL_DLL *GDALRasterBandGetVirtualMem(
     GDALRasterBandH hBand, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     int nYSize, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nPixelSpace, GIntBig nLineSpace, size_t nCacheSize,
+    int nPixelSpace, int64_t nLineSpace, size_t nCacheSize,
     size_t nPageSizeHint, int bSingleThreadUsage,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
 CPLVirtualMem CPL_DLL *
 GDALGetVirtualMemAuto(GDALRasterBandH hBand, GDALRWFlag eRWFlag,
-                      int *pnPixelSpace, GIntBig *pnLineSpace,
+                      int *pnPixelSpace, int64_t *pnLineSpace,
                       CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 
 /**! Enumeration to describe the tile organization */
@@ -2137,7 +2137,7 @@ bool CPL_DLL GDALGroupDeleteGroup(GDALGroupH hGroup, const char *pszName,
                                   CSLConstList papszOptions);
 GDALDimensionH CPL_DLL GDALGroupCreateDimension(
     GDALGroupH hGroup, const char *pszName, const char *pszType,
-    const char *pszDirection, GUInt64 nSize,
+    const char *pszDirection, uint64_t nSize,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALMDArrayH CPL_DLL GDALGroupCreateMDArray(
     GDALGroupH hGroup, const char *pszName, size_t nDimensions,
@@ -2147,7 +2147,7 @@ bool CPL_DLL GDALGroupDeleteMDArray(GDALGroupH hGroup, const char *pszName,
                                     CSLConstList papszOptions);
 GDALAttributeH CPL_DLL GDALGroupCreateAttribute(
     GDALGroupH hGroup, const char *pszName, size_t nDimensions,
-    const GUInt64 *panDimensions, GDALExtendedDataTypeH hEDT,
+    const uint64_t *panDimensions, GDALExtendedDataTypeH hEDT,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 bool CPL_DLL GDALGroupDeleteAttribute(GDALGroupH hGroup, const char *pszName,
                                       CSLConstList papszOptions);
@@ -2156,31 +2156,31 @@ bool CPL_DLL GDALGroupRename(GDALGroupH hGroup, const char *pszNewName);
 void CPL_DLL GDALMDArrayRelease(GDALMDArrayH hMDArray);
 const char CPL_DLL *GDALMDArrayGetName(GDALMDArrayH hArray);
 const char CPL_DLL *GDALMDArrayGetFullName(GDALMDArrayH hArray);
-GUInt64 CPL_DLL GDALMDArrayGetTotalElementsCount(GDALMDArrayH hArray);
+uint64_t CPL_DLL GDALMDArrayGetTotalElementsCount(GDALMDArrayH hArray);
 size_t CPL_DLL GDALMDArrayGetDimensionCount(GDALMDArrayH hArray);
 GDALDimensionH CPL_DLL *
 GDALMDArrayGetDimensions(GDALMDArrayH hArray,
                          size_t *pnCount) CPL_WARN_UNUSED_RESULT;
 GDALExtendedDataTypeH CPL_DLL GDALMDArrayGetDataType(GDALMDArrayH hArray)
     CPL_WARN_UNUSED_RESULT;
-int CPL_DLL GDALMDArrayRead(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
-                            const size_t *count, const GInt64 *arrayStep,
+int CPL_DLL GDALMDArrayRead(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
+                            const size_t *count, const int64_t *arrayStep,
                             const GPtrDiff_t *bufferStride,
                             GDALExtendedDataTypeH bufferDatatype,
                             void *pDstBuffer, const void *pDstBufferAllocStart,
                             size_t nDstBufferllocSize);
-int CPL_DLL GDALMDArrayWrite(GDALMDArrayH hArray, const GUInt64 *arrayStartIdx,
-                             const size_t *count, const GInt64 *arrayStep,
+int CPL_DLL GDALMDArrayWrite(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
+                             const size_t *count, const int64_t *arrayStep,
                              const GPtrDiff_t *bufferStride,
                              GDALExtendedDataTypeH bufferDatatype,
                              const void *pSrcBuffer,
                              const void *psrcBufferAllocStart,
                              size_t nSrcBufferllocSize);
 int CPL_DLL GDALMDArrayAdviseRead(GDALMDArrayH hArray,
-                                  const GUInt64 *arrayStartIdx,
+                                  const uint64_t *arrayStartIdx,
                                   const size_t *count);
 int CPL_DLL GDALMDArrayAdviseReadEx(GDALMDArrayH hArray,
-                                    const GUInt64 *arrayStartIdx,
+                                    const uint64_t *arrayStartIdx,
                                     const size_t *count,
                                     CSLConstList papszOptions);
 GDALAttributeH CPL_DLL GDALMDArrayGetAttribute(
@@ -2190,13 +2190,13 @@ GDALMDArrayGetAttributes(GDALMDArrayH hArray, size_t *pnCount,
                          CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 GDALAttributeH CPL_DLL GDALMDArrayCreateAttribute(
     GDALMDArrayH hArray, const char *pszName, size_t nDimensions,
-    const GUInt64 *panDimensions, GDALExtendedDataTypeH hEDT,
+    const uint64_t *panDimensions, GDALExtendedDataTypeH hEDT,
     CSLConstList papszOptions) CPL_WARN_UNUSED_RESULT;
 bool CPL_DLL GDALMDArrayDeleteAttribute(GDALMDArrayH hArray,
                                         const char *pszName,
                                         CSLConstList papszOptions);
 bool CPL_DLL GDALMDArrayResize(GDALMDArrayH hArray,
-                               const GUInt64 *panNewDimSizes,
+                               const uint64_t *panNewDimSizes,
                                CSLConstList papszOptions);
 const void CPL_DLL *GDALMDArrayGetRawNoDataValue(GDALMDArrayH hArray);
 double CPL_DLL GDALMDArrayGetNoDataValueAsDouble(GDALMDArrayH hArray,
@@ -2224,7 +2224,7 @@ int CPL_DLL GDALMDArraySetOffsetEx(GDALMDArrayH hArray, double dfOffset,
 double CPL_DLL GDALMDArrayGetOffset(GDALMDArrayH hArray, int *pbHasValue);
 double CPL_DLL GDALMDArrayGetOffsetEx(GDALMDArrayH hArray, int *pbHasValue,
                                       GDALDataType *peStorageType);
-GUInt64 CPL_DLL *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount);
+uint64_t CPL_DLL *GDALMDArrayGetBlockSize(GDALMDArrayH hArray, size_t *pnCount);
 int CPL_DLL GDALMDArraySetUnit(GDALMDArrayH hArray, const char *);
 const char CPL_DLL *GDALMDArrayGetUnit(GDALMDArrayH hArray);
 int CPL_DLL GDALMDArraySetSpatialRef(GDALMDArrayH, OGRSpatialReferenceH);
@@ -2246,16 +2246,16 @@ GDALDatasetH CPL_DLL GDALMDArrayAsClassicDataset(GDALMDArrayH hArray,
 CPLErr CPL_DLL GDALMDArrayGetStatistics(
     GDALMDArrayH hArray, GDALDatasetH, int bApproxOK, int bForce,
     double *pdfMin, double *pdfMax, double *pdfMean, double *pdfStdDev,
-    GUInt64 *pnValidCount, GDALProgressFunc pfnProgress, void *pProgressData);
+    uint64_t *pnValidCount, GDALProgressFunc pfnProgress, void *pProgressData);
 int CPL_DLL GDALMDArrayComputeStatistics(GDALMDArrayH hArray, GDALDatasetH,
                                          int bApproxOK, double *pdfMin,
                                          double *pdfMax, double *pdfMean,
                                          double *pdfStdDev,
-                                         GUInt64 *pnValidCount,
+                                         uint64_t *pnValidCount,
                                          GDALProgressFunc, void *pProgressData);
 int CPL_DLL GDALMDArrayComputeStatisticsEx(
     GDALMDArrayH hArray, GDALDatasetH, int bApproxOK, double *pdfMin,
-    double *pdfMax, double *pdfMean, double *pdfStdDev, GUInt64 *pnValidCount,
+    double *pdfMax, double *pdfMean, double *pdfStdDev, uint64_t *pnValidCount,
     GDALProgressFunc, void *pProgressData, CSLConstList papszOptions);
 GDALMDArrayH CPL_DLL GDALMDArrayGetResampled(GDALMDArrayH hArray,
                                              size_t nNewDimCount,
@@ -2278,9 +2278,9 @@ void CPL_DLL GDALAttributeRelease(GDALAttributeH hAttr);
 void CPL_DLL GDALReleaseAttributes(GDALAttributeH *attributes, size_t nCount);
 const char CPL_DLL *GDALAttributeGetName(GDALAttributeH hAttr);
 const char CPL_DLL *GDALAttributeGetFullName(GDALAttributeH hAttr);
-GUInt64 CPL_DLL GDALAttributeGetTotalElementsCount(GDALAttributeH hAttr);
+uint64_t CPL_DLL GDALAttributeGetTotalElementsCount(GDALAttributeH hAttr);
 size_t CPL_DLL GDALAttributeGetDimensionCount(GDALAttributeH hAttr);
-GUInt64 CPL_DLL *
+uint64_t CPL_DLL *
 GDALAttributeGetDimensionsSize(GDALAttributeH hAttr,
                                size_t *pnCount) CPL_WARN_UNUSED_RESULT;
 GDALExtendedDataTypeH CPL_DLL GDALAttributeGetDataType(GDALAttributeH hAttr)
@@ -2314,7 +2314,7 @@ const char CPL_DLL *GDALDimensionGetName(GDALDimensionH hDim);
 const char CPL_DLL *GDALDimensionGetFullName(GDALDimensionH hDim);
 const char CPL_DLL *GDALDimensionGetType(GDALDimensionH hDim);
 const char CPL_DLL *GDALDimensionGetDirection(GDALDimensionH hDim);
-GUInt64 CPL_DLL GDALDimensionGetSize(GDALDimensionH hDim);
+uint64_t CPL_DLL GDALDimensionGetSize(GDALDimensionH hDim);
 GDALMDArrayH CPL_DLL GDALDimensionGetIndexingVariable(GDALDimensionH hDim)
     CPL_WARN_UNUSED_RESULT;
 int CPL_DLL GDALDimensionSetIndexingVariable(GDALDimensionH hDim,

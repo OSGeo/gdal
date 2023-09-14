@@ -68,7 +68,7 @@ class OGRLayerWithTransaction final : public OGRLayerDecorator
                                    int bApproxOK = TRUE) override;
 
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
@@ -721,7 +721,7 @@ OGRFeature *OGRLayerWithTransaction::GetNextFeature()
     return poFeature;
 }
 
-OGRFeature *OGRLayerWithTransaction::GetFeature(GIntBig nFID)
+OGRFeature *OGRLayerWithTransaction::GetFeature(int64_t nFID)
 {
     if (!m_poDecoratedLayer)
         return nullptr;

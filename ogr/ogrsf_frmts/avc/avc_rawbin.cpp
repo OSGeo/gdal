@@ -374,11 +374,11 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
 
     /* Compute destination relative to current memory buffer
      */
-    GIntBig nTargetBig;
+    int64_t nTargetBig;
     if (nFrom == SEEK_SET)
-        nTargetBig = static_cast<GIntBig>(nOffset) - psFile->nOffset;
+        nTargetBig = static_cast<int64_t>(nOffset) - psFile->nOffset;
     else /* if (nFrom == SEEK_CUR) */
-        nTargetBig = static_cast<GIntBig>(nOffset) + psFile->nCurPos;
+        nTargetBig = static_cast<int64_t>(nOffset) + psFile->nCurPos;
     if (nTargetBig > INT_MAX)
         return;
     nTarget = static_cast<int>(nTargetBig);

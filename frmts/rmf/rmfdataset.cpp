@@ -28,6 +28,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #include "cpl_string.h"
@@ -1429,15 +1430,15 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     bool bInvalidTileSize;
     try
     {
-        GUInt64 nMaxTileBits =
-            (CPLSM(static_cast<GUInt64>(2)) *
-             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileWidth)) *
-             CPLSM(static_cast<GUInt64>(poDS->sHeader.nTileHeight)) *
-             CPLSM(static_cast<GUInt64>(poDS->sHeader.nBitDepth)))
+        uint64_t nMaxTileBits =
+            (CPLSM(static_cast<uint64_t>(2)) *
+             CPLSM(static_cast<uint64_t>(poDS->sHeader.nTileWidth)) *
+             CPLSM(static_cast<uint64_t>(poDS->sHeader.nTileHeight)) *
+             CPLSM(static_cast<uint64_t>(poDS->sHeader.nBitDepth)))
                 .v();
         bInvalidTileSize =
             (nMaxTileBits >
-             static_cast<GUInt64>(std::numeric_limits<uint32_t>::max()));
+             static_cast<uint64_t>(std::numeric_limits<uint32_t>::max()));
     }
     catch (...)
     {
@@ -2210,7 +2211,7 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         VSIFSeekL(poDS->fp, poDS->nHeaderOffset, SEEK_SET);
         poDS->poParentDS = poParentDS;
         CPLDebug("RMF",
-                 "Create overview subfile at " CPL_FRMT_GUIB
+                 "Create overview subfile at %" PRIu64
                  " with size %dx%d, parent overview offset %d",
                  poDS->nHeaderOffset, nXSize, nYSize,
                  poParentDS->sHeader.nOvrOffset);
@@ -2464,8 +2465,7 @@ RMFDataset *RMFDataset::OpenOverview(RMFDataset *poParent,
 
     vsi_l_offset nSubOffset = GetFileOffset(sHeader.nOvrOffset);
 
-    CPLDebug("RMF",
-             "Try to open overview subfile at " CPL_FRMT_GUIB " for '%s'",
+    CPLDebug("RMF", "Try to open overview subfile at %" PRIu64 " for '%s'",
              nSubOffset, poOpenInfo->pszFilename);
 
     if (!poParent->poOvrDatasets.empty())
@@ -2757,8 +2757,8 @@ CPLErr RMFDataset::CleanOverviews()
         return CE_Failure;
     }
 
-    CPLDebug("RMF", "Truncate to " CPL_FRMT_GUIB, nLastTileOff);
-    CPLDebug("RMF", "File size:  " CPL_FRMT_GUIB, nFileSize);
+    CPLDebug("RMF", "Truncate to %" PRIu64, nLastTileOff);
+    CPLDebug("RMF", "File size:  %" PRIu64, nFileSize);
 
     if (0 != VSIFTruncateL(fp, nLastTileOff))
     {

@@ -167,7 +167,7 @@ void ZarrGroupBase::NotifyChildrenOfDeletion()
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> ZarrGroupBase::CreateAttribute(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -295,7 +295,7 @@ bool ZarrGroupBase::DeleteMDArray(const std::string &osName,
 
 std::shared_ptr<GDALDimension> ZarrGroupBase::CreateDimension(
     const std::string &osName, const std::string &osType,
-    const std::string &osDirection, GUInt64 nSize, CSLConstList)
+    const std::string &osDirection, uint64_t nSize, CSLConstList)
 {
     if (!CheckValidAndErrorOutIfNot())
         return nullptr;

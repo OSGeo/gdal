@@ -59,7 +59,7 @@ VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock)
   \param nFID feature id
 */
 VFKFeatureSQLite::VFKFeatureSQLite(IVFKDataBlock *poDataBlock, int iRowId,
-                                   GIntBig nFID)
+                                   int64_t nFID)
     : IVFKFeature(poDataBlock), m_iRowId(iRowId), m_hStmt(nullptr)
 {
     m_nFID = nFID;
@@ -257,8 +257,9 @@ OGRErr VFKFeatureSQLite::LoadProperties(OGRFeature *poFeature)
                 poFeature->SetField(iField, sqlite3_column_int(hStmt, iField));
                 break;
             case OFTInteger64:
-                poFeature->SetField(iField,
-                                    sqlite3_column_int64(hStmt, iField));
+                poFeature->SetField(
+                    iField,
+                    static_cast<int64_t>(sqlite3_column_int64(hStmt, iField)));
                 break;
             case OFTReal:
                 poFeature->SetField(iField,

@@ -150,9 +150,9 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray> &poArray,
 
     if (bRead && poArray->GetDataType().GetClass() == GEDTC_NUMERIC)
     {
-        std::vector<GUInt64> anArrayStartIdx(nDimCount);
+        std::vector<uint64_t> anArrayStartIdx(nDimCount);
         std::vector<size_t> anCount(nDimCount, 1);
-        std::vector<GInt64> anArrayStep(nDimCount);
+        std::vector<int64_t> anArrayStep(nDimCount);
         std::vector<GPtrDiff_t> anBufferStride(nDimCount);
         std::vector<GByte> abyData(poArray->GetDataType().GetSize());
         poArray->Read(anArrayStartIdx.data(), anCount.data(),
@@ -251,7 +251,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
             // If we know that we will need to allocate a lot of memory
             // given the block size and interleaving mode, do not read
             // pixels to avoid out of memory conditions by ASAN
-            GIntBig nPixels = 0;
+            int64_t nPixels = 0;
             for (int i = 0; i < nBands; i++)
             {
                 int nBXSize = 0, nBYSize = 0;
@@ -329,7 +329,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     }
                 }
 
-                GIntBig nNewPixels = static_cast<GIntBig>(nBXSize) * nBYSize;
+                int64_t nNewPixels = static_cast<int64_t>(nBXSize) * nBYSize;
                 nNewPixels *= DIV_ROUND_UP(nXSizeToRead, nBXSize);
                 nNewPixels *= DIV_ROUND_UP(nYSizeToRead, nBYSize);
                 if (nNewPixels > nPixels)

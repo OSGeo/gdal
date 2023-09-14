@@ -28,6 +28,7 @@
  ****************************************************************************/
 
 #include <algorithm>
+#include <cinttypes>
 
 #if !DEBUG_JSON
 #ifdef __clang__
@@ -176,7 +177,7 @@ OGRFeature *OGRGeoJSONLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRGeoJSONLayer::GetFeatureCount(int bForce)
+int64_t OGRGeoJSONLayer::GetFeatureCount(int bForce)
 {
     if (poReader_)
     {
@@ -197,7 +198,7 @@ GIntBig OGRGeoJSONLayer::GetFeatureCount(int bForce)
 /*                            GetFeature()                              */
 /************************************************************************/
 
-OGRFeature *OGRGeoJSONLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRGeoJSONLayer::GetFeature(int64_t nFID)
 {
     if (poReader_)
     {
@@ -367,7 +368,7 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRGeoJSONLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRGeoJSONLayer::DeleteFeature(int64_t nFID)
 {
     if (!IsUpdatable() || !IngestAll())
         return OGRERR_FAILURE;
@@ -465,7 +466,7 @@ OGRErr OGRGeoJSONLayer::SyncToDisk()
 
 void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
 {
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
 
     // Detect potential FID duplicates and make sure they are eventually
     // unique.
@@ -488,7 +489,7 @@ void OGRGeoJSONLayer::AddFeature(OGRFeature *poFeature)
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
-                    "Several features with id = " CPL_FRMT_GIB " have been "
+                    "Several features with id = %" PRId64 " have been "
                     "found. Altering it to be unique. This warning will not "
                     "be emitted anymore for this layer",
                     nFID);

@@ -56,7 +56,7 @@ class GDALMDReaderKompsat : public GDALMDReaderBase
   protected:
     virtual void LoadMetadata() override;
     char **ReadTxtToList();
-    virtual GIntBig
+    virtual int64_t
     GetAcquisitionTimeFromString(const char *pszDateTime) override;
 
   protected:

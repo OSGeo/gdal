@@ -36,6 +36,7 @@
 #include "tilematrixset.hpp"
 #include "gdalcachedpixelaccessor.h"
 
+#include <cinttypes>
 #include <limits>
 #include <string>
 
@@ -1022,11 +1023,11 @@ TEST_F(test_gdal, GDALExtendedDataType)
     {
         GDALExtendedDataType m_dt;
         std::vector<std::shared_ptr<GDALDimension>> m_dims;
-        std::vector<GUInt64> m_blockSize;
+        std::vector<uint64_t> m_blockSize;
         const std::string m_osEmptyFilename{};
 
         static std::vector<std::shared_ptr<GDALDimension>>
-        BuildDims(const std::vector<GUInt64> &sizes)
+        BuildDims(const std::vector<uint64_t> &sizes)
         {
             std::vector<std::shared_ptr<GDALDimension>> dims;
             for (const auto sz : sizes)
@@ -1038,7 +1039,7 @@ TEST_F(test_gdal, GDALExtendedDataType)
         }
 
       protected:
-        bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
+        bool IRead(const uint64_t *, const size_t *, const int64_t *,
                    const GPtrDiff_t *, const GDALExtendedDataType &,
                    void *) const override
         {
@@ -1046,8 +1047,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
         }
 
       public:
-        myArray(GDALDataType eDT, const std::vector<GUInt64> &sizes,
-                const std::vector<GUInt64> &blocksizes)
+        myArray(GDALDataType eDT, const std::vector<uint64_t> &sizes,
+                const std::vector<uint64_t> &blocksizes)
             : GDALAbstractMDArray("", "array"), GDALMDArray("", "array"),
               m_dt(GDALExtendedDataType::Create(eDT)), m_dims(BuildDims(sizes)),
               m_blockSize(blocksizes)
@@ -1055,8 +1056,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
         }
 
         myArray(const GDALExtendedDataType &dt,
-                const std::vector<GUInt64> &sizes,
-                const std::vector<GUInt64> &blocksizes)
+                const std::vector<uint64_t> &sizes,
+                const std::vector<uint64_t> &blocksizes)
             : GDALAbstractMDArray("", "array"), GDALMDArray("", "array"),
               m_dt(dt), m_dims(BuildDims(sizes)), m_blockSize(blocksizes)
         {
@@ -1073,8 +1074,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
         }
 
         static std::shared_ptr<myArray>
-        Create(GDALDataType eDT, const std::vector<GUInt64> &sizes,
-               const std::vector<GUInt64> &blocksizes)
+        Create(GDALDataType eDT, const std::vector<uint64_t> &sizes,
+               const std::vector<uint64_t> &blocksizes)
         {
             auto ar(
                 std::shared_ptr<myArray>(new myArray(eDT, sizes, blocksizes)));
@@ -1084,8 +1085,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
 
         static std::shared_ptr<myArray>
         Create(const GDALExtendedDataType &dt,
-               const std::vector<GUInt64> &sizes,
-               const std::vector<GUInt64> &blocksizes)
+               const std::vector<uint64_t> &sizes,
+               const std::vector<uint64_t> &blocksizes)
         {
             auto ar(
                 std::shared_ptr<myArray>(new myArray(dt, sizes, blocksizes)));
@@ -1104,7 +1105,7 @@ TEST_F(test_gdal, GDALExtendedDataType)
             return m_dt;
         }
 
-        std::vector<GUInt64> GetBlockSize() const override
+        std::vector<uint64_t> GetBlockSize() const override
         {
             return m_blockSize;
         }
@@ -1144,9 +1145,9 @@ TEST_F(test_gdal, GDALExtendedDataType)
         struct TmpStructNoDim
         {
             static bool func(GDALAbstractMDArray *p_ar,
-                             const GUInt64 *chunk_array_start_idx,
-                             const size_t *chunk_count, GUInt64 iCurChunk,
-                             GUInt64 nChunkCount, void *user_data)
+                             const uint64_t *chunk_array_start_idx,
+                             const size_t *chunk_count, uint64_t iCurChunk,
+                             uint64_t nChunkCount, void *user_data)
             {
                 EXPECT_TRUE(p_ar->GetName() == "array");
                 EXPECT_TRUE(chunk_array_start_idx == nullptr);
@@ -1165,25 +1166,25 @@ TEST_F(test_gdal, GDALExtendedDataType)
 
     struct ChunkDef
     {
-        std::vector<GUInt64> array_start_idx;
-        std::vector<GUInt64> count;
+        std::vector<uint64_t> array_start_idx;
+        std::vector<uint64_t> count;
     };
 
     struct TmpStruct
     {
         static bool func(GDALAbstractMDArray *p_ar,
-                         const GUInt64 *chunk_array_start_idx,
-                         const size_t *chunk_count, GUInt64 iCurChunk,
-                         GUInt64 nChunkCount, void *user_data)
+                         const uint64_t *chunk_array_start_idx,
+                         const size_t *chunk_count, uint64_t iCurChunk,
+                         uint64_t nChunkCount, void *user_data)
         {
             EXPECT_EQ(p_ar->GetName(), "array");
             std::vector<ChunkDef> *p_chunkDefs =
                 static_cast<std::vector<ChunkDef> *>(user_data);
-            std::vector<GUInt64> v_chunk_array_start_idx;
+            std::vector<uint64_t> v_chunk_array_start_idx;
             v_chunk_array_start_idx.insert(
                 v_chunk_array_start_idx.end(), chunk_array_start_idx,
                 chunk_array_start_idx + p_ar->GetDimensionCount());
-            std::vector<GUInt64> v_chunk_count;
+            std::vector<uint64_t> v_chunk_count;
             v_chunk_count.insert(v_chunk_count.end(), chunk_count,
                                  chunk_count + p_ar->GetDimensionCount());
             ChunkDef chunkDef;
@@ -1218,8 +1219,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
             // Error cases of input parameters of ProcessPerChunk()
             {
                 // array_start_idx[0] + count[0] > 3000
-                std::vector<GUInt64> array_start_idx{1, 0, 0};
-                std::vector<GUInt64> count{3000, 1000, 2000};
+                std::vector<uint64_t> array_start_idx{1, 0, 0};
+                std::vector<uint64_t> count{3000, 1000, 2000};
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 EXPECT_TRUE(!ar.ProcessPerChunk(array_start_idx.data(),
                                                 count.data(), cs.data(),
@@ -1228,8 +1229,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
             }
             {
                 // array_start_idx[0] >= 3000
-                std::vector<GUInt64> array_start_idx{3000, 0, 0};
-                std::vector<GUInt64> count{1, 1000, 2000};
+                std::vector<uint64_t> array_start_idx{3000, 0, 0};
+                std::vector<uint64_t> count{1, 1000, 2000};
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 EXPECT_TRUE(!ar.ProcessPerChunk(array_start_idx.data(),
                                                 count.data(), cs.data(),
@@ -1238,8 +1239,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
             }
             {
                 // count[0] > 3000
-                std::vector<GUInt64> array_start_idx{0, 0, 0};
-                std::vector<GUInt64> count{3001, 1000, 2000};
+                std::vector<uint64_t> array_start_idx{0, 0, 0};
+                std::vector<uint64_t> count{3001, 1000, 2000};
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 EXPECT_TRUE(!ar.ProcessPerChunk(array_start_idx.data(),
                                                 count.data(), cs.data(),
@@ -1248,8 +1249,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
             }
             {
                 // count[0] == 0
-                std::vector<GUInt64> array_start_idx{0, 0, 0};
-                std::vector<GUInt64> count{0, 1000, 2000};
+                std::vector<uint64_t> array_start_idx{0, 0, 0};
+                std::vector<uint64_t> count{0, 1000, 2000};
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 EXPECT_TRUE(!ar.ProcessPerChunk(array_start_idx.data(),
                                                 count.data(), cs.data(),
@@ -1258,8 +1259,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
             }
             {
                 // myCustomChunkSize[0] == 0
-                std::vector<GUInt64> array_start_idx{0, 0, 0};
-                std::vector<GUInt64> count{3000, 1000, 2000};
+                std::vector<uint64_t> array_start_idx{0, 0, 0};
+                std::vector<uint64_t> count{3000, 1000, 2000};
                 std::vector<size_t> myCustomChunkSize{0, 1000, 2000};
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 EXPECT_TRUE(!ar.ProcessPerChunk(
@@ -1269,8 +1270,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
             }
             {
                 // myCustomChunkSize[0] > 3000
-                std::vector<GUInt64> array_start_idx{0, 0, 0};
-                std::vector<GUInt64> count{3000, 1000, 2000};
+                std::vector<uint64_t> array_start_idx{0, 0, 0};
+                std::vector<uint64_t> count{3000, 1000, 2000};
                 std::vector<size_t> myCustomChunkSize{3001, 1000, 2000};
                 CPLPushErrorHandler(CPLQuietErrorHandler);
                 EXPECT_TRUE(!ar.ProcessPerChunk(
@@ -1279,8 +1280,8 @@ TEST_F(test_gdal, GDALExtendedDataType)
                 CPLPopErrorHandler();
             }
 
-            std::vector<GUInt64> array_start_idx{1500, 256, 0};
-            std::vector<GUInt64> count{99, 512, 2000};
+            std::vector<uint64_t> array_start_idx{1500, 256, 0};
+            std::vector<uint64_t> count{99, 512, 2000};
             EXPECT_TRUE(ar.ProcessPerChunk(array_start_idx.data(), count.data(),
                                            cs.data(), TmpStruct::func,
                                            &chunkDefs));
@@ -1318,13 +1319,13 @@ TEST_F(test_gdal, GDALExtendedDataType)
 
     // Another error case of ProcessPerChunk
     {
-        const auto M64 = std::numeric_limits<GUInt64>::max();
+        const auto M64 = std::numeric_limits<uint64_t>::max();
         const auto Msize_t = std::numeric_limits<size_t>::max();
         myArray ar(GDT_UInt16, {M64, M64, M64}, {32, 256, 128});
 
         // Product of myCustomChunkSize[] > Msize_t
-        std::vector<GUInt64> array_start_idx{0, 0, 0};
-        std::vector<GUInt64> count{3000, 1000, 2000};
+        std::vector<uint64_t> array_start_idx{0, 0, 0};
+        std::vector<uint64_t> count{3000, 1000, 2000};
         std::vector<size_t> myCustomChunkSize{Msize_t, Msize_t, Msize_t};
         std::vector<ChunkDef> chunkDefs;
         CPLPushErrorHandler(CPLQuietErrorHandler);
@@ -1335,11 +1336,11 @@ TEST_F(test_gdal, GDALExtendedDataType)
     }
 
     {
-        const auto BIG = GUInt64(5000) * 1000 * 1000;
+        const auto BIG = uint64_t(5000) * 1000 * 1000;
         myArray ar(GDT_UInt16, {BIG + 3000, BIG + 1000, BIG + 2000},
                    {32, 256, 128});
-        std::vector<GUInt64> array_start_idx{BIG + 1500, BIG + 256, BIG + 0};
-        std::vector<GUInt64> count{99, 512, 2000};
+        std::vector<uint64_t> array_start_idx{BIG + 1500, BIG + 256, BIG + 0};
+        std::vector<uint64_t> count{99, 512, 2000};
         std::vector<ChunkDef> chunkDefs;
         auto cs = ar.GetProcessingChunkSize(40 * 1000 * 1000);
         EXPECT_TRUE(ar.ProcessPerChunk(array_start_idx.data(), count.data(),
@@ -1357,14 +1358,13 @@ TEST_F(test_gdal, GDALExtendedDataType)
         CPLString osChunks;
         for (const auto &chunkDef : chunkDefs)
         {
-            osChunks += CPLSPrintf("{" CPL_FRMT_GUIB ", " CPL_FRMT_GUIB
-                                   ", " CPL_FRMT_GUIB "}, {%u, %u, %u}\n",
-                                   (GUIntBig)chunkDef.array_start_idx[0],
-                                   (GUIntBig)chunkDef.array_start_idx[1],
-                                   (GUIntBig)chunkDef.array_start_idx[2],
-                                   (unsigned)chunkDef.count[0],
-                                   (unsigned)chunkDef.count[1],
-                                   (unsigned)chunkDef.count[2]);
+            osChunks += CPLSPrintf(
+                "{%" PRIu64 ", %" PRIu64 ", %" PRIu64 "}, {%u, %u, %u}\n",
+                (uint64_t)chunkDef.array_start_idx[0],
+                (uint64_t)chunkDef.array_start_idx[1],
+                (uint64_t)chunkDef.array_start_idx[2],
+                (unsigned)chunkDef.count[0], (unsigned)chunkDef.count[1],
+                (unsigned)chunkDef.count[2]);
         }
         EXPECT_EQ(osChunks,
                   "{5000001500, 5000000256, 5000000000}, {4, 256, 2000}\n"
@@ -1410,7 +1410,7 @@ TEST_F(test_gdal, GDALExtendedDataType)
         }
     }
     {
-        const auto M = std::numeric_limits<GUInt64>::max();
+        const auto M = std::numeric_limits<uint64_t>::max();
         myArray ar(GDT_UInt16, {M, M, M}, {M, M, M / 2});
         {
             auto cs = ar.GetProcessingChunkSize(0);
@@ -1426,7 +1426,7 @@ TEST_F(test_gdal, GDALExtendedDataType)
     }
 #if SIZEOF_VOIDP == 8
     {
-        const auto M = std::numeric_limits<GUInt64>::max();
+        const auto M = std::numeric_limits<uint64_t>::max();
         myArray ar(GDT_UInt16, {M, M, M}, {M, M, M / 4});
         {
             auto cs =
@@ -2569,8 +2569,8 @@ TEST_F(test_gdal, GDALCachedPixelAccessor)
     TestCachedPixelAccessor<int16_t>();
     TestCachedPixelAccessor<uint32_t>();
     TestCachedPixelAccessor<int32_t>();
-    TestCachedPixelAccessor<GUInt64>();
-    TestCachedPixelAccessor<GInt64>();
+    TestCachedPixelAccessor<uint64_t>();
+    TestCachedPixelAccessor<int64_t>();
     TestCachedPixelAccessor<uint64_t>();
     TestCachedPixelAccessor<int64_t>();
     TestCachedPixelAccessor<float>();

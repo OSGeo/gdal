@@ -33,6 +33,8 @@
 #include "cpl_conv.h"
 #include "cpl_string.h"
 
+#include <inttypes.h>
+
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
 {
 }
@@ -88,7 +90,7 @@ retry:
             psSegInfo->nSegmentHeaderSize)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Failed to read %u byte DES subheader from " CPL_FRMT_GUIB ".",
+                 "Failed to read %u byte DES subheader from %" PRIu64 ".",
                  psSegInfo->nSegmentHeaderSize, psSegInfo->nSegmentHeaderStart);
         CPLFree(pachHeader);
         return NULL;
@@ -225,9 +227,9 @@ retry:
         if (psSegInfo->nSegmentSize > TEN_MEGABYTES)
         {
             const char *pszOffset = CPLSPrintf(
-                CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentStart);
+                "%" PRIu64, psFile->pasSegmentInfo[iSegment].nSegmentStart);
             const char *pszSize = CPLSPrintf(
-                CPL_FRMT_GUIB, psFile->pasSegmentInfo[iSegment].nSegmentSize);
+                "%" PRIu64, psFile->pasSegmentInfo[iSegment].nSegmentSize);
 
             psDES->papszMetadata = CSLSetNameValue(psDES->papszMetadata,
                                                    "DESDATA_OFFSET", pszOffset);
@@ -248,8 +250,8 @@ retry:
                                psFile->fp) != psSegInfo->nSegmentSize)
             {
                 CPLDebug("NITF",
-                         "Failed to read " CPL_FRMT_GUIB
-                         " bytes DES data from " CPL_FRMT_GUIB ".",
+                         "Failed to read %" PRIu64
+                         " bytes DES data from %" PRIu64 ".",
                          psSegInfo->nSegmentSize, psSegInfo->nSegmentStart);
             }
             else
@@ -382,7 +384,7 @@ int NITFDESGetTRE(NITFDES *psDES, int nOffset, char szTREName[7],
             return FALSE;
 
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot get 11 bytes at offset " CPL_FRMT_GUIB ".",
+                 "Cannot get 11 bytes at offset %" PRIu64 ".",
                  psSegInfo->nSegmentStart + nOffset);
         return FALSE;
     }
@@ -421,8 +423,8 @@ int NITFDESGetTRE(NITFDES *psDES, int nOffset, char szTREName[7],
         if ((int)VSIFReadL(*ppabyTREData, 1, nTRESize, fp) != nTRESize)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot get %d bytes at offset " CPL_FRMT_GUIB ".",
-                     nTRESize, VSIFTellL(fp));
+                     "Cannot get %d bytes at offset %" PRIu64 ".", nTRESize,
+                     VSIFTellL(fp));
             VSIFree(*ppabyTREData);
             *ppabyTREData = NULL;
             return FALSE;

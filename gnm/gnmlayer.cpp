@@ -30,6 +30,8 @@
 #include "gnm.h"
 #include "gnm_priv.h"
 
+#include <cinttypes>
+
 /**
  * GNMGenericLayer
  */
@@ -123,7 +125,7 @@ OGRErr GNMGenericLayer::Erase(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
                             pfnProgress, pProgressArg);
 }
 
-GIntBig GNMGenericLayer::GetFeaturesRead()
+int64_t GNMGenericLayer::GetFeaturesRead()
 {
     return m_poLayer->GetFeaturesRead();
 }
@@ -147,12 +149,12 @@ OGRLayerAttrIndex *GNMGenericLayer::GetIndex()
 OGRErr GNMGenericLayer::ISetFeature(OGRFeature *poFeature)
 {
     VALIDATE_POINTER1(poFeature, "GNMGenericLayer::ISetFeature", CE_Failure);
-    std::map<GNMGFID, GIntBig>::iterator it =
+    std::map<GNMGFID, int64_t>::iterator it =
         m_mnFIDMap.find(poFeature->GetFID());
     if (it == m_mnFIDMap.end())
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "The FID " CPL_FRMT_GIB " is invalid", poFeature->GetFID());
+        CPLError(CE_Failure, CPLE_IllegalArg, "The FID %" PRId64 " is invalid",
+                 poFeature->GetFID());
         return OGRERR_NON_EXISTING_FEATURE;
     }
 
@@ -224,23 +226,23 @@ OGRFeature *GNMGenericLayer::GetNextFeature()
     return pFeature;
 }
 
-OGRErr GNMGenericLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr GNMGenericLayer::SetNextByIndex(int64_t nIndex)
 {
     return m_poLayer->SetNextByIndex(nIndex);
 }
 
-OGRErr GNMGenericLayer::DeleteFeature(GIntBig nFID)
+OGRErr GNMGenericLayer::DeleteFeature(int64_t nFID)
 {
     OGRFeature *poFeature = GetFeature(nFID);
     if (nullptr == poFeature)
         return CE_Failure;
 
     nFID = poFeature->GetFID();
-    std::map<GNMGFID, GIntBig>::iterator it = m_mnFIDMap.find(nFID);
+    std::map<GNMGFID, int64_t>::iterator it = m_mnFIDMap.find(nFID);
     if (it == m_mnFIDMap.end())
     {
-        CPLError(CE_Failure, CPLE_IllegalArg,
-                 "The FID " CPL_FRMT_GIB " is invalid", nFID);
+        CPLError(CE_Failure, CPLE_IllegalArg, "The FID %" PRId64 " is invalid",
+                 nFID);
         return OGRERR_NON_EXISTING_FEATURE;
     }
 
@@ -273,7 +275,7 @@ OGRSpatialReference *GNMGenericLayer::GetSpatialRef()
     return m_poLayer->GetSpatialRef();
 }
 
-GIntBig GNMGenericLayer::GetFeatureCount(int bForce)
+int64_t GNMGenericLayer::GetFeatureCount(int bForce)
 {
     return m_poLayer->GetFeatureCount(bForce);
 }

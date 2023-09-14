@@ -57,7 +57,7 @@ class OGRCSWLayer final : public OGRLayer
     CPLString osCSWWhere;
 
     GDALDataset *FetchGetRecords();
-    GIntBig GetFeatureCountWithHits();
+    int64_t GetFeatureCountWithHits();
     void BuildQuery();
 
   public:
@@ -66,7 +66,7 @@ class OGRCSWLayer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual GIntBig GetFeatureCount(int bForce = FALSE) override;
+    virtual int64_t GetFeatureCount(int bForce = FALSE) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
@@ -420,9 +420,9 @@ OGRFeature *OGRCSWLayer::GetNextFeature()
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRCSWLayer::GetFeatureCount(int bForce)
+int64_t OGRCSWLayer::GetFeatureCount(int bForce)
 {
-    GIntBig nFeatures = GetFeatureCountWithHits();
+    int64_t nFeatures = GetFeatureCountWithHits();
     if (nFeatures >= 0)
         return nFeatures;
     return OGRLayer::GetFeatureCount(bForce);
@@ -432,7 +432,7 @@ GIntBig OGRCSWLayer::GetFeatureCount(int bForce)
 /*                        GetFeatureCountWithHits()                     */
 /************************************************************************/
 
-GIntBig OGRCSWLayer::GetFeatureCountWithHits()
+int64_t OGRCSWLayer::GetFeatureCountWithHits()
 {
     CPLString osPost = CPLSPrintf(
         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
@@ -473,7 +473,7 @@ GIntBig OGRCSWLayer::GetFeatureCountWithHits()
     CPLHTTPDestroyResult(psResult);
     psResult = nullptr;
 
-    GIntBig nFeatures = CPLAtoGIntBig(CPLGetXMLValue(
+    int64_t nFeatures = CPLAtoGIntBig(CPLGetXMLValue(
         psXML, "=GetRecordsResponse.SearchResults.numberOfRecordsMatched",
         "-1"));
 

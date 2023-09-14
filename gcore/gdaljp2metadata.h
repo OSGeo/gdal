@@ -50,10 +50,10 @@ class CPL_DLL GDALJP2Box
 
     char szBoxType[5]{0, 0, 0, 0, 0};
 
-    GIntBig nBoxOffset = -1;
-    GIntBig nBoxLength = 0;
+    int64_t nBoxOffset = -1;
+    int64_t nBoxLength = 0;
 
-    GIntBig nDataOffset = -1;
+    int64_t nDataOffset = -1;
 
     GByte abyUUID[16]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -72,7 +72,7 @@ class CPL_DLL GDALJP2Box
         m_bAllowGetFileSize = b;
     }
 
-    int SetOffset(GIntBig nNewOffset);
+    int SetOffset(int64_t nNewOffset);
     int ReadBox();
 
     int ReadFirst();
@@ -81,20 +81,20 @@ class CPL_DLL GDALJP2Box
     int ReadFirstChild(GDALJP2Box *poSuperBox);
     int ReadNextChild(GDALJP2Box *poSuperBox);
 
-    GIntBig GetBoxOffset() const
+    int64_t GetBoxOffset() const
     {
         return nBoxOffset;
     }
-    GIntBig GetBoxLength() const
+    int64_t GetBoxLength() const
     {
         return nBoxLength;
     }
 
-    GIntBig GetDataOffset() const
+    int64_t GetDataOffset() const
     {
         return nDataOffset;
     }
-    GIntBig GetDataLength() const;
+    int64_t GetDataLength() const;
 
     const char *GetType()
     {

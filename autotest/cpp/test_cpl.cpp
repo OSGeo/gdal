@@ -57,6 +57,7 @@
 #include "cpl_threadsafe_queue.hpp"
 
 #include <atomic>
+#include <cinttypes>
 #include <limits>
 #include <fstream>
 #include <string>
@@ -1513,36 +1514,36 @@ TEST_F(test_cpl, CPLSM_unsigned)
     {
     }
 
-    ASSERT_EQ((CPLSM(static_cast<GUInt64>(2) * 1000 * 1000 * 1000) +
-               CPLSM(static_cast<GUInt64>(3) * 1000 * 1000 * 1000))
+    ASSERT_EQ((CPLSM(static_cast<uint64_t>(2) * 1000 * 1000 * 1000) +
+               CPLSM(static_cast<uint64_t>(3) * 1000 * 1000 * 1000))
                   .v(),
-              static_cast<GUInt64>(5) * 1000 * 1000 * 1000);
-    ASSERT_EQ((CPLSM(std::numeric_limits<GUInt64>::max() - 1) +
-               CPLSM(static_cast<GUInt64>(1)))
+              static_cast<uint64_t>(5) * 1000 * 1000 * 1000);
+    ASSERT_EQ((CPLSM(std::numeric_limits<uint64_t>::max() - 1) +
+               CPLSM(static_cast<uint64_t>(1)))
                   .v(),
-              std::numeric_limits<GUInt64>::max());
+              std::numeric_limits<uint64_t>::max());
     try
     {
-        (CPLSM(std::numeric_limits<GUInt64>::max()) +
-         CPLSM(static_cast<GUInt64>(1)));
+        (CPLSM(std::numeric_limits<uint64_t>::max()) +
+         CPLSM(static_cast<uint64_t>(1)));
     }
     catch (...)
     {
     }
 
-    ASSERT_EQ((CPLSM(static_cast<GUInt64>(2) * 1000 * 1000 * 1000) *
-               CPLSM(static_cast<GUInt64>(3) * 1000 * 1000 * 1000))
+    ASSERT_EQ((CPLSM(static_cast<uint64_t>(2) * 1000 * 1000 * 1000) *
+               CPLSM(static_cast<uint64_t>(3) * 1000 * 1000 * 1000))
                   .v(),
-              static_cast<GUInt64>(6) * 1000 * 1000 * 1000 * 1000 * 1000 *
+              static_cast<uint64_t>(6) * 1000 * 1000 * 1000 * 1000 * 1000 *
                   1000);
-    ASSERT_EQ((CPLSM(std::numeric_limits<GUInt64>::max()) *
-               CPLSM(static_cast<GUInt64>(1)))
+    ASSERT_EQ((CPLSM(std::numeric_limits<uint64_t>::max()) *
+               CPLSM(static_cast<uint64_t>(1)))
                   .v(),
-              std::numeric_limits<GUInt64>::max());
+              std::numeric_limits<uint64_t>::max());
     try
     {
-        (CPLSM(std::numeric_limits<GUInt64>::max()) *
-         CPLSM(static_cast<GUInt64>(2)));
+        (CPLSM(std::numeric_limits<uint64_t>::max()) *
+         CPLSM(static_cast<uint64_t>(2)));
     }
     catch (...)
     {
@@ -2653,9 +2654,11 @@ TEST_F(test_cpl, CPLJSONDocument)
         ASSERT_EQ(oObj.GetInteger("inexisting_int", -987), -987);
         ASSERT_TRUE(oObj.GetObj("int").GetType() ==
                     CPLJSONObject::Type::Integer);
-        oObj.Add("int64", GINT64_MAX);
-        ASSERT_EQ(oObj.GetLong("int64"), GINT64_MAX);
-        ASSERT_EQ(oObj.GetLong("inexisting_int64", GINT64_MIN), GINT64_MIN);
+        oObj.Add("int64", std::numeric_limits<int64_t>::max());
+        ASSERT_EQ(oObj.GetLong("int64"), std::numeric_limits<int64_t>::max());
+        ASSERT_EQ(oObj.GetLong("inexisting_int64",
+                               std::numeric_limits<int64_t>::min()),
+                  std::numeric_limits<int64_t>::min());
         ASSERT_TRUE(oObj.GetObj("int64").GetType() ==
                     CPLJSONObject::Type::Long);
         oObj.Add("double", 1.25);
@@ -2683,7 +2686,7 @@ TEST_F(test_cpl, CPLJSONDocument)
         oObj.Set("const_char_star", nullptr);
         oObj.Set("const_char_star", "my_const_char_star");
         oObj.Set("int", 1);
-        oObj.Set("int64", GINT64_MAX);
+        oObj.Set("int64", std::numeric_limits<int64_t>::max());
         oObj.Set("double", 1.25);
         // oObj.Set("array", CPLJSONArray());
         // oObj.Set("obj", CPLJSONObject());
@@ -2710,7 +2713,7 @@ TEST_F(test_cpl, CPLJSONDocument)
         oArray.Add("const_char_star");
         oArray.Add(1.25);
         oArray.Add(1);
-        oArray.Add(GINT64_MAX);
+        oArray.Add(std::numeric_limits<int64_t>::max());
         oArray.Add(true);
         oArray.AddNull();
         ASSERT_EQ(oArray.Size(), 8);
@@ -4419,7 +4422,7 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
     {
         Context *psCtxt;
         int iJob;
-        GIntBig nThreadLambda = 0;
+        int64_t nThreadLambda = 0;
 
         Data(Context *psCtxtIn, int iJobIn) : psCtxt(psCtxtIn), iJob(iJobIn)
         {
@@ -4442,7 +4445,7 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
         }
 
         psData->nThreadLambda = CPLGetPID();
-        // fprintf(stderr, "lambda %d: " CPL_FRMT_GIB "\n",
+        // fprintf(stderr, "lambda %d: %" PRId64 "\n",
         //         psData->iJob, psData->nThreadLambda);
         const auto lambda2 = [](void *pData2)
         {
@@ -4451,8 +4454,8 @@ TEST_F(test_cpl, CPLWorkerThreadPool_recursion)
             const int nCounter = psData2->psCtxt->nCounter++;
             CPL_IGNORE_RET_VAL(nCounter);
             const auto nThreadLambda2 = CPLGetPID();
-            // fprintf(stderr, "lambda2 job=%d, counter(before)=%d, thread="
-            // CPL_FRMT_GIB "\n", iJob, nCounter, nThreadLambda2);
+            // fprintf(stderr, "lambda2 job=%d, counter(before)=%d, thread=%"
+            // PRId64 "\n", iJob, nCounter, nThreadLambda2);
             if (iJob == 100 + 0)
             {
                 ASSERT_TRUE(nThreadLambda2 != psData2->nThreadLambda);

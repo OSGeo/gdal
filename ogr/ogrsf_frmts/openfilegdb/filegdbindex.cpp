@@ -2106,8 +2106,8 @@ class FileGDBSpatialIndexIteratorImpl final : public FileGDBIndexIteratorBase,
     std::vector<int> m_oFIDVector{};
     size_t m_nVectorIdx = 0;
     int m_nGridNo = 0;
-    GInt64 m_nMinVal = 0;
-    GInt64 m_nMaxVal = 0;
+    int64_t m_nMinVal = 0;
+    int64_t m_nMaxVal = 0;
     int32_t m_nCurX = 0;
     int32_t m_nMaxX = 0;
 
@@ -2278,16 +2278,16 @@ double FileGDBSpatialIndexIteratorImpl::GetScaledCoord(double coord) const
 
 bool FileGDBSpatialIndexIteratorImpl::ReadNewXRange()
 {
-    const GUInt64 v1 =
-        (static_cast<GUInt64>(m_nGridNo) << 62) |
-        (static_cast<GUInt64>(m_nCurX) << 31) |
-        (static_cast<GUInt64>(
+    const uint64_t v1 =
+        (static_cast<uint64_t>(m_nGridNo) << 62) |
+        (static_cast<uint64_t>(m_nCurX) << 31) |
+        (static_cast<uint64_t>(
             std::min(std::max(0.0, GetScaledCoord(m_sFilterEnvelope.MinY)),
                      static_cast<double>(INT_MAX))));
-    const GUInt64 v2 =
-        (static_cast<GUInt64>(m_nGridNo) << 62) |
-        (static_cast<GUInt64>(m_nCurX) << 31) |
-        (static_cast<GUInt64>(
+    const uint64_t v2 =
+        (static_cast<uint64_t>(m_nGridNo) << 62) |
+        (static_cast<uint64_t>(m_nCurX) << 31) |
+        (static_cast<uint64_t>(
             std::min(std::max(0.0, GetScaledCoord(m_sFilterEnvelope.MaxY)),
                      static_cast<double>(INT_MAX))));
     if (m_nGridNo < 2)
@@ -2298,8 +2298,8 @@ bool FileGDBSpatialIndexIteratorImpl::ReadNewXRange()
     else
     {
         // Reverse order due to negative sign
-        memcpy(&m_nMinVal, &v2, sizeof(GInt64));
-        memcpy(&m_nMaxVal, &v1, sizeof(GInt64));
+        memcpy(&m_nMinVal, &v2, sizeof(int64_t));
+        memcpy(&m_nMaxVal, &v1, sizeof(int64_t));
     }
 
     const bool errorRetValue = false;
@@ -2324,9 +2324,9 @@ bool FileGDBSpatialIndexIteratorImpl::ReadNewXRange()
 /*                              GetInt64()                              */
 /************************************************************************/
 
-static GInt64 GetInt64(const GByte *pBaseAddr, int iOffset)
+static int64_t GetInt64(const GByte *pBaseAddr, int iOffset)
 {
-    GInt64 nVal;
+    int64_t nVal;
     memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
     CPL_LSBPTR64(&nVal);
     return nVal;
@@ -2337,7 +2337,7 @@ static GInt64 GetInt64(const GByte *pBaseAddr, int iOffset)
 /************************************************************************/
 
 static bool FindMinMaxIdx(const GByte *pBaseAddr, const int nVals,
-                          const GInt64 nMinVal, const GInt64 nMaxVal,
+                          const int64_t nMinVal, const int64_t nMaxVal,
                           int &minIdxOut, int &maxIdxOut)
 {
     // Find maximum index that is <= nMaxVal
@@ -2346,7 +2346,7 @@ static bool FindMinMaxIdx(const GByte *pBaseAddr, const int nVals,
     while (nMaxIdx - nMinIdx >= 2)
     {
         int nIdx = (nMinIdx + nMaxIdx) / 2;
-        const GInt64 nVal = GetInt64(pBaseAddr, nIdx);
+        const int64_t nVal = GetInt64(pBaseAddr, nIdx);
         if (nVal <= nMaxVal)
             nMinIdx = nIdx;
         else
@@ -2367,7 +2367,7 @@ static bool FindMinMaxIdx(const GByte *pBaseAddr, const int nVals,
     while (nMaxIdx - nMinIdx >= 2)
     {
         int nIdx = (nMinIdx + nMaxIdx) / 2;
-        const GInt64 nVal = GetInt64(pBaseAddr, nIdx);
+        const int64_t nVal = GetInt64(pBaseAddr, nIdx);
         if (nVal >= nMinVal)
             nMaxIdx = nIdx;
         else
@@ -2512,7 +2512,7 @@ int FileGDBSpatialIndexIteratorImpl::GetNextRow()
         }
 
 #ifdef DEBUG
-        const GInt64 nVal =
+        const int64_t nVal =
             GetInt64(abyPageFeature + nOffsetFirstValInPage, iCurFeatureInPage);
         CPL_IGNORE_RET_VAL(nVal);
         CPLAssert(nVal >= m_nMinVal && nVal <= m_nMaxVal);

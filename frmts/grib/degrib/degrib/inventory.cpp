@@ -20,6 +20,7 @@
 #include <math.h>
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #include "clock.h"
@@ -135,13 +136,13 @@ void GRIB2InventoryPrint (inventoryType *Inv, uInt4 LenInv)
       delta = (Inv[i].validTime - Inv[i].refTime) / 3600.;
       delta = myRound (delta, 2);
       if (Inv[i].comment == nullptr) {
-         printf ("%u.%u, " CPL_FRMT_GUIB ", %d, %s, %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %" PRIu64 ", %d, %s, %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].shortFstLevel,
                  refTime, validTime, delta);
          fflush (stdout);
       } else {
-         printf ("%u.%u, " CPL_FRMT_GUIB ", %d, %s=\"%s\", %s, %s, %s, %.2f\n",
+         printf ("%u.%u, %" PRIu64 ", %d, %s=\"%s\", %s, %s, %s, %.2f\n",
                  Inv[i].msgNum, Inv[i].subgNum, Inv[i].start,
                  Inv[i].GribVersion, Inv[i].element, Inv[i].comment,
                  Inv[i].shortFstLevel, refTime, validTime, delta);
@@ -1064,7 +1065,7 @@ int GRIB2Inventory (VSILFILE *fp, inventoryType **Inv, uInt4 *LenInv,
             VSIFSeekL (fp, 0L, SEEK_END);
             fileLen = VSIFTellL(fp);
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",
+            printf ("There were %" PRIu64 " trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);
@@ -1331,7 +1332,7 @@ int GRIB2RefTime (const char *filename, double *refTime)
             VSIFSeekL(fp, 0L, SEEK_END);
             fileLen = VSIFTellL(fp);
             /* fseek (fp, 0L, SEEK_SET); */
-            printf ("There were " CPL_FRMT_GUIB " trailing bytes in the file.\n",
+            printf ("There were %" PRIu64 " trailing bytes in the file.\n",
                     fileLen - offset);
 #endif
             free (buffer);

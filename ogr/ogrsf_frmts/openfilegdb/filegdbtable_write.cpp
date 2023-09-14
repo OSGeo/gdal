@@ -33,6 +33,7 @@
 #include "filegdbtable.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cwchar>
 #include <errno.h>
 #include <limits.h>
@@ -2457,11 +2458,11 @@ bool FileGDBTable::Repack()
                 {
                     bRepackNeeded = true;
                     CPLDebug("OpenFileGDB",
-                             "Repack(%s): feature at offset " CPL_FRMT_GUIB
-                             " instead of " CPL_FRMT_GUIB ". Repack needed",
+                             "Repack(%s): feature at offset %" PRIu64
+                             " instead of %" PRIu64 ". Repack needed",
                              m_osFilename.c_str(),
-                             static_cast<GUIntBig>(nOffset),
-                             static_cast<GUIntBig>(nExpectedOffset));
+                             static_cast<uint64_t>(nOffset),
+                             static_cast<uint64_t>(nExpectedOffset));
                     break;
                 }
 

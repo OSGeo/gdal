@@ -851,8 +851,8 @@ bool OGRGMLASDataSource::Open(GDALOpenInfo *poOpenInfo)
             if (VSIStatL(m_osGMLFilename, &sStat) == 0)
             {
                 m_nFileSize = sStat.st_size;
-                GUInt64 nFileSizeLittleEndian =
-                    static_cast<GUInt64>(sStat.st_size);
+                uint64_t nFileSizeLittleEndian =
+                    static_cast<uint64_t>(sStat.st_size);
                 CPL_LSBPTR64(&nFileSizeLittleEndian);
                 CPL_SHA256Update(&ctxt, &nFileSizeLittleEndian,
                                  sizeof(nFileSizeLittleEndian));

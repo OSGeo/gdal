@@ -275,9 +275,9 @@ class OGRPMTilesVectorLayer final
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
 
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
 
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
 
     static OGRwkbGeometryType GuessGeometryType(OGRPMTilesDataset *poDS,
                                                 const char *pszLayerName,
@@ -291,7 +291,7 @@ class OGRPMTilesVectorLayer final
     std::unique_ptr<OGRPMTilesTileIterator> m_poTileIterator{};
 
     //! Total feature count (may over-estimate due to not applying clipping)
-    GIntBig m_nFeatureCount = -1;
+    int64_t m_nFeatureCount = -1;
 
     //! X tile value of currently opened tile
     uint32_t m_nX = 0;
@@ -337,7 +337,7 @@ class OGRPMTilesVectorLayer final
 
     std::unique_ptr<OGRFeature> GetNextSrcFeature();
     std::unique_ptr<OGRFeature> CreateFeatureFrom(OGRFeature *poSrcFeature);
-    GIntBig GetTotalFeatureCount() const;
+    int64_t GetTotalFeatureCount() const;
     void ExtentToTileExtent(const OGREnvelope &sEnvelope, int &nTileMinX,
                             int &nTileMinY, int &nTileMaxX,
                             int &nTileMaxY) const;

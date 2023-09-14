@@ -68,7 +68,7 @@ class SQLResult
 
 OGRErr SQLCommand(sqlite3 *poDb, const char *pszSQL);
 int SQLGetInteger(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
-GIntBig SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
+int64_t SQLGetInteger64(sqlite3 *poDb, const char *pszSQL, OGRErr *err);
 
 std::unique_ptr<SQLResult> SQLQuery(sqlite3 *poDb, const char *pszSQL);
 

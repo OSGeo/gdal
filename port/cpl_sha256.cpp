@@ -89,12 +89,12 @@ constexpr uint32_t K[64] = {
     ((ROTR((x), 8) & 0xff00ff00U) | (ROTL((x), 8) & 0x00ff00ffU))
 #define BYTESWAP64(x) _byteswap64(x)
 
-static inline GUInt64 _byteswap64(GUInt64 x)
+static inline uint64_t _byteswap64(uint64_t x)
 {
     uint32_t a = static_cast<uint32_t>(x >> 32);
     uint32_t b = static_cast<uint32_t>(x);
-    return (static_cast<GUInt64>(BYTESWAP(b)) << 32) |
-           static_cast<GUInt64>(BYTESWAP(a));
+    return (static_cast<uint64_t>(BYTESWAP(b)) << 32) |
+           static_cast<uint64_t>(BYTESWAP(a));
 }
 
 #endif /* !(WORDS_BIGENDIAN) */
@@ -409,7 +409,7 @@ void CPL_SHA256Final(CPL_SHA256Context *sc, GByte hash[CPL_SHA256_HASH_SIZE])
     if (bytesToPad > 64U)
         bytesToPad -= 64U;
 
-    const GUInt64 lengthPad = BYTESWAP64(sc->totalLength);
+    const uint64_t lengthPad = BYTESWAP64(sc->totalLength);
 
     CPL_SHA256Update(sc, padding, bytesToPad);
     CPL_SHA256Update(sc, &lengthPad, 8U);

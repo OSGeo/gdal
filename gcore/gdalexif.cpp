@@ -34,6 +34,7 @@
 #include "gdal_priv.h"
 #include "gdalexif.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -518,7 +519,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
         VSIFReadL(&nEntryCount, 1, sizeof(uint16_t), fp) != sizeof(uint16_t))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Error reading EXIF Directory count at " CPL_FRMT_GUIB,
+                 "Error reading EXIF Directory count at %" PRIu64,
                  static_cast<vsi_l_offset>(nOffset) + nTIFFHEADER);
         return CE_Failure;
     }

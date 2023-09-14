@@ -125,7 +125,7 @@ class HDF5Dimension final : public GDALDimension
   public:
     HDF5Dimension(const std::string &osParentName, const std::string &osName,
                   const std::string &osType, const std::string &osDirection,
-                  GUInt64 nSize,
+                  uint64_t nSize,
                   const std::shared_ptr<HDF5SharedResources> &poShared)
         : GDALDimension(osParentName, osName, osType, osDirection, nSize),
           m_osGroupFullname(osParentName), m_poShared(poShared)
@@ -289,8 +289,8 @@ class HDF5Array final : public GDALMDArray
     void InstantiateDimensions(const std::string &osParentName,
                                const HDF5Group *poGroup);
 
-    bool ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
-                  const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool ReadSlow(const uint64_t *arrayStartIdx, const size_t *count,
+                  const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                   const GDALExtendedDataType &bufferDataType,
                   void *pDstBuffer) const;
 
@@ -298,8 +298,8 @@ class HDF5Array final : public GDALMDArray
                                         void *);
 
   protected:
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -444,8 +444,8 @@ class HDF5Attribute final : public GDALAttribute
     }
 
   protected:
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -1474,7 +1474,7 @@ HDF5Array::GetAttributes(CSLConstList papszOptions) const
 /************************************************************************/
 
 static void CopyBuffer(size_t nDims, const size_t *count,
-                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+                       const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                        const GDALExtendedDataType &bufferDataType,
                        GByte *pabySrc, void *pDstBuffer)
 {
@@ -1531,8 +1531,8 @@ lbl_next_depth:
 /*                             ReadSlow()                               */
 /************************************************************************/
 
-bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
-                         const GInt64 *arrayStep,
+bool HDF5Array::ReadSlow(const uint64_t *arrayStartIdx, const size_t *count,
+                         const int64_t *arrayStep,
                          const GPtrDiff_t *bufferStride,
                          const GDALExtendedDataType &bufferDataType,
                          void *pDstBuffer) const
@@ -1550,7 +1550,7 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
     // Only for testing
     const char *pszThreshold =
         CPLGetConfigOption("GDAL_HDF5_TEMP_ARRAY_ALLOC_SIZE", "10000000");
-    const GUIntBig nThreshold =
+    const uint64_t nThreshold =
         CPLScanUIntBig(pszThreshold, static_cast<int>(strlen(pszThreshold)));
     if (nEltCount < nThreshold / nBufferDataTypeSize)
     {
@@ -1565,8 +1565,8 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
             CPLError(CE_Failure, CPLE_OutOfMemory, "%s", e.what());
             return false;
         }
-        std::vector<GUInt64> anStart(nDims);
-        std::vector<GInt64> anStep(nDims);
+        std::vector<uint64_t> anStart(nDims);
+        std::vector<int64_t> anStep(nDims);
         for (size_t i = 0; i < nDims; i++)
         {
             if (arrayStep[i] >= 0)
@@ -1603,9 +1603,9 @@ bool HDF5Array::ReadSlow(const GUInt64 *arrayStartIdx, const size_t *count,
     }
 
     CPLDebug("HDF5", "Using very slow path");
-    std::vector<GUInt64> anStart(nDims);
+    std::vector<uint64_t> anStart(nDims);
     const std::vector<size_t> anCount(nDims, 1);
-    const std::vector<GInt64> anStep(nDims, 1);
+    const std::vector<int64_t> anStep(nDims, 1);
     const std::vector<GPtrDiff_t> anStride(nDims, 1);
 
     std::vector<size_t> anStackCount(nDims);
@@ -1638,7 +1638,7 @@ lbl_next_depth:
             pabyDstBufferStack[iDim] +=
                 bufferStride[iDim] * nBufferDataTypeSize;
             anStart[iDim] =
-                CPLUnsanitizedAdd<GUInt64>(anStart[iDim], arrayStep[iDim]);
+                CPLUnsanitizedAdd<uint64_t>(anStart[iDim], arrayStep[iDim]);
         }
     }
     if (iDim > 0)
@@ -2012,8 +2012,8 @@ lbl_next_depth:
 /*                               IRead()                                */
 /************************************************************************/
 
-bool HDF5Array::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                      const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+bool HDF5Array::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {
@@ -2220,8 +2220,8 @@ HDF5Attribute::~HDF5Attribute()
 /*                       CopyAllAttrValuesInto()                        */
 /************************************************************************/
 
-static void CopyAllAttrValuesInto(size_t nDims, const GUInt64 *arrayStartIdx,
-                                  const size_t *count, const GInt64 *arrayStep,
+static void CopyAllAttrValuesInto(size_t nDims, const uint64_t *arrayStartIdx,
+                                  const size_t *count, const int64_t *arrayStep,
                                   const GPtrDiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer, hid_t hSrcBufferType,
@@ -2282,8 +2282,8 @@ lbl_next_depth:
 /*                               IRead()                                */
 /************************************************************************/
 
-bool HDF5Attribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                          const GInt64 *arrayStep,
+bool HDF5Attribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                          const int64_t *arrayStep,
                           const GPtrDiff_t *bufferStride,
                           const GDALExtendedDataType &bufferDataType,
                           void *pDstBuffer) const

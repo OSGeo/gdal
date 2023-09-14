@@ -32,7 +32,9 @@
 #include "gdal_pam.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cmath>
+#include <limits>
 #include <mutex>
 #include <vector>
 
@@ -66,8 +68,8 @@ class XYZDataset final : public GDALPamDataset
     int nYIndex;
     int nZIndex;
     int nMinTokens;
-    GIntBig nLineNum;     /* any line */
-    GIntBig nDataLineNum; /* line with values (header line and empty lines
+    int64_t nLineNum;     /* any line */
+    int64_t nDataLineNum; /* line with values (header line and empty lines
                              ignored) */
     double adfGeoTransform[6];
     int bSameNumberOfValuesPerLine;
@@ -200,8 +202,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 {
                     poGDS->bEOF = true;
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot read line " CPL_FRMT_GIB,
-                             poGDS->nLineNum + 1);
+                             "Cannot read line %" PRId64, poGDS->nLineNum + 1);
                     return CE_Failure;
                 }
                 poGDS->nLineNum++;
@@ -259,10 +260,9 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
                 if (nUsefulColsFound != 3)
                 {
-                    CPLError(
-                        CE_Failure, CPLE_AppDefined,
-                        "Unexpected number of values at line " CPL_FRMT_GIB,
-                        poGDS->nLineNum);
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Unexpected number of values at line %" PRId64,
+                             poGDS->nLineNum);
                     return CE_Failure;
                 }
 
@@ -281,14 +281,14 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 if (nX < 0 || nX >= nRasterXSize)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unexpected X value at line " CPL_FRMT_GIB,
+                             "Unexpected X value at line %" PRId64,
                              poGDS->nLineNum);
                     return CE_Failure;
                 }
                 if (nY < 0 || nY >= nRasterYSize)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unexpected Y value at line " CPL_FRMT_GIB,
+                             "Unexpected Y value at line %" PRId64,
                              poGDS->nLineNum);
                     return CE_Failure;
                 }
@@ -320,7 +320,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     }
 
     // Only valid if bSameNumberOfValuesPerLine.
-    const GIntBig nLineInFile = static_cast<GIntBig>(nBlockYOff) * nBlockXSize;
+    const int64_t nLineInFile = static_cast<int64_t>(nBlockYOff) * nBlockXSize;
     if ((poGDS->bSameNumberOfValuesPerLine &&
          poGDS->nDataLineNum > nLineInFile) ||
         (!poGDS->bSameNumberOfValuesPerLine &&
@@ -444,8 +444,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                 if (poGDS->bSameNumberOfValuesPerLine)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot read line " CPL_FRMT_GIB,
-                             poGDS->nLineNum + 1);
+                             "Cannot read line %" PRId64, poGDS->nLineNum + 1);
                     return CE_Failure;
                 }
                 else
@@ -531,7 +530,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       RELATIVE_ERROR))
                             {
                                 CPLError(CE_Failure, CPLE_AppDefined,
-                                         "At line " CPL_FRMT_GIB
+                                         "At line %" PRId64
                                          ", found Y=%f instead of %f "
                                          "for nBlockYOff = %d",
                                          poGDS->nLineNum, dfY, dfExpectedY,
@@ -591,7 +590,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     if (poGDS->bSameNumberOfValuesPerLine)
     {
         if (poGDS->nDataLineNum !=
-            static_cast<GIntBig>(nBlockYOff + 1) * nBlockXSize)
+            static_cast<int64_t>(nBlockYOff + 1) * nBlockXSize)
         {
             CPLError(CE_Failure, CPLE_AssertionFailed,
                      "The file does not have the same number of values per "
@@ -661,8 +660,8 @@ double XYZRasterBand::GetNoDataValue(int *pbSuccess)
 XYZDataset::XYZDataset()
     : fp(nullptr), bHasHeaderLine(FALSE), nCommentLineCount(0),
       chDecimalSep('.'), nXIndex(-1), nYIndex(-1), nZIndex(-1), nMinTokens(0),
-      nLineNum(0), nDataLineNum(GINTBIG_MAX), bSameNumberOfValuesPerLine(TRUE),
-      dfMinZ(0), dfMaxZ(0), bEOF(false)
+      nLineNum(0), nDataLineNum(std::numeric_limits<int64_t>::max()),
+      bSameNumberOfValuesPerLine(TRUE), dfMinZ(0), dfMaxZ(0), bEOF(false)
 {
     adfGeoTransform[0] = 0;
     adfGeoTransform[1] = 1;
@@ -972,8 +971,8 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Parse data lines                                                */
     /* -------------------------------------------------------------------- */
 
-    GIntBig nLineNum = 0;
-    GIntBig nDataLineNum = 0;
+    int64_t nLineNum = 0;
+    int64_t nDataLineNum = 0;
     double dfX = 0.0;
     double dfY = 0.0;
     double dfZ = 0.0;
@@ -994,8 +993,8 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     bool bColOrganization = false;
 
     const char *pszLine;
-    GIntBig nCountStepX = 0;
-    GIntBig nCountStepY = 0;
+    int64_t nCountStepX = 0;
+    int64_t nCountStepY = 0;
     while ((pszLine = CPLReadLine2L(fp, 100, nullptr)) != nullptr)
     {
         nLineNum++;
@@ -1134,7 +1133,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
         if (nCol < nMinTokens)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "At line " CPL_FRMT_GIB
+                     "At line %" PRId64
                      ", found %d tokens. Expected %d at least",
                      nLineNum, nCol, nMinTokens);
             VSIFCloseL(fp);
@@ -1143,8 +1142,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
         if (nUsefulColsFound != 3)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "At line " CPL_FRMT_GIB
-                     ", did not find X, Y and/or Z values",
+                     "At line %" PRId64 ", did not find X, Y and/or Z values",
                      nLineNum);
             VSIFCloseL(fp);
             return nullptr;
@@ -1163,7 +1161,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
             if (dfY == dfLastY)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Ungridded dataset: At line " CPL_FRMT_GIB
+                         "Ungridded dataset: At line %" PRId64
                          ", Failed to detect grid layout.",
                          nLineNum);
                 VSIFCloseL(fp);
@@ -1186,7 +1184,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                     RELATIVE_ERROR)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Ungridded dataset: At line " CPL_FRMT_GIB
+                             "Ungridded dataset: At line %" PRId64
                              ", Y spacing was %f. Expected %f",
                              nLineNum, dfStepY, dfExpectedStepY);
                     VSIFCloseL(fp);
@@ -1203,7 +1201,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                          RELATIVE_ERROR)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Ungridded dataset: At line " CPL_FRMT_GIB
+                             "Ungridded dataset: At line %" PRId64
                              ", X spacing was %f. Expected %f",
                              nLineNum, dfStepX, adfStepX.back());
                     VSIFCloseL(fp);
@@ -1239,7 +1237,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                 else
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Ungridded dataset: At line " CPL_FRMT_GIB
+                             "Ungridded dataset: At line %" PRId64
                              ", X spacing was %f. Expected >0 value",
                              nLineNum, dfX - dfLastX);
                     VSIFCloseL(fp);
@@ -1260,7 +1258,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
             else
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Ungridded dataset: At line " CPL_FRMT_GIB
+                         "Ungridded dataset: At line %" PRId64
                          ", X spacing was %f. Expected a multiple of %f",
                          nLineNum, dfStepX, adfStepX[0]);
                 VSIFCloseL(fp);
@@ -1276,7 +1274,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                 if (dfStepX <= 0)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Ungridded dataset: At line " CPL_FRMT_GIB
+                             "Ungridded dataset: At line %" PRId64
                              ", X spacing was %f. Expected >0 value",
                              nLineNum, dfStepX);
                     VSIFCloseL(fp);
@@ -1367,7 +1365,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                 else if (nStepYSign != bNewStepYSign)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Ungridded dataset: At line " CPL_FRMT_GIB
+                             "Ungridded dataset: At line %" PRId64
                              ", change of Y direction",
                              nLineNum);
                     VSIFCloseL(fp);
@@ -1395,7 +1393,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
                         CPLDebug("XYZ", "New stepY=%.15f prev stepY=%.15f",
                                  dfStepY, adfStepY[0]);
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Ungridded dataset: At line " CPL_FRMT_GIB
+                                 "Ungridded dataset: At line %" PRId64
                                  ", too many stepY values",
                                  nLineNum);
                         VSIFCloseL(fp);
@@ -1461,7 +1459,7 @@ GDALDataset *XYZDataset::Open(GDALOpenInfo *poOpenInfo)
     CPLDebug("XYZ", "miny=%f maxy=%f stepy=%f", dfMinY, dfMaxY, dfStepY);
 #endif
 
-    if (nDataLineNum != static_cast<GIntBig>(nXSize) * nYSize)
+    if (nDataLineNum != static_cast<int64_t>(nXSize) * nYSize)
     {
         if (bColOrganization)
         {

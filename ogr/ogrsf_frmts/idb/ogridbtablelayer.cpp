@@ -31,6 +31,8 @@
 #include "cpl_string.h"
 #include "ogr_idb.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                          OGRIDBTableLayer()                         */
 /************************************************************************/
@@ -333,7 +335,7 @@ void OGRIDBTableLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRIDBTableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRIDBTableLayer::GetFeature(int64_t nFeatureId)
 
 {
     if (pszFIDColumn == nullptr)
@@ -372,7 +374,7 @@ OGRFeature *OGRIDBTableLayer::GetFeature(GIntBig nFeatureId)
 
     CPLString sql;
 
-    sql.Printf("SELECT %s FROM %s WHERE %s = " CPL_FRMT_GIB, osFields.c_str(),
+    sql.Printf("SELECT %s FROM %s WHERE %s = %" PRId64, osFields.c_str(),
                poFeatureDefn->GetName(), pszFIDColumn, nFeatureId);
 
     CPLDebug("OGR_IDB", "ExecuteSQL(%s)", sql.c_str());
@@ -435,7 +437,7 @@ int OGRIDBTableLayer::TestCapability(const char *pszCap)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRIDBTableLayer::GetFeatureCount(int bForce)
+int64_t OGRIDBTableLayer::GetFeatureCount(int bForce)
 
 {
     return OGRIDBLayer::GetFeatureCount(bForce);
@@ -859,7 +861,7 @@ OGRErr OGRIDBTableLayer::ISetFeature(OGRFeature *poFeature)
         osFields += osVal;
     }
 
-    osSql.Printf("UPDATE %s SET %s WHERE %s = " CPL_FRMT_GIB,
+    osSql.Printf("UPDATE %s SET %s WHERE %s = %" PRId64,
                  poFeatureDefn->GetName(), osFields.c_str(), pszFIDColumn,
                  poFeature->GetFID());
 

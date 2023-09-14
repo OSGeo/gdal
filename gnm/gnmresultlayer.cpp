@@ -27,8 +27,11 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
+
 #include "gnm.h"
 #include "gnm_priv.h"
+
+#include <cinttypes>
 
 /** Constructor */
 OGRGNMWrappedResultLayer::OGRGNMWrappedResultLayer(GDALDataset *poDSIn,
@@ -68,12 +71,12 @@ OGRFeature *OGRGNMWrappedResultLayer::GetNextFeature()
     return poLayer->GetNextFeature();
 }
 
-OGRErr OGRGNMWrappedResultLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRGNMWrappedResultLayer::SetNextByIndex(int64_t nIndex)
 {
     return poLayer->SetNextByIndex(nIndex);
 }
 
-OGRFeature *OGRGNMWrappedResultLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRGNMWrappedResultLayer::GetFeature(int64_t nFID)
 {
     return poLayer->GetFeature(nFID);
 }
@@ -83,7 +86,7 @@ OGRFeatureDefn *OGRGNMWrappedResultLayer::GetLayerDefn()
     return poLayer->GetLayerDefn();
 }
 
-GIntBig OGRGNMWrappedResultLayer::GetFeatureCount(int bForce)
+int64_t OGRGNMWrappedResultLayer::GetFeatureCount(int bForce)
 {
     return poLayer->GetFeatureCount(bForce);
 }
@@ -180,8 +183,7 @@ OGRErr OGRGNMWrappedResultLayer::InsertFeature(OGRFeature *poFeature,
     if (poInsertFeature->SetFrom(poFeature, panMap, TRUE) != OGRERR_NONE)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unable to translate feature " CPL_FRMT_GIB
-                 " from layer %s.\n",
+                 "Unable to translate feature %" PRId64 " from layer %s.\n",
                  poFeature->GetFID(), soLayerName.c_str());
         OGRFeature::DestroyFeature(poInsertFeature);
         CPLFree(panMap);

@@ -97,8 +97,8 @@ class MVTTileLayerValue
     {
         float m_fValue;
         double m_dfValue;
-        GInt64 m_nIntValue;
-        GUInt64 m_nUIntValue;
+        int64_t m_nIntValue;
+        uint64_t m_nUIntValue;
         bool m_bBoolValue;
         char *m_pszValue;
         char m_achValue[8];  // optimization for short strings
@@ -139,11 +139,11 @@ class MVTTileLayerValue
     {
         return m_dfValue;
     }
-    GInt64 getIntValue() const
+    int64_t getIntValue() const
     {
         return m_nIntValue;
     }
-    GUInt64 getUIntValue() const
+    uint64_t getUIntValue() const
     {
         return m_nUIntValue;
     }
@@ -192,19 +192,19 @@ class MVTTileLayerValue
         m_eType = ValueType::DOUBLE;
         m_dfValue = dfValue;
     }
-    void setIntValue(GInt64 nVal)
+    void setIntValue(int64_t nVal)
     {
         unset();
         m_eType = ValueType::INT;
         m_nIntValue = nVal;
     }
-    void setUIntValue(GUInt64 nVal)
+    void setUIntValue(uint64_t nVal)
     {
         unset();
         m_eType = ValueType::UINT;
         m_nUIntValue = nVal;
     }
-    void setSIntValue(GInt64 nVal)
+    void setSIntValue(int64_t nVal)
     {
         unset();
         m_eType = ValueType::SINT;
@@ -220,9 +220,9 @@ class MVTTileLayerValue
     void setValue(double dfVal);
     void setValue(int nVal)
     {
-        setValue(static_cast<GInt64>(nVal));
+        setValue(static_cast<int64_t>(nVal));
     }
-    void setValue(GInt64 nVal)
+    void setValue(int64_t nVal)
     {
         if (nVal < 0)
             setSIntValue(nVal);
@@ -254,7 +254,7 @@ class MVTTileLayerFeature
 
   private:
     mutable size_t m_nCachedSize = 0;
-    GUInt64 m_nId = 0;
+    uint64_t m_nId = 0;
     std::vector<uint32_t> m_anTags;
     std::vector<uint32_t> m_anGeometry;
     GeomType m_eType = GeomType::UNKNOWN;
@@ -271,7 +271,7 @@ class MVTTileLayerFeature
     {
         return m_bHasId;
     }
-    GUInt64 getId() const
+    uint64_t getId() const
     {
         return m_nId;
     }
@@ -296,7 +296,7 @@ class MVTTileLayerFeature
         return m_anGeometry;
     }
 
-    void setId(GUInt64 nId)
+    void setId(uint64_t nId)
     {
         m_bHasId = true;
         m_nId = nId;

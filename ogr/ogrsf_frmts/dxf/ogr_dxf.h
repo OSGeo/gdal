@@ -104,7 +104,7 @@ class OGRDXFBlocksLayer final : public OGRLayer
 
     OGRFeatureDefn *poFeatureDefn;
 
-    GIntBig iNextFID;
+    int64_t iNextFID;
 
     std::map<CPLString, DXFBlockDefinition>::iterator oIt;
     CPLString osBlockName;
@@ -457,7 +457,7 @@ class OGRDXFLayer final : public OGRLayer
     OGRDXFDataSource *poDS;
 
     OGRFeatureDefn *poFeatureDefn;
-    GIntBig iNextFID;
+    int64_t iNextFID;
 
     std::set<CPLString> oIgnoredEntities;
 

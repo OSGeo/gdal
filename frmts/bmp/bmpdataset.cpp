@@ -32,6 +32,7 @@
 #include "gdal_frmts.h"
 #include "gdal_pam.h"
 
+#include <cinttypes>
 #include <limits>
 
 // Enable if you want to see lots of BMP debugging output.
@@ -366,7 +367,7 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         else
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Can't seek to offset " CPL_FRMT_GUIB
+                     "Can't seek to offset %" PRIu64
                      " in input file to read data.",
                      iScanOffset);
             return CE_Failure;
@@ -383,7 +384,7 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
         else
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Can't read from offset " CPL_FRMT_GUIB " in input file.",
+                     "Can't read from offset %" PRIu64 " in input file.",
                      iScanOffset);
             return CE_Failure;
         }
@@ -557,7 +558,7 @@ CPLErr BMPRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (VSIFSeekL(poGDS->fp, iScanOffset, SEEK_SET) < 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
-                 "Can't seek to offset " CPL_FRMT_GUIB
+                 "Can't seek to offset %" PRIu64
                  " in output file to write data.\n%s",
                  iScanOffset, VSIStrerror(errno));
         return CE_Failure;

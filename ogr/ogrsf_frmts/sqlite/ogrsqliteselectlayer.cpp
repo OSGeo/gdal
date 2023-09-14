@@ -274,12 +274,12 @@ OGRSQLiteSelectLayerCommonBehaviour::SetAttributeFilter(const char *pszQuery)
 /*                           GetNextFeature()                           */
 /************************************************************************/
 
-GIntBig OGRSQLiteSelectLayer::GetFeatureCount(int bForce)
+int64_t OGRSQLiteSelectLayer::GetFeatureCount(int bForce)
 {
     return m_poBehavior->GetFeatureCount(bForce);
 }
 
-GIntBig OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount(int bForce)
+int64_t OGRSQLiteSelectLayerCommonBehaviour::GetFeatureCount(int bForce)
 {
     if (m_bEmptyLayer)
         return 0;

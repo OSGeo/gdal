@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <cstdlib>
 #include <limits>
 #include <map>
@@ -46,7 +47,7 @@ ZarrV3Array::ZarrV3Array(
     const std::string &osParentName, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
-    const std::vector<GUInt64> &anBlockSize)
+    const std::vector<uint64_t> &anBlockSize)
     : GDALAbstractMDArray(osParentName, osName),
       ZarrArray(poSharedResource, osParentName, osName, aoDims, oType,
                 aoDtypeElts, anBlockSize)
@@ -63,7 +64,7 @@ ZarrV3Array::Create(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
                     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                     const GDALExtendedDataType &oType,
                     const std::vector<DtypeElt> &aoDtypeElts,
-                    const std::vector<GUInt64> &anBlockSize)
+                    const std::vector<uint64_t> &anBlockSize)
 {
     auto arr = std::shared_ptr<ZarrV3Array>(
         new ZarrV3Array(poSharedResource, osParentName, osName, aoDims, oType,
@@ -146,7 +147,7 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
     CPLJSONArray oShape;
     for (const auto &poDim : m_aoDims)
     {
-        oShape.Add(static_cast<GInt64>(poDim->GetSize()));
+        oShape.Add(static_cast<int64_t>(poDim->GetSize()));
     }
     oRoot.Add("shape", oShape);
 
@@ -161,7 +162,7 @@ void ZarrV3Array::Serialize(const CPLJSONObject &oAttrs)
         CPLJSONArray oChunks;
         for (const auto nBlockSize : m_anBlockSize)
         {
-            oChunks.Add(static_cast<GInt64>(nBlockSize));
+            oChunks.Add(static_cast<int64_t>(nBlockSize));
         }
         oConfiguration.Add("chunk_shape", oChunks);
     }
@@ -308,11 +309,11 @@ bool ZarrV3Array::AllocateWorkingBuffers() const
         !CPLTestBool(CPLGetConfigOption("ZARR_ALLOW_BIG_TILE_SIZE", "NO")))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Zarr tile allocation would require " CPL_FRMT_GUIB " bytes. "
+                 "Zarr tile allocation would require %" PRIu64 " bytes. "
                  "By default the driver limits to 1 GB. To allow that memory "
                  "allocation, set the ZARR_ALLOW_BIG_TILE_SIZE configuration "
                  "option to YES.",
-                 static_cast<GUIntBig>(nSizeNeeded));
+                 static_cast<uint64_t>(nSizeNeeded));
         return false;
     }
 
@@ -407,14 +408,14 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
     auto poTilePresenceArray = OpenTilePresenceCache(false);
     if (poTilePresenceArray)
     {
-        std::vector<GUInt64> anTileIdx(m_aoDims.size());
+        std::vector<uint64_t> anTileIdx(m_aoDims.size());
         const std::vector<size_t> anCount(m_aoDims.size(), 1);
-        const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+        const std::vector<int64_t> anArrayStep(m_aoDims.size(), 0);
         const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
         const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
         for (size_t i = 0; i < m_aoDims.size(); ++i)
         {
-            anTileIdx[i] = static_cast<GUInt64>(tileIndices[i]);
+            anTileIdx[i] = static_cast<uint64_t>(tileIndices[i]);
         }
         GByte byValue = 0;
         if (poTilePresenceArray->Read(anTileIdx.data(), anCount.data(),
@@ -561,7 +562,8 @@ bool ZarrV3Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
 /*                      ZarrV3Array::IAdviseRead()                      */
 /************************************************************************/
 
-bool ZarrV3Array::IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+bool ZarrV3Array::IAdviseRead(const uint64_t *arrayStartIdx,
+                              const size_t *count,
                               CSLConstList papszOptions) const
 {
     std::vector<uint64_t> anIndicesCur;
@@ -1236,7 +1238,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
     std::vector<std::shared_ptr<GDALDimension>> aoDims;
     for (int i = 0; i < oShape.Size(); ++i)
     {
-        const auto nSize = static_cast<GUInt64>(oShape[i].ToLong());
+        const auto nSize = static_cast<uint64_t>(oShape[i].ToLong());
         if (nSize == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for shape");
@@ -1382,7 +1384,7 @@ ZarrV3Group::LoadArray(const std::string &osArrayName,
         oType.GetNumericDataType() == GDT_Unknown)
         return nullptr;
 
-    std::vector<GUInt64> anBlockSize;
+    std::vector<uint64_t> anBlockSize;
     if (!ZarrArray::ParseChunkSize(oChunks, oType, anBlockSize))
         return nullptr;
 

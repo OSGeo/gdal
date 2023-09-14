@@ -32,6 +32,7 @@
 #include "cpl_port.h"
 #include "cpl_sha256.h"
 
+#include <cinttypes>
 #include <cstring>
 
 #include "cpl_conv.h"
@@ -448,14 +449,14 @@ char **GOA2GetAccessTokenFromServiceAccount(const char *pszPrivateKey,
     osClaim += "\", \"aud\": \"";
     osClaim += pszAud;
     osClaim += "\", \"iat\": ";
-    GIntBig now = static_cast<GIntBig>(time(nullptr));
+    int64_t now = static_cast<int64_t>(time(nullptr));
     const char *pszNow = CPLGetConfigOption("GOA2_NOW", nullptr);
     if (pszNow)
         now = CPLAtoGIntBig(pszNow);
-    osClaim += CPLSPrintf(CPL_FRMT_GIB, now);
+    osClaim += CPLSPrintf("%" PRId64, now);
     osClaim += ", \"exp\": ";
     osClaim += CPLSPrintf(
-        CPL_FRMT_GIB,
+        "%" PRId64,
         now + atoi(CPLGetConfigOption("GOA2_EXPIRATION_DELAY", "3600")));
     for (CSLConstList papszIter = papszAdditionalClaims;
          papszIter && *papszIter; ++papszIter)

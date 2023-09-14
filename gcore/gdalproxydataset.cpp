@@ -442,7 +442,7 @@ RB_PROXY_METHOD_WITH_RET(int, 0, GetOverviewCount, (), ())
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetOverview, (int arg1),
                          (arg1))
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetRasterSampleOverview,
-                         (GUIntBig arg1), (arg1))
+                         (uint64_t arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
                          (const char *arg1, int arg2, const int *arg3,
@@ -459,7 +459,7 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, AdviseRead,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetHistogram,
                          (double dfMin, double dfMax, int nBuckets,
-                          GUIntBig *panHistogram, int bIncludeOutOfRange,
+                          uint64_t *panHistogram, int bIncludeOutOfRange,
                           int bApproxOK, GDALProgressFunc pfn,
                           void *pProgressData),
                          (dfMin, dfMax, nBuckets, panHistogram,
@@ -467,14 +467,14 @@ RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetHistogram,
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, GetDefaultHistogram,
                          (double *pdfMin, double *pdfMax, int *pnBuckets,
-                          GUIntBig **ppanHistogram, int bForce,
+                          uint64_t **ppanHistogram, int bForce,
                           GDALProgressFunc pfn, void *pProgressData),
                          (pdfMin, pdfMax, pnBuckets, ppanHistogram, bForce, pfn,
                           pProgressData))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, SetDefaultHistogram,
                          (double dfMin, double dfMax, int nBuckets,
-                          GUIntBig *panHistogram),
+                          uint64_t *panHistogram),
                          (dfMin, dfMax, nBuckets, panHistogram))
 
 RB_PROXY_METHOD_WITH_RET(GDALRasterAttributeTable *, nullptr, GetDefaultRAT, (),
@@ -492,7 +492,7 @@ RB_PROXY_METHOD_WITH_RET(GDALMaskValueRange, GMVR_UNKNOWN, GetMaskValueRange,
 
 RB_PROXY_METHOD_WITH_RET(CPLVirtualMem *, nullptr, GetVirtualMemAuto,
                          (GDALRWFlag eRWFlag, int *pnPixelSpace,
-                          GIntBig *pnLineSpace, char **papszOptions),
+                          int64_t *pnLineSpace, char **papszOptions),
                          (eRWFlag, pnPixelSpace, pnLineSpace, papszOptions))
 
 /************************************************************************/

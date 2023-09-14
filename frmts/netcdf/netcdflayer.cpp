@@ -927,7 +927,7 @@ OGRFeature *netCDFLayer::GetNextRawFeature()
     // beyond the end of dimension
     size_t nDimLen = 0;
     nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
-    if (m_nCurFeatureId > static_cast<GIntBig>(nDimLen))
+    if (m_nCurFeatureId > static_cast<int64_t>(nDimLen))
         return nullptr;
 
     OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
@@ -1119,7 +1119,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
                     m_poFeatureDefn->GetFieldDefn(i)->GetType() == OFTDateTime)
                 {
                     struct tm brokendowntime;
-                    GIntBig nVal64 = static_cast<GIntBig>(nVal);
+                    int64_t nVal64 = static_cast<int64_t>(nVal);
                     if (m_aoFieldDesc[i].bIsDays)
                         nVal64 *= 86400;
                     CPLUnixTimeToYMDHMS(nVal64, &brokendowntime);
@@ -1155,7 +1155,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
                 }
                 if (unVal == m_aoFieldDesc[i].uNoData.unVal)
                     continue;
-                poFeature->SetField(i, static_cast<GIntBig>(unVal));
+                poFeature->SetField(i, static_cast<int64_t>(unVal));
                 break;
             }
 #endif
@@ -1163,7 +1163,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
 #ifdef NETCDF_HAS_NC4
             case NC_INT64:
             {
-                GIntBig nVal = 0;
+                long long nVal = 0;
                 int status = nc_get_var1_longlong(
                     m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
                 if (status != NC_NOERR)
@@ -1173,13 +1173,13 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
                 }
                 if (nVal == m_aoFieldDesc[i].uNoData.nVal64)
                     continue;
-                poFeature->SetField(i, nVal);
+                poFeature->SetField(i, static_cast<int64_t>(nVal));
                 break;
             }
 
             case NC_UINT64:
             {
-                GUIntBig nVal = 0;
+                unsigned long long nVal = 0;
                 int status = nc_get_var1_ulonglong(
                     m_nLayerCDFId, m_aoFieldDesc[i].nVarId, anIndex, &nVal);
                 if (status != NC_NOERR)
@@ -1228,7 +1228,7 @@ bool netCDFLayer::FillFeatureFromVar(OGRFeature *poFeature, int nMainDimId,
                     if (m_aoFieldDesc[i].bIsDays)
                         dfVal *= 86400.0;
                     struct tm brokendowntime;
-                    GIntBig nVal = static_cast<GIntBig>(floor(dfVal));
+                    int64_t nVal = static_cast<int64_t>(floor(dfVal));
                     CPLUnixTimeToYMDHMS(nVal, &brokendowntime);
                     poFeature->SetField(
                         i, brokendowntime.tm_year + 1900,
@@ -1789,7 +1789,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     brokendowntime.tm_hour = 0;
                     brokendowntime.tm_min = 0;
                     brokendowntime.tm_sec = 0;
-                    GIntBig nVal64 = CPLYMDHMSToUnixTime(&brokendowntime);
+                    int64_t nVal64 = CPLYMDHMSToUnixTime(&brokendowntime);
                     if (m_aoFieldDesc[i].bIsDays)
                         nVal64 /= 86400;
                     nVal = static_cast<int>(nVal64);
@@ -1817,7 +1817,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 #ifdef NETCDF_HAS_NC4
             case NC_UINT:
             {
-                GIntBig nVal = poFeature->GetFieldAsInteger64(i);
+                int64_t nVal = poFeature->GetFieldAsInteger64(i);
                 unsigned int unVal = static_cast<unsigned int>(nVal);
 
                 if (m_poDS->HasInfiniteRecordDim())
@@ -1840,7 +1840,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
 #ifdef NETCDF_HAS_NC4
             case NC_INT64:
             {
-                GIntBig nVal = poFeature->GetFieldAsInteger64(i);
+                long long nVal = poFeature->GetFieldAsInteger64(i);
                 if (m_poDS->HasInfiniteRecordDim())
                 {
                     status = nc_put_var1_longlong(
@@ -1858,7 +1858,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
             case NC_UINT64:
             {
                 double dfVal = poFeature->GetFieldAsDouble(i);
-                GUIntBig nVal = static_cast<GUIntBig>(dfVal);
+                unsigned long long nVal = static_cast<uint64_t>(dfVal);
 
                 if (m_poDS->HasInfiniteRecordDim())
                 {
@@ -1919,7 +1919,7 @@ bool netCDFLayer::FillVarFromFeature(OGRFeature *poFeature, int nMainDimId,
                     brokendowntime.tm_hour = nHour;
                     brokendowntime.tm_min = nMinute;
                     brokendowntime.tm_sec = static_cast<int>(fSecond);
-                    GIntBig nVal = CPLYMDHMSToUnixTime(&brokendowntime);
+                    int64_t nVal = CPLYMDHMSToUnixTime(&brokendowntime);
                     dfVal = static_cast<double>(nVal) + fmod(fSecond, 1.0f);
                     if (m_aoFieldDesc[i].bIsDays)
                         dfVal /= 86400.0;
@@ -2837,7 +2837,7 @@ OGRErr netCDFLayer::CreateField(OGRFieldDefn *poFieldDefn, int /* bApproxOK */)
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig netCDFLayer::GetFeatureCount(int bForce)
+int64_t netCDFLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
@@ -2848,7 +2848,7 @@ GIntBig netCDFLayer::GetFeatureCount(int bForce)
 
         size_t nDimLen;
         nc_inq_dimlen(m_nLayerCDFId, m_nRecordDimID, &nDimLen);
-        return static_cast<GIntBig>(nDimLen);
+        return static_cast<int64_t>(nDimLen);
     }
     return OGRLayer::GetFeatureCount(bForce);
 }

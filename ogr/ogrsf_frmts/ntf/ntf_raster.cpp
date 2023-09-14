@@ -266,7 +266,7 @@ OGRNTFRasterLayer::OGRNTFRasterLayer(OGRNTFDataSource *poDSIn,
     poFeatureDefn->AddFieldDefn(&oHeight);
 
     nFeatureCount =
-        static_cast<GIntBig>(poReader->GetRasterXSize() / nDEMSample) *
+        static_cast<int64_t>(poReader->GetRasterXSize() / nDEMSample) *
         (poReader->GetRasterYSize() / nDEMSample);
 }
 
@@ -319,7 +319,7 @@ void OGRNTFRasterLayer::ResetReading()
 OGRFeature *OGRNTFRasterLayer::GetNextFeature()
 
 {
-    if (iCurrentFC > static_cast<GIntBig>(poReader->GetRasterXSize()) *
+    if (iCurrentFC > static_cast<int64_t>(poReader->GetRasterXSize()) *
                          poReader->GetRasterYSize())
     {
         return nullptr;
@@ -344,7 +344,7 @@ OGRFeature *OGRNTFRasterLayer::GetNextFeature()
         iReqRow += nDEMSample;
     }
 
-    iCurrentFC = static_cast<GIntBig>(iReqColumn) * poReader->GetRasterYSize() +
+    iCurrentFC = static_cast<int64_t>(iReqColumn) * poReader->GetRasterYSize() +
                  iReqRow + 1;
 
     return poFeature;
@@ -354,7 +354,7 @@ OGRFeature *OGRNTFRasterLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRNTFRasterLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRNTFRasterLayer::GetFeature(int64_t nFeatureId)
 
 {
     int iReqColumn, iReqRow;
@@ -363,7 +363,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature(GIntBig nFeatureId)
     /*      Is this in the range of legal feature ids (pixels)?             */
     /* -------------------------------------------------------------------- */
     if (nFeatureId < 1 ||
-        nFeatureId > static_cast<GIntBig>(poReader->GetRasterXSize()) *
+        nFeatureId > static_cast<int64_t>(poReader->GetRasterXSize()) *
                          poReader->GetRasterYSize())
     {
         return nullptr;
@@ -414,7 +414,7 @@ OGRFeature *OGRNTFRasterLayer::GetFeature(GIntBig nFeatureId)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRNTFRasterLayer::GetFeatureCount(CPL_UNUSED int bForce)
+int64_t OGRNTFRasterLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     return nFeatureCount;
 }

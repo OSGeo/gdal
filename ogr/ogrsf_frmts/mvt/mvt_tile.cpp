@@ -172,16 +172,17 @@ void MVTTileLayerValue::setStringValue(const std::string &osValue)
 void MVTTileLayerValue::setValue(double dfVal)
 {
     if (dfVal >= 0 &&
-        dfVal <= static_cast<double>(std::numeric_limits<GUInt64>::max()) &&
-        dfVal == static_cast<double>(static_cast<GUInt64>(dfVal)))
+        dfVal <= static_cast<double>(std::numeric_limits<uint64_t>::max()) &&
+        dfVal == static_cast<double>(static_cast<uint64_t>(dfVal)))
     {
-        setUIntValue(static_cast<GUInt64>(dfVal));
+        setUIntValue(static_cast<uint64_t>(dfVal));
     }
-    else if (dfVal >= static_cast<double>(std::numeric_limits<GInt64>::min()) &&
+    else if (dfVal >=
+                 static_cast<double>(std::numeric_limits<int64_t>::min()) &&
              dfVal < 0 &&
-             dfVal == static_cast<double>(static_cast<GInt64>(dfVal)))
+             dfVal == static_cast<double>(static_cast<int64_t>(dfVal)))
     {
-        setSIntValue(static_cast<GInt64>(dfVal));
+        setSIntValue(static_cast<int64_t>(dfVal));
     }
     else if (!CPLIsFinite(dfVal) ||
              (dfVal >= -std::numeric_limits<float>::max() &&
@@ -343,19 +344,19 @@ bool MVTTileLayerValue::read(const GByte **ppabyData,
             }
             else if (nKey == MAKE_KEY(knVALUE_INT, WT_VARINT))
             {
-                GIntBig nVal = 0;
+                int64_t nVal = 0;
                 READ_VARINT64(pabyData, pabyDataLimit, nVal);
                 setIntValue(nVal);
             }
             else if (nKey == MAKE_KEY(knVALUE_UINT, WT_VARINT))
             {
-                GUIntBig nVal = 0;
+                uint64_t nVal = 0;
                 READ_VARUINT64(pabyData, pabyDataLimit, nVal);
                 setUIntValue(nVal);
             }
             else if (nKey == MAKE_KEY(knVALUE_SINT, WT_VARINT))
             {
-                GIntBig nVal = 0;
+                int64_t nVal = 0;
                 READ_VARSINT64(pabyData, pabyDataLimit, nVal);
                 setSIntValue(nVal);
             }
@@ -490,7 +491,7 @@ void MVTTileLayerFeature::write(GByte **ppabyData) const
     if (m_bHasType)
     {
         WriteVarUIntSingleByte(&pabyData, MAKE_KEY(knFEATURE_TYPE, WT_VARINT));
-        WriteVarUIntSingleByte(&pabyData, static_cast<GUIntBig>(m_eType));
+        WriteVarUIntSingleByte(&pabyData, static_cast<uint64_t>(m_eType));
     }
     if (!m_anGeometry.empty())
     {
@@ -519,7 +520,7 @@ bool MVTTileLayerFeature::read(const GByte **ppabyData,
             READ_FIELD_KEY(nKey);
             if (nKey == MAKE_KEY(knFEATURE_ID, WT_VARINT))
             {
-                GUIntBig nID = 0;
+                uint64_t nID = 0;
                 READ_VARUINT64(pabyData, pabyDataLimit, nID);
                 setId(nID);
             }

@@ -59,7 +59,7 @@ class OGRPGeoLayer CPL_NON_FINAL : public OGRLayer
     OGRSpatialReference *poSRS;
     int nSRSId;
 
-    GIntBig iNextShapeId;
+    int64_t iNextShapeId;
 
     OGRPGeoDataSource *poDS;
 
@@ -87,7 +87,7 @@ class OGRPGeoLayer CPL_NON_FINAL : public OGRLayer
     virtual OGRFeature *GetNextRawFeature();
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -127,10 +127,10 @@ class OGRPGeoTableLayer final : public OGRPGeoLayer
                       int bHasZ, int nHasM);
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual int TestCapability(const char *) override;
 
@@ -168,9 +168,9 @@ class OGRPGeoSelectLayer final : public OGRPGeoLayer
     virtual ~OGRPGeoSelectLayer();
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual int TestCapability(const char *) override;
 };

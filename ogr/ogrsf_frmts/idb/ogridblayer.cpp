@@ -387,7 +387,7 @@ OGRFeature *OGRIDBLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRIDBLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRIDBLayer::GetFeature(int64_t nFeatureId)
 
 {
     /* This should be implemented directly! */

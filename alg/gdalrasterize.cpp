@@ -1046,7 +1046,7 @@ static CPLErr GDALRasterizeGeometriesInternal(
         if (pszYChunkSize == nullptr ||
             ((nYChunkSize = atoi(pszYChunkSize))) == 0)
         {
-            const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
+            const int64_t nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
             const int knIntMax = std::numeric_limits<int>::max();
             nYChunkSize = nYChunkSize64 > knIntMax
                               ? knIntMax
@@ -1145,11 +1145,11 @@ static CPLErr GDALRasterizeGeometriesInternal(
         const int nPixelSize = nBandCount * GDALGetDataTypeSizeBytes(eType);
 
         // rem: optimized for square blocks
-        const GIntBig nbMaxBlocks64 =
+        const int64_t nbMaxBlocks64 =
             GDALGetCacheMax64() / nPixelSize / nYBlockSize / nXBlockSize;
         const int knIntMax = std::numeric_limits<int>::max();
         const int nbMaxBlocks = static_cast<int>(
-            std::min(static_cast<GIntBig>(knIntMax / nPixelSize / nYBlockSize /
+            std::min(static_cast<int64_t>(knIntMax / nPixelSize / nYBlockSize /
                                           nXBlockSize),
                      nbMaxBlocks64));
         const int nbBlocsX = std::max(
@@ -1428,7 +1428,7 @@ CPLErr GDALRasterizeLayers(GDALDatasetH hDS, int nBandCount, int *panBandList,
     int nYChunkSize = 0;
     if (!(pszYChunkSize && ((nYChunkSize = atoi(pszYChunkSize))) != 0))
     {
-        const GIntBig nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
+        const int64_t nYChunkSize64 = GDALGetCacheMax64() / nScanlineBytes;
         const int knIntMax = std::numeric_limits<int>::max();
         if (nYChunkSize64 > knIntMax)
             nYChunkSize = knIntMax;

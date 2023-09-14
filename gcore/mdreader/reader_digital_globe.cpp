@@ -194,7 +194,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         CSLFetchNameValue(m_papszIMDMD, "IMAGE.FIRSTLINETIME");
     if (nullptr != pszDateTime)
     {
-        GIntBig timeStart = GetAcquisitionTimeFromString(pszDateTime);
+        int64_t timeStart = GetAcquisitionTimeFromString(pszDateTime);
         char szMidDateTime[80];
         struct tm tmBuf;
         strftime(szMidDateTime, 80, MD_DATETIMEFORMAT,
@@ -208,7 +208,7 @@ void GDALMDReaderDigitalGlobe::LoadMetadata()
         pszDateTime = CSLFetchNameValue(m_papszIMDMD, "IMAGE_1.firstLineTime");
         if (nullptr != pszDateTime)
         {
-            GIntBig timeStart = GetAcquisitionTimeFromString(pszDateTime);
+            int64_t timeStart = GetAcquisitionTimeFromString(pszDateTime);
             char szMidDateTime[80];
             struct tm tmBuf;
             strftime(szMidDateTime, 80, MD_DATETIMEFORMAT,

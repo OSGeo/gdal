@@ -69,6 +69,7 @@
 
 #include "marfa.h"
 #include <setjmp.h>
+#include <cinttypes>
 #include <vector>
 
 CPL_C_START
@@ -685,17 +686,16 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Reading this image would require libjpeg to allocate "
-                     "at least " CPL_FRMT_GUIB " bytes. "
-                     "This is disabled since above the " CPL_FRMT_GUIB
-                     " threshold. "
+                     "at least %" PRIu64 " bytes. "
+                     "This is disabled since above the %" PRIu64 " threshold. "
                      "You may override this restriction by defining the "
                      "GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC environment variable, "
                      "or recompile GDAL by defining the "
                      "GDAL_LIBJPEG_LARGEST_MEM_ALLOC macro to a value greater "
-                     "than " CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(nRequiredMemory),
-                     static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
-                     static_cast<GUIntBig>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
+                     "than %" PRIu64,
+                     static_cast<uint64_t>(nRequiredMemory),
+                     static_cast<uint64_t>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC),
+                     static_cast<uint64_t>(GDAL_LIBJPEG_LARGEST_MEM_ALLOC));
             jpeg_destroy_decompress(&cinfo);
             return CE_Failure;
         }

@@ -154,15 +154,15 @@ typedef struct
 // A tile index record, 16 bytes, big endian
 typedef struct
 {
-    GIntBig offset;
-    GIntBig size;
+    int64_t offset;
+    int64_t size;
 } ILIdx;
 
 // Size of an image, also used as a tile or pixel location
 struct ILSize
 {
     int32_t x, y, z, c;
-    GIntBig l;  // Dual use, sometimes it holds the number of pages
+    int64_t l;  // Dual use, sometimes it holds the number of pages
     explicit ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
                     const int c_ = -1, const int l_ = -1)
         : x(x_), y(y_), z(z_), c(c_), l(l_)
@@ -201,8 +201,8 @@ void ppmWrite(const char *fname, const char *data, const ILSize &sz);
 typedef struct ILImage
 {
     ILImage();
-    GIntBig dataoffset;
-    GIntBig idxoffset;
+    int64_t dataoffset;
+    int64_t idxoffset;
     int32_t quality;
     int32_t pageSizeBytes;
     ILSize size;
@@ -288,7 +288,7 @@ ILOrder OrderToken(const char *, ILOrder def = IL_ERR_ORD);
 CPLString getFname(CPLXMLNode *, const char *, const CPLString &, const char *);
 CPLString getFname(const CPLString &, const char *);
 double getXMLNum(CPLXMLNode *, const char *, double);
-GIntBig IdxOffset(const ILSize &, const ILImage &);
+int64_t IdxOffset(const ILSize &, const ILImage &);
 double logbase(double val, double base);
 int IsPower(double value, double base);
 CPLXMLNode *SearchXMLSiblings(CPLXMLNode *psRoot, const char *pszElement);
@@ -302,8 +302,8 @@ CPLXMLNode *XMLSetAttributeVal(CPLXMLNode *parent, const char *pszName,
 void XMLSetAttributeVal(CPLXMLNode *parent, const char *pszName,
                         std::vector<double> const &values);
 
-GIntBig IdxSize(const ILImage &full, const int scale = 0);
-int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess);
+int64_t IdxSize(const ILImage &full, const int scale = 0);
+int CheckFileSize(const char *fname, int64_t sz, GDALAccess eAccess);
 
 // Number of pages of size psz needed to hold n elements
 static inline int pcount(const int n, const int sz)
@@ -320,9 +320,9 @@ static inline const ILSize pcount(const ILSize &size, const ILSize &psz)
     pcnt.y = pcount(size.y, psz.y);
     pcnt.z = pcount(size.z, psz.z);
     pcnt.c = pcount(size.c, psz.c);
-    auto xy = static_cast<GIntBig>(pcnt.x) * pcnt.y;
-    auto zc = static_cast<GIntBig>(pcnt.z) * pcnt.c;
-    if (zc != 0 && xy > std::numeric_limits<GIntBig>::max() / zc)
+    auto xy = static_cast<int64_t>(pcnt.x) * pcnt.y;
+    auto zc = static_cast<int64_t>(pcnt.z) * pcnt.c;
+    if (zc != 0 && xy > std::numeric_limits<int64_t>::max() / zc)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Integer overflow in page count computation");
@@ -341,7 +341,7 @@ typedef struct
 } VF;
 
 // Offset of index, pos is in pages
-GIntBig IdxOffset(const ILSize &pos, const ILImage &img);
+int64_t IdxOffset(const ILSize &pos, const ILImage &img);
 
 enum
 {
@@ -475,7 +475,7 @@ class MRFDataset final : public GDALPamDataset
     bool IsSingleTile();
 
     // Add uniform scale overlays, returns the new size of the index file
-    GIntBig AddOverviews(int scale);
+    int64_t AddOverviews(int scale);
 
     // Late allocation buffer
     bool SetPBuffer(unsigned int sz);
@@ -497,8 +497,8 @@ class MRFDataset final : public GDALPamDataset
     virtual int CloseDependentDatasets() override;
 
     // Write a tile, the infooffset is the relative position in the index file
-    virtual CPLErr WriteTile(void *buff, GUIntBig infooffset,
-                             GUIntBig size = 0);
+    virtual CPLErr WriteTile(void *buff, uint64_t infooffset,
+                             uint64_t size = 0);
 
     // Custom CopyWholeRaster for Zen JPEG
     CPLErr ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
@@ -509,7 +509,7 @@ class MRFDataset final : public GDALPamDataset
 
     // Read the index record itself
     CPLErr ReadTileIdx(ILIdx &tinfo, const ILSize &pos, const ILImage &img,
-                       const GIntBig bias = 0);
+                       const int64_t bias = 0);
 
     VSILFILE *IdxFP();
     VSILFILE *DataFP();
@@ -547,7 +547,7 @@ class MRFDataset final : public GDALPamDataset
 
     // The source to be cached in this MRF
     CPLString source;
-    GIntBig idxSize;  // The size of each version index, or the size of the
+    int64_t idxSize;  // The size of each version index, or the size of the
                       // cloned index
 
     int clonedSource;  // Is it a cloned source
@@ -580,7 +580,7 @@ class MRFDataset final : public GDALPamDataset
     void *pbuffer;
     unsigned int pbsize;
     ILSize tile;  // ID of tile present in buffer
-    GIntBig
+    int64_t
         bdirty;  // Holds bits, to be used in pixel interleaved (up to 64 bands)
 
     // GeoTransform support
@@ -734,17 +734,17 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual CPLErr Decompress(buf_mgr &dst, buf_mgr &src) = 0;
 
     // Read the index record itself, can be overwritten
-    //    virtual CPLErr ReadTileIdx(const ILSize &, ILIdx &, GIntBig bias = 0);
+    //    virtual CPLErr ReadTileIdx(const ILSize &, ILIdx &, int64_t bias = 0);
 
-    static GIntBig bandbit(int b)
+    static int64_t bandbit(int b)
     {
-        return ((GIntBig)1) << b;
+        return ((int64_t)1) << b;
     }
-    GIntBig bandbit()
+    int64_t bandbit()
     {
         return bandbit(nBand - 1);
     }
-    GIntBig AllBandMask()
+    int64_t AllBandMask()
     {
         return bandbit(poMRFDS->nBands) - 1;
     }

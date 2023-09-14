@@ -47,7 +47,7 @@ int main(int argc, char **argv)
         printf("CPLGetNumCPUs = %d\n", CPLGetNumCPUs());
     if (bUsableRAM)
     {
-        GIntBig nUsableRAM = CPLGetUsablePhysicalRAM();
+        int64_t nUsableRAM = CPLGetUsablePhysicalRAM();
         int nUsableRAM_GB = (int)(nUsableRAM >> 30);
         if (nUsableRAM_GB > 1)
             printf("CPLGetUsablePhysicalRAM = %d GB\n", nUsableRAM_GB);

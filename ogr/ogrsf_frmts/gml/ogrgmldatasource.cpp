@@ -466,7 +466,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
             pszFeatureCollection = nullptr;
     }
 
-    GIntBig nNumberOfFeatures = 0;
+    int64_t nNumberOfFeatures = 0;
     if (pszFeatureCollection)
     {
         bExposeGMLId = true;
@@ -1325,7 +1325,7 @@ bool OGRGMLDataSource::Open(GDALOpenInfo *poOpenInfo)
     if (poReader->GetClassCount() == 1 && nNumberOfFeatures != 0)
     {
         GMLFeatureClass *poClass = poReader->GetClass(0);
-        GIntBig nFeatureCount = poClass->GetFeatureCount();
+        int64_t nFeatureCount = poClass->GetFeatureCount();
         if (nFeatureCount < 0)
         {
             poClass->SetFeatureCount(nNumberOfFeatures);

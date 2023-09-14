@@ -128,7 +128,7 @@ void OGRODBCSelectLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRODBCSelectLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRODBCSelectLayer::GetFeature(int64_t nFeatureId)
 
 {
     return OGRODBCLayer::GetFeature(nFeatureId);
@@ -166,7 +166,7 @@ OGRErr OGRODBCSelectLayer::GetExtent(OGREnvelope *, int)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRODBCSelectLayer::GetFeatureCount(int bForce)
+int64_t OGRODBCSelectLayer::GetFeatureCount(int bForce)
 
 {
     return OGRODBCLayer::GetFeatureCount(bForce);

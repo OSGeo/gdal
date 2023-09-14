@@ -41,6 +41,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <cinttypes>
 #include <utility>
 #include <vector>
 
@@ -487,8 +488,7 @@ void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
                 size_t iEnd = i + nCount;
                 for (; i < iEnd; i++)
                 {
-                    snprintf(buffer, sizeof(buffer),
-                             "%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+                    snprintf(buffer, sizeof(buffer), "%010" PRIu64,
                              m_asXRefEntries[i].nOffset);
                     VSIFPrintfL(m_fp, "%s %05d %c \n", buffer,
                                 m_asXRefEntries[i].nGen,
@@ -507,8 +507,7 @@ void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
         VSIFPrintfL(m_fp, "0000000000 65535 f \n");
         for (size_t i = 0; i < m_asXRefEntries.size(); i++)
         {
-            snprintf(buffer, sizeof(buffer),
-                     "%010" CPL_FRMT_GB_WITHOUT_PREFIX "u",
+            snprintf(buffer, sizeof(buffer), "%010" PRIu64,
                      m_asXRefEntries[i].nOffset);
             VSIFPrintfL(m_fp, "%s %05d n \n", buffer, m_asXRefEntries[i].nGen);
         }
@@ -525,7 +524,7 @@ void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
     VSIFPrintfL(m_fp, "%s\n", oDict.Serialize().c_str());
 
     VSIFPrintfL(m_fp,
-                "startxref\n" CPL_FRMT_GUIB "\n"
+                "startxref\n%" PRIu64 "\n"
                 "%%%%EOF\n",
                 nOffsetXREF);
 }
@@ -3152,8 +3151,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteAttributes(
     if (iField >= 0)
         osOutFeatureName = OGR_F_GetFieldAsString(hFeat, iField);
     else
-        osOutFeatureName =
-            CPLSPrintf("feature" CPL_FRMT_GIB, OGR_F_GetFID(hFeat));
+        osOutFeatureName = CPLSPrintf("feature%" PRId64, OGR_F_GetFID(hFeat));
 
     auto nFeatureUserProperties = AllocNewObject();
     StartObj(nFeatureUserProperties);

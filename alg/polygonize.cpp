@@ -425,14 +425,14 @@ bool GDALFloatEquals(float A, float B)
         bInt = INT_MIN - bInt;
 #ifdef COMPAT_WITH_ICC_CONVERSION_CHECK
     const int intDiff =
-        abs(static_cast<int>(static_cast<GUIntBig>(static_cast<GIntBig>(aInt) -
-                                                   static_cast<GIntBig>(bInt)) &
+        abs(static_cast<int>(static_cast<uint64_t>(static_cast<int64_t>(aInt) -
+                                                   static_cast<int64_t>(bInt)) &
                              0xFFFFFFFFU));
 #else
     // To make -ftrapv happy we compute the diff on larger type and
     // cast down later.
-    const int intDiff = abs(static_cast<int>(static_cast<GIntBig>(aInt) -
-                                             static_cast<GIntBig>(bInt)));
+    const int intDiff = abs(static_cast<int>(static_cast<int64_t>(aInt) -
+                                             static_cast<int64_t>(bInt)));
 #endif
     if (intDiff <= maxUlps)
         return true;

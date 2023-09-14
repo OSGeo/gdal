@@ -164,7 +164,7 @@ void OGRParquetDatasetLayer::InvalidateCachedBatches()
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-GIntBig OGRParquetDatasetLayer::GetFeatureCount(int bForce)
+int64_t OGRParquetDatasetLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
     {

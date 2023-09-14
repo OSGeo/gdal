@@ -32,6 +32,7 @@
 #include "cpl_vsi_virtual.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <cstddef>
 #include <cstring>
 #include <ctime>
@@ -43,6 +44,7 @@
 #endif
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <string>
 #include <utility>
@@ -111,7 +113,7 @@ class VSIMemFile
     GByte *pabyData = nullptr;
     vsi_l_offset nLength = 0;
     vsi_l_offset nAllocLength = 0;
-    vsi_l_offset nMaxLength = GUINTBIG_MAX;
+    vsi_l_offset nMaxLength = VSI_L_OFFSET_MAX;
 
     time_t mTime = 0;
     CPL_SHARED_MUTEX_TYPE m_oMutex{};
@@ -192,7 +194,7 @@ class VSIMemFilesystemHandler final : public VSIFilesystemHandler
     int Rmdir(const char *pszDirname) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
     int Rename(const char *oldpath, const char *newpath) override;
-    GIntBig GetDiskFreeSpace(const char *pszDirname) override;
+    int64_t GetDiskFreeSpace(const char *pszDirname) override;
 
     static std::string NormalizePath(const std::string &in);
 
@@ -271,7 +273,7 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
         if (pabyNewData == nullptr)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot extend in-memory file to " CPL_FRMT_GUIB
+                     "Cannot extend in-memory file to %" PRIu64
                      " bytes due to out-of-memory situation",
                      nNewAlloc);
             return false;
@@ -562,7 +564,7 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     if (osFilename.empty())
         return nullptr;
 
-    vsi_l_offset nMaxLength = GUINTBIG_MAX;
+    vsi_l_offset nMaxLength = VSI_L_OFFSET_MAX;
     const size_t iPos = osFilename.find("||maxlength=");
     if (iPos != std::string::npos)
     {
@@ -887,9 +889,9 @@ std::string VSIMemFilesystemHandler::NormalizePath(const std::string &in)
 /*                        GetDiskFreeSpace()                            */
 /************************************************************************/
 
-GIntBig VSIMemFilesystemHandler::GetDiskFreeSpace(const char * /*pszDirname*/)
+int64_t VSIMemFilesystemHandler::GetDiskFreeSpace(const char * /*pszDirname*/)
 {
-    const GIntBig nRet = CPLGetUsablePhysicalRAM();
+    const int64_t nRet = CPLGetUsablePhysicalRAM();
     if (nRet <= 0)
         return -1;
     return nRet;

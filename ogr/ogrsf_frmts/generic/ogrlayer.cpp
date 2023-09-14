@@ -174,13 +174,13 @@ int OGR_L_GetRefCount(OGRLayerH hLayer)
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig OGRLayer::GetFeatureCount(int bForce)
+int64_t OGRLayer::GetFeatureCount(int bForce)
 
 {
     if (!bForce)
         return -1;
 
-    GIntBig nFeatureCount = 0;
+    int64_t nFeatureCount = 0;
     for (auto &&poFeature : *this)
     {
         CPL_IGNORE_RET_VAL(poFeature.get());
@@ -195,7 +195,7 @@ GIntBig OGRLayer::GetFeatureCount(int bForce)
 /*                      OGR_L_GetFeatureCount()                         */
 /************************************************************************/
 
-GIntBig OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
+int64_t OGR_L_GetFeatureCount(OGRLayerH hLayer, int bForce)
 
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_GetFeatureCount", 0);
@@ -448,7 +448,7 @@ OGRErr OGR_L_SetAttributeFilter(OGRLayerH hLayer, const char *pszQuery)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRLayer::GetFeature(int64_t nFID)
 
 {
     /* Save old attribute and spatial filters */
@@ -484,7 +484,7 @@ OGRFeature *OGRLayer::GetFeature(GIntBig nFID)
 /*                          OGR_L_GetFeature()                          */
 /************************************************************************/
 
-OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)
+OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, int64_t nFeatureId)
 
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_GetFeature", nullptr);
@@ -502,7 +502,7 @@ OGRFeatureH OGR_L_GetFeature(OGRLayerH hLayer, GIntBig nFeatureId)
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRLayer::SetNextByIndex(int64_t nIndex)
 
 {
     if (nIndex < 0)
@@ -527,7 +527,7 @@ OGRErr OGRLayer::SetNextByIndex(GIntBig nIndex)
 /*                        OGR_L_SetNextByIndex()                        */
 /************************************************************************/
 
-OGRErr OGR_L_SetNextByIndex(OGRLayerH hLayer, GIntBig nIndex)
+OGRErr OGR_L_SetNextByIndex(OGRLayerH hLayer, int64_t nIndex)
 
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_SetNextByIndex", OGRERR_INVALID_HANDLE);
@@ -1789,7 +1789,7 @@ OGRErr OGR_L_SyncToDisk(OGRLayerH hLayer)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRLayer::DeleteFeature(CPL_UNUSED GIntBig nFID)
+OGRErr OGRLayer::DeleteFeature(CPL_UNUSED int64_t nFID)
 {
     return OGRERR_UNSUPPORTED_OPERATION;
 }
@@ -1798,7 +1798,7 @@ OGRErr OGRLayer::DeleteFeature(CPL_UNUSED GIntBig nFID)
 /*                        OGR_L_DeleteFeature()                         */
 /************************************************************************/
 
-OGRErr OGR_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)
+OGRErr OGR_L_DeleteFeature(OGRLayerH hLayer, int64_t nFID)
 
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_DeleteFeature", OGRERR_INVALID_HANDLE);
@@ -1816,7 +1816,7 @@ OGRErr OGR_L_DeleteFeature(OGRLayerH hLayer, GIntBig nFID)
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-GIntBig OGRLayer::GetFeaturesRead()
+int64_t OGRLayer::GetFeaturesRead()
 
 {
     return m_nFeaturesRead;
@@ -1827,7 +1827,7 @@ GIntBig OGRLayer::GetFeaturesRead()
 /*                       OGR_L_GetFeaturesRead()                        */
 /************************************************************************/
 
-GIntBig OGR_L_GetFeaturesRead(OGRLayerH hLayer)
+int64_t OGR_L_GetFeaturesRead(OGRLayerH hLayer)
 
 {
     VALIDATE_POINTER1(hLayer, "OGR_L_GetFeaturesRead", 0);

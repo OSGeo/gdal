@@ -243,7 +243,7 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
                 {
                     pszXML =
                         reinterpret_cast<char *>(oSubChildBox.ReadBoxData());
-                    GIntBig nXMLLength = oSubChildBox.GetDataLength();
+                    int64_t nXMLLength = oSubChildBox.GetDataLength();
 
                     // Some GML data contains \0 instead of \n.
                     // See http://trac.osgeo.org/gdal/ticket/5760
@@ -251,7 +251,7 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
                     if (pszXML != nullptr && nXMLLength < 100 * 1024 * 1024)
                     {
                         // coverity[tainted_data].
-                        for (GIntBig i = nXMLLength - 1; i >= 0; --i)
+                        for (int64_t i = nXMLLength - 1; i >= 0; --i)
                         {
                             if (pszXML[i] == '\0')
                                 --nXMLLength;
@@ -259,7 +259,7 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
                                 break;
                         }
                         // coverity[tainted_data]
-                        GIntBig i = 0;  // Used after for.
+                        int64_t i = 0;  // Used after for.
                         for (; i < nXMLLength; ++i)
                         {
                             if (pszXML[i] == '\0')
@@ -277,7 +277,7 @@ void GDALJP2Metadata::CollectGMLData(GDALJP2Box *poGMLData)
                                     "GMLJP2 data contains nul characters "
                                     "inside content. Replacing them by \\n");
                                 // coverity[tainted_data]
-                                for (GIntBig j = 0; j < nXMLLength; ++j)
+                                for (int64_t j = 0; j < nXMLLength; ++j)
                                 {
                                     if (pszXML[j] == '\0')
                                         pszXML[j] = '\n';

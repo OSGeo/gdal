@@ -202,7 +202,7 @@ public:
   GDALDimensionHS *CreateDimension( const char *name,
                                     const char* type,
                                     const char* direction,
-                                    GUIntBig size,
+                                    uint64_t size,
                                     char **options = 0 ) {
     return GDALGroupCreateDimension(self, name, type, direction, size, options);
   }
@@ -229,15 +229,15 @@ public:
   }
 
 %newobject CreateAttribute;
-%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
+%apply (int nList, uint64_t *pList) {(int dimensions, uint64_t *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
                                     int dimensions,
-                                    GUIntBig *sizes,
+                                    uint64_t *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
     return GDALGroupCreateAttribute(self, name, dimensions,
-                                    (const GUInt64*) sizes,
+                                    (const uint64_t*) sizes,
                                     data_type, options);
   }
 
@@ -267,7 +267,7 @@ typedef struct
   double max;
   double mean;
   double std_dev;
-  GIntBig valid_count;
+  int64_t valid_count;
 } Statistics;
 %}
 
@@ -278,7 +278,7 @@ struct Statistics
   double max;
   double mean;
   double std_dev;
-  GIntBig valid_count;
+  int64_t valid_count;
 %mutable;
 
 %extend {
@@ -324,10 +324,10 @@ static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
 
 static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
                                              bool bCheckOnlyDims,
-                                             int nDims1, GUIntBig* array_start_idx,
-                                             int nDims2, GUIntBig* count,
-                                             int nDims3, GIntBig* array_step,
-                                             int nDims4, GIntBig* buffer_stride,
+                                             int nDims1, uint64_t* array_start_idx,
+                                             int nDims2, uint64_t* count,
+                                             int nDims3, int64_t* array_step,
+                                             int nDims4, int64_t* buffer_stride,
                                              GDALExtendedDataTypeHS* buffer_datatype,
                                              size_t* pnBufferSize)
 {
@@ -364,7 +364,7 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
             "non-numeric buffer data type not supported in SWIG bindings");
         return CE_Failure;
     }
-    GIntBig nBufferSize = 0;
+    int64_t nBufferSize = 0;
     for( int i = 0; i < nExpectedDims; i++ )
     {
         if( count[i] == 0 )
@@ -381,13 +381,13 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
         }
         if( count[i] > 1 && buffer_stride[i] != 0 )
         {
-            if( (GUIntBig)buffer_stride[i] > std::numeric_limits<GIntBig>::max() / (count[i] - 1) )
+            if( (uint64_t)buffer_stride[i] > std::numeric_limits<int64_t>::max() / (count[i] - 1) )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
                 return CE_Failure;
             }
-            GIntBig nDelta = buffer_stride[i] * (count[i] - 1);
-            if( nBufferSize > std::numeric_limits<GIntBig>::max() - nDelta )
+            int64_t nDelta = buffer_stride[i] * (count[i] - 1);
+            if( nBufferSize > std::numeric_limits<int64_t>::max() - nDelta )
             {
                 CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
                 return CE_Failure;
@@ -401,13 +401,13 @@ static CPLErr MDArrayReadWriteCheckArguments(GDALMDArrayHS* array,
         CPLError(CE_Failure, CPLE_AppDefined, "nDTSize == 0");
         return CE_Failure;
     }
-    if( (GUIntBig)nBufferSize > (GUIntBig)std::numeric_limits<GIntBig>::max() / nDTSize )
+    if( (uint64_t)nBufferSize > (uint64_t)std::numeric_limits<int64_t>::max() / nDTSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
         return CE_Failure;
     }
     nBufferSize *= nDTSize;
-    if( (GUIntBig)nBufferSize > (GUIntBig)std::numeric_limits<GIntBig>::max() - nDTSize )
+    if( (uint64_t)nBufferSize > (uint64_t)std::numeric_limits<int64_t>::max() - nDTSize )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
         return CE_Failure;
@@ -446,7 +446,7 @@ public:
     return GDALMDArrayGetFullName(self);
   }
 
-  GUIntBig GetTotalElementsCount() {
+  uint64_t GetTotalElementsCount() {
     return GDALMDArrayGetTotalElementsCount(self);
   }
 
@@ -467,20 +467,20 @@ public:
 #endif
 
 #if defined(SWIGPYTHON)
-%apply ( GUIntBig** pvals, size_t* pnCount ) { (GUIntBig** psizes, size_t* pnCount ) };
-  void GetBlockSize( GUIntBig** psizes, size_t* pnCount ) {
+%apply ( uint64_t** pvals, size_t* pnCount ) { (uint64_t** psizes, size_t* pnCount ) };
+  void GetBlockSize( uint64_t** psizes, size_t* pnCount ) {
     *psizes = GDALMDArrayGetBlockSize(self, pnCount);
   }
 #endif
 
 #if defined(SWIGPYTHON)
-%apply ( GUIntBig** pvals, size_t* pnCount ) { (GUIntBig** psizes, size_t* pnCount ) };
-  void GetProcessingChunkSize( size_t nMaxChunkMemory, GUIntBig** psizes, size_t* pnCount ) {
+%apply ( uint64_t** pvals, size_t* pnCount ) { (uint64_t** psizes, size_t* pnCount ) };
+  void GetProcessingChunkSize( size_t nMaxChunkMemory, uint64_t** psizes, size_t* pnCount ) {
      size_t* panTmp = GDALMDArrayGetProcessingChunkSize(self, pnCount, nMaxChunkMemory);
      *psizes = NULL;
      if( panTmp )
      {
-        *psizes = (GUIntBig*) CPLMalloc(sizeof(GUIntBig) * (*pnCount));
+        *psizes = (uint64_t*) CPLMalloc(sizeof(uint64_t) * (*pnCount));
         for( size_t i = 0; i < *pnCount; ++i )
         {
             (*psizes)[i] = panTmp[i];
@@ -501,8 +501,8 @@ public:
   }
 %clear char **;
 
-%apply (int nList, GUIntBig* pList) {(int newDimensions, GUIntBig* newSizes)};
-  CPLErr Resize( int newDimensions, GUIntBig* newSizes, char** options = NULL ) {
+%apply (int nList, uint64_t* pList) {(int newDimensions, uint64_t* newSizes)};
+  CPLErr Resize( int newDimensions, uint64_t* newSizes, char** options = NULL ) {
     if( static_cast<size_t>(newDimensions) != GDALMDArrayGetDimensionCount(self) )
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
@@ -511,19 +511,19 @@ public:
     }
     return GDALMDArrayResize( self, newSizes, options ) ? CE_None : CE_Failure;
   }
-%clear (int newDimensions, GUIntBig* newSizes);
+%clear (int newDimensions, uint64_t* newSizes);
 
 #if defined(SWIGPYTHON)
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* buffer_datatype};
 %apply ( void **outPythonObject ) { (void **buf ) };
-%apply (int nList, GUIntBig* pList) {(int nDims1, GUIntBig *array_start_idx)};
-%apply (int nList, GUIntBig* pList) {(int nDims2, GUIntBig *count)};
-%apply (int nList, GIntBig* pList) {(int nDims3, GIntBig *array_step)};
-%apply (int nList, GIntBig* pList) {(int nDims4, GIntBig *buffer_stride)};
-  CPLErr Read( int nDims1, GUIntBig* array_start_idx,
-               int nDims2, GUIntBig* count,
-               int nDims3, GIntBig* array_step,
-               int nDims4, GIntBig* buffer_stride,
+%apply (int nList, uint64_t* pList) {(int nDims1, uint64_t *array_start_idx)};
+%apply (int nList, uint64_t* pList) {(int nDims2, uint64_t *count)};
+%apply (int nList, int64_t* pList) {(int nDims3, int64_t *array_step)};
+%apply (int nList, int64_t* pList) {(int nDims4, int64_t *buffer_stride)};
+  CPLErr Read( int nDims1, uint64_t* array_start_idx,
+               int nDims2, uint64_t* count,
+               int nDims3, int64_t* array_step,
+               int nDims4, int64_t* buffer_stride,
                GDALExtendedDataTypeHS* buffer_datatype,
                void **buf) {
     *buf = NULL;
@@ -675,9 +675,9 @@ public:
   }
 %clear (void **buf );
 
-  CPLErr WriteStringArray( int nDims1, GUIntBig* array_start_idx,
-               int nDims2, GUIntBig* count,
-               int nDims3, GIntBig* array_step,
+  CPLErr WriteStringArray( int nDims1, uint64_t* array_start_idx,
+               int nDims2, uint64_t* count,
+               int nDims3, int64_t* array_step,
                GDALExtendedDataTypeHS* buffer_datatype,
                char** options)
   {
@@ -732,17 +732,17 @@ public:
 
 
 %apply Pointer NONNULL {GDALExtendedDataTypeHS* buffer_datatype};
-%apply (GIntBig nLen, char *pBuf) { (GIntBig buf_len, char *buf_string) };
-%apply (int nList, GUIntBig* pList) {(int nDims1, GUIntBig *array_start_idx)};
-%apply (int nList, GUIntBig* pList) {(int nDims2, GUIntBig *count)};
-%apply (int nList, GIntBig* pList) {(int nDims3, GIntBig *array_step)};
-%apply (int nList, GIntBig* pList) {(int nDims4, GIntBig *buffer_stride)};
-  CPLErr Write( int nDims1, GUIntBig* array_start_idx,
-               int nDims2, GUIntBig* count,
-               int nDims3, GIntBig* array_step,
-               int nDims4, GIntBig* buffer_stride,
+%apply (int64_t nLen, char *pBuf) { (int64_t buf_len, char *buf_string) };
+%apply (int nList, uint64_t* pList) {(int nDims1, uint64_t *array_start_idx)};
+%apply (int nList, uint64_t* pList) {(int nDims2, uint64_t *count)};
+%apply (int nList, int64_t* pList) {(int nDims3, int64_t *array_step)};
+%apply (int nList, int64_t* pList) {(int nDims4, int64_t *buffer_stride)};
+  CPLErr Write( int nDims1, uint64_t* array_start_idx,
+               int nDims2, uint64_t* count,
+               int nDims3, int64_t* array_step,
+               int nDims4, int64_t* buffer_stride,
                GDALExtendedDataTypeHS* buffer_datatype,
-               GIntBig buf_len, char *buf_string) {
+               int64_t buf_len, char *buf_string) {
 
     size_t buf_size = 0;
     if( MDArrayReadWriteCheckArguments(self, false,
@@ -756,7 +756,7 @@ public:
       return CE_Failure;
     }
 
-    if ( (GUIntBig)buf_len < buf_size )
+    if ( (uint64_t)buf_len < buf_size )
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
         return CE_Failure;
@@ -795,10 +795,10 @@ public:
 %clear (void **buf );
 
 
-%apply (int nList, GUIntBig* pList) {(int nDims1, GUIntBig *array_start_idx)};
-%apply (int nList, GUIntBig* pList) {(int nDims2, GUIntBig *count)};
-  CPLErr AdviseRead( int nDims1, GUIntBig* array_start_idx,
-                     int nDims2, GUIntBig* count, char** options = 0 ) {
+%apply (int nList, uint64_t* pList) {(int nDims1, uint64_t *array_start_idx)};
+%apply (int nList, uint64_t* pList) {(int nDims2, uint64_t *count)};
+  CPLErr AdviseRead( int nDims1, uint64_t* array_start_idx,
+                     int nDims2, uint64_t* count, char** options = 0 ) {
 
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
     if( nDims1 != nExpectedDims )
@@ -853,15 +853,15 @@ public:
 #endif
 
 %newobject CreateAttribute;
-%apply (int nList, GUIntBig *pList) {(int dimensions, GUIntBig *sizes)};
+%apply (int nList, uint64_t *pList) {(int dimensions, uint64_t *sizes)};
   GDALAttributeHS *CreateAttribute( const char *name,
                                     int dimensions,
-                                    GUIntBig *sizes,
+                                    uint64_t *sizes,
                                     GDALExtendedDataTypeHS* data_type,
                                     char **options = 0)
   {
     return GDALMDArrayCreateAttribute(self, name, dimensions,
-                                    (const GUInt64*) sizes,
+                                    (const uint64_t*) sizes,
                                     data_type, options);
   }
 
@@ -911,11 +911,11 @@ public:
   }
 
 #ifdef SWIGPYTHON
-  void GetNoDataValueAsInt64( GIntBig *val, int *hasval ) {
+  void GetNoDataValueAsInt64( int64_t *val, int *hasval ) {
     *val = GDALMDArrayGetNoDataValueAsInt64( self, hasval );
   }
 
-  void GetNoDataValueAsUInt64( GUIntBig *val, int *hasval ) {
+  void GetNoDataValueAsUInt64( uint64_t *val, int *hasval ) {
     *val = GDALMDArrayGetNoDataValueAsUInt64( self, hasval );
   }
 #endif
@@ -946,11 +946,11 @@ public:
   }
 
 #ifdef SWIGPYTHON
-  CPLErr SetNoDataValueInt64( GIntBig v ) {
+  CPLErr SetNoDataValueInt64( int64_t v ) {
     return GDALMDArraySetNoDataValueAsInt64( self, v ) ? CE_None : CE_Failure;
   }
 
-  CPLErr SetNoDataValueUInt64( GUIntBig v ) {
+  CPLErr SetNoDataValueUInt64( uint64_t v ) {
     return GDALMDArraySetNoDataValueAsUInt64( self, v ) ? CE_None : CE_Failure;
   }
 #endif
@@ -969,7 +969,7 @@ public:
   }
 
 #if defined(SWIGPYTHON)
-  CPLErr SetNoDataValueRaw(GIntBig nLen, char *pBuf)
+  CPLErr SetNoDataValueRaw(int64_t nLen, char *pBuf)
   {
     GDALExtendedDataTypeHS* selfType = GDALMDArrayGetDataType(self);
     const size_t selfTypeSize = GDALExtendedDataTypeGetSize(selfType);
@@ -1093,7 +1093,7 @@ public:
                              GDALProgressFunc callback = NULL,
                              void* callback_data=NULL)
   {
-        GUInt64 nValidCount = 0;
+        uint64_t nValidCount = 0;
         Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
         CPLErr eErr = GDALMDArrayGetStatistics(self, NULL, approx_ok, force,
                                  &(psStatisticsOut->min),
@@ -1102,7 +1102,7 @@ public:
                                  &(psStatisticsOut->std_dev),
                                  &nValidCount,
                                  callback, callback_data);
-        psStatisticsOut->valid_count = static_cast<GIntBig>(nValidCount);
+        psStatisticsOut->valid_count = static_cast<int64_t>(nValidCount);
         if( eErr == CE_None )
             return psStatisticsOut;
         CPLFree(psStatisticsOut);
@@ -1116,7 +1116,7 @@ public:
                                  void* callback_data=NULL,
                                  char** options = 0)
   {
-        GUInt64 nValidCount = 0;
+        uint64_t nValidCount = 0;
         Statistics* psStatisticsOut = (Statistics*)CPLMalloc(sizeof(Statistics));
         int nSuccess = GDALMDArrayComputeStatisticsEx(self, NULL, approx_ok,
                                  &(psStatisticsOut->min),
@@ -1125,7 +1125,7 @@ public:
                                  &(psStatisticsOut->std_dev),
                                  &nValidCount,
                                  callback, callback_data, options);
-        psStatisticsOut->valid_count = static_cast<GIntBig>(nValidCount);
+        psStatisticsOut->valid_count = static_cast<int64_t>(nValidCount);
         if( nSuccess )
             return psStatisticsOut;
         CPLFree(psStatisticsOut);
@@ -1189,7 +1189,7 @@ public:
     return GDALAttributeGetFullName(self);
   }
 
-  GUIntBig GetTotalElementsCount() {
+  uint64_t GetTotalElementsCount() {
     return GDALAttributeGetTotalElementsCount(self);
   }
 
@@ -1198,8 +1198,8 @@ public:
   }
 
 #if defined(SWIGPYTHON)
-%apply ( GUIntBig** pvals, size_t* pnCount ) { (GUIntBig** pdims, size_t* pnCount ) };
-  void GetDimensionsSize( GUIntBig** pdims, size_t* pnCount ) {
+%apply ( uint64_t** pvals, size_t* pnCount ) { (uint64_t** pdims, size_t* pnCount ) };
+  void GetDimensionsSize( uint64_t** pdims, size_t* pnCount ) {
     *pdims = GDALAttributeGetDimensionsSize(self, pnCount);
   }
 #endif
@@ -1285,7 +1285,7 @@ public:
 #endif
 
 #if defined(SWIGPYTHON)
-  CPLErr WriteRaw(GIntBig nLen, char *pBuf)
+  CPLErr WriteRaw(int64_t nLen, char *pBuf)
   {
     GDALExtendedDataTypeHS* dt = GDALAttributeGetDataType(self);
     bool bIsNumeric = CheckNumericDataType(dt);
@@ -1376,7 +1376,7 @@ public:
     return GDALDimensionGetDirection(self);
   }
 
-  GUIntBig GetSize() {
+  uint64_t GetSize() {
     return GDALDimensionGetSize(self);
   }
 

@@ -812,17 +812,17 @@ uint32_t GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize,
         // Make sure that we have enough cache (with a margin of 50%)
         // and the number of queried pixels isn't too big w.r.t server
         // limit
-        const GIntBig nUncompressedSize = static_cast<GIntBig>(nXBlocks) *
+        const int64_t nUncompressedSize = static_cast<int64_t>(nXBlocks) *
                                           nYBlocks * nBlockXSize * nBlockYSize *
                                           nTotalDataTypeSize;
-        const GIntBig nCacheMax = GDALGetCacheMax64() / 2;
+        const int64_t nCacheMax = GDALGetCacheMax64() / 2;
         if (nUncompressedSize > nCacheMax ||
             nUncompressedSize > SERVER_BYTE_LIMIT)
         {
             if (bQueryAllBands && poGDS->GetRasterCount() > 1)
             {
-                const GIntBig nUncompressedSizeThisBand =
-                    static_cast<GIntBig>(nXBlocks) * nYBlocks * nBlockXSize *
+                const int64_t nUncompressedSizeThisBand =
+                    static_cast<int64_t>(nXBlocks) * nYBlocks * nBlockXSize *
                     nBlockYSize * nThisDTSize;
                 if (nUncompressedSizeThisBand <= SERVER_BYTE_LIMIT &&
                     nUncompressedSizeThisBand <= nCacheMax)

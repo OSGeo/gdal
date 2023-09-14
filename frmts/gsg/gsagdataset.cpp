@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <float.h>
 #include <limits.h>
+#include <cinttypes>
 #include <limits>
 #include <sstream>
 
@@ -534,11 +535,10 @@ CPLErr GSAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         }
         else if (panLineOffset[nBlockYOff - 1] != nNewOffset)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Coding error: previous offset for line %d was " CPL_FRMT_GUIB
-                ", new offset would be " CPL_FRMT_GUIB,
-                nBlockYOff - 1, panLineOffset[nBlockYOff - 1], nNewOffset);
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Coding error: previous offset for line %d was %" PRIu64
+                     ", new offset would be %" PRIu64,
+                     nBlockYOff - 1, panLineOffset[nBlockYOff - 1], nNewOffset);
         }
     }
 

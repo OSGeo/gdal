@@ -1248,9 +1248,9 @@ bool LevellerDataset::load_from_file(VSILFILE *file, const char *pszFilename)
     }
 
     // Sanity check: do we have enough pixels?
-    if (static_cast<GUIntBig>(datalen) !=
-        static_cast<GUIntBig>(nRasterXSize) *
-            static_cast<GUIntBig>(nRasterYSize) * sizeof(float))
+    if (static_cast<uint64_t>(datalen) !=
+        static_cast<uint64_t>(nRasterXSize) *
+            static_cast<uint64_t>(nRasterYSize) * sizeof(float))
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "File does not have enough data.");

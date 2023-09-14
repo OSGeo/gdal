@@ -143,9 +143,9 @@ int CPL_DLL VSIStat(const char *, VSIStatBuf *) CPL_WARN_UNUSED_RESULT;
 /* ==================================================================== */
 
 /** Type for a file offset */
-typedef GUIntBig vsi_l_offset;
+typedef uint64_t vsi_l_offset;
 /** Maximum value for a file offset */
-#define VSI_L_OFFSET_MAX GUINTBIG_MAX
+#define VSI_L_OFFSET_MAX UINT64_MAX
 
 /** Opaque type for a FILE that implements the VSIVirtualHandle API */
 typedef struct VSIVirtualHandle VSILFILE;
@@ -190,7 +190,7 @@ VSIRangeStatus CPL_DLL VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nStart,
 
 int CPL_DLL VSIIngestFile(VSILFILE *fp, const char *pszFilename,
                           GByte **ppabyRet, vsi_l_offset *pnSize,
-                          GIntBig nMaxSize) CPL_WARN_UNUSED_RESULT;
+                          int64_t nMaxSize) CPL_WARN_UNUSED_RESULT;
 
 int CPL_DLL VSIOverwriteFile(VSILFILE *fpTarget, const char *pszSourceFilename)
     CPL_WARN_UNUSED_RESULT;
@@ -366,8 +366,8 @@ char CPL_DLL *VSIStrdupVerbose(const char *pszStr, const char *pszFile,
 /** VSI_STRDUP_VERBOSE */
 #define VSI_STRDUP_VERBOSE(pszStr) VSIStrdupVerbose(pszStr, __FILE__, __LINE__)
 
-GIntBig CPL_DLL CPLGetPhysicalRAM(void);
-GIntBig CPL_DLL CPLGetUsablePhysicalRAM(void);
+int64_t CPL_DLL CPLGetPhysicalRAM(void);
+int64_t CPL_DLL CPLGetUsablePhysicalRAM(void);
 
 /* ==================================================================== */
 /*      Other...                                                        */
@@ -400,7 +400,7 @@ struct VSIDIREntry
     /** File size */
     vsi_l_offset nSize;
     /** Last modification time (seconds since 1970/01/01) */
-    GIntBig nMTime;
+    int64_t nMTime;
     /** Whether nMode is known: 0 = unknown, 1 = known. */
     char bModeKnown;
     /** Whether nSize is known: 0 = unknown, 1 = known. */
@@ -441,7 +441,7 @@ int CPL_DLL VSISync(const char *pszSource, const char *pszTarget,
 int CPL_DLL VSIAbortPendingUploads(const char *pszFilename);
 
 char CPL_DLL *VSIStrerror(int);
-GIntBig CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
+int64_t CPL_DLL VSIGetDiskFreeSpace(const char *pszDirname);
 
 void CPL_DLL VSINetworkStatsReset(void);
 char CPL_DLL *VSINetworkStatsGetAsSerializedJSON(char **papszOptions);

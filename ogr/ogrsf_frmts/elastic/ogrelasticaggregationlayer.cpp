@@ -416,7 +416,7 @@ void OGRElasticAggregationLayer::IssueAggregationRequest()
                     json_object_get_type(poDocCount) == json_type_int)
                 {
                     poFeature->SetField("doc_count",
-                                        static_cast<GIntBig>(
+                                        static_cast<int64_t>(
                                             json_object_get_int64(poDocCount)));
                 }
 
@@ -476,7 +476,7 @@ void OGRElasticAggregationLayer::IssueAggregationRequest()
                                         {
                                             poFeature->SetField(
                                                 pszFieldName,
-                                                static_cast<GIntBig>(
+                                                static_cast<int64_t>(
                                                     json_object_get_int64(
                                                         poField)));
                                         }
@@ -522,7 +522,7 @@ void OGRElasticAggregationLayer::IssueAggregationRequest()
                                         {
                                             poFeature->SetField(
                                                 pszFieldName,
-                                                static_cast<GIntBig>(
+                                                static_cast<int64_t>(
                                                     json_object_get_int64(
                                                         poField)));
                                         }
@@ -572,7 +572,7 @@ OGRFeature *OGRElasticAggregationLayer::GetNextRawFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRElasticAggregationLayer::GetFeatureCount(int bForce)
+int64_t OGRElasticAggregationLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {

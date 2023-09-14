@@ -25,6 +25,7 @@
  * DEALINGS IN THE SOFTWARE.
  ****************************************************************************/
 
+#include <cinttypes>
 #include <cstdlib>
 #include "cpl_conv.h"
 #include "cpl_string.h"
@@ -135,7 +136,7 @@ void OGRSelafinLayer::ResetReading()
 /************************************************************************/
 /*                           SetNextByIndex()                           */
 /************************************************************************/
-OGRErr OGRSelafinLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRSelafinLayer::SetNextByIndex(int64_t nIndex)
 {
     // CPLDebug("Selafin","SetNexByIndex(%li)",nIndex);
     if (nIndex < 0 || nIndex >= poHeader->nPoints)
@@ -188,9 +189,9 @@ int OGRSelafinLayer::TestCapability(const char *pszCap)
 /************************************************************************/
 /*                            GetFeature()                              */
 /************************************************************************/
-OGRFeature *OGRSelafinLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRSelafinLayer::GetFeature(int64_t nFID)
 {
-    CPLDebug("Selafin", "GetFeature(" CPL_FRMT_GIB ")", nFID);
+    CPLDebug("Selafin", "GetFeature(%" PRId64 ")", nFID);
     if (nFID < 0)
         return nullptr;
     if (eType == POINTS)
@@ -260,7 +261,7 @@ OGRFeature *OGRSelafinLayer::GetFeature(GIntBig nFID)
 /************************************************************************/
 /*                           GetFeatureCount()                          */
 /************************************************************************/
-GIntBig OGRSelafinLayer::GetFeatureCount(int bForce)
+int64_t OGRSelafinLayer::GetFeatureCount(int bForce)
 {
     // CPLDebug("Selafin","GetFeatureCount(%i)",bForce);
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
@@ -319,10 +320,10 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
             return OGRERR_FAILURE;
         }
         OGRPoint *poPoint = poGeom->toPoint();
-        GIntBig nFID = poFeature->GetFID();
+        int64_t nFID = poFeature->GetFID();
         poHeader->paadfCoords[0][nFID] = poPoint->getX();
         poHeader->paadfCoords[1][nFID] = poPoint->getY();
-        CPLDebug("Selafin", "SetFeature(" CPL_FRMT_GIB ",%f,%f)", nFID,
+        CPLDebug("Selafin", "SetFeature(%" PRId64 ",%f,%f)", nFID,
                  poHeader->paadfCoords[0][nFID],
                  poHeader->paadfCoords[1][nFID]);
         if (VSIFSeekL(
@@ -334,7 +335,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
                     (poHeader->nPoints + 2) * 4 + 4 + nFID * 4,
                 SEEK_SET) != 0)
             return OGRERR_FAILURE;
-        CPLDebug("Selafin", "Write_float(" CPL_FRMT_GUIB ",%f)",
+        CPLDebug("Selafin", "Write_float(%" PRIu64 ",%f)",
                  VSIFTellL(poHeader->fp),
                  poHeader->paadfCoords[0][nFID] - poHeader->adfOrigin[0]);
         if (Selafin::write_float(poHeader->fp, poHeader->paadfCoords[0][nFID] -
@@ -350,7 +351,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
                     4 + nFID * 4,
                 SEEK_SET) != 0)
             return OGRERR_FAILURE;
-        CPLDebug("Selafin", "Write_float(" CPL_FRMT_GUIB ",%f)",
+        CPLDebug("Selafin", "Write_float(%" PRIu64 ",%f)",
                  VSIFTellL(poHeader->fp),
                  poHeader->paadfCoords[1][nFID] - poHeader->adfOrigin[1]);
         if (Selafin::write_float(poHeader->fp, poHeader->paadfCoords[1][nFID] -
@@ -394,7 +395,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
         CPLError(CE_Warning, CPLE_AppDefined,
                  "The attributes of elements layer in Selafin files can't be "
                  "updated.");
-        CPLDebug("Selafin", "SetFeature(" CPL_FRMT_GIB ",%f,%f,%f,%f,%f,%f)",
+        CPLDebug("Selafin", "SetFeature(%" PRId64 ",%f,%f,%f,%f,%f,%f)",
                  poFeature->GetFID(), poLinearRing->getX(0),
                  poLinearRing->getY(0), poLinearRing->getX(1),
                  poLinearRing->getY(1), poLinearRing->getX(2),
@@ -424,7 +425,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
                         (poHeader->nPoints + 2) * 4 + 4 + nPointId * 4,
                     SEEK_SET) != 0)
                 return OGRERR_FAILURE;
-            CPLDebug("Selafin", "Write_float(" CPL_FRMT_GUIB ",%f)",
+            CPLDebug("Selafin", "Write_float(%" PRIu64 ",%f)",
                      VSIFTellL(poHeader->fp),
                      poHeader->paadfCoords[0][nPointId] -
                          poHeader->adfOrigin[0]);
@@ -443,7 +444,7 @@ OGRErr OGRSelafinLayer::ISetFeature(OGRFeature *poFeature)
                         (poHeader->nPoints + 2) * 4 + 4 + nPointId * 4,
                     SEEK_SET) != 0)
                 return OGRERR_FAILURE;
-            CPLDebug("Selafin", "Write_float(" CPL_FRMT_GUIB ",%f)",
+            CPLDebug("Selafin", "Write_float(%" PRIu64 ",%f)",
                      VSIFTellL(poHeader->fp),
                      poHeader->paadfCoords[1][nPointId] -
                          poHeader->adfOrigin[1]);
@@ -511,7 +512,7 @@ OGRErr OGRSelafinLayer::ICreateFeature(OGRFeature *poFeature)
         // number was not defined yet (0), we define it at once
         OGRLinearRing *poLinearRing = poGeom->toPolygon()->getExteriorRing();
         poFeature->SetFID(poHeader->nElements);
-        CPLDebug("Selafin", "CreateFeature(" CPL_FRMT_GIB ",%f,%f,%f,%f,%f,%f)",
+        CPLDebug("Selafin", "CreateFeature(%" PRId64 ",%f,%f,%f,%f,%f,%f)",
                  poFeature->GetFID(), poLinearRing->getX(0),
                  poLinearRing->getY(0), poLinearRing->getX(1),
                  poLinearRing->getY(1), poLinearRing->getX(2),
@@ -997,9 +998,9 @@ OGRErr OGRSelafinLayer::AlterFieldDefn(int iField, OGRFieldDefn *poNewFieldDefn,
 /************************************************************************/
 /*                          DeleteFeature()                             */
 /************************************************************************/
-OGRErr OGRSelafinLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRSelafinLayer::DeleteFeature(int64_t nFID)
 {
-    CPLDebug("Selafin", "DeleteFeature(" CPL_FRMT_GIB ")", nFID);
+    CPLDebug("Selafin", "DeleteFeature(%" PRId64 ")", nFID);
     if (VSIFSeekL(poHeader->fp, poHeader->getPosition(0), SEEK_SET) != 0)
         return OGRERR_FAILURE;
     // Change the header to delete the feature

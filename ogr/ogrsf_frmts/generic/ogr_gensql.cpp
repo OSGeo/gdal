@@ -34,6 +34,7 @@
 #include "ogr_api.h"
 #include "cpl_time.h"
 #include <algorithm>
+#include <cinttypes>
 #include <vector>
 
 //! @cond Doxygen_Suppress
@@ -494,7 +495,7 @@ OGRGenSQLResultsLayer::~OGRGenSQLResultsLayer()
 {
     if (m_nFeaturesRead > 0 && poDefn != nullptr)
     {
-        CPLDebug("GenSQL", CPL_FRMT_GIB " features read on layer '%s'.",
+        CPLDebug("GenSQL", "%" PRId64 " features read on layer '%s'.",
                  m_nFeaturesRead, poDefn->GetName());
     }
 
@@ -644,7 +645,7 @@ void OGRGenSQLResultsLayer::ResetReading()
 /*      ourselves in it.                                                */
 /************************************************************************/
 
-OGRErr OGRGenSQLResultsLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRGenSQLResultsLayer::SetNextByIndex(int64_t nIndex)
 
 {
     if (nIndex < 0)
@@ -708,14 +709,14 @@ OGRErr OGRGenSQLResultsLayer::GetExtent(int iGeomField, OGREnvelope *psExtent,
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRGenSQLResultsLayer::GetFeatureCount(int bForce)
+int64_t OGRGenSQLResultsLayer::GetFeatureCount(int bForce)
 
 {
     swq_select *psSelectInfo = static_cast<swq_select *>(pSelectInfo);
 
     CreateOrderByIndex();
 
-    GIntBig nRet = 0;
+    int64_t nRet = 0;
     if (psSelectInfo->query_mode == SWQM_DISTINCT_LIST)
     {
         if (!PrepareSummary())
@@ -739,7 +740,7 @@ GIntBig OGRGenSQLResultsLayer::GetFeatureCount(int bForce)
     if (nRet < 0)
         return nRet;
 
-    nRet = std::max(static_cast<GIntBig>(0), nRet - psSelectInfo->offset);
+    nRet = std::max(static_cast<int64_t>(0), nRet - psSelectInfo->offset);
     if (psSelectInfo->limit >= 0)
         nRet = std::min(nRet, psSelectInfo->limit);
     return nRet;
@@ -886,7 +887,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
         psSelectInfo->column_defs[0].col_func == SWQCF_COUNT &&
         psSelectInfo->column_defs[0].field_index < 0)
     {
-        GIntBig nRes = poSrcLayer->GetFeatureCount(TRUE);
+        int64_t nRes = poSrcLayer->GetFeatureCount(TRUE);
         poSummaryFeature->SetField(0, nRes);
 
         if (CPL_INT64_FITS_ON_INT32(nRes))
@@ -1020,7 +1021,7 @@ int OGRGenSQLResultsLayer::PrepareSummary()
                     {
                         struct tm brokendowntime;
                         double dfAvg = oSummary.sum / oSummary.count;
-                        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfAvg),
+                        CPLUnixTimeToYMDHMS(static_cast<int64_t>(dfAvg),
                                             &brokendowntime);
                         poSummaryFeature->SetField(
                             iField, brokendowntime.tm_year + 1900,
@@ -1117,7 +1118,7 @@ static swq_expr_node *OGRMultiFeatureFetcher(swq_expr_node *op,
             if (poFeature == nullptr ||
                 !poFeature->IsFieldSetAndNotNull(op->field_index))
             {
-                poRetNode = new swq_expr_node(static_cast<GIntBig>(0));
+                poRetNode = new swq_expr_node(static_cast<int64_t>(0));
                 poRetNode->is_null = TRUE;
             }
             else
@@ -1208,7 +1209,7 @@ static CPLString GetFilterForJoin(swq_expr_node *poExpr, OGRFeature *poSrcFeat,
                     break;
 
                 case OFTInteger64:
-                    return CPLString().Printf(CPL_FRMT_GIB,
+                    return CPLString().Printf("%" PRId64,
                                               psSrcField->Integer64);
                     break;
 
@@ -1630,7 +1631,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
             /* --------------------------------------------------------------------
              */
 
-            if (nNextIndexFID >= static_cast<GIntBig>(nIndexSize))
+            if (nNextIndexFID >= static_cast<int64_t>(nIndexSize))
                 return nullptr;
 
             poSrcFeat.reset(poSrcLayer->GetFeature(panFIDIndex[nNextIndexFID]));
@@ -1666,7 +1667,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRGenSQLResultsLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRGenSQLResultsLayer::GetFeature(int64_t nFID)
 
 {
     swq_select *psSelectInfo = static_cast<swq_select *>(pSelectInfo);
@@ -1698,7 +1699,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature(GIntBig nFID)
         swq_summary &oSummary = psSelectInfo->column_summary[0];
         if (psSelectInfo->order_specs == 0)
         {
-            if (nFID < 0 || nFID >= static_cast<GIntBig>(
+            if (nFID < 0 || nFID >= static_cast<int64_t>(
                                         oSummary.oVectorDistinctValues.size()))
             {
                 return nullptr;
@@ -1736,7 +1737,7 @@ OGRFeature *OGRGenSQLResultsLayer::GetFeature(GIntBig nFID)
             }
 
             if (nFID < 0 ||
-                nFID >= static_cast<GIntBig>(m_oDistinctList.size()))
+                nFID >= static_cast<int64_t>(m_oDistinctList.size()))
                 return nullptr;
 
             const size_t nIdx = static_cast<size_t>(nFID);
@@ -1968,7 +1969,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             static_cast<OGRField *>(CPLCalloc(sizeof(OGRField), nOrderItems));
         OGRField *pasBestFields =
             static_cast<OGRField *>(CPLCalloc(sizeof(OGRField), nOrderItems));
-        GIntBig nBestFID = poSrcFeat->GetFID();
+        int64_t nBestFID = poSrcFeat->GetFID();
         ReadIndexFields(poSrcFeat, nOrderItems, pasBestFields);
         delete poSrcFeat;
         while ((poSrcFeat = poSrcLayer->GetNextFeature()) != nullptr)
@@ -1990,7 +1991,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
         }
         VSIFree(pasCurrentFields);
         FreeIndexFields(pasBestFields, 1);
-        panFIDIndex = static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig)));
+        panFIDIndex = static_cast<int64_t *>(CPLMalloc(sizeof(int64_t)));
         panFIDIndex[0] = nBestFID;
         nIndexSize = 1;
         return;
@@ -2004,8 +2005,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     panFIDIndex = nullptr;
     OGRField *pasIndexFields = static_cast<OGRField *>(
         CPLCalloc(sizeof(OGRField), nOrderItems * nFeaturesAlloc));
-    GIntBig *panFIDList =
-        static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig) * nFeaturesAlloc));
+    int64_t *panFIDList =
+        static_cast<int64_t *>(CPLMalloc(sizeof(int64_t) * nFeaturesAlloc));
 
     /* -------------------------------------------------------------------- */
     /*      Read in all the key values.                                     */
@@ -2017,13 +2018,13 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     {
         if (nIndexSize == nFeaturesAlloc)
         {
-            GUIntBig nNewFeaturesAlloc =
-                static_cast<GUIntBig>(nFeaturesAlloc) + nFeaturesAlloc / 3;
+            uint64_t nNewFeaturesAlloc =
+                static_cast<uint64_t>(nFeaturesAlloc) + nFeaturesAlloc / 3;
 #if SIZEOF_SIZE_T == 4
             if (static_cast<size_t>(nNewFeaturesAlloc) != nNewFeaturesAlloc ||
                 static_cast<size_t>(sizeof(OGRField) * nOrderItems *
                                     nNewFeaturesAlloc) !=
-                    static_cast<GUIntBig>(sizeof(OGRField)) * nOrderItems *
+                    static_cast<uint64_t>(sizeof(OGRField)) * nOrderItems *
                         nNewFeaturesAlloc)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -2052,9 +2053,9 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
             }
             pasIndexFields = pasNewIndexFields;
 
-            GIntBig *panNewFIDList = static_cast<GIntBig *>(VSI_REALLOC_VERBOSE(
+            int64_t *panNewFIDList = static_cast<int64_t *>(VSI_REALLOC_VERBOSE(
                 panFIDList,
-                sizeof(GIntBig) * static_cast<size_t>(nNewFeaturesAlloc)));
+                sizeof(int64_t) * static_cast<size_t>(nNewFeaturesAlloc)));
             if (panNewFIDList == nullptr)
             {
                 FreeIndexFields(pasIndexFields, nIndexSize);
@@ -2086,8 +2087,8 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     /* -------------------------------------------------------------------- */
     /*      Initialize panFIDIndex                                          */
     /* -------------------------------------------------------------------- */
-    panFIDIndex = static_cast<GIntBig *>(
-        VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nIndexSize));
+    panFIDIndex = static_cast<int64_t *>(
+        VSI_MALLOC_VERBOSE(sizeof(int64_t) * nIndexSize));
     if (panFIDIndex == nullptr)
     {
         FreeIndexFields(pasIndexFields, nIndexSize);
@@ -2096,14 +2097,14 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
         return;
     }
     for (size_t i = 0; i < nIndexSize; i++)
-        panFIDIndex[i] = static_cast<GIntBig>(i);
+        panFIDIndex[i] = static_cast<int64_t>(i);
 
     /* -------------------------------------------------------------------- */
     /*      Quick sort the records.                                         */
     /* -------------------------------------------------------------------- */
 
-    GIntBig *panMerged = static_cast<GIntBig *>(
-        VSI_MALLOC_VERBOSE(sizeof(GIntBig) * nIndexSize));
+    int64_t *panMerged = static_cast<int64_t *>(
+        VSI_MALLOC_VERBOSE(sizeof(int64_t) * nIndexSize));
     if (panMerged == nullptr)
     {
         FreeIndexFields(pasIndexFields, nIndexSize);
@@ -2123,7 +2124,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
     bool bAlreadySorted = true;
     for (size_t i = 0; i < nIndexSize; i++)
     {
-        if (panFIDIndex[i] != static_cast<GIntBig>(i))
+        if (panFIDIndex[i] != static_cast<int64_t>(i))
             bAlreadySorted = false;
         panFIDIndex[i] = panFIDList[panFIDIndex[i]];
     }
@@ -2154,7 +2155,7 @@ void OGRGenSQLResultsLayer::CreateOrderByIndex()
 /************************************************************************/
 
 void OGRGenSQLResultsLayer::SortIndexSection(const OGRField *pasIndexFields,
-                                             GIntBig *panMerged, size_t nStart,
+                                             int64_t *panMerged, size_t nStart,
                                              size_t nEntries)
 
 {
@@ -2200,7 +2201,7 @@ void OGRGenSQLResultsLayer::SortIndexSection(const OGRField *pasIndexFields,
     }
 
     /* Copy the merge list back into the main index */
-    memcpy(panFIDIndex + nStart, panMerged, sizeof(GIntBig) * nEntries);
+    memcpy(panFIDIndex + nStart, panMerged, sizeof(int64_t) * nEntries);
 }
 
 /************************************************************************/

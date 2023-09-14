@@ -51,6 +51,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <set>
 
 #ifdef HAVE_PDFIUM
@@ -534,10 +535,10 @@ void GDALPDFDumper::Dump(GDALPDFObject *poObj, int nDepth)
     if (poStream != nullptr)
     {
         fprintf(f,
-                "%sHas stream (" CPL_FRMT_GIB
-                " uncompressed bytes, " CPL_FRMT_GIB " raw bytes)\n",
-                osIndent.c_str(), static_cast<GIntBig>(poStream->GetLength()),
-                static_cast<GIntBig>(poStream->GetRawLength()));
+                "%sHas stream (%" PRId64 " uncompressed bytes, %" PRId64
+                " raw bytes)\n",
+                osIndent.c_str(), static_cast<int64_t>(poStream->GetLength()),
+                static_cast<int64_t>(poStream->GetRawLength()));
     }
 }
 
@@ -2268,7 +2269,7 @@ CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
 
 #ifdef notdef
             // If the requested area is not too small, then try subdividing
-            if ((GIntBig)nReqXSize * nReqYSize * 4 > 1024 * 1024)
+            if ((int64_t)nReqXSize * nReqYSize * 4 > 1024 * 1024)
             {
 #ifdef DEBUG
                 CPLDebug(
@@ -2902,8 +2903,7 @@ static void PDFDatasetErrorFunction(
     CPLString osError;
 
     if (nPos >= 0)
-        osError.Printf("Pos = " CPL_FRMT_GUIB ", ",
-                       static_cast<GUIntBig>(nPos));
+        osError.Printf("Pos = %" PRIu64 ", ", static_cast<uint64_t>(nPos));
     osError += pszMsg;
     PDFDatasetErrorFunctionCommon(osError);
 }

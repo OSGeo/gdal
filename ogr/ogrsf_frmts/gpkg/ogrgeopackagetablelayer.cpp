@@ -36,6 +36,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <cmath>
 #include <limits>
 
@@ -98,7 +99,7 @@ OGRErr OGRGeoPackageTableLayer::SaveTimestamp()
         !m_bOGRFeatureCountTriggersEnabled && m_nTotalFeatureCount >= 0)
     {
         CPLString osFeatureCount;
-        osFeatureCount.Printf(CPL_FRMT_GIB, m_nTotalFeatureCount);
+        osFeatureCount.Printf("%" PRId64, m_nTotalFeatureCount);
         char *pszSQL = sqlite3_mprintf("UPDATE gpkg_ogr_contents SET "
                                        "feature_count = %s "
                                        "WHERE lower(table_name) = lower('%q')",
@@ -415,7 +416,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                 brokendowntime.tm_hour = sField.Date.Hour;
                                 brokendowntime.tm_min = sField.Date.Minute;
                                 brokendowntime.tm_sec = 0;
-                                GIntBig nDT =
+                                int64_t nDT =
                                     CPLYMDHMSToUnixTime(&brokendowntime);
                                 const int TZOffset =
                                     std::abs(sField.Date.TZFlag - 100) * 15;
@@ -556,7 +557,7 @@ OGRGeoPackageTableLayer::FeatureBindUpdateParameters(OGRFeature *poFeature,
     if (sqlite_err != SQLITE_OK)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "failed to bind FID '" CPL_FRMT_GIB "' to statement",
+                 "failed to bind FID '%" PRId64 "' to statement",
                  poFeature->GetFID());
         return OGRERR_FAILURE;
     }
@@ -2113,7 +2114,7 @@ static bool CheckFIDAndFIDColumnConsistency(const OGRFeature *poFeature,
         if (dfFID >= static_cast<double>(std::numeric_limits<int64_t>::min()) &&
             dfFID <= static_cast<double>(std::numeric_limits<int64_t>::max()))
         {
-            const auto nFID = static_cast<GIntBig>(dfFID);
+            const auto nFID = static_cast<int64_t>(dfFID);
             if (nFID == poFeature->GetFID())
             {
                 ok = true;
@@ -2243,7 +2244,7 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
             if (m_poDS->m_bHasGPKGOGRContents)
             {
                 const char *pszCount =
-                    CPLSPrintf(CPL_FRMT_GIB, m_nTotalFeatureCount);
+                    CPLSPrintf("%" PRId64, m_nTotalFeatureCount);
                 char *pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_ogr_contents SET feature_count = %s WHERE "
                     "lower(table_name )= lower('%q')",
@@ -2305,7 +2306,7 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
                         dfFID <= static_cast<double>(
                                      std::numeric_limits<int64_t>::max()))
                     {
-                        const auto nFID = static_cast<GIntBig>(dfFID);
+                        const auto nFID = static_cast<int64_t>(dfFID);
                         if (static_cast<double>(nFID) == dfFID)
                         {
                             poFeature->SetFID(nFID);
@@ -2406,7 +2407,7 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
     }
 
     /* Read the latest FID value */
-    const GIntBig nFID = (bUpsert && !osUpsertUniqueColumnName.empty())
+    const int64_t nFID = (bUpsert && !osUpsertUniqueColumnName.empty())
                              ?
 #if SQLITE_VERSION_NUMBER >= 3035000L
                              sqlite3_column_int64(m_poInsertStatement, 0)
@@ -2484,7 +2485,7 @@ OGRErr OGRGeoPackageTableLayer::CreateOrUpsertFeature(OGRFeature *poFeature,
                 if (m_aoRTreeEntries.empty())
                     CPLDebug("GPKG",
                              "Starting to fill m_aoRTreeEntries at "
-                             "FID " CPL_FRMT_GIB,
+                             "FID %" PRId64,
                              nFID);
 #endif
                 sEntry.nId = nFID;
@@ -2713,7 +2714,7 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
     }
 
     SQLCommand(m_hAsyncDBHandle, "BEGIN");
-    GIntBig nCount = 0;
+    int64_t nCount = 0;
     while (true)
     {
         const auto aoEntries = m_oQueueRTreeEntries.get_and_pop_front();
@@ -2723,8 +2724,8 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
         CPLDebug("GPKG",
                  "AsyncRTreeThreadFunction(): "
                  "Processing batch of %d features, "
-                 "starting at FID " CPL_FRMT_GIB " and ending "
-                 "at FID " CPL_FRMT_GIB,
+                 "starting at FID %" PRId64 " and ending "
+                 "at FID %" PRId64,
                  static_cast<int>(aoEntries.size()), aoEntries.front().nId,
                  aoEntries.back().nId);
 #endif
@@ -2732,7 +2733,7 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
         {
             if ((entry.nId % 500000) == 0)
             {
-                CPLDebug("GPKG", CPL_FRMT_GIB " rows indexed in rtree",
+                CPLDebug("GPKG", "%" PRId64 " rows indexed in rtree",
                          entry.nId);
                 if (SQLCommand(m_hAsyncDBHandle, "COMMIT") != OGRERR_NONE)
                 {
@@ -2771,8 +2772,7 @@ void OGRGeoPackageTableLayer::AsyncRTreeThreadFunction()
 
     sqlite3_finalize(hStmt);
     CPLDebug("GPKG",
-             "AsyncRTreeThreadFunction(): " CPL_FRMT_GIB
-             " rows inserted into RTree",
+             "AsyncRTreeThreadFunction(): %" PRId64 " rows inserted into RTree",
              nCount);
 
     if (m_bErrorDuringRTreeThread)
@@ -3072,7 +3072,7 @@ OGRErr OGRGeoPackageTableLayer::IUpdateFeature(
     if (sqlite_err != SQLITE_OK)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "failed to bind FID '" CPL_FRMT_GIB "' to statement",
+                 "failed to bind FID '%" PRId64 "' to statement",
                  poFeature->GetFID());
         sqlite3_reset(m_poUpdateStatement);
         sqlite3_clear_bindings(m_poUpdateStatement);
@@ -3183,7 +3183,7 @@ void OGRGeoPackageTableLayer::ResetReading()
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRGeoPackageTableLayer::SetNextByIndex(int64_t nIndex)
 {
     if (nIndex < 0)
         return OGRERR_FAILURE;
@@ -3206,7 +3206,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatement()
 /*                       ResetStatementInternal()                       */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(GIntBig nStartIndex)
+OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(int64_t nStartIndex)
 
 {
     ClearStatement();
@@ -3263,7 +3263,7 @@ OGRErr OGRGeoPackageTableLayer::ResetStatementInternal(GIntBig nStartIndex)
                      SQLEscapeName(m_pszTableName).c_str());
     if (nStartIndex > 0)
     {
-        soSQL += CPLSPrintf(" LIMIT -1 OFFSET " CPL_FRMT_GIB, nStartIndex);
+        soSQL += CPLSPrintf(" LIMIT -1 OFFSET %" PRId64, nStartIndex);
     }
 
     CPLDebug("GPKG", "ResetStatement(%s)", soSQL.c_str());
@@ -3316,7 +3316,7 @@ OGRFeature *OGRGeoPackageTableLayer::GetNextFeature()
 /*                        GetFeature()                                  */
 /************************************************************************/
 
-OGRFeature *OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRGeoPackageTableLayer::GetFeature(int64_t nFID)
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();
@@ -3377,7 +3377,7 @@ OGRFeature *OGRGeoPackageTableLayer::GetFeature(GIntBig nFID)
 /*                        DeleteFeature()                               */
 /************************************************************************/
 
-OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRGeoPackageTableLayer::DeleteFeature(int64_t nFID)
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();
@@ -3415,7 +3415,7 @@ OGRErr OGRGeoPackageTableLayer::DeleteFeature(GIntBig nFID)
 
     /* No filters apply, just use the FID */
     CPLString soSQL;
-    soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = " CPL_FRMT_GIB,
+    soSQL.Printf("DELETE FROM \"%s\" WHERE \"%s\" = %" PRId64,
                  SQLEscapeName(m_pszTableName).c_str(),
                  SQLEscapeName(m_pszFidColumn).c_str(), nFID);
 
@@ -3686,7 +3686,7 @@ OGRErr OGRGeoPackageTableLayer::RollbackTransaction()
 /*                      GetTotalFeatureCount()                          */
 /************************************************************************/
 
-GIntBig OGRGeoPackageTableLayer::GetTotalFeatureCount()
+int64_t OGRGeoPackageTableLayer::GetTotalFeatureCount()
 {
 #ifdef ENABLE_GPKG_OGR_CONTENTS
     if (m_nTotalFeatureCount < 0 && m_poDS->m_bHasGPKGOGRContents)
@@ -3716,7 +3716,7 @@ GIntBig OGRGeoPackageTableLayer::GetTotalFeatureCount()
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
+int64_t OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
 {
     if (!m_bFeatureDefnCompleted)
         GetLayerDefn();
@@ -3771,7 +3771,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
     }
 
     /* Just run the query directly and get back integer */
-    GIntBig iFeatureCount =
+    int64_t iFeatureCount =
         SQLGetInteger64(m_poDS->GetDB(), soSQL.c_str(), &err);
 
     /* Generic implementation uses -1 for error condition, so we will too */
@@ -3786,7 +3786,7 @@ GIntBig OGRGeoPackageTableLayer::GetFeatureCount(int /*bForce*/)
             if (m_poDS->GetUpdate() && m_poDS->m_bHasGPKGOGRContents)
             {
                 const char *pszCount =
-                    CPLSPrintf(CPL_FRMT_GIB, m_nTotalFeatureCount);
+                    CPLSPrintf("%" PRId64, m_nTotalFeatureCount);
                 char *pszSQL = sqlite3_mprintf(
                     "UPDATE gpkg_ogr_contents SET feature_count = %s WHERE "
                     "lower(table_name )= lower('%q')",
@@ -4223,13 +4223,13 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
 
         // Insert entries in RTree by chunks of 500K features
         std::vector<GPKGRTreeEntry> aoEntries;
-        GUIntBig nEntryCount = 0;
+        uint64_t nEntryCount = 0;
         constexpr size_t nChunkSize = 500 * 1000;
 #ifdef ENABLE_GPKG_OGR_CONTENTS
         if (m_nTotalFeatureCount > 0)
         {
             aoEntries.reserve(static_cast<size_t>(std::min(
-                m_nTotalFeatureCount, static_cast<GIntBig>(nChunkSize))));
+                m_nTotalFeatureCount, static_cast<int64_t>(nChunkSize))));
         }
 #endif
         while (true)
@@ -4291,7 +4291,7 @@ bool OGRGeoPackageTableLayer::CreateSpatialIndex(const char *pszTableName)
                 }
 
                 nEntryCount += aoEntries.size();
-                CPLDebug("GPKG", CPL_FRMT_GUIB " rows inserted into %s",
+                CPLDebug("GPKG", "%" PRIu64 " rows inserted into %s",
                          nEntryCount, m_osRTreeName.c_str());
 
                 aoEntries.clear();
@@ -4850,7 +4850,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
             osSQL += "\" WHERE \"";
             osSQL += SQLEscapeName(GetFIDColumn());
             osSQL += "\" = ";
-            osSQL += CPLSPrintf(CPL_FRMT_GIB, nFC);
+            osSQL += CPLSPrintf("%" PRId64, nFC);
             osSQL += " AND \"";
             osSQL += SQLEscapeName(pszC);
             osSQL += "\" IS NOT NULL AND NOT ST_IsEmpty(\"";
@@ -4861,7 +4861,7 @@ bool OGRGeoPackageTableLayer::HasSpatialIndex()
                 osSQL = "SELECT 1 FROM \"";
                 osSQL += SQLEscapeName(m_osRTreeName);
                 osSQL += "\" WHERE id = ";
-                osSQL += CPLSPrintf(CPL_FRMT_GIB, nFC);
+                osSQL += CPLSPrintf("%" PRId64, nFC);
                 if (SQLGetInteger(m_poDS->GetDB(), osSQL, nullptr) == 0)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
@@ -5693,7 +5693,7 @@ char **OGRGeoPackageTableLayer::GetMetadata(const char *pszDomain)
             sqlite3_mprintf("SELECT seq FROM sqlite_sequence WHERE name = '%q'",
                             m_pszTableName);
         CPLPushErrorHandler(CPLQuietErrorHandler);
-        GIntBig nMaxId = SQLGetInteger64(m_poDS->GetDB(), pszSQL, &err);
+        int64_t nMaxId = SQLGetInteger64(m_poDS->GetDB(), pszSQL, &err);
         CPLPopErrorHandler();
         sqlite3_free(pszSQL);
         if (err != OGRERR_NONE)
@@ -7351,7 +7351,7 @@ void OGR_GPKG_FillArrowArray_Step(sqlite3_context *pContext, int /*argc*/,
 
     int iCol = 0;
 
-    GIntBig nFID = sqlite3_value_int64(argv[iCol]);
+    int64_t nFID = sqlite3_value_int64(argv[iCol]);
     if (psHelper->panFIDValues)
     {
         psHelper->panFIDValues[iFeat] = nFID;
@@ -7841,8 +7841,7 @@ void OGRGeoPackageTableLayer::GetNextArrowArrayAsynchronousWorker()
     }
 
     if (m_iNextShapeId > 0)
-        osSQL +=
-            CPLSPrintf(" LIMIT -1 OFFSET " CPL_FRMT_GIB ") m", m_iNextShapeId);
+        osSQL += CPLSPrintf(" LIMIT -1 OFFSET %" PRId64 ") m", m_iNextShapeId);
 
     // CPLDebug("GPKG", "%s", osSQL.c_str());
 
@@ -7921,7 +7920,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
     m_bGetNextArrowArrayCalledSinceResetReading = true;
 
-    // CPLDebug("GPKG", "m_iNextShapeId = " CPL_FRMT_GIB, m_iNextShapeId);
+    // CPLDebug("GPKG", "m_iNextShapeId = %" PRId64, m_iNextShapeId);
 
     const int nMaxBatchSize = OGRArrowArrayHelper::GetMaxFeaturesInBatch(
         m_aosArrowArrayStreamOptions);
@@ -7978,11 +7977,11 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             // Are the records still available for reading beyond the current
             // queued tasks ? If so, recycle this task to read them
             if (task->m_iStartShapeId +
-                    static_cast<GIntBig>(nTasks) * nMaxBatchSize <=
+                    static_cast<int64_t>(nTasks) * nMaxBatchSize <=
                 m_nTotalFeatureCount)
             {
                 task->m_iStartShapeId +=
-                    static_cast<GIntBig>(nTasks) * nMaxBatchSize;
+                    static_cast<int64_t>(nTasks) * nMaxBatchSize;
                 task->m_poLayer->m_iNextShapeId = task->m_iStartShapeId;
                 try
                 {
@@ -8026,11 +8025,11 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
     // Start asynchronous tasks to prefetch the next ArrowArray
     if (m_poDS->GetAccess() == GA_ReadOnly &&
         m_oQueueArrowArrayPrefetchTasks.empty() &&
-        m_iNextShapeId + 2 * static_cast<GIntBig>(nMaxBatchSize) <=
+        m_iNextShapeId + 2 * static_cast<int64_t>(nMaxBatchSize) <=
             m_nTotalFeatureCount &&
         sqlite3_threadsafe() != 0 && GetThreadsAvailable() >= 2)
     {
-        const int nMaxTasks = static_cast<int>(std::min<GIntBig>(
+        const int nMaxTasks = static_cast<int>(std::min<int64_t>(
             DIV_ROUND_UP(m_nTotalFeatureCount - m_iNextShapeId, nMaxBatchSize),
             GetThreadsAvailable()));
         GDALOpenInfo oOpenInfo(m_poDS->GetDescription(), GA_ReadOnly);
@@ -8041,7 +8040,7 @@ int OGRGeoPackageTableLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
             auto task = cpl::make_unique<ArrowArrayPrefetchTask>();
             task->m_iStartShapeId =
                 m_iNextShapeId +
-                static_cast<GIntBig>(iTask + 1) * nMaxBatchSize;
+                static_cast<int64_t>(iTask + 1) * nMaxBatchSize;
             task->m_poDS = cpl::make_unique<GDALGeoPackageDataset>();
             if (!task->m_poDS->Open(&oOpenInfo, m_poDS->m_osFilenameInZip))
             {

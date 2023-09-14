@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "ogr_geojson.h"
 
+#include <cinttypes>
 #include <stdlib.h>
 #include <string.h>
 
@@ -60,9 +61,9 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
 {
     OGRESRIFeatureServiceDataset *poDS;
     OGRFeatureDefn *poFeatureDefn;
-    GIntBig nFeaturesRead;
-    GIntBig nFirstFID;
-    GIntBig nLastFID;
+    int64_t nFeaturesRead;
+    int64_t nFirstFID;
+    int64_t nLastFID;
     bool bOtherPage;
     bool bUseSequentialFID;
 
@@ -72,7 +73,7 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -93,8 +94,8 @@ class OGRESRIFeatureServiceLayer final : public OGRLayer
 class OGRESRIFeatureServiceDataset final : public GDALDataset
 {
     CPLString osURL;
-    GIntBig nFirstOffset;
-    GIntBig nLastOffset;
+    int64_t nFirstOffset;
+    int64_t nLastOffset;
     OGRGeoJSONDataSource *poCurrent;
     OGRESRIFeatureServiceLayer *poLayer;
 
@@ -244,9 +245,9 @@ int OGRESRIFeatureServiceLayer::TestCapability(const char *pszCap)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRESRIFeatureServiceLayer::GetFeatureCount(int bForce)
+int64_t OGRESRIFeatureServiceLayer::GetFeatureCount(int bForce)
 {
-    GIntBig nFeatureCount = -1;
+    int64_t nFeatureCount = -1;
     if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
     {
         CPLString osNewURL =
@@ -402,7 +403,7 @@ int OGRESRIFeatureServiceDataset::LoadNextPage()
 int OGRESRIFeatureServiceDataset::LoadPage()
 {
     CPLString osNewURL = CPLURLAddKVP(osURL, "resultOffset",
-                                      CPLSPrintf(CPL_FRMT_GIB, nLastOffset));
+                                      CPLSPrintf("%" PRId64, nLastOffset));
     OGRGeoJSONDataSource *poDS = new OGRGeoJSONDataSource();
     GDALOpenInfo oOpenInfo(osNewURL, GA_ReadOnly);
     GeoJSONSourceType nSrcType;

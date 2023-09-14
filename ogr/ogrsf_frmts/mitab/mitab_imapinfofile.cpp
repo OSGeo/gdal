@@ -199,7 +199,7 @@ IMapInfoFile *IMapInfoFile::SmartOpen(const char *pszFname, bool bUpdate,
  **********************************************************************/
 OGRFeature *IMapInfoFile::GetNextFeature()
 {
-    GIntBig nFeatureId = 0;
+    int64_t nFeatureId = 0;
 
     while ((nFeatureId = GetNextFeatureId(m_nCurFeatureId)) != -1)
     {
@@ -411,7 +411,7 @@ OGRErr IMapInfoFile::ICreateFeature(OGRFeature *poFeature)
  * to get the wanted (nFeatureId) feature, a NULL value will be
  * returned on error.
  **********************************************************************/
-OGRFeature *IMapInfoFile::GetFeature(GIntBig nFeatureId)
+OGRFeature *IMapInfoFile::GetFeature(int64_t nFeatureId)
 {
     /*fprintf(stderr, "GetFeature(%ld)\n", nFeatureId);*/
 

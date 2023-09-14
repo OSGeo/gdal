@@ -168,7 +168,7 @@ class ZarrAttributeGroup
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList /* papszOptions */ = nullptr)
     {
@@ -386,7 +386,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
 
@@ -398,7 +398,7 @@ class ZarrGroupBase CPL_NON_FINAL : public GDALGroup
 
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
-                    const std::string &osDirection, GUInt64 nSize,
+                    const std::string &osDirection, uint64_t nSize,
                     CSLConstList papszOptions = nullptr) override;
 
     std::vector<std::string>
@@ -599,7 +599,7 @@ class ZarrDimension final : public GDALDimensionWeakIndexingVar
                   const std::weak_ptr<ZarrGroupBase> &poParentGroup,
                   const std::string &osParentName, const std::string &osName,
                   const std::string &osType, const std::string &osDirection,
-                  GUInt64 nSize)
+                  uint64_t nSize)
         : GDALDimensionWeakIndexingVar(osParentName, osName, osType,
                                        osDirection, nSize),
           m_bUpdatable(poSharedResource->IsUpdatable()),
@@ -725,7 +725,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
     const GDALExtendedDataType m_oType;
     const std::vector<DtypeElt> m_aoDtypeElts;
-    const std::vector<GUInt64> m_anBlockSize;
+    const std::vector<uint64_t> m_anBlockSize;
     CPLJSONObject m_dtype{};
     GByte *m_pabyNoData = nullptr;
     std::string m_osDimSeparator{"."};
@@ -768,14 +768,14 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     static uint64_t
     ComputeTileCount(const std::string &osName,
                      const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-                     const std::vector<GUInt64> &anBlockSize);
+                     const std::vector<uint64_t> &anBlockSize);
 
     ZarrArray(const std::shared_ptr<ZarrSharedResource> &poSharedResource,
               const std::string &osParentName, const std::string &osName,
               const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
               const GDALExtendedDataType &oType,
               const std::vector<DtypeElt> &aoDtypeElts,
-              const std::vector<GUInt64> &anBlockSize);
+              const std::vector<uint64_t> &anBlockSize);
 
     virtual bool LoadTileData(const uint64_t *tileIndices,
                               bool &bMissingTileOut) const = 0;
@@ -809,19 +809,19 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     ZarrArray(const ZarrArray &) = delete;
     ZarrArray &operator=(const ZarrArray &) = delete;
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
     bool IsEmptyTile(const ZarrByteVectorQuickResize &abyTile) const;
 
-    bool IAdviseReadCommon(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseReadCommon(const uint64_t *arrayStartIdx, const size_t *count,
                            CSLConstList papszOptions,
                            std::vector<uint64_t> &anIndicesCur,
                            int &nThreadsMax,
@@ -834,7 +834,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     BuildTileFilename(const uint64_t *tileIndices) const = 0;
 
     bool SetStatistics(bool bApproxStats, double dfMin, double dfMax,
-                       double dfMean, double dfStdDev, GUInt64 nValidCount,
+                       double dfMean, double dfStdDev, uint64_t nValidCount,
                        CSLConstList papszOptions) override;
 
   public:
@@ -842,12 +842,12 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     static bool ParseChunkSize(const CPLJSONArray &oChunks,
                                const GDALExtendedDataType &oType,
-                               std::vector<GUInt64> &anBlockSize);
+                               std::vector<uint64_t> &anBlockSize);
 
     static bool FillBlockSize(
         const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         const GDALExtendedDataType &oDataType,
-        std::vector<GUInt64> &anBlockSize, CSLConstList papszOptions);
+        std::vector<uint64_t> &anBlockSize, CSLConstList papszOptions);
 
     bool IsWritable() const override
     {
@@ -870,7 +870,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
         return m_oType;
     }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
         return m_anBlockSize;
     }
@@ -910,7 +910,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     std::vector<std::shared_ptr<GDALMDArray>>
     GetCoordinateVariables() const override;
 
-    bool Resize(const std::vector<GUInt64> &anNewDimSizes,
+    bool Resize(const std::vector<uint64_t> &anNewDimSizes,
                 CSLConstList) override;
 
     void RegisterOffset(double dfOffset)
@@ -965,7 +965,7 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
 
@@ -1032,7 +1032,7 @@ class ZarrV2Array final : public ZarrArray
                 const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                 const GDALExtendedDataType &oType,
                 const std::vector<DtypeElt> &aoDtypeElts,
-                const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+                const std::vector<uint64_t> &anBlockSize, bool bFortranOrder);
 
     void Serialize();
 
@@ -1063,7 +1063,7 @@ class ZarrV2Array final : public ZarrArray
            const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
            const GDALExtendedDataType &oType,
            const std::vector<DtypeElt> &aoDtypeElts,
-           const std::vector<GUInt64> &anBlockSize, bool bFortranOrder);
+           const std::vector<uint64_t> &anBlockSize, bool bFortranOrder);
 
     void SetCompressorJson(const CPLJSONObject &oCompressor)
     {
@@ -1101,7 +1101,7 @@ class ZarrV2Array final : public ZarrArray
     bool LoadTileData(const uint64_t *tileIndices,
                       bool &bMissingTileOut) const override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
 };
 
@@ -1416,7 +1416,7 @@ class ZarrV3Array final : public ZarrArray
                 const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
                 const GDALExtendedDataType &oType,
                 const std::vector<DtypeElt> &aoDtypeElts,
-                const std::vector<GUInt64> &anBlockSize);
+                const std::vector<uint64_t> &anBlockSize);
 
     void Serialize(const CPLJSONObject &oAttrs);
 
@@ -1441,7 +1441,7 @@ class ZarrV3Array final : public ZarrArray
            const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
            const GDALExtendedDataType &oType,
            const std::vector<DtypeElt> &aoDtypeElts,
-           const std::vector<GUInt64> &anBlockSize);
+           const std::vector<uint64_t> &anBlockSize);
 
     void SetIsV2ChunkKeyEncoding(bool b)
     {
@@ -1470,7 +1470,7 @@ class ZarrV3Array final : public ZarrArray
     bool LoadTileData(const uint64_t *tileIndices,
                       bool &bMissingTileOut) const override;
 
-    bool IAdviseRead(const GUInt64 *arrayStartIdx, const size_t *count,
+    bool IAdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
                      CSLConstList papszOptions) const override;
 };
 

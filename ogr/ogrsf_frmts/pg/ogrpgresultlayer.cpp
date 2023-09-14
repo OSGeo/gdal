@@ -195,7 +195,7 @@ void OGRPGResultLayer::ResetReading()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRPGResultLayer::GetFeatureCount(int bForce)
+int64_t OGRPGResultLayer::GetFeatureCount(int bForce)
 
 {
     if (TestCapability(OLCFastFeatureCount) == FALSE)

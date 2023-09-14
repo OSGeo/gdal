@@ -62,6 +62,7 @@
 #include "cpl_vsi.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstring>
@@ -186,7 +187,7 @@ class VSIUnixStdioFilesystemHandler final : public VSIFilesystemHandler
     int Mkdir(const char *pszDirname, long nMode) override;
     int Rmdir(const char *pszDirname) override;
     char **ReadDirEx(const char *pszDirname, int nMaxFiles) override;
-    GIntBig GetDiskFreeSpace(const char *pszDirname) override;
+    int64_t GetDiskFreeSpace(const char *pszDirname) override;
     int SupportsSparseFiles(const char *pszPath) override;
 
     bool IsLocal(const char *pszPath) override;
@@ -349,27 +350,23 @@ int VSIUnixStdioHandle::Seek(vsi_l_offset nOffsetIn, int nWhence)
 
     if (nWhence == SEEK_SET)
     {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",SEEK_SET) = %d",
-                  fp, nOffsetIn, nResult);
+        VSIDebug3("VSIUnixStdioHandle::Seek(%p," PRIu64 ",SEEK_SET) = %d", fp,
+                  nOffsetIn, nResult);
     }
     else if (nWhence == SEEK_END)
     {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",SEEK_END) = %d",
-                  fp, nOffsetIn, nResult);
+        VSIDebug3("VSIUnixStdioHandle::Seek(%p," PRIu64 ",SEEK_END) = %d", fp,
+                  nOffsetIn, nResult);
     }
     else if (nWhence == SEEK_CUR)
     {
-        VSIDebug3("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",SEEK_CUR) = %d",
-                  fp, nOffsetIn, nResult);
+        VSIDebug3("VSIUnixStdioHandle::Seek(%p," PRIu64 ",SEEK_CUR) = %d", fp,
+                  nOffsetIn, nResult);
     }
     else
     {
-        VSIDebug4("VSIUnixStdioHandle::Seek(%p," CPL_FRMT_GUIB
-                  ",%d-Unknown) = %d",
-                  fp, nOffsetIn, nWhence, nResult);
+        VSIDebug4("VSIUnixStdioHandle::Seek(%p," PRIu64 ",%d-Unknown) = %d", fp,
+                  nOffsetIn, nWhence, nResult);
     }
 
 #endif
@@ -676,10 +673,9 @@ size_t VSIUnixStdioHandle::PRead(void *pBuffer, size_t nSize,
 
 VSIUnixStdioFilesystemHandler::~VSIUnixStdioFilesystemHandler()
 {
-    CPLDebug(
-        "VSI",
-        "~VSIUnixStdioFilesystemHandler() : nTotalBytesRead = " CPL_FRMT_GUIB,
-        nTotalBytesRead);
+    CPLDebug("VSI",
+             "~VSIUnixStdioFilesystemHandler() : nTotalBytesRead = %" PRIu64,
+             nTotalBytesRead);
 
     if (hMutex != nullptr)
         CPLDestroyMutex(hMutex);
@@ -831,28 +827,28 @@ char **VSIUnixStdioFilesystemHandler::ReadDirEx(const char *pszPath,
 /*                        GetDiskFreeSpace()                            */
 /************************************************************************/
 
-GIntBig VSIUnixStdioFilesystemHandler::GetDiskFreeSpace(const char *
+int64_t VSIUnixStdioFilesystemHandler::GetDiskFreeSpace(const char *
 #ifdef HAVE_STATVFS
                                                             pszDirname
 #endif
 )
 {
-    GIntBig nRet = -1;
+    int64_t nRet = -1;
 #ifdef HAVE_STATVFS
 
 #ifdef HAVE_STATVFS64
     struct statvfs64 buf;
     if (statvfs64(pszDirname, &buf) == 0)
     {
-        nRet = static_cast<GIntBig>(buf.f_frsize *
-                                    static_cast<GUIntBig>(buf.f_bavail));
+        nRet = static_cast<int64_t>(buf.f_frsize *
+                                    static_cast<uint64_t>(buf.f_bavail));
     }
 #else
     struct statvfs buf;
     if (statvfs(pszDirname, &buf) == 0)
     {
-        nRet = static_cast<GIntBig>(buf.f_frsize *
-                                    static_cast<GUIntBig>(buf.f_bavail));
+        nRet = static_cast<int64_t>(buf.f_frsize *
+                                    static_cast<uint64_t>(buf.f_bavail));
     }
 #endif
 

@@ -37,7 +37,7 @@ typedef struct
 {
     GByte data[64];
     uint32_t datalen;
-    GUIntBig bitlen;
+    uint64_t bitlen;
     uint32_t state[5];
 } CPL_SHA1Context;
 

@@ -29,12 +29,14 @@
 #include "cpl_port.h"
 #include "gdaljp2metadata.h"
 
+#include <cinttypes>
 #include <cmath>
 #include <cstring>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
+#include <limits>
 #include <string>
 
 #include "cpl_conv.h"
@@ -74,14 +76,14 @@ static CPLXMLNode *GetLastChild(CPLXMLNode *psParent)
 }
 
 static CPLXMLNode *_AddError(CPLXMLNode *psParent, const char *pszErrorMsg,
-                             GIntBig nOffset = 0)
+                             int64_t nOffset = 0)
 {
     CPLXMLNode *psError = CPLCreateXMLNode(psParent, CXT_Element, "Error");
     CPLAddXMLAttributeAndValue(psError, "message", pszErrorMsg);
     if (nOffset)
     {
         CPLAddXMLAttributeAndValue(psError, "offset",
-                                   CPLSPrintf(CPL_FRMT_GIB, nOffset));
+                                   CPLSPrintf("%" PRId64, nOffset));
     }
     return psError;
 }
@@ -244,7 +246,7 @@ static const char *GetStandardFieldString(uint16_t nVal)
 static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                            DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     GDALDriver *poVRTDriver =
         static_cast<GDALDriver *>(GDALGetDriverByName("VRT"));
@@ -314,13 +316,13 @@ static void DumpGeoTIFFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpFTYPBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         CPLXMLNode *psLastChild = nullptr;
         if (nRemainingLength >= 4)
@@ -368,13 +370,13 @@ static void DumpFTYPBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpIHDRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         CPLXMLNode *psLastChild = nullptr;
         if (nRemainingLength >= 4)
@@ -447,13 +449,13 @@ static void DumpIHDRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpBPCCBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         int nBPCIndex = 0;
         CPLXMLNode *psLastChild = nullptr;
@@ -479,13 +481,13 @@ static void DumpBPCCBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpCOLRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         GByte nMeth;
         CPLXMLNode *psLastChild = nullptr;
@@ -541,13 +543,13 @@ static void DumpCOLRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpPCLRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         uint16_t NE = 0;
         CPLXMLNode *psLastChild = nullptr;
@@ -611,13 +613,13 @@ static void DumpPCLRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpCMAPBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         int nIndex = 0;
         CPLXMLNode *psLastChild = nullptr;
@@ -660,13 +662,13 @@ static void DumpCMAPBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpCDEFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         uint16_t nChannels = 0;
         CPLXMLNode *psLastChild = nullptr;
@@ -735,14 +737,14 @@ static void DumpCDEFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpRESxBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     char chC = oBox.GetType()[3];
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         uint16_t nNumV = 0;
         uint16_t nNumH = 0;
@@ -839,13 +841,13 @@ static void DumpRESxBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static void DumpRREQBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
                         DumpContext *psDumpContext)
 {
-    GIntBig nBoxDataLength = oBox.GetDataLength();
+    int64_t nBoxDataLength = oBox.GetDataLength();
     GByte *pabyBoxData = oBox.ReadBoxData();
     if (pabyBoxData)
     {
         CPLXMLNode *psDecodedContent =
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
-        GIntBig nRemainingLength = nBoxDataLength;
+        int64_t nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
         GByte ML = 0;
         CPLXMLNode *psLastChild = nullptr;
@@ -980,20 +982,20 @@ static void DumpRREQBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
 static CPLXMLNode *CreateMarker(CPLXMLNode *psCSBox,
                                 CPLXMLNode *&psLastChildCSBox,
                                 DumpContext *psDumpContext, const char *pszName,
-                                GIntBig nOffset, GIntBig nLength)
+                                int64_t nOffset, int64_t nLength)
 {
     CPLXMLNode *psMarker = CPLCreateXMLNode(nullptr, CXT_Element, "Marker");
     CPLAddXMLAttributeAndValue(psMarker, "name", pszName);
     CPLAddXMLAttributeAndValue(psMarker, "offset",
-                               CPLSPrintf(CPL_FRMT_GIB, nOffset));
+                               CPLSPrintf("%" PRId64, nOffset));
     CPLAddXMLAttributeAndValue(psMarker, "length",
-                               CPLSPrintf(CPL_FRMT_GIB, 2 + nLength));
+                               CPLSPrintf("%" PRId64, 2 + nLength));
     return AddElement(psCSBox, psLastChildCSBox, psDumpContext, psMarker);
 }
 
 static void AddError(CPLXMLNode *psParent, CPLXMLNode *&psLastChild,
                      DumpContext *psDumpContext, const char *pszErrorMsg,
-                     GIntBig nOffset = 0)
+                     int64_t nOffset = 0)
 {
     if (psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount + 1)
     {
@@ -1052,8 +1054,8 @@ static const char *GetMarkerName(GByte byVal)
 /************************************************************************/
 
 static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
-                                      GIntBig nBoxDataOffset,
-                                      GIntBig nBoxDataLength,
+                                      int64_t nBoxDataOffset,
+                                      int64_t nBoxDataLength,
                                       DumpContext *psDumpContext)
 {
     GByte abyMarker[2];
@@ -1067,7 +1069,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
         return psCSBox;
     }
     GByte *pabyMarkerData = static_cast<GByte *>(CPLMalloc(65535 + 1));
-    GIntBig nNextTileOffset = 0;
+    int64_t nNextTileOffset = 0;
     int Csiz = -1;
     const auto lambdaPOCType = [](GByte v)
     {
@@ -1081,7 +1083,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
 
     while (psDumpContext->nCurLineCount <= psDumpContext->nMaxLineCount + 1)
     {
-        GIntBig nOffset = static_cast<GIntBig>(VSIFTellL(fp));
+        int64_t nOffset = static_cast<int64_t>(VSIFTellL(fp));
         if (nBoxDataLength > 0 && nOffset == nBoxDataOffset + nBoxDataLength)
             break;
         if (VSIFReadL(abyMarker, 2, 1, fp) != 1)
@@ -1117,7 +1119,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 break;
             }
 
-            GIntBig nMarkerSize = 0;
+            int64_t nMarkerSize = 0;
             bool bBreak = false;
             if (nNextTileOffset == 0)
             {
@@ -2064,7 +2066,7 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
         while (strlen(oBox.GetType()) > 0 &&
                psDumpContext->nCurLineCount <= psDumpContext->nMaxLineCount + 1)
         {
-            GIntBig nBoxDataLength = oBox.GetDataLength();
+            int64_t nBoxDataLength = oBox.GetDataLength();
             const char *pszBoxType = oBox.GetType();
             CPLXMLNode *psBox = nullptr;
             const auto CreateBox = [&]()
@@ -2078,22 +2080,22 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
                 CPLAddXMLAttributeAndValue(psBox, "name", pszBoxType);
                 CPLAddXMLAttributeAndValue(
                     psBox, "box_offset",
-                    CPLSPrintf(CPL_FRMT_GIB, oBox.GetBoxOffset()));
+                    CPLSPrintf("%" PRId64, oBox.GetBoxOffset()));
                 const auto nBoxLength = oBox.GetBoxLength();
                 CPLAddXMLAttributeAndValue(
                     psBox, "box_length",
-                    nBoxLength > 0 ? CPLSPrintf(CPL_FRMT_GIB, nBoxLength)
+                    nBoxLength > 0 ? CPLSPrintf("%" PRId64, nBoxLength)
                                    : "unknown");
                 CPLAddXMLAttributeAndValue(
                     psBox, "data_offset",
-                    CPLSPrintf(CPL_FRMT_GIB, oBox.GetDataOffset()));
+                    CPLSPrintf("%" PRId64, oBox.GetDataOffset()));
                 CPLAddXMLAttributeAndValue(
                     psBox, "data_length",
-                    nBoxDataLength > 0
-                        ? CPLSPrintf(CPL_FRMT_GIB, nBoxDataLength)
-                        : "unknown");
+                    nBoxDataLength > 0 ? CPLSPrintf("%" PRId64, nBoxDataLength)
+                                       : "unknown");
 
-                if (nBoxDataLength > GINTBIG_MAX - oBox.GetDataOffset())
+                if (nBoxDataLength >
+                    std::numeric_limits<int64_t>::max() - oBox.GetDataOffset())
                 {
                     CPLXMLNode *psLastChildBox = nullptr;
                     AddError(psBox, psLastChildBox, psDumpContext,
@@ -2426,10 +2428,10 @@ CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,
     {
         if (dc.bDumpCodestream || dc.pszCodestreamMarkers != nullptr)
         {
-            GIntBig nBoxDataLength = -1;
+            int64_t nBoxDataLength = -1;
             if (dc.bAllowGetFileSize && VSIFSeekL(fp, 0, SEEK_END) == 0)
             {
-                nBoxDataLength = static_cast<GIntBig>(VSIFTellL(fp));
+                nBoxDataLength = static_cast<int64_t>(VSIFTellL(fp));
             }
             psParent = DumpJPK2CodeStream(nullptr, fp, 0, nBoxDataLength, &dc);
             CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename);

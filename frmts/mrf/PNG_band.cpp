@@ -160,7 +160,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
         const char *const apszAllowedDrivers[] = {"PNG", nullptr};
         auto poDS = std::unique_ptr<GDALDataset>(GDALDataset::Open(
             osTmpFilename.c_str(), GDAL_OF_RASTER, apszAllowedDrivers));
-        if (poDS && static_cast<GUIntBig>(poDS->GetRasterXSize()) *
+        if (poDS && static_cast<uint64_t>(poDS->GetRasterXSize()) *
                             poDS->GetRasterYSize() * poDS->GetRasterCount() ==
                         dst.size)
         {

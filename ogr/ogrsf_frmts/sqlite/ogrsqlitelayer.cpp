@@ -306,7 +306,7 @@ void OGRSQLiteLayer::BuildFeatureDefn(const char *pszLayerName, bool bIsSelect,
                     oField.SetType(OFTInteger64);
                 else
                 {
-                    GIntBig nVal = sqlite3_column_int64(hStmtIn, iCol);
+                    int64_t nVal = sqlite3_column_int64(hStmtIn, iCol);
                     if (CPL_INT64_FITS_ON_INT32(nVal))
                         oField.SetType(OFTInteger);
                     else
@@ -895,7 +895,8 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
                         (const char *)sqlite3_column_text(m_hStmt, iRawField));
                 else
                     poFeature->SetField(
-                        iField, sqlite3_column_int64(m_hStmt, iRawField));
+                        iField, static_cast<int64_t>(
+                                    sqlite3_column_int64(m_hStmt, iRawField)));
                 break;
             }
 
@@ -1024,7 +1025,7 @@ OGRFeature *OGRSQLiteLayer::GetNextRawFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRSQLiteLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRSQLiteLayer::GetFeature(int64_t nFeatureId)
 
 {
     return OGRLayer::GetFeature(nFeatureId);

@@ -31,6 +31,7 @@
 #include "cpl_string.h"
 #include "ogr_p.h"
 
+#include <cinttypes>
 #include <limits>
 
 //
@@ -391,7 +392,7 @@ OGRErr OGRPGDumpLayer::CreateFeatureViaInsert(OGRFeature *poFeature)
     {
         if (bNeedComma)
             osCommand += ", ";
-        osCommand += CPLString().Printf(CPL_FRMT_GIB, poFeature->GetFID());
+        osCommand += CPLString().Printf("%" PRId64, poFeature->GetFID());
         bNeedComma = true;
     }
 
@@ -515,7 +516,7 @@ void OGRPGCommonAppendCopyFID(CPLString &osCommand, OGRFeature *poFeature)
     /* Set the FID */
     if (poFeature->GetFID() != OGRNullFID)
     {
-        osCommand += CPLString().Printf(CPL_FRMT_GIB, poFeature->GetFID());
+        osCommand += CPLString().Printf("%" PRId64, poFeature->GetFID());
     }
     else
     {
@@ -588,7 +589,7 @@ void OGRPGCommonAppendCopyRegularFields(
         else if (nOGRFieldType == OFTInteger64List)
         {
             int nCount, nOff = 0;
-            const GIntBig *panItems =
+            const int64_t *panItems =
                 poFeature->GetFieldAsInteger64List(i, &nCount);
 
             const size_t nLen = nCount * 26 + 10;
@@ -600,7 +601,7 @@ void OGRPGCommonAppendCopyRegularFields(
                     strcat(pszNeedToFree + nOff, ",");
 
                 nOff += static_cast<int>(strlen(pszNeedToFree + nOff));
-                snprintf(pszNeedToFree + nOff, nLen - nOff, CPL_FRMT_GIB,
+                snprintf(pszNeedToFree + nOff, nLen - nOff, "%" PRId64,
                          panItems[j]);
             }
             strcat(pszNeedToFree + nOff, "}");
@@ -1016,7 +1017,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
     else if (nOGRFieldType == OFTInteger64List)
     {
         int nCount, nOff = 0, j;
-        const GIntBig *panItems =
+        const int64_t *panItems =
             poFeature->GetFieldAsInteger64List(i, &nCount);
 
         const size_t nLen = nCount * 26 + 10;
@@ -1028,7 +1029,7 @@ void OGRPGCommonAppendFieldValue(CPLString &osCommand, OGRFeature *poFeature,
                 strcat(pszNeedToFree + nOff, ",");
 
             nOff += static_cast<int>(strlen(pszNeedToFree + nOff));
-            snprintf(pszNeedToFree + nOff, nLen - nOff, CPL_FRMT_GIB,
+            snprintf(pszNeedToFree + nOff, nLen - nOff, "%" PRId64,
                      panItems[j]);
         }
         strcat(pszNeedToFree + nOff, "}'");

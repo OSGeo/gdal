@@ -1116,7 +1116,7 @@ VSILFILE *MRFDataset::IdxFP()
         ifp.FP = VSIFOpenL(current.idxfname, mode);
     }
 
-    GIntBig expected_size = idxSize;
+    int64_t expected_size = idxSize;
     if (clonedSource)
         expected_size *= 2;
 
@@ -1678,7 +1678,7 @@ GDALDataset *MRFDataset::GetSrcDS()
  * @return size of the index file
  */
 
-GIntBig MRFDataset::AddOverviews(int scaleIn)
+int64_t MRFDataset::AddOverviews(int scaleIn)
 {
     // Fit the overlays
     ILImage img = current;
@@ -2361,7 +2361,7 @@ CPLErr MRFDataset::AddVersion()
 // To make it multi-processor safe, open the file in append mode
 // and verify after write
 //
-CPLErr MRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
+CPLErr MRFDataset::WriteTile(void *buff, uint64_t infooffset, uint64_t size)
 {
     CPLErr ret = CE_None;
     ILIdx tinfo = {0, 0};
@@ -2403,7 +2403,7 @@ CPLErr MRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
         }
 
         // tinfo contains the current info or 0,0
-        if (tinfo.size == GIntBig(net64(size)))
+        if (tinfo.size == int64_t(net64(size)))
         {  // Might be identical
             if (size != 0)
             {
@@ -2419,7 +2419,7 @@ CPLErr MRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
             else
             {
                 // Writing a null tile on top of a null tile, does it count?
-                if (tinfo.offset != GIntBig(net64(GUIntBig(buff))))
+                if (tinfo.offset != int64_t(net64(uint64_t(buff))))
                     new_tile = true;
             }
         }
@@ -2445,11 +2445,11 @@ CPLErr MRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
         {
             // start of critical MP section
             VSIFSeekL(l_dfp, 0, SEEK_END);
-            GUIntBig offset = VSIFTellL(l_dfp) + spacing;
+            uint64_t offset = VSIFTellL(l_dfp) + spacing;
 
             // Spacing should be 0 in MP safe mode, this doesn't have much of
             // effect Use the existing data, spacing content is not guaranteed
-            for (GUIntBig pending = spacing; pending != 0;
+            for (uint64_t pending = spacing; pending != 0;
                  pending -= std::min(pending, size))
                 VSIFWriteL(buff, 1,
                            static_cast<size_t>(std::min(pending, size)),
@@ -2496,7 +2496,7 @@ CPLErr MRFDataset::WriteTile(void *buff, GUIntBig infooffset, GUIntBig size)
 
     // Special case, any non-zero offset will do
     if (nullptr != buff && 0 == size)
-        tinfo.offset = ~GUIntBig(0);
+        tinfo.offset = ~uint64_t(0);
 
     VSIFSeekL(l_ifp, infooffset, SEEK_SET);
     if (sizeof(tinfo) != VSIFWriteL(&tinfo, 1, sizeof(tinfo), l_ifp))
@@ -2550,7 +2550,7 @@ CPLErr MRFDataset::GetGeoTransform(double *gt)
  */
 
 CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
-                               const ILImage &img, const GIntBig bias)
+                               const ILImage &img, const int64_t bias)
 {
     VSILFILE *l_ifp = IdxFP();
 
@@ -2558,7 +2558,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
     if (missing)
         return CE_None;
 
-    GIntBig offset = bias + IdxOffset(pos, img);
+    int64_t offset = bias + IdxOffset(pos, img);
     if (l_ifp == nullptr && img.comp == IL_NONE)
     {
         tinfo.size = current.pageSizeBytes;
@@ -2574,7 +2574,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
         tinfo.size = VSIFTellL(l_dfp);
 
         // It should be less than the pagebuffer
-        tinfo.size = std::min(tinfo.size, static_cast<GIntBig>(pbsize));
+        tinfo.size = std::min(tinfo.size, static_cast<int64_t>(pbsize));
         return CE_None;
     }
 
@@ -2608,7 +2608,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
     const int CPYSZ = 32768;
     // Adjust offset to the start of the block
     offset = (offset / CPYSZ) * CPYSZ;
-    GIntBig size = std::min(size_t(CPYSZ), size_t(bias - offset));
+    int64_t size = std::min(size_t(CPYSZ), size_t(bias - offset));
     size /= sizeof(ILIdx);  // In records
     vector<ILIdx> buf(static_cast<size_t>(size));
     ILIdx *buffer = &buf[0];  // Buffer to copy the source to the clone index
@@ -2630,7 +2630,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
 
     VSIFSeekL(srcidx, offset, SEEK_SET);
     size = VSIFReadL(buffer, sizeof(ILIdx), static_cast<size_t>(size), srcidx);
-    if (size != GIntBig(buf.size()))
+    if (size != int64_t(buf.size()))
     {
         CPLError(CE_Failure, CPLE_FileIO, "Can't read cloned source index");
         return CE_Failure;  // Source reported the error
@@ -2646,7 +2646,7 @@ CPLErr MRFDataset::ReadTileIdx(ILIdx &tinfo, const ILSize &pos,
     // Write it in the right place in the local index file
     VSIFSeekL(l_ifp, bias + offset, SEEK_SET);
     size = VSIFWriteL(&buf[0], sizeof(ILIdx), static_cast<size_t>(size), l_ifp);
-    if (size != GIntBig(buf.size()))
+    if (size != int64_t(buf.size()))
     {
         CPLError(CE_Failure, CPLE_FileIO, "Can't write to cloning MRF index");
         return CE_Failure;  // Source reported the error

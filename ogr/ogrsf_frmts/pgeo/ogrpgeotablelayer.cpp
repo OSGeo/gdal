@@ -31,6 +31,8 @@
 #include "ogr_pgeo.h"
 #include "ogrpgeogeometry.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                          OGRPGeoTableLayer()                         */
 /************************************************************************/
@@ -321,7 +323,7 @@ void OGRPGeoTableLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRPGeoTableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRPGeoTableLayer::GetFeature(int64_t nFeatureId)
 
 {
     if (pszFIDColumn == nullptr)
@@ -334,7 +336,7 @@ OGRFeature *OGRPGeoTableLayer::GetFeature(GIntBig nFeatureId)
     poStmt = new CPLODBCStatement(poDS->GetSession(), m_nStatementFlags);
     poStmt->Append("SELECT * FROM ");
     poStmt->Append(poFeatureDefn->GetName());
-    poStmt->Appendf(" WHERE %s = " CPL_FRMT_GIB, pszFIDColumn, nFeatureId);
+    poStmt->Appendf(" WHERE %s = %" PRId64, pszFIDColumn, nFeatureId);
 
     if (!poStmt->ExecuteSQL())
     {
@@ -398,7 +400,7 @@ int OGRPGeoTableLayer::TestCapability(const char *pszCap)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRPGeoTableLayer::GetFeatureCount(int bForce)
+int64_t OGRPGeoTableLayer::GetFeatureCount(int bForce)
 
 {
     if (m_poFilterGeom != nullptr || !poDS->CountStarWorking())

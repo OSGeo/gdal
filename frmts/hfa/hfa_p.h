@@ -119,7 +119,7 @@ HFAInfo_t *HFAGetDependent(HFAInfo_t *, const char *);
 HFAInfo_t *HFACreateDependent(HFAInfo_t *psBase);
 bool HFACreateSpillStack(HFAInfo_t *, int nXSize, int nYSize, int nLayers,
                          int nBlockSize, EPTType eDataType,
-                         GIntBig *pnValidFlagsOffset, GIntBig *pnDataOffset);
+                         int64_t *pnValidFlagsOffset, int64_t *pnDataOffset);
 
 const char *const *GetHFAAuxMetaDataList();
 
@@ -133,8 +133,8 @@ int CPL_DLL HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
                            char **papszOptions,
 
                            // These are only related to external (large) files.
-                           GIntBig nStackValidFlagsOffset,
-                           GIntBig nStackDataOffset, int nStackCount,
+                           int64_t nStackValidFlagsOffset,
+                           int64_t nStackDataOffset, int nStackCount,
                            int nStackIndex);
 
 std::unique_ptr<OGRSpatialReference>
@@ -331,7 +331,7 @@ class HFAEntry
     const char *
     GetStringField(const char *, CPLErr * = nullptr,
                    int *pnRemainingDataSize = nullptr) CPL_WARN_UNUSED_RESULT;
-    GIntBig GetBigIntField(const char *,
+    int64_t GetBigIntField(const char *,
                            CPLErr * = nullptr) CPL_WARN_UNUSED_RESULT;
     int GetFieldCount(const char *, CPLErr * = nullptr) CPL_WARN_UNUSED_RESULT;
 

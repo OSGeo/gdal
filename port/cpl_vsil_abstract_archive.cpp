@@ -33,6 +33,7 @@
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
+#include <cinttypes>
 #include <ctime>
 #include <map>
 #include <set>
@@ -244,8 +245,7 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
                         content->entries[content->nEntries].file_pos = nullptr;
 #ifdef DEBUG_VERBOSE
                         const int nEntries = content->nEntries;
-                        CPLDebug("VSIArchive",
-                                 "[%d] %s : " CPL_FRMT_GUIB " bytes",
+                        CPLDebug("VSIArchive", "[%d] %s : %" PRIu64 " bytes",
                                  content->nEntries + 1,
                                  content->entries[nEntries].fileName,
                                  content->entries[nEntries].uncompressed_size);
@@ -272,7 +272,7 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
             content->entries[content->nEntries].file_pos =
                 poReader->GetFileOffset();
 #ifdef DEBUG_VERBOSE
-            CPLDebug("VSIArchive", "[%d] %s : " CPL_FRMT_GUIB " bytes",
+            CPLDebug("VSIArchive", "[%d] %s : %" PRIu64 " bytes",
                      content->nEntries + 1,
                      content->entries[content->nEntries].fileName,
                      content->entries[content->nEntries].uncompressed_size);

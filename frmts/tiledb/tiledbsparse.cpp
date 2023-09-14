@@ -35,6 +35,7 @@
 #include "ogr_swq.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 constexpr int SECONDS_PER_DAY = 3600 * 24;
@@ -981,7 +982,7 @@ bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
                 oAttribute.Set("cell_val_num", "variable");
             else
                 oAttribute.Set("cell_val_num",
-                               static_cast<GIntBig>(attr.cell_val_num()));
+                               static_cast<int64_t>(attr.cell_val_num()));
             oAttribute.Set("nullable", attr.nullable());
 
             const auto filters = attr.filter_list();
@@ -1139,7 +1140,7 @@ bool OGRTileDBLayer::InitFromStorage(tiledb::Context *poCtx,
             case TILEDB_INT64:
                 if (v_num == 1)
                     oMDItem.Set("value",
-                                static_cast<GIntBig>(
+                                static_cast<int64_t>(
                                     *static_cast<const int64_t *>(v_r)));
                 break;
             case TILEDB_FLOAT64:
@@ -2260,7 +2261,7 @@ static bool IsComparisonOp(int op)
 
 static int64_t OGRFieldToTimeMS(const OGRField &sField)
 {
-    GIntBig nVal = sField.Date.Hour * 3600 + sField.Date.Minute * 60;
+    int64_t nVal = sField.Date.Hour * 3600 + sField.Date.Minute * 60;
     return static_cast<int64_t>(
         (static_cast<double>(nVal) + sField.Date.Second) * 1000 + 0.5);
 }
@@ -2279,7 +2280,7 @@ static int64_t OGRFieldToDateDay(const OGRField &sField)
     brokenDown.tm_hour = 0;
     brokenDown.tm_min = 0;
     brokenDown.tm_sec = 0;
-    GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
+    int64_t nVal = CPLYMDHMSToUnixTime(&brokenDown);
     return static_cast<int64_t>(nVal / SECONDS_PER_DAY);
 }
 
@@ -2297,7 +2298,7 @@ static int64_t OGRFieldToDateTimeMS(const OGRField &sField)
     brokenDown.tm_hour = sField.Date.Hour;
     brokenDown.tm_min = sField.Date.Minute;
     brokenDown.tm_sec = 0;
-    GIntBig nVal = CPLYMDHMSToUnixTime(&brokenDown);
+    int64_t nVal = CPLYMDHMSToUnixTime(&brokenDown);
     if (sField.Date.TZFlag != 0 && sField.Date.TZFlag != 1)
     {
         nVal -= (sField.Date.TZFlag - 100) * 15 * 60;
@@ -3135,7 +3136,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     *(std::get<std::shared_ptr<std::vector<int64_t>>>(
                         fieldValues));
                 poFeature->SetFieldSameTypeUnsafe(
-                    i, static_cast<GIntBig>(v[m_nOffsetInResultSet]));
+                    i, static_cast<int64_t>(v[m_nOffsetInResultSet]));
                 break;
             }
 
@@ -3268,8 +3269,8 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                 }
                 else
                 {
-                    GIntBig timestamp =
-                        static_cast<GIntBig>(v[m_nOffsetInResultSet]) *
+                    int64_t timestamp =
+                        static_cast<int64_t>(v[m_nOffsetInResultSet]) *
                         SECONDS_PER_DAY;
                     struct tm dt;
                     CPLUnixTimeToYMDHMS(timestamp, &dt);
@@ -3291,8 +3292,8 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                 const auto &v =
                     *(std::get<std::shared_ptr<std::vector<int64_t>>>(
                         fieldValues));
-                GIntBig timestamp =
-                    static_cast<GIntBig>(v[m_nOffsetInResultSet]);
+                int64_t timestamp =
+                    static_cast<int64_t>(v[m_nOffsetInResultSet]);
                 double floatingPart = (timestamp % 1000) / 1e3;
                 timestamp /= 1000;
                 struct tm dt;
@@ -3317,7 +3318,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                 const auto &v =
                     *(std::get<std::shared_ptr<std::vector<int64_t>>>(
                         fieldValues));
-                GIntBig value = static_cast<GIntBig>(v[m_nOffsetInResultSet]);
+                int64_t value = static_cast<int64_t>(v[m_nOffsetInResultSet]);
                 double floatingPart = (value % 1000) / 1e3;
                 value /= 1000;
                 auto psField = poFeature->GetRawFieldRef(i);
@@ -3354,7 +3355,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
 /*                         GetFeature()                                 */
 /************************************************************************/
 
-OGRFeature *OGRTileDBLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRTileDBLayer::GetFeature(int64_t nFID)
 {
     if (m_osFIDColumn.empty())
         return OGRLayer::GetFeature(nFID);
@@ -3373,11 +3374,11 @@ OGRFeature *OGRTileDBLayer::GetFeature(GIntBig nFID)
 /*                      GetFeatureCount()                               */
 /************************************************************************/
 
-GIntBig OGRTileDBLayer::GetFeatureCount(int bForce)
+int64_t OGRTileDBLayer::GetFeatureCount(int bForce)
 {
     if (!m_poAttrQuery && !m_poFilterGeom && m_nTotalFeatureCount >= 0)
         return m_nTotalFeatureCount;
-    GIntBig nRet = OGRLayer::GetFeatureCount(bForce);
+    int64_t nRet = OGRLayer::GetFeatureCount(bForce);
     if (nRet >= 0 && !m_poAttrQuery && !m_poFilterGeom)
         m_nTotalFeatureCount = nRet;
     return nRet;
@@ -3927,11 +3928,10 @@ OGRErr OGRTileDBLayer::ICreateFeature(OGRFeature *poFeature)
             if (!bFieldIsValid)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Field %d of feature " CPL_FRMT_GIB
-                         " is null or unset, "
+                         "Field %d of feature %" PRId64 " is null or unset, "
                          "but field is declared as not nullable. Readers "
                          "will see an incorrect value",
-                         i, static_cast<GIntBig>(nFID));
+                         i, static_cast<int64_t>(nFID));
             }
         }
         auto &fieldValues = m_aFieldValues[i];

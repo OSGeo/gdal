@@ -337,9 +337,9 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
      * Fetch table id.  We actually use the index feature's ids as the
      * base table ids.
      *----------------------------------------------------------------*/
-    GIntBig nTableId64 = poIndexFeature->GetFID();
+    int64_t nTableId64 = poIndexFeature->GetFID();
     int nTableId = static_cast<int>(nTableId64);
-    CPLAssert(static_cast<GIntBig>(nTableId) == nTableId64);
+    CPLAssert(static_cast<int64_t>(nTableId) == nTableId64);
 
     if (m_nCurBaseTableId == nTableId && m_poCurBaseTable != nullptr)
     {
@@ -489,7 +489,7 @@ int TABSeamless::OpenNextBaseTable(bool bTestOpenNoError /*=FALSE*/)
  * Combine the table id + feature id into a single feature id that should
  * be unique amongst all base tables in this seamless dataset.
  **********************************************************************/
-GIntBig TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
+int64_t TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
 {
     if (nTableId == -1 || nBaseFeatureId == -1)
         return -1;
@@ -497,10 +497,10 @@ GIntBig TABSeamless::EncodeFeatureId(int nTableId, int nBaseFeatureId)
     /* Feature encoding is now based on the numbers of bits on the number
        of features in the index table. */
 
-    return (static_cast<GIntBig>(nTableId) << 32) + nBaseFeatureId;
+    return (static_cast<int64_t>(nTableId) << 32) + nBaseFeatureId;
 }
 
-int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
+int TABSeamless::ExtractBaseTableId(int64_t nEncodedFeatureId)
 {
     if (nEncodedFeatureId == -1)
         return -1;
@@ -508,7 +508,7 @@ int TABSeamless::ExtractBaseTableId(GIntBig nEncodedFeatureId)
     return static_cast<int>(nEncodedFeatureId >> 32);
 }
 
-int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
+int TABSeamless::ExtractBaseFeatureId(int64_t nEncodedFeatureId)
 {
     if (nEncodedFeatureId == -1)
         return -1;
@@ -522,7 +522,7 @@ int TABSeamless::ExtractBaseFeatureId(GIntBig nEncodedFeatureId)
  * Returns feature id that follows nPrevId, or -1 if it is the
  * last feature id.  Pass nPrevId=-1 to fetch the first valid feature id.
  **********************************************************************/
-GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
+int64_t TABSeamless::GetNextFeatureId(int64_t nPrevId)
 {
     if (m_poIndexTable == nullptr || m_poCurBaseTable == nullptr)
         return -1;  // File is not opened yet
@@ -560,7 +560,7 @@ GIntBig TABSeamless::GetNextFeatureId(GIntBig nPrevId)
  * error happened.  In any case, CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-TABFeature *TABSeamless::GetFeatureRef(GIntBig nFeatureId)
+TABFeature *TABSeamless::GetFeatureRef(int64_t nFeatureId)
 {
     if (m_poIndexTable == nullptr)
         return nullptr;  // File is not opened yet
@@ -731,7 +731,7 @@ int TABSeamless::GetFeatureCountByType(CPL_UNUSED int &numPoints,
     return -1;
 }
 
-GIntBig TABSeamless::GetFeatureCount(int bForce)
+int64_t TABSeamless::GetFeatureCount(int bForce)
 {
     /*-----------------------------------------------------------------
      * __TODO__  This should be implemented to return -1 if force=false,

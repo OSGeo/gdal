@@ -885,7 +885,7 @@ class TABRawBinBlock
     // cppcheck-suppress functionStatic
     int32_t ReadInt32();
     // cppcheck-suppress functionStatic
-    GInt64 ReadInt64();
+    int64_t ReadInt64();
     // cppcheck-suppress functionStatic
     float ReadFloat();
     // cppcheck-suppress functionStatic
@@ -898,7 +898,7 @@ class TABRawBinBlock
     // cppcheck-suppress functionStatic
     int WriteInt32(int32_t n32Value);
     // cppcheck-suppress functionStatic
-    int WriteInt64(GInt64 n64Value);
+    int WriteInt64(int64_t n64Value);
     // cppcheck-suppress functionStatic
     int WriteFloat(float fValue);
     // cppcheck-suppress functionStatic
@@ -1759,7 +1759,7 @@ class TABINDFile
     int SetIndexFieldType(int nIndexNumber, TABFieldType eType);
     int SetIndexUnique(int nIndexNumber, bool bUnique = TRUE);
     GByte *BuildKey(int nIndexNumber, int32_t nValue);
-    GByte *BuildKey(int nIndexNumber, GInt64 nValue);
+    GByte *BuildKey(int nIndexNumber, int64_t nValue);
     GByte *BuildKey(int nIndexNumber, const char *pszStr);
     GByte *BuildKey(int nIndexNumber, double dValue);
     int32_t FindFirst(int nIndexNumber, GByte *pKeyValue);
@@ -1857,7 +1857,7 @@ class TABDATFile
     const char *ReadCharField(int nWidth);
     int32_t ReadIntegerField(int nWidth);
     int16_t ReadSmallIntField(int nWidth);
-    GInt64 ReadLargeIntField(int nWidth);
+    int64_t ReadLargeIntField(int nWidth);
     double ReadFloatField(int nWidth);
     double ReadDecimalField(int nWidth);
     const char *ReadLogicalField(int nWidth);
@@ -1874,7 +1874,7 @@ class TABDATFile
                        int nIndexNo);
     int WriteIntegerField(int32_t nValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteSmallIntField(int16_t nValue, TABINDFile *poINDFile, int nIndexNo);
-    int WriteLargeIntField(GInt64 nValue, TABINDFile *poINDFile, int nIndexNo);
+    int WriteLargeIntField(int64_t nValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteFloatField(double dValue, TABINDFile *poINDFile, int nIndexNo);
     int WriteDecimalField(double dValue, int nWidth, int nPrecision,
                           TABINDFile *poINDFile, int nIndexNo);

@@ -261,10 +261,10 @@ static int CreateRandomStrategyRequests(GDALDataset *poDS, int nMaxRequests,
     {
         if (nMaxRequests > 0 && iLoop == nMaxRequests)
             break;
-        int nXOff = (int)((GIntBig)myrand_r(&seed) * (nXSize - 1) / MYRAND_MAX);
-        int nYOff = (int)((GIntBig)myrand_r(&seed) * (nYSize - 1) / MYRAND_MAX);
-        int nXWin = 1 + (int)((GIntBig)myrand_r(&seed) * nMaxXWin / MYRAND_MAX);
-        int nYWin = 1 + (int)((GIntBig)myrand_r(&seed) * nMaxYWin / MYRAND_MAX);
+        int nXOff = (int)((int64_t)myrand_r(&seed) * (nXSize - 1) / MYRAND_MAX);
+        int nYOff = (int)((int64_t)myrand_r(&seed) * (nYSize - 1) / MYRAND_MAX);
+        int nXWin = 1 + (int)((int64_t)myrand_r(&seed) * nMaxXWin / MYRAND_MAX);
+        int nYWin = 1 + (int)((int64_t)myrand_r(&seed) * nMaxYWin / MYRAND_MAX);
         if (nXOff + nXWin > nXSize)
             nXWin = nXSize - nXOff;
         if (nYOff + nYWin > nYSize)

@@ -31,6 +31,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cstdarg>
 #include <cstdio>
@@ -89,8 +90,8 @@ enum class GDALAllowReadWriteMutexState
     RW_MUTEX_STATE_DISABLED
 };
 
-const GIntBig TOTAL_FEATURES_NOT_INIT = -2;
-const GIntBig TOTAL_FEATURES_UNKNOWN = -1;
+const int64_t TOTAL_FEATURES_NOT_INIT = -2;
+const int64_t TOTAL_FEATURES_UNKNOWN = -1;
 
 class GDALDataset::Private
 {
@@ -98,18 +99,18 @@ class GDALDataset::Private
 
   public:
     CPLMutex *hMutex = nullptr;
-    std::map<GIntBig, int> oMapThreadToMutexTakenCount{};
+    std::map<int64_t, int> oMapThreadToMutexTakenCount{};
 #ifdef DEBUG_EXTRA
-    std::map<GIntBig, int> oMapThreadToMutexTakenCountSaved{};
+    std::map<int64_t, int> oMapThreadToMutexTakenCountSaved{};
 #endif
     GDALAllowReadWriteMutexState eStateReadWriteMutex =
         GDALAllowReadWriteMutexState::RW_MUTEX_STATE_UNKNOWN;
     int nCurrentLayerIdx = 0;
     int nLayerCount = -1;
-    GIntBig nFeatureReadInLayer = 0;
-    GIntBig nFeatureReadInDataset = 0;
-    GIntBig nTotalFeaturesInLayer = TOTAL_FEATURES_NOT_INIT;
-    GIntBig nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
+    int64_t nFeatureReadInLayer = 0;
+    int64_t nFeatureReadInDataset = 0;
+    int64_t nTotalFeaturesInLayer = TOTAL_FEATURES_NOT_INIT;
+    int64_t nTotalFeatures = TOTAL_FEATURES_NOT_INIT;
     OGRLayer *poCurrentLayer = nullptr;
 
     char *m_pszWKTCached = nullptr;
@@ -128,7 +129,7 @@ struct SharedDatasetCtxt
 {
     // PID of the thread that mark the dataset as shared
     // This may not be the actual PID, but the responsiblePID.
-    GIntBig nPID;
+    int64_t nPID;
     char *pszDescription;
     char *pszConcatenatedOpenOptions;
     int nOpenFlags;
@@ -145,7 +146,7 @@ static CPLHashSet *phSharedDatasetSet = nullptr;
 // that marked the dataset as shared, so that we can remove it from
 // the phSharedDatasetSet in the destructor of the dataset, even
 // if GDALClose is called from a different thread.
-static std::map<GDALDataset *, GIntBig> *poAllDatasetMap = nullptr;
+static std::map<GDALDataset *, int64_t> *poAllDatasetMap = nullptr;
 
 static CPLMutex *hDLMutex = nullptr;
 
@@ -206,13 +207,13 @@ CPLMutex **GDALGetphDLMutex()
 
 // The current thread will act in the behalf of the thread of PID
 // responsiblePID.
-void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID)
+void GDALSetResponsiblePIDForCurrentThread(int64_t responsiblePID)
 {
-    GIntBig *pResponsiblePID =
-        static_cast<GIntBig *>(CPLGetTLS(CTLS_RESPONSIBLEPID));
+    int64_t *pResponsiblePID =
+        static_cast<int64_t *>(CPLGetTLS(CTLS_RESPONSIBLEPID));
     if (pResponsiblePID == nullptr)
     {
-        pResponsiblePID = static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig)));
+        pResponsiblePID = static_cast<int64_t *>(CPLMalloc(sizeof(int64_t)));
         CPLSetTLS(CTLS_RESPONSIBLEPID, pResponsiblePID, TRUE);
     }
     *pResponsiblePID = responsiblePID;
@@ -220,10 +221,10 @@ void GDALSetResponsiblePIDForCurrentThread(GIntBig responsiblePID)
 
 // Get the PID of the thread that the current thread will act in the behalf of
 // By default : the current thread acts in the behalf of itself.
-GIntBig GDALGetResponsiblePIDForCurrentThread()
+int64_t GDALGetResponsiblePIDForCurrentThread()
 {
-    GIntBig *pResponsiblePID =
-        static_cast<GIntBig *>(CPLGetTLS(CTLS_RESPONSIBLEPID));
+    int64_t *pResponsiblePID =
+        static_cast<int64_t *>(CPLGetTLS(CTLS_RESPONSIBLEPID));
     if (pResponsiblePID == nullptr)
         return CPLGetPID();
     return *pResponsiblePID;
@@ -322,7 +323,7 @@ GDALDataset::~GDALDataset()
         CPLMutexHolderD(&hDLMutex);
         if (poAllDatasetMap)
         {
-            std::map<GDALDataset *, GIntBig>::iterator oIter =
+            std::map<GDALDataset *, int64_t>::iterator oIter =
                 poAllDatasetMap->find(this);
             CPLAssert(oIter != poAllDatasetMap->end());
 
@@ -481,10 +482,10 @@ void GDALDataset::UnregisterFromSharedDataset()
 
     CPLMutexHolderD(&hDLMutex);
 
-    std::map<GDALDataset *, GIntBig>::iterator oIter =
+    std::map<GDALDataset *, int64_t>::iterator oIter =
         poAllDatasetMap->find(this);
     CPLAssert(oIter != poAllDatasetMap->end());
-    const GIntBig nPIDCreatorForShared = oIter->second;
+    const int64_t nPIDCreatorForShared = oIter->second;
     bShared = false;
     SharedDatasetCtxt sStruct;
     sStruct.nPID = nPIDCreatorForShared;
@@ -523,7 +524,7 @@ void GDALDataset::AddToDatasetOpenList()
     CPLMutexHolderD(&hDLMutex);
 
     if (poAllDatasetMap == nullptr)
-        poAllDatasetMap = new std::map<GDALDataset *, GIntBig>;
+        poAllDatasetMap = new std::map<GDALDataset *, int64_t>;
     (*poAllDatasetMap)[this] = -1;
 }
 
@@ -636,7 +637,7 @@ CPLErr CPL_STDCALL GDALFlushCache(GDALDatasetH hDS)
  * returns -1)
  */
 
-GIntBig GDALDataset::GetEstimatedRAMUsage()
+int64_t GDALDataset::GetEstimatedRAMUsage()
 {
     return -1;
 }
@@ -1586,7 +1587,7 @@ void GDALDataset::MarkAsShared()
     if (bIsInternal)
         return;
 
-    GIntBig nPID = GDALGetResponsiblePIDForCurrentThread();
+    int64_t nPID = GDALGetResponsiblePIDForCurrentThread();
 
     // Insert the dataset in the set of shared opened datasets.
     CPLMutexHolderD(&hDLMutex);
@@ -2796,7 +2797,7 @@ GDALDataset **GDALDataset::GetOpenDatasets(int *pnCount)
     *pnCount = static_cast<int>(poAllDatasetMap->size());
     ppDatasets = static_cast<GDALDataset **>(
         CPLRealloc(ppDatasets, (*pnCount) * sizeof(GDALDataset *)));
-    std::map<GDALDataset *, GIntBig>::iterator oIter = poAllDatasetMap->begin();
+    std::map<GDALDataset *, int64_t>::iterator oIter = poAllDatasetMap->begin();
     for (int i = 0; oIter != poAllDatasetMap->end(); ++oIter, ++i)
         ppDatasets[i] = oIter->first;
     return ppDatasets;
@@ -3436,7 +3437,7 @@ GDALDatasetH CPL_STDCALL GDALOpenEx(const char *pszFilename,
 
         if (phSharedDatasetSet != nullptr)
         {
-            const GIntBig nThisPID = GDALGetResponsiblePIDForCurrentThread();
+            const int64_t nThisPID = GDALGetResponsiblePIDForCurrentThread();
             SharedDatasetCtxt sStruct;
 
             sStruct.nPID = nThisPID;
@@ -5408,7 +5409,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                 OGRERR_NONE)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Unable to translate feature " CPL_FRMT_GIB
+                         "Unable to translate feature %" PRId64
                          " from layer %s.",
                          poFeature->GetFID(), poSrcDefn->GetName());
                 return poDstLayer;
@@ -5427,7 +5428,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                         continue;
 
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unable to transform geometry " CPL_FRMT_GIB
+                             "Unable to transform geometry %" PRId64
                              " from layer %s.",
                              poFeature->GetFID(), poSrcDefn->GetName());
                     return poDstLayer;
@@ -5484,7 +5485,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                         poFeature.get(), anMap.data(), TRUE) != OGRERR_NONE)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unable to translate feature " CPL_FRMT_GIB
+                             "Unable to translate feature %" PRId64
                              " from layer %s.",
                              poFeature->GetFID(), poSrcDefn->GetName());
                     bStopTransfer = true;
@@ -5506,7 +5507,7 @@ OGRLayer *GDALDataset::CopyLayer(OGRLayer *poSrcLayer, const char *pszNewName,
                             continue;
 
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Unable to transform geometry " CPL_FRMT_GIB
+                                 "Unable to transform geometry %" PRId64
                                  " from layer %s.",
                                  poFeature->GetFID(), poSrcDefn->GetName());
                         bStopTransfer = true;
@@ -7229,7 +7230,7 @@ OGRFeature *GDALDataset::GetNextFeature(OGRLayer **ppoBelongingLayer,
                     m_poPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
                     break;
                 }
-                GIntBig nCount = poLayer->GetFeatureCount(FALSE);
+                int64_t nCount = poLayer->GetFeatureCount(FALSE);
                 if (nCount < 0)
                 {
                     m_poPrivate->nTotalFeatures = TOTAL_FEATURES_UNKNOWN;
@@ -7772,8 +7773,7 @@ int GDALDataset::EnterReadWrite(GDALRWFlag eRWFlag)
             // it should be first created through IWriteBlock() / IRasterIO()
             // and then GDALRasterBlock might call it from another thread.
 #ifdef DEBUG_VERBOSE
-            CPLDebug("GDAL",
-                     "[Thread " CPL_FRMT_GIB "] Acquiring RW mutex for %s",
+            CPLDebug("GDAL", "[Thread %" PRId64 "] Acquiring RW mutex for %s",
                      CPLGetPID(), GetDescription());
 #endif
             CPLCreateOrAcquireMutex(&(m_poPrivate->hMutex), 1000.0);
@@ -7815,7 +7815,7 @@ void GDALDataset::LeaveReadWrite()
         m_poPrivate->oMapThreadToMutexTakenCount[CPLGetPID()]--;
         CPLReleaseMutex(m_poPrivate->hMutex);
 #ifdef DEBUG_VERBOSE
-        CPLDebug("GDAL", "[Thread " CPL_FRMT_GIB "] Releasing RW mutex for %s",
+        CPLDebug("GDAL", "[Thread %" PRId64 "] Releasing RW mutex for %s",
                  CPLGetPID(), GetDescription());
 #endif
     }
@@ -7886,7 +7886,7 @@ void GDALDataset::TemporarilyDropReadWriteLock()
     {
 #ifdef DEBUG_VERBOSE
         CPLDebug("GDAL",
-                 "[Thread " CPL_FRMT_GIB "] "
+                 "[Thread %" PRId64 "] "
                  "Temporarily drop RW mutex for %s",
                  CPLGetPID(), GetDescription());
 #endif
@@ -7924,7 +7924,7 @@ void GDALDataset::ReacquireReadWriteLock()
     {
 #ifdef DEBUG_VERBOSE
         CPLDebug("GDAL",
-                 "[Thread " CPL_FRMT_GIB "] "
+                 "[Thread %" PRId64 "] "
                  "Reacquire temporarily dropped RW mutex for %s",
                  CPLGetPID(), GetDescription());
 #endif

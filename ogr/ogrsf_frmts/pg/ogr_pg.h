@@ -189,7 +189,7 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
     OGRPGFeatureDefn *poFeatureDefn = nullptr;
 
     int nCursorPage = 0;
-    GIntBig iNextShapeId = 0;
+    int64_t iNextShapeId = 0;
 
     static char *GeometryToBYTEA(const OGRGeometry *, int nPostGISMajor,
                                  int nPostGISMinor);
@@ -263,7 +263,7 @@ class OGRPGLayer CPL_NON_FINAL : public OGRLayer
 
     virtual const char *GetFIDColumn() override;
 
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
 
     OGRPGDataSource *GetDS()
     {
@@ -370,10 +370,10 @@ class OGRPGTableLayer final : public OGRPGLayer
 
     void SetGeometryInformation(PGGeomColumnDesc *pasDesc, int nGeomFieldCount);
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual void SetSpatialFilter(OGRGeometry *poGeom) override
     {
@@ -389,7 +389,7 @@ class OGRPGTableLayer final : public OGRPGLayer
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     virtual OGRErr CreateField(OGRFieldDefn *poField,
@@ -528,7 +528,7 @@ class OGRPGResultLayer final : public OGRPGLayer
     virtual ~OGRPGResultLayer();
 
     virtual void ResetReading() override;
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual void SetSpatialFilter(OGRGeometry *poGeom) override
     {

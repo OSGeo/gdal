@@ -245,9 +245,8 @@ int main(int nArgc, char **papszArgv)
             printf("Segment %d (Type=%s):\n", iSegment + 1,
                    psSegInfo->szSegmentType);
 
-            printf("  HeaderStart=" CPL_FRMT_GUIB
-                   ", HeaderSize=%u, DataStart=" CPL_FRMT_GUIB
-                   ", DataSize=" CPL_FRMT_GUIB "\n",
+            printf("  HeaderStart=" PRIu64 ", HeaderSize=%u, DataStart=" PRIu64
+                   ", DataSize=" PRIu64 "\n",
                    psSegInfo->nSegmentHeaderStart,
                    psSegInfo->nSegmentHeaderSize, psSegInfo->nSegmentStart,
                    psSegInfo->nSegmentSize);
@@ -444,8 +443,7 @@ int main(int nArgc, char **papszArgv)
                     258)
             {
                 CPLError(CE_Warning, CPLE_FileIO,
-                         "Failed to read graphic subheader at " CPL_FRMT_GUIB
-                         ".",
+                         "Failed to read graphic subheader at %" PRIu64 ".",
                          psSegInfo->nSegmentHeaderStart);
                 continue;
             }
@@ -502,7 +500,7 @@ int main(int nArgc, char **papszArgv)
             {
                 CPLError(CE_Warning, CPLE_FileIO,
                          "Failed to read %d bytes of text header data "
-                         "at " CPL_FRMT_GUIB ".",
+                         "at %" PRIu64 ".",
                          psSegment->nSegmentHeaderSize,
                          psSegment->nSegmentHeaderStart);
                 CPLFree(pabyHeaderData);
@@ -527,8 +525,8 @@ int main(int nArgc, char **papszArgv)
                           psFile->fp) != psSegment->nSegmentSize)
             {
                 CPLError(CE_Warning, CPLE_FileIO,
-                         "Failed to read " CPL_FRMT_GUIB
-                         " bytes of text data at " CPL_FRMT_GUIB ".",
+                         "Failed to read %" PRIu64
+                         " bytes of text data at %" PRIu64 ".",
                          psSegment->nSegmentSize, psSegment->nSegmentStart);
                 CPLFree(pabyTextData);
                 continue;

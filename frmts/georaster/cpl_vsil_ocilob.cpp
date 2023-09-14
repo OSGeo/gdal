@@ -66,8 +66,8 @@ class VSIOCILobHandle : public VSIVirtualHandle
     OWConnection *poConnection;
     OWStatement *poStatement;
     OCILobLocator *phLocator;
-    GUIntBig nFileSize;
-    GUIntBig nCurOff;
+    uint64_t nFileSize;
+    uint64_t nCurOff;
     boolean bUpdate;
 
   public:
@@ -458,18 +458,18 @@ vsi_l_offset VSIOCILobHandle::Tell()
 
 size_t VSIOCILobHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 {
-    GUIntBig nBytes = (nSize * nCount);
+    uint64_t nBytes = (nSize * nCount);
 
     if (nBytes == 0)
     {
         return 0;
     }
 
-    GUIntBig nRead = poStatement->ReadBlob(
+    uint64_t nRead = poStatement->ReadBlob(
         phLocator, pBuffer, static_cast<unsigned long>(nCurOff + 1),
         static_cast<unsigned long>(nBytes));
 
-    nCurOff += (GUIntBig)nRead;
+    nCurOff += (uint64_t)nRead;
 
     return (size_t)(nRead / nSize);
 }
@@ -480,18 +480,18 @@ size_t VSIOCILobHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 
 size_t VSIOCILobHandle::Write(const void *pBuffer, size_t nSize, size_t nCount)
 {
-    GUIntBig nBytes = (nSize * nCount);
+    uint64_t nBytes = (nSize * nCount);
 
     if (nBytes == 0)
     {
         return 0;
     }
 
-    GUIntBig nWrite = poStatement->WriteBlob(
+    uint64_t nWrite = poStatement->WriteBlob(
         phLocator, (void *)pBuffer, static_cast<unsigned long>(nCurOff + 1),
         static_cast<unsigned long>(nBytes));
 
-    nCurOff += (GUIntBig)nWrite;
+    nCurOff += (uint64_t)nWrite;
 
     return (size_t)(nWrite / nSize);
 }

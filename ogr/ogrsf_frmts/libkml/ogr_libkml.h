@@ -108,9 +108,9 @@ class OGRLIBKMLLayer final : public OGRLayer,
     // OGRErr                    SetAttributeFilter(const char * );
     OGRErr ICreateFeature(OGRFeature *poOgrFeat) override;
     OGRErr ISetFeature(OGRFeature *poOgrFeat) override;
-    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
 
-    GIntBig GetFeatureCount(int bForce = TRUE) override;
+    int64_t GetFeatureCount(int bForce = TRUE) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override

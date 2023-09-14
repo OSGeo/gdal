@@ -1469,7 +1469,7 @@ static GDALDataset *ECWCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
             }
             double dHistMin, dHistMax;
             int nBuckets;
-            GUIntBig *pHistogram = nullptr;
+            uint64_t *pHistogram = nullptr;
             if (poSrcDS->GetRasterBand(i)->GetDefaultHistogram(
                     &dHistMin, &dHistMax, &nBuckets, &pHistogram, FALSE,
                     nullptr, nullptr) == CE_None)

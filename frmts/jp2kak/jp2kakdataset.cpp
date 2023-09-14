@@ -43,6 +43,7 @@
 #include "subfile_source.h"
 #include "vsil_target.h"
 
+#include <cinttypes>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
@@ -2935,7 +2936,7 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
     // Determine if we can use the kdu_stripe_compressor logic
     const auto nMaxBufferSize = std::strtoull(
         CPLGetConfigOption("JP2KAK_MAX_BUFFER_SIZE",
-                           CPLSPrintf(CPL_FRMT_GUIB, GDALGetCacheMax64() / 4)),
+                           CPLSPrintf("%" PRIu64, GDALGetCacheMax64() / 4)),
         nullptr, 10);
     const auto nLineBufferSize = static_cast<unsigned long long>(nXSize) *
                                  num_components * nDataTypeSizeBytes;
@@ -2951,10 +2952,10 @@ static GDALDataset *JP2KAKCreateCopy(const char *pszFilename,
         {
             CPLDebug("JP2KAK",
                      "Using kdu_multi_analysis because "
-                     "nNeededBufferSize = " CPL_FRMT_GUIB
-                     " is > JP2KAK_MAX_BUFFER_SIZE = " CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(nNeededBufferSize),
-                     static_cast<GUIntBig>(nMaxBufferSize));
+                     "nNeededBufferSize = %" PRIu64
+                     " is > JP2KAK_MAX_BUFFER_SIZE = %" PRIu64,
+                     static_cast<uint64_t>(nNeededBufferSize),
+                     static_cast<uint64_t>(nMaxBufferSize));
             pszUseStripeCompressor = "NO";
         }
     }

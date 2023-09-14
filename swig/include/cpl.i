@@ -404,8 +404,8 @@ typedef struct
 {
     char*        name;
     int          mode;
-    GIntBig      size;
-    GIntBig      mtime;
+    int64_t      size;
+    int64_t      mtime;
     bool         modeKnown;
     bool         sizeKnown;
     bool         mtimeKnown;
@@ -418,8 +418,8 @@ struct DirEntry
 %immutable;
     char*        name;
     int          mode;
-    GIntBig      size;
-    GIntBig      mtime;
+    int64_t      size;
+    int64_t      mtime;
     bool         modeKnown;
     bool         sizeKnown;
     bool         mtimeKnown;
@@ -590,9 +590,9 @@ GByte *CPLHexToBinary( const char *pszHex, int *pnBytes );
 
 #if defined(SWIGPYTHON)
 
-%apply (GIntBig nLen, char *pBuf) {( GIntBig nBytes, const char *pabyData )};
+%apply (int64_t nLen, char *pBuf) {( int64_t nBytes, const char *pabyData )};
 %inline {
-void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const char *pabyData)
+void wrapper_VSIFileFromMemBuffer( const char* utf8_path, int64_t nBytes, const char *pabyData)
 {
     const size_t nSize = static_cast<size_t>(nBytes);
     void* pabyDataDup = VSIMalloc(nSize);
@@ -602,7 +602,7 @@ void wrapper_VSIFileFromMemBuffer( const char* utf8_path, GIntBig nBytes, const 
     VSIFCloseL(VSIFileFromMemBuffer(utf8_path, (GByte*) pabyDataDup, nSize, TRUE));
 }
 }
-%clear ( GIntBig nBytes, const GByte *pabyData );
+%clear ( int64_t nBytes, const GByte *pabyData );
 #else
 #if defined(SWIGJAVA)
 %apply (int nLen, unsigned char *pBuf ) {( int nBytes, const GByte *pabyData )};
@@ -713,7 +713,7 @@ bool VSIAbortPendingUploads(const char *utf8_path );
 int wrapper_VSICopyFile(const char* pszSource,
                         const char* pszTarget,
                         VSILFILE* fpSource = NULL,
-                        GIntBig nSourceSize = -1,
+                        int64_t nSourceSize = -1,
                         char** options = NULL,
                         GDALProgressFunc callback=NULL,
                         void* callback_data=NULL)
@@ -768,8 +768,8 @@ class VSILFILE
 typedef struct
 {
   int     mode;
-  GIntBig size;
-  GIntBig mtime;
+  int64_t size;
+  int64_t mtime;
 } StatBuf;
 %}
 
@@ -783,8 +783,8 @@ struct StatBuf
 {
 %immutable;
   int         mode;
-  GIntBig     size;
-  GIntBig     mtime;
+  int64_t     size;
+  int64_t     mtime;
 %mutable;
 
 %extend {
@@ -817,8 +817,8 @@ int wrapper_VSIStatL( const char * utf8_path, StatBuf *psStatBufOut, int nFlags 
     memset(psStatBufOut, 0, sizeof(StatBuf));
     int nRet = VSIStatExL(utf8_path, &sStat, nFlags);
     psStatBufOut->mode = sStat.st_mode;
-    psStatBufOut->size = (GIntBig)sStat.st_size;
-    psStatBufOut->mtime = (GIntBig)sStat.st_mtime;
+    psStatBufOut->size = (int64_t)sStat.st_size;
+    psStatBufOut->mtime = (int64_t)sStat.st_mtime;
     return nRet;
 }
 }
@@ -874,9 +874,9 @@ int VSIFFlushL( VSILFILE* fp );
 VSI_RETVAL VSIFCloseL( VSILFILE* fp );
 
 #if defined(SWIGPYTHON)
-int     VSIFSeekL( VSILFILE* fp, GIntBig offset, int whence);
-GIntBig    VSIFTellL( VSILFILE* fp );
-int     VSIFTruncateL( VSILFILE* fp, GIntBig length );
+int     VSIFSeekL( VSILFILE* fp, int64_t offset, int whence);
+int64_t    VSIFTellL( VSILFILE* fp );
+int     VSIFTruncateL( VSILFILE* fp, int64_t length );
 
 int     VSISupportsSparseFiles( const char* utf8_path );
 
@@ -884,7 +884,7 @@ int     VSISupportsSparseFiles( const char* utf8_path );
 #define VSI_RANGE_STATUS_DATA       1
 #define VSI_RANGE_STATUS_HOLE       2
 
-int     VSIFGetRangeStatusL( VSILFILE* fp, GIntBig offset, GIntBig length );
+int     VSIFGetRangeStatusL( VSILFILE* fp, int64_t offset, int64_t length );
 #else
 VSI_RETVAL VSIFSeekL( VSILFILE* fp, long offset, int whence);
 long    VSIFTellL( VSILFILE* fp );
@@ -896,7 +896,7 @@ VSI_RETVAL VSIFTruncateL( VSILFILE* fp, long length );
 %inline {
 int wrapper_VSIFWriteL( int nLen, char *pBuf, int size, int memb, VSILFILE* fp)
 {
-    if (nLen < static_cast<GIntBig>(size) * memb)
+    if (nLen < static_cast<int64_t>(size) * memb)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Inconsistent buffer size with 'size' and 'memb' values");
         return 0;
@@ -927,4 +927,4 @@ char **CSLParseCommandLine( const char * utf8_path );
 int CPLGetNumCPUs();
 
 %rename (GetUsablePhysicalRAM) CPLGetUsablePhysicalRAM;
-GIntBig CPLGetUsablePhysicalRAM();
+int64_t CPLGetUsablePhysicalRAM();

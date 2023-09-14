@@ -764,7 +764,7 @@ void swq_select::PushUnionAll(swq_select *poOtherSelectIn)
 /*                             SetLimit()                               */
 /************************************************************************/
 
-void swq_select::SetLimit(GIntBig nLimit)
+void swq_select::SetLimit(int64_t nLimit)
 
 {
     limit = nLimit;
@@ -774,7 +774,7 @@ void swq_select::SetLimit(GIntBig nLimit)
 /*                            SetOffset()                               */
 /************************************************************************/
 
-void swq_select::SetOffset(GIntBig nOffset)
+void swq_select::SetOffset(int64_t nOffset)
 
 {
     offset = nOffset;

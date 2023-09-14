@@ -1480,7 +1480,7 @@ double VRTSimpleSource::GetMaximum(int nXSize, int nYSize, int *pbSuccess)
 
 CPLErr VRTSimpleSource::GetHistogram(int nXSize, int nYSize, double dfMin,
                                      double dfMax, int nBuckets,
-                                     GUIntBig *panHistogram,
+                                     uint64_t *panHistogram,
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)
@@ -1966,7 +1966,7 @@ double VRTAveragedSource::GetMaximum(int /* nXSize */, int /* nYSize */,
 
 CPLErr VRTAveragedSource::GetHistogram(
     int /* nXSize */, int /* nYSize */, double /* dfMin */, double /* dfMax */,
-    int /* nBuckets */, GUIntBig * /* panHistogram */,
+    int /* nBuckets */, uint64_t * /* panHistogram */,
     int /* bIncludeOutOfRange */, int /* bApproxOK */,
     GDALProgressFunc /* pfnProgress */, void * /* pProgressData */)
 {
@@ -2836,7 +2836,7 @@ double VRTComplexSource::GetMaximum(int nXSize, int nYSize, int *pbSuccess)
 
 CPLErr VRTComplexSource::GetHistogram(int nXSize, int nYSize, double dfMin,
                                       double dfMax, int nBuckets,
-                                      GUIntBig *panHistogram,
+                                      uint64_t *panHistogram,
                                       int bIncludeOutOfRange, int bApproxOK,
                                       GDALProgressFunc pfnProgress,
                                       void *pProgressData)
@@ -2944,7 +2944,7 @@ double VRTFuncSource::GetMaximum(int /* nXSize */, int /* nYSize */,
 
 CPLErr VRTFuncSource::GetHistogram(
     int /* nXSize */, int /* nYSize */, double /* dfMin */, double /* dfMax */,
-    int /* nBuckets */, GUIntBig * /* panHistogram */,
+    int /* nBuckets */, uint64_t * /* panHistogram */,
     int /* bIncludeOutOfRange */, int /* bApproxOK */,
     GDALProgressFunc /* pfnProgress */, void * /* pProgressData */)
 {

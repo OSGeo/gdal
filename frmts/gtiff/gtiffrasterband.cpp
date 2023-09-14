@@ -31,6 +31,7 @@
 #include "gtiffdataset.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <set>
 
 #include "cpl_vsi_virtual.h"
@@ -345,8 +346,8 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             if (m_poGDS->nBands != 1 &&
                 m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
         {
-            const GIntBig nRequiredMem =
-                static_cast<GIntBig>(m_poGDS->nBands) * nXBlocks * nYBlocks *
+            const int64_t nRequiredMem =
+                static_cast<int64_t>(m_poGDS->nBands) * nXBlocks * nYBlocks *
                 nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(eDataType);
             if (nRequiredMem > GDALGetCacheMax64())
             {
@@ -355,7 +356,7 @@ CPLErr GTiffRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     CPLDebug("GTiff",
                              "Disable aggressive band caching. "
                              "Cache not big enough. "
-                             "At least " CPL_FRMT_GIB " bytes necessary",
+                             "At least %" PRId64 " bytes necessary",
                              nRequiredMem);
                     m_poGDS->m_bHasWarnedDisableAggressiveBandCaching = true;
                 }

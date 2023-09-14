@@ -520,9 +520,9 @@ int TABMAPObjectBlock::UpdateMBR(int32_t nX, int32_t nY)
     if (!m_bLockCenter)
     {
         m_nCenterX =
-            static_cast<int>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+            static_cast<int>((static_cast<int64_t>(m_nMinX) + m_nMaxX) / 2);
         m_nCenterY =
-            static_cast<int>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+            static_cast<int>((static_cast<int64_t>(m_nMinY) + m_nMaxY) / 2);
     }
 
     return 0;
@@ -564,9 +564,9 @@ void TABMAPObjectBlock::SetMBR(int32_t nXMin, int32_t nYMin, int32_t nXMax,
     if (!m_bLockCenter)
     {
         m_nCenterX =
-            static_cast<int>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+            static_cast<int>((static_cast<int64_t>(m_nMinX) + m_nMaxX) / 2);
         m_nCenterY =
-            static_cast<int>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+            static_cast<int>((static_cast<int64_t>(m_nMinY) + m_nMaxY) / 2);
     }
 }
 
@@ -1071,9 +1071,9 @@ int TABMAPObjPLine::ReadObj(TABMAPObjectBlock *poObjBlock)
     {
         // Init. Compr. Origin to a default value in case type is ever changed
         m_nComprOrgX =
-            static_cast<int32_t>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+            static_cast<int32_t>((static_cast<int64_t>(m_nMinX) + m_nMaxX) / 2);
         m_nComprOrgY =
-            static_cast<int32_t>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+            static_cast<int32_t>((static_cast<int64_t>(m_nMinY) + m_nMaxY) / 2);
     }
 
     m_nPenId = poObjBlock->ReadByte();  // Pen index
@@ -1705,9 +1705,9 @@ int TABMAPObjMultiPoint::ReadObj(TABMAPObjectBlock *poObjBlock)
 
         // Init. Compr. Origin to a default value in case type is ever changed
         m_nComprOrgX =
-            static_cast<int32_t>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+            static_cast<int32_t>((static_cast<int64_t>(m_nMinX) + m_nMaxX) / 2);
         m_nComprOrgY =
-            static_cast<int32_t>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+            static_cast<int32_t>((static_cast<int64_t>(m_nMinY) + m_nMaxY) / 2);
     }
 
     if (CPLGetLastErrorType() == CE_Failure)
@@ -2006,9 +2006,9 @@ int TABMAPObjCollection::ReadObj(TABMAPObjectBlock *poObjBlock)
 
         // Init. Compr. Origin to a default value in case type is ever changed
         m_nComprOrgX =
-            static_cast<int32_t>((static_cast<GIntBig>(m_nMinX) + m_nMaxX) / 2);
+            static_cast<int32_t>((static_cast<int64_t>(m_nMinX) + m_nMaxX) / 2);
         m_nComprOrgY =
-            static_cast<int32_t>((static_cast<GIntBig>(m_nMinY) + m_nMaxY) / 2);
+            static_cast<int32_t>((static_cast<int64_t>(m_nMinY) + m_nMaxY) / 2);
     }
 
     if (CPLGetLastErrorType() == CE_Failure)

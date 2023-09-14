@@ -741,12 +741,12 @@ int32_t HFAEntry::GetIntField(const char *pszFieldPath, CPLErr *peErr)
 /*                           GetBigIntField()                           */
 /*                                                                      */
 /*      This is just a helper method that reads two ULONG array         */
-/*      entries as a GIntBig.  The passed name should be the name of    */
+/*      entries as a int64_t.  The passed name should be the name of    */
 /*      the array with no array index.  Array indexes 0 and 1 will      */
 /*      be concatenated.                                                */
 /************************************************************************/
 
-GIntBig HFAEntry::GetBigIntField(const char *pszFieldPath, CPLErr *peErr)
+int64_t HFAEntry::GetBigIntField(const char *pszFieldPath, CPLErr *peErr)
 
 {
     char szFullFieldPath[1024];
@@ -761,7 +761,7 @@ GIntBig HFAEntry::GetBigIntField(const char *pszFieldPath, CPLErr *peErr)
     if (peErr != nullptr && *peErr != CE_None)
         return 0;
 
-    return nLower + (static_cast<GIntBig>(nUpper) << 32);
+    return nLower + (static_cast<int64_t>(nUpper) << 32);
 }
 
 /************************************************************************/

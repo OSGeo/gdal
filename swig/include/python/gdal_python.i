@@ -72,15 +72,15 @@ static bool readraster_acquirebuffer(void** buf,
         if (PyObject_GetBuffer( (PyObject*)inputOutputBuf, &view,
                                 PyBUF_SIMPLE | PyBUF_WRITABLE) == 0)
         {
-            if( static_cast<GUIntBig>(view.len) < buf_size )
+            if( static_cast<uint64_t>(view.len) < buf_size )
             {
                 PyBuffer_Release(&view);
                 SWIG_PYTHON_THREAD_END_BLOCK;
                 CPLError(CE_Failure, CPLE_AppDefined,
-                    "buf_obj length is " CPL_FRMT_GUIB " bytes. "
-                    "It should be at least " CPL_FRMT_GUIB,
-                    static_cast<GUIntBig>(view.len),
-                    static_cast<GUIntBig>(buf_size));
+                    "buf_obj length is %" PRIu64 " bytes. "
+                    "It should be at least %" PRIu64,
+                    static_cast<uint64_t>(view.len),
+                    static_cast<uint64_t>(buf_size));
                 return false;
             }
             data = (char*)view.buf;
@@ -385,15 +385,15 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
 %apply ( GDALDataType *optional_GDALDataType ) {(GDALDataType*)};
-%apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
+%apply ( int64_t *optional_int64_t ) {(int64_t*)};
 %feature( "kwargs" ) ReadRaster1;
   CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                      void **buf,
                      int *buf_xsize = 0,
                      int *buf_ysize = 0,
                      GDALDataType *buf_type = 0,
-                     GIntBig *buf_pixel_space = 0,
-                     GIntBig *buf_line_space = 0,
+                     int64_t *buf_pixel_space = 0,
+                     int64_t *buf_line_space = 0,
                      GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
                      GDALProgressFunc callback = NULL,
                      void* callback_data=NULL,
@@ -405,8 +405,8 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
     int nysize = (buf_ysize==0) ? static_cast<int>(ysize) : *buf_ysize;
     GDALDataType ntype  = (buf_type==0) ? GDALGetRasterDataType(self)
                                         : *buf_type;
-    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int64_t pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int64_t line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
 
     size_t buf_size = static_cast<size_t>(
         ComputeBandRasterIOSize( nxsize, nysize,
@@ -462,7 +462,7 @@ void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offse
 %clear (void **buf );
 %clear (void* inputOutputBuf);
 %clear (int*);
-%clear (GIntBig*);
+%clear (int64_t*);
 %clear (GDALDataType *);
 
 %apply ( void *inPythonObject ) { (void* buf_obj) };
@@ -728,13 +728,13 @@ def ComputeRasterMinMax(self, *args, **kwargs):
 %apply (int nList, int *pList ) { (int band_list, int *pband_list ) };
 %apply ( void **outPythonObject ) { (void **buf ) };
 %apply ( int *optional_int ) {(int*)};
-%apply ( GIntBig *optional_GIntBig ) {(GIntBig*)};
+%apply ( int64_t *optional_int64_t ) {(int64_t*)};
 CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
                     void **buf,
                     int *buf_xsize = 0, int *buf_ysize = 0,
                     GDALDataType *buf_type = 0,
                     int band_list = 0, int *pband_list = 0,
-                    GIntBig* buf_pixel_space = 0, GIntBig* buf_line_space = 0, GIntBig* buf_band_space = 0,
+                    int64_t* buf_pixel_space = 0, int64_t* buf_line_space = 0, int64_t* buf_band_space = 0,
                     GDALRIOResampleAlg resample_alg = GRIORA_NearestNeighbour,
                     GDALProgressFunc callback = NULL,
                     void* callback_data=NULL,
@@ -756,9 +756,9 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
       ntype = GDALGetRasterDataType( GDALGetRasterBand( self, lastband ) );
     }
 
-    GIntBig pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
-    GIntBig line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
-    GIntBig band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
+    int64_t pixel_space = (buf_pixel_space == 0) ? 0 : *buf_pixel_space;
+    int64_t line_space = (buf_line_space == 0) ? 0 : *buf_line_space;
+    int64_t band_space = (buf_band_space == 0) ? 0 : *buf_band_space;
 
     int ntypesize = GDALGetDataTypeSize( ntype ) / 8;
     size_t buf_size = static_cast<size_t>(
@@ -834,7 +834,7 @@ CPLErr ReadRaster1( double xoff, double yoff, double xsize, double ysize,
 %clear (void **buf );
 %clear (void *inputOutputBuf);
 %clear (int*);
-%clear (GIntBig*);
+%clear (int64_t*);
 
 %pythoncode %{
 

@@ -776,8 +776,8 @@ L160:
 /*        CALCULATED. */
 
 L165:
-    if( (GIntBig)maxb - minb < INT_MIN ||
-        (GIntBig)maxb - minb > INT_MAX )
+    if( (int64_t)maxb - minb < INT_MIN ||
+        (int64_t)maxb - minb > INT_MAX )
     {
         *ier = -1;
         free(misslx);

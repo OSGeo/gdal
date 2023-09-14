@@ -1498,11 +1498,11 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
     vsi_l_offset nImgOffset = panOffsets[0];
-    GIntBig nPixelOffset = (m_nPlanarConfig == PLANARCONFIG_CONTIG)
-                               ? static_cast<GIntBig>(nDTSize) * nBands
+    int64_t nPixelOffset = (m_nPlanarConfig == PLANARCONFIG_CONTIG)
+                               ? static_cast<int64_t>(nDTSize) * nBands
                                : nDTSize;
-    GIntBig nLineOffset = nPixelOffset * nRasterXSize;
-    GIntBig nBandOffset =
+    int64_t nLineOffset = nPixelOffset * nRasterXSize;
+    int64_t nBandOffset =
         (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBands > 1) ? nDTSize : 0;
     RawBinaryLayout::Interleaving eInterleaving =
         (nBands == 1) ? RawBinaryLayout::Interleaving::UNKNOWN
@@ -1517,12 +1517,12 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
             return false;
         if (nBands > 1 && m_nPlanarConfig != PLANARCONFIG_CONTIG)
         {
-            nBandOffset = static_cast<GIntBig>(panOffsets[1]) -
-                          static_cast<GIntBig>(panOffsets[0]);
+            nBandOffset = static_cast<int64_t>(panOffsets[1]) -
+                          static_cast<int64_t>(panOffsets[0]);
             for (int i = 2; i < nBands; i++)
             {
-                if (static_cast<GIntBig>(panOffsets[i]) -
-                        static_cast<GIntBig>(panOffsets[i - 1]) !=
+                if (static_cast<int64_t>(panOffsets[i]) -
+                        static_cast<int64_t>(panOffsets[i - 1]) !=
                     nBandOffset)
                     return false;
             }
@@ -1548,8 +1548,8 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
             // strip_line_1_band_N, strip_line2_band1, ... strip_line2_band_N,
             // etc.... but that'd be faily exotic ! So only detect BSQ layout
             // here
-            nBandOffset = static_cast<GIntBig>(panOffsets[nStrips]) -
-                          static_cast<GIntBig>(panOffsets[0]);
+            nBandOffset = static_cast<int64_t>(panOffsets[nStrips]) -
+                          static_cast<int64_t>(panOffsets[0]);
             for (int i = 0; i < nBands; i++)
             {
                 uint32_t iStripOffset = nStrips * i;
@@ -1562,8 +1562,8 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
                     nLastStripEnd = panOffsets[iStripOffset + iStrip] +
                                     panByteCounts[iStripOffset + iStrip];
                 }
-                if (i >= 2 && static_cast<GIntBig>(panOffsets[iStripOffset]) -
-                                      static_cast<GIntBig>(
+                if (i >= 2 && static_cast<int64_t>(panOffsets[iStripOffset]) -
+                                      static_cast<int64_t>(
                                           panOffsets[iStripOffset - nStrips]) !=
                                   nBandOffset)
                 {

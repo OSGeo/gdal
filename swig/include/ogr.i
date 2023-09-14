@@ -262,6 +262,8 @@ using namespace std;
 
 #define CPL_SUPRESS_CPLUSPLUS
 
+#include <inttypes.h>
+
 #include "gdal.h"
 #include "ogr_api.h"
 #include "ogr_core.h"
@@ -1029,11 +1031,11 @@ public:
     return self;
   }
 
-  GIntBig GetChildrenCount() {
+  int64_t GetChildrenCount() {
     return self->n_children;
   }
 
-  GIntBig GetLength() {
+  int64_t GetLength() {
     return self->length;
   }
 
@@ -1056,7 +1058,7 @@ public:
     return self;
   }
 
-  GIntBig GetChildrenCount() {
+  int64_t GetChildrenCount() {
     return self->n_children;
   }
 
@@ -1190,7 +1192,7 @@ public:
   }
 
 %newobject GetFeature;
-  OGRFeatureShadow *GetFeature(GIntBig fid) {
+  OGRFeatureShadow *GetFeature(int64_t fid) {
     return (OGRFeatureShadow*) OGR_L_GetFeature(self, fid);
   }
 
@@ -1199,7 +1201,7 @@ public:
     return (OGRFeatureShadow*) OGR_L_GetNextFeature(self);
   }
 
-  OGRErr SetNextByIndex(GIntBig new_index) {
+  OGRErr SetNextByIndex(int64_t new_index) {
     return OGR_L_SetNextByIndex(self, new_index);
   }
 
@@ -1235,7 +1237,7 @@ public:
 %clear (int nUpdatedGeomFieldsCount, int *panUpdatedGeomFieldsIdx );
 %clear OGRFeatureShadow *feature;
 
-  OGRErr DeleteFeature(GIntBig fid) {
+  OGRErr DeleteFeature(int64_t fid) {
     return OGR_L_DeleteFeature(self, fid);
   }
 
@@ -1254,7 +1256,7 @@ public:
 #ifndef SWIGJAVA
   %feature( "kwargs" ) GetFeatureCount;
 #endif
-  GIntBig GetFeatureCount(int force=1) {
+  int64_t GetFeatureCount(int force=1) {
     return OGR_L_GetFeatureCount(self, force);
   }
 
@@ -1366,7 +1368,7 @@ public:
     return (OSRSpatialReferenceShadow*) ref;
   }
 
-  GIntBig GetFeaturesRead() {
+  int64_t GetFeaturesRead() {
     return OGR_L_GetFeaturesRead(self);
   }
 
@@ -1717,11 +1719,11 @@ public:
 
   /* ---- GetFieldAsInteger64 ------------------ */
 
-  GIntBig GetFieldAsInteger64(int id) {
+  int64_t GetFieldAsInteger64(int id) {
     return OGR_F_GetFieldAsInteger64(self, id);
   }
 
-  GIntBig GetFieldAsInteger64(const char* field_name) {
+  int64_t GetFieldAsInteger64(const char* field_name) {
       int i = OGR_F_GetFieldIndex(self, field_name);
       if (i == -1)
           CPLError(CE_Failure, 1, FIELD_NAME_ERROR_TMPL, field_name);
@@ -1802,7 +1804,7 @@ public:
 #endif
 
 #if defined(SWIGPYTHON)
-  void GetFieldAsInteger64List(int id, int *nLen, const GIntBig **pList) {
+  void GetFieldAsInteger64List(int id, int *nLen, const int64_t **pList) {
       *pList = OGR_F_GetFieldAsInteger64List(self, id, nLen);
   }
 #endif
@@ -1971,11 +1973,11 @@ public:
       return OGR_F_GetGeomFieldIndex(self, field_name);
   }
 
-  GIntBig GetFID() {
+  int64_t GetFID() {
     return OGR_F_GetFID(self);
   }
 
-  OGRErr SetFID(GIntBig fid) {
+  OGRErr SetFID(int64_t fid) {
     return OGR_F_SetFID(self, fid);
   }
 
@@ -2031,7 +2033,7 @@ public:
 
   %clear (const char* value );
 
-  void SetFieldInteger64(int id, GIntBig value) {
+  void SetFieldInteger64(int id, int64_t value) {
     OGR_F_SetFieldInteger64(self, id, value);
   }
 
@@ -2086,7 +2088,7 @@ public:
   }
 
 #if defined(SWIGPYTHON)
-  void SetFieldInteger64List(int id, int nList, GIntBig *pList) {
+  void SetFieldInteger64List(int id, int nList, int64_t *pList) {
       OGR_F_SetFieldInteger64List(self, id, nList, pList);
   }
 
@@ -3760,7 +3762,7 @@ public:
       if( eType == OFTInteger )
           return CPLSPrintf("%d", psVal->Integer);
       if( eType == OFTInteger64 )
-          return CPLSPrintf(CPL_FRMT_GIB, psVal->Integer64);
+          return CPLSPrintf("%" PRId64, psVal->Integer64);
       if( eType == OFTReal )
           return CPLSPrintf("%.18g", psVal->Real);
       if( eType == OFTDateTime )
@@ -3802,7 +3804,7 @@ public:
       if( eType == OFTInteger )
           return CPLSPrintf("%d", psVal->Integer);
       if( eType == OFTInteger64 )
-          return CPLSPrintf(CPL_FRMT_GIB, psVal->Integer64);
+          return CPLSPrintf("%" PRId64, psVal->Integer64);
       if( eType == OFTReal )
           return CPLSPrintf("%.18g", psVal->Real);
       if( eType == OFTDateTime )
@@ -3866,7 +3868,7 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
   if( type == OFTInteger )
       sMin.Integer = static_cast<int>(min);
   else if( type == OFTInteger64 )
-      sMin.Integer64 = static_cast<GIntBig>(min);
+      sMin.Integer64 = static_cast<int64_t>(min);
   else if( type == OFTReal )
       sMin.Real = min;
   else
@@ -3875,7 +3877,7 @@ OGRFieldDomainShadow* CreateRangeFieldDomain( const char *name,
   if( type == OFTInteger )
       sMax.Integer = static_cast<int>(max);
   else if( type == OFTInteger64 )
-      sMax.Integer64 = static_cast<GIntBig>(max);
+      sMax.Integer64 = static_cast<int64_t>(max);
   else if( type == OFTReal )
       sMax.Real = max;
   else

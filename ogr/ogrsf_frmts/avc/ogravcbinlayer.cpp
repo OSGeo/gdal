@@ -113,7 +113,7 @@ void OGRAVCBinLayer::ResetReading()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRAVCBinLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRAVCBinLayer::GetFeature(int64_t nFID)
 
 {
     if (!CPL_INT64_FITS_ON_INT32(nFID))

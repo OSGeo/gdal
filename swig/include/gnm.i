@@ -137,7 +137,7 @@ typedef enum
     GATConnectedComponents = 3
 } GNMGraphAlgorithmType;
 
-#define GNMGFID GIntBig
+#define GNMGFID int64_t
 #define GNM_EDGE_DIR_BOTH       0   // bidirectional
 #define GNM_EDGE_DIR_SRCTOTGT   1   // from source to target
 #define GNM_EDGE_DIR_TGTTOSRC   2   // from target to source

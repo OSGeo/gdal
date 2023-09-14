@@ -100,8 +100,8 @@ class GDALCachedPixelAccessor
 /** Constructor.
  *
  * The template accepts the following parameters:
- * - Type: should be one of GByte, uint16_t, int16_t, uint32_t, int32_t, GUInt64,
- * GInt64, float or double
+ * - Type: should be one of GByte, uint16_t, int16_t, uint32_t, int32_t, uint64_t,
+ * int64_t, float or double
  * - TILE_SIZE: the tile size for the cache of GDALCachedPixelAccessor.
  *              Use a power of two for faster computation.
  *              It doesn't need to be the same of the underlying raster
@@ -340,22 +340,11 @@ template <> struct GDALCachedPixelAccessorGetDataType<int32_t>
 {
     static constexpr GDALDataType DataType = GDT_Int32;
 };
-#if SIZEOF_UNSIGNED_LONG == 8
-// std::uint64_t on Linux 64-bit resolves as unsigned long
-template <> struct GDALCachedPixelAccessorGetDataType<unsigned long>
+template <> struct GDALCachedPixelAccessorGetDataType<uint64_t>
 {
     static constexpr GDALDataType DataType = GDT_UInt64;
 };
-template <> struct GDALCachedPixelAccessorGetDataType<long>
-{
-    static constexpr GDALDataType DataType = GDT_Int64;
-};
-#endif
-template <> struct GDALCachedPixelAccessorGetDataType<GUInt64>
-{
-    static constexpr GDALDataType DataType = GDT_UInt64;
-};
-template <> struct GDALCachedPixelAccessorGetDataType<GInt64>
+template <> struct GDALCachedPixelAccessorGetDataType<int64_t>
 {
     static constexpr GDALDataType DataType = GDT_Int64;
 };

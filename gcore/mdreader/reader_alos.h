@@ -59,7 +59,7 @@ class GDALMDReaderALOS : public GDALMDReaderBase
   protected:
     virtual void LoadMetadata() override;
     char **LoadRPCTxtFile();
-    virtual GIntBig
+    virtual int64_t
     GetAcquisitionTimeFromString(const char *pszDateTime) override;
 
   protected:

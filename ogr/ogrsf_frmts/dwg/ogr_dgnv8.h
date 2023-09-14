@@ -92,7 +92,7 @@ class OGRDGNV8Layer final : public OGRLayer
     void AttachCommonAttributes(OGRFeature *poFeature,
                                 OdDgGraphicsElementPtr element);
     int GetColorFromString(const char *pszColor);
-    OdDgGraphicsElementPtr GetFeatureInternal(GIntBig nFID,
+    OdDgGraphicsElementPtr GetFeatureInternal(int64_t nFID,
                                               OdDg::OpenMode openMode);
 
   public:
@@ -101,7 +101,7 @@ class OGRDGNV8Layer final : public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -117,7 +117,7 @@ class OGRDGNV8Layer final : public OGRLayer
     int TestCapability(const char *) override;
 
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
-    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
 };
 
 /************************************************************************/

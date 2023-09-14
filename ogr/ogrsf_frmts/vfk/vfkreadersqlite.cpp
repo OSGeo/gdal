@@ -37,6 +37,7 @@
 #include "cpl_conv.h"
 #include "cpl_error.h"
 
+#include <cinttypes>
 #include <cstring>
 
 #include "ogr_geometry.h"
@@ -382,9 +383,9 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
         /* check if file is already registered in DB (requires file_size column)
          */
         osSQL.Printf("SELECT COUNT(*) FROM %s WHERE file_name = '%s' AND "
-                     "file_size = " CPL_FRMT_GUIB " AND num_records > 0",
+                     "file_size = %" PRIu64 " AND num_records > 0",
                      VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
-                     (GUIntBig)m_poFStat->st_size);
+                     (uint64_t)m_poFStat->st_size);
         hStmt = PrepareStatement(osSQL.c_str());
         if (ExecuteSQL(hStmt) == OGRERR_NONE &&
             sqlite3_column_int(hStmt, 0) > 0)
@@ -442,7 +443,7 @@ int VFKReaderSQLite::ReadDataRecords(IVFKDataBlock *poDataBlock)
                 if (nFeatDB > 0 &&
                     nFeatDB != poDataBlockCurrent->GetFeatureCount())
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "%s: Invalid number of features " CPL_FRMT_GIB
+                             "%s: Invalid number of features %" PRId64
                              " (should be %d)",
                              pszName, poDataBlockCurrent->GetFeatureCount(),
                              nFeatDB);
@@ -692,9 +693,9 @@ void VFKReaderSQLite::AddDataBlock(IVFKDataBlock *poDataBlock,
             osCommand.Printf(
                 "INSERT INTO %s (file_name, file_size, table_name, "
                 "num_records, num_features, num_geometries, table_defn) VALUES "
-                "('%s', " CPL_FRMT_GUIB ", '%s', -1, 0, 0, '%s')",
+                "('%s', %" PRIu64 ", '%s', -1, 0, 0, '%s')",
                 VFK_DB_TABLE, CPLGetFilename(m_pszFilename),
-                (GUIntBig)m_poFStat->st_size, pszBlockName, pszDefn);
+                (uint64_t)m_poFStat->st_size, pszBlockName, pszDefn);
             ExecuteSQL(osCommand.c_str());
 
             int geom_type =
@@ -846,7 +847,7 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock,
                     osValue.Printf("%d", poProperty->GetValueI());
                     break;
                 case OFTInteger64:
-                    osValue.Printf(CPL_FRMT_GIB, poProperty->GetValueI64());
+                    osValue.Printf("%" PRId64, poProperty->GetValueI64());
                     break;
                 case OFTReal:
                     osValue.Printf("%f", poProperty->GetValueD());
@@ -861,7 +862,7 @@ OGRErr VFKReaderSQLite::AddFeature(IVFKDataBlock *poDataBlock,
         }
         osCommand += osValue;
     }
-    osValue.Printf("," CPL_FRMT_GIB, poFeature->GetFID());
+    osValue.Printf(",%" PRId64, poFeature->GetFID());
     if (poDataBlock->GetGeometryType() != wkbNone)
     {
         osValue += ",NULL";

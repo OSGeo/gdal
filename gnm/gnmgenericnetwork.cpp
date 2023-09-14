@@ -32,6 +32,7 @@
 #include "gnm_priv.h"
 #include "ogrsf_frmts.h"
 
+#include <cinttypes>
 #include <set>
 
 //! @cond Doxygen_Suppress
@@ -172,7 +173,7 @@ int GNMGenericNetwork::GetVersion() const
     return m_nVersion;
 }
 
-GIntBig GNMGenericNetwork::GetNewGlobalFID()
+int64_t GNMGenericNetwork::GetNewGlobalFID()
 {
     return m_nGID++;
 }
@@ -333,8 +334,8 @@ CPLErr GNMGenericNetwork::DisconnectFeaturesWithId(GNMGFID nFID)
     }
 
     CPLString soFilter;
-    soFilter.Printf("%s = " GNMGFIDFormat " or %s = " GNMGFIDFormat
-                    " or %s = " GNMGFIDFormat,
+    soFilter.Printf("%s = %" GNMGFIDFormat " or %s = %" GNMGFIDFormat
+                    " or %s = %" GNMGFIDFormat,
                     GNM_SYSFIELD_SOURCE, nFID, GNM_SYSFIELD_TARGET, nFID,
                     GNM_SYSFIELD_CONNECTOR, nFID);
 
@@ -496,7 +497,7 @@ CPLErr GNMGenericNetwork::DeleteAllRules()
 
     m_poMetadataLayer->ResetReading();
     OGRFeature *poFeature;
-    std::vector<GIntBig> aFIDs;
+    std::vector<int64_t> aFIDs;
     while ((poFeature = m_poMetadataLayer->GetNextFeature()) != nullptr)
     {
         aFIDs.push_back(poFeature->GetFID());
@@ -637,7 +638,7 @@ CPLErr GNMGenericNetwork::ChangeBlockState(GNMGFID nFID, bool bIsBlock)
     if (nullptr == poFeature)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed to get feature '" GNMGFIDFormat "'.", nFID);
+                 "Failed to get feature '%" GNMGFIDFormat "'.", nFID);
         return CE_Failure;
     }
 
@@ -872,7 +873,7 @@ OGRLayer *GNMGenericNetwork::GetPath(GNMGFID nStartFID, GNMGFID nEndFID,
 }
 
 void GNMGenericNetwork::ConnectPointsByMultiline(
-    GIntBig nFID, const OGRMultiLineString *poMultiLineString,
+    int64_t nFID, const OGRMultiLineString *poMultiLineString,
     const std::vector<OGRLayer *> &paPointLayers, double dfTolerance,
     double dfCost, double dfInvCost, GNMDirection eDir)
 {
@@ -886,7 +887,7 @@ void GNMGenericNetwork::ConnectPointsByMultiline(
 }
 
 void GNMGenericNetwork::ConnectPointsByLine(
-    GIntBig nFID, const OGRLineString *poLineString,
+    int64_t nFID, const OGRLineString *poLineString,
     const std::vector<OGRLayer *> &paPointLayers, double dfTolerance,
     double dfCost, double dfInvCost, GNMDirection eDir)
 {
@@ -942,8 +943,8 @@ OGRFeature *GNMGenericNetwork::FindConnection(GNMGFID nSrcFID, GNMGFID nTgtFID,
 {
 
     CPLString soFilter;
-    soFilter.Printf("%s = " GNMGFIDFormat " and %s = " GNMGFIDFormat
-                    " and %s = " GNMGFIDFormat,
+    soFilter.Printf("%s = %" GNMGFIDFormat " and %s = %" GNMGFIDFormat
+                    " and %s = %" GNMGFIDFormat,
                     GNM_SYSFIELD_SOURCE, nSrcFID, GNM_SYSFIELD_TARGET, nTgtFID,
                     GNM_SYSFIELD_CONNECTOR, nConFID);
 

@@ -603,7 +603,7 @@ void TABSaturatedAdd(int32_t &nVal, int32_t nAdd)
 
 int16_t TABInt16Diff(int a, int b)
 {
-    GIntBig nDiff = static_cast<GIntBig>(a) - b;
+    int64_t nDiff = static_cast<int64_t>(a) - b;
     // Maybe we should error out instead of saturating ???
     if (nDiff < -32768)
         return -32768;

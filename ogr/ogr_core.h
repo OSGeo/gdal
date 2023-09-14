@@ -878,7 +878,7 @@ typedef union
 {
     /*! @cond Doxygen_Suppress */
     int Integer;
-    GIntBig Integer64;
+    int64_t Integer64;
     double Real;
     char *String;
 
@@ -891,7 +891,7 @@ typedef union
     struct
     {
         int nCount;
-        GIntBig *paList;
+        int64_t *paList;
     } Integer64List;
 
     struct

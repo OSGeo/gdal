@@ -33,6 +33,7 @@
 #include "cpl_error.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #if !defined(DEBUG_VERBOSE) && defined(DEBUG_VERBOSE_GPKG)
@@ -817,7 +818,7 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol)
 /************************************************************************/
 
 void GDALGPKGMBTilesLikePseudoDataset::GetTileOffsetAndScale(
-    GIntBig nTileId, double &dfTileOffset, double &dfTileScale)
+    int64_t nTileId, double &dfTileOffset, double &dfTileScale)
 {
     dfTileOffset = 0.0;
     dfTileScale = 1.0;
@@ -903,7 +904,7 @@ GByte *GDALGPKGMBTilesLikePseudoDataset::ReadTile(int nRow, int nCol,
     if (rc == SQLITE_ROW && sqlite3_column_type(hStmt, 0) == SQLITE_BLOB)
     {
         const int nBytes = sqlite3_column_bytes(hStmt, 0);
-        GIntBig nTileId =
+        int64_t nTileId =
             (m_eDT == GDT_Byte) ? 0 : sqlite3_column_int64(hStmt, 1);
         GByte *pabyRawData = static_cast<GByte *>(
             const_cast<void *>(sqlite3_column_blob(hStmt, 0)));
@@ -1257,14 +1258,14 @@ static bool WEBPSupports4Bands()
 /*                         GetTileId()                                  */
 /************************************************************************/
 
-GIntBig GDALGPKGMBTilesLikePseudoDataset::GetTileId(int nRow, int nCol)
+int64_t GDALGPKGMBTilesLikePseudoDataset::GetTileId(int nRow, int nCol)
 {
     char *pszSQL =
         sqlite3_mprintf("SELECT id FROM \"%w\" WHERE zoom_level = %d AND "
                         "tile_row = %d AND tile_column = %d",
                         m_osRasterTable.c_str(), m_nZoomLevel,
                         GetRowFromIntoTopConvention(nRow), nCol);
-    GIntBig nRes = SQLGetInteger64(IGetDB(), pszSQL, nullptr);
+    int64_t nRes = SQLGetInteger64(IGetDB(), pszSQL, nullptr);
     sqlite3_free(pszSQL);
     return nRes;
 }
@@ -1304,7 +1305,7 @@ bool GDALGPKGMBTilesLikePseudoDataset::DeleteTile(int nRow, int nCol)
 /************************************************************************/
 
 bool GDALGPKGMBTilesLikePseudoDataset::DeleteFromGriddedTileAncillary(
-    GIntBig nTileId)
+    int64_t nTileId)
 {
     char *pszSQL =
         sqlite3_mprintf("DELETE FROM gpkg_2d_gridded_tile_ancillary WHERE "
@@ -1571,7 +1572,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         if (nXOff > nRasterXSize - nBlockXSize)
         {
             bPartialTile = true;
-            iXCount -= static_cast<int>(static_cast<GIntBig>(nXOff) +
+            iXCount -= static_cast<int>(static_cast<int64_t>(nXOff) +
                                         nBlockXSize - nRasterXSize);
         }
         if (nYOff < 0)
@@ -1583,7 +1584,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         if (nYOff > nRasterYSize - nBlockYSize)
         {
             bPartialTile = true;
-            iYCount -= static_cast<int>(static_cast<GIntBig>(nYOff) +
+            iYCount -= static_cast<int>(static_cast<int64_t>(nYOff) +
                                         nBlockYSize - nRasterYSize);
         }
         CPLAssert(iXOff >= 0);
@@ -2035,7 +2036,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         {
             // If tile is fully transparent, don't serialize it and remove
             // it if it exists.
-            GIntBig nId = GetTileId(nRow, nCol);
+            int64_t nId = GetTileId(nRow, nCol);
             if (nId > 0)
             {
                 DeleteTile(nRow, nCol);
@@ -2291,7 +2292,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
 
             if (m_eTF == GPKG_TF_PNG_16BIT || m_eTF == GPKG_TF_TIFF_32BIT_FLOAT)
             {
-                GIntBig nTileId = GetTileId(nRow, nCol);
+                int64_t nTileId = GetTileId(nRow, nCol);
                 if (nTileId == 0)
                     eErr = CE_Failure;
                 else
@@ -2550,7 +2551,7 @@ GDALGPKGMBTilesLikePseudoDataset::FlushRemainingShiftedTiles(bool bPartialFlush)
                         sqlite3_column_type(hNewStmt, 0) == SQLITE_BLOB)
                     {
                         const int nBytes = sqlite3_column_bytes(hNewStmt, 0);
-                        GIntBig nTileId =
+                        int64_t nTileId =
                             (m_eDT == GDT_Byte)
                                 ? 0
                                 : sqlite3_column_int64(hNewStmt, 1);
@@ -2762,7 +2763,7 @@ GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary()
          nCurTimeStamp - m_nLastSpaceCheckTimestamp > 10))
     {
         m_nLastSpaceCheckTimestamp = nCurTimeStamp;
-        GIntBig nFreeSpace =
+        int64_t nFreeSpace =
             VSIGetDiskFreeSpace(CPLGetDirname(m_osTempDBFilename));
         bool bTryFreeing = false;
         if (nFreeSpace >= 0 && nFreeSpace < 1024 * 1024 * 1024)
@@ -2776,7 +2777,7 @@ GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary()
             VSIStatBufL sStat;
             if (VSIStatL(m_osTempDBFilename, &sStat) == 0)
             {
-                GIntBig nTempSpace = sStat.st_size;
+                int64_t nTempSpace = sStat.st_size;
                 if (VSIStatL((m_osTempDBFilename + "-journal").c_str(),
                              &sStat) == 0)
                     nTempSpace += sStat.st_size;
@@ -2789,11 +2790,11 @@ GDALGPKGMBTilesLikePseudoDataset::DoPartialFlushOfPartialTilesIfNecessary()
                 const int nBands = IGetRasterCount();
 
                 if (nTempSpace >
-                    4 * static_cast<GIntBig>(IGetRasterBand(1)->GetXSize()) *
+                    4 * static_cast<int64_t>(IGetRasterBand(1)->GetXSize()) *
                         nBlockYSize * nBands * m_nDTSize)
                 {
                     CPLDebug("GPKG",
-                             "Partial tiles DB is " CPL_FRMT_GIB
+                             "Partial tiles DB is %" PRId64
                              " bytes. Flushing part of partial tiles",
                              nTempSpace);
                     bTryFreeing = true;
@@ -3095,13 +3096,13 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
         }
     }
 
-    const GIntBig nAge = (m_poParentDS) ? m_poParentDS->m_nAge : m_nAge;
+    const int64_t nAge = (m_poParentDS) ? m_poParentDS->m_nAge : m_nAge;
     if (nExistingId == 0)
     {
         pszSQL = CPLSPrintf(
             "INSERT INTO partial_tiles "
             "(zoom_level, tile_row, tile_column, tile_data_band_%d, "
-            "partial_flag, age) VALUES (%d, %d, %d, ?, %d, " CPL_FRMT_GIB ")",
+            "partial_flag, age) VALUES (%d, %d, %d, ?, %d, %" PRId64 ")",
             nBand, m_nZoomLevel, nRow, nCol, l_nFlags, nAge);
     }
     else
@@ -3109,7 +3110,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteShiftedTile(
         pszSQL = CPLSPrintf(
             "UPDATE partial_tiles SET zoom_level = %d, "
             "tile_row = %d, tile_column = %d, "
-            "tile_data_band_%d = ?, partial_flag = %d, age = " CPL_FRMT_GIB
+            "tile_data_band_%d = ?, partial_flag = %d, age = %" PRId64
             " WHERE id = %d",
             m_nZoomLevel, nRow, nCol, nBand, l_nFlags, nAge, nExistingId);
     }

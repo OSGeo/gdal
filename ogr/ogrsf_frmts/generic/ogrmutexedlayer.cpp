@@ -107,13 +107,13 @@ bool OGRMutexedLayer::GetArrowStream(struct ArrowArrayStream *out_stream,
     return OGRLayerDecorator::GetArrowStream(out_stream, papszOptions);
 }
 
-OGRErr OGRMutexedLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRMutexedLayer::SetNextByIndex(int64_t nIndex)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::SetNextByIndex(nIndex);
 }
 
-OGRFeature *OGRMutexedLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRMutexedLayer::GetFeature(int64_t nFID)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFeature(nFID);
@@ -150,7 +150,7 @@ OGRErr OGRMutexedLayer::IUpdateFeature(OGRFeature *poFeature,
         nUpdatedGeomFieldsCount, panUpdatedGeomFieldsIdx, bUpdateStyleString);
 }
 
-OGRErr OGRMutexedLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRMutexedLayer::DeleteFeature(int64_t nFID)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::DeleteFeature(nFID);
@@ -180,7 +180,7 @@ OGRSpatialReference *OGRMutexedLayer::GetSpatialRef()
     return OGRLayerDecorator::GetSpatialRef();
 }
 
-GIntBig OGRMutexedLayer::GetFeatureCount(int bForce)
+int64_t OGRMutexedLayer::GetFeatureCount(int bForce)
 {
     CPLMutexHolderOptionalLockD(m_hMutex);
     return OGRLayerDecorator::GetFeatureCount(bForce);

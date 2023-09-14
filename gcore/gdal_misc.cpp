@@ -31,6 +31,7 @@
 
 #include <cctype>
 #include <cerrno>
+#include <cinttypes>
 #include <clocale>
 #include <cmath>
 #include <cstddef>
@@ -4541,9 +4542,9 @@ double GDALGetNoDataValueCastToDouble(int64_t nVal)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "GetNoDataValue() returns an approximate value of the "
-                 "true nodata value = " CPL_FRMT_GIB ". Use "
+                 "true nodata value = %" PRId64 ". Use "
                  "GetNoDataValueAsInt64() instead",
-                 static_cast<GIntBig>(nVal));
+                 static_cast<int64_t>(nVal));
     }
     return dfVal;
 }
@@ -4555,9 +4556,9 @@ double GDALGetNoDataValueCastToDouble(uint64_t nVal)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "GetNoDataValue() returns an approximate value of the "
-                 "true nodata value = " CPL_FRMT_GUIB ". Use "
+                 "true nodata value = %" PRIu64 ". Use "
                  "GetNoDataValueAsUInt64() instead",
-                 static_cast<GUIntBig>(nVal));
+                 static_cast<uint64_t>(nVal));
     }
     return dfVal;
 }

@@ -28,6 +28,8 @@
 
 #include "ogr_jsonfg.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                OGRJSONFGMemLayer::OGRJSONFGMemLayer()                */
 /************************************************************************/
@@ -53,7 +55,7 @@ OGRJSONFGMemLayer::~OGRJSONFGMemLayer() = default;
 
 void OGRJSONFGMemLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
 {
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
 
     // Detect potential FID duplicates and make sure they are eventually
     // unique.
@@ -76,7 +78,7 @@ void OGRJSONFGMemLayer::AddFeature(std::unique_ptr<OGRFeature> poFeature)
             {
                 CPLError(
                     CE_Warning, CPLE_AppDefined,
-                    "Several features with id = " CPL_FRMT_GIB " have been "
+                    "Several features with id = %" PRId64 " have been "
                     "found. Altering it to be unique. This warning will not "
                     "be emitted anymore for this layer",
                     nFID);

@@ -71,6 +71,7 @@ typedef int GDALRIOResampleAlg;
 #include <vector>
 #include "gdal_priv.h"
 #include "ogr_recordbatch.h"
+#include <cinttypes>
 
 #ifdef _DEBUG
 #undef _DEBUG
@@ -596,8 +597,8 @@ GDALDataset* NUMPYMultiDimensionalDataset::Open( PyArrayObject *psArray )
         apoDims.push_back(poDim);
         if( i > 0 )
             strides += ',';
-        strides += CPLSPrintf(CPL_FRMT_GIB,
-                              static_cast<GIntBig>(PyArray_STRIDES(psArray)[i]));
+        strides += CPLSPrintf("%" PRId64,
+                              static_cast<int64_t>(PyArray_STRIDES(psArray)[i]));
     }
     CPLStringList aosOptions;
     aosOptions.SetNameValue("STRIDES", strides.c_str());
@@ -853,7 +854,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
     }
 
     int bandsize, nxsize, nysize;
-    GIntBig pixel_space, line_space, band_space;
+    int64_t pixel_space, line_space, band_space;
     nxsize = static_cast<int>(PyArray_DIMS(psArray)[xdim]);
     nysize = static_cast<int>(PyArray_DIMS(psArray)[ydim]);
     bandsize = static_cast<int>(PyArray_DIMS(psArray)[bdim]);
@@ -922,14 +923,14 @@ static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
 }
 %}
 
-%apply (int nList, GUIntBig* pList) {(int nDims1, GUIntBig *array_start_idx)};
-%apply (int nList, GIntBig* pList) {(int nDims3, GIntBig *array_step)};
+%apply (int nList, uint64_t* pList) {(int nDims1, uint64_t *array_start_idx)};
+%apply (int nList, int64_t* pList) {(int nDims3, int64_t *array_step)};
 %inline %{
   CPLErr MDArrayIONumPy( bool bWrite,
                           GDALMDArrayHS* mdarray,
                           PyArrayObject *psArray,
-                          int nDims1, GUIntBig* array_start_idx,
-                          int nDims3, GIntBig* array_step,
+                          int nDims1, uint64_t* array_start_idx,
+                          int nDims3, int64_t* array_step,
                           GDALExtendedDataTypeHS* buffer_datatype) {
 
     if( !CheckNumericDataType(buffer_datatype) )
@@ -1883,8 +1884,8 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     /*size_t nsize = CPLVirtualMemGetSize( virtualmem->vmem );*/
     GDALDataType datatype = virtualmem->eBufType;
     int readonly = virtualmem->bReadOnly;
-    GIntBig nBufXSize = virtualmem->nBufXSize;
-    GIntBig nBufYSize = virtualmem->nBufYSize;
+    int64_t nBufXSize = virtualmem->nBufXSize;
+    int64_t nBufYSize = virtualmem->nBufYSize;
     int nBandCount = virtualmem->nBandCount;
     int bIsBandSequential = virtualmem->bIsBandSequential;
     GDALTileOrganization eTileOrganization = virtualmem->eTileOrganization;
@@ -1892,7 +1893,7 @@ PyObject* _RecordBatchAsNumpy(VoidPtrAsLong recordBatchPtr,
     int nTileYSize = virtualmem->nTileYSize;
     int bAuto = virtualmem->bAuto;
     int            nPixelSpace = virtualmem->nPixelSpace; /* if bAuto == TRUE */
-    GIntBig        nLineSpace = virtualmem->nLineSpace; /* if bAuto == TRUE */
+    int64_t        nLineSpace = virtualmem->nLineSpace; /* if bAuto == TRUE */
     int numpytype;
 
     if( datatype == GDT_CInt16 || datatype == GDT_CInt32 )

@@ -36,6 +36,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <limits>
 #include <new>
 
@@ -67,14 +68,14 @@ class GDALMDArrayGridded final : public GDALPamMDArray
     GDALGridAlgorithm m_eAlg;
     std::unique_ptr<void, CPLFreeReleaser> m_poGridOptions;
     const GDALExtendedDataType m_dt;
-    std::vector<GUInt64> m_anBlockSize{};
+    std::vector<uint64_t> m_anBlockSize{};
     const double m_dfNoDataValue;
     const double m_dfMinX;
     const double m_dfResX;
     const double m_dfMinY;
     const double m_dfResY;
     const double m_dfRadius;
-    mutable std::vector<GUInt64> m_anLastStartIdx{};
+    mutable std::vector<uint64_t> m_anLastStartIdx{};
     mutable std::vector<double> m_adfZ{};
 
   protected:
@@ -107,8 +108,8 @@ class GDALMDArrayGridded final : public GDALPamMDArray
         m_anBlockSize[m_apoDims.size() - 1] = 256;
     }
 
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -152,7 +153,7 @@ class GDALMDArrayGridded final : public GDALPamMDArray
         return &m_dfNoDataValue;
     }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
         return m_anBlockSize;
     }
@@ -189,8 +190,8 @@ class GDALMDArrayGridded final : public GDALPamMDArray
 /*                             IRead()                                  */
 /************************************************************************/
 
-bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
-                               const size_t *count, const GInt64 *arrayStep,
+bool GDALMDArrayGridded::IRead(const uint64_t *arrayStartIdx,
+                               const size_t *count, const int64_t *arrayStep,
                                const GPtrDiff_t *bufferStride,
                                const GDALExtendedDataType &bufferDataType,
                                void *pDstBuffer) const
@@ -204,7 +205,7 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
     }
     const auto nDims = GetDimensionCount();
 
-    std::vector<GUInt64> anStartIdx;
+    std::vector<uint64_t> anStartIdx;
     for (size_t i = 0; i + 2 < nDims; ++i)
     {
         anStartIdx.push_back(arrayStartIdx[i]);
@@ -240,9 +241,9 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
     // (if not already done)
     if (m_adfZ.empty() || m_anLastStartIdx != anStartIdx)
     {
-        std::vector<GUInt64> anTempStartIdx(anStartIdx);
+        std::vector<uint64_t> anTempStartIdx(anStartIdx);
         anTempStartIdx.push_back(0);
-        const std::vector<GInt64> anTempArrayStep(
+        const std::vector<int64_t> anTempArrayStep(
             m_poParent->GetDimensionCount(), 1);
         std::vector<GPtrDiff_t> anTempBufferStride(
             m_poParent->GetDimensionCount() - 1, 0);
@@ -618,11 +619,11 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
             papszOptions, "ACCEPT_BIG_SPATIAL_INDEXING_VARIABLE", "NO")))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "The spatial indexing variable has " CPL_FRMT_GIB " elements. "
+                 "The spatial indexing variable has %" PRId64 " elements. "
                  "Set the ACCEPT_BIG_SPATIAL_INDEXING_VARIABLE=YES option of "
                  "GetGridded() to mean you want to continue and are aware of "
                  "big RAM and CPU time requirements",
-                 static_cast<GIntBig>(poXArray->GetTotalElementsCount()));
+                 static_cast<int64_t>(poXArray->GetTotalElementsCount()));
         return nullptr;
     }
 
@@ -640,9 +641,9 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
     }
 
     // Ingest X and Y arrays
-    const GUInt64 arrayStartIdx[] = {0};
+    const uint64_t arrayStartIdx[] = {0};
     const size_t count[] = {adfXVals.size()};
-    const GInt64 arrayStep[] = {1};
+    const int64_t arrayStep[] = {1};
     const GPtrDiff_t bufferStride[] = {1};
     if (!poXArray->Read(arrayStartIdx, count, arrayStep, bufferStride,
                         GDALExtendedDataType::Create(GDT_Float64),
@@ -699,7 +700,7 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
         auto poPoint = new OGRPoint(adfXVals[i], adfYVals[i]);
         oFeat.SetFID(OGRNullFID);
         oFeat.SetGeometryDirectly(poPoint);
-        oFeat.SetField(0, static_cast<GIntBig>(i));
+        oFeat.SetField(0, static_cast<int64_t>(i));
         if (poLyr->CreateFeature(&oFeat) != OGRERR_NONE)
             return nullptr;
     }

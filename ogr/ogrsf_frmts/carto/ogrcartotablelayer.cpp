@@ -31,6 +31,8 @@
 #include "ogr_pgdump.h"
 #include "ogrgeojsonreader.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                    OGRCARTOEscapeIdentifier( )                     */
 /************************************************************************/
@@ -396,13 +398,13 @@ json_object *OGRCARTOTableLayer::FetchNewFeatures()
     if (!osFIDColName.empty())
     {
         CPLString osSQL;
-        osSQL.Printf(
-            "%s WHERE %s%s >= " CPL_FRMT_GIB " ORDER BY %s ASC LIMIT %d",
-            osSELECTWithoutWHERE.c_str(),
-            (osWHERE.size()) ? CPLSPrintf("%s AND ", osWHERE.c_str()) : "",
-            OGRCARTOEscapeIdentifier(osFIDColName).c_str(), m_nNextFID,
-            OGRCARTOEscapeIdentifier(osFIDColName).c_str(),
-            GetFeaturesToFetch());
+        osSQL.Printf("%s WHERE %s%s >= %" PRId64 " ORDER BY %s ASC LIMIT %d",
+                     osSELECTWithoutWHERE.c_str(),
+                     (osWHERE.size()) ? CPLSPrintf("%s AND ", osWHERE.c_str())
+                                      : "",
+                     OGRCARTOEscapeIdentifier(osFIDColName).c_str(), m_nNextFID,
+                     OGRCARTOEscapeIdentifier(osFIDColName).c_str(),
+                     GetFeaturesToFetch());
         return poDS->RunSQL(osSQL);
     }
     else
@@ -1070,14 +1072,14 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureCopy(OGRFeature *poFeature,
             if (bMustTab)
                 osCopyFile += "\t";
 
-            osCopyFile += CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFID());
+            osCopyFile += CPLSPrintf("%" PRId64, poFeature->GetFID());
         }
         else if (m_nNextFIDWrite >= 0 && bHasJustGotNextFID)
         {
             if (bMustTab)
                 osCopyFile += "\t";
 
-            osCopyFile += CPLSPrintf(CPL_FRMT_GIB, m_nNextFIDWrite);
+            osCopyFile += CPLSPrintf("%" PRId64, m_nNextFIDWrite);
         }
     }
 
@@ -1305,7 +1307,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureInsert(OGRFeature *poFeature,
                 // No need to set bMustComma to true in else case
                 // Not in a loop.
 
-                osSQL += CPLSPrintf(CPL_FRMT_GIB, poFeature->GetFID());
+                osSQL += CPLSPrintf("%" PRId64, poFeature->GetFID());
             }
             else if (m_nNextFIDWrite >= 0 && bHasJustGotNextFID)
             {
@@ -1313,7 +1315,7 @@ OGRErr OGRCARTOTableLayer::ICreateFeatureInsert(OGRFeature *poFeature,
                     osSQL += ", ";
                 // No need to set bMustComma to true in else case.
                 // Not in a loop.
-                osSQL += CPLSPrintf(CPL_FRMT_GIB, m_nNextFIDWrite);
+                osSQL += CPLSPrintf("%" PRId64, m_nNextFIDWrite);
             }
         }
 
@@ -1509,7 +1511,7 @@ OGRErr OGRCARTOTableLayer::ISetFeature(OGRFeature *poFeature)
     if (!bMustComma)  // nothing to do
         return OGRERR_NONE;
 
-    osSQL += CPLSPrintf(" WHERE %s = " CPL_FRMT_GIB,
+    osSQL += CPLSPrintf(" WHERE %s = %" PRId64,
                         OGRCARTOEscapeIdentifier(osFIDColName).c_str(),
                         poFeature->GetFID());
 
@@ -1540,7 +1542,7 @@ OGRErr OGRCARTOTableLayer::ISetFeature(OGRFeature *poFeature)
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRCARTOTableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRCARTOTableLayer::DeleteFeature(int64_t nFID)
 
 {
 
@@ -1562,7 +1564,7 @@ OGRErr OGRCARTOTableLayer::DeleteFeature(GIntBig nFID)
         return OGRERR_FAILURE;
 
     CPLString osSQL;
-    osSQL.Printf("DELETE FROM %s WHERE %s = " CPL_FRMT_GIB,
+    osSQL.Printf("DELETE FROM %s WHERE %s = %" PRId64,
                  OGRCARTOEscapeIdentifier(osName).c_str(),
                  OGRCARTOEscapeIdentifier(osFIDColName).c_str(), nFID);
 
@@ -1667,7 +1669,7 @@ void OGRCARTOTableLayer::BuildWhere()
 /*                              GetFeature()                            */
 /************************************************************************/
 
-OGRFeature *OGRCARTOTableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRCARTOTableLayer::GetFeature(int64_t nFeatureId)
 {
 
     if (bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
@@ -1684,7 +1686,7 @@ OGRFeature *OGRCARTOTableLayer::GetFeature(GIntBig nFeatureId)
     osSQL += " WHERE ";
     osSQL += OGRCARTOEscapeIdentifier(osFIDColName).c_str();
     osSQL += " = ";
-    osSQL += CPLSPrintf(CPL_FRMT_GIB, nFeatureId);
+    osSQL += CPLSPrintf("%" PRId64, nFeatureId);
 
     json_object *poObj = poDS->RunSQL(osSQL);
     json_object *poRowObj = OGRCARTOGetSingleRow(poObj);
@@ -1705,7 +1707,7 @@ OGRFeature *OGRCARTOTableLayer::GetFeature(GIntBig nFeatureId)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRCARTOTableLayer::GetFeatureCount(int bForce)
+int64_t OGRCARTOTableLayer::GetFeatureCount(int bForce)
 {
 
     if (bDeferredCreation && RunDeferredCreationIfNecessary() != OGRERR_NONE)
@@ -1739,7 +1741,7 @@ GIntBig OGRCARTOTableLayer::GetFeatureCount(int bForce)
         return OGRCARTOLayer::GetFeatureCount(bForce);
     }
 
-    GIntBig nRet = (GIntBig)json_object_get_int64(poCount);
+    int64_t nRet = (int64_t)json_object_get_int64(poCount);
 
     json_object_put(poObj);
 

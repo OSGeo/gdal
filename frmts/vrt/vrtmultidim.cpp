@@ -30,6 +30,7 @@
 /*! @cond Doxygen_Suppress */
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <mutex>
 #include <unordered_set>
@@ -478,7 +479,7 @@ std::shared_ptr<GDALGroup> VRTGroup::CreateGroup(const std::string &osName,
 
 std::shared_ptr<GDALDimension>
 VRTGroup::CreateDimension(const std::string &osName, const std::string &osType,
-                          const std::string &osDirection, GUInt64 nSize,
+                          const std::string &osDirection, uint64_t nSize,
                           CSLConstList)
 {
     if (osName.empty())
@@ -508,7 +509,7 @@ VRTGroup::CreateDimension(const std::string &osName, const std::string &osType,
 
 std::shared_ptr<GDALAttribute>
 VRTGroup::CreateAttribute(const std::string &osName,
-                          const std::vector<GUInt64> &anDimensions,
+                          const std::vector<uint64_t> &anDimensions,
                           const GDALExtendedDataType &oDataType, CSLConstList)
 {
     if (!VRTAttribute::CreationCommonChecks(osName, anDimensions,
@@ -611,7 +612,7 @@ VRTDimension::Create(const std::shared_ptr<VRTGroup> &poThisGroup,
     const char *pszType = CPLGetXMLValue(psNode, "type", "");
     const char *pszDirection = CPLGetXMLValue(psNode, "direction", "");
     const char *pszSize = CPLGetXMLValue(psNode, "size", "");
-    GUInt64 nSize = static_cast<GUInt64>(
+    uint64_t nSize = static_cast<uint64_t>(
         CPLScanUIntBig(pszSize, static_cast<int>(strlen(pszSize))));
     if (nSize == 0)
     {
@@ -646,7 +647,7 @@ void VRTDimension::Serialize(CPLXMLNode *psParent) const
     }
     CPLAddXMLAttributeAndValue(
         psDimension, "size",
-        CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(m_nSize)));
+        CPLSPrintf("%" PRIu64, static_cast<uint64_t>(m_nSize)));
     if (!m_osIndexingVariableName.empty())
     {
         CPLAddXMLAttributeAndValue(psDimension, "indexingVariable",
@@ -750,7 +751,7 @@ bool VRTDimension::SetIndexingVariable(
 /************************************************************************/
 
 bool VRTAttribute::CreationCommonChecks(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const std::map<std::string, std::shared_ptr<VRTAttribute>> &oMapAttributes)
 {
     if (osName.empty())
@@ -773,7 +774,7 @@ bool VRTAttribute::CreationCommonChecks(
         return false;
     }
     if (anDimensions.size() == 1 &&
-        anDimensions[0] > static_cast<GUInt64>(INT_MAX))
+        anDimensions[0] > static_cast<uint64_t>(INT_MAX))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Too large attribute");
         return false;
@@ -818,8 +819,8 @@ VRTAttribute::Create(const std::string &osParentName, const CPLXMLNode *psNode)
 /*                                   IRead()                            */
 /************************************************************************/
 
-bool VRTAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                         const GInt64 *arrayStep,
+bool VRTAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                         const int64_t *arrayStep,
                          const GPtrDiff_t *bufferStride,
                          const GDALExtendedDataType &bufferDataType,
                          void *pDstBuffer) const
@@ -856,8 +857,8 @@ bool VRTAttribute::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /*                                  IWrite()                            */
 /************************************************************************/
 
-bool VRTAttribute::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                          const GInt64 *arrayStep,
+bool VRTAttribute::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                          const int64_t *arrayStep,
                           const GPtrDiff_t *bufferStride,
                           const GDALExtendedDataType &bufferDataType,
                           const void *pSrcBuffer)
@@ -1104,9 +1105,9 @@ VRTMDArray::GetAttributes(CSLConstList) const
 /************************************************************************/
 
 bool VRTMDArraySourceRegularlySpaced::Read(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
-    void *pDstBuffer) const
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     GDALExtendedDataType dtFloat64(GDALExtendedDataType::Create(GDT_Float64));
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
@@ -1168,7 +1169,7 @@ VRTMDArraySourceInlinedValues::Create(const VRTMDArray *array,
     }
 
     const int nDimCount = static_cast<int>(array->GetDimensionCount());
-    std::vector<GUInt64> anOffset(nDimCount);
+    std::vector<uint64_t> anOffset(nDimCount);
     std::vector<size_t> anCount(nDimCount);
     size_t nArrayByteSize = nDTSize;
     if (nDimCount > 0)
@@ -1188,7 +1189,7 @@ VRTMDArraySourceInlinedValues::Create(const VRTMDArray *array,
             }
             for (int i = 0; i < nDimCount; ++i)
             {
-                anOffset[i] = static_cast<GUInt64>(CPLScanUIntBig(
+                anOffset[i] = static_cast<uint64_t>(CPLScanUIntBig(
                     aosTokensOffset[i],
                     static_cast<int>(strlen(aosTokensOffset[i]))));
                 if (aosTokensOffset[i][0] == '-' ||
@@ -1329,7 +1330,7 @@ VRTMDArraySourceInlinedValues::~VRTMDArraySourceInlinedValues()
 /************************************************************************/
 /*                                   Read()                             */
 /************************************************************************/
-static inline void IncrPointer(const GByte *&ptr, GInt64 nInc, size_t nIncSize)
+static inline void IncrPointer(const GByte *&ptr, int64_t nInc, size_t nIncSize)
 {
     if (nInc < 0)
         ptr -= (-nInc) * nIncSize;
@@ -1346,12 +1347,12 @@ static inline void IncrPointer(GByte *&ptr, GPtrDiff_t nInc, size_t nIncSize)
 }
 
 bool VRTMDArraySourceInlinedValues::Read(
-    const GUInt64 *arrayStartIdx, const size_t *count, const GInt64 *arrayStep,
-    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
-    void *pDstBuffer) const
+    const uint64_t *arrayStartIdx, const size_t *count,
+    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     const auto nDims(m_poDstArray->GetDimensionCount());
-    std::vector<GUInt64> anReqStart(nDims);
+    std::vector<uint64_t> anReqStart(nDims);
     std::vector<size_t> anReqCount(nDims);
     // Compute the intersection between the inline value slab and the
     // request slab.
@@ -1469,7 +1470,7 @@ void VRTMDArraySourceInlinedValues::Serialize(CPLXMLNode *psParent,
     {
         if (!osOffset.empty())
             osOffset += ',';
-        osOffset += CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nOffset));
+        osOffset += CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nOffset));
     }
     if (!osOffset.empty())
     {
@@ -1483,7 +1484,7 @@ void VRTMDArraySourceInlinedValues::Serialize(CPLXMLNode *psParent,
         if (!osCount.empty())
             osCount += ',';
         nValues *= nCount;
-        osCount += CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nCount));
+        osCount += CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nCount));
     }
     if (!osCount.empty())
     {
@@ -1581,10 +1582,10 @@ VRTMDArraySourceFromArray::Create(const VRTMDArray *poDstArray,
     const char *pszView = CPLGetXMLValue(psNode, "SourceView", "");
 
     const int nDimCount = static_cast<int>(poDstArray->GetDimensionCount());
-    std::vector<GUInt64> anSrcOffset(nDimCount);
-    std::vector<GUInt64> anCount(nDimCount);
-    std::vector<GUInt64> anStep(nDimCount, 1);
-    std::vector<GUInt64> anDstOffset(nDimCount);
+    std::vector<uint64_t> anSrcOffset(nDimCount);
+    std::vector<uint64_t> anCount(nDimCount);
+    std::vector<uint64_t> anStep(nDimCount, 1);
+    std::vector<uint64_t> anDstOffset(nDimCount);
 
     if (nDimCount > 0)
     {
@@ -1605,7 +1606,7 @@ VRTMDArraySourceFromArray::Create(const VRTMDArray *poDstArray,
                 }
                 for (int i = 0; i < nDimCount; ++i)
                 {
-                    anSrcOffset[i] = static_cast<GUInt64>(CPLScanUIntBig(
+                    anSrcOffset[i] = static_cast<uint64_t>(CPLScanUIntBig(
                         aosTokensOffset[i],
                         static_cast<int>(strlen(aosTokensOffset[i]))));
                     if (aosTokensOffset[i][0] == '-')
@@ -1630,7 +1631,7 @@ VRTMDArraySourceFromArray::Create(const VRTMDArray *poDstArray,
                 }
                 for (int i = 0; i < nDimCount; ++i)
                 {
-                    anStep[i] = static_cast<GUInt64>(CPLScanUIntBig(
+                    anStep[i] = static_cast<uint64_t>(CPLScanUIntBig(
                         aosTokensStep[i],
                         static_cast<int>(strlen(aosTokensStep[i]))));
                     if (aosTokensStep[i][0] == '-')
@@ -1656,7 +1657,7 @@ VRTMDArraySourceFromArray::Create(const VRTMDArray *poDstArray,
                 }
                 for (int i = 0; i < nDimCount; ++i)
                 {
-                    anCount[i] = static_cast<GUInt64>(CPLScanUIntBig(
+                    anCount[i] = static_cast<uint64_t>(CPLScanUIntBig(
                         aosTokensCount[i],
                         static_cast<int>(strlen(aosTokensCount[i]))));
                     if (aosTokensCount[i][0] == '-')
@@ -1687,7 +1688,7 @@ VRTMDArraySourceFromArray::Create(const VRTMDArray *poDstArray,
                 }
                 for (int i = 0; i < nDimCount; ++i)
                 {
-                    anDstOffset[i] = static_cast<GUInt64>(CPLScanUIntBig(
+                    anDstOffset[i] = static_cast<uint64_t>(CPLScanUIntBig(
                         aosTokensOffset[i],
                         static_cast<int>(strlen(aosTokensOffset[i]))));
                     if (aosTokensOffset[i][0] == '-' ||
@@ -1773,8 +1774,8 @@ void VRTMDArraySourceFromArray::Serialize(CPLXMLNode *psParent,
             {
                 if (i > 0)
                     str += ',';
-                str += CPLSPrintf(CPL_FRMT_GUIB,
-                                  static_cast<GUIntBig>(m_anSrcOffset[i]));
+                str += CPLSPrintf("%" PRIu64,
+                                  static_cast<uint64_t>(m_anSrcOffset[i]));
             }
             CPLAddXMLAttributeAndValue(psSourceSlab, "offset", str.c_str());
         }
@@ -1784,8 +1785,8 @@ void VRTMDArraySourceFromArray::Serialize(CPLXMLNode *psParent,
             {
                 if (i > 0)
                     str += ',';
-                str += CPLSPrintf(CPL_FRMT_GUIB,
-                                  static_cast<GUIntBig>(m_anCount[i]));
+                str +=
+                    CPLSPrintf("%" PRIu64, static_cast<uint64_t>(m_anCount[i]));
             }
             CPLAddXMLAttributeAndValue(psSourceSlab, "count", str.c_str());
         }
@@ -1795,8 +1796,8 @@ void VRTMDArraySourceFromArray::Serialize(CPLXMLNode *psParent,
             {
                 if (i > 0)
                     str += ',';
-                str += CPLSPrintf(CPL_FRMT_GUIB,
-                                  static_cast<GUIntBig>(m_anStep[i]));
+                str +=
+                    CPLSPrintf("%" PRIu64, static_cast<uint64_t>(m_anStep[i]));
             }
             CPLAddXMLAttributeAndValue(psSourceSlab, "step", str.c_str());
         }
@@ -1809,8 +1810,8 @@ void VRTMDArraySourceFromArray::Serialize(CPLXMLNode *psParent,
             {
                 if (i > 0)
                     str += ',';
-                str += CPLSPrintf(CPL_FRMT_GUIB,
-                                  static_cast<GUIntBig>(m_anDstOffset[i]));
+                str += CPLSPrintf("%" PRIu64,
+                                  static_cast<uint64_t>(m_anDstOffset[i]));
             }
             CPLAddXMLAttributeAndValue(psDestSlab, "offset", str.c_str());
         }
@@ -1864,12 +1865,12 @@ VRTMDArraySourceFromArray::~VRTMDArraySourceFromArray()
 
 static std::string CreateKey(const std::string &filename)
 {
-    return filename + CPLSPrintf("__thread_" CPL_FRMT_GIB, CPLGetPID());
+    return filename + CPLSPrintf("__thread_%" PRId64, CPLGetPID());
 }
 
-bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
+bool VRTMDArraySourceFromArray::Read(const uint64_t *arrayStartIdx,
                                      const size_t *count,
-                                     const GInt64 *arrayStep,
+                                     const int64_t *arrayStep,
                                      const GPtrDiff_t *bufferStride,
                                      const GDALExtendedDataType &bufferDataType,
                                      void *pDstBuffer) const
@@ -2000,7 +2001,7 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
     }
 
     const auto &srcDims(poArray->GetDimensions());
-    std::vector<GUInt64> anReqDstStart(nDims);
+    std::vector<uint64_t> anReqDstStart(nDims);
     std::vector<size_t> anReqCount(nDims);
     // Compute the intersection between the inline value slab and the
     // request slab.
@@ -2057,8 +2058,8 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
 
     GPtrDiff_t nDstOffset = 0;
     const auto nBufferDataTypeSize(bufferDataType.GetSize());
-    std::vector<GUInt64> anSrcArrayOffset(nDims);
-    std::vector<GInt64> anSrcArrayStep(nDims);
+    std::vector<uint64_t> anSrcArrayOffset(nDims);
+    std::vector<int64_t> anSrcArrayStep(nDims);
     for (size_t i = 0; i < nDims; i++)
     {
         const size_t nRelStartDst =
@@ -2068,8 +2069,8 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
             m_anSrcOffset[i] +
             (anReqDstStart[i] - m_anDstOffset[i]) * m_anStep[i];
         if (arrayStep[i] < 0)
-            anSrcArrayStep[i] = -static_cast<GInt64>(
-                m_anStep[i] * static_cast<GUInt64>(-arrayStep[i]));
+            anSrcArrayStep[i] = -static_cast<int64_t>(
+                m_anStep[i] * static_cast<uint64_t>(-arrayStep[i]));
         else
             anSrcArrayStep[i] = m_anStep[i] * arrayStep[i];
     }
@@ -2082,8 +2083,8 @@ bool VRTMDArraySourceFromArray::Read(const GUInt64 *arrayStartIdx,
 /*                                   IRead()                            */
 /************************************************************************/
 
-bool VRTMDArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+bool VRTMDArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                       const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                        const GDALExtendedDataType &bufferDataType,
                        void *pDstBuffer) const
 {
@@ -2263,7 +2264,7 @@ VRTGroup *VRTMDArray::GetGroup() const
 
 std::shared_ptr<GDALAttribute>
 VRTMDArray::CreateAttribute(const std::string &osName,
-                            const std::vector<GUInt64> &anDimensions,
+                            const std::vector<uint64_t> &anDimensions,
                             const GDALExtendedDataType &oDataType, CSLConstList)
 {
     if (!VRTAttribute::CreationCommonChecks(osName, anDimensions,
@@ -2284,8 +2285,8 @@ VRTMDArray::CreateAttribute(const std::string &osName,
 /************************************************************************/
 
 bool VRTMDArray::CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
-                          bool bStrict, GUInt64 &nCurCost,
-                          const GUInt64 nTotalCost,
+                          bool bStrict, uint64_t &nCurCost,
+                          const uint64_t nTotalCost,
                           GDALProgressFunc pfnProgress, void *pProgressData)
 {
     if (pfnProgress == nullptr)
@@ -2309,7 +2310,7 @@ bool VRTMDArray::CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
         {
             std::vector<double> adfTmp(
                 static_cast<size_t>(m_dims[0]->GetSize()));
-            const GUInt64 anStart[] = {0};
+            const uint64_t anStart[] = {0};
             const size_t nCount = adfTmp.size();
             const size_t anCount[] = {nCount};
             if (poSrcArray->Read(anStart, anCount, nullptr, nullptr,
@@ -2340,10 +2341,10 @@ bool VRTMDArray::CopyFrom(GDALDataset *poSrcDS, const GDALMDArray *poSrcArray,
 
         if (m_sources.empty())
         {
-            std::vector<GUInt64> anSrcOffset(nDims);
-            std::vector<GUInt64> anCount(nDims);
-            std::vector<GUInt64> anStep(nDims, 1);
-            std::vector<GUInt64> anDstOffset(nDims);
+            std::vector<uint64_t> anSrcOffset(nDims);
+            std::vector<uint64_t> anCount(nDims);
+            std::vector<uint64_t> anStep(nDims, 1);
+            std::vector<uint64_t> anDstOffset(nDims);
             for (size_t i = 0; i < nDims; i++)
                 anCount[i] = m_dims[i]->GetSize();
 

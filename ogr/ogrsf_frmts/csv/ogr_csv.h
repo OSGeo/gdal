@@ -133,7 +133,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     bool bIsEurostatTSV;
     int nEurostatDims;
 
-    GIntBig nTotalFeatures;
+    int64_t nTotalFeatures;
 
     char **AutodetectFieldTypes(char **papszOpenOptions, int nFieldCount);
 
@@ -193,7 +193,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
     {
         return bHiddenWKTColumn;
     }
-    GIntBig GetTotalFeatureCount() const
+    int64_t GetTotalFeatureCount() const
     {
         return nTotalFeatures;
     }
@@ -216,7 +216,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
 
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
@@ -253,7 +253,7 @@ class OGRCSVLayer final : public IOGRCSVLayer, public OGRLayer
         return m_eStringQuoting;
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr SyncToDisk() override;
 
     OGRErr WriteHeader();

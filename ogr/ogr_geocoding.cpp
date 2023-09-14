@@ -69,11 +69,11 @@ static int OGR_gettimeofday(struct timeval *tv,
     GetSystemTimeAsFileTime(&ft);
 
     // In 100-nanosecond intervals since January 1, 1601 (UTC).
-    GUIntBig nVal =
-        (static_cast<GUIntBig>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
+    uint64_t nVal =
+        (static_cast<uint64_t>(ft.dwHighDateTime) << 32) | ft.dwLowDateTime;
     nVal /= 10;  // To microseconds.
     // There are 11 644 473 600 seconds between 1601 and 1970.
-    nVal -= static_cast<GUIntBig>(116444736) * 100 * MICROSEC_IN_SEC;
+    nVal -= static_cast<uint64_t>(116444736) * 100 * MICROSEC_IN_SEC;
     tv->tv_sec = static_cast<long>(nVal / MICROSEC_IN_SEC);
     tv->tv_usec = static_cast<long>(nVal % MICROSEC_IN_SEC);
 

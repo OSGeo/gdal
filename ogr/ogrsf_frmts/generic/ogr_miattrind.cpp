@@ -57,13 +57,13 @@ class OGRMIAttrIndex : public OGRAttrIndex
     ~OGRMIAttrIndex();
 
     GByte *BuildKey(OGRField *psKey);
-    GIntBig GetFirstMatch(OGRField *psKey) override;
-    GIntBig *GetAllMatches(OGRField *psKey) override;
-    GIntBig *GetAllMatches(OGRField *psKey, GIntBig *panFIDList, int *nFIDCount,
+    int64_t GetFirstMatch(OGRField *psKey) override;
+    int64_t *GetAllMatches(OGRField *psKey) override;
+    int64_t *GetAllMatches(OGRField *psKey, int64_t *panFIDList, int *nFIDCount,
                            int *nLength) override;
 
-    OGRErr AddEntry(OGRField *psKey, GIntBig nFID) override;
-    OGRErr RemoveEntry(OGRField *psKey, GIntBig nFID) override;
+    OGRErr AddEntry(OGRField *psKey, int64_t nFID) override;
+    OGRErr RemoveEntry(OGRField *psKey, int64_t nFID) override;
 
     OGRErr Clear() override;
 };
@@ -692,7 +692,7 @@ OGRMIAttrIndex::~OGRMIAttrIndex()
 /*                              AddEntry()                              */
 /************************************************************************/
 
-OGRErr OGRMIAttrIndex::AddEntry(OGRField *psKey, GIntBig nFID)
+OGRErr OGRMIAttrIndex::AddEntry(OGRField *psKey, int64_t nFID)
 
 {
     if (psKey == nullptr)
@@ -716,7 +716,7 @@ OGRErr OGRMIAttrIndex::AddEntry(OGRField *psKey, GIntBig nFID)
 /*                            RemoveEntry()                             */
 /************************************************************************/
 
-OGRErr OGRMIAttrIndex::RemoveEntry(OGRField * /*psKey*/, GIntBig /*nFID*/)
+OGRErr OGRMIAttrIndex::RemoveEntry(OGRField * /*psKey*/, int64_t /*nFID*/)
 
 {
     return OGRERR_UNSUPPORTED_OPERATION;
@@ -768,11 +768,11 @@ GByte *OGRMIAttrIndex::BuildKey(OGRField *psKey)
 /*                           GetFirstMatch()                            */
 /************************************************************************/
 
-GIntBig OGRMIAttrIndex::GetFirstMatch(OGRField *psKey)
+int64_t OGRMIAttrIndex::GetFirstMatch(OGRField *psKey)
 
 {
     GByte *pabyKey = BuildKey(psKey);
-    const GIntBig nFID = poINDFile->FindFirst(iIndex, pabyKey);
+    const int64_t nFID = poINDFile->FindFirst(iIndex, pabyKey);
     if (nFID < 1)
         return OGRNullFID;
     else
@@ -783,26 +783,26 @@ GIntBig OGRMIAttrIndex::GetFirstMatch(OGRField *psKey)
 /*                           GetAllMatches()                            */
 /************************************************************************/
 
-GIntBig *OGRMIAttrIndex::GetAllMatches(OGRField *psKey, GIntBig *panFIDList,
+int64_t *OGRMIAttrIndex::GetAllMatches(OGRField *psKey, int64_t *panFIDList,
                                        int *nFIDCount, int *nLength)
 {
     GByte *pabyKey = BuildKey(psKey);
 
     if (panFIDList == nullptr)
     {
-        panFIDList = static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig) * 2));
+        panFIDList = static_cast<int64_t *>(CPLMalloc(sizeof(int64_t) * 2));
         *nFIDCount = 0;
         *nLength = 2;
     }
 
-    GIntBig nFID = poINDFile->FindFirst(iIndex, pabyKey);
+    int64_t nFID = poINDFile->FindFirst(iIndex, pabyKey);
     while (nFID > 0)
     {
         if (*nFIDCount >= *nLength - 1)
         {
             *nLength = (*nLength) * 2 + 10;
-            panFIDList = static_cast<GIntBig *>(
-                CPLRealloc(panFIDList, sizeof(GIntBig) * (*nLength)));
+            panFIDList = static_cast<int64_t *>(
+                CPLRealloc(panFIDList, sizeof(int64_t) * (*nLength)));
         }
         panFIDList[(*nFIDCount)++] = nFID - 1;
 
@@ -814,7 +814,7 @@ GIntBig *OGRMIAttrIndex::GetAllMatches(OGRField *psKey, GIntBig *panFIDList,
     return panFIDList;
 }
 
-GIntBig *OGRMIAttrIndex::GetAllMatches(OGRField *psKey)
+int64_t *OGRMIAttrIndex::GetAllMatches(OGRField *psKey)
 {
     int nFIDCount, nLength;
     return GetAllMatches(psKey, nullptr, &nFIDCount, &nLength);

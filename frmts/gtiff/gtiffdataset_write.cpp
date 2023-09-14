@@ -35,6 +35,7 @@
 #include <cerrno>
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -677,8 +678,8 @@ bool GTiffDataset::WriteEncodedTile(uint32_t tile, GByte *pabyData,
             cc)
         {
             ReportError(CE_Failure, CPLE_FileIO,
-                        "Could not write " CPL_FRMT_GUIB " bytes",
-                        static_cast<GUIntBig>(cc));
+                        "Could not write %" PRIu64 " bytes",
+                        static_cast<uint64_t>(cc));
             return false;
         }
         m_nLastWrittenBlockId = tile;
@@ -726,10 +727,9 @@ bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
         nStripHeight = GetRasterYSize() - nStripWithinBand * m_nRowsPerStrip;
         cc = (cc / m_nRowsPerStrip) * nStripHeight;
         CPLDebug("GTiff",
-                 "Adjusted bytes to write from " CPL_FRMT_GUIB
-                 " to " CPL_FRMT_GUIB ".",
-                 static_cast<GUIntBig>(TIFFStripSize(m_hTIFF)),
-                 static_cast<GUIntBig>(cc));
+                 "Adjusted bytes to write from %" PRIu64 " to %" PRIu64 ".",
+                 static_cast<uint64_t>(TIFFStripSize(m_hTIFF)),
+                 static_cast<uint64_t>(cc));
     }
 
     /* -------------------------------------------------------------------- */
@@ -787,8 +787,8 @@ bool GTiffDataset::WriteEncodedStrip(uint32_t strip, GByte *pabyData,
             cc)
         {
             ReportError(CE_Failure, CPLE_FileIO,
-                        "Could not write " CPL_FRMT_GUIB " bytes",
-                        static_cast<GUIntBig>(cc));
+                        "Could not write %" PRIu64 " bytes",
+                        static_cast<uint64_t>(cc));
             return false;
         }
         m_nLastWrittenBlockId = strip;
@@ -1011,8 +1011,8 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
                                        GPtrDiff_t nCompressedBufferSize)
 {
 #ifdef DEBUG_VERBOSE
-    CPLDebug("GTIFF", "Writing raw strip/tile %d, size " CPL_FRMT_GUIB,
-             nStripOrTile, static_cast<GUIntBig>(nCompressedBufferSize));
+    CPLDebug("GTIFF", "Writing raw strip/tile %d, size %" PRIu64, nStripOrTile,
+             static_cast<uint64_t>(nCompressedBufferSize));
 #endif
     toff_t *panOffsets = nullptr;
     toff_t *panByteCounts = nullptr;
@@ -1038,7 +1038,7 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
                              &panByteCounts) &&
                 panByteCounts != nullptr)
             {
-                if (static_cast<GUIntBig>(nCompressedBufferSize) >
+                if (static_cast<uint64_t>(nCompressedBufferSize) >
                     panByteCounts[nStripOrTile])
                 {
                     GTiffDataset *poRootDS = m_poBaseDS ? m_poBaseDS : this;
@@ -1057,7 +1057,7 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
                 // completely give up (we could potentially move the mask in
                 // case the imagery is smaller)
                 else if (m_poMaskDS && m_bMaskInterleavedWithImagery &&
-                         static_cast<GUIntBig>(nCompressedBufferSize) !=
+                         static_cast<uint64_t>(nCompressedBufferSize) !=
                              panByteCounts[nStripOrTile])
                 {
                     GTiffDataset *poRootDS = m_poBaseDS ? m_poBaseDS : this;
@@ -1101,7 +1101,7 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
         }
     }
     if (bWriteLeader &&
-        static_cast<GUIntBig>(nCompressedBufferSize) <= 0xFFFFFFFFU)
+        static_cast<uint64_t>(nCompressedBufferSize) <= 0xFFFFFFFFU)
     {
         // cppcheck-suppress knownConditionTrueFalse
         if (bWriteAtEnd)
@@ -1143,7 +1143,7 @@ void GTiffDataset::WriteRawStripOrTile(int nStripOrTile,
     if (written != nCompressedBufferSize)
         m_bWriteError = true;
     if (bWriteTrailer &&
-        static_cast<GUIntBig>(nCompressedBufferSize) <= 0xFFFFFFFFU)
+        static_cast<uint64_t>(nCompressedBufferSize) <= 0xFFFFFFFFU)
     {
         GByte abyLastBytes[4] = {};
         if (nCompressedBufferSize >= 4)
@@ -4358,14 +4358,14 @@ void GTiffDataset::WriteNoDataValue(TIFF *hTIFF, int64_t nNoData)
 
 {
     TIFFSetField(hTIFF, TIFFTAG_GDAL_NODATA,
-                 CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(nNoData)));
+                 CPLSPrintf("%" PRId64, static_cast<int64_t>(nNoData)));
 }
 
 void GTiffDataset::WriteNoDataValue(TIFF *hTIFF, uint64_t nNoData)
 
 {
     TIFFSetField(hTIFF, TIFFTAG_GDAL_NODATA,
-                 CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nNoData)));
+                 CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nNoData)));
 }
 
 /************************************************************************/
@@ -5249,17 +5249,17 @@ TIFF *GTiffDataset::CreateLL(const char *pszFilename, int nXSize, int nYSize,
         osOriFilename != "/vsistdout_redirect/" &&
         CPLTestBool(CPLGetConfigOption("CHECK_DISK_FREE_SPACE", "TRUE")))
     {
-        GIntBig nFreeDiskSpace =
+        int64_t nFreeDiskSpace =
             VSIGetDiskFreeSpace(CPLGetDirname(pszFilename));
         if (nFreeDiskSpace >= 0 && nFreeDiskSpace < dfUncompressedImageSize)
         {
             ReportError(pszFilename, CE_Failure, CPLE_FileIO,
-                        "Free disk space available is " CPL_FRMT_GIB " bytes, "
-                        "whereas " CPL_FRMT_GIB " are at least necessary. "
+                        "Free disk space available is %" PRId64 " bytes, "
+                        "whereas %" PRId64 " are at least necessary. "
                         "You can disable this check by defining the "
                         "CHECK_DISK_FREE_SPACE configuration option to FALSE.",
                         nFreeDiskSpace,
-                        static_cast<GIntBig>(dfUncompressedImageSize));
+                        static_cast<int64_t>(dfUncompressedImageSize));
             return nullptr;
         }
     }

@@ -188,7 +188,7 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
 
     int nStart = CPL_LSBWORD32(poDS->sHeader.IL);
     int nEnd = CPL_LSBWORD32(poDS->sHeader.LL);
-    GIntBig nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    int64_t nDiff = static_cast<int64_t>(nEnd) - nStart + 1;
     if (nDiff <= 0 || nDiff > INT_MAX)
     {
         return nullptr;
@@ -197,7 +197,7 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
 
     nStart = CPL_LSBWORD32(poDS->sHeader.IE);
     nEnd = CPL_LSBWORD32(poDS->sHeader.LE);
-    nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    nDiff = static_cast<int64_t>(nEnd) - nStart + 1;
     if (nDiff <= 0 || nDiff > INT_MAX)
     {
         return nullptr;

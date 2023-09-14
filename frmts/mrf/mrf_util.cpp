@@ -217,11 +217,11 @@ void ppmWrite(const char *fname, const char *data, const ILSize &sz)
 
 // Returns the size of the index for image and overlays
 // If scale is zero, only base image
-GIntBig IdxSize(const ILImage &full, const int scale)
+int64_t IdxSize(const ILImage &full, const int scale)
 {
     ILImage img = full;
     img.pagecount = pcount(img.size, img.pagesize);
-    GIntBig sz = img.pagecount.l;
+    int64_t sz = img.pagecount.l;
     while (scale != 0 && 1 != img.pagecount.x * img.pagecount.y)
     {
         img.size.x = pcount(img.size.x, scale);
@@ -231,7 +231,7 @@ GIntBig IdxSize(const ILImage &full, const int scale)
     }
 
     if (sz >
-        std::numeric_limits<GIntBig>::max() / static_cast<int>(sizeof(ILIdx)))
+        std::numeric_limits<int64_t>::max() / static_cast<int>(sizeof(ILIdx)))
     {
         CPLError(CE_Failure, CPLE_AppDefined, "IdxSize: integer overflow");
         return 0;
@@ -326,7 +326,7 @@ double getXMLNum(CPLXMLNode *node, const char *pszPath, double def)
 // Calculate offset of index, pos is in pages
 //
 
-GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
+int64_t IdxOffset(const ILSize &pos, const ILImage &img)
 {
     return img.idxoffset +
            sizeof(ILIdx) *
@@ -334,7 +334,7 @@ GIntBig IdxOffset(const ILSize &pos, const ILImage &img)
                 img.pagecount.c *
                     (pos.x + img.pagecount.x *
                                  (pos.y + img.pagecount.y *
-                                              static_cast<GIntBig>(pos.z))));
+                                              static_cast<int64_t>(pos.z))));
 }
 
 // Is compression type endianness dependent?
@@ -549,7 +549,7 @@ void XMLSetAttributeVal(CPLXMLNode *parent, const char *pszName,
  * @return true if size is OK or if extend succeeded
  */
 
-int CheckFileSize(const char *fname, GIntBig sz, GDALAccess eAccess)
+int CheckFileSize(const char *fname, int64_t sz, GDALAccess eAccess)
 {
 
     VSIStatBufL statb;

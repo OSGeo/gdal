@@ -277,7 +277,7 @@ bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
 /*                           SetNextByIndex()                           */
 /************************************************************************/
 
-OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
+OGRErr OGRSXFLayer::SetNextByIndex(int64_t nIndex)
 {
     if (nIndex < 0 || nIndex > (long)mnRecordDesc.size())
         return OGRERR_FAILURE;
@@ -292,7 +292,7 @@ OGRErr OGRSXFLayer::SetNextByIndex(GIntBig nIndex)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRSXFLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRSXFLayer::GetFeature(int64_t nFID)
 {
     const auto IT = mnRecordDesc.find(static_cast<long>(nFID));
     if (IT != mnRecordDesc.end())
@@ -345,7 +345,7 @@ OGRErr OGRSXFLayer::GetExtent(OGREnvelope *psExtent, int bForce)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRSXFLayer::GetFeatureCount(int bForce)
+int64_t OGRSXFLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
         return static_cast<int>(mnRecordDesc.size());

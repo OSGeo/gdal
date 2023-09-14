@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <algorithm>
 
@@ -407,7 +408,7 @@ class VSICryptFileHeader
     VSICryptMode eMode = MODE_CBC;
     CPLString osIV{};
     bool bAddKeyCheck = false;
-    GUIntBig nPayloadFileSize = 0;
+    uint64_t nPayloadFileSize = 0;
     CPLString osFreeText{};
     CPLString osExtraContent{};
 };
@@ -647,8 +648,7 @@ int VSICryptFileHeader::ReadFromFile(VSIVirtualHandle *fp,
         return VSICryptReadError();
     CPL_LSBPTR64(&nPayloadFileSize);
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "nPayloadFileSize read = " CPL_FRMT_GUIB,
-             nPayloadFileSize);
+    CPLDebug("VSICRYPT", "nPayloadFileSize read = %" PRIu64, nPayloadFileSize);
 #endif
 
     uint16_t nExtraContentSize = 0;
@@ -733,7 +733,7 @@ int VSICryptFileHeader::WriteToFile(VSIVirtualHandle *fp,
     bRet &= (fp->Write(osKeyCheckRes.c_str(), 1, osKeyCheckRes.size()) ==
              osKeyCheckRes.size());
 
-    GUIntBig nPayloadFileSizeToWrite = nPayloadFileSize;
+    uint64_t nPayloadFileSizeToWrite = nPayloadFileSize;
     CPL_LSBPTR64(&nPayloadFileSizeToWrite);
     bRet &= (fp->Write(&nPayloadFileSizeToWrite, 8, 1) == 1);
 
@@ -1048,7 +1048,7 @@ bool VSICryptFileHandle::FlushDirty()
 int VSICryptFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 {
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Seek(nOffset=" CPL_FRMT_GUIB ", nWhence=%d)", nOffset,
+    CPLDebug("VSICRYPT", "Seek(nOffset=" PRIu64 ", nWhence=%d)", nOffset,
              nWhence);
 #endif
 
@@ -1070,7 +1070,7 @@ int VSICryptFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 vsi_l_offset VSICryptFileHandle::Tell()
 {
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Tell()=" CPL_FRMT_GUIB, nCurPos);
+    CPLDebug("VSICRYPT", "Tell()=" PRIu64, nCurPos);
 #endif
     return nCurPos;
 }
@@ -1085,7 +1085,7 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
     GByte *pabyBuffer = static_cast<GByte *>(pBuffer);
 
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Read(nCurPos=" CPL_FRMT_GUIB ", nToRead=%d)", nCurPos,
+    CPLDebug("VSICRYPT", "Read(nCurPos=" PRIu64 ", nToRead=%d)", nCurPos,
              static_cast<int>(nToRead));
 #endif
 
@@ -1170,9 +1170,9 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
 
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT",
-             "Write(nCurPos=" CPL_FRMT_GUIB ", nToWrite=%d,"
-             "nPayloadFileSize=" CPL_FRMT_GUIB
-             ",bWBDirty=%d,nWBOffset=" CPL_FRMT_GUIB ",nWBSize=%d)",
+             "Write(nCurPos=" PRIu64 ", nToWrite=%d,"
+             "nPayloadFileSize=" PRIu64 ",bWBDirty=%d,nWBOffset=" PRIu64
+             ",nWBSize=%d)",
              nCurPos, static_cast<int>(nToWrite), poHeader->nPayloadFileSize,
              static_cast<int>(bWBDirty), nWBOffset, nWBSize);
 #endif
@@ -1326,7 +1326,7 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
 int VSICryptFileHandle::Truncate(vsi_l_offset nNewSize)
 {
 #ifdef VERBOSE_VSICRYPT
-    CPLDebug("VSICRYPT", "Truncate(" CPL_FRMT_GUIB ")", nNewSize);
+    CPLDebug("VSICRYPT", "Truncate(" PRIu64 ")", nNewSize);
 #endif
     if ((nPerms & VSICRYPT_WRITE) == 0)
         return -1;
@@ -1412,7 +1412,7 @@ int VSICryptFileHandle::Flush()
     if (bUpdateHeader)
     {
 #ifdef VERBOSE_VSICRYPT
-        CPLDebug("VSICRYPT", "nPayloadFileSize = " CPL_FRMT_GUIB,
+        CPLDebug("VSICRYPT", "nPayloadFileSize = %" PRIu64,
                  poHeader->nPayloadFileSize);
 #endif
         if (!poHeader->WriteToFile(poBaseHandle, poEncCipher))

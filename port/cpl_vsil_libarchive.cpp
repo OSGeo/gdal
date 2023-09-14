@@ -209,8 +209,8 @@ class VSILibArchiveReader final : public VSIArchiveReader
     std::string m_osPrefix;
     bool m_bFirst = true;
     std::string m_osFilename{};
-    GUIntBig m_nFilesize = 0;
-    GIntBig m_nMTime = 0;
+    uint64_t m_nFilesize = 0;
+    int64_t m_nMTime = 0;
 
   public:
     VSILibArchiveReader(const char *pszArchiveFileName,
@@ -231,7 +231,7 @@ class VSILibArchiveReader final : public VSIArchiveReader
     virtual int GotoFirstFile() override;
     virtual int GotoNextFile() override;
     virtual VSIArchiveEntryFileOffset *GetFileOffset() override;
-    virtual GUIntBig GetFileSize() override
+    virtual uint64_t GetFileSize() override
     {
         return m_nFilesize;
     }
@@ -239,7 +239,7 @@ class VSILibArchiveReader final : public VSIArchiveReader
     {
         return m_osFilename;
     }
-    virtual GIntBig GetModifiedTime() override
+    virtual int64_t GetModifiedTime() override
     {
         return m_nMTime;
     }

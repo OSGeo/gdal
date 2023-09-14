@@ -111,7 +111,7 @@ class GDALDAASDataset final : public GDALDataset
     CPLString m_osGetBufferURL;
     int m_nBlockSize = knDEFAULT_BLOCKSIZE;
     Format m_eFormat = Format::RAW;
-    GIntBig m_nServerByteLimit = knDEFAULT_SERVER_BYTE_LIMIT;
+    int64_t m_nServerByteLimit = knDEFAULT_SERVER_BYTE_LIMIT;
     GDALRIOResampleAlg m_eCurrentResampleAlg = GRIORA_NearestNeighbour;
 
     int m_nMainMaskBandIndex = 0;
@@ -1822,7 +1822,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
 
     // If AdviseRead() was called before, and the current requested area is
     // in it, check if we can prefetch the whole advised area
-    const GIntBig nCacheMax = GDALGetCacheMax64() / 2;
+    const int64_t nCacheMax = GDALGetCacheMax64() / 2;
     if (poGDS->m_nXSizeAdvise > 0 && nXOff >= poGDS->m_nXOffAdvise &&
         nYOff >= poGDS->m_nYOffAdvise &&
         nXOff + nXSize <= poGDS->m_nXOffAdvise + poGDS->m_nXSizeAdvise &&
@@ -1836,7 +1836,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
         int nYBlocksAdvise =
             (poGDS->m_nYOffAdvise + poGDS->m_nYSizeAdvise - 1) / nBlockYSize -
             nBlockYOffAdvise + 1;
-        const GIntBig nUncompressedSize = static_cast<GIntBig>(nXBlocksAdvise) *
+        const int64_t nUncompressedSize = static_cast<int64_t>(nXBlocksAdvise) *
                                           nYBlocksAdvise * nBlockXSize *
                                           nBlockYSize * nTotalDataTypeSize;
         if (nUncompressedSize <= nCacheMax &&
@@ -1930,7 +1930,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
         // Make sure that we have enough cache (with a margin of 50%)
         // and the number of queried pixels isn't too big w.r.t server
         // limit
-        const GIntBig nUncompressedSize = static_cast<GIntBig>(nXBlocks) *
+        const int64_t nUncompressedSize = static_cast<int64_t>(nXBlocks) *
                                           nYBlocks * nBlockXSize * nBlockYSize *
                                           nTotalDataTypeSize;
         if (nUncompressedSize > nCacheMax ||
@@ -1939,8 +1939,8 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
             if (anRequestedBands.size() > 1 && poGDS->GetRasterCount() > 1)
             {
                 const int nThisDTSize = GDALGetDataTypeSizeBytes(eDataType);
-                const GIntBig nUncompressedSizeThisBand =
-                    static_cast<GIntBig>(nXBlocks) * nYBlocks * nBlockXSize *
+                const int64_t nUncompressedSizeThisBand =
+                    static_cast<int64_t>(nXBlocks) * nYBlocks * nBlockXSize *
                     nBlockYSize * nThisDTSize;
                 if (nUncompressedSizeThisBand <= poGDS->m_nServerByteLimit &&
                     nUncompressedSizeThisBand <= nCacheMax)
@@ -2086,21 +2086,21 @@ CPLErr GDALDAASRasterBand::GetBlocks(int nBlockXOff, int nBlockYOff,
     else
     {
         oUL.Add("x",
-                static_cast<int>((static_cast<GIntBig>(nULX) * nMainXSize) /
+                static_cast<int>((static_cast<int64_t>(nULX) * nMainXSize) /
                                  nRasterXSize));
         oUL.Add("y",
-                static_cast<int>((static_cast<GIntBig>(nULY) * nMainYSize) /
+                static_cast<int>((static_cast<int64_t>(nULY) * nMainYSize) /
                                  nRasterYSize));
 
         oLR.Add("x", (nLRX == nRasterXSize)
                          ? nMainXSize
                          : static_cast<int>(
-                               (static_cast<GIntBig>(nLRX) * nMainXSize) /
+                               (static_cast<int64_t>(nLRX) * nMainXSize) /
                                nRasterXSize));
         oLR.Add("y", (nLRY == nRasterYSize)
                          ? nMainYSize
                          : static_cast<int>(
-                               (static_cast<GIntBig>(nLRY) * nMainYSize) /
+                               (static_cast<int64_t>(nLRY) * nMainYSize) /
                                nRasterYSize));
     }
     oBBox.Add("ul", oUL);

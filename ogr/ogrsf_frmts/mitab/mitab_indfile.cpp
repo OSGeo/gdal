@@ -647,7 +647,7 @@ GByte *TABINDFile::BuildKey(int nIndexNumber, double dValue)
  *
  * BuildKey() for LargeInt
  **********************************************************************/
-GByte *TABINDFile::BuildKey(int nIndexNumber, GInt64 nValue)
+GByte *TABINDFile::BuildKey(int nIndexNumber, int64_t nValue)
 {
     if (ValidateIndexNo(nIndexNumber) != 0)
         return nullptr;

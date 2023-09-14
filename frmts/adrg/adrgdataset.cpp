@@ -31,6 +31,7 @@
 #include "iso8211.h"
 #include "ogr_spatialref.h"
 
+#include <cinttypes>
 #include <limits>
 #include <new>
 
@@ -251,14 +252,14 @@ CPLErr ADRGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (VSIFSeekL(l_poDS->fdIMG, offset, SEEK_SET) != 0)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot seek to offset " CPL_FRMT_GUIB, offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot seek to offset %" PRIu64,
+                 offset);
         return CE_Failure;
     }
     if (VSIFReadL(pImage, 1, 128 * 128, l_poDS->fdIMG) != 128 * 128)
     {
-        CPLError(CE_Failure, CPLE_FileIO,
-                 "Cannot read data at offset " CPL_FRMT_GUIB, offset);
+        CPLError(CE_Failure, CPLE_FileIO, "Cannot read data at offset %" PRIu64,
+                 offset);
         return CE_Failure;
     }
 

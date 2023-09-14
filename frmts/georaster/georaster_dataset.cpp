@@ -739,7 +739,7 @@ boolean GeoRasterDataset::JPEG_CopyDirect(const char *pszJPGFilename,
 
         VSIFSeekL(fpInput, 0L, SEEK_SET);
 
-        GUIntBig nCurOff = 0;
+        uint64_t nCurOff = 0;
 
         while (nCount < nDataLength)
         {

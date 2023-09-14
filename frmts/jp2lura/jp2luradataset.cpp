@@ -1255,7 +1255,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             /*else
                 bUseXLBoxes =
                     CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) ||
-                    (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
+                    (int64_t)nXSize * nYSize * nBands * nDataTypeSize /
                                     dfRates.back() > 4e9;*/
             uint32_t nLBox = (bUseXLBoxes) ? 1 : 0;
             CPL_MSBPTR32(&nLBox);
@@ -1263,7 +1263,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             VSIFWriteL("jp2c", 1, 4, fp);
             if (bUseXLBoxes)
             {
-                GUIntBig nXLBox = 0;
+                uint64_t nXLBox = 0;
                 VSIFWriteL(&nXLBox, 1, 8, fp);
             }
         }
@@ -1374,10 +1374,10 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
                 if (QUALITY == 0 && RATE != 0)
                 {
 
-                    GUIntBig ullTotalBytes =
-                        ((GUIntBig)nXSize * nYSize * 32) >> 3;
+                    uint64_t ullTotalBytes =
+                        ((uint64_t)nXSize * nYSize * 32) >> 3;
 
-                    GUIntBig ulMaxBytes = ullTotalBytes / RATE;
+                    uint64_t ulMaxBytes = ullTotalBytes / RATE;
                     // This property can only be set for the complete image
                     SetPropGeneral(cJP2_Prop_Rate_Bytes, ulMaxBytes);
                 }
@@ -1458,10 +1458,10 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
                 }
                 cJP2_Wavelet = cJP2_Wavelet_9_7;
 
-                GUIntBig ullTotalBytes =
-                    ((GUIntBig)nXSize * nYSize * nBands * ulBps + 7) >> 3;
+                uint64_t ullTotalBytes =
+                    ((uint64_t)nXSize * nYSize * nBands * ulBps + 7) >> 3;
 
-                GUIntBig ulMaxBytes = ullTotalBytes / RATE;
+                uint64_t ulMaxBytes = ullTotalBytes / RATE;
                 SetPropGeneral(cJP2_Prop_Rate_Bytes, ulMaxBytes);
             }
             SetPropGeneral(cJP2_Prop_Wavelet_Filter, cJP2_Wavelet);

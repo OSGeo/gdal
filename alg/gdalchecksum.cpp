@@ -149,11 +149,11 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
         const int nChunkYSize = nBlockYSize;
         if (nBlockXSize < nXSize)
         {
-            const GIntBig nMaxChunkSize =
-                std::max(static_cast<GIntBig>(10 * 1000 * 1000),
+            const int64_t nMaxChunkSize =
+                std::max(static_cast<int64_t>(10 * 1000 * 1000),
                          GDALGetCacheMax64() / 10);
             if (nDstDataTypeSize > 0 &&
-                static_cast<GIntBig>(nXSize) * nChunkYSize <
+                static_cast<int64_t>(nXSize) * nChunkYSize <
                     nMaxChunkSize / nDstDataTypeSize)
             {
                 // A full line of height nChunkYSize can fit in the maximum
@@ -164,11 +164,11 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
             {
                 // Otherwise compute a size that is a multiple of nBlockXSize
                 nChunkXSize = static_cast<int>(std::min(
-                    static_cast<GIntBig>(nXSize),
+                    static_cast<int64_t>(nXSize),
                     nBlockXSize *
-                        std::max(static_cast<GIntBig>(1),
+                        std::max(static_cast<int64_t>(1),
                                  nMaxChunkSize /
-                                     (static_cast<GIntBig>(nBlockXSize) *
+                                     (static_cast<int64_t>(nBlockXSize) *
                                       nChunkYSize * nDstDataTypeSize))));
             }
         }

@@ -117,7 +117,7 @@ template <> void AverageByFour<int32_t>(int32_t *buff, int xsz, int ysz)
         int32_t *oddline = evenline + xsz * 2;
         for (int col = 0; col < xsz; col++)
         {
-            *obuff++ = (GIntBig(2) + evenline[0] + evenline[1] + oddline[0] +
+            *obuff++ = (int64_t(2) + evenline[0] + evenline[1] + oddline[0] +
                         oddline[1]) /
                        4;
             evenline += 2;
@@ -138,7 +138,7 @@ template <> void AverageByFour<uint32_t>(uint32_t *buff, int xsz, int ysz)
         uint32_t *oddline = evenline + xsz * 2;
         for (int col = 0; col < xsz; col++)
         {
-            *obuff++ = (GIntBig(2) + evenline[0] + evenline[1] + oddline[0] +
+            *obuff++ = (int64_t(2) + evenline[0] + evenline[1] + oddline[0] +
                         oddline[1]) /
                        4;
             evenline += 2;
@@ -190,7 +190,7 @@ template <> void AverageByFour<double>(double *buff, int xsz, int ysz)
 
 //
 // Integer type specialization, with roundup and integer math, avoids overflow
-// using GIntBig accumulator Speedup by specialization for smaller byte count
+// using int64_t accumulator Speedup by specialization for smaller byte count
 // int types is probably not worth much since there are so many conditions here
 //
 template <typename T>
@@ -204,7 +204,7 @@ static void AverageByFour(T *buff, int xsz, int ysz, T ndv)
         T *oddline = evenline + xsz * 2;
         for (int col = 0; col < xsz; col++)
         {
-            GIntBig acc = 0;
+            int64_t acc = 0;
             int count = 0;
 
 // Temporary macro to accumulate the sum, uses the value, increments the pointer

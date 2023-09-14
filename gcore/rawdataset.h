@@ -205,7 +205,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     CPLErr FlushCache(bool bAtClosing) override;
 
     CPLVirtualMem *GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
-                                     GIntBig *pnLineSpace,
+                                     int64_t *pnLineSpace,
                                      char **papszOptions) override;
 
     CPLErr AccessLine(int iLine);

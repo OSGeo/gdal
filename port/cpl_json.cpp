@@ -34,6 +34,8 @@
 #include "cpl_http.h"
 #include "cpl_multiproc.h"
 
+#include <cinttypes>
+
 #define TO_JSONOBJ(x) static_cast<json_object *>(x)
 
 static const char *JSON_PATH_DELIMITER = "/";
@@ -57,7 +59,7 @@ static int CPLJSON_json_object_new_uint64_formatter(struct json_object *jso,
 static json_object *CPLJSON_json_object_new_uint64(uint64_t nVal)
 {
     json_object *jso = json_object_new_string(
-        CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
+        CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nVal)));
     json_object_set_serializer(jso, CPLJSON_json_object_new_uint64_formatter,
                                nullptr, nullptr);
     return jso;
@@ -706,7 +708,7 @@ void CPLJSONObject::Add(const std::string &osName, int nValue)
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Add(const std::string &osName, GInt64 nValue)
+void CPLJSONObject::Add(const std::string &osName, int64_t nValue)
 {
     std::string objectName;
     if (m_osKey == INVALID_OBJ_KEY)
@@ -919,7 +921,7 @@ void CPLJSONObject::Set(const std::string &osName, int nValue)
  *
  * @since GDAL 2.3
  */
-void CPLJSONObject::Set(const std::string &osName, GInt64 nValue)
+void CPLJSONObject::Set(const std::string &osName, int64_t nValue)
 {
     Delete(osName);
     Add(osName, nValue);
@@ -1163,7 +1165,8 @@ int CPLJSONObject::ToInteger(int nDefault) const
  *
  * @since GDAL 2.3
  */
-GInt64 CPLJSONObject::GetLong(const std::string &osName, GInt64 nDefault) const
+int64_t CPLJSONObject::GetLong(const std::string &osName,
+                               int64_t nDefault) const
 {
     CPLJSONObject object = GetObj(osName);
     return object.ToLong(nDefault);
@@ -1176,11 +1179,11 @@ GInt64 CPLJSONObject::GetLong(const std::string &osName, GInt64 nDefault) const
  *
  * @since GDAL 2.3
  */
-GInt64 CPLJSONObject::ToLong(GInt64 nDefault) const
+int64_t CPLJSONObject::ToLong(int64_t nDefault) const
 {
     if( m_poJsonObject /*&& json_object_get_type( TO_JSONOBJ(m_poJsonObject) ) ==
             json_type_int*/ )
-        return static_cast<GInt64>(
+        return static_cast<int64_t>(
             json_object_get_int64(TO_JSONOBJ(m_poJsonObject)));
     return nDefault;
 }
@@ -1542,7 +1545,7 @@ void CPLJSONArray::Add(int nValue)
  *
  * @since GDAL 2.3
  */
-void CPLJSONArray::Add(GInt64 nValue)
+void CPLJSONArray::Add(int64_t nValue)
 {
     if (m_poJsonObject)
         json_object_array_add(TO_JSONOBJ(m_poJsonObject),

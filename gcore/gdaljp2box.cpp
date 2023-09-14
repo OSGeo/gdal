@@ -38,6 +38,7 @@
 #endif
 
 #include <algorithm>
+#include <cinttypes>
 
 #include "cpl_conv.h"
 #include "cpl_error.h"
@@ -71,7 +72,7 @@ GDALJP2Box::~GDALJP2Box()
 /*                             SetOffset()                              */
 /************************************************************************/
 
-int GDALJP2Box::SetOffset(GIntBig nNewOffset)
+int GDALJP2Box::SetOffset(int64_t nNewOffset)
 
 {
     szBoxType[0] = '\0';
@@ -171,21 +172,9 @@ int GDALJP2Box::ReadBox()
         if (VSIFReadL(abyXLBox, 8, 1, fpVSIL) != 1)
             return FALSE;
 
-#ifdef CPL_HAS_GINT64
         CPL_MSBPTR64(abyXLBox);
         memcpy(&nBoxLength, abyXLBox, 8);
-#else
-        // In case we lack a 64 bit integer type
-        if (abyXLBox[0] != 0 || abyXLBox[1] != 0 || abyXLBox[2] != 0 ||
-            abyXLBox[3] != 0)
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Box size requires a 64 bit integer type");
-            return FALSE;
-        }
-        CPL_MSBPTR32(abyXLBox + 4);
-        memcpy(&nBoxLength, abyXLBox + 4, 4);
-#endif
+
         if (nBoxLength < 0)
         {
             CPLDebug("GDALJP2", "Invalid length for box %s", szBoxType);
@@ -240,11 +229,11 @@ int GDALJP2Box::IsSuperBox()
 GByte *GDALJP2Box::ReadBoxData()
 
 {
-    GIntBig nDataLength = GetDataLength();
+    int64_t nDataLength = GetDataLength();
     if (nDataLength > 100 * 1024 * 1024)
     {
-        CPLError(CE_Failure, CPLE_AppDefined,
-                 "Too big box : " CPL_FRMT_GIB " bytes", nDataLength);
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big box : %" PRId64 " bytes",
+                 nDataLength);
         return nullptr;
     }
 
@@ -256,7 +245,7 @@ GByte *GDALJP2Box::ReadBoxData()
     if (pszData == nullptr)
         return nullptr;
 
-    if (static_cast<GIntBig>(VSIFReadL(
+    if (static_cast<int64_t>(VSIFReadL(
             pszData, 1, static_cast<int>(nDataLength), fpVSIL)) != nDataLength)
     {
         CPLError(CE_Failure, CPLE_AppDefined, "Cannot read box content");
@@ -273,7 +262,7 @@ GByte *GDALJP2Box::ReadBoxData()
 /*                           GetDataLength()                            */
 /************************************************************************/
 
-GIntBig GDALJP2Box::GetDataLength() const
+int64_t GDALJP2Box::GetDataLength() const
 {
     return nBoxLength - (nDataOffset - nBoxOffset);
 }
@@ -293,8 +282,7 @@ int GDALJP2Box::DumpReadable(FILE *fpOut, int nIndentLevel)
 
     char szBuffer[128];
     CPLsnprintf(szBuffer, sizeof(szBuffer),
-                "  Type=%s, Offset=" CPL_FRMT_GIB "/" CPL_FRMT_GIB
-                ", Data Size=" CPL_FRMT_GIB,
+                "  Type=%s, Offset=%" PRId64 "/%" PRId64 ", Data Size=%" PRId64,
                 szBoxType, nBoxOffset, nDataOffset, GetDataLength());
     fprintf(fpOut, "%s", szBuffer);
 

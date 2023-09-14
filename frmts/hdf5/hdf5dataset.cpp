@@ -36,6 +36,7 @@
 #include "hdf5vfl.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <stdio.h>
 #include <string.h>
 #include <string>
@@ -1144,8 +1145,8 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, CPL_FRMT_GIB,
-                         static_cast<GIntBig *>(buf)[i]);
+                snprintf(szData, nDataLen, "%" PRId64,
+                         static_cast<int64_t *>(buf)[i]);
                 if (psContext->m_osValue.size() > MAX_METADATA_LEN)
                 {
                     CPLError(CE_Warning, CPLE_OutOfMemory,
@@ -1161,8 +1162,8 @@ static herr_t HDF5AttrIterate(hid_t hH5ObjID, const char *pszAttrName,
         {
             for (hsize_t i = 0; i < nAttrElmts; i++)
             {
-                snprintf(szData, nDataLen, CPL_FRMT_GUIB,
-                         static_cast<GUIntBig *>(buf)[i]);
+                snprintf(szData, nDataLen, "%" PRIu64,
+                         static_cast<uint64_t *>(buf)[i]);
                 if (psContext->m_osValue.size() > MAX_METADATA_LEN)
                 {
                     CPLError(CE_Warning, CPLE_OutOfMemory,

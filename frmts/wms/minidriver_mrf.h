@@ -87,7 +87,7 @@ struct ILSize
     {
     }
     int32_t x, y, z, c;
-    GIntBig l;  // Dual use, sometimes it holds the number of pages
+    int64_t l;  // Dual use, sometimes it holds the number of pages
 };
 
 }  // namespace WMSMiniDriver_MRF_ns
@@ -127,7 +127,7 @@ class WMSMiniDriver_MRF : public WMSMiniDriver
     WMSMiniDriver_MRF_ns::SectorCache *index_cache;
 
     // Per level index offsets, level 0 being the full resolution
-    std::vector<GUIntBig> offsets;
+    std::vector<uint64_t> offsets;
     // Matching pagecounts
     std::vector<WMSMiniDriver_MRF_ns::ILSize> pages;
 };

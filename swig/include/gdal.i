@@ -660,21 +660,21 @@ void GDALDestroyDriverManager();
 
 #if defined(SWIGPYTHON)
 %inline {
-GIntBig wrapper_GDALGetCacheMax()
+int64_t wrapper_GDALGetCacheMax()
 {
     return GDALGetCacheMax64();
 }
 }
 
 %inline {
-GIntBig wrapper_GDALGetCacheUsed()
+int64_t wrapper_GDALGetCacheUsed()
 {
     return GDALGetCacheUsed64();
 }
 }
 
 %inline {
-void wrapper_GDALSetCacheMax(GIntBig nBytes)
+void wrapper_GDALSetCacheMax(int64_t nBytes)
 {
     return GDALSetCacheMax64(nBytes);
 }

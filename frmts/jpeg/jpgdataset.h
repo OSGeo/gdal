@@ -177,7 +177,7 @@ class JPGDatasetCommon CPL_NON_FINAL : public GDALPamDataset
     GDAL_GCP *pasGCPList;
 
     VSILFILE *m_fpImage;
-    GUIntBig nSubfileOffset;
+    uint64_t nSubfileOffset;
 
     int nLoadedScanline;
     GByte *m_pabyScanline;

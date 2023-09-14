@@ -166,7 +166,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
            OGRSpatialReference *poSpatialRef, OGRwkbGeometryType eGType,
            bool bCreateSpatialIndexAtClose, char **papszOptions);
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
     virtual OGRFeature *GetNextFeature() override;
     virtual OGRErr CreateField(OGRFieldDefn *poField,
                                int bApproxOK = true) override;
@@ -178,7 +178,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     {
         return m_poFeatureDefn;
     }
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -219,7 +219,7 @@ class OGRFlatGeobufEditableLayer final : public OGREditableLayer,
     OGRFlatGeobufEditableLayer(OGRFlatGeobufLayer *poFlatGeobufLayer,
                                char **papszOpenOptions);
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
 
     const std::string &GetFilename() const override
     {

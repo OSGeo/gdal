@@ -95,10 +95,10 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     size_t m_nBufferValidSize = 0;
 
     vsi_l_offset m_nFileSize = 0;
-    GIntBig m_nIter = 0;
+    int64_t m_nIter = 0;
 
-    GIntBig m_nTotalFeatures = 0;
-    GIntBig m_nNextFID = 0;
+    int64_t m_nTotalFeatures = 0;
+    int64_t m_nNextFID = 0;
 
     std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
     OGRGeometryFactory::TransformWithOptionsCache m_oTransformCache;
@@ -129,7 +129,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     {
         return m_osFIDColumn.c_str();
     }
-    GIntBig GetFeatureCount(int) override;
+    int64_t GetFeatureCount(int) override;
     int TestCapability(const char *) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(OGRFieldDefn *, int) override;
@@ -576,7 +576,7 @@ OGRFeature *OGRGeoJSONSeqLayer::GetNextFeature()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRGeoJSONSeqLayer::GetFeatureCount(int bForce)
+int64_t OGRGeoJSONSeqLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {

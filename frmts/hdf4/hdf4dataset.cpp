@@ -313,9 +313,9 @@ double HDF4Dataset::AnyTypeToDouble(int32 iNumType, void *pData)
         case DFNT_UINT32:
             return static_cast<double>(*reinterpret_cast<uint32_t *>(pData));
         case DFNT_INT64:
-            return static_cast<double>(*reinterpret_cast<GInt64 *>(pData));
+            return static_cast<double>(*reinterpret_cast<int64_t *>(pData));
         case DFNT_UINT64:
-            return static_cast<double>(*reinterpret_cast<GUInt64 *>(pData));
+            return static_cast<double>(*reinterpret_cast<uint64_t *>(pData));
         case DFNT_FLOAT32:
             return static_cast<double>(*reinterpret_cast<float *>(pData));
         case DFNT_FLOAT64:

@@ -354,7 +354,7 @@ class OGRTileDBLayer final : public OGRLayer,
     bool m_bInitialized = false;
     OGRFeatureDefn *m_poFeatureDefn = nullptr;
     std::string m_osFIDColumn{};
-    GIntBig m_nNextFID = 1;
+    int64_t m_nNextFID = 1;
     int64_t m_nTotalFeatureCount = -1;
     bool m_bStats = false;
     bool m_bQueryComplete = false;
@@ -485,11 +485,11 @@ class OGRTileDBLayer final : public OGRLayer,
     ~OGRTileDBLayer();
     void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGRTileDBLayer);
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
     int TestCapability(const char *) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent, int bForce) override
     {

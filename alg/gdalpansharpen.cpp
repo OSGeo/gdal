@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -1618,11 +1619,11 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv;
     gettimeofday(&tv, nullptr);
-    const GIntBig launch_time =
-        static_cast<GIntBig>(psJob->ptv->tv_sec) * 1000000 +
-        static_cast<GIntBig>(psJob->ptv->tv_usec);
-    const GIntBig start_job = static_cast<GIntBig>(tv.tv_sec) * 1000000 +
-                              static_cast<GIntBig>(tv.tv_usec);
+    const int64_t launch_time =
+        static_cast<int64_t>(psJob->ptv->tv_sec) * 1000000 +
+        static_cast<int64_t>(psJob->ptv->tv_usec);
+    const int64_t start_job = static_cast<int64_t>(tv.tv_sec) * 1000000 +
+                              static_cast<int64_t>(tv.tv_usec);
 #endif
 
 #if 0
@@ -1648,11 +1649,11 @@ void GDALPansharpenOperation::PansharpenResampleJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
     gettimeofday(&tv_end, nullptr);
-    const GIntBig end = static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
-                        static_cast<GIntBig>(tv_end.tv_usec);
+    const int64_t end = static_cast<int64_t>(tv_end.tv_sec) * 1000000 +
+                        static_cast<int64_t>(tv_end.tv_usec);
     if (start_job - launch_time > 500)
-        /*ok*/ printf("Resample: Delay before start=" CPL_FRMT_GIB
-                      ", completion time=" CPL_FRMT_GIB "\n",
+        /*ok*/ printf("Resample: Delay before start=%" PRId64
+                      ", completion time=%" PRId64 "\n",
                       start_job - launch_time, end - start_job);
 #endif
 }
@@ -1668,11 +1669,11 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv;
     gettimeofday(&tv, nullptr);
-    const GIntBig launch_time =
-        static_cast<GIntBig>(psJob->ptv->tv_sec) * 1000000 +
-        static_cast<GIntBig>(psJob->ptv->tv_usec);
-    const GIntBig start_job = static_cast<GIntBig>(tv.tv_sec) * 1000000 +
-                              static_cast<GIntBig>(tv.tv_usec);
+    const int64_t launch_time =
+        static_cast<int64_t>(psJob->ptv->tv_sec) * 1000000 +
+        static_cast<int64_t>(psJob->ptv->tv_usec);
+    const int64_t start_job = static_cast<int64_t>(tv.tv_sec) * 1000000 +
+                              static_cast<int64_t>(tv.tv_usec);
 #endif
 
 #if 0
@@ -1689,11 +1690,11 @@ void GDALPansharpenOperation::PansharpenJobThreadFunc(void *pUserData)
 #ifdef DEBUG_TIMING
     struct timeval tv_end;
     gettimeofday(&tv_end, nullptr);
-    const GIntBig end = static_cast<GIntBig>(tv_end.tv_sec) * 1000000 +
-                        static_cast<GIntBig>(tv_end.tv_usec);
+    const int64_t end = static_cast<int64_t>(tv_end.tv_sec) * 1000000 +
+                        static_cast<int64_t>(tv_end.tv_usec);
     if (start_job - launch_time > 500)
-        /*ok*/ printf("Pansharpen: Delay before start=" CPL_FRMT_GIB
-                      ", completion time=" CPL_FRMT_GIB "\n",
+        /*ok*/ printf("Pansharpen: Delay before start=%" PRId64
+                      ", completion time=%" PRId64 "\n",
                       start_job - launch_time, end - start_job);
 #endif
 }

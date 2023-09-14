@@ -1162,8 +1162,8 @@ bool OGRSQLiteBaseDataSource::SetCacheSize()
         CPLGetConfigOption("OGR_SQLITE_CACHE", nullptr);
     if (pszSqliteCacheMB != nullptr)
     {
-        const GIntBig iSqliteCacheBytes =
-            static_cast<GIntBig>(atoi(pszSqliteCacheMB)) * 1024 * 1024;
+        const int64_t iSqliteCacheBytes =
+            static_cast<int64_t>(atoi(pszSqliteCacheMB)) * 1024 * 1024;
 
         /* querying the current PageSize */
         int iSqlitePageSize = SQLGetInteger(hDB, "PRAGMA page_size", nullptr);

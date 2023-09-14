@@ -343,11 +343,11 @@ class PythonPluginLayer final : public OGRLayer
     const char *GetName() override;
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     int TestCapability(const char *) override;
     OGRFeatureDefn *GetLayerDefn() override;
 
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
     const char *GetFIDColumn() override;
     OGRErr SetAttributeFilter(const char *) override;
 
@@ -665,7 +665,7 @@ static PyObject *layer_featureCount(PyObject * /*m*/, PyObject *args,
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig PythonPluginLayer::GetFeatureCount(int bForce)
+int64_t PythonPluginLayer::GetFeatureCount(int bForce)
 {
     GIL_Holder oHolder(false);
 
@@ -681,7 +681,7 @@ GIntBig PythonPluginLayer::GetFeatureCount(int bForce)
             return OGRLayer::GetFeatureCount(bForce);
         }
 
-        GIntBig nRet = PyLong_AsLongLong(poRet);
+        int64_t nRet = PyLong_AsLongLong(poRet);
         if (ErrOccurredEmitCPLError())
         {
             Py_DecRef(poRet);
@@ -784,11 +784,11 @@ OGRFeature *PythonPluginLayer::TranslateToOGRFeature(PyObject *poObj)
 
     if (poId && PyObject_IsInstance(poId, myLongType))
     {
-        poFeature->SetFID(static_cast<GIntBig>(PyLong_AsLongLong(poId)));
+        poFeature->SetFID(static_cast<int64_t>(PyLong_AsLongLong(poId)));
     }
     else if (poId && PyObject_IsInstance(poId, myIntType))
     {
-        poFeature->SetFID(static_cast<GIntBig>(PyLong_AsLong(poId)));
+        poFeature->SetFID(static_cast<int64_t>(PyLong_AsLong(poId)));
     }
 
     if (poStyleString && poStyleString != Py_None)
@@ -889,7 +889,7 @@ OGRFeature *PythonPluginLayer::TranslateToOGRFeature(PyObject *poObj)
             if (idx >= 0)
             {
                 poFeature->SetField(
-                    idx, static_cast<GIntBig>(PyLong_AsLongLong(value)));
+                    idx, static_cast<int64_t>(PyLong_AsLongLong(value)));
             }
         }
         else if (PyObject_IsInstance(value, myBoolType) ||
@@ -899,7 +899,7 @@ OGRFeature *PythonPluginLayer::TranslateToOGRFeature(PyObject *poObj)
             if (idx >= 0)
             {
                 poFeature->SetField(idx,
-                                    static_cast<GIntBig>(PyLong_AsLong(value)));
+                                    static_cast<int64_t>(PyLong_AsLong(value)));
             }
         }
         else if (PyObject_IsInstance(value, myFloatType))
@@ -955,7 +955,7 @@ OGRFeature *PythonPluginLayer::TranslateToOGRFeature(PyObject *poObj)
 /*                            GetFeature()                              */
 /************************************************************************/
 
-OGRFeature *PythonPluginLayer::GetFeature(GIntBig nFID)
+OGRFeature *PythonPluginLayer::GetFeature(int64_t nFID)
 {
     GIL_Holder oHolder(false);
 

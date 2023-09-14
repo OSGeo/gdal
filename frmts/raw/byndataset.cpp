@@ -236,25 +236,25 @@ int BYNDataset::Identify(GDALOpenInfo *poOpenInfo)
 
     if (hHeader.nScale == 0)
     {
-        if ((std::abs(static_cast<GIntBig>(hHeader.nSouth) -
+        if ((std::abs(static_cast<int64_t>(hHeader.nSouth) -
                       (hHeader.nDLat / 2)) > BYN_MAX_LAT) ||
-            (std::abs(static_cast<GIntBig>(hHeader.nNorth) +
+            (std::abs(static_cast<int64_t>(hHeader.nNorth) +
                       (hHeader.nDLat / 2)) > BYN_MAX_LAT) ||
-            (std::abs(static_cast<GIntBig>(hHeader.nWest) -
+            (std::abs(static_cast<int64_t>(hHeader.nWest) -
                       (hHeader.nDLon / 2)) > BYN_MAX_LON) ||
-            (std::abs(static_cast<GIntBig>(hHeader.nEast) +
+            (std::abs(static_cast<int64_t>(hHeader.nEast) +
                       (hHeader.nDLon / 2)) > BYN_MAX_LON))
             return FALSE;
     }
     else
     {
-        if ((std::abs(static_cast<GIntBig>(hHeader.nSouth) -
+        if ((std::abs(static_cast<int64_t>(hHeader.nSouth) -
                       (hHeader.nDLat / 2)) > BYN_MAX_LAT_SCL) ||
-            (std::abs(static_cast<GIntBig>(hHeader.nNorth) +
+            (std::abs(static_cast<int64_t>(hHeader.nNorth) +
                       (hHeader.nDLat / 2)) > BYN_MAX_LAT_SCL) ||
-            (std::abs(static_cast<GIntBig>(hHeader.nWest) -
+            (std::abs(static_cast<int64_t>(hHeader.nWest) -
                       (hHeader.nDLon / 2)) > BYN_MAX_LON_SCL) ||
-            (std::abs(static_cast<GIntBig>(hHeader.nEast) +
+            (std::abs(static_cast<int64_t>(hHeader.nEast) +
                       (hHeader.nDLon / 2)) > BYN_MAX_LON_SCL))
             return FALSE;
     }

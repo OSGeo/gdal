@@ -169,7 +169,7 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
                              GSpacing nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
-    virtual GIntBig GetEstimatedRAMUsage() override;
+    virtual int64_t GetEstimatedRAMUsage() override;
 
     CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
                            const int *panOverviewList, int nListBands,

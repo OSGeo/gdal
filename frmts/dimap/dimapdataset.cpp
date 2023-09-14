@@ -286,7 +286,7 @@ class DIMAPRasterBand final : public GDALPamRasterBand
                              GDALProgressFunc, void *pProgressData) override;
 
     CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                        GUIntBig *panHistogram, int bIncludeOutOfRange,
+                        uint64_t *panHistogram, int bIncludeOutOfRange,
                         int bApproxOK, GDALProgressFunc,
                         void *pProgressData) override;
 };
@@ -433,7 +433,7 @@ CPLErr DIMAPRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 /************************************************************************/
 
 CPLErr DIMAPRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                     GUIntBig *panHistogram,
+                                     uint64_t *panHistogram,
                                      int bIncludeOutOfRange, int bApproxOK,
                                      GDALProgressFunc pfnProgress,
                                      void *pProgressData)

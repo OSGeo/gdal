@@ -369,7 +369,7 @@ odbc::Timestamp OGRHanaFeatureReader::GetFieldAsTimestamp(int fieldIndex) const
             time.tm_hour = hour;
             time.tm_min = minute;
             time.tm_sec = second;
-            GIntBig dt = CPLYMDHMSToUnixTime(&time);
+            int64_t dt = CPLYMDHMSToUnixTime(&time);
             const int tzoffset = std::abs(timeZoneFlag - 100) * 15;
             dt -= tzoffset * 60;
             CPLUnixTimeToYMDHMS(dt, &time);
@@ -453,9 +453,9 @@ odbc::String OGRHanaFeatureReader::GetFieldAsBigIntArray(int fieldIndex) const
         return odbc::String();
 
     int numElements;
-    const GIntBig *values =
+    const int64_t *values =
         feature_.GetFieldAsInteger64List(fieldIndex, &numElements);
-    return CreateStringFromValues<GIntBig>(values, numElements,
+    return CreateStringFromValues<int64_t>(values, numElements,
                                            &std::to_string);
 }
 

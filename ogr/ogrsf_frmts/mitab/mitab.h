@@ -81,7 +81,7 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     CPL_DISALLOW_COPY_ASSIGN(IMapInfoFile)
 
   protected:
-    GIntBig m_nCurFeatureId;
+    int64_t m_nCurFeatureId;
     TABFeature *m_poCurFeature;
     bool m_bBoundsSet;
 
@@ -124,9 +124,9 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     ///////////////
     //  OGR methods for read support
     virtual void ResetReading() override = 0;
-    virtual GIntBig GetFeatureCount(int bForce) override = 0;
+    virtual int64_t GetFeatureCount(int bForce) override = 0;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual int TestCapability(const char *pszCap) override = 0;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override = 0;
@@ -139,8 +139,8 @@ class IMapInfoFile CPL_NON_FINAL : public OGRLayer
     ///////////////
     // Read access specific stuff
     //
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) = 0;
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) = 0;
+    virtual int64_t GetNextFeatureId(int64_t nPrevId) = 0;
+    virtual TABFeature *GetFeatureRef(int64_t nFeatureId) = 0;
     virtual OGRFeatureDefn *GetLayerDefn() override = 0;
 
     virtual TABFieldType GetNativeFieldType(int nFieldId) = 0;
@@ -236,7 +236,7 @@ class TABFile final : public IMapInfoFile
 
     int m_nLastFeatureId;
 
-    GIntBig *m_panMatchingFIDs;
+    int64_t *m_panMatchingFIDs;
     int m_iMatchingFID;
 
     int m_bNeedTABRewrite;
@@ -293,7 +293,7 @@ class TABFile final : public IMapInfoFile
 
     virtual void ResetReading() override;
     virtual int TestCapability(const char *pszCap) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -303,7 +303,7 @@ class TABFile final : public IMapInfoFile
 
     /* Implement OGRLayer's SetFeature() for random write, only with TABFile */
     virtual OGRErr ISetFeature(OGRFeature *) override;
-    virtual OGRErr DeleteFeature(GIntBig nFeatureId) override;
+    virtual OGRErr DeleteFeature(int64_t nFeatureId) override;
 
     virtual OGRErr DeleteField(int iField) override;
     virtual OGRErr ReorderFields(int *panMap) override;
@@ -321,8 +321,8 @@ class TABFile final : public IMapInfoFile
 
     int GetNextFeatureId_Spatial(int nPrevId);
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual int64_t GetNextFeatureId(int64_t nPrevId) override;
+    virtual TABFeature *GetFeatureRef(int64_t nFeatureId) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual TABFieldType GetNativeFieldType(int nFieldId) override;
@@ -471,7 +471,7 @@ class TABView final : public IMapInfoFile
 
     virtual void ResetReading() override;
     virtual int TestCapability(const char *pszCap) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -483,8 +483,8 @@ class TABView final : public IMapInfoFile
     // Read access specific stuff
     //
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual int64_t GetNextFeatureId(int64_t nPrevId) override;
+    virtual TABFeature *GetFeatureRef(int64_t nFeatureId) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual TABFieldType GetNativeFieldType(int nFieldId) override;
@@ -577,9 +577,9 @@ class TABSeamless final : public IMapInfoFile
                       bool bTestOpenNoError = FALSE);
     int OpenBaseTable(int nTableId, bool bTestOpenNoError = FALSE);
     int OpenNextBaseTable(bool bTestOpenNoError = FALSE);
-    static GIntBig EncodeFeatureId(int nTableId, int nBaseFeatureId);
-    static int ExtractBaseTableId(GIntBig nEncodedFeatureId);
-    static int ExtractBaseFeatureId(GIntBig nEncodedFeatureId);
+    static int64_t EncodeFeatureId(int nTableId, int nBaseFeatureId);
+    static int ExtractBaseTableId(int64_t nEncodedFeatureId);
+    static int ExtractBaseFeatureId(int64_t nEncodedFeatureId);
 
   public:
     TABSeamless();
@@ -615,7 +615,7 @@ class TABSeamless final : public IMapInfoFile
 
     virtual void ResetReading() override;
     virtual int TestCapability(const char *pszCap) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override
@@ -627,8 +627,8 @@ class TABSeamless final : public IMapInfoFile
     // Read access specific stuff
     //
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual int64_t GetNextFeatureId(int64_t nPrevId) override;
+    virtual TABFeature *GetFeatureRef(int64_t nFeatureId) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual TABFieldType GetNativeFieldType(int nFieldId) override;
@@ -807,7 +807,7 @@ class MIFFile final : public IMapInfoFile
     }
 
     virtual int TestCapability(const char *pszCap) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual void ResetReading() override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -820,8 +820,8 @@ class MIFFile final : public IMapInfoFile
     // Read access specific stuff
     //
 
-    virtual GIntBig GetNextFeatureId(GIntBig nPrevId) override;
-    virtual TABFeature *GetFeatureRef(GIntBig nFeatureId) override;
+    virtual int64_t GetNextFeatureId(int64_t nPrevId) override;
+    virtual TABFeature *GetFeatureRef(int64_t nFeatureId) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual TABFieldType GetNativeFieldType(int nFieldId) override;

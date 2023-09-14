@@ -58,9 +58,9 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
 
     VSIVirtualHandle *m_poBaseHandle = nullptr;
     GByte *pabyBuffer = nullptr;
-    GUIntBig nBufferOffset = 0;
+    uint64_t nBufferOffset = 0;
     int nBufferSize = 0;
-    GUIntBig nCurOffset = 0;
+    uint64_t nCurOffset = 0;
     bool bNeedBaseHandleSeek = false;
     bool bEOF = false;
     vsi_l_offset nCheatFileSize = 0;

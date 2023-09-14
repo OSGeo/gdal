@@ -30,6 +30,7 @@
 #include "rawdataset.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 
 #ifdef CPL_IS_LSB
@@ -545,8 +546,8 @@ CPLErr SIGDEMRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
         if (poDS != nullptr && poDS->GetAccess() == GA_ReadOnly)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Failed to seek to block %d @ " CPL_FRMT_GUIB ".",
-                     nBlockIndex, nReadStart);
+                     "Failed to seek to block %d @ %" PRIu64 ".", nBlockIndex,
+                     nReadStart);
             return CE_Failure;
         }
         else

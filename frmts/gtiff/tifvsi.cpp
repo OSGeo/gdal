@@ -35,6 +35,7 @@
 #include "tifvsi.h"
 
 #include <assert.h>
+#include <cinttypes>
 #include <string.h>
 #include <cerrno>
 #if HAVE_FCNTL_H
@@ -162,7 +163,7 @@ static tsize_t _tiffReadProc(thandle_t th, tdata_t buf, tsize_t size)
     }
 
 #ifdef DEBUG_VERBOSE_EXTRA
-    CPLDebug("GTiff", "Reading %d bytes at offset " CPL_FRMT_GUIB,
+    CPLDebug("GTiff", "Reading %d bytes at offset %" PRIu64,
              static_cast<int>(size), VSIFTellL(psGTH->psShared->fpL));
 #endif
     return VSIFReadL(buf, 1, size, psGTH->psShared->fpL);

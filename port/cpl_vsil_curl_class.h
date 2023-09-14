@@ -119,7 +119,7 @@ struct WriteFuncStruct
     bool bError = false;
     bool bInterruptDownload = false;
     bool bDetectRangeDownloadingError = false;
-    GIntBig nTimestampDate = 0;  // Corresponds to Date: header field
+    int64_t nTimestampDate = 0;  // Corresponds to Date: header field
 
     VSILFILE *fp = nullptr;
     VSICurlReadCbkFunc pfnReadCbk = nullptr;
@@ -817,15 +817,15 @@ class NetworkStatisticsLogger
 
     struct Counters
     {
-        GIntBig nHEAD = 0;
-        GIntBig nGET = 0;
-        GIntBig nPUT = 0;
-        GIntBig nPOST = 0;
-        GIntBig nDELETE = 0;
-        GIntBig nGETDownloadedBytes = 0;
-        GIntBig nPUTUploadedBytes = 0;
-        GIntBig nPOSTDownloadedBytes = 0;
-        GIntBig nPOSTUploadedBytes = 0;
+        int64_t nHEAD = 0;
+        int64_t nGET = 0;
+        int64_t nPUT = 0;
+        int64_t nPOST = 0;
+        int64_t nDELETE = 0;
+        int64_t nGETDownloadedBytes = 0;
+        int64_t nPUTUploadedBytes = 0;
+        int64_t nPOSTDownloadedBytes = 0;
+        int64_t nPOSTUploadedBytes = 0;
     };
 
     enum class ContextPathType
@@ -866,7 +866,7 @@ class NetworkStatisticsLogger
     // Workaround bug in Coverity Scan
     // coverity[generated_default_constructor_used_in_field_initializer]
     Stats m_stats{};
-    std::map<GIntBig, std::vector<ContextPathItem>>
+    std::map<int64_t, std::vector<ContextPathItem>>
         m_mapThreadIdToContextPath{};
 
     static void ReadEnabled();

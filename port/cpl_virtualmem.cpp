@@ -39,6 +39,7 @@
 #include "cpl_virtualmem.h"
 
 #include <cassert>
+#include <cinttypes>
 // TODO(schwehr): Should ucontext.h be included?
 // #include <ucontext.h>
 
@@ -2021,8 +2022,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
     if (nLength != static_cast<size_t>(nLength))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "nLength = " CPL_FRMT_GUIB
-                 " incompatible with 32 bit architecture",
+                 "nLength = %" PRIu64 " incompatible with 32 bit architecture",
                  nLength);
         return nullptr;
     }
@@ -2031,8 +2031,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
             static_cast<off_t>(nOffset + CPLGetPageSize())))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "nOffset = " CPL_FRMT_GUIB
-                 " incompatible with 32 bit architecture",
+                 "nOffset = %" PRIu64 " incompatible with 32 bit architecture",
                  nOffset);
         return nullptr;
     }

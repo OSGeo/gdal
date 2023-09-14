@@ -33,6 +33,8 @@
 
 #include "tifvsi.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /* ==================================================================== */
 /*                     GTiffJPEGOverviewBand                            */
@@ -275,8 +277,8 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                             "<SubfileRegion>"
                             "<Filename relative='0'>%s</Filename>"
                             "<DestinationOffset>%d</DestinationOffset>"
-                            "<SourceOffset>" CPL_FRMT_GUIB "</SourceOffset>"
-                            "<RegionLength>" CPL_FRMT_GUIB "</RegionLength>"
+                            "<SourceOffset>%" PRIu64 "</SourceOffset>"
+                            "<RegionLength>%" PRIu64 "</RegionLength>"
                             "</SubfileRegion></VSISparseFile>",
                             m_poGDS->m_osTmpFilenameJPEGTable.c_str(),
                             static_cast<int>(m_poGDS->m_nJPEGTableSize),

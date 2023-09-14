@@ -3815,7 +3815,7 @@ CPLErr GTIFMemBufFromSRS(OGRSpatialReferenceH hSRS,
     /*      to be able to "steal" the memory buffer, but there isn't        */
     /*      currently any support for this.                                 */
     /* -------------------------------------------------------------------- */
-    GUIntBig nBigLength = 0;
+    uint64_t nBigLength = 0;
 
     *ppabyBuffer = VSIGetMemFileBuffer(szFilename, &nBigLength, TRUE);
     *pnSize = static_cast<int>(nBigLength);

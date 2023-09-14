@@ -84,7 +84,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     int bPreserveSrcFID;
 
-    GIntBig nFeatureCount;
+    int64_t nFeatureCount;
 
     int iCurLayer;
     char *pszAttributeFilter;
@@ -134,7 +134,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
@@ -152,7 +152,7 @@ class CPL_DLL OGRUnionLayer final : public OGRLayer
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual OGRErr SetAttributeFilter(const char *) override;
 

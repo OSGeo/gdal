@@ -446,7 +446,7 @@ inline double FileGDBOGRDateToDoubleDate(const OGRField *psField)
     brokendowntime.tm_hour = psField->Date.Hour;
     brokendowntime.tm_min = psField->Date.Minute;
     brokendowntime.tm_sec = static_cast<int>(psField->Date.Second + 0.5);
-    GIntBig nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+    int64_t nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
     if (psField->Date.TZFlag > 1 && psField->Date.TZFlag != 100)
     {
         // Convert to GMT

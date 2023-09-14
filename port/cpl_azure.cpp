@@ -34,6 +34,7 @@
 #include "cpl_multiproc.h"
 #include "cpl_vsi_virtual.h"
 
+#include <cinttypes>
 #include <mutex>
 
 //! @cond Doxygen_Suppress
@@ -235,7 +236,7 @@ std::mutex gMutex;
 struct CPLAzureCachedToken
 {
     std::string osAccessToken{};
-    GIntBig nExpiresOn = 0;
+    int64_t nExpiresOn = 0;
 };
 static std::map<std::string, CPLAzureCachedToken> goMapIMDSURLToCachedToken;
 
@@ -309,7 +310,7 @@ GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
         CPLHTTPDestroyResult(psResult);
     }
     osAccessToken = oResponse.FetchNameValueDef("access_token", "");
-    const GIntBig nExpiresOn =
+    const int64_t nExpiresOn =
         CPLAtoGIntBig(oResponse.FetchNameValueDef("expires_on", ""));
     if (!osAccessToken.empty() && nExpiresOn > 0)
     {
@@ -317,7 +318,7 @@ GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
         cachedToken.osAccessToken = osAccessToken;
         cachedToken.nExpiresOn = nExpiresOn;
         goMapIMDSURLToCachedToken[osURLResource] = cachedToken;
-        CPLDebug("AZURE", "Storing credentials for %s until " CPL_FRMT_GIB,
+        CPLDebug("AZURE", "Storing credentials for %s until %" PRId64,
                  osURLResource.c_str(), nExpiresOn);
     }
 
@@ -329,7 +330,7 @@ GetConfigurationFromIMDSCredentials(const std::string &osPathForOption,
 /************************************************************************/
 
 // Last timestamp AZURE_FEDERATED_TOKEN_FILE was read
-static GIntBig gnLastReadFederatedTokenFile = 0;
+static int64_t gnLastReadFederatedTokenFile = 0;
 static std::string gosFederatedToken{};
 
 // Azure Active Directory Workload Identity, typically for Azure Kubernetes
@@ -387,10 +388,9 @@ static bool GetConfigurationFromWorkloadIdentity(CPLString &osAccessToken)
         const auto nSize = fp->Tell();
         if (nSize == 0 || nSize > 100 * 1024)
         {
-            CPLDebug(
-                "AZURE",
-                "Invalid size for AZURE_FEDERATED_TOKEN_FILE = " CPL_FRMT_GUIB,
-                static_cast<GUIntBig>(nSize));
+            CPLDebug("AZURE",
+                     "Invalid size for AZURE_FEDERATED_TOKEN_FILE = %" PRIu64,
+                     static_cast<uint64_t>(nSize));
             return false;
         }
         fp->Seek(0, SEEK_SET);
@@ -453,7 +453,7 @@ static bool GetConfigurationFromWorkloadIdentity(CPLString &osAccessToken)
         cachedToken.osAccessToken = osAccessToken;
         cachedToken.nExpiresOn = nCurTime + nExpiresIn;
         goMapIMDSURLToCachedToken[osURL] = cachedToken;
-        CPLDebug("AZURE", "Storing credentials for %s until " CPL_FRMT_GIB,
+        CPLDebug("AZURE", "Storing credentials for %s until %" PRId64,
                  osURL.c_str(), cachedToken.nExpiresOn);
     }
 
@@ -963,8 +963,8 @@ CPLString VSIAzureBlobHandleHelper::GetSignedURL(CSLConstList papszOptions)
     brokendowntime.tm_hour = nHour;
     brokendowntime.tm_min = nMin;
     brokendowntime.tm_sec = nSec;
-    GIntBig nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
-    GIntBig nEndDate =
+    int64_t nStartDate = CPLYMDHMSToUnixTime(&brokendowntime);
+    int64_t nEndDate =
         nStartDate +
         atoi(CSLFetchNameValueDef(papszOptions, "EXPIRATION_DELAY", "3600"));
     CPLUnixTimeToYMDHMS(nEndDate, &brokendowntime);

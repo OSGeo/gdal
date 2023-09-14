@@ -30,6 +30,7 @@
 #include "cpl_port.h"
 #include "rdataset.h"
 
+#include <cinttypes>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -63,7 +64,7 @@ namespace
 {
 
 // TODO(schwehr): Move this to port/? for general use.
-bool SafeMult(GIntBig a, GIntBig b, GIntBig *result)
+bool SafeMult(int64_t a, int64_t b, int64_t *result)
 {
     if (a == 0 || b == 0)
     {
@@ -75,8 +76,8 @@ bool SafeMult(GIntBig a, GIntBig b, GIntBig *result)
     if (result_positive)
     {
         // Cannot convert min() to positive.
-        if (a == std::numeric_limits<GIntBig>::min() ||
-            b == std::numeric_limits<GIntBig>::min())
+        if (a == std::numeric_limits<int64_t>::min() ||
+            b == std::numeric_limits<int64_t>::min())
         {
             *result = 0;
             return false;
@@ -86,7 +87,7 @@ bool SafeMult(GIntBig a, GIntBig b, GIntBig *result)
             a = -a;
             b = -b;
         }
-        if (a > std::numeric_limits<GIntBig>::max() / b)
+        if (a > std::numeric_limits<int64_t>::max() / b)
         {
             *result = 0;
             return false;
@@ -97,7 +98,7 @@ bool SafeMult(GIntBig a, GIntBig b, GIntBig *result)
 
     if (b < a)
         std::swap(a, b);
-    if (a < (std::numeric_limits<GIntBig>::min() + 1) / b)
+    if (a < (std::numeric_limits<int64_t>::min() + 1) / b)
     {
         *result = 0;
         return false;
@@ -435,7 +436,7 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Corrupt file.  "
                  "Object claims to be larger than available bytes. "
-                 "%d > " CPL_FRMT_GUIB,
+                 "%d > %" PRIu64,
                  nValueCount, stat.st_size - poDS->nStartOfData);
         return nullptr;
     }
@@ -535,7 +536,7 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    GIntBig result = 0;
+    int64_t result = 0;
     bool ok = SafeMult(nBandCount, poDS->nRasterXSize, &result);
     ok &= SafeMult(result, poDS->nRasterYSize, &result);
 

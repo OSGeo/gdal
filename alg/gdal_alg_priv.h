@@ -251,7 +251,7 @@ typedef struct
 /*      Color table related                                             */
 /************************************************************************/
 
-// Definitions exists for T = uint32_t and T = GUIntBig.
+// Definitions exists for T = uint32_t and T = uint64_t.
 template <class T>
 int GDALComputeMedianCutPCTInternal(
     GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,

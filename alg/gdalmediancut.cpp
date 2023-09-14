@@ -85,7 +85,7 @@ typedef struct colorbox
     int rmin, rmax;
     int gmin, gmax;
     int bmin, bmax;
-    GUIntBig total;
+    uint64_t total;
 } Colorbox;
 
 template <class T>
@@ -164,7 +164,7 @@ extern "C" int CPL_STDCALL GDALComputeMedianCutPCT(
     {
         return GDALComputeMedianCutPCTInternal(
             hRed, hGreen, hBlue, nullptr, nullptr, nullptr, pfnIncludePixel,
-            nColors, 5, static_cast<GUIntBig *>(nullptr), hColorTable,
+            nColors, 5, static_cast<uint64_t *>(nullptr), hColorTable,
             pfnProgress, pProgressArg);
     }
 }
@@ -359,7 +359,7 @@ int GDALComputeMedianCutPCTInternal(
     HashHistogram *psHashHistogram = nullptr;
     if (panHistogram)
     {
-        if (nBits == 8 && static_cast<GUIntBig>(nXSize) * nYSize <= 65536)
+        if (nBits == 8 && static_cast<uint64_t>(nXSize) * nYSize <= 65536)
         {
             // If the image is small enough, then the number of colors
             // will be limited and using a hashmap, rather than a full table
@@ -418,7 +418,7 @@ int GDALComputeMedianCutPCTInternal(
     usedboxes->gmax = -1;
     usedboxes->bmax = -1;
     usedboxes->total =
-        static_cast<GUIntBig>(nXSize) * static_cast<GUIntBig>(nYSize);
+        static_cast<uint64_t>(nXSize) * static_cast<uint64_t>(nYSize);
 
     /* -------------------------------------------------------------------- */
     /*      Collect histogram.                                              */
@@ -598,7 +598,7 @@ static Colorbox *largest_box(Colorbox *usedboxes)
 
 static void shrinkboxFromBand(Colorbox *ptr, const GByte *pabyRedBand,
                               const GByte *pabyGreenBand,
-                              const GByte *pabyBlueBand, GUIntBig nPixels)
+                              const GByte *pabyBlueBand, uint64_t nPixels)
 {
     int rmin_new = 255;
     int rmax_new = 0;
@@ -606,7 +606,7 @@ static void shrinkboxFromBand(Colorbox *ptr, const GByte *pabyRedBand,
     int gmax_new = 0;
     int bmin_new = 255;
     int bmax_new = 0;
-    for (GUIntBig i = 0; i < nPixels; i++)
+    for (uint64_t i = 0; i < nPixels; i++)
     {
         const int iR = pabyRedBand[i];
         const int iG = pabyGreenBand[i];
@@ -1222,9 +1222,9 @@ template int GDALComputeMedianCutPCTInternal<uint32_t>(
     uint32_t *panHistogram, GDALColorTableH hColorTable,
     GDALProgressFunc pfnProgress, void *pProgressArg);
 
-template int GDALComputeMedianCutPCTInternal<GUIntBig>(
+template int GDALComputeMedianCutPCTInternal<uint64_t>(
     GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
     GByte *pabyRedBand, GByte *pabyGreenBand, GByte *pabyBlueBand,
     int (*pfnIncludePixel)(int, int, void *), int nColors, int nBits,
-    GUIntBig *panHistogram, GDALColorTableH hColorTable,
+    uint64_t *panHistogram, GDALColorTableH hColorTable,
     GDALProgressFunc pfnProgress, void *pProgressArg);

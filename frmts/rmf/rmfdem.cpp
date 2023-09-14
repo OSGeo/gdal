@@ -59,7 +59,7 @@
  */
 
 typedef int32_t DEMWorkT;
-typedef GInt64 DEMDiffT;
+typedef int64_t DEMDiffT;
 
 // Encoding types
 enum RmfTypes

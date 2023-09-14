@@ -38,6 +38,7 @@
 #include "ogr_p.h"
 #include "ogrsf_frmts.h"
 
+#include <cinttypes>
 #include <limits>
 #include <map>
 #include <set>
@@ -1037,7 +1038,7 @@ static OGRErr CreateParts(OGRLayer *const poLnLayer, OGRLayer *const poPkLayer,
             if (!bQuiet)
             {
                 fprintf(stdout,
-                        "\nThe geometry " CPL_FRMT_GIB
+                        "\nThe geometry %" PRId64
                         " is wkbMultiLineString type\n",
                         pPathFeature->GetFID());
             }

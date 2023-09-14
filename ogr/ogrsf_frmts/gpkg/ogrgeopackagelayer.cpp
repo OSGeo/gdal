@@ -34,6 +34,8 @@
 #include "ogr_recordbatch.h"
 #include "ograrrowarrayhelper.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                      OGRGeoPackageLayer()                            */
 /************************************************************************/
@@ -152,7 +154,7 @@ OGRFeature *OGRGeoPackageLayer::GetNextFeature()
 bool OGRGeoPackageLayer::ParseDateField(sqlite3_stmt *hStmt, int iRawField,
                                         int nSqlite3ColType, OGRField *psField,
                                         const OGRFieldDefn *poFieldDefn,
-                                        GIntBig nFID)
+                                        int64_t nFID)
 {
     if (nSqlite3ColType == SQLITE_TEXT)
     {
@@ -166,8 +168,7 @@ bool OGRGeoPackageLayer::ParseDateField(sqlite3_stmt *hStmt, int iRawField,
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Unexpected data type for record " CPL_FRMT_GIB
-                     " in column %s",
+                     "Unexpected data type for record %" PRId64 " in column %s",
                      nFID, poFieldDefn->GetNameRef());
             m_poDS->m_oSetGPKGLayerWarnings[line] = true;
         }
@@ -177,7 +178,7 @@ bool OGRGeoPackageLayer::ParseDateField(sqlite3_stmt *hStmt, int iRawField,
 
 bool OGRGeoPackageLayer::ParseDateField(const char *pszTxt, OGRField *psField,
                                         const OGRFieldDefn *poFieldDefn,
-                                        GIntBig nFID)
+                                        int64_t nFID)
 {
     if (pszTxt == nullptr)
     {
@@ -226,7 +227,7 @@ bool OGRGeoPackageLayer::ParseDateField(const char *pszTxt, OGRField *psField,
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Non-conformant content for record " CPL_FRMT_GIB
+                     "Non-conformant content for record %" PRId64
                      " in column %s, %s, "
                      "successfully parsed",
                      nFID, poFieldDefn->GetNameRef(), pszTxt);
@@ -245,8 +246,7 @@ bool OGRGeoPackageLayer::ParseDateField(const char *pszTxt, OGRField *psField,
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Invalid content for record " CPL_FRMT_GIB
-                     " in column %s: %s",
+                     "Invalid content for record %" PRId64 " in column %s: %s",
                      nFID, poFieldDefn->GetNameRef(), pszTxt);
             m_poDS->m_oSetGPKGLayerWarnings[line] = true;
         }
@@ -264,7 +264,7 @@ bool OGRGeoPackageLayer::ParseDateTimeField(sqlite3_stmt *hStmt, int iRawField,
                                             int nSqlite3ColType,
                                             OGRField *psField,
                                             const OGRFieldDefn *poFieldDefn,
-                                            GIntBig nFID)
+                                            int64_t nFID)
 {
     if (nSqlite3ColType == SQLITE_TEXT)
     {
@@ -278,8 +278,7 @@ bool OGRGeoPackageLayer::ParseDateTimeField(sqlite3_stmt *hStmt, int iRawField,
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Unexpected data type for record " CPL_FRMT_GIB
-                     " in column %s",
+                     "Unexpected data type for record %" PRId64 " in column %s",
                      nFID, poFieldDefn->GetNameRef());
             m_poDS->m_oSetGPKGLayerWarnings[line] = true;
         }
@@ -290,7 +289,7 @@ bool OGRGeoPackageLayer::ParseDateTimeField(sqlite3_stmt *hStmt, int iRawField,
 bool OGRGeoPackageLayer::ParseDateTimeField(const char *pszTxt,
                                             OGRField *psField,
                                             const OGRFieldDefn *poFieldDefn,
-                                            GIntBig nFID)
+                                            int64_t nFID)
 {
     if (pszTxt == nullptr)
     {
@@ -314,7 +313,7 @@ bool OGRGeoPackageLayer::ParseDateTimeField(const char *pszTxt,
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Non-conformant content for record " CPL_FRMT_GIB
+                     "Non-conformant content for record %" PRId64
                      " in column %s, %s, "
                      "successfully parsed",
                      nFID, poFieldDefn->GetNameRef(), pszTxt);
@@ -328,8 +327,7 @@ bool OGRGeoPackageLayer::ParseDateTimeField(const char *pszTxt,
         if (!m_poDS->m_oSetGPKGLayerWarnings[line])
         {
             CPLError(CE_Warning, CPLE_AppDefined,
-                     "Invalid content for record " CPL_FRMT_GIB
-                     " in column %s: %s",
+                     "Invalid content for record %" PRId64 " in column %s: %s",
                      nFID, poFieldDefn->GetNameRef(), pszTxt);
             m_poDS->m_oSetGPKGLayerWarnings[line] = true;
         }
@@ -432,7 +430,8 @@ OGRFeature *OGRGeoPackageLayer::TranslateFeature(sqlite3_stmt *hStmt)
 
             case OFTInteger64:
                 poFeature->SetFieldSameTypeUnsafe(
-                    iField, sqlite3_column_int64(hStmt, iRawField));
+                    iField, static_cast<int64_t>(
+                                sqlite3_column_int64(hStmt, iRawField)));
                 break;
 
             case OFTReal:
@@ -576,7 +575,7 @@ int OGRGeoPackageLayer::GetNextArrowArray(struct ArrowArrayStream *stream,
 
         m_nFeaturesRead++;
 
-        GIntBig nFID;
+        int64_t nFID;
         if (m_iFIDCol >= 0)
         {
             nFID = sqlite3_column_int64(hStmt, m_iFIDCol);
@@ -1086,7 +1085,7 @@ void OGRGeoPackageLayer::BuildFeatureDefn(const char *pszLayerName,
                     oField.SetType(OFTInteger64);
                 else
                 {
-                    GIntBig nVal = sqlite3_column_int64(hStmt, iCol);
+                    int64_t nVal = sqlite3_column_int64(hStmt, iCol);
                     if (CPL_INT64_FITS_ON_INT32(nVal))
                         oField.SetType(OFTInteger);
                     else

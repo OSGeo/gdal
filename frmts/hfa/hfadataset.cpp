@@ -33,6 +33,7 @@
 #include "hfa_p.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -2020,8 +2021,8 @@ void HFARasterBand::ReadHistogramMetadata()
     if (pszType != nullptr && STARTS_WITH_CI(pszType, "real"))
         nBinSize = 8;
 
-    GUIntBig *panHistValues = static_cast<GUIntBig *>(
-        VSI_MALLOC2_VERBOSE(sizeof(GUIntBig), nNumBins));
+    uint64_t *panHistValues = static_cast<uint64_t *>(
+        VSI_MALLOC2_VERBOSE(sizeof(uint64_t), nNumBins));
     GByte *pabyWorkBuf =
         static_cast<GByte *>(VSI_MALLOC2_VERBOSE(nBinSize, nNumBins));
 
@@ -2053,9 +2054,9 @@ void HFARasterBand::ReadHistogramMetadata()
         {
             const double dfNumber = padfWorkBuf[i];
             if (dfNumber >=
-                    static_cast<double>(std::numeric_limits<GUIntBig>::max()) ||
+                    static_cast<double>(std::numeric_limits<uint64_t>::max()) ||
                 dfNumber <
-                    static_cast<double>(std::numeric_limits<GUIntBig>::min()) ||
+                    static_cast<double>(std::numeric_limits<uint64_t>::min()) ||
                 CPLIsNan(dfNumber))
             {
                 CPLError(CE_Failure, CPLE_FileIO, "Out of range hist vals.");
@@ -2063,7 +2064,7 @@ void HFARasterBand::ReadHistogramMetadata()
                 CPLFree(pabyWorkBuf);
                 return;
             }
-            panHistValues[i] = static_cast<GUIntBig>(dfNumber);
+            panHistValues[i] = static_cast<uint64_t>(dfNumber);
         }
     }
     else  // Source is 32bit integers.
@@ -2080,7 +2081,7 @@ void HFARasterBand::ReadHistogramMetadata()
                 CPLFree(pabyWorkBuf);
                 return;
             }
-            panHistValues[i] = static_cast<GUIntBig>(nNumber);
+            panHistValues[i] = static_cast<uint64_t>(nNumber);
         }
     }
 
@@ -2126,8 +2127,8 @@ void HFARasterBand::ReadHistogramMetadata()
         }
 
         const int nNewBins = nMaxValue + 1;
-        GUIntBig *panNewHistValues =
-            static_cast<GUIntBig *>(CPLCalloc(sizeof(GUIntBig), nNewBins));
+        uint64_t *panNewHistValues =
+            static_cast<uint64_t *>(CPLCalloc(sizeof(uint64_t), nNewBins));
 
         for (int i = 0; i < nNumBins; i++)
             panNewHistValues[static_cast<int>(padfBinValues[i])] =
@@ -2156,7 +2157,7 @@ void HFARasterBand::ReadHistogramMetadata()
     for (int nBin = 0; nBin < nNumBins; ++nBin)
     {
         char szBuf[32] = {};
-        snprintf(szBuf, 31, CPL_FRMT_GUIB, panHistValues[nBin]);
+        snprintf(szBuf, 31, "%" PRIu64, panHistValues[nBin]);
         if ((nBinValuesLen + strlen(szBuf) + 2) > nBufSize)
         {
             nBufSize *= 2;
@@ -2756,7 +2757,7 @@ CPLErr HFARasterBand::BuildOverviews(const char *pszResampling,
 
 CPLErr HFARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
                                           int *pnBuckets,
-                                          GUIntBig **ppanHistogram, int bForce,
+                                          uint64_t **ppanHistogram, int bForce,
                                           GDALProgressFunc pfnProgress,
                                           void *pProgressData)
 
@@ -2778,13 +2779,13 @@ CPLErr HFARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
         }
 
         *ppanHistogram =
-            static_cast<GUIntBig *>(CPLCalloc(sizeof(GUIntBig), *pnBuckets));
+            static_cast<uint64_t *>(CPLCalloc(sizeof(uint64_t), *pnBuckets));
 
         const char *pszNextBin = pszBinValues;
         for (int i = 0; i < *pnBuckets; i++)
         {
             (*ppanHistogram)[i] =
-                static_cast<GUIntBig>(CPLAtoGIntBig(pszNextBin));
+                static_cast<uint64_t>(CPLAtoGIntBig(pszNextBin));
 
             while (*pszNextBin != '|' && *pszNextBin != '\0')
                 pszNextBin++;
@@ -5141,7 +5142,7 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
 
             // Histogram
             int nBuckets = 0;
-            GUIntBig *panHistogram = nullptr;
+            uint64_t *panHistogram = nullptr;
 
             if (poSrcBand->GetDefaultHistogram(&dfMin, &dfMax, &nBuckets,
                                                &panHistogram, TRUE, pfnProgress,
@@ -5167,7 +5168,7 @@ GDALDataset *HFADataset::CreateCopy(const char *pszFilename,
                 {
 
                     strcat(pszBinValues + nBinValuesLen,
-                           osValue.Printf(CPL_FRMT_GUIB, panHistogram[iBin]));
+                           osValue.Printf("%" PRIu64, panHistogram[iBin]));
                     strcat(pszBinValues + nBinValuesLen, "|");
                     nBinValuesLen +=
                         static_cast<int>(strlen(pszBinValues + nBinValuesLen));

@@ -185,7 +185,7 @@ class HFARasterBand final : public GDALPamRasterBand
                                   CSLConstList papszOptions) override;
 
     virtual CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax,
-                                       int *pnBuckets, GUIntBig **ppanHistogram,
+                                       int *pnBuckets, uint64_t **ppanHistogram,
                                        int bForce, GDALProgressFunc,
                                        void *pProgressData) override;
 

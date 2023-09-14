@@ -55,7 +55,7 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
     size_t m_nRootObjMemEstimate = 0;
     json_object *m_poCurObj = nullptr;
     size_t m_nCurObjMemEstimate = 0;
-    GUIntBig m_nTotalOGRFeatureMemEstimate = 0;
+    uint64_t m_nTotalOGRFeatureMemEstimate = 0;
     bool m_bKeySet = false;
     std::string m_osCurKey{};
     std::vector<json_object *> m_apoCurObj{};
@@ -110,7 +110,7 @@ class OGRJSONCollectionStreamingParser CPL_NON_FINAL
     {
         return m_bIsFeatureCollection;
     }
-    inline GUIntBig GetTotalOGRFeatureMemEstimate() const
+    inline uint64_t GetTotalOGRFeatureMemEstimate() const
     {
         return m_nTotalOGRFeatureMemEstimate;
     }

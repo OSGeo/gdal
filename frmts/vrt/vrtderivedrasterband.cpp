@@ -1585,7 +1585,7 @@ CPLErr VRTDerivedRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
 /************************************************************************/
 
 CPLErr VRTDerivedRasterBand::GetHistogram(double dfMin, double dfMax,
-                                          int nBuckets, GUIntBig *panHistogram,
+                                          int nBuckets, uint64_t *panHistogram,
                                           int bIncludeOutOfRange, int bApproxOK,
                                           GDALProgressFunc pfnProgress,
                                           void *pProgressData)

@@ -31,6 +31,7 @@
 #include "cpl_vsi_virtual.h"
 #include "cpl_vsil_curl_class.h"
 
+#include <cinttypes>
 #include <algorithm>
 #include <map>
 
@@ -630,7 +631,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
                 pszBuffer, static_cast<int>(sWriteFuncData.nSize -
                                             strlen("Content-Length: ")));
             if (ENABLE_DEBUG)
-                CPLDebug("VSICURL", "GetFileSize(%s)=" CPL_FRMT_GUIB, m_pszURL,
+                CPLDebug("VSICURL", "GetFileSize(%s)=%" PRIu64, m_pszURL,
                          fileSize);
         }
     }
@@ -655,7 +656,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
             if (dfSize < 0)
                 fileSize = 0;
             else
-                fileSize = static_cast<GUIntBig>(dfSize);
+                fileSize = static_cast<uint64_t>(dfSize);
         }
         else
         {
@@ -688,8 +689,7 @@ vsi_l_offset VSICurlStreamingHandle::GetFileSize()
         }
 
         if (ENABLE_DEBUG)
-            CPLDebug("VSICURL",
-                     "GetFileSize(%s)=" CPL_FRMT_GUIB " response_code=%d",
+            CPLDebug("VSICURL", "GetFileSize(%s)= %" PRIu64 " response_code=%d",
                      m_pszURL, fileSize, static_cast<int>(response_code));
     }
 
@@ -791,7 +791,7 @@ size_t VSICurlStreamingHandle::ReceivedBytes(GByte *buffer, size_t count,
         cachedFileProp.bHasComputedFileSize = bHasComputedFileSize;
         m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
         if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
+            CPLDebug("VSICURL", "File size = %" PRIu64, fileSize);
     }
 
     AcquireMutex();
@@ -956,7 +956,7 @@ size_t VSICurlStreamingHandle::ReceivedBytesHeader(GByte *buffer, size_t count,
                     pszVal, static_cast<int>(pszEndOfLine - pszVal));
                 if (ENABLE_DEBUG)
                     CPLDebug("VSICURL",
-                             "Has found candidate file size = " CPL_FRMT_GUIB,
+                             "Has found candidate file size = %" PRIu64,
                              nCandidateFileSize);
             }
 
@@ -1061,7 +1061,7 @@ void VSICurlStreamingHandle::DownloadInThread()
         cachedFileProp.bHasComputedFileSize = bHasComputedFileSize;
         m_poFS->SetCachedFileProp(m_pszURL, cachedFileProp);
         if (ENABLE_DEBUG)
-            CPLDebug("VSICURL", "File size = " CPL_FRMT_GUIB, fileSize);
+            CPLDebug("VSICURL", "File size = %" PRIu64, fileSize);
     }
 
     bDownloadInProgress = FALSE;
@@ -1193,8 +1193,8 @@ size_t VSICurlStreamingHandle::Read(void *const pBuffer, size_t const nSize,
         PutRingBufferInCache();
 
     if (ENABLE_DEBUG)
-        CPLDebug("VSICURL", "Read [" CPL_FRMT_GUIB ", " CPL_FRMT_GUIB "[ in %s",
-                 curOffset, curOffset + nBufferRequestSize, m_pszURL);
+        CPLDebug("VSICURL", "Read [ %" PRIu64 ", %" PRIu64 "[ in %s", curOffset,
+                 curOffset + nBufferRequestSize, m_pszURL);
 
     // Can we use the cache?
     if (pCachedData != nullptr && curOffset < nCachedSize)

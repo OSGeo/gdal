@@ -2083,7 +2083,7 @@ static OGRGeometryH GCIOAPI_CALL _buildOGRGeometry_GCIO(
         i++;
         if (np < 0 ||
             (np > 0 &&
-             i + (GIntBig)(2 + ((d == v3D_GCIO || d == v3DM_GCIO) ? 1 : 0)) *
+             i + (int64_t)(2 + ((d == v3D_GCIO || d == v3DM_GCIO) ? 1 : 0)) *
                          np >
                  nbtp))
         {

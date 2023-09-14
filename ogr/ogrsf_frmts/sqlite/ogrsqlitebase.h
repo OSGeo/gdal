@@ -253,7 +253,7 @@ class IOGRSQLiteSelectLayer
     virtual void BaseResetReading() = 0;
     virtual OGRFeature *BaseGetNextFeature() = 0;
     virtual OGRErr BaseSetAttributeFilter(const char *pszQuery) = 0;
-    virtual GIntBig BaseGetFeatureCount(int bForce) = 0;
+    virtual int64_t BaseGetFeatureCount(int bForce) = 0;
     virtual int BaseTestCapability(const char *) = 0;
     virtual OGRErr BaseGetExtent(OGREnvelope *psExtent, int bForce) = 0;
     virtual OGRErr BaseGetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -290,7 +290,7 @@ class OGRSQLiteSelectLayerCommonBehaviour
 
     void ResetReading();
     OGRFeature *GetNextFeature();
-    GIntBig GetFeatureCount(int);
+    int64_t GetFeatureCount(int);
     void SetSpatialFilter(int iGeomField, OGRGeometry *);
     OGRErr SetAttributeFilter(const char *);
     int TestCapability(const char *);

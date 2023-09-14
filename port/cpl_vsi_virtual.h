@@ -206,7 +206,7 @@ class CPL_DLL VSIFilesystemHandler
         (void)pszFilename;
         return TRUE;
     }
-    virtual GIntBig GetDiskFreeSpace(const char * /* pszDirname */)
+    virtual int64_t GetDiskFreeSpace(const char * /* pszDirname */)
     {
         return -1;
     }
@@ -355,7 +355,7 @@ typedef struct
     vsi_l_offset uncompressed_size;
     VSIArchiveEntryFileOffset *file_pos;
     int bIsDir;
-    GIntBig nModifiedTime;
+    int64_t nModifiedTime;
 } VSIArchiveEntry;
 
 class VSIArchiveContent
@@ -377,9 +377,9 @@ class VSIArchiveReader
     virtual int GotoFirstFile() = 0;
     virtual int GotoNextFile() = 0;
     virtual VSIArchiveEntryFileOffset *GetFileOffset() = 0;
-    virtual GUIntBig GetFileSize() = 0;
+    virtual uint64_t GetFileSize() = 0;
     virtual CPLString GetFileName() = 0;
-    virtual GIntBig GetModifiedTime() = 0;
+    virtual int64_t GetModifiedTime() = 0;
     virtual int GotoFileOffset(VSIArchiveEntryFileOffset *pOffset) = 0;
 };
 

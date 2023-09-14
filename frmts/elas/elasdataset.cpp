@@ -353,7 +353,7 @@ GDALDataset *ELASDataset::Open(GDALOpenInfo *poOpenInfo)
 
     int nStart = CPL_MSBWORD32(poDS->sHeader.IL);
     int nEnd = CPL_MSBWORD32(poDS->sHeader.LL);
-    GIntBig nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    int64_t nDiff = static_cast<int64_t>(nEnd) - nStart + 1;
 
     if (nDiff <= 0 || nDiff > std::numeric_limits<int>::max())
     {
@@ -364,7 +364,7 @@ GDALDataset *ELASDataset::Open(GDALOpenInfo *poOpenInfo)
 
     nStart = CPL_MSBWORD32(poDS->sHeader.IE);
     nEnd = CPL_MSBWORD32(poDS->sHeader.LE);
-    nDiff = static_cast<GIntBig>(nEnd) - nStart + 1;
+    nDiff = static_cast<int64_t>(nEnd) - nStart + 1;
     if (nDiff <= 0 || nDiff > std::numeric_limits<int>::max())
     {
         delete poDS;

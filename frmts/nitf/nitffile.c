@@ -33,6 +33,7 @@
 #include "cpl_vsi.h"
 #include "cpl_conv.h"
 #include "cpl_string.h"
+#include <inttypes.h>
 #include <stdbool.h>
 
 CPL_INLINE static void CPL_IGNORE_RET_VAL_INT(CPL_UNUSED int unused)
@@ -48,7 +49,7 @@ static int NITFWriteTREsFromOptions(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
 static int NITFCollectSegmentInfo(NITFFile *psFile, int nFileHeaderLenSize,
                                   int nOffset, const char szType[3],
                                   int nHeaderLenSize, int nDataLenSize,
-                                  GUIntBig *pnNextData);
+                                  uint64_t *pnNextData);
 
 static void NITFExtractAndRecodeMetadata(char ***ppapszMetadata,
                                          const char *pachHeader, int nStart,
@@ -56,7 +57,7 @@ static void NITFExtractAndRecodeMetadata(char ***ppapszMetadata,
                                          const char *pszSrcEncoding);
 
 static int NITFWriteOption(VSILFILE *fp, char **papszOptions, size_t nWidth,
-                           GUIntBig nLocation, const char *pszName,
+                           uint64_t nLocation, const char *pszName,
                            const char *pszText);
 
 /************************************************************************/
@@ -96,9 +97,9 @@ NITFFile *NITFOpenEx(VSILFILE *fp, const char *pszFilename)
     char *pachHeader;
     NITFFile *psFile;
     int nHeaderLen, nOffset, nHeaderLenOffset;
-    GUIntBig nNextData;
+    uint64_t nNextData;
     char szTemp[128], achFSDWNG[6];
-    GIntBig currentPos;
+    int64_t currentPos;
     int bTriedStreamingFileHeader = FALSE;
 
     /* -------------------------------------------------------------------- */
@@ -271,7 +272,7 @@ retry_read_header:
 
     if (!bTriedStreamingFileHeader && EQUAL(szTemp, "999999999999"))
     {
-        GUIntBig nFileSize;
+        uint64_t nFileSize;
         GByte abyDELIM2_L2[12] = {0};
         GByte abyL1_DELIM1[11] = {0};
         int bOK;
@@ -494,13 +495,13 @@ void NITFClose(NITFFile *psFile)
     CPLFree(psFile);
 }
 
-static int NITFGotoOffset(VSILFILE *fp, GUIntBig nLocation)
+static int NITFGotoOffset(VSILFILE *fp, uint64_t nLocation)
 {
     int bOK = TRUE;
-    GUIntBig nCurrentLocation = VSIFTellL(fp);
+    uint64_t nCurrentLocation = VSIFTellL(fp);
     if (nLocation > nCurrentLocation)
     {
-        GUIntBig nFileSize;
+        uint64_t nFileSize;
         size_t iFill;
         char cSpace = ' ';
 
@@ -546,9 +547,9 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
 
 {
     VSILFILE *fp;
-    GUIntBig nCur = 0;
+    uint64_t nCur = 0;
     int nOffset = 0, iBand, nIHSize, nNPPBH, nNPPBV;
-    GUIntBig nImageSize = 0;
+    uint64_t nImageSize = 0;
     int nNBPR, nNBPC;
     const char *pszIREP;
     const char *pszIC = CSLFetchNameValue(papszOptions, "IC");
@@ -694,7 +695,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         if (EQUAL(pszIC, "NC"))
         {
             nImageSize =
-                ((nBitsPerSample) / 8) * ((GUIntBig)nPixels * nLines) * nBands;
+                ((nBitsPerSample) / 8) * ((uint64_t)nPixels * nLines) * nBands;
         }
     }
     else if ((EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) && nPixels > 8192 &&
@@ -717,7 +718,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         if (EQUAL(pszIC, "NC"))
         {
             nImageSize = ((nBitsPerSample) / 8) *
-                         ((GUIntBig)nPixels * (nNBPC * nNPPBV)) * nBands;
+                         ((uint64_t)nPixels * (nNBPC * nNPPBV)) * nBands;
         }
     }
     else if ((EQUAL(pszIC, "NC") || EQUAL(pszIC, "C8")) && nLines > 8192 &&
@@ -740,7 +741,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         if (EQUAL(pszIC, "NC"))
         {
             nImageSize = ((nBitsPerSample) / 8) *
-                         ((GUIntBig)nLines * (nNBPR * nNPPBH)) * nBands;
+                         ((uint64_t)nLines * (nNBPR * nNPPBH)) * nBands;
         }
     }
     else
@@ -761,7 +762,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
 
         if (EQUAL(pszIC, "NC"))
         {
-            nImageSize = ((nBitsPerSample) / 8) * ((GUIntBig)nNBPR * nNBPC) *
+            nImageSize = ((nBitsPerSample) / 8) * ((uint64_t)nNBPR * nNBPC) *
                          nNPPBH * nNPPBV * nBands;
         }
     }
@@ -772,7 +773,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to create file %s,\n"
-                     "Too big image size : " CPL_FRMT_GUIB,
+                     "Too big image size : %" PRIu64,
                      pszFilename, nImageSize);
             return FALSE;
         }
@@ -780,7 +781,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Unable to create file %s,\n"
-                     "Too big file size : " CPL_FRMT_GUIB,
+                     "Too big file size : %" PRIu64,
                      pszFilename, nImageSize * nIM);
             return FALSE;
         }
@@ -1293,9 +1294,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
         PLACE(363 + iIM * 16, LISH1, CPLSPrintf("%06d", nIHSize));
         if (EQUAL(pszIC, "NC"))
         {
-            PLACE(
-                369 + iIM * 16, LIi,
-                CPLSPrintf("%010" CPL_FRMT_GB_WITHOUT_PREFIX "u", nImageSize));
+            PLACE(369 + iIM * 16, LIi, CPLSPrintf("%010" PRIu64, nImageSize));
         }
 
         nCur += nIHSize;
@@ -1359,13 +1358,12 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
     /* but we can support technically much more */
     if (EQUAL(pszIC, "NC") && nCur >= 999999999999ULL)
     {
-        CPLError(CE_Failure, CPLE_AppDefined, "Too big file : " CPL_FRMT_GUIB,
-                 nCur);
+        CPLError(CE_Failure, CPLE_AppDefined, "Too big file : %" PRIu64, nCur);
         CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
         return FALSE;
     }
 
-    PLACE(342, FL, CPLSPrintf("%012" CPL_FRMT_GB_WITHOUT_PREFIX "d", nCur));
+    PLACE(342, FL, CPLSPrintf("%012" PRId64, nCur));
 
     if (VSIFCloseL(fp) != 0)
         bOK = FALSE;
@@ -1374,7 +1372,7 @@ int NITFCreateEx(const char *pszFilename, int nPixels, int nLines, int nBands,
 }
 
 static int NITFWriteOption(VSILFILE *psFile, char **papszOptions, size_t nWidth,
-                           GUIntBig nLocation, const char *pszName,
+                           uint64_t nLocation, const char *pszName,
                            const char *pszText)
 {
     const char *pszParamValue;
@@ -1692,7 +1690,7 @@ static int NITFWriteBLOCKA(VSILFILE *fp, vsi_l_offset nOffsetUDIDL,
 static int NITFCollectSegmentInfo(NITFFile *psFile, int nFileHeaderLen,
                                   int nOffset, const char szType[3],
                                   int nHeaderLenSize, int nDataLenSize,
-                                  GUIntBig *pnNextData)
+                                  uint64_t *pnNextData)
 
 {
     char szTemp[12];
@@ -2306,8 +2304,7 @@ int NITFCollectAttachments(NITFFile *psFile)
                     258)
             {
                 CPLError(CE_Warning, CPLE_FileIO,
-                         "Failed to read graphic subheader at " CPL_FRMT_GUIB
-                         ".",
+                         "Failed to read graphic subheader at %" PRIu64 ".",
                          psSegInfo->nSegmentHeaderStart);
                 continue;
             }
@@ -2745,8 +2742,8 @@ static char **NITFGenericMetadataReadTREInternal(
                         }
 
                         pszValue = (char *)CPLMalloc(nBufferSize);
-                        CPLsnprintf(pszValue, nBufferSize, CPL_FRMT_GUIB,
-                                    (GUIntBig)nVal);
+                        CPLsnprintf(pszValue, nBufferSize, "%" PRIu64,
+                                    (uint64_t)nVal);
                         papszTmp =
                             CSLSetNameValue(papszTmp, pszMDItemName, pszValue);
                     }

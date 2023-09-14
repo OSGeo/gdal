@@ -33,6 +33,7 @@
 #include "ogrjsoncollectionstreamingparser.h"
 #include "ogr_api.h"
 
+#include <cinttypes>
 #include <limits>
 #include <set>
 
@@ -49,7 +50,7 @@ class OGRGeoJSONReaderStreamingParser final
     std::vector<OGRFeature *> m_apoFeatures{};
     size_t m_nCurFeatureIdx = 0;
     bool m_bOriginalIdModifiedEmitted = false;
-    std::set<GIntBig> m_oSetUsedFIDs{};
+    std::set<int64_t> m_oSetUsedFIDs{};
 
     std::map<std::string, int> m_oMapFieldNameToIdx{};
     std::vector<std::unique_ptr<OGRFieldDefn>> m_apoFieldDefn{};
@@ -300,10 +301,10 @@ void OGRGeoJSONReaderStreamingParser::GotFeature(json_object *poObj,
             m_oReader.ReadFeature(m_poLayer, poObj, osJson.c_str());
         if (poFeat)
         {
-            GIntBig nFID = poFeat->GetFID();
+            int64_t nFID = poFeat->GetFID();
             if (nFID == OGRNullFID)
             {
-                nFID = static_cast<GIntBig>(m_oSetUsedFIDs.size());
+                nFID = static_cast<int64_t>(m_oSetUsedFIDs.size());
                 while (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
                 {
                     ++nFID;
@@ -314,14 +315,14 @@ void OGRGeoJSONReaderStreamingParser::GotFeature(json_object *poObj,
                 if (!m_bOriginalIdModifiedEmitted)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Several features with id = " CPL_FRMT_GIB " have "
+                             "Several features with id = %" PRId64 " have "
                              "been found. Altering it to be unique. "
                              "This warning will not be emitted anymore for "
                              "this layer",
                              nFID);
                     m_bOriginalIdModifiedEmitted = true;
                 }
-                nFID = static_cast<GIntBig>(m_oSetUsedFIDs.size());
+                nFID = static_cast<int64_t>(m_oSetUsedFIDs.size());
                 while (m_oSetUsedFIDs.find(nFID) != m_oSetUsedFIDs.end())
                 {
                     ++nFID;
@@ -403,16 +404,16 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
     pabyBuffer_ = static_cast<GByte *>(CPLMalloc(nBufferSize_));
     int nIter = 0;
     bool bThresholdReached = false;
-    const GIntBig nMaxBytesFirstPass = CPLAtoGIntBig(
+    const int64_t nMaxBytesFirstPass = CPLAtoGIntBig(
         CPLGetConfigOption("OGR_GEOJSON_MAX_BYTES_FIRST_PASS", "0"));
-    const GIntBig nLimitFeaturesFirstPass = CPLAtoGIntBig(
+    const int64_t nLimitFeaturesFirstPass = CPLAtoGIntBig(
         CPLGetConfigOption("OGR_GEOJSON_MAX_FEATURES_FIRST_PASS", "0"));
     while (true)
     {
         nIter++;
 
         if (nMaxBytesFirstPass > 0 &&
-            static_cast<GIntBig>(nIter) * static_cast<GIntBig>(nBufferSize_) >=
+            static_cast<int64_t>(nIter) * static_cast<int64_t>(nBufferSize_) >=
                 nMaxBytesFirstPass)
         {
             CPLDebug("GeoJSON", "First pass: early exit since above "
@@ -450,10 +451,9 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
                 }
                 else
                 {
-                    CPLDebug("GeoJSON",
-                             "First pass: " CPL_FRMT_GUIB " bytes read",
-                             static_cast<GUIntBig>(nIter) *
-                                     static_cast<GUIntBig>(nBufferSize_) +
+                    CPLDebug("GeoJSON", "First pass: %" PRIu64 " bytes read",
+                             static_cast<uint64_t>(nIter) *
+                                     static_cast<uint64_t>(nBufferSize_) +
                                  nRead);
                 }
             }
@@ -676,7 +676,7 @@ OGRFeature *OGRGeoJSONReader::GetNextFeature(OGRGeoJSONLayer *poLayer)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
+OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, int64_t nFID)
 {
     CPLAssert(fp_);
 
@@ -732,7 +732,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID)
                     auto poFeat = oParser.GetNextFeature();
                     if (poFeat)
                     {
-                        const GIntBig nThisFID = poFeat->GetFID();
+                        const int64_t nThisFID = poFeat->GetFID();
                         if (oMapFIDToOffsetSize_.find(nThisFID) ==
                             oMapFIDToOffsetSize_.end())
                         {
@@ -805,18 +805,18 @@ bool OGRGeoJSONReader::IngestAll(OGRGeoJSONLayer *poLayer)
     if (nRAM && nTotalOGRFeatureMemEstimate_ > nRAM)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Not enough memory to ingest all the layer: " CPL_FRMT_GUIB
-                 " available, " CPL_FRMT_GUIB " needed",
+                 "Not enough memory to ingest all the layer: %" PRIu64
+                 " available, %" PRIu64 " needed",
                  nRAM, nTotalOGRFeatureMemEstimate_);
         return false;
     }
 
     CPLDebug("GeoJSON",
-             "Total memory estimated for ingestion: " CPL_FRMT_GUIB " bytes",
+             "Total memory estimated for ingestion: %" PRIu64 " bytes",
              nTotalOGRFeatureMemEstimate_);
 
     ResetReading();
-    GIntBig nCounter = 0;
+    int64_t nCounter = 0;
     while (true)
     {
         OGRFeature *poFeature = GetNextFeature(poLayer);
@@ -1663,7 +1663,7 @@ void OGRGeoJSONGenerateFeatureDefnDealWithID(
         }
         if (poId != nullptr && json_object_get_type(poId) == json_type_int)
         {
-            GIntBig nFID = json_object_get_int64(poId);
+            int64_t nFID = json_object_get_int64(poId);
             if (!CPL_INT64_FITS_ON_INT32(nFID))
             {
                 bNeedFID64 = true;
@@ -2021,12 +2021,12 @@ void OGRGeoJSONReaderSetField(OGRLayer *poLayer, OGRFeature *poFeature,
     }
     else if (OFTInteger64 == eType)
     {
-        poFeature->SetField(nField, (GIntBig)json_object_get_int64(poVal));
+        poFeature->SetField(nField, (int64_t)json_object_get_int64(poVal));
 
         // Check if FID available and set correct value.
         if (EQUAL(poFieldDefn->GetNameRef(), poLayer->GetFIDColumn()))
             poFeature->SetFID(
-                static_cast<GIntBig>(json_object_get_int64(poVal)));
+                static_cast<int64_t>(json_object_get_int64(poVal)));
     }
     else if (OFTReal == eType)
     {
@@ -2058,12 +2058,12 @@ void OGRGeoJSONReaderSetField(OGRLayer *poLayer, OGRFeature *poFeature,
         if (eJSonType == json_type_array)
         {
             const auto nLength = json_object_array_length(poVal);
-            GIntBig *panVal =
-                static_cast<GIntBig *>(CPLMalloc(sizeof(GIntBig) * nLength));
+            int64_t *panVal =
+                static_cast<int64_t *>(CPLMalloc(sizeof(int64_t) * nLength));
             for (auto i = decltype(nLength){0}; i < nLength; i++)
             {
                 json_object *poRow = json_object_array_get_idx(poVal, i);
-                panVal[i] = static_cast<GIntBig>(json_object_get_int64(poRow));
+                panVal[i] = static_cast<int64_t>(json_object_get_int64(poRow));
             }
             poFeature->SetField(nField, static_cast<int>(nLength), panVal);
             CPLFree(panVal);
@@ -2071,7 +2071,7 @@ void OGRGeoJSONReaderSetField(OGRLayer *poLayer, OGRFeature *poFeature,
         else if (eJSonType == json_type_boolean || eJSonType == json_type_int)
         {
             poFeature->SetField(
-                nField, static_cast<GIntBig>(json_object_get_int64(poVal)));
+                nField, static_cast<int64_t>(json_object_get_int64(poVal)));
         }
     }
     else if (OFTRealList == eType)
@@ -2230,7 +2230,7 @@ OGRFeature *OGRGeoJSONBaseReader::ReadFeature(OGRLayer *poLayer,
     json_object *poObjId = OGRGeoJSONFindMemberByName(poObj, "id");
     if (nullptr != poObjId && bFeatureLevelIdAsFID_)
     {
-        poFeature->SetFID(static_cast<GIntBig>(json_object_get_int64(poObjId)));
+        poFeature->SetFID(static_cast<int64_t>(json_object_get_int64(poObjId)));
     }
 
     /* -------------------------------------------------------------------- */

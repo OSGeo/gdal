@@ -89,12 +89,12 @@ class AAIGDataset CPL_NON_FINAL : public GDALPamDataset
     OGRSpatialReference m_oSRS{};
 
     unsigned char achReadBuf[256];
-    GUIntBig nBufferOffset;
+    uint64_t nBufferOffset;
     int nOffsetInBuffer;
 
     char Getc();
-    GUIntBig Tell() const;
-    int Seek(GUIntBig nOffset);
+    uint64_t Tell() const;
+    int Seek(uint64_t nOffset);
 
   protected:
     GDALDataType eDataType;
@@ -179,7 +179,7 @@ class AAIGRasterBand final : public GDALPamRasterBand
 {
     friend class AAIGDataset;
 
-    GUIntBig *panLineOffset;
+    uint64_t *panLineOffset;
 
   public:
     AAIGRasterBand(AAIGDataset *, int);

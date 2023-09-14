@@ -65,8 +65,8 @@ class OGREDIGEOLayer final : public OGRLayer,
 
     virtual void ResetReading() override;
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGREDIGEOLayer)
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {

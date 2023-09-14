@@ -68,7 +68,7 @@ static inline __m128i GDALCopyInt64ToXMM(const void *ptr)
 #if defined(__i386__) || defined(_M_IX86)
     return _mm_loadl_epi64(static_cast<const __m128i *>(ptr));
 #else
-    GInt64 i;
+    int64_t i;
     memcpy(&i, ptr, 8);
     return _mm_cvtsi64_si128(i);
 #endif
@@ -385,7 +385,7 @@ class XMMReg2Double
     inline void Store2Val(float *ptr) const
     {
         __m128i xmm_i = _mm_castps_si128(_mm_cvtpd_ps(xmm));
-        GDALCopyXMMToInt64(xmm_i, reinterpret_cast<GInt64 *>(ptr));
+        GDALCopyXMMToInt64(xmm_i, reinterpret_cast<int64_t *>(ptr));
     }
 
     inline void Store2Val(unsigned char *ptr) const
@@ -1034,7 +1034,7 @@ class XMMReg4Double
         __m128i xmm_i =
             _mm256_cvttpd_epi32(_mm256_add_pd(ymm, _mm256_set1_pd(0.5)));
         xmm_i = _mm_packus_epi32(xmm_i, xmm_i);  // Pack uint32 to uint16
-        GDALCopyXMMToInt64(xmm_i, reinterpret_cast<GInt64 *>(ptr));
+        GDALCopyXMMToInt64(xmm_i, reinterpret_cast<int64_t *>(ptr));
     }
 
     inline void Store4Val(float *ptr) const
@@ -1294,7 +1294,7 @@ class XMMReg4Double
         xmm0 = _mm_packs_epi32(xmm0, xmm0);
         xmm0 = _mm_sub_epi16(xmm0, _mm_set1_epi16(-32768));
 #endif
-        GDALCopyXMMToInt64(xmm0, (GInt64 *)ptr);
+        GDALCopyXMMToInt64(xmm0, (int64_t *)ptr);
 #endif
     }
 

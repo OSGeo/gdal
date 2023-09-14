@@ -44,22 +44,22 @@
 
 %apply (double *OUTPUT) { double *argout };
 
-%typemap(in) GIntBig
+%typemap(in) int64_t
 {
-    $1 = (GIntBig)PyLong_AsLongLong($input);
+    $1 = (int64_t)PyLong_AsLongLong($input);
 }
 
-%typemap(out) GIntBig
+%typemap(out) int64_t
 {
     $result = PyLong_FromLongLong($1);
 }
 
-%typemap(in) GUIntBig
+%typemap(in) uint64_t
 {
-    $1 = (GIntBig)PyLong_AsUnsignedLongLong($input);
+    $1 = (int64_t)PyLong_AsUnsignedLongLong($input);
 }
 
-%typemap(out) GUIntBig
+%typemap(out) uint64_t
 {
     $result = PyLong_FromUnsignedLongLong($1);
 }
@@ -101,13 +101,13 @@
 }
 
 
-%typemap(in,numinputs=0) (GIntBig *val, int *hasval) ( GIntBig tmpval, int tmphasval ) {
-  /* %typemap(python,in,numinputs=0) (GIntBig *val, int *hasval) */
+%typemap(in,numinputs=0) (int64_t *val, int *hasval) ( int64_t tmpval, int tmphasval ) {
+  /* %typemap(python,in,numinputs=0) (int64_t *val, int *hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
-%typemap(argout) (GIntBig *val, int *hasval) {
-  /* %typemap(python,argout) (GIntBig *val, int *hasval) */
+%typemap(argout) (int64_t *val, int *hasval) {
+  /* %typemap(python,argout) (int64_t *val, int *hasval) */
   PyObject *r;
   if ( !*$2 ) {
     Py_INCREF(Py_None);
@@ -121,13 +121,13 @@
 }
 
 
-%typemap(in,numinputs=0) (GUIntBig *val, int *hasval) ( GUIntBig tmpval, int tmphasval ) {
-  /* %typemap(python,in,numinputs=0) (GUIntBig *val, int *hasval) */
+%typemap(in,numinputs=0) (uint64_t *val, int *hasval) ( uint64_t tmpval, int tmphasval ) {
+  /* %typemap(python,in,numinputs=0) (uint64_t *val, int *hasval) */
   $1 = &tmpval;
   $2 = &tmphasval;
 }
-%typemap(argout) (GUIntBig *val, int *hasval) {
-  /* %typemap(python,argout) (GUIntBig *val, int *hasval) */
+%typemap(argout) (uint64_t *val, int *hasval) {
+  /* %typemap(python,argout) (uint64_t *val, int *hasval) */
   PyObject *r;
   if ( !*$2 ) {
     Py_INCREF(Py_None);
@@ -365,9 +365,9 @@ CreateCIntListFromSequence( PyObject* pySeq, int* pnSize ) {
   free($2);
 }
 
-%fragment("CreateCGIntBigListFromSequence","header") %{
-static GIntBig*
-CreateCGIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
+%fragment("CreateCint64_tListFromSequence","header") %{
+static int64_t*
+CreateCint64_tListFromSequence( PyObject* pySeq, int* pnSize ) {
   /* check if is List */
   if ( !PySequence_Check(pySeq) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -380,13 +380,13 @@ CreateCGIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
     *pnSize = -1;
     return NULL;
   }
-  if( (size_t)size > SIZE_MAX / sizeof(GIntBig) ) {
+  if( (size_t)size > SIZE_MAX / sizeof(int64_t) ) {
     PyErr_SetString(PyExc_RuntimeError, "too big sequence");
     *pnSize = -1;
     return NULL;
   }
   *pnSize = (int)size;
-  GIntBig* ret = (GIntBig*) malloc((*pnSize)*sizeof(GIntBig));
+  int64_t* ret = (int64_t*) malloc((*pnSize)*sizeof(int64_t));
   if( !ret ) {
     PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
     *pnSize = -1;
@@ -408,26 +408,26 @@ CreateCGIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
 %}
 
 /*
- *  Typemap for counted arrays of GIntBig <- PySequence
+ *  Typemap for counted arrays of int64_t <- PySequence
  */
-%typemap(in,numinputs=1,fragment="CreateCGIntBigListFromSequence") (int nList, GIntBig* pList)
+%typemap(in,numinputs=1,fragment="CreateCint64_tListFromSequence") (int nList, int64_t* pList)
 {
-  /* %typemap(in,numinputs=1) (int nList, GIntBig* pList)*/
-  $2 = CreateCGIntBigListFromSequence($input, &$1);
+  /* %typemap(in,numinputs=1) (int nList, int64_t* pList)*/
+  $2 = CreateCint64_tListFromSequence($input, &$1);
   if( $1 < 0 ) {
     SWIG_fail;
   }
 }
 
-%typemap(freearg) (int nList, GIntBig* pList)
+%typemap(freearg) (int nList, int64_t* pList)
 {
-  /* %typemap(freearg) (int nList, GIntBig* pList) */
+  /* %typemap(freearg) (int nList, int64_t* pList) */
   free($2);
 }
 
-%fragment("CreateCGUIntBigListFromSequence","header") %{
-static GUIntBig*
-CreateCGUIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
+%fragment("CreateCuint64_tListFromSequence","header") %{
+static uint64_t*
+CreateCuint64_tListFromSequence( PyObject* pySeq, int* pnSize ) {
   /* check if is List */
   if ( !PySequence_Check(pySeq) ) {
     PyErr_SetString(PyExc_TypeError, "not a sequence");
@@ -440,13 +440,13 @@ CreateCGUIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
     *pnSize = -1;
     return NULL;
   }
-  if( (size_t)size > SIZE_MAX / sizeof(GUIntBig) ) {
+  if( (size_t)size > SIZE_MAX / sizeof(uint64_t) ) {
     PyErr_SetString(PyExc_RuntimeError, "too big sequence");
     *pnSize = -1;
     return NULL;
   }
   *pnSize = (int)size;
-  GUIntBig* ret = (GUIntBig*) malloc((*pnSize)*sizeof(GUIntBig));
+  uint64_t* ret = (uint64_t*) malloc((*pnSize)*sizeof(uint64_t));
   if( !ret ) {
     PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
     *pnSize = -1;
@@ -468,20 +468,20 @@ CreateCGUIntBigListFromSequence( PyObject* pySeq, int* pnSize ) {
 %}
 
 /*
- *  Typemap for counted arrays of GUIntBig <- PySequence
+ *  Typemap for counted arrays of uint64_t <- PySequence
  */
-%typemap(in,numinputs=1,fragment="CreateCGUIntBigListFromSequence") (int nList, GUIntBig* pList)
+%typemap(in,numinputs=1,fragment="CreateCuint64_tListFromSequence") (int nList, uint64_t* pList)
 {
-  /* %typemap(in,numinputs=1) (int nList, GUIntBig* pList)*/
-  $2 = CreateCGUIntBigListFromSequence($input, &$1);
+  /* %typemap(in,numinputs=1) (int nList, uint64_t* pList)*/
+  $2 = CreateCuint64_tListFromSequence($input, &$1);
   if( $1 < 0 ) {
     SWIG_fail;
   }
 }
 
-%typemap(freearg) (int nList, GUIntBig* pList)
+%typemap(freearg) (int nList, uint64_t* pList)
 {
-  /* %typemap(freearg) (int nList, GUIntBig* pList) */
+  /* %typemap(freearg) (int nList, uint64_t* pList) */
   free($2);
 }
 
@@ -775,9 +775,9 @@ GetBufferAsCharPtrSizetSize( PyObject* input, size_t *nLen, char **pBuf, int *al
   }
 }
 
-%fragment("GetBufferAsCharPtrGIntBigSize","header") %{
+%fragment("GetBufferAsCharPtrint64_tSize","header") %{
 static bool
-GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int *alloc, bool *viewIsValid, Py_buffer *view ) {
+GetBufferAsCharPtrint64_tSize( PyObject* input, int64_t *nLen, char **pBuf, int *alloc, bool *viewIsValid, Py_buffer *view ) {
   {
     if (PyObject_GetBuffer(input, view, PyBUF_SIMPLE) == 0)
     {
@@ -809,7 +809,7 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
     }
 
     if (safeLen) safeLen--;
-    *nLen = (GIntBig)safeLen;
+    *nLen = (int64_t)safeLen;
     return true;
   }
   else
@@ -820,19 +820,19 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
 }
 %}
 
-%typemap(in,numinputs=1,fragment="GetBufferAsCharPtrGIntBigSize") (GIntBig nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
+%typemap(in,numinputs=1,fragment="GetBufferAsCharPtrint64_tSize") (int64_t nLen, char *pBuf ) (int alloc = 0, bool viewIsValid = false, Py_buffer view)
 {
-  /* %typemap(in,numinputs=1) (GIntBig nLen, char *pBuf ) */
+  /* %typemap(in,numinputs=1) (int64_t nLen, char *pBuf ) */
   char* ptr = NULL;
-  if( !GetBufferAsCharPtrGIntBigSize($input, &$1, &ptr, &alloc, &viewIsValid, &view) ) {
+  if( !GetBufferAsCharPtrint64_tSize($input, &$1, &ptr, &alloc, &viewIsValid, &view) ) {
       SWIG_fail;
   }
   $2 = ($2_ltype)ptr;
 }
 
-%typemap(freearg) (GIntBig nLen, char *pBuf )
+%typemap(freearg) (int64_t nLen, char *pBuf )
 {
-  /* %typemap(freearg) (GIntBig *nLen, char *pBuf ) */
+  /* %typemap(freearg) (int64_t *nLen, char *pBuf ) */
   if( viewIsValid$argnum ) {
     PyBuffer_Release(&view$argnum);
   }
@@ -890,16 +890,16 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
 /*
  * Typemap argout used in Feature::GetFieldAsInteger64List()
  */
-%typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen = 0, GIntBig *pList = NULL)
+%typemap(in,numinputs=0) (int *nLen, const int64_t **pList) (int nLen = 0, int64_t *pList = NULL)
 {
-  /* %typemap(in,numinputs=0) (int *nLen, const GIntBig **pList) (int nLen, GIntBig *pList) */
+  /* %typemap(in,numinputs=0) (int *nLen, const int64_t **pList) (int nLen, int64_t *pList) */
   $1 = &nLen;
   $2 = &pList;
 }
 
-%typemap(argout) (int *nLen, const GIntBig **pList )
+%typemap(argout) (int *nLen, const int64_t **pList )
 {
-  /* %typemap(argout) (int *nLen, const GIntBig **pList ) */
+  /* %typemap(argout) (int *nLen, const int64_t **pList ) */
   Py_DECREF($result);
   PyObject *out = PyList_New( *$1 );
   if( !out ) {
@@ -907,7 +907,7 @@ GetBufferAsCharPtrGIntBigSize( PyObject* input, GIntBig *nLen, char **pBuf, int 
   }
   for( int i=0; i<*$1; i++ ) {
     char szTmp[32];
-    sprintf(szTmp, CPL_FRMT_GIB, (*$2)[i]);
+    sprintf(szTmp, "%" PRId64, (*$2)[i]);
     PyObject* val;
     val = PyLong_FromString(szTmp, NULL, 10);
     PyList_SetItem( out, i, val );
@@ -1436,7 +1436,7 @@ static PyObject* CSLToList( char** stringarray, bool *pbErr )
 %enddef
 
 OPTIONAL_POD(int,i);
-OPTIONAL_POD(GIntBig,L);
+OPTIONAL_POD(int64_t,L);
 
 /*
  * Typedef const char * <- Any object.
@@ -1827,31 +1827,31 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
  * a list object.
  */
 
-%typemap(arginit) (int buckets, GUIntBig* panHistogram)
+%typemap(arginit) (int buckets, uint64_t* panHistogram)
 {
-  /* %typemap(in) int buckets, GUIntBig* panHistogram -> list */
-  $2 = (GUIntBig *) VSICalloc(sizeof(GUIntBig),$1);
+  /* %typemap(in) int buckets, uint64_t* panHistogram -> list */
+  $2 = (uint64_t *) VSICalloc(sizeof(uint64_t),$1);
 }
 
-%typemap(in, numinputs=1) (int buckets, GUIntBig* panHistogram)
+%typemap(in, numinputs=1) (int buckets, uint64_t* panHistogram)
 {
-  /* %typemap(in) int buckets, GUIntBig* panHistogram -> list */
+  /* %typemap(in) int buckets, uint64_t* panHistogram -> list */
   int requested_buckets = 0;
   CPL_IGNORE_RET_VAL(SWIG_AsVal_int($input, &requested_buckets));
   if( requested_buckets != $1 )
   {
     $1 = requested_buckets;
-    if (requested_buckets <= 0 || (size_t)requested_buckets > SIZE_MAX / sizeof(GUIntBig))
+    if (requested_buckets <= 0 || (size_t)requested_buckets > SIZE_MAX / sizeof(uint64_t))
     {
         PyErr_SetString( PyExc_RuntimeError, "Bad value for buckets" );
         SWIG_fail;
     }
-    void* tmp = VSIRealloc($2, sizeof(GUIntBig) * requested_buckets);
+    void* tmp = VSIRealloc($2, sizeof(uint64_t) * requested_buckets);
     if( !tmp) {
       PyErr_SetString(PyExc_MemoryError, "cannot allocate temporary buffer");
       SWIG_fail;
     }
-    $2 = (GUIntBig *)tmp;
+    $2 = (uint64_t *)tmp;
   }
   if ($2 == NULL)
   {
@@ -1860,16 +1860,16 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
   }
 }
 
-%typemap(freearg)  (int buckets, GUIntBig* panHistogram)
+%typemap(freearg)  (int buckets, uint64_t* panHistogram)
 {
-  /* %typemap(freearg) (int buckets, GUIntBig* panHistogram)*/
+  /* %typemap(freearg) (int buckets, uint64_t* panHistogram)*/
   VSIFree( $2 );
 }
 
-%typemap(argout) (int buckets, GUIntBig* panHistogram)
+%typemap(argout) (int buckets, uint64_t* panHistogram)
 {
-  /* %typemap(out) int buckets, GUIntBig* panHistogram -> list */
-  GUIntBig *integerarray = $2;
+  /* %typemap(out) int buckets, uint64_t* panHistogram -> list */
+  uint64_t *integerarray = $2;
   Py_DECREF( $result );
   if ( integerarray == NULL ) {
     $result = Py_None;
@@ -1882,7 +1882,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
     }
     for ( int i = 0; i < $1; ++i ) {
       char szTmp[32];
-      sprintf(szTmp, CPL_FRMT_GUIB, integerarray[i]);
+      sprintf(szTmp, "%" PRIu64, integerarray[i]);
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
       PyList_SetItem($result, i, o );
     }
@@ -1893,11 +1893,11 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
  *                       GetDefaultHistogram()
  */
 
-%typemap(arginit, noblock=1) (double *min_ret, double *max_ret, int *buckets_ret, GUIntBig **ppanHistogram)
+%typemap(arginit, noblock=1) (double *min_ret, double *max_ret, int *buckets_ret, uint64_t **ppanHistogram)
 {
    double min_val = 0.0, max_val = 0.0;
    int buckets_val = 0;
-   GUIntBig *panHistogram = NULL;
+   uint64_t *panHistogram = NULL;
 
    $1 = &min_val;
    $2 = &max_val;
@@ -1905,7 +1905,7 @@ OBJECT_LIST_INPUT(GDALDatasetShadow);
    $4 = &panHistogram;
 }
 
-%typemap(argout) (double *min_ret, double *max_ret, int *buckets_ret, GUIntBig** ppanHistogram)
+%typemap(argout) (double *min_ret, double *max_ret, int *buckets_ret, uint64_t** ppanHistogram)
 {
   int i;
   PyObject *psList = NULL;
@@ -2796,15 +2796,15 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
 /*
  * Typemap argout for GDALAttributeGetDimensionsSize()
  */
-%typemap(in,numinputs=0) (GUIntBig** pvals, size_t* pnCount) ( GUIntBig* vals=0, size_t nCount = 0 )
+%typemap(in,numinputs=0) (uint64_t** pvals, size_t* pnCount) ( uint64_t* vals=0, size_t nCount = 0 )
 {
-  /* %typemap(in,numinputs=0) (GUIntBig** pvals, size_t* pnCount) */
+  /* %typemap(in,numinputs=0) (uint64_t** pvals, size_t* pnCount) */
   $1 = &vals;
   $2 = &nCount;
 }
-%typemap(argout) (GUIntBig** pvals, size_t* pnCount)
+%typemap(argout) (uint64_t** pvals, size_t* pnCount)
 {
-  /* %typemap(argout) (GUIntBig** pvals, size_t* pnCount) */
+  /* %typemap(argout) (uint64_t** pvals, size_t* pnCount) */
   Py_DECREF($result);
   $result = PyList_New( *$2 );
   if( !$result ) {
@@ -2812,15 +2812,15 @@ OBJECT_LIST_INPUT_ITEM_MAY_BE_NULL(GDALDimensionHS);
   }
   for( size_t i = 0; i < *$2; i++ ) {
       char szTmp[32];
-      sprintf(szTmp, CPL_FRMT_GUIB, (*$1)[i]);
+      sprintf(szTmp, "%" PRIu64, (*$1)[i]);
       PyObject *o = PyLong_FromString(szTmp, NULL, 10);
       PyList_SetItem($result, i, o );
   }
 }
 
-%typemap(freearg) (GUIntBig** pvals, size_t* pnCount)
+%typemap(freearg) (uint64_t** pvals, size_t* pnCount)
 {
-  /* %typemap(freearg) (GUIntBig** pvals, size_t* pnCount) */
+  /* %typemap(freearg) (uint64_t** pvals, size_t* pnCount) */
   CPLFree(*$1);
 }
 

@@ -213,7 +213,7 @@ void GDALMDReaderEROS::LoadMetadata()
     if (nullptr != pszDate)
     {
         char buffer[80];
-        GIntBig timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
+        int64_t timeMid = GetAcquisitionTimeFromString(CPLStripQuotes(pszDate));
         struct tm tmBuf;
         strftime(buffer, 80, MD_DATETIMEFORMAT,
                  CPLUnixTimeToYMDHMS(timeMid, &tmBuf));
@@ -258,7 +258,7 @@ char **GDALMDReaderEROS::LoadImdTxtFile()
 /**
  * GetAcqisitionTimeFromString()
  */
-GIntBig GDALMDReaderEROS::GetAcquisitionTimeFromString(const char *pszDateTime)
+int64_t GDALMDReaderEROS::GetAcquisitionTimeFromString(const char *pszDateTime)
 {
     if (nullptr == pszDateTime)
         return 0;

@@ -476,13 +476,13 @@ OGRFeature *OGRHanaLayer::ReadFeature()
             {
                 odbc::Int val = resultSet_->getInt(paramIndex);
                 if (!val.isNull())
-                    feature->SetFID(static_cast<GIntBig>(*val));
+                    feature->SetFID(static_cast<int64_t>(*val));
             }
             else if (clmDesc.type == odbc::SQLDataTypes::BigInt)
             {
                 odbc::Long val = resultSet_->getLong(paramIndex);
                 if (!val.isNull())
-                    feature->SetFID(static_cast<GIntBig>(*val));
+                    feature->SetFID(static_cast<int64_t>(*val));
             }
             continue;
         }
@@ -521,7 +521,7 @@ OGRFeature *OGRHanaLayer::ReadFeature()
                         fieldIndex, val);
                     break;
                 case odbc::SQLDataTypes::BigInt:
-                    featWriter.SetFieldValueAsArray<GIntBig, GIntBig>(
+                    featWriter.SetFieldValueAsArray<int64_t, int64_t>(
                         fieldIndex, val);
                     break;
                 case odbc::SQLDataTypes::Float:
@@ -880,11 +880,11 @@ OGRErr OGRHanaLayer::GetExtent(int iGeomField, OGREnvelope *extent, int force)
 /*                            GetFeatureCount()                         */
 /************************************************************************/
 
-GIntBig OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
+int64_t OGRHanaLayer::GetFeatureCount(CPL_UNUSED int force)
 {
     EnsureInitialized();
 
-    GIntBig ret = 0;
+    int64_t ret = 0;
     CPLString sql = CPLString().Printf("SELECT COUNT(*) FROM (%s) AS tmp",
                                        GetQueryStatement().c_str());
     odbc::StatementRef stmt = dataSource_->CreateStatement();

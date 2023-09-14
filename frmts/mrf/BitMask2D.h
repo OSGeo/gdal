@@ -210,9 +210,9 @@ template <typename T = unsigned long long> class BitMap2D
     {
         for (size_t i = 0; i < _bits.size(); i++)
         {
-            if (sizeof(T) == sizeof(GUIntBig))
+            if (sizeof(T) == sizeof(uint64_t))
             {
-                CPL_SWAP64PTR(reinterpret_cast<GUIntBig *>(&_bits[i]));
+                CPL_SWAP64PTR(reinterpret_cast<uint64_t *>(&_bits[i]));
             }
             else
             {

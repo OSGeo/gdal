@@ -77,8 +77,8 @@ class Sentinel3_SRAL_MWR_Layer final : public OGRLayer
     }
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
+    int64_t GetFeatureCount(int bForce) override;
     int TestCapability(const char *pszCap) override;
     char **GetMetadata(const char *pszDomain) override;
     const char *GetMetadataItem(const char *pszKey,
@@ -258,7 +258,7 @@ void Sentinel3_SRAL_MWR_Layer::ResetReading()
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig Sentinel3_SRAL_MWR_Layer::GetFeatureCount(int bForce)
+int64_t Sentinel3_SRAL_MWR_Layer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
         return m_nFeatureCount;
@@ -402,7 +402,7 @@ OGRFeature *Sentinel3_SRAL_MWR_Layer::GetNextRawFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *Sentinel3_SRAL_MWR_Layer::GetFeature(GIntBig nFID)
+OGRFeature *Sentinel3_SRAL_MWR_Layer::GetFeature(int64_t nFID)
 {
     if (nFID <= 0 || static_cast<size_t>(nFID) > m_nFeatureCount)
         return nullptr;

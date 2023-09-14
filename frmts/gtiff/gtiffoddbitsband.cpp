@@ -112,8 +112,8 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     {
         // TODO(schwehr): Create a CplNumBits8Aligned.
         // Bits per line rounds up to next byte boundary.
-        GInt64 nBitsPerLine =
-            static_cast<GInt64>(nBlockXSize) * m_poGDS->m_nBitsPerSample;
+        int64_t nBitsPerLine =
+            static_cast<int64_t>(nBlockXSize) * m_poGDS->m_nBitsPerSample;
         if ((nBitsPerLine & 7) != 0)
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
@@ -124,7 +124,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         {
             for (int iY = 0; iY < nBlockYSize; ++iY, iPixel += nBlockXSize)
             {
-                GInt64 iBitOffset = iY * nBitsPerLine;
+                int64_t iBitOffset = iY * nBitsPerLine;
 
                 const GByte *pabySrc =
                     static_cast<const GByte *>(pImage) + iPixel;
@@ -188,7 +188,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
         for (int iY = 0; iY < nBlockYSize; ++iY)
         {
-            GInt64 iBitOffset = iY * nBitsPerLine;
+            int64_t iBitOffset = iY * nBitsPerLine;
 
             if (m_poGDS->m_nBitsPerSample == 12)
             {
@@ -349,7 +349,8 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         const int iBandBitOffset = iBand * m_poGDS->m_nBitsPerSample;
 
         // Bits per line rounds up to next byte boundary.
-        GInt64 nBitsPerLine = static_cast<GInt64>(nBlockXSize) * iPixelBitSkip;
+        int64_t nBitsPerLine =
+            static_cast<int64_t>(nBlockXSize) * iPixelBitSkip;
         if ((nBitsPerLine & 7) != 0)
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
@@ -380,7 +381,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
         for (int iY = 0; iY < nBlockYSize; ++iY)
         {
-            GInt64 iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+            int64_t iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
             if (m_poGDS->m_nBitsPerSample == 12)
             {
@@ -831,8 +832,8 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
 
         // Bits per line rounds up to next byte boundary.
-        GUIntBig nBitsPerLine =
-            static_cast<GUIntBig>(nBlockXSize) * iPixelBitSkip;
+        uint64_t nBitsPerLine =
+            static_cast<uint64_t>(nBlockXSize) * iPixelBitSkip;
         if ((nBitsPerLine & 7) != 0)
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
@@ -844,7 +845,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (unsigned iY = 0; iY < static_cast<unsigned>(nBlockYSize); ++iY)
             {
-                GUIntBig iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+                uint64_t iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
                 for (unsigned iX = 0; iX < static_cast<unsigned>(nBlockXSize);
                      ++iX)
@@ -863,7 +864,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (unsigned iY = 0; iY < static_cast<unsigned>(nBlockYSize); ++iY)
             {
-                GUIntBig iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+                uint64_t iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
                 for (unsigned iX = 0; iX < static_cast<unsigned>(nBlockXSize);
                      ++iX)

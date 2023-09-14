@@ -36,15 +36,15 @@
 #define CPL_SHA256_HASH_SIZE 32 /* 256 bit */
 #define CPL_SHA256_HASH_WORDS 8
 
-#ifndef GUInt64
-#define GUInt64 GUIntBig
+#ifndef uint64_t
+#define uint64_t uint64_t
 #endif
 
 CPL_C_START
 
 struct _CPL_SHA256Context
 {
-    GUInt64 totalLength;
+    uint64_t totalLength;
     uint32_t hash[CPL_SHA256_HASH_WORDS];
     uint32_t bufferLength;
     union

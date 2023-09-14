@@ -51,6 +51,7 @@
 #include <limits>
 
 #include <cassert>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -2193,10 +2194,10 @@ CPLErr CPLCreateFileInZip(void *hZip, const char *pszFilename,
     memset(&fileinfo, 0, sizeof(fileinfo));
     const char *pszTimeStamp =
         CSLFetchNameValueDef(papszOptions, "TIMESTAMP", "NOW");
-    GIntBig unixTime =
+    int64_t unixTime =
         EQUAL(pszTimeStamp, "NOW")
             ? time(nullptr)
-            : static_cast<GIntBig>(std::strtoll(pszTimeStamp, nullptr, 10));
+            : static_cast<int64_t>(std::strtoll(pszTimeStamp, nullptr, 10));
     struct tm brokenDown;
     CPLUnixTimeToYMDHMS(unixTime, &brokenDown);
     fileinfo.tmz_date.tm_year = brokenDown.tm_year;
@@ -2389,8 +2390,8 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
 
         bSeekOptimized = true;
 
-        aosNewsOptions.SetNameValue(
-            "UNCOMPRESSED_SIZE", CPLSPrintf(CPL_FRMT_GUIB, nUncompressedSize));
+        aosNewsOptions.SetNameValue("UNCOMPRESSED_SIZE",
+                                    CPLSPrintf("%" PRIu64, nUncompressedSize));
 
         zi->nOffsetSize = nOffsetSize;
         nExpectedIndexSize =
@@ -2453,7 +2454,7 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
         {
             aosNewsOptions.SetNameValue(
                 "TIMESTAMP",
-                CPLSPrintf(CPL_FRMT_GIB, static_cast<GIntBig>(sStat.st_mtime)));
+                CPLSPrintf("%" PRId64, static_cast<int64_t>(sStat.st_mtime)));
         }
     }
 

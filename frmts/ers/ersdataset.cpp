@@ -949,7 +949,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     /*     Get the HeaderOffset if it exists in the header                  */
     /* -------------------------------------------------------------------- */
-    GIntBig nHeaderOffset = 0;
+    int64_t nHeaderOffset = 0;
     const char *pszHeaderOffset = poHeader->Find("HeaderOffset");
     if (pszHeaderOffset != nullptr)
     {
@@ -1081,7 +1081,7 @@ GDALDataset *ERSDataset::Open(GDALOpenInfo *poOpenInfo)
                 return nullptr;
             }
             if (nHeaderOffset >
-                std::numeric_limits<GIntBig>::max() -
+                std::numeric_limits<int64_t>::max() -
                     (nBands - 1) * iWordSize * poDS->nRasterXSize)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1420,8 +1420,8 @@ GDALDataset *ERSDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         return nullptr;
     }
 
-    GUIntBig nSize =
-        nXSize * (GUIntBig)nYSize * nBandsIn * (GDALGetDataTypeSize(eType) / 8);
+    uint64_t nSize =
+        nXSize * (uint64_t)nYSize * nBandsIn * (GDALGetDataTypeSize(eType) / 8);
     GByte byZero = 0;
     if (VSIFSeekL(fpBin, nSize - 1, SEEK_SET) != 0 ||
         VSIFWriteL(&byZero, 1, 1, fpBin) != 1)

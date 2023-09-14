@@ -280,7 +280,7 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
     int nXEnd = (nXOff + nXSize - 1) / poBand->nBlockXSize;
     int nYStart = nYOff / poBand->nBlockYSize;
     int nYEnd = (nYOff + nYSize - 1) / poBand->nBlockYSize;
-    GIntBig nReqMem = (GIntBig)(nXEnd - nXStart + 1) * (nYEnd - nYStart + 1) *
+    int64_t nReqMem = (int64_t)(nXEnd - nXStart + 1) * (nYEnd - nYStart + 1) *
                       poBand->nBlockXSize * poBand->nBlockYSize *
                       (GDALGetDataTypeSize(poBand->eDataType) / 8);
 
@@ -395,10 +395,10 @@ int JP2OPJLikeDataset<CODEC, BASE>::PreloadBlocks(
 /************************************************************************/
 
 template <typename CODEC, typename BASE>
-GIntBig JP2OPJLikeDataset<CODEC, BASE>::GetEstimatedRAMUsage()
+int64_t JP2OPJLikeDataset<CODEC, BASE>::GetEstimatedRAMUsage()
 {
     // libopenjp2 holds the code block values in a uint32_t array.
-    GIntBig nVal = static_cast<GIntBig>(this->m_nTileWidth) *
+    int64_t nVal = static_cast<int64_t>(this->m_nTileWidth) *
                    this->m_nTileHeight * this->nBands * sizeof(uint32_t);
     if (this->bSingleTiled)
     {
@@ -1485,7 +1485,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
                          strlen(oSubBox.GetType()) > 0;
                          oSubBox.ReadNextChild(&oBox))
                     {
-                        GIntBig nDataLength = oSubBox.GetDataLength();
+                        int64_t nDataLength = oSubBox.GetDataLength();
                         if (poCT == nullptr &&
                             EQUAL(oSubBox.GetType(), "pclr") &&
                             nDataLength >= 3 &&
@@ -3169,7 +3169,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         else
             bUseXLBoxes = CPLFetchBool(papszOptions, "JP2C_XLBOX",
                                        false) || /* For debugging */
-                          (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
+                          (int64_t)nXSize * nYSize * nBands * nDataTypeSize /
                                   adfRates.back() >
                               4e9;
         uint32_t nLBox = (bUseXLBoxes) ? 1 : 0;
@@ -3178,7 +3178,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         VSIFWriteL("jp2c", 1, 4, fp);
         if (bUseXLBoxes)
         {
-            GUIntBig nXLBox = 0;
+            uint64_t nXLBox = 0;
             VSIFWriteL(&nXLBox, 1, 8, fp);
         }
     }
@@ -3279,8 +3279,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         const int nTilesX = DIV_ROUND_UP(nXSize, nBlockXSize);
         const int nTilesY = DIV_ROUND_UP(nYSize, nBlockYSize);
 
-        const GUIntBig nTileSize =
-            (GUIntBig)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
+        const uint64_t nTileSize =
+            (uint64_t)nBlockXSize * nBlockYSize * nBands * nDataTypeSize;
         GByte *pTempBuffer = nullptr;
 
         const bool bUseIOThread =
@@ -3571,7 +3571,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                       false) /* debug option */)
     {
         vsi_l_offset nEndJP2C = VSIFTellL(fp);
-        GUIntBig nBoxSize = nEndJP2C - nStartJP2C;
+        uint64_t nBoxSize = nEndJP2C - nStartJP2C;
         if (bUseXLBoxes)
         {
             VSIFSeekL(fp, nStartJP2C + 8, SEEK_SET);

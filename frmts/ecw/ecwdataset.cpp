@@ -289,7 +289,7 @@ CPLErr ECWRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
 
 CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
                                           int *pnBuckets,
-                                          GUIntBig **ppanHistogram, int bForce,
+                                          uint64_t **ppanHistogram, int bForce,
                                           GDALProgressFunc f,
                                           void *pProgressData)
 {
@@ -330,12 +330,12 @@ CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
         if (bandStats.Histogram != nullptr && bandStats.nHistBucketCount > 0)
         {
             *pnBuckets = bandStats.nHistBucketCount;
-            *ppanHistogram = static_cast<GUIntBig *>(
-                VSIMalloc(bandStats.nHistBucketCount * sizeof(GUIntBig)));
+            *ppanHistogram = static_cast<uint64_t *>(
+                VSIMalloc(bandStats.nHistBucketCount * sizeof(uint64_t)));
             for (size_t i = 0; i < bandStats.nHistBucketCount; i++)
             {
                 (*ppanHistogram)[i] =
-                    static_cast<GUIntBig>(bandStats.Histogram[i]);
+                    static_cast<uint64_t>(bandStats.Histogram[i]);
             }
             // JTO: this is not perfect as You can't tell who wrote the
             // histogram !!! It will offset it unnecessarily for files with
@@ -391,7 +391,7 @@ CPLErr ECWRasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
 /************************************************************************/
 
 CPLErr ECWRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
-                                          int nBuckets, GUIntBig *panHistogram)
+                                          int nBuckets, uint64_t *panHistogram)
 {
     // Only version 3 supports saving statistics.
     if (poGDS->psFileInfo->nFormatVersion < 3 || eBandInterp == GCI_AlphaBand)
@@ -403,7 +403,7 @@ CPLErr ECWRasterBand::SetDefaultHistogram(double dfMin, double dfMax,
     // determine if there are statistics in PAM file.
     double dummy;
     int dummy_i;
-    GUIntBig *dummy_histogram = nullptr;
+    uint64_t *dummy_histogram = nullptr;
     bool hasPAMDefaultHistogram =
         GDALPamRasterBand::GetDefaultHistogram(&dummy, &dummy, &dummy_i,
                                                &dummy_histogram, FALSE, nullptr,
@@ -2090,8 +2090,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         CPLErr eErr = IRasterIO(
             eRWFlag, nXOff, nYOff, nXSize, nYSize, pabyTemp, nXSize, nYSize,
             eBufType, nBandCount, panBandMap, nBufDataTypeSize,
-            (GIntBig)nBufDataTypeSize * nXSize,
-            (GIntBig)nBufDataTypeSize * nXSize * nYSize, &sExtraArgDefault);
+            (int64_t)nBufDataTypeSize * nXSize,
+            (int64_t)nBufDataTypeSize * nXSize * nYSize, &sExtraArgDefault);
 
         if (eErr == CE_None)
         {

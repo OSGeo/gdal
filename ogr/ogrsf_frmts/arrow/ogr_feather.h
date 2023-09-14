@@ -122,7 +122,7 @@ class OGRFeatherLayer final : public OGRArrowLayer
 
     void ResetReading() override;
     int TestCapability(const char *pszCap) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
     const char *GetMetadataItem(const char *pszName,
                                 const char *pszDomain = "") override;
     char **GetMetadata(const char *pszDomain = "") override;

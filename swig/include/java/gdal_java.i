@@ -181,10 +181,10 @@ import java.lang.Integer;
 
   static bool MDArrayRead(GDALMDArrayH hMDA,
                             int numDims,
-                            const GInt64 *arrayStartIdxes,
-                            const GInt64 *counts,
-                            const GInt64 *arraySteps,
-                            GInt64 *bufferStrides,
+                            const int64_t *arrayStartIdxes,
+                            const int64_t *counts,
+                            const int64_t *arraySteps,
+                            int64_t *bufferStrides,
                             void* arrayOut,
                             size_t arrayByteSize,
                             GDALExtendedDataTypeH data_type)
@@ -201,7 +201,7 @@ import java.lang.Integer;
     }
 
     bool retVal = GDALMDArrayRead(hMDA,
-                                   (const GUInt64*) arrayStartIdxes,
+                                   (const uint64_t*) arrayStartIdxes,
                                    localCounts,
                                    arraySteps,
                                    localBufferStrides,
@@ -218,10 +218,10 @@ import java.lang.Integer;
 
   static bool MDArrayWrite(GDALMDArrayH hMDA,
                             int numDims,
-                            const GInt64 *arrayStartIdxes,
-                            const GInt64 *counts,
-                            const GInt64 *arraySteps,
-                            GInt64 *bufferStrides,
+                            const int64_t *arrayStartIdxes,
+                            const int64_t *counts,
+                            const int64_t *arraySteps,
+                            int64_t *bufferStrides,
                             void* arrayIn,
                             size_t arrayByteSize,
                             GDALExtendedDataTypeH data_type)
@@ -238,7 +238,7 @@ import java.lang.Integer;
     }
 
     bool retVal = GDALMDArrayWrite(hMDA,
-                                    (const GUInt64*) arrayStartIdxes,
+                                    (const uint64_t*) arrayStartIdxes,
                                     localCounts,
                                     arraySteps,
                                     localBufferStrides,
@@ -263,15 +263,15 @@ import java.lang.Integer;
   }
 
 %define DEFINE_READ_MDA_DATA(ctype, buffer_type_code)
-  %apply(int nList, GInt64 *pList) { (int starts,  GInt64 *startsValues) };
-  %apply(int nList, GInt64 *pList) { (int counts,  GInt64 *countsValues) };
-  %apply(int nList, GInt64 *pList) { (int steps,   GInt64 *stepsValues) };
-  %apply(int nList, GInt64 *pList) { (int strides, GInt64 *stridesValues) };
+  %apply(int nList, int64_t *pList) { (int starts,  int64_t *startsValues) };
+  %apply(int nList, int64_t *pList) { (int counts,  int64_t *countsValues) };
+  %apply(int nList, int64_t *pList) { (int steps,   int64_t *stepsValues) };
+  %apply(int nList, int64_t *pList) { (int strides, int64_t *stridesValues) };
   %apply (ctype *arrayOut, size_t arraySize) { (ctype *arrayOut, size_t arraySize) };
-  bool Read(int starts,  GInt64 *startsValues,
-            int counts,  GInt64 *countsValues,
-            int steps,   GInt64 *stepsValues,
-            int strides, GInt64 *stridesValues,
+  bool Read(int starts,  int64_t *startsValues,
+            int counts,  int64_t *countsValues,
+            int steps,   int64_t *stepsValues,
+            int strides, int64_t *stridesValues,
             ctype *arrayOut,
             size_t arraySize
            )
@@ -314,15 +314,15 @@ import java.lang.Integer;
   DEFINE_READ_MDA_DATA(double,  GDT_Float64)
 
 %define DEFINE_WRITE_MDA_DATA(ctype, buffer_type_code)
-  %apply(int nList, GInt64 *pList) { (int starts,  GInt64 *startsValues) };
-  %apply(int nList, GInt64 *pList) { (int counts,  GInt64 *countsValues) };
-  %apply(int nList, GInt64 *pList) { (int steps,   GInt64 *stepsValues) };
-  %apply(int nList, GInt64 *pList) { (int strides, GInt64 *stridesValues) };
+  %apply(int nList, int64_t *pList) { (int starts,  int64_t *startsValues) };
+  %apply(int nList, int64_t *pList) { (int counts,  int64_t *countsValues) };
+  %apply(int nList, int64_t *pList) { (int steps,   int64_t *stepsValues) };
+  %apply(int nList, int64_t *pList) { (int strides, int64_t *stridesValues) };
   %apply (ctype *arrayIn, size_t arraySize) { (ctype *arrayIn, size_t arraySize) };
-  bool Write(int starts,  GInt64 *startsValues,
-             int counts,  GInt64 *countsValues,
-             int steps,   GInt64 *stepsValues,
-             int strides, GInt64 *stridesValues,
+  bool Write(int starts,  int64_t *startsValues,
+             int counts,  int64_t *countsValues,
+             int steps,   int64_t *stepsValues,
+             int strides, int64_t *stridesValues,
              ctype *arrayIn,
              size_t arraySize
             )
@@ -616,9 +616,9 @@ import org.gdal.gdalconst.gdalconstConstants;
 %{
 
 static
-GIntBig ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
+int64_t ComputeDatasetRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
                                 int nBands, int* bandMap, int nBandMapArrayLength,
-                                GIntBig nPixelSpace, GIntBig nLineSpace, GIntBig nBandSpace,
+                                int64_t nPixelSpace, int64_t nLineSpace, int64_t nBandSpace,
                                 int bSpacingShouldBeMultipleOfPixelSize );
 
 static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
@@ -649,7 +649,7 @@ static CPLErr DatasetRasterIO( GDALDatasetH hDS, GDALRWFlag eRWFlag,
       band_list = GDALGetRasterCount(hDS);
   }
 
-  GIntBig nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
+  int64_t nMinBufferSizeInBytes = ComputeDatasetRasterIOSize (
                          buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                          band_list, pband_list, band_list,
                          nPixelSpace, nLineSpace, nBandSpace, sizeof_ctype > 1 );
@@ -793,8 +793,8 @@ CPLErr ReadRaster( int xoff, int yoff, int xsize, int ysize,
 
 %{
 static
-GIntBig ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
-                                 GIntBig nPixelSpace, GIntBig nLineSpace,
+int64_t ComputeBandRasterIOSize (int buf_xsize, int buf_ysize, int nPixelSize,
+                                 int64_t nPixelSpace, int64_t nLineSpace,
                                  int bSpacingShouldBeMultipleOfPixelSize );
 
 static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
@@ -816,7 +816,7 @@ static CPLErr BandRasterIO( GDALRasterBandH hBand, GDALRWFlag eRWFlag,
         return CE_Failure;
     }
 
-    GIntBig nMinBufferSizeInBytes = ComputeBandRasterIOSize (
+    int64_t nMinBufferSizeInBytes = ComputeBandRasterIOSize (
                             buf_xsize, buf_ysize, GDALGetDataTypeSize(buf_type) / 8,
                             nPixelSpace, nLineSpace, sizeof_ctype > 1 );
     if (nMinBufferSizeInBytes > 0x7fffffff)
@@ -1367,7 +1367,7 @@ import org.gdal.gdalconst.gdalconstConstants;
 
     size_t count;
 
-    GUInt64* sizes = GDALAttributeGetDimensionsSize(attH, &count);
+    uint64_t* sizes = GDALAttributeGetDimensionsSize(attH, &count);
 
     if (index < 0 || index >= count) {
 

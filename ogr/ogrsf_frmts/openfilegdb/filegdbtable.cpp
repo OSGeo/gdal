@@ -30,6 +30,7 @@
 #include "filegdbtable.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <errno.h>
 #include <limits.h>
 #include <stddef.h>
@@ -253,10 +254,10 @@ static int ReadVarUInt32Silent(GByte *&pabyIter, GByte *pabyEnd,
         pabyIter, pabyEnd, nOutVal);
 }
 
-static void ReadVarUInt64NoCheck(GByte *&pabyIter, GUIntBig &nOutVal)
+static void ReadVarUInt64NoCheck(GByte *&pabyIter, uint64_t &nOutVal)
 {
     GByte *pabyEnd = nullptr;
-    ReadVarUInt<GUIntBig, ControlTypeNone>(pabyIter, pabyEnd, nOutVal);
+    ReadVarUInt<uint64_t, ControlTypeNone>(pabyIter, pabyEnd, nOutVal);
 }
 
 /************************************************************************/
@@ -519,9 +520,9 @@ int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
 /*                      GuessFeatureLocations()                         */
 /************************************************************************/
 
-#define MARK_DELETED(x) ((x) | (static_cast<GUIntBig>(1) << 63))
-#define IS_DELETED(x) (((x) & (static_cast<GUIntBig>(1) << 63)) != 0)
-#define GET_OFFSET(x) ((x) & ~(static_cast<GUIntBig>(1) << 63))
+#define MARK_DELETED(x) ((x) | (static_cast<uint64_t>(1) << 63))
+#define IS_DELETED(x) (((x) & (static_cast<uint64_t>(1) << 63)) != 0)
+#define GET_OFFSET(x) ((x) & ~(static_cast<uint64_t>(1) << 63))
 
 bool FileGDBTable::GuessFeatureLocations()
 {
@@ -806,8 +807,8 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
 #ifdef DEBUG_VERBOSE
     if (m_nOffsetFieldDesc != 40)
     {
-        CPLDebug("OpenFileGDB", "%s: nOffsetFieldDesc=" CPL_FRMT_GUIB,
-                 pszFilename, m_nOffsetFieldDesc);
+        CPLDebug("OpenFileGDB", "%s: nOffsetFieldDesc=%" PRIu64, pszFilename,
+                 m_nOffsetFieldDesc);
     }
 #endif
 
@@ -834,7 +835,7 @@ bool FileGDBTable::Open(const char *pszFilename, bool bUpdate,
     m_bIsV9 = (nVersion == 3);
 
     returnErrorIf(m_nOffsetFieldDesc >
-                  std::numeric_limits<GUIntBig>::max() - m_nFieldDescLength);
+                  std::numeric_limits<uint64_t>::max() - m_nFieldDescLength);
 
     returnErrorIf(m_nFieldDescLength > 10 * 1024 * 1024 ||
                   m_nFieldDescLength < 10);
@@ -1278,12 +1279,12 @@ static int SkipVarUInt(GByte *&pabyIter, GByte *pabyEnd, int nIter = 1)
 /************************************************************************/
 
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static void ReadVarIntAndAddNoCheck(GByte *&pabyIter, GIntBig &nOutVal)
+static void ReadVarIntAndAddNoCheck(GByte *&pabyIter, int64_t &nOutVal)
 {
     uint32_t b;
 
     b = *pabyIter;
-    GUIntBig nVal = (b & 0x3F);
+    uint64_t nVal = (b & 0x3F);
     bool bNegative = (b & 0x40) != 0;
     if ((b & 0x80) == 0)
     {
@@ -1299,7 +1300,7 @@ static void ReadVarIntAndAddNoCheck(GByte *&pabyIter, GIntBig &nOutVal)
     int nShift = 6;
     while (true)
     {
-        GUIntBig b64 = *pabyLocalIter;
+        uint64_t b64 = *pabyLocalIter;
         pabyLocalIter++;
         nVal |= (b64 & 0x7F) << nShift;
         if ((b64 & 0x80) == 0)
@@ -1313,7 +1314,7 @@ static void ReadVarIntAndAddNoCheck(GByte *&pabyIter, GIntBig &nOutVal)
         }
         nShift += 7;
         // To avoid undefined behavior later when doing << nShift
-        if (nShift >= static_cast<int>(sizeof(GIntBig)) * 8)
+        if (nShift >= static_cast<int>(sizeof(int64_t)) * 8)
         {
             pabyIter = pabyLocalIter;
             nOutVal = nVal;
@@ -1394,8 +1395,7 @@ FileGDBTable::GetOffsetInTableForRow(int iRow, vsi_l_offset *pnOffsetInTableX)
     if (iRow == 0 && nOffset != 0 && nOffset != nOffsetHeaderEnd &&
         nOffset != nOffsetHeaderEnd + 4)
         CPLDebug("OpenFileGDB",
-                 "%s: first feature offset = " CPL_FRMT_GUIB
-                 ". Expected " CPL_FRMT_GUIB,
+                 "%s: first feature offset = %" PRIu64 ". Expected %" PRIu64,
                  m_osFilename.c_str(), nOffset, nOffsetHeaderEnd);
 #endif
 
@@ -1567,9 +1567,9 @@ int FileGDBDoubleDateToOGRDate(double dfVal, OGRField *psField)
     double dfSeconds = (dfVal - 25569.0) * 3600.0 * 24.0;
     if (CPLIsNan(dfSeconds) ||
         dfSeconds <
-            static_cast<double>(std::numeric_limits<GIntBig>::min()) + 1000 ||
+            static_cast<double>(std::numeric_limits<int64_t>::min()) + 1000 ||
         dfSeconds >
-            static_cast<double>(std::numeric_limits<GIntBig>::max()) - 1000)
+            static_cast<double>(std::numeric_limits<int64_t>::max()) - 1000)
     {
         CPLError(CE_Failure, CPLE_NotSupported,
                  "FileGDBDoubleDateToOGRDate: Invalid days: %lf", dfVal);
@@ -1577,7 +1577,7 @@ int FileGDBDoubleDateToOGRDate(double dfVal, OGRField *psField)
     }
 
     struct tm brokendowntime;
-    CPLUnixTimeToYMDHMS(static_cast<GIntBig>(dfSeconds + 0.5), &brokendowntime);
+    CPLUnixTimeToYMDHMS(static_cast<int64_t>(dfSeconds + 0.5), &brokendowntime);
 
     psField->Date.Year = static_cast<int16_t>(brokendowntime.tm_year + 1900);
     psField->Date.Month = static_cast<GByte>(brokendowntime.tm_mon + 1);
@@ -2226,7 +2226,7 @@ bool FileGDBTable::HasSpatialIndex()
 /*                       InstallFilterEnvelope()                        */
 /************************************************************************/
 
-#define MAX_GUINTBIG std::numeric_limits<GUIntBig>::max()
+#define MAX_GUINTBIG std::numeric_limits<uint64_t>::max()
 
 void FileGDBTable::InstallFilterEnvelope(const OGREnvelope *psFilterEnvelope)
 {
@@ -2239,27 +2239,27 @@ void FileGDBTable::InstallFilterEnvelope(const OGREnvelope *psFilterEnvelope)
         /* We store the bounding box as unscaled coordinates, so that BBOX */
         /* intersection is done with integer comparisons */
         if (psFilterEnvelope->MinX >= poGeomField->m_dfXOrigin)
-            m_nFilterXMin = static_cast<GUIntBig>(
+            m_nFilterXMin = static_cast<uint64_t>(
                 0.5 + (psFilterEnvelope->MinX - poGeomField->m_dfXOrigin) *
                           poGeomField->m_dfXYScale);
         else
             m_nFilterXMin = 0;
         if (psFilterEnvelope->MaxX - poGeomField->m_dfXOrigin <
             static_cast<double>(MAX_GUINTBIG) / poGeomField->m_dfXYScale)
-            m_nFilterXMax = static_cast<GUIntBig>(
+            m_nFilterXMax = static_cast<uint64_t>(
                 0.5 + (psFilterEnvelope->MaxX - poGeomField->m_dfXOrigin) *
                           poGeomField->m_dfXYScale);
         else
             m_nFilterXMax = MAX_GUINTBIG;
         if (psFilterEnvelope->MinY >= poGeomField->m_dfYOrigin)
-            m_nFilterYMin = static_cast<GUIntBig>(
+            m_nFilterYMin = static_cast<uint64_t>(
                 0.5 + (psFilterEnvelope->MinY - poGeomField->m_dfYOrigin) *
                           poGeomField->m_dfXYScale);
         else
             m_nFilterYMin = 0;
         if (psFilterEnvelope->MaxY - poGeomField->m_dfYOrigin <
             static_cast<double>(MAX_GUINTBIG) / poGeomField->m_dfXYScale)
-            m_nFilterYMax = static_cast<GUIntBig>(
+            m_nFilterYMax = static_cast<uint64_t>(
                 0.5 + (psFilterEnvelope->MaxY - poGeomField->m_dfYOrigin) *
                           poGeomField->m_dfXYScale);
         else
@@ -2422,11 +2422,11 @@ int FileGDBTable::GetFeatureExtent(const OGRField *psField,
         case SHPT_POINTM:
         case SHPT_GENERALPOINT:
         {
-            GUIntBig x, y;
+            uint64_t x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
-            x = CPLUnsanitizedAdd<GUIntBig>(x, -1);
+            x = CPLUnsanitizedAdd<uint64_t>(x, -1);
             ReadVarUInt64NoCheck(pabyCur, y);
-            y = CPLUnsanitizedAdd<GUIntBig>(y, -1);
+            y = CPLUnsanitizedAdd<uint64_t>(y, -1);
             psOutFeatureEnvelope->MinX =
                 x / poGeomField->m_dfXYScale + poGeomField->m_dfXOrigin;
             psOutFeatureEnvelope->MinY =
@@ -2481,7 +2481,7 @@ int FileGDBTable::GetFeatureExtent(const OGRField *psField,
         return TRUE;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, nToSkip));
 
-    GUIntBig vxmin, vymin, vdx, vdy;
+    uint64_t vxmin, vymin, vdx, vdy;
 
     returnErrorIf(pabyCur >= pabyEnd);
     ReadVarUInt64NoCheck(pabyCur, vxmin);
@@ -2494,10 +2494,10 @@ int FileGDBTable::GetFeatureExtent(const OGRField *psField,
     psOutFeatureEnvelope->MinY =
         vymin / poGeomField->m_dfXYScale + poGeomField->m_dfYOrigin;
     psOutFeatureEnvelope->MaxX =
-        CPLUnsanitizedAdd<GUIntBig>(vxmin, vdx) / poGeomField->m_dfXYScale +
+        CPLUnsanitizedAdd<uint64_t>(vxmin, vdx) / poGeomField->m_dfXYScale +
         poGeomField->m_dfXOrigin;
     psOutFeatureEnvelope->MaxY =
-        CPLUnsanitizedAdd<GUIntBig>(vymin, vdy) / poGeomField->m_dfXYScale +
+        CPLUnsanitizedAdd<uint64_t>(vymin, vdy) / poGeomField->m_dfXYScale +
         poGeomField->m_dfYOrigin;
 
     return TRUE;
@@ -2528,7 +2528,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField *psField)
         case SHPT_POINTM:
         case SHPT_GENERALPOINT:
         {
-            GUIntBig x, y;
+            uint64_t x, y;
             ReadVarUInt64NoCheck(pabyCur, x);
             if (x == 0)  // POINT EMPTY
                 return FALSE;
@@ -2586,7 +2586,7 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField *psField)
         return TRUE;
     returnErrorIf(!SkipVarUInt(pabyCur, pabyEnd, nToSkip));
 
-    GUIntBig vxmin, vymin, vdx, vdy;
+    uint64_t vxmin, vymin, vdx, vdy;
 
     returnErrorIf(pabyCur >= pabyEnd);
     ReadVarUInt64NoCheck(pabyCur, vxmin);
@@ -2596,10 +2596,10 @@ int FileGDBTable::DoesGeometryIntersectsFilterEnvelope(const OGRField *psField)
     if (vymin > m_nFilterYMax)
         return FALSE;
     ReadVarUInt64NoCheck(pabyCur, vdx);
-    if (CPLUnsanitizedAdd<GUIntBig>(vxmin, vdx) < m_nFilterXMin)
+    if (CPLUnsanitizedAdd<uint64_t>(vxmin, vdx) < m_nFilterXMin)
         return FALSE;
     ReadVarUInt64NoCheck(pabyCur, vdy);
-    return CPLUnsanitizedAdd<GUIntBig>(vymin, vdy) >= m_nFilterYMin;
+    return CPLUnsanitizedAdd<uint64_t>(vymin, vdy) >= m_nFilterYMin;
 }
 
 /************************************************************************/
@@ -2800,13 +2800,13 @@ class FileGDBOGRGeometryConverterImpl final : public FileGDBOGRGeometryConverter
                       bool bIsMultiPatch);
     template <class XYSetter>
     int ReadXYArray(XYSetter &setter, GByte *&pabyCur, GByte *pabyEnd,
-                    uint32_t nPoints, GIntBig &dx, GIntBig &dy);
+                    uint32_t nPoints, int64_t &dx, int64_t &dy);
     template <class ZSetter>
     int ReadZArray(ZSetter &setter, GByte *&pabyCur, GByte *pabyEnd,
-                   uint32_t nPoints, GIntBig &dz);
+                   uint32_t nPoints, int64_t &dz);
     template <class MSetter>
     int ReadMArray(MSetter &setter, GByte *&pabyCur, GByte *pabyEnd,
-                   uint32_t nPoints, GIntBig &dm);
+                   uint32_t nPoints, int64_t &dm);
 
     OGRGeometry *CreateCurveGeometry(uint32_t nBaseShapeType, uint32_t nParts,
                                      uint32_t nPoints, uint32_t nCurves,
@@ -2890,7 +2890,7 @@ bool FileGDBOGRGeometryConverterImpl::ReadPartDefs(
         panPointCount = panPointCountNew;
         nPointCountMax = nParts;
     }
-    GUIntBig nSumNPartsM1 = 0;
+    uint64_t nSumNPartsM1 = 0;
     for (i = 0; i < nParts - 1; i++)
     {
         uint32_t nTmp;
@@ -3003,12 +3003,12 @@ template <class XYSetter>
 int FileGDBOGRGeometryConverterImpl::ReadXYArray(XYSetter &setter,
                                                  GByte *&pabyCur,
                                                  GByte *pabyEnd,
-                                                 uint32_t nPoints, GIntBig &dx,
-                                                 GIntBig &dy)
+                                                 uint32_t nPoints, int64_t &dx,
+                                                 int64_t &dy)
 {
     const int errorRetValue = FALSE;
-    GIntBig dxLocal = dx;
-    GIntBig dyLocal = dy;
+    int64_t dxLocal = dx;
+    int64_t dyLocal = dy;
 
     for (uint32_t i = 0; i < nPoints; i++)
     {
@@ -3093,7 +3093,7 @@ class FileGDBArraySetter
 template <class ZSetter>
 int FileGDBOGRGeometryConverterImpl::ReadZArray(ZSetter &setter,
                                                 GByte *&pabyCur, GByte *pabyEnd,
-                                                uint32_t nPoints, GIntBig &dz)
+                                                uint32_t nPoints, int64_t &dz)
 {
     const int errorRetValue = FALSE;
     const double dfZScale = SanitizeScale(poGeomField->GetZScale());
@@ -3153,7 +3153,7 @@ class MMultiPointSetter
 template <class MSetter>
 int FileGDBOGRGeometryConverterImpl::ReadMArray(MSetter &setter,
                                                 GByte *&pabyCur, GByte *pabyEnd,
-                                                uint32_t nPoints, GIntBig &dm)
+                                                uint32_t nPoints, int64_t &dm)
 {
     const int errorRetValue = FALSE;
     const double dfMScale = SanitizeScale(poGeomField->GetMScale());
@@ -3216,11 +3216,11 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     OGRGeometry *errorRetValue = nullptr;
     uint32_t i;
     const int nDims = 2 + (bHasZ ? 1 : 0) + (bHasM ? 1 : 0);
-    GIntBig nMaxSize64 = 44 + 4 * static_cast<GUIntBig>(nParts) +
-                         8 * nDims * static_cast<GUIntBig>(nPoints);
+    int64_t nMaxSize64 = 44 + 4 * static_cast<uint64_t>(nParts) +
+                         8 * nDims * static_cast<uint64_t>(nPoints);
     nMaxSize64 += 4;  // nCurves
     nMaxSize64 +=
-        static_cast<GUIntBig>(nCurves) * (4 + /* start index */
+        static_cast<uint64_t>(nCurves) * (4 + /* start index */
                                           4 + /* curve type */
                                           44 /* size of ellipse struct */);
     nMaxSize64 +=
@@ -3259,8 +3259,8 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
         memcpy(pabyExtShapeBuffer + 44 + 4 * i, &nTmp, 4);
     }
     int nOffset = 44 + 4 * nParts;
-    GIntBig dx = 0;
-    GIntBig dy = 0;
+    int64_t dx = 0;
+    int64_t dy = 0;
     XYBufferSetter arraySetter(pabyExtShapeBuffer + nOffset);
     if (!ReadXYArray<XYBufferSetter>(arraySetter, pabyCur, pabyEnd, nPoints, dx,
                                      dy))
@@ -3274,7 +3274,7 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
     {
         memset(pabyExtShapeBuffer + nOffset, 0, 16); /* bbox: unused */
         nOffset += 16;
-        GIntBig dz = 0;
+        int64_t dz = 0;
         ZOrMBufferSetter arrayzSetter(pabyExtShapeBuffer + nOffset);
         if (!ReadZArray<ZOrMBufferSetter>(arrayzSetter, pabyCur, pabyEnd,
                                           nPoints, dz))
@@ -3316,7 +3316,7 @@ OGRGeometry *FileGDBOGRGeometryConverterImpl::CreateCurveGeometry(
             memset(pabyExtShapeBuffer + nOffset, 0, 16); /* bbox: unused */
             nOffset += 16;
             ZOrMBufferSetter arraymSetter(pabyExtShapeBuffer + nOffset);
-            GIntBig dm = 0;
+            int64_t dm = 0;
             if (!ReadMArray<ZOrMBufferSetter>(arraymSetter, pabyCur, pabyEnd,
                                               nPoints, dm))
             {
@@ -3381,8 +3381,8 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
     GByte *pabyCur = psField->Binary.paData;
     GByte *pabyEnd = pabyCur + psField->Binary.nCount;
     uint32_t nGeomType, i, nPoints, nParts, nCurves;
-    GUIntBig x, y, z;
-    GIntBig dx, dy, dz;
+    uint64_t x, y, z;
+    int64_t dx, dy, dz;
 
     ReadVarUInt32NoCheck(pabyCur, nGeomType);
 
@@ -3422,7 +3422,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
                            : (z - 1U) / dfZScale + poGeomField->GetZOrigin();
                 if (bHasM)
                 {
-                    GUIntBig m = 0;
+                    uint64_t m = 0;
                     ReadVarUInt64NoCheck(pabyCur, m);
                     const double dfMScale =
                         SanitizeScale(poGeomField->GetMScale());
@@ -3437,7 +3437,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             else if (bHasM)
             {
                 OGRPoint *poPoint = new OGRPoint(dfX, dfY);
-                GUIntBig m = 0;
+                uint64_t m = 0;
                 ReadVarUInt64NoCheck(pabyCur, m);
                 const double dfMScale = SanitizeScale(poGeomField->GetMScale());
                 const double dfM =
@@ -3506,7 +3506,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
             if (bHasM && pabyCur + nPoints <= pabyEnd)
             {
                 poMP->setMeasured(TRUE);
-                GIntBig dm = 0;
+                int64_t dm = 0;
                 MMultiPointSetter mpmSetter(poMP);
                 if (!ReadMArray<MMultiPointSetter>(mpmSetter, pabyCur, pabyEnd,
                                                    nPoints, dm))
@@ -3612,7 +3612,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
 
             if (bHasM)
             {
-                GIntBig dm = 0;
+                int64_t dm = 0;
                 for (i = 0; i < nParts; i++)
                 {
                     if (nParts > 1)
@@ -3735,7 +3735,7 @@ FileGDBOGRGeometryConverterImpl::GetAsGeometry(const OGRField *psField)
 
             if (bHasM)
             {
-                GIntBig dm = 0;
+                int64_t dm = 0;
                 for (i = 0; i < nParts; i++)
                 {
                     // It seems that absence of M is marked with a single byte

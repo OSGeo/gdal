@@ -35,6 +35,7 @@
 #include <errno.h>
 
 #include <algorithm>
+#include <cinttypes>
 #include <set>
 #include <map>
 #include <memory>
@@ -1054,9 +1055,9 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
     }
 
     if (ENABLE_DEBUG)
-        CPLDebug(
-            "WEBHDFS", "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
-            osURL.c_str(), oFileProp.fileSize, static_cast<int>(response_code));
+        CPLDebug("WEBHDFS", "GetFileSize(%s)=%" PRIu64 "  response_code=%d",
+                 osURL.c_str(), oFileProp.fileSize,
+                 static_cast<int>(response_code));
 
     CPLFree(sWriteFuncData.pBuffer);
     curl_easy_cleanup(hCurlHandle);
@@ -1108,9 +1109,9 @@ retry:
     if (!bInRedirect)
     {
         osURL += "?op=OPEN&offset=";
-        osURL += CPLSPrintf(CPL_FRMT_GUIB, startOffset);
+        osURL += CPLSPrintf("%" PRIu64, startOffset);
         osURL += "&length=";
-        osURL += CPLSPrintf(CPL_FRMT_GUIB, nEndOffset - startOffset + 1);
+        osURL += CPLSPrintf("%" PRIu64, nEndOffset - startOffset + 1);
         osURL += m_osUsernameParam + m_osDelegationParam;
     }
 

@@ -455,7 +455,7 @@ class OGRNTFLayer final : public OGRLayer
     OGRFeature *GetNextFeature() override;
 
 #ifdef notdef
-    OGRFeature *GetFeature(GIntBig nFeatureId);
+    OGRFeature *GetFeature(int64_t nFeatureId);
     OGRErr ISetFeature(OGRFeature *poFeature);
     OGRErr ICreateFeature(OGRFeature *poFeature);
 #endif
@@ -466,7 +466,7 @@ class OGRNTFLayer final : public OGRLayer
     }
 
 #ifdef notdef
-    GIntBig GetFeatureCount(int);
+    int64_t GetFeatureCount(int);
 #endif
 
     int TestCapability(const char *) override;
@@ -486,7 +486,7 @@ class OGRNTFFeatureClassLayer final : public OGRLayer
 
     OGRNTFDataSource *poDS;
 
-    GIntBig iCurrentFC;
+    int64_t iCurrentFC;
 
   public:
     explicit OGRNTFFeatureClassLayer(OGRNTFDataSource *poDS);
@@ -505,14 +505,14 @@ class OGRNTFFeatureClassLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int = TRUE) override;
+    int64_t GetFeatureCount(int = TRUE) override;
 
     int TestCapability(const char *) override;
 };
@@ -531,10 +531,10 @@ class OGRNTFRasterLayer final : public OGRLayer
     float *pafColumn;
     int iColumnOffset;
 
-    GIntBig iCurrentFC;
+    int64_t iCurrentFC;
 
     int nDEMSample;
-    GIntBig nFeatureCount;
+    int64_t nFeatureCount;
 
   public:
     OGRNTFRasterLayer(OGRNTFDataSource *poDS, NTFFileReader *poReaderIn);
@@ -553,14 +553,14 @@ class OGRNTFRasterLayer final : public OGRLayer
     void ResetReading() override;
     OGRFeature *GetNextFeature() override;
 
-    OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
     }
 
-    GIntBig GetFeatureCount(int = TRUE) override;
+    int64_t GetFeatureCount(int = TRUE) override;
 
     int TestCapability(const char *) override;
 };

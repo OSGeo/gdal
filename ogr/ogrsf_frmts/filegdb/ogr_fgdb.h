@@ -138,7 +138,7 @@ class FGdbLayer final : public FGdbBaseLayer
 
     std::vector<ByteArray *> m_apoByteArrays;
     OGRErr PopulateRowWithFeature(Row &row, OGRFeature *poFeature);
-    OGRErr GetRow(EnumRows &enumRows, Row &row, GIntBig nFID);
+    OGRErr GetRow(EnumRows &enumRows, Row &row, int64_t nFID);
 
     char **m_papszOptions;
 
@@ -180,7 +180,7 @@ class FGdbLayer final : public FGdbBaseLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     Table *GetTable()
     {
@@ -205,7 +205,7 @@ class FGdbLayer final : public FGdbBaseLayer
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -214,7 +214,7 @@ class FGdbLayer final : public FGdbBaseLayer
         return OGRLayer::GetExtent(iGeomField, psExtent, bForce);
     }
 
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual OGRErr SetAttributeFilter(const char *pszQuery) override;
 
     virtual void SetSpatialFilter(OGRGeometry *) override;

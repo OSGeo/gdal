@@ -949,11 +949,11 @@ static CPLJSONArray ReadList(const ArrayType *array, int64_t nIdxInArray)
         }
         case arrow::Type::UINT32:
         {
-            return ReadList<GInt64, arrow::UInt32Array>(array, nIdxInArray);
+            return ReadList<int64_t, arrow::UInt32Array>(array, nIdxInArray);
         }
         case arrow::Type::INT64:
         {
-            return ReadList<GInt64, arrow::Int64Array>(array, nIdxInArray);
+            return ReadList<int64_t, arrow::Int64Array>(array, nIdxInArray);
         }
         case arrow::Type::UINT64:
         {
@@ -1119,13 +1119,13 @@ static void ReadList(OGRFeature *poFeature, int i, int64_t nIdxInArray,
         }
         case arrow::Type::UINT32:
         {
-            ReadList<GIntBig, arrow::UInt32Array>(poFeature, i, nIdxInArray,
+            ReadList<int64_t, arrow::UInt32Array>(poFeature, i, nIdxInArray,
                                                   array);
             break;
         }
         case arrow::Type::INT64:
         {
-            ReadList<GIntBig, arrow::Int64Array>(poFeature, i, nIdxInArray,
+            ReadList<int64_t, arrow::Int64Array>(poFeature, i, nIdxInArray,
                                                  array);
             break;
         }
@@ -1247,7 +1247,7 @@ static CPLJSONObject ReadMap(const arrow::MapArray *array, int64_t nIdxInArray)
         }
         else if (itemTypeId == arrow::Type::UINT32)
         {
-            return ReadMap<GIntBig, arrow::UInt32Array>(array, nIdxInArray);
+            return ReadMap<int64_t, arrow::UInt32Array>(array, nIdxInArray);
         }
         else if (itemTypeId == arrow::Type::INT32)
         {
@@ -1259,7 +1259,7 @@ static CPLJSONObject ReadMap(const arrow::MapArray *array, int64_t nIdxInArray)
         }
         else if (itemTypeId == arrow::Type::INT64)
         {
-            return ReadMap<GIntBig, arrow::Int64Array>(array, nIdxInArray);
+            return ReadMap<int64_t, arrow::Int64Array>(array, nIdxInArray);
         }
         else if (itemTypeId == arrow::Type::FLOAT)
         {
@@ -1492,7 +1492,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto castArray =
                     static_cast<const arrow::Int64Array *>(array);
                 poFeature->SetFID(
-                    static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
+                    static_cast<int64_t>(castArray->Value(nIdxInBatch)));
             }
             else if (array->type_id() == arrow::Type::INT32)
             {
@@ -1612,7 +1612,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto castArray =
                     static_cast<const arrow::UInt32Array *>(array);
                 poFeature->SetFieldSameTypeUnsafe(
-                    i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
+                    i, static_cast<int64_t>(castArray->Value(nIdxInBatch)));
                 break;
             }
             case arrow::Type::INT32:
@@ -1636,7 +1636,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto castArray =
                     static_cast<const arrow::Int64Array *>(array);
                 poFeature->SetFieldSameTypeUnsafe(
-                    i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
+                    i, static_cast<int64_t>(castArray->Value(nIdxInBatch)));
                 break;
             }
             case arrow::Type::HALF_FLOAT:
@@ -1763,7 +1763,7 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                 const auto castArray =
                     static_cast<const arrow::Time64Array *>(array);
                 poFeature->SetField(
-                    i, static_cast<GIntBig>(castArray->Value(nIdxInBatch)));
+                    i, static_cast<int64_t>(castArray->Value(nIdxInBatch)));
                 break;
             }
 
@@ -1832,8 +1832,8 @@ inline OGRFeature *OGRArrowLayer::ReadFeature(
                     // this is probably the most likely code path if people use
                     // LargeBinary...
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Too large binary: " CPL_FRMT_GUIB " bytes",
-                             static_cast<GUIntBig>(out_length));
+                             "Too large binary: %" PRIu64 " bytes",
+                             static_cast<uint64_t>(out_length));
                 }
                 break;
             }
@@ -2351,7 +2351,7 @@ static bool FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
             psConstraint->eType = OGRArrowLayer::Constraint::Type::Integer64;
             if (poSrcValue->field_type == SWQ_FLOAT)
                 psConstraint->sValue.Integer64 =
-                    static_cast<GIntBig>(poSrcValue->float_value);
+                    static_cast<int64_t>(poSrcValue->float_value);
             else
                 psConstraint->sValue.Integer64 = poSrcValue->int_value;
             psConstraint->osValue =
@@ -2652,18 +2652,18 @@ template <class T, class U> struct Compare
 template <class T> struct Compare<T, T> : public CompareGeneric<T, T>
 {
 };
-template <> struct Compare<int, GIntBig> : public CompareGeneric<int, GIntBig>
+template <> struct Compare<int, int64_t> : public CompareGeneric<int, int64_t>
 {
 };
-template <> struct Compare<double, GIntBig>
+template <> struct Compare<double, int64_t>
 {
-    static inline bool get(int op, double val1, GIntBig val2)
+    static inline bool get(int op, double val1, int64_t val2)
     {
         return CompareGeneric<double, double>::get(op, val1,
                                                    static_cast<double>(val2));
     }
 };
-template <> struct Compare<GIntBig, int> : public CompareGeneric<GIntBig, int>
+template <> struct Compare<int64_t, int> : public CompareGeneric<int64_t, int>
 {
 };
 template <> struct Compare<double, int> : public CompareGeneric<double, int>
@@ -2682,7 +2682,7 @@ static bool ConstraintEvaluator(const OGRArrowLayer::Constraint &constraint,
                                      constraint.sValue.Integer);
             break;
         case OGRArrowLayer::Constraint::Type::Integer64:
-            b = Compare<T, GIntBig>::get(constraint.nOperation, value,
+            b = Compare<T, int64_t>::get(constraint.nOperation, value,
                                          constraint.sValue.Integer64);
             break;
         case OGRArrowLayer::Constraint::Type::Real:
@@ -2857,7 +2857,7 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
                     static_cast<const arrow::UInt32Array *>(array);
                 if (!ConstraintEvaluator(
                         constraint,
-                        static_cast<GIntBig>(castArray->Value(m_nIdxInBatch))))
+                        static_cast<int64_t>(castArray->Value(m_nIdxInBatch))))
                 {
                     return true;
                 }
@@ -2892,7 +2892,7 @@ inline bool OGRArrowLayer::SkipToNextFeatureDueToAttributeFilter() const
                     static_cast<const arrow::Int64Array *>(array);
                 if (!ConstraintEvaluator(
                         constraint,
-                        static_cast<GIntBig>(castArray->Value(m_nIdxInBatch))))
+                        static_cast<int64_t>(castArray->Value(m_nIdxInBatch))))
                 {
                     return true;
                 }

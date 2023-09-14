@@ -35,6 +35,7 @@
 #include "ogr_srs_api.h"
 
 #include <algorithm>
+#include <cinttypes>
 
 static int16_t CastToint16_t(float val)
 {
@@ -2306,8 +2307,7 @@ static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
                 max_bytes -= record->Length;
             else
             {
-                CPLDebug("SAR_CEOS",
-                         "Partial record found.  %d > " CPL_FRMT_GUIB,
+                CPLDebug("SAR_CEOS", "Partial record found.  %d > %" PRIu64,
                          record->Length, max_bytes);
                 max_bytes = 0;
             }

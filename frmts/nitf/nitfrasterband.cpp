@@ -343,7 +343,7 @@ RB_PROXY_METHOD_WITH_RET(int, 0, GetOverviewCount, (), ())
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetOverview, (int arg1),
                          (arg1))
 RB_PROXY_METHOD_WITH_RET(GDALRasterBand *, nullptr, GetRasterSampleOverview,
-                         (GUIntBig arg1), (arg1))
+                         (uint64_t arg1), (arg1))
 
 RB_PROXY_METHOD_WITH_RET(CPLErr, CE_Failure, BuildOverviews,
                          (const char *arg1, int arg2, const int *arg3,
@@ -681,7 +681,7 @@ CPLErr NITFSetColorInterpretation(NITFImage *psImage, int nBand,
     /* -------------------------------------------------------------------- */
     NITFBandInfo *psBandInfo = psImage->pasBandInfo + nBand - 1;
     strcpy(psBandInfo->szIREPBAND, pszREP);
-    GUIntBig nOffset = NITFIHFieldOffset(psImage, "IREPBAND");
+    uint64_t nOffset = NITFIHFieldOffset(psImage, "IREPBAND");
 
     if (nOffset != 0)
         nOffset += (nBand - 1) * 13;

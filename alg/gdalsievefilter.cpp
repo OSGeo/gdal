@@ -327,7 +327,7 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     {
         if (oFirstEnum.panPolyIdMap[iPoly] != iPoly)
         {
-            GIntBig nSize = anPolySizes[oFirstEnum.panPolyIdMap[iPoly]];
+            int64_t nSize = anPolySizes[oFirstEnum.panPolyIdMap[iPoly]];
 
             nSize += anPolySizes[iPoly];
 

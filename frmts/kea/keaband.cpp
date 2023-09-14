@@ -34,6 +34,7 @@
 
 #include "gdal_rat.h"
 
+#include <cinttypes>
 #include <map>
 #include <vector>
 #include <limits>
@@ -271,9 +272,9 @@ char *KEARasterBand::GetHistogramAsString()
     for (int nBin = 0; nBin < nRows; ++nBin)
     {
         char szBuf[32];
-        // RAT's don't handle GUIntBig - use double instead. Cast back
-        snprintf(szBuf, 31, CPL_FRMT_GUIB,
-                 (GUIntBig)pTable->GetValueAsDouble(nBin, nCol));
+        // RAT's don't handle uint64_t - use double instead. Cast back
+        snprintf(szBuf, 31, "%" PRIu64,
+                 (uint64_t)pTable->GetValueAsDouble(nBin, nCol));
         if ((nBinValuesLen + strlen(szBuf) + 2) > nBufSize)
         {
             nBufSize *= 2;
@@ -715,7 +716,7 @@ CPLErr KEARasterBand::DeleteNoDataValue()
 
 CPLErr KEARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
                                           int *pnBuckets,
-                                          GUIntBig **ppanHistogram, int bForce,
+                                          uint64_t **ppanHistogram, int bForce,
                                           GDALProgressFunc fn,
                                           void *pProgressData)
 {
@@ -729,7 +730,7 @@ CPLErr KEARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
     {
         // returned cached if avail
         // I've used the RAT interface here as it deals with data type
-        // conversions. Would be nice to have GUIntBig support in RAT though...
+        // conversions. Would be nice to have uint64_t support in RAT though...
         GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
         if (pTable == nullptr)
             return CE_Failure;
@@ -744,7 +745,7 @@ CPLErr KEARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
         if (!pTable->GetLinearBinning(&dfRow0Min, &dfBinSize))
             return CE_Warning;
 
-        *ppanHistogram = (GUIntBig *)VSIMalloc2(nRows, sizeof(GUIntBig));
+        *ppanHistogram = (uint64_t *)VSIMalloc2(nRows, sizeof(uint64_t));
         if (*ppanHistogram == nullptr)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
@@ -766,9 +767,9 @@ CPLErr KEARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
         if (pTable->ValuesIO(GF_Read, nCol, 0, nRows, pDoubleHisto) != CE_None)
             return CE_Failure;
 
-        // convert to GUIntBig
+        // convert to uint64_t
         for (int n = 0; n < nRows; n++)
-            (*ppanHistogram)[n] = static_cast<GUIntBig>(pDoubleHisto[n]);
+            (*ppanHistogram)[n] = static_cast<uint64_t>(pDoubleHisto[n]);
 
         CPLFree(pDoubleHisto);
 
@@ -780,7 +781,7 @@ CPLErr KEARasterBand::GetDefaultHistogram(double *pdfMin, double *pdfMax,
 }
 
 CPLErr KEARasterBand::SetDefaultHistogram(double /*dfMin*/, double /*dfMax*/,
-                                          int nBuckets, GUIntBig *panHistogram)
+                                          int nBuckets, uint64_t *panHistogram)
 {
 
     GDALRasterAttributeTable *pTable = this->GetDefaultRAT();
@@ -802,7 +803,7 @@ CPLErr KEARasterBand::SetDefaultHistogram(double /*dfMin*/, double /*dfMax*/,
     if (nBuckets > nRows)
         pTable->SetRowCount(nBuckets);
 
-    // convert to double (RATs don't take GUIntBig yet)
+    // convert to double (RATs don't take uint64_t yet)
     double *pDoubleHist = (double *)VSIMalloc2(nBuckets, sizeof(double));
 
     if (pDoubleHist == nullptr)

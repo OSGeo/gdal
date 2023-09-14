@@ -196,8 +196,8 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     virtual void ResetReading() = 0;
     virtual OGRFeature *GetNextFeature() CPL_WARN_UNUSED_RESULT = 0;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex);
-    virtual OGRFeature *GetFeature(GIntBig nFID) CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr SetNextByIndex(int64_t nIndex);
+    virtual OGRFeature *GetFeature(int64_t nFID) CPL_WARN_UNUSED_RESULT;
 
     virtual GDALDataset *GetDataset();
     virtual bool GetArrowStream(struct ArrowArrayStream *out_stream,
@@ -212,7 +212,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
                          const int *panUpdatedGeomFieldsIdx,
                          bool bUpdateStyleString) CPL_WARN_UNUSED_RESULT;
 
-    virtual OGRErr DeleteFeature(GIntBig nFID) CPL_WARN_UNUSED_RESULT;
+    virtual OGRErr DeleteFeature(int64_t nFID) CPL_WARN_UNUSED_RESULT;
 
     virtual const char *GetName();
     virtual OGRwkbGeometryType GetGeomType();
@@ -230,7 +230,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     virtual OGRErr SetActiveSRS(int iGeomField,
                                 const OGRSpatialReference *poSRS);
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE);
+    virtual int64_t GetFeatureCount(int bForce = TRUE);
     virtual OGRErr GetExtent(OGREnvelope *psExtent,
                              int bForce = TRUE) CPL_WARN_UNUSED_RESULT;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
@@ -305,7 +305,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
     int Dereference();
     int GetRefCount() const;
     //! @cond Doxygen_Suppress
-    GIntBig GetFeaturesRead();
+    int64_t GetFeaturesRead();
     //! @endcond
 
     /* non virtual : convenience wrapper for ReorderFields() */
@@ -361,7 +361,7 @@ class CPL_DLL OGRLayer : public GDALMajorObject
 
     int m_nRefCount;
 
-    GIntBig m_nFeaturesRead;
+    int64_t m_nFeaturesRead;
     //! @endcond
 };
 

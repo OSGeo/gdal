@@ -78,7 +78,7 @@ TABView::~TABView()
     TABView::Close();
 }
 
-GIntBig TABView::GetFeatureCount(int bForce)
+int64_t TABView::GetFeatureCount(int bForce)
 {
 
     if (m_nMainTableIndex != -1)
@@ -756,7 +756,7 @@ int TABView::SetQuickSpatialIndexMode(bool bQuickSpatialIndexMode /*=TRUE*/)
  * Returns feature id that follows nPrevId, or -1 if it is the
  * last feature id.  Pass nPrevId=-1 to fetch the first valid feature id.
  **********************************************************************/
-GIntBig TABView::GetNextFeatureId(GIntBig nPrevId)
+int64_t TABView::GetNextFeatureId(int64_t nPrevId)
 {
     if (m_nMainTableIndex != -1)
         return m_papoTABFiles[m_nMainTableIndex]->GetNextFeatureId(nPrevId);
@@ -778,7 +778,7 @@ GIntBig TABView::GetNextFeatureId(GIntBig nPrevId)
  * error happened.  In any case, CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-TABFeature *TABView::GetFeatureRef(GIntBig nFeatureId)
+TABFeature *TABView::GetFeatureRef(int64_t nFeatureId)
 {
 
     /*-----------------------------------------------------------------

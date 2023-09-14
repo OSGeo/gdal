@@ -86,8 +86,8 @@ class OGRSXFLayer final : public OGRLayer
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
         return poFeatureDefn;
@@ -95,7 +95,7 @@ class OGRSXFLayer final : public OGRLayer
 
     virtual int TestCapability(const char *) override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override

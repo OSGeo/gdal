@@ -825,7 +825,7 @@ by the OGRSFDriverManager.
 
 /**
 
- \fn GIntBig OGRLayer::GetFeatureCount( int bForce = TRUE );
+ \fn int64_t OGRLayer::GetFeatureCount( int bForce = TRUE );
 
  \brief Fetch the feature count in this layer.
 
@@ -842,7 +842,7 @@ by the OGRSFDriverManager.
 
  This method is the same as the C function OGR_L_GetFeatureCount().
 
- Note: since GDAL 2.0, this method returns a GIntBig (previously a int)
+ Note: since GDAL 2.0, this method returns a int64_t (previously a int)
 
  @param bForce Flag indicating whether the count should be computed even
  if it is expensive.
@@ -852,7 +852,7 @@ by the OGRSFDriverManager.
 */
 
 /**
- \fn GIntBig OGR_L_GetFeatureCount( OGRLayerH hLayer, int bForce );
+ \fn int64_t OGR_L_GetFeatureCount( OGRLayerH hLayer, int bForce );
 
  \brief Fetch the feature count in this layer.
 
@@ -869,7 +869,7 @@ by the OGRSFDriverManager.
 
  This function is the same as the CPP OGRLayer::GetFeatureCount().
 
- Note: since GDAL 2.0, this method returns a GIntBig (previously a int)
+ Note: since GDAL 2.0, this method returns a int64_t (previously a int)
 
  @param hLayer handle to the layer that owned the features.
  @param bForce Flag indicating whether the count should be computed even
@@ -1503,7 +1503,7 @@ by the OGRSFDriverManager.
 
 /**
 
- \fn OGRFeature *OGRLayer::GetFeature( GIntBig nFID );
+ \fn OGRFeature *OGRLayer::GetFeature( int64_t nFID );
 
  \brief Fetch a feature by its identifier.
 
@@ -1537,7 +1537,7 @@ by the OGRSFDriverManager.
 
 /**
 
- \fn OGRFeatureH OGR_L_GetFeature( OGRLayerH hLayer, GIntBig nFeatureId );
+ \fn OGRFeatureH OGR_L_GetFeature( OGRLayerH hLayer, int64_t nFeatureId );
 
  \brief Fetch a feature by its identifier.
 
@@ -2007,7 +2007,7 @@ by the OGRSFDriverManager.
 
 /**
 
- \fn OGRErr OGRLayer::DeleteFeature( GIntBig nFID );
+ \fn OGRErr OGRLayer::DeleteFeature( int64_t nFID );
 
  \brief Delete feature from layer.
 
@@ -2028,7 +2028,7 @@ by the OGRSFDriverManager.
 
 /**
 
- \fn OGRErr OGR_L_DeleteFeature( OGRLayerH hLayer, GIntBig nFID );
+ \fn OGRErr OGR_L_DeleteFeature( OGRLayerH hLayer, int64_t nFID );
 
  \brief Delete feature from layer.
 
@@ -2302,7 +2302,7 @@ error code.
 */
 
 /**
- \fn OGRErr OGRLayer::SetNextByIndex( GIntBig nIndex );
+ \fn OGRErr OGRLayer::SetNextByIndex( int64_t nIndex );
 
  \brief Move read cursor to the nIndex'th feature in the current resultset.
 
@@ -2330,7 +2330,7 @@ error code.
 
 
 /**
- \fn OGRErr OGR_L_SetNextByIndex( OGRLayerH hLayer, GIntBig nIndex );
+ \fn OGRErr OGR_L_SetNextByIndex( OGRLayerH hLayer, int64_t nIndex );
 
  \brief Move read cursor to the nIndex'th feature in the current resultset.
 

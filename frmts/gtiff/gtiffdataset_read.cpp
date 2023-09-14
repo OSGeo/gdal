@@ -36,6 +36,7 @@
 #include "gtiffsplitbitmapband.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <memory>
 #include <mutex>
@@ -597,8 +598,8 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
         if (bError)
         {
             CPLError(CE_Failure, CPLE_OutOfMemory,
-                     "Cannot allocate working buffer of size " CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(psJob->nSize));
+                     "Cannot allocate working buffer of size %" PRIu64,
+                     static_cast<uint64_t>(psJob->nSize));
             return false;
         }
         return true;
@@ -633,10 +634,9 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
                                            psJob->nOffset) != abyInput.size())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot read " CPL_FRMT_GUIB
-                         " bytes at offset " CPL_FRMT_GUIB,
-                         static_cast<GUIntBig>(psJob->nSize),
-                         static_cast<GUIntBig>(psJob->nOffset));
+                         "Cannot read %" PRIu64 " bytes at offset %" PRIu64,
+                         static_cast<uint64_t>(psJob->nSize),
+                         static_cast<uint64_t>(psJob->nOffset));
 
                 std::lock_guard<std::mutex> oLock(psContext->oMutex);
                 psContext->bSuccess = false;
@@ -672,10 +672,9 @@ static void CPL_STDCALL ThreadDecompressionFuncErrorHandler(
                                           1) != 1)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot read " CPL_FRMT_GUIB
-                         " bytes at offset " CPL_FRMT_GUIB,
-                         static_cast<GUIntBig>(psJob->nSize),
-                         static_cast<GUIntBig>(psJob->nOffset));
+                         "Cannot read %" PRIu64 " bytes at offset %" PRIu64,
+                         static_cast<uint64_t>(psJob->nSize),
+                         static_cast<uint64_t>(psJob->nOffset));
                 psContext->bSuccess = false;
                 return;
             }
@@ -1103,7 +1102,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     if (!sContext.bSkipBlockCache && nBands != 1 &&
         m_nPlanarConfig == PLANARCONFIG_CONTIG && nBandCount == 1)
     {
-        const GIntBig nRequiredMem = static_cast<GIntBig>(nBands) * nXBlocks *
+        const int64_t nRequiredMem = static_cast<int64_t>(nBands) * nXBlocks *
                                      nYBlocks * m_nBlockXSize * m_nBlockYSize *
                                      GDALGetDataTypeSizeBytes(sContext.eDT);
         if (nRequiredMem > GDALGetCacheMax64())
@@ -1113,7 +1112,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                 CPLDebug("GTiff",
                          "Disable aggressive band caching. "
                          "Cache not big enough. "
-                         "At least " CPL_FRMT_GIB " bytes necessary",
+                         "At least %" PRId64 " bytes necessary",
                          nRequiredMem);
                 m_bHasWarnedDisableAggressiveBandCaching = true;
             }
@@ -1285,10 +1284,10 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                     if (asJobs[iJob].nSize > nFileSize)
                     {
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Cannot read " CPL_FRMT_GUIB
-                                 " bytes at offset " CPL_FRMT_GUIB,
-                                 static_cast<GUIntBig>(asJobs[iJob].nSize),
-                                 static_cast<GUIntBig>(asJobs[iJob].nOffset));
+                                 "Cannot read %" PRIu64
+                                 " bytes at offset %" PRIu64,
+                                 static_cast<uint64_t>(asJobs[iJob].nSize),
+                                 static_cast<uint64_t>(asJobs[iJob].nOffset));
 
                         std::lock_guard<std::mutex> oLock(sContext.oMutex);
                         sContext.bSuccess = false;
@@ -1514,8 +1513,8 @@ int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         }
         if (m_eVirtualMemIOUsage == VirtualMemIOEnum::IF_ENOUGH_RAM)
         {
-            GIntBig nRAM = CPLGetUsablePhysicalRAM();
-            if (static_cast<GIntBig>(nLength) > nRAM)
+            int64_t nRAM = CPLGetUsablePhysicalRAM();
+            if (static_cast<int64_t>(nLength) > nRAM)
             {
                 CPLDebug("GTiff",
                          "Not enough RAM to map whole file into memory.");
@@ -3278,7 +3277,7 @@ CPLErr GTiffDataset::LoadBlockBuf(int nBlockId, bool bReadFromDisk)
             (nBlockBufSize / m_nBlockYSize) *
             (m_nBlockYSize -
              static_cast<int>(
-                 (static_cast<GIntBig>(nBlockYOff + 1) * m_nBlockYSize) %
+                 (static_cast<int64_t>(nBlockYOff + 1) * m_nBlockYSize) %
                  nRasterYSize));
         memset(m_pabyBlockBuf, 0, nBlockBufSize);
     }
@@ -3318,7 +3317,7 @@ CPLErr GTiffDataset::LoadBlockBuf(int nBlockId, bool bReadFromDisk)
                 (nBlockBufSize / m_nBlockYSize) *
                 (m_nBlockYSize -
                  static_cast<int>(
-                     (static_cast<GIntBig>(nBlockYOff + 1) * m_nBlockYSize) %
+                     (static_cast<int64_t>(nBlockYOff + 1) * m_nBlockYSize) %
                      nRasterYSize));
             // Zero-out unused area
             memset(m_pabyBlockBuf + nValidBytes, 0,
@@ -3449,7 +3448,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     vsi_l_offset nMaxOffset = 0;
     if (bBigTIFF)
     {
-        GUInt64 nTmp = 0;
+        uint64_t nTmp = 0;
         memcpy(&nTmp, pabyBuffer + 8, 8);
         if (bSwap)
             CPL_SWAP64PTR(&nTmp);
@@ -3466,8 +3465,8 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
             CPL_SWAP64PTR(&nTmp);
         if (nTmp > 1024)
         {
-            CPLError(CE_Failure, CPLE_NotSupported,
-                     "Too many tags : " CPL_FRMT_GIB, nTmp);
+            CPLError(CE_Failure, CPLE_NotSupported, "Too many tags : %" PRId64,
+                     nTmp);
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
             VSIUnlink(osTmpFilename);
             return false;
@@ -3499,8 +3498,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
             if (nTmp >= 16 * 1024 * 1024)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,
-                         "Too many elements for tag %d : " CPL_FRMT_GUIB, nTag,
-                         nTmp);
+                         "Too many elements for tag %d : %" PRIu64, nTag, nTmp);
                 CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
                 VSIUnlink(osTmpFilename);
                 return false;
@@ -3513,7 +3511,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
                 memcpy(&nTmp, pabyBuffer + 24 + i * 20 + 12, 8);
                 if (bSwap)
                     CPL_SWAP64PTR(&nTmp);
-                if (nTmp > GUINT64_MAX - nTagSize)
+                if (nTmp > std::numeric_limits<uint64_t>::max() - nTagSize)
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Overflow with tag %d", nTag);
@@ -6279,8 +6277,8 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
                 if (nSize > 0)
                 {
                     const std::string osSubfile(
-                        CPLSPrintf("/vsisubfile/" CPL_FRMT_GUIB "_%d,%s",
-                                   static_cast<GUIntBig>(nOffset),
+                        CPLSPrintf("/vsisubfile/%" PRIu64 "_%d,%s",
+                                   static_cast<uint64_t>(nOffset),
                                    static_cast<int>(std::min(
                                        static_cast<vsi_l_offset>(1024), nSize)),
                                    m_pszFilename));

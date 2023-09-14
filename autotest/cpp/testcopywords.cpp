@@ -245,12 +245,12 @@ class TestCopyWords : public ::testing::Test
 };
 
 #define FROM_R(intype, inval, outtype, outval)                                 \
-    FromR<GIntBig>(intype, inval, 0, outtype, outval, 0, __LINE__)
+    FromR<int64_t>(intype, inval, 0, outtype, outval, 0, __LINE__)
 #define FROM_R_F(intype, inval, outtype, outval)                               \
     FromR<double>(intype, inval, 0, outtype, outval, 0, __LINE__)
 
 #define FROM_C(intype, inval, invali, outtype, outval, outvali)                \
-    FromR<GIntBig>(intype, inval, invali, outtype, outval, outvali, __LINE__)
+    FromR<int64_t>(intype, inval, invali, outtype, outval, outvali, __LINE__)
 #define FROM_C_F(intype, inval, invali, outtype, outval, outvali)              \
     FromR<double>(intype, inval, invali, outtype, outval, outvali, __LINE__)
 
@@ -260,8 +260,8 @@ class TestCopyWords : public ::testing::Test
     (x == GDT_Float32 || x == GDT_Float64 || x == GDT_CFloat32 ||              \
      x == GDT_CFloat64)
 
-#define CST_3000000000 (((GIntBig)3000) * 1000 * 1000)
-#define CST_5000000000 (((GIntBig)5000) * 1000 * 1000)
+#define CST_3000000000 (((int64_t)3000) * 1000 * 1000)
+#define CST_5000000000 (((int64_t)5000) * 1000 * 1000)
 
 TEST_F(TestCopyWords, GDT_Byte)
 {

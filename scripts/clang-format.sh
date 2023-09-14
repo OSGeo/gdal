@@ -58,6 +58,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*ogr/ogrsf_frmts/cad/libopencad/*)
+	  continue
+	  ;;
+
 	*ogr/ogrsf_frmts/flatgeobuf/flatbuffers/*)
 	  continue
 	  ;;

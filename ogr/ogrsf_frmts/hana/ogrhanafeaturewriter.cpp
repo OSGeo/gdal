@@ -56,7 +56,7 @@ void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,
     if (value.isNull())
         feature_.SetFieldNull(fieldIndex);
     else
-        feature_.SetField(fieldIndex, static_cast<GIntBig>(*value));
+        feature_.SetField(fieldIndex, static_cast<int64_t>(*value));
 }
 
 void OGRHanaFeatureWriter::SetFieldValue(int fieldIndex,

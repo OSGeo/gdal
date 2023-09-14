@@ -29,6 +29,7 @@
 #include "cpl_port.h"
 #include "ogr_sqlite.h"
 
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -121,7 +122,7 @@ static int OGRSQLiteIOTruncate(sqlite3_file *pFile, sqlite3_int64 size)
 {
     OGRSQLiteFileStruct *pMyFile = (OGRSQLiteFileStruct *)pFile;
 #ifdef DEBUG_IO
-    CPLDebug("SQLITE", "OGRSQLiteIOTruncate(%p, " CPL_FRMT_GIB ")", pMyFile->fp,
+    CPLDebug("SQLITE", "OGRSQLiteIOTruncate(%p, %" PRId64 ")", pMyFile->fp,
              size);
 #endif
     int nRet = VSIFTruncateL(pMyFile->fp, size);
@@ -145,7 +146,7 @@ static int OGRSQLiteIOFileSize(sqlite3_file *pFile, sqlite3_int64 *pSize)
     *pSize = VSIFTellL(pMyFile->fp);
     VSIFSeekL(pMyFile->fp, nCurOffset, SEEK_SET);
 #ifdef DEBUG_IO
-    CPLDebug("SQLITE", "OGRSQLiteIOFileSize(%p) = " CPL_FRMT_GIB, pMyFile->fp,
+    CPLDebug("SQLITE", "OGRSQLiteIOFileSize(%p) = %" PRId64, pMyFile->fp,
              *pSize);
 #endif
     return SQLITE_OK;

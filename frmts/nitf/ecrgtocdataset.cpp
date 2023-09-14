@@ -262,9 +262,9 @@ static int GetScaleFromString(const char *pszScale)
 /*                            GetFromBase34()                           */
 /************************************************************************/
 
-static GIntBig GetFromBase34(const char *pszVal, int nMaxSize)
+static int64_t GetFromBase34(const char *pszVal, int nMaxSize)
 {
-    GIntBig nFrameNumber = 0;
+    int64_t nFrameNumber = 0;
     for (int i = 0; i < nMaxSize; i++)
     {
         char ch = pszVal[i];
@@ -384,11 +384,11 @@ static void GetExtent(const char *pszFrameName, int nScale, int nZone,
     /************************************************************************/
 
     /* Converts the first 10 characters into a number from base 34 */
-    const GIntBig nFrameNumber = GetFromBase34(pszFrameName, 10);
+    const int64_t nFrameNumber = GetFromBase34(pszFrameName, 10);
 
     /*  MIL-PRF-32283 - A.2.6.1 */
-    const GIntBig nY = nFrameNumber / nCols;
-    const GIntBig nX = nFrameNumber % nCols;
+    const int64_t nY = nFrameNumber / nCols;
+    const int64_t nX = nFrameNumber % nCols;
 
     /************************************************************************/
     /*  Compute extent of the frame                                         */

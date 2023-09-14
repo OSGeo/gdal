@@ -32,6 +32,7 @@
 #include "ogr_spatialref.h"
 #include "rawdataset.h"
 
+#include <cinttypes>
 #include <cmath>
 
 /************************************************************************/
@@ -994,8 +995,8 @@ GDALDataset *PAuxDataset::Create(const char *pszFilename, int nXSize,
             pszTypeName = "8U";
 
         CPL_IGNORE_RET_VAL(VSIFPrintfL(
-            fp, "ChanDefinition-%d: %s " CPL_FRMT_GIB " %d %d %s\n", iBand + 1,
-            pszTypeName, static_cast<GIntBig>(nImgOffset), nPixelOffset,
+            fp, "ChanDefinition-%d: %s %" PRId64 " %d %d %s\n", iBand + 1,
+            pszTypeName, static_cast<int64_t>(nImgOffset), nPixelOffset,
             nLineOffset,
 #ifdef CPL_LSB
             "Swapped"

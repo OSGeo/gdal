@@ -57,7 +57,7 @@ class GDALMDReaderGeoEye : public GDALMDReaderBase
 
   protected:
     virtual void LoadMetadata() override;
-    virtual GIntBig
+    virtual int64_t
     GetAcquisitionTimeFromString(const char *pszDateTime) override;
     char **LoadRPCWktFile() const;
     char **LoadIMDWktFile() const;

@@ -36,6 +36,7 @@
 #include <cassert>
 #include <cctype>
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstdio>
@@ -1640,19 +1641,18 @@ CPLErr netCDFRasterBand::SetNoDataValueAsInt64(int64_t nNoData)
             !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to " CPL_FRMT_GIB
-                     " (previously set to " CPL_FRMT_GIB ") "
+                     "Setting NoDataValue to %" PRId64
+                     " (previously set to %" PRId64 ") "
                      "but file is no longer in define mode (id #%d, band #%d)",
-                     static_cast<GIntBig>(nNoData),
-                     static_cast<GIntBig>(m_nNodataValueInt64), cdfid, nBand);
+                     static_cast<int64_t>(nNoData),
+                     static_cast<int64_t>(m_nNodataValueInt64), cdfid, nBand);
         }
 #ifdef NCDF_DEBUG
         else
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to " CPL_FRMT_GIB
-                     " (id #%d, band #%d)",
-                     static_cast<GIntBig>(nNoData), cdfid, nBand);
+                     "Setting NoDataValue to %" PRId64 " (id #%d, band #%d)",
+                     static_cast<int64_t>(nNoData), cdfid, nBand);
         }
 #endif
         // Make sure we are in define mode.
@@ -1726,19 +1726,18 @@ CPLErr netCDFRasterBand::SetNoDataValueAsUInt64(uint64_t nNoData)
             !reinterpret_cast<netCDFDataset *>(poDS)->GetDefineMode())
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to " CPL_FRMT_GUIB
-                     " (previously set to " CPL_FRMT_GUIB ") "
+                     "Setting NoDataValue to %" PRIu64
+                     " (previously set to %" PRIu64 ") "
                      "but file is no longer in define mode (id #%d, band #%d)",
-                     static_cast<GUIntBig>(nNoData),
-                     static_cast<GUIntBig>(m_nNodataValueUInt64), cdfid, nBand);
+                     static_cast<uint64_t>(nNoData),
+                     static_cast<uint64_t>(m_nNodataValueUInt64), cdfid, nBand);
         }
 #ifdef NCDF_DEBUG
         else
         {
             CPLDebug("GDAL_netCDF",
-                     "Setting NoDataValue to " CPL_FRMT_GUIB
-                     " (id #%d, band #%d)",
-                     static_cast<GUIntBig>(nNoData), cdfid, nBand);
+                     "Setting NoDataValue to %" PRIu64 " (id #%d, band #%d)",
+                     static_cast<uint64_t>(nNoData), cdfid, nBand);
         }
 #endif
         // Make sure we are in define mode.
@@ -2148,8 +2147,8 @@ void netCDFRasterBand::CreateMetadataFromOtherVars()
                         long long nData;
                         /* status = */ nc_get_vara_longlong(
                             nGroupID, nVarID, start, count, &nData);
-                        snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GIB,
-                                 nData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%" PRId64,
+                                 static_cast<int64_t>(nData));
                         break;
                     }
                     case NC_UINT64:
@@ -2157,8 +2156,8 @@ void netCDFRasterBand::CreateMetadataFromOtherVars()
                         unsigned long long unData;
                         /* status = */ nc_get_vara_ulonglong(
                             nGroupID, nVarID, start, count, &unData);
-                        snprintf(szMetaTemp, sizeof(szMetaTemp), CPL_FRMT_GUIB,
-                                 unData);
+                        snprintf(szMetaTemp, sizeof(szMetaTemp), "%" PRIu64,
+                                 static_cast<uint64_t>(unData));
                         break;
                     }
 #endif
@@ -9615,8 +9614,8 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (xdim > INT_MAX || ydim > INT_MAX)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Invalid raster dimensions: " CPL_FRMT_GUIB "x" CPL_FRMT_GUIB,
-                 static_cast<GUIntBig>(xdim), static_cast<GUIntBig>(ydim));
+                 "Invalid raster dimensions: %" PRIu64 "x%" PRIu64,
+                 static_cast<uint64_t>(xdim), static_cast<uint64_t>(ydim));
         CPLReleaseMutex(hNCMutex);  // Release mutex otherwise we'll deadlock
                                     // with GDALDataset own mutex.
         delete poDS;
@@ -10749,14 +10748,14 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         }
         else if (eDT == GDT_UInt64)
         {
-            CPLDebug("GDAL_netCDF", "GUInt64 Band#%d", iBand);
+            CPLDebug("GDAL_netCDF", "uint64_t Band#%d", iBand);
             eErr = NCDFCopyBand<std::uint64_t>(poSrcBand, poDstBand, nXSize,
                                                nYSize, GDALScaledProgress,
                                                pScaledProgress);
         }
         else if (eDT == GDT_Int64)
         {
-            CPLDebug("GDAL_netCDF", "GInt64 Band#%d", iBand);
+            CPLDebug("GDAL_netCDF", "int64_t Band#%d", iBand);
             eErr =
                 NCDFCopyBand<std::int64_t>(poSrcBand, poDstBand, nXSize, nYSize,
                                            GDALScaledProgress, pScaledProgress);
@@ -11953,34 +11952,36 @@ static CPLErr NCDFGetAttr1(int nCdfId, int nVarId, const char *pszAttrName,
         }
         case NC_INT64:
         {
-            GIntBig *panTemp =
-                static_cast<GIntBig *>(CPLCalloc(nAttrLen, sizeof(GIntBig)));
+            long long *panTemp = static_cast<long long *>(
+                CPLCalloc(nAttrLen, sizeof(long long)));
             nc_get_att_longlong(nCdfId, nVarId, pszAttrName, panTemp);
             dfValue = static_cast<double>(panTemp[0]);
             for (m = 0; m < nAttrLen - 1; m++)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB ",",
-                            panTemp[m]);
+                CPLsnprintf(szTemp, sizeof(szTemp), "%" PRId64 ",",
+                            static_cast<int64_t>(panTemp[m]));
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
-            CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB, panTemp[m]);
+            CPLsnprintf(szTemp, sizeof(szTemp), "%" PRId64,
+                        static_cast<int64_t>(panTemp[m]));
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             CPLFree(panTemp);
             break;
         }
         case NC_UINT64:
         {
-            GUIntBig *panTemp =
-                static_cast<GUIntBig *>(CPLCalloc(nAttrLen, sizeof(GUIntBig)));
+            unsigned long long *panTemp = static_cast<unsigned long long *>(
+                CPLCalloc(nAttrLen, sizeof(unsigned long long)));
             nc_get_att_ulonglong(nCdfId, nVarId, pszAttrName, panTemp);
             dfValue = static_cast<double>(panTemp[0]);
             for (m = 0; m < nAttrLen - 1; m++)
             {
-                CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",",
-                            panTemp[m]);
+                CPLsnprintf(szTemp, sizeof(szTemp), "%" PRIu64 ",",
+                            static_cast<uint64_t>(panTemp[m]));
                 NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             }
-            CPLsnprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB, panTemp[m]);
+            CPLsnprintf(szTemp, sizeof(szTemp), "%" PRIu64,
+                        static_cast<uint64_t>(panTemp[m]));
             NCDFSafeStrcat(&pszAttrValue, szTemp, &nAttrValueSize);
             CPLFree(panTemp);
             break;
@@ -12432,10 +12433,12 @@ static CPLErr NCDFGet1DVar(int nCdfId, int nVarId, char **pszValue)
             size_t m = 0;
             for (; m < nVarLen - 1; m++)
             {
-                snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB ",", pnTemp[m]);
+                snprintf(szTemp, sizeof(szTemp), "%" PRId64 ",",
+                         static_cast<int64_t>(pnTemp[m]));
                 NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
             }
-            snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GIB, pnTemp[m]);
+            snprintf(szTemp, sizeof(szTemp), "%" PRId64,
+                     static_cast<int64_t>(pnTemp[m]));
             NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
             CPLFree(pnTemp);
             break;
@@ -12449,10 +12452,12 @@ static CPLErr NCDFGet1DVar(int nCdfId, int nVarId, char **pszValue)
             size_t m = 0;
             for (; m < nVarLen - 1; m++)
             {
-                snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB ",", pnTemp[m]);
+                snprintf(szTemp, sizeof(szTemp), "%" PRIu64 ",",
+                         static_cast<uint64_t>(pnTemp[m]));
                 NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
             }
-            snprintf(szTemp, sizeof(szTemp), CPL_FRMT_GUIB, pnTemp[m]);
+            snprintf(szTemp, sizeof(szTemp), "%" PRIu64,
+                     static_cast<uint64_t>(pnTemp[m]));
             NCDFSafeStrcat(&pszVarValue, szTemp, &nVarValueSize);
             CPLFree(pnTemp);
             break;

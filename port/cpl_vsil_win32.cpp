@@ -78,7 +78,7 @@ class VSIWin32FilesystemHandler final : public VSIFilesystemHandler
         (void)pszFilename;
         return FALSE;
     }
-    virtual GIntBig GetDiskFreeSpace(const char *pszDirname) override;
+    virtual int64_t GetDiskFreeSpace(const char *pszDirname) override;
     virtual int SupportsSparseFiles(const char *pszPath) override;
     virtual bool IsLocal(const char *pszPath) override;
     std::string
@@ -1016,13 +1016,13 @@ char **VSIWin32FilesystemHandler::ReadDirEx(const char *pszPath, int nMaxFiles)
 /*                        GetDiskFreeSpace()                            */
 /************************************************************************/
 
-GIntBig VSIWin32FilesystemHandler::GetDiskFreeSpace(const char *pszDirname)
+int64_t VSIWin32FilesystemHandler::GetDiskFreeSpace(const char *pszDirname)
 {
-    GIntBig nRet = -1;
+    int64_t nRet = -1;
     ULARGE_INTEGER nFreeBytesAvailable;
     if (GetDiskFreeSpaceEx(pszDirname, &nFreeBytesAvailable, nullptr, nullptr))
     {
-        nRet = static_cast<GIntBig>(nFreeBytesAvailable.QuadPart);
+        nRet = static_cast<int64_t>(nFreeBytesAvailable.QuadPart);
     }
     return nRet;
 }

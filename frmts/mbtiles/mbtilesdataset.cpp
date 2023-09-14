@@ -243,7 +243,7 @@ class MBTilesVectorLayer final : public OGRLayer
     bool m_bEOF = false;
     CPLString m_osTmpFilename;
     GDALDatasetH m_hTileDS = nullptr;
-    GIntBig m_nFeatureCount = -1;
+    int64_t m_nFeatureCount = -1;
     int m_nX = 0;
     int m_nY = 0;
     OGREnvelope m_sExtent;
@@ -275,7 +275,7 @@ class MBTilesVectorLayer final : public OGRLayer
     {
         return m_poFeatureDefn;
     }
-    virtual GIntBig GetFeatureCount(int bForce) override;
+    virtual int64_t GetFeatureCount(int bForce) override;
     virtual int TestCapability(const char *) override;
 
     OGRErr GetExtent(OGREnvelope *psExtent, int bForce) override;
@@ -290,7 +290,7 @@ class MBTilesVectorLayer final : public OGRLayer
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
 };
 
 /************************************************************************/
@@ -1667,7 +1667,7 @@ OGRFeature *MBTilesVectorLayer::GetNextFeature()
 /*                         GetFeatureCount()                            */
 /************************************************************************/
 
-GIntBig MBTilesVectorLayer::GetFeatureCount(int bForce)
+int64_t MBTilesVectorLayer::GetFeatureCount(int bForce)
 {
     if (m_poFilterGeom == nullptr && m_poAttrQuery == nullptr)
     {
@@ -1848,8 +1848,8 @@ OGRFeature *MBTilesVectorLayer::GetNextRawFeature()
     if (poSrcFeat == nullptr)
         return nullptr;
 
-    const GIntBig nFIDBase =
-        (static_cast<GIntBig>(m_nY) << m_nZoomLevel) | m_nX;
+    const int64_t nFIDBase =
+        (static_cast<int64_t>(m_nY) << m_nZoomLevel) | m_nX;
     OGRFeature *poFeature = CreateFeatureFrom(poSrcFeat);
     poFeature->SetFID((poSrcFeat->GetFID() << (2 * m_nZoomLevel)) | nFIDBase);
     delete poSrcFeat;
@@ -1861,12 +1861,12 @@ OGRFeature *MBTilesVectorLayer::GetNextRawFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *MBTilesVectorLayer::GetFeature(GIntBig nFID)
+OGRFeature *MBTilesVectorLayer::GetFeature(int64_t nFID)
 {
     const int nZ = m_nZoomLevel;
     const int nX = static_cast<int>(nFID & ((1 << nZ) - 1));
     const int nY = static_cast<int>((nFID >> nZ) & ((1 << nZ) - 1));
-    const GIntBig nTileFID = nFID >> (2 * nZ);
+    const int64_t nTileFID = nFID >> (2 * nZ);
 
     CPLString osSQL;
     osSQL.Printf("SELECT tile_data FROM tiles "

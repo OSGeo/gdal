@@ -135,7 +135,7 @@ class OGRHanaLayer : public OGRLayer
   protected:
     OGRHanaDataSource *dataSource_ = nullptr;
     OGRFeatureDefn *featureDefn_ = nullptr;
-    GIntBig nextFeatureId_ = 0;
+    int64_t nextFeatureId_ = 0;
     std::vector<AttributeColumnDescription> attrColumns_;
     std::vector<GeometryColumnDescription> geomColumns_;
     int fidFieldIndex_ = OGRNullFID;
@@ -180,7 +180,7 @@ class OGRHanaLayer : public OGRLayer
         return GetExtent(0, extent, force);
     }
     OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
-    GIntBig GetFeatureCount(int force) override;
+    int64_t GetFeatureCount(int force) override;
     OGRFeature *GetNextFeature() override;
     const char *GetFIDColumn() override;
     OGRFeatureDefn *GetLayerDefn() override;
@@ -257,7 +257,7 @@ class OGRHanaTableLayer final : public OGRHanaLayer
         return GetExtent(0, extent, force);
     }
     OGRErr GetExtent(int geomField, OGREnvelope *extent, int force) override;
-    GIntBig GetFeatureCount(int force) override;
+    int64_t GetFeatureCount(int force) override;
     const char *GetName() override
     {
         return tableName_.c_str();
@@ -265,7 +265,7 @@ class OGRHanaTableLayer final : public OGRHanaLayer
     int TestCapability(const char *capabilities) override;
 
     OGRErr ICreateFeature(OGRFeature *feature) override;
-    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
     OGRErr ISetFeature(OGRFeature *feature) override;
 
     OGRErr CreateField(OGRFieldDefn *field, int approxOK = TRUE) override;

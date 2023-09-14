@@ -32,6 +32,7 @@
 #include "memmultidim.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <climits>
 #include <cstdlib>
 #include <cstring>
@@ -1261,20 +1262,21 @@ MEMDataset *MEMDataset::Create(const char * /* pszFilename */, int nXSize,
     const int nWordSize = GDALGetDataTypeSize(eType) / 8;
     if (nBandsIn > 0 && nWordSize > 0 &&
         (nBandsIn > INT_MAX / nWordSize ||
-         (GIntBig)nXSize * nYSize > GINTBIG_MAX / (nWordSize * nBandsIn)))
+         (int64_t)nXSize * nYSize >
+             std::numeric_limits<int64_t>::max() / (nWordSize * nBandsIn)))
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Multiplication overflow");
         return nullptr;
     }
 
-    const GUIntBig nGlobalBigSize =
-        static_cast<GUIntBig>(nWordSize) * nBandsIn * nXSize * nYSize;
+    const uint64_t nGlobalBigSize =
+        static_cast<uint64_t>(nWordSize) * nBandsIn * nXSize * nYSize;
     const size_t nGlobalSize = static_cast<size_t>(nGlobalBigSize);
 #if SIZEOF_VOIDP == 4
-    if (static_cast<GUIntBig>(nGlobalSize) != nGlobalBigSize)
+    if (static_cast<uint64_t>(nGlobalSize) != nGlobalBigSize)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,
-                 "Cannot allocate " CPL_FRMT_GUIB " bytes on this platform.",
+                 "Cannot allocate %" PRIu64 " bytes on this platform.",
                  nGlobalBigSize);
         return nullptr;
     }
@@ -1700,7 +1702,7 @@ MEMGroup::GetDimensions(CSLConstList) const
 
 std::shared_ptr<GDALAttribute>
 MEMGroup::CreateAttribute(const std::string &osName,
-                          const std::vector<GUInt64> &anDimensions,
+                          const std::vector<uint64_t> &anDimensions,
                           const GDALExtendedDataType &oDataType, CSLConstList)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -1911,7 +1913,7 @@ void MEMAbstractMDArray::FreeArray()
 bool MEMAbstractMDArray::Init(GByte *pData,
                               const std::vector<GPtrDiff_t> &anStrides)
 {
-    GUInt64 nTotalSize = m_oType.GetSize();
+    uint64_t nTotalSize = m_oType.GetSize();
     if (!m_aoDims.empty())
     {
         if (anStrides.empty())
@@ -1937,7 +1939,7 @@ bool MEMAbstractMDArray::Init(GByte *pData,
                          "Illegal dimension size 0");
                 return false;
             }
-            if (nTotalSize > std::numeric_limits<GUInt64>::max() / nDimSize)
+            if (nTotalSize > std::numeric_limits<uint64_t>::max() / nDimSize)
             {
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
                 return false;
@@ -2207,8 +2209,8 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite, const size_t *count,
 /*                                   IRead()                            */
 /************************************************************************/
 
-bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
-                               const size_t *count, const GInt64 *arrayStep,
+bool MEMAbstractMDArray::IRead(const uint64_t *arrayStartIdx,
+                               const size_t *count, const int64_t *arrayStep,
                                const GPtrDiff_t *bufferStride,
                                const GDALExtendedDataType &bufferDataType,
                                void *pDstBuffer) const
@@ -2246,8 +2248,8 @@ bool MEMAbstractMDArray::IRead(const GUInt64 *arrayStartIdx,
 /*                                IWrite()                              */
 /************************************************************************/
 
-bool MEMAbstractMDArray::IWrite(const GUInt64 *arrayStartIdx,
-                                const size_t *count, const GInt64 *arrayStep,
+bool MEMAbstractMDArray::IWrite(const uint64_t *arrayStartIdx,
+                                const size_t *count, const int64_t *arrayStep,
                                 const GPtrDiff_t *bufferStride,
                                 const GDALExtendedDataType &bufferDataType,
                                 const void *pSrcBuffer)
@@ -2403,7 +2405,7 @@ MEMMDArray::GetAttributes(CSLConstList) const
 
 std::shared_ptr<GDALAttribute>
 MEMMDArray::CreateAttribute(const std::string &osName,
-                            const std::vector<GUInt64> &anDimensions,
+                            const std::vector<uint64_t> &anDimensions,
                             const GDALExtendedDataType &oDataType, CSLConstList)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -2508,13 +2510,13 @@ MEMMDArray::GetCoordinateVariables() const
 /*                            Resize()                                  */
 /************************************************************************/
 
-bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+bool MEMMDArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
                         CSLConstList /* papszOptions */)
 {
     return Resize(anNewDimSizes, /*bResizeOtherArrays=*/true);
 }
 
-bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+bool MEMMDArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
                         bool bResizeOtherArrays)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -2544,7 +2546,7 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
     auto &dims = GetDimensions();
     std::vector<size_t> anDecreasedDimIdx;
     std::vector<size_t> anGrownDimIdx;
-    std::map<GDALDimension *, GUInt64> oMapDimToSize;
+    std::map<GDALDimension *, uint64_t> oMapDimToSize;
     for (size_t i = 0; i < nDimCount; ++i)
     {
         auto oIter = oMapDimToSize.find(dims[i].get());
@@ -2590,7 +2592,7 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
     const auto ResizeOtherArrays = [this, &anNewDimSizes, nDimCount, &dims]()
     {
         std::set<MEMMDArray *> oSetArrays;
-        std::map<GDALDimension *, GUInt64> oMapNewSize;
+        std::map<GDALDimension *, uint64_t> oMapNewSize;
         for (size_t i = 0; i < nDimCount; ++i)
         {
             if (anNewDimSizes[i] != dims[i]->GetSize())
@@ -2616,7 +2618,7 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         for (auto *poArray : oSetArrays)
         {
             const auto &apoOtherDims = poArray->GetDimensions();
-            std::vector<GUInt64> anOtherArrayNewDimSizes(
+            std::vector<uint64_t> anOtherArrayNewDimSizes(
                 poArray->GetDimensionCount());
             for (size_t i = 0; i < anOtherArrayNewDimSizes.size(); ++i)
             {
@@ -2697,9 +2699,9 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         anGrownDimIdx[0] == 0)
     {
         CPLAssert(m_nTotalSize % dims[0]->GetSize() == 0);
-        GUInt64 nNewTotalSize64 = m_nTotalSize / dims[0]->GetSize();
+        uint64_t nNewTotalSize64 = m_nTotalSize / dims[0]->GetSize();
         if (nNewTotalSize64 >
-            std::numeric_limits<GUInt64>::max() / anNewDimSizes[0])
+            std::numeric_limits<uint64_t>::max() / anNewDimSizes[0])
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
             return false;
@@ -2756,9 +2758,9 @@ bool MEMMDArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
         Create(std::string(), std::string(), aoNewDims, GetDataType());
     if (!poTempMDArray->Init())
         return false;
-    std::vector<GUInt64> arrayStartIdx(nDimCount);
+    std::vector<uint64_t> arrayStartIdx(nDimCount);
     std::vector<size_t> count(nDimCount);
-    std::vector<GInt64> arrayStep(nDimCount, 1);
+    std::vector<int64_t> arrayStep(nDimCount, 1);
     std::vector<GPtrDiff_t> bufferStride(nDimCount);
     for (size_t i = nDimCount; i > 0;)
     {
@@ -2869,7 +2871,7 @@ void MEMMDArray::NotifyChildrenOfDeletion()
 /************************************************************************/
 
 static std::vector<std::shared_ptr<GDALDimension>>
-BuildDimensions(const std::vector<GUInt64> &anDimensions)
+BuildDimensions(const std::vector<uint64_t> &anDimensions)
 {
     std::vector<std::shared_ptr<GDALDimension>> res;
     for (size_t i = 0; i < anDimensions.size(); i++)
@@ -2887,7 +2889,7 @@ BuildDimensions(const std::vector<GUInt64> &anDimensions)
 
 MEMAttribute::MEMAttribute(const std::string &osParentName,
                            const std::string &osName,
-                           const std::vector<GUInt64> &anDimensions,
+                           const std::vector<uint64_t> &anDimensions,
                            const GDALExtendedDataType &oType)
     : GDALAbstractMDArray(osParentName, osName),
       MEMAbstractMDArray(osParentName, osName, BuildDimensions(anDimensions),
@@ -2902,7 +2904,7 @@ MEMAttribute::MEMAttribute(const std::string &osParentName,
 
 std::shared_ptr<MEMAttribute>
 MEMAttribute::Create(const std::string &osParentName, const std::string &osName,
-                     const std::vector<GUInt64> &anDimensions,
+                     const std::vector<uint64_t> &anDimensions,
                      const GDALExtendedDataType &oType)
 {
     auto attr(std::shared_ptr<MEMAttribute>(
@@ -2917,9 +2919,11 @@ MEMAttribute::Create(const std::string &osParentName, const std::string &osName,
 /*                        MEMAttribute::Create()                        */
 /************************************************************************/
 
-std::shared_ptr<MEMAttribute> MEMAttribute::Create(
-    const std::shared_ptr<MEMGroup> &poParentGroup, const std::string &osName,
-    const std::vector<GUInt64> &anDimensions, const GDALExtendedDataType &oType)
+std::shared_ptr<MEMAttribute>
+MEMAttribute::Create(const std::shared_ptr<MEMGroup> &poParentGroup,
+                     const std::string &osName,
+                     const std::vector<uint64_t> &anDimensions,
+                     const GDALExtendedDataType &oType)
 {
     const std::string osParentName =
         (poParentGroup && poParentGroup->GetName().empty())
@@ -2941,9 +2945,11 @@ std::shared_ptr<MEMAttribute> MEMAttribute::Create(
 /*                        MEMAttribute::Create()                        */
 /************************************************************************/
 
-std::shared_ptr<MEMAttribute> MEMAttribute::Create(
-    const std::shared_ptr<MEMMDArray> &poParentArray, const std::string &osName,
-    const std::vector<GUInt64> &anDimensions, const GDALExtendedDataType &oType)
+std::shared_ptr<MEMAttribute>
+MEMAttribute::Create(const std::shared_ptr<MEMMDArray> &poParentArray,
+                     const std::string &osName,
+                     const std::vector<uint64_t> &anDimensions,
+                     const GDALExtendedDataType &oType)
 {
     auto attr(
         Create(poParentArray->GetFullName(), osName, anDimensions, oType));
@@ -2988,7 +2994,7 @@ bool MEMAttribute::Rename(const std::string &osNewName)
 
 MEMDimension::MEMDimension(const std::string &osParentName,
                            const std::string &osName, const std::string &osType,
-                           const std::string &osDirection, GUInt64 nSize)
+                           const std::string &osDirection, uint64_t nSize)
     : GDALDimensionWeakIndexingVar(osParentName, osName, osType, osDirection,
                                    nSize)
 {
@@ -3020,7 +3026,7 @@ void MEMDimension::UnRegisterUsingArray(MEMMDArray *poArray)
 std::shared_ptr<MEMDimension>
 MEMDimension::Create(const std::shared_ptr<MEMGroup> &poParentGroup,
                      const std::string &osName, const std::string &osType,
-                     const std::string &osDirection, GUInt64 nSize)
+                     const std::string &osDirection, uint64_t nSize)
 {
     auto newDim(std::make_shared<MEMDimension>(
         poParentGroup->GetFullName(), osName, osType, osDirection, nSize));
@@ -3034,7 +3040,7 @@ MEMDimension::Create(const std::shared_ptr<MEMGroup> &poParentGroup,
 
 std::shared_ptr<GDALDimension>
 MEMGroup::CreateDimension(const std::string &osName, const std::string &osType,
-                          const std::string &osDirection, GUInt64 nSize,
+                          const std::string &osDirection, uint64_t nSize,
                           CSLConstList)
 {
     if (osName.empty())

@@ -31,6 +31,7 @@
 #include "ogr_featurestyle.h"
 #include "ogr_api.h"
 
+#include <cinttypes>
 #include <math.h>
 #include <algorithm>
 
@@ -729,7 +730,7 @@ OGRDGNV8Layer::ProcessElement(OdDgGraphicsElementPtr element, int level)
     OdRxClass *poClass = element->isA();
     const OdString osName = poClass->name();
     const char *pszEntityClassName = static_cast<const char *>(osName);
-    poFeature->SetFID(static_cast<GIntBig>(
+    poFeature->SetFID(static_cast<int64_t>(
         static_cast<OdUInt64>(element->elementId().getHandle())));
 #ifdef DEBUG_VERBOSE
     fprintf(stdout, "%s%s\n", osIndent.c_str(), pszEntityClassName);
@@ -1439,7 +1440,7 @@ OGRDGNV8Layer::ProcessElement(OdDgGraphicsElementPtr element, int level)
             m_aoSetIgnoredFeatureClasses.insert(pszEntityClassName);
             CPLDebug("DGNV8",
                      "Unhandled class %s for, at least, "
-                     "feature " CPL_FRMT_GIB,
+                     "feature %" PRId64,
                      pszEntityClassName, poFeature->GetFID());
         }
     }
@@ -1521,7 +1522,7 @@ OGRFeature *OGRDGNV8Layer::GetNextFeature()
 /************************************************************************/
 
 OdDgGraphicsElementPtr
-OGRDGNV8Layer::GetFeatureInternal(GIntBig nFID, OdDg::OpenMode openMode)
+OGRDGNV8Layer::GetFeatureInternal(int64_t nFID, OdDg::OpenMode openMode)
 {
     if (nFID < 0)
         return OdDgGraphicsElementPtr();
@@ -1538,7 +1539,7 @@ OGRDGNV8Layer::GetFeatureInternal(GIntBig nFID, OdDg::OpenMode openMode)
 /*                            GetFeature()                              */
 /************************************************************************/
 
-OGRFeature *OGRDGNV8Layer::GetFeature(GIntBig nFID)
+OGRFeature *OGRDGNV8Layer::GetFeature(int64_t nFID)
 {
     OdDgGraphicsElementPtr element = GetFeatureInternal(nFID, OdDg::kForRead);
     if (element.isNull())
@@ -1560,7 +1561,7 @@ OGRFeature *OGRDGNV8Layer::GetFeature(GIntBig nFID)
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRDGNV8Layer::DeleteFeature(GIntBig nFID)
+OGRErr OGRDGNV8Layer::DeleteFeature(int64_t nFID)
 {
     if (!m_poDS->GetUpdate())
     {
@@ -1703,7 +1704,7 @@ OGRErr OGRDGNV8Layer::ICreateFeature(OGRFeature *poFeature)
         if (element.isNull())
             return OGRERR_FAILURE;
         m_pModel->addElement(element);
-        poFeature->SetFID(static_cast<GIntBig>(
+        poFeature->SetFID(static_cast<int64_t>(
             static_cast<OdUInt64>(element->elementId().getHandle())));
     }
     catch (const OdError &e)

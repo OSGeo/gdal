@@ -1248,13 +1248,13 @@ bool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
 
         if (bTilesSameDimension && nBand > 0)
         {
-            GIntBig nMemoryRequiredForTiles =
-                static_cast<GIntBig>(PQntuples(poResult)) * nTileWidth *
+            int64_t nMemoryRequiredForTiles =
+                static_cast<int64_t>(PQntuples(poResult)) * nTileWidth *
                 nTileHeight *
                 (GDALGetDataTypeSize(
                      GetRasterBand(nBand)->GetRasterDataType()) /
                  8);
-            GIntBig nCacheMax = GDALGetCacheMax64();
+            int64_t nCacheMax = GDALGetCacheMax64();
             if (nBands * nMemoryRequiredForTiles <= nCacheMax)
             {
                 bLoadRasters = true;
@@ -1530,11 +1530,11 @@ bool PostGISRasterDataset::CanUseClientSideOutDB(bool bAllBandCaching,
                     if (pszSize && pszTimestamp)
                     {
                         bUsable &=
-                            (static_cast<GUInt64>(CPLAtoGIntBig(pszSize)) ==
-                             static_cast<GUInt64>(sStat.st_size));
-                        bUsable &= (static_cast<GUInt64>(
+                            (static_cast<uint64_t>(CPLAtoGIntBig(pszSize)) ==
+                             static_cast<uint64_t>(sStat.st_size));
+                        bUsable &= (static_cast<uint64_t>(
                                         CPLAtoGIntBig(pszTimestamp)) ==
-                                    static_cast<GUInt64>(sStat.st_mtime));
+                                    static_cast<uint64_t>(sStat.st_mtime));
                     }
                 }
                 oOutDBFilenameUsable.insert(std::string(pszFilename), bUsable);

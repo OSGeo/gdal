@@ -37,6 +37,8 @@
 
 #include "test_data.h"
 
+#include <cinttypes>
+
 namespace
 {
 
@@ -168,9 +170,9 @@ static void test_raw_auto(const char *pszFormat, int bFileMapping)
     ASSERT_TRUE(hDS != nullptr);
 
     int nPixelSpace1;
-    GIntBig nLineSpace1;
+    int64_t nLineSpace1;
     int nPixelSpace2;
-    GIntBig nLineSpace2;
+    int64_t nLineSpace2;
     if (!bFileMapping)
     {
         char **papszOptions =
@@ -236,7 +238,7 @@ TEST(testvitualmem, test)
     /*printf("test_huge_mapping\n");
     test_huge_mapping();*/
 
-    printf("Physical memory : " CPL_FRMT_GIB " bytes\n", CPLGetPhysicalRAM());
+    printf("Physical memory : %" PRId64 " bytes\n", CPLGetPhysicalRAM());
 
     if (CPLIsVirtualMemFileMapAvailable())
     {

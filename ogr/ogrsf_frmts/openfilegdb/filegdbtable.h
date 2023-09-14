@@ -402,7 +402,7 @@ class FileGDBTable
     bool m_bDirtyGdbIndexesFile = false;
 
     uint32_t m_nHeaderBufferMaxSize = 0;
-    GUIntBig m_nOffsetFieldDesc = 0;
+    uint64_t m_nOffsetFieldDesc = 0;
     uint32_t m_nFieldDescLength = 0;
     bool m_bDirtyGeomFieldBBox = false;
     bool m_bDirtyGeomFieldSpatialIndexGridRes = false;
@@ -469,7 +469,7 @@ class FileGDBTable
 
     std::string m_osCacheRasterFieldPath{};
 
-    GUIntBig m_nFilterXMin = 0, m_nFilterXMax = 0, m_nFilterYMin = 0,
+    uint64_t m_nFilterXMin = 0, m_nFilterXMax = 0, m_nFilterYMin = 0,
              m_nFilterYMax = 0;
 
     class WholeFileRewriter

@@ -36,6 +36,7 @@
 #include "mitab.h"
 
 #include <cctype>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -729,7 +730,7 @@ int MIFFile::AddFields(const char *pszLine)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig MIFFile::GetFeatureCount(int bForce)
+int64_t MIFFile::GetFeatureCount(int bForce)
 {
 
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)
@@ -1136,7 +1137,7 @@ int MIFFile::Close()
  * Returns feature id that follows nPrevId, or -1 if it is the
  * last feature id.  Pass nPrevId=-1 to fetch the first valid feature id.
  **********************************************************************/
-GIntBig MIFFile::GetNextFeatureId(GIntBig nPrevId)
+int64_t MIFFile::GetNextFeatureId(int64_t nPrevId)
 {
     if (m_eAccessMode != TABRead)
     {
@@ -1213,7 +1214,7 @@ int MIFFile::GotoFeature(int nFeatureId)
  * error happened.  In any case, CPLError() will have been called to
  * report the reason of the failure.
  **********************************************************************/
-TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
+TABFeature *MIFFile::GetFeatureRef(int64_t nFeatureId)
 {
     if (m_eAccessMode != TABRead)
     {
@@ -1237,7 +1238,7 @@ TABFeature *MIFFile::GetFeatureRef(GIntBig nFeatureId)
         GotoFeature(static_cast<int>(nFeatureId)) != 0)
     {
         CPLError(CE_Failure, CPLE_IllegalArg,
-                 "GetFeatureRef() failed: invalid feature id " CPL_FRMT_GIB,
+                 "GetFeatureRef() failed: invalid feature id %" PRId64,
                  nFeatureId);
         return nullptr;
     }

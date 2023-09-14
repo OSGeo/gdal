@@ -33,6 +33,7 @@
 #include "gdal_priv.h"
 #include "commonutils.h"
 
+#include <cinttypes>
 #include <limits>
 
 /************************************************************************/
@@ -181,10 +182,10 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                     {
                         bSeekOptimizedValid = false;
                         fprintf(stderr,
-                                "Error: file %s, offset[%d] (= " CPL_FRMT_GUIB
+                                "Error: file %s, offset[%d] (= %" PRIu64
                                 ") >= compressed_size is invalid.\n",
                                 psEntry->pszName, i,
-                                static_cast<GUIntBig>(nOffset64));
+                                static_cast<uint64_t>(nOffset64));
                     }
                     if (!anOffsets.empty())
                     {
@@ -192,23 +193,22 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                         if (nOffset64 <= nPrevOffset)
                         {
                             bSeekOptimizedValid = false;
-                            fprintf(
-                                stderr,
-                                "Error: file %s, offset[%d] (= " CPL_FRMT_GUIB
-                                ") <= offset[%d] (= " CPL_FRMT_GUIB ")\n",
-                                psEntry->pszName, i + 1,
-                                static_cast<GUIntBig>(nOffset64), i,
-                                static_cast<GUIntBig>(nPrevOffset));
+                            fprintf(stderr,
+                                    "Error: file %s, offset[%d] (= %" PRIu64
+                                    ") <= offset[%d] (= %" PRIu64 ")\n",
+                                    psEntry->pszName, i + 1,
+                                    static_cast<uint64_t>(nOffset64), i,
+                                    static_cast<uint64_t>(nPrevOffset));
                         }
                     }
                     else if (nOffset64 < 9)
                     {
                         bSeekOptimizedValid = false;
                         fprintf(stderr,
-                                "Error: file %s, offset[0] (= " CPL_FRMT_GUIB
+                                "Error: file %s, offset[0] (= %" PRIu64
                                 ") is invalid.\n",
                                 psEntry->pszName,
-                                static_cast<GUIntBig>(nOffset64));
+                                static_cast<uint64_t>(nOffset64));
                     }
                     anOffsets.push_back(nOffset64);
                 }
@@ -570,10 +570,10 @@ MAIN_START(nArgc, papszArgv)
                     CSLFetchNameValue(papszMD, "SOZIP_VALID") != nullptr;
                 const char *pszChunkSize =
                     CSLFetchNameValue(papszMD, "SOZIP_CHUNK_SIZE");
-                printf("%11" CPL_FRMT_GB_WITHOUT_PREFIX
-                       "u  %04d-%02d-%02d %02d:%02d:%02d  %s  %s               "
+                printf("%11" PRIu64
+                       "  %04d-%02d-%02d %02d:%02d:%02d  %s  %s               "
                        "%s\n",
-                       static_cast<GUIntBig>(psEntry->nSize),
+                       static_cast<uint64_t>(psEntry->nSize),
                        brokenDown.tm_year + 1900, brokenDown.tm_mon + 1,
                        brokenDown.tm_mday, brokenDown.tm_hour,
                        brokenDown.tm_min, brokenDown.tm_sec,

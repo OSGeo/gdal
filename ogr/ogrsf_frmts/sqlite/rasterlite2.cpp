@@ -38,6 +38,7 @@
 #include "ogrsqliteutility.h"
 #include "rasterlite2_header.h"
 
+#include <cinttypes>
 #include <cstring>
 #include <algorithm>
 
@@ -261,7 +262,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "rl2_resolve_base_resolution_from_dbms() failed / "
-                     "Invalid section: " CPL_FRMT_GIB,
+                     "Invalid section: %" PRId64,
                      m_nSectionId);
             return false;
         }
@@ -274,7 +275,7 @@ bool OGRSQLiteDataSource::OpenRasterSubDataset(
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "rl2_resolve_full_section_from_dbms() failed / "
-                     "Invalid section: " CPL_FRMT_GIB,
+                     "Invalid section: %" PRId64,
                      m_nSectionId);
             return false;
         }
@@ -1088,7 +1089,7 @@ CPLErr RL2RasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pData)
         nOutPixel = RL2_PIXEL_GRAYSCALE;
     }
 
-    const GIntBig nSectionId = poGDS->GetSectionId();
+    const int64_t nSectionId = poGDS->GetSectionId();
     if (nSectionId >= 0 &&
         (poGDS->IsRL2MixedResolutions() || poGDS->GetParentDS() == nullptr))
     {

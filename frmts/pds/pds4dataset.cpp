@@ -36,6 +36,7 @@
 #include "ogreditablelayer.h"
 #include "pds4dataset.h"
 
+#include <cinttypes>
 #include <cstdlib>
 #include <vector>
 #include <algorithm>
@@ -3101,7 +3102,7 @@ bool PDS4Dataset::InitImageFile()
             m_poExternalDS->FlushCache(false);
 
             // Check that blocks are effectively written in expected order.
-            GIntBig nLastOffset = 0;
+            int64_t nLastOffset = 0;
             for (int i = 0; i < nBands; i++)
             {
                 for (int y = 0; y < l_nBlocksPerColumn; y++)
@@ -3111,7 +3112,7 @@ bool PDS4Dataset::InitImageFile()
                             CPLSPrintf("BLOCK_OFFSET_%d_%d", 0, y), "TIFF");
                     if (pszBlockOffset)
                     {
-                        GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
+                        int64_t nOffset = CPLAtoGIntBig(pszBlockOffset);
                         if (i != 0 || y != 0)
                         {
                             if (nOffset != nLastOffset + nBlockSizeBytes)
@@ -3159,7 +3160,7 @@ bool PDS4Dataset::InitImageFile()
             m_poExternalDS->FlushCache(false);
 
             // Check that blocks are effectively written in expected order.
-            GIntBig nLastOffset = 0;
+            int64_t nLastOffset = 0;
             for (int y = 0; y < l_nBlocksPerColumn; y++)
             {
                 const char *pszBlockOffset =
@@ -3167,7 +3168,7 @@ bool PDS4Dataset::InitImageFile()
                         CPLSPrintf("BLOCK_OFFSET_%d_%d", 0, y), "TIFF");
                 if (pszBlockOffset)
                 {
-                    GIntBig nOffset = CPLAtoGIntBig(pszBlockOffset);
+                    int64_t nOffset = CPLAtoGIntBig(pszBlockOffset);
                     if (y != 0)
                     {
                         if (nOffset != nLastOffset + nBlockSizeBytes * nBands)
@@ -3206,8 +3207,7 @@ bool PDS4Dataset::InitImageFile()
         if (VSIFTruncateL(m_fpImage, nFileSize) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO,
-                     "Cannot create file of size " CPL_FRMT_GUIB " bytes",
-                     nFileSize);
+                     "Cannot create file of size %" PRIu64 " bytes", nFileSize);
             return false;
         }
     }
@@ -3236,7 +3236,7 @@ bool PDS4Dataset::InitImageFile()
             if (nBytesWritten != nLineSize)
             {
                 CPLError(CE_Failure, CPLE_FileIO,
-                         "Cannot create file of size " CPL_FRMT_GUIB " bytes",
+                         "Cannot create file of size %" PRIu64 " bytes",
                          nFileSize);
                 VSIFree(pData);
                 return false;
@@ -3336,7 +3336,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
                                     pszLocalIdentifier);
     }
 
-    GUIntBig nOffset = m_nBaseOffset;
+    uint64_t nOffset = m_nBaseOffset;
     if (m_poExternalDS)
     {
         const char *pszOffset =
@@ -3347,7 +3347,7 @@ void PDS4Dataset::WriteArray(const CPLString &osPrefix, CPLXMLNode *psFAO,
     }
     CPLAddXMLAttributeAndValue(
         CPLCreateXMLElementAndValue(psArray, (osPrefix + "offset").c_str(),
-                                    CPLSPrintf(CPL_FRMT_GUIB, nOffset)),
+                                    CPLSPrintf("%" PRIu64, nOffset)),
         "unit", "byte");
     CPLCreateXMLElementAndValue(psArray, (osPrefix + "axes").c_str(),
                                 (bIsArray2D) ? "2" : "3");
@@ -4017,8 +4017,8 @@ void PDS4Dataset::CreateHeader(CPLXMLNode *psProduct,
                 CPLAddXMLAttributeAndValue(
                     CPLCreateXMLElementAndValue(
                         psHeader, (osPrefix + "object_length").c_str(),
-                        CPLSPrintf(CPL_FRMT_GUIB,
-                                   static_cast<GUIntBig>(m_nBaseOffset))),
+                        CPLSPrintf("%" PRIu64,
+                                   static_cast<uint64_t>(m_nBaseOffset))),
                     "unit", "byte");
                 CPLCreateXMLElementAndValue(
                     psHeader, (osPrefix + "parsing_standard_id").c_str(),

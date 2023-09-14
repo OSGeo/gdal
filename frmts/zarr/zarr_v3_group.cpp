@@ -543,7 +543,7 @@ std::shared_ptr<GDALMDArray> ZarrV3Group::CreateMDArray(
         return nullptr;
     }
 
-    std::vector<GUInt64> anBlockSize;
+    std::vector<uint64_t> anBlockSize;
     if (!ZarrArray::FillBlockSize(aoDimensions, oDataType, anBlockSize,
                                   papszOptions))
         return nullptr;

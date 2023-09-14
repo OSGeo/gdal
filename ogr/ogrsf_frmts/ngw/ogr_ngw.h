@@ -48,7 +48,7 @@ std::string GetFeature(const std::string &osUrl,
                        const std::string &osResourceId);
 std::string GetTMS(const std::string &osUrl, const std::string &osResourceId);
 std::string GetFeaturePage(const std::string &osUrl,
-                           const std::string &osResourceId, GIntBig nStart,
+                           const std::string &osResourceId, int64_t nStart,
                            int nCount = 0, const std::string &osFields = "",
                            const std::string &osWhere = "",
                            const std::string &osSpatialWhere = "",
@@ -110,13 +110,13 @@ void FillResmeta(CPLJSONObject &oRoot, char **papszMetadata);
 std::string GetResmetaSuffix(CPLJSONObject::Type eType);
 bool DeleteFeature(const std::string &osUrl, const std::string &osResourceId,
                    const std::string &osFeatureId, char **papszHTTPOptions);
-GIntBig CreateFeature(const std::string &osUrl, const std::string &osResourceId,
+int64_t CreateFeature(const std::string &osUrl, const std::string &osResourceId,
                       const std::string &osFeatureJson,
                       char **papszHTTPOptions);
 bool UpdateFeature(const std::string &osUrl, const std::string &osResourceId,
                    const std::string &osFeatureId,
                    const std::string &osFeatureJson, char **papszHTTPOptions);
-std::vector<GIntBig> PatchFeatures(const std::string &osUrl,
+std::vector<int64_t> PatchFeatures(const std::string &osUrl,
                                    const std::string &osResourceId,
                                    const std::string &osFeaturesJson,
                                    char **papszHTTPOptions);
@@ -136,13 +136,13 @@ class OGRNGWLayer final : public OGRLayer
     NGWAPI::Permissions stPermissions;
     bool bFetchedPermissions;
     OGRFeatureDefn *poFeatureDefn;
-    GIntBig nFeatureCount;
+    int64_t nFeatureCount;
     OGREnvelope stExtent;
-    std::map<GIntBig, OGRFeature *> moFeatures;
-    std::map<GIntBig, OGRFeature *>::const_iterator oNextPos;
-    GIntBig nPageStart;
+    std::map<int64_t, OGRFeature *> moFeatures;
+    std::map<int64_t, OGRFeature *>::const_iterator oNextPos;
+    int64_t nPageStart;
     bool bNeedSyncData, bNeedSyncStructure;
-    std::set<GIntBig> soChangedIds;
+    std::set<int64_t> soChangedIds;
     std::string osFields;
     std::string osWhere;
     std::string osSpatialFilter;
@@ -152,7 +152,7 @@ class OGRNGWLayer final : public OGRLayer
                          OGRNGWDataset *poDSIn,
                          const NGWAPI::Permissions &stPermissionsIn,
                          OGRFeatureDefn *poFeatureDefnIn,
-                         GIntBig nFeatureCountIn,
+                         int64_t nFeatureCountIn,
                          const OGREnvelope &stExtentIn);
 
   public:
@@ -171,9 +171,9 @@ class OGRNGWLayer final : public OGRLayer
     /* OGRLayer */
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce = TRUE) override;
@@ -189,7 +189,7 @@ class OGRNGWLayer final : public OGRLayer
 
     virtual OGRErr SyncToDisk() override;
 
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
     bool DeleteAllFeatures();
 
     virtual CPLErr SetMetadata(char **papszMetadata,
@@ -219,9 +219,9 @@ class OGRNGWLayer final : public OGRLayer
     void FreeFeaturesCache(bool bForce = false);
     std::string CreateNGWResourceJson();
     OGRErr SyncFeatures();
-    GIntBig GetMaxFeatureCount(bool bForce);
+    int64_t GetMaxFeatureCount(bool bForce);
     bool FillFeatures(const std::string &osUrl);
-    GIntBig GetNewFeaturesCount() const;
+    int64_t GetNewFeaturesCount() const;
 };
 
 class OGRNGWDataset final : public GDALDataset

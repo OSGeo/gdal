@@ -46,6 +46,7 @@
 #include "cpl_port.h"
 #include "rpftoclib.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cstring>
 #if HAVE_FCNTL_H
@@ -467,12 +468,11 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
             static_cast<vsi_l_offset>(frameFileIndexRecordLength) * i;
         if (VSIFSeekL(fp, nFrameOffset, SEEK_SET) != 0)
         {
-            CPLError(
-                CE_Failure, CPLE_NotSupported,
-                "Invalid TOC file. Unable to seek to "
-                "frameFileIndexSubsectionPhysIndex(%d) at offset " CPL_FRMT_GUIB
-                ".",
-                i, static_cast<GUIntBig>(nFrameOffset));
+            CPLError(CE_Failure, CPLE_NotSupported,
+                     "Invalid TOC file. Unable to seek to "
+                     "frameFileIndexSubsectionPhysIndex(%d) at offset %" PRIu64
+                     ".",
+                     i, static_cast<uint64_t>(nFrameOffset));
             RPFTOCFree(toc);
             return nullptr;
         }
@@ -627,9 +627,9 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid TOC file. Unable to seek to "
                      "frameFileIndexSubsectionPhysIndex + "
-                     "offsetFrameFilePathName(%d) at offset " CPL_FRMT_GUIB ".",
+                     "offsetFrameFilePathName(%d) at offset %" PRIu64 ".",
                      i,
-                     static_cast<GUIntBig>(frameFileIndexSubsectionPhysIndex) +
+                     static_cast<uint64_t>(frameFileIndexSubsectionPhysIndex) +
                          offsetFrameFilePathName);
             RPFTOCFree(toc);
             return nullptr;

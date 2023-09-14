@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cinttypes>
 #include <set>
 #include <map>
 #include <memory>
@@ -160,7 +161,7 @@ static void VSICURLReadGlobalEnvVariables()
                 DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > 10 * 1024 * 1024)
                 DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY = 16384;
 
-            GIntBig nCacheSize = CPLAtoGIntBig(
+            int64_t nCacheSize = CPLAtoGIntBig(
                 CPLGetConfigOption("CPL_VSIL_CURL_CACHE_SIZE", "16384000"));
             if (nCacheSize < DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY ||
                 nCacheSize / DOWNLOAD_CHUNK_SIZE_DO_NOT_USE_DIRECTLY > INT_MAX)
@@ -529,7 +530,7 @@ int VSICurlHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                 VSICurlGetTimeStampFromRFC822DateTime()              */
 /************************************************************************/
 
-static GIntBig VSICurlGetTimeStampFromRFC822DateTime(const char *pszDT)
+static int64_t VSICurlGetTimeStampFromRFC822DateTime(const char *pszDT)
 {
     // Sun, 03 Apr 2016 12:07:27 GMT
     if (strlen(pszDT) >= 5 && pszDT[3] == ',' && pszDT[4] == ' ')
@@ -676,11 +677,10 @@ size_t VSICurlHandleWriteFunc(void *buffer, size_t count, size_t nmemb,
                 }
                 osDate.Trim();
 
-                GIntBig nTimestampDate =
+                int64_t nTimestampDate =
                     VSICurlGetTimeStampFromRFC822DateTime(osDate);
 #if DEBUG_VERBOSE
-                CPLDebug("VSICURL", "Timestamp = " CPL_FRMT_GIB,
-                         nTimestampDate);
+                CPLDebug("VSICURL", "Timestamp = %" PRId64, nTimestampDate);
 #endif
                 psStruct->nTimestampDate = nTimestampDate;
             }
@@ -764,7 +764,7 @@ static bool VSICurlIsS3LikeSignedURL(const char *pszURL)
 /*                  VSICurlGetExpiresFromS3LikeSignedURL()              */
 /************************************************************************/
 
-static GIntBig VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
+static int64_t VSICurlGetExpiresFromS3LikeSignedURL(const char *pszURL)
 {
     const auto GetParamValue = [pszURL](const char *pszKey) -> const char *
     {
@@ -884,7 +884,7 @@ void VSICURLResetHeaderAndWriterFunctions(CURL *hCurlHandle)
 /*                        Iso8601ToUnixTime()                           */
 /************************************************************************/
 
-static bool Iso8601ToUnixTime(const char *pszDT, GIntBig *pnUnixTime)
+static bool Iso8601ToUnixTime(const char *pszDT, int64_t *pnUnixTime)
 {
     int nYear;
     int nMonth;
@@ -924,7 +924,7 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
     struct PCSigningInfo
     {
         std::string osQueryString{};
-        GIntBig nExpireTimestamp = 0;
+        int64_t nExpireTimestamp = 0;
     };
 
     PCSigningInfo sSigningInfo;
@@ -1164,9 +1164,8 @@ retry:
                     CPLScanUIntBig(pszContentLength,
                                    static_cast<int>(strlen(pszContentLength)));
                 if (ENABLE_DEBUG)
-                    CPLDebug(poFS->GetDebugKey(),
-                             "GetFileSize(%s)=" CPL_FRMT_GUIB, osURL.c_str(),
-                             oFileProp.fileSize);
+                    CPLDebug(poFS->GetDebugKey(), "GetFileSize(%s)=%" PRIu64,
+                             osURL.c_str(), oFileProp.fileSize);
             }
         }
     }
@@ -1254,7 +1253,7 @@ retry:
             CPLTestBool(
                 CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")))
         {
-            const GIntBig nExpireTimestamp =
+            const int64_t nExpireTimestamp =
                 VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
             if (nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10)
             {
@@ -1301,7 +1300,7 @@ retry:
                 oFileProp.fileSize = 0;
             }
             else
-                oFileProp.fileSize = static_cast<GUIntBig>(dfSize);
+                oFileProp.fileSize = static_cast<uint64_t>(dfSize);
         }
 
         if (sWriteFuncHeaderData.pBuffer != nullptr &&
@@ -1385,7 +1384,7 @@ retry:
                 if (pszContentRange)
                 {
                     oFileProp.eExists = EXIST_YES;
-                    oFileProp.fileSize = static_cast<GUIntBig>(
+                    oFileProp.fileSize = static_cast<uint64_t>(
                         CPLAtoGIntBig(pszContentRange + 1));
                 }
 
@@ -1522,7 +1521,7 @@ retry:
         if (!bAlreadyLogged)
         {
             CPLDebug(poFS->GetDebugKey(),
-                     "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
+                     "GetFileSize(%s)=%" PRIu64 "  response_code=%d",
                      osURL.c_str(), oFileProp.fileSize,
                      static_cast<int>(response_code));
         }
@@ -1794,8 +1793,9 @@ retry:
     }
 
     char rangeStr[512] = {};
-    snprintf(rangeStr, sizeof(rangeStr), CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
-             startOffset, sWriteFuncHeaderData.nEndOffset);
+    // cppcheck-suppress invalidPrintfArgType_uint
+    snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64, startOffset,
+             sWriteFuncHeaderData.nEndOffset);
 
     if (ENABLE_DEBUG)
         CPLDebug(poFS->GetDebugKey(), "Downloading %s (%s)...", rangeStr,
@@ -2013,7 +2013,7 @@ retry:
 
             if (ENABLE_DEBUG)
                 CPLDebug(poFS->GetDebugKey(),
-                         "GetFileSize(%s)=" CPL_FRMT_GUIB "  response_code=%d",
+                         "GetFileSize(%s)=%" PRIu64 "  response_code=%d",
                          m_pszURL, oFileProp.fileSize,
                          static_cast<int>(response_code));
 
@@ -2069,7 +2069,7 @@ void VSICurlHandle::UpdateRedirectInfo(
             CPLTestBool(
                 CPLGetConfigOption("CPL_VSIL_CURL_USE_S3_REDIRECT", "TRUE")))
         {
-            GIntBig nExpireTimestamp =
+            int64_t nExpireTimestamp =
                 VSICurlGetExpiresFromS3LikeSignedURL(osEffectiveURL);
             if (nExpireTimestamp > sWriteFuncHeaderData.nTimestampDate + 10)
             {
@@ -2163,8 +2163,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             if (iterOffset == curOffset)
             {
                 CPLDebug(poFS->GetDebugKey(),
-                         "Request at offset " CPL_FRMT_GUIB
-                         ", after end of file",
+                         "Request at offset %" PRIu64 ", after end of file",
                          iterOffset);
             }
             break;
@@ -2240,8 +2239,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             if (iterOffset == curOffset)
             {
                 CPLDebug(poFS->GetDebugKey(),
-                         "Request at offset " CPL_FRMT_GUIB
-                         ", after end of file",
+                         "Request at offset %" PRIu64 ", after end of file",
                          iterOffset);
             }
             break;
@@ -2391,7 +2389,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         asWriteFuncHeaderData[iRequest].nEndOffset = panOffsets[i] + nSize - 1;
 
         char rangeStr[512] = {};
-        snprintf(rangeStr, sizeof(rangeStr), CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+        // cppcheck-suppress invalidPrintfArgType_uint
+        snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                  asWriteFuncHeaderData[iRequest].nStartOffset,
                  asWriteFuncHeaderData[iRequest].nEndOffset);
 
@@ -2452,8 +2451,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
         if (ENABLE_DEBUG && asCurlErrors[iRange].szCurlErrBuf[0] != '\0')
         {
             char rangeStr[512] = {};
-            snprintf(rangeStr, sizeof(rangeStr),
-                     CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+            // cppcheck-suppress invalidPrintfArgType_uint
+            snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                      asWriteFuncHeaderData[iReq].nStartOffset,
                      asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -2470,8 +2469,8 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
                     asWriteFuncData[iReq].nSize)
         {
             char rangeStr[512] = {};
-            snprintf(rangeStr, sizeof(rangeStr),
-                     CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+            // cppcheck-suppress invalidPrintfArgType_uint
+            snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                      asWriteFuncHeaderData[iReq].nStartOffset,
                      asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -2554,7 +2553,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
         CPLString osCurRange;
         if (i != 0)
             osRanges.append(",");
-        osCurRange = CPLSPrintf(CPL_FRMT_GUIB "-", panOffsets[i]);
+        osCurRange = CPLSPrintf("%" PRIu64 "-", panOffsets[i]);
         while (i + 1 < nRanges &&
                panOffsets[i] + panSizes[i] == panOffsets[i + 1])
         {
@@ -2563,7 +2562,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
         }
         nTotalReqSize += panSizes[i];
         osCurRange.append(
-            CPLSPrintf(CPL_FRMT_GUIB, panOffsets[i] + panSizes[i] - 1));
+            CPLSPrintf("%" PRIu64, panOffsets[i] + panSizes[i] - 1));
         nMergedRanges++;
 
         osRanges += osCurRange;
@@ -2624,9 +2623,9 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
                      osRanges.c_str(), m_pszURL);
         else
             CPLDebug(poFS->GetDebugKey(),
-                     "Downloading %s, ..., %s (" CPL_FRMT_GUIB " bytes, %s)...",
+                     "Downloading %s, ..., %s (%" PRIu64 " bytes, %s)...",
                      osFirstRange.c_str(), osLastRange.c_str(),
-                     static_cast<GUIntBig>(nTotalReqSize), m_pszURL);
+                     static_cast<uint64_t>(nTotalReqSize), m_pszURL);
     }
 
     unchecked_curl_easy_setopt(hCurlHandle, CURLOPT_RANGE, osRanges.c_str());
@@ -2995,7 +2994,8 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
     sWriteFuncHeaderData.nEndOffset = nOffset + nSize - 1;
 
     char rangeStr[512] = {};
-    snprintf(rangeStr, sizeof(rangeStr), CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+    // cppcheck-suppress invalidPrintfArgType_uint
+    snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
              sWriteFuncHeaderData.nStartOffset,
              sWriteFuncHeaderData.nEndOffset);
 
@@ -3256,8 +3256,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                 m_aoAdviseReadRanges[i]->nSize - 1;
 
             char rangeStr[512] = {};
-            snprintf(rangeStr, sizeof(rangeStr),
-                     CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+            // cppcheck-suppress invalidPrintfArgType_uint
+            snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                      asWriteFuncHeaderData[i].nStartOffset,
                      asWriteFuncHeaderData[i].nEndOffset);
 
@@ -3309,8 +3309,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
             if (ENABLE_DEBUG && asCurlErrors[iReq].szCurlErrBuf[0] != '\0')
             {
                 char rangeStr[512] = {};
-                snprintf(rangeStr, sizeof(rangeStr),
-                         CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                // cppcheck-suppress invalidPrintfArgType_uint
+                snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                          asWriteFuncHeaderData[iReq].nStartOffset,
                          asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -3327,8 +3327,8 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
                         asWriteFuncData[iReq].nSize)
             {
                 char rangeStr[512] = {};
-                snprintf(rangeStr, sizeof(rangeStr),
-                         CPL_FRMT_GUIB "-" CPL_FRMT_GUIB,
+                // cppcheck-suppress invalidPrintfArgType_uint
+                snprintf(rangeStr, sizeof(rangeStr), "%" PRIu64 "-%" PRIu64,
                          asWriteFuncHeaderData[iReq].nStartOffset,
                          asWriteFuncHeaderData[iReq].nEndOffset);
 
@@ -4140,8 +4140,8 @@ static const char *const apszMonths[] = {
 
 static bool VSICurlParseHTMLDateTimeFileSize(const char *pszStr,
                                              struct tm &brokendowntime,
-                                             GUIntBig &nFileSize,
-                                             GIntBig &mTime)
+                                             uint64_t &nFileSize,
+                                             int64_t &mTime)
 {
     for (int iMonth = 0; iMonth < 12; iMonth++)
     {
@@ -4431,8 +4431,8 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
             {
                 struct tm brokendowntime;
                 memset(&brokendowntime, 0, sizeof(brokendowntime));
-                GUIntBig nFileSize = 0;
-                GIntBig mTime = 0;
+                uint64_t nFileSize = 0;
+                int64_t mTime = 0;
 
                 VSICurlParseHTMLDateTimeFileSize(pszLine, brokendowntime,
                                                  nFileSize, mTime);
@@ -4471,16 +4471,15 @@ char **VSICurlFilesystemHandlerBase::ParseHTMLFileList(const char *pszFilename,
                     oFileList.AddString(beginFilename);
                     if (ENABLE_DEBUG_VERBOSE)
                     {
-                        CPLDebug(
-                            GetDebugKey(),
-                            "File[%d] = %s, is_dir = %d, size = " CPL_FRMT_GUIB
-                            ", time = %04d/%02d/%02d %02d:%02d:%02d",
-                            nCount, osCachedFilename.c_str(),
-                            bIsDirectory ? 1 : 0, nFileSize,
-                            brokendowntime.tm_year + 1900,
-                            brokendowntime.tm_mon + 1, brokendowntime.tm_mday,
-                            brokendowntime.tm_hour, brokendowntime.tm_min,
-                            brokendowntime.tm_sec);
+                        CPLDebug(GetDebugKey(),
+                                 "File[%d] = %s, is_dir = %d, size = %" PRIu64
+                                 ", time = %04d/%02d/%02d %02d:%02d:%02d",
+                                 nCount, osCachedFilename.c_str(),
+                                 bIsDirectory ? 1 : 0, nFileSize,
+                                 brokendowntime.tm_year + 1900,
+                                 brokendowntime.tm_mon + 1,
+                                 brokendowntime.tm_mday, brokendowntime.tm_hour,
+                                 brokendowntime.tm_min, brokendowntime.tm_sec);
                     }
                     nCount++;
 
@@ -4553,8 +4552,8 @@ mirrors/mplayerhq.hu/MPlayer -rw-r--r--    1 ftp      ftp      725614592 May 13
 */
 
 static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
-                                    bool &bSizeValid, GUIntBig &nSize,
-                                    bool &bIsDirectory, GIntBig &nUnixTime)
+                                    bool &bSizeValid, uint64_t &nSize,
+                                    bool &bIsDirectory, int64_t &nUnixTime)
 {
     char *pszNextToken = pszLine;
     char *pszPermissions = VSICurlGetToken(pszNextToken, &pszNextToken);
@@ -4620,7 +4619,7 @@ static bool VSICurlParseFullFTPLine(char *pszLine, char *&pszFilename,
         time_t sTime;
         time(&sTime);
         struct tm currentBrokendowntime;
-        CPLUnixTimeToYMDHMS(static_cast<GIntBig>(sTime),
+        CPLUnixTimeToYMDHMS(static_cast<int64_t>(sTime),
                             &currentBrokendowntime);
         brokendowntime.tm_year = currentBrokendowntime.tm_year;
         brokendowntime.tm_hour = atoi(pszHourOrYear);
@@ -4781,9 +4780,9 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
 
                     char *pszFilename = nullptr;
                     bool bSizeValid = false;
-                    GUIntBig nFileSize = 0;
+                    uint64_t nFileSize = 0;
                     bool bIsDirectory = false;
-                    GIntBig mUnixTime = 0;
+                    int64_t mUnixTime = 0;
                     if (!VSICurlParseFullFTPLine(pszLine, pszFilename,
                                                  bSizeValid, nFileSize,
                                                  bIsDirectory, mUnixTime))
@@ -4812,7 +4811,7 @@ char **VSICurlFilesystemHandlerBase::GetFileList(const char *pszDirname,
                             CPLDebug(
                                 GetDebugKey(),
                                 "File[%d] = %s, is_dir = %d, size "
-                                "= " CPL_FRMT_GUIB
+                                "= %" PRIu64
                                 ", time = %04d/%02d/%02d %02d:%02d:%02d",
                                 nCount, pszFilename, bIsDirectory ? 1 : 0,
                                 nFileSize, brokendowntime.tm_year + 1900,

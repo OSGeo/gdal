@@ -2052,7 +2052,7 @@ static CPLErr GDALResampleChunk_Gauss(
             if (poColorTable == nullptr)
             {
                 double dfTotal = 0.0;
-                GInt64 nCount = 0;
+                int64_t nCount = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -2091,10 +2091,10 @@ static CPLErr GDALResampleChunk_Gauss(
             }
             else
             {
-                GInt64 nTotalR = 0;
-                GInt64 nTotalG = 0;
-                GInt64 nTotalB = 0;
-                GInt64 nTotalWeight = 0;
+                int64_t nTotalR = 0;
+                int64_t nTotalG = 0;
+                int64_t nTotalB = 0;
+                int64_t nTotalWeight = 0;
                 const int *panLineWeight =
                     panGaussMatrix + nYShiftGaussMatrix * nGaussMatrixDim +
                     nXShiftGaussMatrix;
@@ -2116,11 +2116,11 @@ static CPLErr GDALResampleChunk_Gauss(
                         if (colorEntries[idx].c4)
                         {
                             const int nWeight = panLineWeight[i];
-                            nTotalR += static_cast<GInt64>(
+                            nTotalR += static_cast<int64_t>(
                                 colorEntries[idx].c1 * nWeight);
-                            nTotalG += static_cast<GInt64>(
+                            nTotalG += static_cast<int64_t>(
                                 colorEntries[idx].c2 * nWeight);
-                            nTotalB += static_cast<GInt64>(
+                            nTotalB += static_cast<int64_t>(
                                 colorEntries[idx].c3 * nWeight);
                             nTotalWeight += nWeight;
                         }
@@ -3096,7 +3096,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
         GetReplacementValueIfNoData(dstDataType, bHasNoData, dfNoDataValue);
     // cppcheck-suppress unreadVariable
     const int isIntegerDT = GDALDataTypeIsInteger(dstDataType);
-    const auto nNodataValueInt64 = static_cast<GInt64>(dfNoDataValue);
+    const auto nNodataValueInt64 = static_cast<int64_t>(dfNoDataValue);
 
     // TODO: we should have some generic function to do this.
     Twork fDstMin = -std::numeric_limits<Twork>::max();
@@ -3150,7 +3150,7 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             fClamped = fDstMax;
         if (isIntegerDT)
         {
-            if (nNodataValueInt64 == static_cast<GInt64>(std::round(fClamped)))
+            if (nNodataValueInt64 == static_cast<int64_t>(std::round(fClamped)))
             {
                 // Do not use the nodata value
                 return static_cast<Twork>(dfReplacementVal);
@@ -4459,7 +4459,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
         nFullResYChunk = std::max(nFullResYChunk, 2 * nMaxOvrFactor);
         nMaxChunkYSizeQueried =
             nFullResYChunk + 2 * nKernelRadius * nMaxOvrFactor;
-        return static_cast<GIntBig>(GDALGetDataTypeSizeBytes(eWrkDataType)) *
+        return static_cast<int64_t>(GDALGetDataTypeSizeBytes(eWrkDataType)) *
                nMaxChunkYSizeQueried * nWidth;
     };
 
@@ -5267,7 +5267,7 @@ CPLErr GDALRegenerateOverviewsMultiBand(
             const int nFullResXChunkQueried =
                 nFullResXChunk + 2 * nKernelRadius * nOvrFactor;
 
-            if (static_cast<GIntBig>(nFullResXChunkQueried) *
+            if (static_cast<int64_t>(nFullResXChunkQueried) *
                     nFullResYChunkQueried * nBands *
                     GDALGetDataTypeSizeBytes(eWrkDataType) >
                 nChunkMaxSize)
@@ -5691,7 +5691,7 @@ CPLErr CPL_STDCALL GDALComputeBandStats(GDALRasterBandH hSrcBand,
     double dfSum = 0.0;
     double dfSum2 = 0.0;
     int iLine = 0;
-    GIntBig nSamples = 0;
+    int64_t nSamples = 0;
 
     do
     {

@@ -129,7 +129,7 @@ class CPL_UNSTABLE_API swq_expr_node
 
     explicit swq_expr_node(const char *);
     explicit swq_expr_node(int);
-    explicit swq_expr_node(GIntBig);
+    explicit swq_expr_node(int64_t);
     explicit swq_expr_node(double);
     explicit swq_expr_node(OGRGeometry *);
     explicit swq_expr_node(swq_op);
@@ -167,7 +167,7 @@ class CPL_UNSTABLE_API swq_expr_node
 
     /* only for SNT_CONSTANT */
     int is_null = false;
-    GIntBig int_value = 0;
+    int64_t int_value = 0;
     double float_value = 0.0;
     OGRGeometry *geometry_value = nullptr;
 
@@ -338,7 +338,7 @@ class CPL_UNSTABLE_API swq_summary
         bool operator()(const CPLString &, const CPLString &) const;
     };
 
-    GIntBig count = 0;
+    int64_t count = 0;
 
     std::vector<CPLString> oVectorDistinctValues{};
     std::set<CPLString, Comparator> oSetDistinctValues{};
@@ -421,11 +421,11 @@ class CPL_UNSTABLE_API swq_select
     int order_specs = 0;
     swq_order_def *order_defs = nullptr;
 
-    void SetLimit(GIntBig nLimit);
-    GIntBig limit = -1;
+    void SetLimit(int64_t nLimit);
+    int64_t limit = -1;
 
-    void SetOffset(GIntBig nOffset);
-    GIntBig offset = 0;
+    void SetOffset(int64_t nOffset);
+    int64_t offset = 0;
 
     swq_select *poOtherSelect = nullptr;
     void PushUnionAll(swq_select *poOtherSelectIn);

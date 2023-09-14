@@ -32,6 +32,8 @@
 #include "cpl_string.h"
 #include "ogrgeoconceptlayer.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                         OGRGeoconceptLayer()                         */
 /************************************************************************/
@@ -180,7 +182,7 @@ OGRFeature *OGRGeoconceptLayer::GetNextFeature()
     }
 
     CPLDebug("GEOCONCEPT",
-             "FID : " CPL_FRMT_GIB "\n"
+             "FID : %" PRId64 "\n"
              "%s  : %s",
              poFeature ? poFeature->GetFID() : -1L,
              poFeature && poFeature->GetFieldCount() > 0
@@ -422,7 +424,7 @@ OGRSpatialReference *OGRGeoconceptLayer::GetSpatialRef()
 /*      the generic counter.  Otherwise we return the total count.      */
 /************************************************************************/
 
-GIntBig OGRGeoconceptLayer::GetFeatureCount(int bForce)
+int64_t OGRGeoconceptLayer::GetFeatureCount(int bForce)
 
 {
     if (m_poFilterGeom != nullptr || m_poAttrQuery != nullptr)

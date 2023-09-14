@@ -31,6 +31,8 @@
 #include "postgisraster.h"
 #include "cpl_multiproc.h"
 
+#include <cinttypes>
+
 /************************
  * \brief Constructor
  ************************/
@@ -90,7 +92,7 @@ PGconn *PostGISRasterDriver::GetConnection(const char *pszConnectionString,
     osKey += "-";
     osKey += pszUserIn;
     osKey += "-";
-    osKey += CPLSPrintf(CPL_FRMT_GIB, CPLGetPID());
+    osKey += CPLSPrintf("%" PRId64, CPLGetPID());
 
     /**
      * Look for an existing connection in the map

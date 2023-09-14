@@ -295,7 +295,7 @@ class OGCAPITiledLayer final
         return m_poFeatureDefn->GetGeomType();
     }
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(OGCAPITiledLayer)
-    GIntBig GetFeatureCount(int /* bForce */) override
+    int64_t GetFeatureCount(int /* bForce */) override
     {
         return -1;
     }
@@ -309,7 +309,7 @@ class OGCAPITiledLayer final
     {
         OGRLayer::SetSpatialFilter(iGeomField, poGeom);
     }
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     int TestCapability(const char *) override;
 };
 
@@ -2418,7 +2418,7 @@ OGRFeature *OGCAPITiledLayer::BuildFeature(OGRFeature *poSrcFeature, int nX,
     nX = (nX / nCoalesce) * nCoalesce;
 
     OGRFeature *poFeature = new OGRFeature(m_poFeatureDefn);
-    const GIntBig nFID = nY * m_oTileMatrix.mMatrixWidth + nX +
+    const int64_t nFID = nY * m_oTileMatrix.mMatrixWidth + nX +
                          poSrcFeature->GetFID() * m_oTileMatrix.mMatrixWidth *
                              m_oTileMatrix.mMatrixHeight;
     auto poGeom = poSrcFeature->StealGeometry();
@@ -2518,13 +2518,13 @@ OGRFeature *OGCAPITiledLayer::GetNextRawFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGCAPITiledLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGCAPITiledLayer::GetFeature(int64_t nFID)
 {
     if (nFID < 0)
         return nullptr;
-    const GIntBig nFIDInTile =
+    const int64_t nFIDInTile =
         nFID / (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
-    const GIntBig nTileID =
+    const int64_t nTileID =
         nFID % (m_oTileMatrix.mMatrixWidth * m_oTileMatrix.mMatrixHeight);
     const int nY = static_cast<int>(nTileID / m_oTileMatrix.mMatrixWidth);
     const int nX = static_cast<int>(nTileID % m_oTileMatrix.mMatrixWidth);

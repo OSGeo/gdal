@@ -1682,7 +1682,7 @@ CPLErr VRTPansharpenedRasterBand::IRasterIO(
             else if (nYOff + nYSizeToCache > nRasterYSize)
                 nYSizeToCache = nRasterYSize - nYOff;
         }
-        const GUIntBig nBufferSize = static_cast<GUIntBig>(nXSize) *
+        const uint64_t nBufferSize = static_cast<uint64_t>(nXSize) *
                                      nYSizeToCache * nDataTypeSize *
                                      psOptions->nOutPansharpenedBands;
         // Check the we don't overflow (for 32 bit platforms)

@@ -296,7 +296,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     OGRSpatialReference *poSRS = nullptr;
     int nSRSId = 0;
 
-    GIntBig iNextShapeId = 0;
+    int64_t iNextShapeId = 0;
 
     OGRMSSQLSpatialDataSource *poDS = nullptr;
 
@@ -332,7 +332,7 @@ class OGRMSSQLSpatialLayer CPL_NON_FINAL : public OGRLayer
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override
     {
@@ -376,7 +376,7 @@ typedef union
     struct
     {
         int iIndicator;
-        GIntBig Value;
+        int64_t Value;
     } Integer64;
 
     struct
@@ -456,7 +456,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce) override;
 
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
@@ -466,7 +466,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
     virtual OGRFeature *GetNextFeature() override;
 
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
 
     const char *GetTableName()
@@ -485,7 +485,7 @@ class OGRMSSQLSpatialTableLayer final : public OGRMSSQLSpatialLayer
     virtual OGRErr CreateField(OGRFieldDefn *poField,
                                int bApproxOK = TRUE) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual int TestCapability(const char *) override;
 
@@ -548,9 +548,9 @@ class OGRMSSQLSpatialSelectLayer final : public OGRMSSQLSpatialLayer
     OGRMSSQLSpatialSelectLayer(OGRMSSQLSpatialDataSource *, CPLODBCStatement *);
     virtual ~OGRMSSQLSpatialSelectLayer();
 
-    virtual GIntBig GetFeatureCount(int) override;
+    virtual int64_t GetFeatureCount(int) override;
 
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,

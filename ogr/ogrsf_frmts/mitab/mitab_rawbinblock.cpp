@@ -736,9 +736,9 @@ int32_t TABRawBinBlock::ReadInt32()
 #endif
 }
 
-GInt64 TABRawBinBlock::ReadInt64()
+int64_t TABRawBinBlock::ReadInt64()
 {
-    GInt64 n64Value = 0;
+    int64_t n64Value = 0;
 
     ReadBytes(8, reinterpret_cast<GByte *>(&n64Value));
 
@@ -866,7 +866,7 @@ int TABRawBinBlock::WriteInt32(int32_t n32Value)
     return WriteBytes(4, reinterpret_cast<GByte *>(&n32Value));
 }
 
-int TABRawBinBlock::WriteInt64(GInt64 n64Value)
+int TABRawBinBlock::WriteInt64(int64_t n64Value)
 {
 #ifdef CPL_MSB
     CPL_SWAP64PTR(&n64Value);

@@ -34,6 +34,7 @@
 #include "ods_formula.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <set>
 
 namespace OGRODS
@@ -133,7 +134,7 @@ OGRFeature *OGRODSLayer::GetNextFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGRODSLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRODSLayer::GetFeature(int64_t nFeatureId)
 {
     OGRFeature *poFeature =
         OGRMemLayer::GetFeature(nFeatureId - (1 + (bHasHeaderLine ? 1 : 0)));
@@ -146,7 +147,7 @@ OGRFeature *OGRODSLayer::GetFeature(GIntBig nFeatureId)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRODSLayer::GetFeatureCount(int bForce)
+int64_t OGRODSLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQueryODS == nullptr)
         return OGRMemLayer::GetFeatureCount(bForce);
@@ -162,7 +163,7 @@ OGRErr OGRODSLayer::ISetFeature(OGRFeature *poFeature)
     if (poFeature == nullptr)
         return OGRMemLayer::ISetFeature(poFeature);
 
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (nFID != OGRNullFID)
         poFeature->SetFID(nFID - (1 + (bHasHeaderLine ? 1 : 0)));
     SetUpdated();
@@ -175,7 +176,7 @@ OGRErr OGRODSLayer::ISetFeature(OGRFeature *poFeature)
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr OGRODSLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRODSLayer::DeleteFeature(int64_t nFID)
 {
     SetUpdated();
     return OGRMemLayer::DeleteFeature(nFID - (1 + (bHasHeaderLine ? 1 : 0)));
@@ -526,7 +527,7 @@ OGRFieldType OGRODSDataSource::GetOGRFieldType(const char *pszValue,
     {
         if (CPLGetValueType(pszValue) == CPL_VALUE_INTEGER)
         {
-            GIntBig nVal = CPLAtoGIntBig(pszValue);
+            int64_t nVal = CPLAtoGIntBig(pszValue);
             if (!CPL_INT64_FITS_ON_INT32(nVal))
                 return OFTInteger64;
             else
@@ -698,7 +699,7 @@ void OGRODSDataSource::startElementTable(const char *pszNameIn,
     {
         nRowsRepeated = atoi(
             GetAttributeValue(ppszAttr, "table:number-rows-repeated", "1"));
-        if (static_cast<GIntBig>(nCurLine) + nRowsRepeated + 2 >= 1048576)
+        if (static_cast<int64_t>(nCurLine) + nRowsRepeated + 2 >= 1048576)
         {
             // Typical of a XLSX converted to ODS
             bEndTableParsing = true;
@@ -1120,7 +1121,7 @@ void OGRODSDataSource::endElementRow(
             if (apoCurLineValues.size() >
                 (size_t)poCurLayer->GetLayerDefn()->GetFieldCount())
             {
-                GIntBig nFeatureCount = poCurLayer->GetFeatureCount(false);
+                int64_t nFeatureCount = poCurLayer->GetFeatureCount(false);
                 if (nFeatureCount > 0 &&
                     static_cast<size_t>(
                         apoCurLineValues.size() -
@@ -1762,7 +1763,7 @@ static void WriteLayer(VSILFILE *fp, OGRLayer *poLayer)
                 {
                     VSIFPrintfL(fp,
                                 "<table:table-cell office:value-type=\"float\" "
-                                "office:value=\"" CPL_FRMT_GIB "\"/>\n",
+                                "office:value=\"%" PRId64 "\"/>\n",
                                 poFeature->GetFieldAsInteger64(j));
                 }
                 else if (eType == OFTDateTime)

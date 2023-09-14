@@ -1218,11 +1218,11 @@ int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt),
                 else if (end_m1 == 'l' && ptrend[-2] != 'l')
                     call_native_snprintf(long);
                 else if (end_m1 == 'l' && ptrend[-2] == 'l')
-                    call_native_snprintf(GIntBig);
+                    call_native_snprintf(int64_t);
                 else if (end_m1 == '4' && ptrend[-2] == '6' &&
                          ptrend[-3] == 'I')
                     // Microsoft I64 modifier.
-                    call_native_snprintf(GIntBig);
+                    call_native_snprintf(int64_t);
                 else if (end_m1 == 'z')
                     call_native_snprintf(size_t);
                 else if ((end_m1 >= 'a' && end_m1 <= 'z') ||
@@ -1241,11 +1241,11 @@ int CPLvsnprintf(char *str, size_t size, CPL_FORMAT_STRING(const char *fmt),
                 else if (end_m1 == 'l' && ptrend[-2] != 'l')
                     call_native_snprintf(unsigned long);
                 else if (end_m1 == 'l' && ptrend[-2] == 'l')
-                    call_native_snprintf(GUIntBig);
+                    call_native_snprintf(uint64_t);
                 else if (end_m1 == '4' && ptrend[-2] == '6' &&
                          ptrend[-3] == 'I')
                     // Microsoft I64 modifier.
-                    call_native_snprintf(GUIntBig);
+                    call_native_snprintf(uint64_t);
                 else if (end_m1 == 'z')
                     call_native_snprintf(size_t);
                 else if ((end_m1 >= 'a' && end_m1 <= 'z') ||

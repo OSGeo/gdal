@@ -173,7 +173,7 @@ class OGRGeoJSONReader : public OGRGeoJSONBaseReader
 
     void ResetReading();
     OGRFeature *GetNextFeature(OGRGeoJSONLayer *poLayer);
-    OGRFeature *GetFeature(OGRGeoJSONLayer *poLayer, GIntBig nFID);
+    OGRFeature *GetFeature(OGRGeoJSONLayer *poLayer, int64_t nFID);
     bool IngestAll(OGRGeoJSONLayer *poLayer);
 
     VSILFILE *GetFP()
@@ -204,10 +204,10 @@ class OGRGeoJSONReader : public OGRGeoJSONBaseReader
     size_t nBufferSize_;
     GByte *pabyBuffer_;
 
-    GIntBig nTotalFeatureCount_;
-    GUIntBig nTotalOGRFeatureMemEstimate_;
+    int64_t nTotalFeatureCount_;
+    uint64_t nTotalOGRFeatureMemEstimate_;
 
-    std::map<GIntBig, std::pair<vsi_l_offset, vsi_l_offset>>
+    std::map<int64_t, std::pair<vsi_l_offset, vsi_l_offset>>
         oMapFIDToOffsetSize_;
     //
     // Copy operations not supported.

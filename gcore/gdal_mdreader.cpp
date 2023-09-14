@@ -221,7 +221,7 @@ void GDALMDReaderBase::LoadMetadata()
 /**
  * GetAcqisitionTimeFromString()
  */
-GIntBig GDALMDReaderBase::GetAcquisitionTimeFromString(const char *pszDateTime)
+int64_t GDALMDReaderBase::GetAcquisitionTimeFromString(const char *pszDateTime)
 {
     if (nullptr == pszDateTime)
         return 0;

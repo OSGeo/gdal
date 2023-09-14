@@ -74,8 +74,8 @@ class OGRCARTOLayer CPL_NON_FINAL : public OGRLayer
     bool bEOF;
     int nFetchedObjects;
     int iNextInFetchedObjects;
-    GIntBig m_nNextFID;
-    GIntBig m_nNextOffset;
+    int64_t m_nNextFID;
+    int64_t m_nNextOffset;
     json_object *poCachedObj;
 
     virtual OGRFeature *GetNextRawFeature();
@@ -135,7 +135,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     InsertState eDeferredInsertState;
     CPLString osDeferredBuffer;
     CPLString osCopySQL;
-    GIntBig m_nNextFIDWrite;
+    int64_t m_nNextFIDWrite;
 
     bool bDeferredCreation;
     bool bCartodbfy;
@@ -159,8 +159,8 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
     virtual OGRFeatureDefn *GetLayerDefnInternal(json_object *poObjIn) override;
     virtual json_object *FetchNewFeatures() override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
-    virtual OGRFeature *GetFeature(GIntBig nFeatureId) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
+    virtual OGRFeature *GetFeature(int64_t nFeatureId) override;
 
     virtual int TestCapability(const char *) override;
 
@@ -176,7 +176,7 @@ class OGRCARTOTableLayer final : public OGRCARTOLayer
 
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual void SetSpatialFilter(OGRGeometry *poGeom) override
     {

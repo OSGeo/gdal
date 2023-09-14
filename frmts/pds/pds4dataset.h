@@ -59,8 +59,8 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
     bool m_bKeepGeomColmuns = false;
     bool m_bDirtyHeader = false;
     VSILFILE *m_fp = nullptr;
-    GIntBig m_nFeatureCount = -1;
-    GIntBig m_nFID = 1;
+    int64_t m_nFeatureCount = -1;
+    int64_t m_nFID = 1;
     vsi_l_offset m_nOffset = 0;
     CPLStringList m_aosLCO{};
     std::string m_osLineEnding{};
@@ -83,7 +83,7 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
     {
         return m_poFeatureDefn;
     }
-    GIntBig GetFeatureCount(int bForce) override;
+    int64_t GetFeatureCount(int bForce) override;
 
     const char *GetFileName() const
     {
@@ -159,7 +159,7 @@ class PDS4FixedWidthTable CPL_NON_FINAL : public PDS4TableBaseLayer
                         const char *pszFilename);
 
     void ResetReading() override;
-    OGRFeature *GetFeature(GIntBig nFID) override;
+    OGRFeature *GetFeature(int64_t nFID) override;
     OGRFeature *GetNextFeature() override;
     int TestCapability(const char *) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;

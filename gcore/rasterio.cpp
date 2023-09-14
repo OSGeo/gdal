@@ -32,6 +32,7 @@
 #include "gdal.h"
 #include "gdal_priv.h"
 
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -183,8 +184,8 @@ static bool DownsamplingIntegerXFactor(
     {
         const int nRasterXSize = poBand->GetXSize();
         iSrcX =
-            static_cast<int>(std::min(static_cast<GInt64>(iSrcX) + nSrcXInc,
-                                      static_cast<GInt64>(nRasterXSize - 1)));
+            static_cast<int>(std::min(static_cast<int64_t>(iSrcX) + nSrcXInc,
+                                      static_cast<int64_t>(nRasterXSize - 1)));
         pabyDstData += nPixelSpace;
         if (iSrcX < nEndBlockX)
         {
@@ -1237,7 +1238,7 @@ CPLErr GDALRasterBand::RasterIOResampled(
             if (nFullResYChunk > nRasterYSize)
                 nFullResYChunk = nRasterYSize;
             if ((nDstBlockXSize == 1 && nDstBlockYSize == 1) ||
-                (static_cast<GIntBig>(nFullResXChunk) * nFullResYChunk <=
+                (static_cast<int64_t>(nFullResXChunk) * nFullResYChunk <=
                  1024 * 1024))
                 break;
             // When operating on the full width of a raster whose block width is
@@ -1549,12 +1550,12 @@ CPLErr GDALDataset::RasterIOResampled(GDALRWFlag /* eRWFlag */, int nXOff,
         snprintf(szBuffer0, sizeof(szBuffer0), "DATAPOINTER=%s", szBuffer);
 
         char szBuffer1[64] = {'\0'};
-        snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=" CPL_FRMT_GIB,
-                 static_cast<GIntBig>(nPixelSpace));
+        snprintf(szBuffer1, sizeof(szBuffer1), "PIXELOFFSET=%" PRId64,
+                 static_cast<int64_t>(nPixelSpace));
 
         char szBuffer2[64] = {'\0'};
-        snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=" CPL_FRMT_GIB,
-                 static_cast<GIntBig>(nLineSpace));
+        snprintf(szBuffer2, sizeof(szBuffer2), "LINEOFFSET=%" PRId64,
+                 static_cast<int64_t>(nLineSpace));
 
         char *apszOptions[4] = {szBuffer0, szBuffer1, szBuffer2, nullptr};
 
@@ -1687,7 +1688,7 @@ CPLErr GDALDataset::RasterIOResampled(GDALRWFlag /* eRWFlag */, int nXOff,
             if (nFullResYChunk > nRasterYSize)
                 nFullResYChunk = nRasterYSize;
             if ((nDstBlockXSize == 1 && nDstBlockYSize == 1) ||
-                (static_cast<GIntBig>(nFullResXChunk) * nFullResYChunk <=
+                (static_cast<int64_t>(nFullResXChunk) * nFullResYChunk <=
                  1024 * 1024))
                 break;
             // When operating on the full width of a raster whose block width is
@@ -2023,18 +2024,16 @@ void CPL_STDCALL GDALSwapWords(void *pData, int nWordSize, int nWordCount,
 
         case 8:
             CPLAssert(nWordSkip >= 8 || nWordCount == 1);
-#ifdef CPL_HAS_GINT64
             if (CPL_IS_ALIGNED(pabyData, 8) && (nWordSkip % 8) == 0)
             {
                 for (int i = 0; i < nWordCount; i++)
                 {
-                    *reinterpret_cast<GUInt64 *>(pabyData) = CPL_SWAP64(
-                        *reinterpret_cast<const GUInt64 *>(pabyData));
+                    *reinterpret_cast<uint64_t *>(pabyData) = CPL_SWAP64(
+                        *reinterpret_cast<const uint64_t *>(pabyData));
                     pabyData += nWordSkip;
                 }
             }
             else
-#endif
             {
                 for (int i = 0; i < nWordCount; i++)
                 {
@@ -4316,18 +4315,18 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     int nTargetSwathSize;
     if (pszSwathSize != nullptr)
         nTargetSwathSize = static_cast<int>(
-            std::min(GIntBig(INT_MAX), CPLAtoGIntBig(pszSwathSize)));
+            std::min(int64_t(INT_MAX), CPLAtoGIntBig(pszSwathSize)));
     else
     {
         // As a default, take one 1/4 of the cache size.
         nTargetSwathSize = static_cast<int>(
-            std::min(GIntBig(INT_MAX), GDALGetCacheMax64() / 4));
+            std::min(int64_t(INT_MAX), GDALGetCacheMax64() / 4));
 
         // but if the minimum idal swath buf size is less, then go for it to
         // avoid unnecessarily abusing RAM usage.
         // but try to use 10 MB at least.
-        GIntBig nIdealSwathBufSize =
-            static_cast<GIntBig>(nSwathCols) * nSwathLines * nPixelSize;
+        int64_t nIdealSwathBufSize =
+            static_cast<int64_t>(nSwathCols) * nSwathLines * nPixelSize;
         int nMinTargetSwathSize = 10 * 1000 * 1000;
 
         if ((poSrcPrototypeBand->GetSuggestedBlockAccessPattern() &
@@ -4348,12 +4347,12 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
                                    (nSrcBlockYSize % nBlockYSize) == 0)))
         {
             nIdealSwathBufSize =
-                std::max(nIdealSwathBufSize, static_cast<GIntBig>(nSwathCols) *
+                std::max(nIdealSwathBufSize, static_cast<int64_t>(nSwathCols) *
                                                  nSrcBlockYSize * nPixelSize);
         }
         if (nTargetSwathSize > nIdealSwathBufSize)
             nTargetSwathSize = static_cast<int>(
-                std::min(GIntBig(INT_MAX), nIdealSwathBufSize));
+                std::min(int64_t(INT_MAX), nIdealSwathBufSize));
     }
 
     if (nTargetSwathSize < 1000000)
@@ -4365,7 +4364,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "When translating into a compressed interleave format, "
-                 "the block cache size (" CPL_FRMT_GIB ") "
+                 "the block cache size (%" PRId64 ") "
                  "should be at least the size of the swath (%d) "
                  "(GDAL_SWATH_SIZE config. option)",
                  GDALGetCacheMax64(), nTargetSwathSize);
@@ -4383,9 +4382,9 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
         IS_DIVIDER_OF(nBlockYSize, nMaxBlockYSize) &&
         IS_DIVIDER_OF(nSrcBlockYSize, nMaxBlockYSize))
     {
-        if (static_cast<GIntBig>(nMaxBlockXSize) * nMaxBlockYSize *
+        if (static_cast<int64_t>(nMaxBlockXSize) * nMaxBlockYSize *
                 nPixelSize <=
-            static_cast<GIntBig>(nTargetSwathSize))
+            static_cast<int64_t>(nTargetSwathSize))
         {
             nSwathCols = nTargetSwathSize / (nMaxBlockYSize * nPixelSize);
             nSwathCols = ROUND_TO(nSwathCols, nMaxBlockXSize);
@@ -4395,8 +4394,8 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
                 nSwathCols = nXSize;
             nSwathLines = nMaxBlockYSize;
 
-            if (static_cast<GIntBig>(nSwathCols) * nSwathLines * nPixelSize >
-                static_cast<GIntBig>(nTargetSwathSize))
+            if (static_cast<int64_t>(nSwathCols) * nSwathLines * nPixelSize >
+                static_cast<int64_t>(nTargetSwathSize))
             {
                 nSwathCols = nXSize;
                 nSwathLines = nBlockYSize;
@@ -4404,9 +4403,9 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
         }
     }
 
-    const GIntBig nMemoryPerCol = static_cast<GIntBig>(nSwathCols) * nPixelSize;
-    const GIntBig nSwathBufSize = nMemoryPerCol * nSwathLines;
-    if (nSwathBufSize > static_cast<GIntBig>(nTargetSwathSize))
+    const int64_t nMemoryPerCol = static_cast<int64_t>(nSwathCols) * nPixelSize;
+    const int64_t nSwathBufSize = nMemoryPerCol * nSwathLines;
+    if (nSwathBufSize > static_cast<int64_t>(nTargetSwathSize))
     {
         nSwathLines = static_cast<int>(nTargetSwathSize / nMemoryPerCol);
         if (nSwathLines == 0)
@@ -4415,7 +4414,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
         CPLDebug(
             "GDAL",
             "GDALCopyWholeRasterGetSwathSize(): adjusting to %d line swath "
-            "since requirement (" CPL_FRMT_GIB " bytes) exceed target swath "
+            "since requirement (%" PRId64 " bytes) exceed target swath "
             "size (%d bytes) (GDAL_SWATH_SIZE config. option)",
             nSwathLines, nBlockYSize * nMemoryPerCol, nTargetSwathSize);
     }
@@ -4424,7 +4423,7 @@ static void GDALCopyWholeRasterGetSwathSize(GDALRasterBand *poSrcPrototypeBand,
     // of blocks is substantially less than our target buffer size.
     else if (nSwathLines == 1 ||
              nMemoryPerCol * nSwathLines <
-                 static_cast<GIntBig>(nTargetSwathSize) / 10)
+                 static_cast<int64_t>(nTargetSwathSize) / 10)
     {
         nSwathLines = std::min(
             nYSize,
@@ -4681,10 +4680,10 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(GDALDatasetH hSrcDS,
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
         CPL_IGNORE_RET_VAL(sExtraArg.pfnProgress);  // to make cppcheck happy
 
-        const GIntBig nTotalBlocks = static_cast<GIntBig>(nBandCount) *
+        const int64_t nTotalBlocks = static_cast<int64_t>(nBandCount) *
                                      DIV_ROUND_UP(nYSize, nSwathLines) *
                                      DIV_ROUND_UP(nXSize, nSwathCols);
-        GIntBig nBlocksDone = 0;
+        int64_t nBlocksDone = 0;
 
         for (int iBand = 0; iBand < nBandCount && eErr == CE_None; iBand++)
         {
@@ -4762,10 +4761,10 @@ CPLErr CPL_STDCALL GDALDatasetCopyWholeRaster(GDALDatasetH hSrcDS,
         INIT_RASTERIO_EXTRA_ARG(sExtraArg);
         CPL_IGNORE_RET_VAL(sExtraArg.pfnProgress);  // to make cppcheck happy
 
-        const GIntBig nTotalBlocks =
-            static_cast<GIntBig>(DIV_ROUND_UP(nYSize, nSwathLines)) *
+        const int64_t nTotalBlocks =
+            static_cast<int64_t>(DIV_ROUND_UP(nYSize, nSwathLines)) *
             DIV_ROUND_UP(nXSize, nSwathCols);
-        GIntBig nBlocksDone = 0;
+        int64_t nBlocksDone = 0;
 
         for (int iY = 0; iY < nYSize && eErr == CE_None; iY += nSwathLines)
         {

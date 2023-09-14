@@ -31,7 +31,7 @@
 #define OSM_PARSER_H_INCLUDED
 
 #include "cpl_port.h"
-/* typedef long long GIntBig; */
+/* typedef long long int64_t; */
 
 CPL_C_START
 
@@ -45,10 +45,10 @@ typedef struct
 {
     union
     {
-        GIntBig nTimeStamp;
+        int64_t nTimeStamp;
         const char *pszTimeStamp;
     } ts;
-    GIntBig nChangeset;
+    int64_t nChangeset;
     int nVersion;
     int nUID;
     int bTimeStampIsStr;
@@ -57,7 +57,7 @@ typedef struct
 
 typedef struct
 {
-    GIntBig nID;
+    int64_t nID;
     double dfLat;
     double dfLon;
     OSMInfo sInfo;
@@ -67,12 +67,12 @@ typedef struct
 
 typedef struct
 {
-    GIntBig nID;
+    int64_t nID;
     OSMInfo sInfo;
     unsigned int nTags;
     unsigned int nRefs;
     OSMTag *pasTags;
-    GIntBig *panNodeRefs;
+    int64_t *panNodeRefs;
 } OSMWay;
 
 typedef enum
@@ -84,14 +84,14 @@ typedef enum
 
 typedef struct
 {
-    GIntBig nID;
+    int64_t nID;
     const char *pszRole;
     OSMMemberType eType;
 } OSMMember;
 
 typedef struct
 {
-    GIntBig nID;
+    int64_t nID;
     OSMInfo sInfo;
     unsigned int nTags;
     unsigned int nMembers;
@@ -123,7 +123,7 @@ OSMContext *OSM_Open(const char *pszFilename, NotifyNodesFunc pfnNotifyNodes,
                      NotifyRelationFunc pfnNotifyRelation,
                      NotifyBoundsFunc pfnNotifyBounds, void *user_data);
 
-GUIntBig OSM_GetBytesRead(OSMContext *psOSMContext);
+uint64_t OSM_GetBytesRead(OSMContext *psOSMContext);
 
 void OSM_ResetReading(OSMContext *psOSMContext);
 

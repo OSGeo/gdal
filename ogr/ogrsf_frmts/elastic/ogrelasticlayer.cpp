@@ -1451,7 +1451,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
             json_type eJSONType = json_object_get_type(it.val);
             if (eJSONType == json_type_int)
             {
-                poFeature->SetFID((GIntBig)json_object_get_int64(it.val));
+                poFeature->SetFID((int64_t)json_object_get_int64(it.val));
                 continue;
             }
         }
@@ -1475,7 +1475,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
                     break;
                 case json_type_int:
                     poFeature->SetField(oIter->second,
-                                        (GIntBig)json_object_get_int64(it.val));
+                                        (int64_t)json_object_get_int64(it.val));
                     break;
                 case json_type_double:
                     poFeature->SetField(oIter->second,
@@ -1501,7 +1501,7 @@ void OGRElasticLayer::BuildFeature(OGRFeature *poFeature, json_object *poSource,
                     else if (m_poFeatureDefn->GetFieldDefn(oIter->second)
                                  ->GetType() == OFTInteger64List)
                     {
-                        std::vector<GIntBig> anValues;
+                        std::vector<int64_t> anValues;
                         const auto nLength = json_object_array_length(it.val);
                         for (auto i = decltype(nLength){0}; i < nLength; i++)
                         {
@@ -2561,7 +2561,7 @@ CPLString OGRElasticLayer::BuildJSonFromFeature(OGRFeature *poFeature)
                 case OFTInteger64List:
                 {
                     int nCount = 0;
-                    const GIntBig *panValues =
+                    const int64_t *panValues =
                         poFeature->GetFieldAsInteger64List(i, &nCount);
                     json_object *poArray = json_object_new_array();
                     for (int j = 0; j < nCount; j++)
@@ -3087,7 +3087,7 @@ void OGRElasticLayer::AddTimeoutTerminateAfterToURL(CPLString &osURL)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
+int64_t OGRElasticLayer::GetFeatureCount(int bForce)
 {
     if (m_bFilterMustBeClientSideEvaluated)
     {
@@ -3180,7 +3180,7 @@ GIntBig OGRElasticLayer::GetFeatureCount(int bForce)
         return nRet;
     }
 
-    GIntBig nCount = json_object_get_int64(poCount);
+    int64_t nCount = json_object_get_int64(poCount);
     json_object_put(poResponse);
     return nCount;
 }

@@ -30,6 +30,7 @@
  ****************************************************************************/
 
 #include <cassert>
+#include <cinttypes>
 #include "ogr_fgdb.h"
 #include "ogrpgeogeometry.h"
 #include "cpl_conv.h"
@@ -665,7 +666,7 @@ int FGdbLayer::EditGDBTablX(const CPLString &osGDBTablX,
     // printf("nInMaxFID = %d\n", nInMaxFID);
     // printf("nOutMaxFID = %d\n", nOutMaxFID);
 
-    int n1024BlocksOut = (int)(((GIntBig)nOutMaxFID + 1023) / 1024);
+    int n1024BlocksOut = (int)(((int64_t)nOutMaxFID + 1023) / 1024);
     int nTmp;
 
     nTmp = CPL_LSBWORD32(n1024BlocksOut);
@@ -679,7 +680,7 @@ int FGdbLayer::EditGDBTablX(const CPLString &osGDBTablX,
     VSIFReadL(abyBuffer, 1, 16, fp);
     int nBitmapInt32Words = GetInt32(abyBuffer, 0);
     int n1024BlocksTotal = GetInt32(abyBuffer, 1);
-    CPLAssert(n1024BlocksTotal == (int)(((GIntBig)nInMaxFIDOri + 1023) / 1024));
+    CPLAssert(n1024BlocksTotal == (int)(((int64_t)nInMaxFIDOri + 1023) / 1024));
     GByte *pabyBlockMap = nullptr;
     if (nBitmapInt32Words != 0)
     {
@@ -1107,7 +1108,7 @@ OGRErr FGdbLayer::ICreateFeature(OGRFeature *poFeature)
     if (!m_pDS->GetUpdate() || m_pTable == nullptr)
         return OGRERR_FAILURE;
 
-    GIntBig nFID = poFeature->GetFID();
+    int64_t nFID = poFeature->GetFID();
     if (nFID < -1 || nFID == 0 || !CPL_INT64_FITS_ON_INT32(nFID))
     {
         CPLError(CE_Failure, CPLE_NotSupported,
@@ -1518,7 +1519,7 @@ OGRErr FGdbLayer::PopulateRowWithFeature(Row &fgdb_row, OGRFeature *poFeature)
 /*                             GetRow()                                 */
 /************************************************************************/
 
-OGRErr FGdbLayer::GetRow(EnumRows &enumRows, Row &row, GIntBig nFID)
+OGRErr FGdbLayer::GetRow(EnumRows &enumRows, Row &row, int64_t nFID)
 {
     long hr;
     CPLString osQuery;
@@ -1529,7 +1530,7 @@ OGRErr FGdbLayer::GetRow(EnumRows &enumRows, Row &row, GIntBig nFID)
         return OGRERR_FAILURE;
     }
 
-    osQuery.Printf("%s = " CPL_FRMT_GIB, m_strOIDFieldName.c_str(), nFID);
+    osQuery.Printf("%s = %" PRId64, m_strOIDFieldName.c_str(), nFID);
 
     if (FAILED(hr = m_pTable->Search(m_wstrSubfields,
                                      StringToWString(osQuery.c_str()), true,
@@ -1555,7 +1556,7 @@ OGRErr FGdbLayer::GetRow(EnumRows &enumRows, Row &row, GIntBig nFID)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr FGdbLayer::DeleteFeature(GIntBig nFID)
+OGRErr FGdbLayer::DeleteFeature(int64_t nFID)
 
 {
     long hr;
@@ -1610,7 +1611,7 @@ OGRErr FGdbLayer::ISetFeature(OGRFeature *poFeature)
     if (!m_pDS->GetUpdate() || m_pTable == nullptr)
         return OGRERR_FAILURE;
 
-    GIntBig nFID64 = poFeature->GetFID();
+    int64_t nFID64 = poFeature->GetFID();
     if (nFID64 == OGRNullFID)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3865,7 +3866,7 @@ OGRFeature *FGdbLayer::GetNextFeature()
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *FGdbLayer::GetFeature(GIntBig oid)
+OGRFeature *FGdbLayer::GetFeature(int64_t oid)
 {
     // do query to fetch individual row
     EnumRows enumRows;
@@ -3903,7 +3904,7 @@ OGRFeature *FGdbLayer::GetFeature(GIntBig oid)
 /*                          GetFeatureCount()                           */
 /************************************************************************/
 
-GIntBig FGdbLayer::GetFeatureCount(CPL_UNUSED int bForce)
+int64_t FGdbLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     int32 rowCount = 0;
 

@@ -280,9 +280,9 @@ GDALDataset *KTX2Dataset::Open(GDALOpenInfo *poOpenInfo)
         nLayer = static_cast<uint32_t>(atoi(aosTokens[2]));
         nFace = static_cast<uint32_t>(atoi(aosTokens[3]));
     }
-    GIntBig nMaxSize = std::strtoull(
+    int64_t nMaxSize = std::strtoull(
         CPLGetConfigOption("KTX2_MAX_FILE_SIZE", "0"), nullptr, 10);
-    constexpr GIntBig KTX2_LIMIT = std::numeric_limits<uint32_t>::max();
+    constexpr int64_t KTX2_LIMIT = std::numeric_limits<uint32_t>::max();
     if (nMaxSize == 0 || nMaxSize > KTX2_LIMIT)
         nMaxSize = KTX2_LIMIT;
     GByte *pabyRet = nullptr;

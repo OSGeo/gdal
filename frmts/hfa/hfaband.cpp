@@ -1439,7 +1439,7 @@ CPLErr HFABand::SetRasterBlock(int nXBlock, int nYBlock, void *pData)
         // Write compressed data.
         int nInBlockSize = static_cast<int>(
             (nBlockXSize * nBlockYSize *
-                 static_cast<GIntBig>(HFAGetDataTypeBits(eDataType)) +
+                 static_cast<int64_t>(HFAGetDataTypeBits(eDataType)) +
              7) /
             8);
 
@@ -2111,8 +2111,8 @@ int HFABand::CreateOverview(int nOverviewLevel, const char *pszResampling)
     // it on the config options.
     bool bCreateLargeRaster =
         CPLTestBool(CPLGetConfigOption("USE_SPILL", "NO"));
-    GIntBig nValidFlagsOffset = 0;
-    GIntBig nDataOffset = 0;
+    int64_t nValidFlagsOffset = 0;
+    int64_t nDataOffset = 0;
     int nOverviewBlockSize = HFAGetOverviewBlockSize();
 
     if ((psRRDInfo->nEndOfFile +

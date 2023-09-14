@@ -247,12 +247,12 @@ CPLErr STACTARawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const int nXOffMod = std::max(0, nXOff - nRadiusX);
     const int nYOffMod = std::max(0, nYOff - nRadiusY);
     const int nXSizeMod = static_cast<int>(std::min(
-                              nXOff + nXSize + static_cast<GIntBig>(nRadiusX),
-                              static_cast<GIntBig>(nRasterXSize))) -
+                              nXOff + nXSize + static_cast<int64_t>(nRadiusX),
+                              static_cast<int64_t>(nRasterXSize))) -
                           nXOffMod;
     const int nYSizeMod = static_cast<int>(std::min(
-                              nYOff + nYSize + static_cast<GIntBig>(nRadiusY),
-                              static_cast<GIntBig>(nRasterYSize))) -
+                              nYOff + nYSize + static_cast<int64_t>(nRadiusY),
+                              static_cast<int64_t>(nRasterYSize))) -
                           nYOffMod;
 
     const bool bRequestFitsInSingleMetaTile =
@@ -307,12 +307,12 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     const int nXOffMod = std::max(0, nXOff - nRadiusX);
     const int nYOffMod = std::max(0, nYOff - nRadiusY);
     const int nXSizeMod = static_cast<int>(std::min(
-                              nXOff + nXSize + static_cast<GIntBig>(nRadiusX),
-                              static_cast<GIntBig>(nRasterXSize))) -
+                              nXOff + nXSize + static_cast<int64_t>(nRadiusX),
+                              static_cast<int64_t>(nRasterXSize))) -
                           nXOffMod;
     const int nYSizeMod = static_cast<int>(std::min(
-                              nYOff + nYSize + static_cast<GIntBig>(nRadiusY),
-                              static_cast<GIntBig>(nRasterYSize))) -
+                              nYOff + nYSize + static_cast<int64_t>(nRadiusY),
+                              static_cast<int64_t>(nRasterYSize))) -
                           nYOffMod;
 
     const bool bRequestFitsInSingleMetaTile =
@@ -386,7 +386,7 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     // it entirely to minimize the number of network requests
     const bool bDownloadWholeMetaTile =
         m_poMasterDS->m_bDownloadWholeMetaTile ||
-        (static_cast<GIntBig>(m_nMetaTileWidth) * m_nMetaTileHeight * nBands *
+        (static_cast<int64_t>(m_nMetaTileWidth) * m_nMetaTileHeight * nBands *
              nDTSize <
          128 * 1024);
 

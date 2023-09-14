@@ -30,6 +30,8 @@
 #include "ogr_p.h"
 #include "ogrgeojsonreader.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                         OGRAmigoCloudLayer()                            */
 /************************************************************************/
@@ -122,7 +124,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object *poRowObj)
             else if (json_object_get_type(poVal) == json_type_int ||
                      json_object_get_type(poVal) == json_type_boolean)
             {
-                poFeature->SetField(i, (GIntBig)json_object_get_int64(poVal));
+                poFeature->SetField(i, (int64_t)json_object_get_int64(poVal));
             }
             else if (json_object_get_type(poVal) == json_type_double)
             {
@@ -155,7 +157,7 @@ OGRFeature *OGRAmigoCloudLayer::BuildFeature(json_object *poRowObj)
 /*                        FetchNewFeatures()                            */
 /************************************************************************/
 
-json_object *OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNextIn)
+json_object *OGRAmigoCloudLayer::FetchNewFeatures(int64_t iNextIn)
 {
     CPLString osSQL = osBaseSQL;
     if (osSQL.ifind("SELECT") != std::string::npos &&
@@ -164,7 +166,7 @@ json_object *OGRAmigoCloudLayer::FetchNewFeatures(GIntBig iNextIn)
         osSQL += " LIMIT ";
         osSQL += CPLSPrintf("%d", GetFeaturesToFetch());
         osSQL += " OFFSET ";
-        osSQL += CPLSPrintf(CPL_FRMT_GIB, iNextIn);
+        osSQL += CPLSPrintf("%" PRId64, iNextIn);
     }
     return poDS->RunSQL(osSQL);
 }
@@ -231,7 +233,7 @@ OGRFeature *OGRAmigoCloudLayer::GetNextRawFeature()
 
     OGRFeature *poFeature = BuildFeature(poRowObj);
 
-    std::map<GIntBig, OGRAmigoCloudFID>::iterator it =
+    std::map<int64_t, OGRAmigoCloudFID>::iterator it =
         mFIDs.find(poFeature->GetFID());
     if (it != mFIDs.end())
     {

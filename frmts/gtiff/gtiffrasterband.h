@@ -66,7 +66,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     static void DropReferenceVirtualMem(void *pUserData);
     CPLVirtualMem *GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
                                              int *pnPixelSpace,
-                                             GIntBig *pnLineSpace,
+                                             int64_t *pnLineSpace,
                                              char **papszOptions);
 
     void *CacheMultiRange(int nXOff, int nYOff, int nXSize, int nYSize,
@@ -166,18 +166,18 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     virtual CPLVirtualMem *
     GetVirtualMemAuto(GDALRWFlag eRWFlag, int *pnPixelSpace,
-                      GIntBig *pnLineSpace, char **papszOptions) override final;
+                      int64_t *pnLineSpace, char **papszOptions) override final;
 
     GDALRasterAttributeTable *GetDefaultRAT() override final;
     virtual CPLErr
     SetDefaultRAT(const GDALRasterAttributeTable *) override final;
     virtual CPLErr GetHistogram(double dfMin, double dfMax, int nBuckets,
-                                GUIntBig *panHistogram, int bIncludeOutOfRange,
+                                uint64_t *panHistogram, int bIncludeOutOfRange,
                                 int bApproxOK, GDALProgressFunc,
                                 void *pProgressData) override final;
 
     virtual CPLErr GetDefaultHistogram(double *pdfMin, double *pdfMax,
-                                       int *pnBuckets, GUIntBig **ppanHistogram,
+                                       int *pnBuckets, uint64_t **ppanHistogram,
                                        int bForce, GDALProgressFunc,
                                        void *pProgressData) override final;
 };

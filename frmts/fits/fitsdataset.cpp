@@ -41,6 +41,7 @@
 #include <fitsio.h>
 
 #include <algorithm>
+#include <cinttypes>
 #include <string>
 #include <cstring>
 #include <set>
@@ -216,12 +217,12 @@ class FITSLayer final : public OGRLayer,
     }
     void ResetReading() override;
     int TestCapability(const char *) override;
-    OGRFeature *GetFeature(GIntBig) override;
-    GIntBig GetFeatureCount(int bForce) override;
+    OGRFeature *GetFeature(int64_t) override;
+    int64_t GetFeatureCount(int bForce) override;
     OGRErr CreateField(OGRFieldDefn *poField, int bApproxOK) override;
     OGRErr ICreateFeature(OGRFeature *poFeature) override;
     OGRErr ISetFeature(OGRFeature *poFeature) override;
-    OGRErr DeleteFeature(GIntBig nFID) override;
+    OGRErr DeleteFeature(int64_t nFID) override;
 
     DEFINE_GET_NEXT_FEATURE_THROUGH_RAW(FITSLayer)
 
@@ -604,7 +605,7 @@ void FITSLayer::SetActiveHDU()
 /*                        GetFeatureCount()                             */
 /************************************************************************/
 
-GIntBig FITSLayer::GetFeatureCount(int bForce)
+int64_t FITSLayer::GetFeatureCount(int bForce)
 {
     if (m_poAttrQuery == nullptr && m_poFilterGeom == nullptr)
         return m_nRows;
@@ -680,7 +681,7 @@ OGRFeature *FITSLayer::GetNextRawFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
+OGRFeature *FITSLayer::GetFeature(int64_t nFID)
 {
     LONGLONG nRow = static_cast<LONGLONG>(nFID);
     if (nRow <= 0 || nRow > m_nRows)
@@ -754,7 +755,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
         {
             if (colDesc.nTypeCode == TUINT)
             {
-                ReadCol<uint32_t, GIntBig, TUINT>::Read(
+                ReadCol<uint32_t, int64_t, TUINT>::Read(
                     m_poDS->m_hFITS, colDesc, iField, nRow, poFeature, nRepeat);
             }
             else
@@ -765,7 +766,7 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
         }
         else if (typechar == 'K')
         {
-            ReadCol<GInt64, GIntBig, TLONGLONG>::Read(
+            ReadCol<int64_t, int64_t, TLONGLONG>::Read(
                 m_poDS->m_hFITS, colDesc, iField, nRow, poFeature, nRepeat);
         }
         else if (typechar == 'A')  // Character
@@ -1325,9 +1326,9 @@ struct WriteCol
             if (nCount > nRepeat)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Field %s of feature " CPL_FRMT_GIB " had %d "
+                         "Field %s of feature %" PRId64 " had %d "
                          "elements, but had to be truncated to %d",
-                         poFieldDefn->GetNameRef(), static_cast<GIntBig>(irow),
+                         poFieldDefn->GetNameRef(), static_cast<int64_t>(irow),
                          nCount, nRepeat);
             }
         }
@@ -1413,9 +1414,9 @@ template <typename T, int TYPECODE> struct WriteComplex
             if (nRepeat > nCount)
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
-                         "Field %s of feature " CPL_FRMT_GIB " had %d "
+                         "Field %s of feature %" PRId64 " had %d "
                          "elements, but had to be truncated to %d",
-                         poFieldDefn->GetNameRef(), static_cast<GIntBig>(irow),
+                         poFieldDefn->GetNameRef(), static_cast<int64_t>(irow),
                          nRepeat, nCount);
             }
             std::vector<T> x(2 * nRepeat);
@@ -1477,10 +1478,10 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
                 if (nRepeat > nCount)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Field %s of feature " CPL_FRMT_GIB " had %d "
+                             "Field %s of feature %" PRId64 " had %d "
                              "elements, but had to be truncated to %d",
                              poFieldDefn->GetNameRef(),
-                             static_cast<GIntBig>(nRow), nRepeat, nCount);
+                             static_cast<int64_t>(nRow), nRepeat, nCount);
                 }
                 std::vector<char> x(nRepeat);
                 for (int i = 0; i < nRepeat; i++)
@@ -1546,7 +1547,7 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
             if (colDesc.nTypeCode == TUINT)
             {
                 status = WriteCol<
-                    uint32_t, GIntBig, TUINT, &OGRFeature::GetFieldAsInteger64,
+                    uint32_t, int64_t, TUINT, &OGRFeature::GetFieldAsInteger64,
                     &OGRFeature::GetFieldAsInteger64List>::Write(m_poDS
                                                                      ->m_hFITS,
                                                                  colDesc,
@@ -1565,7 +1566,7 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
         else if (typechar == 'K')
         {
             status = WriteCol<
-                GInt64, GIntBig, TLONGLONG, &OGRFeature::GetFieldAsInteger64,
+                int64_t, int64_t, TLONGLONG, &OGRFeature::GetFieldAsInteger64,
                 &OGRFeature::GetFieldAsInteger64List>::Write(m_poDS->m_hFITS,
                                                              colDesc, iField,
                                                              nRow, poFeature);
@@ -1580,10 +1581,10 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
                 if (nItems > nStringCount)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Field %s of feature " CPL_FRMT_GIB " had %d "
+                             "Field %s of feature %" PRId64 " had %d "
                              "elements, but had to be truncated to %d",
                              poFieldDefn->GetNameRef(),
-                             static_cast<GIntBig>(nRow), nItems, nStringCount);
+                             static_cast<int64_t>(nRow), nItems, nStringCount);
                 }
                 fits_write_col_str(m_poDS->m_hFITS, colDesc.iCol, nRow, 1,
                                    nItems, papszStrings, &status);
@@ -1673,7 +1674,7 @@ OGRErr FITSLayer::ISetFeature(OGRFeature *poFeature)
 
     RunDeferredFieldCreation();
 
-    const GIntBig nRow = poFeature->GetFID();
+    const int64_t nRow = poFeature->GetFID();
     if (nRow <= 0 || nRow > m_nRows)
         return OGRERR_NON_EXISTING_FEATURE;
 
@@ -1686,7 +1687,7 @@ OGRErr FITSLayer::ISetFeature(OGRFeature *poFeature)
 /*                          DeleteFeature()                             */
 /************************************************************************/
 
-OGRErr FITSLayer::DeleteFeature(GIntBig nFID)
+OGRErr FITSLayer::DeleteFeature(int64_t nFID)
 {
     if (!TestCapability(OLCDeleteFeature))
         return OGRERR_FAILURE;
@@ -2046,7 +2047,7 @@ bool FITSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
         sLayout.eInterleaving = RawBinaryLayout::Interleaving::BSQ;
     sLayout.eDataType = eDT;
     sLayout.bLittleEndianOrder = false;
-    sLayout.nImageOffset = static_cast<GIntBig>(datastart);
+    sLayout.nImageOffset = static_cast<int64_t>(datastart);
     sLayout.nPixelOffset = GDALGetDataTypeSizeBytes(eDT);
     sLayout.nLineOffset = sLayout.nPixelOffset * nRasterXSize;
     sLayout.nBandOffset = sLayout.nLineOffset * nRasterYSize;

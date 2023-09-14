@@ -2349,10 +2349,10 @@ bool GDALGeoPackageDataset::InitRaster(
         return false;
     }
     int nTileMatrixWidth = static_cast<int>(
-        std::min(static_cast<GIntBig>(INT_MAX),
+        std::min(static_cast<int64_t>(INT_MAX),
                  CPLAtoGIntBig(oResult.GetValue(5, nIdxInResult))));
     int nTileMatrixHeight = static_cast<int>(
-        std::min(static_cast<GIntBig>(INT_MAX),
+        std::min(static_cast<int64_t>(INT_MAX),
                  CPLAtoGIntBig(oResult.GetValue(6, nIdxInResult))));
     if (nTileMatrixWidth <= 0 || nTileMatrixHeight <= 0)
     {

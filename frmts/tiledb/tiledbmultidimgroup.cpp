@@ -338,7 +338,7 @@ bool TileDBGroup::AddMember(const std::string &osPath,
 
 std::shared_ptr<GDALDimension> TileDBGroup::CreateDimension(
     const std::string &osName, const std::string &osType,
-    const std::string &osDirection, GUInt64 nSize, CSLConstList)
+    const std::string &osDirection, uint64_t nSize, CSLConstList)
 {
     if (osName.empty())
     {
@@ -539,7 +539,7 @@ std::shared_ptr<GDALMDArray> TileDBGroup::CreateMDArray(
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> TileDBGroup::CreateAttribute(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
     return CreateAttributeImpl(osName, anDimensions, oDataType, papszOptions);

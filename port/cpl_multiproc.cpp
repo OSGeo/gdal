@@ -42,6 +42,7 @@
 #endif
 #include <cerrno>
 #include <cmath>
+#include <cinttypes>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -83,10 +84,10 @@ struct _CPLLock
     bool bDebugPerfAsked;
     bool bDebugPerf;
     volatile int nCurrentHolders;
-    GUIntBig nStartTime;
-    GIntBig nMaxDiff;
+    uint64_t nStartTime;
+    int64_t nMaxDiff;
     double dfAvgDiff;
-    GUIntBig nIters;
+    uint64_t nIters;
 #endif
 };
 
@@ -108,7 +109,7 @@ struct _CPLLock
                      : "0"(level))
 #endif
 
-static GUIntBig CPLrdtsc()
+static uint64_t CPLrdtsc()
 {
     unsigned int a;
     unsigned int d;
@@ -118,10 +119,10 @@ static GUIntBig CPLrdtsc()
     unsigned int unused4;
     GCC_CPUID(0, unused1, unused2, unused3, unused4);
     __asm__ volatile("rdtsc" : "=a"(a), "=d"(d));
-    return static_cast<GUIntBig>(a) | (static_cast<GUIntBig>(d) << 32);
+    return static_cast<uint64_t>(a) | (static_cast<uint64_t>(d) << 32);
 }
 
-static GUIntBig CPLrdtscp()
+static uint64_t CPLrdtscp()
 {
     unsigned int a;
     unsigned int d;
@@ -131,7 +132,7 @@ static GUIntBig CPLrdtscp()
     unsigned int unused4;
     __asm__ volatile("rdtscp" : "=a"(a), "=d"(d));
     GCC_CPUID(0, unused1, unused2, unused3, unused4);
-    return static_cast<GUIntBig>(a) | (static_cast<GUIntBig>(d) << 32);
+    return static_cast<uint64_t>(a) | (static_cast<uint64_t>(d) << 32);
 }
 #endif
 
@@ -716,7 +717,7 @@ void CPLUnlockFile(void *hLock)
 /*                             CPLGetPID()                              */
 /************************************************************************/
 
-GIntBig CPLGetPID()
+int64_t CPLGetPID()
 
 {
     return 1;
@@ -1187,10 +1188,10 @@ void CPLUnlockFile(void *hLock)
 /*                             CPLGetPID()                              */
 /************************************************************************/
 
-GIntBig CPLGetPID()
+int64_t CPLGetPID()
 
 {
-    return static_cast<GIntBig>(GetCurrentThreadId());
+    return static_cast<int64_t>(GetCurrentThreadId());
 }
 
 /************************************************************************/
@@ -1885,10 +1886,10 @@ void CPLUnlockFile(void *hLock)
 /*                             CPLGetPID()                              */
 /************************************************************************/
 
-GIntBig CPLGetPID()
+int64_t CPLGetPID()
 
 {
-    return reinterpret_cast<GIntBig>(reinterpret_cast<void *>(pthread_self()));
+    return reinterpret_cast<int64_t>(reinterpret_cast<void *>(pthread_self()));
 }
 
 static pthread_key_t oTLSKey;
@@ -2507,7 +2508,7 @@ CPLLock *CPLCreateLock(CPLLockType eType)
 int CPLCreateOrAcquireLock(CPLLock **ppsLock, CPLLockType eType)
 {
 #ifdef DEBUG_CONTENTION
-    GUIntBig nStartTime = 0;
+    uint64_t nStartTime = 0;
     if ((*ppsLock) && (*ppsLock)->bDebugPerfAsked)
         nStartTime = CPLrdtsc();
 #endif
@@ -2548,7 +2549,7 @@ int CPLCreateOrAcquireLock(CPLLock **ppsLock, CPLLockType eType)
 int CPLAcquireLock(CPLLock *psLock)
 {
 #ifdef DEBUG_CONTENTION
-    GUIntBig nStartTime = 0;
+    uint64_t nStartTime = 0;
     if (psLock->bDebugPerfAsked)
         nStartTime = CPLrdtsc();
 #endif
@@ -2576,13 +2577,13 @@ void CPLReleaseLock(CPLLock *psLock)
 {
 #ifdef DEBUG_CONTENTION
     bool bHitMaxDiff = false;
-    GIntBig nMaxDiff = 0;
+    int64_t nMaxDiff = 0;
     double dfAvgDiff = 0;
     if (psLock->bDebugPerf && CPLAtomicDec(&(psLock->nCurrentHolders)) == 0)
     {
-        const GUIntBig nStopTime = CPLrdtscp();
-        const GIntBig nDiffTime =
-            static_cast<GIntBig>(nStopTime - psLock->nStartTime);
+        const uint64_t nStopTime = CPLrdtscp();
+        const int64_t nDiffTime =
+            static_cast<int64_t>(nStopTime - psLock->nStartTime);
         if (nDiffTime > psLock->nMaxDiff)
         {
             bHitMaxDiff = true;
@@ -2602,7 +2603,7 @@ void CPLReleaseLock(CPLLock *psLock)
     if (psLock->bDebugPerf &&
         (bHitMaxDiff || (psLock->nIters % 1000000) == (1000000 - 1)))
     {
-        CPLDebug("LOCK", "Lock contention : max = " CPL_FRMT_GIB ", avg = %.0f",
+        CPLDebug("LOCK", "Lock contention : max = %" PRId64 ", avg = %.0f",
                  nMaxDiff, dfAvgDiff);
     }
 #endif

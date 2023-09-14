@@ -78,6 +78,7 @@
 #include "cpl_vsi.h"
 
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cstddef>
 #include <cstdio>
@@ -598,8 +599,8 @@ void VSIGZipHandle::check_header()
 
         len = static_cast<uInt>(m_poBaseHandle->Read(inbuf + len, 1, nToRead));
 #ifdef ENABLE_DEBUG
-        CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                 m_poBaseHandle->Tell(), offsetEndCompressedData);
+        CPLDebug("GZIP", "%" PRIu64 " %" PRIu64, m_poBaseHandle->Tell(),
+                 offsetEndCompressedData);
 #endif
         if (len == 0)  // && ferror(file)
         {
@@ -693,8 +694,8 @@ int VSIGZipHandle::get_byte()
         stream.avail_in =
             static_cast<uInt>(m_poBaseHandle->Read(inbuf, 1, nToRead));
 #ifdef ENABLE_DEBUG
-        CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                 m_poBaseHandle->Tell(), offsetEndCompressedData);
+        CPLDebug("GZIP", "%" PRIu64 " %" PRIu64, m_poBaseHandle->Tell(),
+                 offsetEndCompressedData);
 #endif
         if (stream.avail_in == 0)
         {
@@ -748,7 +749,7 @@ bool VSIGZipHandle::gzseek(vsi_l_offset offset, int whence)
 
     z_eof = 0;
 #ifdef ENABLE_DEBUG
-    CPLDebug("GZIP", "Seek(" CPL_FRMT_GUIB ",%d)", offset, whence);
+    CPLDebug("GZIP", "Seek(" PRIu64 ",%d)", offset, whence);
 #endif
 
     if (m_transparent)
@@ -871,10 +872,8 @@ bool VSIGZipHandle::gzseek(vsi_l_offset offset, int whence)
 #ifdef ENABLE_DEBUG
             CPLDebug("SNAPSHOT",
                      "using snapshot %d : "
-                     "posInBaseHandle(snapshot)=" CPL_FRMT_GUIB
-                     " in(snapshot)=" CPL_FRMT_GUIB
-                     " out(snapshot)=" CPL_FRMT_GUIB " out=" CPL_FRMT_GUIB
-                     " offset=" CPL_FRMT_GUIB,
+                     "posInBaseHandle(snapshot)=" PRIu64 " in(snapshot)=" PRIu64
+                     " out(snapshot)=" PRIu64 " out=" PRIu64 " offset=" PRIu64,
                      i, snapshots[i].posInBaseHandle, snapshots[i].in,
                      snapshots[i].out, out, offset);
 #endif
@@ -934,7 +933,7 @@ bool VSIGZipHandle::gzseek(vsi_l_offset offset, int whence)
         offset -= read_size;
     }
 #ifdef ENABLE_DEBUG
-    CPLDebug("GZIP", "gzseek at offset " CPL_FRMT_GUIB, out);
+    CPLDebug("GZIP", "gzseek at offset %" PRIu64, out);
 #endif
 
     if (original_offset == 0 && original_nWhence == SEEK_END)
@@ -983,7 +982,7 @@ bool VSIGZipHandle::gzseek(vsi_l_offset offset, int whence)
 vsi_l_offset VSIGZipHandle::Tell()
 {
 #ifdef ENABLE_DEBUG
-    CPLDebug("GZIP", "Tell() = " CPL_FRMT_GUIB, out);
+    CPLDebug("GZIP", "Tell() = %" PRIu64, out);
 #endif
     return out;
 }
@@ -1087,8 +1086,8 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
 #ifdef ENABLE_DEBUG
                 CPLDebug("SNAPSHOT",
                          "creating snapshot %d : "
-                         "posInBaseHandle=" CPL_FRMT_GUIB " in=" CPL_FRMT_GUIB
-                         " out=" CPL_FRMT_GUIB " crc=%X",
+                         "posInBaseHandle=" PRIu64 " in=" PRIu64 " out=" PRIu64
+                         " crc=%X",
                          static_cast<int>((posInBaseHandle - startOff) /
                                           snapshot_byte_interval),
                          posInBaseHandle, in, out,
@@ -1108,8 +1107,8 @@ size_t VSIGZipHandle::Read(void *const buf, size_t const nSize,
             stream.avail_in =
                 static_cast<uInt>(m_poBaseHandle->Read(inbuf, 1, Z_BUFSIZE));
 #ifdef ENABLE_DEBUG
-            CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                     m_poBaseHandle->Tell(), offsetEndCompressedData);
+            CPLDebug("GZIP", "%" PRIu64 " %" PRIu64, m_poBaseHandle->Tell(),
+                     offsetEndCompressedData);
 #endif
             if (m_poBaseHandle->Tell() > offsetEndCompressedData)
             {
@@ -1476,7 +1475,7 @@ bool VSIDeflate64Handle::gzseek(vsi_l_offset offset, int whence)
 
     z_eof = 0;
 #ifdef ENABLE_DEBUG
-    CPLDebug("GZIP", "Seek(" CPL_FRMT_GUIB ",%d)", offset, whence);
+    CPLDebug("GZIP", "Seek(" PRIu64 ",%d)", offset, whence);
 #endif
 
     // whence == SEEK_END is unsuppored in original gzseek.
@@ -1546,10 +1545,8 @@ bool VSIDeflate64Handle::gzseek(vsi_l_offset offset, int whence)
 #ifdef ENABLE_DEBUG
             CPLDebug("SNAPSHOT",
                      "using snapshot %d : "
-                     "posInBaseHandle(snapshot)=" CPL_FRMT_GUIB
-                     " in(snapshot)=" CPL_FRMT_GUIB
-                     " out(snapshot)=" CPL_FRMT_GUIB " out=" CPL_FRMT_GUIB
-                     " offset=" CPL_FRMT_GUIB,
+                     "posInBaseHandle(snapshot)=" PRIu64 " in(snapshot)=" PRIu64
+                     " out(snapshot)=" PRIu64 " out=" PRIu64 " offset=" PRIu64,
                      i, snapshots[i].posInBaseHandle, snapshots[i].in,
                      snapshots[i].out, out, offset);
 #endif
@@ -1612,7 +1609,7 @@ bool VSIDeflate64Handle::gzseek(vsi_l_offset offset, int whence)
         offset -= read_size;
     }
 #ifdef ENABLE_DEBUG
-    CPLDebug("GZIP", "gzseek at offset " CPL_FRMT_GUIB, out);
+    CPLDebug("GZIP", "gzseek at offset %" PRIu64, out);
 #endif
 
     if (original_offset == 0 && original_nWhence == SEEK_END)
@@ -1630,7 +1627,7 @@ bool VSIDeflate64Handle::gzseek(vsi_l_offset offset, int whence)
 vsi_l_offset VSIDeflate64Handle::Tell()
 {
 #ifdef ENABLE_DEBUG
-    CPLDebug("GZIP", "Tell() = " CPL_FRMT_GUIB, out);
+    CPLDebug("GZIP", "Tell() = %" PRIu64, out);
 #endif
     return out;
 }
@@ -1717,8 +1714,8 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
 #ifdef ENABLE_DEBUG
                 CPLDebug("SNAPSHOT",
                          "creating snapshot %d : "
-                         "posInBaseHandle=" CPL_FRMT_GUIB " in=" CPL_FRMT_GUIB
-                         " out=" CPL_FRMT_GUIB " crc=%X",
+                         "posInBaseHandle=" PRIu64 " in=" PRIu64 " out=" PRIu64
+                         " crc=%X",
                          static_cast<int>((posInBaseHandle - startOff) /
                                           snapshot_byte_interval),
                          posInBaseHandle, in, out,
@@ -1738,8 +1735,8 @@ size_t VSIDeflate64Handle::Read(void *const buf, size_t const nSize,
             stream.avail_in =
                 static_cast<uInt>(m_poBaseHandle->Read(inbuf, 1, Z_BUFSIZE));
 #ifdef ENABLE_DEBUG
-            CPLDebug("GZIP", CPL_FRMT_GUIB " " CPL_FRMT_GUIB,
-                     m_poBaseHandle->Tell(), offsetEndCompressedData);
+            CPLDebug("GZIP", "%" PRIu64 " %" PRIu64, m_poBaseHandle->Tell(),
+                     offsetEndCompressedData);
 #endif
             if (m_poBaseHandle->Tell() > offsetEndCompressedData)
             {
@@ -3111,8 +3108,8 @@ int VSIGZipFilesystemHandler::Stat(const char *pszFilename,
         if (fpCacheLength)
         {
             const char *pszLine;
-            GUIntBig nCompressedSize = 0;
-            GUIntBig nUncompressedSize = 0;
+            uint64_t nCompressedSize = 0;
+            uint64_t nUncompressedSize = 0;
             while ((pszLine = CPLReadLineL(fpCacheLength)) != nullptr)
             {
                 if (STARTS_WITH_CI(pszLine, "compressed_size="))
@@ -3133,7 +3130,7 @@ int VSIGZipFilesystemHandler::Stat(const char *pszFilename,
 
             CPL_IGNORE_RET_VAL(VSIFCloseL(fpCacheLength));
 
-            if (nCompressedSize == static_cast<GUIntBig>(pStatBuf->st_size))
+            if (nCompressedSize == static_cast<uint64_t>(pStatBuf->st_size))
             {
                 // Patch with the uncompressed size.
                 pStatBuf->st_size = nUncompressedSize;
@@ -3158,8 +3155,8 @@ int VSIGZipFilesystemHandler::Stat(const char *pszFilename,
         if (poHandle)
         {
             poHandle->Seek(0, SEEK_END);
-            const GUIntBig uncompressed_size =
-                static_cast<GUIntBig>(poHandle->Tell());
+            const uint64_t uncompressed_size =
+                static_cast<uint64_t>(poHandle->Tell());
             poHandle->Seek(0, SEEK_SET);
 
             // Patch with the uncompressed size.
@@ -3297,9 +3294,9 @@ class VSIZipReader final : public VSIArchiveReader
   private:
     unzFile unzF = nullptr;
     unz_file_pos file_pos;
-    GUIntBig nNextFileSize = 0;
+    uint64_t nNextFileSize = 0;
     CPLString osNextFileName{};
-    GIntBig nModifiedTime = 0;
+    int64_t nModifiedTime = 0;
 
     bool SetInfo();
 
@@ -3323,7 +3320,7 @@ class VSIZipReader final : public VSIArchiveReader
     {
         return new VSIZipEntryFileOffset(file_pos);
     }
-    GUIntBig GetFileSize() override
+    uint64_t GetFileSize() override
     {
         return nNextFileSize;
     }
@@ -3331,7 +3328,7 @@ class VSIZipReader final : public VSIArchiveReader
     {
         return osNextFileName;
     }
-    GIntBig GetModifiedTime() override
+    int64_t GetModifiedTime() override
     {
         return nModifiedTime;
     }
@@ -3839,18 +3836,17 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
                 13 + 2 * nChunkSize_ ||
             nNextOffsetInCompressedStream > compressed_size_)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "Invalid values for nOffsetInCompressedStream (" CPL_FRMT_GUIB
-                ") / "
-                "nNextOffsetInCompressedStream(" CPL_FRMT_GUIB ")",
-                static_cast<GUIntBig>(nOffsetInCompressedStream),
-                static_cast<GUIntBig>(nNextOffsetInCompressedStream));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "Invalid values for nOffsetInCompressedStream (%" PRIu64
+                     ") / "
+                     "nNextOffsetInCompressedStream(%" PRIu64 ")",
+                     static_cast<uint64_t>(nOffsetInCompressedStream),
+                     static_cast<uint64_t>(nNextOffsetInCompressedStream));
             return 0;
         }
 
         // CPLDebug("VSIZIP", "Seek to compressed data at offset "
-        // CPL_FRMT_GUIB, static_cast<GUIntBig>(nPosCompressedStream_ +
+        // PRIu64, static_cast<uint64_t>(nPosCompressedStream_ +
         // nOffsetInCompressedStream));
         if (poBaseHandle_->Seek(
                 nPosCompressedStream_ + nOffsetInCompressedStream, SEEK_SET) !=
@@ -3884,19 +3880,18 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
                 static_cast<Bytef *>(pBuffer) + nOffsetInOutputBuffer,
                 nToReadThisIter, &nOut) != LIBDEFLATE_SUCCESS)
         {
-            CPLError(
-                CE_Failure, CPLE_AppDefined,
-                "libdeflate_deflate_decompress() failed at pos " CPL_FRMT_GUIB,
-                static_cast<GUIntBig>(nCurPos_));
+            CPLError(CE_Failure, CPLE_AppDefined,
+                     "libdeflate_deflate_decompress() failed at pos %" PRIu64,
+                     static_cast<uint64_t>(nCurPos_));
             return 0;
         }
         if (nOut != nToReadThisIter)
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "Only %u bytes decompressed at pos " CPL_FRMT_GUIB
+                     "Only %u bytes decompressed at pos %" PRIu64
                      " whereas %u where expected",
                      static_cast<unsigned>(nOut),
-                     static_cast<GUIntBig>(nCurPos_),
+                     static_cast<uint64_t>(nCurPos_),
                      static_cast<unsigned>(nToReadThisIter));
             return 0;
         }
@@ -3911,8 +3906,8 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         if ((err != Z_OK && err != Z_STREAM_END))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "inflate() failed at pos " CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(nCurPos_));
+                     "inflate() failed at pos %" PRIu64,
+                     static_cast<uint64_t>(nCurPos_));
             inflateReset(&sStream_);
             return 0;
         }
@@ -3922,10 +3917,10 @@ size_t VSISOZipHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
         {
             CPLError(
                 CE_Failure, CPLE_AppDefined,
-                "Only %u bytes decompressed at pos " CPL_FRMT_GUIB
+                "Only %u bytes decompressed at pos %" PRIu64
                 " whereas %u where expected",
                 static_cast<unsigned>(nToReadThisIter - sStream_.avail_out),
-                static_cast<GUIntBig>(nCurPos_),
+                static_cast<uint64_t>(nCurPos_),
                 static_cast<unsigned>(nToReadThisIter));
             inflateReset(&sStream_);
             return 0;
@@ -4297,8 +4292,8 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
         CPLStringList aosMetadata;
         aosMetadata.SetNameValue(
             "START_DATA_OFFSET",
-            CPLSPrintf(CPL_FRMT_GUIB,
-                       static_cast<GUIntBig>(info.nStartDataStream)));
+            CPLSPrintf("%" PRIu64,
+                       static_cast<uint64_t>(info.nStartDataStream)));
 
         if (info.nCompressionMethod == 0)
             aosMetadata.SetNameValue("COMPRESSION_METHOD", "0 (STORED)");
@@ -4311,12 +4306,12 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
         }
         aosMetadata.SetNameValue(
             "COMPRESSED_SIZE",
-            CPLSPrintf(CPL_FRMT_GUIB,
-                       static_cast<GUIntBig>(info.nCompressedSize)));
+            CPLSPrintf("%" PRIu64,
+                       static_cast<uint64_t>(info.nCompressedSize)));
         aosMetadata.SetNameValue(
             "UNCOMPRESSED_SIZE",
-            CPLSPrintf(CPL_FRMT_GUIB,
-                       static_cast<GUIntBig>(info.nUncompressedSize)));
+            CPLSPrintf("%" PRIu64,
+                       static_cast<uint64_t>(info.nUncompressedSize)));
 
         if (info.bSOZipIndexFound)
         {
@@ -4333,8 +4328,8 @@ char **VSIZipFilesystemHandler::GetFileMetadata(const char *pszFilename,
 
             aosMetadata.SetNameValue(
                 "SOZIP_START_DATA_OFFSET",
-                CPLSPrintf(CPL_FRMT_GUIB,
-                           static_cast<GUIntBig>(info.nSOZIPStartData)));
+                CPLSPrintf("%" PRIu64,
+                           static_cast<uint64_t>(info.nSOZIPStartData)));
 
             if (info.bSOZipIndexValid)
             {

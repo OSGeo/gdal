@@ -35,7 +35,9 @@
 
 #include <string>
 #include <algorithm>
+#include <cinttypes>
 #include <fstream>
+#include <limits>
 
 #ifdef HAVE_SQLITE3
 #include <sqlite3.h>
@@ -615,16 +617,16 @@ TEST_F(test_ogr, gpb_h)
     ASSERT_EQ(GetVarUIntSize(128), 2);
     ASSERT_EQ(GetVarUIntSize((1 << 14) - 1), 2);
     ASSERT_EQ(GetVarUIntSize(1 << 14), 3);
-    ASSERT_EQ(GetVarUIntSize(GUINT64_MAX), 10);
+    ASSERT_EQ(GetVarUIntSize(std::numeric_limits<uint64_t>::max()), 10);
 
     ASSERT_EQ(GetVarIntSize(0), 1);
     ASSERT_EQ(GetVarIntSize(127), 1);
     ASSERT_EQ(GetVarIntSize(128), 2);
     ASSERT_EQ(GetVarIntSize((1 << 14) - 1), 2);
     ASSERT_EQ(GetVarIntSize(1 << 14), 3);
-    ASSERT_EQ(GetVarIntSize(GINT64_MAX), 9);
+    ASSERT_EQ(GetVarIntSize(std::numeric_limits<int64_t>::max()), 9);
     ASSERT_EQ(GetVarIntSize(-1), 10);
-    ASSERT_EQ(GetVarIntSize(GINT64_MIN), 10);
+    ASSERT_EQ(GetVarIntSize(std::numeric_limits<int64_t>::min()), 10);
 
     ASSERT_EQ(GetVarSIntSize(0), 1);
     ASSERT_EQ(GetVarSIntSize(63), 1);
@@ -632,8 +634,8 @@ TEST_F(test_ogr, gpb_h)
     ASSERT_EQ(GetVarSIntSize(-1), 1);
     ASSERT_EQ(GetVarSIntSize(-64), 1);
     ASSERT_EQ(GetVarSIntSize(-65), 2);
-    ASSERT_EQ(GetVarSIntSize(GINT64_MIN), 10);
-    ASSERT_EQ(GetVarSIntSize(GINT64_MAX), 10);
+    ASSERT_EQ(GetVarSIntSize(std::numeric_limits<int64_t>::min()), 10);
+    ASSERT_EQ(GetVarSIntSize(std::numeric_limits<int64_t>::max()), 10);
 
     ASSERT_EQ(GetTextSize(""), 1);
     ASSERT_EQ(GetTextSize(" "), 2);
@@ -662,16 +664,17 @@ TEST_F(test_ogr, gpb_h)
     ASSERT_EQ(ReadVarUInt64(&pabyBufferRO), 0xDEADBEEFU);
 
     pabyBuffer = abyBuffer;
-    WriteVarUInt(&pabyBuffer, GUINT64_MAX);
+    WriteVarUInt(&pabyBuffer, std::numeric_limits<uint64_t>::max());
     ASSERT_EQ(pabyBuffer - abyBuffer, 10);
     pabyBufferRO = abyBuffer;
-    ASSERT_EQ(ReadVarUInt64(&pabyBufferRO), GUINT64_MAX);
+    ASSERT_EQ(ReadVarUInt64(&pabyBufferRO),
+              std::numeric_limits<uint64_t>::max());
 
     pabyBuffer = abyBuffer;
-    WriteVarInt(&pabyBuffer, GINT64_MAX);
+    WriteVarInt(&pabyBuffer, std::numeric_limits<int64_t>::max());
     ASSERT_EQ(pabyBuffer - abyBuffer, 9);
     pabyBufferRO = abyBuffer;
-    ASSERT_EQ(ReadVarInt64(&pabyBufferRO), GINT64_MAX);
+    ASSERT_EQ(ReadVarInt64(&pabyBufferRO), std::numeric_limits<int64_t>::max());
 
     pabyBuffer = abyBuffer;
     WriteVarInt(&pabyBuffer, -1);
@@ -680,16 +683,16 @@ TEST_F(test_ogr, gpb_h)
     ASSERT_EQ(ReadVarInt64(&pabyBufferRO), -1);
 
     pabyBuffer = abyBuffer;
-    WriteVarInt(&pabyBuffer, GINT64_MIN);
+    WriteVarInt(&pabyBuffer, std::numeric_limits<int64_t>::min());
     ASSERT_EQ(pabyBuffer - abyBuffer, 10);
     pabyBufferRO = abyBuffer;
-    ASSERT_EQ(ReadVarInt64(&pabyBufferRO), GINT64_MIN);
+    ASSERT_EQ(ReadVarInt64(&pabyBufferRO), std::numeric_limits<int64_t>::min());
 
     pabyBuffer = abyBuffer;
     WriteVarSInt(&pabyBuffer, 0);
     ASSERT_EQ(pabyBuffer - abyBuffer, 1);
     {
-        GIntBig nVal;
+        int64_t nVal;
         pabyBufferRO = abyBuffer;
         READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
         ASSERT_EQ(nVal, 0);
@@ -699,7 +702,7 @@ TEST_F(test_ogr, gpb_h)
     WriteVarSInt(&pabyBuffer, 1);
     ASSERT_EQ(pabyBuffer - abyBuffer, 1);
     {
-        GIntBig nVal;
+        int64_t nVal;
         pabyBufferRO = abyBuffer;
         READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
         ASSERT_EQ(nVal, 1);
@@ -709,30 +712,30 @@ TEST_F(test_ogr, gpb_h)
     WriteVarSInt(&pabyBuffer, -1);
     ASSERT_EQ(pabyBuffer - abyBuffer, 1);
     {
-        GIntBig nVal;
+        int64_t nVal;
         pabyBufferRO = abyBuffer;
         READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
         ASSERT_EQ(nVal, -1);
     }
 
     pabyBuffer = abyBuffer;
-    WriteVarSInt(&pabyBuffer, GINT64_MAX);
+    WriteVarSInt(&pabyBuffer, std::numeric_limits<int64_t>::max());
     ASSERT_EQ(pabyBuffer - abyBuffer, 10);
     {
-        GIntBig nVal;
+        int64_t nVal;
         pabyBufferRO = abyBuffer;
         READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
-        ASSERT_EQ(nVal, GINT64_MAX);
+        ASSERT_EQ(nVal, std::numeric_limits<int64_t>::max());
     }
 
     pabyBuffer = abyBuffer;
-    WriteVarSInt(&pabyBuffer, GINT64_MIN);
+    WriteVarSInt(&pabyBuffer, std::numeric_limits<int64_t>::min());
     ASSERT_EQ(pabyBuffer - abyBuffer, 10);
     {
-        GIntBig nVal;
+        int64_t nVal;
         pabyBufferRO = abyBuffer;
         READ_VARSINT64(pabyBufferRO, abyBuffer + 10, nVal);
-        ASSERT_EQ(nVal, GINT64_MIN);
+        ASSERT_EQ(nVal, std::numeric_limits<int64_t>::min());
     }
 
     pabyBuffer = abyBuffer;
@@ -1265,7 +1268,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
     ASSERT_TRUE(poDS != nullptr);
 
     {
-        GIntBig nExpectedFID = 0;
+        int64_t nExpectedFID = 0;
         for (const auto &oFeatureLayerPair : poDS->GetFeatures())
         {
             ASSERT_EQ(oFeatureLayerPair.feature->GetFID(), nExpectedFID);
@@ -1282,7 +1285,7 @@ TEST_F(test_ogr, DatasetFeature_and_LayerFeature_iterators)
 
     for (auto poLayer : poDS->GetLayers())
     {
-        GIntBig nExpectedFID = 0;
+        int64_t nExpectedFID = 0;
         for (const auto &poFeature : poLayer)
         {
             ASSERT_EQ(poFeature->GetFID(), nExpectedFID);
@@ -1483,7 +1486,7 @@ TEST_F(test_ogr, field_iterator)
         oFeatureTmp["int_field"] = 123;
         oFeatureTmp["int64_field"] = oFeatureTmp["int_field"];
         ASSERT_EQ(oFeatureTmp["int64_field"].GetInteger64(), 123);
-        oFeatureTmp["int64_field"] = static_cast<GIntBig>(1234567890123);
+        oFeatureTmp["int64_field"] = static_cast<int64_t>(1234567890123);
         oFeatureTmp["double_field"] = 123.45;
         oFeatureTmp["null_field"].SetNull();
         oFeatureTmp["unset_field"].clear();
@@ -1499,9 +1502,9 @@ TEST_F(test_ogr, field_iterator)
             2);
         oFeatureTmp["intlist_field"] = std::vector<int>();
         oFeatureTmp["intlist_field"] = std::vector<int>{12, 34};
-        oFeatureTmp["int64list_field"] = std::vector<GIntBig>();
+        oFeatureTmp["int64list_field"] = std::vector<int64_t>();
         oFeatureTmp["int64list_field"] =
-            std::vector<GIntBig>{1234567890123, 34};
+            std::vector<int64_t>{1234567890123, 34};
         oFeatureTmp["doublelist_field"] = std::vector<double>();
         oFeatureTmp["doublelist_field"] = std::vector<double>{12.25, 56.75};
 
@@ -1520,8 +1523,8 @@ TEST_F(test_ogr, field_iterator)
         ASSERT_EQ(x, 123);
     }
     {
-        GIntBig x = oFeature["int64_field"];
-        ASSERT_EQ(x, static_cast<GIntBig>(1234567890123));
+        int64_t x = oFeature["int64_field"];
+        ASSERT_EQ(x, static_cast<int64_t>(1234567890123));
     }
     {
         double x = oFeature["double_field"];
@@ -1634,7 +1637,7 @@ TEST_F(test_ogr, field_iterator)
         }
         else if (iIter == 9)
         {
-            std::vector<GIntBig> oExpected{1234567890123, 34};
+            std::vector<int64_t> oExpected{1234567890123, 34};
             decltype(oExpected) oGot = oField;
             ASSERT_EQ(oGot.size(), oExpected.size());
             for (size_t i = 0; i < oExpected.size(); i++)
@@ -2031,7 +2034,7 @@ TEST_F(test_ogr, OGR_L_GetArrowStream)
         poFeature->SetField("bool", 1);
         poFeature->SetField("int16", -12345);
         poFeature->SetField("int32", 12345678);
-        poFeature->SetField("int64", static_cast<GIntBig>(12345678901234));
+        poFeature->SetField("int64", static_cast<int64_t>(12345678901234));
         poFeature->SetField("float32", 1.25);
         poFeature->SetField("float64", 1.250123);
         poFeature->SetField("str", "abc");

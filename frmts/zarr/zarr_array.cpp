@@ -35,6 +35,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cinttypes>
 #include <cstdlib>
 #include <limits>
 #include <map>
@@ -110,12 +111,12 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 
 /* static */ bool ZarrArray::ParseChunkSize(const CPLJSONArray &oChunks,
                                             const GDALExtendedDataType &oType,
-                                            std::vector<GUInt64> &anBlockSize)
+                                            std::vector<uint64_t> &anBlockSize)
 {
     size_t nBlockSize = oType.GetSize();
     for (const auto &item : oChunks)
     {
-        const auto nSize = static_cast<GUInt64>(item.ToLong());
+        const auto nSize = static_cast<uint64_t>(item.ToLong());
         if (nSize == 0)
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Invalid content for chunks");
@@ -140,7 +141,7 @@ inline char *UCS4ToUTF8(const uint8_t *ucs4Ptr, size_t nSize, bool needByteSwap)
 /* static */ uint64_t ZarrArray::ComputeTileCount(
     const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
-    const std::vector<GUInt64> &anBlockSize)
+    const std::vector<uint64_t> &anBlockSize)
 {
     uint64_t nTotalTileCount = 1;
     for (size_t i = 0; i < aoDims.size(); ++i)
@@ -172,7 +173,7 @@ ZarrArray::ZarrArray(
     const std::string &osParentName, const std::string &osName,
     const std::vector<std::shared_ptr<GDALDimension>> &aoDims,
     const GDALExtendedDataType &oType, const std::vector<DtypeElt> &aoDtypeElts,
-    const std::vector<GUInt64> &anBlockSize)
+    const std::vector<uint64_t> &anBlockSize)
     :
 #if !defined(COMPILER_WARNS_ABOUT_ABSTRACT_VBASE_INIT)
       GDALAbstractMDArray(osParentName, osName),
@@ -306,7 +307,7 @@ CPLJSONObject ZarrArray::SerializeSpecialAttributes()
 /* static */
 bool ZarrArray::FillBlockSize(
     const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
-    const GDALExtendedDataType &oDataType, std::vector<GUInt64> &anBlockSize,
+    const GDALExtendedDataType &oDataType, std::vector<uint64_t> &anBlockSize,
     CSLConstList papszOptions)
 {
     const auto nDims = aoDimensions.size();
@@ -316,15 +317,15 @@ bool ZarrArray::FillBlockSize(
     if (nDims >= 2)
     {
         anBlockSize[nDims - 2] =
-            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 2]->GetSize()),
-                     static_cast<GUInt64>(256));
+            std::min(std::max<uint64_t>(1, aoDimensions[nDims - 2]->GetSize()),
+                     static_cast<uint64_t>(256));
         anBlockSize[nDims - 1] =
-            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 1]->GetSize()),
-                     static_cast<GUInt64>(256));
+            std::min(std::max<uint64_t>(1, aoDimensions[nDims - 1]->GetSize()),
+                     static_cast<uint64_t>(256));
     }
     else if (nDims == 1)
     {
-        anBlockSize[0] = std::max<GUInt64>(1, aoDimensions[0]->GetSize());
+        anBlockSize[0] = std::max<uint64_t>(1, aoDimensions[0]->GetSize());
     }
 
     const char *pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
@@ -341,7 +342,7 @@ bool ZarrArray::FillBlockSize(
         size_t nBlockSize = oDataType.GetSize();
         for (size_t i = 0; i < nDims; ++i)
         {
-            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            anBlockSize[i] = static_cast<uint64_t>(CPLAtoGIntBig(aszTokens[i]));
             if (anBlockSize[i] == 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -553,14 +554,14 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
     if (m_oType.GetNumericDataType() == GDT_Int64)
     {
         const auto nVal = GetNoDataValueAsInt64();
-        oRoot.Add("fill_value", static_cast<GInt64>(nVal));
+        oRoot.Add("fill_value", static_cast<int64_t>(nVal));
     }
     else if (m_oType.GetNumericDataType() == GDT_UInt64)
     {
         const auto nVal = GetNoDataValueAsUInt64();
         if (nVal <= static_cast<uint64_t>(std::numeric_limits<int64_t>::max()))
         {
-            oRoot.Add("fill_value", static_cast<GInt64>(nVal));
+            oRoot.Add("fill_value", static_cast<int64_t>(nVal));
         }
         else if (nVal == static_cast<uint64_t>(static_cast<double>(nVal)))
         {
@@ -570,7 +571,7 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
         {
             // not really compliant...
             oRoot.Add("fill_value",
-                      CPLSPrintf(CPL_FRMT_GUIB, static_cast<GUIntBig>(nVal)));
+                      CPLSPrintf("%" PRIu64, static_cast<uint64_t>(nVal)));
         }
     }
     else
@@ -583,7 +584,7 @@ void ZarrArray::SerializeNumericNoData(CPLJSONObject &oRoot) const
         else if (dfVal == -std::numeric_limits<double>::infinity())
             oRoot.Add("fill_value", "-Infinity");
         else if (GDALDataTypeIsInteger(m_oType.GetNumericDataType()))
-            oRoot.Add("fill_value", static_cast<GInt64>(dfVal));
+            oRoot.Add("fill_value", static_cast<int64_t>(dfVal));
         else
             oRoot.Add("fill_value", dfVal);
     }
@@ -880,7 +881,7 @@ void ZarrArray::DecodeSourceElt(const std::vector<DtypeElt> &elts,
 /*                  ZarrArray::IAdviseReadCommon()                      */
 /************************************************************************/
 
-bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
+bool ZarrArray::IAdviseReadCommon(const uint64_t *arrayStartIdx,
                                   const size_t *count,
                                   CSLConstList papszOptions,
                                   std::vector<uint64_t> &anIndicesCur,
@@ -931,8 +932,8 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
                 static_cast<uint64_t>(
                     (GDALGetCacheMax64() - GDALGetCacheUsed64()) / 2),
                 static_cast<uint64_t>(std::numeric_limits<size_t>::max() / 2)));
-            CPLDebug(ZARR_DEBUG_KEY, "Using implicit CACHE_SIZE=" CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(nCacheSizeTmp));
+            CPLDebug(ZARR_DEBUG_KEY, "Using implicit CACHE_SIZE=%" PRIu64,
+                     static_cast<uint64_t>(nCacheSizeTmp));
         }
         return nCacheSizeTmp;
     }();
@@ -945,11 +946,11 @@ bool ZarrArray::IAdviseReadCommon(const GUInt64 *arrayStartIdx,
     {
         CPLError(
             CE_Failure, CPLE_OutOfMemory,
-            "CACHE_SIZE=" CPL_FRMT_GUIB " is not big enough to cache "
+            "CACHE_SIZE=%" PRIu64 " is not big enough to cache "
             "all needed tiles. "
-            "At least " CPL_FRMT_GUIB " bytes would be needed",
-            static_cast<GUIntBig>(nCacheSize),
-            static_cast<GUIntBig>(nReqTiles * std::max(m_nTileSize, nDims)));
+            "At least %" PRIu64 " bytes would be needed",
+            static_cast<uint64_t>(nCacheSize),
+            static_cast<uint64_t>(nReqTiles * std::max(m_nTileSize, nDims)));
         return false;
     }
 
@@ -1031,8 +1032,8 @@ lbl_next_depth:
 /*                           ZarrArray::IRead()                         */
 /************************************************************************/
 
-bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                      const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+bool ZarrArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {
@@ -1043,8 +1044,8 @@ bool ZarrArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
         return false;
 
     // Need to be kept in top-level scope
-    std::vector<GUInt64> arrayStartIdxMod;
-    std::vector<GInt64> arrayStepMod;
+    std::vector<uint64_t> arrayStartIdxMod;
+    std::vector<int64_t> arrayStepMod;
     std::vector<GPtrDiff_t> bufferStrideMod;
 
     const size_t nDims = m_aoDims.size();
@@ -1166,9 +1167,8 @@ lbl_next_depth:
             }
             else
             {
-                CPLDebugOnly(ZARR_DEBUG_KEY,
-                             "Cache miss for tile " CPL_FRMT_GUIB,
-                             static_cast<GUIntBig>(nTileIdx));
+                CPLDebugOnly(ZARR_DEBUG_KEY, "Cache miss for tile %" PRIu64,
+                             static_cast<uint64_t>(nTileIdx));
             }
         }
 
@@ -1355,7 +1355,7 @@ lbl_next_depth:
             const auto step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
 
             if (m_bUseOptimizedCodePaths && bBothAreNumericDT &&
-                step <= static_cast<GIntBig>(std::numeric_limits<int>::max() /
+                step <= static_cast<int64_t>(std::numeric_limits<int>::max() /
                                              nDTSize) &&
                 dstBufferStrideBytes[dimIdxSubLoop] <=
                     std::numeric_limits<int>::max())
@@ -1484,7 +1484,8 @@ lbl_next_depth:
                 break;
 
             size_t nIncr;
-            if (static_cast<GUInt64>(arrayStep[dimIdx]) < m_anBlockSize[dimIdx])
+            if (static_cast<uint64_t>(arrayStep[dimIdx]) <
+                m_anBlockSize[dimIdx])
             {
                 // Compute index at next block boundary
                 auto newIdx =
@@ -1521,8 +1522,8 @@ lbl_next_depth:
 /*                           ZarrArray::IRead()                         */
 /************************************************************************/
 
-bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                       const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+bool ZarrArray::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                       const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                        const GDALExtendedDataType &bufferDataType,
                        const void *pSrcBuffer)
 {
@@ -1535,8 +1536,8 @@ bool ZarrArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
     m_oMapTileIndexToCachedTile.clear();
 
     // Need to be kept in top-level scope
-    std::vector<GUInt64> arrayStartIdxMod;
-    std::vector<GInt64> arrayStepMod;
+    std::vector<uint64_t> arrayStartIdxMod;
+    std::vector<int64_t> arrayStepMod;
     std::vector<GPtrDiff_t> bufferStrideMod;
 
     const size_t nDims = m_aoDims.size();
@@ -1746,7 +1747,7 @@ lbl_next_depth:
         if (dimIdxSubLoop == dimIdxForCopy)
         {
             size_t nOffset = offsetDstBuffer[dimIdxSubLoop];
-            GInt64 step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
+            int64_t step = nDims == 0 ? 0 : arrayStep[dimIdxSubLoop];
             for (size_t i = dimIdxSubLoop + 1; i < nDims; ++i)
             {
                 nOffset = static_cast<size_t>(
@@ -1793,7 +1794,7 @@ lbl_next_depth:
                     }
                 }
                 else if (step <=
-                             static_cast<GIntBig>(
+                             static_cast<int64_t>(
                                  std::numeric_limits<int>::max() / nDTSize) &&
                          srcBufferStrideBytes[dimIdxSubLoop] <=
                              std::numeric_limits<int>::max())
@@ -1957,7 +1958,8 @@ lbl_next_depth:
                 break;
 
             size_t nIncr;
-            if (static_cast<GUInt64>(arrayStep[dimIdx]) < m_anBlockSize[dimIdx])
+            if (static_cast<uint64_t>(arrayStep[dimIdx]) <
+                m_anBlockSize[dimIdx])
             {
                 // Compute index at next block boundary
                 auto newIdx =
@@ -2122,7 +2124,7 @@ ZarrArray::OpenTilePresenceCache(bool bCanCreate) const
 
             if (!osBlockSize.empty())
                 osBlockSize += ',';
-            constexpr GUInt64 BLOCKSIZE = 256;
+            constexpr uint64_t BLOCKSIZE = 256;
             osBlockSize +=
                 std::to_string(std::min(poNewDim->GetSize(), BLOCKSIZE));
 
@@ -2198,9 +2200,9 @@ bool ZarrArray::CacheTilePresence()
         return true;
     }
 
-    std::vector<GUInt64> anTileIdx(m_aoDims.size());
+    std::vector<uint64_t> anTileIdx(m_aoDims.size());
     const std::vector<size_t> anCount(m_aoDims.size(), 1);
-    const std::vector<GInt64> anArrayStep(m_aoDims.size(), 0);
+    const std::vector<int64_t> anArrayStep(m_aoDims.size(), 0);
     const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
     const auto apoDimsCache = poTilePresenceArray->GetDimensions();
     const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
@@ -2227,7 +2229,7 @@ bool ZarrArray::CacheTilePresence()
                         unexpectedIndex = true;
                     }
                     anTileIdx[i] =
-                        static_cast<GUInt64>(CPLAtoGIntBig(aosTokens[i]));
+                        static_cast<uint64_t>(CPLAtoGIntBig(aosTokens[i]));
                     if (anTileIdx[i] >= apoDimsCache[i]->GetSize())
                     {
                         unexpectedIndex = true;
@@ -2287,7 +2289,7 @@ bool ZarrArray::CacheTilePresence()
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> ZarrArray::CreateAttribute(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -2547,7 +2549,7 @@ ZarrArray::GetCoordinateVariables() const
 /*                            Resize()                                  */
 /************************************************************************/
 
-bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
+bool ZarrArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
                        CSLConstList /* papszOptions */)
 {
     if (!CheckValidAndErrorOutIfNot())
@@ -2570,7 +2572,7 @@ bool ZarrArray::Resize(const std::vector<GUInt64> &anNewDimSizes,
 
     auto &dims = GetDimensions();
     std::vector<size_t> anGrownDimIdx;
-    std::map<GDALDimension *, GUInt64> oMapDimToSize;
+    std::map<GDALDimension *, uint64_t> oMapDimToSize;
     for (size_t i = 0; i < nDimCount; ++i)
     {
         auto oIter = oMapDimToSize.find(dims[i].get());
@@ -2811,7 +2813,7 @@ void ZarrArray::ParseSpecialAttributes(CPLJSONObject &oAttributes)
 
 bool ZarrArray::SetStatistics(bool bApproxStats, double dfMin, double dfMax,
                               double dfMean, double dfStdDev,
-                              GUInt64 nValidCount, CSLConstList papszOptions)
+                              uint64_t nValidCount, CSLConstList papszOptions)
 {
     if (!bApproxStats && m_bUpdatable &&
         CPLTestBool(
@@ -2825,7 +2827,7 @@ bool ZarrArray::SetStatistics(bool bApproxStats, double dfMin, double dfMax,
         }
         if (poAttr)
         {
-            std::vector<GUInt64> startIdx = {0};
+            std::vector<uint64_t> startIdx = {0};
             std::vector<size_t> count = {2};
             std::vector<double> values = {dfMin, dfMax};
             poAttr->Write(startIdx.data(), count.data(), nullptr, nullptr,

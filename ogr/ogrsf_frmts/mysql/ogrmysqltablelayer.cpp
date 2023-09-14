@@ -32,6 +32,8 @@
 #include "cpl_string.h"
 #include "ogr_mysql.h"
 
+#include <cinttypes>
+
 /************************************************************************/
 /*                         OGRMySQLTableLayer()                         */
 /************************************************************************/
@@ -692,7 +694,7 @@ OGRErr OGRMySQLTableLayer::ISetFeature(OGRFeature *poFeature)
 /*                           DeleteFeature()                            */
 /************************************************************************/
 
-OGRErr OGRMySQLTableLayer::DeleteFeature(GIntBig nFID)
+OGRErr OGRMySQLTableLayer::DeleteFeature(int64_t nFID)
 
 {
     MYSQL_RES *hResult = nullptr;
@@ -705,7 +707,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature(GIntBig nFID)
     if (!bHasFid)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "DeleteFeature(" CPL_FRMT_GIB
+                 "DeleteFeature(%" PRId64
                  ") failed.  Unable to delete features "
                  "in tables without\n a recognised FID column.",
                  nFID);
@@ -715,7 +717,7 @@ OGRErr OGRMySQLTableLayer::DeleteFeature(GIntBig nFID)
     /* -------------------------------------------------------------------- */
     /*      Form the statement to drop the record.                          */
     /* -------------------------------------------------------------------- */
-    osCommand.Printf("DELETE FROM `%s` WHERE `%s` = " CPL_FRMT_GIB,
+    osCommand.Printf("DELETE FROM `%s` WHERE `%s` = %" PRId64,
                      poFeatureDefn->GetName(), pszFIDColumn, nFID);
 
     /* -------------------------------------------------------------------- */
@@ -820,7 +822,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature(OGRFeature *poFeature)
     // Set the FID
     if (poFeature->GetFID() != OGRNullFID && pszFIDColumn != nullptr)
     {
-        GIntBig nFID = poFeature->GetFID();
+        int64_t nFID = poFeature->GetFID();
         if (!CPL_INT64_FITS_ON_INT32(nFID) &&
             GetMetadataItem(OLMD_FID64) == nullptr)
         {
@@ -846,7 +848,7 @@ OGRErr OGRMySQLTableLayer::ICreateFeature(OGRFeature *poFeature)
 
         if (bNeedComma)
             osCommand += ", ";
-        osCommand += CPLString().Printf(CPL_FRMT_GIB, nFID);
+        osCommand += CPLString().Printf("%" PRId64, nFID);
         bNeedComma = TRUE;
     }
 
@@ -1111,7 +1113,7 @@ OGRErr OGRMySQLTableLayer::CreateField(OGRFieldDefn *poFieldIn, int bApproxOK)
 /*                             GetFeature()                             */
 /************************************************************************/
 
-OGRFeature *OGRMySQLTableLayer::GetFeature(GIntBig nFeatureId)
+OGRFeature *OGRMySQLTableLayer::GetFeature(int64_t nFeatureId)
 
 {
     if (pszFIDColumn == nullptr)
@@ -1129,9 +1131,8 @@ OGRFeature *OGRMySQLTableLayer::GetFeature(GIntBig nFeatureId)
     char *pszFieldList = BuildFields();
     CPLString osCommand;
 
-    osCommand.Printf("SELECT %s FROM `%s` WHERE `%s` = " CPL_FRMT_GIB,
-                     pszFieldList, poFeatureDefn->GetName(), pszFIDColumn,
-                     nFeatureId);
+    osCommand.Printf("SELECT %s FROM `%s` WHERE `%s` = %" PRId64, pszFieldList,
+                     poFeatureDefn->GetName(), pszFIDColumn, nFeatureId);
     CPLFree(pszFieldList);
 
     /* -------------------------------------------------------------------- */
@@ -1190,7 +1191,7 @@ OGRFeature *OGRMySQLTableLayer::GetFeature(GIntBig nFeatureId)
 /*      way of counting features matching a spatial query.              */
 /************************************************************************/
 
-GIntBig OGRMySQLTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
+int64_t OGRMySQLTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
 {
     /* -------------------------------------------------------------------- */
     /*      Ensure any active long result is interrupted.                   */
@@ -1223,7 +1224,7 @@ GIntBig OGRMySQLTableLayer::GetFeatureCount(CPL_UNUSED int bForce)
     /*      Capture the result.                                             */
     /* -------------------------------------------------------------------- */
     char **papszRow = mysql_fetch_row(hResult);
-    GIntBig nCount = 0;
+    int64_t nCount = 0;
 
     if (papszRow != nullptr && papszRow[0] != nullptr)
         nCount = CPLAtoGIntBig(papszRow[0]);

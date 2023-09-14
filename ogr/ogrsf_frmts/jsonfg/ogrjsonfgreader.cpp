@@ -1069,7 +1069,7 @@ OGRJSONFGReader::ReadFeature(json_object *poObj, const char *pszRequestedLayer,
     json_object *poObjId = CPL_json_object_object_get(poObj, "id");
     if (nullptr != poObjId && oBuildContext.bFeatureLevelIdAsFID)
     {
-        poFeature->SetFID(static_cast<GIntBig>(json_object_get_int64(poObjId)));
+        poFeature->SetFID(static_cast<int64_t>(json_object_get_int64(poObjId)));
     }
 
     /* -------------------------------------------------------------------- */

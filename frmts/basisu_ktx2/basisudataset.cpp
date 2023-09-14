@@ -289,9 +289,9 @@ GDALDataset *BASISUDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         nImageIdx = static_cast<uint32_t>(atoi(aosTokens[2]));
     }
-    GIntBig nMaxSize = std::strtoull(
+    int64_t nMaxSize = std::strtoull(
         CPLGetConfigOption("BASISU_MAX_FILE_SIZE", "0"), nullptr, 10);
-    constexpr GIntBig BASISU_LIMIT = std::numeric_limits<uint32_t>::max();
+    constexpr int64_t BASISU_LIMIT = std::numeric_limits<uint32_t>::max();
     if (nMaxSize == 0 || nMaxSize > BASISU_LIMIT)
         nMaxSize = BASISU_LIMIT;
     GByte *pabyRet = nullptr;

@@ -33,6 +33,7 @@
 #include "gdal_utils_priv.h"
 
 #include <cassert>
+#include <cinttypes>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -165,7 +166,7 @@ struct GDALVectorTranslateOptions
        the fact the 'fid' is a special field recognized by OGR SQL. So
        GDALVectorTranslateOptions::pszWHERE = "fid in (1,3,5)" would select
        features 1, 3 and 5. */
-    GIntBig nFIDToFetch = OGRNullFID;
+    int64_t nFIDToFetch = OGRNullFID;
 
     /*! allow or suppress progress monitor and other non-error output */
     bool bQuiet = false;
@@ -430,7 +431,7 @@ struct GDALVectorTranslateOptions
     bool bNativeData = true;
 
     /*! Maximum number of features, or -1 if no limit. */
-    GIntBig nLimit = -1;
+    int64_t nLimit = -1;
 
     /*! Wished offset w.r.t UTC of dateTime */
     int nTZOffsetInSec = TZ_OFFSET_INVALID;
@@ -439,7 +440,7 @@ struct GDALVectorTranslateOptions
 struct TargetLayerInfo
 {
     OGRLayer *m_poSrcLayer = nullptr;
-    GIntBig m_nFeaturesRead = 0;
+    int64_t m_nFeaturesRead = 0;
     bool m_bPerFeatureCT = 0;
     OGRLayer *m_poDstLayer = nullptr;
     std::vector<std::unique_ptr<OGRCoordinateTransformation>> m_apoCT{};
@@ -507,7 +508,7 @@ class SetupTargetLayer
 
     std::unique_ptr<TargetLayerInfo>
     Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
-          GDALVectorTranslateOptions *psOptions, GIntBig &nTotalEventsDone);
+          GDALVectorTranslateOptions *psOptions, int64_t &nTotalEventsDone);
 };
 
 class LayerTranslator
@@ -538,12 +539,12 @@ class LayerTranslator
     const OGRSpatialReference *m_poClipDstReprojectedToDstSRS_SRS = nullptr;
     bool m_bExplodeCollections = false;
     bool m_bNativeData = false;
-    GIntBig m_nLimit = -1;
+    int64_t m_nLimit = -1;
     OGRGeometryFactory::TransformWithOptionsCache m_transformWithOptionsCache;
 
     int Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
-                  GIntBig nCountLayerFeatures, GIntBig *pnReadFeatureCount,
-                  GIntBig &nTotalEventsDone, GDALProgressFunc pfnProgress,
+                  int64_t nCountLayerFeatures, int64_t *pnReadFeatureCount,
+                  int64_t &nTotalEventsDone, GDALProgressFunc pfnProgress,
                   void *pProgressArg, GDALVectorTranslateOptions *psOptions);
 
   private:
@@ -611,7 +612,7 @@ static std::unique_ptr<OGRGeometry> LoadGeometry(const std::string &osDS,
                 if (!poSrcGeom->IsValid())
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Geometry of feature " CPL_FRMT_GIB " of %s "
+                             "Geometry of feature %" PRId64 " of %s "
                              "is invalid. Trying to make it valid",
                              poFeat->GetFID(), osDS.c_str());
                     auto poValid =
@@ -667,7 +668,7 @@ class OGRSplitListFieldLayer : public OGRLayer
     bool BuildLayerDefn(GDALProgressFunc pfnProgress, void *pProgressArg);
 
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual void ResetReading() override
@@ -679,7 +680,7 @@ class OGRSplitListFieldLayer : public OGRLayer
         return FALSE;
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override
     {
         return poSrcLayer->GetFeatureCount(bForce);
     }
@@ -792,11 +793,11 @@ bool OGRSplitListFieldLayer::BuildLayerDefn(GDALProgressFunc pfnProgress,
     {
         poSrcLayer->ResetReading();
 
-        const GIntBig nFeatureCount =
+        const int64_t nFeatureCount =
             poSrcLayer->TestCapability(OLCFastFeatureCount)
                 ? poSrcLayer->GetFeatureCount()
                 : 0;
-        GIntBig nFeatureIndex = 0;
+        int64_t nFeatureIndex = 0;
 
         /* Scan the whole layer to compute the maximum number of */
         /* items for each field of list type */
@@ -954,7 +955,7 @@ OGRFeature *OGRSplitListFieldLayer::TranslateFeature(OGRFeature *poSrcFeature)
             {
                 const int nCount = std::min(nMaxSplitListSubFields,
                                             psField->Integer64List.nCount);
-                GIntBig *paList = psField->Integer64List.paList;
+                int64_t *paList = psField->Integer64List.paList;
                 for (int j = 0; j < nCount; ++j)
                     poFeature->SetField(iDstField + j, paList[j]);
                 iDstField += pasListFields[iListField].nMaxOccurrences;
@@ -1010,7 +1011,7 @@ OGRFeature *OGRSplitListFieldLayer::GetNextFeature()
 /*                           GetFeature()                               */
 /************************************************************************/
 
-OGRFeature *OGRSplitListFieldLayer::GetFeature(GIntBig nFID)
+OGRFeature *OGRSplitListFieldLayer::GetFeature(int64_t nFID)
 {
     return TranslateFeature(poSrcLayer->GetFeature(nFID));
 }
@@ -1449,7 +1450,7 @@ class GDALVectorTranslateWrappedLayer : public OGRLayerDecorator
         return m_poFDefn;
     }
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
 
     static GDALVectorTranslateWrappedLayer *
     New(OGRLayer *poBaseLayer, bool bOwnBaseLayer,
@@ -1543,7 +1544,7 @@ OGRFeature *GDALVectorTranslateWrappedLayer::GetNextFeature()
     return TranslateFeature(OGRLayerDecorator::GetNextFeature());
 }
 
-OGRFeature *GDALVectorTranslateWrappedLayer::GetFeature(GIntBig nFID)
+OGRFeature *GDALVectorTranslateWrappedLayer::GetFeature(int64_t nFID)
 {
     return TranslateFeature(OGRLayerDecorator::GetFeature(nFID));
 }
@@ -2791,7 +2792,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             poODS->StartTransaction(psOptions->bForceTransaction);
     }
 
-    GIntBig nTotalEventsDone = 0;
+    int64_t nTotalEventsDone = 0;
 
     /* -------------------------------------------------------------------- */
     /*      Special case for -sql clause.  No source layers required.       */
@@ -2836,7 +2837,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                              psOptions->osGeomField.c_str());
             }
 
-            GIntBig nCountLayerFeatures = 0;
+            int64_t nCountLayerFeatures = 0;
             GDALProgressFunc pfnProgress = nullptr;
             void *pProgressArg = nullptr;
             if (psOptions->bDisplayProgress)
@@ -3287,10 +3288,10 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
             psOptions->osNewLayerName = CPLGetBasename(osDestFilename);
         }
 
-        std::vector<GIntBig> anLayerCountFeatures;
+        std::vector<int64_t> anLayerCountFeatures;
         anLayerCountFeatures.resize(nLayerCount);
-        GIntBig nCountLayersFeatures = 0;
-        GIntBig nAccCountFeatures = 0;
+        int64_t nCountLayersFeatures = 0;
+        int64_t nAccCountFeatures = 0;
 
         /* First pass to apply filters and count all features if necessary */
         for (int iLayer = 0; iLayer < nLayerCount; iLayer++)
@@ -3396,7 +3397,7 @@ GDALDatasetH GDALVectorTranslate(const char *pszDest, GDALDatasetH hDstDS,
                 if (nCountLayersFeatures != 0)
                 {
                     pfnProgress = GDALScaledProgress;
-                    GIntBig nStart = 0;
+                    int64_t nStart = 0;
                     if (poPassedLayer != poLayer &&
                         psOptions->nMaxSplitListSubFields != 1)
                         nStart = anLayerCountFeatures[iLayer] / 2;
@@ -3809,7 +3810,7 @@ static void DoFieldTypeConversion(GDALDataset *poDstDS,
 std::unique_ptr<TargetLayerInfo>
 SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
                         GDALVectorTranslateOptions *psOptions,
-                        GIntBig &nTotalEventsDone)
+                        int64_t &nTotalEventsDone)
 {
     int eGType = m_eGType;
     bool bPreserveFID = m_bPreserveFID;
@@ -5206,9 +5207,9 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
 /************************************************************************/
 
 int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
-                               GIntBig nCountLayerFeatures,
-                               GIntBig *pnReadFeatureCount,
-                               GIntBig &nTotalEventsDone,
+                               int64_t nCountLayerFeatures,
+                               int64_t *pnReadFeatureCount,
+                               int64_t &nTotalEventsDone,
                                GDALProgressFunc pfnProgress, void *pProgressArg,
                                GDALVectorTranslateOptions *psOptions)
 {
@@ -5260,8 +5261,8 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
     std::unique_ptr<OGRFeature> poFeature;
     std::unique_ptr<OGRFeature> poDstFeature(new OGRFeature(poDstFDefn));
     int nFeaturesInTransaction = 0;
-    GIntBig nCount = 0; /* written + failed */
-    GIntBig nFeaturesWritten = 0;
+    int64_t nCount = 0; /* written + failed */
+    int64_t nFeaturesWritten = 0;
 
     bool bRet = true;
     CPLErrorReset();
@@ -5341,8 +5342,8 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
             }
         }
 
-        const GIntBig nSrcFID = poFeature->GetFID();
-        GIntBig nDesiredFID = OGRNullFID;
+        const int64_t nSrcFID = poFeature->GetFID();
+        int64_t nDesiredFID = OGRNullFID;
         if (bPreserveFID)
             nDesiredFID = nSrcFID;
         else if (psInfo->m_iSrcFIDField >= 0 &&
@@ -5431,7 +5432,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     }
 
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Unable to translate feature " CPL_FRMT_GIB
+                             "Unable to translate feature %" PRId64
                              " from layer %s.",
                              nSrcFID, poSrcLayer->GetName());
 
@@ -5506,7 +5507,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     brokendowntime.tm_year = psField->Date.Year - 1900;
                     brokendowntime.tm_mon = psField->Date.Month - 1;
                     brokendowntime.tm_mday = psField->Date.Day;
-                    GIntBig nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
+                    int64_t nUnixTime = CPLYMDHMSToUnixTime(&brokendowntime);
                     int nSec = psField->Date.Hour * 3600 +
                                psField->Date.Minute * 60 +
                                static_cast<int>(psField->Date.Second);
@@ -5648,7 +5649,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     {
                         CPLDebug(
                             "OGR2OGR",
-                            "Discarding feature " CPL_FRMT_GIB " of layer %s, "
+                            "Discarding feature %" PRId64 " of layer %s, "
                             "as its intersection with -clipsrc is a %s "
                             "whereas the input is a %s",
                             nSrcFID, poSrcLayer->GetName(),
@@ -5690,7 +5691,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                         }
 
                         CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Failed to reproject feature " CPL_FRMT_GIB
+                                 "Failed to reproject feature %" PRId64
                                  " (geometry probably out of source or "
                                  "destination SRS).",
                                  nSrcFID);
@@ -5748,8 +5749,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                         {
                             CPLDebug(
                                 "OGR2OGR",
-                                "Discarding feature " CPL_FRMT_GIB
-                                " of layer %s, "
+                                "Discarding feature %" PRId64 " of layer %s, "
                                 "as its intersection with -clipdst is a %s "
                                 "whereas the input is a %s",
                                 nSrcFID, poSrcLayer->GetName(),
@@ -5814,7 +5814,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     poDstFeature->GetFID() != nDesiredFID)
                 {
                     CPLError(CE_Warning, CPLE_AppDefined,
-                             "Feature id " CPL_FRMT_GIB " not preserved",
+                             "Feature id %" PRId64 " not preserved",
                              nDesiredFID);
                 }
             }
@@ -5827,8 +5827,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 }
 
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Unable to write feature " CPL_FRMT_GIB
-                         " from layer %s.",
+                         "Unable to write feature %" PRId64 " from layer %s.",
                          nSrcFID, poSrcLayer->GetName());
 
                 return false;
@@ -5836,8 +5835,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
             else
             {
                 CPLDebug("GDALVectorTranslate",
-                         "Unable to write feature " CPL_FRMT_GIB
-                         " into layer %s.",
+                         "Unable to write feature %" PRId64 " into layer %s.",
                          nSrcFID, poSrcLayer->GetName());
                 if (psOptions->nGroupTransactions)
                 {
@@ -5894,8 +5892,8 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
     if (poFeatureIn == nullptr)
     {
         CPLDebug("GDALVectorTranslate",
-                 CPL_FRMT_GIB " features written in layer '%s'",
-                 nFeaturesWritten, poDstLayer->GetName());
+                 "%" PRId64 " features written in layer '%s'", nFeaturesWritten,
+                 poDstLayer->GetName());
     }
 
     return bRet;

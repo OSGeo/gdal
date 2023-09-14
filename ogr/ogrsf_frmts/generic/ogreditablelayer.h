@@ -52,11 +52,11 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
     IOGREditableLayerSynchronizer *m_poSynchronizer;
     bool m_bTakeOwnershipSynchronizer;
     OGRFeatureDefn *m_poEditableFeatureDefn;
-    GIntBig m_nNextFID;
-    std::set<GIntBig> m_oSetCreated{};
-    std::set<GIntBig> m_oSetEdited{};
-    std::set<GIntBig> m_oSetDeleted{};
-    std::set<GIntBig>::iterator m_oIter{};
+    int64_t m_nNextFID;
+    std::set<int64_t> m_oSetCreated{};
+    std::set<int64_t> m_oSetEdited{};
+    std::set<int64_t> m_oSetDeleted{};
+    std::set<int64_t>::iterator m_oIter{};
     std::set<CPLString> m_oSetDeletedFields{};
     OGRLayer *m_poMemLayer;
     bool m_bStructureModified;
@@ -77,7 +77,7 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
                      bool bTakeOwnershipSynchronizer);
     virtual ~OGREditableLayer();
 
-    void SetNextFID(GIntBig nNextFID);
+    void SetNextFID(int64_t nNextFID);
     void SetSupportsCreateGeomField(bool SupportsCreateGeomField);
     void SetSupportsCurveGeometries(bool bSupportsCurveGeometries);
 
@@ -94,8 +94,8 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
 
     virtual void ResetReading() override;
     virtual OGRFeature *GetNextFeature() override;
-    virtual OGRErr SetNextByIndex(GIntBig nIndex) override;
-    virtual OGRFeature *GetFeature(GIntBig nFID) override;
+    virtual OGRErr SetNextByIndex(int64_t nIndex) override;
+    virtual OGRFeature *GetFeature(int64_t nFID) override;
     virtual OGRErr ISetFeature(OGRFeature *poFeature) override;
     virtual OGRErr ICreateFeature(OGRFeature *poFeature) override;
     virtual OGRErr IUpsertFeature(OGRFeature *poFeature) override;
@@ -104,14 +104,14 @@ class CPL_DLL OGREditableLayer : public OGRLayerDecorator
                           int nUpdatedGeomFieldsCount,
                           const int *panUpdatedGeomFieldsIdx,
                           bool bUpdateStyleString) override;
-    virtual OGRErr DeleteFeature(GIntBig nFID) override;
+    virtual OGRErr DeleteFeature(int64_t nFID) override;
 
     virtual OGRwkbGeometryType GetGeomType() override;
     virtual OGRFeatureDefn *GetLayerDefn() override;
 
     virtual OGRSpatialReference *GetSpatialRef() override;
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override;
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override;
     virtual OGRErr GetExtent(int iGeomField, OGREnvelope *psExtent,
                              int bForce = TRUE) override;
     virtual OGRErr GetExtent(OGREnvelope *psExtent, int bForce = TRUE) override;

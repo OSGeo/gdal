@@ -31,6 +31,7 @@
 
 #include <cassert>
 #include <cerrno>
+#include <cinttypes>
 #include <climits>
 #include <cmath>
 #include <cstddef>
@@ -92,7 +93,7 @@ constexpr unsigned int MAX_COUNT_FOR_TAGS_IN_WAY = 255;  // Must fit on 1 byte.
 
 constexpr int NODE_PER_BUCKET = 65536;
 
-static bool VALID_ID_FOR_CUSTOM_INDEXING(GIntBig _id)
+static bool VALID_ID_FOR_CUSTOM_INDEXING(int64_t _id)
 {
     return _id >= 0 && _id / NODE_PER_BUCKET < INT_MAX;
 }
@@ -157,7 +158,7 @@ constexpr int HASHED_INDEXES_ARRAY_SIZE = 3145739;
 constexpr int COLLISION_BUCKET_ARRAY_SIZE = (MAX_ACCUMULATED_NODES / 100) * 40;
 
 // hash function = identity
-#define HASH_ID_FUNC(x) ((GUIntBig)(x))
+#define HASH_ID_FUNC(x) ((uint64_t)(x))
 #endif  // ENABLE_NODE_LOOKUP_BY_HASHING
 
 // #define FAKE_LOOKUP_NODES
@@ -167,12 +168,12 @@ constexpr int COLLISION_BUCKET_ARRAY_SIZE = (MAX_ACCUMULATED_NODES / 100) * 40;
 size_t GetMaxTotalAllocs();
 #endif
 
-static void WriteVarSInt64(GIntBig nSVal, GByte **ppabyData);
+static void WriteVarSInt64(int64_t nSVal, GByte **ppabyData);
 
 class DSToBeOpened
 {
   public:
-    GIntBig nPID;
+    int64_t nPID;
     CPLString osDSName;
     CPLString osInterestLayers;
 };
@@ -202,7 +203,7 @@ static void AddInterestLayersForDSName(const CPLString &osDSName,
 static CPLString GetInterestLayersForDSName(const CPLString &osDSName)
 {
     CPLMutexHolder oMutexHolder(&hMutex);
-    GIntBig nPID = CPLGetPID();
+    int64_t nPID = CPLGetPID();
     for (int i = 0; i < (int)oListDSToBeOpened.size(); i++)
     {
         if (oListDSToBeOpened[i].nPID == nPID &&
@@ -244,7 +245,7 @@ OGROSMDataSource::~OGROSMDataSource()
     CPLFree(m_pszName);
 
     if (m_psParser != nullptr)
-        CPLDebug("OSM", "Number of bytes read in file : " CPL_FRMT_GUIB,
+        CPLDebug("OSM", "Number of bytes read in file : %" PRIu64,
                  OSM_GetBytesRead(m_psParser));
     OSM_Close(m_psParser);
 
@@ -443,7 +444,7 @@ bool OGROSMDataSource::IndexPointSQLite(OSMNode *psNode)
     if (!(rc == SQLITE_OK || rc == SQLITE_DONE))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed inserting node " CPL_FRMT_GIB ": %s", psNode->nID,
+                 "Failed inserting node %" PRId64 ": %s", psNode->nID,
                  sqlite3_errmsg(m_hDB));
         return false;
     }
@@ -558,10 +559,10 @@ bool OGROSMDataSource::FlushCurrentSectorCompressedCase()
             abyOutBuffer[i >> 3] |= (1 << (i % 8));
             if (bLastValid)
             {
-                const GIntBig nDiff64Lon =
-                    static_cast<GIntBig>(pasLonLatIn[i].nLon) -
-                    static_cast<GIntBig>(nLastLon);
-                const GIntBig nDiff64Lat = pasLonLatIn[i].nLat - nLastLat;
+                const int64_t nDiff64Lon =
+                    static_cast<int64_t>(pasLonLatIn[i].nLon) -
+                    static_cast<int64_t>(nLastLon);
+                const int64_t nDiff64Lat = pasLonLatIn[i].nLat - nLastLat;
                 WriteVarSInt64(nDiff64Lon, &pabyOut);
                 WriteVarSInt64(nDiff64Lat, &pabyOut);
             }
@@ -654,7 +655,7 @@ bool OGROSMDataSource::IndexPointCustom(OSMNode *psNode)
     if (!VALID_ID_FOR_CUSTOM_INDEXING(psNode->nID))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Unsupported node id value (" CPL_FRMT_GIB
+                 "Unsupported node id value (%" PRId64
                  "). Use OSM_USE_CUSTOM_INDEXING=NO",
                  psNode->nID);
         m_bStopParsing = true;
@@ -900,7 +901,7 @@ void OGROSMDataSource::LookupNodesSQLite()
     m_nReqIds = 0;
     for (unsigned int i = 0; i < m_nUnsortedReqIds; i++)
     {
-        GIntBig id = m_panUnsortedReqIds[i];
+        int64_t id = m_panUnsortedReqIds[i];
         m_panReqIds[m_nReqIds++] = id;
     }
 
@@ -932,7 +933,7 @@ void OGROSMDataSource::LookupNodesSQLite()
 
         while (sqlite3_step(hStmt) == SQLITE_ROW)
         {
-            const GIntBig id = sqlite3_column_int64(hStmt, 0);
+            const int64_t id = sqlite3_column_int64(hStmt, 0);
             LonLat *psLonLat = (LonLat *)sqlite3_column_blob(hStmt, 1);
 
             m_panReqIds[j] = id;
@@ -1017,7 +1018,7 @@ void OGROSMDataSource::LookupNodesCustom()
 
     for (unsigned int i = 0; i < m_nUnsortedReqIds; i++)
     {
-        GIntBig id = m_panUnsortedReqIds[i];
+        int64_t id = m_panUnsortedReqIds[i];
 
         if (!VALID_ID_FOR_CUSTOM_INDEXING(id))
             continue;
@@ -1094,7 +1095,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
     unsigned int j = 0;  // Used after for.
     for (unsigned int i = 0; i < m_nReqIds; i++)
     {
-        const GIntBig id = m_panReqIds[i];
+        const int64_t id = m_panReqIds[i];
         const int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
         const int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         const int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
@@ -1115,7 +1116,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
             if (oIter == m_oMapBuckets.end())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot read node " CPL_FRMT_GIB, id);
+                         "Cannot read node %" PRId64, id);
                 continue;
                 // FIXME ?
             }
@@ -1123,7 +1124,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
             if (psBucket->u.panSectorSize == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot read node " CPL_FRMT_GIB, id);
+                         "Cannot read node %" PRId64, id);
                 continue;
                 // FIXME ?
             }
@@ -1147,7 +1148,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
                               m_fpNodes) != static_cast<size_t>(SECTOR_SIZE))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot read node " CPL_FRMT_GIB, id);
+                             "Cannot read node %" PRId64, id);
                     continue;
                     // FIXME ?
                 }
@@ -1158,7 +1159,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
                                                m_fpNodes)) != nSectorSize)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
-                             "Cannot read sector for node " CPL_FRMT_GIB, id);
+                             "Cannot read sector for node %" PRId64, id);
                     continue;
                     // FIXME ?
                 }
@@ -1168,7 +1169,7 @@ void OGROSMDataSource::LookupNodesCustomCompressedCase()
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Error while uncompressing sector for "
-                             "node " CPL_FRMT_GIB,
+                             "node %" PRId64,
                              id);
                     continue;
                     // FIXME ?
@@ -1205,14 +1206,14 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
     CPL_STATIC_ASSERT((knDISK_SECTOR_SIZE % SECTOR_SIZE) == 0);
     GByte abyDiskSector[knDISK_SECTOR_SIZE];
     // Offset in the nodes files for which abyDiskSector was read
-    GIntBig nOldOffset = -knDISK_SECTOR_SIZE - 1;
+    int64_t nOldOffset = -knDISK_SECTOR_SIZE - 1;
     // Number of valid bytes in abyDiskSector
     size_t nValidBytes = 0;
     int k = 0;
     int nSectorBase = 0;
     for (unsigned int i = 0; i < m_nReqIds; i++)
     {
-        const GIntBig id = m_panReqIds[i];
+        const int64_t id = m_panReqIds[i];
         const int nBucket = static_cast<int>(id / NODE_PER_BUCKET);
         const int nOffInBucket = static_cast<int>(id % NODE_PER_BUCKET);
         const int nOffInBucketReduced = nOffInBucket >> NODE_PER_SECTOR_SHIFT;
@@ -1229,7 +1230,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
             if (oIter == m_oMapBuckets.end())
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot read node " CPL_FRMT_GIB, id);
+                         "Cannot read node %" PRId64, id);
                 continue;
                 // FIXME ?
             }
@@ -1237,7 +1238,7 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
             if (psBucket->u.pabyBitmap == nullptr)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
-                         "Cannot read node " CPL_FRMT_GIB, id);
+                         "Cannot read node %" PRId64, id);
                 continue;
                 // FIXME ?
             }
@@ -1264,12 +1265,12 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
                                     ((1 << nBitmapRemainder) - 1)];
         }
 
-        const GIntBig nNewOffset = psBucket->nOff + nSector * SECTOR_SIZE;
+        const int64_t nNewOffset = psBucket->nOff + nSector * SECTOR_SIZE;
         if (nNewOffset - nOldOffset >= knDISK_SECTOR_SIZE)
         {
             // Align on 4096 boundary to be glibc caching friendly
-            const GIntBig nAlignedNewPos =
-                nNewOffset & ~(static_cast<GIntBig>(knDISK_SECTOR_SIZE) - 1);
+            const int64_t nAlignedNewPos =
+                nNewOffset & ~(static_cast<int64_t>(knDISK_SECTOR_SIZE) - 1);
             VSIFSeekL(m_fpNodes, nAlignedNewPos, SEEK_SET);
             nValidBytes =
                 VSIFReadL(abyDiskSector, 1, knDISK_SECTOR_SIZE, m_fpNodes);
@@ -1282,8 +1283,8 @@ void OGROSMDataSource::LookupNodesCustomNonCompressedCase()
         if (nValidBytes < sizeof(LonLat) ||
             nOffsetInDiskSector > nValidBytes - sizeof(LonLat))
         {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "Cannot read node " CPL_FRMT_GIB, id);
+            CPLError(CE_Failure, CPLE_AppDefined, "Cannot read node %" PRId64,
+                     id);
             continue;
         }
         memcpy(&m_pasLonLatArray[j], abyDiskSector + nOffsetInDiskSector,
@@ -1319,7 +1320,7 @@ static void WriteVarInt(unsigned int nVal, std::vector<GByte> &abyData)
 /*                           WriteVarInt64()                            */
 /************************************************************************/
 
-static void WriteVarInt64(GUIntBig nVal, std::vector<GByte> &abyData)
+static void WriteVarInt64(uint64_t nVal, std::vector<GByte> &abyData)
 {
     while (true)
     {
@@ -1338,9 +1339,9 @@ static void WriteVarInt64(GUIntBig nVal, std::vector<GByte> &abyData)
 /*                           WriteVarSInt64()                           */
 /************************************************************************/
 
-static void WriteVarSInt64(GIntBig nSVal, std::vector<GByte> &abyData)
+static void WriteVarSInt64(int64_t nSVal, std::vector<GByte> &abyData)
 {
-    GIntBig nVal = nSVal >= 0 ? nSVal << 1 : ((-1 - nSVal) << 1) + 1;
+    int64_t nVal = nSVal >= 0 ? nSVal << 1 : ((-1 - nSVal) << 1) + 1;
 
     while (true)
     {
@@ -1359,9 +1360,9 @@ static void WriteVarSInt64(GIntBig nSVal, std::vector<GByte> &abyData)
 /*                           WriteVarSInt64()                           */
 /************************************************************************/
 
-static void WriteVarSInt64(GIntBig nSVal, GByte **ppabyData)
+static void WriteVarSInt64(int64_t nSVal, GByte **ppabyData)
 {
-    GIntBig nVal = nSVal >= 0 ? nSVal << 1 : ((-1 - nSVal) << 1) + 1;
+    int64_t nVal = nSVal >= 0 ? nSVal << 1 : ((-1 - nSVal) << 1) + 1;
 
     GByte *pabyData = *ppabyData;
     while (true)
@@ -1453,8 +1454,8 @@ void OGROSMDataSource::CompressWay(bool bIsArea, unsigned int nTags,
         reinterpret_cast<const GByte *>(&(pasLonLatPairs[0])) + sizeof(LonLat));
     for (int i = 1; i < nPoints; i++)
     {
-        GIntBig nDiff64 = (GIntBig)pasLonLatPairs[i].nLon -
-                          (GIntBig)pasLonLatPairs[i - 1].nLon;
+        int64_t nDiff64 = (int64_t)pasLonLatPairs[i].nLon -
+                          (int64_t)pasLonLatPairs[i - 1].nLon;
         WriteVarSInt64(nDiff64, abyCompressedWay);
 
         nDiff64 = pasLonLatPairs[i].nLat - pasLonLatPairs[i - 1].nLat;
@@ -1558,7 +1559,7 @@ void OGROSMDataSource::UncompressWay(int nBytes, const GByte *pabyCompressedWay,
 /*                              IndexWay()                              */
 /************************************************************************/
 
-void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
+void OGROSMDataSource::IndexWay(int64_t nWayID, bool bIsArea,
                                 unsigned int nTags, IndexedKVP *pasTags,
                                 LonLat *pasLonLatPairs, int nPairs,
                                 OSMInfo *psInfo)
@@ -1572,7 +1573,7 @@ void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
     if (nTagsClamped < nTags)
     {
         CPLDebug("OSM",
-                 "Too many tags for way " CPL_FRMT_GIB ": %u. "
+                 "Too many tags for way %" PRId64 ": %u. "
                  "Clamping to %u",
                  nWayID, nTags, nTagsClamped);
     }
@@ -1586,7 +1587,7 @@ void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
     if (!(rc == SQLITE_OK || rc == SQLITE_DONE))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
-                 "Failed inserting way " CPL_FRMT_GIB ": %s", nWayID,
+                 "Failed inserting way %" PRId64 ": %s", nWayID,
                  sqlite3_errmsg(m_hDB));
     }
 }
@@ -1595,7 +1596,7 @@ void OGROSMDataSource::IndexWay(GIntBig nWayID, bool bIsArea,
 /*                              FindNode()                              */
 /************************************************************************/
 
-int OGROSMDataSource::FindNode(GIntBig nID)
+int OGROSMDataSource::FindNode(int64_t nID)
 {
     if (m_nReqIds == 0)
         return -1;
@@ -1702,7 +1703,7 @@ void OGROSMDataSource::ProcessWaysBatch()
         if (m_asLonLatCache.size() < 2)
         {
             CPLDebug("OSM",
-                     "Way " CPL_FRMT_GIB
+                     "Way %" PRId64
                      " with %d nodes that could be found. Discarding it",
                      psWayFeaturePairs->nWayID,
                      static_cast<int>(m_asLonLatCache.size()));
@@ -1745,8 +1746,7 @@ void OGROSMDataSource::ProcessWaysBatch()
 
         if (m_asLonLatCache.size() != psWayFeaturePairs->nRefs)
             CPLDebug(
-                "OSM",
-                "For way " CPL_FRMT_GIB ", got only %d nodes instead of %d",
+                "OSM", "For way %" PRId64 ", got only %d nodes instead of %d",
                 psWayFeaturePairs->nWayID, nPoints, psWayFeaturePairs->nRefs);
 
         int bFilteredOut = FALSE;
@@ -1777,7 +1777,7 @@ void OGROSMDataSource::ProcessWaysBatch()
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Failed inserting into "
-                             "polygons_standalone " CPL_FRMT_GIB ": %s",
+                             "polygons_standalone %" PRId64 ": %s",
                              psWayFeaturePairs->nWayID, sqlite3_errmsg(m_hDB));
                 }
             }
@@ -1871,8 +1871,8 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
     {
         CPLDebug("OSM", "Ways processed : %d", m_nWaysProcessed);
 #ifdef DEBUG_MEM_USAGE
-        CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB,
-                 static_cast<GUIntBig>(GetMaxTotalAllocs()));
+        CPLDebug("OSM", "GetMaxTotalAllocs() = %" PRIu64,
+                 static_cast<uint64_t>(GetMaxTotalAllocs()));
 #endif
     }
 
@@ -1883,7 +1883,7 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
 
     if (psWay->nRefs < 2)
     {
-        CPLDebug("OSM", "Way " CPL_FRMT_GIB " with %d nodes. Discarding it",
+        CPLDebug("OSM", "Way %" PRId64 " with %d nodes. Discarding it",
                  psWay->nID, psWay->nRefs);
         return;
     }
@@ -2147,7 +2147,7 @@ void OGROSMDataSource::NotifyWay(OSMWay *psWay)
     m_nWayFeaturePairs++;
 
     memcpy(m_panUnsortedReqIds + m_nUnsortedReqIds, psWay->panNodeRefs,
-           sizeof(GIntBig) * (psWay->nRefs - (bIsArea ? 1 : 0)));
+           sizeof(int64_t) * (psWay->nRefs - (bIsArea ? 1 : 0)));
     m_nUnsortedReqIds += (psWay->nRefs - (bIsArea ? 1 : 0));
 }
 
@@ -2162,7 +2162,7 @@ static void OGROSMNotifyWay(OSMWay *psWay, OSMContext * /* psOSMContext */,
 /************************************************************************/
 
 unsigned int OGROSMDataSource::LookupWays(
-    std::map<GIntBig, std::pair<int, void *>> &aoMapWays,
+    std::map<int64_t, std::pair<int, void *>> &aoMapWays,
     OSMRelation *psRelation)
 {
     unsigned int nFound = 0;
@@ -2207,7 +2207,7 @@ unsigned int OGROSMDataSource::LookupWays(
 
         while (sqlite3_step(hStmt) == SQLITE_ROW)
         {
-            GIntBig id = sqlite3_column_int64(hStmt, 0);
+            int64_t id = sqlite3_column_int64(hStmt, 0);
             if (aoMapWays.find(id) == aoMapWays.end())
             {
                 int nBlobSize = sqlite3_column_bytes(hStmt, 1);
@@ -2233,7 +2233,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
                                                  unsigned int *pnTags,
                                                  OSMTag *pasTags)
 {
-    std::map<GIntBig, std::pair<int, void *>> aoMapWays;
+    std::map<int64_t, std::pair<int, void *>> aoMapWays;
     LookupWays(aoMapWays, psRelation);
 
     bool bMissing = false;
@@ -2247,8 +2247,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
                 aoMapWays.end())
             {
                 CPLDebug("OSM",
-                         "Relation " CPL_FRMT_GIB
-                         " has missing ways. Ignoring it",
+                         "Relation %" PRId64 " has missing ways. Ignoring it",
                          psRelation->nID);
                 bMissing = true;
                 break;
@@ -2258,7 +2257,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 
     if (bMissing)
     {
-        std::map<GIntBig, std::pair<int, void *>>::iterator oIter;
+        std::map<int64_t, std::pair<int, void *>>::iterator oIter;
         for (oIter = aoMapWays.begin(); oIter != aoMapWays.end(); ++oIter)
             CPLFree(oIter->second.second);
 
@@ -2392,7 +2391,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
         else
         {
             CPLDebug("OSM",
-                     "Relation " CPL_FRMT_GIB
+                     "Relation %" PRId64
                      ": Geometry has incompatible type : %s",
                      psRelation->nID,
                      poGeom != nullptr
@@ -2404,7 +2403,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 
     CPLFree(papoPolygons);
 
-    std::map<GIntBig, std::pair<int, void *>>::iterator oIter;
+    std::map<int64_t, std::pair<int, void *>>::iterator oIter;
     for (oIter = aoMapWays.begin(); oIter != aoMapWays.end(); ++oIter)
         CPLFree(oIter->second.second);
 
@@ -2418,7 +2417,7 @@ OGRGeometry *OGROSMDataSource::BuildMultiPolygon(OSMRelation *psRelation,
 OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
                                                        int bMultiLineString)
 {
-    std::map<GIntBig, std::pair<int, void *>> aoMapWays;
+    std::map<int64_t, std::pair<int, void *>> aoMapWays;
     LookupWays(aoMapWays, psRelation);
 
     OGRGeometryCollection *poColl = (bMultiLineString)
@@ -2481,7 +2480,7 @@ OGRGeometry *OGROSMDataSource::BuildGeometryCollection(OSMRelation *psRelation,
         poColl = nullptr;
     }
 
-    std::map<GIntBig, std::pair<int, void *>>::iterator oIter;
+    std::map<int64_t, std::pair<int, void *>>::iterator oIter;
     for (oIter = aoMapWays.begin(); oIter != aoMapWays.end(); ++oIter)
         CPLFree(oIter->second.second);
 
@@ -2502,8 +2501,8 @@ void OGROSMDataSource::NotifyRelation(OSMRelation *psRelation)
     {
         CPLDebug("OSM", "Relations processed : %d", m_nRelationsProcessed);
 #ifdef DEBUG_MEM_USAGE
-        CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB,
-                 static_cast<GUIntBig>(GetMaxTotalAllocs()));
+        CPLDebug("OSM", "GetMaxTotalAllocs() = %" PRIu64,
+                 static_cast<uint64_t>(GetMaxTotalAllocs()));
 #endif
     }
 
@@ -2658,7 +2657,7 @@ void OGROSMDataSource::ProcessPolygonsStandalone()
             bFirst = false;
         }
 
-        GIntBig id = sqlite3_column_int64(m_hSelectPolygonsStandaloneStmt, 0);
+        int64_t id = sqlite3_column_int64(m_hSelectPolygonsStandaloneStmt, 0);
 
         sqlite3_bind_int64(m_pahSelectWayStmt[0], 1, id);
         if (sqlite3_step(m_pahSelectWayStmt[0]) == SQLITE_ROW)
@@ -2849,8 +2848,8 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
          m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUID() ||
          m_papoLayers[IDX_LYR_MULTIPOLYGONS]->HasUser());
 
-    m_panReqIds = static_cast<GIntBig *>(
-        VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig)));
+    m_panReqIds = static_cast<int64_t *>(
+        VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(int64_t)));
 #ifdef ENABLE_NODE_LOOKUP_BY_HASHING
     m_panHashedIndexes = static_cast<int *>(
         VSI_MALLOC_VERBOSE(HASHED_INDEXES_ARRAY_SIZE * sizeof(int)));
@@ -2859,8 +2858,8 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
 #endif
     m_pasLonLatArray = static_cast<LonLat *>(
         VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(LonLat)));
-    m_panUnsortedReqIds = static_cast<GIntBig *>(
-        VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(GIntBig)));
+    m_panUnsortedReqIds = static_cast<int64_t *>(
+        VSI_MALLOC_VERBOSE(MAX_ACCUMULATED_NODES * sizeof(int64_t)));
     m_pasWayFeaturePairs = static_cast<WayFeaturePair *>(
         VSI_MALLOC_VERBOSE(MAX_DELAYED_FEATURES * sizeof(WayFeaturePair)));
     m_pasAccumulatedTags = static_cast<IndexedKVP *>(
@@ -2880,15 +2879,15 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
     m_nMaxSizeForInMemoryDBInMB = atoi(CSLFetchNameValueDef(
         papszOpenOptionsIn, "MAX_TMPFILE_SIZE",
         CPLGetConfigOption("OSM_MAX_TMPFILE_SIZE", "100")));
-    GIntBig nSize =
-        static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
+    int64_t nSize =
+        static_cast<int64_t>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
     if (nSize < 0 ||
-        static_cast<GUIntBig>(nSize) > std::numeric_limits<size_t>::max() / 2)
+        static_cast<uint64_t>(nSize) > std::numeric_limits<size_t>::max() / 2)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid value for OSM_MAX_TMPFILE_SIZE. Using 100 instead.");
         m_nMaxSizeForInMemoryDBInMB = 100;
-        nSize = static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
+        nSize = static_cast<int64_t>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
     }
 
     if (m_bCustomIndexing)
@@ -2995,8 +2994,8 @@ bool OGROSMDataSource::CreateTempDB()
         VSILFILE *fp = VSIFOpenL(m_osTmpDBName, "wb");
         if (fp)
         {
-            GIntBig nSize =
-                static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
+            int64_t nSize =
+                static_cast<int64_t>(m_nMaxSizeForInMemoryDBInMB) * 1024 * 1024;
             if (m_bCustomIndexing && m_bInMemoryNodesFile)
                 nSize = nSize / 4;
 
@@ -3164,8 +3163,8 @@ void OGROSMDataSource::SetCacheSize()
     int nRowCount = 0;
     int nColCount = 0;
     int iSqlitePageSize = -1;
-    const GIntBig iSqliteCacheBytes =
-        static_cast<GIntBig>(atoi(pszSqliteCacheMB)) * 1024 * 1024;
+    const int64_t iSqliteCacheBytes =
+        static_cast<int64_t>(atoi(pszSqliteCacheMB)) * 1024 * 1024;
 
     /* querying the current PageSize */
     int rc = sqlite3_get_table(m_hDB, "PRAGMA page_size", &papszResult,
@@ -3920,7 +3919,7 @@ OGRFeature *OGROSMDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
             VSIStatBufL sStat;
             if (VSIStatL(m_pszName, &sStat) == 0)
             {
-                m_nFileSize = static_cast<GIntBig>(sStat.st_size);
+                m_nFileSize = static_cast<int64_t>(sStat.st_size);
             }
             else
             {
@@ -3984,8 +3983,8 @@ bool OGROSMDataSource::ParseNextChunk(int nIdxLayer,
         static int counter = 0;
         counter++;
         if ((counter % 1000) == 0)
-            CPLDebug("OSM", "GetMaxTotalAllocs() = " CPL_FRMT_GUIB,
-                     static_cast<GUIntBig>(GetMaxTotalAllocs()));
+            CPLDebug("OSM", "GetMaxTotalAllocs() = %" PRIu64,
+                     static_cast<uint64_t>(GetMaxTotalAllocs()));
 #endif
 
         OSMRetCode eRet = OSM_ProcessBlock(m_psParser);
@@ -4032,7 +4031,7 @@ bool OGROSMDataSource::ParseNextChunk(int nIdxLayer,
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "An error occurred during the parsing of data "
-                         "around byte " CPL_FRMT_GUIB,
+                         "around byte %" PRIu64,
                          OSM_GetBytesRead(m_psParser));
 
                 m_bStopParsing = true;
@@ -4098,8 +4097,8 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
                 {
                     VSIFSeekL(fp, 0, SEEK_END);
                     vsi_l_offset nCurSize = VSIFTellL(fp);
-                    GIntBig nNewSize =
-                        static_cast<GIntBig>(m_nMaxSizeForInMemoryDBInMB) *
+                    int64_t nNewSize =
+                        static_cast<int64_t>(m_nMaxSizeForInMemoryDBInMB) *
                         1024 * 1024;
                     CPLPushErrorHandler(CPLQuietErrorHandler);
                     const bool bSuccess =
@@ -4357,7 +4356,7 @@ class OGROSMResultLayerDecorator final : public OGRLayerDecorator
     {
     }
 
-    virtual GIntBig GetFeatureCount(int bForce = TRUE) override
+    virtual int64_t GetFeatureCount(int bForce = TRUE) override
     {
         /* When we run GetFeatureCount() with SQLite SQL dialect, */
         /* the OSM dataset will be re-opened. Make sure that it is */
@@ -4382,7 +4381,7 @@ OGRLayer *OGROSMDataSource::ExecuteSQL(const char *pszSQLCommand,
     if (strcmp(pszSQLCommand, "GetBytesRead()") == 0)
     {
         char szVal[64] = {};
-        snprintf(szVal, sizeof(szVal), CPL_FRMT_GUIB,
+        snprintf(szVal, sizeof(szVal), "%" PRIu64,
                  OSM_GetBytesRead(m_psParser));
         return new OGROSMSingleFeatureLayer("GetBytesRead", szVal);
     }

@@ -32,6 +32,7 @@
 #include "filegdbtable_priv.h"
 
 #include <algorithm>
+#include <cinttypes>
 #include <limits>
 #include <set>
 
@@ -523,10 +524,10 @@ uint64_t FileGDBTable::GetOffsetOfFreeAreaFromFreeList(uint32_t nSize)
     if (nOffset == OFFSET_MINUS_ONE)
     {
         CPLDebug("OpenFileGDB",
-                 "%s references a free area at offset " CPL_FRMT_GUIB
+                 "%s references a free area at offset %" PRIu64
                  ", but it does not appear to match a deleted "
                  "feature",
-                 osFilename.c_str(), static_cast<GUIntBig>(nCandidateOffset));
+                 osFilename.c_str(), static_cast<uint64_t>(nCandidateOffset));
     }
 
     VSIFCloseL(fp);
@@ -682,8 +683,8 @@ bool FileGDBTable::CheckFreeListConsistency()
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Page %u contains free area that points to "
-                             "invalid offset " CPL_FRMT_GUIB,
-                             nPageIdx, static_cast<GUIntBig>(nOffset));
+                             "invalid offset %" PRIu64,
+                             nPageIdx, static_cast<uint64_t>(nOffset));
                     VSIFCloseL(fp);
                     return false;
                 }
@@ -691,12 +692,11 @@ bool FileGDBTable::CheckFreeListConsistency()
                     (nOldSize = static_cast<uint32_t>(-static_cast<int>(
                          nOldSize))) != nFreeAreaSize - sizeof(uint32_t))
                 {
-                    CPLError(CE_Failure, CPLE_AppDefined,
-                             "Page %u contains free area that points to dead "
-                             "zone at offset " CPL_FRMT_GUIB
-                             " of unexpected size: %u",
-                             nPageIdx, static_cast<GUIntBig>(nOffset),
-                             nOldSize);
+                    CPLError(
+                        CE_Failure, CPLE_AppDefined,
+                        "Page %u contains free area that points to dead "
+                        "zone at offset %" PRIu64 " of unexpected size: %u",
+                        nPageIdx, static_cast<uint64_t>(nOffset), nOldSize);
                     VSIFCloseL(fp);
                     return false;
                 }
@@ -705,8 +705,8 @@ bool FileGDBTable::CheckFreeListConsistency()
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Page %u contains free area that points to "
-                             "offset " CPL_FRMT_GUIB " already referenced",
-                             nPageIdx, static_cast<GUIntBig>(nOffset));
+                             "offset %" PRIu64 " already referenced",
+                             nPageIdx, static_cast<uint64_t>(nOffset));
                     VSIFCloseL(fp);
                     return false;
                 }

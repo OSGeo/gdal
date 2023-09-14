@@ -528,8 +528,8 @@ static void DumpAttrs(const std::vector<std::shared_ptr<GDALAttribute>> &attrs,
 
 static void DumpArrayRec(std::shared_ptr<GDALMDArray> array,
                          CPLJSonStreamingWriter &serializer, size_t nCurDim,
-                         const std::vector<GUInt64> &dimSizes,
-                         std::vector<GUInt64> &startIdx,
+                         const std::vector<uint64_t> &dimSizes,
+                         std::vector<uint64_t> &startIdx,
                          const GDALMultiDimInfoOptions *psOptions)
 {
     do
@@ -872,8 +872,8 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
         }
         else
         {
-            std::vector<GUInt64> startIdx(dims.size());
-            std::vector<GUInt64> dimSizes;
+            std::vector<uint64_t> startIdx(dims.size());
+            std::vector<uint64_t> dimSizes;
             for (const auto &dim : dims)
                 dimSizes.emplace_back(dim->GetSize());
             DumpArrayRec(array, serializer, 0, dimSizes, startIdx, psOptions);
@@ -886,7 +886,7 @@ static void DumpArray(const std::shared_ptr<GDALGroup> &rootGroup,
         double dfMax = 0.0;
         double dfMean = 0.0;
         double dfStdDev = 0.0;
-        GUInt64 nValidCount = 0;
+        uint64_t nValidCount = 0;
         if (array->GetStatistics(false, true, &dfMin, &dfMax, &dfMean,
                                  &dfStdDev, &nValidCount, nullptr,
                                  nullptr) == CE_None)

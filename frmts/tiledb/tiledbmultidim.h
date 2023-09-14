@@ -132,7 +132,7 @@ class TileDBAttributeHolder
 
     std::shared_ptr<GDALAttribute>
     CreateAttributeImpl(const std::string &osName,
-                        const std::vector<GUInt64> &anDimensions,
+                        const std::vector<uint64_t> &anDimensions,
                         const GDALExtendedDataType &oDataType,
                         CSLConstList papszOptions = nullptr);
 
@@ -268,7 +268,7 @@ class TileDBGroup final : public GDALGroup, public TileDBAttributeHolder
 
     std::shared_ptr<GDALDimension>
     CreateDimension(const std::string &osName, const std::string &osType,
-                    const std::string &osDirection, GUInt64 nSize,
+                    const std::string &osDirection, uint64_t nSize,
                     CSLConstList) override;
 
     std::shared_ptr<GDALGroup>
@@ -293,7 +293,7 @@ class TileDBGroup final : public GDALGroup, public TileDBAttributeHolder
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
 
@@ -317,7 +317,7 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
     const std::vector<std::shared_ptr<GDALDimension>> m_aoDims;
     const GDALExtendedDataType m_oType;
     const std::string m_osPath;
-    std::vector<GUInt64> m_anBlockSize{};
+    std::vector<uint64_t> m_anBlockSize{};
     // Starting offset of each dimension (if not zero)
     std::vector<uint64_t> m_anStartDimOffset{};
     mutable bool m_bFinalized = true;
@@ -357,13 +357,13 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
     bool Finalize() const;
 
   protected:
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -455,7 +455,7 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
         return m_oType;
     }
 
-    std::vector<GUInt64> GetBlockSize() const override
+    std::vector<uint64_t> GetBlockSize() const override
     {
         return m_anBlockSize;
     }
@@ -482,7 +482,7 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
 
     std::shared_ptr<GDALAttribute>
     CreateAttribute(const std::string &osName,
-                    const std::vector<GUInt64> &anDimensions,
+                    const std::vector<uint64_t> &anDimensions,
                     const GDALExtendedDataType &oDataType,
                     CSLConstList papszOptions = nullptr) override;
 
@@ -515,13 +515,13 @@ class TileDBAttribute final : public GDALAttribute
     TileDBAttribute(const std::string &osParentName, const std::string &osName);
 
   protected:
-    bool IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-               const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
+               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
-    bool IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+    bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -539,7 +539,7 @@ class TileDBAttribute final : public GDALAttribute
   public:
     static std::shared_ptr<GDALAttribute>
     Create(const std::shared_ptr<TileDBAttributeHolder> &poParent,
-           const std::string &osName, const std::vector<GUInt64> &anDimensions,
+           const std::string &osName, const std::vector<uint64_t> &anDimensions,
            const GDALExtendedDataType &oDataType);
 };
 
@@ -556,7 +556,7 @@ class TileDBDimension final : public GDALDimension
   public:
     TileDBDimension(const std::string &osParentName, const std::string &osName,
                     const std::string &osType, const std::string &osDirection,
-                    GUInt64 nSize)
+                    uint64_t nSize)
         : GDALDimension(osParentName, osName, osType, osDirection, nSize)
     {
     }

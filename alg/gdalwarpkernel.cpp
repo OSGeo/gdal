@@ -246,7 +246,7 @@ struct GWKThreadData
     bool bTransformerArgInputAssignedToThread{false};
     void *pTransformerArgInput{
         nullptr};  // owned by calling layer. Not to be destroyed
-    std::map<GIntBig, void *> mapThreadToTransformerArg{};
+    std::map<int64_t, void *> mapThreadToTransformerArg{};
     int nTotalThreadCountForThisRun = 0;
     int nCurThreadCountForThisRun = 0;
 };
@@ -386,7 +386,7 @@ static void ThreadFuncAdapter(void *pData)
 
     // Look if we have already a per-thread transformer
     void *pTransformerArg = nullptr;
-    const GIntBig nThreadId = CPLGetPID();
+    const int64_t nThreadId = CPLGetPID();
 
     {
         std::lock_guard<std::mutex> lock(psThreadData->mutex);
@@ -484,8 +484,8 @@ static CPLErr GWKRun(GDALWarpKernel *poWK, const char *pszFuncName,
         atoi(CPLGetConfigOption("WARP_THREAD_CHUNK_SIZE", "65536"));
     if (nWarpChunkSize > 0)
     {
-        GIntBig nChunks =
-            static_cast<GIntBig>(nDstYSize) * poWK->nDstXSize / nWarpChunkSize;
+        int64_t nChunks =
+            static_cast<int64_t>(nDstYSize) * poWK->nDstXSize / nWarpChunkSize;
         if (nThreads > nChunks)
             nThreads = static_cast<int>(nChunks);
     }
@@ -2980,7 +2980,7 @@ static CPL_INLINE __m128 XMMLoad4Values(const GByte *ptr)
 
 static CPL_INLINE __m128 XMMLoad4Values(const uint16_t *ptr)
 {
-    GUInt64 i;
+    uint64_t i;
     memcpy(&i, ptr, 8);
     __m128i xmm_i = _mm_cvtsi64_si128(s);
     // Zero extend 4 packed unsigned 16-bit integers in a to packed

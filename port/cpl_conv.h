@@ -130,9 +130,9 @@ char CPL_DLL *CPLScanString(const char *, int, int, int);
 double CPL_DLL CPLScanDouble(const char *, int);
 long CPL_DLL CPLScanLong(const char *, int);
 unsigned long CPL_DLL CPLScanULong(const char *, int);
-GUIntBig CPL_DLL CPLScanUIntBig(const char *, int);
-GIntBig CPL_DLL CPLAtoGIntBig(const char *pszString);
-GIntBig CPL_DLL CPLAtoGIntBigEx(const char *pszString, int bWarn,
+uint64_t CPL_DLL CPLScanUIntBig(const char *, int);
+int64_t CPL_DLL CPLAtoGIntBig(const char *pszString);
+int64_t CPL_DLL CPLAtoGIntBigEx(const char *pszString, int bWarn,
                                 int *pbOverflow);
 void CPL_DLL *CPLScanPointer(const char *, int);
 
@@ -142,7 +142,7 @@ void CPL_DLL *CPLScanPointer(const char *, int);
 int CPL_DLL CPLPrintString(char *, const char *, int);
 int CPL_DLL CPLPrintStringFill(char *, const char *, int);
 int CPL_DLL CPLPrintInt32(char *, int32_t, int);
-int CPL_DLL CPLPrintUIntBig(char *, GUIntBig, int);
+int CPL_DLL CPLPrintUIntBig(char *, uint64_t, int);
 int CPL_DLL CPLPrintDouble(char *, const char *, double, const char *);
 int CPL_DLL CPLPrintTime(char *, int, const char *, const struct tm *,
                          const char *);

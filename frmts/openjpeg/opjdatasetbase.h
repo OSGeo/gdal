@@ -29,6 +29,7 @@
 
 #include <limits>
 #include <algorithm>
+#include <cinttypes>
 
 /* This file is to be used with openjpeg 2.1 or later */
 #ifdef __clang__
@@ -126,8 +127,8 @@ static size_t JP2Dataset_Read(void *pBuffer, size_t nBytes, void *pUserData)
         static_cast<size_t>(VSIFReadL(pBuffer, 1, nBytes, psJP2File->fp_));
 #ifdef DEBUG_IO
     CPLDebug(OPJCodecWrapper::debugId(),
-             "JP2Dataset_Read(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
-             static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
+             "JP2Dataset_Read(" PRIu64 ") = %" PRIu64,
+             static_cast<uint64_t>(nBytes), static_cast<uint64_t>(nRet));
 #endif
     if (nRet == 0)
         nRet = static_cast<size_t>(-1);
@@ -146,8 +147,8 @@ static size_t JP2Dataset_Write(void *pBuffer, size_t nBytes, void *pUserData)
         static_cast<size_t>(VSIFWriteL(pBuffer, 1, nBytes, psJP2File->fp_));
 #ifdef DEBUG_IO
     CPLDebug(OPJCodecWrapper::debugId(),
-             "JP2Dataset_Write(" CPL_FRMT_GUIB ") = " CPL_FRMT_GUIB,
-             static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nRet));
+             "JP2Dataset_Write(" PRIu64 ") = %" PRIu64,
+             static_cast<uint64_t>(nBytes), static_cast<uint64_t>(nRet));
 #endif
     if (nRet != nBytes)
         return static_cast<size_t>(-1);
@@ -162,8 +163,8 @@ static OPJ_BOOL JP2Dataset_Seek(int64_t nBytes, void *pUserData)
 {
     JP2File *psJP2File = (JP2File *)pUserData;
 #ifdef DEBUG_IO
-    CPLDebug(OPJCodecWrapper::debugId(), "JP2Dataset_Seek(" CPL_FRMT_GUIB ")",
-             static_cast<GUIntBig>(nBytes));
+    CPLDebug(OPJCodecWrapper::debugId(), "JP2Dataset_Seek(" PRIu64 ")",
+             static_cast<uint64_t>(nBytes));
 #endif
     return VSIFSeekL(psJP2File->fp_, psJP2File->nBaseOffset + nBytes,
                      SEEK_SET) == 0;
@@ -180,8 +181,8 @@ static int64_t JP2Dataset_Skip(int64_t nBytes, void *pUserData)
     nOffset += nBytes;
 #ifdef DEBUG_IO
     CPLDebug(OPJCodecWrapper::debugId(),
-             "JP2Dataset_Skip(" CPL_FRMT_GUIB " -> " CPL_FRMT_GUIB ")",
-             static_cast<GUIntBig>(nBytes), static_cast<GUIntBig>(nOffset));
+             "JP2Dataset_Skip(" PRIu64 " -> %" PRIu64 ")",
+             static_cast<uint64_t>(nBytes), static_cast<uint64_t>(nOffset));
 #endif
     VSIFSeekL(psJP2File->fp_, nOffset, SEEK_SET);
     return nBytes;
@@ -933,17 +934,17 @@ struct JP2OPJDatasetBase : public JP2DatasetBase
             if (!opj_set_decode_area(
                     codec->pCodec, codec->psImage,
                     m_nX0 + static_cast<int>(
-                                static_cast<GIntBig>(nBlockXOff * nBlockXSize) *
+                                static_cast<int64_t>(nBlockXOff * nBlockXSize) *
                                 nParentXSize / nRasterXSize),
                     m_nY0 + static_cast<int>(
-                                static_cast<GIntBig>(nBlockYOff * nBlockYSize) *
+                                static_cast<int64_t>(nBlockYOff * nBlockYSize) *
                                 nParentYSize / nRasterYSize),
                     m_nX0 + static_cast<int>(
-                                static_cast<GIntBig>(nBlockXOff * nBlockXSize +
+                                static_cast<int64_t>(nBlockXOff * nBlockXSize +
                                                      nWidthToRead) *
                                 nParentXSize / nRasterXSize),
                     m_nY0 + static_cast<int>(
-                                static_cast<GIntBig>(nBlockYOff * nBlockYSize +
+                                static_cast<int64_t>(nBlockYOff * nBlockYSize +
                                                      nHeightToRead) *
                                 nParentYSize / nRasterYSize)))
             {

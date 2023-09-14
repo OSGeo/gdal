@@ -249,7 +249,7 @@ bool TileDBArray::Finalize() const
                         abyVals.resize(static_cast<size_t>(
                             poVar->GetDimensions()[0]->GetSize() *
                             GDALGetDataTypeSizeBytes(eDT)));
-                        GUInt64 anStart[1] = {0};
+                        uint64_t anStart[1] = {0};
                         size_t anCount[1] = {static_cast<size_t>(
                             poVar->GetDimensions()[0]->GetSize())};
                         if (poVar->Read(anStart, anCount, nullptr, nullptr,
@@ -529,7 +529,7 @@ std::shared_ptr<TileDBArray> TileDBArray::OpenFromDisk(
         // Read dimensions
         std::vector<std::shared_ptr<GDALDimension>> aoDims;
         const auto dims = schema.domain().dimensions();
-        std::vector<GUInt64> anBlockSize;
+        std::vector<uint64_t> anBlockSize;
         std::vector<uint64_t> anStartDimOffset;
         const std::string osArrayFullName(
             (osParentName == "/" ? std::string() : osParentName) + "/" +
@@ -739,8 +739,9 @@ bool TileDBArray::EnsureOpenAs(tiledb_query_type_t mode) const
 /*                          TileDBArray::IRead()                        */
 /************************************************************************/
 
-bool TileDBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
-                        const GInt64 *arrayStep, const GPtrDiff_t *bufferStride,
+bool TileDBArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
+                        const int64_t *arrayStep,
+                        const GPtrDiff_t *bufferStride,
                         const GDALExtendedDataType &bufferDataType,
                         void *pDstBuffer) const
 {
@@ -802,8 +803,8 @@ bool TileDBArray::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
 /*                          TileDBArray::IWrite()                       */
 /************************************************************************/
 
-bool TileDBArray::IWrite(const GUInt64 *arrayStartIdx, const size_t *count,
-                         const GInt64 *arrayStep,
+bool TileDBArray::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
+                         const int64_t *arrayStep,
                          const GPtrDiff_t *bufferStride,
                          const GDALExtendedDataType &bufferDataType,
                          const void *pSrcBuffer)
@@ -919,7 +920,7 @@ bool TileDBArray::SetRawNoDataValue(const void *pRawNoData)
 /************************************************************************/
 
 std::shared_ptr<GDALAttribute> TileDBArray::CreateAttribute(
-    const std::string &osName, const std::vector<GUInt64> &anDimensions,
+    const std::string &osName, const std::vector<uint64_t> &anDimensions,
     const GDALExtendedDataType &oDataType, CSLConstList papszOptions)
 {
     return CreateAttributeImpl(osName, anDimensions, oDataType, papszOptions);
@@ -1052,7 +1053,7 @@ bool TileDBArray::SetUnit(const std::string &osUnit)
 static bool
 FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
               const GDALExtendedDataType &oDataType,
-              std::vector<GUInt64> &anBlockSize, CSLConstList papszOptions)
+              std::vector<uint64_t> &anBlockSize, CSLConstList papszOptions)
 {
     const auto nDims = aoDimensions.size();
     anBlockSize.resize(nDims);
@@ -1061,15 +1062,15 @@ FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
     if (nDims >= 2)
     {
         anBlockSize[nDims - 2] =
-            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 2]->GetSize()),
-                     static_cast<GUInt64>(256));
+            std::min(std::max<uint64_t>(1, aoDimensions[nDims - 2]->GetSize()),
+                     static_cast<uint64_t>(256));
         anBlockSize[nDims - 1] =
-            std::min(std::max<GUInt64>(1, aoDimensions[nDims - 1]->GetSize()),
-                     static_cast<GUInt64>(256));
+            std::min(std::max<uint64_t>(1, aoDimensions[nDims - 1]->GetSize()),
+                     static_cast<uint64_t>(256));
     }
     else if (nDims == 1)
     {
-        anBlockSize[0] = std::max<GUInt64>(1, aoDimensions[0]->GetSize());
+        anBlockSize[0] = std::max<uint64_t>(1, aoDimensions[0]->GetSize());
     }
 
     const char *pszBlockSize = CSLFetchNameValue(papszOptions, "BLOCKSIZE");
@@ -1086,7 +1087,7 @@ FillBlockSize(const std::vector<std::shared_ptr<GDALDimension>> &aoDimensions,
         size_t nBlockSize = oDataType.GetSize();
         for (size_t i = 0; i < nDims; ++i)
         {
-            anBlockSize[i] = static_cast<GUInt64>(CPLAtoGIntBig(aszTokens[i]));
+            anBlockSize[i] = static_cast<uint64_t>(CPLAtoGIntBig(aszTokens[i]));
             if (anBlockSize[i] == 0)
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
@@ -1182,7 +1183,7 @@ IsIncreasingOrDecreasing1DVar(const std::shared_ptr<GDALMDArray> &poVar,
     }
     if (adfVals.size() > 1)
     {
-        GUInt64 anStart[1] = {0};
+        uint64_t anStart[1] = {0};
         size_t anCount[1] = {adfVals.size()};
         if (poVar->Read(anStart, anCount, nullptr, nullptr,
                         GDALExtendedDataType::Create(GDT_Float64),
@@ -1271,7 +1272,7 @@ std::shared_ptr<TileDBArray> TileDBArray::CreateOnDisk(
             return nullptr;
         }
 
-        std::vector<GUInt64> anBlockSize;
+        std::vector<uint64_t> anBlockSize;
         if (!FillBlockSize(aoDimensions, oDataType, anBlockSize, papszOptions))
             return nullptr;
 
