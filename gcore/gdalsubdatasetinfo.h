@@ -51,7 +51,7 @@ struct GDALSubdatasetInfo
     virtual ~GDALSubdatasetInfo() = default;
 
     /**
- * @brief Returns the path component of the complete file descriptor,
+ * @brief Returns the unquoted and unescaped path component of the complete file descriptor
  *        stripping any subdataset, prefix and additional information.
  * @return                      The path to the file
  * @since                       GDAL 3.8
@@ -59,10 +59,10 @@ struct GDALSubdatasetInfo
     std::string GetPathComponent() const;
 
     /**
- * @brief Replaces the path component of complete file descriptor
+ * @brief Replaces the path component of the complete file descriptor
  *        by keeping the subdataset and any other component unaltered.
  *        The returned string must be freed with CPLFree()
- * @param newPathName           New path name with no subdataset information
+ * @param newPathName           New path name with no subdataset information.
  * @note                        This method does not check if the subdataset actually exists.
  * @return                      The original file name with the old path component replaced by newPathName.
  * @since                       GDAL 3.8
@@ -84,16 +84,35 @@ struct GDALSubdatasetInfo
      * It must be reimplemented by concrete derived classes.
      */
     virtual void parseFileName() = 0;
-    mutable bool m_initialized = false;
+
+    /**
+     * Adds double quotes to paths and escape double quotes inside the path.
+     */
+    static std::string quote(const std::string &path);
+
+    /**
+     * Removes double quotes and unescape double quotes.
+     */
+    static std::string unquote(const std::string &path);
 
     //! The original unparsed complete file name passed to the constructor (e.g. GPKG:/path/to/file.gpkg:layer_name)
     std::string m_fileName;
-    //! The path component of the file name (e.g. /path/to/file.gpkg)
+    //! The unmodified path component of the file name (e.g. "\"C:\path\to\file.gpkg\"", "/path/to/file.gpkg")
     std::string m_pathComponent;
+    //! The unquoted and unescaped path component of the file name (e.g. "C:\path\to\file.gpkg", "/path/to/file.gpkg")
+    std::string m_cleanedPathComponent;
     //! The subdataset component (e.g. layer_name)
     std::string m_subdatasetComponent;
     //! The driver prefix component (e.g. GPKG)
     std::string m_driverPrefixComponent;
+    //! If the path is enclosed in double quotes.
+    bool m_isQuoted = false;
+
+  private:
+    mutable bool m_initialized = false;
+
+    void init() const;
+
     //! @endcond
 };
 

@@ -6461,14 +6461,22 @@ def test_netcdf_NASA_EMIT():
     (
         (
             'NETCDF:"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
-            '"data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc"',
+            "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
         ),
         (
             "NETCDF:data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
             "data/netcdf/SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
         ),
         (
+            r'NETCDF:"C:\data\netcdf\quoted \"SNPP_VIIRS.20230406T024200\".L2.OC.NRT.nc":/navigation_data/longitude',
+            r'C:\data\netcdf\quoted "SNPP_VIIRS.20230406T024200".L2.OC.NRT.nc',
+        ),
+        (
             r"NETCDF:C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc:/navigation_data/longitude",
+            r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
+        ),
+        (
+            r'NETCDF:"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc":/navigation_data/longitude',
             r"C:\SNPP_VIIRS.20230406T024200.L2.OC.NRT.nc",
         ),
         ("", ""),
@@ -6503,3 +6511,13 @@ def test_gdal_subdataset_modify_filename(filename):
             info.ModifyPathComponent('"/path/to.nc"')
             == 'NETCDF:"/path/to.nc":/navigation_data/longitude'
         )
+        if 'NETCDF:"' in filename:
+            assert (
+                info.ModifyPathComponent("/path/to.nc")
+                == 'NETCDF:"/path/to.nc":/navigation_data/longitude'
+            )
+        else:
+            assert (
+                info.ModifyPathComponent("/path/to.nc")
+                == "NETCDF:/path/to.nc:/navigation_data/longitude"
+            )

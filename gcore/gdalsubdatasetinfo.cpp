@@ -28,6 +28,7 @@
  ***************************************************************************/
 #include "gdalsubdatasetinfo.h"
 #include "gdal_priv.h"
+#include <algorithm>
 #include <stdexcept>
 
 /************************************************************************/
@@ -94,38 +95,37 @@ char *GDALSubdatasetInfoModifyPathComponent(GDALSubdatasetInfoH hInfo,
 }
 
 GDALSubdatasetInfo::GDALSubdatasetInfo(const std::string &fileName)
-    : m_fileName(fileName), m_pathComponent(), m_subdatasetComponent(),
-      m_driverPrefixComponent()
+    : m_fileName(fileName), m_pathComponent(), m_cleanedPathComponent(),
+      m_subdatasetComponent(), m_driverPrefixComponent()
 {
 }
 
 std::string GDALSubdatasetInfo::GetPathComponent() const
 {
-    if (!m_initialized)
-    {
-        GDALSubdatasetInfo *this_ = const_cast<GDALSubdatasetInfo *>(this);
-        this_->parseFileName();
-        m_initialized = true;
-    }
-    return m_pathComponent;
+    init();
+    return m_cleanedPathComponent;
 }
 
 std::string
 GDALSubdatasetInfo::ModifyPathComponent(const std::string &newPathName) const
 {
-    if (!m_initialized)
-    {
-        GDALSubdatasetInfo *this_ = const_cast<GDALSubdatasetInfo *>(this);
-        this_->parseFileName();
-        m_initialized = true;
-    }
+    init();
 
     std::string replaced{m_fileName};
 
     try
     {
+        auto newPathName_{newPathName};
+        if (m_isQuoted)
+        {
+            if (newPathName_.length() >= 2 && newPathName_.at(0) != '"' &&
+                newPathName_.at(newPathName_.length() - 1) != '"')
+            {
+                newPathName_ = quote(newPathName_);
+            }
+        }
         replaced.replace(replaced.find(m_pathComponent),
-                         m_pathComponent.length(), newPathName);
+                         m_pathComponent.length(), newPathName_);
     }
     catch (const std::out_of_range &)
     {
@@ -137,11 +137,61 @@ GDALSubdatasetInfo::ModifyPathComponent(const std::string &newPathName) const
 
 std::string GDALSubdatasetInfo::GetSubdatasetComponent() const
 {
+    init();
+    return m_subdatasetComponent;
+}
+
+std::string GDALSubdatasetInfo::unquote(const std::string &path)
+{
+    if (path.length() >= 2)
+    {
+        std::string cleanedPath{path};
+        if (cleanedPath.at(0) == '"' &&
+            cleanedPath.at(cleanedPath.length() - 1) == '"')
+        {
+            cleanedPath = cleanedPath.substr(1, cleanedPath.length() - 2);
+            while (cleanedPath.find(R"(\")") != std::string::npos)
+            {
+                const auto pos{cleanedPath.find(R"(\")")};
+                if (pos == 0 || cleanedPath.at(pos - 1) != '\\')
+                {
+                    cleanedPath.erase(pos, 1);
+                }
+            }
+            return cleanedPath;
+        }
+    }
+    return path;
+}
+
+std::string GDALSubdatasetInfo::quote(const std::string &path)
+{
+    std::string quotedPath{'"'};
+    for (size_t i = 0; i < path.length(); ++i)
+    {
+        if (path.at(i) == '"')
+        {
+            quotedPath += R"(\")";
+        }
+        else
+        {
+            quotedPath += path.at(i);
+        }
+    }
+    return quotedPath + '"';
+}
+
+void GDALSubdatasetInfo::init() const
+{
     if (!m_initialized)
     {
         GDALSubdatasetInfo *this_ = const_cast<GDALSubdatasetInfo *>(this);
         this_->parseFileName();
+        this_->m_isQuoted =
+            m_pathComponent.length() >= 2 && m_pathComponent.at(0) == '"' &&
+            m_pathComponent.at(m_pathComponent.length() - 1) == '"';
+        this_->m_cleanedPathComponent =
+            m_isQuoted ? unquote(m_pathComponent) : m_pathComponent;
         m_initialized = true;
     }
-    return m_subdatasetComponent;
 }
