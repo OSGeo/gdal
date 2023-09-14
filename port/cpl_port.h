@@ -176,8 +176,9 @@
 #endif
 #endif /* __cplusplus */
 
+#ifndef GDAL_COMPILATION
 /*---------------------------------------------------------------------
- *        types for 16 and 32 bits integers, etc...
+ *        Deprecated types for 16 and 32 bits integers, etc...
  *--------------------------------------------------------------------*/
 #if UINT_MAX == 65535
 typedef long GInt32;
@@ -193,10 +194,13 @@ typedef unsigned int GUInt32;
 typedef short GInt16;
 /** Unsigned int16 type */
 typedef unsigned short GUInt16;
-/** Unsigned byte type */
-typedef unsigned char GByte;
 /** Signed int8 type */
 typedef signed char GInt8;
+#endif
+
+/** Unsigned byte type */
+typedef unsigned char GByte;
+
 /* hack for PDF driver and poppler >= 0.15.0 that defines incompatible "typedef
  * bool GBool" */
 /* in include/poppler/goo/gtypes.h */
