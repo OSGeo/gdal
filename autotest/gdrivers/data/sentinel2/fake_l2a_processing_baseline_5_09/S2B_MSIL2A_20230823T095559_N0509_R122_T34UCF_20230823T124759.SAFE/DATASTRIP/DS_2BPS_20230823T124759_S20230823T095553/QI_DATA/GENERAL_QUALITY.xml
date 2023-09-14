@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>GENERAL_QUALITY.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes></Notes>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2022-08-30T00:25:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>06.01.00</Creator_Version>
+                <Creation_Date>UTC=2023-08-23T12:48:10</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report gippVersion="1.0" globalStatus="PASSED" date="2023-08-23T12:48:10.610Z">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20220715T000042_V20220830T002500</parentID>
+                <name>GENERAL_QUALITY</name>
+                <version>1.0</version>
+                <item url="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/" className="PDI Level 2A Datastrip Folder" name="S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09" class="http://www.esa.int/s2#pdi_level_2a_datastrip_container"/>
+                <check>
+                    <inspection creation="2023-08-23T12:48:10.581Z" duration="11" execution="2023-08-23T12:48:10.595Z" id="Degraded_Packets" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check the number of degraded packets " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">NUMBER_OF_TOO_DEGRADED_PACKETS value 0 does not exceed the threshold (0) </message>
+                    <extraValues>
+                        <value name="NUMBER_OF_TOO_DEGRADED_PACKETS">0</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:11.385Z" duration="1" execution="2023-08-23T12:48:11.395Z" id="Orbit_Number_DOWNLINK" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check the consistency of downlink orbit number. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Downlink Orbit number (33754) is in range [1,99999] </message>
+                    <extraValues>
+                        <value name="DOWNLINK_ORBIT_NUMBER">33754</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:11.416Z" duration="1" execution="2023-08-23T12:48:11.425Z" id="Lost_Packets" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check the number of lost packets " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">NUMBER_OF_LOST_PACKETS value 0 does not exceed the threshold (0) </message>
+                    <extraValues>
+                        <value name="NUMBER_OF_LOST_PACKETS">0</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:14.670Z" duration="2" execution="2023-08-23T12:48:14.679Z" id="Relative_Orbit_Number_SENSING" item="MTD_DS.xml" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/MTD_DS.xml" name="Check the consistency of relative imaging orbit number. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Sensing orbit number (122) is in range [1,143] </message>
+                    <extraValues>
+                        <value name="SENSING_ORBIT_NUMBER">122</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T12:48:14.692Z" duration="447" execution="2023-08-23T12:48:14.703Z" id="checkMetadata" item="S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09" itemURL="/mnt/local/l2ads/work/5461aa77-da65-46c4-891c-7deeadf792de/work/tmp_l2_ds_20230823124742/work/Sen2Core_tmp_ds_20230823124755/DS/S2B_OPER_MSI_L2A_DS_2BPS_20230823T124759_S20230823T095553_N05.09/" name="Metadata file check. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Metadata file is present.</message>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>

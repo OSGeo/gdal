@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?><Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>GRANULE/L1C_T34UCF_A033753_20230823T095553/QI_DATA/GEOMETRIC_QUALITY.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes/>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2022-08-30T00:25:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>06.01.00</Creator_Version>
+                <Creation_Date>UTC=2023-08-23T13:27:29</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report date="2023-08-23T13:27:29.474Z" gippVersion="1.0" globalStatus="PASSED">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20220715T000042_V20220830T002500</parentID>
+                <name>GEOMETRIC_QUALITY</name>
+                <version>1.0</version>
+                <item class="http://www.esa.int/s2#pdi_level_1c_tile_container" className="PDI Level 1C Tile Folder" name="S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09" url="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/"/>
+                <check>
+                    <inspection creation="2023-08-23T13:27:29.187Z" duration="263" execution="2023-08-23T13:27:29.207Z" id="Solar_Angle_Azimuth" item="S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/S2B_OPER_MTD_L1C_TL_2BPS_20230823T120234_A033753_T34UCF.xml" name="Check the azimuth solar angle. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Azimuth solar angle (165.030490026582) is in the limit of the threshold (360.0) </message>
+                    <extraValues>
+                        <value name="EXPECTED">360.0</value>
+                        <value name="SOLAR_AZIMUTH_ANGLE">165.030490026582</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T13:28:05.328Z" duration="326" execution="2023-08-23T13:28:05.359Z" id="Granule_Dimensions_60m" item="S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/" name="Check the 60m consistency of granules/tiles. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">60m resolution granules/tiles dimensions are correct.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T13:28:05.688Z" duration="144" execution="2023-08-23T13:28:05.710Z" id="Granule_Dimensions_20m" item="S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/" name="Check the 20m consistency of granules/tiles. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">20m resolution granules/tiles dimensions are correct.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T13:28:05.856Z" duration="77" execution="2023-08-23T13:28:05.880Z" id="Granule_Dimensions_10m" item="S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09" itemURL="/mnt/local/l1ctile/work/7de0a333-bffe-40ca-83d9-d4f8f78041d0/ipf_output_L1CTile_20230823130952/L1CTile/TaskTable_20230823T130955/FORMAT_METADATA_TILE_L1C/output/PDI_DS_TILE_LIST/S2B_OPER_MSI_L1C_TL_2BPS_20230823T120234_A033753_T34UCF_N05.09/" name="Check the 10m consistency of granules/tiles. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">10m resolution granules/tiles dimensions are correct.</message>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>

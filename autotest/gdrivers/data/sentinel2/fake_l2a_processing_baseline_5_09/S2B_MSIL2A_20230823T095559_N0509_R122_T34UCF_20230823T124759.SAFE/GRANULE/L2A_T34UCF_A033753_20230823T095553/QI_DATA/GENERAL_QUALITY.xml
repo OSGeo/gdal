@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Earth_Explorer_File xmlns="http://gs2.esa.int/DATA_STRUCTURE/olqcReport">
+    <Earth_Explorer_Header>
+        <Fixed_Header>
+            <File_Name>GENERAL_QUALITY.xml</File_Name>
+            <File_Description>Report produced by OLQC-SC</File_Description>
+            <Notes></Notes>
+            <Mission>S2B</Mission>
+            <File_Class>OPER</File_Class>
+            <File_Type>REP_OLQCPA</File_Type>
+            <Validity_Period>
+                <Validity_Start>UTC=2022-08-30T00:25:00</Validity_Start>
+                <Validity_Stop>UTC=2100-01-01T00:00:00</Validity_Stop>
+            </Validity_Period>
+            <File_Version>2</File_Version>
+            <Source>
+                <System>OLQC-SC</System>
+                <Creator>OLQC-SC</Creator>
+                <Creator_Version>06.01.00</Creator_Version>
+                <Creation_Date>UTC=2023-08-23T14:10:06</Creation_Date>
+            </Source>
+        </Fixed_Header>
+    </Earth_Explorer_Header>
+    <Data_Block type="xml">
+        <report gippVersion="1.0" globalStatus="PASSED" date="2023-08-23T14:10:06.468Z">
+            <checkList>
+                <parentID>S2B_OPER_GIP_OLQCPA_MPC__20220715T000042_V20220830T002500</parentID>
+                <name>GENERAL_QUALITY</name>
+                <version>1.0</version>
+                <item url="/mnt/local/l2ads/work/201882b9-86a3-4ecf-864d-84058774fac0/work/tmp_l2_tl_20230823132820/work/Sen2Core_tmp_tl_20230823132927/TL/S2B_OPER_MSI_L2A_TL_2BPS_20230823T124759_A033753_T34UCF_N05.09/" className="PDI Level 2A Tile Folder" name="S2B_OPER_MSI_L2A_TL_2BPS_20230823T124759_A033753_T34UCF_N05.09" class="http://www.esa.int/s2#pdi_level_2a_tile_container"/>
+                <check>
+                    <inspection creation="2023-08-23T14:10:06.156Z" duration="281" execution="2023-08-23T14:10:06.183Z" id="Solar_Angle_Zenith" item="MTD_TL.xml" itemURL="/mnt/local/l2ads/work/201882b9-86a3-4ecf-864d-84058774fac0/work/tmp_l2_tl_20230823132820/work/Sen2Core_tmp_tl_20230823132927/TL/S2B_OPER_MSI_L2A_TL_2BPS_20230823T124759_A033753_T34UCF_N05.09/MTD_TL.xml" name="Check the zenith solar angle. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Zenith solar angle (43.8765807295268) is within the threshold limit (70.0) </message>
+                    <extraValues>
+                        <value name="EXPECTED">70.0</value>
+                        <value name="SOLAR_ZENITH_ANGLE">43.8765807295268</value>
+                    </extraValues>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T14:10:06.884Z" duration="9" execution="2023-08-23T14:10:06.900Z" id="checkMetadata" item="S2B_OPER_MSI_L2A_TL_2BPS_20230823T124759_A033753_T34UCF_N05.09" itemURL="/mnt/local/l2ads/work/201882b9-86a3-4ecf-864d-84058774fac0/work/tmp_l2_tl_20230823132820/work/Sen2Core_tmp_tl_20230823132927/TL/S2B_OPER_MSI_L2A_TL_2BPS_20230823T124759_A033753_T34UCF_N05.09/" name="Metadata file check. " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">Metadata file is present.</message>
+                </check>
+                <check>
+                    <inspection creation="2023-08-23T14:10:07.110Z" duration="27497" execution="2023-08-23T14:10:07.130Z" id="Data_Loss" item="S2B_OPER_MSI_L2A_TL_2BPS_20230823T124759_A033753_T34UCF_N05.09" itemURL="/mnt/local/l2ads/work/201882b9-86a3-4ecf-864d-84058774fac0/work/tmp_l2_tl_20230823132820/work/Sen2Core_tmp_tl_20230823132927/TL/S2B_OPER_MSI_L2A_TL_2BPS_20230823T124759_A033753_T34UCF_N05.09/" name="Check TECQUA for data loss " priority="5" processingStatus="done" status="PASSED"/>
+                    <message contentType="text/plain">No data loss in this tile.</message>
+                </check>
+            </checkList>
+        </report>
+    </Data_Block>
+</Earth_Explorer_File>
