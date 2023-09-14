@@ -1,3 +1,23 @@
+MIGRATION GUIDE FROM GDAL 3.7 to GDAL 3.8
+-----------------------------------------
+
+- C++ methods in OGRStyleXXXX classes that used to take or return a ``GBool``
+  now use ``bool``. This is both a API and ABI breakage, especially for methods
+  that took ``GBool`` as argument, in the later case most compilers should error
+  out in case of type mismatch.
+  External code that needs to deal with GDAL < 3.8 and >= 3.8 may need to add
+  the following section in their code, and replace their use of ``GBool`` with
+  ``GBool_cpp``:
+
+  ```
+  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,8,0)
+  typedef bool GBool_cpp
+  #else
+  typedef int GBool_cpp
+  #endif
+  ```
+
+
 MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
 -----------------------------------------
 

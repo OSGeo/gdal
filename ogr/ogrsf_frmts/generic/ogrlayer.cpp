@@ -2439,7 +2439,7 @@ OGRErr OGRLayer::Intersection(OGRLayer *pLayerMethod, OGRLayer *pLayerResult,
     int *mapInput = nullptr;
     int *mapMethod = nullptr;
     OGREnvelope sEnvelopeMethod;
-    GBool bEnvelopeSet;
+    bool bEnvelopeSet;
     double progress_max = static_cast<double>(GetFeatureCount(FALSE));
     double progress_counter = 0;
     double progress_ticker = 0;

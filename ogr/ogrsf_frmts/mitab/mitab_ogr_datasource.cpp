@@ -46,9 +46,9 @@
 
 OGRTABDataSource::OGRTABDataSource()
     : m_pszName(nullptr), m_pszDirectory(nullptr), m_nLayerCount(0),
-      m_papoLayers(nullptr), m_papszOptions(nullptr), m_bCreateMIF(FALSE),
-      m_bSingleFile(FALSE), m_bSingleLayerAlreadyCreated(FALSE),
-      m_bQuickSpatialIndexMode(-1), m_nBlockSize(512)
+      m_papoLayers(nullptr), m_papszOptions(nullptr), m_bCreateMIF(false),
+      m_bSingleFile(false), m_bSingleLayerAlreadyCreated(false),
+      m_nQuickSpatialIndexMode(-1), m_nBlockSize(512)
 {
 }
 
@@ -86,18 +86,18 @@ int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
 
     const char *pszOpt = CSLFetchNameValue(papszOptions, "FORMAT");
     if (pszOpt != nullptr && EQUAL(pszOpt, "MIF"))
-        m_bCreateMIF = TRUE;
+        m_bCreateMIF = true;
     else if (EQUAL(CPLGetExtension(pszName), "mif") ||
              EQUAL(CPLGetExtension(pszName), "mid"))
-        m_bCreateMIF = TRUE;
+        m_bCreateMIF = true;
 
     if ((pszOpt = CSLFetchNameValue(papszOptions, "SPATIAL_INDEX_MODE")) !=
         nullptr)
     {
         if (EQUAL(pszOpt, "QUICK"))
-            m_bQuickSpatialIndexMode = TRUE;
+            m_nQuickSpatialIndexMode = TRUE;
         else if (EQUAL(pszOpt, "OPTIMIZED"))
-            m_bQuickSpatialIndexMode = FALSE;
+            m_nQuickSpatialIndexMode = FALSE;
     }
 
     m_nBlockSize = atoi(CSLFetchNameValueDef(papszOptions, "BLOCKSIZE", "512"));
@@ -164,7 +164,7 @@ int OGRTABDataSource::Create(const char *pszName, char **papszOptions)
         m_papoLayers[0] = poFile;
 
         m_pszDirectory = CPLStrdup(CPLGetPath(pszName));
-        m_bSingleFile = TRUE;
+        m_bSingleFile = true;
     }
 
     return TRUE;
@@ -200,8 +200,8 @@ int OGRTABDataSource::Open(GDALOpenInfo *poOpenInfo, int bTestOpen)
 
         m_pszDirectory = CPLStrdup(CPLGetPath(m_pszName));
 
-        m_bSingleFile = TRUE;
-        m_bSingleLayerAlreadyCreated = TRUE;
+        m_bSingleFile = true;
+        m_bSingleLayerAlreadyCreated = true;
     }
 
     // Otherwise, we need to scan the whole directory for files
@@ -320,7 +320,7 @@ OGRLayer *OGRTABDataSource::ICreateLayer(const char *pszLayerName,
             return nullptr;
         }
 
-        m_bSingleLayerAlreadyCreated = TRUE;
+        m_bSingleLayerAlreadyCreated = true;
 
         poFile = m_papoLayers[0];
         if (pszEncoding)
@@ -421,13 +421,13 @@ OGRLayer *OGRTABDataSource::ICreateLayer(const char *pszLayerName,
             poFile->SetBounds(-30000000, -15000000, 30000000, 15000000);
     }
 
-    if (m_bQuickSpatialIndexMode == TRUE &&
+    if (m_nQuickSpatialIndexMode == TRUE &&
         poFile->SetQuickSpatialIndexMode(TRUE) != 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "Setting Quick Spatial Index Mode failed.");
     }
-    else if (m_bQuickSpatialIndexMode == FALSE &&
+    else if (m_nQuickSpatialIndexMode == FALSE &&
              poFile->SetQuickSpatialIndexMode(FALSE) != 0)
     {
         CPLError(CE_Warning, CPLE_AppDefined,

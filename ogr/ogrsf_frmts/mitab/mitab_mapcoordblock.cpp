@@ -85,7 +85,7 @@ TABMAPCoordBlock::~TABMAPCoordBlock()
  **********************************************************************/
 int TABMAPCoordBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
                                         int nSizeUsed,
-                                        GBool bMakeCopy /* = TRUE */,
+                                        bool bMakeCopy /* = TRUE */,
                                         VSILFILE *fpSrc /* = NULL */,
                                         int nOffset /* = 0 */)
 {
@@ -303,7 +303,7 @@ void TABMAPCoordBlock::SetComprCoordOrigin(int32_t nX, int32_t nY)
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABMAPCoordBlock::ReadIntCoord(GBool bCompressed, int32_t &nX, int32_t &nY)
+int TABMAPCoordBlock::ReadIntCoord(bool bCompressed, int32_t &nX, int32_t &nY)
 {
     if (bCompressed)
     {
@@ -341,7 +341,7 @@ int TABMAPCoordBlock::ReadIntCoord(GBool bCompressed, int32_t &nX, int32_t &nY)
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
+int TABMAPCoordBlock::ReadIntCoords(bool bCompressed, int numCoordPairs,
                                     int32_t *panXY)
 {
     int i, numValues = numCoordPairs * 2;
@@ -401,7 +401,7 @@ int TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int nVersion,
+int TABMAPCoordBlock::ReadCoordSecHdrs(bool bCompressed, int nVersion,
                                        int numSections,
                                        TABMAPCoordSecHdr *pasHdrs,
                                        int32_t &numVerticesTotal)
@@ -540,7 +540,7 @@ int TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int nVersion,
  **********************************************************************/
 int TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion, int numSections,
                                         TABMAPCoordSecHdr *pasHdrs,
-                                        GBool bCompressed /*=FALSE*/)
+                                        bool bCompressed /*=FALSE*/)
 {
     CPLErrorReset();
 
@@ -593,7 +593,7 @@ int TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion, int numSections,
  **********************************************************************/
 
 int TABMAPCoordBlock::WriteIntCoord(int32_t nX, int32_t nY,
-                                    GBool bCompressed /*=FALSE*/)
+                                    bool bCompressed /*=FALSE*/)
 {
 
     if ((!bCompressed && (WriteInt32(nX) != 0 || WriteInt32(nY) != 0)) ||

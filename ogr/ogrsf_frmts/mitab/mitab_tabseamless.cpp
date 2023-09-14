@@ -114,7 +114,7 @@ void TABSeamless::ResetReading()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
-                      GBool bTestOpenNoError /*= FALSE*/,
+                      bool bTestOpenNoError /*= FALSE*/,
                       const char * /*pszCharset = NULL */)
 {
     char nStatus = 0;
@@ -152,7 +152,7 @@ int TABSeamless::Open(const char *pszFname, TABAccess eAccess,
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABSeamless::OpenForRead(const char *pszFname,
-                             GBool bTestOpenNoError /*= FALSE*/)
+                             bool bTestOpenNoError /*= FALSE*/)
 {
     int nFnameLen = 0;
 
@@ -194,7 +194,7 @@ int TABSeamless::OpenForRead(const char *pszFname,
      * If there is no such line, then we may have a valid .TAB file,
      * but we do not support it in this class.
      *------------------------------------------------------------*/
-    GBool bSeamlessFound = FALSE;
+    bool bSeamlessFound = FALSE;
     for (int i = 0; !bSeamlessFound && papszTABFile[i]; i++)
     {
         const char *pszStr = papszTABFile[i];
@@ -329,7 +329,7 @@ int TABSeamless::Close()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
-                               GBool bTestOpenNoError /*=FALSE*/)
+                               bool bTestOpenNoError /*=FALSE*/)
 {
     CPLAssert(poIndexFeature);
 
@@ -404,7 +404,7 @@ int TABSeamless::OpenBaseTable(TABFeature *poIndexFeature,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABSeamless::OpenBaseTable(int nTableId, GBool bTestOpenNoError /*=FALSE*/)
+int TABSeamless::OpenBaseTable(int nTableId, bool bTestOpenNoError /*=FALSE*/)
 {
 
     if (nTableId == -1)
@@ -454,7 +454,7 @@ int TABSeamless::OpenBaseTable(int nTableId, GBool bTestOpenNoError /*=FALSE*/)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABSeamless::OpenNextBaseTable(GBool bTestOpenNoError /*=FALSE*/)
+int TABSeamless::OpenNextBaseTable(bool bTestOpenNoError /*=FALSE*/)
 {
     CPLAssert(m_poIndexTable);
 
@@ -637,7 +637,7 @@ TABFieldType TABSeamless::GetNativeFieldType(int nFieldId)
  *
  * Returns TRUE if field is indexed, or FALSE otherwise.
  **********************************************************************/
-GBool TABSeamless::IsFieldIndexed(int nFieldId)
+bool TABSeamless::IsFieldIndexed(int nFieldId)
 {
     if (m_poCurBaseTable)
         return m_poCurBaseTable->IsFieldIndexed(nFieldId);
@@ -650,7 +650,7 @@ GBool TABSeamless::IsFieldIndexed(int nFieldId)
  *
  * Returns TRUE if field is in the Unique table, or FALSE otherwise.
  **********************************************************************/
-GBool TABSeamless::IsFieldUnique(int nFieldId)
+bool TABSeamless::IsFieldUnique(int nFieldId)
 {
     if (m_poCurBaseTable)
         return m_poCurBaseTable->IsFieldUnique(nFieldId);
@@ -669,7 +669,7 @@ GBool TABSeamless::IsFieldUnique(int nFieldId)
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABSeamless::GetBounds(double &dXMin, double &dYMin, double &dXMax,
-                           double &dYMax, GBool bForce /*= TRUE*/)
+                           double &dYMax, bool bForce /*= TRUE*/)
 {
     if (m_poIndexTable == nullptr)
     {
@@ -721,7 +721,7 @@ int TABSeamless::GetFeatureCountByType(CPL_UNUSED int &numPoints,
                                        CPL_UNUSED int &numLines,
                                        CPL_UNUSED int &numRegions,
                                        CPL_UNUSED int &numTexts,
-                                       CPL_UNUSED GBool bForce /*= TRUE*/)
+                                       CPL_UNUSED bool bForce /*= TRUE*/)
 {
     /*-----------------------------------------------------------------
      * __TODO__  This should be implemented to return -1 if force=false,

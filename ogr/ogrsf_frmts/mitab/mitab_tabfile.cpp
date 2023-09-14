@@ -283,7 +283,7 @@ void TABFile::ResetReading()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::Open(const char *pszFname, TABAccess eAccess,
-                  GBool bTestOpenNoError /*=FALSE*/, int nBlockSizeForCreate,
+                  bool bTestOpenNoError /*=FALSE*/, int nBlockSizeForCreate,
                   const char *pszCharset /* = NULL */)
 {
     char *pszTmpFname = nullptr;
@@ -627,11 +627,11 @@ int TABFile::Open(const char *pszFname, TABAccess eAccess,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::ParseTABFileFirstPass(GBool bTestOpenNoError)
+int TABFile::ParseTABFileFirstPass(bool bTestOpenNoError)
 {
     int iLine, numLines, numFields = 0;
     char **papszTok = nullptr;
-    GBool bInsideTableDef = FALSE, bFoundTableFields = FALSE;
+    bool bInsideTableDef = FALSE, bFoundTableFields = FALSE;
 
     if (m_eAccessMode == TABWrite)
     {
@@ -1313,7 +1313,7 @@ int TABFile::Close()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode /*=TRUE*/)
+int TABFile::SetQuickSpatialIndexMode(bool bQuickSpatialIndexMode /*=TRUE*/)
 {
     if (m_eAccessMode != TABWrite || m_poMAPFile == nullptr)
     {
@@ -2096,7 +2096,7 @@ int TABFile::SetFeatureDefn(
  **********************************************************************/
 int TABFile::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
-                            GBool bIndexed /*=FALSE*/, GBool /*bUnique=FALSE*/,
+                            bool bIndexed /*=FALSE*/, bool /*bUnique=FALSE*/,
                             int /*bApproxOK*/)
 {
     if (m_eAccessMode == TABRead || m_poDATFile == nullptr)
@@ -2383,7 +2383,7 @@ int TABFile::SetFieldIndexed(int nFieldId)
  *
  * Returns TRUE if field is indexed, or FALSE otherwise.
  ************************************************************************/
-GBool TABFile::IsFieldIndexed(int nFieldId)
+bool TABFile::IsFieldIndexed(int nFieldId)
 {
     return GetFieldIndexNumber(nFieldId) > 0 ? TRUE : FALSE;
 }
@@ -2492,7 +2492,7 @@ int TABFile::SetBounds(double dXMin, double dYMin, double dXMax, double dYMax)
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABFile::GetBounds(double &dXMin, double &dYMin, double &dXMax,
-                       double &dYMax, GBool /*bForce = TRUE*/)
+                       double &dYMax, bool /*bForce = TRUE*/)
 {
     if (m_poMAPFile)
     {
@@ -2585,7 +2585,7 @@ OGRErr TABFile::GetExtent(OGREnvelope *psExtent, CPL_UNUSED int bForce)
  **********************************************************************/
 int TABFile::GetFeatureCountByType(int &numPoints, int &numLines,
                                    int &numRegions, int &numTexts,
-                                   GBool /* bForce = TRUE*/)
+                                   bool /* bForce = TRUE*/)
 {
     TABMAPHeaderBlock *poHeader = nullptr;
 

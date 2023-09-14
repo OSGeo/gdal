@@ -99,7 +99,7 @@ void TABMAPIndexBlock::UnsetCurChild()
  **********************************************************************/
 int TABMAPIndexBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
                                         int nSizeUsed,
-                                        GBool bMakeCopy /* = TRUE */,
+                                        bool bMakeCopy /* = TRUE */,
                                         VSILFILE *fpSrc /* = NULL */,
                                         int nOffset /* = 0 */)
 {
@@ -479,7 +479,7 @@ int TABMAPIndexBlock::ChooseSubEntryForInsert(int32_t nXMin, int32_t nYMin,
 
         /* Does this entry fully contain the new entry's MBR ?
          */
-        const GBool bIsContained =
+        const bool bIsContained =
             nXMin >= m_asEntries[i].XMin && nYMin >= m_asEntries[i].YMin &&
             nXMax <= m_asEntries[i].XMax && nYMax <= m_asEntries[i].YMax;
 
@@ -549,7 +549,7 @@ int TABMAPIndexBlock::ChooseSubEntryForInsert(int32_t nXMin, int32_t nYMin,
 int32_t TABMAPIndexBlock::ChooseLeafForInsert(int32_t nXMin, int32_t nYMin,
                                               int32_t nXMax, int32_t nYMax)
 {
-    GBool bFound = FALSE;
+    bool bFound = FALSE;
 
     if (m_numEntries < 0)
         return -1;
@@ -734,9 +734,9 @@ int TABMAPIndexBlock::UpdateLeafEntry(int32_t nBlockPtr, int32_t nXMin,
  **********************************************************************/
 int TABMAPIndexBlock::AddEntry(int32_t nXMin, int32_t nYMin, int32_t nXMax,
                                int32_t nYMax, int32_t nBlockPtr,
-                               GBool bAddInThisNodeOnly /*=FALSE*/)
+                               bool bAddInThisNodeOnly /*=FALSE*/)
 {
-    GBool bFound = FALSE;
+    bool bFound = FALSE;
 
     if (m_eAccess != TABWrite && m_eAccess != TABReadWrite)
     {
@@ -883,7 +883,7 @@ double TABMAPIndexBlock::ComputeAreaDiff(int32_t nNodeXMin, int32_t nNodeYMin,
         MITAB_AREA(nNodeXMin, nNodeYMin, nNodeXMax, nNodeYMax);
 
     // Does the node fully contain the new entry's MBR?
-    const GBool bIsContained =
+    const bool bIsContained =
         nEntryXMin >= nNodeXMin && nEntryYMin >= nNodeYMin &&
         nEntryXMax <= nNodeXMax && nEntryYMax <= nNodeYMax;
 

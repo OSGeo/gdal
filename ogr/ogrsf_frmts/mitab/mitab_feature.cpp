@@ -675,7 +675,7 @@ int TABFeature::WriteRecordToDATFile(TABDATFile *poDATFile,
  **********************************************************************/
 int TABFeature::ReadGeometryFromMAPFile(
     TABMAPFile * /*poMapFile*/, TABMAPObjHdr * /*poObjHdr*/,
-    GBool /*bCoordBlockDataOnly=FALSE*/,
+    bool /*bCoordBlockDataOnly=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     // Nothing to do. Instances of TABFeature objects contain no geometry.
@@ -739,9 +739,9 @@ int TABFeature::UpdateMBR(TABMAPFile *poMapFile /*=NULL*/)
  *
  * Returns TRUE if coord. should be compressed, FALSE otherwise
  **********************************************************************/
-GBool TABFeature::ValidateCoordType(TABMAPFile *poMapFile)
+bool TABFeature::ValidateCoordType(TABMAPFile *poMapFile)
 {
-    GBool bCompr = FALSE;
+    bool bCompr = FALSE;
 
     /*-------------------------------------------------------------
      * Decide if coordinates should be compressed or not.
@@ -783,7 +783,7 @@ GBool TABFeature::ValidateCoordType(TABMAPFile *poMapFile)
  * to be the same. (A replacement for ValidateCoordType() for this
  * specific case)
  **********************************************************************/
-void TABFeature::ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, GBool bCompr,
+void TABFeature::ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, bool bCompr,
                                          int32_t nComprOrgX, int32_t nComprOrgY,
                                          int32_t nXMin, int32_t nYMin,
                                          int32_t nXMax, int32_t nYMax)
@@ -838,7 +838,7 @@ void TABFeature::ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, GBool bCompr,
  **********************************************************************/
 int TABFeature::WriteGeometryToMAPFile(
     TABMAPFile * /* poMapFile*/, TABMAPObjHdr * /*poObjHdr*/,
-    GBool /*bCoordBlockDataOnly=FALSE*/,
+    bool /*bCoordBlockDataOnly=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /*-----------------------------------------------------------------
@@ -1001,7 +1001,7 @@ TABGeomType TABPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABPoint::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -1063,7 +1063,7 @@ int TABPoint::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABPoint::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                      TABMAPObjHdr *poObjHdr,
-                                     GBool bCoordBlockDataOnly /*=FALSE*/,
+                                     bool bCoordBlockDataOnly /*=FALSE*/,
                                      TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -1310,7 +1310,7 @@ TABFeature *TABFontPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  **********************************************************************/
 int TABFontPoint::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -1394,7 +1394,7 @@ int TABFontPoint::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABFontPoint::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -1474,12 +1474,12 @@ int TABFontPoint::WriteGeometryToMAPFile(
  * or FALSE otherwise.  See enum TABFontStyle for the list of styles
  * that can be queried on.
  **********************************************************************/
-GBool TABFontPoint::QueryFontStyle(TABFontStyle eStyleToQuery)
+bool TABFontPoint::QueryFontStyle(TABFontStyle eStyleToQuery)
 {
-    return (m_nFontStyle & static_cast<int>(eStyleToQuery)) ? TRUE : FALSE;
+    return (m_nFontStyle & static_cast<int>(eStyleToQuery)) != 0;
 }
 
-void TABFontPoint::ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStyleOn)
+void TABFontPoint::ToggleFontStyle(TABFontStyle eStyleToToggle, bool bStyleOn)
 {
     if (bStyleOn)
         m_nFontStyle |= static_cast<int>(eStyleToToggle);
@@ -1584,7 +1584,7 @@ void TABFontPoint::SetSymbolFromStyle(OGRStyleSymbol *poSymbolStyle)
 {
     ITABFeatureSymbol::SetSymbolFromStyle(poSymbolStyle);
 
-    GBool bIsNull = 0;
+    bool bIsNull = 0;
 
     // Try to set font glyph number
     const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
@@ -1670,7 +1670,7 @@ TABFeature *TABCustomPoint::CloneTABFeature(OGRFeatureDefn *poNewDefn /*=NULL*/)
  **********************************************************************/
 int TABCustomPoint::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -1738,7 +1738,7 @@ int TABCustomPoint::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABCustomPoint::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -1839,7 +1839,7 @@ void TABCustomPoint::SetSymbolFromStyle(OGRStyleSymbol *poSymbolStyle)
 {
     ITABFeatureSymbol::SetSymbolFromStyle(poSymbolStyle);
 
-    GBool bIsNull = 0;
+    bool bIsNull = 0;
 
     // Try to set font glyph number
     const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
@@ -2138,7 +2138,7 @@ TABGeomType TABPolyline::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABPolyline::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     int32_t nX = 0;
@@ -2150,7 +2150,7 @@ int TABPolyline::ReadGeometryFromMAPFile(
     double dXMax = 0.0;
     double dYMax = 0.0;
     OGRGeometry *poGeometry = nullptr;
-    GBool bComprCoord = poObjHdr->IsCompressedType();
+    bool bComprCoord = poObjHdr->IsCompressedType();
     TABMAPCoordBlock *poCoordBlock = nullptr;
 
     /*-----------------------------------------------------------------
@@ -2460,7 +2460,7 @@ int TABPolyline::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABPolyline::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     int32_t nX = 0;
@@ -2511,7 +2511,7 @@ int TABPolyline::WriteGeometryToMAPFile(
         /*=============================================================
          * PLINE ( > 2 vertices and less than 32767 vertices)
          *============================================================*/
-        GBool bCompressed = poObjHdr->IsCompressedType();
+        bool bCompressed = poObjHdr->IsCompressedType();
 
         /*-------------------------------------------------------------
          * Process geometry first...
@@ -2604,7 +2604,7 @@ int TABPolyline::WriteGeometryToMAPFile(
 
         int nStatus = 0;
         OGREnvelope sEnvelope;
-        GBool bCompressed = poObjHdr->IsCompressedType();
+        bool bCompressed = poObjHdr->IsCompressedType();
 
         /*-------------------------------------------------------------
          * Process geometry first...
@@ -2960,7 +2960,7 @@ void TABPolyline::SetCenter(double dX, double dY)
  *
  * Returns the value of m_bWriteTwoPointLineAsPolyline
  **********************************************************************/
-GBool TABPolyline::TwoPointLineAsPolyline()
+bool TABPolyline::TwoPointLineAsPolyline()
 {
     return m_bWriteTwoPointLineAsPolyline;
 }
@@ -2970,7 +2970,7 @@ GBool TABPolyline::TwoPointLineAsPolyline()
  *
  * Sets the value of m_bWriteTwoPointLineAsPolyline
  **********************************************************************/
-void TABPolyline::TwoPointLineAsPolyline(GBool bTwoPointLineAsPolyline)
+void TABPolyline::TwoPointLineAsPolyline(bool bTwoPointLineAsPolyline)
 {
     m_bWriteTwoPointLineAsPolyline = bTwoPointLineAsPolyline;
 }
@@ -3096,7 +3096,7 @@ TABGeomType TABRegion::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABRegion::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     double dXMin = 0.0;
@@ -3124,7 +3124,7 @@ int TABRegion::ReadGeometryFromMAPFile(
         int32_t /* nCoordDataSize, */ numPointsTotal;
         OGRMultiPolygon *poMultiPolygon = nullptr;
         OGRPolygon *poPolygon = nullptr;
-        GBool bComprCoord = poObjHdr->IsCompressedType();
+        bool bComprCoord = poObjHdr->IsCompressedType();
         int nVersion = TAB_GEOM_GET_VERSION(m_nMapInfoType);
 
         /*-------------------------------------------------------------
@@ -3357,7 +3357,7 @@ int TABRegion::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABRegion::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     /*-----------------------------------------------------------------
@@ -3388,7 +3388,7 @@ int TABRegion::WriteGeometryToMAPFile(
          * We accept both OGRPolygons (with one or multiple rings) and
          * OGRMultiPolygons as input.
          *============================================================*/
-        GBool bCompressed = poObjHdr->IsCompressedType();
+        bool bCompressed = poObjHdr->IsCompressedType();
 
         /*-------------------------------------------------------------
          * Process geometry first...
@@ -3751,7 +3751,7 @@ OGRLinearRing *TABRegion::GetRingRef(int nRequestedRingIndex)
  *
  * Return false if the requested ring index is the first of a polygon
  **********************************************************************/
-GBool TABRegion::IsInteriorRing(int nRequestedRingIndex)
+bool TABRegion::IsInteriorRing(int nRequestedRingIndex)
 {
     OGRGeometry *poGeom = GetGeometryRef();
 
@@ -4119,7 +4119,7 @@ int TABRectangle::UpdateMBR(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABRectangle::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -4259,7 +4259,7 @@ int TABRectangle::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABRectangle::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -4586,7 +4586,7 @@ int TABEllipse::UpdateMBR(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABEllipse::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -4677,7 +4677,7 @@ int TABEllipse::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABEllipse::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -5014,7 +5014,7 @@ int TABArc::UpdateMBR(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                     TABMAPObjHdr *poObjHdr,
-                                    GBool bCoordBlockDataOnly /*=FALSE*/,
+                                    bool bCoordBlockDataOnly /*=FALSE*/,
                                     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -5192,7 +5192,7 @@ int TABArc::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABArc::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                    TABMAPObjHdr *poObjHdr,
-                                   GBool bCoordBlockDataOnly /*=FALSE*/,
+                                   bool bCoordBlockDataOnly /*=FALSE*/,
                                    TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /* Nothing to do for bCoordBlockDataOnly (used by index splitting) */
@@ -5464,7 +5464,7 @@ TABGeomType TABText::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
                                      TABMAPObjHdr *poObjHdr,
-                                     GBool bCoordBlockDataOnly /*=FALSE*/,
+                                     bool bCoordBlockDataOnly /*=FALSE*/,
                                      TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     /*-----------------------------------------------------------------
@@ -5681,7 +5681,7 @@ int TABText::ReadGeometryFromMAPFile(TABMAPFile *poMapFile,
  **********************************************************************/
 int TABText::WriteGeometryToMAPFile(TABMAPFile *poMapFile,
                                     TABMAPObjHdr *poObjHdr,
-                                    GBool bCoordBlockDataOnly /*=FALSE*/,
+                                    bool bCoordBlockDataOnly /*=FALSE*/,
                                     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     int32_t nX, nY, nXMin, nYMin, nXMax, nYMax;
@@ -6164,12 +6164,12 @@ void TABText::SetTextLineType(TABTextLineType eLineType)
  * or FALSE otherwise.  See enum TABFontStyle for the list of styles
  * that can be queried on.
  **********************************************************************/
-GBool TABText::QueryFontStyle(TABFontStyle eStyleToQuery) const
+bool TABText::QueryFontStyle(TABFontStyle eStyleToQuery) const
 {
-    return (m_nFontStyle & static_cast<int>(eStyleToQuery)) ? TRUE : FALSE;
+    return (m_nFontStyle & static_cast<int>(eStyleToQuery)) != 0;
 }
 
-void TABText::ToggleFontStyle(TABFontStyle eStyleToToggle, GBool bStyleOn)
+void TABText::ToggleFontStyle(TABFontStyle eStyleToToggle, bool bStyleOn)
 {
     if (bStyleOn)
         m_nFontStyle |= static_cast<int>(eStyleToToggle);
@@ -6198,7 +6198,7 @@ int TABText::GetFontStyleMIFValue() const
     return (m_nFontStyle & 0xff) + (m_nFontStyle & (0xff00 - 0x0100)) / 2;
 }
 
-void TABText::SetFontStyleMIFValue(int nStyle, GBool bBGColorSet)
+void TABText::SetFontStyleMIFValue(int nStyle, bool bBGColorSet)
 {
     m_nFontStyle =
         static_cast<int16_t>((nStyle & 0xff) + (nStyle & 0x7f00) * 2);
@@ -6207,37 +6207,37 @@ void TABText::SetFontStyleMIFValue(int nStyle, GBool bBGColorSet)
         ToggleFontStyle(TABFSBox, TRUE);
 }
 
-int TABText::IsFontBGColorUsed() const
+bool TABText::IsFontBGColorUsed() const
 {
     // Font BG color is used only when BOX is set.
     return QueryFontStyle(TABFSBox);
 }
 
-int TABText::IsFontOColorUsed() const
+bool TABText::IsFontOColorUsed() const
 {
     // Font outline color is used only when HALO is set.
     return QueryFontStyle(TABFSHalo);
 }
 
-int TABText::IsFontSColorUsed() const
+bool TABText::IsFontSColorUsed() const
 {
     // Font shadow color is used only when Shadow is set.
     return QueryFontStyle(TABFSShadow);
 }
 
-int TABText::IsFontBold() const
+bool TABText::IsFontBold() const
 {
     // Font bold is used only when Bold is set.
     return QueryFontStyle(TABFSBold);
 }
 
-int TABText::IsFontItalic() const
+bool TABText::IsFontItalic() const
 {
     // Font italic is used only when Italic is set.
     return QueryFontStyle(TABFSItalic);
 }
 
-int TABText::IsFontUnderline() const
+bool TABText::IsFontUnderline() const
 {
     // Font underline is used only when Underline is set.
     return QueryFontStyle(TABFSUnderline);
@@ -6425,7 +6425,7 @@ void TABText::SetLabelFromStyleString(const char *pszStyleString)
 
     auto poLabelStyle = cpl::down_cast<OGRStyleLabel *>(poStylePart.get());
 
-    GBool bIsNull = 0;
+    bool bIsNull = 0;
     const char *pszText = poLabelStyle->TextString(bIsNull);
     if (!bIsNull && pszText)
     {
@@ -6713,7 +6713,7 @@ TABGeomType TABMultiPoint::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  **********************************************************************/
 int TABMultiPoint::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     double dXMin = 0.0;
@@ -6721,7 +6721,7 @@ int TABMultiPoint::ReadGeometryFromMAPFile(
     double dXMax = 0.0;
     double dYMax = 0.0;
     OGRGeometry *poGeometry = nullptr;
-    GBool bComprCoord = poObjHdr->IsCompressedType();
+    bool bComprCoord = poObjHdr->IsCompressedType();
     TABMAPCoordBlock *poCoordBlock = nullptr;
 
     /*-----------------------------------------------------------------
@@ -6854,7 +6854,7 @@ int TABMultiPoint::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABMultiPoint::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     int32_t nX, nY;
@@ -6887,7 +6887,7 @@ int TABMultiPoint::WriteGeometryToMAPFile(
     /*-----------------------------------------------------------------
      * Write data to coordinate block
      *----------------------------------------------------------------*/
-    const GBool bCompressed = poObjHdr->IsCompressedType();
+    const bool bCompressed = poObjHdr->IsCompressedType();
 
     TABMAPCoordBlock *poCoordBlock = nullptr;
     if (ppoCoordBlock != nullptr && *ppoCoordBlock != nullptr)
@@ -7271,7 +7271,7 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
     /*-----------------------------------------------------------------
      * Decide if coordinates should be compressed or not.
      *----------------------------------------------------------------*/
-    GBool bComprCoord = ValidateCoordType(poMapFile);
+    bool bComprCoord = ValidateCoordType(poMapFile);
 
     /*-----------------------------------------------------------------
      * Since all members of the collection share the same compressed coord
@@ -7359,7 +7359,7 @@ TABGeomType TABCollection::ValidateMapInfoType(TABMAPFile *poMapFile /*=NULL*/)
  * Returns 0 on success, -1 on failure.
  **********************************************************************/
 int TABCollection::ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
-                                   GBool bComprCoord, int32_t nComprOrgX,
+                                   bool bComprCoord, int32_t nComprOrgX,
                                    int32_t nComprOrgY, int32_t &pnMinX,
                                    int32_t &pnMinY, int32_t &pnMaxX,
                                    int32_t &pnMaxY, int32_t &pnLabelX,
@@ -7414,7 +7414,7 @@ int TABCollection::ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
  * Returns 0 on success, -1 on failure.
  **********************************************************************/
 int TABCollection::WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
-                                    GBool bComprCoord, int32_t nMinX,
+                                    bool bComprCoord, int32_t nMinX,
                                     int32_t nMinY, int32_t nMaxX, int32_t nMaxY,
                                     int32_t nLabelX, int32_t nLabelY)
 {
@@ -7452,10 +7452,10 @@ int TABCollection::WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
  **********************************************************************/
 int TABCollection::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
-    const GBool bComprCoord = poObjHdr->IsCompressedType();
+    const bool bComprCoord = poObjHdr->IsCompressedType();
 
     /*-----------------------------------------------------------------
      * Fetch and validate geometry type
@@ -7718,7 +7718,7 @@ int TABCollection::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABCollection::WriteGeometryToMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool bCoordBlockDataOnly /*=FALSE*/,
+    bool bCoordBlockDataOnly /*=FALSE*/,
     TABMAPCoordBlock **ppoCoordBlock /*=NULL*/)
 {
     /*-----------------------------------------------------------------
@@ -7752,7 +7752,7 @@ int TABCollection::WriteGeometryToMAPFile(
      * ForceCoordTypeAndCoordOrigin() so the objects are ready to have
      * their respective WriteGeometryToMapFile() called.
      *----------------------------------------------------------------*/
-    const GBool bCompressed = poObjHdr->IsCompressedType();
+    const bool bCompressed = poObjHdr->IsCompressedType();
     // TODO: ??? Do we need to track overall collection coord data size???
     int nTotalFeatureDataSize = 0;
 
@@ -8077,9 +8077,8 @@ int TABCollection::WriteGeometryToMAPFile(
  * Copy the region/pline/multipoint's geometries to the OGRFeature's
  * geometry.
  **********************************************************************/
-int TABCollection::SyncOGRGeometryCollection(GBool bSyncRegion,
-                                             GBool bSyncPline,
-                                             GBool bSyncMpoint)
+int TABCollection::SyncOGRGeometryCollection(bool bSyncRegion, bool bSyncPline,
+                                             bool bSyncMpoint)
 {
     OGRGeometry *poThisGeom = GetGeometryRef();
     OGRGeometryCollection *poGeomColl = nullptr;
@@ -8309,7 +8308,7 @@ TABDebugFeature::~TABDebugFeature()
  **********************************************************************/
 int TABDebugFeature::ReadGeometryFromMAPFile(
     TABMAPFile *poMapFile, TABMAPObjHdr *poObjHdr,
-    GBool /*bCoordBlockDataOnly=FALSE*/,
+    bool /*bCoordBlockDataOnly=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     /*-----------------------------------------------------------------
@@ -8359,7 +8358,7 @@ int TABDebugFeature::ReadGeometryFromMAPFile(
  **********************************************************************/
 int TABDebugFeature::WriteGeometryToMAPFile(
     TABMAPFile * /*poMapFile*/, TABMAPObjHdr * /*poObjHdr*/,
-    GBool /*bCoordBlockDataOnly=FALSE*/,
+    bool /*bCoordBlockDataOnly=FALSE*/,
     TABMAPCoordBlock ** /*ppoCoordBlock=NULL*/)
 {
     // Nothing to do here!
@@ -8652,7 +8651,7 @@ const char *ITABFeaturePen::GetPenStyleString() const
  **********************************************************************/
 void ITABFeaturePen::SetPenFromStyleString(const char *pszStyleString)
 {
-    GBool bIsNull = 0;
+    bool bIsNull = 0;
 
     // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
@@ -8904,7 +8903,7 @@ const char *ITABFeatureBrush::GetBrushStyleString() const
  **********************************************************************/
 void ITABFeatureBrush::SetBrushFromStyleString(const char *pszStyleString)
 {
-    GBool bIsNull = 0;
+    bool bIsNull = 0;
 
     // Use the Style Manager to retrieve all the information we need.
     OGRStyleMgr *poStyleMgr = new OGRStyleMgr(nullptr);
@@ -9205,7 +9204,7 @@ const char *ITABFeatureSymbol::GetSymbolStyleString(double dfAngle) const
  **********************************************************************/
 void ITABFeatureSymbol::SetSymbolFromStyle(OGRStyleSymbol *poSymbolStyle)
 {
-    GBool bIsNull = 0;
+    bool bIsNull = 0;
 
     // Set the Symbol Id (SymbolNo)
     const char *pszSymbolId = poSymbolStyle->Id(bIsNull);
@@ -9392,7 +9391,7 @@ ITABFeatureSymbol::GetSymbolFeatureClass(const char *pszStyleString)
     OGRStyleSymbol *poSymbolStyle =
         cpl::down_cast<OGRStyleSymbol *>(poStylePart);
 
-    GBool bIsNull = 0;
+    bool bIsNull = 0;
 
     // Set the Symbol Id (SymbolNo)
     const char *pszSymbolId = poSymbolStyle->Id(bIsNull);

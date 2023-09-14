@@ -61,7 +61,7 @@ typedef struct ogr_style_param
 {
     int eParam;
     const char *pszToken;
-    GBool bGeoref;
+    bool bGeoref;
     OGRSType eType;
 } OGRStyleParamId;
 
@@ -70,7 +70,7 @@ typedef struct ogr_style_value
     char *pszValue;
     double dfValue;
     int nValue;  // Used for both integer and boolean types
-    GBool bValid;
+    bool bValid;
     OGRSTUnitId eUnit;
 } OGRStyleValue;
 //! @endcond
@@ -94,14 +94,14 @@ class CPL_DLL OGRStyleTable
   public:
     OGRStyleTable();
     ~OGRStyleTable();
-    GBool AddStyle(const char *pszName, const char *pszStyleString);
-    GBool RemoveStyle(const char *pszName);
-    GBool ModifyStyle(const char *pszName, const char *pszStyleString);
+    bool AddStyle(const char *pszName, const char *pszStyleString);
+    bool RemoveStyle(const char *pszName);
+    bool ModifyStyle(const char *pszName, const char *pszStyleString);
 
-    GBool SaveStyleTable(const char *pszFilename);
-    GBool LoadStyleTable(const char *pszFilename);
+    bool SaveStyleTable(const char *pszFilename);
+    bool LoadStyleTable(const char *pszFilename);
     const char *Find(const char *pszStyleString);
-    GBool IsExist(const char *pszName);
+    int IsExist(const char *pszName);
     const char *GetStyleName(const char *pszName);
     void Print(FILE *fpOut);
     void Clear();
@@ -128,26 +128,26 @@ class CPL_DLL OGRStyleMgr
     explicit OGRStyleMgr(OGRStyleTable *poDataSetStyleTable = nullptr);
     ~OGRStyleMgr();
 
-    GBool SetFeatureStyleString(OGRFeature *,
-                                const char *pszStyleString = nullptr,
-                                GBool bNoMatching = FALSE);
+    bool SetFeatureStyleString(OGRFeature *,
+                               const char *pszStyleString = nullptr,
+                               bool bNoMatching = FALSE);
     /* It will set in the given feature the pszStyleString with
             the style or will set the style name found in
             dataset StyleTable (if bNoMatching == FALSE). */
 
     const char *InitFromFeature(OGRFeature *);
-    GBool InitStyleString(const char *pszStyleString = nullptr);
+    bool InitStyleString(const char *pszStyleString = nullptr);
 
     const char *GetStyleName(const char *pszStyleString = nullptr);
     const char *GetStyleByName(const char *pszStyleName);
 
-    GBool AddStyle(const char *pszStyleName,
-                   const char *pszStyleString = nullptr);
+    bool AddStyle(const char *pszStyleName,
+                  const char *pszStyleString = nullptr);
 
     const char *GetStyleString(OGRFeature * = nullptr);
 
-    GBool AddPart(OGRStyleTool *);
-    GBool AddPart(const char *);
+    bool AddPart(OGRStyleTool *);
+    bool AddPart(const char *);
 
     int GetPartCount(const char *pszStyleString = nullptr);
     OGRStyleTool *GetPart(int hPartId, const char *pszStyleString = nullptr);
@@ -171,21 +171,21 @@ class CPL_DLL OGRStyleMgr
 class CPL_DLL OGRStyleTool
 {
   private:
-    GBool m_bModified = false;
-    GBool m_bParsed = false;
+    bool m_bModified = false;
+    bool m_bParsed = false;
     double m_dfScale = 1.0;
     OGRSTUnitId m_eUnit = OGRSTUMM;
     OGRSTClassId m_eClassId = OGRSTCNone;
     char *m_pszStyleString = nullptr;
 
-    virtual GBool Parse() = 0;
+    virtual bool Parse() = 0;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRStyleTool)
 
   protected:
 #ifndef DOXYGEN_SKIP
-    GBool Parse(const OGRStyleParamId *pasStyle, OGRStyleValue *pasValue,
-                int nCount);
+    bool Parse(const OGRStyleParamId *pasStyle, OGRStyleValue *pasValue,
+               int nCount);
 #endif
 
   public:
@@ -198,12 +198,12 @@ class CPL_DLL OGRStyleTool
     explicit OGRStyleTool(OGRSTClassId eClassId);
     virtual ~OGRStyleTool();
 
-    static GBool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
-                                  int &nBlue, int &nTransparence);
+    static bool GetRGBFromString(const char *pszColor, int &nRed, int &nGreen,
+                                 int &nBlue, int &nTransparence);
     static int GetSpecificId(const char *pszId, const char *pszWanted);
 
 #ifndef DOXYGEN_SKIP
-    GBool IsStyleModified()
+    bool IsStyleModified()
     {
         return m_bModified;
     }
@@ -212,7 +212,7 @@ class CPL_DLL OGRStyleTool
         m_bModified = TRUE;
     }
 
-    GBool IsStyleParsed()
+    bool IsStyleParsed()
     {
         return m_bParsed;
     }
@@ -248,13 +248,13 @@ class CPL_DLL OGRStyleTool
                                OGRStyleValue *pasStyleValue, int nSize);
 
     const char *GetParamStr(const OGRStyleParamId &sStyleParam,
-                            OGRStyleValue &sStyleValue, GBool &bValueIsNull);
+                            OGRStyleValue &sStyleValue, bool &bValueIsNull);
 
     int GetParamNum(const OGRStyleParamId &sStyleParam,
-                    OGRStyleValue &sStyleValue, GBool &bValueIsNull);
+                    OGRStyleValue &sStyleValue, bool &bValueIsNull);
 
     double GetParamDbl(const OGRStyleParamId &sStyleParam,
-                       OGRStyleValue &sStyleValue, GBool &bValueIsNull);
+                       OGRStyleValue &sStyleValue, bool &bValueIsNull);
 
     void SetParamStr(const OGRStyleParamId &sStyleParam,
                      OGRStyleValue &sStyleValue, const char *pszParamString);
@@ -280,7 +280,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
   private:
     OGRStyleValue *m_pasStyleValue;
 
-    GBool Parse() override;
+    bool Parse() override;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRStylePen)
 
@@ -292,7 +292,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     /* Explicit fct for all parameters defined in the Drawing tools  Pen  */
     /**********************************************************************/
 
-    const char *Color(GBool &bDefault)
+    const char *Color(bool &bDefault)
     {
         return GetParamStr(OGRSTPenColor, bDefault);
     }
@@ -300,7 +300,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         SetParamStr(OGRSTPenColor, pszColor);
     }
-    double Width(GBool &bDefault)
+    double Width(bool &bDefault)
     {
         return GetParamDbl(OGRSTPenWidth, bDefault);
     }
@@ -308,7 +308,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         SetParamDbl(OGRSTPenWidth, dfWidth);
     }
-    const char *Pattern(GBool &bDefault)
+    const char *Pattern(bool &bDefault)
     {
         return GetParamStr(OGRSTPenPattern, bDefault);
     }
@@ -316,7 +316,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         SetParamStr(OGRSTPenPattern, pszPattern);
     }
-    const char *Id(GBool &bDefault)
+    const char *Id(bool &bDefault)
     {
         return GetParamStr(OGRSTPenId, bDefault);
     }
@@ -324,7 +324,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         SetParamStr(OGRSTPenId, pszId);
     }
-    double PerpendicularOffset(GBool &bDefault)
+    double PerpendicularOffset(bool &bDefault)
     {
         return GetParamDbl(OGRSTPenPerOffset, bDefault);
     }
@@ -332,7 +332,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         SetParamDbl(OGRSTPenPerOffset, dfPerp);
     }
-    const char *Cap(GBool &bDefault)
+    const char *Cap(bool &bDefault)
     {
         return GetParamStr(OGRSTPenCap, bDefault);
     }
@@ -340,7 +340,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         SetParamStr(OGRSTPenCap, pszCap);
     }
-    const char *Join(GBool &bDefault)
+    const char *Join(bool &bDefault)
     {
         return GetParamStr(OGRSTPenJoin, bDefault);
     }
@@ -348,7 +348,7 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
     {
         SetParamStr(OGRSTPenJoin, pszJoin);
     }
-    int Priority(GBool &bDefault)
+    int Priority(bool &bDefault)
     {
         return GetParamNum(OGRSTPenPriority, bDefault);
     }
@@ -359,9 +359,9 @@ class CPL_DLL OGRStylePen : public OGRStyleTool
 
     /*****************************************************************/
 
-    const char *GetParamStr(OGRSTPenParam eParam, GBool &bValueIsNull);
-    int GetParamNum(OGRSTPenParam eParam, GBool &bValueIsNull);
-    double GetParamDbl(OGRSTPenParam eParam, GBool &bValueIsNull);
+    const char *GetParamStr(OGRSTPenParam eParam, bool &bValueIsNull);
+    int GetParamNum(OGRSTPenParam eParam, bool &bValueIsNull);
+    double GetParamDbl(OGRSTPenParam eParam, bool &bValueIsNull);
     void SetParamStr(OGRSTPenParam eParam, const char *pszParamString);
     void SetParamNum(OGRSTPenParam eParam, int nParam);
     void SetParamDbl(OGRSTPenParam eParam, double dfParam);
@@ -376,7 +376,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
   private:
     OGRStyleValue *m_pasStyleValue;
 
-    GBool Parse() override;
+    bool Parse() override;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRStyleBrush)
 
@@ -386,7 +386,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
 
     /* Explicit fct for all parameters defined in the Drawing tools Brush */
 
-    const char *ForeColor(GBool &bDefault)
+    const char *ForeColor(bool &bDefault)
     {
         return GetParamStr(OGRSTBrushFColor, bDefault);
     }
@@ -394,7 +394,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         SetParamStr(OGRSTBrushFColor, pszColor);
     }
-    const char *BackColor(GBool &bDefault)
+    const char *BackColor(bool &bDefault)
     {
         return GetParamStr(OGRSTBrushBColor, bDefault);
     }
@@ -402,7 +402,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         SetParamStr(OGRSTBrushBColor, pszColor);
     }
-    const char *Id(GBool &bDefault)
+    const char *Id(bool &bDefault)
     {
         return GetParamStr(OGRSTBrushId, bDefault);
     }
@@ -410,7 +410,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         SetParamStr(OGRSTBrushId, pszId);
     }
-    double Angle(GBool &bDefault)
+    double Angle(bool &bDefault)
     {
         return GetParamDbl(OGRSTBrushAngle, bDefault);
     }
@@ -418,7 +418,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         SetParamDbl(OGRSTBrushAngle, dfAngle);
     }
-    double Size(GBool &bDefault)
+    double Size(bool &bDefault)
     {
         return GetParamDbl(OGRSTBrushSize, bDefault);
     }
@@ -426,7 +426,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         SetParamDbl(OGRSTBrushSize, dfSize);
     }
-    double SpacingX(GBool &bDefault)
+    double SpacingX(bool &bDefault)
     {
         return GetParamDbl(OGRSTBrushDx, bDefault);
     }
@@ -434,7 +434,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         SetParamDbl(OGRSTBrushDx, dfX);
     }
-    double SpacingY(GBool &bDefault)
+    double SpacingY(bool &bDefault)
     {
         return GetParamDbl(OGRSTBrushDy, bDefault);
     }
@@ -442,7 +442,7 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
     {
         SetParamDbl(OGRSTBrushDy, dfY);
     }
-    int Priority(GBool &bDefault)
+    int Priority(bool &bDefault)
     {
         return GetParamNum(OGRSTBrushPriority, bDefault);
     }
@@ -453,9 +453,9 @@ class CPL_DLL OGRStyleBrush : public OGRStyleTool
 
     /*****************************************************************/
 
-    const char *GetParamStr(OGRSTBrushParam eParam, GBool &bValueIsNull);
-    int GetParamNum(OGRSTBrushParam eParam, GBool &bValueIsNull);
-    double GetParamDbl(OGRSTBrushParam eParam, GBool &bValueIsNull);
+    const char *GetParamStr(OGRSTBrushParam eParam, bool &bValueIsNull);
+    int GetParamNum(OGRSTBrushParam eParam, bool &bValueIsNull);
+    double GetParamDbl(OGRSTBrushParam eParam, bool &bValueIsNull);
     void SetParamStr(OGRSTBrushParam eParam, const char *pszParamString);
     void SetParamNum(OGRSTBrushParam eParam, int nParam);
     void SetParamDbl(OGRSTBrushParam eParam, double dfParam);
@@ -470,7 +470,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
   private:
     OGRStyleValue *m_pasStyleValue;
 
-    GBool Parse() override;
+    bool Parse() override;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRStyleSymbol)
 
@@ -482,7 +482,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     /* Explicit fct for all parameters defined in the Drawing tools  */
     /*****************************************************************/
 
-    const char *Id(GBool &bDefault)
+    const char *Id(bool &bDefault)
     {
         return GetParamStr(OGRSTSymbolId, bDefault);
     }
@@ -490,7 +490,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamStr(OGRSTSymbolId, pszId);
     }
-    double Angle(GBool &bDefault)
+    double Angle(bool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolAngle, bDefault);
     }
@@ -498,7 +498,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamDbl(OGRSTSymbolAngle, dfAngle);
     }
-    const char *Color(GBool &bDefault)
+    const char *Color(bool &bDefault)
     {
         return GetParamStr(OGRSTSymbolColor, bDefault);
     }
@@ -506,7 +506,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamStr(OGRSTSymbolColor, pszColor);
     }
-    double Size(GBool &bDefault)
+    double Size(bool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolSize, bDefault);
     }
@@ -514,7 +514,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamDbl(OGRSTSymbolSize, dfSize);
     }
-    double SpacingX(GBool &bDefault)
+    double SpacingX(bool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolDx, bDefault);
     }
@@ -522,7 +522,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamDbl(OGRSTSymbolDx, dfX);
     }
-    double SpacingY(GBool &bDefault)
+    double SpacingY(bool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolDy, bDefault);
     }
@@ -530,7 +530,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamDbl(OGRSTSymbolDy, dfY);
     }
-    double Step(GBool &bDefault)
+    double Step(bool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolStep, bDefault);
     }
@@ -538,7 +538,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamDbl(OGRSTSymbolStep, dfStep);
     }
-    double Offset(GBool &bDefault)
+    double Offset(bool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolOffset, bDefault);
     }
@@ -546,7 +546,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamDbl(OGRSTSymbolOffset, dfOffset);
     }
-    double Perp(GBool &bDefault)
+    double Perp(bool &bDefault)
     {
         return GetParamDbl(OGRSTSymbolPerp, bDefault);
     }
@@ -554,7 +554,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamDbl(OGRSTSymbolPerp, dfPerp);
     }
-    int Priority(GBool &bDefault)
+    int Priority(bool &bDefault)
     {
         return GetParamNum(OGRSTSymbolPriority, bDefault);
     }
@@ -562,7 +562,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamNum(OGRSTSymbolPriority, nPriority);
     }
-    const char *FontName(GBool &bDefault)
+    const char *FontName(bool &bDefault)
     {
         return GetParamStr(OGRSTSymbolFontName, bDefault);
     }
@@ -570,7 +570,7 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
     {
         SetParamStr(OGRSTSymbolFontName, pszFontName);
     }
-    const char *OColor(GBool &bDefault)
+    const char *OColor(bool &bDefault)
     {
         return GetParamStr(OGRSTSymbolOColor, bDefault);
     }
@@ -581,9 +581,9 @@ class CPL_DLL OGRStyleSymbol : public OGRStyleTool
 
     /*****************************************************************/
 
-    const char *GetParamStr(OGRSTSymbolParam eParam, GBool &bValueIsNull);
-    int GetParamNum(OGRSTSymbolParam eParam, GBool &bValueIsNull);
-    double GetParamDbl(OGRSTSymbolParam eParam, GBool &bValueIsNull);
+    const char *GetParamStr(OGRSTSymbolParam eParam, bool &bValueIsNull);
+    int GetParamNum(OGRSTSymbolParam eParam, bool &bValueIsNull);
+    double GetParamDbl(OGRSTSymbolParam eParam, bool &bValueIsNull);
     void SetParamStr(OGRSTSymbolParam eParam, const char *pszParamString);
     void SetParamNum(OGRSTSymbolParam eParam, int nParam);
     void SetParamDbl(OGRSTSymbolParam eParam, double dfParam);
@@ -598,7 +598,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
   private:
     OGRStyleValue *m_pasStyleValue;
 
-    GBool Parse() override;
+    bool Parse() override;
 
     CPL_DISALLOW_COPY_ASSIGN(OGRStyleLabel)
 
@@ -610,7 +610,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     /* Explicit fct for all parameters defined in the Drawing tools  */
     /*****************************************************************/
 
-    const char *FontName(GBool &bDefault)
+    const char *FontName(bool &bDefault)
     {
         return GetParamStr(OGRSTLabelFontName, bDefault);
     }
@@ -618,7 +618,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamStr(OGRSTLabelFontName, pszFontName);
     }
-    double Size(GBool &bDefault)
+    double Size(bool &bDefault)
     {
         return GetParamDbl(OGRSTLabelSize, bDefault);
     }
@@ -626,7 +626,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamDbl(OGRSTLabelSize, dfSize);
     }
-    const char *TextString(GBool &bDefault)
+    const char *TextString(bool &bDefault)
     {
         return GetParamStr(OGRSTLabelTextString, bDefault);
     }
@@ -634,7 +634,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamStr(OGRSTLabelTextString, pszTextString);
     }
-    double Angle(GBool &bDefault)
+    double Angle(bool &bDefault)
     {
         return GetParamDbl(OGRSTLabelAngle, bDefault);
     }
@@ -642,7 +642,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamDbl(OGRSTLabelAngle, dfAngle);
     }
-    const char *ForeColor(GBool &bDefault)
+    const char *ForeColor(bool &bDefault)
     {
         return GetParamStr(OGRSTLabelFColor, bDefault);
     }
@@ -650,7 +650,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamStr(OGRSTLabelFColor, pszForColor);
     }
-    const char *BackColor(GBool &bDefault)
+    const char *BackColor(bool &bDefault)
     {
         return GetParamStr(OGRSTLabelBColor, bDefault);
     }
@@ -658,7 +658,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamStr(OGRSTLabelBColor, pszBackColor);
     }
-    const char *Placement(GBool &bDefault)
+    const char *Placement(bool &bDefault)
     {
         return GetParamStr(OGRSTLabelPlacement, bDefault);
     }
@@ -666,7 +666,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamStr(OGRSTLabelPlacement, pszPlacement);
     }
-    int Anchor(GBool &bDefault)
+    int Anchor(bool &bDefault)
     {
         return GetParamNum(OGRSTLabelAnchor, bDefault);
     }
@@ -674,7 +674,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamNum(OGRSTLabelAnchor, nAnchor);
     }
-    double SpacingX(GBool &bDefault)
+    double SpacingX(bool &bDefault)
     {
         return GetParamDbl(OGRSTLabelDx, bDefault);
     }
@@ -682,7 +682,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamDbl(OGRSTLabelDx, dfX);
     }
-    double SpacingY(GBool &bDefault)
+    double SpacingY(bool &bDefault)
     {
         return GetParamDbl(OGRSTLabelDy, bDefault);
     }
@@ -690,7 +690,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamDbl(OGRSTLabelDy, dfY);
     }
-    double Perp(GBool &bDefault)
+    double Perp(bool &bDefault)
     {
         return GetParamDbl(OGRSTLabelPerp, bDefault);
     }
@@ -698,31 +698,31 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamDbl(OGRSTLabelPerp, dfPerp);
     }
-    GBool Bold(GBool &bDefault)
+    bool Bold(bool &bDefault)
     {
         return GetParamNum(OGRSTLabelBold, bDefault);
     }
-    void SetBold(GBool bBold)
+    void SetBold(bool bBold)
     {
         SetParamNum(OGRSTLabelBold, bBold);
     }
-    GBool Italic(GBool &bDefault)
+    bool Italic(bool &bDefault)
     {
         return GetParamNum(OGRSTLabelItalic, bDefault);
     }
-    void SetItalic(GBool bItalic)
+    void SetItalic(bool bItalic)
     {
         SetParamNum(OGRSTLabelItalic, bItalic);
     }
-    GBool Underline(GBool &bDefault)
+    bool Underline(bool &bDefault)
     {
         return GetParamNum(OGRSTLabelUnderline, bDefault);
     }
-    void SetUnderline(GBool bUnderline)
+    void SetUnderline(bool bUnderline)
     {
         SetParamNum(OGRSTLabelUnderline, bUnderline);
     }
-    int Priority(GBool &bDefault)
+    int Priority(bool &bDefault)
     {
         return GetParamNum(OGRSTLabelPriority, bDefault);
     }
@@ -730,15 +730,15 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamNum(OGRSTLabelPriority, nPriority);
     }
-    GBool Strikeout(GBool &bDefault)
+    bool Strikeout(bool &bDefault)
     {
         return GetParamNum(OGRSTLabelStrikeout, bDefault);
     }
-    void SetStrikeout(GBool bStrikeout)
+    void SetStrikeout(bool bStrikeout)
     {
         SetParamNum(OGRSTLabelStrikeout, bStrikeout);
     }
-    double Stretch(GBool &bDefault)
+    double Stretch(bool &bDefault)
     {
         return GetParamDbl(OGRSTLabelStretch, bDefault);
     }
@@ -746,7 +746,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamDbl(OGRSTLabelStretch, dfStretch);
     }
-    const char *ShadowColor(GBool &bDefault)
+    const char *ShadowColor(bool &bDefault)
     {
         return GetParamStr(OGRSTLabelHColor, bDefault);
     }
@@ -754,7 +754,7 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
     {
         SetParamStr(OGRSTLabelHColor, pszShadowColor);
     }
-    const char *OutlineColor(GBool &bDefault)
+    const char *OutlineColor(bool &bDefault)
     {
         return GetParamStr(OGRSTLabelOColor, bDefault);
     }
@@ -765,9 +765,9 @@ class CPL_DLL OGRStyleLabel : public OGRStyleTool
 
     /*****************************************************************/
 
-    const char *GetParamStr(OGRSTLabelParam eParam, GBool &bValueIsNull);
-    int GetParamNum(OGRSTLabelParam eParam, GBool &bValueIsNull);
-    double GetParamDbl(OGRSTLabelParam eParam, GBool &bValueIsNull);
+    const char *GetParamStr(OGRSTLabelParam eParam, bool &bValueIsNull);
+    int GetParamNum(OGRSTLabelParam eParam, bool &bValueIsNull);
+    double GetParamDbl(OGRSTLabelParam eParam, bool &bValueIsNull);
     void SetParamStr(OGRSTLabelParam eParam, const char *pszParamString);
     void SetParamNum(OGRSTLabelParam eParam, int nParam);
     void SetParamDbl(OGRSTLabelParam eParam, double dfParam);

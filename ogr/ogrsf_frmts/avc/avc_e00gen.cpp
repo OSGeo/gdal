@@ -227,7 +227,7 @@ const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType,
  * for this "end of section".
  **********************************************************************/
 const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
-                                GBool bCont)
+                                bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -307,7 +307,7 @@ const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
  * for this ARC.
  **********************************************************************/
 const char *AVCE00GenObject(AVCE00GenInfo *psInfo, AVCFileType eType,
-                            void *psObj, GBool bCont)
+                            void *psObj, bool bCont)
 {
     const char *pszLine = nullptr;
 
@@ -365,7 +365,7 @@ const char *AVCE00GenObject(AVCE00GenInfo *psInfo, AVCFileType eType,
  * The function returns nullptr when there are no more lines to generate
  * for this ARC.
  **********************************************************************/
-const char *AVCE00GenArc(AVCE00GenInfo *psInfo, AVCArc *psArc, GBool bCont)
+const char *AVCE00GenArc(AVCE00GenInfo *psInfo, AVCArc *psArc, bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -456,7 +456,7 @@ const char *AVCE00GenArc(AVCE00GenInfo *psInfo, AVCArc *psArc, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this PAL entry.
  **********************************************************************/
-const char *AVCE00GenPal(AVCE00GenInfo *psInfo, AVCPal *psPal, GBool bCont)
+const char *AVCE00GenPal(AVCE00GenInfo *psInfo, AVCPal *psPal, bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -568,7 +568,7 @@ const char *AVCE00GenPal(AVCE00GenInfo *psInfo, AVCPal *psPal, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this CNT entry.
  **********************************************************************/
-const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, GBool bCont)
+const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -632,7 +632,7 @@ const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this LAB entry.
  **********************************************************************/
-const char *AVCE00GenLab(AVCE00GenInfo *psInfo, AVCLab *psLab, GBool bCont)
+const char *AVCE00GenLab(AVCE00GenInfo *psInfo, AVCLab *psLab, bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -722,7 +722,7 @@ const char *AVCE00GenLab(AVCE00GenInfo *psInfo, AVCLab *psLab, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this TOL entry.
  **********************************************************************/
-const char *AVCE00GenTol(AVCE00GenInfo *psInfo, AVCTol *psTol, GBool bCont)
+const char *AVCE00GenTol(AVCE00GenInfo *psInfo, AVCTol *psTol, bool bCont)
 {
     if (bCont == TRUE)
     {
@@ -757,7 +757,7 @@ const char *AVCE00GenTol(AVCE00GenInfo *psInfo, AVCTol *psTol, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this PRJ entry.
  **********************************************************************/
-const char *AVCE00GenPrj(AVCE00GenInfo *psInfo, char **papszPrj, GBool bCont)
+const char *AVCE00GenPrj(AVCE00GenInfo *psInfo, char **papszPrj, bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -823,7 +823,7 @@ const char *AVCE00GenPrj(AVCE00GenInfo *psInfo, char **papszPrj, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this TXT entry.
  **********************************************************************/
-const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
+const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, bool bCont)
 {
     int numFixedLines;
 
@@ -967,7 +967,7 @@ const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this TX6 entry.
  **********************************************************************/
-const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
+const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -1101,7 +1101,7 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
  * The function returns nullptr when there are no more lines to generate
  * for this RXP entry.
  **********************************************************************/
-const char *AVCE00GenRxp(AVCE00GenInfo *psInfo, AVCRxp *psRxp, GBool bCont)
+const char *AVCE00GenRxp(AVCE00GenInfo *psInfo, AVCRxp *psRxp, bool bCont)
 {
     if (bCont == TRUE)
     {
@@ -1134,7 +1134,7 @@ const char *AVCE00GenRxp(AVCE00GenInfo *psInfo, AVCRxp *psRxp, GBool bCont)
  * The function returns nullptr when there are no more lines to generate.
  **********************************************************************/
 const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
-                              GBool bCont)
+                              bool bCont)
 {
     if (bCont == FALSE)
     {
@@ -1249,7 +1249,7 @@ const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
  **********************************************************************/
 const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                               AVCFieldInfo *pasDef, AVCField *pasFields,
-                              GBool bCont)
+                              bool bCont)
 {
     int i, nSize, nType, nLen;
     char *pszBuf2;

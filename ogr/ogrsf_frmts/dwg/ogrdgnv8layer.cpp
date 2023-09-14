@@ -1774,7 +1774,7 @@ OdDgGraphicsElementPtr OGRDGNV8Layer::TranslateLabel(OGRFeature *poFeature,
     double dfHeightMultiplier = 1.0;
     if (poLabel != nullptr)
     {
-        GBool bDefault;
+        bool bDefault;
 
         if (poLabel->TextString(bDefault) != nullptr && !bDefault)
             pszText = poLabel->TextString(bDefault);
@@ -1854,7 +1854,7 @@ void OGRDGNV8Layer::AttachFillLinkage(OGRFeature *poFeature,
             static_cast<OGRStyleBrush *>(GetTool(poFeature, OGRSTCBrush));
         if (poBrush != nullptr)
         {
-            GBool bDefault;
+            bool bDefault;
             const char *pszColor = poBrush->ForeColor(bDefault);
             if (pszColor && !bDefault)
             {
@@ -1904,7 +1904,7 @@ void OGRDGNV8Layer::AttachCommonAttributes(OGRFeature *poFeature,
                 static_cast<OGRStylePen *>(GetTool(poFeature, OGRSTCPen));
             if (poPen != nullptr)
             {
-                GBool bDefault;
+                bool bDefault;
                 const char *pszColor = poPen->Color(bDefault);
                 if (pszColor && !bDefault)
                 {
@@ -1923,7 +1923,7 @@ void OGRDGNV8Layer::AttachCommonAttributes(OGRFeature *poFeature,
                 static_cast<OGRStyleLabel *>(GetTool(poFeature, OGRSTCLabel));
             if (poLabel != nullptr)
             {
-                GBool bDefault;
+                bool bDefault;
                 const char *pszColor = poLabel->ForeColor(bDefault);
                 if (pszColor && !bDefault)
                 {

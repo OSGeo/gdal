@@ -94,7 +94,7 @@ TABMAPFile::~TABMAPFile()
  **********************************************************************/
 
 int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
-                     GBool bNoErrorMsg, int nBlockSizeForCreate)
+                     bool bNoErrorMsg, int nBlockSizeForCreate)
 {
     // cppcheck-suppress nullPointer
     if (STARTS_WITH_CI(pszAccess, "r"))
@@ -125,7 +125,7 @@ int TABMAPFile::Open(const char *pszFname, const char *pszAccess,
  * Returns 0 on success, 1 when the .map file does not exist, -1 on error.
  **********************************************************************/
 int TABMAPFile::Open(const char *pszFname, TABAccess eAccess,
-                     GBool bNoErrorMsg /* = FALSE */,
+                     bool bNoErrorMsg /* = FALSE */,
                      int nBlockSizeForCreate /* = 512 */)
 {
     CPLErrorReset();
@@ -614,7 +614,7 @@ int TABMAPFile::ReOpenReadWrite()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode /*=TRUE*/)
+int TABMAPFile::SetQuickSpatialIndexMode(bool bQuickSpatialIndexMode /*=TRUE*/)
 {
     if (m_eAccessMode != TABWrite)
     {
@@ -859,7 +859,7 @@ int TABMAPFile::GetNextFeatureId(int nPrevId)
         // first object from it.  Note that some object blocks actually
         // have no objects, so we may have to advance to additional
         // object blocks till we find a non-empty one.
-        GBool bFirstCall = (nPrevId == -1);
+        bool bFirstCall = (nPrevId == -1);
         do
         {
             if (!LoadNextMatchingObjectBlock(bFirstCall))
@@ -910,7 +910,7 @@ int TABMAPFile::Int2Coordsys(int32_t nX, int32_t nY, double &dX, double &dY)
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABMAPFile::Coordsys2Int(double dX, double dY, int32_t &nX, int32_t &nY,
-                             GBool bIgnoreOverflow /*=FALSE*/)
+                             bool bIgnoreOverflow /*=FALSE*/)
 {
     if (m_poHeader == nullptr)
         return -1;
@@ -1782,7 +1782,7 @@ int TABMAPFile::CommitNewObj(TABMAPObjHdr *poObjHdr)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPFile::CommitObjAndCoordBlocks(GBool bDeleteObjects /*=FALSE*/)
+int TABMAPFile::CommitObjAndCoordBlocks(bool bDeleteObjects /*=FALSE*/)
 {
     int nStatus = 0;
 

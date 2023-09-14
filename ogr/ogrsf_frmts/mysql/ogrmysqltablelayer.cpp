@@ -1258,7 +1258,7 @@ OGRErr OGRMySQLTableLayer::GetExtent(OGREnvelope *psExtent,
 
     OGREnvelope oEnv;
     CPLString osCommand;
-    GBool bExtentSet = FALSE;
+    bool bExtentSet = FALSE;
 
     if (poDS->GetMajorVersion() >= 8 && !poDS->IsMariaDB())
     {

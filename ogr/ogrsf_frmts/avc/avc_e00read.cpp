@@ -642,8 +642,8 @@ static int _AVCIncreaseSectionsArray(AVCE00Section **pasArray, int *pnumItems,
 static AVCCoverType _AVCE00ReadFindCoverType(char **papszCoverDir)
 {
     int i, nLen;
-    GBool bFoundAdfFile = FALSE, bFoundArcFile = FALSE, bFoundTableFile = FALSE,
-          bFoundDbfFile = FALSE, bFoundArcDirFile = FALSE;
+    bool bFoundAdfFile = FALSE, bFoundArcFile = FALSE, bFoundTableFile = FALSE,
+         bFoundDbfFile = FALSE, bFoundArcDirFile = FALSE;
 
     /*-----------------------------------------------------------------
      * Scan the list of files, looking for well known filenames.
@@ -741,7 +741,7 @@ static int _AVCE00ReadAddJabberwockySection(
     int nCoverPrecision, const char *pszFileExtension, char **papszCoverDir)
 {
     int iSect, iDirEntry, nLen, nExtLen;
-    GBool bFoundFiles = FALSE;
+    bool bFoundFiles = FALSE;
     AVCBinFile *psFile = nullptr;
 
     nExtLen = (int)strlen(pszFileExtension);
@@ -1369,7 +1369,7 @@ static void _AVCE00ReadScanE00(AVCE00ReadE00Ptr psRead)
     const char *pszName = nullptr;
     void *obj;
     int iSect = 0;
-    GBool bFirstLine = TRUE;
+    bool bFirstLine = TRUE;
 
     while (CPLGetLastErrorNo() == 0 &&
            (pszLine = CPLReadLine2L(psRead->hFile, knMAX_CHARS_PER_LINE,
@@ -1936,10 +1936,10 @@ AVCE00Section *AVCE00ReadSectionsList(AVCE00ReadPtr psInfo, int *numSect)
  * This function returns 0 on success or -1 on error.
  **********************************************************************/
 int AVCE00ReadGotoSection(AVCE00ReadPtr psInfo, AVCE00Section *psSect,
-                          GBool bContinue)
+                          bool bContinue)
 {
     int iSect;
-    GBool bFound = FALSE;
+    bool bFound = FALSE;
 
     CPLErrorReset();
 
@@ -2135,10 +2135,10 @@ AVCE00Section *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead, int *numSect)
  * This function returns 0 on success or -1 on error.
  **********************************************************************/
 int AVCE00ReadGotoSectionE00(AVCE00ReadE00Ptr psRead, AVCE00Section *psSect,
-                             GBool bContinue)
+                             bool bContinue)
 {
     int iSect;
-    GBool bFound = FALSE;
+    bool bFound = FALSE;
 
     CPLErrorReset();
 

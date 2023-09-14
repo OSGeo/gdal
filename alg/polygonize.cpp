@@ -396,7 +396,7 @@ static CPLErr GDALPolygonizeT(GDALRasterBandH hSrcBand,
 /* Code from:                                                                 */
 /* http://www.cygnus-software.com/papers/comparingfloats/comparingfloats.htm  */
 /******************************************************************************/
-GBool GDALFloatEquals(float A, float B)
+bool GDALFloatEquals(float A, float B)
 {
     // This function will allow maxUlps-1 floats between A and B.
     const int maxUlps = MAX_ULPS;

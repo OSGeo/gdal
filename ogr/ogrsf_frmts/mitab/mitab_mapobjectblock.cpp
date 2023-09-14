@@ -87,7 +87,7 @@ TABMAPObjectBlock::~TABMAPObjectBlock()
  **********************************************************************/
 int TABMAPObjectBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
                                          int nSizeUsed,
-                                         GBool bMakeCopy /* = TRUE */,
+                                         bool bMakeCopy /* = TRUE */,
                                          VSILFILE *fpSrc /* = NULL */,
                                          int nOffset /* = 0 */)
 {
@@ -413,7 +413,7 @@ int TABMAPObjectBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABMAPObjectBlock::ReadIntCoord(GBool bCompressed, int32_t &nX, int32_t &nY)
+int TABMAPObjectBlock::ReadIntCoord(bool bCompressed, int32_t &nX, int32_t &nY)
 {
     if (bCompressed)
     {
@@ -448,7 +448,7 @@ int TABMAPObjectBlock::ReadIntCoord(GBool bCompressed, int32_t &nX, int32_t &nY)
  * CPLError() will have been called.
  **********************************************************************/
 int TABMAPObjectBlock::WriteIntCoord(int32_t nX, int32_t nY,
-                                     GBool bCompressed /*=FALSE*/)
+                                     bool bCompressed /*=FALSE*/)
 {
 
     /*-----------------------------------------------------------------
@@ -483,7 +483,7 @@ int TABMAPObjectBlock::WriteIntCoord(int32_t nX, int32_t nY,
  **********************************************************************/
 int TABMAPObjectBlock::WriteIntMBRCoord(int32_t nXMin, int32_t nYMin,
                                         int32_t nXMax, int32_t nYMax,
-                                        GBool bCompressed /*=FALSE*/)
+                                        bool bCompressed /*=FALSE*/)
 {
     if (WriteIntCoord(std::min(nXMin, nXMax), std::min(nYMin, nYMax),
                       bCompressed) != 0 ||
@@ -669,7 +669,7 @@ int TABMAPObjectBlock::CommitNewObject(TABMAPObjHdr *poObjHdr)
  **********************************************************************/
 #ifdef DEBUG
 
-void TABMAPObjectBlock::Dump(FILE *fpOut, GBool bDetails)
+void TABMAPObjectBlock::Dump(FILE *fpOut, bool bDetails)
 {
     CPLErrorReset();
 
@@ -868,7 +868,7 @@ TABMAPObjHdr *TABMAPObjHdr::ReadNextObj(TABMAPObjectBlock *poObjBlock,
  * Returns TRUE if the current object type uses compressed coordinates
  * or FALSE otherwise.
  **********************************************************************/
-GBool TABMAPObjHdr::IsCompressedType()
+bool TABMAPObjHdr::IsCompressedType()
 {
     // Compressed types are 1, 4, 7, etc.
     return (m_nType % 3) == 1 ? TRUE : FALSE;

@@ -50,10 +50,10 @@
  *
  * Adapted version of msPointInPolygon() from MapServer's mapsearch.c
  **********************************************************************/
-GBool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing)
+bool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing)
 {
     int i, j, numpoints;
-    GBool status = FALSE;
+    bool status = FALSE;
     double x, y;
 
     numpoints = poRing->getNumPoints();
@@ -84,9 +84,9 @@ GBool OGRPointInRing(OGRPoint *poPoint, OGRLineString *poRing)
  *
  * Adapted version of msIntersectPointPolygon() from MapServer's mapsearch.c
  **********************************************************************/
-GBool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
+bool OGRIntersectPointPolygon(OGRPoint *poPoint, OGRPolygon *poPoly)
 {
-    GBool status = FALSE;
+    bool status = FALSE;
 
     for (int i = 0; i < OGR_NUM_RINGS(poPoly); i++)
     {

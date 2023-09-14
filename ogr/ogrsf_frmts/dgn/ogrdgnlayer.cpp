@@ -1097,7 +1097,7 @@ DGNElemCore **OGRDGNLayer::TranslateLabel(OGRFeature *poFeature)
 
     if (poLabel != nullptr)
     {
-        GBool bDefault;
+        bool bDefault;
 
         if (poLabel->TextString(bDefault) != nullptr && !bDefault)
             pszText = poLabel->TextString(bDefault);

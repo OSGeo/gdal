@@ -146,8 +146,8 @@ typedef struct
 {
     GDALDataType eDataType;
     int nBitsDepth;
-    GBool bHasNoDataValue;
-    GBool bIsOffline;
+    bool bHasNoDataValue;
+    bool bIsOffline;
     char *path;
     double dfNoDataValue;
 } BandMetadata;
@@ -164,7 +164,7 @@ typedef struct
 char *ReplaceQuotes(const char *, int);
 char *ReplaceSingleQuotes(const char *, int);
 char **ParseConnectionString(const char *);
-GBool TranslateDataType(const char *, GDALDataType *, int *);
+bool TranslateDataType(const char *, GDALDataType *, int *);
 
 class PostGISRasterRasterBand;
 class PostGISRasterTileDataset;
@@ -215,15 +215,15 @@ class PostGISRasterDataset final : public VRTDataset
     int nOverviewFactor;
     int nBandsToCreate;
     PGconn *poConn;
-    GBool bRegularBlocking;
-    GBool bAllTilesSnapToSameGrid;
-    GBool bCheckAllTiles;
+    bool bRegularBlocking;
+    bool bAllTilesSnapToSameGrid;
+    bool bCheckAllTiles;
     char *pszSchema;
     char *pszTable;
     char *pszColumn;
     char *pszWhere;
     char *pszPrimaryKeyName;
-    GBool bIsFastPK;
+    bool bIsFastPK;
     int bHasTriedFetchingPrimaryKeyName;
     mutable OGRSpatialReference m_oSRS{};
     ResolutionStrategy resolutionStrategy;
@@ -238,26 +238,26 @@ class PostGISRasterDataset final : public VRTDataset
     PostGISRasterTileDataset **papoSourcesHolders;
     CPLQuadTree *hQuadTree;
 
-    GBool bHasBuiltOverviews;
+    bool bHasBuiltOverviews;
     int nOverviewCount;
     PostGISRasterDataset *poParentDS;
     PostGISRasterDataset **papoOverviewDS;
 
     std::map<CPLString, PostGISRasterTileDataset *> oMapPKIDToRTDS{};
 
-    GBool bAssumeMultiBandReadPattern;
+    bool bAssumeMultiBandReadPattern;
     int nNextExpectedBand;
     int nXOffPrev;
     int nYOffPrev;
     int nXSizePrev;
     int nYSizePrev;
 
-    GBool bHasTriedHasSpatialIndex;
-    GBool bHasSpatialIndex;
+    bool bHasTriedHasSpatialIndex;
+    bool bHasSpatialIndex;
 
-    GBool bBuildQuadTreeDynamically;
+    bool bBuildQuadTreeDynamically;
 
-    GBool bTilesSameDimension;
+    bool bTilesSameDimension;
     int nTileWidth;
     int nTileHeight;
 
@@ -271,10 +271,10 @@ class PostGISRasterDataset final : public VRTDataset
         8, 0};
     lru11::Cache<std::string, bool> oOutDBFilenameUsable{100, 0};
 
-    GBool ConstructOneDatasetFromTiles(PGresult *);
-    GBool YieldSubdatasets(PGresult *, const char *);
-    GBool SetRasterProperties(const char *);
-    GBool BrowseDatabase(const char *, const char *);
+    bool ConstructOneDatasetFromTiles(PGresult *);
+    bool YieldSubdatasets(PGresult *, const char *);
+    bool SetRasterProperties(const char *);
+    bool BrowseDatabase(const char *, const char *);
     void AddComplexSource(PostGISRasterTileDataset *poRTDS);
     void GetDstWin(PostGISRasterTileDataset *, int *, int *, int *, int *);
     BandMetadata *GetBandsMetadata(int *);
@@ -317,8 +317,8 @@ class PostGISRasterDataset final : public VRTDataset
     static int Identify(GDALOpenInfo *);
     static GDALDataset *CreateCopy(const char *, GDALDataset *, int, char **,
                                    GDALProgressFunc, void *);
-    static GBool InsertRaster(PGconn *, PostGISRasterDataset *, const char *,
-                              const char *, const char *);
+    static bool InsertRaster(PGconn *, PostGISRasterDataset *, const char *,
+                             const char *, const char *);
     static CPLErr Delete(const char *);
     virtual char **GetMetadataDomainList() override;
     char **GetMetadata(const char *) override;
@@ -334,10 +334,10 @@ class PostGISRasterDataset final : public VRTDataset
     PostGISRasterDataset *GetOverviewDS(int iOvr);
 
     const char *GetPrimaryKeyRef();
-    GBool HasSpatialIndex();
-    GBool LoadSources(int nXOff, int nYOff, int nXSize, int nYSize, int nBand);
-    GBool PolygonFromCoords(int nXOff, int nYOff, int nXEndOff, int nYEndOff,
-                            double adfProjWin[8]);
+    bool HasSpatialIndex();
+    bool LoadSources(int nXOff, int nYOff, int nXSize, int nYSize, int nBand);
+    bool PolygonFromCoords(int nXOff, int nYOff, int nXEndOff, int nYEndOff,
+                           double adfProjWin[8]);
     void CacheTile(const char *pszMetadata, const char *pszRaster,
                    const char *pszPKID, int nBand, bool bAllBandCaching);
 };
@@ -363,7 +363,7 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
 
   public:
     PostGISRasterRasterBand(PostGISRasterDataset *poDSIn, int nBandIn,
-                            GDALDataType eDataTypeIn, GBool bNoDataValueSetIn,
+                            GDALDataType eDataTypeIn, bool bNoDataValueSetIn,
                             double dfNodata);
 
     virtual ~PostGISRasterRasterBand();
@@ -426,7 +426,7 @@ class PostGISRasterTileRasterBand final : public GDALRasterBand
     friend class PostGISRasterDataset;
 
   private:
-    GBool IsCached();
+    bool IsCached();
 
     VRTSource *poSource;
 

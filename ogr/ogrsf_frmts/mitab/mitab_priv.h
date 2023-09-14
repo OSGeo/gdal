@@ -435,7 +435,7 @@ class TABMAPObjHdr
     static TABMAPObjHdr *ReadNextObj(TABMAPObjectBlock *poObjBlock,
                                      TABMAPHeaderBlock *poHeader);
 
-    GBool IsCompressedType();
+    bool IsCompressedType();
     int WriteObjTypeAndId(TABMAPObjectBlock *);
     void SetMBR(int32_t nMinX, int32_t nMinY, int32_t nMaxX, int32_t mMaxY);
 
@@ -582,7 +582,7 @@ class TABMAPObjPLine final : public TABMAPObjHdrWithCoord
     int32_t m_nComprOrgY;
     GByte m_nPenId;
     GByte m_nBrushId;
-    GBool m_bSmooth; /* TRUE if (m_nCoordDataSize & 0x80000000) */
+    bool m_bSmooth; /* TRUE if (m_nCoordDataSize & 0x80000000) */
 
     TABMAPObjPLine()
         : m_numLineSections(0), m_nLabelX(0), m_nLabelY(0), m_nComprOrgX(0),
@@ -824,22 +824,22 @@ class TABRawBinBlock
 
     int m_nBlockType;
 
-    GByte *m_pabyBuf;       /* Buffer to contain the block's data    */
-    int m_nBlockSize;       /* Size of current block (and buffer)    */
-    int m_nSizeUsed;        /* Number of bytes used in buffer        */
-    GBool m_bHardBlockSize; /* TRUE=Blocks MUST always be nSize bytes  */
-                            /* FALSE=last block may be less than nSize */
-    int m_nFileOffset;      /* Location of current block in the file */
-    int m_nCurPos;          /* Next byte to read from m_pabyBuf[]    */
-    int m_nFirstBlockPtr;   /* Size of file header when different from */
-                            /* block size (used by GotoByteInFile())   */
+    GByte *m_pabyBuf;      /* Buffer to contain the block's data    */
+    int m_nBlockSize;      /* Size of current block (and buffer)    */
+    int m_nSizeUsed;       /* Number of bytes used in buffer        */
+    bool m_bHardBlockSize; /* TRUE=Blocks MUST always be nSize bytes  */
+                           /* FALSE=last block may be less than nSize */
+    int m_nFileOffset;     /* Location of current block in the file */
+    int m_nCurPos;         /* Next byte to read from m_pabyBuf[]    */
+    int m_nFirstBlockPtr;  /* Size of file header when different from */
+                           /* block size (used by GotoByteInFile())   */
     int m_nFileSize;
 
     int m_bModified; /* Used only to detect changes        */
 
   public:
     explicit TABRawBinBlock(TABAccess eAccessMode = TABRead,
-                            GBool bHardBlockSize = TRUE);
+                            bool bHardBlockSize = TRUE);
     virtual ~TABRawBinBlock();
 
     virtual int ReadFromFile(VSILFILE *fpSrc, int nOffset, int nSize);
@@ -847,7 +847,7 @@ class TABRawBinBlock
     int CommitAsDeleted(int32_t nNextBlockPtr);
 
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
-                                  GBool bMakeCopy = TRUE,
+                                  bool bMakeCopy = TRUE,
                                   VSILFILE *fpSrc = nullptr, int nOffset = 0);
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
                              int nFileOffset = 0);
@@ -870,8 +870,8 @@ class TABRawBinBlock
 
     int GotoByteRel(int nOffset);
     int GotoByteInBlock(int nOffset);
-    int GotoByteInFile(int nOffset, GBool bForceReadFromFile = FALSE,
-                       GBool bOffsetIsEndOfData = FALSE);
+    int GotoByteInFile(int nOffset, bool bForceReadFromFile = FALSE,
+                       bool bOffsetIsEndOfData = FALSE);
     void SetFirstBlockPtr(int nOffset);
 
     int GetNumUnusedBytes();
@@ -906,7 +906,7 @@ class TABRawBinBlock
     int WriteZeros(int nBytesToWrite);
     int WritePaddedString(int nFieldSize, const char *pszString);
 
-    void SetModifiedFlag(GBool bModified)
+    void SetModifiedFlag(bool bModified)
     {
         m_bModified = bModified;
     }
@@ -947,7 +947,7 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     virtual int CommitToFile() override;
 
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
-                                  GBool bMakeCopy = TRUE,
+                                  bool bMakeCopy = TRUE,
                                   VSILFILE *fpSrc = nullptr,
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
@@ -960,7 +960,7 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
 
     int Int2Coordsys(int32_t nX, int32_t nY, double &dX, double &dY);
     int Coordsys2Int(double dX, double dY, int32_t &nX, int32_t &nY,
-                     GBool bIgnoreOverflow = FALSE);
+                     bool bIgnoreOverflow = FALSE);
     int ComprInt2Coordsys(int32_t nCenterX, int32_t nCenterY, int nDeltaX,
                           int nDeltaY, double &dX, double &dY);
     int Int2CoordsysDist(int32_t nX, int32_t nY, double &dX, double &dY);
@@ -969,7 +969,7 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
                           double dYMax);
 
     int GetMapObjectSize(int nObjType);
-    GBool MapObjectUsesCoordBlock(int nObjType);
+    bool MapObjectUsesCoordBlock(int nObjType);
 
     int GetProjInfo(TABProjInfo *psProjInfo);
     int SetProjInfo(TABProjInfo *psProjInfo);
@@ -990,8 +990,8 @@ class TABMAPHeaderBlock final : public TABRawBinBlock
     int32_t m_nYMin{};
     int32_t m_nXMax{};
     int32_t m_nYMax{};
-    GBool m_bIntBoundsOverflow{};  // Set to TRUE if coordinates
-                                   // outside of bounds were written
+    bool m_bIntBoundsOverflow{};  // Set to TRUE if coordinates
+                                  // outside of bounds were written
 
     int32_t m_nFirstIndexBlock{};
     int32_t m_nFirstGarbageBlock{};
@@ -1067,7 +1067,7 @@ class TABMAPIndexBlock final : public TABRawBinBlock
     virtual ~TABMAPIndexBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
-                                  GBool bMakeCopy = TRUE,
+                                  bool bMakeCopy = TRUE,
                                   VSILFILE *fpSrc = nullptr,
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
@@ -1088,7 +1088,7 @@ class TABMAPIndexBlock final : public TABRawBinBlock
     }
     TABMAPIndexEntry *GetEntry(int iIndex);
     int AddEntry(int32_t XMin, int32_t YMin, int32_t XMax, int32_t YMax,
-                 int32_t nBlockPtr, GBool bAddInThisNodeOnly = FALSE);
+                 int32_t nBlockPtr, bool bAddInThisNodeOnly = FALSE);
     int GetCurMaxDepth();
     void GetMBR(int32_t &nXMin, int32_t &nYMin, int32_t &nXMax, int32_t &nYMax);
     void SetMBR(int32_t nXMin, int32_t nYMin, int32_t nXMax, int32_t nYMax);
@@ -1186,7 +1186,7 @@ class TABMAPObjectBlock final : public TABRawBinBlock
 
     virtual int CommitToFile() override;
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
-                                  GBool bMakeCopy = TRUE,
+                                  bool bMakeCopy = TRUE,
                                   VSILFILE *fpSrc = nullptr,
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
@@ -1197,10 +1197,10 @@ class TABMAPObjectBlock final : public TABRawBinBlock
         return TABMAP_OBJECT_BLOCK;
     }
 
-    virtual int ReadIntCoord(GBool bCompressed, int32_t &nX, int32_t &nY);
-    int WriteIntCoord(int32_t nX, int32_t nY, GBool bCompressed);
+    virtual int ReadIntCoord(bool bCompressed, int32_t &nX, int32_t &nY);
+    int WriteIntCoord(int32_t nX, int32_t nY, bool bCompressed);
     int WriteIntMBRCoord(int32_t nXMin, int32_t nYMin, int32_t nXMax,
-                         int32_t nYMax, GBool bCompressed);
+                         int32_t nYMax, bool bCompressed);
     int UpdateMBR(int32_t nX, int32_t nY);
 
     int PrepareNewObject(TABMAPObjHdr *poObjHdr);
@@ -1242,7 +1242,7 @@ class TABMAPObjectBlock final : public TABRawBinBlock
     {
         Dump(fpOut, FALSE);
     }
-    void Dump(FILE *fpOut, GBool bDetails);
+    void Dump(FILE *fpOut, bool bDetails);
 #endif
 };
 
@@ -1285,7 +1285,7 @@ class TABMAPCoordBlock final : public TABRawBinBlock
     virtual ~TABMAPCoordBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
-                                  GBool bMakeCopy = TRUE,
+                                  bool bMakeCopy = TRUE,
                                   VSILFILE *fpSrc = nullptr,
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
@@ -1301,12 +1301,12 @@ class TABMAPCoordBlock final : public TABRawBinBlock
     virtual int ReadBytes(int numBytes, GByte *pabyDstBuf) override;
     virtual int WriteBytes(int nBytesToWrite, const GByte *pBuf) override;
     void SetComprCoordOrigin(int32_t nX, int32_t nY);
-    int ReadIntCoord(GBool bCompressed, int32_t &nX, int32_t &nY);
-    int ReadIntCoords(GBool bCompressed, int numCoords, int32_t *panXY);
-    int ReadCoordSecHdrs(GBool bCompressed, int nVersion, int numSections,
+    int ReadIntCoord(bool bCompressed, int32_t &nX, int32_t &nY);
+    int ReadIntCoords(bool bCompressed, int numCoords, int32_t *panXY);
+    int ReadCoordSecHdrs(bool bCompressed, int nVersion, int numSections,
                          TABMAPCoordSecHdr *pasHdrs, int32_t &numVerticesTotal);
     int WriteCoordSecHdrs(int nVersion, int numSections,
-                          TABMAPCoordSecHdr *pasHdrs, GBool bCompressed);
+                          TABMAPCoordSecHdr *pasHdrs, bool bCompressed);
 
     void SetNextCoordBlock(int32_t nNextCoordBlockAddress);
     int32_t GetNextCoordBlock()
@@ -1314,7 +1314,7 @@ class TABMAPCoordBlock final : public TABRawBinBlock
         return m_nNextCoordBlock;
     }
 
-    int WriteIntCoord(int32_t nX, int32_t nY, GBool bCompressed);
+    int WriteIntCoord(int32_t nX, int32_t nY, bool bCompressed);
 
     int GetNumBlocksInChain()
     {
@@ -1371,7 +1371,7 @@ class TABMAPToolBlock final : public TABRawBinBlock
     virtual ~TABMAPToolBlock();
 
     virtual int InitBlockFromData(GByte *pabyBuf, int nBlockSize, int nSizeUsed,
-                                  GBool bMakeCopy = TRUE,
+                                  bool bMakeCopy = TRUE,
                                   VSILFILE *fpSrc = nullptr,
                                   int nOffset = 0) override;
     virtual int InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
@@ -1389,7 +1389,7 @@ class TABMAPToolBlock final : public TABRawBinBlock
 
     void SetNextToolBlock(int32_t nNextCoordBlockAddress);
 
-    GBool EndOfChain();
+    bool EndOfChain();
     int GetNumBlocksInChain()
     {
         return m_numBlocksInChain;
@@ -1471,7 +1471,7 @@ class TABMAPFile
     TABMAPIndexBlock *m_poSpIndex;
 
     // Defaults to FALSE, i.e. optimized spatial index
-    GBool m_bQuickSpatialIndexMode;
+    bool m_bQuickSpatialIndexMode;
 
     // Member used to access objects using the object ids (.ID file)
     TABIDFile *m_poIdIndex;
@@ -1498,7 +1498,7 @@ class TABMAPFile
     int m_bLastOpWasRead;
     int m_bLastOpWasWrite;
 
-    int CommitObjAndCoordBlocks(GBool bDeleteObjects = FALSE);
+    int CommitObjAndCoordBlocks(bool bDeleteObjects = FALSE);
     int LoadObjAndCoordBlocks(int32_t nBlockPtr);
     TABMAPObjectBlock *SplitObjBlock(TABMAPObjHdr *poObjHdrToAdd,
                                      int nSizeOfObjToAdd);
@@ -1530,8 +1530,8 @@ class TABMAPFile
     ~TABMAPFile();
 
     int Open(const char *pszFname, const char *pszAccess,
-             GBool bNoErrorMsg = FALSE, int nBlockSizeForCreate = 512);
-    int Open(const char *pszFname, TABAccess eAccess, GBool bNoErrorMsg = FALSE,
+             bool bNoErrorMsg = FALSE, int nBlockSizeForCreate = 512);
+    int Open(const char *pszFname, TABAccess eAccess, bool bNoErrorMsg = FALSE,
              int nBlockSizeForCreate = 512);
     int Close();
 
@@ -1539,11 +1539,11 @@ class TABMAPFile
 
     int SyncToDisk();
 
-    int SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode = TRUE);
+    int SetQuickSpatialIndexMode(bool bQuickSpatialIndexMode = TRUE);
 
     int Int2Coordsys(int32_t nX, int32_t nY, double &dX, double &dY);
     int Coordsys2Int(double dX, double dY, int32_t &nX, int32_t &nY,
-                     GBool bIgnoreOverflow = FALSE);
+                     bool bIgnoreOverflow = FALSE);
     int Int2CoordsysDist(int32_t nX, int32_t nY, double &dX, double &dY);
     int Coordsys2IntDist(double dX, double dY, int32_t &nX, int32_t &nY);
     void SetCoordFilter(TABVertex sMin, TABVertex sMax);
@@ -1624,7 +1624,7 @@ class TABINDNode
     int m_nSubTreeDepth;
     int m_nKeyLength;
     TABFieldType m_eFieldType;
-    GBool m_bUnique;
+    bool m_bUnique;
 
     int32_t m_nCurDataBlockPtr;
     int m_nCurIndexEntry;
@@ -1638,8 +1638,8 @@ class TABINDNode
     int IndexKeyCmp(const GByte *pKeyValue, int nEntryNo);
 
     int InsertEntry(GByte *pKeyValue, int32_t nRecordNo,
-                    GBool bInsertAfterCurChild = FALSE,
-                    GBool bMakeNewEntryCurChild = FALSE);
+                    bool bInsertAfterCurChild = FALSE,
+                    bool bMakeNewEntryCurChild = FALSE);
     int SetNodeBufferDirectly(int numEntries, GByte *pBuf,
                               int nCurIndexEntry = 0,
                               TABINDNode *poCurChild = nullptr);
@@ -1651,7 +1651,7 @@ class TABINDNode
     ~TABINDNode();
 
     int InitNode(VSILFILE *fp, int nBlockPtr, int nKeyLength, int nSubTreeDepth,
-                 GBool bUnique, TABBinBlockManager *poBlockMgr = nullptr,
+                 bool bUnique, TABBinBlockManager *poBlockMgr = nullptr,
                  TABINDNode *poParentNode = nullptr, int nPrevNodePtr = 0,
                  int nNextNodePtr = 0);
 
@@ -1661,11 +1661,11 @@ class TABINDNode
         return m_eFieldType;
     }
 
-    void SetUnique(GBool bUnique)
+    void SetUnique(bool bUnique)
     {
         m_bUnique = bUnique;
     }
-    GBool IsUnique()
+    bool IsUnique()
     {
         return m_bUnique;
     }
@@ -1697,9 +1697,9 @@ class TABINDNode
     int CommitToFile();
 
     int AddEntry(GByte *pKeyValue, int32_t nRecordNo,
-                 GBool bAddInThisNodeOnly = FALSE,
-                 GBool bInsertAfterCurChild = FALSE,
-                 GBool bMakeNewEntryCurChild = FALSE);
+                 bool bAddInThisNodeOnly = FALSE,
+                 bool bInsertAfterCurChild = FALSE,
+                 bool bMakeNewEntryCurChild = FALSE);
     int SplitNode();
     int SplitRootNode();
     GByte *GetNodeKey();
@@ -1749,7 +1749,7 @@ class TABINDFile
     ~TABINDFile();
 
     int Open(const char *pszFname, const char *pszAccess,
-             GBool bTestOpenNoError = FALSE);
+             bool bTestOpenNoError = FALSE);
     int Close();
 
     int GetNumIndexes()
@@ -1757,7 +1757,7 @@ class TABINDFile
         return m_numIndexes;
     }
     int SetIndexFieldType(int nIndexNumber, TABFieldType eType);
-    int SetIndexUnique(int nIndexNumber, GBool bUnique = TRUE);
+    int SetIndexUnique(int nIndexNumber, bool bUnique = TRUE);
     GByte *BuildKey(int nIndexNumber, int32_t nValue);
     GByte *BuildKey(int nIndexNumber, GInt64 nValue);
     GByte *BuildKey(int nIndexNumber, const char *pszStr);
@@ -1798,12 +1798,12 @@ class TABDATFile
     int m_nBlockSize;
     int m_nRecordSize;
     int m_nCurRecordId;
-    GBool m_bCurRecordDeletedFlag;
+    bool m_bCurRecordDeletedFlag;
 
     int32_t m_numRecords;
     int32_t m_nFirstRecordPtr;
-    GBool m_bWriteHeaderInitialized;
-    GBool m_bWriteEOF;
+    bool m_bWriteHeaderInitialized;
+    bool m_bWriteEOF;
 
     int m_bUpdated;
     CPLString m_osEncoding;
@@ -1845,7 +1845,7 @@ class TABDATFile
 
     int32_t GetNumRecords();
     TABRawBinBlock *GetRecordBlock(int nRecordId);
-    GBool IsCurrentRecordDeleted()
+    bool IsCurrentRecordDeleted()
     {
         return m_bCurRecordDeletedFlag;
     }
@@ -1972,12 +1972,12 @@ class TABRelation
                        TABFieldType *paeMapInfoNativeFieldTypes = nullptr);
     int AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                        int nWidth = 0, int nPrecision = 0,
-                       GBool bIndexed = FALSE, GBool bUnique = FALSE,
+                       bool bIndexed = FALSE, bool bUnique = FALSE,
                        int bApproxOK = TRUE);
 
     int SetFieldIndexed(int nFieldId);
-    GBool IsFieldIndexed(int nFieldId);
-    GBool IsFieldUnique(int nFieldId);
+    bool IsFieldIndexed(int nFieldId);
+    bool IsFieldUnique(int nFieldId);
 
     const char *GetMainFieldName()
     {
@@ -2014,7 +2014,7 @@ class MIDDATAFile
     void SaveLine(const char *pszLine);
     const char *GetSavedLine();
     void WriteLine(const char *, ...) CPL_PRINT_FUNC_FORMAT(2, 3);
-    static GBool IsValidFeature(const char *pszString);
+    static bool IsValidFeature(const char *pszString);
 
     //  Translation information
     void SetTranslation(double, double, double, double);
@@ -2033,8 +2033,8 @@ class MIDDATAFile
         m_pszDelimiter = pszDelimiter;
     }
 
-    void SetEof(GBool bEof);
-    GBool GetEof();
+    void SetEof(bool bEof);
+    bool GetEof();
 
     const CPLString &GetEncoding() const;
     void SetEncoding(const CPLString &);
@@ -2052,7 +2052,7 @@ class MIDDATAFile
     double m_dfYMultiplier;
     double m_dfXDisplacement;
     double m_dfYDisplacement;
-    GBool m_bEof;
+    bool m_bEof;
     CPLString m_osEncoding;
 };
 
@@ -2061,8 +2061,7 @@ class MIDDATAFile
  =====================================================================*/
 
 TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
-                                          int nSize,
-                                          GBool bHardBlockSize = TRUE,
+                                          int nSize, bool bHardBlockSize = TRUE,
                                           TABAccess eAccessMode = TABRead);
 
 #endif /* MITAB_PRIV_H_INCLUDED_ */

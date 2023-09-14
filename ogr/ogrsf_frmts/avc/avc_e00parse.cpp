@@ -339,7 +339,7 @@ AVCFileType AVCE00ParseSuperSectionHeader(AVCE00ParseInfo *psInfo,
  * Supersections always end with the line "JABBERWOCKY", except for
  * the IFO section.
  **********************************************************************/
-GBool AVCE00ParseSuperSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine)
+bool AVCE00ParseSuperSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine)
 {
     if (psInfo->eFileType == AVCFileUnknown &&
         psInfo->eSuperSectionType != AVCFileUnknown &&
@@ -546,8 +546,8 @@ AVCFileType AVCE00ParseSectionHeader(AVCE00ParseInfo *psInfo,
  * Return TRUE if this is the end of the section (and reset the
  * ParseInfo structure) , or FALSE otherwise.
  **********************************************************************/
-GBool AVCE00ParseSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine,
-                            GBool bResetParseInfo)
+bool AVCE00ParseSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine,
+                           bool bResetParseInfo)
 {
     if (psInfo->bForceEndOfSection ||
         ((psInfo->eFileType == AVCFileARC || psInfo->eFileType == AVCFilePAL ||

@@ -90,7 +90,7 @@ TABINDFile::~TABINDFile()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABINDFile::Open(const char *pszFname, const char *pszAccess,
-                     GBool bTestOpenNoError /*=FALSE*/)
+                     bool bTestOpenNoError /*=FALSE*/)
 {
     if (m_fp)
     {
@@ -510,7 +510,7 @@ int TABINDFile::SetIndexFieldType(int nIndexNumber, TABFieldType eType)
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABINDFile::SetIndexUnique(int nIndexNumber, GBool bUnique /*=TRUE*/)
+int TABINDFile::SetIndexUnique(int nIndexNumber, bool bUnique /*=TRUE*/)
 {
     if (ValidateIndexNo(nIndexNumber) != 0)
         return -1;
@@ -924,7 +924,7 @@ TABINDNode::~TABINDNode()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABINDNode::InitNode(VSILFILE *fp, int nBlockPtr, int nKeyLength,
-                         int nSubTreeDepth, GBool bUnique,
+                         int nSubTreeDepth, bool bUnique,
                          TABBinBlockManager *poBlockMgr /*=NULL*/,
                          TABINDNode *poParentNode /*=NULL*/,
                          int nPrevNodePtr /*=0*/, int nNextNodePtr /*=0*/)
@@ -1461,9 +1461,9 @@ int TABINDNode::CommitToFile()
  * Returns 0 on success, -1 on error
  **********************************************************************/
 int TABINDNode::AddEntry(GByte *pKeyValue, int32_t nRecordNo,
-                         GBool bAddInThisNodeOnly /*=FALSE*/,
-                         GBool bInsertAfterCurChild /*=FALSE*/,
-                         GBool bMakeNewEntryCurChild /*=FALSE*/)
+                         bool bAddInThisNodeOnly /*=FALSE*/,
+                         bool bInsertAfterCurChild /*=FALSE*/,
+                         bool bMakeNewEntryCurChild /*=FALSE*/)
 {
     if ((m_eAccessMode != TABWrite && m_eAccessMode != TABReadWrite) ||
         m_poDataBlock == nullptr)
@@ -1550,8 +1550,8 @@ int TABINDNode::AddEntry(GByte *pKeyValue, int32_t nRecordNo,
  * Returns 0 on success, -1 on error
  **********************************************************************/
 int TABINDNode::InsertEntry(GByte *pKeyValue, int32_t nRecordNo,
-                            GBool bInsertAfterCurChild /*=FALSE*/,
-                            GBool bMakeNewEntryCurChild /*=FALSE*/)
+                            bool bInsertAfterCurChild /*=FALSE*/,
+                            bool bMakeNewEntryCurChild /*=FALSE*/)
 {
     int iInsertAt = 0;
 

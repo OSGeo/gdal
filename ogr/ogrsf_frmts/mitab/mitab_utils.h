@@ -47,12 +47,12 @@ int TABGenerateArc(OGRLineString *poLine, int numPoints, double dCenterX,
                    double dStartAngle, double dEndAngle);
 int TABCloseRing(OGRLineString *poRing);
 
-GBool TABAdjustFilenameExtension(char *pszFname);
+bool TABAdjustFilenameExtension(char *pszFname);
 char *TABGetBasename(const char *pszFname);
 char **TAB_CSLLoad(const char *pszFname);
 
 char *TABEscapeString(char *pszString);
-char *TABUnEscapeString(char *pszString, GBool bSrcIsConst);
+char *TABUnEscapeString(char *pszString, bool bSrcIsConst);
 
 char *TABCleanFieldName(const char *pszSrcName);
 

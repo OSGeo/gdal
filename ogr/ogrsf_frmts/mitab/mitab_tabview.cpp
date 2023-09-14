@@ -111,7 +111,7 @@ void TABView::ResetReading()
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABView::Open(const char *pszFname, TABAccess eAccess,
-                  GBool bTestOpenNoError /*= FALSE*/,
+                  bool bTestOpenNoError /*= FALSE*/,
                   const char *pszCharset /* = NULL */)
 {
     char nStatus = 0;
@@ -156,7 +156,7 @@ int TABView::Open(const char *pszFname, TABAccess eAccess,
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABView::OpenForRead(const char *pszFname,
-                         GBool bTestOpenNoError /*= FALSE*/)
+                         bool bTestOpenNoError /*= FALSE*/)
 {
     char *pszPath = nullptr;
     int nFnameLen = 0;
@@ -198,7 +198,7 @@ int TABView::OpenForRead(const char *pszFname,
      * If there is no "create view", then we may have a valid .TAB file,
      * but we do not support it in this class.
      *------------------------------------------------------------*/
-    GBool bCreateViewFound = FALSE;
+    bool bCreateViewFound = FALSE;
     for (int i = 0; !bCreateViewFound && m_papszTABFile[i]; i++)
     {
         const char *pszStr = m_papszTABFile[i];
@@ -432,11 +432,11 @@ int TABView::OpenForWrite(const char *pszFname)
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABView::ParseTABFile(const char *pszDatasetPath,
-                          GBool bTestOpenNoError /*=FALSE*/)
+                          bool bTestOpenNoError /*=FALSE*/)
 {
     int iLine, numLines;
     char **papszTok = nullptr;
-    GBool bInsideTableDef = FALSE;
+    bool bInsideTableDef = FALSE;
 
     if (m_eAccessMode != TABRead)
     {
@@ -727,7 +727,7 @@ int TABView::Close()
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABView::SetQuickSpatialIndexMode(GBool bQuickSpatialIndexMode /*=TRUE*/)
+int TABView::SetQuickSpatialIndexMode(bool bQuickSpatialIndexMode /*=TRUE*/)
 {
     if (m_eAccessMode != TABWrite || m_numTABFiles == 0)
     {
@@ -927,7 +927,7 @@ TABFieldType TABView::GetNativeFieldType(int nFieldId)
  **********************************************************************/
 int TABView::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                             int nWidth /*=0*/, int nPrecision /*=0*/,
-                            GBool bIndexed /*=FALSE*/, GBool bUnique /*=FALSE*/,
+                            bool bIndexed /*=FALSE*/, bool bUnique /*=FALSE*/,
                             int bApproxOK)
 {
     if (m_poRelation)
@@ -976,7 +976,7 @@ int TABView::SetCharset(const char *pszCharset)
  *
  * Returns TRUE if field is indexed, or FALSE otherwise.
  **********************************************************************/
-GBool TABView::IsFieldIndexed(int nFieldId)
+bool TABView::IsFieldIndexed(int nFieldId)
 {
     if (m_poRelation)
         return m_poRelation->IsFieldIndexed(nFieldId);
@@ -989,7 +989,7 @@ GBool TABView::IsFieldIndexed(int nFieldId)
  *
  * Returns TRUE if field is in the Unique table, or FALSE otherwise.
  **********************************************************************/
-GBool TABView::IsFieldUnique(int nFieldId)
+bool TABView::IsFieldUnique(int nFieldId)
 {
     if (m_poRelation)
         return m_poRelation->IsFieldUnique(nFieldId);
@@ -1008,7 +1008,7 @@ GBool TABView::IsFieldUnique(int nFieldId)
  * Returns 0 on success, -1 on error.
  **********************************************************************/
 int TABView::GetBounds(double &dXMin, double &dYMin, double &dXMax,
-                       double &dYMax, GBool bForce /*= TRUE*/)
+                       double &dYMax, bool bForce /*= TRUE*/)
 {
     if (m_nMainTableIndex == -1)
     {
@@ -1062,7 +1062,7 @@ OGRErr TABView::GetExtent(OGREnvelope *psExtent, int bForce)
  **********************************************************************/
 int TABView::GetFeatureCountByType(int &numPoints, int &numLines,
                                    int &numRegions, int &numTexts,
-                                   GBool bForce /*= TRUE*/)
+                                   bool bForce /*= TRUE*/)
 {
     if (m_nMainTableIndex == -1)
         return -1;
@@ -1688,8 +1688,8 @@ TABFieldType TABRelation::GetNativeFieldType(int nFieldId)
  **********************************************************************/
 int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
                                 int nWidth /*=0*/, int nPrecision /*=0*/,
-                                GBool bIndexed /*=FALSE*/,
-                                GBool bUnique /*=FALSE*/, int bApproxOK)
+                                bool bIndexed /*=FALSE*/,
+                                bool bUnique /*=FALSE*/, int bApproxOK)
 {
     if (m_poMainTable == nullptr || m_poRelTable == nullptr ||
         m_panMainTableFieldMap == nullptr || m_panRelTableFieldMap == nullptr)
@@ -1752,7 +1752,7 @@ int TABRelation::AddFieldNative(const char *pszName, TABFieldType eMapInfoType,
  *
  * Note that field ids are positive and start at 0.
  **********************************************************************/
-GBool TABRelation::IsFieldIndexed(int nFieldId)
+bool TABRelation::IsFieldIndexed(int nFieldId)
 {
     int i, numFields;
 
@@ -1835,7 +1835,7 @@ int TABRelation::SetFieldIndexed(int nFieldId)
  *
  * Note that field ids are positive and start at 0.
  **********************************************************************/
-GBool TABRelation::IsFieldUnique(int nFieldId)
+bool TABRelation::IsFieldUnique(int nFieldId)
 {
     int i, numFields;
 

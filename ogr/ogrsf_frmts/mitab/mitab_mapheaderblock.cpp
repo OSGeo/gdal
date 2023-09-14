@@ -172,7 +172,7 @@ void TABMAPHeaderBlock::InitMembersWithDefaultValues()
  **********************************************************************/
 int TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
                                          int nSizeUsed,
-                                         GBool bMakeCopy /* = TRUE */,
+                                         bool bMakeCopy /* = TRUE */,
                                          VSILFILE *fpSrc /* = NULL */,
                                          int nOffset /* = 0 */)
 {
@@ -405,7 +405,7 @@ int TABMAPHeaderBlock::Int2Coordsys(int32_t nX, int32_t nY, double &dX,
  **********************************************************************/
 int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, int32_t &nX,
                                     int32_t &nY,
-                                    GBool bIgnoreOverflow /*=FALSE*/)
+                                    bool bIgnoreOverflow /*=FALSE*/)
 {
     if (m_pabyBuf == nullptr)
         return -1;
@@ -440,7 +440,7 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, int32_t &nX,
      * integer coordinates range: (-1e9, -1e9) - (1e9, 1e9)
      * Integer coordinates outside of that range will confuse MapInfo.
      *----------------------------------------------------------------*/
-    GBool bIntBoundsOverflow = FALSE;
+    bool bIntBoundsOverflow = FALSE;
     if (dTempX < -1000000000)
     {
         dTempX = -1000000000;
@@ -645,7 +645,7 @@ int TABMAPHeaderBlock::GetMapObjectSize(int nObjType)
  * inside type 3 coordinate blocks.
  * The info is looked up in the first 256 bytes of the header.
  **********************************************************************/
-GBool TABMAPHeaderBlock::MapObjectUsesCoordBlock(int nObjType)
+bool TABMAPHeaderBlock::MapObjectUsesCoordBlock(int nObjType)
 {
     if (m_pabyBuf == nullptr)
     {

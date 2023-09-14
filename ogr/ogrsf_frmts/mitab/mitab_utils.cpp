@@ -226,7 +226,7 @@ static bool TABAdjustCaseSensitiveFilename(char *pszFname)
  * If none of the extensions worked then the original extension will NOT be
  * restored.
  **********************************************************************/
-GBool TABAdjustFilenameExtension(char *pszFname)
+bool TABAdjustFilenameExtension(char *pszFname)
 {
     VSIStatBufL sStatBuf;
 
@@ -343,7 +343,7 @@ char **TAB_CSLLoad(const char *pszFname)
  * in which case the caller becomes responsible of freeing both the
  * source and the copy.
  **********************************************************************/
-char *TABUnEscapeString(char *pszString, GBool bSrcIsConst)
+char *TABUnEscapeString(char *pszString, bool bSrcIsConst)
 {
     // First check if we need to do any replacement.
     if (pszString == nullptr || strstr(pszString, "\\n") == nullptr)

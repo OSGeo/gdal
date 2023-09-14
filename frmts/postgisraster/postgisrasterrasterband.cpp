@@ -43,7 +43,7 @@
 PostGISRasterRasterBand::PostGISRasterRasterBand(PostGISRasterDataset *poDSIn,
                                                  int nBandIn,
                                                  GDALDataType eDataTypeIn,
-                                                 GBool bNoDataValueSetIn,
+                                                 bool bNoDataValueSetIn,
                                                  double dfNodata)
     : VRTSourcedRasterBand(poDSIn, nBandIn), pszSchema(poDSIn->pszSchema),
       pszTable(poDSIn->pszTable), pszColumn(poDSIn->pszColumn)

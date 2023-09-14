@@ -602,7 +602,7 @@ int TABPolyline::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     const char *pszLine = nullptr;
     OGRLineString *poLine = nullptr;
     OGRMultiLineString *poMultiLine = nullptr;
-    GBool bMultiple = FALSE;
+    bool bMultiple = FALSE;
     int nNumPoints = 0;
     int nNumSec = 0;
     OGREnvelope sEnvelope;

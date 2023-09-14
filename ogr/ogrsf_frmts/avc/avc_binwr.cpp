@@ -133,7 +133,7 @@ AVCBinFile *AVCBinWriteCreate(const char *pszPath, const char *pszName,
 {
     AVCBinFile *psFile;
     char *pszFname = nullptr, *pszExt;
-    GBool bCreateIndex = FALSE;
+    bool bCreateIndex = FALSE;
     int nLen;
 
     /*-----------------------------------------------------------------
@@ -328,7 +328,7 @@ int AVCBinWriteHeader(AVCBinFile *psFile)
 {
     AVCBinHeader sHeader;
     int nStatus = 0;
-    GBool bHeader = TRUE;
+    bool bHeader = TRUE;
 
     memset(&sHeader, 0, sizeof(sHeader));
 
@@ -1488,7 +1488,7 @@ static int _AVCBinWriteCreateArcDirEntry(const char *pszArcDirFile,
     int iEntry, numDirEntries = 0, nTableIndex = 0;
     VSIStatBufL sStatBuf;
     AVCRawBinFile *hRawBinFile;
-    GBool bFound;
+    bool bFound;
     AVCTableDef sEntry;
 
     /*-----------------------------------------------------------------

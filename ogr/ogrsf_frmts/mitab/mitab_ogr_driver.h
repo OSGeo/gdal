@@ -54,10 +54,10 @@ class OGRTABDataSource : public OGRDataSource
     IMapInfoFile **m_papoLayers;
 
     char **m_papszOptions;
-    int m_bCreateMIF;
-    int m_bSingleFile;
-    int m_bSingleLayerAlreadyCreated;
-    GBool m_bQuickSpatialIndexMode;
+    bool m_bCreateMIF;
+    bool m_bSingleFile;
+    bool m_bSingleLayerAlreadyCreated;
+    int m_nQuickSpatialIndexMode;
     int m_nBlockSize;
 
   private:

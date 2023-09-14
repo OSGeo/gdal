@@ -111,7 +111,7 @@ int AVCGetDBCSCodePage(void)
  * Returns TRUE once the encoding is established, or FALSE if more lines
  * of input are required to establish the encoding.
  **********************************************************************/
-GBool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const GByte *pszLine)
+bool AVCE00DetectEncoding(AVCDBCSInfo *psDBCSInfo, const GByte *pszLine)
 {
     if (psDBCSInfo == nullptr || psDBCSInfo->nDBCSCodePage == 0 ||
         psDBCSInfo->nDBCSEncoding != AVC_CODE_UNKNOWN)
@@ -154,7 +154,7 @@ const GByte *AVCE00Convert2ArcDBCS(AVCDBCSInfo *psDBCSInfo,
 {
     const GByte *pszOutBuf = nullptr;
     GByte *pszTmp = nullptr;
-    GBool bAllAscii;
+    bool bAllAscii;
 
     if (psDBCSInfo == nullptr || psDBCSInfo->nDBCSCodePage == 0 ||
         pszLine == nullptr)
@@ -219,7 +219,7 @@ const GByte *AVCE00ConvertFromArcDBCS(AVCDBCSInfo *psDBCSInfo,
 {
     const GByte *pszOutBuf = nullptr;
     GByte *pszTmp;
-    GBool bAllAscii;
+    bool bAllAscii;
 
     if (psDBCSInfo == nullptr || psDBCSInfo->nDBCSCodePage == 0 ||
         pszLine == nullptr)

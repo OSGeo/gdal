@@ -433,7 +433,7 @@ OGRErr OGRKMLLayer::ICreateFeature(OGRFeature *poFeature)
         VSIFPrintfL(fp, "\t<Style>");
         if (poPen != nullptr)
         {
-            GBool bDefault = FALSE;
+            bool bDefault = FALSE;
 
             /* Require width to be returned in pixel */
             poPen->SetUnit(OGRSTUPixel);

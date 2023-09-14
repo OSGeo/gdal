@@ -57,7 +57,7 @@
  * Constructor.
  **********************************************************************/
 TABRawBinBlock::TABRawBinBlock(TABAccess eAccessMode /*= TABRead*/,
-                               GBool bHardBlockSize /*= TRUE*/)
+                               bool bHardBlockSize /*= TRUE*/)
     : m_fp(nullptr), m_eAccess(eAccessMode), m_nBlockType(0),
       m_pabyBuf(nullptr), m_nBlockSize(0), m_nSizeUsed(0),
       m_bHardBlockSize(bHardBlockSize), m_nFileOffset(0), m_nCurPos(0),
@@ -293,7 +293,7 @@ int TABRawBinBlock::CommitAsDeleted(int32_t nNextBlockPtr)
  **********************************************************************/
 int TABRawBinBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
                                       int nSizeUsed,
-                                      GBool bMakeCopy /* = TRUE */,
+                                      bool bMakeCopy /* = TRUE */,
                                       VSILFILE *fpSrc /* = NULL */,
                                       int nOffset /* = 0 */)
 {
@@ -486,8 +486,8 @@ int TABRawBinBlock::GotoByteRel(int nOffset)
  * CPLError() will have been called.
  **********************************************************************/
 int TABRawBinBlock::GotoByteInFile(int nOffset,
-                                   GBool bForceReadFromFile /*=FALSE*/,
-                                   GBool bOffsetIsEndOfData /*=FALSE*/)
+                                   bool bForceReadFromFile /*=FALSE*/,
+                                   bool bOffsetIsEndOfData /*=FALSE*/)
 {
     if (nOffset < 0)
     {
@@ -1049,7 +1049,7 @@ void TABRawBinBlock::DumpBytes(int32_t nValue, int nOffset /*=0*/,
  **********************************************************************/
 TABRawBinBlock *TABCreateMAPBlockFromFile(VSILFILE *fpSrc, int nOffset,
                                           int nSize,
-                                          GBool bHardBlockSize /*= TRUE */,
+                                          bool bHardBlockSize /*= TRUE */,
                                           TABAccess eAccessMode /*= TABRead*/)
 {
     if (fpSrc == nullptr || nSize == 0)

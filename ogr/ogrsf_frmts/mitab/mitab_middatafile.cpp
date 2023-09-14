@@ -273,7 +273,7 @@ double MIDDATAFile::GetYTrans(double dfY)
     return (dfY * m_dfYMultiplier) + m_dfYDisplacement;
 }
 
-GBool MIDDATAFile::IsValidFeature(const char *pszString)
+bool MIDDATAFile::IsValidFeature(const char *pszString)
 {
     char **papszToken = CSLTokenizeString(pszString);
 
@@ -299,7 +299,7 @@ GBool MIDDATAFile::IsValidFeature(const char *pszString)
     return FALSE;
 }
 
-GBool MIDDATAFile::GetEof()
+bool MIDDATAFile::GetEof()
 {
     return m_bEof;
 }
@@ -314,7 +314,7 @@ void MIDDATAFile::SetEncoding(const CPLString &osEncoding)
     m_osEncoding = osEncoding;
 }
 
-void MIDDATAFile::SetEof(GBool bEof)
+void MIDDATAFile::SetEof(bool bEof)
 {
     m_bEof = bEof;
 }

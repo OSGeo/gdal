@@ -300,7 +300,7 @@ CPLErr PostGISRasterDataset::FlushCache(bool bAtClosing)
 /*                            HasSpatialIndex()                         */
 /************************************************************************/
 
-GBool PostGISRasterDataset::HasSpatialIndex()
+bool PostGISRasterDataset::HasSpatialIndex()
 {
     CPLString osCommand;
     PGresult *poResult = nullptr;
@@ -481,8 +481,8 @@ const char *PostGISRasterDataset::GetPrimaryKeyRef()
  * error if an error is returned when trying to access to tables not
  * allowed to the current user.
  **********************************************************************/
-GBool PostGISRasterDataset::BrowseDatabase(const char *pszCurrentSchema,
-                                           const char *pszValidConnectionString)
+bool PostGISRasterDataset::BrowseDatabase(const char *pszCurrentSchema,
+                                          const char *pszValidConnectionString)
 {
 
     char *l_pszSchema = nullptr;
@@ -1137,8 +1137,8 @@ bool PostGISRasterDataset::LoadOutdbRaster(int &nCurOffset, GDALDataType eDT,
 /*                          LoadSources()                               */
 /************************************************************************/
 
-GBool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
-                                        int nYSize, int nBand)
+bool PostGISRasterDataset::LoadSources(int nXOff, int nYOff, int nXSize,
+                                       int nYSize, int nBand)
 {
     if (!bBuildQuadTreeDynamically)
         return false;
@@ -1926,7 +1926,7 @@ void PostGISRasterDataset::BuildBands(BandMetadata *poBandMetaData,
  * wrapper to raise queries and get results without all the checking
  * overhead. I'd like to do it, someday...
  **********************************************************************/
-GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
+bool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
 {
 
     /*******************************************************************
@@ -2114,7 +2114,7 @@ GBool PostGISRasterDataset::ConstructOneDatasetFromTiles(PGresult *poResult)
  * wrapper to raise queries and get results without all the checking
  * overhead. I'd like to do it, someday...
  **********************************************************************/
-GBool PostGISRasterDataset::YieldSubdatasets(
+bool PostGISRasterDataset::YieldSubdatasets(
     PGresult *poResult, const char *pszValidConnectionString)
 {
     int l_nTiles = PQntuples(poResult);
@@ -2229,12 +2229,12 @@ GBool PostGISRasterDataset::YieldSubdatasets(
  * the same grid and do not overlap.
  *
  **********************************************************************/
-GBool PostGISRasterDataset::SetRasterProperties(
+bool PostGISRasterDataset::SetRasterProperties(
     const char *pszValidConnectionString)
 {
     PGresult *poResult = nullptr;
-    GBool bDataFoundInRasterColumns = false;
-    GBool bNeedToCheckWholeTable = false;
+    bool bDataFoundInRasterColumns = false;
+    bool bNeedToCheckWholeTable = false;
 
     CPLString osCommand;
     CPLString osSchemaI(CPLQuotedSQLIdentifier(pszSchema));
@@ -2725,7 +2725,7 @@ GBool PostGISRasterDataset::SetRasterProperties(
                  m_nTiles);
 #endif
 
-        GBool res = ConstructOneDatasetFromTiles(poResult);
+        bool res = ConstructOneDatasetFromTiles(poResult);
 
         PQclear(poResult);
 
@@ -2744,7 +2744,7 @@ GBool PostGISRasterDataset::SetRasterProperties(
                  m_nTiles);
 #endif
 
-        GBool res = YieldSubdatasets(poResult, pszValidConnectionString);
+        bool res = YieldSubdatasets(poResult, pszValidConnectionString);
 
         PQclear(poResult);
 
@@ -2791,13 +2791,13 @@ GBool PostGISRasterDataset::SetRasterProperties(
  * Apart from that, bBrowseDatabase is set to TRUE if the mode is
  * BROWSE_SCHEMA or BROWSE_DATABASE
  **********************************************************************/
-static GBool
+static bool
 GetConnectionInfo(const char *pszFilename, char **ppszConnectionString,
                   char **ppszService, char **ppszDbname, char **ppszSchema,
                   char **ppszTable, char **ppszColumn, char **ppszWhere,
                   char **ppszHost, char **ppszPort, char **ppszUser,
                   char **ppszPassword, WorkingMode *nMode,
-                  GBool *bBrowseDatabase, OutDBResolution *peOutDBResolution)
+                  bool *bBrowseDatabase, OutDBResolution *peOutDBResolution)
 {
     int nPos = -1, sPos = -1, i;
     char *pszTmp = nullptr;
@@ -3127,7 +3127,7 @@ static PGconn *GetConnection(const char *pszFilename,
                              char **ppszConnectionString, char **ppszSchema,
                              char **ppszTable, char **ppszColumn,
                              char **ppszWhere, WorkingMode *nMode,
-                             GBool *bBrowseDatabase,
+                             bool *bBrowseDatabase,
                              OutDBResolution *peOutDBResolution)
 {
     PGconn *poConn = nullptr;
@@ -3213,7 +3213,7 @@ GDALDataset *PostGISRasterDataset::Open(GDALOpenInfo *poOpenInfo)
     WorkingMode nMode = NO_MODE;
     PGconn *poConn = nullptr;
     PostGISRasterDataset *poDS = nullptr;
-    GBool bBrowseDatabase = false;
+    bool bBrowseDatabase = false;
     OutDBResolution eOutDBResolution;
 
     /**************************
@@ -3545,13 +3545,13 @@ GDALDataset *PostGISRasterDataset::CreateCopy(
     char *pszTable = nullptr;
     char *pszColumn = nullptr;
     char *pszWhere = nullptr;
-    GBool bBrowseDatabase = false;
+    bool bBrowseDatabase = false;
     WorkingMode nMode;
     OutDBResolution eOutDBResolution;
     char *pszConnectionString = nullptr;
     PGconn *poConn = nullptr;
     PGresult *poResult = nullptr;
-    GBool bInsertSuccess;
+    bool bInsertSuccess;
 
     CPLString osCommand;
 
@@ -3854,11 +3854,11 @@ GDALDataset *PostGISRasterDataset::CreateCopy(
 /********************************************************
  * \brief Helper method to insert a new raster.
  ********************************************************/
-GBool PostGISRasterDataset::InsertRaster(PGconn *poConn,
-                                         PostGISRasterDataset *poSrcDS,
-                                         const char *pszSchema,
-                                         const char *pszTable,
-                                         const char *pszColumn)
+bool PostGISRasterDataset::InsertRaster(PGconn *poConn,
+                                        PostGISRasterDataset *poSrcDS,
+                                        const char *pszSchema,
+                                        const char *pszTable,
+                                        const char *pszColumn)
 {
     CPLString osCommand;
     PGresult *poResult = nullptr;
@@ -3918,7 +3918,7 @@ CPLErr PostGISRasterDataset::Delete(const char *pszFilename)
     char *pszTable = nullptr;
     char *pszColumn = nullptr;
     char *pszWhere = nullptr;
-    GBool bBrowseDatabase;
+    bool bBrowseDatabase;
     char *pszConnectionString = nullptr;
     WorkingMode nMode;
     OutDBResolution eOutDBResolution;
@@ -4045,9 +4045,8 @@ CPLErr PostGISRasterDataset::Delete(const char *pszFilename)
  * \brief Create an array with all the coordinates needed to construct
  * a polygon using ST_PolygonFromText.
  **********************************************************************/
-GBool PostGISRasterDataset::PolygonFromCoords(int nXOff, int nYOff,
-                                              int nXEndOff, int nYEndOff,
-                                              double adfProjWin[8])
+bool PostGISRasterDataset::PolygonFromCoords(int nXOff, int nYOff, int nXEndOff,
+                                             int nYEndOff, double adfProjWin[8])
 {
     // We first construct a polygon to intersect with
     int ulx = nXOff;

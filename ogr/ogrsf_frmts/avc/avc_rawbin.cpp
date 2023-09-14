@@ -235,7 +235,7 @@ int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize)
  * Copy the number of bytes from the input file to the specified
  * memory location.
  **********************************************************************/
-static GBool bDisableReadBytesEOFError = FALSE;
+static bool bDisableReadBytesEOFError = FALSE;
 
 void AVCRawBinReadBytes(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf)
 {
@@ -418,7 +418,7 @@ void AVCRawBinFSeek(AVCRawBinFile *psFile, int nOffset, int nFrom)
  * Return TRUE if there is no more data to read from the file or
  * FALSE otherwise.
  **********************************************************************/
-GBool AVCRawBinEOF(AVCRawBinFile *psFile)
+bool AVCRawBinEOF(AVCRawBinFile *psFile)
 {
     if (psFile == nullptr || psFile->fp == nullptr)
         return TRUE;

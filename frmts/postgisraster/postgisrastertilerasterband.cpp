@@ -71,7 +71,7 @@ PostGISRasterTileRasterBand::~PostGISRasterTileRasterBand()
 /***********************************************************************
  * \brief Returns true if the (only) block is stored in the cache
  **********************************************************************/
-GBool PostGISRasterTileRasterBand::IsCached()
+bool PostGISRasterTileRasterBand::IsCached()
 {
     GDALRasterBlock *poBlock = TryGetLockedBlockRef(0, 0);
     if (poBlock != nullptr)

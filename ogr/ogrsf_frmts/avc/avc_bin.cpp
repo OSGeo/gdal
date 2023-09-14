@@ -1800,13 +1800,13 @@ static int _AVCBinReadNextArcNit(AVCRawBinFile *psFile, AVCFieldInfo *psField)
  * If pszRetFnmae/pszRetNitFile != nullptr then the filename with full path
  * will be copied to the specified buffer.
  **********************************************************************/
-static GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
-                                        const char *pszBasename,
-                                        const char *pszDatOrNit,
-                                        AVCCoverType eCoverType,
-                                        char *pszRetFname, size_t nRetFnameLen)
+static bool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
+                                       const char *pszBasename,
+                                       const char *pszDatOrNit,
+                                       AVCCoverType eCoverType,
+                                       char *pszRetFname, size_t nRetFnameLen)
 {
-    GBool bFilesExist = FALSE;
+    bool bFilesExist = FALSE;
     char *pszBuf = nullptr;
     VSIStatBufL sStatBuf;
     size_t nBufLen;
@@ -1866,9 +1866,9 @@ static GBool _AVCBinReadGetInfoFilename(const char *pszInfoPath,
  * If pszRetDatFile/pszRetNitFile != nullptr then the .DAT and .NIT filename
  * without the info path will be copied to the specified buffers.
  **********************************************************************/
-static GBool _AVCBinReadInfoFileExists(const char *pszInfoPath,
-                                       const char *pszBasename,
-                                       AVCCoverType eCoverType)
+static bool _AVCBinReadInfoFileExists(const char *pszInfoPath,
+                                      const char *pszBasename,
+                                      AVCCoverType eCoverType)
 {
 
     return (_AVCBinReadGetInfoFilename(pszInfoPath, pszBasename, "dat",
@@ -1995,7 +1995,7 @@ AVCBinFile *_AVCBinReadOpenTable(const char *pszInfoPath,
     AVCTableDef sTableDef;
     AVCFieldInfo *pasFieldDef;
     char *pszFname;
-    GBool bFound;
+    bool bFound;
     int i;
     size_t nFnameLen;
 

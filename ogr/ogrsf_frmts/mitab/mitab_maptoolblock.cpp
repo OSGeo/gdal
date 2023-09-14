@@ -74,7 +74,7 @@ TABMAPToolBlock::~TABMAPToolBlock()
  * TABMAPToolBlocks, or FALSE if there is still data to be read from
  * this chain.
  **********************************************************************/
-GBool TABMAPToolBlock::EndOfChain()
+bool TABMAPToolBlock::EndOfChain()
 {
     if (m_pabyBuf && (m_nCurPos < (m_numDataBytes + MAP_TOOL_HEADER_SIZE) ||
                       m_nNextToolBlock > 0))
@@ -96,7 +96,7 @@ GBool TABMAPToolBlock::EndOfChain()
  **********************************************************************/
 int TABMAPToolBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
                                        int nSizeUsed,
-                                       GBool bMakeCopy /* = TRUE */,
+                                       bool bMakeCopy /* = TRUE */,
                                        VSILFILE *fpSrc /* = NULL */,
                                        int nOffset /* = 0 */)
 {

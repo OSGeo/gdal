@@ -504,8 +504,8 @@ struct AVCE00ParseInfo
     int nCurLineNum = 0;
 
     int nCurObjectId = 0;
-    GBool bForceEndOfSection = 0; /* For sections that don't have an */
-                                  /* explicit end-of-section line.   */
+    bool bForceEndOfSection = 0; /* For sections that don't have an */
+                                 /* explicit end-of-section line.   */
     AVCFileType eSuperSectionType =
         AVCFileUnknown; /* For sections containing several files*/
     char *pszSectionHdrLine = nullptr; /* Used by supersection types      */
@@ -514,8 +514,8 @@ struct AVCE00ParseInfo
     {
         AVCTableDef *psTableDef = nullptr;
     } hdr;
-    GBool bTableHdrComplete = 0; /* FALSE until table header is */
-                                 /* finished parsing */
+    bool bTableHdrComplete = 0; /* FALSE until table header is */
+                                /* finished parsing */
     int nTableE00RecLength = 0;
 
     /* cur.* : temp. storage used to store current object (ARC, PAL, ... or
@@ -573,7 +573,7 @@ typedef struct AVCE00ReadInfo_t
      * Otherwise, you can use AVCE00ReadGotoSection() to read one section
      * at a time... this will set bReadAllSections=FALSE.
      */
-    GBool bReadAllSections;
+    bool bReadAllSections;
 
     /* Info about the file (or E00 section) currently being processed
      */
@@ -608,7 +608,7 @@ typedef struct AVCE00ReadInfoE00_t
      * Otherwise, you can use AVCE00ReadGotoSectionE00() to read one
      * section at a time.
      */
-    GBool bReadAllSections;
+    bool bReadAllSections;
 
     /* File handle of the E00 file currently being processed
      */
@@ -671,7 +671,7 @@ AVCRawBinFile *AVCRawBinOpen(const char *pszFname, const char *pszAccess,
                              AVCDBCSInfo *psDBCSInfo);
 void AVCRawBinClose(AVCRawBinFile *psInfo);
 void AVCRawBinFSeek(AVCRawBinFile *psInfo, int nOffset, int nFrom);
-GBool AVCRawBinEOF(AVCRawBinFile *psInfo);
+bool AVCRawBinEOF(AVCRawBinFile *psInfo);
 void AVCRawBinSetFileDataSize(AVCRawBinFile *psInfo, int nDataSize);
 int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize);
 
@@ -754,25 +754,25 @@ void AVCE00GenReset(AVCE00GenInfo *psInfo);
 const char *AVCE00GenStartSection(AVCE00GenInfo *psInfo, AVCFileType eType,
                                   const char *pszFilename);
 const char *AVCE00GenEndSection(AVCE00GenInfo *psInfo, AVCFileType eType,
-                                GBool bCont);
+                                bool bCont);
 
 const char *AVCE00GenObject(AVCE00GenInfo *psInfo, AVCFileType eType,
-                            void *psObj, GBool bCont);
-const char *AVCE00GenArc(AVCE00GenInfo *psInfo, AVCArc *psArc, GBool bCont);
-const char *AVCE00GenPal(AVCE00GenInfo *psInfo, AVCPal *psPal, GBool bCont);
-const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, GBool bCont);
-const char *AVCE00GenLab(AVCE00GenInfo *psInfo, AVCLab *psLab, GBool bCont);
-const char *AVCE00GenTol(AVCE00GenInfo *psInfo, AVCTol *psTol, GBool bCont);
-const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont);
-const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont);
-const char *AVCE00GenPrj(AVCE00GenInfo *psInfo, char **papszPrj, GBool bCont);
-const char *AVCE00GenRxp(AVCE00GenInfo *psInfo, AVCRxp *psRxp, GBool bCont);
+                            void *psObj, bool bCont);
+const char *AVCE00GenArc(AVCE00GenInfo *psInfo, AVCArc *psArc, bool bCont);
+const char *AVCE00GenPal(AVCE00GenInfo *psInfo, AVCPal *psPal, bool bCont);
+const char *AVCE00GenCnt(AVCE00GenInfo *psInfo, AVCCnt *psCnt, bool bCont);
+const char *AVCE00GenLab(AVCE00GenInfo *psInfo, AVCLab *psLab, bool bCont);
+const char *AVCE00GenTol(AVCE00GenInfo *psInfo, AVCTol *psTol, bool bCont);
+const char *AVCE00GenTxt(AVCE00GenInfo *psInfo, AVCTxt *psTxt, bool bCont);
+const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, bool bCont);
+const char *AVCE00GenPrj(AVCE00GenInfo *psInfo, char **papszPrj, bool bCont);
+const char *AVCE00GenRxp(AVCE00GenInfo *psInfo, AVCRxp *psRxp, bool bCont);
 
 const char *AVCE00GenTableHdr(AVCE00GenInfo *psInfo, AVCTableDef *psDef,
-                              GBool bCont);
+                              bool bCont);
 const char *AVCE00GenTableRec(AVCE00GenInfo *psInfo, int numFields,
                               AVCFieldInfo *pasDef, AVCField *pasFields,
-                              GBool bCont);
+                              bool bCont);
 
 /*---------------------------------------------------------------------
  * Functions related to parsing E00 lines
@@ -783,11 +783,11 @@ void AVCE00ParseReset(AVCE00ParseInfo *psInfo);
 
 AVCFileType AVCE00ParseSectionHeader(AVCE00ParseInfo *psInfo,
                                      const char *pszLine);
-GBool AVCE00ParseSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine,
-                            GBool bResetParseInfo);
+bool AVCE00ParseSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine,
+                           bool bResetParseInfo);
 AVCFileType AVCE00ParseSuperSectionHeader(AVCE00ParseInfo *psInfo,
                                           const char *pszLine);
-GBool AVCE00ParseSuperSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine);
+bool AVCE00ParseSuperSectionEnd(AVCE00ParseInfo *psInfo, const char *pszLine);
 
 void *AVCE00ParseNextLine(AVCE00ParseInfo *psInfo, const char *pszLine);
 AVCArc *AVCE00ParseNextArcLine(AVCE00ParseInfo *psInfo, const char *pszLine);
@@ -808,13 +808,13 @@ AVCField *AVCE00ParseNextTableRecLine(AVCE00ParseInfo *psInfo,
  * Misc. functions shared by several parts of the lib.
  *--------------------------------------------------------------------*/
 int _AVCE00ComputeRecSize(int numFields, AVCFieldInfo *pasDef,
-                          GBool bMapType40ToDouble);
+                          bool bMapType40ToDouble);
 
 void _AVCDestroyTableFields(AVCTableDef *psTableDef, AVCField *pasFields);
 void _AVCDestroyTableDef(AVCTableDef *psTableDef);
 AVCTableDef *_AVCDupTableDef(AVCTableDef *psSrcDef);
 
-GBool AVCFileExists(const char *pszPath, const char *pszName);
+bool AVCFileExists(const char *pszPath, const char *pszName);
 char *AVCAdjustCaseSensitiveFilename(char *pszFname);
 int AVCPrintRealValue(char *pszBuf, size_t nBufLen, int nPrecision,
                       AVCFileType eType, double dValue);
@@ -833,7 +833,7 @@ void *AVCE00ReadNextObjectE00(AVCE00ReadE00Ptr psRead);
 
 AVCE00Section *AVCE00ReadSectionsListE00(AVCE00ReadE00Ptr psRead, int *numSect);
 int AVCE00ReadGotoSectionE00(AVCE00ReadE00Ptr psRead, AVCE00Section *psSect,
-                             GBool bContinue);
+                             bool bContinue);
 
 /*---------------------------------------------------------------------
  * Functions to make a binary coverage appear as E00
@@ -846,7 +846,7 @@ int AVCE00ReadRewind(AVCE00ReadPtr psInfo);
 
 AVCE00Section *AVCE00ReadSectionsList(AVCE00ReadPtr psInfo, int *numSect);
 int AVCE00ReadGotoSection(AVCE00ReadPtr psInfo, AVCE00Section *psSect,
-                          GBool bContinue);
+                          bool bContinue);
 
 /*---------------------------------------------------------------------
  * Functions to write E00 lines to a binary coverage

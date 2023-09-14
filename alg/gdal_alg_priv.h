@@ -286,7 +286,7 @@ int GDALDitherRGB2PCTInternal(GDALRasterBandH hRed, GDALRasterBandH hGreen,
  */
 #define MAX_ULPS 10
 
-GBool GDALFloatEquals(float A, float B);
+bool GDALFloatEquals(float A, float B);
 
 struct FloatEqualityTest
 {
