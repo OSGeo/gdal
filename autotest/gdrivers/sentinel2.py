@@ -2724,43 +2724,43 @@ def test_sentinel2_zipped():
 ###############################################################################
 # Test opening a L1C subdataset (processing baseline 05.09) on the 10m bands
 
+
 def test_sentinel2_l1c_processing_baseline_5_09__1():
-    filename_xml = (
-        "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
-    )
+    filename_xml = "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
+
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L1C:%s:10m:EPSG_32634" % filename_xml)
     assert ds is not None and gdal.GetLastErrorMsg() == ""
 
     expected_md = {
-        'CLOUD_COVERAGE_ASSESSMENT': '3.34127623995939',
-        'DATATAKE_1_DATATAKE_SENSING_START': '2023-08-23T09:55:59.024Z',
-        'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
-        'DATATAKE_1_ID': 'GS2B_20230823T095559_033753_N05.09',
-        'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'ASCENDING',
-        'DATATAKE_1_SENSING_ORBIT_NUMBER': '122',
-        'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
-        'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
-        'DEGRADED_MSI_DATA_PERCENTAGE': '0',
-        'FORMAT_CORRECTNESS': 'PASSED',
-        'GENERAL_QUALITY': 'PASSED',
-        'GENERATION_TIME': '2023-08-23T12:02:34.000000Z',
-        'GEOMETRIC_QUALITY': 'PASSED',
-        'PREVIEW_GEO_INFO': 'Not applicable',
-        'PREVIEW_IMAGE_URL': 'Not applicable',
-        'PROCESSING_BASELINE': '05.09',
-        'PROCESSING_LEVEL': 'Level-1C',
-        'PRODUCT_DOI': 'https://doi.org/10.5270/S2_-742ikth',
-        'PRODUCT_START_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_STOP_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_TYPE': 'S2MSI1C',
-        'PRODUCT_URI': 'S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE',
-        'QUANTIFICATION_VALUE': '10000',
-        'RADIOMETRIC_QUALITY': 'PASSED',
-        'REFLECTANCE_CONVERSION_U': '0.97659423426857',
-        'SENSOR_QUALITY': 'PASSED',
-        'SPECIAL_VALUE_NODATA': '0',
-        'SPECIAL_VALUE_SATURATED': '65535'
+        "CLOUD_COVERAGE_ASSESSMENT": "3.34127623995939",
+        "DATATAKE_1_DATATAKE_SENSING_START": "2023-08-23T09:55:59.024Z",
+        "DATATAKE_1_DATATAKE_TYPE": "INS-NOBS",
+        "DATATAKE_1_ID": "GS2B_20230823T095559_033753_N05.09",
+        "DATATAKE_1_SENSING_ORBIT_DIRECTION": "ASCENDING",
+        "DATATAKE_1_SENSING_ORBIT_NUMBER": "122",
+        "DATATAKE_1_SPACECRAFT_NAME": "Sentinel-2B",
+        "DEGRADED_ANC_DATA_PERCENTAGE": "0.0",
+        "DEGRADED_MSI_DATA_PERCENTAGE": "0",
+        "FORMAT_CORRECTNESS": "PASSED",
+        "GENERAL_QUALITY": "PASSED",
+        "GENERATION_TIME": "2023-08-23T12:02:34.000000Z",
+        "GEOMETRIC_QUALITY": "PASSED",
+        "PREVIEW_GEO_INFO": "Not applicable",
+        "PREVIEW_IMAGE_URL": "Not applicable",
+        "PROCESSING_BASELINE": "05.09",
+        "PROCESSING_LEVEL": "Level-1C",
+        "PRODUCT_DOI": "https://doi.org/10.5270/S2_-742ikth",
+        "PRODUCT_START_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_STOP_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_TYPE": "S2MSI1C",
+        "PRODUCT_URI": "S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE",
+        "QUANTIFICATION_VALUE": "10000",
+        "RADIOMETRIC_QUALITY": "PASSED",
+        "REFLECTANCE_CONVERSION_U": "0.97659423426857",
+        "SENSOR_QUALITY": "PASSED",
+        "SPECIAL_VALUE_NODATA": "0",
+        "SPECIAL_VALUE_SATURATED": "65535",
     }
     got_md = ds.GetMetadata()
     if got_md != expected_md:
@@ -2783,14 +2783,14 @@ def test_sentinel2_l1c_processing_baseline_5_09__1():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B4',
-        'BANDWIDTH': '30',
-        'BANDWIDTH_UNIT': 'nm',
-        'RADIO_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '1512.79',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '665',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B4",
+        "BANDWIDTH": "30",
+        "BANDWIDTH_UNIT": "nm",
+        "RADIO_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "1512.79",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "665",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint
@@ -2808,14 +2808,14 @@ def test_sentinel2_l1c_processing_baseline_5_09__1():
 
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B8',
-        'BANDWIDTH': '115',
-        'BANDWIDTH_UNIT': 'nm',
-        'RADIO_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '1041.28',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '842',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B8",
+        "BANDWIDTH": "115",
+        "BANDWIDTH_UNIT": "nm",
+        "RADIO_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "1041.28",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "842",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint
@@ -2827,43 +2827,42 @@ def test_sentinel2_l1c_processing_baseline_5_09__1():
 ###############################################################################
 # Test opening a L1C subdataset (processing baseline 05.09) on the 20m bands
 
+
 def test_sentinel2_l1c_processing_baseline_5_09__2():
-    filename_xml = (
-        "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
-    )
+    filename_xml = "data/sentinel2/fake_l1c_processing_baseline_5_09/S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE/MTD_MSIL1C.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L1C:%s:20m:EPSG_32634" % filename_xml)
     assert ds is not None and gdal.GetLastErrorMsg() == ""
 
     expected_md = {
-        'CLOUD_COVERAGE_ASSESSMENT': '3.34127623995939',
-        'DATATAKE_1_DATATAKE_SENSING_START': '2023-08-23T09:55:59.024Z',
-        'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
-        'DATATAKE_1_ID': 'GS2B_20230823T095559_033753_N05.09',
-        'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'ASCENDING',
-        'DATATAKE_1_SENSING_ORBIT_NUMBER': '122',
-        'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
-        'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
-        'DEGRADED_MSI_DATA_PERCENTAGE': '0',
-        'FORMAT_CORRECTNESS': 'PASSED',
-        'GENERAL_QUALITY': 'PASSED',
-        'GENERATION_TIME': '2023-08-23T12:02:34.000000Z',
-        'GEOMETRIC_QUALITY': 'PASSED',
-        'PREVIEW_GEO_INFO': 'Not applicable',
-        'PREVIEW_IMAGE_URL': 'Not applicable',
-        'PROCESSING_BASELINE': '05.09',
-        'PROCESSING_LEVEL': 'Level-1C',
-        'PRODUCT_DOI': 'https://doi.org/10.5270/S2_-742ikth',
-        'PRODUCT_START_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_STOP_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_TYPE': 'S2MSI1C',
-        'PRODUCT_URI': 'S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE',
-        'QUANTIFICATION_VALUE': '10000',
-        'RADIOMETRIC_QUALITY': 'PASSED',
-        'REFLECTANCE_CONVERSION_U': '0.97659423426857',
-        'SENSOR_QUALITY': 'PASSED',
-        'SPECIAL_VALUE_NODATA': '0',
-        'SPECIAL_VALUE_SATURATED': '65535'
+        "CLOUD_COVERAGE_ASSESSMENT": "3.34127623995939",
+        "DATATAKE_1_DATATAKE_SENSING_START": "2023-08-23T09:55:59.024Z",
+        "DATATAKE_1_DATATAKE_TYPE": "INS-NOBS",
+        "DATATAKE_1_ID": "GS2B_20230823T095559_033753_N05.09",
+        "DATATAKE_1_SENSING_ORBIT_DIRECTION": "ASCENDING",
+        "DATATAKE_1_SENSING_ORBIT_NUMBER": "122",
+        "DATATAKE_1_SPACECRAFT_NAME": "Sentinel-2B",
+        "DEGRADED_ANC_DATA_PERCENTAGE": "0.0",
+        "DEGRADED_MSI_DATA_PERCENTAGE": "0",
+        "FORMAT_CORRECTNESS": "PASSED",
+        "GENERAL_QUALITY": "PASSED",
+        "GENERATION_TIME": "2023-08-23T12:02:34.000000Z",
+        "GEOMETRIC_QUALITY": "PASSED",
+        "PREVIEW_GEO_INFO": "Not applicable",
+        "PREVIEW_IMAGE_URL": "Not applicable",
+        "PROCESSING_BASELINE": "05.09",
+        "PROCESSING_LEVEL": "Level-1C",
+        "PRODUCT_DOI": "https://doi.org/10.5270/S2_-742ikth",
+        "PRODUCT_START_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_STOP_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_TYPE": "S2MSI1C",
+        "PRODUCT_URI": "S2B_MSIL1C_20230823T095559_N0509_R122_T34UCF_20230823T120234.SAFE",
+        "QUANTIFICATION_VALUE": "10000",
+        "RADIOMETRIC_QUALITY": "PASSED",
+        "REFLECTANCE_CONVERSION_U": "0.97659423426857",
+        "SENSOR_QUALITY": "PASSED",
+        "SPECIAL_VALUE_NODATA": "0",
+        "SPECIAL_VALUE_SATURATED": "65535",
     }
     got_md = ds.GetMetadata()
     if got_md != expected_md:
@@ -2886,14 +2885,14 @@ def test_sentinel2_l1c_processing_baseline_5_09__2():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B5',
-        'BANDWIDTH': '15',
-        'BANDWIDTH_UNIT': 'nm',
-        'RADIO_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '1425.78',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '705',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B5",
+        "BANDWIDTH": "15",
+        "BANDWIDTH_UNIT": "nm",
+        "RADIO_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "1425.78",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "705",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint
@@ -2911,14 +2910,14 @@ def test_sentinel2_l1c_processing_baseline_5_09__2():
 
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B8A',
-        'BANDWIDTH': '20',
-        'BANDWIDTH_UNIT': 'nm',
-        'RADIO_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '953.93',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '865',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B8A",
+        "BANDWIDTH": "20",
+        "BANDWIDTH_UNIT": "nm",
+        "RADIO_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "953.93",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "865",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint
@@ -2930,70 +2929,69 @@ def test_sentinel2_l1c_processing_baseline_5_09__2():
 ###############################################################################
 # Test opening a L2A subdataset (processing baseline 05.09) on the 10m bands
 
+
 def test_sentinel2_l2a_processing_baseline_5_09__1():
-    filename_xml = (
-        "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
-    )
+    filename_xml = "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L2A:%s:10m:EPSG_32634" % filename_xml)
     assert ds is not None and gdal.GetLastErrorMsg() == ""
 
     expected_md = {
-        'AOT_QUANTIFICATION_VALUE': '1000.0',
-        'AOT_QUANTIFICATION_VALUE_UNIT': 'none',
-        'AOT_RETRIEVAL_ACCURACY': '0.0',
-        'AOT_RETRIEVAL_METHOD': 'SEN2COR_DDV',
-        'BOA_QUANTIFICATION_VALUE': '10000',
-        'BOA_QUANTIFICATION_VALUE_UNIT': 'none',
-        'CLOUDY_PIXEL_OVER_LAND_PERCENTAGE': '12.448037',
-        'CLOUD_COVERAGE_ASSESSMENT': '6.859297',
-        'CLOUD_SHADOW_PERCENTAGE': '4.600983',
-        'DARK_FEATURES_PERCENTAGE': '0.012462000000000003',
-        'DATATAKE_1_DATATAKE_SENSING_START': '2023-08-23T09:55:59.024Z',
-        'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
-        'DATATAKE_1_ID': 'GS2B_20230823T095559_033753_N05.09',
-        'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'ASCENDING',
-        'DATATAKE_1_SENSING_ORBIT_NUMBER': '122',
-        'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
-        'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
-        'DEGRADED_MSI_DATA_PERCENTAGE': '0',
-        'FORMAT_CORRECTNESS': 'PASSED',
-        'GENERAL_QUALITY': 'PASSED',
-        'GENERATION_TIME': '2023-08-23T12:47:59.000000Z',
-        'GEOMETRIC_QUALITY': 'PASSED',
-        'GRANULE_MEAN_AOT': '0.083458',
-        'GRANULE_MEAN_WV': '1.958955',
-        'HIGH_PROBA_CLOUDS_PERCENTAGE': '2.847519',
-        'L2A_QUALITY': 'PASSED',
-        'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '3.071045',
-        'NODATA_PIXEL_PERCENTAGE': '0.0',
-        'NOT_VEGETATED_PERCENTAGE': '11.11341',
-        'OZONE_SOURCE': 'AUX_ECMWFT',
-        'OZONE_VALUE': '277.364999',
-        'PREVIEW_GEO_INFO': 'Not applicable',
-        'PREVIEW_IMAGE_URL': 'Not applicable',
-        'PROCESSING_BASELINE': '05.09',
-        'PROCESSING_LEVEL': 'Level-2A',
-        'PRODUCT_DOI': 'https://doi.org/10.5270/S2_-znk9xsj',
-        'PRODUCT_START_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_STOP_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_TYPE': 'S2MSI2A',
-        'PRODUCT_URI': 'S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE',
-        'RADIATIVE_TRANSFER_ACCURACY': '0.0',
-        'RADIOMETRIC_QUALITY': 'PASSED',
-        'REFLECTANCE_CONVERSION_U': '0.97659423426857',
-        'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
-        'SENSOR_QUALITY': 'PASSED',
-        'SNOW_ICE_PERCENTAGE': '0.0',
-        'SPECIAL_VALUE_NODATA': '0',
-        'SPECIAL_VALUE_SATURATED': '65535',
-        'THIN_CIRRUS_PERCENTAGE': '0.940733',
-        'UNCLASSIFIED_PERCENTAGE': '0.441296',
-        'VEGETATION_PERCENTAGE': '25.88712',
-        'WATER_PERCENTAGE': '51.08543',
-        'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0',
-        'WVP_QUANTIFICATION_VALUE': '1000.0',
-        'WVP_QUANTIFICATION_VALUE_UNIT': 'cm'
+        "AOT_QUANTIFICATION_VALUE": "1000.0",
+        "AOT_QUANTIFICATION_VALUE_UNIT": "none",
+        "AOT_RETRIEVAL_ACCURACY": "0.0",
+        "AOT_RETRIEVAL_METHOD": "SEN2COR_DDV",
+        "BOA_QUANTIFICATION_VALUE": "10000",
+        "BOA_QUANTIFICATION_VALUE_UNIT": "none",
+        "CLOUDY_PIXEL_OVER_LAND_PERCENTAGE": "12.448037",
+        "CLOUD_COVERAGE_ASSESSMENT": "6.859297",
+        "CLOUD_SHADOW_PERCENTAGE": "4.600983",
+        "DARK_FEATURES_PERCENTAGE": "0.012462000000000003",
+        "DATATAKE_1_DATATAKE_SENSING_START": "2023-08-23T09:55:59.024Z",
+        "DATATAKE_1_DATATAKE_TYPE": "INS-NOBS",
+        "DATATAKE_1_ID": "GS2B_20230823T095559_033753_N05.09",
+        "DATATAKE_1_SENSING_ORBIT_DIRECTION": "ASCENDING",
+        "DATATAKE_1_SENSING_ORBIT_NUMBER": "122",
+        "DATATAKE_1_SPACECRAFT_NAME": "Sentinel-2B",
+        "DEGRADED_ANC_DATA_PERCENTAGE": "0.0",
+        "DEGRADED_MSI_DATA_PERCENTAGE": "0",
+        "FORMAT_CORRECTNESS": "PASSED",
+        "GENERAL_QUALITY": "PASSED",
+        "GENERATION_TIME": "2023-08-23T12:47:59.000000Z",
+        "GEOMETRIC_QUALITY": "PASSED",
+        "GRANULE_MEAN_AOT": "0.083458",
+        "GRANULE_MEAN_WV": "1.958955",
+        "HIGH_PROBA_CLOUDS_PERCENTAGE": "2.847519",
+        "L2A_QUALITY": "PASSED",
+        "MEDIUM_PROBA_CLOUDS_PERCENTAGE": "3.071045",
+        "NODATA_PIXEL_PERCENTAGE": "0.0",
+        "NOT_VEGETATED_PERCENTAGE": "11.11341",
+        "OZONE_SOURCE": "AUX_ECMWFT",
+        "OZONE_VALUE": "277.364999",
+        "PREVIEW_GEO_INFO": "Not applicable",
+        "PREVIEW_IMAGE_URL": "Not applicable",
+        "PROCESSING_BASELINE": "05.09",
+        "PROCESSING_LEVEL": "Level-2A",
+        "PRODUCT_DOI": "https://doi.org/10.5270/S2_-znk9xsj",
+        "PRODUCT_START_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_STOP_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_TYPE": "S2MSI2A",
+        "PRODUCT_URI": "S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE",
+        "RADIATIVE_TRANSFER_ACCURACY": "0.0",
+        "RADIOMETRIC_QUALITY": "PASSED",
+        "REFLECTANCE_CONVERSION_U": "0.97659423426857",
+        "SATURATED_DEFECTIVE_PIXEL_PERCENTAGE": "0.0",
+        "SENSOR_QUALITY": "PASSED",
+        "SNOW_ICE_PERCENTAGE": "0.0",
+        "SPECIAL_VALUE_NODATA": "0",
+        "SPECIAL_VALUE_SATURATED": "65535",
+        "THIN_CIRRUS_PERCENTAGE": "0.940733",
+        "UNCLASSIFIED_PERCENTAGE": "0.441296",
+        "VEGETATION_PERCENTAGE": "25.88712",
+        "WATER_PERCENTAGE": "51.08543",
+        "WATER_VAPOUR_RETRIEVAL_ACCURACY": "0.0",
+        "WVP_QUANTIFICATION_VALUE": "1000.0",
+        "WVP_QUANTIFICATION_VALUE_UNIT": "cm",
     }
     got_md = ds.GetMetadata()
     if got_md != expected_md:
@@ -3016,14 +3014,14 @@ def test_sentinel2_l2a_processing_baseline_5_09__1():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B4',
-        'BANDWIDTH': '30',
-        'BANDWIDTH_UNIT': 'nm',
-        'BOA_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '1512.79',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '665',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B4",
+        "BANDWIDTH": "30",
+        "BANDWIDTH_UNIT": "nm",
+        "BOA_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "1512.79",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "665",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint
@@ -3041,14 +3039,14 @@ def test_sentinel2_l2a_processing_baseline_5_09__1():
 
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B8',
-        'BANDWIDTH': '115',
-        'BANDWIDTH_UNIT': 'nm',
-        'BOA_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '1041.28',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '842',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B8",
+        "BANDWIDTH": "115",
+        "BANDWIDTH_UNIT": "nm",
+        "BOA_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "1041.28",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "842",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint
@@ -3060,70 +3058,69 @@ def test_sentinel2_l2a_processing_baseline_5_09__1():
 ###############################################################################
 # Test opening a L2A subdataset (processing baseline 05.09) on the 20m bands
 
+
 def test_sentinel2_l2a_processing_baseline_5_09__2():
-    filename_xml = (
-        "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
-    )
+    filename_xml = "data/sentinel2/fake_l2a_processing_baseline_5_09/S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE/MTD_MSIL2A.xml"
     gdal.ErrorReset()
     ds = gdal.Open("SENTINEL2_L2A:%s:20m:EPSG_32634" % filename_xml)
     assert ds is not None and gdal.GetLastErrorMsg() == ""
 
     expected_md = {
-        'AOT_QUANTIFICATION_VALUE': '1000.0',
-        'AOT_QUANTIFICATION_VALUE_UNIT': 'none',
-        'AOT_RETRIEVAL_ACCURACY': '0.0',
-        'AOT_RETRIEVAL_METHOD': 'SEN2COR_DDV',
-        'BOA_QUANTIFICATION_VALUE': '10000',
-        'BOA_QUANTIFICATION_VALUE_UNIT': 'none',
-        'CLOUDY_PIXEL_OVER_LAND_PERCENTAGE': '12.448037',
-        'CLOUD_COVERAGE_ASSESSMENT': '6.859297',
-        'CLOUD_SHADOW_PERCENTAGE': '4.600983',
-        'DARK_FEATURES_PERCENTAGE': '0.012462000000000003',
-        'DATATAKE_1_DATATAKE_SENSING_START': '2023-08-23T09:55:59.024Z',
-        'DATATAKE_1_DATATAKE_TYPE': 'INS-NOBS',
-        'DATATAKE_1_ID': 'GS2B_20230823T095559_033753_N05.09',
-        'DATATAKE_1_SENSING_ORBIT_DIRECTION': 'ASCENDING',
-        'DATATAKE_1_SENSING_ORBIT_NUMBER': '122',
-        'DATATAKE_1_SPACECRAFT_NAME': 'Sentinel-2B',
-        'DEGRADED_ANC_DATA_PERCENTAGE': '0.0',
-        'DEGRADED_MSI_DATA_PERCENTAGE': '0',
-        'FORMAT_CORRECTNESS': 'PASSED',
-        'GENERAL_QUALITY': 'PASSED',
-        'GENERATION_TIME': '2023-08-23T12:47:59.000000Z',
-        'GEOMETRIC_QUALITY': 'PASSED',
-        'GRANULE_MEAN_AOT': '0.083458',
-        'GRANULE_MEAN_WV': '1.958955',
-        'HIGH_PROBA_CLOUDS_PERCENTAGE': '2.847519',
-        'L2A_QUALITY': 'PASSED',
-        'MEDIUM_PROBA_CLOUDS_PERCENTAGE': '3.071045',
-        'NODATA_PIXEL_PERCENTAGE': '0.0',
-        'NOT_VEGETATED_PERCENTAGE': '11.11341',
-        'OZONE_SOURCE': 'AUX_ECMWFT',
-        'OZONE_VALUE': '277.364999',
-        'PREVIEW_GEO_INFO': 'Not applicable',
-        'PREVIEW_IMAGE_URL': 'Not applicable',
-        'PROCESSING_BASELINE': '05.09',
-        'PROCESSING_LEVEL': 'Level-2A',
-        'PRODUCT_DOI': 'https://doi.org/10.5270/S2_-znk9xsj',
-        'PRODUCT_START_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_STOP_TIME': '2023-08-23T09:55:59.024Z',
-        'PRODUCT_TYPE': 'S2MSI2A',
-        'PRODUCT_URI': 'S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE',
-        'RADIATIVE_TRANSFER_ACCURACY': '0.0',
-        'RADIOMETRIC_QUALITY': 'PASSED',
-        'REFLECTANCE_CONVERSION_U': '0.97659423426857',
-        'SATURATED_DEFECTIVE_PIXEL_PERCENTAGE': '0.0',
-        'SENSOR_QUALITY': 'PASSED',
-        'SNOW_ICE_PERCENTAGE': '0.0',
-        'SPECIAL_VALUE_NODATA': '0',
-        'SPECIAL_VALUE_SATURATED': '65535',
-        'THIN_CIRRUS_PERCENTAGE': '0.940733',
-        'UNCLASSIFIED_PERCENTAGE': '0.441296',
-        'VEGETATION_PERCENTAGE': '25.88712',
-        'WATER_PERCENTAGE': '51.08543',
-        'WATER_VAPOUR_RETRIEVAL_ACCURACY': '0.0',
-        'WVP_QUANTIFICATION_VALUE': '1000.0',
-        'WVP_QUANTIFICATION_VALUE_UNIT': 'cm'
+        "AOT_QUANTIFICATION_VALUE": "1000.0",
+        "AOT_QUANTIFICATION_VALUE_UNIT": "none",
+        "AOT_RETRIEVAL_ACCURACY": "0.0",
+        "AOT_RETRIEVAL_METHOD": "SEN2COR_DDV",
+        "BOA_QUANTIFICATION_VALUE": "10000",
+        "BOA_QUANTIFICATION_VALUE_UNIT": "none",
+        "CLOUDY_PIXEL_OVER_LAND_PERCENTAGE": "12.448037",
+        "CLOUD_COVERAGE_ASSESSMENT": "6.859297",
+        "CLOUD_SHADOW_PERCENTAGE": "4.600983",
+        "DARK_FEATURES_PERCENTAGE": "0.012462000000000003",
+        "DATATAKE_1_DATATAKE_SENSING_START": "2023-08-23T09:55:59.024Z",
+        "DATATAKE_1_DATATAKE_TYPE": "INS-NOBS",
+        "DATATAKE_1_ID": "GS2B_20230823T095559_033753_N05.09",
+        "DATATAKE_1_SENSING_ORBIT_DIRECTION": "ASCENDING",
+        "DATATAKE_1_SENSING_ORBIT_NUMBER": "122",
+        "DATATAKE_1_SPACECRAFT_NAME": "Sentinel-2B",
+        "DEGRADED_ANC_DATA_PERCENTAGE": "0.0",
+        "DEGRADED_MSI_DATA_PERCENTAGE": "0",
+        "FORMAT_CORRECTNESS": "PASSED",
+        "GENERAL_QUALITY": "PASSED",
+        "GENERATION_TIME": "2023-08-23T12:47:59.000000Z",
+        "GEOMETRIC_QUALITY": "PASSED",
+        "GRANULE_MEAN_AOT": "0.083458",
+        "GRANULE_MEAN_WV": "1.958955",
+        "HIGH_PROBA_CLOUDS_PERCENTAGE": "2.847519",
+        "L2A_QUALITY": "PASSED",
+        "MEDIUM_PROBA_CLOUDS_PERCENTAGE": "3.071045",
+        "NODATA_PIXEL_PERCENTAGE": "0.0",
+        "NOT_VEGETATED_PERCENTAGE": "11.11341",
+        "OZONE_SOURCE": "AUX_ECMWFT",
+        "OZONE_VALUE": "277.364999",
+        "PREVIEW_GEO_INFO": "Not applicable",
+        "PREVIEW_IMAGE_URL": "Not applicable",
+        "PROCESSING_BASELINE": "05.09",
+        "PROCESSING_LEVEL": "Level-2A",
+        "PRODUCT_DOI": "https://doi.org/10.5270/S2_-znk9xsj",
+        "PRODUCT_START_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_STOP_TIME": "2023-08-23T09:55:59.024Z",
+        "PRODUCT_TYPE": "S2MSI2A",
+        "PRODUCT_URI": "S2B_MSIL2A_20230823T095559_N0509_R122_T34UCF_20230823T124759.SAFE",
+        "RADIATIVE_TRANSFER_ACCURACY": "0.0",
+        "RADIOMETRIC_QUALITY": "PASSED",
+        "REFLECTANCE_CONVERSION_U": "0.97659423426857",
+        "SATURATED_DEFECTIVE_PIXEL_PERCENTAGE": "0.0",
+        "SENSOR_QUALITY": "PASSED",
+        "SNOW_ICE_PERCENTAGE": "0.0",
+        "SPECIAL_VALUE_NODATA": "0",
+        "SPECIAL_VALUE_SATURATED": "65535",
+        "THIN_CIRRUS_PERCENTAGE": "0.940733",
+        "UNCLASSIFIED_PERCENTAGE": "0.441296",
+        "VEGETATION_PERCENTAGE": "25.88712",
+        "WATER_PERCENTAGE": "51.08543",
+        "WATER_VAPOUR_RETRIEVAL_ACCURACY": "0.0",
+        "WVP_QUANTIFICATION_VALUE": "1000.0",
+        "WVP_QUANTIFICATION_VALUE_UNIT": "cm",
     }
     got_md = ds.GetMetadata()
     if got_md != expected_md:
@@ -3146,14 +3143,14 @@ def test_sentinel2_l2a_processing_baseline_5_09__2():
     band = ds.GetRasterBand(1)
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B5',
-        'BANDWIDTH': '15',
-        'BANDWIDTH_UNIT': 'nm',
-        'BOA_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '1425.78',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '705',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B5",
+        "BANDWIDTH": "15",
+        "BANDWIDTH_UNIT": "nm",
+        "BOA_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "1425.78",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "705",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint
@@ -3171,14 +3168,14 @@ def test_sentinel2_l2a_processing_baseline_5_09__2():
 
     got_md = band.GetMetadata()
     expected_md = {
-        'BANDNAME': 'B8A',
-        'BANDWIDTH': '20',
-        'BANDWIDTH_UNIT': 'nm',
-        'BOA_ADD_OFFSET': '-1000',
-        'SOLAR_IRRADIANCE': '953.93',
-        'SOLAR_IRRADIANCE_UNIT': 'W/m2/um',
-        'WAVELENGTH': '865',
-        'WAVELENGTH_UNIT': 'nm'
+        "BANDNAME": "B8A",
+        "BANDWIDTH": "20",
+        "BANDWIDTH_UNIT": "nm",
+        "BOA_ADD_OFFSET": "-1000",
+        "SOLAR_IRRADIANCE": "953.93",
+        "SOLAR_IRRADIANCE_UNIT": "W/m2/um",
+        "WAVELENGTH": "865",
+        "WAVELENGTH_UNIT": "nm",
     }
     if got_md != expected_md:
         import pprint

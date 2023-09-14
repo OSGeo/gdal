@@ -3406,19 +3406,18 @@ void SENTINEL2Dataset::AddL1CL2ABandMetadata(
             }
         }
 
-        CPLXMLNode *psOL =
-            CPLGetXMLNode(psIC, (eLevel == SENTINEL2_L1C) ? 
-                                "Radiometric_Offset_List" : 
-                                "BOA_ADD_OFFSET_VALUES_LIST");
+        CPLXMLNode *psOL = CPLGetXMLNode(
+            psIC, (eLevel == SENTINEL2_L1C) ? "Radiometric_Offset_List"
+                                            : "BOA_ADD_OFFSET_VALUES_LIST");
         if (psOL != nullptr)
         {
             for (CPLXMLNode *psIter = psOL->psChild; psIter != nullptr;
                  psIter = psIter->psNext)
             {
                 if (psIter->eType != CXT_Element ||
-                    !EQUAL(psIter->pszValue, (eLevel == SENTINEL2_L1C) ? 
-                                             "RADIO_ADD_OFFSET" :
-                                             "BOA_ADD_OFFSET"))
+                    !EQUAL(psIter->pszValue, (eLevel == SENTINEL2_L1C)
+                                                 ? "RADIO_ADD_OFFSET"
+                                                 : "BOA_ADD_OFFSET"))
                 {
                     continue;
                 }
@@ -3440,9 +3439,9 @@ void SENTINEL2Dataset::AddL1CL2ABandMetadata(
                                       pszBandName))
                             {
                                 poBand->GDALRasterBand::SetMetadataItem(
-                                    (eLevel == SENTINEL2_L1C) ? 
-                                    "RADIO_ADD_OFFSET" :
-                                    "BOA_ADD_OFFSET",
+                                    (eLevel == SENTINEL2_L1C)
+                                        ? "RADIO_ADD_OFFSET"
+                                        : "BOA_ADD_OFFSET",
                                     pszValue);
                                 break;
                             }
