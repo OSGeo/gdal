@@ -47,8 +47,8 @@ NAMESPACE_MRF_START
 // Read an unaligned 4 byte little endian int from location p, advances pointer
 static void READ_GINT32(int &X, const char *&p)
 {
-    memcpy(&X, p, sizeof(GInt32));
-    p += sizeof(GInt32);
+    memcpy(&X, p, sizeof(int32_t));
+    p += sizeof(int32_t);
 }
 
 static void READ_FLOAT(float &X, const char *&p)
@@ -67,7 +67,7 @@ static void READ_FLOAT(float &X, const char *&p)
 
 static int checkV1(const char *s, size_t sz)
 {
-    GInt32 nBytesMask, nBytesData;
+    int32_t nBytesMask, nBytesData;
 
     // Header is 34 bytes
     // band header is 16, first mask band then data band
@@ -157,7 +157,7 @@ static int checkV1(const char *s, size_t sz)
 // Load a buffer of type T into a LERC1 zImg, with a given stride
 template <typename T>
 static void Lerc1ImgFill(Lerc1Image &zImg, T *src, const ILImage &img,
-                         GInt32 stride)
+                         int32_t stride)
 {
     int w = img.pagesize.x;
     int h = img.pagesize.y;
@@ -187,7 +187,7 @@ static void Lerc1ImgFill(Lerc1Image &zImg, T *src, const ILImage &img,
 // Unload LERC1 zImg into a type T buffer
 template <typename T>
 static bool Lerc1ImgUFill(Lerc1Image &zImg, T *dst, const ILImage &img,
-                          GInt32 stride)
+                          int32_t stride)
 {
     const T ndv = static_cast<T>(img.hasNoData ? img.NoDataValue : 0);
     if (img.pagesize.y != zImg.getHeight() || img.pagesize.x != zImg.getWidth())
@@ -216,7 +216,7 @@ static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img,
                             double precision)
 {
     Lerc1Image zImg;
-    GInt32 stride = img.pagesize.c;
+    int32_t stride = img.pagesize.c;
     Lerc1NS::Byte *ptr = reinterpret_cast<Lerc1NS::Byte *>(dst.buffer);
 
     for (int c = 0; c < stride; c++)
@@ -229,16 +229,16 @@ static CPLErr CompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img,
                 FILL(GByte);
                 break;
             case GDT_UInt16:
-                FILL(GUInt16);
+                FILL(uint16_t);
                 break;
             case GDT_Int16:
-                FILL(GInt16);
+                FILL(int16_t);
                 break;
             case GDT_Int32:
-                FILL(GInt32);
+                FILL(int32_t);
                 break;
             case GDT_UInt32:
-                FILL(GUInt32);
+                FILL(uint32_t);
                 break;
             case GDT_Float32:
                 FILL(float);
@@ -274,7 +274,7 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
     // need to add the padding bytes so that out-of-buffer-access
     size_t nRemainingBytes = src.size + PADDING_BYTES;
     Lerc1NS::Byte *ptr = reinterpret_cast<Lerc1NS::Byte *>(src.buffer);
-    GInt32 stride = img.pagesize.c;
+    int32_t stride = img.pagesize.c;
     for (int c = 0; c < stride; c++)
     {
         // Check that input passes snicker test
@@ -303,16 +303,16 @@ static CPLErr DecompressLERC1(buf_mgr &dst, buf_mgr &src, const ILImage &img)
                 UFILL(GByte);
                 break;
             case GDT_UInt16:
-                UFILL(GUInt16);
+                UFILL(uint16_t);
                 break;
             case GDT_Int16:
-                UFILL(GInt16);
+                UFILL(int16_t);
                 break;
             case GDT_Int32:
-                UFILL(GInt32);
+                UFILL(int32_t);
                 break;
             case GDT_UInt32:
-                UFILL(GUInt32);
+                UFILL(uint32_t);
                 break;
             case GDT_Float32:
                 UFILL(float);
@@ -476,16 +476,16 @@ static CPLErr CompressLERC2(buf_mgr &dst, buf_mgr &src, const ILImage &img,
                 MASK(GByte);
                 break;
             case GDT_UInt16:
-                MASK(GUInt16);
+                MASK(uint16_t);
                 break;
             case GDT_Int16:
-                MASK(GInt16);
+                MASK(int16_t);
                 break;
             case GDT_Int32:
-                MASK(GInt32);
+                MASK(int32_t);
                 break;
             case GDT_UInt32:
-                MASK(GUInt32);
+                MASK(uint32_t);
                 break;
             case GDT_Float32:
                 MASK(float);
@@ -578,16 +578,16 @@ CPLErr LERC_Band::Decompress(buf_mgr &dst, buf_mgr &src)
             UNMASK(GByte);
             break;
         case GDT_UInt16:
-            UNMASK(GUInt16);
+            UNMASK(uint16_t);
             break;
         case GDT_Int16:
-            UNMASK(GInt16);
+            UNMASK(int16_t);
             break;
         case GDT_Int32:
-            UNMASK(GInt32);
+            UNMASK(int32_t);
             break;
         case GDT_UInt32:
-            UNMASK(GUInt32);
+            UNMASK(uint32_t);
             break;
         case GDT_Float32:
             UNMASK(float);

@@ -341,7 +341,7 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
         static_cast<size_t>((count[iDimX] - 1) * arrayStep[iDimX] + 1);
     const size_t nYSize =
         static_cast<size_t>((count[iDimY] - 1) * arrayStep[iDimY] + 1);
-    if (nXSize > std::numeric_limits<GUInt32>::max() / nYSize)
+    if (nXSize > std::numeric_limits<uint32_t>::max() / nYSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Too many points queried at once");
@@ -365,11 +365,12 @@ bool GDALMDArrayGridded::IRead(const GUInt64 *arrayStartIdx,
 
     // Finally do the gridded interpolation
     if (!adfX.empty() &&
-        GDALGridCreate(
-            m_eAlg, m_poGridOptions.get(), static_cast<GUInt32>(adfX.size()),
-            adfX.data(), adfY.data(), adfZ.data(), dfMinX, dfMaxX, dfMinY,
-            dfMaxY, static_cast<GUInt32>(nXSize), static_cast<GUInt32>(nYSize),
-            GDT_Float64, adfRes.data(), nullptr, nullptr) != CE_None)
+        GDALGridCreate(m_eAlg, m_poGridOptions.get(),
+                       static_cast<uint32_t>(adfX.size()), adfX.data(),
+                       adfY.data(), adfZ.data(), dfMinX, dfMaxX, dfMinY, dfMaxY,
+                       static_cast<uint32_t>(nXSize),
+                       static_cast<uint32_t>(nYSize), GDT_Float64,
+                       adfRes.data(), nullptr, nullptr) != CE_None)
     {
         return false;
     }

@@ -99,9 +99,9 @@ static CPLErr Delete(const char *)
 
 // Read a 32bit unsigned integer stored in little endian
 // Same as CPL_LSBUINT32PTR
-static inline GUInt32 u32lat(void *data)
+static inline uint32_t u32lat(void *data)
 {
-    GUInt32 val;
+    uint32_t val;
     memcpy(&val, data, 4);
     return CPL_LSBWORD32(val);
 }

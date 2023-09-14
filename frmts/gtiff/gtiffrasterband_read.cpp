@@ -810,7 +810,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             CPLAssert(i < anOffsets.size());
             CPLAssert(nOffset >= anOffsets[i]);
             CPLAssert(nOffset + nSize <= anOffsets[i] + anSizes[i]);
-            GUInt32 nSizeFromLeader;
+            uint32_t nSizeFromLeader;
             memcpy(&nSizeFromLeader,
                    // cppcheck-suppress containerOutOfBounds
                    static_cast<GByte *>(apData[i]) + nOffset - anOffsets[i],
@@ -873,7 +873,7 @@ void *GTiffRasterBand::CacheMultiRange(int nXOff, int nYOff, int nXSize,
             if (nMaskOffsetWithLeader + nLeaderSize <=
                 anOffsets[i] + anSizes[i])
             {
-                GUInt32 nMaskSizeFromLeader;
+                uint32_t nMaskSizeFromLeader;
                 memcpy(&nMaskSizeFromLeader,
                        static_cast<GByte *>(apData[i]) + nMaskOffsetWithLeader -
                            anOffsets[i],

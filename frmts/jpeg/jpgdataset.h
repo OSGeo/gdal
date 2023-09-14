@@ -75,9 +75,9 @@ CPL_C_END
 // TIFF header.
 typedef struct
 {
-    GUInt16 tiff_magic;    // Magic number (defines byte order).
-    GUInt16 tiff_version;  // TIFF version number.
-    GUInt32 tiff_diroff;   // byte offset to first directory.
+    uint16_t tiff_magic;    // Magic number (defines byte order).
+    uint16_t tiff_version;  // TIFF version number.
+    uint32_t tiff_diroff;   // byte offset to first directory.
 } TIFFHeader;
 
 // Ok to use setjmp().

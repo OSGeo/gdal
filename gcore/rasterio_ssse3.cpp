@@ -216,10 +216,10 @@ void GDALDeinterleave4Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
 // GCC autovectorizer does an excellent job
 __attribute__((optimize("tree-vectorize")))
 #endif
-void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
-                                  GUInt16* CPL_RESTRICT panDest0,
-                                  GUInt16* CPL_RESTRICT panDest1,
-                                  GUInt16* CPL_RESTRICT panDest2,
+void GDALDeinterleave3UInt16_SSSE3(const uint16_t* CPL_RESTRICT panSrc,
+                                  uint16_t* CPL_RESTRICT panDest0,
+                                  uint16_t* CPL_RESTRICT panDest1,
+                                  uint16_t* CPL_RESTRICT panDest2,
                                   size_t nIters)
 {
     for (size_t i = 0; i < nIters; ++i)
@@ -241,11 +241,11 @@ void GDALDeinterleave3UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
 // GCC autovectorizer does an excellent job
 __attribute__((optimize("tree-vectorize")))
 #endif
-void GDALDeinterleave4UInt16_SSSE3(const GUInt16* CPL_RESTRICT panSrc,
-                                  GUInt16* CPL_RESTRICT panDest0,
-                                  GUInt16* CPL_RESTRICT panDest1,
-                                  GUInt16* CPL_RESTRICT panDest2,
-                                  GUInt16* CPL_RESTRICT panDest3,
+void GDALDeinterleave4UInt16_SSSE3(const uint16_t* CPL_RESTRICT panSrc,
+                                  uint16_t* CPL_RESTRICT panDest0,
+                                  uint16_t* CPL_RESTRICT panDest1,
+                                  uint16_t* CPL_RESTRICT panDest2,
+                                  uint16_t* CPL_RESTRICT panDest3,
                                   size_t nIters)
 {
     for (size_t i = 0; i < nIters; ++i)

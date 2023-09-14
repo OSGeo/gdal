@@ -71,7 +71,7 @@ CEOSRecord *CEOSReadRecord(CEOSImage *psImage)
 {
     GByte abyHeader[12];
     CEOSRecord *psRecord;
-    GUInt32 nRecordNumUInt32, nLengthUInt32;
+    uint32_t nRecordNumUInt32, nLengthUInt32;
 
     /* -------------------------------------------------------------------- */
     /*      Read the standard CEOS header.                                  */

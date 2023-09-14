@@ -278,7 +278,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 if (poBlock)
                     poBlock->DropLock();
 
-                const GUInt32 nErrorCounter = CPLGetErrorCounter();
+                const uint32_t nErrorCounter = CPLGetErrorCounter();
                 poBlock = GetLockedBlockRef(0, nLBlockY, bJustInitialize);
                 if (poBlock == nullptr)
                 {
@@ -467,7 +467,7 @@ CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 /*      Ensure we have the appropriate block loaded. */
                 /* --------------------------------------------------------------------
                  */
-                const GUInt32 nErrorCounter = CPLGetErrorCounter();
+                const uint32_t nErrorCounter = CPLGetErrorCounter();
                 poBlock =
                     GetLockedBlockRef(nLBlockX, nLBlockY, bJustInitialize);
                 if (!poBlock)
@@ -2006,8 +2006,8 @@ void CPL_STDCALL GDALSwapWords(void *pData, int nWordSize, int nWordCount,
             {
                 for (int i = 0; i < nWordCount; i++)
                 {
-                    *reinterpret_cast<GUInt32 *>(pabyData) = CPL_SWAP32(
-                        *reinterpret_cast<const GUInt32 *>(pabyData));
+                    *reinterpret_cast<uint32_t *>(pabyData) = CPL_SWAP32(
+                        *reinterpret_cast<const uint32_t *>(pabyData));
                     pabyData += nWordSkip;
                 }
             }
@@ -2108,9 +2108,9 @@ namespace
  * @param nWordCount the total number of pixel words to copy
  *
  * @code
- * // Assume an input buffer of type GUInt16 named pBufferIn
+ * // Assume an input buffer of type uint16_t named pBufferIn
  * GByte *pBufferOut = new GByte[numBytesOut];
- * GDALCopyWordsT<GUInt16, GByte>(pSrcData, 2, pDstData, 1, numBytesOut);
+ * GDALCopyWordsT<uint16_t, GByte>(pSrcData, 2, pDstData, 1, numBytesOut);
  * @endcode
  * @note
  * This is a private function, and should not be exposed outside of
@@ -2235,7 +2235,7 @@ void GDALCopyWordsByteTo16Bit(const GByte *const CPL_RESTRICT pSrcData,
 
 template <>
 void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt16 *const CPL_RESTRICT pDstData,
+                    int nSrcPixelStride, uint16_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo16Bit(pSrcData, nSrcPixelStride, pDstData,
@@ -2244,7 +2244,7 @@ void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
 
 template <>
 void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt16 *const CPL_RESTRICT pDstData,
+                    int nSrcPixelStride, int16_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo16Bit(pSrcData, nSrcPixelStride, pDstData,
@@ -2300,7 +2300,7 @@ void GDALCopyWordsByteTo32Bit(const GByte *const CPL_RESTRICT pSrcData,
 
 template <>
 void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt32 *const CPL_RESTRICT pDstData,
+                    int nSrcPixelStride, uint32_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo32Bit(pSrcData, nSrcPixelStride, pDstData,
@@ -2309,7 +2309,7 @@ void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
 
 template <>
 void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt32 *const CPL_RESTRICT pDstData,
+                    int nSrcPixelStride, int32_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsByteTo32Bit(pSrcData, nSrcPixelStride, pDstData,
@@ -2436,7 +2436,7 @@ void GDALCopyWordsT(const GByte *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
+void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
                     int nSrcPixelStride, GByte *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
@@ -2473,8 +2473,8 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt16 *const CPL_RESTRICT pDstData,
+void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
+                    int nSrcPixelStride, int16_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     if (nSrcPixelStride == static_cast<int>(sizeof(*pSrcData)) &&
@@ -2496,8 +2496,9 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
         }
         for (; n < nWordCount; n++)
         {
-            pDstData[n] =
-                pSrcData[n] >= 32767 ? 32767 : static_cast<GInt16>(pSrcData[n]);
+            pDstData[n] = pSrcData[n] >= 32767
+                              ? 32767
+                              : static_cast<int16_t>(pSrcData[n]);
         }
     }
     else
@@ -2508,7 +2509,7 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
+void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
                     int nSrcPixelStride, float *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
@@ -2545,7 +2546,7 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 }
 
 template <>
-void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
+void GDALCopyWordsT(const uint16_t *const CPL_RESTRICT pSrcData,
                     int nSrcPixelStride, double *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
@@ -2596,7 +2597,7 @@ void GDALCopyWordsT(const GUInt16 *const CPL_RESTRICT pSrcData,
 
 template <>
 void GDALCopyWordsT(const double *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt16 *const CPL_RESTRICT pDstData,
+                    int nSrcPixelStride, uint16_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
@@ -2616,7 +2617,7 @@ void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
 
 template <>
 void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GInt16 *const CPL_RESTRICT pDstData,
+                    int nSrcPixelStride, int16_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
@@ -2625,7 +2626,7 @@ void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
 
 template <>
 void GDALCopyWordsT(const float *const CPL_RESTRICT pSrcData,
-                    int nSrcPixelStride, GUInt16 *const CPL_RESTRICT pDstData,
+                    int nSrcPixelStride, uint16_t *const CPL_RESTRICT pDstData,
                     int nDstPixelStride, GPtrDiff_t nWordCount)
 {
     GDALCopyWordsT_8atatime(pSrcData, nSrcPixelStride, pDstData,
@@ -2957,10 +2958,10 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
         break;                                                                 \
     }
 
-            CASE_DUPLICATE_SIMPLE(GDT_UInt16, GUInt16)
-            CASE_DUPLICATE_SIMPLE(GDT_Int16, GInt16)
-            CASE_DUPLICATE_SIMPLE(GDT_UInt32, GUInt32)
-            CASE_DUPLICATE_SIMPLE(GDT_Int32, GInt32)
+            CASE_DUPLICATE_SIMPLE(GDT_UInt16, uint16_t)
+            CASE_DUPLICATE_SIMPLE(GDT_Int16, int16_t)
+            CASE_DUPLICATE_SIMPLE(GDT_UInt32, uint32_t)
+            CASE_DUPLICATE_SIMPLE(GDT_Int32, int32_t)
             CASE_DUPLICATE_SIMPLE(GDT_UInt64, std::uint64_t)
             CASE_DUPLICATE_SIMPLE(GDT_Int64, std::int64_t)
             CASE_DUPLICATE_SIMPLE(GDT_Float32, float)
@@ -2981,8 +2982,8 @@ static void GDALReplicateWord(const void *CPL_RESTRICT pSrcData,
         break;                                                                 \
     }
 
-            CASE_DUPLICATE_COMPLEX(GDT_CInt16, GInt16)
-            CASE_DUPLICATE_COMPLEX(GDT_CInt32, GInt32)
+            CASE_DUPLICATE_COMPLEX(GDT_CInt16, int16_t)
+            CASE_DUPLICATE_COMPLEX(GDT_CInt32, int32_t)
             CASE_DUPLICATE_COMPLEX(GDT_CFloat32, float)
             CASE_DUPLICATE_COMPLEX(GDT_CFloat64, double)
 
@@ -5531,14 +5532,14 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
         {
             if (nComponents == 3)
             {
-                const GUInt16 *CPL_RESTRICT panSrc =
-                    static_cast<const GUInt16 *>(pSourceBuffer);
-                GUInt16 *CPL_RESTRICT panDest0 =
-                    static_cast<GUInt16 *>(ppDestBuffer[0]);
-                GUInt16 *CPL_RESTRICT panDest1 =
-                    static_cast<GUInt16 *>(ppDestBuffer[1]);
-                GUInt16 *CPL_RESTRICT panDest2 =
-                    static_cast<GUInt16 *>(ppDestBuffer[2]);
+                const uint16_t *CPL_RESTRICT panSrc =
+                    static_cast<const uint16_t *>(pSourceBuffer);
+                uint16_t *CPL_RESTRICT panDest0 =
+                    static_cast<uint16_t *>(ppDestBuffer[0]);
+                uint16_t *CPL_RESTRICT panDest1 =
+                    static_cast<uint16_t *>(ppDestBuffer[1]);
+                uint16_t *CPL_RESTRICT panDest2 =
+                    static_cast<uint16_t *>(ppDestBuffer[2]);
                 GDALDeinterleave3UInt16_SSSE3(panSrc, panDest0, panDest1,
                                               panDest2, nIters);
                 return;
@@ -5548,16 +5549,16 @@ void GDALDeinterleave(const void *pSourceBuffer, GDALDataType eSourceDT,
             // 2022.1.0.20220316
             else if (nComponents == 4)
             {
-                const GUInt16 *CPL_RESTRICT panSrc =
-                    static_cast<const GUInt16 *>(pSourceBuffer);
-                GUInt16 *CPL_RESTRICT panDest0 =
-                    static_cast<GUInt16 *>(ppDestBuffer[0]);
-                GUInt16 *CPL_RESTRICT panDest1 =
-                    static_cast<GUInt16 *>(ppDestBuffer[1]);
-                GUInt16 *CPL_RESTRICT panDest2 =
-                    static_cast<GUInt16 *>(ppDestBuffer[2]);
-                GUInt16 *CPL_RESTRICT panDest3 =
-                    static_cast<GUInt16 *>(ppDestBuffer[3]);
+                const uint16_t *CPL_RESTRICT panSrc =
+                    static_cast<const uint16_t *>(pSourceBuffer);
+                uint16_t *CPL_RESTRICT panDest0 =
+                    static_cast<uint16_t *>(ppDestBuffer[0]);
+                uint16_t *CPL_RESTRICT panDest1 =
+                    static_cast<uint16_t *>(ppDestBuffer[1]);
+                uint16_t *CPL_RESTRICT panDest2 =
+                    static_cast<uint16_t *>(ppDestBuffer[2]);
+                uint16_t *CPL_RESTRICT panDest3 =
+                    static_cast<uint16_t *>(ppDestBuffer[3]);
                 GDALDeinterleave4UInt16_SSSE3(panSrc, panDest0, panDest1,
                                               panDest2, panDest3, nIters);
                 return;

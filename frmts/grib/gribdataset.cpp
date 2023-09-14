@@ -299,7 +299,7 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
         return;
     }
 
-    GUInt32 nSectSize = 0;
+    uint32_t nSectSize = 0;
     if (abyHead[4] == 1)
     {
         memcpy(&nSectSize, abyHead, 4);
@@ -502,11 +502,11 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                 return;
             }
 
-            GUInt16 nCoordCount = 0;
+            uint16_t nCoordCount = 0;
             memcpy(&nCoordCount, pabyBody + 6 - 1, 2);
             CPL_MSBPTR16(&nCoordCount);
 
-            GUInt16 nPDTN = 0;
+            uint16_t nPDTN = 0;
             memcpy(&nPDTN, pabyBody + 8 - 1, 2);
             CPL_MSBPTR16(&nPDTN);
 
@@ -570,9 +570,9 @@ void GRIBRasterBand::FindPDSTemplateGRIB2()
                             if (nEltSize == 4)
                             {
                                 m_anPDSTemplateAssembledValues.push_back(
-                                    static_cast<GUInt32>(pdstempl[i]));
+                                    static_cast<uint32_t>(pdstempl[i]));
                                 osValues += CPLSPrintf(
-                                    "%u", static_cast<GUInt32>(pdstempl[i]));
+                                    "%u", static_cast<uint32_t>(pdstempl[i]));
                             }
                             else
                             {
@@ -639,7 +639,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
     VSIFReadL(abyHead, 5, 1, poGDS->fp);
 
     // Skip to section 5
-    GUInt32 nSectSize = 0;
+    uint32_t nSectSize = 0;
     while (abyHead[4] != 5)
     {
         memcpy(&nSectSize, abyHead, 4);
@@ -662,7 +662,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
             memcpy(pabyBody, abyHead, 5);
             VSIFReadL(pabyBody + 5, 1, nSectSize - 5, poGDS->fp);
 
-            GUInt16 nDRTN = 0;
+            uint16_t nDRTN = 0;
             memcpy(&nDRTN, pabyBody + 10 - 1, 2);
             CPL_MSBPTR16(&nDRTN);
 
@@ -679,7 +679,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
                 GDALRasterBand::SetMetadataItem(
                     "DRS_REF_VALUE", CPLSPrintf("%.10f", fRef), "GRIB");
 
-                GUInt16 nBinaryScaleFactorUnsigned;
+                uint16_t nBinaryScaleFactorUnsigned;
                 memcpy(&nBinaryScaleFactorUnsigned, pabyBody + 16 - 1, 2);
                 CPL_MSBPTR16(&nBinaryScaleFactorUnsigned);
                 const int nBSF =
@@ -689,7 +689,7 @@ void GRIBRasterBand::FindNoDataGrib2(bool bSeekToStart)
                 GDALRasterBand::SetMetadataItem("DRS_BINARY_SCALE_FACTOR",
                                                 CPLSPrintf("%d", nBSF), "GRIB");
 
-                GUInt16 nDecimalScaleFactorUnsigned;
+                uint16_t nDecimalScaleFactorUnsigned;
                 memcpy(&nDecimalScaleFactorUnsigned, pabyBody + 18 - 1, 2);
                 CPL_MSBPTR16(&nDecimalScaleFactorUnsigned);
                 const int nDSF =

@@ -40,27 +40,27 @@
 
 struct ImageRec
 {
-    GUInt16 imagic;
+    uint16_t imagic;
     GByte type;
     GByte bpc;
-    GUInt16 dim;
-    GUInt16 xsize;
-    GUInt16 ysize;
-    GUInt16 zsize;
-    GUInt32 min;
-    GUInt32 max;
+    uint16_t dim;
+    uint16_t xsize;
+    uint16_t ysize;
+    uint16_t zsize;
+    uint32_t min;
+    uint32_t max;
     char wasteBytes[4];
     char name[80];
-    GUInt32 colorMap;
+    uint32_t colorMap;
 
     VSILFILE *file;
     std::string fileName;
     int tmpSize;
     unsigned char *tmp;
-    GUInt32 rleEnd;
+    uint32_t rleEnd;
     int rleTableDirty;
-    GUInt32 *rowStart;
-    GInt32 *rowSize;
+    uint32_t *rowStart;
+    int32_t *rowSize;
 
     ImageRec()
         : imagic(0), type(0), bpc(1), dim(0), xsize(0), ysize(0), zsize(0),
@@ -90,9 +90,9 @@ struct ImageRec
 /*                            ConvertLong()                             */
 /************************************************************************/
 #ifdef CPL_LSB
-static void ConvertLong(GUInt32 *array, GInt32 length)
+static void ConvertLong(uint32_t *array, int32_t length)
 {
-    GUInt32 *ptr = reinterpret_cast<GUInt32 *>(array);
+    uint32_t *ptr = reinterpret_cast<uint32_t *>(array);
     while (length--)
     {
         CPL_SWAP32PTR(ptr);
@@ -100,7 +100,7 @@ static void ConvertLong(GUInt32 *array, GInt32 length)
     }
 }
 #else
-static void ConvertLong(GUInt32 * /*array*/, GInt32 /*length */)
+static void ConvertLong(uint32_t * /*array*/, int32_t /*length */)
 {
 }
 #endif
@@ -142,9 +142,9 @@ static CPLErr ImageGetRow(ImageRec *image, unsigned char *buf, int y, int z)
               static_cast<long>(image->rowStart[y + z * image->ysize]),
               SEEK_SET);
     if (VSIFReadL(image->tmp, 1,
-                  static_cast<GUInt32>(image->rowSize[y + z * image->ysize]),
+                  static_cast<uint32_t>(image->rowSize[y + z * image->ysize]),
                   image->file) !=
-        static_cast<GUInt32>(image->rowSize[y + z * image->ysize]))
+        static_cast<uint32_t>(image->rowSize[y + z * image->ysize]))
     {
         CPLError(CE_Failure, CPLE_OpenFailed,
                  "file read error: row (%d) of (%s)\n", y,
@@ -384,7 +384,7 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     VSIFSeekL(image->file, 0, SEEK_END);
 
-    image->rowStart[row] = static_cast<GUInt32>(VSIFTellL(image->file));
+    image->rowStart[row] = static_cast<uint32_t>(VSIFTellL(image->file));
     image->rowSize[row] = nRLEBytes;
     image->rleTableDirty = TRUE;
 
@@ -477,7 +477,7 @@ SGIDataset::~SGIDataset()
     {
         CPLDebug("SGI", "Flushing RLE offset table.");
         ConvertLong(image.rowStart, image.ysize * image.zsize);
-        ConvertLong(reinterpret_cast<GUInt32 *>(image.rowSize),
+        ConvertLong(reinterpret_cast<uint32_t *>(image.rowSize),
                     image.ysize * image.zsize);
 
         VSIFSeekL(fpImage, 512, SEEK_SET);
@@ -592,7 +592,7 @@ GDALDataset *SGIDataset::Open(GDALOpenInfo *poOpenInfo)
         delete poDS;
         return nullptr;
     }
-    poDS->nBands = std::max(static_cast<GUInt16>(1), poDS->image.zsize);
+    poDS->nBands = std::max(static_cast<uint16_t>(1), poDS->image.zsize);
     if (poDS->nBands > 256)
     {
         CPLError(CE_Failure, CPLE_OpenFailed, "Too many bands : %d",
@@ -622,11 +622,11 @@ GDALDataset *SGIDataset::Open(GDALOpenInfo *poOpenInfo)
     if (static_cast<int>(poDS->image.type) == 1)  // RLE compressed
     {
         const size_t x = static_cast<size_t>(poDS->image.ysize) * poDS->nBands *
-                         sizeof(GUInt32);
-        poDS->image.rowStart = reinterpret_cast<GUInt32 *>(VSI_MALLOC2_VERBOSE(
-            poDS->image.ysize, poDS->nBands * sizeof(GUInt32)));
-        poDS->image.rowSize = reinterpret_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(
-            poDS->image.ysize, poDS->nBands * sizeof(GUInt32)));
+                         sizeof(uint32_t);
+        poDS->image.rowStart = reinterpret_cast<uint32_t *>(VSI_MALLOC2_VERBOSE(
+            poDS->image.ysize, poDS->nBands * sizeof(uint32_t)));
+        poDS->image.rowSize = reinterpret_cast<int32_t *>(VSI_MALLOC2_VERBOSE(
+            poDS->image.ysize, poDS->nBands * sizeof(uint32_t)));
         if (poDS->image.rowStart == nullptr || poDS->image.rowSize == nullptr)
         {
             delete poDS;
@@ -634,7 +634,7 @@ GDALDataset *SGIDataset::Open(GDALOpenInfo *poOpenInfo)
         }
         memset(poDS->image.rowStart, 0, x);
         memset(poDS->image.rowSize, 0, x);
-        poDS->image.rleEnd = static_cast<GUInt32>(512 + (2 * x));
+        poDS->image.rleEnd = static_cast<uint32_t>(512 + (2 * x));
         VSIFSeekL(poDS->fpImage, 512, SEEK_SET);
         if (VSIFReadL(poDS->image.rowStart, 1, x, poDS->image.file) != x)
         {
@@ -653,9 +653,9 @@ GDALDataset *SGIDataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         ConvertLong(poDS->image.rowStart,
-                    static_cast<int>(x / static_cast<int>(sizeof(GUInt32))));
-        ConvertLong(reinterpret_cast<GUInt32 *>(poDS->image.rowSize),
-                    static_cast<int>(x / static_cast<int>(sizeof(GInt32))));
+                    static_cast<int>(x / static_cast<int>(sizeof(uint32_t))));
+        ConvertLong(reinterpret_cast<uint32_t *>(poDS->image.rowSize),
+                    static_cast<int>(x / static_cast<int>(sizeof(int32_t))));
     }
     else  // uncompressed.
     {
@@ -730,7 +730,7 @@ GDALDataset *SGIDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     abyHeader[2] = 1;  // RLE
     abyHeader[3] = 1;  // 8bit
 
-    GInt16 nShortValue;
+    int16_t nShortValue;
     if (nBandsIn == 1)
         nShortValue = CPL_MSBWORD16(2);
     else
@@ -746,10 +746,10 @@ GDALDataset *SGIDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     nShortValue = CPL_MSBWORD16(nBandsIn);
     memcpy(abyHeader + 10, &nShortValue, 2);
 
-    GInt32 nIntValue = CPL_MSBWORD32(0);
+    int32_t nIntValue = CPL_MSBWORD32(0);
     memcpy(abyHeader + 12, &nIntValue, 4);
 
-    GUInt32 nUIntValue = CPL_MSBWORD32(255);
+    uint32_t nUIntValue = CPL_MSBWORD32(255);
     memcpy(abyHeader + 16, &nUIntValue, 4);
 
     VSIFWriteL(abyHeader, 1, 512, fp);
@@ -761,7 +761,7 @@ GDALDataset *SGIDataset::Create(const char *pszFilename, int nXSize, int nYSize,
         reinterpret_cast<GByte *>(CPLMalloc((nXSize / 127) * 2 + 4));
 
     int nPixelsRemaining = nXSize;
-    GInt32 nRLEBytes = 0;
+    int32_t nRLEBytes = 0;
     while (nPixelsRemaining > 0)
     {
         pabyRLELine[nRLEBytes] =
@@ -777,7 +777,7 @@ GDALDataset *SGIDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      zeroed indicating dummy lines.                                  */
     /* -------------------------------------------------------------------- */
     const int nTableLen = nYSize * nBandsIn;
-    GInt32 nDummyRLEOffset = 512 + 4 * nTableLen * 2;
+    int32_t nDummyRLEOffset = 512 + 4 * nTableLen * 2;
 
     CPL_MSBPTR32(&nRLEBytes);
     CPL_MSBPTR32(&nDummyRLEOffset);
@@ -792,7 +792,7 @@ GDALDataset *SGIDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /*      write the dummy RLE blank line.                                 */
     /* -------------------------------------------------------------------- */
     CPL_MSBPTR32(&nRLEBytes);
-    if (static_cast<GInt32>(VSIFWriteL(pabyRLELine, 1, nRLEBytes, fp)) !=
+    if (static_cast<int32_t>(VSIFWriteL(pabyRLELine, 1, nRLEBytes, fp)) !=
         nRLEBytes)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Failure writing SGI file '%s'.\n%s",

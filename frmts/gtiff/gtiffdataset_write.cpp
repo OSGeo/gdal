@@ -479,27 +479,27 @@ inline bool GTiffDataset::IsFirstPixelEqualToNoData(const void *pBuffer)
     }
     if (m_nBitsPerSample == 16 && eDT == GDT_UInt16)
     {
-        return GDALIsValueInRange<GUInt16>(dfEffectiveNoData) &&
-               *(static_cast<const GUInt16 *>(pBuffer)) ==
-                   static_cast<GUInt16>(dfEffectiveNoData);
+        return GDALIsValueInRange<uint16_t>(dfEffectiveNoData) &&
+               *(static_cast<const uint16_t *>(pBuffer)) ==
+                   static_cast<uint16_t>(dfEffectiveNoData);
     }
     if (m_nBitsPerSample == 16 && eDT == GDT_Int16)
     {
-        return GDALIsValueInRange<GInt16>(dfEffectiveNoData) &&
-               *(static_cast<const GInt16 *>(pBuffer)) ==
-                   static_cast<GInt16>(dfEffectiveNoData);
+        return GDALIsValueInRange<int16_t>(dfEffectiveNoData) &&
+               *(static_cast<const int16_t *>(pBuffer)) ==
+                   static_cast<int16_t>(dfEffectiveNoData);
     }
     if (m_nBitsPerSample == 32 && eDT == GDT_UInt32)
     {
-        return GDALIsValueInRange<GUInt32>(dfEffectiveNoData) &&
-               *(static_cast<const GUInt32 *>(pBuffer)) ==
-                   static_cast<GUInt32>(dfEffectiveNoData);
+        return GDALIsValueInRange<uint32_t>(dfEffectiveNoData) &&
+               *(static_cast<const uint32_t *>(pBuffer)) ==
+                   static_cast<uint32_t>(dfEffectiveNoData);
     }
     if (m_nBitsPerSample == 32 && eDT == GDT_Int32)
     {
-        return GDALIsValueInRange<GInt32>(dfEffectiveNoData) &&
-               *(static_cast<const GInt32 *>(pBuffer)) ==
-                   static_cast<GInt32>(dfEffectiveNoData);
+        return GDALIsValueInRange<int32_t>(dfEffectiveNoData) &&
+               *(static_cast<const int32_t *>(pBuffer)) ==
+                   static_cast<int32_t>(dfEffectiveNoData);
     }
     if (m_nBitsPerSample == 64 && eDT == GDT_UInt64)
     {
@@ -3386,7 +3386,7 @@ static void GTiffWriteDummyGeokeyDirectory(TIFF *hTIFF)
 
     if (TIFFGetField(hTIFF, TIFFTAG_GEOKEYDIRECTORY, &nKeyCount, &panVI))
     {
-        GUInt16 anGKVersionInfo[4] = {1, 1, 0, 0};
+        uint16_t anGKVersionInfo[4] = {1, 1, 0, 0};
         double adfDummyDoubleParams[1] = {0.0};
         TIFFSetField(hTIFF, TIFFTAG_GEOKEYDIRECTORY, 4, anGKVersionInfo);
         TIFFSetField(hTIFF, TIFFTAG_GEODOUBLEPARAMS, 1, adfDummyDoubleParams);

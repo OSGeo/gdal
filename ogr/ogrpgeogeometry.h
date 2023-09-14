@@ -76,7 +76,7 @@
 #define ESRI_LAYERGEOMTYPE_MULTIPATCH 9
 
 OGRGeometry CPL_DLL *OGRCreateFromMultiPatch(
-    int nParts, const GInt32 *panPartStart, const GInt32 *panPartType,
+    int nParts, const int32_t *panPartStart, const int32_t *panPartType,
     int nPoints, const double *padfX, const double *padfY, const double *padfZ);
 
 OGRErr CPL_DLL OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,

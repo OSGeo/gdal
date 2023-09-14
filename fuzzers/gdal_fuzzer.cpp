@@ -299,7 +299,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                 {
                     if (EQUAL(pszCompress, "PIXARLOG") &&
                         GDALGetRasterYSize(hDS) >
-                            (INT_MAX / 2) / static_cast<int>(sizeof(GUInt16)) /
+                            (INT_MAX / 2) / static_cast<int>(sizeof(uint16_t)) /
                                 nSimultaneousBands / GDALGetRasterXSize(hDS))
                     {
                         bDoCheckSum = false;
@@ -308,7 +308,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
                     else if (EQUAL(pszCompress, "SGILOG24") &&
                              GDALGetRasterYSize(hDS) >
                                  (INT_MAX / 2) /
-                                     static_cast<int>(sizeof(GUInt32)) /
+                                     static_cast<int>(sizeof(uint32_t)) /
                                      nSimultaneousBands /
                                      GDALGetRasterXSize(hDS))
                     {

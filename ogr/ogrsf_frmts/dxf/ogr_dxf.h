@@ -518,7 +518,7 @@ class OGRDXFLayer final : public OGRLayer
                            int nControlPoints, std::vector<double> &adfKnots,
                            int nKnots, std::vector<double> &adfWeights);
     static OGRGeometry *SimplifyBlockGeometry(OGRGeometryCollection *);
-    OGRDXFFeature *InsertBlockInline(GUInt32 nInitialErrorCounter,
+    OGRDXFFeature *InsertBlockInline(uint32_t nInitialErrorCounter,
                                      const CPLString &osBlockName,
                                      OGRDXFInsertTransformer oTransformer,
                                      OGRDXFFeature *const poFeature,

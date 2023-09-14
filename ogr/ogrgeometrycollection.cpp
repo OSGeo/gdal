@@ -628,7 +628,7 @@ OGRErr OGRGeometryCollection::exportToWkb(OGRwkbByteOrder eByteOrder,
     /*      Set the geometry feature type, ensuring that 3D flag is         */
     /*      preserved.                                                      */
     /* -------------------------------------------------------------------- */
-    GUInt32 nGType = getGeometryType();
+    uint32_t nGType = getGeometryType();
 
     if (eWkbVariant == wkbVariantIso)
         nGType = getIsoGeometryType();

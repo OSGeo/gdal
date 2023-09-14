@@ -158,19 +158,19 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
             DumpValue<GByte>(serializer, bytes);
             break;
         case GDT_Int8:
-            DumpValue<GInt8>(serializer, bytes);
+            DumpValue<int8_t>(serializer, bytes);
             break;
         case GDT_Int16:
-            DumpValue<GInt16>(serializer, bytes);
+            DumpValue<int16_t>(serializer, bytes);
             break;
         case GDT_UInt16:
-            DumpValue<GUInt16>(serializer, bytes);
+            DumpValue<uint16_t>(serializer, bytes);
             break;
         case GDT_Int32:
-            DumpValue<GInt32>(serializer, bytes);
+            DumpValue<int32_t>(serializer, bytes);
             break;
         case GDT_UInt32:
-            DumpValue<GUInt32>(serializer, bytes);
+            DumpValue<uint32_t>(serializer, bytes);
             break;
         case GDT_Int64:
             DumpValue<std::int64_t>(serializer, bytes);
@@ -185,10 +185,10 @@ static void DumpValue(CPLJSonStreamingWriter &serializer, const GByte *bytes,
             DumpValue<double>(serializer, bytes);
             break;
         case GDT_CInt16:
-            DumpComplexValue<GInt16>(serializer, bytes);
+            DumpComplexValue<int16_t>(serializer, bytes);
             break;
         case GDT_CInt32:
-            DumpComplexValue<GInt32>(serializer, bytes);
+            DumpComplexValue<int32_t>(serializer, bytes);
             break;
         case GDT_CFloat32:
             DumpComplexValue<float>(serializer, bytes);

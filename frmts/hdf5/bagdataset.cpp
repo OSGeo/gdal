@@ -1349,7 +1349,7 @@ CPLErr BAGResampledBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
                     if (poGDS->m_ePopulation == BAGDataset::Population::COUNT)
                     {
-                        static_cast<GUInt32 *>(pImage)[nTargetIdx]++;
+                        static_cast<uint32_t *>(pImage)[nTargetIdx]++;
                         continue;
                     }
 

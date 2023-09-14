@@ -305,8 +305,8 @@ class L1BDataset final : public GDALPamDataset
     int nDataStartOffset;
     int nRecordSize;
     int nRecordSizeFromHeader;
-    GUInt32 iInstrumentStatus;
-    GUInt32 iChannelsMask;
+    uint32_t iInstrumentStatus;
+    uint32_t iChannelsMask;
 
     OGRSpatialReference m_oGCPSRS{};
 
@@ -333,10 +333,10 @@ class L1BDataset final : public GDALPamDataset
 
     vsi_l_offset GetLineOffset(int nBlockYOff) const;
 
-    GUInt16 GetUInt16(const void *pabyData) const;
-    GInt16 GetInt16(const void *pabyData) const;
-    GUInt32 GetUInt32(const void *pabyData) const;
-    GInt32 GetInt32(const void *pabyData) const;
+    uint16_t GetUInt16(const void *pabyData) const;
+    int16_t GetInt16(const void *pabyData) const;
+    uint32_t GetUInt32(const void *pabyData) const;
+    int32_t GetInt32(const void *pabyData) const;
 
     static L1BFileFormat DetectFormat(const char *pszFilename,
                                       const GByte *pabyHeader,
@@ -421,7 +421,7 @@ CPLErr L1BMaskBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     GByte abyData[4];
     CPL_IGNORE_RET_VAL(VSIFReadL(abyData, 1, 4, poGDS->fp));
-    GUInt32 n32 = poGDS->GetUInt32(abyData);
+    uint32_t n32 = poGDS->GetUInt32(abyData);
 
     if ((n32 >> 31) != 0) /* fatal flag */
         memset(pImage, 0, nBlockXSize);
@@ -488,7 +488,7 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Read data into the buffer.                                      */
     /* -------------------------------------------------------------------- */
-    GUInt16 *iScan = nullptr;  // Unpacked 16-bit scanline buffer
+    uint16_t *iScan = nullptr;  // Unpacked 16-bit scanline buffer
     int i, j;
 
     switch (poGDS->iDataFormat)
@@ -496,22 +496,22 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         case PACKED10BIT:
         {
             // Read packed scanline
-            GUInt32 *iRawScan = (GUInt32 *)CPLMalloc(poGDS->nRecordSize);
+            uint32_t *iRawScan = (uint32_t *)CPLMalloc(poGDS->nRecordSize);
             CPL_IGNORE_RET_VAL(
                 VSIFReadL(iRawScan, 1, poGDS->nRecordSize, poGDS->fp));
 
-            iScan = (GUInt16 *)CPLMalloc(poGDS->nBufferSize);
+            iScan = (uint16_t *)CPLMalloc(poGDS->nBufferSize);
             j = 0;
             for (i = poGDS->nRecordDataStart / (int)sizeof(iRawScan[0]);
                  i < poGDS->nRecordDataEnd / (int)sizeof(iRawScan[0]); i++)
             {
-                GUInt32 iWord1 = poGDS->GetUInt32(&iRawScan[i]);
-                GUInt32 iWord2 = iWord1 & 0x3FF00000;
+                uint32_t iWord1 = poGDS->GetUInt32(&iRawScan[i]);
+                uint32_t iWord2 = iWord1 & 0x3FF00000;
 
-                iScan[j++] = (GUInt16)(iWord2 >> 20);
+                iScan[j++] = (uint16_t)(iWord2 >> 20);
                 iWord2 = iWord1 & 0x000FFC00;
-                iScan[j++] = (GUInt16)(iWord2 >> 10);
-                iScan[j++] = (GUInt16)(iWord1 & 0x000003FF);
+                iScan[j++] = (uint16_t)(iWord2 >> 10);
+                iScan[j++] = (uint16_t)(iWord1 & 0x000003FF);
             }
             CPLFree(iRawScan);
         }
@@ -519,12 +519,12 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         case UNPACKED16BIT:
         {
             // Read unpacked scanline
-            GUInt16 *iRawScan = (GUInt16 *)CPLMalloc(poGDS->nRecordSize);
+            uint16_t *iRawScan = (uint16_t *)CPLMalloc(poGDS->nRecordSize);
             CPL_IGNORE_RET_VAL(
                 VSIFReadL(iRawScan, 1, poGDS->nRecordSize, poGDS->fp));
 
-            iScan = (GUInt16 *)CPLMalloc(poGDS->GetRasterXSize() *
-                                         poGDS->nBands * sizeof(GUInt16));
+            iScan = (uint16_t *)CPLMalloc(poGDS->GetRasterXSize() *
+                                          poGDS->nBands * sizeof(uint16_t));
             for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
             {
                 iScan[i] =
@@ -542,8 +542,8 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             CPL_IGNORE_RET_VAL(
                 VSIFReadL(byRawScan, 1, poGDS->nRecordSize, poGDS->fp));
 
-            iScan = (GUInt16 *)CPLMalloc(poGDS->GetRasterXSize() *
-                                         poGDS->nBands * sizeof(GUInt16));
+            iScan = (uint16_t *)CPLMalloc(poGDS->GetRasterXSize() *
+                                          poGDS->nBands * sizeof(uint16_t));
             for (i = 0; i < poGDS->GetRasterXSize() * poGDS->nBands; i++)
                 iScan[i] = byRawScan[poGDS->nRecordDataStart /
                                          (int)sizeof(byRawScan[0]) +
@@ -560,7 +560,7 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     {
         for (i = 0, j = 0; i < nBlockSize; i++)
         {
-            ((GUInt16 *)pImage)[i] = iScan[j + nBand - 1];
+            ((uint16_t *)pImage)[i] = iScan[j + nBand - 1];
             j += poGDS->nBands;
         }
     }
@@ -568,7 +568,7 @@ CPLErr L1BRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     {
         for (i = nBlockSize - 1, j = 0; i >= 0; i--)
         {
-            ((GUInt16 *)pImage)[i] = iScan[j + nBand - 1];
+            ((uint16_t *)pImage)[i] = iScan[j + nBand - 1];
             j += poGDS->nBands;
         }
     }
@@ -676,36 +676,36 @@ const GDAL_GCP *L1BDataset::GetGCPs()
 /*      Byte swapping helpers                                           */
 /************************************************************************/
 
-GUInt16 L1BDataset::GetUInt16(const void *pabyData) const
+uint16_t L1BDataset::GetUInt16(const void *pabyData) const
 {
-    GUInt16 iTemp;
+    uint16_t iTemp;
     memcpy(&iTemp, pabyData, 2);
     if (bByteSwap)
         return CPL_SWAP16(iTemp);
     return iTemp;
 }
 
-GInt16 L1BDataset::GetInt16(const void *pabyData) const
+int16_t L1BDataset::GetInt16(const void *pabyData) const
 {
-    GInt16 iTemp;
+    int16_t iTemp;
     memcpy(&iTemp, pabyData, 2);
     if (bByteSwap)
         return CPL_SWAP16(iTemp);
     return iTemp;
 }
 
-GUInt32 L1BDataset::GetUInt32(const void *pabyData) const
+uint32_t L1BDataset::GetUInt32(const void *pabyData) const
 {
-    GUInt32 lTemp;
+    uint32_t lTemp;
     memcpy(&lTemp, pabyData, 4);
     if (bByteSwap)
         return CPL_SWAP32(lTemp);
     return lTemp;
 }
 
-GInt32 L1BDataset::GetInt32(const void *pabyData) const
+int32_t L1BDataset::GetInt32(const void *pabyData) const
 {
-    GInt32 lTemp;
+    int32_t lTemp;
     memcpy(&lTemp, pabyData, 4);
     if (bByteSwap)
         return CPL_SWAP32(lTemp);
@@ -720,18 +720,18 @@ void L1BDataset::FetchNOAA9TimeCode(TimeCode *psTime,
                                     const GByte *piRecordHeader,
                                     int *peLocationIndicator)
 {
-    GUInt32 lTemp;
+    uint32_t lTemp;
 
     lTemp = ((piRecordHeader[2] >> 1) & 0x7F);
     psTime->SetYear((lTemp > 77)
                         ? (lTemp + 1900)
                         : (lTemp + 2000));  // Avoid `Year 2000' problem
-    psTime->SetDay((GUInt32)(piRecordHeader[2] & 0x01) << 8 |
-                   (GUInt32)piRecordHeader[3]);
-    psTime->SetMillisecond(((GUInt32)(piRecordHeader[4] & 0x07) << 24) |
-                           ((GUInt32)piRecordHeader[5] << 16) |
-                           ((GUInt32)piRecordHeader[6] << 8) |
-                           (GUInt32)piRecordHeader[7]);
+    psTime->SetDay((uint32_t)(piRecordHeader[2] & 0x01) << 8 |
+                   (uint32_t)piRecordHeader[3]);
+    psTime->SetMillisecond(((uint32_t)(piRecordHeader[4] & 0x07) << 24) |
+                           ((uint32_t)piRecordHeader[5] << 16) |
+                           ((uint32_t)piRecordHeader[6] << 8) |
+                           (uint32_t)piRecordHeader[7]);
     if (peLocationIndicator)
     {
         *peLocationIndicator =
@@ -814,20 +814,20 @@ int L1BDataset::FetchGCPs(GDAL_GCP *pasGCPListRow, GByte *pabyRecordHeader,
     {
         if (eSpacecraftID <= NOAA14)
         {
-            GInt16 nRawY = GetInt16(pabyRecordHeader);
-            pabyRecordHeader += sizeof(GInt16);
-            GInt16 nRawX = GetInt16(pabyRecordHeader);
-            pabyRecordHeader += sizeof(GInt16);
+            int16_t nRawY = GetInt16(pabyRecordHeader);
+            pabyRecordHeader += sizeof(int16_t);
+            int16_t nRawX = GetInt16(pabyRecordHeader);
+            pabyRecordHeader += sizeof(int16_t);
 
             pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA9_GCP_SCALE;
             pasGCPListRow[nGCPCountRow].dfGCPX = nRawX / L1B_NOAA9_GCP_SCALE;
         }
         else
         {
-            GInt32 nRawY = GetInt32(pabyRecordHeader);
-            pabyRecordHeader += sizeof(GInt32);
-            GInt32 nRawX = GetInt32(pabyRecordHeader);
-            pabyRecordHeader += sizeof(GInt32);
+            int32_t nRawY = GetInt32(pabyRecordHeader);
+            pabyRecordHeader += sizeof(int32_t);
+            int32_t nRawX = GetInt32(pabyRecordHeader);
+            pabyRecordHeader += sizeof(int32_t);
 
             pasGCPListRow[nGCPCountRow].dfGCPY = nRawY / L1B_NOAA15_GCP_SCALE;
             pasGCPListRow[nGCPCountRow].dfGCPX = nRawX / L1B_NOAA15_GCP_SCALE;
@@ -1089,7 +1089,7 @@ void L1BDataset::FetchMetadata()
         CPL_IGNORE_RET_VAL(
             VSIFReadL(pabyRecordHeader, 1, nRecordDataStart, fp));
 
-        GUInt16 nScanlineNumber = GetUInt16(pabyRecordHeader);
+        uint16_t nScanlineNumber = GetUInt16(pabyRecordHeader);
 
         TimeCode timeCode;
         FetchTimeCode(&timeCode, pabyRecordHeader, nullptr);
@@ -1116,7 +1116,7 @@ void L1BDataset::FetchMetadata()
             (pabyRecordHeader[10] >> 4) & 1, (pabyRecordHeader[10] >> 3) & 1));
         CPL_IGNORE_RET_VAL(
             VSIFPrintfL(fpCSV, "%d,", pabyRecordHeader[11] >> 2));
-        GInt32 i32;
+        int32_t i32;
         for (int i = 0; i < 10; i++)
         {
             i32 = GetInt32(pabyRecordHeader + 12 + 4 * i);
@@ -1238,10 +1238,10 @@ void L1BDataset::FetchMetadataNOAA15()
     CPL_IGNORE_RET_VAL(VSIFPrintfL(fpCSV, "\n"));
 
     GByte *pabyRecordHeader = (GByte *)CPLMalloc(nRecordDataStart);
-    GInt16 i16;
-    GUInt16 n16;
-    GInt32 i32;
-    GUInt32 n32;
+    int16_t i16;
+    uint16_t n16;
+    int32_t i32;
+    uint32_t n32;
 
     for (int nBlockYOff = 0; nBlockYOff < nRasterYSize; nBlockYOff++)
     {
@@ -1255,7 +1255,7 @@ void L1BDataset::FetchMetadataNOAA15()
         CPL_IGNORE_RET_VAL(
             VSIFReadL(pabyRecordHeader, 1, nRecordDataStart, fp));
 
-        GUInt16 nScanlineNumber = GetUInt16(pabyRecordHeader);
+        uint16_t nScanlineNumber = GetUInt16(pabyRecordHeader);
 
         TimeCode timeCode;
         FetchTimeCode(&timeCode, pabyRecordHeader, nullptr);
@@ -2992,7 +2992,7 @@ CPLErr L1BNOAA15AnglesRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
     for (i = 0; i < nRasterXSize; i++)
     {
-        GInt16 i16 =
+        int16_t i16 =
             poL1BDS->GetInt16(pabyRecordHeader + 328 + 6 * i + 2 * (nBand - 1));
         pafData[i] = i16 / 100.0f;
     }
@@ -3378,7 +3378,7 @@ GDALDataset *L1BDataset::Open(GDALOpenInfo *poOpenInfo)
     else if (poDS->bGuessDataFormat)
     {
         int nTempYSize;
-        GUInt16 nScanlineNumber;
+        uint16_t nScanlineNumber;
         int j;
 
         /* If the data format is unspecified, try each one of the 3 known data

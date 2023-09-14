@@ -60,12 +60,12 @@ typedef struct
     GByte color_table[256][3];
 
     bool got_bounds;
-    GUInt32 min_x;
-    GUInt32 min_y;
-    GUInt32 min_z;
-    GUInt32 max_x;
-    GUInt32 max_y;
-    GUInt32 max_z;
+    uint32_t min_x;
+    uint32_t min_y;
+    uint32_t min_z;
+    uint32_t max_x;
+    uint32_t max_y;
+    uint32_t max_z;
 
     bool has_spatial_filter;
     bool sf_converted_to_uor;
@@ -73,10 +73,10 @@ typedef struct
     bool select_complex_group;
     bool in_complex_group;
 
-    GUInt32 sf_min_x;
-    GUInt32 sf_min_y;
-    GUInt32 sf_max_x;
-    GUInt32 sf_max_y;
+    uint32_t sf_min_x;
+    uint32_t sf_min_y;
+    uint32_t sf_max_x;
+    uint32_t sf_max_y;
 
     double sf_min_x_geo;
     double sf_min_y_geo;
@@ -87,7 +87,7 @@ typedef struct
 #define DGN_INT32(p) ((p)[2] + ((p)[3] << 8) + ((p)[1] << 24) + ((p)[0] << 16))
 #define DGN_WRITE_INT32(n, p)                                                  \
     {                                                                          \
-        GInt32 nMacroWork = (GInt32)(n);                                       \
+        int32_t nMacroWork = (int32_t)(n);                                     \
         ((unsigned char *)p)[0] =                                              \
             (unsigned char)((nMacroWork & 0x00ff0000) >> 16);                  \
         ((unsigned char *)p)[1] =                                              \

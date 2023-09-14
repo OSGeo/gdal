@@ -2118,9 +2118,9 @@ int VSIGZipWriteHandleMT::Close()
 
     if (nDeflateType_ == CPL_DEFLATE_TYPE_GZIP)
     {
-        const GUInt32 anTrailer[2] = {
-            CPL_LSBWORD32(static_cast<GUInt32>(nCRC_)),
-            CPL_LSBWORD32(static_cast<GUInt32>(nCurOffset_))};
+        const uint32_t anTrailer[2] = {
+            CPL_LSBWORD32(static_cast<uint32_t>(nCRC_)),
+            CPL_LSBWORD32(static_cast<uint32_t>(nCurOffset_))};
 
         if (poBaseHandle_->Write(anTrailer, 1, 8) < 8)
         {
@@ -2725,9 +2725,9 @@ int VSIGZipWriteHandle::Close()
 
         if (nRet == 0 && nDeflateType == CPL_DEFLATE_TYPE_GZIP)
         {
-            const GUInt32 anTrailer[2] = {
-                CPL_LSBWORD32(static_cast<GUInt32>(nCRC)),
-                CPL_LSBWORD32(static_cast<GUInt32>(nCurOffset))};
+            const uint32_t anTrailer[2] = {
+                CPL_LSBWORD32(static_cast<uint32_t>(nCRC)),
+                CPL_LSBWORD32(static_cast<uint32_t>(nCurOffset))};
 
             if (m_poBaseHandle->Write(anTrailer, 1, 8) < 8)
             {

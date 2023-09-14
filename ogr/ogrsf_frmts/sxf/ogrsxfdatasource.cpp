@@ -306,7 +306,7 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE *fpSXFIn,
 
         // read year
         memcpy(date, buff, 2);
-        passport.dtCrateDate.nYear = static_cast<GUInt16>(atoi(date));
+        passport.dtCrateDate.nYear = static_cast<uint16_t>(atoi(date));
         if (passport.dtCrateDate.nYear < 50)
             passport.dtCrateDate.nYear += 2000;
         else
@@ -314,11 +314,11 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE *fpSXFIn,
 
         memcpy(date, buff + 2, 2);
 
-        passport.dtCrateDate.nMonth = static_cast<GUInt16>(atoi(date));
+        passport.dtCrateDate.nMonth = static_cast<uint16_t>(atoi(date));
 
         memcpy(date, buff + 4, 2);
 
-        passport.dtCrateDate.nDay = static_cast<GUInt16>(atoi(date));
+        passport.dtCrateDate.nDay = static_cast<uint16_t>(atoi(date));
 
         char szName[26] = {0};
         memcpy(szName, buff + 8, 24);
@@ -348,16 +348,16 @@ OGRErr OGRSXFDataSource::ReadSXFDescription(VSILFILE *fpSXFIn,
 
         // read year
         memcpy(date, buff, 4);
-        passport.dtCrateDate.nYear = static_cast<GUInt16>(atoi(date));
+        passport.dtCrateDate.nYear = static_cast<uint16_t>(atoi(date));
 
         memcpy(date, buff + 4, 2);
         memset(date + 2, 0, 3);
 
-        passport.dtCrateDate.nMonth = static_cast<GUInt16>(atoi(date));
+        passport.dtCrateDate.nMonth = static_cast<uint16_t>(atoi(date));
 
         memcpy(date, buff + 6, 2);
 
-        passport.dtCrateDate.nDay = static_cast<GUInt16>(atoi(date));
+        passport.dtCrateDate.nDay = static_cast<uint16_t>(atoi(date));
 
         char szName[32] = {0};
         memcpy(szName, buff + 12, 32);
@@ -685,10 +685,10 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE *fpSXFIn,
         VSIFSeekL(fpSXFIn, 212, SEEK_SET);
         struct _buff
         {
-            GUInt32 nRes;
-            GInt16 anFrame[8];
+            uint32_t nRes;
+            int16_t anFrame[8];
             // cppcheck-suppress unusedStructMember
-            GUInt32 nFrameCode;
+            uint32_t nFrameCode;
         } buff;
         if (VSIFReadL(&buff, 20, 1, fpSXFIn) != 1)
             return OGRERR_FAILURE;
@@ -753,7 +753,7 @@ OGRErr OGRSXFDataSource::ReadSXFMapDescription(VSILFILE *fpSXFIn,
         }
 
         VSIFSeekL(fpSXFIn, 312, SEEK_SET);
-        GUInt32 buff[10];
+        uint32_t buff[10];
         if (VSIFReadL(&buff, 40, 1, fpSXFIn) != 1)
             return OGRERR_FAILURE;
         for (int i = 0; i < 10; i++)
@@ -1001,7 +1001,7 @@ void OGRSXFDataSource::FillLayers()
     vsi_l_offset nOffset = 0;
 
     // get record count
-    GUInt32 nRecordCountMax = 0;
+    uint32_t nRecordCountMax = 0;
     if (oSXFPassport.version == 3)
     {
         VSIFSeekL(fpSXF, 288, SEEK_SET);
@@ -1028,9 +1028,9 @@ void OGRSXFDataSource::FillLayers()
 
     VSIFSeekL(fpSXF, nOffset, SEEK_SET);
 
-    for (GUInt32 nFID = 0; nFID < nRecordCountMax; nFID++)
+    for (uint32_t nFID = 0; nFID < nRecordCountMax; nFID++)
     {
-        GInt32 buff[6];
+        int32_t buff[6];
         nObjectsRead = static_cast<int>(VSIFReadL(&buff, 24, 1, fpSXF));
         for (int i = 0; i < 6; i++)
         {
@@ -1165,14 +1165,14 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
     GByte szLayersID[4];
     struct _layer
     {
-        GUInt32 nLength;
+        uint32_t nLength;
         char szName[32];
         char szShortName[16];
         GByte nNo;
         // cppcheck-suppress unusedStructMember
         GByte nPos;
         // cppcheck-suppress unusedStructMember
-        GUInt16 nSemanticCount;
+        uint16_t nSemanticCount;
     };
 
     VSIFSeekL(fpRSC, stRSCFileHeader.Layers.nOffset - sizeof(szLayersID),
@@ -1181,7 +1181,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
     vsi_l_offset nOffset = stRSCFileHeader.Layers.nOffset;
     _layer LAYER;
 
-    for (GUInt32 i = 0; i < stRSCFileHeader.Layers.nRecordCount; ++i)
+    for (uint32_t i = 0; i < stRSCFileHeader.Layers.nRecordCount; ++i)
     {
         VSIFReadL(&LAYER, sizeof(LAYER), 1, fpRSC);
         CPL_LSBPTR32(&(LAYER.nLength));
@@ -1256,7 +1256,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
     nOffset = stRSCFileHeader.Objects.nOffset;
     _object OBJECT;
 
-    for (GUInt32 i = 0; i < stRSCFileHeader.Objects.nRecordCount; ++i)
+    for (uint32_t i = 0; i < stRSCFileHeader.Objects.nRecordCount; ++i)
     {
         VSIFReadL(&OBJECT, sizeof(_object), 1, fpRSC);
         CPL_LSBPTR32(&(OBJECT.nLength));

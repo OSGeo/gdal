@@ -2061,7 +2061,7 @@ CPLErr MRFDataset::ZenCopy(GDALDataset *poSrc, GDALProgressFunc pfnProgress,
                               nPixelCount, nBandCount, bFirstBandOnly);
                     break;
                 case GDT_UInt16:
-                    ZenFilter(reinterpret_cast<GUInt16 *>(buffer), buffer_mask,
+                    ZenFilter(reinterpret_cast<uint16_t *>(buffer), buffer_mask,
                               nPixelCount, nBandCount, bFirstBandOnly);
                     break;
                 default:

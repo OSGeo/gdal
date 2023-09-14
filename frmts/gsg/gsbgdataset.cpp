@@ -53,7 +53,7 @@ class GSBGDataset final : public GDALPamDataset
     static const float fNODATA_VALUE;
     static const size_t nHEADER_SIZE;
 
-    static CPLErr WriteHeader(VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
+    static CPLErr WriteHeader(VSILFILE *fp, int16_t nXSize, int16_t nYSize,
                               double dfMinX, double dfMaxX, double dfMinY,
                               double dfMaxY, double dfMinZ, double dfMaxZ);
 
@@ -415,8 +415,8 @@ CPLErr GSBGRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (bHeaderNeedsUpdate && dfMaxZ > dfMinZ)
     {
-        CPLErr eErr = poGDS->WriteHeader(poGDS->fp, (GInt16)nRasterXSize,
-                                         (GInt16)nRasterYSize, dfMinX, dfMaxX,
+        CPLErr eErr = poGDS->WriteHeader(poGDS->fp, (int16_t)nRasterXSize,
+                                         (int16_t)nRasterYSize, dfMinX, dfMaxX,
                                          dfMinY, dfMaxY, dfMinZ, dfMaxZ);
         return eErr;
     }
@@ -523,7 +523,7 @@ GDALDataset *GSBGDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     /* Parse number of X axis grid rows */
-    GInt16 nTemp;
+    int16_t nTemp;
     if (VSIFReadL((void *)&nTemp, 2, 1, poDS->fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Unable to read raster X size.\n");
@@ -684,8 +684,8 @@ CPLErr GSBGDataset::SetGeoTransform(double *padfGeoTransform)
         padfGeoTransform[5] * (nRasterYSize - 0.5) + padfGeoTransform[3];
     double dfMaxY = padfGeoTransform[3] + padfGeoTransform[5] / 2;
 
-    CPLErr eErr = WriteHeader(fp, (GInt16)poGRB->nRasterXSize,
-                              (GInt16)poGRB->nRasterYSize, dfMinX, dfMaxX,
+    CPLErr eErr = WriteHeader(fp, (int16_t)poGRB->nRasterXSize,
+                              (int16_t)poGRB->nRasterYSize, dfMinX, dfMaxX,
                               dfMinY, dfMaxY, poGRB->dfMinZ, poGRB->dfMaxZ);
 
     if (eErr == CE_None)
@@ -703,7 +703,7 @@ CPLErr GSBGDataset::SetGeoTransform(double *padfGeoTransform)
 /*                             WriteHeader()                            */
 /************************************************************************/
 
-CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
+CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, int16_t nXSize, int16_t nYSize,
                                 double dfMinX, double dfMaxX, double dfMinY,
                                 double dfMaxY, double dfMinZ, double dfMaxZ)
 
@@ -722,7 +722,7 @@ CPLErr GSBGDataset::WriteHeader(VSILFILE *fp, GInt16 nXSize, GInt16 nYSize,
         return CE_Failure;
     }
 
-    GInt16 nTemp = CPL_LSBWORD16(nXSize);
+    int16_t nTemp = CPL_LSBWORD16(nXSize);
     if (VSIFWriteL((void *)&nTemp, 2, 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -845,7 +845,7 @@ GDALDataset *GSBGDataset::Create(const char *pszFilename, int nXSize,
         return nullptr;
     }
 
-    CPLErr eErr = WriteHeader(fp, (GInt16)nXSize, (GInt16)nYSize, 0.0, nXSize,
+    CPLErr eErr = WriteHeader(fp, (int16_t)nXSize, (int16_t)nYSize, 0.0, nXSize,
                               0.0, nYSize, 0.0, 0.0);
     if (eErr != CE_None)
     {
@@ -939,8 +939,8 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    GInt16 nXSize = (GInt16)poSrcBand->GetXSize();
-    GInt16 nYSize = (GInt16)poSrcBand->GetYSize();
+    int16_t nXSize = (int16_t)poSrcBand->GetXSize();
+    int16_t nYSize = (int16_t)poSrcBand->GetYSize();
     double adfGeoTransform[6];
 
     poSrcDS->GetGeoTransform(adfGeoTransform);
@@ -972,7 +972,7 @@ GDALDataset *GSBGDataset::CreateCopy(const char *pszFilename,
     float fSrcNoDataValue = (float)poSrcBand->GetNoDataValue(&bSrcHasNDValue);
     double dfMinZ = std::numeric_limits<double>::max();
     double dfMaxZ = std::numeric_limits<double>::lowest();
-    for (GInt16 iRow = nYSize - 1; iRow >= 0; iRow--)
+    for (int16_t iRow = nYSize - 1; iRow >= 0; iRow--)
     {
         eErr = poSrcBand->RasterIO(GF_Read, 0, iRow, nXSize, 1, pfData, nXSize,
                                    1, GDT_Float32, 0, 0, nullptr);

@@ -361,7 +361,7 @@ OGRErr OGRCurveCollection::exportToWkb(const OGRGeometry *poGeom,
     /*      Set the geometry feature type, ensuring that 3D flag is         */
     /*      preserved.                                                      */
     /* -------------------------------------------------------------------- */
-    GUInt32 nGType = poGeom->getIsoGeometryType();
+    uint32_t nGType = poGeom->getIsoGeometryType();
     if (eWkbVariant == wkbVariantPostGIS1)
     {
         const bool bIs3D = wkbHasZ(static_cast<OGRwkbGeometryType>(nGType));

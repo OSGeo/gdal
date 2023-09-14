@@ -523,15 +523,15 @@ static void RemapNoData(GDALDataType eDataType, void *pBuffer, int nItems,
     }
     else if (eDataType == GDT_UInt16)
     {
-        RemapNoDataT(reinterpret_cast<GUInt16 *>(pBuffer), nItems,
-                     static_cast<GUInt16>(dfSrcNoData),
-                     static_cast<GUInt16>(dfDstNoData));
+        RemapNoDataT(reinterpret_cast<uint16_t *>(pBuffer), nItems,
+                     static_cast<uint16_t>(dfSrcNoData),
+                     static_cast<uint16_t>(dfDstNoData));
     }
     else if (eDataType == GDT_Int16)
     {
-        RemapNoDataT(reinterpret_cast<GInt16 *>(pBuffer), nItems,
-                     static_cast<GInt16>(dfSrcNoData),
-                     static_cast<GInt16>(dfDstNoData));
+        RemapNoDataT(reinterpret_cast<int16_t *>(pBuffer), nItems,
+                     static_cast<int16_t>(dfSrcNoData),
+                     static_cast<int16_t>(dfDstNoData));
     }
     else
     {
@@ -1265,15 +1265,15 @@ CPLErr ISISMaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     }
     else if (eSrcDT == GDT_UInt16)
     {
-        FillMask<GUInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                          NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
-                          HIGH_INSTR_SATU2, HIGH_REPR_SATU2);
+        FillMask<uint16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize,
+                           nBlockXSize, NULLU2, LOW_REPR_SATU2, LOW_INSTR_SATU2,
+                           HIGH_INSTR_SATU2, HIGH_REPR_SATU2);
     }
     else if (eSrcDT == GDT_Int16)
     {
-        FillMask<GInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                         NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2, HIGH_INSTR_SAT2,
-                         HIGH_REPR_SAT2);
+        FillMask<int16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                          NULL2, LOW_REPR_SAT2, LOW_INSTR_SAT2, HIGH_INSTR_SAT2,
+                          HIGH_REPR_SAT2);
     }
     else
     {

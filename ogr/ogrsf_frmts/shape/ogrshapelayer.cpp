@@ -2445,7 +2445,8 @@ int OGRShapeLayer::ResetGeomType(int nNewGeomType)
         hSHP->sHooks.FRead(abyHeader, 100, 1, hSHP->fpSHP) != 1)
         return FALSE;
 
-    *(reinterpret_cast<GInt32 *>(abyHeader + 32)) = CPL_LSBWORD32(nNewGeomType);
+    *(reinterpret_cast<int32_t *>(abyHeader + 32)) =
+        CPL_LSBWORD32(nNewGeomType);
 
     if (hSHP->sHooks.FSeek(hSHP->fpSHP, 0, SEEK_SET) != 0 ||
         hSHP->sHooks.FWrite(abyHeader, 100, 1, hSHP->fpSHP) != 1)
@@ -2463,7 +2464,8 @@ int OGRShapeLayer::ResetGeomType(int nNewGeomType)
         hSHP->sHooks.FRead(abyHeader, 100, 1, hSHP->fpSHX) != 1)
         return FALSE;
 
-    *(reinterpret_cast<GInt32 *>(abyHeader + 32)) = CPL_LSBWORD32(nNewGeomType);
+    *(reinterpret_cast<int32_t *>(abyHeader + 32)) =
+        CPL_LSBWORD32(nNewGeomType);
 
     if (hSHP->sHooks.FSeek(hSHP->fpSHX, 0, SEEK_SET) != 0 ||
         hSHP->sHooks.FWrite(abyHeader, 100, 1, hSHP->fpSHX) != 1)

@@ -218,8 +218,8 @@ CPLErr AAIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
                         DoubleToFloatClamp(CPLAtofM(szToken));
             }
             else
-                reinterpret_cast<GInt32 *>(pImage)[iPixel] =
-                    static_cast<GInt32>(atoi(szToken));
+                reinterpret_cast<int32_t *>(pImage)[iPixel] =
+                    static_cast<int32_t>(atoi(szToken));
         }
 
         iPixel++;

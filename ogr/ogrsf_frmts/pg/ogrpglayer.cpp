@@ -891,8 +891,8 @@ OGRFeature *OGRPGLayer::RecordToFeature(PGresult *hResult,
                         }
                         else
                         {
-                            CPLAssert(nSize == sizeof(GInt16));
-                            GInt16 nVal = 0;
+                            CPLAssert(nSize == sizeof(int16_t));
+                            int16_t nVal = 0;
                             memcpy(&nVal, pData, nSize);
                             CPL_MSBPTR16(&nVal);
                             panList[i] = nVal;

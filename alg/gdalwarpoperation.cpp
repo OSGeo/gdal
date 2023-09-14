@@ -2179,7 +2179,7 @@ CPLErr GDALWarpOperation::WarpRegionToBuffer(
             static_cast<GPtrDiff_t>(oWK.nDstXSize) * oWK.nDstYSize;
 
         eErr = CreateKernelMask(&oWK, 0 /* not used */, "DstValid");
-        GUInt32 *panBandMask =
+        uint32_t *panBandMask =
             eErr == CE_None ? CPLMaskCreate(nMaskBits, true) : nullptr;
 
         if (eErr == CE_None && panBandMask != nullptr)
@@ -2351,7 +2351,7 @@ CPLErr GDALWarpOperation::CreateKernelMask(GDALWarpKernel *poKernel, int iBand,
     if (EQUAL(pszType, "BandSrcValid"))
     {
         if (poKernel->papanBandSrcValid == nullptr)
-            poKernel->papanBandSrcValid = static_cast<GUInt32 **>(
+            poKernel->papanBandSrcValid = static_cast<uint32_t **>(
                 CPLCalloc(sizeof(void *), poKernel->nBands));
 
         ppMask =

@@ -191,19 +191,21 @@ static void gvBurnScanline(void *pCBData, int nY, int nXStart, int nXEnd,
             gvBurnScanlineBasic<GByte>(psInfo, nY, nXStart, nXEnd, dfVariant);
             break;
         case GDT_Int8:
-            gvBurnScanlineBasic<GInt8>(psInfo, nY, nXStart, nXEnd, dfVariant);
+            gvBurnScanlineBasic<int8_t>(psInfo, nY, nXStart, nXEnd, dfVariant);
             break;
         case GDT_Int16:
-            gvBurnScanlineBasic<GInt16>(psInfo, nY, nXStart, nXEnd, dfVariant);
+            gvBurnScanlineBasic<int16_t>(psInfo, nY, nXStart, nXEnd, dfVariant);
             break;
         case GDT_UInt16:
-            gvBurnScanlineBasic<GUInt16>(psInfo, nY, nXStart, nXEnd, dfVariant);
+            gvBurnScanlineBasic<uint16_t>(psInfo, nY, nXStart, nXEnd,
+                                          dfVariant);
             break;
         case GDT_Int32:
-            gvBurnScanlineBasic<GInt32>(psInfo, nY, nXStart, nXEnd, dfVariant);
+            gvBurnScanlineBasic<int32_t>(psInfo, nY, nXStart, nXEnd, dfVariant);
             break;
         case GDT_UInt32:
-            gvBurnScanlineBasic<GUInt32>(psInfo, nY, nXStart, nXEnd, dfVariant);
+            gvBurnScanlineBasic<uint32_t>(psInfo, nY, nXStart, nXEnd,
+                                          dfVariant);
             break;
         case GDT_Int64:
             gvBurnScanlineBasic<std::int64_t>(psInfo, nY, nXStart, nXEnd,
@@ -305,19 +307,19 @@ static void gvBurnPoint(void *pCBData, int nY, int nX, double dfVariant)
             gvBurnPointBasic<GByte>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_Int8:
-            gvBurnPointBasic<GInt8>(psInfo, nY, nX, dfVariant);
+            gvBurnPointBasic<int8_t>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_Int16:
-            gvBurnPointBasic<GInt16>(psInfo, nY, nX, dfVariant);
+            gvBurnPointBasic<int16_t>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_UInt16:
-            gvBurnPointBasic<GUInt16>(psInfo, nY, nX, dfVariant);
+            gvBurnPointBasic<uint16_t>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_Int32:
-            gvBurnPointBasic<GInt32>(psInfo, nY, nX, dfVariant);
+            gvBurnPointBasic<int32_t>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_UInt32:
-            gvBurnPointBasic<GUInt32>(psInfo, nY, nX, dfVariant);
+            gvBurnPointBasic<uint32_t>(psInfo, nY, nX, dfVariant);
             break;
         case GDT_Int64:
             gvBurnPointBasic<std::int64_t>(psInfo, nY, nX, dfVariant);

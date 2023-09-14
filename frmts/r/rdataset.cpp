@@ -202,7 +202,7 @@ int RDataset::ReadInteger()
         return atoi(ASCIIFGets());
     }
 
-    GInt32 nValue = 0;
+    int32_t nValue = 0;
 
     if (VSIFReadL(&nValue, 4, 1, fp) != 1)
         return -1;

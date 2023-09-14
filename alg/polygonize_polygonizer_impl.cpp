@@ -5,9 +5,9 @@ namespace gdal
 namespace polygonizer
 {
 
-template class Polygonizer<GInt32, std::int64_t>;
+template class Polygonizer<int32_t, std::int64_t>;
 
-template class Polygonizer<GInt32, float>;
+template class Polygonizer<int32_t, float>;
 
 template class OGRPolygonWriter<std::int64_t>;
 

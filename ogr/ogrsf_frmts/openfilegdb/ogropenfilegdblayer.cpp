@@ -321,7 +321,7 @@ void OGROpenFileGDBLayer::TryToDetectMultiPatchKind()
     delete poGeom;
 
     int nLastIdx = m_poLyrTable->GetTotalRecordCount() - 1;
-    const GUInt32 nErrorCount = CPLGetErrorCounter();
+    const uint32_t nErrorCount = CPLGetErrorCounter();
     while (nLastIdx > nFirstIdx &&
            m_poLyrTable->GetOffsetInTableForRow(nLastIdx) == 0 &&
            nErrorCount == CPLGetErrorCounter())
@@ -1108,7 +1108,7 @@ static int FillTargetValueFromSrcExpr(OGRFieldDefn *poFieldDefn,
                     sscanf(poSrcValue->string_value, "%02d:%02d:%02d", &nHour,
                            &nMin, &nSec) == 3)
                 {
-                    poTargetValue->Date.Year = static_cast<GInt16>(nYear);
+                    poTargetValue->Date.Year = static_cast<int16_t>(nYear);
                     poTargetValue->Date.Month = static_cast<GByte>(nMonth);
                     poTargetValue->Date.Day = static_cast<GByte>(nDay);
                     poTargetValue->Date.Hour = static_cast<GByte>(nHour);

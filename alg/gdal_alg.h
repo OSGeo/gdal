@@ -436,13 +436,13 @@ typedef struct
      *
      * Do not search for more points than this number.
      */
-    GUInt32 nMaxPoints;
+    uint32_t nMaxPoints;
     /*! Minimum number of data points to use.
      *
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
-    GUInt32 nMinPoints;
+    uint32_t nMinPoints;
     /*! No data marker to fill empty points. */
     double dfNoDataValue;
 } GDALGridInverseDistanceToAPowerOptions;
@@ -465,26 +465,26 @@ typedef struct
      *
      * Do not search for more points than this number.
      */
-    GUInt32 nMaxPoints;
+    uint32_t nMaxPoints;
     /*! Minimum number of data points to use.
      *
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
-    GUInt32 nMinPoints;
+    uint32_t nMinPoints;
     /*! No data marker to fill empty points. */
     double dfNoDataValue;
     /*! Maximum number of data points to use for each of the 4 quadrants.
      *
      * Do not search for more points than this number.
      */
-    GUInt32 nMaxPointsPerQuadrant;
+    uint32_t nMaxPointsPerQuadrant;
     /*! Minimum number of data points to use for each of the 4 quadrants.
      *
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
-    GUInt32 nMinPointsPerQuadrant;
+    uint32_t nMinPointsPerQuadrant;
 } GDALGridInverseDistanceToAPowerNearestNeighborOptions;
 
 /** Moving average method control options */
@@ -506,26 +506,26 @@ typedef struct
      *
      * Do not search for more points than this number.
      */
-    GUInt32 nMaxPoints;
+    uint32_t nMaxPoints;
     /*! Minimum number of data points to average.
      *
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
-    GUInt32 nMinPoints;
+    uint32_t nMinPoints;
     /*! No data marker to fill empty points. */
     double dfNoDataValue;
     /*! Maximum number of data points to use for each of the 4 quadrants.
      *
      * Do not search for more points than this number.
      */
-    GUInt32 nMaxPointsPerQuadrant;
+    uint32_t nMaxPointsPerQuadrant;
     /*! Minimum number of data points to use for each of the 4 quadrants.
      *
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
-    GUInt32 nMinPointsPerQuadrant;
+    uint32_t nMinPointsPerQuadrant;
 } GDALGridMovingAverageOptions;
 
 /** Nearest neighbor method control options */
@@ -567,20 +567,20 @@ typedef struct
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
-    GUInt32 nMinPoints;
+    uint32_t nMinPoints;
     /*! No data marker to fill empty points. */
     double dfNoDataValue;
     /*! Maximum number of data points to use for each of the 4 quadrants.
      *
      * Do not search for more points than this number.
      */
-    GUInt32 nMaxPointsPerQuadrant;
+    uint32_t nMaxPointsPerQuadrant;
     /*! Minimum number of data points to use for each of the 4 quadrants.
      *
      * If less amount of points found the grid node considered empty and will
      * be filled with NODATA marker.
      */
-    GUInt32 nMinPointsPerQuadrant;
+    uint32_t nMinPointsPerQuadrant;
 } GDALGridDataMetricsOptions;
 
 /** Linear method control options */
@@ -599,25 +599,27 @@ typedef struct
     double dfNoDataValue;
 } GDALGridLinearOptions;
 
-CPLErr CPL_DLL GDALGridCreate(GDALGridAlgorithm, const void *, GUInt32,
+CPLErr CPL_DLL GDALGridCreate(GDALGridAlgorithm, const void *, uint32_t,
                               const double *, const double *, const double *,
-                              double, double, double, double, GUInt32, GUInt32,
-                              GDALDataType, void *, GDALProgressFunc, void *);
+                              double, double, double, double, uint32_t,
+                              uint32_t, GDALDataType, void *, GDALProgressFunc,
+                              void *);
 
 /** Grid context opaque type */
 typedef struct GDALGridContext GDALGridContext;
 
 GDALGridContext CPL_DLL *
 GDALGridContextCreate(GDALGridAlgorithm eAlgorithm, const void *poOptions,
-                      GUInt32 nPoints, const double *padfX, const double *padfY,
-                      const double *padfZ, int bCallerWillKeepPointArraysAlive);
+                      uint32_t nPoints, const double *padfX,
+                      const double *padfY, const double *padfZ,
+                      int bCallerWillKeepPointArraysAlive);
 
 void CPL_DLL GDALGridContextFree(GDALGridContext *psContext);
 
 CPLErr CPL_DLL GDALGridContextProcess(GDALGridContext *psContext, double dfXMin,
                                       double dfXMax, double dfYMin,
-                                      double dfYMax, GUInt32 nXSize,
-                                      GUInt32 nYSize, GDALDataType eType,
+                                      double dfYMax, uint32_t nXSize,
+                                      uint32_t nYSize, GDALDataType eType,
                                       void *pData, GDALProgressFunc pfnProgress,
                                       void *pProgressArg);
 

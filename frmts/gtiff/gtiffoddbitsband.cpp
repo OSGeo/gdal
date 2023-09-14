@@ -101,7 +101,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             return eErr;
     }
 
-    const GUInt32 nMaxVal = (1U << m_poGDS->m_nBitsPerSample) - 1;
+    const uint32_t nMaxVal = (1U << m_poGDS->m_nBitsPerSample) - 1;
 
     /* -------------------------------------------------------------------- */
     /*      Handle case of "separate" images or single band images where    */
@@ -168,11 +168,11 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             for (; iPixel < static_cast<GPtrDiff_t>(nBlockYSize) * nBlockXSize;
                  iPixel++)
             {
-                GUInt32 nInWord = static_cast<GUInt32 *>(pImage)[iPixel];
+                uint32_t nInWord = static_cast<uint32_t *>(pImage)[iPixel];
                 bool bClipWarn = m_poGDS->m_bClipWarn;
-                GUInt16 nHalf = CPLFloatToHalf(nInWord, bClipWarn);
+                uint16_t nHalf = CPLFloatToHalf(nInWord, bClipWarn);
                 m_poGDS->m_bClipWarn = bClipWarn;
-                reinterpret_cast<GUInt16 *>(m_poGDS->m_pabyBlockBuf)[iPixel] =
+                reinterpret_cast<uint16_t *>(m_poGDS->m_pabyBlockBuf)[iPixel] =
                     nHalf;
             }
 
@@ -194,7 +194,8 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             {
                 for (int iX = 0; iX < nBlockXSize; ++iX)
                 {
-                    GUInt32 nInWord = static_cast<GUInt16 *>(pImage)[iPixel++];
+                    uint32_t nInWord =
+                        static_cast<uint16_t *>(pImage)[iPixel++];
                     if (nInWord > nMaxVal)
                     {
                         nInWord = nMaxVal;
@@ -235,18 +236,18 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
             for (int iX = 0; iX < nBlockXSize; ++iX)
             {
-                GUInt32 nInWord = 0;
+                uint32_t nInWord = 0;
                 if (eDataType == GDT_Byte)
                 {
                     nInWord = static_cast<GByte *>(pImage)[iPixel++];
                 }
                 else if (eDataType == GDT_UInt16)
                 {
-                    nInWord = static_cast<GUInt16 *>(pImage)[iPixel++];
+                    nInWord = static_cast<uint16_t *>(pImage)[iPixel++];
                 }
                 else if (eDataType == GDT_UInt32)
                 {
-                    nInWord = static_cast<GUInt32 *>(pImage)[iPixel++];
+                    nInWord = static_cast<uint32_t *>(pImage)[iPixel++];
                 }
                 else
                 {
@@ -359,12 +360,12 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             for (; iPixel < static_cast<GPtrDiff_t>(nBlockYSize) * nBlockXSize;
                  iPixel++)
             {
-                GUInt32 nInWord =
-                    reinterpret_cast<const GUInt32 *>(pabyThisImage)[iPixel];
+                uint32_t nInWord =
+                    reinterpret_cast<const uint32_t *>(pabyThisImage)[iPixel];
                 bool bClipWarn = m_poGDS->m_bClipWarn;
-                GUInt16 nHalf = CPLFloatToHalf(nInWord, bClipWarn);
+                uint16_t nHalf = CPLFloatToHalf(nInWord, bClipWarn);
                 m_poGDS->m_bClipWarn = bClipWarn;
-                reinterpret_cast<GUInt16 *>(
+                reinterpret_cast<uint16_t *>(
                     m_poGDS->m_pabyBlockBuf)[iPixel * m_poGDS->nBands + iBand] =
                     nHalf;
             }
@@ -385,7 +386,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
             {
                 for (int iX = 0; iX < nBlockXSize; ++iX)
                 {
-                    GUInt32 nInWord = reinterpret_cast<const GUInt16 *>(
+                    uint32_t nInWord = reinterpret_cast<const uint16_t *>(
                         pabyThisImage)[iPixel++];
                     if (nInWord > nMaxVal)
                     {
@@ -430,7 +431,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
             for (int iX = 0; iX < nBlockXSize; ++iX)
             {
-                GUInt32 nInWord = 0;
+                uint32_t nInWord = 0;
                 if (eDataType == GDT_Byte)
                 {
                     nInWord =
@@ -438,12 +439,12 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                 }
                 else if (eDataType == GDT_UInt16)
                 {
-                    nInWord = reinterpret_cast<const GUInt16 *>(
+                    nInWord = reinterpret_cast<const uint16_t *>(
                         pabyThisImage)[iPixel++];
                 }
                 else if (eDataType == GDT_UInt32)
                 {
-                    nInWord = reinterpret_cast<const GUInt32 *>(
+                    nInWord = reinterpret_cast<const uint32_t *>(
                         pabyThisImage)[iPixel++];
                 }
                 else
@@ -686,8 +687,8 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         {
             for (GPtrDiff_t i = 0; i < nBlockPixels; ++i)
             {
-                static_cast<GUInt32 *>(pImage)[i] = CPLHalfToFloat(
-                    *reinterpret_cast<const GUInt16 *>(pabyImage));
+                static_cast<uint32_t *>(pImage)[i] = CPLHalfToFloat(
+                    *reinterpret_cast<const uint16_t *>(pabyImage));
                 pabyImage += iSkipBytes;
             }
         }
@@ -696,15 +697,15 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             for (GPtrDiff_t i = 0; i < nBlockPixels; ++i)
             {
 #ifdef CPL_MSB
-                static_cast<GUInt32 *>(pImage)[i] = CPLTripleToFloat(
-                    (static_cast<GUInt32>(*(pabyImage + 0)) << 16) |
-                    (static_cast<GUInt32>(*(pabyImage + 1)) << 8) |
-                    static_cast<GUInt32>(*(pabyImage + 2)));
+                static_cast<uint32_t *>(pImage)[i] = CPLTripleToFloat(
+                    (static_cast<uint32_t>(*(pabyImage + 0)) << 16) |
+                    (static_cast<uint32_t>(*(pabyImage + 1)) << 8) |
+                    static_cast<uint32_t>(*(pabyImage + 2)));
 #else
-                static_cast<GUInt32 *>(pImage)[i] = CPLTripleToFloat(
-                    (static_cast<GUInt32>(*(pabyImage + 2)) << 16) |
-                    (static_cast<GUInt32>(*(pabyImage + 1)) << 8) |
-                    static_cast<GUInt32>(*pabyImage));
+                static_cast<uint32_t *>(pImage)[i] = CPLTripleToFloat(
+                    (static_cast<uint32_t>(*(pabyImage + 2)) << 16) |
+                    (static_cast<uint32_t>(*(pabyImage + 1)) << 8) |
+                    static_cast<uint32_t>(*pabyImage));
 #endif
                 pabyImage += iSkipBytes;
             }
@@ -748,7 +749,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 {
                     // Starting on byte boundary.
 
-                    static_cast<GUInt16 *>(pImage)[iPixel++] =
+                    static_cast<uint16_t *>(pImage)[iPixel++] =
                         (m_poGDS->m_pabyBlockBuf[iByte] << 4) |
                         (m_poGDS->m_pabyBlockBuf[iByte + 1] >> 4);
                 }
@@ -756,7 +757,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 {
                     // Starting off byte boundary.
 
-                    static_cast<GUInt16 *>(pImage)[iPixel++] =
+                    static_cast<uint16_t *>(pImage)[iPixel++] =
                         ((m_poGDS->m_pabyBlockBuf[iByte] & 0xf) << 8) |
                         (m_poGDS->m_pabyBlockBuf[iByte + 1]);
                 }
@@ -796,15 +797,15 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             for (int iX = 0; iX < nBlockXSize; ++iX)
             {
 #ifdef CPL_MSB
-                static_cast<GUInt32 *>(pImage)[iPixel++] =
-                    (static_cast<GUInt32>(*(pabyImage + 2)) << 16) |
-                    (static_cast<GUInt32>(*(pabyImage + 1)) << 8) |
-                    static_cast<GUInt32>(*(pabyImage + 0));
+                static_cast<uint32_t *>(pImage)[iPixel++] =
+                    (static_cast<uint32_t>(*(pabyImage + 2)) << 16) |
+                    (static_cast<uint32_t>(*(pabyImage + 1)) << 8) |
+                    static_cast<uint32_t>(*(pabyImage + 0));
 #else
-                static_cast<GUInt32 *>(pImage)[iPixel++] =
-                    (static_cast<GUInt32>(*(pabyImage + 0)) << 16) |
-                    (static_cast<GUInt32>(*(pabyImage + 1)) << 8) |
-                    static_cast<GUInt32>(*(pabyImage + 2));
+                static_cast<uint32_t *>(pImage)[iPixel++] =
+                    (static_cast<uint32_t>(*(pabyImage + 0)) << 16) |
+                    (static_cast<uint32_t>(*(pabyImage + 1)) << 8) |
+                    static_cast<uint32_t>(*(pabyImage + 2));
 #endif
                 pabyImage += iPixelByteSkip;
             }
@@ -886,12 +887,12 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                     }
                     else if (eDataType == GDT_UInt16)
                     {
-                        static_cast<GUInt16 *>(pImage)[iPixel++] =
-                            static_cast<GUInt16>(nOutWord);
+                        static_cast<uint16_t *>(pImage)[iPixel++] =
+                            static_cast<uint16_t>(nOutWord);
                     }
                     else if (eDataType == GDT_UInt32)
                     {
-                        static_cast<GUInt32 *>(pImage)[iPixel++] = nOutWord;
+                        static_cast<uint32_t *>(pImage)[iPixel++] = nOutWord;
                     }
                     else
                     {

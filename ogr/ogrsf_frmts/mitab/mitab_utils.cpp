@@ -582,10 +582,10 @@ int TABUnitIdFromString(const char *pszName)
  *                       TABSaturatedAdd()
  ***********************************************************************/
 
-void TABSaturatedAdd(GInt32 &nVal, GInt32 nAdd)
+void TABSaturatedAdd(int32_t &nVal, int32_t nAdd)
 {
-    const GInt32 int_max = std::numeric_limits<GInt32>::max();
-    const GInt32 int_min = std::numeric_limits<GInt32>::min();
+    const int32_t int_max = std::numeric_limits<int32_t>::max();
+    const int32_t int_min = std::numeric_limits<int32_t>::min();
 
     if (nAdd >= 0 && nVal > int_max - nAdd)
         nVal = int_max;
@@ -601,7 +601,7 @@ void TABSaturatedAdd(GInt32 &nVal, GInt32 nAdd)
  *                           TABInt16Diff()
  **********************************************************************/
 
-GInt16 TABInt16Diff(int a, int b)
+int16_t TABInt16Diff(int a, int b)
 {
     GIntBig nDiff = static_cast<GIntBig>(a) - b;
     // Maybe we should error out instead of saturating ???
@@ -609,5 +609,5 @@ GInt16 TABInt16Diff(int a, int b)
         return -32768;
     if (nDiff > 32767)
         return 32767;
-    return static_cast<GInt16>(nDiff);
+    return static_cast<int16_t>(nDiff);
 }

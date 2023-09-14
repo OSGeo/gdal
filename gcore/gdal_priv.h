@@ -2759,7 +2759,7 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
     GDALExtendedDataType m_dt;
     int m_nValue = 0;
     double m_dfValue = 0;
-    std::vector<GUInt32> m_anValuesUInt32{};
+    std::vector<uint32_t> m_anValuesUInt32{};
 
   protected:
     bool IRead(const GUInt64 *, const size_t *, const GInt64 *,
@@ -2773,7 +2773,7 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
                          const std::string &osName, int nValue);
     GDALAttributeNumeric(const std::string &osParentName,
                          const std::string &osName,
-                         const std::vector<GUInt32> &anValues);
+                         const std::vector<uint32_t> &anValues);
 
     const std::vector<std::shared_ptr<GDALDimension>> &
     GetDimensions() const override;

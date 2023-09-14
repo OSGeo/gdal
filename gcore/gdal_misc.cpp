@@ -195,24 +195,24 @@ static int GetMinBitsForValue(double dValue)
             dValue >= std::numeric_limits<GByte>::min())
             return 8;
 
-        if (dValue <= std::numeric_limits<GInt8>::max() &&
-            dValue >= std::numeric_limits<GInt8>::min())
+        if (dValue <= std::numeric_limits<int8_t>::max() &&
+            dValue >= std::numeric_limits<int8_t>::min())
             return 8;
 
-        if (dValue <= std::numeric_limits<GInt16>::max() &&
-            dValue >= std::numeric_limits<GInt16>::min())
+        if (dValue <= std::numeric_limits<int16_t>::max() &&
+            dValue >= std::numeric_limits<int16_t>::min())
             return 16;
 
-        if (dValue <= std::numeric_limits<GUInt16>::max() &&
-            dValue >= std::numeric_limits<GUInt16>::min())
+        if (dValue <= std::numeric_limits<uint16_t>::max() &&
+            dValue >= std::numeric_limits<uint16_t>::min())
             return 16;
 
-        if (dValue <= std::numeric_limits<GInt32>::max() &&
-            dValue >= std::numeric_limits<GInt32>::min())
+        if (dValue <= std::numeric_limits<int32_t>::max() &&
+            dValue >= std::numeric_limits<int32_t>::min())
             return 32;
 
-        if (dValue <= std::numeric_limits<GUInt32>::max() &&
-            dValue >= std::numeric_limits<GUInt32>::min())
+        if (dValue <= std::numeric_limits<uint32_t>::max() &&
+            dValue >= std::numeric_limits<uint32_t>::min())
             return 32;
 
         if (dValue <= static_cast<double>(
@@ -803,19 +803,19 @@ double GDALAdjustValueToDataType(GDALDataType eDT, double dfValue,
             ClampAndRound<GByte>(dfValue, bClamped, bRounded);
             break;
         case GDT_Int8:
-            ClampAndRound<GInt8>(dfValue, bClamped, bRounded);
+            ClampAndRound<int8_t>(dfValue, bClamped, bRounded);
             break;
         case GDT_Int16:
-            ClampAndRound<GInt16>(dfValue, bClamped, bRounded);
+            ClampAndRound<int16_t>(dfValue, bClamped, bRounded);
             break;
         case GDT_UInt16:
-            ClampAndRound<GUInt16>(dfValue, bClamped, bRounded);
+            ClampAndRound<uint16_t>(dfValue, bClamped, bRounded);
             break;
         case GDT_Int32:
-            ClampAndRound<GInt32>(dfValue, bClamped, bRounded);
+            ClampAndRound<int32_t>(dfValue, bClamped, bRounded);
             break;
         case GDT_UInt32:
-            ClampAndRound<GUInt32>(dfValue, bClamped, bRounded);
+            ClampAndRound<uint32_t>(dfValue, bClamped, bRounded);
             break;
         case GDT_Int64:
             ClampAndRound<std::int64_t>(dfValue, bClamped, bRounded);
@@ -1250,23 +1250,23 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                         break;
                     case GDT_Int8:
                         dfValue =
-                            reinterpret_cast<const GInt8 *>(pDataRef)[iOffset];
+                            reinterpret_cast<const int8_t *>(pDataRef)[iOffset];
                         break;
                     case GDT_UInt16:
-                        dfValue = reinterpret_cast<const GUInt16 *>(
+                        dfValue = reinterpret_cast<const uint16_t *>(
                             pDataRef)[iOffset];
                         break;
                     case GDT_Int16:
-                        dfValue =
-                            reinterpret_cast<const GInt16 *>(pDataRef)[iOffset];
+                        dfValue = reinterpret_cast<const int16_t *>(
+                            pDataRef)[iOffset];
                         break;
                     case GDT_UInt32:
-                        dfValue = reinterpret_cast<const GUInt32 *>(
+                        dfValue = reinterpret_cast<const uint32_t *>(
                             pDataRef)[iOffset];
                         break;
                     case GDT_Int32:
-                        dfValue =
-                            reinterpret_cast<const GInt32 *>(pDataRef)[iOffset];
+                        dfValue = reinterpret_cast<const int32_t *>(
+                            pDataRef)[iOffset];
                         break;
                     case GDT_UInt64:
                         dfValue = static_cast<double>(
@@ -1289,18 +1289,18 @@ int CPL_STDCALL GDALGetRandomRasterSample(GDALRasterBandH hBand, int nSamples,
                     case GDT_CInt16:
                     {
                         // TODO(schwehr): Clean up casts.
-                        const double dfReal = reinterpret_cast<const GInt16 *>(
+                        const double dfReal = reinterpret_cast<const int16_t *>(
                             pDataRef)[iOffset * 2];
-                        const double dfImag = reinterpret_cast<const GInt16 *>(
+                        const double dfImag = reinterpret_cast<const int16_t *>(
                             pDataRef)[iOffset * 2 + 1];
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;
                     }
                     case GDT_CInt32:
                     {
-                        const double dfReal = reinterpret_cast<const GInt32 *>(
+                        const double dfReal = reinterpret_cast<const int32_t *>(
                             pDataRef)[iOffset * 2];
-                        const double dfImag = reinterpret_cast<const GInt32 *>(
+                        const double dfImag = reinterpret_cast<const int32_t *>(
                             pDataRef)[iOffset * 2 + 1];
                         dfValue = sqrt(dfReal * dfReal + dfImag * dfImag);
                         break;

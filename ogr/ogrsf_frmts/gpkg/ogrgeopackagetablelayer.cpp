@@ -421,7 +421,7 @@ OGRErr OGRGeoPackageTableLayer::FeatureBindParameters(
                                     std::abs(sField.Date.TZFlag - 100) * 15;
                                 nDT -= TZOffset * 60;
                                 CPLUnixTimeToYMDHMS(nDT, &brokendowntime);
-                                sField.Date.Year = static_cast<GInt16>(
+                                sField.Date.Year = static_cast<int16_t>(
                                     brokendowntime.tm_year + 1900);
                                 sField.Date.Month = static_cast<GByte>(
                                     brokendowntime.tm_mon + 1);

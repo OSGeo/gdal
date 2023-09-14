@@ -185,8 +185,8 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         CPLAssert(nPixelSize == 2);
         for (int i = 0; i < nXSize; i++)
         {
-            reinterpret_cast<GUInt16 *>(pImage)[i] =
-                *reinterpret_cast<GUInt16 *>(pabyScanline + i * nPixelOffset);
+            reinterpret_cast<uint16_t *>(pImage)[i] =
+                *reinterpret_cast<uint16_t *>(pabyScanline + i * nPixelOffset);
         }
     }
 
@@ -1473,7 +1473,7 @@ CPLErr PNGDataset::LoadScanline(int nLine)
 
     // Read till we get the desired row.
     png_bytep row = pabyBuffer;
-    const GUInt32 nErrorCounter = CPLGetErrorCounter();
+    const uint32_t nErrorCounter = CPLGetErrorCounter();
     while (nLine > nLastLineRead)
     {
         if (!safe_png_read_rows(hPNG, row, sSetJmpContext))

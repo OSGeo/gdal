@@ -1955,20 +1955,20 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
                             CPL_ENC_UCS2);
                         const auto nLen = wcslen(buffer);
                         papstBindBuffer[iCol]->VarChar.nSize =
-                            (SQLLEN)nLen * sizeof(GUInt16);
+                            (SQLLEN)nLen * sizeof(uint16_t);
 #if WCHAR_MAX > 0xFFFFu
                         // Shorten each character to a two-byte value, as
                         // expected by the ODBC driver
-                        GUInt16 *panBuffer =
-                            reinterpret_cast<GUInt16 *>(buffer);
+                        uint16_t *panBuffer =
+                            reinterpret_cast<uint16_t *>(buffer);
                         for (unsigned int nIndex = 1; nIndex <= nLen;
                              nIndex += 1)
                             panBuffer[nIndex] =
-                                static_cast<GUInt16>(buffer[nIndex]);
+                                static_cast<uint16_t>(buffer[nIndex]);
 #endif
                         memcpy(papstBindBuffer[iCol]->VarChar.pData, buffer,
                                papstBindBuffer[iCol]->VarChar.nSize +
-                                   sizeof(GUInt16));
+                                   sizeof(uint16_t));
                         CPLFree(buffer);
 
                         if (Failed2(bcp_collen(
@@ -2170,16 +2170,16 @@ OGRErr OGRMSSQLSpatialTableLayer::CreateFeatureBCP(OGRFeature *poFeature)
                                 CPL_ENC_UTF8, CPL_ENC_UCS2);
                             const auto nLen = wcslen(buffer);
                             papstBindBuffer[iCol]->VarChar.nSize =
-                                (SQLLEN)nLen * sizeof(GUInt16);
+                                (SQLLEN)nLen * sizeof(uint16_t);
 #if WCHAR_MAX > 0xFFFFu
                             // Shorten each character to a two-byte value, as
                             // expected by the ODBC driver
-                            GUInt16 *panBuffer =
-                                reinterpret_cast<GUInt16 *>(buffer);
+                            uint16_t *panBuffer =
+                                reinterpret_cast<uint16_t *>(buffer);
                             for (unsigned int nIndex = 1; nIndex <= nLen;
                                  nIndex += 1)
                                 panBuffer[nIndex] =
-                                    static_cast<GUInt16>(buffer[nIndex]);
+                                    static_cast<uint16_t>(buffer[nIndex]);
 #endif
                             if (Failed2(bcp_moretext(
                                     hDBCBCP,
@@ -2783,9 +2783,9 @@ void OGRMSSQLSpatialTableLayer::AppendFieldValue(CPLODBCStatement *poStatement,
 #if WCHAR_MAX > 0xFFFFu
                 // Shorten each character to a two-byte value, as expected by
                 // the ODBC driver
-                GUInt16 *panBuffer = reinterpret_cast<GUInt16 *>(buffer);
+                uint16_t *panBuffer = reinterpret_cast<uint16_t *>(buffer);
                 for (unsigned int nIndex = 1; nIndex < nLen; nIndex += 1)
-                    panBuffer[nIndex] = static_cast<GUInt16>(buffer[nIndex]);
+                    panBuffer[nIndex] = static_cast<uint16_t>(buffer[nIndex]);
 #endif
                 int nRetCode =
                     SQLBindParameter(poStatement->GetStatement(),

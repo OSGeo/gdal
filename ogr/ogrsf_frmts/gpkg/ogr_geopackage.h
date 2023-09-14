@@ -65,12 +65,12 @@ typedef enum
 } GPKGASpatialVariant;
 
 // Requirement 2
-static const GUInt32 GP10_APPLICATION_ID = 0x47503130U;
-static const GUInt32 GP11_APPLICATION_ID = 0x47503131U;
-static const GUInt32 GPKG_APPLICATION_ID = 0x47504B47U;
-static const GUInt32 GPKG_1_2_VERSION = 10200U;
-static const GUInt32 GPKG_1_3_VERSION = 10300U;
-static const GUInt32 GPKG_1_4_VERSION = 10400U;
+static const uint32_t GP10_APPLICATION_ID = 0x47503130U;
+static const uint32_t GP11_APPLICATION_ID = 0x47503131U;
+static const uint32_t GPKG_APPLICATION_ID = 0x47504B47U;
+static const uint32_t GPKG_1_2_VERSION = 10200U;
+static const uint32_t GPKG_1_3_VERSION = 10300U;
+static const uint32_t GPKG_1_4_VERSION = 10400U;
 
 static const size_t knApplicationIdPos = 68;
 static const size_t knUserVersionPos = 60;
@@ -132,8 +132,8 @@ class GDALGeoPackageDataset final : public OGRSQLiteBaseDataSource,
 
     std::string m_osFilenameInZip{};
     void *m_pSQLFunctionData = nullptr;
-    GUInt32 m_nApplicationId = GPKG_APPLICATION_ID;
-    GUInt32 m_nUserVersion = GPKG_1_2_VERSION;
+    uint32_t m_nApplicationId = GPKG_APPLICATION_ID;
+    uint32_t m_nUserVersion = GPKG_1_2_VERSION;
     OGRGeoPackageTableLayer **m_papoLayers = nullptr;
     int m_nLayers = 0;
     void CheckUnknownExtensions(bool bCheckRasterTable = false);

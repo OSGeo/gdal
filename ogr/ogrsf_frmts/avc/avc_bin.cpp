@@ -1055,8 +1055,8 @@ static int _AVCBinReadNextCnt(AVCRawBinFile *psFile, AVCCnt *psCnt,
      */
     if (psCnt->panLabelIds == nullptr || numLabels > psCnt->numLabels)
     {
-        GInt32 *panIds = (GInt32 *)VSIRealloc(psCnt->panLabelIds,
-                                              numLabels * sizeof(GInt32));
+        int32_t *panIds = (int32_t *)VSIRealloc(psCnt->panLabelIds,
+                                                numLabels * sizeof(int32_t));
         if (panIds == nullptr)
             return -1;
         psCnt->panLabelIds = panIds;
@@ -2428,7 +2428,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
     snprintf(psTableDef->szTableName, sizeof(psTableDef->szTableName),
              "%-32.32s", pszArcInfoTableName);
 
-    psTableDef->numFields = (GInt16)DBFGetFieldCount(hDBFFile);
+    psTableDef->numFields = (int16_t)DBFGetFieldCount(hDBFFile);
 
     /* We'll compute nRecSize value when we read fields info later */
     psTableDef->nRecSize = 0;
@@ -2462,11 +2462,11 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
                         &nDecimals);
         cNativeType = DBFGetNativeFieldType(hDBFFile, iField);
 
-        pasFieldDef[iField].nFmtWidth = (GInt16)nWidth;
-        pasFieldDef[iField].nFmtPrec = (GInt16)nDecimals;
+        pasFieldDef[iField].nFmtWidth = (int16_t)nWidth;
+        pasFieldDef[iField].nFmtPrec = (int16_t)nDecimals;
 
         /* nIndex is the 1-based field index that we see in the E00 header */
-        pasFieldDef[iField].nIndex = (GInt16)(iField + 1);
+        pasFieldDef[iField].nIndex = (int16_t)(iField + 1);
 
         if (cNativeType == 'F' || (cNativeType == 'N' && nDecimals > 0))
         {
@@ -2500,7 +2500,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
              * DATE - Actually handled as a string internally
              *--------------------------------------------------------*/
             pasFieldDef[iField].nType1 = AVC_FT_DATE / 10;
-            pasFieldDef[iField].nSize = (GInt16)nWidth;
+            pasFieldDef[iField].nSize = (int16_t)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
         }
         else /* (cNativeType == 'C' || cNativeType == 'L') */
@@ -2509,7 +2509,7 @@ AVCBinFile *_AVCBinReadOpenDBFTable(const char *pszDBFFilename,
              * CHAR STRINGS ... and all unknown types also handled as strings
              *--------------------------------------------------------*/
             pasFieldDef[iField].nType1 = AVC_FT_CHAR / 10;
-            pasFieldDef[iField].nSize = (GInt16)nWidth;
+            pasFieldDef[iField].nSize = (int16_t)nWidth;
             pasFieldDef[iField].nFmtPrec = -1;
         }
 
@@ -2640,7 +2640,7 @@ static int _AVCBinReadNextDBFTableRec(DBFHandle hDBFFile, int *piRecordIndex,
              * 16 bit binary integers
              *--------------------------------------------------------*/
             pasFields[i].nInt16 =
-                (GInt16)DBFReadIntegerAttribute(hDBFFile, *piRecordIndex, i);
+                (int16_t)DBFReadIntegerAttribute(hDBFFile, *piRecordIndex, i);
         }
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 4)
         {

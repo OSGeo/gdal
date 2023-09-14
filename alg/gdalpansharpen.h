@@ -148,7 +148,7 @@ typedef struct
     void *pDataBuf;
     size_t nValues;
     size_t nBandValues;
-    GUInt32 nMaxValue;
+    uint32_t nMaxValue;
 
 #ifdef DEBUG_TIMING
     struct timeval *ptv;
@@ -255,7 +255,7 @@ class GDALPansharpenOperation
                            GDALDataType eBufDataType, const void *pPanBuffer,
                            const void *pUpsampledSpectralBuffer, void *pDataBuf,
                            size_t nValues, size_t nBandValues,
-                           GUInt32 nMaxValue) const;
+                           uint32_t nMaxValue) const;
 
   public:
     GDALPansharpenOperation();

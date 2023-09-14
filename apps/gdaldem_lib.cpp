@@ -236,10 +236,10 @@ float ComputeVal(bool bSrcHasNoData, float fSrcNoDataValue,
 }
 
 template <>
-float ComputeVal(bool bSrcHasNoData, GInt32 fSrcNoDataValue,
-                 bool /* bIsSrcNoDataNan */, GInt32 *afWin,
+float ComputeVal(bool bSrcHasNoData, int32_t fSrcNoDataValue,
+                 bool /* bIsSrcNoDataNan */, int32_t *afWin,
                  float fDstNoDataValue,
-                 GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlg, void *pData,
+                 GDALGeneric3x3ProcessingAlg<int32_t>::type pfnAlg, void *pData,
                  bool bComputeAtEdges)
 {
     if (bSrcHasNoData && afWin[4] == fSrcNoDataValue)
@@ -280,7 +280,8 @@ float INTERPOL(float a, float b, int bSrcHasNoData, float fSrcNoDataValue)
 }
 
 template <>
-GInt32 INTERPOL(GInt32 a, GInt32 b, int bSrcHasNoData, GInt32 fSrcNoDataValue)
+int32_t INTERPOL(int32_t a, int32_t b, int bSrcHasNoData,
+                 int32_t fSrcNoDataValue)
 {
     if (bSrcHasNoData && ((a == fSrcNoDataValue) || (b == fSrcNoDataValue)))
         return fSrcNoDataValue;
@@ -3388,8 +3389,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
     bool bDstHasNoData = false;
     void *pData = nullptr;
     GDALGeneric3x3ProcessingAlg<float>::type pfnAlgFloat = nullptr;
-    GDALGeneric3x3ProcessingAlg<GInt32>::type pfnAlgInt32 = nullptr;
-    GDALGeneric3x3ProcessingAlg_multisample<GInt32>::type
+    GDALGeneric3x3ProcessingAlg<int32_t>::type pfnAlgInt32 = nullptr;
+    GDALGeneric3x3ProcessingAlg_multisample<int32_t>::type
         pfnAlgInt32_multisample = nullptr;
 
     if (eUtilityMode == HILL_SHADE && psOptions->bMultiDirectional)
@@ -3404,14 +3405,14 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
             pfnAlgFloat = GDALHillshadeMultiDirectionalAlg<
                 float, GradientAlg::ZEVENBERGEN_THORNE>;
             pfnAlgInt32 = GDALHillshadeMultiDirectionalAlg<
-                GInt32, GradientAlg::ZEVENBERGEN_THORNE>;
+                int32_t, GradientAlg::ZEVENBERGEN_THORNE>;
         }
         else
         {
             pfnAlgFloat =
                 GDALHillshadeMultiDirectionalAlg<float, GradientAlg::HORN>;
             pfnAlgInt32 =
-                GDALHillshadeMultiDirectionalAlg<GInt32, GradientAlg::HORN>;
+                GDALHillshadeMultiDirectionalAlg<int32_t, GradientAlg::HORN>;
         }
     }
     else if (eUtilityMode == HILL_SHADE)
@@ -3429,7 +3430,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                     GDALHillshadeCombinedAlg<float,
                                              GradientAlg::ZEVENBERGEN_THORNE>;
                 pfnAlgInt32 =
-                    GDALHillshadeCombinedAlg<GInt32,
+                    GDALHillshadeCombinedAlg<int32_t,
                                              GradientAlg::ZEVENBERGEN_THORNE>;
             }
             else if (psOptions->bIgor)
@@ -3438,7 +3439,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                     GDALHillshadeIgorAlg<float,
                                          GradientAlg::ZEVENBERGEN_THORNE>;
                 pfnAlgInt32 =
-                    GDALHillshadeIgorAlg<GInt32,
+                    GDALHillshadeIgorAlg<int32_t,
                                          GradientAlg::ZEVENBERGEN_THORNE>;
             }
             else
@@ -3446,7 +3447,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                 pfnAlgFloat =
                     GDALHillshadeAlg<float, GradientAlg::ZEVENBERGEN_THORNE>;
                 pfnAlgInt32 =
-                    GDALHillshadeAlg<GInt32, GradientAlg::ZEVENBERGEN_THORNE>;
+                    GDALHillshadeAlg<int32_t, GradientAlg::ZEVENBERGEN_THORNE>;
             }
         }
         else
@@ -3456,28 +3457,28 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
                 pfnAlgFloat =
                     GDALHillshadeCombinedAlg<float, GradientAlg::HORN>;
                 pfnAlgInt32 =
-                    GDALHillshadeCombinedAlg<GInt32, GradientAlg::HORN>;
+                    GDALHillshadeCombinedAlg<int32_t, GradientAlg::HORN>;
             }
             else if (psOptions->bIgor)
             {
                 pfnAlgFloat = GDALHillshadeIgorAlg<float, GradientAlg::HORN>;
-                pfnAlgInt32 = GDALHillshadeIgorAlg<GInt32, GradientAlg::HORN>;
+                pfnAlgInt32 = GDALHillshadeIgorAlg<int32_t, GradientAlg::HORN>;
             }
             else
             {
                 if (adfGeoTransform[1] == -adfGeoTransform[5])
                 {
                     pfnAlgFloat = GDALHillshadeAlg_same_res<float>;
-                    pfnAlgInt32 = GDALHillshadeAlg_same_res<GInt32>;
+                    pfnAlgInt32 = GDALHillshadeAlg_same_res<int32_t>;
 #ifdef HAVE_16_SSE_REG
                     pfnAlgInt32_multisample =
-                        GDALHillshadeAlg_same_res_multisample<GInt32>;
+                        GDALHillshadeAlg_same_res_multisample<int32_t>;
 #endif
                 }
                 else
                 {
                     pfnAlgFloat = GDALHillshadeAlg<float, GradientAlg::HORN>;
-                    pfnAlgInt32 = GDALHillshadeAlg<GInt32, GradientAlg::HORN>;
+                    pfnAlgInt32 = GDALHillshadeAlg<int32_t, GradientAlg::HORN>;
                 }
             }
         }
@@ -3492,12 +3493,12 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         if (psOptions->eGradientAlg == GradientAlg::ZEVENBERGEN_THORNE)
         {
             pfnAlgFloat = GDALSlopeZevenbergenThorneAlg<float>;
-            pfnAlgInt32 = GDALSlopeZevenbergenThorneAlg<GInt32>;
+            pfnAlgInt32 = GDALSlopeZevenbergenThorneAlg<int32_t>;
         }
         else
         {
             pfnAlgFloat = GDALSlopeHornAlg<float>;
-            pfnAlgInt32 = GDALSlopeHornAlg<GInt32>;
+            pfnAlgInt32 = GDALSlopeHornAlg<int32_t>;
         }
     }
 
@@ -3513,12 +3514,12 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         if (psOptions->eGradientAlg == GradientAlg::ZEVENBERGEN_THORNE)
         {
             pfnAlgFloat = GDALAspectZevenbergenThorneAlg<float>;
-            pfnAlgInt32 = GDALAspectZevenbergenThorneAlg<GInt32>;
+            pfnAlgInt32 = GDALAspectZevenbergenThorneAlg<int32_t>;
         }
         else
         {
             pfnAlgFloat = GDALAspectAlg<float>;
-            pfnAlgInt32 = GDALAspectAlg<GInt32>;
+            pfnAlgInt32 = GDALAspectAlg<int32_t>;
         }
     }
     else if (eUtilityMode == TRI)
@@ -3528,12 +3529,12 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         if (psOptions->eTRIAlg == TRIAlg::WILSON)
         {
             pfnAlgFloat = GDALTRIAlgWilson<float>;
-            pfnAlgInt32 = GDALTRIAlgWilson<GInt32>;
+            pfnAlgInt32 = GDALTRIAlgWilson<int32_t>;
         }
         else
         {
             pfnAlgFloat = GDALTRIAlgRiley<float>;
-            pfnAlgInt32 = GDALTRIAlgRiley<GInt32>;
+            pfnAlgInt32 = GDALTRIAlgRiley<int32_t>;
         }
     }
     else if (eUtilityMode == TPI)
@@ -3541,14 +3542,14 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
         dfDstNoDataValue = -9999;
         bDstHasNoData = true;
         pfnAlgFloat = GDALTPIAlg<float>;
-        pfnAlgInt32 = GDALTPIAlg<GInt32>;
+        pfnAlgInt32 = GDALTPIAlg<int32_t>;
     }
     else if (eUtilityMode == ROUGHNESS)
     {
         dfDstNoDataValue = -9999;
         bDstHasNoData = true;
         pfnAlgFloat = GDALRoughnessAlg<float>;
-        pfnAlgInt32 = GDALRoughnessAlg<GInt32>;
+        pfnAlgInt32 = GDALRoughnessAlg<int32_t>;
     }
 
     const GDALDataType eDstDataType =
@@ -3644,8 +3645,8 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
             if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 ||
                 eSrcDT == GDT_UInt16)
             {
-                GDALGeneric3x3Dataset<GInt32> *poDS =
-                    new GDALGeneric3x3Dataset<GInt32>(
+                GDALGeneric3x3Dataset<int32_t> *poDS =
+                    new GDALGeneric3x3Dataset<int32_t>(
                         hSrcDataset, hSrcBand, eDstDataType, bDstHasNoData,
                         dfDstNoDataValue, pfnAlgInt32, pData,
                         psOptions->bComputeAtEdges);
@@ -3728,7 +3729,7 @@ GDALDatasetH GDALDEMProcessing(const char *pszDest, GDALDatasetH hSrcDataset,
 
         if (eSrcDT == GDT_Byte || eSrcDT == GDT_Int16 || eSrcDT == GDT_UInt16)
         {
-            GDALGeneric3x3Processing<GInt32>(
+            GDALGeneric3x3Processing<int32_t>(
                 hSrcBand, hDstBand, pfnAlgInt32, pfnAlgInt32_multisample, pData,
                 psOptions->bComputeAtEdges, pfnProgress, pProgressData);
         }

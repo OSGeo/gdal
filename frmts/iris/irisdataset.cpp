@@ -510,7 +510,7 @@ void IRISDataset::LoadProjection() const
         }
     }
 
-    constexpr GUInt32 knUINT32_MAX = 0xFFFFFFFFU;
+    constexpr uint32_t knUINT32_MAX = 0xFFFFFFFFU;
     const double dfCenterLon =
         CPL_LSBUINT32PTR(abyHeader + 112 + 320 + 12) * 360.0 / knUINT32_MAX;
     const double dfCenterLat =

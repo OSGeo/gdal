@@ -221,13 +221,13 @@ typedef struct AVCVertex_t
  *--------------------------------------------------------------------*/
 typedef struct AVCArc_t
 {
-    GInt32 nArcId;
-    GInt32 nUserId;
-    GInt32 nFNode;
-    GInt32 nTNode;
-    GInt32 nLPoly;
-    GInt32 nRPoly;
-    GInt32 numVertices;
+    int32_t nArcId;
+    int32_t nUserId;
+    int32_t nFNode;
+    int32_t nTNode;
+    int32_t nLPoly;
+    int32_t nRPoly;
+    int32_t numVertices;
     AVCVertex *pasVertices;
 } AVCArc;
 
@@ -237,17 +237,17 @@ typedef struct AVCArc_t
  *--------------------------------------------------------------------*/
 typedef struct AVCPalArc_t
 {
-    GInt32 nArcId;
-    GInt32 nFNode;
-    GInt32 nAdjPoly;
+    int32_t nArcId;
+    int32_t nFNode;
+    int32_t nAdjPoly;
 } AVCPalArc;
 
 typedef struct AVCPal_t
 {
-    GInt32 nPolyId;
+    int32_t nPolyId;
     AVCVertex sMin;
     AVCVertex sMax;
-    GInt32 numArcs;
+    int32_t numArcs;
     AVCPalArc *pasArcs;
 } AVCPal;
 
@@ -256,10 +256,10 @@ typedef struct AVCPal_t
  *--------------------------------------------------------------------*/
 typedef struct AVCCnt_t
 {
-    GInt32 nPolyId;
+    int32_t nPolyId;
     AVCVertex sCoord;
-    GInt32 numLabels; /* 0 or 1 */
-    GInt32 *panLabelIds;
+    int32_t numLabels; /* 0 or 1 */
+    int32_t *panLabelIds;
 } AVCCnt;
 
 /*---------------------------------------------------------------------
@@ -267,8 +267,8 @@ typedef struct AVCCnt_t
  *--------------------------------------------------------------------*/
 typedef struct AVCLab_t
 {
-    GInt32 nValue;
-    GInt32 nPolyId;
+    int32_t nValue;
+    int32_t nPolyId;
     AVCVertex sCoord1;
     AVCVertex sCoord2;
     AVCVertex sCoord3;
@@ -279,8 +279,8 @@ typedef struct AVCLab_t
  *--------------------------------------------------------------------*/
 typedef struct AVCTol_t
 {
-    GInt32 nIndex;
-    GInt32 nFlag;
+    int32_t nIndex;
+    int32_t nFlag;
     double dValue;
 } AVCTol;
 
@@ -289,18 +289,18 @@ typedef struct AVCTol_t
  *--------------------------------------------------------------------*/
 typedef struct AVCTxt_t
 {
-    GInt32 nTxtId;
-    GInt32 nUserId;
-    GInt32 nLevel;
+    int32_t nTxtId;
+    int32_t nUserId;
+    int32_t nLevel;
     float f_1e2; /* Always (float)-1e+20, even for double precision! */
-    GInt32 nSymbol;
-    GInt32 numVerticesLine;
-    GInt32 n28; /* Unknown value at byte 28 */
-    GInt32 numChars;
-    GInt32 numVerticesArrow;
+    int32_t nSymbol;
+    int32_t numVerticesLine;
+    int32_t n28; /* Unknown value at byte 28 */
+    int32_t numChars;
+    int32_t numVerticesArrow;
 
-    GInt16 anJust1[20];
-    GInt16 anJust2[20];
+    int16_t anJust1[20];
+    int16_t anJust2[20];
 
     double dHeight;
     double dV2; /* ??? */
@@ -316,8 +316,8 @@ typedef struct AVCTxt_t
  *--------------------------------------------------------------------*/
 typedef struct AVCRxp_t
 {
-    GInt32 n1;
-    GInt32 n2;
+    int32_t n1;
+    int32_t n2;
 } AVCRxp;
 
 /*---------------------------------------------------------------------
@@ -334,21 +334,21 @@ typedef struct AVCRxp_t
 typedef struct AVCFieldInfo_t
 {
     char szName[17];
-    GInt16 nSize;
-    GInt16 v2;
-    GInt16 nOffset;
-    GInt16 v4;
-    GInt16 v5;
-    GInt16 nFmtWidth;
-    GInt16 nFmtPrec;
-    GInt16 nType1;
-    GInt16 nType2;
-    GInt16 v10;
-    GInt16 v11;
-    GInt16 v12;
-    GInt16 v13;
+    int16_t nSize;
+    int16_t v2;
+    int16_t nOffset;
+    int16_t v4;
+    int16_t v5;
+    int16_t nFmtWidth;
+    int16_t nFmtPrec;
+    int16_t nType1;
+    int16_t nType2;
+    int16_t v10;
+    int16_t v11;
+    int16_t v12;
+    int16_t v13;
     char szAltName[17];
-    GInt16 nIndex; /* >0 if valid, or -1 if field is deleted */
+    int16_t nIndex; /* >0 if valid, or -1 if field is deleted */
 } AVCFieldInfo;
 
 #define AVC_FT_DATE 10
@@ -365,11 +365,11 @@ typedef struct AVCTableDef_t
      */
     char szTableName[33];
     char szInfoFile[9];
-    GInt16 numFields;
-    GInt16 nRecSize;
-    GInt32 numRecords;
-    char szExternal[3];  /* "XX" or "  " */
-    GInt16 bDeletedFlag; /* 1 if deleted, 0 if table is active */
+    int16_t numFields;
+    int16_t nRecSize;
+    int32_t numRecords;
+    char szExternal[3];   /* "XX" or "  " */
+    int16_t bDeletedFlag; /* 1 if deleted, 0 if table is active */
 
     /* Data file path read from the arc####.dat file
      */
@@ -382,8 +382,8 @@ typedef struct AVCTableDef_t
 
 typedef struct AVCField_t
 {
-    GInt16 nInt16;
-    GInt32 nInt32;
+    int16_t nInt16;
+    int32_t nInt32;
     float fFloat;
     double dDouble;
     GByte *pszStr;
@@ -421,10 +421,10 @@ typedef struct AVCRawBinFile_t
 
 typedef struct AVCBinHeader_t
 {
-    GUInt32 nSignature;
-    GInt32 nPrecision;  /* <0 for double prec., >0 for single prec. */
-    GInt32 nRecordSize; /* nbr of 2 byte words, 0 for var. length   */
-    GInt32 nLength;     /* Overall file length, in 2 byte words     */
+    uint32_t nSignature;
+    int32_t nPrecision;  /* <0 for double prec., >0 for single prec. */
+    int32_t nRecordSize; /* nbr of 2 byte words, 0 for var. length   */
+    int32_t nLength;     /* Overall file length, in 2 byte words     */
 } AVCBinHeader;
 
 typedef struct AVCBinFile_t
@@ -676,16 +676,16 @@ void AVCRawBinSetFileDataSize(AVCRawBinFile *psInfo, int nDataSize);
 int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize);
 
 void AVCRawBinReadBytes(AVCRawBinFile *psInfo, int nBytesToRead, GByte *pBuf);
-GInt16 AVCRawBinReadInt16(AVCRawBinFile *psInfo);
-GInt32 AVCRawBinReadInt32(AVCRawBinFile *psInfo);
+int16_t AVCRawBinReadInt16(AVCRawBinFile *psInfo);
+int32_t AVCRawBinReadInt32(AVCRawBinFile *psInfo);
 float AVCRawBinReadFloat(AVCRawBinFile *psInfo);
 double AVCRawBinReadDouble(AVCRawBinFile *psInfo);
 void AVCRawBinReadString(AVCRawBinFile *psFile, int nBytesToRead, GByte *pBuf);
 
 void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
                          const GByte *pBuf);
-void AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value);
-void AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value);
+void AVCRawBinWriteInt16(AVCRawBinFile *psFile, int16_t n16Value);
+void AVCRawBinWriteInt32(AVCRawBinFile *psFile, int32_t n32Value);
 void AVCRawBinWriteFloat(AVCRawBinFile *psFile, float fValue);
 void AVCRawBinWriteDouble(AVCRawBinFile *psFile, double dValue);
 void AVCRawBinWriteZeros(AVCRawBinFile *psFile, int nBytesToWrite);

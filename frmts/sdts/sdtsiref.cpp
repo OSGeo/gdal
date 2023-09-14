@@ -144,7 +144,7 @@ int SDTS_IREF::GetSADR(DDFField *poField, int nVertices, double *padfX,
             return FALSE;
         }
 
-        GInt32 anXY[2];
+        int32_t anXY[2];
         const char *pachRawData = poField->GetData();
 
         for (int iVertex = 0; iVertex < nVertices; iVertex++)
@@ -214,7 +214,7 @@ int SDTS_IREF::GetSADR(DDFField *poField, int nVertices, double *padfX,
                         {
                             if (nBytesConsumed < 4)
                                 return FALSE;
-                            GInt32 nValue;
+                            int32_t nValue;
                             memcpy(&nValue, pabyBString, 4);
                             adfXYZ[iEntry] =
                                 static_cast<int>(CPL_MSBWORD32(nValue));
@@ -223,7 +223,7 @@ int SDTS_IREF::GetSADR(DDFField *poField, int nVertices, double *padfX,
                         {
                             if (nBytesConsumed < 2)
                                 return FALSE;
-                            GInt16 nValue;
+                            int16_t nValue;
                             memcpy(&nValue, pabyBString, 2);
                             adfXYZ[iEntry] =
                                 static_cast<int>(CPL_MSBWORD16(nValue));
@@ -232,19 +232,19 @@ int SDTS_IREF::GetSADR(DDFField *poField, int nVertices, double *padfX,
                         {
                             if (nBytesConsumed < 4)
                                 return FALSE;
-                            GUInt32 nValue;
+                            uint32_t nValue;
                             memcpy(&nValue, pabyBString, 4);
                             adfXYZ[iEntry] =
-                                static_cast<GUInt32>(CPL_MSBWORD32(nValue));
+                                static_cast<uint32_t>(CPL_MSBWORD32(nValue));
                         }
                         else if (EQUAL(pszCoordinateFormat, "BU16"))
                         {
                             if (nBytesConsumed < 2)
                                 return FALSE;
-                            GUInt16 nValue;
+                            uint16_t nValue;
                             memcpy(&nValue, pabyBString, 2);
                             adfXYZ[iEntry] =
-                                static_cast<GUInt16>(CPL_MSBWORD16(nValue));
+                                static_cast<uint16_t>(CPL_MSBWORD16(nValue));
                         }
                         else if (EQUAL(pszCoordinateFormat, "BFP32"))
                         {

@@ -327,8 +327,8 @@ GDALDataset *BYNDataset::Open(GDALOpenInfo *poOpenInfo)
     if (dfXSize > 0.0 && dfXSize < std::numeric_limits<double>::max() &&
         dfYSize > 0.0 && dfYSize < std::numeric_limits<double>::max())
     {
-        poDS->nRasterXSize = static_cast<GInt32>(dfXSize);
-        poDS->nRasterYSize = static_cast<GInt32>(dfYSize);
+        poDS->nRasterXSize = static_cast<int32_t>(dfXSize);
+        poDS->nRasterYSize = static_cast<int32_t>(dfYSize);
     }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize))
@@ -453,7 +453,7 @@ const OGRSpatialReference *BYNDataset::GetSpatialRef() const
 
         if (hHeader.nEllipsoid > -1 &&
             hHeader.nEllipsoid <
-                static_cast<GInt16>(CPL_ARRAYSIZE(EllipsoidTable)))
+                static_cast<int16_t>(CPL_ARRAYSIZE(EllipsoidTable)))
             m_oSRS.SetGeogCS(
                 CPLSPrintf("BYN Ellipsoid(%d)", hHeader.nEllipsoid),
                 "Unspecified", EllipsoidTable[hHeader.nEllipsoid].pszName,
@@ -780,7 +780,7 @@ GDALDataset *BYNDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     hHeader.nEast = nXSize - 2;
     hHeader.nDLat = 1;
     hHeader.nDLon = 1;
-    hHeader.nSizeOf = static_cast<GInt16>(GDALGetDataTypeSizeBytes(eType));
+    hHeader.nSizeOf = static_cast<int16_t>(GDALGetDataTypeSizeBytes(eType));
 
     /* Prepare buffer for writing */
 
@@ -817,12 +817,12 @@ void BYNDataset::UpdateHeader()
         dfDLon /= BYN_SCALE;
     }
 
-    hHeader.nSouth = static_cast<GInt32>(dfSouth);
-    hHeader.nNorth = static_cast<GInt32>(dfNorth);
-    hHeader.nWest = static_cast<GInt32>(dfWest);
-    hHeader.nEast = static_cast<GInt32>(dfEast);
-    hHeader.nDLat = static_cast<GInt16>(dfDLat);
-    hHeader.nDLon = static_cast<GInt16>(dfDLon);
+    hHeader.nSouth = static_cast<int32_t>(dfSouth);
+    hHeader.nNorth = static_cast<int32_t>(dfNorth);
+    hHeader.nWest = static_cast<int32_t>(dfWest);
+    hHeader.nEast = static_cast<int32_t>(dfEast);
+    hHeader.nDLat = static_cast<int16_t>(dfDLat);
+    hHeader.nDLon = static_cast<int16_t>(dfDLon);
 
     GByte abyBuf[BYN_HDR_SZ];
 
@@ -830,19 +830,19 @@ void BYNDataset::UpdateHeader()
 
     const char *pszValue = GetMetadataItem("GLOBAL");
     if (pszValue != nullptr)
-        hHeader.nGlobal = static_cast<GInt16>(atoi(pszValue));
+        hHeader.nGlobal = static_cast<int16_t>(atoi(pszValue));
 
     pszValue = GetMetadataItem("TYPE");
     if (pszValue != nullptr)
-        hHeader.nType = static_cast<GInt16>(atoi(pszValue));
+        hHeader.nType = static_cast<int16_t>(atoi(pszValue));
 
     pszValue = GetMetadataItem("DESCRIPTION");
     if (pszValue != nullptr)
-        hHeader.nDescrip = static_cast<GInt16>(atoi(pszValue));
+        hHeader.nDescrip = static_cast<int16_t>(atoi(pszValue));
 
     pszValue = GetMetadataItem("SUBTYPE");
     if (pszValue != nullptr)
-        hHeader.nSubType = static_cast<GInt16>(atoi(pszValue));
+        hHeader.nSubType = static_cast<int16_t>(atoi(pszValue));
 
     pszValue = GetMetadataItem("WO");
     if (pszValue != nullptr)
@@ -854,11 +854,11 @@ void BYNDataset::UpdateHeader()
 
     pszValue = GetMetadataItem("TIDESYSTEM");
     if (pszValue != nullptr)
-        hHeader.nTideSys = static_cast<GInt16>(atoi(pszValue));
+        hHeader.nTideSys = static_cast<int16_t>(atoi(pszValue));
 
     pszValue = GetMetadataItem("REALIZATION");
     if (pszValue != nullptr)
-        hHeader.nRealiz = static_cast<GInt16>(atoi(pszValue));
+        hHeader.nRealiz = static_cast<int16_t>(atoi(pszValue));
 
     pszValue = GetMetadataItem("EPOCH");
     if (pszValue != nullptr)
@@ -866,7 +866,7 @@ void BYNDataset::UpdateHeader()
 
     pszValue = GetMetadataItem("PTTYPE");
     if (pszValue != nullptr)
-        hHeader.nPtType = static_cast<GInt16>(atoi(pszValue));
+        hHeader.nPtType = static_cast<int16_t>(atoi(pszValue));
 
     CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, 0, SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFWriteL(abyBuf, BYN_HDR_SZ, 1, fpImage));

@@ -336,7 +336,7 @@ OGRErr OGRSQLiteGetSpatialiteGeometryHeader(const GByte *pabyData, int nBytes,
 OGRErr CPL_DLL OGRSQLiteImportSpatiaLiteGeometry(const GByte *, int,
                                                  OGRGeometry **,
                                                  int *pnSRID = nullptr);
-OGRErr OGRSQLiteExportSpatiaLiteGeometry(const OGRGeometry *, GInt32,
+OGRErr OGRSQLiteExportSpatiaLiteGeometry(const OGRGeometry *, int32_t,
                                          OGRwkbByteOrder, bool bSpatialite2D,
                                          bool bUseComprGeom, GByte **, int *);
 #endif  // OGR_SQLITE_BASE_H_INCLUDED

@@ -144,8 +144,8 @@ int GDALJP2Box::ReadNextChild(GDALJP2Box *poSuperBox)
 int GDALJP2Box::ReadBox()
 
 {
-    GUInt32 nLBox = 0;
-    GUInt32 nTBox = 0;
+    uint32_t nLBox = 0;
+    uint32_t nTBox = 0;
 
     nBoxOffset = VSIFTellL(fpVSIL);
 
@@ -358,11 +358,11 @@ void GDALJP2Box::SetType(const char *pszType)
 GByte *GDALJP2Box::GetWritableBoxData() const
 {
     GByte *pabyRet =
-        static_cast<GByte *>(CPLMalloc(static_cast<GUInt32>(nBoxLength)));
-    const GUInt32 nLBox = CPL_MSBWORD32(static_cast<GUInt32>(nBoxLength));
-    memcpy(pabyRet, &nLBox, sizeof(GUInt32));
+        static_cast<GByte *>(CPLMalloc(static_cast<uint32_t>(nBoxLength)));
+    const uint32_t nLBox = CPL_MSBWORD32(static_cast<uint32_t>(nBoxLength));
+    memcpy(pabyRet, &nLBox, sizeof(uint32_t));
     memcpy(pabyRet + 4, szBoxType, 4);
-    memcpy(pabyRet + 8, pabyData, static_cast<GUInt32>(nBoxLength) - 8);
+    memcpy(pabyRet + 8, pabyData, static_cast<uint32_t>(nBoxLength) - 8);
     return pabyRet;
 }
 
@@ -409,7 +409,7 @@ void GDALJP2Box::AppendWritableData(int nLength, const void *pabyDataIn)
 /*                              AppendUInt32()                          */
 /************************************************************************/
 
-void GDALJP2Box::AppendUInt32(GUInt32 nVal)
+void GDALJP2Box::AppendUInt32(uint32_t nVal)
 {
     CPL_MSBPTR32(&nVal);
     AppendWritableData(4, &nVal);
@@ -419,7 +419,7 @@ void GDALJP2Box::AppendUInt32(GUInt32 nVal)
 /*                              AppendUInt16()                          */
 /************************************************************************/
 
-void GDALJP2Box::AppendUInt16(GUInt16 nVal)
+void GDALJP2Box::AppendUInt16(uint16_t nVal)
 {
     CPL_MSBPTR16(&nVal);
     AppendWritableData(2, &nVal);
@@ -483,8 +483,8 @@ GDALJP2Box *GDALJP2Box::CreateSuperBox(const char *pszType, int nCount,
     /* -------------------------------------------------------------------- */
     for (int iBox = 0; iBox < nCount; ++iBox)
     {
-        GUInt32 nLBox =
-            CPL_MSBWORD32(static_cast<GUInt32>(papoBoxes[iBox]->nBoxLength));
+        uint32_t nLBox =
+            CPL_MSBWORD32(static_cast<uint32_t>(papoBoxes[iBox]->nBoxLength));
         memcpy(pabyNext, &nLBox, 4);
         pabyNext += 4;
 

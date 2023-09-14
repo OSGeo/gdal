@@ -1563,7 +1563,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     {
         for (int i = 0; i < nBlockXSize; i++)
         {
-            float fVal = (float)((GInt16 *)pabyScanLine)[i];
+            float fVal = (float)((int16_t *)pabyScanLine)[i];
             if (!bHasNoDataValue || fVal != fNoDataValue)
             {
                 if (bFirstVal)
@@ -1882,11 +1882,11 @@ CPLErr IdrisiRasterBand::SetColorTable(GDALColorTable *poColorTable)
         VSIFWriteL(&nDepth, 1, 1, fpSMP);
         GByte nHeadSz = 18;
         VSIFWriteL(&nHeadSz, 1, 1, fpSMP);
-        GUInt16 nCount = 255;
+        uint16_t nCount = 255;
         VSIFWriteL(&nCount, 2, 1, fpSMP);
-        GUInt16 nMix = 0;
+        uint16_t nMix = 0;
         VSIFWriteL(&nMix, 2, 1, fpSMP);
-        GUInt16 nMax = 255;
+        uint16_t nMax = 255;
         VSIFWriteL(&nMax, 2, 1, fpSMP);
 
         GDALColorEntry oEntry;

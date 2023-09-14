@@ -639,10 +639,10 @@ TEST_F(test_gdal, GDALIsValueInRange)
     EXPECT_TRUE(GDALIsValueInRange<GByte>(255));
     EXPECT_TRUE(!GDALIsValueInRange<GByte>(-1));
     EXPECT_TRUE(!GDALIsValueInRange<GByte>(256));
-    EXPECT_TRUE(GDALIsValueInRange<GInt8>(-128));
-    EXPECT_TRUE(GDALIsValueInRange<GInt8>(127));
-    EXPECT_TRUE(!GDALIsValueInRange<GInt8>(-129));
-    EXPECT_TRUE(!GDALIsValueInRange<GInt8>(128));
+    EXPECT_TRUE(GDALIsValueInRange<int8_t>(-128));
+    EXPECT_TRUE(GDALIsValueInRange<int8_t>(127));
+    EXPECT_TRUE(!GDALIsValueInRange<int8_t>(-129));
+    EXPECT_TRUE(!GDALIsValueInRange<int8_t>(128));
     EXPECT_TRUE(GDALIsValueInRange<float>(std::numeric_limits<float>::max()));
     EXPECT_TRUE(
         GDALIsValueInRange<float>(std::numeric_limits<float>::infinity()));
@@ -2565,10 +2565,10 @@ template <class T> void TestCachedPixelAccessor()
 TEST_F(test_gdal, GDALCachedPixelAccessor)
 {
     TestCachedPixelAccessor<GByte>();
-    TestCachedPixelAccessor<GUInt16>();
-    TestCachedPixelAccessor<GInt16>();
-    TestCachedPixelAccessor<GUInt32>();
-    TestCachedPixelAccessor<GInt32>();
+    TestCachedPixelAccessor<uint16_t>();
+    TestCachedPixelAccessor<int16_t>();
+    TestCachedPixelAccessor<uint32_t>();
+    TestCachedPixelAccessor<int32_t>();
     TestCachedPixelAccessor<GUInt64>();
     TestCachedPixelAccessor<GInt64>();
     TestCachedPixelAccessor<uint64_t>();
@@ -2791,8 +2791,10 @@ TEST_F(test_gdal, GDALDeinterleaveGeneralCase)
     GByte *pabySrc = static_cast<GByte *>(CPLMalloc(3 * 2));
     for (int i = 0; i < 3 * 2; i++)
         pabySrc[i] = static_cast<GByte>(i);
-    GUInt16 *panDest0 = static_cast<GUInt16 *>(CPLMalloc(3 * sizeof(uint16_t)));
-    GUInt16 *panDest1 = static_cast<GUInt16 *>(CPLMalloc(3 * sizeof(uint16_t)));
+    uint16_t *panDest0 =
+        static_cast<uint16_t *>(CPLMalloc(3 * sizeof(uint16_t)));
+    uint16_t *panDest1 =
+        static_cast<uint16_t *>(CPLMalloc(3 * sizeof(uint16_t)));
     void *ppanDest[] = {panDest0, panDest1};
     GDALDeinterleave(pabySrc, GDT_Byte, 2, ppanDest, GDT_UInt16, 3);
     for (int i = 0; i < 3; i++)
@@ -2808,16 +2810,16 @@ TEST_F(test_gdal, GDALDeinterleaveGeneralCase)
 // Test GDALDeinterleave 3 components UInt16()
 TEST_F(test_gdal, GDALDeinterleave3ComponentsUInt16)
 {
-    GUInt16 *panSrc =
-        static_cast<GUInt16 *>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
+    uint16_t *panSrc =
+        static_cast<uint16_t *>(CPLMalloc(3 * 4 * 15 * sizeof(uint16_t)));
     for (int i = 0; i < 3 * 4 * 15; i++)
-        panSrc[i] = static_cast<GUInt16>(i + 32767);
-    GUInt16 *panDest0 =
-        static_cast<GUInt16 *>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
-    GUInt16 *panDest1 =
-        static_cast<GUInt16 *>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
-    GUInt16 *panDest2 =
-        static_cast<GUInt16 *>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        panSrc[i] = static_cast<uint16_t>(i + 32767);
+    uint16_t *panDest0 =
+        static_cast<uint16_t *>(CPLMalloc(4 * 15 * sizeof(uint16_t)));
+    uint16_t *panDest1 =
+        static_cast<uint16_t *>(CPLMalloc(4 * 15 * sizeof(uint16_t)));
+    uint16_t *panDest2 =
+        static_cast<uint16_t *>(CPLMalloc(4 * 15 * sizeof(uint16_t)));
     void *ppanDest[] = {panDest0, panDest1, panDest2};
     for (int nIters : {1, 4 * 15})
     {
@@ -2838,18 +2840,18 @@ TEST_F(test_gdal, GDALDeinterleave3ComponentsUInt16)
 // Test GDALDeinterleave 4 components UInt16()
 TEST_F(test_gdal, GDALDeinterleave4ComponentsUInt16)
 {
-    GUInt16 *panSrc =
-        static_cast<GUInt16 *>(CPLMalloc(3 * 4 * 15 * sizeof(GUInt16)));
+    uint16_t *panSrc =
+        static_cast<uint16_t *>(CPLMalloc(3 * 4 * 15 * sizeof(uint16_t)));
     for (int i = 0; i < 3 * 4 * 15; i++)
-        panSrc[i] = static_cast<GUInt16>(i + 32767);
-    GUInt16 *panDest0 =
-        static_cast<GUInt16 *>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
-    GUInt16 *panDest1 =
-        static_cast<GUInt16 *>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
-    GUInt16 *panDest2 =
-        static_cast<GUInt16 *>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
-    GUInt16 *panDest3 =
-        static_cast<GUInt16 *>(CPLMalloc(4 * 15 * sizeof(GUInt16)));
+        panSrc[i] = static_cast<uint16_t>(i + 32767);
+    uint16_t *panDest0 =
+        static_cast<uint16_t *>(CPLMalloc(4 * 15 * sizeof(uint16_t)));
+    uint16_t *panDest1 =
+        static_cast<uint16_t *>(CPLMalloc(4 * 15 * sizeof(uint16_t)));
+    uint16_t *panDest2 =
+        static_cast<uint16_t *>(CPLMalloc(4 * 15 * sizeof(uint16_t)));
+    uint16_t *panDest3 =
+        static_cast<uint16_t *>(CPLMalloc(4 * 15 * sizeof(uint16_t)));
     void *ppanDest[] = {panDest0, panDest1, panDest2, panDest3};
     for (int nIters : {1, 3 * 15})
     {

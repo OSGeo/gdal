@@ -219,15 +219,15 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 
         case GDT_UInt32:
         {
-            FillOutBuffer<GUInt32>(nBlockOffsetPixels, nBands, pabySrc,
-                                   padfNodataValues, pImage);
+            FillOutBuffer<uint32_t>(nBlockOffsetPixels, nBands, pabySrc,
+                                    padfNodataValues, pImage);
         }
         break;
 
         case GDT_Int32:
         {
-            FillOutBuffer<GInt32>(nBlockOffsetPixels, nBands, pabySrc,
-                                  padfNodataValues, pImage);
+            FillOutBuffer<int32_t>(nBlockOffsetPixels, nBands, pabySrc,
+                                   padfNodataValues, pImage);
         }
         break;
 

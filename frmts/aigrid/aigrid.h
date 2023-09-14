@@ -45,7 +45,7 @@ CPL_C_START
 typedef struct
 {
     int nBlocks;
-    GUInt32 *panBlockOffset;
+    uint32_t *panBlockOffset;
     int *panBlockSize;
 
     VSILFILE *fpGrid;  // The w001001.adf file.
@@ -65,17 +65,17 @@ typedef struct
 
     char *pszCoverName;  // Path of coverage directory.
 
-    GInt32 nCellType;
-    GInt32 bCompressed;
+    int32_t nCellType;
+    int32_t bCompressed;
 
 #define AIG_CELLTYPE_INT 1
 #define AIG_CELLTYPE_FLOAT 2
 
-    GInt32 nBlockXSize;
-    GInt32 nBlockYSize;
+    int32_t nBlockXSize;
+    int32_t nBlockYSize;
 
-    GInt32 nBlocksPerRow;
-    GInt32 nBlocksPerColumn;
+    int32_t nBlocksPerRow;
+    int32_t nBlocksPerColumn;
 
     int nTileXSize;
     int nTileYSize;
@@ -106,8 +106,8 @@ typedef struct
 /* ==================================================================== */
 
 CPLErr AIGAccessTile(AIGInfo_t *psInfo, int iTileX, int iTileY);
-CPLErr AIGReadBlock(VSILFILE *fp, GUInt32 nBlockOffset, int nBlockSize,
-                    int nBlockXSize, int nBlockYSize, GInt32 *panData,
+CPLErr AIGReadBlock(VSILFILE *fp, uint32_t nBlockOffset, int nBlockSize,
+                    int nBlockXSize, int nBlockYSize, int32_t *panData,
                     int nCellType, int bCompressed);
 
 CPLErr AIGReadHeader(const char *, AIGInfo_t *);
@@ -125,7 +125,7 @@ CPLErr DecompressCCITTRLETile(unsigned char *pabySrcData, int nSrcBytes,
 
 AIGInfo_t *AIGOpen(const char *, const char *);
 
-CPLErr AIGReadTile(AIGInfo_t *, int, int, GInt32 *);
+CPLErr AIGReadTile(AIGInfo_t *, int, int, int32_t *);
 CPLErr AIGReadFloatTile(AIGInfo_t *, int, int, float *);
 
 void AIGClose(AIGInfo_t *);

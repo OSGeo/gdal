@@ -199,10 +199,10 @@ inline GIntBig DecodeSInt(GUIntBig nVal)
                              : -static_cast<GIntBig>(nVal >> 1) - 1;
 }
 
-inline GInt32 DecodeSInt(GUInt32 nVal)
+inline int32_t DecodeSInt(uint32_t nVal)
 {
-    return ((nVal & 1) == 0) ? static_cast<GInt32>(nVal >> 1)
-                             : -static_cast<GInt32>(nVal >> 1) - 1;
+    return ((nVal & 1) == 0) ? static_cast<int32_t>(nVal >> 1)
+                             : -static_cast<int32_t>(nVal >> 1) - 1;
 }
 
 /************************************************************************/
@@ -247,7 +247,7 @@ inline int ReadVarInt32(const GByte **ppabyData)
 
 #define READ_VARSINT32(pabyData, pabyDataLimit, nVal)                          \
     {                                                                          \
-        nVal = DecodeSInt(static_cast<GUInt32>(ReadVarUInt64(&pabyData)));     \
+        nVal = DecodeSInt(static_cast<uint32_t>(ReadVarUInt64(&pabyData)));    \
         if (CHECK_OOB && pabyData > pabyDataLimit)                             \
             THROW_GPB_EXCEPTION;                                               \
     }
@@ -428,12 +428,12 @@ inline GUIntBig EncodeSInt(GIntBig nVal)
         return static_cast<GUIntBig>(nVal) << 1;
 }
 
-inline GUInt32 EncodeSInt(GInt32 nVal)
+inline uint32_t EncodeSInt(int32_t nVal)
 {
     if (nVal < 0)
-        return (static_cast<GUInt32>(-(nVal + 1)) << 1) | 1;
+        return (static_cast<uint32_t>(-(nVal + 1)) << 1) | 1;
     else
-        return static_cast<GUInt32>(nVal) << 1;
+        return static_cast<uint32_t>(nVal) << 1;
 }
 
 /************************************************************************/

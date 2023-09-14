@@ -349,7 +349,7 @@ typedef struct
 typedef union
 {
     char *string;
-    GInt32 integer;
+    int32_t integer;
     double real;
 } tagValueUnion;
 

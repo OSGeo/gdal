@@ -219,7 +219,7 @@ struct SXFMapDescription
     double dfYOr = 0;
     double dfFalseNorthing = 0;
     double dfFalseEasting = 0;
-    GUInt32 nResolution = 0;
+    uint32_t nResolution = 0;
     double dfScale = 0;
     bool bIsRealCoordinates = false;
     SXFCoordinatesAccuracy stCoordAcc = SXF_COORD_ACC_UNDEFINED;
@@ -269,29 +269,29 @@ typedef struct
     int bFormat;  // Has 3D vector (Note 4) /* Format of the certificate (0-
                   // linear size, 1-vector format ) */
     GByte bDim;   // Dimensionality of the idea (0- 2D, 1- 3D) (Note 6)
-    bool bHasTextSign;        // Sign of certificate with the text (Note 8)
-    GUInt32 nPointCount;      // Point count
-    GUInt16 nSubObjectCount;  // The sub object count
+    bool bHasTextSign;         // Sign of certificate with the text (Note 8)
+    uint32_t nPointCount;      // Point count
+    uint16_t nSubObjectCount;  // The sub object count
 
 } SXFRecordDescription;
 
 typedef struct
 {
-    GUInt32 nID; /* Identifier of the beginning of record (0x7FFF7FFF) */
-    GUInt32 nFullLength;     /* The overall length of record (with the title) */
-    GUInt32 nGeometryLength; /* Length of certificate (in bytes) */
-    GUInt32 nClassifyCode;   /* Classification code */
-    GUInt16 anGroup[2];      /* 0 - group no, 1 - no in group */
-    GByte nRef[3];           /* Reference data */
+    uint32_t nID; /* Identifier of the beginning of record (0x7FFF7FFF) */
+    uint32_t nFullLength; /* The overall length of record (with the title) */
+    uint32_t nGeometryLength; /* Length of certificate (in bytes) */
+    uint32_t nClassifyCode;   /* Classification code */
+    uint16_t anGroup[2];      /* 0 - group no, 1 - no in group */
+    GByte nRef[3];            /* Reference data */
     GByte byPadding;
-    GUInt32 nPointCount;      /* Point count */
-    GUInt16 nSubObjectCount;  /* The sub object count */
-    GUInt16 nPointCountSmall; /* Point count in small geometries */
+    uint32_t nPointCount;      /* Point count */
+    uint16_t nSubObjectCount;  /* The sub object count */
+    uint16_t nPointCountSmall; /* Point count in small geometries */
 } SXFRecordHeader;
 
 typedef struct
 {
-    GUInt16 nCode;  // type
+    uint16_t nCode;  // type
     char nType;
     char nScale;
 } SXFRecordAttributeInfo;
@@ -314,15 +314,15 @@ enum SXFRecordAttributeType
 
 struct SXFDate
 {
-    GUInt16 nYear = 0, nMonth = 0, nDay = 0;
+    uint16_t nYear = 0, nMonth = 0, nDay = 0;
 };
 
 struct SXFPassport
 {
-    GUInt32 version = 0;
+    uint32_t version = 0;
     SXFDate dtCrateDate{};
     CPLString sMapSheet{};
-    GUInt32 nScale = 0;
+    uint32_t nScale = 0;
     CPLString sMapSheetName{};
     SXFInformationFlags informationFlags;
     SXFMapDescription stMapDescription{};
@@ -331,9 +331,9 @@ struct SXFPassport
 typedef struct
 {
     char szID[4];             // the file ID should be "SXF"
-    GUInt32 nHeaderLength;    // the Header length
+    uint32_t nHeaderLength;   // the Header length
     GByte nFormatVersion[4];  // the format version (e.g. 4)
-    GUInt32 nCheckSum;        // check sum
+    uint32_t nCheckSum;       // check sum
 } SXFHeader;
 
 /************************************************************************/
@@ -345,10 +345,10 @@ typedef struct
 */
 typedef struct
 {
-    GUInt32 nOffset;  // RSC Section offset in bytes from the beginning of the
-                      // RSC file
-    GUInt32 nLength;  // RSC Section record length
-    GUInt32 nRecordCount;  // count of records in the section
+    uint32_t nOffset;  // RSC Section offset in bytes from the beginning of the
+                       // RSC file
+    uint32_t nLength;  // RSC Section record length
+    uint32_t nRecordCount;  // count of records in the section
 } RSCSection;
 
 /*
@@ -357,18 +357,18 @@ typedef struct
 typedef struct
 {
     char szID[4];
-    GUInt32 nFileLength;
-    GUInt32 nVersion;
-    GUInt32 nEncoding;
-    GUInt32 nFileState;
-    GUInt32 nFileModState;
-    GUInt32 nLang;  // 1 - en, 2 - rus
-    GUInt32 nNextID;
+    uint32_t nFileLength;
+    uint32_t nVersion;
+    uint32_t nEncoding;
+    uint32_t nFileState;
+    uint32_t nFileModState;
+    uint32_t nLang;  // 1 - en, 2 - rus
+    uint32_t nNextID;
     GByte date[8];
     char szMapType[32];
     char szClassifyName[32];
     char szClassifyCode[8];
-    GUInt32 nScale;
+    uint32_t nScale;
     char nScales[4];
     RSCSection Objects;
     RSCSection Semantic;
@@ -387,8 +387,8 @@ typedef struct
     GByte nFlagKeysAsCodes;
     GByte nFlagPaletteMods;
     GByte Reserved[30];
-    GUInt32 nFontEnc;
-    GUInt32 nColorsInPalette;
+    uint32_t nFontEnc;
+    uint32_t nColorsInPalette;
 } RSCHeader;
 
 #endif /* SXF_DEFS_H */

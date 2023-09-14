@@ -370,7 +370,7 @@ CPLErr RS2CalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     if (m_eType == GDT_CInt16)
     {
         /* read in complex values */
-        GInt16 *pnImageTmp = reinterpret_cast<GInt16 *>(
+        int16_t *pnImageTmp = reinterpret_cast<int16_t *>(
             CPLMalloc(2 * nBlockXSize * nBlockYSize *
                       GDALGetDataTypeSize(GDT_Int16) / 8));
         if (m_poBandDataset->GetRasterCount() == 2)
@@ -419,7 +419,7 @@ CPLErr RS2CalibRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else if (m_eType == GDT_UInt16)
     {
         /* read in detected values */
-        GUInt16 *pnImageTmp = reinterpret_cast<GUInt16 *>(CPLMalloc(
+        uint16_t *pnImageTmp = reinterpret_cast<uint16_t *>(CPLMalloc(
             nBlockXSize * nBlockYSize * GDALGetDataTypeSize(GDT_UInt16) / 8));
         eErr = m_poBandDataset->RasterIO(
             GF_Read, nBlockXOff * nBlockXSize, nBlockYOff * nBlockYSize,

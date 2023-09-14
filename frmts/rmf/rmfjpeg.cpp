@@ -38,9 +38,9 @@
 /*                          JPEGDecompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
-                                  GByte *pabyOut, GUInt32 nSizeOut,
-                                  GUInt32 nRawXSize, GUInt32 nRawYSize)
+size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, uint32_t nSizeIn,
+                                  GByte *pabyOut, uint32_t nSizeOut,
+                                  uint32_t nRawXSize, uint32_t nRawYSize)
 {
     if (pabyIn == nullptr || pabyOut == nullptr || nSizeOut < nSizeIn ||
         nSizeIn < 2)
@@ -136,9 +136,9 @@ size_t RMFDataset::JPEGDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
 /*                            JPEGCompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::JPEGCompress(const GByte *pabyIn, GUInt32 nSizeIn,
-                                GByte *pabyOut, GUInt32 nSizeOut,
-                                GUInt32 nRawXSize, GUInt32 nRawYSize,
+size_t RMFDataset::JPEGCompress(const GByte *pabyIn, uint32_t nSizeIn,
+                                GByte *pabyOut, uint32_t nSizeOut,
+                                uint32_t nRawXSize, uint32_t nRawYSize,
                                 const RMFDataset *poDS)
 {
     if (pabyIn == nullptr || pabyOut == nullptr || nSizeIn < 2)

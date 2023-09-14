@@ -615,8 +615,8 @@ boolean GeoRasterDataset::JP2_CopyDirect(const char *pszJP2Filename,
 
     (void)oBox.ReadFirst();
 
-    GUInt32 nLBox;
-    GUInt32 nTBox;
+    uint32_t nLBox;
+    uint32_t nTBox;
 
     int nBoxCount = 0;
 

@@ -1461,7 +1461,7 @@ OGRArrowLayer::TimestampToOGR(int64_t timestamp,
     }
     struct tm dt;
     CPLUnixTimeToYMDHMS(timestamp, &dt);
-    psField->Date.Year = static_cast<GInt16>(dt.tm_year + 1900);
+    psField->Date.Year = static_cast<int16_t>(dt.tm_year + 1900);
     psField->Date.Month = static_cast<GByte>(dt.tm_mon + 1);
     psField->Date.Day = static_cast<GByte>(dt.tm_mday);
     psField->Date.Hour = static_cast<GByte>(dt.tm_hour);
@@ -2389,7 +2389,7 @@ static bool FillTargetValueFromSrcExpr(const OGRFieldDefn *poFieldDefn,
                 {
                     psConstraint->eType =
                         OGRArrowLayer::Constraint::Type::DateTime;
-                    psConstraint->sValue.Date.Year = (GInt16)nYear;
+                    psConstraint->sValue.Date.Year = (int16_t)nYear;
                     psConstraint->sValue.Date.Month = (GByte)nMonth;
                     psConstraint->sValue.Date.Day = (GByte)nDay;
                     psConstraint->sValue.Date.Hour = (GByte)nHour;

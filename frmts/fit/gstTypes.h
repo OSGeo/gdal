@@ -35,10 +35,10 @@
 
 typedef int (*gstItemGetFunc)(void *data, int tag, ...);
 
-typedef GUInt16 uint16;
-typedef GInt16 int16;
-typedef GUInt32 uint32;
-typedef GInt32 int32;
+typedef uint16_t uint16;
+typedef int16_t int16;
+typedef uint32_t uint32;
+typedef int32_t int32;
 typedef GUIntBig uint64;
 typedef GIntBig int64;
 

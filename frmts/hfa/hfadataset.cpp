@@ -191,7 +191,7 @@ HFARasterAttributeTable::HFARasterAttributeTable(HFARasterBand *poBand,
             }
             else if (eType == GFT_Integer)
             {
-                int nSize = sizeof(GInt32);
+                int nSize = sizeof(int32_t);
                 if (bConvertColors)
                     nSize = sizeof(double);
                 AddColumn(poDTChild->GetName(), GFT_Integer, eUsage, nOffset,
@@ -737,8 +737,8 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
             {
                 return CE_Failure;
             }
-            GInt32 *panColData = static_cast<GInt32 *>(
-                VSI_MALLOC2_VERBOSE(iLength, sizeof(GInt32)));
+            int32_t *panColData = static_cast<int32_t *>(
+                VSI_MALLOC2_VERBOSE(iLength, sizeof(int32_t)));
             if (panColData == nullptr)
             {
                 return CE_Failure;
@@ -746,7 +746,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 
             if (eRWFlag == GF_Read)
             {
-                if (static_cast<int>(VSIFReadL(panColData, sizeof(GInt32),
+                if (static_cast<int>(VSIFReadL(panColData, sizeof(int32_t),
                                                iLength, hHFA->fp)) != iLength)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -759,7 +759,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                 GDALSwapWords(panColData, 4, iLength, 4);
 #endif
                 // Now copy into application buffer. This extra step
-                // may not be necessary if sizeof(int) == sizeof(GInt32).
+                // may not be necessary if sizeof(int) == sizeof(int32_t).
                 for (int i = 0; i < iLength; i++)
                     pnData[i] = panColData[i];
             }
@@ -774,7 +774,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
 #endif
                 // Note: HFAAllocateSpace now called by CreateColumn so space
                 // should exist.
-                if (static_cast<int>(VSIFWriteL(panColData, sizeof(GInt32),
+                if (static_cast<int>(VSIFWriteL(panColData, sizeof(int32_t),
                                                 iLength, hHFA->fp)) != iLength)
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
@@ -1486,7 +1486,7 @@ CPLErr HFARasterAttributeTable::CreateColumn(const char *pszFieldName,
 
     if (eFieldType == GFT_Integer)
     {
-        nElementSize = sizeof(GInt32);
+        nElementSize = sizeof(int32_t);
         poColumn->SetStringField("dataType", "integer");
     }
     else if (eFieldType == GFT_Real)
@@ -2944,8 +2944,8 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
         {
             const int nOffset =
                 HFAAllocateSpace(hHFA->papoBand[nBand - 1]->psInfo,
-                                 static_cast<GUInt32>(nRowCount) *
-                                     static_cast<GUInt32>(sizeof(double)));
+                                 static_cast<uint32_t>(nRowCount) *
+                                     static_cast<uint32_t>(sizeof(double)));
             poColumn->SetIntField("columnDataPtr", nOffset);
             poColumn->SetStringField("dataType", "real");
 
@@ -3015,12 +3015,12 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
         {
             const int nOffset = HFAAllocateSpace(
                 hHFA->papoBand[nBand - 1]->psInfo,
-                static_cast<GUInt32>(nRowCount) * (GUInt32)sizeof(GInt32));
+                static_cast<uint32_t>(nRowCount) * (uint32_t)sizeof(int32_t));
             poColumn->SetIntField("columnDataPtr", nOffset);
             poColumn->SetStringField("dataType", "integer");
 
-            GInt32 *panColData =
-                static_cast<GInt32 *>(CPLCalloc(nRowCount, sizeof(GInt32)));
+            int32_t *panColData =
+                static_cast<int32_t *>(CPLCalloc(nRowCount, sizeof(int32_t)));
             for (int i = 0; i < nRowCount; i++)
             {
                 panColData[i] = poRAT->GetValueAsInt(i, col);
@@ -3029,8 +3029,8 @@ CPLErr HFARasterBand::WriteNamedRAT(const char * /*pszName*/,
             GDALSwapWords(panColData, 4, nRowCount, 4);
 #endif
             if (VSIFSeekL(hHFA->fp, nOffset, SEEK_SET) != 0 ||
-                VSIFWriteL(panColData, nRowCount, sizeof(GInt32), hHFA->fp) !=
-                    sizeof(GInt32))
+                VSIFWriteL(panColData, nRowCount, sizeof(int32_t), hHFA->fp) !=
+                    sizeof(int32_t))
             {
                 CPLError(CE_Failure, CPLE_FileIO, "WriteNamedRAT() failed");
                 CPLFree(panColData);

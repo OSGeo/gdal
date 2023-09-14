@@ -36,9 +36,9 @@
 typedef struct
 {
     GByte data[64];
-    GUInt32 datalen;
+    uint32_t datalen;
     GUIntBig bitlen;
-    GUInt32 state[5];
+    uint32_t state[5];
 } CPL_SHA1Context;
 
 #define ROTLEFT(a, b) ((a << b) | (a >> (32 - b)))
@@ -50,7 +50,7 @@ typedef struct
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
 static void sha1_transform(CPL_SHA1Context *ctx, const GByte data[])
 {
-    GUInt32 a, b, c, d, e, i, j, t, m[80];
+    uint32_t a, b, c, d, e, i, j, t, m[80];
 
     for (i = 0, j = 0; i < 16; ++i, j += 4)
         m[i] = (data[j] << 24) + (data[j + 1] << 16) + (data[j + 2] << 8) +
@@ -154,7 +154,7 @@ static void CPL_SHA1Update(CPL_SHA1Context *ctx, const GByte data[], size_t len)
 
 static void CPL_SHA1Final(CPL_SHA1Context *ctx, GByte hash[CPL_SHA1_HASH_SIZE])
 {
-    GUInt32 i;
+    uint32_t i;
 
     i = ctx->datalen;
 

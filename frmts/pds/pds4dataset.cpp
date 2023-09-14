@@ -445,28 +445,28 @@ CPLErr PDS4MaskBand::IReadBlock(int nXBlock, int nYBlock, void *pImage)
     }
     else if (eSrcDT == GDT_Int8)
     {
-        FillMask<GInt8>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                        m_adfConstants);
+        FillMask<int8_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                         m_adfConstants);
     }
     else if (eSrcDT == GDT_UInt16)
     {
-        FillMask<GUInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                          m_adfConstants);
+        FillMask<uint16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize,
+                           nBlockXSize, m_adfConstants);
     }
     else if (eSrcDT == GDT_Int16)
     {
-        FillMask<GInt16>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                         m_adfConstants);
+        FillMask<int16_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                          m_adfConstants);
     }
     else if (eSrcDT == GDT_UInt32)
     {
-        FillMask<GUInt32>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                          m_adfConstants);
+        FillMask<uint32_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize,
+                           nBlockXSize, m_adfConstants);
     }
     else if (eSrcDT == GDT_Int32)
     {
-        FillMask<GInt32>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
-                         m_adfConstants);
+        FillMask<int32_t>(m_pBuffer, pabyDst, nReqXSize, nReqYSize, nBlockXSize,
+                          m_adfConstants);
     }
     else if (eSrcDT == GDT_Float32)
     {

@@ -482,7 +482,7 @@ GDALDataset *NTv2Dataset::Open(GDALOpenInfo *poOpenInfo)
 
     SwapPtr32IfNecessary(poDS->m_bMustSwap,
                          achHeader + 2 * poDS->nRecordSize + 8);
-    GInt32 nSubFileCount = 0;
+    int32_t nSubFileCount = 0;
     memcpy(&nSubFileCount, achHeader + 2 * poDS->nRecordSize + 8, 4);
     if (nSubFileCount <= 0 || nSubFileCount >= 1024)
     {
@@ -541,7 +541,7 @@ GDALDataset *NTv2Dataset::Open(GDALOpenInfo *poOpenInfo)
         SwapPtr32IfNecessary(poDS->m_bMustSwap,
                              achHeader + 10 * poDS->nRecordSize + 8);
 
-        GUInt32 nGSCount = 0;
+        uint32_t nGSCount = 0;
         memcpy(&nGSCount, achHeader + 10 * poDS->nRecordSize + 8, 4);
 
         CPLString osSubName;
@@ -847,7 +847,7 @@ GDALDataset *NTv2Dataset::Create(const char *pszFilename, int nXSize,
     /* -------------------------------------------------------------------- */
     char achHeader[11 * 16] = {'\0'};
     const char *pszValue = nullptr;
-    GUInt32 nNumFile = 1;
+    uint32_t nNumFile = 1;
     bool bMustSwap = false;
     bool bIsLE = false;
 
@@ -1005,7 +1005,7 @@ GDALDataset *NTv2Dataset::Create(const char *pszFilename, int nXSize,
     memcpy(achHeader + 9 * 16 + 8, &dfValue, 8);
 
     memcpy(achHeader + 10 * 16, "GS_COUNT", 8);
-    GUInt32 nGSCount = nXSize * nYSize;
+    uint32_t nGSCount = nXSize * nYSize;
     SwapPtr32IfNecessary(bMustSwap, &nGSCount);
     memcpy(achHeader + 10 * 16 + 8, &nGSCount, 4);
 

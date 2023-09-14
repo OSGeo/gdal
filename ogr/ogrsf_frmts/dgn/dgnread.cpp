@@ -142,9 +142,10 @@ int DGNLoadRawElement(DGNInfo *psDGN, int *pnType, int *pnLevel)
 /************************************************************************/
 
 static bool DGNGetRawExtents(DGNInfo *psDGN, int nType,
-                             unsigned char *pabyRawData, GUInt32 *pnXMin,
-                             GUInt32 *pnYMin, GUInt32 *pnZMin, GUInt32 *pnXMax,
-                             GUInt32 *pnYMax, GUInt32 *pnZMax)
+                             unsigned char *pabyRawData, uint32_t *pnXMin,
+                             uint32_t *pnYMin, uint32_t *pnZMin,
+                             uint32_t *pnXMax, uint32_t *pnYMax,
+                             uint32_t *pnZMax)
 
 {
     if (pabyRawData == nullptr)
@@ -220,8 +221,8 @@ int DGNGetElementExtents(DGNHandle hDGN, DGNElemCore *psElement,
     DGNInfo *psDGN = (DGNInfo *)hDGN;
     bool bResult = false;
 
-    GUInt32 anMin[3] = {0, 0, 0};
-    GUInt32 anMax[3] = {0, 0, 0};
+    uint32_t anMin[3] = {0, 0, 0};
+    uint32_t anMax[3] = {0, 0, 0};
 
     /* -------------------------------------------------------------------- */
     /*      Get the extents if we have raw data in the element, or          */
@@ -677,7 +678,7 @@ static DGNElemCore *DGNProcessElement(DGNInfo *psDGN, int nType, int nLevel)
 
         case DGNT_ARC:
         {
-            GInt32 nSweepVal = 0;
+            int32_t nSweepVal = 0;
 
             DGNElemArc *psEllipse =
                 static_cast<DGNElemArc *>(CPLCalloc(sizeof(DGNElemArc), 1));
@@ -1196,10 +1197,10 @@ DGNElemCore *DGNReadElement(DGNHandle hDGN)
             if (!psDGN->sf_converted_to_uor)
                 DGNSpatialFilterToUOR(psDGN);
 
-            GUInt32 nXMin = 0;
-            GUInt32 nXMax = 0;
-            GUInt32 nYMin = 0;
-            GUInt32 nYMax = 0;
+            uint32_t nXMin = 0;
+            uint32_t nXMax = 0;
+            uint32_t nYMin = 0;
+            uint32_t nYMax = 0;
             if (!DGNGetRawExtents(psDGN, nType, nullptr, &nXMin, &nYMin,
                                   nullptr, &nXMax, &nYMax, nullptr))
             {
@@ -1714,10 +1715,10 @@ void DGNInverseTransformPointToInt(DGNInfo *psDGN, DGNPoint *psPoint,
     const int nIter = std::min(3, psDGN->dimension);
     for (int i = 0; i < nIter; i++)
     {
-        GInt32 nCTI = static_cast<GInt32>(
+        int32_t nCTI = static_cast<int32_t>(
             std::max(-2147483647.0, std::min(2147483647.0, adfCT[i])));
         unsigned char abyCTI[4];
-        memcpy(abyCTI, &nCTI, sizeof(GInt32));
+        memcpy(abyCTI, &nCTI, sizeof(int32_t));
 
 #ifdef WORDS_BIGENDIAN
         pabyTarget[i * 4 + 0] = abyCTI[1];
@@ -1875,7 +1876,7 @@ void DGNBuildIndex(DGNInfo *psDGN)
 
     int nType = 0;
     int nLevel = 0;
-    GUInt32 anRegion[6] = {};
+    uint32_t anRegion[6] = {};
 
     psDGN->index_built = true;
 

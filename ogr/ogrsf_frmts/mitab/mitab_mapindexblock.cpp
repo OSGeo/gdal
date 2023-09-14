@@ -179,7 +179,7 @@ int TABMAPIndexBlock::CommitToFile()
     GotoByteInBlock(0x000);
 
     WriteInt16(TABMAP_INDEX_BLOCK);  // Block type code
-    WriteInt16(static_cast<GInt16>(m_numEntries));
+    WriteInt16(static_cast<int16_t>(m_numEntries));
 
     int nStatus = CPLGetLastErrorType() == CE_Failure ? -1 : 0;
 
@@ -384,8 +384,8 @@ int TABMAPIndexBlock::GetCurMaxDepth()
  *
  * Return the MBR for the current block.
  **********************************************************************/
-void TABMAPIndexBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin, GInt32 &nXMax,
-                              GInt32 &nYMax)
+void TABMAPIndexBlock::GetMBR(int32_t &nXMin, int32_t &nYMin, int32_t &nXMax,
+                              int32_t &nYMax)
 {
     nXMin = m_nMinX;
     nYMin = m_nMinY;
@@ -397,8 +397,8 @@ void TABMAPIndexBlock::GetMBR(GInt32 &nXMin, GInt32 &nYMin, GInt32 &nXMax,
  *                   TABMAPIndexBlock::SetMBR()
  *
  **********************************************************************/
-void TABMAPIndexBlock::SetMBR(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
-                              GInt32 nYMax)
+void TABMAPIndexBlock::SetMBR(int32_t nXMin, int32_t nYMin, int32_t nXMax,
+                              int32_t nYMax)
 {
     m_nMinX = nXMin;
     m_nMinY = nYMin;
@@ -415,8 +415,8 @@ void TABMAPIndexBlock::SetMBR(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPIndexBlock::InsertEntry(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
-                                  GInt32 nYMax, GInt32 nBlockPtr)
+int TABMAPIndexBlock::InsertEntry(int32_t nXMin, int32_t nYMin, int32_t nXMax,
+                                  int32_t nYMax, int32_t nBlockPtr)
 {
     if (m_eAccess != TABWrite && m_eAccess != TABReadWrite)
     {
@@ -461,16 +461,16 @@ int TABMAPIndexBlock::InsertEntry(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
  *
  * Returns the index of the best candidate or -1 of node is empty.
  **********************************************************************/
-int TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
-                                              GInt32 nXMax, GInt32 nYMax)
+int TABMAPIndexBlock::ChooseSubEntryForInsert(int32_t nXMin, int32_t nYMin,
+                                              int32_t nXMax, int32_t nYMax)
 {
-    GInt32 nBestCandidate = -1;
+    int32_t nBestCandidate = -1;
 
     double dOptimalAreaDiff = 0.0;
 
     const double dNewEntryArea = MITAB_AREA(nXMin, nYMin, nXMax, nYMax);
 
-    for (GInt32 i = 0; i < m_numEntries; i++)
+    for (int32_t i = 0; i < m_numEntries; i++)
     {
         double dAreaDiff = 0.0;
         const double dAreaBefore =
@@ -498,10 +498,10 @@ int TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
             /* Need to calculate the expanded MBR to calculate the area
              * difference.
              */
-            GInt32 nXMin2 = std::min(m_asEntries[i].XMin, nXMin);
-            GInt32 nYMin2 = std::min(m_asEntries[i].YMin, nYMin);
-            GInt32 nXMax2 = std::max(m_asEntries[i].XMax, nXMax);
-            GInt32 nYMax2 = std::max(m_asEntries[i].YMax, nYMax);
+            int32_t nXMin2 = std::min(m_asEntries[i].XMin, nXMin);
+            int32_t nYMin2 = std::min(m_asEntries[i].YMin, nYMin);
+            int32_t nXMax2 = std::max(m_asEntries[i].XMax, nXMax);
+            int32_t nYMax2 = std::max(m_asEntries[i].YMax, nYMax);
 
             dAreaDiff =
                 MITAB_AREA(nXMin2, nYMin2, nXMax2, nYMax2) - dAreaBefore;
@@ -546,8 +546,8 @@ int TABMAPIndexBlock::ChooseSubEntryForInsert(GInt32 nXMin, GInt32 nYMin,
  * After this call, m_poCurChild will be pointing at the selected child
  * node, for use by later calls to UpdateLeafEntry()
  **********************************************************************/
-GInt32 TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
-                                             GInt32 nXMax, GInt32 nYMax)
+int32_t TABMAPIndexBlock::ChooseLeafForInsert(int32_t nXMin, int32_t nYMin,
+                                              int32_t nXMax, int32_t nYMax)
 {
     GBool bFound = FALSE;
 
@@ -629,9 +629,9 @@ GInt32 TABMAPIndexBlock::ChooseLeafForInsert(GInt32 nXMin, GInt32 nYMin,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPIndexBlock::GetCurLeafEntryMBR(GInt32 nBlockPtr, GInt32 &nXMin,
-                                         GInt32 &nYMin, GInt32 &nXMax,
-                                         GInt32 &nYMax)
+int TABMAPIndexBlock::GetCurLeafEntryMBR(int32_t nBlockPtr, int32_t &nXMin,
+                                         int32_t &nYMin, int32_t &nXMax,
+                                         int32_t &nYMax)
 {
     if (m_poCurChild)
     {
@@ -673,8 +673,9 @@ int TABMAPIndexBlock::GetCurLeafEntryMBR(GInt32 nBlockPtr, GInt32 &nXMin,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPIndexBlock::UpdateLeafEntry(GInt32 nBlockPtr, GInt32 nXMin,
-                                      GInt32 nYMin, GInt32 nXMax, GInt32 nYMax)
+int TABMAPIndexBlock::UpdateLeafEntry(int32_t nBlockPtr, int32_t nXMin,
+                                      int32_t nYMin, int32_t nXMax,
+                                      int32_t nYMax)
 {
     if (m_poCurChild)
     {
@@ -731,8 +732,8 @@ int TABMAPIndexBlock::UpdateLeafEntry(GInt32 nBlockPtr, GInt32 nXMin,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
-                               GInt32 nYMax, GInt32 nBlockPtr,
+int TABMAPIndexBlock::AddEntry(int32_t nXMin, int32_t nYMin, int32_t nXMax,
+                               int32_t nYMax, int32_t nBlockPtr,
                                GBool bAddInThisNodeOnly /*=FALSE*/)
 {
     GBool bFound = FALSE;
@@ -871,10 +872,10 @@ int TABMAPIndexBlock::AddEntry(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
  * The returned AreaDiff value is positive if NodeMBR has to be enlarged
  * and negative if new Entry is fully contained in the NodeMBR.
  **********************************************************************/
-double TABMAPIndexBlock::ComputeAreaDiff(GInt32 nNodeXMin, GInt32 nNodeYMin,
-                                         GInt32 nNodeXMax, GInt32 nNodeYMax,
-                                         GInt32 nEntryXMin, GInt32 nEntryYMin,
-                                         GInt32 nEntryXMax, GInt32 nEntryYMax)
+double TABMAPIndexBlock::ComputeAreaDiff(int32_t nNodeXMin, int32_t nNodeYMin,
+                                         int32_t nNodeXMax, int32_t nNodeYMax,
+                                         int32_t nEntryXMin, int32_t nEntryYMin,
+                                         int32_t nEntryXMax, int32_t nEntryYMax)
 {
     double dAreaDiff = 0.0;
 
@@ -930,21 +931,21 @@ double TABMAPIndexBlock::ComputeAreaDiff(GInt32 nNodeXMin, GInt32 nNodeYMin,
  **********************************************************************/
 int TABMAPIndexBlock::PickSeedsForSplit(
     TABMAPIndexEntry *pasEntries, int numEntries, int nSrcCurChildIndex,
-    GInt32 nNewEntryXMin, GInt32 nNewEntryYMin, GInt32 nNewEntryXMax,
-    GInt32 nNewEntryYMax, int &nSeed1, int &nSeed2)
+    int32_t nNewEntryXMin, int32_t nNewEntryYMin, int32_t nNewEntryXMax,
+    int32_t nNewEntryYMax, int &nSeed1, int &nSeed2)
 {
-    GInt32 nSrcMinX = 0;
-    GInt32 nSrcMinY = 0;
-    GInt32 nSrcMaxX = 0;
-    GInt32 nSrcMaxY = 0;
+    int32_t nSrcMinX = 0;
+    int32_t nSrcMinY = 0;
+    int32_t nSrcMaxX = 0;
+    int32_t nSrcMaxY = 0;
     int nLowestMaxX = -1;
     int nHighestMinX = -1;
     int nLowestMaxY = -1;
     int nHighestMinY = -1;
-    GInt32 nLowestMaxXId = -1;
-    GInt32 nHighestMinXId = -1;
-    GInt32 nLowestMaxYId = -1;
-    GInt32 nHighestMinYId = -1;
+    int32_t nLowestMaxXId = -1;
+    int32_t nHighestMinXId = -1;
+    int32_t nLowestMaxYId = -1;
+    int32_t nHighestMinYId = -1;
 
     nSeed1 = -1;
     nSeed2 = -1;
@@ -1080,8 +1081,8 @@ int TABMAPIndexBlock::PickSeedsForSplit(
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
-                                GInt32 nNewEntryXMax, GInt32 nNewEntryYMax)
+int TABMAPIndexBlock::SplitNode(int32_t nNewEntryXMin, int32_t nNewEntryYMin,
+                                int32_t nNewEntryXMax, int32_t nNewEntryYMax)
 {
     CPLAssert(m_poBlockManagerRef);
 
@@ -1187,10 +1188,10 @@ int TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
             pasSrcEntries[iEntry].YMin, pasSrcEntries[iEntry].XMax,
             pasSrcEntries[iEntry].YMax);
 
-        GInt32 nXMin2 = 0;
-        GInt32 nYMin2 = 0;
-        GInt32 nXMax2 = 0;
-        GInt32 nYMax2 = 0;
+        int32_t nXMin2 = 0;
+        int32_t nYMin2 = 0;
+        int32_t nXMax2 = 0;
+        int32_t nYMax2 = 0;
         poNewNode->RecomputeMBR();
         poNewNode->GetMBR(nXMin2, nYMin2, nXMax2, nYMax2);
         const double dAreaDiff2 = ComputeAreaDiff(
@@ -1249,8 +1250,10 @@ int TABMAPIndexBlock::SplitNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
  *
  * Returns 0 on success, -1 on error
  **********************************************************************/
-int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
-                                    GInt32 nNewEntryXMax, GInt32 nNewEntryYMax)
+int TABMAPIndexBlock::SplitRootNode(int32_t nNewEntryXMin,
+                                    int32_t nNewEntryYMin,
+                                    int32_t nNewEntryXMax,
+                                    int32_t nNewEntryYMax)
 {
     CPLAssert(m_poBlockManagerRef);
     CPLAssert(m_poParentRef == nullptr);
@@ -1320,7 +1323,7 @@ int TABMAPIndexBlock::SplitRootNode(GInt32 nNewEntryXMin, GInt32 nNewEntryYMin,
  **********************************************************************/
 void TABMAPIndexBlock::RecomputeMBR()
 {
-    GInt32 nMinX, nMinY, nMaxX, nMaxY;
+    int32_t nMinX, nMinY, nMaxX, nMaxY;
 
     nMinX = 1000000000;
     nMinY = 1000000000;
@@ -1363,9 +1366,9 @@ void TABMAPIndexBlock::RecomputeMBR()
  *
  * nBlockPtr is passed only to validate the consistency of the tree.
  **********************************************************************/
-void TABMAPIndexBlock::UpdateCurChildMBR(GInt32 nXMin, GInt32 nYMin,
-                                         GInt32 nXMax, GInt32 nYMax,
-                                         CPL_UNUSED GInt32 nBlockPtr)
+void TABMAPIndexBlock::UpdateCurChildMBR(int32_t nXMin, int32_t nYMin,
+                                         int32_t nXMax, int32_t nYMax,
+                                         CPL_UNUSED int32_t nBlockPtr)
 {
     CPLAssert(m_poCurChild);
     CPLAssert(m_asEntries[m_nCurChildIndex].nBlockPtr == nBlockPtr);

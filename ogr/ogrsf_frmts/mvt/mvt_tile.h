@@ -255,8 +255,8 @@ class MVTTileLayerFeature
   private:
     mutable size_t m_nCachedSize = 0;
     GUInt64 m_nId = 0;
-    std::vector<GUInt32> m_anTags;
-    std::vector<GUInt32> m_anGeometry;
+    std::vector<uint32_t> m_anTags;
+    std::vector<uint32_t> m_anGeometry;
     GeomType m_eType = GeomType::UNKNOWN;
     mutable bool m_bCachedSize = false;
     bool m_bHasId = false;
@@ -275,7 +275,7 @@ class MVTTileLayerFeature
     {
         return m_nId;
     }
-    const std::vector<GUInt32> &getTags() const
+    const std::vector<uint32_t> &getTags() const
     {
         return m_anTags;
     }
@@ -287,11 +287,11 @@ class MVTTileLayerFeature
     {
         return m_eType;
     }
-    GUInt32 getGeometryCount() const
+    uint32_t getGeometryCount() const
     {
-        return static_cast<GUInt32>(m_anGeometry.size());
+        return static_cast<uint32_t>(m_anGeometry.size());
     }
-    const std::vector<GUInt32> &getGeometry() const
+    const std::vector<uint32_t> &getGeometry() const
     {
         return m_anGeometry;
     }
@@ -302,7 +302,7 @@ class MVTTileLayerFeature
         m_nId = nId;
         invalidateCachedSize();
     }
-    void addTag(GUInt32 nTag)
+    void addTag(uint32_t nTag)
     {
         m_anTags.push_back(nTag);
         invalidateCachedSize();
@@ -313,22 +313,22 @@ class MVTTileLayerFeature
         m_eType = eType;
         invalidateCachedSize();
     }
-    void resizeGeometryArray(GUInt32 nNewSize)
+    void resizeGeometryArray(uint32_t nNewSize)
     {
         m_anGeometry.resize(nNewSize);
         invalidateCachedSize();
     }
-    void addGeometry(GUInt32 nGeometry)
+    void addGeometry(uint32_t nGeometry)
     {
         m_anGeometry.push_back(nGeometry);
         invalidateCachedSize();
     }
-    void setGeometry(GUInt32 nIdx, GUInt32 nVal)
+    void setGeometry(uint32_t nIdx, uint32_t nVal)
     {
         m_anGeometry[nIdx] = nVal;
         invalidateCachedSize();
     }
-    void setGeometry(const std::vector<GUInt32> &anGeometry)
+    void setGeometry(const std::vector<uint32_t> &anGeometry)
     {
         m_anGeometry = anGeometry;
         invalidateCachedSize();
@@ -351,20 +351,20 @@ class MVTTileLayer
 {
     mutable bool m_bCachedSize = false;
     mutable size_t m_nCachedSize = 0;
-    GUInt32 m_nVersion = 1;
+    uint32_t m_nVersion = 1;
     std::string m_osName;
     std::vector<std::shared_ptr<MVTTileLayerFeature>> m_apoFeatures;
     std::vector<std::string> m_aosKeys;
     std::vector<MVTTileLayerValue> m_aoValues;
     bool m_bHasExtent = false;
-    GUInt32 m_nExtent = 4096;
+    uint32_t m_nExtent = 4096;
     MVTTile *m_poOwner = nullptr;
 
   public:
     MVTTileLayer();
     void setOwner(MVTTile *poOwner);
 
-    GUInt32 getVersion() const
+    uint32_t getVersion() const
     {
         return m_nVersion;
     }
@@ -384,12 +384,12 @@ class MVTTileLayer
     {
         return m_aoValues;
     }
-    GUInt32 getExtent() const
+    uint32_t getExtent() const
     {
         return m_nExtent;
     }
 
-    void setVersion(GUInt32 nVersion)
+    void setVersion(uint32_t nVersion)
     {
         m_nVersion = nVersion;
         invalidateCachedSize();
@@ -400,21 +400,21 @@ class MVTTileLayer
         invalidateCachedSize();
     }
     size_t addFeature(std::shared_ptr<MVTTileLayerFeature> poFeature);
-    GUInt32 addKey(const std::string &osKey)
+    uint32_t addKey(const std::string &osKey)
     {
         m_aosKeys.push_back(osKey);
         invalidateCachedSize();
-        return static_cast<GUInt32>(m_aosKeys.size()) - 1;
+        return static_cast<uint32_t>(m_aosKeys.size()) - 1;
     }
 
-    GUInt32 addValue(const MVTTileLayerValue &oValue)
+    uint32_t addValue(const MVTTileLayerValue &oValue)
     {
         m_aoValues.push_back(oValue);
         invalidateCachedSize();
-        return static_cast<GUInt32>(m_aoValues.size()) - 1;
+        return static_cast<uint32_t>(m_aoValues.size()) - 1;
     }
 
-    void setExtent(GUInt32 nExtent)
+    void setExtent(uint32_t nExtent)
     {
         m_nExtent = nExtent;
         m_bHasExtent = true;

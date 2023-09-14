@@ -100,7 +100,7 @@ class GDALCachedPixelAccessor
 /** Constructor.
  *
  * The template accepts the following parameters:
- * - Type: should be one of GByte, GUInt16, GInt16, GUInt32, GInt32, GUInt64,
+ * - Type: should be one of GByte, uint16_t, int16_t, uint32_t, int32_t, GUInt64,
  * GInt64, float or double
  * - TILE_SIZE: the tile size for the cache of GDALCachedPixelAccessor.
  *              Use a power of two for faster computation.
@@ -320,23 +320,23 @@ template <> struct GDALCachedPixelAccessorGetDataType<GByte>
 {
     static constexpr GDALDataType DataType = GDT_Byte;
 };
-template <> struct GDALCachedPixelAccessorGetDataType<GInt8>
+template <> struct GDALCachedPixelAccessorGetDataType<int8_t>
 {
     static constexpr GDALDataType DataType = GDT_Int8;
 };
-template <> struct GDALCachedPixelAccessorGetDataType<GUInt16>
+template <> struct GDALCachedPixelAccessorGetDataType<uint16_t>
 {
     static constexpr GDALDataType DataType = GDT_UInt16;
 };
-template <> struct GDALCachedPixelAccessorGetDataType<GInt16>
+template <> struct GDALCachedPixelAccessorGetDataType<int16_t>
 {
     static constexpr GDALDataType DataType = GDT_Int16;
 };
-template <> struct GDALCachedPixelAccessorGetDataType<GUInt32>
+template <> struct GDALCachedPixelAccessorGetDataType<uint32_t>
 {
     static constexpr GDALDataType DataType = GDT_UInt32;
 };
-template <> struct GDALCachedPixelAccessorGetDataType<GInt32>
+template <> struct GDALCachedPixelAccessorGetDataType<int32_t>
 {
     static constexpr GDALDataType DataType = GDT_Int32;
 };

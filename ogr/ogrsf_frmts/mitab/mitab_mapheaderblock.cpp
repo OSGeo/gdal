@@ -44,8 +44,8 @@
 /*---------------------------------------------------------------------
  * Set various constants used in generating the header block.
  *--------------------------------------------------------------------*/
-constexpr GInt32 HDR_MAGIC_COOKIE = 42424242;
-constexpr GInt16 HDR_VERSION_NUMBER = 500;
+constexpr int32_t HDR_MAGIC_COOKIE = 42424242;
+constexpr int16_t HDR_VERSION_NUMBER = 500;
 
 constexpr GByte HDR_DEF_ORG_QUADRANT = 1;  // N-E Quadrant
 constexpr GByte HDR_DEF_REFLECTXAXIS = 0;
@@ -189,7 +189,7 @@ int TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
      * Header blocks have a magic cookie at byte 0x100
      *----------------------------------------------------------------*/
     GotoByteInBlock(0x100);
-    const GInt32 nMagicCookie = ReadInt32();
+    const int32_t nMagicCookie = ReadInt32();
     if (nMagicCookie != HDR_MAGIC_COOKIE)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -357,7 +357,7 @@ int TABMAPHeaderBlock::InitBlockFromData(GByte *pabyBuf, int nBlockSize,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX,
+int TABMAPHeaderBlock::Int2Coordsys(int32_t nX, int32_t nY, double &dX,
                                     double &dY)
 {
     if (m_pabyBuf == nullptr)
@@ -403,8 +403,8 @@ int TABMAPHeaderBlock::Int2Coordsys(GInt32 nX, GInt32 nY, double &dX,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, GInt32 &nX,
-                                    GInt32 &nY,
+int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, int32_t &nX,
+                                    int32_t &nY,
                                     GBool bIgnoreOverflow /*=FALSE*/)
 {
     if (m_pabyBuf == nullptr)
@@ -462,8 +462,8 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, GInt32 &nX,
         bIntBoundsOverflow = TRUE;
     }
 
-    nX = static_cast<GInt32>(ROUND_INT(dTempX));
-    nY = static_cast<GInt32>(ROUND_INT(dTempY));
+    nX = static_cast<int32_t>(ROUND_INT(dTempX));
+    nY = static_cast<int32_t>(ROUND_INT(dTempY));
 
     if (bIntBoundsOverflow && !bIgnoreOverflow)
     {
@@ -492,7 +492,7 @@ int TABMAPHeaderBlock::Coordsys2Int(double dX, double dY, GInt32 &nX,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
+int TABMAPHeaderBlock::ComprInt2Coordsys(int32_t nCenterX, int32_t nCenterY,
                                          int nDeltaX, int nDeltaY, double &dX,
                                          double &dY)
 {
@@ -517,7 +517,7 @@ int TABMAPHeaderBlock::ComprInt2Coordsys(GInt32 nCenterX, GInt32 nCenterY,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX,
+int TABMAPHeaderBlock::Int2CoordsysDist(int32_t nX, int32_t nY, double &dX,
                                         double &dY)
 {
     if (m_pabyBuf == nullptr)
@@ -544,14 +544,14 @@ int TABMAPHeaderBlock::Int2CoordsysDist(GInt32 nX, GInt32 nY, double &dX,
  *
  * Returns 0 on success, -1 on error.
  **********************************************************************/
-int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY, GInt32 &nX,
-                                        GInt32 &nY)
+int TABMAPHeaderBlock::Coordsys2IntDist(double dX, double dY, int32_t &nX,
+                                        int32_t &nY)
 {
     if (m_pabyBuf == nullptr)
         return -1;
 
-    nX = static_cast<GInt32>(dX * m_XScale);
-    nY = static_cast<GInt32>(dY * m_YScale);
+    nX = static_cast<int32_t>(dX * m_XScale);
+    nY = static_cast<int32_t>(dY * m_YScale);
 
     return 0;
 }
@@ -889,7 +889,7 @@ int TABMAPHeaderBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
     InitMembersWithDefaultValues();
 
     CPLAssert(nBlockSize >= 0 && nBlockSize <= 32767);
-    m_nRegularBlockSize = static_cast<GInt16>(nBlockSize);
+    m_nRegularBlockSize = static_cast<int16_t>(nBlockSize);
 
     /*-----------------------------------------------------------------
      * And Set the map object length array in the buffer...

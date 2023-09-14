@@ -64,14 +64,14 @@ typedef struct
 
 #ifdef HAVE_SSE_AT_COMPILE_TIME
 CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchSSE(
-    const void *poOptions, GUInt32 nPoints, const double *unused_padfX,
+    const void *poOptions, uint32_t nPoints, const double *unused_padfX,
     const double *unused_padfY, const double *unused_padfZ, double dfXPoint,
     double dfYPoint, double *pdfValue, void *hExtraParamsIn);
 #endif
 
 #ifdef HAVE_AVX_AT_COMPILE_TIME
 CPLErr GDALGridInverseDistanceToAPower2NoSmoothingNoSearchAVX(
-    const void *poOptions, GUInt32 nPoints, const double *unused_padfX,
+    const void *poOptions, uint32_t nPoints, const double *unused_padfX,
     const double *unused_padfY, const double *unused_padfZ, double dfXPoint,
     double dfYPoint, double *pdfValue, void *hExtraParamsIn);
 #endif

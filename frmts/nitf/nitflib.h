@@ -51,7 +51,7 @@ typedef struct
     char szSegmentType[3]; /* one of "IM", ... */
 
     GUIntBig nSegmentHeaderStart;
-    GUInt32 nSegmentHeaderSize;
+    uint32_t nSegmentHeaderSize;
     GUIntBig nSegmentStart;
     GUIntBig nSegmentSize;
 
@@ -127,9 +127,9 @@ typedef struct
 
 typedef struct
 {
-    GUInt16 nLocId;
-    GUInt32 nLocOffset;
-    GUInt32 nLocSize;
+    uint16_t nLocId;
+    uint32_t nLocOffset;
+    uint32_t nLocSize;
 } NITFLocation;
 
 typedef struct
@@ -212,7 +212,7 @@ typedef struct
 
     char **papszMetadata;
 
-    GUInt32 *apanVQLUT[4];
+    uint32_t *apanVQLUT[4];
 
     int nLocCount;
     NITFLocation *pasLocations;

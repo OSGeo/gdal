@@ -271,7 +271,7 @@ CPLErr AIGAccessTile(AIGInfo_t *psInfo, int iTileX, int iTileY)
 /************************************************************************/
 
 CPLErr AIGReadTile(AIGInfo_t *psInfo, int nBlockXOff, int nBlockYOff,
-                   GInt32 *panData)
+                   int32_t *panData)
 
 {
     int nBlockID;
@@ -422,7 +422,7 @@ CPLErr AIGReadFloatTile(AIGInfo_t *psInfo, int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     eErr = AIGReadBlock(psTInfo->fpGrid, psTInfo->panBlockOffset[nBlockID],
                         psTInfo->panBlockSize[nBlockID], psInfo->nBlockXSize,
-                        psInfo->nBlockYSize, (GInt32 *)pafData,
+                        psInfo->nBlockYSize, (int32_t *)pafData,
                         psInfo->nCellType, psInfo->bCompressed);
 
     /* -------------------------------------------------------------------- */
@@ -430,7 +430,7 @@ CPLErr AIGReadFloatTile(AIGInfo_t *psInfo, int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     if (eErr == CE_None && psInfo->nCellType == AIG_CELLTYPE_INT)
     {
-        GUInt32 *panData = (GUInt32 *)pafData;
+        uint32_t *panData = (uint32_t *)pafData;
         int i, nPixels = psInfo->nBlockXSize * psInfo->nBlockYSize;
 
         for (i = 0; i < nPixels; i++)

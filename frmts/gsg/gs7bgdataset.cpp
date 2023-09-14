@@ -56,7 +56,7 @@ class GS7BGDataset final : public GDALPamDataset
     static const size_t nHEADER_SIZE;
     size_t nData_Position;
 
-    static CPLErr WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
+    static CPLErr WriteHeader(VSILFILE *fp, int32_t nXSize, int32_t nYSize,
                               double dfMinX, double dfMaxX, double dfMinY,
                               double dfMaxY, double dfMinZ, double dfMaxZ);
 
@@ -539,8 +539,8 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    GInt32 nTag;
-    if (VSIFReadL((void *)&nTag, sizeof(GInt32), 1, poDS->fp) != 1)
+    int32_t nTag;
+    if (VSIFReadL((void *)&nTag, sizeof(int32_t), 1, poDS->fp) != 1)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.\n");
@@ -556,8 +556,8 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    GUInt32 nSize;
-    if (VSIFReadL((void *)&nSize, sizeof(GUInt32), 1, poDS->fp) != 1)
+    uint32_t nSize;
+    if (VSIFReadL((void *)&nSize, sizeof(uint32_t), 1, poDS->fp) != 1)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO,
@@ -567,8 +567,8 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
 
     CPL_LSBPTR32(&nSize);
 
-    GInt32 nVersion;
-    if (VSIFReadL((void *)&nVersion, sizeof(GInt32), 1, poDS->fp) != 1)
+    int32_t nVersion;
+    if (VSIFReadL((void *)&nVersion, sizeof(int32_t), 1, poDS->fp) != 1)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO, "Unable to read file version.\n");
@@ -588,7 +588,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     // advance until the grid tag is found
     while (nTag != nGRID_TAG)
     {
-        if (VSIFReadL((void *)&nTag, sizeof(GInt32), 1, poDS->fp) != 1)
+        if (VSIFReadL((void *)&nTag, sizeof(int32_t), 1, poDS->fp) != 1)
         {
             delete poDS;
             CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.\n");
@@ -597,7 +597,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
 
         CPL_LSBPTR32(&nTag);
 
-        if (VSIFReadL((void *)&nSize, sizeof(GUInt32), 1, poDS->fp) != 1)
+        if (VSIFReadL((void *)&nSize, sizeof(uint32_t), 1, poDS->fp) != 1)
         {
             delete poDS;
             CPLError(CE_Failure, CPLE_FileIO,
@@ -623,8 +623,8 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Read the grid.                                                 */
     /* --------------------------------------------------------------------*/
     /* Parse number of Y axis grid rows */
-    GInt32 nRows;
-    if (VSIFReadL((void *)&nRows, sizeof(GInt32), 1, poDS->fp) != 1)
+    int32_t nRows;
+    if (VSIFReadL((void *)&nRows, sizeof(int32_t), 1, poDS->fp) != 1)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO, "Unable to read raster Y size.\n");
@@ -634,8 +634,8 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     poDS->nRasterYSize = nRows;
 
     /* Parse number of X axis grid columns */
-    GInt32 nCols;
-    if (VSIFReadL((void *)&nCols, sizeof(GInt32), 1, poDS->fp) != 1)
+    int32_t nCols;
+    if (VSIFReadL((void *)&nCols, sizeof(int32_t), 1, poDS->fp) != 1)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO, "Unable to read raster X size.\n");
@@ -743,7 +743,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
     /* --------------------------------------------------------------------*/
     /*      Set the current offset of the grid data.                       */
     /* --------------------------------------------------------------------*/
-    if (VSIFReadL((void *)&nTag, sizeof(GInt32), 1, poDS->fp) != 1)
+    if (VSIFReadL((void *)&nTag, sizeof(int32_t), 1, poDS->fp) != 1)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO, "Unable to read Tag.\n");
@@ -758,7 +758,7 @@ GDALDataset *GS7BGDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    if (VSIFReadL((void *)&nSize, sizeof(GInt32), 1, poDS->fp) != 1)
+    if (VSIFReadL((void *)&nSize, sizeof(int32_t), 1, poDS->fp) != 1)
     {
         delete poDS;
         CPLError(CE_Failure, CPLE_FileIO, "Unable to data section size.\n");
@@ -883,7 +883,7 @@ CPLErr GS7BGDataset::SetGeoTransform(double *padfGeoTransform)
 /*                             WriteHeader()                            */
 /************************************************************************/
 
-CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
+CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, int32_t nXSize, int32_t nYSize,
                                  double dfMinX, double dfMaxX, double dfMinY,
                                  double dfMaxY, double dfMinZ, double dfMaxZ)
 
@@ -895,16 +895,16 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
         return CE_Failure;
     }
 
-    GInt32 nTemp = CPL_LSBWORD32(nHEADER_TAG);
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    int32_t nTemp = CPL_LSBWORD32(nHEADER_TAG);
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write header tag to grid file.\n");
         return CE_Failure;
     }
 
-    nTemp = CPL_LSBWORD32(sizeof(GInt32));  // Size of version section.
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    nTemp = CPL_LSBWORD32(sizeof(int32_t));  // Size of version section.
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write size to grid file.\n");
@@ -912,7 +912,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     }
 
     nTemp = CPL_LSBWORD32(1);  // Version
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write size to grid file.\n");
@@ -920,7 +920,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     }
 
     nTemp = CPL_LSBWORD32(nGRID_TAG);  // Mark start of grid
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write size to grid file.\n");
@@ -928,7 +928,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     }
 
     nTemp = CPL_LSBWORD32(72);  // Grid info size (the remainder of the header)
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write size to grid file.\n");
@@ -936,7 +936,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     }
 
     nTemp = CPL_LSBWORD32(nYSize);
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write Y size to grid file.\n");
@@ -944,7 +944,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
     }
 
     nTemp = CPL_LSBWORD32(nXSize);
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write X size to grid file.\n");
@@ -1027,7 +1027,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 
     // Only supports 1 band so go ahead and write band info here
     nTemp = CPL_LSBWORD32(nDATA_TAG);  // Mark start of data
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO, "Unable to data tag to grid file.\n");
         return CE_Failure;
@@ -1035,7 +1035,7 @@ CPLErr GS7BGDataset::WriteHeader(VSILFILE *fp, GInt32 nXSize, GInt32 nYSize,
 
     int nSize = nXSize * nYSize * (int)sizeof(double);
     nTemp = CPL_LSBWORD32(nSize);  // Mark size of data
-    if (VSIFWriteL((void *)&nTemp, sizeof(GInt32), 1, fp) != 1)
+    if (VSIFWriteL((void *)&nTemp, sizeof(int32_t), 1, fp) != 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Unable to write data size to grid file.\n");
@@ -1174,8 +1174,8 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    GInt32 nXSize = poSrcBand->GetXSize();
-    GInt32 nYSize = poSrcBand->GetYSize();
+    int32_t nXSize = poSrcBand->GetXSize();
+    int32_t nYSize = poSrcBand->GetYSize();
     double adfGeoTransform[6];
 
     poSrcDS->GetGeoTransform(adfGeoTransform);
@@ -1207,7 +1207,7 @@ GDALDataset *GS7BGDataset::CreateCopy(const char *pszFilename,
     double dfSrcNoDataValue = poSrcBand->GetNoDataValue(&bSrcHasNDValue);
     double dfMinZ = std::numeric_limits<double>::max();
     double dfMaxZ = std::numeric_limits<double>::lowest();
-    for (GInt32 iRow = nYSize - 1; iRow >= 0; iRow--)
+    for (int32_t iRow = nYSize - 1; iRow >= 0; iRow--)
     {
         eErr = poSrcBand->RasterIO(GF_Read, 0, iRow, nXSize, 1, pfData, nXSize,
                                    1, GDT_Float64, 0, 0, nullptr);

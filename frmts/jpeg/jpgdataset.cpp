@@ -1346,8 +1346,8 @@ CPLErr JPGMaskBand::IReadBlock(int /* nBlockX */, int nBlockY, void *pImage)
         return CE_Failure;
 
     // Set mask based on bitmask for this scanline.
-    GUInt32 iBit =
-        static_cast<GUInt32>(nBlockY) * static_cast<GUInt32>(nBlockXSize);
+    uint32_t iBit =
+        static_cast<uint32_t>(nBlockY) * static_cast<uint32_t>(nBlockXSize);
 
     GByte *const pbyImage = static_cast<GByte *>(pImage);
     if (poJDS->bMaskLSBOrder)
@@ -1719,11 +1719,11 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
         return nullptr;
 
     // Read number of entry in directory.
-    GUInt16 nEntryCount = 0;
+    uint16_t nEntryCount = 0;
     if (nTiffDirStart > (INT_MAX - nTIFFHEADER) ||
         VSIFSeekL(m_fpImage, nTiffDirStart + nTIFFHEADER, SEEK_SET) != 0 ||
-        VSIFReadL(&nEntryCount, 1, sizeof(GUInt16), m_fpImage) !=
-            sizeof(GUInt16))
+        VSIFReadL(&nEntryCount, 1, sizeof(uint16_t), m_fpImage) !=
+            sizeof(uint16_t))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error reading EXIF Directory count at " CPL_FRMT_GUIB,
@@ -1747,9 +1747,9 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     VSIFSeekL(m_fpImage, nEntryCount * sizeof(GDALEXIFTIFFDirEntry), SEEK_CUR);
 
     // Read offset of next directory (IFD1).
-    GUInt32 nNextDirOff = 0;
-    if (VSIFReadL(&nNextDirOff, 1, sizeof(GUInt32), m_fpImage) !=
-        sizeof(GUInt32))
+    uint32_t nNextDirOff = 0;
+    if (VSIFReadL(&nNextDirOff, 1, sizeof(uint32_t), m_fpImage) !=
+        sizeof(uint32_t))
         return nullptr;
     if (bSwabflag)
         CPL_SWAP32PTR(&nNextDirOff);
@@ -1758,8 +1758,8 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
 
     // Seek to IFD1.
     if (VSIFSeekL(m_fpImage, nTIFFHEADER + nNextDirOff, SEEK_SET) != 0 ||
-        VSIFReadL(&nEntryCount, 1, sizeof(GUInt16), m_fpImage) !=
-            sizeof(GUInt16))
+        VSIFReadL(&nEntryCount, 1, sizeof(uint16_t), m_fpImage) !=
+            sizeof(uint16_t))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error reading IFD1 Directory count at %d.",
@@ -1783,8 +1783,8 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     int nImageWidth = 0;
     int nImageHeight = 0;
     int nCompression = 6;
-    GUInt32 nJpegIFOffset = 0;
-    GUInt32 nJpegIFByteCount = 0;
+    uint32_t nJpegIFOffset = 0;
+    uint32_t nJpegIFByteCount = 0;
     for (int i = 0; i < nEntryCount; i++)
     {
         GDALEXIFTIFFDirEntry sEntry;
@@ -3294,7 +3294,7 @@ void JPGDatasetCommon::CheckForMask()
     GIntBig nFileSize = VSIFTellL(m_fpImage);
     VSIFSeekL(m_fpImage, nFileSize - 4, SEEK_SET);
 
-    GUInt32 nImageSize = 0;
+    uint32_t nImageSize = 0;
     VSIFReadL(&nImageSize, 4, 1, m_fpImage);
     CPL_LSBPTR32(&nImageSize);
 
@@ -3770,7 +3770,7 @@ void JPGAddICCProfile(void *pInfo, const char *pszICCProfile,
 
     // Write out each segment of the ICC profile.
     char *pEmbedBuffer = CPLStrdup(pszICCProfile);
-    GInt32 nEmbedLen = CPLBase64DecodeInPlace((GByte *)pEmbedBuffer);
+    int32_t nEmbedLen = CPLBase64DecodeInPlace((GByte *)pEmbedBuffer);
     char *pEmbedPtr = pEmbedBuffer;
     char const *const paHeader = "ICC_PROFILE";
     int nSegments = (nEmbedLen + 65518) / 65519;
@@ -3844,7 +3844,7 @@ CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
     const bool bMaskLSBOrder = EQUAL(pszJPEGMaskBitOrder, "LSB");
 
     // Set bit buffer from mask band, scanline by scanline.
-    GUInt32 iBit = 0;
+    uint32_t iBit = 0;
     for (int iY = 0; eErr == CE_None && iY < nYSize; iY++)
     {
         eErr = poMask->RasterIO(GF_Read, 0, iY, nXSize, 1, pabyMaskLine, nXSize,
@@ -3923,7 +3923,7 @@ CPLErr JPGAppendMask(const char *pszJPGFilename, GDALRasterBand *poMask,
         {
             VSIFSeekL(fpOut, 0, SEEK_END);
 
-            GUInt32 nImageSize = static_cast<GUInt32>(VSIFTellL(fpOut));
+            uint32_t nImageSize = static_cast<uint32_t>(VSIFTellL(fpOut));
             CPL_LSBPTR32(&nImageSize);
 
             if (VSIFWriteL(pabyCMask, 1, nTotalOut, fpOut) != nTotalOut)
@@ -4069,18 +4069,18 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
         }
     }
 
-    GUInt32 nMarkerSize;
+    uint32_t nMarkerSize;
     const bool bWriteExifMetadata =
         CPLFetchBool(papszOptions, "WRITE_EXIF_METADATA", true);
 
     GByte *pabyEXIF =
         EXIFCreate(bWriteExifMetadata ? poSrcDS->GetMetadata() : nullptr,
-                   pabyOvr, static_cast<GUInt32>(nJPEGIfByteCount), nOvrWidth,
+                   pabyOvr, static_cast<uint32_t>(nJPEGIfByteCount), nOvrWidth,
                    nOvrHeight, &nMarkerSize);
     if (pabyEXIF)
     {
         p_jpeg_write_m_header(cinfo, JPEG_APP0 + 1, nMarkerSize);
-        for (GUInt32 i = 0; i < nMarkerSize; i++)
+        for (uint32_t i = 0; i < nMarkerSize; i++)
         {
             p_jpeg_write_m_byte(cinfo, pabyEXIF[i]);
         }
@@ -4137,7 +4137,7 @@ GDALDataset *JPGDataset::CreateCopy(const char *pszFilename,
                     {
                         papszEXIF_MD = poSrcDS->GetMetadata();
                     }
-                    GUInt32 nEXIFContentSize = 0;
+                    uint32_t nEXIFContentSize = 0;
                     GByte *pabyEXIF = EXIFCreate(papszEXIF_MD, nullptr, 0, 0, 0,
                                                  &nEXIFContentSize);
                     if (nEXIFContentSize > 0 && nEXIFContentSize + 2 <= 65535U)
@@ -4692,7 +4692,7 @@ GDALDataset *JPGDataset::CreateCopyStage2(
         // Clamp 16bit values to 12bit.
         if (nWorkDTSize == 2)
         {
-            GUInt16 *panScanline = reinterpret_cast<GUInt16 *>(pabyScanline);
+            uint16_t *panScanline = reinterpret_cast<uint16_t *>(pabyScanline);
 
             for (int iPixel = 0; iPixel < nXSize * nBands; iPixel++)
             {

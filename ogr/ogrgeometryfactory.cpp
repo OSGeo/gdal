@@ -2354,7 +2354,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal(
     /* -------------------------------------------------------------------- */
     /*      Decode the geometry type.                                       */
     /* -------------------------------------------------------------------- */
-    GInt32 nGType = 0;
+    int32_t nGType = 0;
     memcpy(&nGType, pabyData + 0, 4);
     CPL_LSBPTR32(&nGType);
 
@@ -2365,7 +2365,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal(
     /*      Decode the dimensionality if appropriate.                       */
     /* -------------------------------------------------------------------- */
     int nTupleSize = 0;
-    GInt32 nGDim = 0;
+    int32_t nGDim = 0;
 
     // TODO: Why is this a switch?
     switch (nGType)
@@ -2436,7 +2436,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal(
         if (nBytes < 12)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 8, 4);
         CPL_LSBPTR32(&nPointCount);
 
@@ -2477,7 +2477,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal(
         if (nBytes < 12)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 8, 4);
         CPL_LSBPTR32(&nRingCount);
 
@@ -2501,7 +2501,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             CPL_LSBPTR32(&nPointCount);
 
@@ -2557,7 +2557,7 @@ OGRErr OGRGeometryFactory::createFromFgfInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nGeomCount = 0;
+        int32_t nGeomCount = 0;
         memcpy(&nGeomCount, pabyData + 4, 4);
         CPL_LSBPTR32(&nGeomCount);
 
@@ -5117,8 +5117,8 @@ static void OGRGeometryFactoryStrokeArc(OGRLineString *poLine, double cx,
 
 // TODO(schwehr): Cleanup these static constants.
 constexpr int HIDDEN_ALPHA_WIDTH = 32;
-constexpr GUInt32 HIDDEN_ALPHA_SCALE =
-    static_cast<GUInt32>((static_cast<GUIntBig>(1) << HIDDEN_ALPHA_WIDTH) - 2);
+constexpr uint32_t HIDDEN_ALPHA_SCALE =
+    static_cast<uint32_t>((static_cast<GUIntBig>(1) << HIDDEN_ALPHA_WIDTH) - 2);
 constexpr int HIDDEN_ALPHA_HALF_WIDTH = (HIDDEN_ALPHA_WIDTH / 2);
 constexpr int HIDDEN_ALPHA_HALF_MASK = (1 << HIDDEN_ALPHA_HALF_WIDTH) - 1;
 
@@ -5130,7 +5130,7 @@ constexpr int DOUBLE_LSB_OFFSET = 0;
 constexpr int DOUBLE_LSB_OFFSET = 7;
 #endif
 
-static void OGRGF_SetHiddenValue(GUInt16 nValue, double &dfX, double &dfY)
+static void OGRGF_SetHiddenValue(uint16_t nValue, double &dfX, double &dfY)
 {
     GByte abyData[8] = {};
 
@@ -5148,11 +5148,11 @@ static void OGRGF_SetHiddenValue(GUInt16 nValue, double &dfX, double &dfY)
 /************************************************************************/
 
 // Decode 16-bit nValue from the 8-lsb of dfX and dfY.
-static GUInt16 OGRGF_GetHiddenValue(double dfX, double dfY)
+static uint16_t OGRGF_GetHiddenValue(double dfX, double dfY)
 {
     GByte abyData[8] = {};
     memcpy(abyData, &dfX, sizeof(double));
-    GUInt16 nValue = abyData[DOUBLE_LSB_OFFSET];
+    uint16_t nValue = abyData[DOUBLE_LSB_OFFSET];
     memcpy(abyData, &dfY, sizeof(double));
     nValue |= (abyData[DOUBLE_LSB_OFFSET] << 8);
 
@@ -5350,16 +5350,17 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
                          dfAlphaRatio);
                 dfAlphaRatio *= -1;
             }
-            else if (dfAlphaRatio >= std::numeric_limits<GUInt32>::max() ||
+            else if (dfAlphaRatio >= std::numeric_limits<uint32_t>::max() ||
                      CPLIsNan(dfAlphaRatio))
             {
                 CPLError(CE_Warning, CPLE_AppDefined,
                          "AlphaRatio too large: %lf", dfAlphaRatio);
-                dfAlphaRatio = std::numeric_limits<GUInt32>::max();
+                dfAlphaRatio = std::numeric_limits<uint32_t>::max();
             }
-            const GUInt32 nAlphaRatio = static_cast<GUInt32>(dfAlphaRatio);
-            const GUInt16 nAlphaRatioLow = nAlphaRatio & HIDDEN_ALPHA_HALF_MASK;
-            const GUInt16 nAlphaRatioHigh =
+            const uint32_t nAlphaRatio = static_cast<uint32_t>(dfAlphaRatio);
+            const uint16_t nAlphaRatioLow =
+                nAlphaRatio & HIDDEN_ALPHA_HALF_MASK;
+            const uint16_t nAlphaRatioHigh =
                 nAlphaRatio >> HIDDEN_ALPHA_HALF_WIDTH;
             // printf("alpha0=%f, alpha1=%f, alpha2=%f, dfRatio=%f, "/*ok*/
             //        "nAlphaRatio = %u\n",
@@ -5369,7 +5370,7 @@ OGRLineString *OGRGeometryFactory::curveToLineString(
 
             for (int i = 1; i + 1 < poLine->getNumPoints(); i += 2)
             {
-                GUInt16 nVal = 0xFFFF;
+                uint16_t nVal = 0xFFFF;
 
                 double dfX = poLine->getX(i);
                 double dfY = poLine->getY(i);
@@ -5465,7 +5466,7 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
     const double dfDeltaAlpha21 = alpha2_1 - alpha1_1;
     const double dfMaxDeltaAlpha =
         std::max(fabs(dfDeltaAlpha10), fabs(dfDeltaAlpha21));
-    GUInt32 nAlphaRatioRef =
+    uint32_t nAlphaRatioRef =
         OGRGF_GetHiddenValue(p1.getX(), p1.getY()) |
         (OGRGF_GetHiddenValue(p2.getX(), p2.getY()) << HIDDEN_ALPHA_HALF_WIDTH);
     bool bFoundFFFFFFFFPattern = false;
@@ -5586,7 +5587,7 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
 
         if (bValidAlphaRatio && j > i + 1 && (i % 2) != (j % 2))
         {
-            const GUInt32 nAlphaRatioReversed =
+            const uint32_t nAlphaRatioReversed =
                 (OGRGF_GetHiddenValue(p1.getX(), p1.getY())
                  << HIDDEN_ALPHA_HALF_WIDTH) |
                 (OGRGF_GetHiddenValue(p2.getX(), p2.getY()));

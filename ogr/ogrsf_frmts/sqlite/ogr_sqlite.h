@@ -278,7 +278,7 @@ class OGRSQLiteLayer CPL_NON_FINAL : public OGRLayer,
     static OGRErr ImportSpatiaLiteGeometry(const GByte *, int, OGRGeometry **);
     static OGRErr ImportSpatiaLiteGeometry(const GByte *, int, OGRGeometry **,
                                            int *pnSRID);
-    static OGRErr ExportSpatiaLiteGeometry(const OGRGeometry *, GInt32,
+    static OGRErr ExportSpatiaLiteGeometry(const OGRGeometry *, int32_t,
                                            OGRwkbByteOrder, bool,
                                            bool bUseComprGeom, GByte **, int *);
 };

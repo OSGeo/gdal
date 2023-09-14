@@ -2455,13 +2455,13 @@ bool netCDFRasterBand::FetchNetcdfChunk(size_t xstart, size_t ystart,
         {
             if (eDataType == GDT_Int16)
             {
-                CheckData<GInt16>(pImage, pImageNC, edge[nBandXPos],
-                                  nYChunkSize, false);
+                CheckData<int16_t>(pImage, pImageNC, edge[nBandXPos],
+                                   nYChunkSize, false);
             }
             else
             {
-                CheckData<GUInt16>(pImage, pImageNC, edge[nBandXPos],
-                                   nYChunkSize, false);
+                CheckData<uint16_t>(pImage, pImageNC, edge[nBandXPos],
+                                    nYChunkSize, false);
             }
         }
     }
@@ -10719,33 +10719,33 @@ netCDFDataset::CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
         }
         else if (eDT == GDT_Int8)
         {
-            CPLDebug("GDAL_netCDF", "GInt8 Band#%d", iBand);
-            eErr = NCDFCopyBand<GInt8>(poSrcBand, poDstBand, nXSize, nYSize,
-                                       GDALScaledProgress, pScaledProgress);
+            CPLDebug("GDAL_netCDF", "int8_t Band#%d", iBand);
+            eErr = NCDFCopyBand<int8_t>(poSrcBand, poDstBand, nXSize, nYSize,
+                                        GDALScaledProgress, pScaledProgress);
         }
         else if (eDT == GDT_UInt16)
         {
-            CPLDebug("GDAL_netCDF", "GUInt16 Band#%d", iBand);
-            eErr = NCDFCopyBand<GInt16>(poSrcBand, poDstBand, nXSize, nYSize,
-                                        GDALScaledProgress, pScaledProgress);
+            CPLDebug("GDAL_netCDF", "uint16_t Band#%d", iBand);
+            eErr = NCDFCopyBand<int16_t>(poSrcBand, poDstBand, nXSize, nYSize,
+                                         GDALScaledProgress, pScaledProgress);
         }
         else if (eDT == GDT_Int16)
         {
-            CPLDebug("GDAL_netCDF", "GInt16 Band#%d", iBand);
-            eErr = NCDFCopyBand<GUInt16>(poSrcBand, poDstBand, nXSize, nYSize,
-                                         GDALScaledProgress, pScaledProgress);
+            CPLDebug("GDAL_netCDF", "int16_t Band#%d", iBand);
+            eErr = NCDFCopyBand<uint16_t>(poSrcBand, poDstBand, nXSize, nYSize,
+                                          GDALScaledProgress, pScaledProgress);
         }
         else if (eDT == GDT_UInt32)
         {
-            CPLDebug("GDAL_netCDF", "GUInt32 Band#%d", iBand);
-            eErr = NCDFCopyBand<GUInt32>(poSrcBand, poDstBand, nXSize, nYSize,
-                                         GDALScaledProgress, pScaledProgress);
+            CPLDebug("GDAL_netCDF", "uint32_t Band#%d", iBand);
+            eErr = NCDFCopyBand<uint32_t>(poSrcBand, poDstBand, nXSize, nYSize,
+                                          GDALScaledProgress, pScaledProgress);
         }
         else if (eDT == GDT_Int32)
         {
-            CPLDebug("GDAL_netCDF", "GInt32 Band#%d", iBand);
-            eErr = NCDFCopyBand<GInt32>(poSrcBand, poDstBand, nXSize, nYSize,
-                                        GDALScaledProgress, pScaledProgress);
+            CPLDebug("GDAL_netCDF", "int32_t Band#%d", iBand);
+            eErr = NCDFCopyBand<int32_t>(poSrcBand, poDstBand, nXSize, nYSize,
+                                         GDALScaledProgress, pScaledProgress);
         }
         else if (eDT == GDT_UInt64)
         {

@@ -921,7 +921,7 @@ typedef union
 
     struct
     {
-        GInt16 Year;
+        int16_t Year;
         GByte Month;
         GByte Day;
         GByte Hour;

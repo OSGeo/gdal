@@ -141,7 +141,7 @@ void CPL_DLL *CPLScanPointer(const char *, int);
 /* -------------------------------------------------------------------- */
 int CPL_DLL CPLPrintString(char *, const char *, int);
 int CPL_DLL CPLPrintStringFill(char *, const char *, int);
-int CPL_DLL CPLPrintInt32(char *, GInt32, int);
+int CPL_DLL CPLPrintInt32(char *, int32_t, int);
 int CPL_DLL CPLPrintUIntBig(char *, GUIntBig, int);
 int CPL_DLL CPLPrintDouble(char *, const char *, double, const char *);
 int CPL_DLL CPLPrintTime(char *, int, const char *, const struct tm *,

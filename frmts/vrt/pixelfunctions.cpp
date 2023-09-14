@@ -43,15 +43,15 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
         case GDT_Byte:
             return static_cast<const GByte *>(pSource)[ii];
         case GDT_Int8:
-            return static_cast<const GInt8 *>(pSource)[ii];
+            return static_cast<const int8_t *>(pSource)[ii];
         case GDT_UInt16:
-            return static_cast<const GUInt16 *>(pSource)[ii];
+            return static_cast<const uint16_t *>(pSource)[ii];
         case GDT_Int16:
-            return static_cast<const GInt16 *>(pSource)[ii];
+            return static_cast<const int16_t *>(pSource)[ii];
         case GDT_UInt32:
-            return static_cast<const GUInt32 *>(pSource)[ii];
+            return static_cast<const uint32_t *>(pSource)[ii];
         case GDT_Int32:
-            return static_cast<const GInt32 *>(pSource)[ii];
+            return static_cast<const int32_t *>(pSource)[ii];
         // Precision loss currently for int64/uint64
         case GDT_UInt64:
             return static_cast<double>(
@@ -64,9 +64,9 @@ inline double GetSrcVal(const void *pSource, GDALDataType eSrcType, T ii)
         case GDT_Float64:
             return static_cast<const double *>(pSource)[ii];
         case GDT_CInt16:
-            return static_cast<const GInt16 *>(pSource)[2 * ii];
+            return static_cast<const int16_t *>(pSource)[2 * ii];
         case GDT_CInt32:
-            return static_cast<const GInt32 *>(pSource)[2 * ii];
+            return static_cast<const int32_t *>(pSource)[2 * ii];
         case GDT_CFloat32:
             return static_cast<const float *>(pSource)[2 * ii];
         case GDT_CFloat64:

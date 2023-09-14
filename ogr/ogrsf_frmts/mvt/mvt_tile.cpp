@@ -410,7 +410,7 @@ void MVTTileLayerFeature::invalidateCachedSize()
 /*                        GetPackedArraySize()                          */
 /************************************************************************/
 
-static size_t GetPackedArraySize(const std::vector<GUInt32> &anVals)
+static size_t GetPackedArraySize(const std::vector<uint32_t> &anVals)
 {
     size_t nPackedSize = 0;
     for (const auto &nVal : anVals)
@@ -456,7 +456,7 @@ size_t MVTTileLayerFeature::getSize() const
 /************************************************************************/
 
 static void WriteUIntPackedArray(GByte **ppabyData, int nKey,
-                                 const std::vector<GUInt32> &anVals)
+                                 const std::vector<uint32_t> &anVals)
 {
     GByte *pabyData = *ppabyData;
     const size_t nPackedSize = GetPackedArraySize(anVals);

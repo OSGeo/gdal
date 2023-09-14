@@ -1369,8 +1369,8 @@ int CPLODBCStatement::Fetch(int nOrientation, int nOffset)
                 reinterpret_cast<wchar_t *>(m_papszColValues[iCol]);
 #else
             unsigned int i = 0;
-            GUInt16 *panColValue =
-                reinterpret_cast<GUInt16 *>(m_papszColValues[iCol]);
+            uint16_t *panColValue =
+                reinterpret_cast<uint16_t *>(m_papszColValues[iCol]);
             wchar_t *pwszSrc = static_cast<wchar_t *>(CPLMalloc(
                 (m_panColValueLengths[iCol] / 2 + 1) * sizeof(wchar_t)));
 

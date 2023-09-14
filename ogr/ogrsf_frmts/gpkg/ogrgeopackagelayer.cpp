@@ -201,7 +201,7 @@ bool OGRGeoPackageLayer::ParseDateField(const char *pszTxt, OGRField *psField,
     bool bError = false;
     if (bNominalFormat)
     {
-        psField->Date.Year = static_cast<GUInt16>(
+        psField->Date.Year = static_cast<uint16_t>(
             ((((pszTxt[0] - '0') * 10 + (pszTxt[1] - '0')) * 10) +
              (pszTxt[2] - '0')) *
                 10 +

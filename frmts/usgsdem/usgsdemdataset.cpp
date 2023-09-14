@@ -497,11 +497,11 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
 
                 if (GetRasterDataType() == GDT_Int16)
                 {
-                    GUInt16 nVal = (fComputedElev < -32768) ? -32768
-                                   : (fComputedElev > 32767)
-                                       ? 32767
-                                       : static_cast<GInt16>(fComputedElev);
-                    reinterpret_cast<GInt16 *>(pImage)[i + iY * GetXSize()] =
+                    uint16_t nVal = (fComputedElev < -32768) ? -32768
+                                    : (fComputedElev > 32767)
+                                        ? 32767
+                                        : static_cast<int16_t>(fComputedElev);
+                    reinterpret_cast<int16_t *>(pImage)[i + iY * GetXSize()] =
                         nVal;
                 }
                 else
@@ -675,7 +675,7 @@ int USGSDEMDataset::LoadFromFile(VSILFILE *InDem)
     fVRes = DConvert(InDem, 12);
 
     /* -------------------------------------------------------------------- */
-    /*      Should we treat this as floating point, or GInt16.              */
+    /*      Should we treat this as floating point, or int16_t.              */
     /* -------------------------------------------------------------------- */
     if (nVUnit == 1 || fVRes < 1.0)
         eNaturalDataFormat = GDT_Float32;

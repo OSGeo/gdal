@@ -1070,7 +1070,7 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
 
         std::vector<half> bufferHalf;
         std::vector<float> bufferFloat;
-        std::vector<GUInt32> bufferUInt;
+        std::vector<uint32_t> bufferUInt;
         const size_t pixelTypeSize = (pixelType == HALF) ? 2 : 4;
         const GDALDataType eDT = (pixelType == UINT) ? GDT_UInt32 : GDT_Float32;
         const GSpacing nDTSize = GDALGetDataTypeSizeBytes(eDT);
@@ -1444,7 +1444,7 @@ class GDALEXRWritableDataset final : public GDALPamDataset
     bool m_bTriedWritingHeader = false;
     std::vector<half> m_bufferHalf{};
     std::vector<float> m_bufferFloat{};
-    std::vector<GUInt32> m_bufferUInt{};
+    std::vector<uint32_t> m_bufferUInt{};
     size_t m_nBufferEltSize = 0;
     char *m_pSliceBuffer = nullptr;
 

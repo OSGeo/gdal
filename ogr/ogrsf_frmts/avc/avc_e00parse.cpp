@@ -975,8 +975,8 @@ AVCCnt *AVCE00ParseNextCntLine(AVCE00ParseInfo *psInfo, const char *pszLine)
              * 0 labels attached to them.
              */
             if (psCnt->numLabels > 0)
-                psCnt->panLabelIds = (GInt32 *)CPLRealloc(
-                    psCnt->panLabelIds, psCnt->numLabels * sizeof(GInt32));
+                psCnt->panLabelIds = (int32_t *)CPLRealloc(
+                    psCnt->panLabelIds, psCnt->numLabels * sizeof(int32_t));
 
             if (psInfo->nPrecision == AVC_SINGLE_PREC)
             {
@@ -1647,7 +1647,7 @@ AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
         /*-------------------------------------------------------------
          * Text Justification stuff... 2 sets of 20 int16 values.
          *------------------------------------------------------------*/
-        GInt16 *pValue;
+        int16_t *pValue;
         int numValPerLine = 7;
 
         if (psInfo->iCurItem < 3)
@@ -1661,7 +1661,7 @@ AVCTxt *AVCE00ParseNextTx6Line(AVCE00ParseInfo *psInfo, const char *pszLine)
 
         for (i = 0;
              i < numValPerLine && nLen >= static_cast<size_t>(i) * 10 + 10; i++)
-            pValue[i] = (GInt16)AVCE00Str2Int(pszLine + i * 10, 10);
+            pValue[i] = (int16_t)AVCE00Str2Int(pszLine + i * 10, 10);
 
         psInfo->iCurItem++;
     }
@@ -1881,8 +1881,8 @@ AVCTableDef *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             strncpy(psTableDef->szExternal, pszLine + 32, 2);
             psTableDef->szExternal[2] = '\0';
 
-            psTableDef->numFields = (GInt16)AVCE00Str2Int(pszLine + 34, 4);
-            psTableDef->nRecSize = (GInt16)AVCE00Str2Int(pszLine + 42, 4);
+            psTableDef->numFields = (int16_t)AVCE00Str2Int(pszLine + 34, 4);
+            psTableDef->nRecSize = (int16_t)AVCE00Str2Int(pszLine + 42, 4);
             psTableDef->numRecords = AVCE00Str2Int(pszLine + 46, 10);
             if (psTableDef->numFields < 0 || psTableDef->numFields > 10 * 1024)
             {
@@ -1936,26 +1936,26 @@ AVCTableDef *AVCE00ParseNextTableDefLine(AVCE00ParseInfo *psInfo,
             AVCFieldInfo *psDef;
             psDef = &(psTableDef->pasFieldDef[psInfo->nCurObjectId]);
 
-            psDef->nIndex = (GInt16)nIndex;
+            psDef->nIndex = (int16_t)nIndex;
 
             strncpy(psDef->szName, pszLine, 16);
             psDef->szName[16] = '\0';
 
-            psDef->nSize = (GInt16)AVCE00Str2Int(pszLine + 16, 3);
-            psDef->v2 = (GInt16)AVCE00Str2Int(pszLine + 19, 2);
+            psDef->nSize = (int16_t)AVCE00Str2Int(pszLine + 16, 3);
+            psDef->v2 = (int16_t)AVCE00Str2Int(pszLine + 19, 2);
 
-            psDef->nOffset = (GInt16)AVCE00Str2Int(pszLine + 21, 4);
+            psDef->nOffset = (int16_t)AVCE00Str2Int(pszLine + 21, 4);
 
-            psDef->v4 = (GInt16)AVCE00Str2Int(pszLine + 25, 1);
-            psDef->v5 = (GInt16)AVCE00Str2Int(pszLine + 26, 2);
-            psDef->nFmtWidth = (GInt16)AVCE00Str2Int(pszLine + 28, 4);
-            psDef->nFmtPrec = (GInt16)AVCE00Str2Int(pszLine + 32, 2);
-            psDef->nType1 = (GInt16)AVCE00Str2Int(pszLine + 34, 3) / 10;
+            psDef->v4 = (int16_t)AVCE00Str2Int(pszLine + 25, 1);
+            psDef->v5 = (int16_t)AVCE00Str2Int(pszLine + 26, 2);
+            psDef->nFmtWidth = (int16_t)AVCE00Str2Int(pszLine + 28, 4);
+            psDef->nFmtPrec = (int16_t)AVCE00Str2Int(pszLine + 32, 2);
+            psDef->nType1 = (int16_t)AVCE00Str2Int(pszLine + 34, 3) / 10;
             psDef->nType2 = AVCE00Str2Int(pszLine + 34, 3) % 10;
-            psDef->v10 = (GInt16)AVCE00Str2Int(pszLine + 37, 2);
-            psDef->v11 = (GInt16)AVCE00Str2Int(pszLine + 39, 4);
-            psDef->v12 = (GInt16)AVCE00Str2Int(pszLine + 43, 4);
-            psDef->v13 = (GInt16)AVCE00Str2Int(pszLine + 47, 2);
+            psDef->v10 = (int16_t)AVCE00Str2Int(pszLine + 37, 2);
+            psDef->v11 = (int16_t)AVCE00Str2Int(pszLine + 39, 4);
+            psDef->v12 = (int16_t)AVCE00Str2Int(pszLine + 43, 4);
+            psDef->v13 = (int16_t)AVCE00Str2Int(pszLine + 47, 2);
             strncpy(psDef->szAltName, pszLine + 49, 16);
             psDef->szAltName[16] = '\0';
 
@@ -2097,7 +2097,7 @@ static AVCField *_AVCE00ParseTableRecord(AVCE00ParseInfo *psInfo)
         }
         else if (nType == AVC_FT_BININT && nSize == 2)
         {
-            pasFields[i].nInt16 = (GInt16)AVCE00Str2Int(pszBuf, 6);
+            pasFields[i].nInt16 = (int16_t)AVCE00Str2Int(pszBuf, 6);
             pszBuf += 6;
         }
         else if (nType == AVC_FT_BINFLOAT && pasDef[i].nSize == 4)

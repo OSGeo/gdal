@@ -270,7 +270,7 @@ int TABIDFile::SyncToDisk()
  *
  * Returns a value >= 0 on success, -1 on error.
  **********************************************************************/
-GInt32 TABIDFile::GetObjPtr(GInt32 nObjId)
+int32_t TABIDFile::GetObjPtr(int32_t nObjId)
 {
     if (m_poIDBlock == nullptr)
         return -1;
@@ -301,7 +301,7 @@ GInt32 TABIDFile::GetObjPtr(GInt32 nObjId)
  *
  * Returns a value of 0 on success, -1 on error.
  **********************************************************************/
-int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
+int TABIDFile::SetObjPtr(int32_t nObjId, int32_t nObjPtr)
 {
     if (m_poIDBlock == nullptr)
         return -1;
@@ -324,8 +324,8 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
 
     // GotoByteInFile() will automagically commit current block and init
     // a new one if necessary.
-    const GInt32 nLastIdBlock = ((m_nMaxId - 1) * 4) / m_nBlockSize;
-    const GInt32 nTargetIdBlock = ((nObjId - 1) * 4) / m_nBlockSize;
+    const int32_t nLastIdBlock = ((m_nMaxId - 1) * 4) / m_nBlockSize;
+    const int32_t nTargetIdBlock = ((nObjId - 1) * 4) / m_nBlockSize;
     if (m_nMaxId > 0 && nTargetIdBlock <= nLastIdBlock)
     {
         // Pass second arg to GotoByteInFile() to force reading from file
@@ -354,7 +354,7 @@ int TABIDFile::SetObjPtr(GInt32 nObjId, GInt32 nObjPtr)
  *
  * Returns a value >= 0 on success, -1 on error.
  **********************************************************************/
-GInt32 TABIDFile::GetMaxObjId()
+int32_t TABIDFile::GetMaxObjId()
 {
     return m_nMaxId;
 }

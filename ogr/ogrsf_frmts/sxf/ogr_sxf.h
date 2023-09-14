@@ -56,27 +56,27 @@ class OGRSXFLayer final : public OGRLayer
     std::map<long, vsi_l_offset> mnRecordDesc;
     std::map<long, vsi_l_offset>::const_iterator oNextIt;
     SXFMapDescription stSXFMapDescription;
-    std::set<GUInt16> snAttributeCodes;
+    std::set<uint16_t> snAttributeCodes;
     int m_nSXFFormatVer;
     CPLString sFIDColumn_;
     CPLMutex **m_hIOMutex;
     double m_dfCoeff;
     virtual OGRFeature *GetNextRawFeature(long nFID);
 
-    GUInt32 TranslateXYH(const SXFRecordDescription &certifInfo,
-                         const char *psBuff, GUInt32 nBufLen, double *dfX,
-                         double *dfY, double *dfH = nullptr);
+    uint32_t TranslateXYH(const SXFRecordDescription &certifInfo,
+                          const char *psBuff, uint32_t nBufLen, double *dfX,
+                          double *dfY, double *dfH = nullptr);
 
     OGRFeature *TranslatePoint(const SXFRecordDescription &certifInfo,
-                               const char *psRecordBuf, GUInt32 nBufLen);
+                               const char *psRecordBuf, uint32_t nBufLen);
     OGRFeature *TranslateText(const SXFRecordDescription &certifInfo,
-                              const char *psBuff, GUInt32 nBufLen);
+                              const char *psBuff, uint32_t nBufLen);
     OGRFeature *TranslatePolygon(const SXFRecordDescription &certifInfo,
-                                 const char *psBuff, GUInt32 nBufLen);
+                                 const char *psBuff, uint32_t nBufLen);
     OGRFeature *TranslateLine(const SXFRecordDescription &certifInfo,
-                              const char *psBuff, GUInt32 nBufLen);
+                              const char *psBuff, uint32_t nBufLen);
     OGRFeature *TranslateVetorAngle(const SXFRecordDescription &certifInfo,
-                                    const char *psBuff, GUInt32 nBufLen);
+                                    const char *psBuff, uint32_t nBufLen);
 
   public:
     OGRSXFLayer(VSILFILE *fp, CPLMutex **hIOMutex, GByte nID,

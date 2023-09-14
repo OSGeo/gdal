@@ -261,7 +261,7 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
         // clamp 16bit values to 12bit.
         if (eDT == GDT_UInt16)
         {
-            GUInt16 *panScanline = reinterpret_cast<GUInt16 *>(pabyScanline);
+            uint16_t *panScanline = reinterpret_cast<uint16_t *>(pabyScanline);
 
             for (int iPixel = 0; iPixel < nXSize * nBands; iPixel++)
             {

@@ -161,7 +161,7 @@ typedef struct
 // Size of an image, also used as a tile or pixel location
 struct ILSize
 {
-    GInt32 x, y, z, c;
+    int32_t x, y, z, c;
     GIntBig l;  // Dual use, sometimes it holds the number of pages
     explicit ILSize(const int x_ = -1, const int y_ = -1, const int z_ = -1,
                     const int c_ = -1, const int l_ = -1)
@@ -203,8 +203,8 @@ typedef struct ILImage
     ILImage();
     GIntBig dataoffset;
     GIntBig idxoffset;
-    GInt32 quality;
-    GInt32 pageSizeBytes;
+    int32_t quality;
+    int32_t pageSizeBytes;
     ILSize size;
     ILSize pagesize;
     ILSize pagecount;
@@ -694,7 +694,7 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     int dozstd;
     int zstd_level;
     // Level count of this band
-    GInt32 m_l;
+    int32_t m_l;
     // The info about the current image, to enable R-sets
     ILImage img;
     std::vector<MRFRasterBand *> overviews;
@@ -718,7 +718,7 @@ class MRFRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     // How many bytes are in a band block (not a page, a single band block)
     // Easiest is to calculate it from the pageSizeBytes
-    GUInt32 blockSizeBytes()
+    uint32_t blockSizeBytes()
     {
         return poMRFDS->current.pageSizeBytes / poMRFDS->current.pagesize.c;
     }

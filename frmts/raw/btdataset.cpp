@@ -510,7 +510,7 @@ CPLErr BTDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
             nShortTemp = 1;
     }
 #endif
-    GInt16 nShortTemp = CPL_LSBWORD16(1);
+    int16_t nShortTemp = CPL_LSBWORD16(1);
     memcpy(abyHeader + 22, &nShortTemp, 2);
 
     /* -------------------------------------------------------------------- */
@@ -518,7 +518,7 @@ CPLErr BTDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     /* -------------------------------------------------------------------- */
     int bNorth = FALSE;
 
-    nShortTemp = static_cast<GInt16>(m_oSRS.GetUTMZone(&bNorth));
+    nShortTemp = static_cast<int16_t>(m_oSRS.GetUTMZone(&bNorth));
     if (bNorth)
         nShortTemp = -nShortTemp;
 
@@ -530,7 +530,7 @@ CPLErr BTDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     /* -------------------------------------------------------------------- */
     if (m_oSRS.GetAuthorityName("GEOGCS|DATUM") != nullptr &&
         EQUAL(m_oSRS.GetAuthorityName("GEOGCS|DATUM"), "EPSG"))
-        nShortTemp = static_cast<GInt16>(
+        nShortTemp = static_cast<int16_t>(
             atoi(m_oSRS.GetAuthorityCode("GEOGCS|DATUM")) + 2000);
     else
         nShortTemp = -2;
@@ -602,7 +602,7 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      version.                                                        */
     /* -------------------------------------------------------------------- */
 
-    GInt32 nIntTemp = 0;
+    int32_t nIntTemp = 0;
     memcpy(&nIntTemp, poDS->abyHeader + 10, 4);
     poDS->nRasterXSize = CPL_LSBWORD32(nIntTemp);
 
@@ -615,7 +615,7 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    GInt16 nDataSize = 0;
+    int16_t nDataSize = 0;
     memcpy(&nDataSize, poDS->abyHeader + 18, 2);
     CPL_LSBPTR16(&nDataSize);
 
@@ -681,15 +681,15 @@ GDALDataset *BTDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     if (oSRS.GetRoot() == nullptr)
     {
-        GInt16 nUTMZone = 0;
+        int16_t nUTMZone = 0;
         memcpy(&nUTMZone, poDS->abyHeader + 24, 2);
         CPL_LSBPTR16(&nUTMZone);
 
-        GInt16 nDatum = 0;
+        int16_t nDatum = 0;
         memcpy(&nDatum, poDS->abyHeader + 26, 2);
         CPL_LSBPTR16(&nDatum);
 
-        GInt16 nHUnits = 0;
+        int16_t nHUnits = 0;
         memcpy(&nHUnits, poDS->abyHeader + 22, 2);
         CPL_LSBPTR16(&nHUnits);
 
@@ -864,14 +864,14 @@ GDALDataset *BTDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 
     memcpy(abyHeader, "binterr1.3", 10);
 
-    GInt32 nTemp = CPL_LSBWORD32(nXSize);
+    int32_t nTemp = CPL_LSBWORD32(nXSize);
     memcpy(abyHeader + 10, &nTemp, 4);
 
     nTemp = CPL_LSBWORD32(nYSize);
     memcpy(abyHeader + 14, &nTemp, 4);
 
-    GInt16 nShortTemp = static_cast<GInt16>(
-        CPL_LSBWORD16((GInt16)(GDALGetDataTypeSize(eType) / 8)));
+    int16_t nShortTemp = static_cast<int16_t>(
+        CPL_LSBWORD16((int16_t)(GDALGetDataTypeSize(eType) / 8)));
     memcpy(abyHeader + 18, &nShortTemp, 2);
 
     if (eType == GDT_Float32)

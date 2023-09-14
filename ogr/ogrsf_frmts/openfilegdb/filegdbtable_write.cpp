@@ -1623,7 +1623,7 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
             {
                 // This requires rewriting the gdbtablx file to insert
                 // a new page
-                GUInt32 nCountBlocksBefore = 0;
+                uint32_t nCountBlocksBefore = 0;
                 for (int i = 0; i < iBlock; i++)
                     nCountBlocksBefore +=
                         TEST_BIT(m_abyTablXBlockMap.data(), i) != 0;
@@ -1684,7 +1684,7 @@ bool FileGDBTable::SeekIntoTableXForNewFeature(int nObjectID)
             bWriteEmptyPageAtEnd = true;
         }
 
-        GUInt32 nCountBlocksBefore = 0;
+        uint32_t nCountBlocksBefore = 0;
         // In case of sequential access, optimization to avoid recomputing
         // the number of blocks since the beginning of the map
         if (iBlock >= m_nCountBlocksBeforeIBlockIdx)

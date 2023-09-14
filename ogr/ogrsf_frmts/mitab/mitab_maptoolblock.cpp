@@ -193,8 +193,8 @@ int TABMAPToolBlock::CommitToFile()
     WriteInt16(TABMAP_TOOL_BLOCK);  // Block type code
     CPLAssert(m_nSizeUsed >= MAP_TOOL_HEADER_SIZE &&
               m_nSizeUsed < MAP_TOOL_HEADER_SIZE + 32768);
-    WriteInt16(static_cast<GInt16>(m_nSizeUsed -
-                                   MAP_TOOL_HEADER_SIZE));  // num. bytes used
+    WriteInt16(static_cast<int16_t>(m_nSizeUsed -
+                                    MAP_TOOL_HEADER_SIZE));  // num. bytes used
     WriteInt32(m_nNextToolBlock);
 
     int nStatus = CPLGetLastErrorType() == CE_Failure ? -1 : 0;
@@ -269,7 +269,7 @@ int TABMAPToolBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
  * Set the address (offset from beginning of file) of the drawing tool block
  * that follows the current one.
  **********************************************************************/
-void TABMAPToolBlock::SetNextToolBlock(GInt32 nNextToolBlockAddress)
+void TABMAPToolBlock::SetNextToolBlock(int32_t nNextToolBlockAddress)
 {
     m_nNextToolBlock = nNextToolBlockAddress;
 }

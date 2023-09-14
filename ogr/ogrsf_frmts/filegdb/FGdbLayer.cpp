@@ -568,9 +568,9 @@ int FGdbLayer::EditATXOrSPX(VSILFILE *fp, int nThisPage, int &nLastPageVisited,
 /*                              GetInt32()                              */
 /************************************************************************/
 
-static GInt32 GetInt32(const GByte *pBaseAddr, int iOffset)
+static int32_t GetInt32(const GByte *pBaseAddr, int iOffset)
 {
-    GInt32 nVal;
+    int32_t nVal;
     memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
     CPL_LSBPTR32(&nVal);
     return nVal;

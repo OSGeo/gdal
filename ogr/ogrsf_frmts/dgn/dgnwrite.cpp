@@ -1040,7 +1040,7 @@ DGNElemCore *DGNCreateArcElem(DGNHandle hDGN, int nType, double dfOriginX,
             static_cast<unsigned char *>(CPLCalloc(psCore->raw_bytes, 1));
 
         /* start angle */
-        GInt32 nAngle = (int)(dfStartAngle * 360000.0);
+        int32_t nAngle = (int)(dfStartAngle * 360000.0);
         DGN_WRITE_INT32(nAngle, psCore->raw_data + 36);
 
         /* sweep angle */
@@ -1142,7 +1142,7 @@ DGNElemCore *DGNCreateArcElem(DGNHandle hDGN, int nType, double dfOriginX,
         else
         {
             /* rotation */
-            GInt32 nAngle = (int)(dfRotation * 360000.0);
+            int32_t nAngle = (int)(dfRotation * 360000.0);
             DGN_WRITE_INT32(nAngle, psCore->raw_data + 52);
 
             /* origin */
@@ -1392,14 +1392,14 @@ DGNElemCore *DGNCreateTextElem(DGNHandle hDGN, const char *pszText, int nFontId,
     psCore->raw_data[36] = (unsigned char)nFontId;
     psCore->raw_data[37] = (unsigned char)nJustification;
 
-    GInt32 nIntValue =
+    int32_t nIntValue =
         static_cast<int>(dfLengthMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
     DGN_WRITE_INT32(nIntValue, psCore->raw_data + 38);
 
     nIntValue = (int)(dfHeightMult * 1000.0 / (psDGN->scale * 6.0) + 0.5);
     DGN_WRITE_INT32(nIntValue, psCore->raw_data + 42);
 
-    GInt32 nBase = 0;
+    int32_t nBase = 0;
 
     if (psDGN->dimension == 2)
     {
@@ -2081,10 +2081,10 @@ static void DGNPointToInt(DGNInfo *psDGN, DGNPoint *psPoint,
     const int nIter = std::min(3, psDGN->dimension);
     for (int i = 0; i < nIter; i++)
     {
-        GInt32 nCTI = static_cast<GInt32>(
+        int32_t nCTI = static_cast<int32_t>(
             std::max(-2147483647.0, std::min(2147483647.0, adfCT[i])));
         unsigned char abyCTI[4];
-        memcpy(abyCTI, &nCTI, sizeof(GInt32));
+        memcpy(abyCTI, &nCTI, sizeof(int32_t));
 
 #ifdef WORDS_BIGENDIAN
         pabyTarget[i * 4 + 0] = abyCTI[1];

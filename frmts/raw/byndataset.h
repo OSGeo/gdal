@@ -145,29 +145,29 @@ constexpr int BYN_HDR_SZ = 80; /* != sizeof(BYNHeader) */
 
 struct BYNHeader
 {
-    GInt32 nSouth;
-    GInt32 nNorth;
-    GInt32 nWest;
-    GInt32 nEast;
-    GInt16 nDLat;
-    GInt16 nDLon;
-    GInt16 nGlobal;
-    GInt16 nType;
+    int32_t nSouth;
+    int32_t nNorth;
+    int32_t nWest;
+    int32_t nEast;
+    int16_t nDLat;
+    int16_t nDLon;
+    int16_t nGlobal;
+    int16_t nType;
     double dfFactor;
-    GInt16 nSizeOf;
-    GInt16 nVDatum;
-    GInt16 nDescrip;
-    GInt16 nSubType;
-    GInt16 nDatum;
-    GInt16 nEllipsoid;
-    GInt16 nByteOrder;
-    GInt16 nScale;
+    int16_t nSizeOf;
+    int16_t nVDatum;
+    int16_t nDescrip;
+    int16_t nSubType;
+    int16_t nDatum;
+    int16_t nEllipsoid;
+    int16_t nByteOrder;
+    int16_t nScale;
     double dfWo;
     double dfGM;
-    GInt16 nTideSys;
-    GInt16 nRealiz;
+    int16_t nTideSys;
+    int16_t nRealiz;
     float dEpoch;
-    GInt16 nPtType;
+    int16_t nPtType;
 };
 
 struct BYNEllipsoids
@@ -189,11 +189,11 @@ constexpr int BYN_VDATUM_3 = 6357; /* NAVD88 */
 
 /* Maximum ordinates values for Identify() */
 
-constexpr GInt32 BYN_SCALE = 1000;
-constexpr GInt32 BYN_MAX_LAT = 90 * 3600 * 2;
-constexpr GInt32 BYN_MAX_LON = 180 * 3600 * 2;
-constexpr GInt32 BYN_MAX_LAT_SCL = BYN_MAX_LAT / BYN_SCALE;
-constexpr GInt32 BYN_MAX_LON_SCL = BYN_MAX_LON / BYN_SCALE;
+constexpr int32_t BYN_SCALE = 1000;
+constexpr int32_t BYN_MAX_LAT = 90 * 3600 * 2;
+constexpr int32_t BYN_MAX_LON = 180 * 3600 * 2;
+constexpr int32_t BYN_MAX_LAT_SCL = BYN_MAX_LAT / BYN_SCALE;
+constexpr int32_t BYN_MAX_LON_SCL = BYN_MAX_LON / BYN_SCALE;
 
 /************************************************************************/
 /* ==================================================================== */

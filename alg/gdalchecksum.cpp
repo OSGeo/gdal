@@ -125,7 +125,7 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
                     else if (dfVal > 2147483647)
                         nVal = 2147483647;
                     else
-                        nVal = static_cast<GInt32>(floor(dfVal));
+                        nVal = static_cast<int32_t>(floor(dfVal));
                 }
 
                 nChecksum += nVal % anPrimes[iPrime++];
@@ -173,7 +173,7 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
             }
         }
 
-        int *panChunkData = static_cast<GInt32 *>(
+        int *panChunkData = static_cast<int32_t *>(
             VSI_MALLOC3_VERBOSE(nChunkXSize, nChunkYSize, nDstDataTypeSize));
         if (panChunkData == nullptr)
         {
@@ -237,7 +237,7 @@ int CPL_STDCALL GDALChecksumImage(GDALRasterBandH hBand, int nXOff, int nYOff,
     {
         const GDALDataType eDstDataType = bComplex ? GDT_CInt32 : GDT_Int32;
 
-        int *panLineData = static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(
+        int *panLineData = static_cast<int32_t *>(VSI_MALLOC2_VERBOSE(
             nXSize, GDALGetDataTypeSizeBytes(eDstDataType)));
         if (panLineData == nullptr)
         {

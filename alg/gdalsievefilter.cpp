@@ -217,9 +217,9 @@ CPLErr CPL_STDCALL GDALSieveFilter(GDALRasterBandH hSrcBand,
     auto *panThisLineVal = static_cast<std::int64_t *>(
         VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
     auto *panLastLineId =
-        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
+        static_cast<int32_t *>(VSI_MALLOC2_VERBOSE(sizeof(int32_t), nXSize));
     auto *panThisLineId =
-        static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(sizeof(GInt32), nXSize));
+        static_cast<int32_t *>(VSI_MALLOC2_VERBOSE(sizeof(int32_t), nXSize));
     auto *panThisLineWriteVal = static_cast<std::int64_t *>(
         VSI_MALLOC2_VERBOSE(sizeof(std::int64_t), nXSize));
     GByte *pabyMaskLine = hMaskBand != nullptr

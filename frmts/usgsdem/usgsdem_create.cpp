@@ -71,7 +71,7 @@ typedef struct
 
     VSILFILE *fp;
 
-    GInt16 *panData;
+    int16_t *panData;
 } USGSDEMWriteInfo;
 
 #define DEM_NODATA -32767
@@ -517,8 +517,8 @@ static int USGSDEMWriteARecord(USGSDEMWriteInfo *psWInfo)
     /*      Minimum and Maximum elevations for this cell.                   */
     /*      24.15 format.                                                   */
     /* -------------------------------------------------------------------- */
-    GInt16 nMin = DEM_NODATA;
-    GInt16 nMax = DEM_NODATA;
+    int16_t nMin = DEM_NODATA;
+    int16_t nMax = DEM_NODATA;
     int nVoid = 0;
 
     for (int i = psWInfo->nXSize * psWInfo->nYSize - 1; i >= 0; i--)
@@ -541,8 +541,8 @@ static int USGSDEMWriteARecord(USGSDEMWriteInfo *psWInfo)
     }
 
     /* take into account z resolutions that are not 1.0 */
-    nMin = static_cast<GInt16>(std::floor(nMin * psWInfo->dfElevStepSize));
-    nMax = static_cast<GInt16>(std::ceil(nMax * psWInfo->dfElevStepSize));
+    nMin = static_cast<int16_t>(std::floor(nMin * psWInfo->dfElevStepSize));
+    nMax = static_cast<int16_t>(std::ceil(nMax * psWInfo->dfElevStepSize));
 
     USGSDEMPrintDouble(achARec + 738, static_cast<double>(nMin));
     USGSDEMPrintDouble(achARec + 762, static_cast<double>(nMax));
@@ -771,8 +771,8 @@ static int USGSDEMWriteProfile(USGSDEMWriteInfo *psWInfo, int iProfile)
     /* -------------------------------------------------------------------- */
     /*      Min/Max elevation values for this profile.                      */
     /* -------------------------------------------------------------------- */
-    GInt16 nMin = DEM_NODATA;
-    GInt16 nMax = DEM_NODATA;
+    int16_t nMin = DEM_NODATA;
+    int16_t nMax = DEM_NODATA;
 
     for (int iY = 0; iY < psWInfo->nYSize; iY++)
     {
@@ -795,8 +795,8 @@ static int USGSDEMWriteProfile(USGSDEMWriteInfo *psWInfo, int iProfile)
     }
 
     /* take into account z resolutions that are not 1.0 */
-    nMin = static_cast<GInt16>(std::floor(nMin * psWInfo->dfElevStepSize));
-    nMax = static_cast<GInt16>(std::ceil(nMax * psWInfo->dfElevStepSize));
+    nMin = static_cast<int16_t>(std::floor(nMin * psWInfo->dfElevStepSize));
+    nMax = static_cast<int16_t>(std::ceil(nMax * psWInfo->dfElevStepSize));
 
     USGSDEMPrintDouble(achBuffer + 96, static_cast<double>(nMin));
     USGSDEMPrintDouble(achBuffer + 120, static_cast<double>(nMax));
@@ -1287,7 +1287,7 @@ static int USGSDEMLoadRaster(CPL_UNUSED USGSDEMWriteInfo *psWInfo,
     /* -------------------------------------------------------------------- */
     /*      Allocate output array, and pre-initialize to NODATA value.      */
     /* -------------------------------------------------------------------- */
-    psWInfo->panData = reinterpret_cast<GInt16 *>(
+    psWInfo->panData = reinterpret_cast<int16_t *>(
         VSI_MALLOC3_VERBOSE(2, psWInfo->nXSize, psWInfo->nYSize));
     if (psWInfo->panData == nullptr)
     {

@@ -327,7 +327,7 @@ bool CPLJSONDocument::LoadChunks(const std::string &osPath, size_t nChunkSize,
     void *pBuffer = CPLMalloc(nChunkSize);
     json_tokener *tok = json_tokener_new();
     bool bSuccess = true;
-    GUInt32 nFileSize = static_cast<GUInt32>(sStatBuf.st_size);
+    uint32_t nFileSize = static_cast<uint32_t>(sStatBuf.st_size);
     double dfTotalRead = 0.0;
 
     while (true)

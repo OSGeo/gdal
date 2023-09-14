@@ -34,7 +34,7 @@
 
 CPL_C_START
 
-#define int32 GInt32
+#define int32 int32_t
 #define TBool int
 #define uchar unsigned char
 

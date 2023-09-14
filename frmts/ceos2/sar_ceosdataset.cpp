@@ -36,7 +36,7 @@
 
 #include <algorithm>
 
-static GInt16 CastToGInt16(float val)
+static int16_t CastToint16_t(float val)
 {
     if (val < -32768.0)
         val = -32768.0;
@@ -44,7 +44,7 @@ static GInt16 CastToGInt16(float val)
     if (val > 32767)
         val = 32767.0;
 
-    return static_cast<GInt16>(val);
+    return static_cast<int16_t>(val);
 }
 
 static const char *const CeosExtension[][6] = {
@@ -580,41 +580,41 @@ CPLErr PALSARRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
     if (nBand == 2)
     {
-        GInt16 *panLine = (GInt16 *)pImage;
+        int16_t *panLine = (int16_t *)pImage;
 
         for (int i = 0; i < nBlockXSize * 2; i++)
         {
-            panLine[i] = (GInt16)CastToGInt16((float)2.0 * panLine[i]);
+            panLine[i] = (int16_t)CastToint16_t((float)2.0 * panLine[i]);
         }
     }
     else if (nBand == 4)
     {
         const double sqrt_2 = pow(2.0, 0.5);
-        GInt16 *panLine = (GInt16 *)pImage;
+        int16_t *panLine = (int16_t *)pImage;
 
         for (int i = 0; i < nBlockXSize * 2; i++)
         {
             panLine[i] =
-                (GInt16)CastToGInt16((float)floor(panLine[i] * sqrt_2 + 0.5));
+                (int16_t)CastToint16_t((float)floor(panLine[i] * sqrt_2 + 0.5));
         }
     }
     else if (nBand == 6)
     {
-        GInt16 *panLine = (GInt16 *)pImage;
+        int16_t *panLine = (int16_t *)pImage;
         const double sqrt_2 = pow(2.0, 0.5);
 
         // real portion - just multiple by sqrt(2)
         for (int i = 0; i < nBlockXSize * 2; i += 2)
         {
             panLine[i] =
-                (GInt16)CastToGInt16((float)floor(panLine[i] * sqrt_2 + 0.5));
+                (int16_t)CastToint16_t((float)floor(panLine[i] * sqrt_2 + 0.5));
         }
 
         // imaginary portion - conjugate and multiply
         for (int i = 1; i < nBlockXSize * 2; i += 2)
         {
-            panLine[i] =
-                (GInt16)CastToGInt16((float)floor(-panLine[i] * sqrt_2 + 0.5));
+            panLine[i] = (int16_t)CastToint16_t(
+                (float)floor(-panLine[i] * sqrt_2 + 0.5));
         }
     }
 
@@ -1722,7 +1722,7 @@ void SAR_CEOSDataset::ScanForGCPs()
         CalcCeosSARImageFilePosition(&sVolume, 1, iScanline + 1, nullptr,
                                      &nFileOffset);
 
-        GInt32 anRecord[192 / 4];
+        int32_t anRecord[192 / 4];
         if (VSIFSeekL(fpImage, nFileOffset, SEEK_SET) != 0 ||
             VSIFReadL(anRecord, 1, 192, fpImage) != 192)
             break;

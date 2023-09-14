@@ -129,10 +129,10 @@ static int isAllVal(GDALDataType gt, void *b, size_t bytecount, double ndv)
     switch (gt)
     {
         TEST_T(GDT_Byte, GByte);
-        TEST_T(GDT_UInt16, GUInt16);
-        TEST_T(GDT_Int16, GInt16);
-        TEST_T(GDT_UInt32, GUInt32);
-        TEST_T(GDT_Int32, GInt32);
+        TEST_T(GDT_UInt16, uint16_t);
+        TEST_T(GDT_Int16, int16_t);
+        TEST_T(GDT_UInt32, uint32_t);
+        TEST_T(GDT_Int32, int32_t);
         TEST_T(GDT_Float32, float);
         TEST_T(GDT_Float64, double);
         default:
@@ -499,7 +499,7 @@ CPLErr MRFRasterBand::SetNoDataValue(double val)
                  "MRF: NoData can be set only during file create");
         return CE_Failure;
     }
-    if (GInt32(poMRFDS->vNoData.size()) < nBand)
+    if (int32_t(poMRFDS->vNoData.size()) < nBand)
         poMRFDS->vNoData.resize(nBand);
     poMRFDS->vNoData[nBand - 1] = val;
     // We also need to set it for this band
@@ -572,13 +572,13 @@ CPLErr MRFRasterBand::FillBlock(void *buffer)
     switch (eDataType)
     {
         case GDT_UInt16:
-            return bf(GUInt16);
+            return bf(uint16_t);
         case GDT_Int16:
-            return bf(GInt16);
+            return bf(int16_t);
         case GDT_UInt32:
-            return bf(GUInt32);
+            return bf(uint32_t);
         case GDT_Int32:
-            return bf(GInt32);
+            return bf(int32_t);
         case GDT_Float32:
             return bf(float);
         case GDT_Float64:
@@ -670,10 +670,10 @@ CPLErr MRFRasterBand::ReadInterleavedBlock(int xblk, int yblk, void *buffer)
                 CpySI(GByte);
                 break;
             case 2:
-                CpySI(GInt16);
+                CpySI(int16_t);
                 break;
             case 4:
-                CpySI(GInt32);
+                CpySI(int32_t);
                 break;
             case 8:
                 CpySI(GIntBig);
@@ -708,7 +708,7 @@ CPLErr MRFRasterBand::FetchBlock(int xblk, int yblk, void *buffer)
     if (poMRFDS->clonedSource)  // This is a clone
         return FetchClonedBlock(xblk, yblk, buffer);
 
-    const GInt32 cstride = img.pagesize.c;  // 1 if band separate
+    const int32_t cstride = img.pagesize.c;  // 1 if band separate
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
@@ -972,7 +972,7 @@ CPLErr MRFRasterBand::FetchClonedBlock(int xblk, int yblk, void *buffer)
 
 CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 {
-    GInt32 cstride = img.pagesize.c;
+    int32_t cstride = img.pagesize.c;
     ILIdx tinfo;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
     CPLDebug("MRF_IB",
@@ -1220,7 +1220,7 @@ CPLErr MRFRasterBand::IReadBlock(int xblk, int yblk, void *buffer)
 
 CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
 {
-    GInt32 cstride = img.pagesize.c;
+    int32_t cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
     GUIntBig infooffset = IdxOffset(req, img);
 
@@ -1362,10 +1362,10 @@ CPLErr MRFRasterBand::IWriteBlock(int xblk, int yblk, void *buffer)
                 CpySO(GByte);
                 break;
             case 2:
-                CpySO(GInt16);
+                CpySO(int16_t);
                 break;
             case 4:
-                CpySO(GInt32);
+                CpySO(int32_t);
                 break;
             case 8:
                 CpySO(GIntBig);
@@ -1501,7 +1501,7 @@ bool MRFRasterBand::TestBlock(int xblk, int yblk)
         return false;
 
     ILIdx tinfo;
-    GInt32 cstride = img.pagesize.c;
+    int32_t cstride = img.pagesize.c;
     ILSize req(xblk, yblk, 0, (nBand - 1) / cstride, m_l);
 
     if (CE_None != poMRFDS->ReadTileIdx(tinfo, req, img))

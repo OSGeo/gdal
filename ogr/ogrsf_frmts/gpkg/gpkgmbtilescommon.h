@@ -75,7 +75,7 @@ class GDALGPKGMBTilesLikePseudoDataset
     double m_dfOffset = 0.0;
     double m_dfScale = 1.0;
     double m_dfPrecision = 1.0;
-    GUInt16 m_usGPKGNull = 0;
+    uint16_t m_usGPKGNull = 0;
     int m_nZoomLevel = -1;
     GByte *m_pabyCachedTiles = nullptr;
     CachedTileDesc m_asCachedTilesDesc[4];

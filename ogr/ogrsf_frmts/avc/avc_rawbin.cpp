@@ -475,29 +475,29 @@ GBool AVCRawBinEOF(AVCRawBinFile *psFile)
  * and return a value with the bytes ordered properly for the current
  * platform.
  **********************************************************************/
-GInt16 AVCRawBinReadInt16(AVCRawBinFile *psFile)
+int16_t AVCRawBinReadInt16(AVCRawBinFile *psFile)
 {
-    GInt16 n16Value = 0;
+    int16_t n16Value = 0;
 
     AVCRawBinReadBytes(psFile, 2, (GByte *)(&n16Value));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        return (GInt16)CPL_SWAP16(n16Value);
+        return (int16_t)CPL_SWAP16(n16Value);
     }
 
     return n16Value;
 }
 
-GInt32 AVCRawBinReadInt32(AVCRawBinFile *psFile)
+int32_t AVCRawBinReadInt32(AVCRawBinFile *psFile)
 {
-    GInt32 n32Value = 0;
+    int32_t n32Value = 0;
 
     AVCRawBinReadBytes(psFile, 4, (GByte *)(&n32Value));
 
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        return (GInt32)CPL_SWAP32(n32Value);
+        return (int32_t)CPL_SWAP32(n32Value);
     }
 
     return n32Value;
@@ -577,21 +577,21 @@ void AVCRawBinWriteBytes(AVCRawBinFile *psFile, int nBytesToWrite,
  * CPLGetLastErrNo() can be used to test if a write operation was
  * successful.
  **********************************************************************/
-void AVCRawBinWriteInt16(AVCRawBinFile *psFile, GInt16 n16Value)
+void AVCRawBinWriteInt16(AVCRawBinFile *psFile, int16_t n16Value)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        n16Value = (GInt16)CPL_SWAP16(n16Value);
+        n16Value = (int16_t)CPL_SWAP16(n16Value);
     }
 
     AVCRawBinWriteBytes(psFile, 2, (GByte *)&n16Value);
 }
 
-void AVCRawBinWriteInt32(AVCRawBinFile *psFile, GInt32 n32Value)
+void AVCRawBinWriteInt32(AVCRawBinFile *psFile, int32_t n32Value)
 {
     if (psFile->eByteOrder != geSystemByteOrder)
     {
-        n32Value = (GInt32)CPL_SWAP32(n32Value);
+        n32Value = (int32_t)CPL_SWAP32(n32Value);
     }
 
     AVCRawBinWriteBytes(psFile, 4, (GByte *)&n32Value);

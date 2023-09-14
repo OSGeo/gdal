@@ -85,12 +85,12 @@ struct hfainfo
 
     HFAAccess eAccess;
 
-    GUInt32 nEndOfFile;
-    GUInt32 nRootPos;
-    GUInt32 nDictionaryPos;
+    uint32_t nEndOfFile;
+    uint32_t nRootPos;
+    uint32_t nDictionaryPos;
 
-    GInt16 nEntryHeaderLength;
-    GInt32 nVersion;
+    int16_t nEntryHeaderLength;
+    int32_t nVersion;
 
     bool bTreeDirty;
     HFAEntry *poRoot;
@@ -113,7 +113,7 @@ struct hfainfo
 
 typedef struct hfainfo HFAInfo_t;
 
-GUInt32 HFAAllocateSpace(HFAInfo_t *, GUInt32);
+uint32_t HFAAllocateSpace(HFAInfo_t *, uint32_t);
 CPLErr HFAParseBandInfo(HFAInfo_t *);
 HFAInfo_t *HFAGetDependent(HFAInfo_t *, const char *);
 HFAInfo_t *HFACreateDependent(HFAInfo_t *psBase);
@@ -232,16 +232,16 @@ class HFABand
 class HFAEntry
 {
     bool bDirty;
-    GUInt32 nFilePos;
+    uint32_t nFilePos;
 
     HFAInfo_t *psHFA;
     HFAEntry *poParent;
     HFAEntry *poPrev;
 
-    GUInt32 nNextPos;
+    uint32_t nNextPos;
     HFAEntry *poNext;
 
-    GUInt32 nChildPos;
+    uint32_t nChildPos;
     HFAEntry *poChild;
 
     char szName[64];
@@ -249,8 +249,8 @@ class HFAEntry
 
     HFAType *poType;
 
-    GUInt32 nDataPos;
-    GUInt32 nDataSize;
+    uint32_t nDataPos;
+    uint32_t nDataSize;
     GByte *pabyData;
 
     void LoadData();
@@ -268,7 +268,7 @@ class HFAEntry
                                          int *pbErrorDetected);
 
   public:
-    static HFAEntry *New(HFAInfo_t *psHFA, GUInt32 nPos, HFAEntry *poParent,
+    static HFAEntry *New(HFAInfo_t *psHFA, uint32_t nPos, HFAEntry *poParent,
                          HFAEntry *poPrev) CPL_WARN_UNUSED_RESULT;
 
     HFAEntry(HFAInfo_t *psHFA, const char *pszNodeName, const char *pszTypeName,
@@ -286,7 +286,7 @@ class HFAEntry
 
     CPLErr RemoveAndDestroy();
 
-    GUInt32 GetFilePos() const CPL_WARN_UNUSED_RESULT
+    uint32_t GetFilePos() const CPL_WARN_UNUSED_RESULT
     {
         return nFilePos;
     }
@@ -308,11 +308,11 @@ class HFAEntry
         LoadData();
         return pabyData;
     }
-    GUInt32 GetDataPos() const CPL_WARN_UNUSED_RESULT
+    uint32_t GetDataPos() const CPL_WARN_UNUSED_RESULT
     {
         return nDataPos;
     }
-    GUInt32 GetDataSize() const CPL_WARN_UNUSED_RESULT
+    uint32_t GetDataSize() const CPL_WARN_UNUSED_RESULT
     {
         return nDataSize;
     }
@@ -324,7 +324,8 @@ class HFAEntry
     FindChildren(const char *pszName,
                  const char *pszType) CPL_WARN_UNUSED_RESULT;
 
-    GInt32 GetIntField(const char *, CPLErr * = nullptr) CPL_WARN_UNUSED_RESULT;
+    int32_t GetIntField(const char *,
+                        CPLErr * = nullptr) CPL_WARN_UNUSED_RESULT;
     double GetDoubleField(const char *,
                           CPLErr * = nullptr) CPL_WARN_UNUSED_RESULT;
     const char *
@@ -383,15 +384,15 @@ class HFAField
     void Dump(FILE *);
 
     bool ExtractInstValue(const char *pszField, int nIndexValue,
-                          GByte *pabyData, GUInt32 nDataOffset, int nDataSize,
+                          GByte *pabyData, uint32_t nDataOffset, int nDataSize,
                           char chReqType, void *pReqReturn,
                           int *pnRemainingDataSize = nullptr);
 
     CPLErr SetInstValue(const char *pszField, int nIndexValue, GByte *pabyData,
-                        GUInt32 nDataOffset, int nDataSize, char chReqType,
+                        uint32_t nDataOffset, int nDataSize, char chReqType,
                         void *pValue);
 
-    void DumpInstValue(FILE *fpOut, GByte *pabyData, GUInt32 nDataOffset,
+    void DumpInstValue(FILE *fpOut, GByte *pabyData, uint32_t nDataOffset,
                        int nDataSize, const char *pszPrefix = nullptr);
 
     int GetInstBytes(GByte *, int, std::set<HFAField *> &oVisitedFields);
@@ -425,15 +426,15 @@ class HFAType
     void Dump(FILE *);
 
     int GetInstBytes(GByte *, int, std::set<HFAField *> &oVisitedFields) const;
-    int GetInstCount(const char *pszField, GByte *pabyData, GUInt32 nDataOffset,
-                     int nDataSize);
+    int GetInstCount(const char *pszField, GByte *pabyData,
+                     uint32_t nDataOffset, int nDataSize);
     bool ExtractInstValue(const char *pszField, GByte *pabyData,
-                          GUInt32 nDataOffset, int nDataSize, char chReqType,
+                          uint32_t nDataOffset, int nDataSize, char chReqType,
                           void *pReqReturn, int *pnRemainingDataSize);
     CPLErr SetInstValue(const char *pszField, GByte *pabyData,
-                        GUInt32 nDataOffset, int nDataSize, char chReqType,
+                        uint32_t nDataOffset, int nDataSize, char chReqType,
                         void *pValue);
-    void DumpInstValue(FILE *fpOut, GByte *pabyData, GUInt32 nDataOffset,
+    void DumpInstValue(FILE *fpOut, GByte *pabyData, uint32_t nDataOffset,
                        int nDataSize, const char *pszPrefix = nullptr) const;
 };
 
@@ -475,7 +476,7 @@ class HFADictionary
 class HFACompress
 {
   public:
-    HFACompress(void *pData, GUInt32 nBlockSize, EPTType eDataType);
+    HFACompress(void *pData, uint32_t nBlockSize, EPTType eDataType);
     ~HFACompress();
 
     // This is the method that does the work.
@@ -489,7 +490,7 @@ class HFACompress
     {
         return m_pCounts;
     }
-    GUInt32 getCountSize() const
+    uint32_t getCountSize() const
     {
         return m_nSizeCounts;
     }
@@ -497,15 +498,15 @@ class HFACompress
     {
         return m_pValues;
     }
-    GUInt32 getValueSize() const
+    uint32_t getValueSize() const
     {
         return m_nSizeValues;
     }
-    GUInt32 getMin() const
+    uint32_t getMin() const
     {
         return m_nMin;
     }
-    GUInt32 getNumRuns() const
+    uint32_t getNumRuns() const
     {
         return m_nNumRuns;
     }
@@ -515,28 +516,29 @@ class HFACompress
     }
 
   private:
-    static void makeCount(GUInt32 count, GByte *pCounter, GUInt32 *pnSizeCount);
-    GUInt32 findMin(GByte *pNumBits);
-    GUInt32 valueAsUInt32(GUInt32 index);
-    void encodeValue(GUInt32 val, GUInt32 repeat);
+    static void makeCount(uint32_t count, GByte *pCounter,
+                          uint32_t *pnSizeCount);
+    uint32_t findMin(GByte *pNumBits);
+    uint32_t valueAsUInt32(uint32_t index);
+    void encodeValue(uint32_t val, uint32_t repeat);
 
     void *m_pData;
-    GUInt32 m_nBlockSize;
-    GUInt32 m_nBlockCount;
+    uint32_t m_nBlockSize;
+    uint32_t m_nBlockCount;
     EPTType m_eDataType;
     // The number of bits the datatype we are trying to compress takes.
     int m_nDataTypeNumBits;
 
     GByte *m_pCounts;
     GByte *m_pCurrCount;
-    GUInt32 m_nSizeCounts;
+    uint32_t m_nSizeCounts;
 
     GByte *m_pValues;
     GByte *m_pCurrValues;
-    GUInt32 m_nSizeValues;
+    uint32_t m_nSizeValues;
 
-    GUInt32 m_nMin;
-    GUInt32 m_nNumRuns;
+    uint32_t m_nMin;
+    uint32_t m_nNumRuns;
     // The number of bits needed to compress the range of values in the block.
     GByte m_nNumBits;
 };

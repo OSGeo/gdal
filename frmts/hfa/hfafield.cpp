@@ -404,7 +404,7 @@ void HFAField::Dump(FILE *fp)
 /************************************************************************/
 
 CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
-                              GByte *pabyData, GUInt32 nDataOffset,
+                              GByte *pabyData, uint32_t nDataOffset,
                               int nDataSize, char chReqType, void *pValue)
 
 {
@@ -412,7 +412,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
     // data offset relative to it.
     if (chPointer != '\0')
     {
-        GUInt32 nCount = 0;
+        uint32_t nCount = 0;
 
         // The count returned for BASEDATA's are the contents,
         // but here we really want to mark it as one BASEDATA instance
@@ -425,7 +425,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
         else if (chReqType == 's' && (chItemType == 'c' || chItemType == 'C'))
         {
             if (pValue != nullptr)
-                nCount = static_cast<GUInt32>(strlen((char *)pValue) + 1);
+                nCount = static_cast<uint32_t>(strlen((char *)pValue) + 1);
         }
         // Set size based on index. Assumes in-order setting of array.
         else
@@ -444,7 +444,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
         }
 
         // We will update the object count iff we are writing beyond the end.
-        GUInt32 nOffset = 0;
+        uint32_t nOffset = 0;
         memcpy(&nOffset, pabyData, 4);
         HFAStandard(4, &nOffset);
         if (nOffset < nCount)
@@ -631,7 +631,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
                 return CE_Failure;
             }
 
-            GUInt32 nNumber = nIntValue;
+            uint32_t nNumber = nIntValue;
             // TODO(schwehr): What is this 4?
             HFAStandard(4, &nNumber);
             memcpy(pabyData + nIndexValue * 4, &nNumber, 4);
@@ -649,7 +649,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
                 return CE_Failure;
             }
 
-            GInt32 nNumber = nIntValue;
+            int32_t nNumber = nIntValue;
             HFAStandard(4, &nNumber);
             memcpy(pabyData + nIndexValue * 4, &nNumber, 4);
         }
@@ -694,15 +694,15 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
         case 'b':
         {
             // Extract existing rows, columns, and datatype.
-            GInt32 nRows = 1;  // TODO(schwehr): Why init to 1 instead of 0?
+            int32_t nRows = 1;  // TODO(schwehr): Why init to 1 instead of 0?
             memcpy(&nRows, pabyData, 4);
             HFAStandard(4, &nRows);
 
-            GInt32 nColumns = 1;  // TODO(schwehr): Why init to 1 instead of 0?
+            int32_t nColumns = 1;  // TODO(schwehr): Why init to 1 instead of 0?
             memcpy(&nColumns, pabyData + 4, 4);
             HFAStandard(4, &nColumns);
 
-            GInt16 nBaseItemType = 0;
+            int16_t nBaseItemType = 0;
             memcpy(&nBaseItemType, pabyData + 8, 2);
             HFAStandard(2, &nBaseItemType);
 
@@ -710,7 +710,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
             // or type?
 
             if (nIndexValue == -3)
-                nBaseItemType = static_cast<GInt16>(nIntValue);
+                nBaseItemType = static_cast<int16_t>(nIntValue);
             else if (nIndexValue == -2)
                 nColumns = nIntValue;
             else if (nIndexValue == -1)
@@ -847,7 +847,7 @@ CPLErr HFAField::SetInstValue(const char *pszField, int nIndexValue,
 /************************************************************************/
 
 bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
-                                GByte *pabyData, GUInt32 nDataOffset,
+                                GByte *pabyData, uint32_t nDataOffset,
                                 int nDataSize, char chReqType, void *pReqReturn,
                                 int *pnRemainingDataSize)
 
@@ -877,12 +877,12 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
             return false;
         }
 
-        GUInt32 nOffset = 0;
+        uint32_t nOffset = 0;
         memcpy(&nOffset, pabyData + 4, 4);
         HFAStandard(4, &nOffset);
 
 #if DEBUG_VERBOSE
-        if (nOffset != static_cast<GUInt32>(nDataOffset + 8))
+        if (nOffset != static_cast<uint32_t>(nDataOffset + 8))
         {
             // TODO(schwehr): Debug why this is happening.
             CPLError(CE_Warning, CPLE_AppDefined,
@@ -972,7 +972,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                 CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                 return false;
             }
-            GUInt32 nNumber = 0;
+            uint32_t nNumber = 0;
             memcpy(&nNumber, pabyData + nIndexValue * 4, 4);
             HFAStandard(4, &nNumber);
             nIntRet = nNumber;
@@ -987,7 +987,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                 CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                 return false;
             }
-            GInt32 nNumber = 0;
+            int32_t nNumber = 0;
             // TODO(schwehr): What is 4?
             memcpy(&nNumber, pabyData + nIndexValue * 4, 4);
             HFAStandard(4, &nNumber);
@@ -1050,15 +1050,15 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
             if (nDataSize < 12)
                 return false;
 
-            GInt32 nRows = 0;
+            int32_t nRows = 0;
             memcpy(&nRows, pabyData, 4);
             HFAStandard(4, &nRows);
 
-            GInt32 nColumns = 0;
+            int32_t nColumns = 0;
             memcpy(&nColumns, pabyData + 4, 4);
             HFAStandard(4, &nColumns);
 
-            GInt16 nBaseItemType = 0;
+            int16_t nBaseItemType = 0;
             memcpy(&nBaseItemType, pabyData + 8, 2);
             HFAStandard(2, &nBaseItemType);
             // We ignore the 2 byte objecttype value.
@@ -1162,7 +1162,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                     CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                     return false;
                 }
-                GInt16 nValue = 0;
+                int16_t nValue = 0;
                 memcpy(&nValue, pabyData + 2 * nIndexValue, 2);
                 HFAStandard(2, &nValue);
 
@@ -1176,7 +1176,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                     CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                     return false;
                 }
-                GUInt16 nValue = 0;
+                uint16_t nValue = 0;
                 memcpy(&nValue, pabyData + 2 * nIndexValue, 2);
                 HFAStandard(2, &nValue);
 
@@ -1190,7 +1190,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                     CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                     return false;
                 }
-                GInt32 nValue = 0;
+                int32_t nValue = 0;
                 memcpy(&nValue, pabyData + 4 * nIndexValue, 4);
                 HFAStandard(4, &nValue);
 
@@ -1204,7 +1204,7 @@ bool HFAField::ExtractInstValue(const char *pszField, int nIndexValue,
                     CPLError(CE_Failure, CPLE_AppDefined, "Buffer too small");
                     return false;
                 }
-                GUInt32 nValue = 0;
+                uint32_t nValue = 0;
                 memcpy(&nValue, pabyData + 4 * nIndexValue, 4);
                 HFAStandard(4, &nValue);
 
@@ -1418,13 +1418,13 @@ int HFAField::GetInstBytes(GByte *pabyData, int nDataSize,
             return -1;
         }
 
-        GInt32 nRows = 0;
+        int32_t nRows = 0;
         memcpy(&nRows, pabyData, 4);
         HFAStandard(4, &nRows);
-        GInt32 nColumns = 0;
+        int32_t nColumns = 0;
         memcpy(&nColumns, pabyData + 4, 4);
         HFAStandard(4, &nColumns);
-        GInt16 nBaseItemType = 0;
+        int16_t nBaseItemType = 0;
         memcpy(&nBaseItemType, pabyData + 8, 2);
         HFAStandard(2, &nBaseItemType);
         if (nBaseItemType < EPT_MIN || nBaseItemType > EPT_MAX)
@@ -1504,10 +1504,10 @@ int HFAField::GetInstCount(GByte *pabyData, int nDataSize) const
         if (nDataSize < 20)
             return 0;
 
-        GInt32 nRows = 0;
+        int32_t nRows = 0;
         memcpy(&nRows, pabyData + 8, 4);
         HFAStandard(4, &nRows);
-        GInt32 nColumns = 0;
+        int32_t nColumns = 0;
         memcpy(&nColumns, pabyData + 12, 4);
         HFAStandard(4, &nColumns);
 
@@ -1522,7 +1522,7 @@ int HFAField::GetInstCount(GByte *pabyData, int nDataSize) const
     if (nDataSize < 4)
         return 0;
 
-    GInt32 nCount = 0;
+    int32_t nCount = 0;
     memcpy(&nCount, pabyData, 4);
     HFAStandard(4, &nCount);
     return nCount;
@@ -1532,7 +1532,7 @@ int HFAField::GetInstCount(GByte *pabyData, int nDataSize) const
 /*                           DumpInstValue()                            */
 /************************************************************************/
 
-void HFAField::DumpInstValue(FILE *fpOut, GByte *pabyData, GUInt32 nDataOffset,
+void HFAField::DumpInstValue(FILE *fpOut, GByte *pabyData, uint32_t nDataOffset,
                              int nDataSize, const char *pszPrefix)
 
 {
@@ -1660,7 +1660,7 @@ void HFAField::DumpInstValue(FILE *fpOut, GByte *pabyData, GUInt32 nDataOffset,
 
             default:
             {
-                GInt32 nIntValue = 0;
+                int32_t nIntValue = 0;
 
                 if (ExtractInstValue(nullptr, iEntry, pabyData, nDataOffset,
                                      nDataSize, 'i', &nIntValue))

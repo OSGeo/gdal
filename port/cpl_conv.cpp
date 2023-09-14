@@ -502,14 +502,14 @@ static char *CPLReadLineBuffer(int nRequiredSize)
     /*      If the buffer doesn't exist yet, create it.                     */
     /* -------------------------------------------------------------------- */
     int bMemoryError = FALSE;
-    GUInt32 *pnAlloc =
-        static_cast<GUInt32 *>(CPLGetTLSEx(CTLS_RLBUFFERINFO, &bMemoryError));
+    uint32_t *pnAlloc =
+        static_cast<uint32_t *>(CPLGetTLSEx(CTLS_RLBUFFERINFO, &bMemoryError));
     if (bMemoryError)
         return nullptr;
 
     if (pnAlloc == nullptr)
     {
-        pnAlloc = static_cast<GUInt32 *>(VSI_MALLOC_VERBOSE(200));
+        pnAlloc = static_cast<uint32_t *>(VSI_MALLOC_VERBOSE(200));
         if (pnAlloc == nullptr)
             return nullptr;
         *pnAlloc = 196;
@@ -532,8 +532,8 @@ static char *CPLReadLineBuffer(int nRequiredSize)
             return nullptr;
         }
 
-        GUInt32 *pnAllocNew =
-            static_cast<GUInt32 *>(VSI_REALLOC_VERBOSE(pnAlloc, nNewSize));
+        uint32_t *pnAllocNew =
+            static_cast<uint32_t *>(VSI_REALLOC_VERBOSE(pnAlloc, nNewSize));
         if (pnAllocNew == nullptr)
         {
             VSIFree(pnAlloc);
@@ -1294,7 +1294,7 @@ int CPLPrintStringFill(char *pszDest, const char *pszSrc, int nMaxLen)
 /************************************************************************/
 
 /**
- * Print GInt32 value into specified string buffer. This string will not
+ * Print int32_t value into specified string buffer. This string will not
  * be NULL-terminated.
  *
  * @param pszBuffer Pointer to the destination string buffer. Should be
@@ -1309,7 +1309,7 @@ int CPLPrintStringFill(char *pszDest, const char *pszSrc, int nMaxLen)
  * @return Number of characters printed.
  */
 
-int CPLPrintInt32(char *pszBuffer, GInt32 iValue, int nMaxLen)
+int CPLPrintInt32(char *pszBuffer, int32_t iValue, int nMaxLen)
 {
     if (!pszBuffer)
         return 0;
@@ -1571,14 +1571,14 @@ void CPLVerifyConfiguration()
     /* -------------------------------------------------------------------- */
     /*      Verify data types.                                              */
     /* -------------------------------------------------------------------- */
-    CPL_STATIC_ASSERT(sizeof(GInt32) == 4);
-    CPL_STATIC_ASSERT(sizeof(GInt16) == 2);
+    CPL_STATIC_ASSERT(sizeof(int32_t) == 4);
+    CPL_STATIC_ASSERT(sizeof(int16_t) == 2);
     CPL_STATIC_ASSERT(sizeof(GByte) == 1);
 
     /* -------------------------------------------------------------------- */
     /*      Verify byte order                                               */
     /* -------------------------------------------------------------------- */
-    GInt32 nTest = 1;
+    int32_t nTest = 1;
 
 #ifdef CPL_LSB
     if (reinterpret_cast<GByte *>(&nTest)[0] != 1)

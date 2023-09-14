@@ -80,7 +80,7 @@ typedef struct
     CPLErrorHandlerNode *psHandlerStack;
     int nLastErrMsgMax;
     int nFailureIntoWarning;
-    GUInt32 nErrorCounter;
+    uint32_t nErrorCounter;
     char szLastErrMsg[DEFAULT_LAST_ERR_MSG_SIZE];
     // Do not add anything here. szLastErrMsg must be the last field.
     // See CPLRealloc() below.
@@ -912,7 +912,7 @@ const char *CPL_STDCALL CPLGetLastErrorMsg()
  * @since GDAL 2.3
  */
 
-GUInt32 CPL_STDCALL CPLGetErrorCounter()
+uint32_t CPL_STDCALL CPLGetErrorCounter()
 {
     CPLErrorContext *psCtx = CPLGetErrorContext();
     if (psCtx == nullptr)

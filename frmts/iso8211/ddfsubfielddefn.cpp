@@ -514,9 +514,9 @@ double DDFSubfieldDefn::ExtractFloatData(const char *pachSourceData,
                     if (nFormatWidth == 1)
                         return abyData[0];
                     else if (nFormatWidth == 2)
-                        return *((GUInt16 *)pabyData);
+                        return *((uint16_t *)pabyData);
                     else if (nFormatWidth == 4)
-                        return *((GUInt32 *)pabyData);
+                        return *((uint32_t *)pabyData);
                     else
                     {
                         // CPLAssert( false );
@@ -527,9 +527,9 @@ double DDFSubfieldDefn::ExtractFloatData(const char *pachSourceData,
                     if (nFormatWidth == 1)
                         return *((signed char *)abyData);
                     else if (nFormatWidth == 2)
-                        return *((GInt16 *)pabyData);
+                        return *((int16_t *)pabyData);
                     else if (nFormatWidth == 4)
-                        return *((GInt32 *)pabyData);
+                        return *((int32_t *)pabyData);
                     else
                     {
                         // CPLAssert( false );
@@ -650,11 +650,11 @@ int DDFSubfieldDefn::ExtractIntData(const char *pachSourceData, int nMaxBytes,
             {
                 case UInt:
                     if (nFormatWidth == 4)
-                        return (int)*((GUInt32 *)pabyData);
+                        return (int)*((uint32_t *)pabyData);
                     else if (nFormatWidth == 1)
                         return abyData[0];
                     else if (nFormatWidth == 2)
-                        return *((GUInt16 *)pabyData);
+                        return *((uint16_t *)pabyData);
                     else
                     {
                         // CPLAssert( false );
@@ -663,11 +663,11 @@ int DDFSubfieldDefn::ExtractIntData(const char *pachSourceData, int nMaxBytes,
 
                 case SInt:
                     if (nFormatWidth == 4)
-                        return *((GInt32 *)pabyData);
+                        return *((int32_t *)pabyData);
                     else if (nFormatWidth == 1)
                         return *((signed char *)abyData);
                     else if (nFormatWidth == 2)
-                        return *((GInt16 *)pabyData);
+                        return *((int16_t *)pabyData);
                     else
                     {
                         // CPLAssert( false );
@@ -929,7 +929,7 @@ int DDFSubfieldDefn::FormatIntValue(char *pachData, int nBytesAvailable,
     }
     else
     {
-        GUInt32 nMask = 0xff;
+        uint32_t nMask = 0xff;
         int i;
 
         switch (GetBinaryFormat())

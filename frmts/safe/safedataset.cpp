@@ -241,7 +241,7 @@ CPLErr SAFESLCRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         else if (m_eBandType == INTENSITY)
         {
-            GInt16 *pnImageTmp = static_cast<GInt16 *>(
+            int16_t *pnImageTmp = static_cast<int16_t *>(
                 VSI_MALLOC_VERBOSE(2 * nBlockXSize * nBlockYSize *
                                    GDALGetDataTypeSizeBytes(GDT_Int16)));
             if (!pnImageTmp)
@@ -486,7 +486,7 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     if (m_eInputDataType == GDT_CInt16)
     {
         CPLErr eErr = CE_None;
-        GInt16 *pnImageTmp = static_cast<GInt16 *>(
+        int16_t *pnImageTmp = static_cast<int16_t *>(
             VSI_MALLOC_VERBOSE(2 * nBlockXSize * nBlockYSize *
                                GDALGetDataTypeSizeBytes(GDT_Int16)));
         if (!pnImageTmp)
@@ -557,7 +557,7 @@ CPLErr SAFECalibratedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
     else if (m_eInputDataType == GDT_UInt16)
     {
         CPLErr eErr = CE_None;
-        GUInt16 *pnImageTmp = static_cast<GUInt16 *>(VSI_MALLOC_VERBOSE(
+        uint16_t *pnImageTmp = static_cast<uint16_t *>(VSI_MALLOC_VERBOSE(
             nBlockXSize * nBlockYSize * GDALGetDataTypeSizeBytes(GDT_UInt16)));
         if (!pnImageTmp)
             return CE_Failure;

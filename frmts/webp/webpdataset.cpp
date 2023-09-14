@@ -213,7 +213,7 @@ char **WEBPDataset::GetMetadata(const char *pszDomain)
         while (true)
         {
             char szHeader[5];
-            GUInt32 nChunkSize;
+            uint32_t nChunkSize;
 
             if (VSIFReadL(szHeader, 1, 4, fpImage) != 4 ||
                 VSIFReadL(&nChunkSize, 1, 4, fpImage) != 4)
@@ -248,8 +248,8 @@ char **WEBPDataset::GetMetadata(const char *pszDomain)
                 if (pszXMP == nullptr)
                     break;
 
-                if (static_cast<GUInt32>(VSIFReadL(pszXMP, 1, nChunkSize,
-                                                   fpImage)) != nChunkSize)
+                if (static_cast<uint32_t>(VSIFReadL(pszXMP, 1, nChunkSize,
+                                                    fpImage)) != nChunkSize)
                 {
                     VSIFree(pszXMP);
                     break;

@@ -231,7 +231,7 @@ CPLErr MSGNRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         {
             if (open_mode != MODE_RAD)
             {
-                ((GUInt16 *)pImage)[c] = (GUInt16)MSGN_NODATA_VALUE;
+                ((uint16_t *)pImage)[c] = (uint16_t)MSGN_NODATA_VALUE;
             }
             else
             {
@@ -296,7 +296,7 @@ CPLErr MSGNRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                     bitsLeft = 8;
                 }
             }
-            ((GUInt16 *)pImage)[nBlockXSize - 1 - c - shift] = value;
+            ((uint16_t *)pImage)[nBlockXSize - 1 - c - shift] = value;
         }
     }
     else

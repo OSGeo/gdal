@@ -129,7 +129,7 @@ int OGRSDTSDataSource::Open(const char *pszFilename, int bTestOpen)
     /* -------------------------------------------------------------------- */
     poTransfer = new SDTSTransfer();
 
-    GUInt32 nInitialErrorCounter = CPLGetErrorCounter();
+    uint32_t nInitialErrorCounter = CPLGetErrorCounter();
     if (!poTransfer->Open(pszFilename) ||
         CPLGetErrorCounter() > nInitialErrorCounter + 100)
     {

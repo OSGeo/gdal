@@ -141,11 +141,11 @@ CPLErr AIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
     AIGDataset *poODS = (AIGDataset *)poDS;
-    GInt32 *panGridRaster;
+    int32_t *panGridRaster;
 
     if (poODS->psInfo->nCellType == AIG_CELLTYPE_INT)
     {
-        panGridRaster = (GInt32 *)VSIMalloc3(4, nBlockXSize, nBlockYSize);
+        panGridRaster = (int32_t *)VSIMalloc3(4, nBlockXSize, nBlockYSize);
         if (panGridRaster == nullptr ||
             AIGReadTile(poODS->psInfo, nBlockXOff, nBlockYOff, panGridRaster) !=
                 CE_None)
@@ -169,15 +169,15 @@ CPLErr AIGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             for (int i = 0; i < nBlockXSize * nBlockYSize; i++)
             {
                 if (panGridRaster[i] == ESRI_GRID_NO_DATA)
-                    ((GInt16 *)pImage)[i] = -32768;
+                    ((int16_t *)pImage)[i] = -32768;
                 else
-                    ((GInt16 *)pImage)[i] = (GInt16)panGridRaster[i];
+                    ((int16_t *)pImage)[i] = (int16_t)panGridRaster[i];
             }
         }
         else
         {
             for (int i = 0; i < nBlockXSize * nBlockYSize; i++)
-                ((GInt32 *)pImage)[i] = panGridRaster[i];
+                ((int32_t *)pImage)[i] = panGridRaster[i];
         }
 
         CPLFree(panGridRaster);

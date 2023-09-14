@@ -358,8 +358,8 @@ static GDALDataset *BLXCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     //      Loop over image, copying image data.
     // --------------------------------------------------------------------
 
-    GInt16 *pabyTile = (GInt16 *)VSI_MALLOC_VERBOSE(
-        sizeof(GInt16) * ctx->cell_xsize * ctx->cell_ysize);
+    int16_t *pabyTile = (int16_t *)VSI_MALLOC_VERBOSE(
+        sizeof(int16_t) * ctx->cell_xsize * ctx->cell_ysize);
     if (pabyTile == nullptr)
     {
         blxclose(ctx);

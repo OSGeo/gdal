@@ -53,9 +53,9 @@ namespace OpenFileGDB
 /*                              GetInt16()                              */
 /************************************************************************/
 
-inline GInt16 GetInt16(const GByte *pBaseAddr, int iOffset)
+inline int16_t GetInt16(const GByte *pBaseAddr, int iOffset)
 {
-    GInt16 nVal;
+    int16_t nVal;
     memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
     CPL_LSBPTR16(&nVal);
     return nVal;
@@ -65,9 +65,9 @@ inline GInt16 GetInt16(const GByte *pBaseAddr, int iOffset)
 /*                              GetUInt16()                             */
 /************************************************************************/
 
-inline GUInt16 GetUInt16(const GByte *pBaseAddr, int iOffset)
+inline uint16_t GetUInt16(const GByte *pBaseAddr, int iOffset)
 {
-    GUInt16 nVal;
+    uint16_t nVal;
     memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
     CPL_LSBPTR16(&nVal);
     return nVal;
@@ -77,9 +77,9 @@ inline GUInt16 GetUInt16(const GByte *pBaseAddr, int iOffset)
 /*                              GetInt32()                              */
 /************************************************************************/
 
-inline GInt32 GetInt32(const GByte *pBaseAddr, int iOffset)
+inline int32_t GetInt32(const GByte *pBaseAddr, int iOffset)
 {
-    GInt32 nVal;
+    int32_t nVal;
     memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
     CPL_LSBPTR32(&nVal);
     return nVal;
@@ -89,9 +89,9 @@ inline GInt32 GetInt32(const GByte *pBaseAddr, int iOffset)
 /*                              GetUInt32()                             */
 /************************************************************************/
 
-inline GUInt32 GetUInt32(const GByte *pBaseAddr, int iOffset)
+inline uint32_t GetUInt32(const GByte *pBaseAddr, int iOffset)
 {
-    GUInt32 nVal;
+    uint32_t nVal;
     memcpy(&nVal, pBaseAddr + sizeof(nVal) * iOffset, sizeof(nVal));
     CPL_LSBPTR32(&nVal);
     return nVal;

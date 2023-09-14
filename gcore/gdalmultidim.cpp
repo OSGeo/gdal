@@ -1031,19 +1031,19 @@ bool GDALGroup::CopyFrom(const std::shared_ptr<GDALGroup> &poDstRootGroup,
                         setDTMinMax(GByte);
                         break;
                     case GDT_Int8:
-                        setDTMinMax(GInt8);
+                        setDTMinMax(int8_t);
                         break;
                     case GDT_UInt16:
-                        setDTMinMax(GUInt16);
+                        setDTMinMax(uint16_t);
                         break;
                     case GDT_Int16:
-                        setDTMinMax(GInt16);
+                        setDTMinMax(int16_t);
                         break;
                     case GDT_UInt32:
-                        setDTMinMax(GUInt32);
+                        setDTMinMax(uint32_t);
                         break;
                     case GDT_Int32:
-                        setDTMinMax(GInt32);
+                        setDTMinMax(int32_t);
                         break;
                     case GDT_UInt64:
                         setDTMinMax(std::uint64_t);
@@ -1661,19 +1661,19 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 str = CPLSPrintf("%d", *static_cast<const GByte *>(pSrc));
                 break;
             case GDT_Int8:
-                str = CPLSPrintf("%d", *static_cast<const GInt8 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const int8_t *>(pSrc));
                 break;
             case GDT_UInt16:
-                str = CPLSPrintf("%d", *static_cast<const GUInt16 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const uint16_t *>(pSrc));
                 break;
             case GDT_Int16:
-                str = CPLSPrintf("%d", *static_cast<const GInt16 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const int16_t *>(pSrc));
                 break;
             case GDT_UInt32:
-                str = CPLSPrintf("%u", *static_cast<const GUInt32 *>(pSrc));
+                str = CPLSPrintf("%u", *static_cast<const uint32_t *>(pSrc));
                 break;
             case GDT_Int32:
-                str = CPLSPrintf("%d", *static_cast<const GInt32 *>(pSrc));
+                str = CPLSPrintf("%d", *static_cast<const int32_t *>(pSrc));
                 break;
             case GDT_UInt64:
                 str =
@@ -1694,13 +1694,13 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
                 break;
             case GDT_CInt16:
             {
-                const GInt16 *src = static_cast<const GInt16 *>(pSrc);
+                const int16_t *src = static_cast<const int16_t *>(pSrc);
                 str = CPLSPrintf("%d+%dj", src[0], src[1]);
                 break;
             }
             case GDT_CInt32:
             {
-                const GInt32 *src = static_cast<const GInt32 *>(pSrc);
+                const int32_t *src = static_cast<const int32_t *>(pSrc);
                 str = CPLSPrintf("%d+%dj", src[0], src[1]);
                 break;
             }
@@ -6838,33 +6838,33 @@ bool GDALMDArrayMask::IRead(const GUInt64 *arrayStartIdx, const size_t *count,
             break;
 
         case GDT_Int8:
-            ReadInternal<GInt8>(count, bufferStride, bufferDataType, pDstBuffer,
-                                pTempBuffer, oTmpBufferDT,
-                                tmpBufferStrideVector);
+            ReadInternal<int8_t>(count, bufferStride, bufferDataType,
+                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                 tmpBufferStrideVector);
             break;
 
         case GDT_UInt16:
-            ReadInternal<GUInt16>(count, bufferStride, bufferDataType,
-                                  pDstBuffer, pTempBuffer, oTmpBufferDT,
-                                  tmpBufferStrideVector);
+            ReadInternal<uint16_t>(count, bufferStride, bufferDataType,
+                                   pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                   tmpBufferStrideVector);
             break;
 
         case GDT_Int16:
-            ReadInternal<GInt16>(count, bufferStride, bufferDataType,
-                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
-                                 tmpBufferStrideVector);
-            break;
-
-        case GDT_UInt32:
-            ReadInternal<GUInt32>(count, bufferStride, bufferDataType,
+            ReadInternal<int16_t>(count, bufferStride, bufferDataType,
                                   pDstBuffer, pTempBuffer, oTmpBufferDT,
                                   tmpBufferStrideVector);
             break;
 
+        case GDT_UInt32:
+            ReadInternal<uint32_t>(count, bufferStride, bufferDataType,
+                                   pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                   tmpBufferStrideVector);
+            break;
+
         case GDT_Int32:
-            ReadInternal<GInt32>(count, bufferStride, bufferDataType,
-                                 pDstBuffer, pTempBuffer, oTmpBufferDT,
-                                 tmpBufferStrideVector);
+            ReadInternal<int32_t>(count, bufferStride, bufferDataType,
+                                  pDstBuffer, pTempBuffer, oTmpBufferDT,
+                                  tmpBufferStrideVector);
             break;
 
         case GDT_UInt64:
@@ -12703,9 +12703,9 @@ GDALAttributeNumeric::GDALAttributeNumeric(const std::string &osParentName,
 {
 }
 
-GDALAttributeNumeric::GDALAttributeNumeric(const std::string &osParentName,
-                                           const std::string &osName,
-                                           const std::vector<GUInt32> &anValues)
+GDALAttributeNumeric::GDALAttributeNumeric(
+    const std::string &osParentName, const std::string &osName,
+    const std::vector<uint32_t> &anValues)
     : GDALAbstractMDArray(osParentName, osName),
       GDALAttribute(osParentName, osName),
       m_dt(GDALExtendedDataType::Create(GDT_UInt32)), m_anValuesUInt32(anValues)

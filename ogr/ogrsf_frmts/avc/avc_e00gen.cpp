@@ -992,7 +992,7 @@ const char *AVCE00GenTx6(AVCE00GenInfo *psInfo, AVCTxt *psTxt, GBool bCont)
         /*-------------------------------------------------------------
          * Text Justification stuff... 2 sets of 20 int16 values.
          *------------------------------------------------------------*/
-        GInt16 *pValue;
+        int16_t *pValue;
 
         if (psInfo->iCurItem < 3)
             pValue = psTxt->anJust2 + psInfo->iCurItem * 7;

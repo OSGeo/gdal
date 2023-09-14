@@ -774,13 +774,13 @@ bool PDSDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
 /*                        PDSConvertFromHex()                           */
 /************************************************************************/
 
-static GUInt32 PDSConvertFromHex(const char *pszVal)
+static uint32_t PDSConvertFromHex(const char *pszVal)
 {
     if (!STARTS_WITH_CI(pszVal, "16#"))
         return 0;
 
     pszVal += 3;
-    GUInt32 nVal = 0;
+    uint32_t nVal = 0;
     while (*pszVal != '#' && *pszVal != '\0')
     {
         nVal <<= 4;
@@ -1156,7 +1156,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
             strlen(pszMissing) >= 3 + 8 + 1 && pszMissing[3 + 8] == '#' &&
             (eDataType == GDT_Float32 || eDataType == GDT_Float64))
         {
-            GUInt32 nVal = PDSConvertFromHex(pszMissing);
+            uint32_t nVal = PDSConvertFromHex(pszMissing);
             float fVal;
             memcpy(&fVal, &nVal, 4);
             dfNoData = fVal;

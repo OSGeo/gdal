@@ -131,7 +131,7 @@ template <class DataType, class EqualityTest> class GDALRasterPolygonEnumeratorT
     CPL_DISALLOW_COPY_ASSIGN(GDALRasterPolygonEnumeratorT)
 
   public:  // these are intended to be readonly.
-    GInt32 *panPolyIdMap = nullptr;
+    int32_t *panPolyIdMap = nullptr;
     DataType *panPolyValue = nullptr;
 
     int nNextPolygonId = 0;
@@ -144,7 +144,8 @@ template <class DataType, class EqualityTest> class GDALRasterPolygonEnumeratorT
     ~GDALRasterPolygonEnumeratorT();
 
     bool ProcessLine(DataType *panLastLineVal, DataType *panThisLineVal,
-                     GInt32 *panLastLineId, GInt32 *panThisLineId, int nXSize);
+                     int32_t *panLastLineId, int32_t *panThisLineId,
+                     int nXSize);
 
     void CompleteMerges();
 
@@ -250,7 +251,7 @@ typedef struct
 /*      Color table related                                             */
 /************************************************************************/
 
-// Definitions exists for T = GUInt32 and T = GUIntBig.
+// Definitions exists for T = uint32_t and T = GUIntBig.
 template <class T>
 int GDALComputeMedianCutPCTInternal(
     GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
@@ -262,7 +263,7 @@ int GDALComputeMedianCutPCTInternal(
 int GDALDitherRGB2PCTInternal(GDALRasterBandH hRed, GDALRasterBandH hGreen,
                               GDALRasterBandH hBlue, GDALRasterBandH hTarget,
                               GDALColorTableH hColorTable, int nBits,
-                              GInt16 *pasDynamicColorMap, int bDither,
+                              int16_t *pasDynamicColorMap, int bDither,
                               GDALProgressFunc pfnProgress, void *pProgressArg);
 
 #define PRIME_FOR_65536 98317

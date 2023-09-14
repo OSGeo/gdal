@@ -198,7 +198,7 @@ class GRIBRasterBand final : public GDALPamRasterBand
     std::string m_osProductionStatus{};
     std::string m_osType{};
     int m_nPDTN = -1;
-    std::vector<GUInt32> m_anPDSTemplateAssembledValues{};
+    std::vector<uint32_t> m_anPDSTemplateAssembledValues{};
     bool bLoadedPDS = false;
     bool bLoadedMetadata = false;
 };

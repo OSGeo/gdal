@@ -5143,14 +5143,14 @@ void OGRFeature::SetField(int iField, int nYear, int nMonth, int nDay,
     OGRFieldType eType = poFDefn->GetType();
     if (eType == OFTDate || eType == OFTTime || eType == OFTDateTime)
     {
-        if (static_cast<GInt16>(nYear) != nYear)
+        if (static_cast<int16_t>(nYear) != nYear)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Years < -32768 or > 32767 are not supported");
             return;
         }
 
-        pauFields[iField].Date.Year = static_cast<GInt16>(nYear);
+        pauFields[iField].Date.Year = static_cast<int16_t>(nYear);
         pauFields[iField].Date.Month = static_cast<GByte>(nMonth);
         pauFields[iField].Date.Day = static_cast<GByte>(nDay);
         pauFields[iField].Date.Hour = static_cast<GByte>(nHour);

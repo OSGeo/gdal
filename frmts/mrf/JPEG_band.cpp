@@ -400,7 +400,7 @@ CPLErr JPEG_Codec::CompressJPEG(buf_mgr &dst, buf_mgr &src)
     int nzeros =
         (cinfo.data_precision == 8)
             ? update_mask(mask, reinterpret_cast<GByte *>(src.buffer), sz.c)
-            : update_mask(mask, reinterpret_cast<GUInt16 *>(src.buffer), sz.c);
+            : update_mask(mask, reinterpret_cast<uint16_t *>(src.buffer), sz.c);
 
     // In case we need to build a Zen chunk
     char *buffer = nullptr;
@@ -779,7 +779,7 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         apply_mask(sJPEGStruct, reinterpret_cast<char *>(dst.buffer),
                    img.pagesize.c);
     else
-        apply_mask(sJPEGStruct, reinterpret_cast<GUInt16 *>(dst.buffer),
+        apply_mask(sJPEGStruct, reinterpret_cast<uint16_t *>(dst.buffer),
                    img.pagesize.c);
 
     return CE_None;
@@ -792,12 +792,12 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
 char CHUNK_NAME[] = "Zen";
 size_t CHUNK_NAME_SIZE = strlen(CHUNK_NAME) + 1;
 
-const static GUInt32 JPEG_SIG = 0xe0ffd8ff;  // JPEG 4CC code
-const static GUInt32 BRUN_SIG = 0xd242040a;  // Brunsli 4CC code, native
+const static uint32_t JPEG_SIG = 0xe0ffd8ff;  // JPEG 4CC code
+const static uint32_t BRUN_SIG = 0xd242040a;  // Brunsli 4CC code, native
 
 static bool isbrunsli(const buf_mgr &src)
 {
-    GUInt32 signature;
+    uint32_t signature;
     memcpy(&signature, src.buffer, sizeof(signature));
     if (BRUN_SIG == CPL_LSBWORD32(signature))
         return true;
@@ -808,7 +808,7 @@ bool JPEG_Codec::IsJPEG(const buf_mgr &src)
 {
     if (isbrunsli(src))
         return true;
-    GUInt32 signature;
+    uint32_t signature;
     memcpy(&signature, src.buffer, sizeof(signature));
     if (JPEG_SIG == CPL_LSBWORD32(signature))
         return true;

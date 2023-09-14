@@ -321,7 +321,7 @@ CPLErr CPL_STDCALL GDALCreateAndReprojectImage(
 
 template <class T>
 static CPLErr GDALWarpNoDataMaskerT(const double *padfNoData, size_t nPixels,
-                                    const T *pData, GUInt32 *panValidityMask,
+                                    const T *pData, uint32_t *panValidityMask,
                                     int *pbOutAllValid)
 {
     // Nothing to do if value is out of range.
@@ -363,7 +363,7 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
 
 {
     const double *padfNoData = static_cast<double *>(pMaskFuncArg);
-    GUInt32 *panValidityMask = static_cast<GUInt32 *>(pValidityMask);
+    uint32_t *panValidityMask = static_cast<uint32_t *>(pValidityMask);
     const size_t nPixels = static_cast<size_t>(nXSize) * nYSize;
 
     *pbOutAllValid = FALSE;
@@ -385,12 +385,12 @@ CPLErr GDALWarpNoDataMasker(void *pMaskFuncArg, int nBandCount,
 
         case GDT_Int16:
             return GDALWarpNoDataMaskerT(
-                padfNoData, nPixels, reinterpret_cast<GInt16 *>(*ppImageData),
+                padfNoData, nPixels, reinterpret_cast<int16_t *>(*ppImageData),
                 panValidityMask, pbOutAllValid);
 
         case GDT_UInt16:
             return GDALWarpNoDataMaskerT(
-                padfNoData, nPixels, reinterpret_cast<GUInt16 *>(*ppImageData),
+                padfNoData, nPixels, reinterpret_cast<uint16_t *>(*ppImageData),
                 panValidityMask, pbOutAllValid);
 
         case GDT_Float32:
@@ -558,11 +558,11 @@ CPLErr GDALWarpSrcAlphaMasker(void *pMaskFuncArg, int /* nBandCount */,
         // Make sure we have the correct alignment before doing SSE
         // On Linux x86_64, the alignment should be always correct due
         // the alignment of malloc() being 16 byte.
-        const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
+        const uint32_t mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
         if (!CPL_IS_ALIGNED(pafMask, 16))
         {
             pafMask[iPixel] =
-                (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                (reinterpret_cast<uint32_t *>(pafMask)[iPixel] & mask) *
                 inv_alpha_max;
             if (pafMask[iPixel] >= 1.0f)
                 pafMask[iPixel] = 1.0f;
@@ -638,7 +638,7 @@ CPLErr GDALWarpSrcAlphaMasker(void *pMaskFuncArg, int /* nBandCount */,
         for (; iPixel < nPixels; iPixel++)
         {
             pafMask[iPixel] =
-                (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                (reinterpret_cast<uint32_t *>(pafMask)[iPixel] & mask) *
                 inv_alpha_max;
             if (pafMask[iPixel] >= 1.0f)
                 pafMask[iPixel] = 1.0f;
@@ -710,7 +710,7 @@ CPLErr GDALWarpSrcMaskMasker(void *pMaskFuncArg, int /* nBandCount */,
 
 {
     GDALWarpOptions *psWO = static_cast<GDALWarpOptions *>(pMaskFuncArg);
-    GUInt32 *panMask = static_cast<GUInt32 *>(pValidityMask);
+    uint32_t *panMask = static_cast<uint32_t *>(pValidityMask);
 
     /* -------------------------------------------------------------------- */
     /*      Do some minimal checking.                                       */
@@ -859,11 +859,11 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
             // Make sure we have the correct alignment before doing SSE
             // On Linux x86_64, the alignment should be always correct due
             // the alignment of malloc() being 16 byte.
-            const GUInt32 mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
+            const uint32_t mask = (eDT == GDT_Byte) ? 0xff : 0xffff;
             if (!CPL_IS_ALIGNED(pafMask, 16))
             {
                 pafMask[iPixel] =
-                    (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                    (reinterpret_cast<uint32_t *>(pafMask)[iPixel] & mask) *
                     inv_alpha_max;
                 pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
                 iPixel++;
@@ -927,7 +927,7 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
             for (; iPixel < nPixels; iPixel++)
             {
                 pafMask[iPixel] =
-                    (reinterpret_cast<GUInt32 *>(pafMask)[iPixel] & mask) *
+                    (reinterpret_cast<uint32_t *>(pafMask)[iPixel] & mask) *
                     inv_alpha_max;
                 pafMask[iPixel] = std::min(1.0f, pafMask[iPixel]);
             }

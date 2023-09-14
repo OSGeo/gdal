@@ -372,17 +372,17 @@ MrSIDRasterBand::MrSIDRasterBand(MrSIDDataset *poDSIn, int nBandIn)
                 break;
             case LTI_DATATYPE_SINT16:
                 dfNoDataValue =
-                    (double)*(GInt16 *)poDS->poNDPixel->getSampleValueAddr(
+                    (double)*(int16_t *)poDS->poNDPixel->getSampleValueAddr(
                         nBand - 1);
                 break;
             case LTI_DATATYPE_UINT32:
                 dfNoDataValue =
-                    (double)*(GUInt32 *)poDS->poNDPixel->getSampleValueAddr(
+                    (double)*(uint32_t *)poDS->poNDPixel->getSampleValueAddr(
                         nBand - 1);
                 break;
             case LTI_DATATYPE_SINT32:
                 dfNoDataValue =
-                    (double)*(GInt32 *)poDS->poNDPixel->getSampleValueAddr(
+                    (double)*(int32_t *)poDS->poNDPixel->getSampleValueAddr(
                         nBand - 1);
                 break;
             case LTI_DATATYPE_FLOAT64:
@@ -505,8 +505,8 @@ CPLErr MrSIDRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (!poGDS->bPrevBlockRead || poGDS->nPrevBlockXOff != nBlockXOff ||
         poGDS->nPrevBlockYOff != nBlockYOff)
     {
-        GInt32 nLine = nBlockYOff * nBlockYSize;
-        GInt32 nCol = nBlockXOff * nBlockXSize;
+        int32_t nLine = nBlockYOff * nBlockYSize;
+        int32_t nCol = nBlockXOff * nBlockXSize;
 
         // XXX: The scene, passed to LTIImageStage::read() call must be
         // inside the image boundaries. So we should detect the last strip and
@@ -1047,20 +1047,20 @@ CPLErr MrSIDDataset::IBuildOverviews(const char *, int, const int *, int,
 
 static CPLString SerializeMetadataRec(const LTIMetadataRecord *poMetadataRec)
 {
-    GUInt32 iNumDims = 0;
-    const GUInt32 *paiDims = nullptr;
+    uint32_t iNumDims = 0;
+    const uint32_t *paiDims = nullptr;
     const void *pData = poMetadataRec->getArrayData(iNumDims, paiDims);
     CPLString osMetadata;
-    GUInt32 k = 0;
+    uint32_t k = 0;
 
-    for (GUInt32 i = 0; paiDims != nullptr && i < iNumDims; i++)
+    for (uint32_t i = 0; paiDims != nullptr && i < iNumDims; i++)
     {
         // stops on large binary data
         if (poMetadataRec->getDataType() == LTI_METADATA_DATATYPE_UINT8 &&
             paiDims[i] > 1024)
             return CPLString();
 
-        for (GUInt32 j = 0; j < paiDims[i]; j++)
+        for (uint32_t j = 0; j < paiDims[i]; j++)
         {
             CPLString osTemp;
 
@@ -1071,16 +1071,16 @@ static CPLString SerializeMetadataRec(const LTIMetadataRecord *poMetadataRec)
                     osTemp.Printf("%d", ((GByte *)pData)[k++]);
                     break;
                 case LTI_METADATA_DATATYPE_UINT16:
-                    osTemp.Printf("%u", ((GUInt16 *)pData)[k++]);
+                    osTemp.Printf("%u", ((uint16_t *)pData)[k++]);
                     break;
                 case LTI_METADATA_DATATYPE_SINT16:
-                    osTemp.Printf("%d", ((GInt16 *)pData)[k++]);
+                    osTemp.Printf("%d", ((int16_t *)pData)[k++]);
                     break;
                 case LTI_METADATA_DATATYPE_UINT32:
-                    osTemp.Printf("%u", ((GUInt32 *)pData)[k++]);
+                    osTemp.Printf("%u", ((uint32_t *)pData)[k++]);
                     break;
                 case LTI_METADATA_DATATYPE_SINT32:
-                    osTemp.Printf("%d", ((GInt32 *)pData)[k++]);
+                    osTemp.Printf("%d", ((int32_t *)pData)[k++]);
                     break;
                 case LTI_METADATA_DATATYPE_FLOAT32:
                     osTemp.Printf("%f", ((float *)pData)[k++]);
@@ -1554,9 +1554,9 @@ GDALDataset *MrSIDDataset::Open(GDALOpenInfo *poOpenInfo, int bIsJP2)
     /* -------------------------------------------------------------------- */
     poDS->poMetadata =
         new LTIDLLCopy<LTIMetadataDatabase>(poDS->poImageReader->getMetadata());
-    const GUInt32 iNumRecs = poDS->poMetadata->getIndexCount();
+    const uint32_t iNumRecs = poDS->poMetadata->getIndexCount();
 
-    for (GUInt32 i = 0; i < iNumRecs; i++)
+    for (uint32_t i = 0; i < iNumRecs; i++)
     {
         const LTIMetadataRecord *poMetadataRec = nullptr;
         if (LT_SUCCESS(poDS->poMetadata->getDataByIndex(i, poMetadataRec)))

@@ -1557,20 +1557,20 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                      i];
                             else if (eBufType == GDT_Int16 ||
                                      eBufType == GDT_UInt16)
-                                ((GUInt16 *)pData)[iX * nPixelSpace / 2 +
-                                                   iY * nLineSpace / 2 +
-                                                   i * nBandSpace / 2] =
-                                    ((GUInt16 *)pabyIntermediate)
+                                ((uint16_t *)pData)[iX * nPixelSpace / 2 +
+                                                    iY * nLineSpace / 2 +
+                                                    i * nBandSpace / 2] =
+                                    ((uint16_t *)pabyIntermediate)
                                         [iSrcX * nBandCount +
                                          static_cast<GPtrDiff_t>(iSrcY) *
                                              l_dims.size.x * nBandCount +
                                          i];
                             else if (eBufType == GDT_Int32 ||
                                      eBufType == GDT_UInt32)
-                                ((GUInt32 *)pData)[iX * nPixelSpace / 4 +
-                                                   iY * nLineSpace / 4 +
-                                                   i * nBandSpace / 4] =
-                                    ((GUInt32 *)pabyIntermediate)
+                                ((uint32_t *)pData)[iX * nPixelSpace / 4 +
+                                                    iY * nLineSpace / 4 +
+                                                    i * nBandSpace / 4] =
+                                    ((uint32_t *)pabyIntermediate)
                                         [iSrcX * nBandCount +
                                          static_cast<GPtrDiff_t>(iSrcY) *
                                              l_dims.size.x * nBandCount +
@@ -1760,7 +1760,7 @@ static void JP2KAKWriteBox(jp2_family_tgt *jp2_family, GDALJP2Box *poBox)
 
     jp2_output_box jp2_out;
 
-    GUInt32 nBoxType = 0;
+    uint32_t nBoxType = 0;
     memcpy(&nBoxType, poBox->GetType(), sizeof(nBoxType));
     CPL_MSBPTR32(&nBoxType);
 
@@ -1907,7 +1907,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_Int16)
             {
-                const GInt16 *sp = static_cast<const GInt16 *>(pabyBuffer);
+                const int16_t *sp = static_cast<const int16_t *>(pabyBuffer);
                 if (kdu_sample16 *dest16 = apoLines[c]->get_buf16())
                 {
                     for (int n = nXSize; n > 0; n--, dest16++, sp++)
@@ -1956,7 +1956,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_UInt16)
             {
-                const GUInt16 *sp = static_cast<const GUInt16 *>(pabyBuffer);
+                const uint16_t *sp = static_cast<const uint16_t *>(pabyBuffer);
                 const kdu_int32 nOffset = 1 << (nBits - 1);
                 if (kdu_sample16 *dest16 = apoLines[c]->get_buf16())
                 {
@@ -2008,7 +2008,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_Int32)
             {
-                const GInt32 *sp = static_cast<const GInt32 *>(pabyBuffer);
+                const int32_t *sp = static_cast<const int32_t *>(pabyBuffer);
                 if (kdu_sample32 *dest32 = apoLines[c]->get_buf32())
                 {
                     const float fScale = static_cast<float>(
@@ -2043,7 +2043,7 @@ static bool JP2KAKCreateCopy_WriteTile(
 
             else if (eType == GDT_UInt32)
             {
-                const GUInt32 *sp = static_cast<const GUInt32 *>(pabyBuffer);
+                const uint32_t *sp = static_cast<const uint32_t *>(pabyBuffer);
                 if (kdu_sample32 *dest32 = apoLines[c]->get_buf32())
                 {
                     const float fScale = static_cast<float>(

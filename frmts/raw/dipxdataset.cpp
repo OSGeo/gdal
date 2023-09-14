@@ -47,18 +47,18 @@ class DIPExDataset final : public GDALPamDataset
 {
     struct DIPExHeader
     {
-        GInt32 NBIH = {0};  /* bytes in header, normally 1024 */
-        GInt32 NBPR = {0};  /* bytes per data record (all bands of scanline) */
-        GInt32 IL = {0};    /* initial line - normally 1 */
-        GInt32 LL = {0};    /* last line */
-        GInt32 IE = {0};    /* initial element (pixel), normally 1 */
-        GInt32 LE = {0};    /* last element (pixel) */
-        GInt32 NC = {0};    /* number of channels (bands) */
-        GInt32 H4322 = {0}; /* header record identifier - always 4322. */
+        int32_t NBIH = {0};  /* bytes in header, normally 1024 */
+        int32_t NBPR = {0};  /* bytes per data record (all bands of scanline) */
+        int32_t IL = {0};    /* initial line - normally 1 */
+        int32_t LL = {0};    /* last line */
+        int32_t IE = {0};    /* initial element (pixel), normally 1 */
+        int32_t LE = {0};    /* last element (pixel) */
+        int32_t NC = {0};    /* number of channels (bands) */
+        int32_t H4322 = {0}; /* header record identifier - always 4322. */
         char unused1[40] = {0};
         GByte IH19[4] = {0}; /* data type, and size flags */
-        GInt32 IH20 = {0};   /* number of secondary headers */
-        GInt32 SRID = {0};
+        int32_t IH20 = {0};  /* number of secondary headers */
+        int32_t SRID = {0};
         char unused2[12] = {0};
         double YOffset = {0};
         double XOffset = {0};
@@ -66,7 +66,7 @@ class DIPExDataset final : public GDALPamDataset
         double XPixSize = {0};
         double Matrix[4] = {0};
         char unused3[344] = {0};
-        GUInt16 ColorTable[256] = {0}; /* RGB packed with 4 bits each */
+        uint16_t ColorTable[256] = {0}; /* RGB packed with 4 bits each */
         char unused4[32] = {0};
     };
 
@@ -143,11 +143,11 @@ GDALDataset *DIPExDataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
 
     if (CPL_LSBWORD32(
-            *(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader + 0))) != 1024)
+            *(reinterpret_cast<int32_t *>(poOpenInfo->pabyHeader + 0))) != 1024)
         return nullptr;
 
-    if (CPL_LSBWORD32(
-            *(reinterpret_cast<GInt32 *>(poOpenInfo->pabyHeader + 28))) != 4322)
+    if (CPL_LSBWORD32(*(
+            reinterpret_cast<int32_t *>(poOpenInfo->pabyHeader + 28))) != 4322)
         return nullptr;
 
     /* -------------------------------------------------------------------- */

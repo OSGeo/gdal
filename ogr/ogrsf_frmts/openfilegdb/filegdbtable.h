@@ -403,7 +403,7 @@ class FileGDBTable
 
     uint32_t m_nHeaderBufferMaxSize = 0;
     GUIntBig m_nOffsetFieldDesc = 0;
-    GUInt32 m_nFieldDescLength = 0;
+    uint32_t m_nFieldDescLength = 0;
     bool m_bDirtyGeomFieldBBox = false;
     bool m_bDirtyGeomFieldSpatialIndexGridRes = false;
     uint32_t m_nGeomFieldBBoxSubOffset =
@@ -413,7 +413,7 @@ class FileGDBTable
         0;  // offset of geometry field spatial index grid resolution
             // relative to m_nOffsetFieldDesc
 
-    GUInt32 m_nTablxOffsetSize =
+    uint32_t m_nTablxOffsetSize =
         0;  // 4 (4 GB limit), 5 (1 TB limit), 6 (256 TB limit)
     std::vector<vsi_l_offset>
         m_anFeatureOffsets{}; /* MSb set marks deleted feature. Only used when
@@ -440,7 +440,7 @@ class FileGDBTable
     int m_nLastCol = -1;
     GByte *m_pabyIterVals = nullptr;
     int m_iAccNullable = 0;
-    GUInt32 m_nRowBlobLength = 0;
+    uint32_t m_nRowBlobLength = 0;
     OGRField m_sCurField{};
 
     FileGDBTableGeometryType m_eTableGeomType = FGTGT_NONE;
@@ -457,7 +457,7 @@ class FileGDBTable
 
     std::vector<double> m_adfSpatialIndexGridResolution{};
 
-    GUInt32 m_nRowBufferMaxSize = 0;
+    uint32_t m_nRowBufferMaxSize = 0;
     std::vector<GByte> m_abyBuffer{};
     std::vector<GByte> m_abyGeomBuffer{};
     std::vector<GByte> m_abyCurvePart{};
@@ -511,7 +511,7 @@ class FileGDBTable
     bool WriteHeaderX(VSILFILE *fpTableX);
 
     int ReadTableXHeader();
-    int IsLikelyFeatureAtOffset(vsi_l_offset nOffset, GUInt32 *pnSize,
+    int IsLikelyFeatureAtOffset(vsi_l_offset nOffset, uint32_t *pnSize,
                                 int *pbDeletedRecord);
     bool GuessFeatureLocations();
     bool WriteFieldDescriptors(VSILFILE *fpTable);

@@ -147,8 +147,8 @@ CPLErr COSARRasterBand::IReadBlock(int /*nBlockXOff*/, int nBlockYOff,
         // Iterate starting the end to avoid overwriting first values
         for (int i = nBlockXSize * 2 - 1; i >= 0; --i)
         {
-            static_cast<GUInt32 *>(pImage)[i] =
-                CPLHalfToFloat(static_cast<GUInt16 *>(pImage)[i]);
+            static_cast<uint32_t *>(pImage)[i] =
+                CPLHalfToFloat(static_cast<uint16_t *>(pImage)[i]);
         }
     }
 

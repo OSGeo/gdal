@@ -64,7 +64,7 @@
 /**
  * To move over the data return by queries
  **/
-#define POSTGIS_RASTER_VERSION static_cast<GUInt16>(0)
+#define POSTGIS_RASTER_VERSION static_cast<uint16_t>(0)
 #define RASTER_HEADER_SIZE 61
 #define RASTER_BAND_HEADER_FIXED_SIZE 1
 

@@ -2374,11 +2374,11 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE *fp, void *pabyBuffer,
                    sizeof(abyJPEG1CompSig)) == 0 &&
             ((GByte *)pabyBuffer)[sizeof(abyJPEG1CompSig) + 4] == 1)
         {
-            GUInt16 nWidth;
+            uint16_t nWidth;
             memcpy(&nWidth, &(((GByte *)pabyBuffer)[sizeof(abyJPEG1CompSig)]),
                    2);
             CPL_MSBPTR16(&nWidth);
-            GUInt16 nHeight;
+            uint16_t nHeight;
             memcpy(&nHeight,
                    &(((GByte *)pabyBuffer)[sizeof(abyJPEG1CompSig) + 2]), 2);
             CPL_MSBPTR16(&nHeight);
@@ -2399,11 +2399,11 @@ static int MBTilesCurlReadCbk(CPL_UNUSED VSILFILE *fp, void *pabyBuffer,
                         sizeof(abyJPEG3CompSig)) == 0 &&
                  ((GByte *)pabyBuffer)[sizeof(abyJPEG3CompSig) + 4] == 3)
         {
-            GUInt16 nWidth;
+            uint16_t nWidth;
             memcpy(&nWidth, &(((GByte *)pabyBuffer)[sizeof(abyJPEG3CompSig)]),
                    2);
             CPL_MSBPTR16(&nWidth);
-            GUInt16 nHeight;
+            uint16_t nHeight;
             memcpy(&nHeight,
                    &(((GByte *)pabyBuffer)[sizeof(abyJPEG3CompSig) + 2]), 2);
             CPL_MSBPTR16(&nHeight);

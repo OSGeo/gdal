@@ -1010,7 +1010,7 @@ class ITABFeaturePen
     {
         return m_sPenDef.nLinePattern;
     }
-    GInt32 GetPenColor() const
+    int32_t GetPenColor() const
     {
         return m_sPenDef.rgbColor;
     }
@@ -1023,7 +1023,7 @@ class ITABFeaturePen
     {
         m_sPenDef.nLinePattern = val;
     }
-    void SetPenColor(GInt32 clr)
+    void SetPenColor(int32_t clr)
     {
         m_sPenDef.rgbColor = clr;
     }
@@ -1058,11 +1058,11 @@ class ITABFeatureBrush
         return &m_sBrushDef;
     }
 
-    GInt32 GetBrushFGColor() const
+    int32_t GetBrushFGColor() const
     {
         return m_sBrushDef.rgbFGColor;
     }
-    GInt32 GetBrushBGColor() const
+    int32_t GetBrushBGColor() const
     {
         return m_sBrushDef.rgbBGColor;
     }
@@ -1075,11 +1075,11 @@ class ITABFeatureBrush
         return m_sBrushDef.bTransparentFill;
     }
 
-    void SetBrushFGColor(GInt32 clr)
+    void SetBrushFGColor(int32_t clr)
     {
         m_sBrushDef.rgbFGColor = clr;
     }
-    void SetBrushBGColor(GInt32 clr)
+    void SetBrushBGColor(int32_t clr)
     {
         m_sBrushDef.rgbBGColor = clr;
     }
@@ -1156,28 +1156,28 @@ class ITABFeatureSymbol
         return &m_sSymbolDef;
     }
 
-    GInt16 GetSymbolNo() const
+    int16_t GetSymbolNo() const
     {
         return m_sSymbolDef.nSymbolNo;
     }
-    GInt16 GetSymbolSize() const
+    int16_t GetSymbolSize() const
     {
         return m_sSymbolDef.nPointSize;
     }
-    GInt32 GetSymbolColor() const
+    int32_t GetSymbolColor() const
     {
         return m_sSymbolDef.rgbColor;
     }
 
-    void SetSymbolNo(GInt16 val)
+    void SetSymbolNo(int16_t val)
     {
         m_sSymbolDef.nSymbolNo = val;
     }
-    void SetSymbolSize(GInt16 val)
+    void SetSymbolSize(int16_t val)
     {
         m_sSymbolDef.nPointSize = val;
     }
-    void SetSymbolColor(GInt32 clr)
+    void SetSymbolColor(int32_t clr)
     {
         m_sSymbolDef.rgbColor = clr;
     }
@@ -1223,12 +1223,12 @@ class TABFeature : public OGRFeature
     void CopyTABFeatureBase(TABFeature *poDestFeature);
 
     // Compr. Origin is set for TAB files by ValidateCoordType()
-    GInt32 m_nXMin;
-    GInt32 m_nYMin;
-    GInt32 m_nXMax;
-    GInt32 m_nYMax;
-    GInt32 m_nComprOrgX;
-    GInt32 m_nComprOrgY;
+    int32_t m_nXMin;
+    int32_t m_nYMin;
+    int32_t m_nXMax;
+    int32_t m_nYMax;
+    int32_t m_nComprOrgX;
+    int32_t m_nComprOrgY;
 
     virtual int UpdateMBR(TABMAPFile *poMapFile = nullptr);
 
@@ -1281,9 +1281,9 @@ class TABFeature : public OGRFeature
                            TABMAPCoordBlock **ppoCoordBlock = nullptr);
     GBool ValidateCoordType(TABMAPFile *poMapFile);
     void ForceCoordTypeAndOrigin(TABGeomType nMapInfoType, GBool bCompr,
-                                 GInt32 nComprOrgX, GInt32 nComprOrgY,
-                                 GInt32 nXMin, GInt32 nYMin, GInt32 nXMax,
-                                 GInt32 nYMax);
+                                 int32_t nComprOrgX, int32_t nComprOrgY,
+                                 int32_t nXMin, int32_t nYMin, int32_t nXMax,
+                                 int32_t nYMax);
 
     /*-----------------------------------------------------------------
      * Mid/Mif Support
@@ -1303,8 +1303,9 @@ class TABFeature : public OGRFeature
 
     void SetMBR(double dXMin, double dYMin, double dXMax, double dYMax);
     void GetMBR(double &dXMin, double &dYMin, double &dXMax, double &dYMax);
-    void SetIntMBR(GInt32 nXMin, GInt32 nYMin, GInt32 nXMax, GInt32 nYMax);
-    void GetIntMBR(GInt32 &nXMin, GInt32 &nYMin, GInt32 &nXMax, GInt32 &nYMax);
+    void SetIntMBR(int32_t nXMin, int32_t nYMin, int32_t nXMax, int32_t nYMax);
+    void GetIntMBR(int32_t &nXMin, int32_t &nYMin, int32_t &nXMax,
+                   int32_t &nYMax);
 
     virtual void DumpMID(FILE *fpOut = nullptr);
     virtual void DumpMIF(FILE *fpOut = nullptr);
@@ -1382,7 +1383,7 @@ class TABFontPoint final : public TABPoint, public ITABFeatureFont
 
   protected:
     double m_dAngle;
-    GInt16 m_nFontStyle;  // Bold/shadow/halo/etc.
+    int16_t m_nFontStyle;  // Bold/shadow/halo/etc.
 
   public:
     explicit TABFontPoint(OGRFeatureDefn *poDefnIn);
@@ -1423,7 +1424,7 @@ class TABFontPoint final : public TABPoint, public ITABFeatureFont
     }
     void SetFontStyleTABValue(int nStyle)
     {
-        m_nFontStyle = static_cast<GInt16>(nStyle);
+        m_nFontStyle = static_cast<int16_t>(nStyle);
     }
 
     // GetSymbolAngle(): Return angle in degrees counterclockwise
@@ -1879,13 +1880,13 @@ class TABText final : public TABFeature,
     GBool m_bLineEndSet;
     void UpdateTextMBR();
 
-    GInt32 m_rgbForeground;
-    GInt32 m_rgbBackground;
-    GInt32 m_rgbOutline;
-    GInt32 m_rgbShadow;
+    int32_t m_rgbForeground;
+    int32_t m_rgbBackground;
+    int32_t m_rgbOutline;
+    int32_t m_rgbShadow;
 
-    GInt16 m_nTextAlignment;  // Justification/Vert.Spacing/arrow
-    GInt16 m_nFontStyle;      // Bold/italic/underlined/shadow/...
+    int16_t m_nTextAlignment;  // Justification/Vert.Spacing/arrow
+    int16_t m_nFontStyle;      // Bold/italic/underlined/shadow/...
 
     const char *GetLabelStyleString() const;
 
@@ -1926,10 +1927,10 @@ class TABText final : public TABFeature,
     double GetTextAngle() const;
     double GetTextBoxHeight() const;
     double GetTextBoxWidth() const;
-    GInt32 GetFontFGColor() const;
-    GInt32 GetFontBGColor() const;
-    GInt32 GetFontOColor() const;
-    GInt32 GetFontSColor() const;
+    int32_t GetFontFGColor() const;
+    int32_t GetFontBGColor() const;
+    int32_t GetFontOColor() const;
+    int32_t GetFontSColor() const;
     void GetTextLineEndPoint(double &dX, double &dY);
 
     TABTextJust GetTextJustification() const;
@@ -1941,10 +1942,10 @@ class TABText final : public TABFeature,
     void SetTextAngle(double dAngle);
     void SetTextBoxHeight(double dHeight);
     void SetTextBoxWidth(double dWidth);
-    void SetFontFGColor(GInt32 rgbColor);
-    void SetFontBGColor(GInt32 rgbColor);
-    void SetFontOColor(GInt32 rgbColor);
-    void SetFontSColor(GInt32 rgbColor);
+    void SetFontFGColor(int32_t rgbColor);
+    void SetFontBGColor(int32_t rgbColor);
+    void SetFontOColor(int32_t rgbColor);
+    void SetFontSColor(int32_t rgbColor);
     void SetTextLineEndPoint(double dX, double dY);
 
     void SetTextJustification(TABTextJust eJust);
@@ -1966,7 +1967,7 @@ class TABText final : public TABFeature,
     }
     void SetFontStyleTABValue(int nStyle)
     {
-        m_nFontStyle = static_cast<GInt16>(nStyle);
+        m_nFontStyle = static_cast<int16_t>(nStyle);
     }
 };
 
@@ -2064,14 +2065,15 @@ class TABCollection final : public TABFeature, public ITABFeatureSymbol
 
     void EmptyCollection();
     static int ReadLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
-                               GBool bComprCoord, GInt32 nComprOrgX,
-                               GInt32 nComprOrgY, GInt32 &pnMinX,
-                               GInt32 &pnMinY, GInt32 &pnMaxX, GInt32 &pnMaxY,
-                               GInt32 &pnLabelX, GInt32 &pnLabelY);
+                               GBool bComprCoord, int32_t nComprOrgX,
+                               int32_t nComprOrgY, int32_t &pnMinX,
+                               int32_t &pnMinY, int32_t &pnMaxX,
+                               int32_t &pnMaxY, int32_t &pnLabelX,
+                               int32_t &pnLabelY);
     static int WriteLabelAndMBR(TABMAPCoordBlock *poCoordBlock,
-                                GBool bComprCoord, GInt32 nMinX, GInt32 nMinY,
-                                GInt32 nMaxX, GInt32 nMaxY, GInt32 nLabelX,
-                                GInt32 nLabelY);
+                                GBool bComprCoord, int32_t nMinX, int32_t nMinY,
+                                int32_t nMaxX, int32_t nMaxY, int32_t nLabelX,
+                                int32_t nLabelY);
     int SyncOGRGeometryCollection(GBool bSyncRegion, GBool bSyncPline,
                                   GBool bSyncMpoint);
 

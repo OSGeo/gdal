@@ -39,9 +39,9 @@
 static void DumpRPC(NITFImage *psImage, NITFRPC00BInfo *psRPC);
 static void DumpMetadata(const char *, const char *, char **);
 
-static GUInt16 NITFReadMSBGUInt16(VSILFILE *fp, int *pbSuccess)
+static uint16_t NITFReadMSBuint16_t(VSILFILE *fp, int *pbSuccess)
 {
-    GUInt16 nVal;
+    uint16_t nVal;
     if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
     {
         *pbSuccess = FALSE;
@@ -51,9 +51,9 @@ static GUInt16 NITFReadMSBGUInt16(VSILFILE *fp, int *pbSuccess)
     return nVal;
 }
 
-static GUInt32 NITFReadMSBGUInt32(VSILFILE *fp, int *pbSuccess)
+static uint32_t NITFReadMSBuint32_t(VSILFILE *fp, int *pbSuccess)
 {
-    GUInt32 nVal;
+    uint32_t nVal;
     if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
     {
         *pbSuccess = FALSE;

@@ -987,7 +987,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
                 rreqBox.AppendUInt8(0x80 | 0x40 | (bIPR ? 0x20 : 0)); /* FUAM */
                 rreqBox.AppendUInt8(0x80);                            /* DCM */
 
-                rreqBox.AppendUInt16(static_cast<GUInt16>(
+                rreqBox.AppendUInt16(static_cast<uint16_t>(
                     2 + (bIPR ? 1 : 0))); /* NSF: Number of standard features */
 
                 rreqBox.AppendUInt16(
@@ -1013,7 +1013,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             if (nBands == 1 && eDataType == GDT_Float32)
                 ihdrBox.AppendUInt16(3);
             else
-                ihdrBox.AppendUInt16(static_cast<GUInt16>(nBands));
+                ihdrBox.AppendUInt16(static_cast<uint16_t>(nBands));
             GByte BPC;
             if (bSamePrecision)
                 BPC = static_cast<GByte>((ulBps - 1) | (bSigned ? 0x80 : 0));
@@ -1043,7 +1043,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             colrBox.AppendUInt8(
                 0); /* PREC: Precedence. 0=(field reserved for ISO use) */
             colrBox.AppendUInt8(0); /* APPROX: Colourspace approximation. */
-            GUInt32 enumcs = (eColorspace == cJP2_Colorspace_RGBa) ? 16 : 17;
+            uint32_t enumcs = (eColorspace == cJP2_Colorspace_RGBa) ? 16 : 17;
             colrBox.AppendUInt32(enumcs); /* EnumCS: Enumerated colourspace */
 
             GDALJP2Box cdefBox(fp);
@@ -1054,11 +1054,11 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             {
                 cdefBox.SetType("cdef");
                 int nComponents = nBands;
-                cdefBox.AppendUInt16(static_cast<GUInt16>(nComponents));
+                cdefBox.AppendUInt16(static_cast<uint16_t>(nComponents));
                 for (int i = 0; i < nComponents; i++)
                 {
                     /* Component number */
-                    cdefBox.AppendUInt16(static_cast<GUInt16>(i));
+                    cdefBox.AppendUInt16(static_cast<uint16_t>(i));
                     if (i != nAlphaBandIndex)
                     {
                         /* Signification: This channel is the colour image data
@@ -1151,10 +1151,10 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
                         nXDenom *= 2;
                     }
 
-                    oResd.AppendUInt16((GUInt16)dfYRes);
-                    oResd.AppendUInt16((GUInt16)nYDenom);
-                    oResd.AppendUInt16((GUInt16)dfXRes);
-                    oResd.AppendUInt16((GUInt16)nXDenom);
+                    oResd.AppendUInt16((uint16_t)dfYRes);
+                    oResd.AppendUInt16((uint16_t)nYDenom);
+                    oResd.AppendUInt16((uint16_t)dfXRes);
+                    oResd.AppendUInt16((uint16_t)nXDenom);
                     oResd.AppendUInt8(2); /* vertical exponent */
                     oResd.AppendUInt8(2); /* horizontal exponent */
 
@@ -1250,14 +1250,14 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             // Start codestream box
             // nStartJP2C = VSIFTellL(fp);
             if (nCodeStreamLength)
-                bUseXLBoxes = ((vsi_l_offset)(GUInt32)nCodeStreamLength !=
+                bUseXLBoxes = ((vsi_l_offset)(uint32_t)nCodeStreamLength !=
                                nCodeStreamLength);
             /*else
                 bUseXLBoxes =
                     CSLFetchBoolean(papszOptions, "JP2C_XLBOX", FALSE) ||
                     (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
                                     dfRates.back() > 4e9;*/
-            GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
+            uint32_t nLBox = (bUseXLBoxes) ? 1 : 0;
             CPL_MSBPTR32(&nLBox);
             VSIFWriteL(&nLBox, 1, 4, fp);
             VSIFWriteL("jp2c", 1, 4, fp);
@@ -1891,13 +1891,13 @@ GDALDataset *JP2LuraDataset::Open(GDALOpenInfo *poOpenInfo)
                      i < poDS->sOutputData.pPalette->ulEntries; ++i)
                 {
                     GDALColorEntry sEntry;
-                    sEntry.c1 = static_cast<GInt16>(
+                    sEntry.c1 = static_cast<int16_t>(
                         poDS->sOutputData.pPalette->ppulPalette[0][i]);
-                    sEntry.c2 = static_cast<GInt16>(
+                    sEntry.c2 = static_cast<int16_t>(
                         poDS->sOutputData.pPalette->ppulPalette[1][i]);
-                    sEntry.c3 = static_cast<GInt16>(
+                    sEntry.c3 = static_cast<int16_t>(
                         poDS->sOutputData.pPalette->ppulPalette[2][i]);
-                    sEntry.c4 = static_cast<GInt16>(
+                    sEntry.c4 = static_cast<int16_t>(
                         (poDS->sOutputData.pPalette->ulChannels == 4)
                             ? poDS->sOutputData.pPalette->ppulPalette[3][i]
                             : 255);
@@ -2456,8 +2456,8 @@ CPLErr JP2LuraDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 
 void JP2LuraDataset::WriteBox(VSILFILE *fp, GDALJP2Box *poBox)
 {
-    GUInt32 nLBox;
-    GUInt32 nTBox;
+    uint32_t nLBox;
+    uint32_t nTBox;
 
     if (poBox == nullptr)
         return;

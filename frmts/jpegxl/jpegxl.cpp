@@ -1901,7 +1901,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
                 {
                     if (nInsertPos)
                     {
-                        GUInt32 nMarkerSize = 0;
+                        uint32_t nMarkerSize = 0;
                         GByte *pabyEXIF =
                             EXIFCreate(papszEXIF, nullptr, 0, 0, 0,  // overview
                                        &nMarkerSize);
@@ -2513,7 +2513,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
         if (pszICCProfile && pszICCProfile[0] != '\0')
         {
             char *pEmbedBuffer = CPLStrdup(pszICCProfile);
-            GInt32 nEmbedLen =
+            int32_t nEmbedLen =
                 CPLBase64DecodeInPlace(reinterpret_cast<GByte *>(pEmbedBuffer));
             if (JXL_ENC_SUCCESS !=
                 JxlEncoderSetICCProfile(encoder.get(),
@@ -2624,7 +2624,7 @@ GDALDataset *JPEGXLDataset::CreateCopy(const char *pszFilename,
     // Write "Exif" box with EXIF metadata
     if (papszEXIF && bWriteExifMetadata)
     {
-        GUInt32 nMarkerSize = 0;
+        uint32_t nMarkerSize = 0;
         GByte *pabyEXIF = EXIFCreate(papszEXIF, nullptr, 0, 0, 0,  // overview
                                      &nMarkerSize);
         CPLAssert(nMarkerSize > 6 && memcmp(pabyEXIF, "Exif\0\0", 6) == 0);

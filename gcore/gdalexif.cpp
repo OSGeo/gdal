@@ -58,8 +58,8 @@ constexpr int EXIFOFFSETTAG = 0x8769;
 constexpr int INTEROPERABILITYOFFSET = 0xA005;
 constexpr int GPSOFFSETTAG = 0x8825;
 
-constexpr GUInt16 TAG_SIZE = 12;
-constexpr GUInt16 EXIF_HEADER_SIZE = 6;
+constexpr uint16_t TAG_SIZE = 12;
+constexpr uint16_t EXIF_HEADER_SIZE = 6;
 
 constexpr char COND_MANDATORY = 'M';
 constexpr char COND_RECOMMENDED = 'R';
@@ -69,9 +69,9 @@ constexpr char COND_NOT_ALLOWED_EVEN_IN_JPEG_MARKER = 'J';
 
 struct EXIFTagDesc
 {
-    GUInt16 tag;
+    uint16_t tag;
     GDALEXIFTIFFDataType datatype;
-    GUInt32 length;
+    uint32_t length;
     const char *name;
     // comprCond is only used when DUMP_EXIF_ITEMS is defined
     // cppcheck-suppress unusedStructMember
@@ -255,7 +255,7 @@ static const EXIFTagDesc exiftags[] = {
 
 static const struct intr_tag
 {
-    GInt16 tag;
+    int16_t tag;
     const char *name;
 } intr_tags[] = {
 
@@ -269,7 +269,7 @@ static const struct intr_tag
 /************************************************************************/
 /*                         EXIFPrintData()                              */
 /************************************************************************/
-static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
+static void EXIFPrintData(char *pszData, uint16_t type, uint32_t count,
                           const unsigned char *data)
 {
     const char *sep = "";
@@ -316,7 +316,7 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
 
         case TIFF_SHORT:
         {
-            const GUInt16 *wp = reinterpret_cast<const GUInt16 *>(data);
+            const uint16_t *wp = reinterpret_cast<const uint16_t *>(data);
             for (; count > 0; count--)
             {
                 snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *wp);
@@ -331,7 +331,7 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
         }
         case TIFF_SSHORT:
         {
-            const GInt16 *wp = reinterpret_cast<const GInt16 *>(data);
+            const int16_t *wp = reinterpret_cast<const int16_t *>(data);
             for (; count > 0; count--)
             {
                 snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *wp);
@@ -346,7 +346,7 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
         }
         case TIFF_LONG:
         {
-            const GUInt32 *lp = reinterpret_cast<const GUInt32 *>(data);
+            const uint32_t *lp = reinterpret_cast<const uint32_t *>(data);
             for (; count > 0; count--)
             {
                 snprintf(szTemp, sizeof(szTemp), "%s%u", sep, *lp);
@@ -361,7 +361,7 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
         }
         case TIFF_SLONG:
         {
-            const GInt32 *lp = reinterpret_cast<const GInt32 *>(data);
+            const int32_t *lp = reinterpret_cast<const int32_t *>(data);
             for (; count > 0; count--)
             {
                 snprintf(szTemp, sizeof(szTemp), "%s%d", sep, *lp);
@@ -376,9 +376,9 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
         }
         case TIFF_RATIONAL:
         {
-            const GUInt32 *lp = reinterpret_cast<const GUInt32 *>(data);
+            const uint32_t *lp = reinterpret_cast<const uint32_t *>(data);
             //      if(bSwabflag)
-            //      TIFFSwabArrayOfLong((GUInt32*) data, 2*count);
+            //      TIFFSwabArrayOfLong((uint32_t*) data, 2*count);
             for (; count > 0; count--)
             {
                 if ((lp[0] == 0) || (lp[1] == 0))
@@ -402,7 +402,7 @@ static void EXIFPrintData(char *pszData, GUInt16 type, GUInt32 count,
         }
         case TIFF_SRATIONAL:
         {
-            const GInt32 *lp = reinterpret_cast<const GInt32 *>(data);
+            const int32_t *lp = reinterpret_cast<const int32_t *>(data);
             for (; count > 0; count--)
             {
                 if ((lp[0] == 0) || (lp[1] == 0))
@@ -510,12 +510,12 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
     /* -------------------------------------------------------------------- */
     /*      Read number of entry in directory                               */
     /* -------------------------------------------------------------------- */
-    GUInt16 nEntryCount;
+    uint16_t nEntryCount;
     VSILFILE *const fp = static_cast<VSILFILE *>(fpInL);
 
     if (nOffset > INT_MAX - nTIFFHEADER ||
         VSIFSeekL(fp, nOffset + nTIFFHEADER, SEEK_SET) != 0 ||
-        VSIFReadL(&nEntryCount, 1, sizeof(GUInt16), fp) != sizeof(GUInt16))
+        VSIFReadL(&nEntryCount, 1, sizeof(uint16_t), fp) != sizeof(uint16_t))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error reading EXIF Directory count at " CPL_FRMT_GUIB,
@@ -694,7 +694,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
         /*      Print tags */
         /* --------------------------------------------------------------------
          */
-        if (poTIFFDirEntry->tdir_count > static_cast<GUInt32>(MAXSTRINGLENGTH))
+        if (poTIFFDirEntry->tdir_count > static_cast<uint32_t>(MAXSTRINGLENGTH))
         {
             CPLError(CE_Warning, CPLE_AppDefined,
                      "Too many bytes in tag: %u, ignoring tag.",
@@ -725,7 +725,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
             memcpy(data, &poTIFFDirEntry->tdir_offset, 4);
             if (bSwabflag)
             {
-                GUInt32 nValUInt32;
+                uint32_t nValUInt32;
                 // Unswab 32bit value, and reswab per data type.
                 memcpy(&nValUInt32, data, 4);
                 CPL_SWAP32PTR(&nValUInt32);
@@ -746,7 +746,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
                         for (unsigned j = 0; j < poTIFFDirEntry->tdir_count;
                              j++)
                         {
-                            CPL_SWAP16PTR(reinterpret_cast<GUInt16 *>(data) +
+                            CPL_SWAP16PTR(reinterpret_cast<uint16_t *>(data) +
                                           j);
                         }
                         break;
@@ -787,7 +787,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
                                  j++)
                             {
                                 CPL_SWAP16PTR(
-                                    reinterpret_cast<GUInt16 *>(data) + j);
+                                    reinterpret_cast<uint16_t *>(data) + j);
                             }
                             break;
                         }
@@ -799,7 +799,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
                                  j++)
                             {
                                 CPL_SWAP32PTR(
-                                    reinterpret_cast<GUInt32 *>(data) + j);
+                                    reinterpret_cast<uint32_t *>(data) + j);
                             }
                             break;
                         }
@@ -810,7 +810,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
                                  j < 2 * poTIFFDirEntry->tdir_count; j++)
                             {
                                 CPL_SWAP32PTR(
-                                    reinterpret_cast<GUInt32 *>(data) + j);
+                                    reinterpret_cast<uint32_t *>(data) + j);
                             }
                             break;
                         }
@@ -852,7 +852,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
 /*                        WriteLEUInt16()                               */
 /************************************************************************/
 
-static void WriteLEUInt16(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nVal)
+static void WriteLEUInt16(GByte *pabyData, uint32_t &nBufferOff, uint16_t nVal)
 {
     pabyData[nBufferOff] = static_cast<GByte>(nVal & 0xff);
     pabyData[nBufferOff + 1] = static_cast<GByte>(nVal >> 8);
@@ -863,7 +863,7 @@ static void WriteLEUInt16(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nVal)
 /*                        WriteLEUInt32()                               */
 /************************************************************************/
 
-static void WriteLEUInt32(GByte *pabyData, GUInt32 &nBufferOff, GUInt32 nVal)
+static void WriteLEUInt32(GByte *pabyData, uint32_t &nBufferOff, uint32_t nVal)
 {
     pabyData[nBufferOff] = static_cast<GByte>(nVal & 0xff);
     pabyData[nBufferOff + 1] = static_cast<GByte>((nVal >> 8) & 0xff);
@@ -892,9 +892,9 @@ static int GetHexValue(char ch)
 /*                         ParseUndefined()                             */
 /************************************************************************/
 
-static GByte *ParseUndefined(const char *pszVal, GUInt32 *pnLength)
+static GByte *ParseUndefined(const char *pszVal, uint32_t *pnLength)
 {
-    GUInt32 nSize = 0;
+    uint32_t nSize = 0;
     bool bIsHexExcaped = true;
     const char chDEC_ZERO = '0';
     GByte *pabyData = reinterpret_cast<GByte *>(CPLMalloc(strlen(pszVal) + 1));
@@ -951,7 +951,7 @@ static GByte *ParseUndefined(const char *pszVal, GUInt32 *pnLength)
 
     // Otherwise take the string value as a byte value
     memcpy(pabyData, pszVal, strlen(pszVal) + 1);
-    *pnLength = static_cast<GUInt32>(strlen(pszVal));
+    *pnLength = static_cast<uint32_t>(strlen(pszVal));
     return pabyData;
 }
 
@@ -961,11 +961,11 @@ static GByte *ParseUndefined(const char *pszVal, GUInt32 *pnLength)
 
 struct TagValue
 {
-    GUInt16 tag;
+    uint16_t tag;
     GDALEXIFTIFFDataType datatype;
     GByte *pabyVal;
-    GUInt32 nLength;
-    GUInt32 nLengthBytes;
+    uint32_t nLength;
+    uint32_t nLengthBytes;
     int nRelOffset;
 };
 
@@ -979,7 +979,7 @@ static bool EXIFTagSort(const TagValue &a, const TagValue &b)
 /************************************************************************/
 
 static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
-                                  GUInt32 &nNum, GUInt32 &nDenom)
+                                  uint32_t &nNum, uint32_t &nDenom)
 {
     nNum = 0;
     nDenom = 1;
@@ -994,63 +994,64 @@ static bool GetNumDenomFromDouble(GDALEXIFTIFFDataType datatype, double dfVal,
             return false;
         }
         else if (dfVal <= std::numeric_limits<unsigned int>::max() &&
-                 dfVal == static_cast<GUInt32>(dfVal))
+                 dfVal == static_cast<uint32_t>(dfVal))
         {
-            nNum = static_cast<GUInt32>(dfVal);
+            nNum = static_cast<uint32_t>(dfVal);
             nDenom = 1;
         }
         else if (dfVal < 1.0)
         {
-            nNum = static_cast<GUInt32>(
+            nNum = static_cast<uint32_t>(
                 dfVal * std::numeric_limits<unsigned int>::max());
             nDenom = std::numeric_limits<unsigned int>::max();
         }
         else
         {
             nNum = std::numeric_limits<unsigned int>::max();
-            nDenom = static_cast<GUInt32>(
+            nDenom = static_cast<uint32_t>(
                 std::numeric_limits<unsigned int>::max() / dfVal);
         }
     }
     else if (dfVal < 0.0)
     {
         if (dfVal >= std::numeric_limits<int>::min() &&
-            dfVal == static_cast<GInt32>(dfVal))
+            dfVal == static_cast<int32_t>(dfVal))
         {
-            nNum = static_cast<GInt32>(dfVal);
+            nNum = static_cast<int32_t>(dfVal);
             nDenom = 1;
         }
         else if (dfVal > -1.0)
         {
-            nNum = -static_cast<GInt32>((-dfVal) *
-                                        std::numeric_limits<int>::max());
+            nNum = -static_cast<int32_t>((-dfVal) *
+                                         std::numeric_limits<int>::max());
             nDenom = std::numeric_limits<int>::max();
         }
         else
         {
             nNum = -std::numeric_limits<int>::max();
-            nDenom =
-                static_cast<GInt32>(std::numeric_limits<int>::max() / (-dfVal));
+            nDenom = static_cast<int32_t>(std::numeric_limits<int>::max() /
+                                          (-dfVal));
         }
     }
     else
     {
         if (dfVal <= std::numeric_limits<int>::max() &&
-            dfVal == static_cast<GInt32>(dfVal))
+            dfVal == static_cast<int32_t>(dfVal))
         {
-            nNum = static_cast<GInt32>(dfVal);
+            nNum = static_cast<int32_t>(dfVal);
             nDenom = 1;
         }
         else if (dfVal < 1.0)
         {
-            nNum = static_cast<GInt32>(dfVal * std::numeric_limits<int>::max());
+            nNum =
+                static_cast<int32_t>(dfVal * std::numeric_limits<int>::max());
             nDenom = std::numeric_limits<int>::max();
         }
         else
         {
             nNum = std::numeric_limits<int>::max();
             nDenom =
-                static_cast<GInt32>(std::numeric_limits<int>::max() / dfVal);
+                static_cast<int32_t>(std::numeric_limits<int>::max() / dfVal);
         }
     }
     return true;
@@ -1069,7 +1070,7 @@ enum class EXIFLocation
 
 static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                                                 EXIFLocation location,
-                                                GUInt32 *pnOfflineSize)
+                                                uint32_t *pnOfflineSize)
 {
     std::vector<TagValue> tags;
     int nRelOffset = 0;
@@ -1170,7 +1171,7 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
             else if (tag.datatype == TIFF_BYTE ||
                      tag.datatype == TIFF_UNDEFINED)
             {
-                GUInt32 nValLength = 0;
+                uint32_t nValLength = 0;
                 GByte *pabyVal = ParseUndefined(pszValue, &nValLength);
                 if (tagdescArray[i].length == 0 ||
                     nValLength == tagdescArray[i].length)
@@ -1217,8 +1218,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
             else if (tag.datatype == TIFF_SHORT || tag.datatype == TIFF_LONG)
             {
                 char **papszTokens = CSLTokenizeString2(pszValue, " ", 0);
-                GUInt32 nTokens = static_cast<GUInt32>(CSLCount(papszTokens));
-                const GUInt32 nDataTypeSize =
+                uint32_t nTokens = static_cast<uint32_t>(CSLCount(papszTokens));
+                const uint32_t nDataTypeSize =
                     (tag.datatype == TIFF_SHORT) ? 2 : 4;
                 if (tagdescArray[i].length == 0 ||
                     nTokens == tagdescArray[i].length)
@@ -1245,13 +1246,13 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 tag.pabyVal = reinterpret_cast<GByte *>(
                     CPLCalloc(1, nDataTypeSize * tag.nLength));
 
-                GUInt32 nOffset = 0;
-                for (GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++)
+                uint32_t nOffset = 0;
+                for (uint32_t j = 0; j < std::min(nTokens, tag.nLength); j++)
                 {
-                    GUInt32 nVal = atoi(papszTokens[j]);
+                    uint32_t nVal = atoi(papszTokens[j]);
                     if (tag.datatype == TIFF_SHORT)
                         WriteLEUInt16(tag.pabyVal, nOffset,
-                                      static_cast<GUInt16>(nVal));
+                                      static_cast<uint16_t>(nVal));
                     else
                         WriteLEUInt32(tag.pabyVal, nOffset, nVal);
                 }
@@ -1263,8 +1264,8 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                      tag.datatype == TIFF_SRATIONAL)
             {
                 char **papszTokens = CSLTokenizeString2(pszValue, " ", 0);
-                GUInt32 nTokens = static_cast<GUInt32>(CSLCount(papszTokens));
-                const GUInt32 nDataTypeSize = 8;
+                uint32_t nTokens = static_cast<uint32_t>(CSLCount(papszTokens));
+                const uint32_t nDataTypeSize = 8;
                 if (tagdescArray[i].length == 0 ||
                     nTokens == tagdescArray[i].length)
                 {
@@ -1290,14 +1291,14 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
                 tag.pabyVal = reinterpret_cast<GByte *>(
                     CPLCalloc(1, nDataTypeSize * tag.nLength));
 
-                GUInt32 nOffset = 0;
-                for (GUInt32 j = 0; j < std::min(nTokens, tag.nLength); j++)
+                uint32_t nOffset = 0;
+                for (uint32_t j = 0; j < std::min(nTokens, tag.nLength); j++)
                 {
                     double dfVal =
                         CPLAtof(papszTokens[j][0] == '(' ? papszTokens[j] + 1
                                                          : papszTokens[j]);
-                    GUInt32 nNum = 1;
-                    GUInt32 nDenom = 0;
+                    uint32_t nNum = 1;
+                    uint32_t nDenom = 0;
                     if (!GetNumDenomFromDouble(tag.datatype, dfVal, nNum,
                                                nDenom))
                     {
@@ -1341,7 +1342,7 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
     if (location == EXIF_IFD &&
         CSLFetchNameValue(papszEXIFMetadata, "EXIF_ExifVersion") == nullptr)
     {
-        const GUInt16 EXIF_VERSION = 0x9000;
+        const uint16_t EXIF_VERSION = 0x9000;
         TagValue tag;
         tag.tag = EXIF_VERSION;
         tag.datatype = TIFF_UNDEFINED;
@@ -1362,11 +1363,11 @@ static std::vector<TagValue> EXIFFormatTagValue(char **papszEXIFMetadata,
 /*                            WriteTag()                                */
 /************************************************************************/
 
-static void WriteTag(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nTag,
-                     GDALEXIFTIFFDataType nType, GUInt32 nCount, GUInt32 nVal)
+static void WriteTag(GByte *pabyData, uint32_t &nBufferOff, uint16_t nTag,
+                     GDALEXIFTIFFDataType nType, uint32_t nCount, uint32_t nVal)
 {
     WriteLEUInt16(pabyData, nBufferOff, nTag);
-    WriteLEUInt16(pabyData, nBufferOff, static_cast<GUInt16>(nType));
+    WriteLEUInt16(pabyData, nBufferOff, static_cast<uint16_t>(nType));
     WriteLEUInt32(pabyData, nBufferOff, nCount);
     WriteLEUInt32(pabyData, nBufferOff, nVal);
 }
@@ -1375,13 +1376,14 @@ static void WriteTag(GByte *pabyData, GUInt32 &nBufferOff, GUInt16 nTag,
 /*                            WriteTags()                               */
 /************************************************************************/
 
-static void WriteTags(GByte *pabyData, GUInt32 &nBufferOff,
-                      GUInt32 offsetIFDData, std::vector<TagValue> &tags)
+static void WriteTags(GByte *pabyData, uint32_t &nBufferOff,
+                      uint32_t offsetIFDData, std::vector<TagValue> &tags)
 {
     for (auto &tag : tags)
     {
         WriteLEUInt16(pabyData, nBufferOff, tag.tag);
-        WriteLEUInt16(pabyData, nBufferOff, static_cast<GUInt16>(tag.datatype));
+        WriteLEUInt16(pabyData, nBufferOff,
+                      static_cast<uint16_t>(tag.datatype));
         WriteLEUInt32(pabyData, nBufferOff, tag.nLength);
         if (tag.nRelOffset < 0)
         {
@@ -1415,8 +1417,8 @@ static void FreeTags(std::vector<TagValue> &tags)
 /************************************************************************/
 
 GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
-                  GUInt32 nThumbnailSize, GUInt32 nThumbnailWidth,
-                  GUInt32 nThumbnailHeight, GUInt32 *pnOutBufferSize)
+                  uint32_t nThumbnailSize, uint32_t nThumbnailWidth,
+                  uint32_t nThumbnailHeight, uint32_t *pnOutBufferSize)
 {
     *pnOutBufferSize = 0;
 
@@ -1436,31 +1438,31 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
         return nullptr;
     }
 
-    GUInt32 nOfflineSizeMain = 0;
+    uint32_t nOfflineSizeMain = 0;
     std::vector<TagValue> mainTags = EXIFFormatTagValue(
         papszEXIFMetadata, EXIFLocation::MAIN_IFD, &nOfflineSizeMain);
 
-    GUInt32 nOfflineSizeEXIF = 0;
+    uint32_t nOfflineSizeEXIF = 0;
     std::vector<TagValue> exifTags = EXIFFormatTagValue(
         papszEXIFMetadata, EXIFLocation::EXIF_IFD, &nOfflineSizeEXIF);
 
-    GUInt32 nOfflineSizeGPS = 0;
+    uint32_t nOfflineSizeGPS = 0;
     std::vector<TagValue> gpsTags = EXIFFormatTagValue(
         papszEXIFMetadata, EXIFLocation::GPS_IFD, &nOfflineSizeGPS);
 
-    const GUInt16 nEXIFTags = static_cast<GUInt16>(exifTags.size());
-    const GUInt16 nGPSTags = static_cast<GUInt16>(gpsTags.size());
+    const uint16_t nEXIFTags = static_cast<uint16_t>(exifTags.size());
+    const uint16_t nGPSTags = static_cast<uint16_t>(gpsTags.size());
 
     // including TIFFTAG_EXIFIFD and TIFFTAG_GPSIFD
-    GUInt16 nIFD0Entries = (nEXIFTags ? 1 : 0) + (nGPSTags ? 1 : 0) +
-                           static_cast<GUInt16>(mainTags.size());
+    uint16_t nIFD0Entries = (nEXIFTags ? 1 : 0) + (nGPSTags ? 1 : 0) +
+                            static_cast<uint16_t>(mainTags.size());
 
-    GUInt32 nBufferSize = EXIF_HEADER_SIZE +  // Exif header
-                          4 +                 // Tiff signature
-                          4 +                 // Offset of IFD0
-                          2 +                 // Number of entries of IFD0
-                          nIFD0Entries * TAG_SIZE +  // Entries of IFD0
-                          nOfflineSizeMain;
+    uint32_t nBufferSize = EXIF_HEADER_SIZE +  // Exif header
+                           4 +                 // Tiff signature
+                           4 +                 // Offset of IFD0
+                           2 +                 // Number of entries of IFD0
+                           nIFD0Entries * TAG_SIZE +  // Entries of IFD0
+                           nOfflineSizeMain;
 
     if (nEXIFTags)
     {
@@ -1474,7 +1476,7 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
                        nGPSTags * TAG_SIZE + nOfflineSizeGPS;
     }
 
-    GUInt16 nIFD1Entries = 0;
+    uint16_t nIFD1Entries = 0;
     if (pabyThumbnail)
     {
         nIFD1Entries = 5;
@@ -1505,13 +1507,13 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
     }
 
     memcpy(pabyData, "Exif\0\0", EXIF_HEADER_SIZE);
-    GUInt32 nBufferOff = EXIF_HEADER_SIZE;
-    GUInt32 nTIFFStartOff = nBufferOff;
+    uint32_t nBufferOff = EXIF_HEADER_SIZE;
+    uint32_t nTIFFStartOff = nBufferOff;
 
     // TIFF little-endian signature.
-    const GUInt16 TIFF_LITTLEENDIAN = 0x4949;
+    const uint16_t TIFF_LITTLEENDIAN = 0x4949;
     WriteLEUInt16(pabyData, nBufferOff, TIFF_LITTLEENDIAN);
-    const GUInt16 TIFF_VERSION = 42;
+    const uint16_t TIFF_VERSION = 42;
     WriteLEUInt16(pabyData, nBufferOff, TIFF_VERSION);
 
     // Offset of IFD0
@@ -1522,19 +1524,19 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
 
     if (!mainTags.empty())
     {
-        GUInt32 offsetIFDData =
+        uint32_t offsetIFDData =
             nBufferOff - nTIFFStartOff + nIFD0Entries * TAG_SIZE + 4;
         WriteTags(pabyData, nBufferOff, offsetIFDData, mainTags);
     }
 
-    GUInt32 nEXIFIFDOffset = 0;
+    uint32_t nEXIFIFDOffset = 0;
     if (nEXIFTags)
     {
         WriteTag(pabyData, nBufferOff, EXIFOFFSETTAG, TIFF_LONG, 1, 0);
         nEXIFIFDOffset = nBufferOff - 4;
     }
 
-    GUInt32 nGPSIFDOffset = 0;
+    uint32_t nGPSIFDOffset = 0;
     if (nGPSTags)
     {
         WriteTag(pabyData, nBufferOff, GPSOFFSETTAG, TIFF_LONG, 1, 0);
@@ -1542,7 +1544,7 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
     }
 
     // Offset of next IFD
-    GUInt32 nOffsetOfIFDAfterIFD0 = nBufferOff;
+    uint32_t nOffsetOfIFDAfterIFD0 = nBufferOff;
     WriteLEUInt32(pabyData, nBufferOff, 0);  // offset to patch
 
     // Space for offline tag values (already written)
@@ -1552,14 +1554,14 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
     {
         // Patch value of EXIFOFFSETTAG
         {
-            GUInt32 nTmp = nEXIFIFDOffset;
+            uint32_t nTmp = nEXIFIFDOffset;
             WriteLEUInt32(pabyData, nTmp, nBufferOff - nTIFFStartOff);
         }
 
         // Number of entries of EXIF IFD
         WriteLEUInt16(pabyData, nBufferOff, nEXIFTags);
 
-        GUInt32 offsetIFDData =
+        uint32_t offsetIFDData =
             nBufferOff - nTIFFStartOff + nEXIFTags * TAG_SIZE;
         WriteTags(pabyData, nBufferOff, offsetIFDData, exifTags);
 
@@ -1571,14 +1573,14 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
     {
         // Patch value of GPSOFFSETTAG
         {
-            GUInt32 nTmp = nGPSIFDOffset;
+            uint32_t nTmp = nGPSIFDOffset;
             WriteLEUInt32(pabyData, nTmp, nBufferOff - nTIFFStartOff);
         }
 
         // Number of entries of GPS IFD
         WriteLEUInt16(pabyData, nBufferOff, nGPSTags);
 
-        GUInt32 offsetIFDData =
+        uint32_t offsetIFDData =
             nBufferOff - nTIFFStartOff + nGPSTags * TAG_SIZE;
         WriteTags(pabyData, nBufferOff, offsetIFDData, gpsTags);
 
@@ -1590,18 +1592,18 @@ GByte *EXIFCreate(char **papszEXIFMetadata, GByte *pabyThumbnail,
     {
         // Patch value of offset after next IFD
         {
-            GUInt32 nTmp = nOffsetOfIFDAfterIFD0;
+            uint32_t nTmp = nOffsetOfIFDAfterIFD0;
             WriteLEUInt32(pabyData, nTmp, nBufferOff - nTIFFStartOff);
         }
 
         // Number of entries of IFD1
         WriteLEUInt16(pabyData, nBufferOff, nIFD1Entries);
 
-        const GUInt16 JPEG_TIFF_IMAGEWIDTH = 0x100;
-        const GUInt16 JPEG_TIFF_IMAGEHEIGHT = 0x101;
-        const GUInt16 JPEG_TIFF_COMPRESSION = 0x103;
-        const GUInt16 JPEG_EXIF_JPEGIFOFSET = 0x201;
-        const GUInt16 JPEG_EXIF_JPEGIFBYTECOUNT = 0x202;
+        const uint16_t JPEG_TIFF_IMAGEWIDTH = 0x100;
+        const uint16_t JPEG_TIFF_IMAGEHEIGHT = 0x101;
+        const uint16_t JPEG_TIFF_COMPRESSION = 0x103;
+        const uint16_t JPEG_EXIF_JPEGIFOFSET = 0x201;
+        const uint16_t JPEG_EXIF_JPEGIFBYTECOUNT = 0x202;
 
         WriteTag(pabyData, nBufferOff, JPEG_TIFF_IMAGEWIDTH, TIFF_LONG, 1,
                  nThumbnailWidth);

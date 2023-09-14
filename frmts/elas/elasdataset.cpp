@@ -40,35 +40,35 @@ typedef struct ELASHeader
 {
     ELASHeader();
 
-    GInt32 NBIH;     /* bytes in header, normally 1024 */
-    GInt32 NBPR;     /* bytes per data record (all bands of scanline) */
-    GInt32 IL;       /* initial line - normally 1 */
-    GInt32 LL;       /* last line */
-    GInt32 IE;       /* initial element (pixel), normally 1 */
-    GInt32 LE;       /* last element (pixel) */
-    GInt32 NC;       /* number of channels (bands) */
-    GUInt32 H4321;   /* header record identifier - always 4321. */
+    int32_t NBIH;    /* bytes in header, normally 1024 */
+    int32_t NBPR;    /* bytes per data record (all bands of scanline) */
+    int32_t IL;      /* initial line - normally 1 */
+    int32_t LL;      /* last line */
+    int32_t IE;      /* initial element (pixel), normally 1 */
+    int32_t LE;      /* last element (pixel) */
+    int32_t NC;      /* number of channels (bands) */
+    uint32_t H4321;  /* header record identifier - always 4321. */
     char YLabel[4];  /* Should be "NOR" for UTM */
-    GInt32 YOffset;  /* topleft pixel center northing */
+    int32_t YOffset; /* topleft pixel center northing */
     char XLabel[4];  /* Should be "EAS" for UTM */
-    GInt32 XOffset;  /* topleft pixel center easting */
+    int32_t XOffset; /* topleft pixel center easting */
     float YPixSize;  /* height of pixel in georef units */
     float XPixSize;  /* width of pixel in georef units */
     float Matrix[4]; /* 2x2 transformation matrix.  Should be
                         1,0,0,1 for pixel/line, or
                         1,0,0,-1 for UTM */
     GByte IH19[4];   /* data type, and size flags */
-    GInt32 IH20;     /* number of secondary headers */
+    int32_t IH20;    /* number of secondary headers */
     char unused1[8];
-    GInt32 LABL; /* used by LABL module */
-    char HEAD;   /* used by HEAD module */
+    int32_t LABL; /* used by LABL module */
+    char HEAD;    /* used by HEAD module */
     char Comment1[64];
     char Comment2[64];
     char Comment3[64];
     char Comment4[64];
     char Comment5[64];
     char Comment6[64];
-    GUInt16 ColorTable[256]; /* RGB packed with 4 bits each */
+    uint16_t ColorTable[256]; /* RGB packed with 4 bits each */
     char unused2[32];
 } _ELASHeader;
 
@@ -88,7 +88,7 @@ ELASHeader::ELASHeader()
     fill(Comment5, Comment5 + CPL_ARRAYSIZE(Comment5), static_cast<char>(0));
     fill(Comment6, Comment6 + CPL_ARRAYSIZE(Comment6), static_cast<char>(0));
     fill(ColorTable, ColorTable + CPL_ARRAYSIZE(ColorTable),
-         static_cast<GUInt16>(0));
+         static_cast<uint16_t>(0));
     fill(unused2, unused2 + CPL_ARRAYSIZE(unused2), static_cast<char>(0));
 }
 
@@ -305,8 +305,8 @@ int ELASDataset::Identify(GDALOpenInfo *poOpenInfo)
     if (poOpenInfo->nHeaderBytes < 256)
         return FALSE;
 
-    if (CPL_MSBWORD32(*((GInt32 *)(poOpenInfo->pabyHeader + 0))) != 1024 ||
-        CPL_MSBWORD32(*((GInt32 *)(poOpenInfo->pabyHeader + 28))) != 4321)
+    if (CPL_MSBWORD32(*((int32_t *)(poOpenInfo->pabyHeader + 0))) != 1024 ||
+        CPL_MSBWORD32(*((int32_t *)(poOpenInfo->pabyHeader + 28))) != 4321)
     {
         return FALSE;
     }
@@ -447,10 +447,12 @@ GDALDataset *ELASDataset::Open(GDALOpenInfo *poOpenInfo)
         CPL_MSBPTR32(&(poDS->sHeader.XPixSize));
         CPL_MSBPTR32(&(poDS->sHeader.YPixSize));
 
-        poDS->adfGeoTransform[0] = (GInt32)CPL_MSBWORD32(poDS->sHeader.XOffset);
+        poDS->adfGeoTransform[0] =
+            (int32_t)CPL_MSBWORD32(poDS->sHeader.XOffset);
         poDS->adfGeoTransform[1] = poDS->sHeader.XPixSize;
         poDS->adfGeoTransform[2] = 0.0;
-        poDS->adfGeoTransform[3] = (GInt32)CPL_MSBWORD32(poDS->sHeader.YOffset);
+        poDS->adfGeoTransform[3] =
+            (int32_t)CPL_MSBWORD32(poDS->sHeader.YOffset);
         poDS->adfGeoTransform[4] = 0.0;
         poDS->adfGeoTransform[5] = -1.0 * std::abs(poDS->sHeader.YPixSize);
 

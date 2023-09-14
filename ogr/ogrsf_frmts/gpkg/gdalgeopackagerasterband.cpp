@@ -508,8 +508,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             for (size_t i = 0;
                  i < static_cast<size_t>(nBlockXSize) * nBlockYSize; i++)
             {
-                const GUInt16 nVal = *reinterpret_cast<GUInt16 *>(
-                    pabyTileData + i * sizeof(GUInt16));
+                const uint16_t nVal = *reinterpret_cast<uint16_t *>(
+                    pabyTileData + i * sizeof(uint16_t));
                 double dfVal =
                     floor((nVal * dfTileScale + dfTileOffset) * m_dfScale +
                           m_dfOffset + 0.5);
@@ -519,8 +519,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                     dfVal = 32767;
                 else if (dfVal < -32768)
                     dfVal = -32768;
-                *reinterpret_cast<GInt16 *>(pabyTileData + i * sizeof(GInt16)) =
-                    static_cast<GInt16>(dfVal);
+                *reinterpret_cast<int16_t *>(pabyTileData +
+                                             i * sizeof(int16_t)) =
+                    static_cast<int16_t>(dfVal);
             }
         }
         else if (m_eDT == GDT_UInt16 &&
@@ -531,8 +532,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             for (size_t i = 0;
                  i < static_cast<size_t>(nBlockXSize) * nBlockYSize; i++)
             {
-                const GUInt16 nVal = *reinterpret_cast<GUInt16 *>(
-                    pabyTileData + i * sizeof(GUInt16));
+                const uint16_t nVal = *reinterpret_cast<uint16_t *>(
+                    pabyTileData + i * sizeof(uint16_t));
                 double dfVal =
                     floor((nVal * dfTileScale + dfTileOffset) * m_dfScale +
                           m_dfOffset + 0.5);
@@ -542,9 +543,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                     dfVal = 65535;
                 else if (dfVal < 0)
                     dfVal = 0;
-                *reinterpret_cast<GUInt16 *>(pabyTileData +
-                                             i * sizeof(GUInt16)) =
-                    static_cast<GUInt16>(dfVal);
+                *reinterpret_cast<uint16_t *>(pabyTileData +
+                                              i * sizeof(uint16_t)) =
+                    static_cast<uint16_t>(dfVal);
             }
         }
         else if (m_eDT == GDT_Float32 && eRequestDT == GDT_UInt16)
@@ -555,8 +556,8 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                      static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize - 1;
                  i >= 0; i--)
             {
-                const GUInt16 nVal = *reinterpret_cast<GUInt16 *>(
-                    pabyTileData + i * sizeof(GUInt16));
+                const uint16_t nVal = *reinterpret_cast<uint16_t *>(
+                    pabyTileData + i * sizeof(uint16_t));
                 double dfVal = (nVal * dfTileScale + dfTileOffset) * m_dfScale +
                                m_dfOffset;
                 if (m_dfPrecision == 1.0)
@@ -588,7 +589,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
         static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
     if (nBands == 1 && m_poCT != nullptr && nTileBandCount != 1)
     {
-        std::map<GUInt32, int> oMapEntryToIndex;
+        std::map<uint32_t, int> oMapEntryToIndex;
         const int nEntries = std::min(256, m_poCT->GetColorEntryCount());
         for (int i = 0; i < nEntries; i++)
         {
@@ -596,9 +597,9 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             GByte c1 = static_cast<GByte>(psEntry->c1);
             GByte c2 = static_cast<GByte>(psEntry->c2);
             GByte c3 = static_cast<GByte>(psEntry->c3);
-            GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
+            uint32_t nVal = c1 + (c2 << 8) + (c3 << 16);
             if (nTileBandCount == 4)
-                nVal += (static_cast<GUInt32>(psEntry->c4) << 24);
+                nVal += (static_cast<uint32_t>(psEntry->c4) << 24);
             oMapEntryToIndex[nVal] = i;
         }
         int iBestEntryFor0 =
@@ -609,7 +610,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
             const GByte c2 = pabyTileData[i + nBlockPixels];
             const GByte c3 = pabyTileData[i + 2 * nBlockPixels];
             const GByte c4 = pabyTileData[i + 3 * nBlockPixels];
-            GUInt32 nVal = c1 + (c2 << 8) + (c3 << 16);
+            uint32_t nVal = c1 + (c2 << 8) + (c3 << 16);
             if (nTileBandCount == 4)
                 nVal += (c4 << 24);
             if (nVal == 0)
@@ -617,7 +618,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::ReadTile(
                 pabyTileData[i] = static_cast<GByte>(iBestEntryFor0);
             else
             {
-                std::map<GUInt32, int>::iterator oMapEntryToIndexIter =
+                std::map<uint32_t, int>::iterator oMapEntryToIndexIter =
                     oMapEntryToIndex.find(nVal);
                 if (oMapEntryToIndexIter == oMapEntryToIndex.end())
                     /* Could happen with JPEG tiles */
@@ -1328,8 +1329,8 @@ bool GDALGPKGMBTilesLikePseudoDataset::DeleteFromGriddedTileAncillary(
 template <class T>
 static void ProcessInt16UInt16Tile(
     const void *pabyData, GPtrDiff_t nPixels, bool bIsInt16, bool bHasNoData,
-    double dfNoDataValue, GUInt16 usGPKGNull, double m_dfOffset,
-    double m_dfScale, GUInt16 *pTempTileBuffer, double &dfTileOffset,
+    double dfNoDataValue, uint16_t usGPKGNull, double m_dfOffset,
+    double m_dfScale, uint16_t *pTempTileBuffer, double &dfTileOffset,
     double &dfTileScale, double &dfTileMin, double &dfTileMax,
     double &dfTileMean, double &dfTileStdDev, GPtrDiff_t &nValidPixels)
 {
@@ -1408,7 +1409,7 @@ static void ProcessInt16UInt16Tile(
             double dfVal =
                 ((nVal - m_dfOffset) / m_dfScale - dfTileOffset) / dfTileScale;
             CPLAssert(dfVal >= 0.0 && dfVal < 65535.5);
-            pTempTileBuffer[i] = static_cast<GUInt16>(dfVal + 0.5);
+            pTempTileBuffer[i] = static_cast<uint16_t>(dfVal + 0.5);
             if (bHasNoData && pTempTileBuffer[i] == usGPKGNull)
             {
                 if (usGPKGNull > 0)
@@ -1809,7 +1810,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
         }
 
-        GUInt16 *pTempTileBuffer = nullptr;
+        uint16_t *pTempTileBuffer = nullptr;
         GPtrDiff_t nValidPixels = 0;
         double dfTileMin = 0.0;
         double dfTileMax = 0.0;
@@ -1819,12 +1820,12 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         double dfTileScale = 1.0;
         if (m_eTF == GPKG_TF_PNG_16BIT)
         {
-            pTempTileBuffer = static_cast<GUInt16 *>(
+            pTempTileBuffer = static_cast<uint16_t *>(
                 VSI_MALLOC3_VERBOSE(2, nBlockXSize, nBlockYSize));
 
             if (m_eDT == GDT_Int16)
             {
-                ProcessInt16UInt16Tile<GInt16>(
+                ProcessInt16UInt16Tile<int16_t>(
                     m_pabyCachedTiles,
                     static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize, true,
                     CPL_TO_BOOL(bHasNoData), dfNoDataValue, m_usGPKGNull,
@@ -1834,7 +1835,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
             }
             else if (m_eDT == GDT_UInt16)
             {
-                ProcessInt16UInt16Tile<GUInt16>(
+                ProcessInt16UInt16Tile<uint16_t>(
                     m_pabyCachedTiles,
                     static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize, false,
                     CPL_TO_BOOL(bHasNoData), dfNoDataValue, m_usGPKGNull,
@@ -1943,7 +1944,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         : (fVal > 0) ? 65535
                                      : 0;
                     CPLAssert(dfVal >= 0.0 && dfVal < 65535.5);
-                    pTempTileBuffer[i] = static_cast<GUInt16>(dfVal + 0.5);
+                    pTempTileBuffer[i] = static_cast<uint16_t>(dfVal + 0.5);
                     if (bHasNoData && pTempTileBuffer[i] == m_usGPKGNull)
                     {
                         if (m_usGPKGNull > 0)
@@ -2068,7 +2069,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                         VSIMalloc(MEDIAN_CUT_AND_DITHER_BUFFER_SIZE_65536);
                 else
                     m_pabyHugeColorArray =
-                        VSIMalloc2(256 * 256 * 256, sizeof(GUInt32));
+                        VSIMalloc2(256 * 256 * 256, sizeof(uint32_t));
             }
 
             GDALColorTable *poCT = new GDALColorTable();
@@ -2080,7 +2081,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 m_pabyCachedTiles + 2 * nBandBlockSize, nullptr,
                 256, /* max colors */
                 8,   /* bit depth */
-                static_cast<GUInt32 *>(
+                static_cast<uint32_t *>(
                     m_pabyHugeColorArray), /* preallocated histogram */
                 poCT, nullptr, nullptr);
 
@@ -2088,7 +2089,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
                 poMEM_RGB_DS->GetRasterBand(1), poMEM_RGB_DS->GetRasterBand(2),
                 poMEM_RGB_DS->GetRasterBand(3), poMEMDS->GetRasterBand(1), poCT,
                 8, /* bit depth */
-                static_cast<GInt16 *>(
+                static_cast<int16_t *>(
                     m_pabyHugeColorArray), /* pasDynamicColorMap */
                 m_bDither, nullptr, nullptr);
             poMEMDS->GetRasterBand(1)->SetColorTable(poCT);
@@ -3596,9 +3597,9 @@ CPLErr GDALGeoPackageRasterBand::SetNoDataValue(double dfNoDataValue)
             if (eDataType == GDT_UInt16 && poGDS->m_dfOffset == 0.0 &&
                 poGDS->m_dfScale == 1.0 && dfNoDataValue >= 0 &&
                 dfNoDataValue <= 65535 &&
-                static_cast<GUInt16>(dfNoDataValue) == dfNoDataValue)
+                static_cast<uint16_t>(dfNoDataValue) == dfNoDataValue)
             {
-                poGDS->m_usGPKGNull = static_cast<GUInt16>(dfNoDataValue);
+                poGDS->m_usGPKGNull = static_cast<uint16_t>(dfNoDataValue);
             }
             else
             {

@@ -58,7 +58,7 @@
  * elements as count specifies.
  */
 
-typedef GInt32 DEMWorkT;
+typedef int32_t DEMWorkT;
 typedef GInt64 DEMDiffT;
 
 // Encoding types
@@ -75,34 +75,34 @@ enum RmfTypes
 };
 
 // Encoding ranges
-GInt32 RANGE_INT4 = 0x00000007L;   // 4-bit
-GInt32 RANGE_INT8 = 0x0000007FL;   // 8-bit
-GInt32 RANGE_INT12 = 0x000007FFL;  // 12-bit
-GInt32 RANGE_INT16 = 0x00007FFFL;  // 16-bit
-GInt32 RANGE_INT24 = 0x007FFFFFL;  // 24-bit
+int32_t RANGE_INT4 = 0x00000007L;   // 4-bit
+int32_t RANGE_INT8 = 0x0000007FL;   // 8-bit
+int32_t RANGE_INT12 = 0x000007FFL;  // 12-bit
+int32_t RANGE_INT16 = 0x00007FFFL;  // 16-bit
+int32_t RANGE_INT24 = 0x007FFFFFL;  // 24-bit
 
 // Out of range codes
-GInt32 OUT_INT4 = 0xFFFFFFF8;
-GInt32 OUT_INT8 = 0xFFFFFF80;
-GInt32 OUT_INT12 = 0xFFFFF800;
-GInt32 OUT_INT16 = 0xFFFF8000;
-GInt32 OUT_INT24 = 0xFF800000;
-GInt32 OUT_INT32 = 0x80000000;
+int32_t OUT_INT4 = 0xFFFFFFF8;
+int32_t OUT_INT8 = 0xFFFFFF80;
+int32_t OUT_INT12 = 0xFFFFF800;
+int32_t OUT_INT16 = 0xFFFF8000;
+int32_t OUT_INT24 = 0xFF800000;
+int32_t OUT_INT32 = 0x80000000;
 
 constexpr DEMDiffT DIFF_OUI_OF_RANGE = std::numeric_limits<DEMDiffT>::max();
 
 // Inversion masks
-GInt32 INV_INT4 = 0xFFFFFFF0L;
-GInt32 INV_INT12 = 0xFFFFF000L;
-GInt32 INV_INT24 = 0xFF000000L;
+int32_t INV_INT4 = 0xFFFFFFF0L;
+int32_t INV_INT12 = 0xFFFFF000L;
+int32_t INV_INT24 = 0xFF000000L;
 
 // Not sure which behavior we wish for int32 overflow, so just do the
 // addition as uint32 to workaround -ftrapv
 CPL_NOSANITIZE_UNSIGNED_INT_OVERFLOW
-static GInt32 AddInt32(GInt32 &nTarget, GInt32 nVal)
+static int32_t AddInt32(int32_t &nTarget, int32_t nVal)
 {
-    GUInt32 nTargetU = static_cast<GUInt32>(nTarget);
-    GUInt32 nValU = static_cast<GUInt32>(nVal);
+    uint32_t nTargetU = static_cast<uint32_t>(nTarget);
+    uint32_t nValU = static_cast<uint32_t>(nVal);
     nTargetU += nValU;
     memcpy(&nTarget, &nTargetU, 4);
     return nTarget;
@@ -112,26 +112,26 @@ static GInt32 AddInt32(GInt32 &nTarget, GInt32 nVal)
 /*                           DEMDecompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
-                                 GByte *pabyOut, GUInt32 nSizeOut, GUInt32,
-                                 GUInt32)
+size_t RMFDataset::DEMDecompress(const GByte *pabyIn, uint32_t nSizeIn,
+                                 GByte *pabyOut, uint32_t nSizeOut, uint32_t,
+                                 uint32_t)
 {
     if (pabyIn == nullptr || pabyOut == nullptr || nSizeOut < nSizeIn ||
         nSizeIn < 2)
         return 0;
 
-    GInt32 iPrev = 0;  // The last data value decoded.
+    int32_t iPrev = 0;  // The last data value decoded.
 
     const signed char *pabyTempIn =
         reinterpret_cast<const signed char *>(pabyIn);
-    GInt32 *paiOut = reinterpret_cast<GInt32 *>(pabyOut);
-    nSizeOut /= sizeof(GInt32);
+    int32_t *paiOut = reinterpret_cast<int32_t *>(pabyOut);
+    nSizeOut /= sizeof(int32_t);
 
     while (nSizeIn > 0)
     {
         // Read number of codes in the record and encoding type.
-        GUInt32 nCount = *pabyTempIn & 0x1F;
-        const GUInt32 nType = *pabyTempIn++ & 0xE0;  // The encoding type.
+        uint32_t nCount = *pabyTempIn & 0x1F;
+        const uint32_t nType = *pabyTempIn++ & 0xE0;  // The encoding type.
         nSizeIn--;
         if (nCount == 0)
         {
@@ -175,7 +175,7 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
                 while (nCount > 0)
                 {
                     nCount--;
-                    GInt32 nCode;
+                    int32_t nCode;
                     nCode = (*pabyTempIn) & 0x0F;
                     if (nCode > RANGE_INT4)
                         nCode |= INV_INT4;
@@ -211,7 +211,7 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
                 while (nCount > 0)
                 {
                     nCount--;
-                    GInt32 nCode;
+                    int32_t nCode;
                     *paiOut++ = ((nCode = *pabyTempIn++) == OUT_INT8)
                                     ? OUT_INT32
                                     : AddInt32(iPrev, nCode);
@@ -229,7 +229,7 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
                 while (nCount > 0)
                 {
                     nCount--;
-                    GInt32 nCode = CPL_LSBSINT16PTR(pabyTempIn) & 0x0FFF;
+                    int32_t nCode = CPL_LSBSINT16PTR(pabyTempIn) & 0x0FFF;
                     pabyTempIn += 1;
                     if (nCode > RANGE_INT12)
                         nCode |= INV_INT12;
@@ -267,7 +267,7 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
                 while (nCount > 0)
                 {
                     nCount--;
-                    const GInt32 nCode = CPL_LSBSINT16PTR(pabyTempIn);
+                    const int32_t nCode = CPL_LSBSINT16PTR(pabyTempIn);
                     pabyTempIn += 2;
                     *paiOut++ = (nCode == OUT_INT16) ? OUT_INT32
                                                      : AddInt32(iPrev, nCode);
@@ -285,9 +285,9 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
                 while (nCount > 0)
                 {
                     nCount--;
-                    GInt32 nCode = (*(GByte *)pabyTempIn) |
-                                   ((*(GByte *)(pabyTempIn + 1)) << 8) |
-                                   ((*(GByte *)(pabyTempIn + 2)) << 16);
+                    int32_t nCode = (*(GByte *)pabyTempIn) |
+                                    ((*(GByte *)(pabyTempIn + 1)) << 8) |
+                                    ((*(GByte *)(pabyTempIn + 2)) << 16);
                     pabyTempIn += 3;
                     if (nCode > RANGE_INT24)
                         nCode |= INV_INT24;
@@ -307,7 +307,7 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
                 while (nCount > 0)
                 {
                     nCount--;
-                    GInt32 nCode = CPL_LSBSINT32PTR(pabyTempIn);
+                    int32_t nCode = CPL_LSBSINT32PTR(pabyTempIn);
                     pabyTempIn += 4;
                     *paiOut++ = (nCode == OUT_INT32) ? OUT_INT32
                                                      : AddInt32(iPrev, nCode);
@@ -324,12 +324,12 @@ size_t RMFDataset::DEMDecompress(const GByte *pabyIn, GUInt32 nSizeIn,
 /************************************************************************/
 
 static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
-                             GUInt32 nRecordSize, GInt32 nSizeOut,
+                             uint32_t nRecordSize, int32_t nSizeOut,
                              GByte *&pabyCurrent)
 {
-    const GUInt32 nMaxCountInHeader = 31;
-    GInt32 iCode;
-    GInt32 iPrevCode;
+    const uint32_t nMaxCountInHeader = 31;
+    int32_t iCode;
+    int32_t iPrevCode;
 
     if (nRecordSize <= nMaxCountInHeader)
     {
@@ -362,7 +362,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 return CE_Failure;
             }
 
-            for (GUInt32 n = 0; n != nRecordSize; ++n)
+            for (uint32_t n = 0; n != nRecordSize; ++n)
             {
                 if (paiRecord[n] == DIFF_OUI_OF_RANGE)
                 {
@@ -370,7 +370,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 }
                 else
                 {
-                    iCode = static_cast<GInt32>(paiRecord[n]);
+                    iCode = static_cast<int32_t>(paiRecord[n]);
                 }
                 *pabyCurrent = static_cast<GByte>(iCode & 0x0F);
 
@@ -387,7 +387,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 }
                 else
                 {
-                    iCode = static_cast<GInt32>(paiRecord[n]);
+                    iCode = static_cast<int32_t>(paiRecord[n]);
                 }
                 *pabyCurrent++ |= static_cast<GByte>((iCode & 0x0F) << 4);
             }
@@ -400,7 +400,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 return CE_Failure;
             }
 
-            for (GUInt32 n = 0; n != nRecordSize; ++n)
+            for (uint32_t n = 0; n != nRecordSize; ++n)
             {
                 if (paiRecord[n] == DIFF_OUI_OF_RANGE)
                 {
@@ -420,7 +420,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 return CE_Failure;
             }
 
-            for (GUInt32 n = 0; n != nRecordSize; ++n)
+            for (uint32_t n = 0; n != nRecordSize; ++n)
             {
                 if (paiRecord[n] == DIFF_OUI_OF_RANGE)
                 {
@@ -428,7 +428,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 }
                 else
                 {
-                    iCode = static_cast<GInt32>(paiRecord[n]);
+                    iCode = static_cast<int32_t>(paiRecord[n]);
                 }
 
                 iPrevCode = iCode;
@@ -448,7 +448,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 }
                 else
                 {
-                    iCode = static_cast<GInt32>(paiRecord[n]);
+                    iCode = static_cast<int32_t>(paiRecord[n]);
                 }
                 iCode = (((iPrevCode & 0x0F00) >> 8) | ((iCode & 0x0FFF) << 4));
 
@@ -465,7 +465,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 return CE_Failure;
             }
 
-            for (GUInt32 n = 0; n != nRecordSize; ++n)
+            for (uint32_t n = 0; n != nRecordSize; ++n)
             {
                 if (paiRecord[n] == DIFF_OUI_OF_RANGE)
                 {
@@ -473,7 +473,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 }
                 else
                 {
-                    iCode = static_cast<GInt32>(paiRecord[n]);
+                    iCode = static_cast<int32_t>(paiRecord[n]);
                 }
                 CPL_LSBPTR32(&iCode);
                 memcpy(pabyCurrent, &iCode, 2);
@@ -488,7 +488,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 return CE_Failure;
             }
 
-            for (GUInt32 n = 0; n != nRecordSize; ++n)
+            for (uint32_t n = 0; n != nRecordSize; ++n)
             {
                 if (paiRecord[n] == DIFF_OUI_OF_RANGE)
                 {
@@ -496,7 +496,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 }
                 else
                 {
-                    iCode = static_cast<GInt32>(paiRecord[n]);
+                    iCode = static_cast<int32_t>(paiRecord[n]);
                 }
                 CPL_LSBPTR32(&iCode);
                 memcpy(pabyCurrent, &iCode, 3);
@@ -511,7 +511,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 return CE_Failure;
             }
 
-            for (GUInt32 n = 0; n != nRecordSize; ++n)
+            for (uint32_t n = 0; n != nRecordSize; ++n)
             {
                 if (paiRecord[n] == DIFF_OUI_OF_RANGE)
                 {
@@ -519,7 +519,7 @@ static CPLErr DEMWriteRecord(const DEMDiffT *paiRecord, RmfTypes eRecordType,
                 }
                 else
                 {
-                    iCode = static_cast<GInt32>(paiRecord[n]);
+                    iCode = static_cast<int32_t>(paiRecord[n]);
                 }
                 CPL_LSBPTR32(&iCode);
                 memcpy(pabyCurrent, &iCode, 4);
@@ -593,15 +593,15 @@ static RmfTypes DEMDeltaType(DEMDiffT delta)
 /*                             DEMCompress()                            */
 /************************************************************************/
 
-size_t RMFDataset::DEMCompress(const GByte *pabyIn, GUInt32 nSizeIn,
-                               GByte *pabyOut, GUInt32 nSizeOut, GUInt32,
-                               GUInt32, const RMFDataset *poDS)
+size_t RMFDataset::DEMCompress(const GByte *pabyIn, uint32_t nSizeIn,
+                               GByte *pabyOut, uint32_t nSizeOut, uint32_t,
+                               uint32_t, const RMFDataset *poDS)
 {
     if (pabyIn == nullptr || pabyOut == nullptr || nSizeIn < sizeof(DEMWorkT))
         return 0;
 
-    const GUInt32 anDeltaTypeSize[8] = {0, 0, 4, 8, 12, 16, 24, 32};
-    const GUInt32 nMaxRecordSize = 255 + 32;
+    const uint32_t anDeltaTypeSize[8] = {0, 0, 4, 8, 12, 16, 24, 32};
+    const uint32_t nMaxRecordSize = 255 + 32;
 
     DEMWorkT iMin(std::numeric_limits<DEMWorkT>::min() + 1);
     if (poDS != nullptr &&
@@ -609,8 +609,8 @@ size_t RMFDataset::DEMCompress(const GByte *pabyIn, GUInt32 nSizeIn,
     {
         iMin = static_cast<DEMWorkT>(poDS->sHeader.adfElevMinMax[0]);
     }
-    GUInt32 nLessCount = 0;
-    GUInt32 nRecordSize = 0;
+    uint32_t nLessCount = 0;
+    uint32_t nRecordSize = 0;
     RmfTypes eRecordType = TYPE_OUT;
     DEMDiffT aiRecord[nMaxRecordSize] = {0};
     DEMWorkT aiPrev[nMaxRecordSize] = {0};
@@ -625,7 +625,7 @@ size_t RMFDataset::DEMCompress(const GByte *pabyIn, GUInt32 nSizeIn,
 
     while (true)
     {
-        GUInt32 nRecordElementSize = 0;
+        uint32_t nRecordElementSize = 0;
 
         if (paiIn >= paiInEnd)
         {
@@ -711,7 +711,7 @@ size_t RMFDataset::DEMCompress(const GByte *pabyIn, GUInt32 nSizeIn,
 
         nLessCount++;
 
-        GUInt32 nDeltaSize(anDeltaTypeSize[eCurrType >> 5]);
+        uint32_t nDeltaSize(anDeltaTypeSize[eCurrType >> 5]);
         if (nRecordElementSize < nDeltaSize ||
             (nRecordElementSize - nDeltaSize) * nLessCount < 16)
         {

@@ -378,9 +378,9 @@ int TABPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
     if (papszToken != nullptr && CSLCount(papszToken) == 4 &&
         EQUAL(papszToken[0], "SYMBOL"))
     {
-        SetSymbolNo(static_cast<GInt16>(atoi(papszToken[1])));
+        SetSymbolNo(static_cast<int16_t>(atoi(papszToken[1])));
         SetSymbolColor(atoi(papszToken[2]));
-        SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
+        SetSymbolSize(static_cast<int16_t>(atoi(papszToken[3])));
     }
 
     CSLDestroy(papszToken);
@@ -457,9 +457,9 @@ int TABFontPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         return -1;
     }
 
-    SetSymbolNo(static_cast<GInt16>(atoi(papszToken[1])));
+    SetSymbolNo(static_cast<int16_t>(atoi(papszToken[1])));
     SetSymbolColor(atoi(papszToken[2]));
-    SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
+    SetSymbolSize(static_cast<int16_t>(atoi(papszToken[3])));
     SetFontName(papszToken[4]);
     SetFontStyleMIFValue(atoi(papszToken[5]));
     SetSymbolAngle(CPLAtof(papszToken[6]));
@@ -538,7 +538,7 @@ int TABCustomPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
 
     SetFontName(papszToken[1]);
     SetSymbolColor(atoi(papszToken[2]));
-    SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
+    SetSymbolSize(static_cast<int16_t>(atoi(papszToken[3])));
     m_nCustomStyle = static_cast<GByte>(atoi(papszToken[4]));
 
     CSLDestroy(papszToken);
@@ -2094,9 +2094,9 @@ int TABMultiPoint::ReadGeometryFromMIFFile(MIDDATAFile *fp)
         papszToken = CSLTokenizeStringComplex(pszLine, " ,()\t", TRUE, FALSE);
         if (CSLCount(papszToken) == 4 && EQUAL(papszToken[0], "SYMBOL"))
         {
-            SetSymbolNo(static_cast<GInt16>(atoi(papszToken[1])));
+            SetSymbolNo(static_cast<int16_t>(atoi(papszToken[1])));
             SetSymbolColor(atoi(papszToken[2]));
-            SetSymbolSize(static_cast<GInt16>(atoi(papszToken[3])));
+            SetSymbolSize(static_cast<int16_t>(atoi(papszToken[3])));
         }
         CSLDestroy(papszToken);
     }

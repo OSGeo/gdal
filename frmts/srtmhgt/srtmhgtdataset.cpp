@@ -38,7 +38,7 @@
 
 #include <cmath>
 
-constexpr GInt16 SRTMHG_NODATA_VALUE = -32768;
+constexpr int16_t SRTMHG_NODATA_VALUE = -32768;
 
 /************************************************************************/
 /* ==================================================================== */
@@ -624,8 +624,8 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
         return nullptr;
     }
 
-    GInt16 *panData =
-        reinterpret_cast<GInt16 *>(CPLMalloc(sizeof(GInt16) * nXSize));
+    int16_t *panData =
+        reinterpret_cast<int16_t *>(CPLMalloc(sizeof(int16_t) * nXSize));
     GDALRasterBand *poSrcBand = poSrcDS->GetRasterBand(1);
 
     int bSrcBandHasNoData;
@@ -656,7 +656,7 @@ GDALDataset *SRTMHGTDataset::CreateCopy(const char *pszFilename,
         GDALSwapWords(panData, 2, nXSize, 2);
 #endif
 
-        if (VSIFWriteL(panData, sizeof(GInt16) * nXSize, 1, fp) != 1)
+        if (VSIFWriteL(panData, sizeof(int16_t) * nXSize, 1, fp) != 1)
         {
             CPLError(CE_Failure, CPLE_FileIO,
                      "Failed to write line %d in SRTMHGT dataset.\n", iY);

@@ -121,8 +121,8 @@ class CPL_DLL GDALJP2Box
     void SetType(const char *);
     void SetWritableData(int nLength, const GByte *pabyData);
     void AppendWritableData(int nLength, const void *pabyDataIn);
-    void AppendUInt32(GUInt32 nVal);
-    void AppendUInt16(GUInt16 nVal);
+    void AppendUInt32(uint32_t nVal);
+    void AppendUInt16(uint16_t nVal);
     void AppendUInt8(GByte nVal);
     const GByte *GetWritableData() const
     {

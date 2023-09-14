@@ -514,7 +514,7 @@ CPLErr LevellerRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       void *pImage)
 
 {
-    CPLAssert(sizeof(float) == sizeof(GInt32));
+    CPLAssert(sizeof(float) == sizeof(int32_t));
     CPLAssert(nBlockXOff == 0);
     CPLAssert(pImage != nullptr);
 
@@ -558,7 +558,7 @@ CPLErr LevellerRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 
     if (poGDS->m_version < 6)
     {
-        GInt32 *pi = reinterpret_cast<int *>(pImage);
+        int32_t *pi = reinterpret_cast<int *>(pImage);
         for (size_t i = 0; i < (size_t)nBlockXSize; i++)
             pf[i] = static_cast<float>(pi[i]) / 65536;
     }
@@ -934,7 +934,7 @@ bool LevellerDataset::write(int n)
 
 bool LevellerDataset::write(size_t n)
 {
-    GUInt32 n32 = (GUInt32)n;
+    uint32_t n32 = (uint32_t)n;
     CPL_LSBPTR32(&n32);
     return 1 == VSIFWriteL(&n32, sizeof(n32), 1, m_fp);
 }
@@ -1014,7 +1014,7 @@ bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
         if (1 != VSIFReadL(descriptor, descriptorLen, 1, fp))
             return false;
 
-        GUInt32 datalen;
+        uint32_t datalen;
         if (1 != VSIFReadL(&datalen, sizeof(datalen), 1, fp))
             return false;
 
@@ -1046,7 +1046,7 @@ bool LevellerDataset::get(int &n, VSILFILE *fp, const char *psz)
 
     if (locate_data(offset, len, fp, psz))
     {
-        GInt32 value;
+        int32_t value;
         if (1 == VSIFReadL(&value, sizeof(value), 1, fp))
         {
             CPL_LSBPTR32(&value);

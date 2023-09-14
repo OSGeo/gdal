@@ -98,9 +98,9 @@ static int FindNearestColor(int nColors, int *panPCT, int nRedValue,
 // into account HashHistogram in gdalmediancut.cpp.
 typedef struct
 {
-    GUInt32 nColorCode;
-    GUInt32 nColorCode2;
-    GUInt32 nColorCode3;
+    uint32_t nColorCode;
+    uint32_t nColorCode2;
+    uint32_t nColorCode3;
     GByte nIndex;
     GByte nIndex2;
     GByte nIndex3;
@@ -111,7 +111,7 @@ typedef struct
 /*                         GDALDitherRGB2PCT()                          */
 /************************************************************************/
 
-static inline bool IsColorCodeSet(GUInt32 nColorCode)
+static inline bool IsColorCodeSet(uint32_t nColorCode)
 {
     return (nColorCode >> 31) == 0;
 }
@@ -159,8 +159,8 @@ int CPL_STDCALL GDALDitherRGB2PCT(GDALRasterBandH hRed, GDALRasterBandH hGreen,
 int GDALDitherRGB2PCTInternal(
     GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
     GDALRasterBandH hTarget, GDALColorTableH hColorTable, int nBits,
-    // NULL or at least 256 * 256 * 256 * sizeof(GInt16) bytes.
-    GInt16 *pasDynamicColorMap, int bDither, GDALProgressFunc pfnProgress,
+    // NULL or at least 256 * 256 * 256 * sizeof(int16_t) bytes.
+    int16_t *pasDynamicColorMap, int bDither, GDALProgressFunc pfnProgress,
     void *pProgressArg)
 {
     VALIDATE_POINTER1(hRed, "GDALDitherRGB2PCT", CE_Failure);
@@ -322,7 +322,7 @@ int GDALDitherRGB2PCTInternal(
         }
         else
         {
-            memset(pasDynamicColorMap, 0xFF, 256 * 256 * 256 * sizeof(GInt16));
+            memset(pasDynamicColorMap, 0xFF, 256 * 256 * 256 * sizeof(int16_t));
         }
     }
 
@@ -421,9 +421,9 @@ int GDALDitherRGB2PCTInternal(
             int nSixth = 0;
             if (psColorIndexMap)
             {
-                const GUInt32 nColorCode =
+                const uint32_t nColorCode =
                     MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
-                GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
+                uint32_t nIdx = nColorCode % PRIME_FOR_65536;
                 while (true)
                 {
                     if (psColorIndexMap[nIdx].nColorCode == nColorCode)
@@ -494,12 +494,12 @@ int GDALDitherRGB2PCTInternal(
             }
             else
             {
-                const GUInt32 nColorCode =
+                const uint32_t nColorCode =
                     MAKE_COLOR_CODE(nRedValue, nGreenValue, nBlueValue);
-                GInt16 *psIndex = &pasDynamicColorMap[nColorCode];
+                int16_t *psIndex = &pasDynamicColorMap[nColorCode];
                 if (*psIndex < 0)
                 {
-                    *psIndex = static_cast<GInt16>(FindNearestColor(
+                    *psIndex = static_cast<int16_t>(FindNearestColor(
                         nColors, anPCT, nRedValue, nGreenValue, nBlueValue));
                     iIndex = *psIndex;
                 }

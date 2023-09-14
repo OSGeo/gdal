@@ -195,7 +195,7 @@ CPLErr HF2RasterBand::IReadBlock(int nBlockXOff, int nLineYOff, void *pImage)
                     break;
                 }
 
-                GInt32 nVal;
+                int32_t nVal;
                 VSIFReadL(&nVal, 4, 1, poGDS->fp);
                 CPL_LSBPTR32(&nVal);
                 const size_t nToRead =
@@ -229,9 +229,9 @@ CPLErr HF2RasterBand::IReadBlock(int nBlockXOff, int nLineYOff, void *pImage)
                     if (nWordSize == 1)
                         nInc = ((signed char *)pabyData)[i - 1];
                     else if (nWordSize == 2)
-                        nInc = ((GInt16 *)pabyData)[i - 1];
+                        nInc = ((int16_t *)pabyData)[i - 1];
                     else
-                        nInc = ((GInt32 *)pabyData)[i - 1];
+                        nInc = ((int32_t *)pabyData)[i - 1];
                     if ((nInc >= 0 && nVal > INT_MAX - nInc) ||
                         (nInc == INT_MIN && nVal < 0) ||
                         (nInc < 0 && nVal < INT_MIN - nInc))
@@ -463,7 +463,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
     memcpy(&nYSize, poOpenInfo->pabyHeader + 10, 4);
     CPL_LSBPTR32(&nYSize);
 
-    GUInt16 nTileSize;
+    uint16_t nTileSize;
     memcpy(&nTileSize, poOpenInfo->pabyHeader + 14, 2);
     CPL_LSBPTR16(&nTileSize);
 
@@ -473,7 +473,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
     memcpy(&fHorizScale, poOpenInfo->pabyHeader + 20, 4);
     CPL_LSBPTR32(&fHorizScale);
 
-    GUInt32 nExtendedHeaderLen;
+    uint32_t nExtendedHeaderLen;
     memcpy(&nExtendedHeaderLen, poOpenInfo->pabyHeader + 24, 4);
     CPL_LSBPTR32(&nExtendedHeaderLen);
 
@@ -516,16 +516,16 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
     double dfMinY = 0.0;
     double dfMaxY = 0.0;
     int bHasUTMZone = FALSE;
-    GInt16 nUTMZone = 0;
+    int16_t nUTMZone = 0;
     int bHasEPSGDatumCode = FALSE;
-    GInt16 nEPSGDatumCode = 0;
+    int16_t nEPSGDatumCode = 0;
     int bHasEPSGCode = FALSE;
-    GInt16 nEPSGCode = 0;
+    int16_t nEPSGCode = 0;
     int bHasRelativePrecision = FALSE;
     float fRelativePrecision = 0.0f;
     char szApplicationName[256] = {0};
 
-    GUInt32 nExtendedHeaderOff = 0;
+    uint32_t nExtendedHeaderOff = 0;
     while (nExtendedHeaderOff < nExtendedHeaderLen)
     {
         char pabyBlockHeader[24];
@@ -534,7 +534,7 @@ GDALDataset *HF2Dataset::Open(GDALOpenInfo *poOpenInfo)
         char szBlockName[16 + 1];
         memcpy(szBlockName, pabyBlockHeader + 4, 16);
         szBlockName[16] = 0;
-        GUInt32 nBlockSize;
+        uint32_t nBlockSize;
         memcpy(&nBlockSize, pabyBlockHeader + 20, 4);
         CPL_LSBPTR32(&nBlockSize);
         if (nBlockSize > 65536)
@@ -705,13 +705,13 @@ CPLErr HF2Dataset::GetGeoTransform(double *padfTransform)
     return CE_None;
 }
 
-static void WriteShort(VSILFILE *fp, GInt16 val)
+static void WriteShort(VSILFILE *fp, int16_t val)
 {
     CPL_LSBPTR16(&val);
     VSIFWriteL(&val, 2, 1, fp);
 }
 
-static void WriteInt(VSILFILE *fp, GInt32 val)
+static void WriteInt(VSILFILE *fp, int32_t val)
 {
     CPL_LSBPTR32(&val);
     VSIFWriteL(&val, 4, 1, fp);
@@ -915,7 +915,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
     WriteShort(fp, 0);
     WriteInt(fp, nXSize);
     WriteInt(fp, nYSize);
-    WriteShort(fp, (GInt16)nTileSize);
+    WriteShort(fp, (int16_t)nTileSize);
     WriteFloat(fp, fVertPres);
     const float fHorizScale =
         (float)((fabs(adfGeoTransform[1]) + fabs(adfGeoTransform[5])) / 2);
@@ -934,7 +934,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
         strcpy(szBlockName, "georef-extents");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 34);
-        WriteShort(fp, (GInt16)nExtentUnits);
+        WriteShort(fp, (int16_t)nExtentUnits);
         WriteDouble(fp, adfGeoTransform[0]);
         WriteDouble(fp, adfGeoTransform[0] + nXSize * adfGeoTransform[1]);
         WriteDouble(fp, adfGeoTransform[3] + nYSize * adfGeoTransform[5]);
@@ -947,7 +947,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
         strcpy(szBlockName, "georef-utm");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
-        WriteShort(fp, (GInt16)((bNorth) ? nUTMZone : -nUTMZone));
+        WriteShort(fp, (int16_t)((bNorth) ? nUTMZone : -nUTMZone));
     }
     if (nDatumCode != -2)
     {
@@ -956,7 +956,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
         strcpy(szBlockName, "georef-datum");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
-        WriteShort(fp, (GInt16)nDatumCode);
+        WriteShort(fp, (int16_t)nDatumCode);
     }
     if (nEPSGCode != 0)
     {
@@ -965,7 +965,7 @@ GDALDataset *HF2Dataset::CreateCopy(const char *pszFilename,
         strcpy(szBlockName, "georef-epsg-prj");
         VSIFWriteL(szBlockName, 16, 1, fp);
         WriteInt(fp, 2);
-        WriteShort(fp, (GInt16)nEPSGCode);
+        WriteShort(fp, (int16_t)nEPSGCode);
     }
 
     /* -------------------------------------------------------------------- */

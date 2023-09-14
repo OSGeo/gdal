@@ -97,10 +97,10 @@ static int OGRGeoPackageDriverIdentify(GDALOpenInfo *poOpenInfo,
     /* Requirement 2: application id */
     /* http://opengis.github.io/geopackage/#_file_format */
     /* Be tolerant since some datasets don't actually follow that requirement */
-    GUInt32 nApplicationId;
+    uint32_t nApplicationId;
     memcpy(&nApplicationId, poOpenInfo->pabyHeader + knApplicationIdPos, 4);
     nApplicationId = CPL_MSBWORD32(nApplicationId);
-    GUInt32 nUserVersion;
+    uint32_t nUserVersion;
     memcpy(&nUserVersion, poOpenInfo->pabyHeader + knUserVersionPos, 4);
     nUserVersion = CPL_MSBWORD32(nUserVersion);
     if (nApplicationId != GP10_APPLICATION_ID &&

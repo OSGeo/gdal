@@ -177,9 +177,9 @@ static CPLErr GDALResampleChunk_Near(
     else if (eWrkDataType == GDT_UInt16)
         return GDALResampleChunk_NearT(
             dfXRatioDstToSrc, dfYRatioDstToSrc, eWrkDataType,
-            static_cast<const GInt16 *>(pChunk), nChunkXOff, nChunkXSize,
+            static_cast<const int16_t *>(pChunk), nChunkXOff, nChunkXSize,
             nChunkYOff, nDstXOff, nDstXOff2, nDstYOff, nDstYOff2,
-            reinterpret_cast<GInt16 **>(ppDstBuffer));
+            reinterpret_cast<int16_t **>(ppDstBuffer));
     else if (eWrkDataType == GDT_Float32)
         return GDALResampleChunk_NearT(
             dfXRatioDstToSrc, dfYRatioDstToSrc, eWrkDataType,
@@ -265,22 +265,22 @@ static double GetReplacementValueIfNoData(GDALDataType dt, bool bHasNoData,
         }
         else if (dt == GDT_Int8)
         {
-            if (dfNoDataValue == std::numeric_limits<GInt8>::max())
-                dfReplacementVal = std::numeric_limits<GInt8>::max() - 1;
+            if (dfNoDataValue == std::numeric_limits<int8_t>::max())
+                dfReplacementVal = std::numeric_limits<int8_t>::max() - 1;
             else
                 dfReplacementVal = dfNoDataValue + 1;
         }
         else if (dt == GDT_UInt16)
         {
-            if (dfNoDataValue == std::numeric_limits<GUInt16>::max())
-                dfReplacementVal = std::numeric_limits<GUInt16>::max() - 1;
+            if (dfNoDataValue == std::numeric_limits<uint16_t>::max())
+                dfReplacementVal = std::numeric_limits<uint16_t>::max() - 1;
             else
                 dfReplacementVal = dfNoDataValue + 1;
         }
         else if (dt == GDT_Int16)
         {
-            if (dfNoDataValue == std::numeric_limits<GInt16>::max())
-                dfReplacementVal = std::numeric_limits<GInt16>::max() - 1;
+            if (dfNoDataValue == std::numeric_limits<int16_t>::max())
+                dfReplacementVal = std::numeric_limits<int16_t>::max() - 1;
             else
                 dfReplacementVal = dfNoDataValue + 1;
         }
@@ -289,7 +289,7 @@ static double GetReplacementValueIfNoData(GDALDataType dt, bool bHasNoData,
             // Be careful to limited precision of float
             dfReplacementVal = dfNoDataValue + 1;
             double dfVal = dfNoDataValue;
-            if (dfReplacementVal >= std::numeric_limits<GUInt32>::max() - 128)
+            if (dfReplacementVal >= std::numeric_limits<uint32_t>::max() - 128)
             {
                 while (dfReplacementVal == dfNoDataValue)
                 {
@@ -311,7 +311,7 @@ static double GetReplacementValueIfNoData(GDALDataType dt, bool bHasNoData,
             // Be careful to limited precision of float
             dfReplacementVal = dfNoDataValue + 1;
             double dfVal = dfNoDataValue;
-            if (dfReplacementVal >= std::numeric_limits<GInt32>::max() - 64)
+            if (dfReplacementVal >= std::numeric_limits<int32_t>::max() - 64)
             {
                 while (dfReplacementVal == dfNoDataValue)
                 {
@@ -397,17 +397,17 @@ template <> inline GByte ComputeIntegerRMS_4values<GByte, int>(int sumSquares)
 }
 
 template <>
-inline GUInt16 ComputeIntegerRMS_4values<GUInt16, double>(double sumSquares)
+inline uint16_t ComputeIntegerRMS_4values<uint16_t, double>(double sumSquares)
 {
     const double sumDivWeight = sumSquares * 0.25;
-    GUInt16 rms = static_cast<GUInt16>(std::sqrt(sumDivWeight));
+    uint16_t rms = static_cast<uint16_t>(std::sqrt(sumDivWeight));
 
     // Is rms**2 or (rms+1)**2 closest to sumSquares / weight ?
     // Naive version:
     // if( weight * (rms+1)**2 - sumSquares < sumSquares - weight * rms**2 )
     // Optimized version for integer case and weight == 4
-    if (static_cast<GUInt32>(rms) * (rms + 1) <
-        static_cast<GUInt32>(sumDivWeight + 0.25))
+    if (static_cast<uint32_t>(rms) * (rms + 1) <
+        static_cast<uint32_t>(sumDivWeight + 0.25))
         rms += 1;
     return rms;
 }
@@ -1829,10 +1829,10 @@ static CPLErr GDALResampleChunk_AverageOrRMS(
         if (EQUAL(pszResampling, "RMS"))
         {
             // Use double as accumulation type, because UInt32 could overflow
-            return GDALResampleChunk_AverageOrRMS_T<GUInt16, double,
+            return GDALResampleChunk_AverageOrRMS_T<uint16_t, double,
                                                     GDT_UInt16>(
                 dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-                static_cast<const GUInt16 *>(pChunk), pabyChunkNodataMask,
+                static_cast<const uint16_t *>(pChunk), pabyChunkNodataMask,
                 nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
                 nDstXOff2, nDstYOff, nDstYOff2, poOverview, ppDstBuffer,
                 pszResampling, bHasNoData, dfNoDataValue, poColorTable,
@@ -1840,10 +1840,10 @@ static CPLErr GDALResampleChunk_AverageOrRMS(
         }
         else
         {
-            return GDALResampleChunk_AverageOrRMS_T<GUInt16, GUInt32,
+            return GDALResampleChunk_AverageOrRMS_T<uint16_t, uint32_t,
                                                     GDT_UInt16>(
                 dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-                static_cast<const GUInt16 *>(pChunk), pabyChunkNodataMask,
+                static_cast<const uint16_t *>(pChunk), pabyChunkNodataMask,
                 nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
                 nDstXOff2, nDstYOff, nDstYOff2, poOverview, ppDstBuffer,
                 pszResampling, bHasNoData, dfNoDataValue, poColorTable,
@@ -2432,12 +2432,12 @@ static CPLErr GDALResampleChunk_Mode(
     }
     else if (eWrkDataType == GDT_UInt16)
     {
-        return GDALResampleChunk_Mode_T<GUInt16>(
+        return GDALResampleChunk_Mode_T<uint16_t>(
             dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-            static_cast<const GUInt16 *>(pChunk), pabyChunkNodataMask,
+            static_cast<const uint16_t *>(pChunk), pabyChunkNodataMask,
             nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
             nDstXOff2, nDstYOff, nDstYOff2,
-            static_cast<GUInt16 *>(*ppDstBuffer), bHasNoData, dfNoDataValue,
+            static_cast<uint16_t *>(*ppDstBuffer), bHasNoData, dfNoDataValue,
             poColorTable, eSrcDataType);
     }
     else if (eWrkDataType == GDT_Float32)
@@ -2808,8 +2808,10 @@ inline double GDALResampleConvolutionHorizontal<GByte>(
 }
 
 template <>
-inline double GDALResampleConvolutionHorizontal<GUInt16>(
-    const GUInt16 *pChunk, const double *padfWeightsAligned, int nSrcPixelCount)
+inline double
+GDALResampleConvolutionHorizontal<uint16_t>(const uint16_t *pChunk,
+                                            const double *padfWeightsAligned,
+                                            int nSrcPixelCount)
 {
     return GDALResampleConvolutionHorizontalSSE2(pChunk, padfWeightsAligned,
                                                  nSrcPixelCount);
@@ -2864,8 +2866,8 @@ inline void GDALResampleConvolutionHorizontalWithMask<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontalWithMask<GUInt16>(
-    const GUInt16 *pChunk, const GByte *pabyMask,
+inline void GDALResampleConvolutionHorizontalWithMask<uint16_t>(
+    const uint16_t *pChunk, const GByte *pabyMask,
     const double *padfWeightsAligned, int nSrcPixelCount, double &dfVal,
     double &dfWeightSum)
 {
@@ -2939,9 +2941,9 @@ inline void GDALResampleConvolutionHorizontal_3rows<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontal_3rows<GUInt16>(
-    const GUInt16 *pChunkRow1, const GUInt16 *pChunkRow2,
-    const GUInt16 *pChunkRow3, const double *padfWeightsAligned,
+inline void GDALResampleConvolutionHorizontal_3rows<uint16_t>(
+    const uint16_t *pChunkRow1, const uint16_t *pChunkRow2,
+    const uint16_t *pChunkRow3, const double *padfWeightsAligned,
     int nSrcPixelCount, double &dfRes1, double &dfRes2, double &dfRes3)
 {
     GDALResampleConvolutionHorizontal_3rows_SSE2(
@@ -3005,9 +3007,9 @@ inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<GUInt16>(
-    const GUInt16 *pChunkRow1, const GUInt16 *pChunkRow2,
-    const GUInt16 *pChunkRow3, const double *padfWeightsAligned,
+inline void GDALResampleConvolutionHorizontalPixelCountLess8_3rows<uint16_t>(
+    const uint16_t *pChunkRow1, const uint16_t *pChunkRow2,
+    const uint16_t *pChunkRow3, const double *padfWeightsAligned,
     int nSrcPixelCount, double &dfRes1, double &dfRes2, double &dfRes3)
 {
     GDALResampleConvolutionHorizontalPixelCountLess8_3rows_SSE2(
@@ -3058,10 +3060,10 @@ inline void GDALResampleConvolutionHorizontalPixelCount4_3rows<GByte>(
 }
 
 template <>
-inline void GDALResampleConvolutionHorizontalPixelCount4_3rows<GUInt16>(
-    const GUInt16 *pChunkRow1, const GUInt16 *pChunkRow2,
-    const GUInt16 *pChunkRow3, const double *padfWeightsAligned, double &dfRes1,
-    double &dfRes2, double &dfRes3)
+inline void GDALResampleConvolutionHorizontalPixelCount4_3rows<uint16_t>(
+    const uint16_t *pChunkRow1, const uint16_t *pChunkRow2,
+    const uint16_t *pChunkRow3, const double *padfWeightsAligned,
+    double &dfRes1, double &dfRes2, double &dfRes3)
 {
     GDALResampleConvolutionHorizontalPixelCount4_3rows_SSE2(
         pChunkRow1, pChunkRow2, pChunkRow3, padfWeightsAligned, dfRes1, dfRes2,
@@ -3106,30 +3108,30 @@ static CPLErr GDALResampleChunk_ConvolutionT(
     }
     else if (dstDataType == GDT_Int8)
     {
-        fDstMin = std::numeric_limits<GInt8>::min();
-        fDstMax = std::numeric_limits<GInt8>::max();
+        fDstMin = std::numeric_limits<int8_t>::min();
+        fDstMax = std::numeric_limits<int8_t>::max();
     }
     else if (dstDataType == GDT_UInt16)
     {
-        fDstMin = std::numeric_limits<GUInt16>::min();
-        fDstMax = std::numeric_limits<GUInt16>::max();
+        fDstMin = std::numeric_limits<uint16_t>::min();
+        fDstMax = std::numeric_limits<uint16_t>::max();
     }
     else if (dstDataType == GDT_Int16)
     {
-        fDstMin = std::numeric_limits<GInt16>::min();
-        fDstMax = std::numeric_limits<GInt16>::max();
+        fDstMin = std::numeric_limits<int16_t>::min();
+        fDstMax = std::numeric_limits<int16_t>::max();
     }
     else if (dstDataType == GDT_UInt32)
     {
-        fDstMin = static_cast<Twork>(std::numeric_limits<GUInt32>::min());
-        fDstMax = static_cast<Twork>(std::numeric_limits<GUInt32>::max());
+        fDstMin = static_cast<Twork>(std::numeric_limits<uint32_t>::min());
+        fDstMax = static_cast<Twork>(std::numeric_limits<uint32_t>::max());
     }
     else if (dstDataType == GDT_Int32)
     {
         // cppcheck-suppress unreadVariable
-        fDstMin = static_cast<Twork>(std::numeric_limits<GInt32>::min());
+        fDstMin = static_cast<Twork>(std::numeric_limits<int32_t>::min());
         // cppcheck-suppress unreadVariable
-        fDstMax = static_cast<Twork>(std::numeric_limits<GInt32>::max());
+        fDstMax = static_cast<Twork>(std::numeric_limits<int32_t>::max());
     }
 
     auto replaceValIfNodata = [bHasNoData, isIntegerDT, fDstMin, fDstMax,
@@ -3735,9 +3737,9 @@ static CPLErr GDALResampleChunk_Convolution(
             bHasNoData, dfNoDataValue, pfnFilterFunc, pfnFilterFunc4Values,
             nKernelRadius, bKernelWithNegativeWeights, fMaxVal);
     else if (eWrkDataType == GDT_UInt16)
-        return GDALResampleChunk_ConvolutionT<GUInt16, float, GDT_Float32>(
+        return GDALResampleChunk_ConvolutionT<uint16_t, float, GDT_Float32>(
             dfXRatioDstToSrc, dfYRatioDstToSrc, dfSrcXDelta, dfSrcYDelta,
-            static_cast<const GUInt16 *>(pChunk), 1, pabyChunkNodataMask,
+            static_cast<const uint16_t *>(pChunk), 1, pabyChunkNodataMask,
             nChunkXOff, nChunkXSize, nChunkYOff, nChunkYSize, nDstXOff,
             nDstXOff2, nDstYOff, nDstYOff2, poOverview, *ppDstBuffer,
             bHasNoData, dfNoDataValue, pfnFilterFunc, pfnFilterFunc4Values,
@@ -4766,7 +4768,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             }
             else if (eWrkDataType == GDT_UInt16)
             {
-                GUInt16 *pasChunk = static_cast<GUInt16 *>(pChunk);
+                uint16_t *pasChunk = static_cast<uint16_t *>(pChunk);
                 for (GPtrDiff_t i = 0;
                      i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
@@ -4821,7 +4823,7 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             }
             else if (eWrkDataType == GDT_UInt16)
             {
-                GUInt16 *pasChunk = static_cast<GUInt16 *>(pChunk);
+                uint16_t *pasChunk = static_cast<uint16_t *>(pChunk);
                 for (GPtrDiff_t i = 0;
                      i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)

@@ -86,7 +86,7 @@ static bool WriteSByte(VSILFILE *fp, int nVal)
 
 static bool WriteUInt16(VSILFILE *fp, int nVal)
 {
-    GUInt16 usVal = static_cast<GUInt16>(nVal);
+    uint16_t usVal = static_cast<uint16_t>(nVal);
     CPL_MSBPTR16(&usVal);
     return VSIFWriteL(&usVal, 1, sizeof(usVal), fp) == sizeof(usVal);
 }
@@ -97,11 +97,11 @@ static bool WriteUInt16(VSILFILE *fp, int nVal)
 
 static bool WriteInt16(VSILFILE *fp, int nVal)
 {
-    GInt16 sVal = static_cast<GInt16>(nVal);
-    if (sVal == std::numeric_limits<GInt16>::min())
-        sVal = std::numeric_limits<GInt16>::min() + 1;
-    GUInt16 nUnsignedVal = (sVal < 0) ? static_cast<GUInt16>(-sVal) | 0x8000U
-                                      : static_cast<GUInt16>(sVal);
+    int16_t sVal = static_cast<int16_t>(nVal);
+    if (sVal == std::numeric_limits<int16_t>::min())
+        sVal = std::numeric_limits<int16_t>::min() + 1;
+    uint16_t nUnsignedVal = (sVal < 0) ? static_cast<uint16_t>(-sVal) | 0x8000U
+                                       : static_cast<uint16_t>(sVal);
     CPL_MSBPTR16(&nUnsignedVal);
     return VSIFWriteL(&nUnsignedVal, 1, sizeof(nUnsignedVal), fp) ==
            sizeof(nUnsignedVal);
@@ -111,7 +111,7 @@ static bool WriteInt16(VSILFILE *fp, int nVal)
 /*                             WriteUInt32()                            */
 /************************************************************************/
 
-static bool WriteUInt32(VSILFILE *fp, GUInt32 nVal)
+static bool WriteUInt32(VSILFILE *fp, uint32_t nVal)
 {
     CPL_MSBPTR32(&nVal);
     return VSIFWriteL(&nVal, 1, sizeof(nVal), fp) == sizeof(nVal);
@@ -121,13 +121,13 @@ static bool WriteUInt32(VSILFILE *fp, GUInt32 nVal)
 /*                             WriteInt32()                             */
 /************************************************************************/
 
-static bool WriteInt32(VSILFILE *fp, GInt32 nVal)
+static bool WriteInt32(VSILFILE *fp, int32_t nVal)
 {
-    if (nVal == std::numeric_limits<GInt32>::min())
-        nVal = std::numeric_limits<GInt32>::min() + 1;
-    GUInt32 nUnsignedVal = (nVal < 0)
-                               ? static_cast<GUInt32>(-nVal) | 0x80000000U
-                               : static_cast<GUInt32>(nVal);
+    if (nVal == std::numeric_limits<int32_t>::min())
+        nVal = std::numeric_limits<int32_t>::min() + 1;
+    uint32_t nUnsignedVal = (nVal < 0)
+                                ? static_cast<uint32_t>(-nVal) | 0x80000000U
+                                : static_cast<uint32_t>(nVal);
     CPL_MSBPTR32(&nUnsignedVal);
     return VSIFWriteL(&nUnsignedVal, 1, sizeof(nUnsignedVal), fp) ==
            sizeof(nUnsignedVal);
@@ -151,7 +151,7 @@ static void PatchSectionSize(VSILFILE *fp, vsi_l_offset nStartSection)
 {
     vsi_l_offset nCurOffset = VSIFTellL(fp);
     VSIFSeekL(fp, nStartSection, SEEK_SET);
-    GUInt32 nSect3Size = static_cast<GUInt32>(nCurOffset - nStartSection);
+    uint32_t nSect3Size = static_cast<uint32_t>(nCurOffset - nStartSection);
     WriteUInt32(fp, nSect3Size);
     VSIFSeekL(fp, nCurOffset, SEEK_SET);
 }
@@ -257,7 +257,7 @@ bool GRIB2Section3Writer::WriteEllipsoidAndRasterSize()
         // by data producer
         WriteByte(fp, 1);
         WriteByte(fp, 2);  // scale = * 100
-        WriteUInt32(fp, static_cast<GUInt32>(dfSemiMajor * 100 + 0.5));
+        WriteUInt32(fp, static_cast<uint32_t>(dfSemiMajor * 100 + 0.5));
         WriteByte(fp, GRIB2MISSING_u1);
         WriteUInt32(fp, GRIB2MISSING_u4);
         WriteByte(fp, GRIB2MISSING_u1);
@@ -271,9 +271,9 @@ bool GRIB2Section3Writer::WriteEllipsoidAndRasterSize()
         WriteByte(fp, GRIB2MISSING_u1);
         WriteUInt32(fp, GRIB2MISSING_u4);
         WriteByte(fp, 2);  // scale = * 100
-        WriteUInt32(fp, static_cast<GUInt32>(dfSemiMajor * 100 + 0.5));
+        WriteUInt32(fp, static_cast<uint32_t>(dfSemiMajor * 100 + 0.5));
         WriteByte(fp, 2);  // scale = * 100
-        WriteUInt32(fp, static_cast<GUInt32>(dfSemiMinor * 100 + 0.5));
+        WriteUInt32(fp, static_cast<uint32_t>(dfSemiMinor * 100 + 0.5));
     }
     WriteUInt32(fp, poSrcDS->GetRasterXSize());
     WriteUInt32(fp, poSrcDS->GetRasterYSize());
@@ -287,7 +287,7 @@ bool GRIB2Section3Writer::WriteEllipsoidAndRasterSize()
 
 bool GRIB2Section3Writer::WriteScaled(double dfVal, double dfUnit)
 {
-    return WriteInt32(fp, static_cast<GInt32>(floor(dfVal / dfUnit + 0.5)));
+    return WriteInt32(fp, static_cast<int32_t>(floor(dfVal / dfUnit + 0.5)));
 }
 
 /************************************************************************/
@@ -627,8 +627,8 @@ bool GRIB2Section3Writer::Write()
     // Source of grid definition = Specified in Code Table 3.1
     WriteByte(fp, 0);
 
-    const GUInt32 nDataPoints =
-        static_cast<GUInt32>(poSrcDS->GetRasterXSize()) *
+    const uint32_t nDataPoints =
+        static_cast<uint32_t>(poSrcDS->GetRasterXSize()) *
         poSrcDS->GetRasterYSize();
     WriteUInt32(fp, nDataPoints);
 
@@ -719,7 +719,7 @@ class GRIB2Section567Writer
     int m_nBand;
     int m_nXSize;
     int m_nYSize;
-    GUInt32 m_nDataPoints;
+    uint32_t m_nDataPoints;
     GDALDataType m_eDT;
     double m_adfGeoTransform[6];
     int m_nDecimalScaleFactor;
@@ -758,7 +758,7 @@ GRIB2Section567Writer::GRIB2Section567Writer(VSILFILE *fp, GDALDataset *poSrcDS,
                                              int nBand, int nSplitAndSwap)
     : m_fp(fp), m_poSrcDS(poSrcDS), m_nBand(nBand),
       m_nXSize(poSrcDS->GetRasterXSize()), m_nYSize(poSrcDS->GetRasterYSize()),
-      m_nDataPoints(static_cast<GUInt32>(m_nXSize) * m_nYSize),
+      m_nDataPoints(static_cast<uint32_t>(m_nXSize) * m_nYSize),
       m_eDT(m_poSrcDS->GetRasterBand(m_nBand)->GetRasterDataType()),
       m_nDecimalScaleFactor(0), m_dfDecimalScale(1.0), m_fMin(0.0f),
       m_fMax(0.0f), m_dfMinScaled(0.0), m_nBits(0), m_bUseZeroBits(false),
@@ -817,7 +817,7 @@ float *GRIB2Section567Writer::GetFloatData()
     m_fMax = -std::numeric_limits<float>::max();
     bool bHasNoDataValuePoint = false;
     bool bHasDataValuePoint = false;
-    for (GUInt32 i = 0; i < m_nDataPoints; i++)
+    for (uint32_t i = 0; i < m_nDataPoints; i++)
     {
         if (m_bHasNoData && pafData[i] == static_cast<float>(m_dfNoData))
         {
@@ -904,7 +904,7 @@ bool GRIB2Section567Writer::WriteSimplePacking()
                                                : GDALGetDataTypeSize(m_eDT) +
                                                      nBitCorrectionForDec));
     if (nMaxBitsPerElt > 0 &&
-        m_nDataPoints > static_cast<GUInt32>(INT_MAX) / nMaxBitsPerElt)
+        m_nDataPoints > static_cast<uint32_t>(INT_MAX) / nMaxBitsPerElt)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Int overflow while computing maximum number of bits");
@@ -977,7 +977,7 @@ bool GRIB2Section567Writer::WriteSimplePacking()
             WriteUInt32(m_fp, 6 + ((m_nDataPoints + 7) / 8));  // section size
             WriteByte(m_fp, 6);                                // section number
             WriteByte(m_fp, 0);                                // bitmap
-            for (GUInt32 i = 0; i < (m_nDataPoints + 7) / 8; i++)
+            for (uint32_t i = 0; i < (m_nDataPoints + 7) / 8; i++)
                 WriteByte(m_fp, 255);
         }
         else
@@ -1107,7 +1107,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
                                                : GDALGetDataTypeSize(m_eDT) +
                                                      nBitCorrectionForDec));
     if (nMaxBitsPerElt > 0 &&
-        m_nDataPoints > static_cast<GUInt32>(INT_MAX) / nMaxBitsPerElt)
+        m_nDataPoints > static_cast<uint32_t>(INT_MAX) / nMaxBitsPerElt)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Int overflow while computing maximum number of bits");
@@ -1135,7 +1135,7 @@ bool GRIB2Section567Writer::WriteComplexPacking(int nSpatialDifferencingOrder)
     }
     const int nMaxNum = (m_nBits == 31) ? INT_MAX : ((1 << m_nBits) - 1);
     double dfTemp = log(nMaxNum / dfScaledMaxDiff) / log(2.0);
-    int nBinaryScaleFactor = static_cast<GInt16>(ceil(-dfTemp));
+    int nBinaryScaleFactor = static_cast<int16_t>(ceil(-dfTemp));
 
     // Indices expected by cmplxpack()
     enum
@@ -1270,7 +1270,7 @@ bool GRIB2Section567Writer::WriteIEEE(GDALProgressFunc pfnProgress,
     // Section 7: Data Section
     const size_t nBufferSize = m_nXSize * GDALGetDataTypeSizeBytes(eReqDT);
     // section size
-    WriteUInt32(m_fp, static_cast<GUInt32>(5 + nBufferSize * m_nYSize));
+    WriteUInt32(m_fp, static_cast<uint32_t>(5 + nBufferSize * m_nYSize));
     WriteByte(m_fp, 7);  // section number
     void *pData = CPLMalloc(nBufferSize);
     // coverity[divide_by_zero]
@@ -1386,16 +1386,16 @@ static int GetRoundedToUpperPowerOfTwo(int nBits)
 /*                             GetScaledData()                          */
 /************************************************************************/
 
-static GUInt16 *GetScaledData(GUInt32 nDataPoints, const float *pafData,
-                              float fMin, float fMax, double dfDecimalScale,
-                              double dfMinScaled,
-                              bool bOnlyPowerOfTwoDepthAllowed, int &nBits,
-                              GInt16 &nBinaryScaleFactor)
+static uint16_t *GetScaledData(uint32_t nDataPoints, const float *pafData,
+                               float fMin, float fMax, double dfDecimalScale,
+                               double dfMinScaled,
+                               bool bOnlyPowerOfTwoDepthAllowed, int &nBits,
+                               int16_t &nBinaryScaleFactor)
 {
     bool bDone = false;
     nBinaryScaleFactor = 0;
-    GUInt16 *panData = static_cast<GUInt16 *>(
-        VSI_MALLOC2_VERBOSE(nDataPoints, sizeof(GUInt16)));
+    uint16_t *panData = static_cast<uint16_t *>(
+        VSI_MALLOC2_VERBOSE(nDataPoints, sizeof(uint16_t)));
     if (panData == nullptr)
     {
         return nullptr;
@@ -1415,9 +1415,9 @@ static GUInt16 *GetScaledData(GUInt32 nDataPoints, const float *pafData,
         else
         {
             bDone = true;
-            for (GUInt32 i = 0; i < nDataPoints; i++)
+            for (uint32_t i = 0; i < nDataPoints; i++)
             {
-                panData[i] = static_cast<GUInt16>(
+                panData[i] = static_cast<uint16_t>(
                     0.5 + (pafData[i] * dfDecimalScale - dfMinScaled));
             }
         }
@@ -1436,11 +1436,11 @@ static GUInt16 *GetScaledData(GUInt32 nDataPoints, const float *pafData,
         }
         const int nMaxNum = (1 << nBits) - 1;
         double dfTemp = log(nMaxNum / dfScaledMaxDiff) / log(2.0);
-        nBinaryScaleFactor = static_cast<GInt16>(ceil(-dfTemp));
+        nBinaryScaleFactor = static_cast<int16_t>(ceil(-dfTemp));
         double dfBinaryScale = pow(2.0, -1.0 * nBinaryScaleFactor);
-        for (GUInt32 i = 0; i < nDataPoints; i++)
+        for (uint32_t i = 0; i < nDataPoints; i++)
         {
-            panData[i] = static_cast<GUInt16>(
+            panData[i] = static_cast<uint16_t>(
                 0.5 +
                 (pafData[i] * dfDecimalScale - dfMinScaled) * dfBinaryScale);
         }
@@ -1498,8 +1498,8 @@ bool GRIB2Section567Writer::WritePNG()
         return false;
     }
 
-    GInt16 nBinaryScaleFactor = 0;
-    GUInt16 *panData =
+    int16_t nBinaryScaleFactor = 0;
+    uint16_t *panData =
         GetScaledData(m_nDataPoints, pafData, m_fMin, m_fMax, m_dfDecimalScale,
                       m_dfMinScaled, true, m_nBits, nBinaryScaleFactor);
     if (panData == nullptr)
@@ -1552,8 +1552,8 @@ bool GRIB2Section567Writer::WritePNG()
     // Section 7: Data Section
     vsi_l_offset nDataLength = 0;
     GByte *pabyData = VSIGetMemFileBuffer(osTmpFile, &nDataLength, FALSE);
-    WriteUInt32(m_fp, static_cast<GUInt32>(5 + nDataLength));  // section size
-    WriteByte(m_fp, 7);                                        // section number
+    WriteUInt32(m_fp, static_cast<uint32_t>(5 + nDataLength));  // section size
+    WriteByte(m_fp, 7);  // section number
     const size_t nDataLengthSize = static_cast<size_t>(nDataLength);
     const bool bOK =
         VSIFWriteL(pabyData, 1, nDataLengthSize, m_fp) == nDataLengthSize;
@@ -1635,8 +1635,8 @@ bool GRIB2Section567Writer::WriteJPEG2000(char **papszOptions)
         return false;
     }
 
-    GInt16 nBinaryScaleFactor = 0;
-    GUInt16 *panData =
+    int16_t nBinaryScaleFactor = 0;
+    uint16_t *panData =
         GetScaledData(m_nDataPoints, pafData, m_fMin, m_fMax, m_dfDecimalScale,
                       m_dfMinScaled, false, m_nBits, nBinaryScaleFactor);
     if (panData == nullptr)
@@ -1742,8 +1742,8 @@ bool GRIB2Section567Writer::WriteJPEG2000(char **papszOptions)
     // Section 7: Data Section
     vsi_l_offset nDataLength = 0;
     GByte *pabyData = VSIGetMemFileBuffer(osTmpFile, &nDataLength, FALSE);
-    WriteUInt32(m_fp, static_cast<GUInt32>(5 + nDataLength));  // section size
-    WriteByte(m_fp, 7);                                        // section number
+    WriteUInt32(m_fp, static_cast<uint32_t>(5 + nDataLength));  // section size
+    WriteByte(m_fp, 7);  // section number
     const size_t nDataLengthSize = static_cast<size_t>(nDataLength);
     const bool bOK =
         VSIFWriteL(pabyData, 1, nDataLengthSize, m_fp) == nDataLengthSize;
@@ -2018,12 +2018,12 @@ static void WriteSection1(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
     WriteUInt32(fp, 21);  // section size
     WriteByte(fp, 1);     // section number
 
-    GUInt16 nCenter = static_cast<GUInt16>(
+    uint16_t nCenter = static_cast<uint16_t>(
         atoi(GetIDSOption(papszOptions, poSrcDS, nBand, "CENTER",
                           CPLSPrintf("%d", GRIB2MISSING_u1))));
     WriteUInt16(fp, nCenter);
 
-    GUInt16 nSubCenter = static_cast<GUInt16>(
+    uint16_t nSubCenter = static_cast<uint16_t>(
         atoi(GetIDSOption(papszOptions, poSrcDS, nBand, "SUBCENTER",
                           CPLSPrintf("%d", GRIB2MISSING_u2))));
     WriteUInt16(fp, nSubCenter);
@@ -2111,7 +2111,7 @@ static void WriteAssembledPDS(VSILFILE *fp, const gtemplate *mappds,
                          "in [0,%d] range",
                          nBigVal, i, INT_MAX);
             }
-            WriteUInt32(fp, static_cast<GUInt32>(nBigVal));
+            WriteUInt32(fp, static_cast<uint32_t>(nBigVal));
         }
         else if (nEltSize == -1)
         {
@@ -2576,8 +2576,8 @@ GDALDataset *GRIBDataset::CreateCopy(const char *pszFilename,
                 VSIFCloseL(fp);
                 return nullptr;
             }
-            GUInt32 nTotalSize =
-                static_cast<GUInt32>(nCurOffset - nStartOffset);
+            uint32_t nTotalSize =
+                static_cast<uint32_t>(nCurOffset - nStartOffset);
             VSIFSeekL(fp, nTotalSizeOffset, SEEK_SET);
             WriteUInt32(fp, 0);           // file size (high 32 bits)
             WriteUInt32(fp, nTotalSize);  // file size (low 32 bits)

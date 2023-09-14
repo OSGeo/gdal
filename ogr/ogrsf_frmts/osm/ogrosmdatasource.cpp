@@ -1323,7 +1323,7 @@ static void WriteVarInt64(GUIntBig nVal, std::vector<GByte> &abyData)
 {
     while (true)
     {
-        if ((((GUInt32)nVal) & (~0x7fU)) == 0)
+        if ((((uint32_t)nVal) & (~0x7fU)) == 0)
         {
             abyData.push_back((GByte)nVal);
             return;

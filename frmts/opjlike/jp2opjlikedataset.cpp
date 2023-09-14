@@ -941,14 +941,14 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::Close()
                         abyBuffer[0] == 0 && abyBuffer[1] == 0 &&
                         abyBuffer[2] == 0 && abyBuffer[3] == 0)
                     {
-                        if ((vsi_l_offset)(GUInt32)(nLengthJP2C + 8) ==
+                        if ((vsi_l_offset)(uint32_t)(nLengthJP2C + 8) ==
                             (nLengthJP2C + 8))
                         {
                             CPLDebug(
                                 CODEC::debugId(),
                                 "Patching length of JP2C box with real length");
                             VSIFSeekL(this->fp_, nOffsetJP2C - 8, SEEK_SET);
-                            GUInt32 nLength = (GUInt32)nLengthJP2C + 8;
+                            uint32_t nLength = (uint32_t)nLengthJP2C + 8;
                             CPL_MSBPTR32(&nLength);
                             if (VSIFWriteL(&nLength, 1, 4, this->fp_) != 1)
                                 eErr = CE_Failure;
@@ -1551,10 +1551,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
                                 if (pabyContent[0] ==
                                     1 /* enumerated colourspace */)
                                 {
-                                    GUInt32 enumcs = (pabyContent[3] << 24) |
-                                                     (pabyContent[4] << 16) |
-                                                     (pabyContent[5] << 8) |
-                                                     (pabyContent[6]);
+                                    uint32_t enumcs = (pabyContent[3] << 24) |
+                                                      (pabyContent[4] << 16) |
+                                                      (pabyContent[5] << 8) |
+                                                      (pabyContent[6]);
                                     if (enumcs == 16)
                                     {
                                         poDS->eColorSpace =
@@ -1884,8 +1884,8 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::Open(GDALOpenInfo *poOpenInfo)
 template <typename CODEC, typename BASE>
 bool JP2OPJLikeDataset<CODEC, BASE>::WriteBox(VSILFILE *fp, GDALJP2Box *poBox)
 {
-    GUInt32 nLBox;
-    GUInt32 nTBox;
+    uint32_t nLBox;
+    uint32_t nTBox;
 
     if (poBox == nullptr)
         return true;
@@ -2852,7 +2852,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         ihdrBox.SetType("ihdr");
         ihdrBox.AppendUInt32(nYSize);
         ihdrBox.AppendUInt32(nXSize);
-        ihdrBox.AppendUInt16(static_cast<GUInt16>(nBands));
+        ihdrBox.AppendUInt16(static_cast<uint16_t>(nBands));
         GByte BPC;
         if (bSamePrecision)
             BPC = static_cast<GByte>((localctx.pasBandParams[0].prec - 1) |
@@ -2883,7 +2883,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         colrBox.AppendUInt8(
             0); /* PREC: Precedence. 0=(field reserved for ISO use) */
         colrBox.AppendUInt8(0); /* APPROX: Colourspace approximation. */
-        GUInt32 enumcs = 16;
+        uint32_t enumcs = 16;
         if (eColorSpace == CODEC::cvtenum(JP2_CLRSPC_SRGB))
             enumcs = 16;
         else if (eColorSpace == CODEC::cvtenum(JP2_CLRSPC_GRAY))
@@ -2935,7 +2935,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
             nBlueBandIndex = 2;
             nAlphaBandIndex = (nCTComponentCount == 4) ? 3 : -1;
 
-            pclrBox.AppendUInt16(static_cast<GUInt16>(nEntries));
+            pclrBox.AppendUInt16(static_cast<uint16_t>(nEntries));
             pclrBox.AppendUInt8(static_cast<GByte>(
                 nCTComponentCount)); /* NPC: Number of components */
             for (int i = 0; i < nCTComponentCount; i++)
@@ -2972,11 +2972,11 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         {
             cdefBox.SetType("cdef");
             int nComponents = (nCTComponentCount == 4) ? 4 : nBands;
-            cdefBox.AppendUInt16(static_cast<GUInt16>(nComponents));
+            cdefBox.AppendUInt16(static_cast<uint16_t>(nComponents));
             for (int i = 0; i < nComponents; i++)
             {
                 cdefBox.AppendUInt16(
-                    static_cast<GUInt16>(i)); /* Component number */
+                    static_cast<uint16_t>(i)); /* Component number */
                 if (i != nAlphaBandIndex)
                 {
                     cdefBox.AppendUInt16(
@@ -3065,10 +3065,10 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
                     nXDenom *= 2;
                 }
 
-                oResd.AppendUInt16((GUInt16)dfYRes);
-                oResd.AppendUInt16((GUInt16)nYDenom);
-                oResd.AppendUInt16((GUInt16)dfXRes);
-                oResd.AppendUInt16((GUInt16)nXDenom);
+                oResd.AppendUInt16((uint16_t)dfYRes);
+                oResd.AppendUInt16((uint16_t)nYDenom);
+                oResd.AppendUInt16((uint16_t)dfXRes);
+                oResd.AppendUInt16((uint16_t)nXDenom);
                 oResd.AppendUInt8(2); /* vertical exponent */
                 oResd.AppendUInt8(2); /* horizontal exponent */
 
@@ -3164,15 +3164,15 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         // Start codestream box
         nStartJP2C = VSIFTellL(fp);
         if (nCodeStreamLength)
-            bUseXLBoxes =
-                ((vsi_l_offset)(GUInt32)nCodeStreamLength != nCodeStreamLength);
+            bUseXLBoxes = ((vsi_l_offset)(uint32_t)nCodeStreamLength !=
+                           nCodeStreamLength);
         else
             bUseXLBoxes = CPLFetchBool(papszOptions, "JP2C_XLBOX",
                                        false) || /* For debugging */
                           (GIntBig)nXSize * nYSize * nBands * nDataTypeSize /
                                   adfRates.back() >
                               4e9;
-        GUInt32 nLBox = (bUseXLBoxes) ? 1 : 0;
+        uint32_t nLBox = (bUseXLBoxes) ? 1 : 0;
         CPL_MSBPTR32(&nLBox);
         VSIFWriteL(&nLBox, 1, 4, fp);
         VSIFWriteL("jp2c", 1, 4, fp);
@@ -3581,7 +3581,7 @@ GDALDataset *JP2OPJLikeDataset<CODEC, BASE>::CreateCopy(
         }
         else
         {
-            GUInt32 nBoxSize32 = (GUInt32)nBoxSize;
+            uint32_t nBoxSize32 = (uint32_t)nBoxSize;
             if ((vsi_l_offset)nBoxSize32 != nBoxSize)
             {
                 /*  Should not happen hopefully */

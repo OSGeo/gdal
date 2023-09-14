@@ -741,12 +741,12 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
         {
             if (colDesc.nTypeCode == TUSHORT)
             {
-                ReadCol<GUInt16, int, TUSHORT>::Read(
+                ReadCol<uint16_t, int, TUSHORT>::Read(
                     m_poDS->m_hFITS, colDesc, iField, nRow, poFeature, nRepeat);
             }
             else
             {
-                ReadCol<GInt16, int, TSHORT>::Read(
+                ReadCol<int16_t, int, TSHORT>::Read(
                     m_poDS->m_hFITS, colDesc, iField, nRow, poFeature, nRepeat);
             }
         }
@@ -754,12 +754,12 @@ OGRFeature *FITSLayer::GetFeature(GIntBig nFID)
         {
             if (colDesc.nTypeCode == TUINT)
             {
-                ReadCol<GUInt32, GIntBig, TUINT>::Read(
+                ReadCol<uint32_t, GIntBig, TUINT>::Read(
                     m_poDS->m_hFITS, colDesc, iField, nRow, poFeature, nRepeat);
             }
             else
             {
-                ReadCol<GInt32, int, TINT>::Read(
+                ReadCol<int32_t, int, TINT>::Read(
                     m_poDS->m_hFITS, colDesc, iField, nRow, poFeature, nRepeat);
             }
         }
@@ -1527,7 +1527,7 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
             if (colDesc.nTypeCode == TUSHORT)
             {
                 status = WriteCol<
-                    GUInt16, int, TUSHORT, &OGRFeature::GetFieldAsInteger,
+                    uint16_t, int, TUSHORT, &OGRFeature::GetFieldAsInteger,
                     &OGRFeature::GetFieldAsIntegerList>::Write(m_poDS->m_hFITS,
                                                                colDesc, iField,
                                                                nRow, poFeature);
@@ -1535,7 +1535,7 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
             else
             {
                 status = WriteCol<
-                    GInt16, int, TSHORT, &OGRFeature::GetFieldAsInteger,
+                    int16_t, int, TSHORT, &OGRFeature::GetFieldAsInteger,
                     &OGRFeature::GetFieldAsIntegerList>::Write(m_poDS->m_hFITS,
                                                                colDesc, iField,
                                                                nRow, poFeature);
@@ -1546,7 +1546,7 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
             if (colDesc.nTypeCode == TUINT)
             {
                 status = WriteCol<
-                    GUInt32, GIntBig, TUINT, &OGRFeature::GetFieldAsInteger64,
+                    uint32_t, GIntBig, TUINT, &OGRFeature::GetFieldAsInteger64,
                     &OGRFeature::GetFieldAsInteger64List>::Write(m_poDS
                                                                      ->m_hFITS,
                                                                  colDesc,
@@ -1556,7 +1556,7 @@ bool FITSLayer::SetOrCreateFeature(const OGRFeature *poFeature, LONGLONG nRow)
             else
             {
                 status = WriteCol<
-                    GInt32, int, TINT, &OGRFeature::GetFieldAsInteger,
+                    int32_t, int, TINT, &OGRFeature::GetFieldAsInteger,
                     &OGRFeature::GetFieldAsIntegerList>::Write(m_poDS->m_hFITS,
                                                                colDesc, iField,
                                                                nRow, poFeature);

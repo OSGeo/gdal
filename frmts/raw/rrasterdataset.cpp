@@ -348,26 +348,27 @@ static void GetMinMax(const void *pBuffer, GDALDataType eDT, int nBufXSize,
                       nPixelSpace, nLineSpace, dfNoDataValue, dfMin, dfMax);
             break;
         case GDT_Int8:
-            GetMinMax(static_cast<const GInt8 *>(pBuffer), nBufXSize, nBufYSize,
-                      nPixelSpace, nLineSpace, dfNoDataValue, dfMin, dfMax);
+            GetMinMax(static_cast<const int8_t *>(pBuffer), nBufXSize,
+                      nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
+                      dfMax);
             break;
         case GDT_UInt16:
-            GetMinMax(static_cast<const GUInt16 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const uint16_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;
         case GDT_Int16:
-            GetMinMax(static_cast<const GInt16 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const int16_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;
         case GDT_UInt32:
-            GetMinMax(static_cast<const GUInt32 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const uint32_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;
         case GDT_Int32:
-            GetMinMax(static_cast<const GInt32 *>(pBuffer), nBufXSize,
+            GetMinMax(static_cast<const int32_t *>(pBuffer), nBufXSize,
                       nBufYSize, nPixelSpace, nLineSpace, dfNoDataValue, dfMin,
                       dfMax);
             break;

@@ -318,7 +318,7 @@ void EnvisatDataset::ScanForGCPs_ASAR()
     GByte abyRecord[521];
     int nRange = 0;
     int nRangeOffset = 0;
-    GUInt32 unValue;
+    uint32_t unValue;
 
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP), (nNumDSR + 1) * 11);
@@ -537,12 +537,12 @@ void EnvisatDataset::ScanForGCPs_MERIS()
 
     GByte *pabyRecord = (GByte *)CPLMalloc(nDSRSize - 13);
 
-    GUInt32 *tpLat = ((GUInt32 *)pabyRecord) + nTPPerLine * 0; /* latitude */
-    GUInt32 *tpLon = ((GUInt32 *)pabyRecord) + nTPPerLine * 1; /* longitude */
-    GUInt32 *tpLtc =
-        ((GUInt32 *)pabyRecord) + nTPPerLine * 4; /* lat. DEM correction */
-    GUInt32 *tpLnc =
-        ((GUInt32 *)pabyRecord) + nTPPerLine * 5; /* lon. DEM correction */
+    uint32_t *tpLat = ((uint32_t *)pabyRecord) + nTPPerLine * 0; /* latitude */
+    uint32_t *tpLon = ((uint32_t *)pabyRecord) + nTPPerLine * 1; /* longitude */
+    uint32_t *tpLtc =
+        ((uint32_t *)pabyRecord) + nTPPerLine * 4; /* lat. DEM correction */
+    uint32_t *tpLnc =
+        ((uint32_t *)pabyRecord) + nTPPerLine * 5; /* lon. DEM correction */
 
     nGCPCount = 0;
     pasGCPList = (GDAL_GCP *)CPLCalloc(sizeof(GDAL_GCP),
@@ -570,7 +570,7 @@ void EnvisatDataset::ScanForGCPs_MERIS()
             snprintf(szId, sizeof(szId), "%d", nGCPCount + 1);
             pasGCPList[nGCPCount].pszId = CPLStrdup(szId);
 
-#define INT32(x) ((GInt32)CPL_MSBWORD32(x))
+#define INT32(x) ((int32_t)CPL_MSBWORD32(x))
 
             pasGCPList[nGCPCount].dfGCPX = 1e-6 * INT32(tpLon[iGCP]);
             pasGCPList[nGCPCount].dfGCPY = 1e-6 * INT32(tpLat[iGCP]);

@@ -881,8 +881,8 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
     /* -------------------------------------------------------------------- */
     else
     {
-        GUInt32 nIMDATOFF;
-        GUInt16 nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
+        uint32_t nIMDATOFF;
+        uint16_t nBMRLNTH, nTMRLNTH, nTPXCDLNTH;
         int nBlockCount;
         int bOK = TRUE;
 
@@ -920,7 +920,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
 
             for (i = 0; bOK && i < nStoredBlocks; i++)
             {
-                GUInt32 l_nOffset;
+                uint32_t l_nOffset;
                 bOK &= VSIFReadL(&l_nOffset, 4, 1, psFile->fp) == 1;
                 CPL_MSBPTR32(&l_nOffset);
                 psImage->panBlockStart[i] = l_nOffset;
@@ -949,7 +949,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
             int isM4 = EQUAL(psImage->szIC, "M4");
             for (i = 0; bOK && i < nBlockCount; i++)
             {
-                GUInt32 l_nOffset;
+                uint32_t l_nOffset;
                 bOK &= VSIFReadL(&l_nOffset, 4, 1, psFile->fp) == 1;
                 CPL_MSBPTR32(&l_nOffset);
                 psImage->panBlockStart[i] = l_nOffset;
@@ -993,7 +993,7 @@ NITFImage *NITFImageAccess(NITFFile *psFile, int iSegment)
 
                 for (i = 0; bOK && i < nBlockCount; i++)
                 {
-                    GUInt32 l_nOffset;
+                    uint32_t l_nOffset;
                     bOK &= VSIFReadL(&l_nOffset, 4, 1, psFile->fp) == 1;
                     CPL_MSBPTR32(&l_nOffset);
                     psImage->panBlockStart[i] = l_nOffset;
@@ -1250,9 +1250,9 @@ static void NITFUncompressVQTile(NITFImage *psImage, GByte *pabyVQBuf,
     {
         for (j = 0; j < 256; j += 8)
         {
-            GUInt16 firstByte = pabyVQBuf[iSrcByte++];
-            GUInt16 secondByte = pabyVQBuf[iSrcByte++];
-            GUInt16 thirdByte = pabyVQBuf[iSrcByte++];
+            uint16_t firstByte = pabyVQBuf[iSrcByte++];
+            uint16_t secondByte = pabyVQBuf[iSrcByte++];
+            uint16_t thirdByte = pabyVQBuf[iSrcByte++];
 
             /*
              * because dealing with half-bytes is hard, we
@@ -1263,11 +1263,11 @@ static void NITFUncompressVQTile(NITFImage *psImage, GByte *pabyVQBuf,
 
             /* Get first 12-bit value as index into VQ table */
 
-            GUInt16 val1 = (firstByte << 4) | (secondByte >> 4);
+            uint16_t val1 = (firstByte << 4) | (secondByte >> 4);
 
             /* Get second 12-bit value as index into VQ table*/
 
-            GUInt16 val2 = ((secondByte & 0x000F) << 8) | thirdByte;
+            uint16_t val2 = ((secondByte & 0x000F) << 8) | thirdByte;
 
             for (t = 0; t < 4; ++t)
             {
@@ -3270,13 +3270,13 @@ static int NITFReadGEOLOB(NITFImage *psImage)
 /*      id and the number of bytes to fetch.                            */
 /************************************************************************/
 
-static int NITFFetchAttribute(GByte *pabyAttributeSubsection, GUInt32 nASSSize,
+static int NITFFetchAttribute(GByte *pabyAttributeSubsection, uint32_t nASSSize,
                               int nAttrCount, int nAttrID, int nParamID,
-                              GUInt32 nBytesToFetch, GByte *pabyBuffer)
+                              uint32_t nBytesToFetch, GByte *pabyBuffer)
 
 {
     int i;
-    GUInt32 nAttrOffset = 0;
+    uint32_t nAttrOffset = 0;
 
     /* -------------------------------------------------------------------- */
     /*      Scan the attribute offset table                                 */
@@ -3319,9 +3319,9 @@ static void NITFLoadAttributeSection(NITFImage *psImage)
 
 {
     int i;
-    GUInt32 nASHOffset = 0, /* nASHSize=0, */ nASSOffset = 0, nASSSize = 0,
-            nNextOffset = 0;
-    GInt16 nAttrCount;
+    uint32_t nASHOffset = 0, /* nASHSize=0, */ nASSOffset = 0, nASSSize = 0,
+             nNextOffset = 0;
+    int16_t nAttrCount;
     GByte *pabyAttributeSubsection;
     GByte abyBuffer[128];
 
@@ -3615,8 +3615,8 @@ static void NITFLoadSubframeMaskTable(NITFImage *psImage)
     NITFFile *psFile = psImage->psFile;
     NITFSegmentInfo *psSegInfo = psFile->pasSegmentInfo + psImage->iSegment;
     GUIntBig nLocBaseSpatialDataSubsection = psSegInfo->nSegmentStart;
-    GUInt32 nLocBaseMaskSubsection = 0;
-    GUInt16 subframeSequenceRecordLength, transparencySequenceRecordLength,
+    uint32_t nLocBaseMaskSubsection = 0;
+    uint16_t subframeSequenceRecordLength, transparencySequenceRecordLength,
         transparencyOutputPixelCodeLength;
     int bOK = TRUE;
 
@@ -3701,9 +3701,9 @@ static void NITFLoadSubframeMaskTable(NITFImage *psImage)
     }
 }
 
-static GUInt16 NITFReadMSBGUInt16(VSILFILE *fp, int *pbSuccess)
+static uint16_t NITFReadMSBuint16_t(VSILFILE *fp, int *pbSuccess)
 {
-    GUInt16 nVal;
+    uint16_t nVal;
     if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
     {
         *pbSuccess = FALSE;
@@ -3713,9 +3713,9 @@ static GUInt16 NITFReadMSBGUInt16(VSILFILE *fp, int *pbSuccess)
     return nVal;
 }
 
-static GUInt32 NITFReadMSBGUInt32(VSILFILE *fp, int *pbSuccess)
+static uint32_t NITFReadMSBuint32_t(VSILFILE *fp, int *pbSuccess)
 {
-    GUInt32 nVal;
+    uint32_t nVal;
     if (VSIFReadL(&nVal, 1, sizeof(nVal), fp) != sizeof(nVal))
     {
         *pbSuccess = FALSE;
@@ -3731,12 +3731,12 @@ static GUInt32 NITFReadMSBGUInt32(VSILFILE *fp, int *pbSuccess)
 
 NITFLocation *NITFReadRPFLocationTable(VSILFILE *fp, int *pnLocCount)
 {
-    /* GUInt16 nLocSectionLength; */
-    GUInt32 nLocSectionOffset;
-    GUInt16 iLoc;
-    GUInt16 nLocCount;
-    GUInt16 nLocRecordLength;
-    /* GUInt32 nLocComponentAggregateLength; */
+    /* uint16_t nLocSectionLength; */
+    uint32_t nLocSectionOffset;
+    uint16_t iLoc;
+    uint16_t nLocCount;
+    uint16_t nLocRecordLength;
+    /* uint32_t nLocComponentAggregateLength; */
     NITFLocation *pasLocations = NULL;
     int bSuccess;
     GUIntBig nCurOffset;
@@ -3749,22 +3749,22 @@ NITFLocation *NITFReadRPFLocationTable(VSILFILE *fp, int *pnLocCount)
     nCurOffset = VSIFTellL(fp);
 
     bSuccess = TRUE;
-    /* nLocSectionLength = */ NITFReadMSBGUInt16(fp, &bSuccess);
-    nLocSectionOffset = NITFReadMSBGUInt32(fp, &bSuccess);
+    /* nLocSectionLength = */ NITFReadMSBuint16_t(fp, &bSuccess);
+    nLocSectionOffset = NITFReadMSBuint32_t(fp, &bSuccess);
     if (nLocSectionOffset != 14)
     {
         CPLDebug("NITF", "Unusual location section offset : %d",
                  nLocSectionOffset);
     }
 
-    nLocCount = NITFReadMSBGUInt16(fp, &bSuccess);
+    nLocCount = NITFReadMSBuint16_t(fp, &bSuccess);
 
     if (!bSuccess || nLocCount == 0)
     {
         return NULL;
     }
 
-    nLocRecordLength = NITFReadMSBGUInt16(fp, &bSuccess);
+    nLocRecordLength = NITFReadMSBuint16_t(fp, &bSuccess);
     if (nLocRecordLength != 10)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -3772,7 +3772,7 @@ NITFLocation *NITFReadRPFLocationTable(VSILFILE *fp, int *pnLocCount)
         return NULL;
     }
 
-    /* nLocComponentAggregateLength = */ NITFReadMSBGUInt32(fp, &bSuccess);
+    /* nLocComponentAggregateLength = */ NITFReadMSBuint32_t(fp, &bSuccess);
 
     bSuccess = VSIFSeekL(fp, nCurOffset + nLocSectionOffset, SEEK_SET) == 0;
 
@@ -3788,9 +3788,9 @@ NITFLocation *NITFReadRPFLocationTable(VSILFILE *fp, int *pnLocCount)
     /* -------------------------------------------------------------------- */
     for (iLoc = 0; bSuccess && iLoc < nLocCount; iLoc++)
     {
-        pasLocations[iLoc].nLocId = NITFReadMSBGUInt16(fp, &bSuccess);
-        pasLocations[iLoc].nLocSize = NITFReadMSBGUInt32(fp, &bSuccess);
-        pasLocations[iLoc].nLocOffset = NITFReadMSBGUInt32(fp, &bSuccess);
+        pasLocations[iLoc].nLocId = NITFReadMSBuint16_t(fp, &bSuccess);
+        pasLocations[iLoc].nLocSize = NITFReadMSBuint32_t(fp, &bSuccess);
+        pasLocations[iLoc].nLocOffset = NITFReadMSBuint32_t(fp, &bSuccess);
     }
 
     if (!bSuccess)
@@ -3814,7 +3814,7 @@ static void NITFLoadLocationTable(NITFImage *psImage)
     /*      Get the location table out of the RPFIMG TRE on the image.      */
     /* -------------------------------------------------------------------- */
     const char *pszTRE;
-    GUInt32 nHeaderOffset = 0;
+    uint32_t nHeaderOffset = 0;
     int i;
     int nTRESize;
     char szTempFileName[32];
@@ -3968,7 +3968,7 @@ static int NITFLoadVQTables(NITFImage *psImage, int bTryGuessingOffset)
 
 {
     int i;
-    GUInt32 nVQOffset = 0 /*, nVQSize=0 */;
+    uint32_t nVQOffset = 0 /*, nVQSize=0 */;
     GByte abyTestChunk[1000];
     const GByte abySignature[6] = {0x00, 0x00, 0x00, 0x06, 0x00, 0x0E};
 
@@ -4033,10 +4033,10 @@ static int NITFLoadVQTables(NITFImage *psImage, int bTryGuessingOffset)
     /* -------------------------------------------------------------------- */
     for (i = 0; i < 4; i++)
     {
-        GUInt32 nVQVector;
+        uint32_t nVQVector;
         int bOK;
 
-        psImage->apanVQLUT[i] = (GUInt32 *)CPLCalloc(4096, sizeof(GUInt32));
+        psImage->apanVQLUT[i] = (uint32_t *)CPLCalloc(4096, sizeof(uint32_t));
 
         bOK = VSIFSeekL(psImage->psFile->fp, nVQOffset + 6 + i * 14 + 10,
                         SEEK_SET) == 0;

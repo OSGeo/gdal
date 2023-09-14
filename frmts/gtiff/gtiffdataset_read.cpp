@@ -3484,7 +3484,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
         nMaxOffset = 24 + nSpaceForTags + 8;
         for (int i = 0; i < nTags; ++i)
         {
-            GUInt16 nTmp16 = 0;
+            uint16_t nTmp16 = 0;
             memcpy(&nTmp16, pabyBuffer + 24 + i * 20, 2);
             if (bSwap)
                 CPL_SWAP16PTR(&nTmp16);
@@ -3505,8 +3505,8 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
                 VSIUnlink(osTmpFilename);
                 return false;
             }
-            const GUInt32 nCount = static_cast<GUInt32>(nTmp);
-            const GUInt32 nTagSize =
+            const uint32_t nCount = static_cast<uint32_t>(nTmp);
+            const uint32_t nTagSize =
                 TIFFDataWidth(static_cast<TIFFDataType>(nDataType)) * nCount;
             if (nTagSize > 8)
             {
@@ -3528,7 +3528,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        GUInt32 nTmp = 0;
+        uint32_t nTmp = 0;
         memcpy(&nTmp, pabyBuffer + 4, 4);
         if (bSwap)
             CPL_SWAP32PTR(&nTmp);
@@ -3540,7 +3540,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
             VSIUnlink(osTmpFilename);
             return false;
         }
-        GUInt16 nTmp16 = 0;
+        uint16_t nTmp16 = 0;
         memcpy(&nTmp16, pabyBuffer + 8, 2);
         if (bSwap)
             CPL_SWAP16PTR(&nTmp16);
@@ -3583,15 +3583,15 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
                 VSIUnlink(osTmpFilename);
                 return false;
             }
-            const GUInt32 nCount = nTmp;
-            const GUInt32 nTagSize =
+            const uint32_t nCount = nTmp;
+            const uint32_t nTagSize =
                 TIFFDataWidth(static_cast<TIFFDataType>(nDataType)) * nCount;
             if (nTagSize > 4)
             {
                 memcpy(&nTmp, pabyBuffer + 10 + i * 12 + 8, 4);
                 if (bSwap)
                     CPL_SWAP32PTR(&nTmp);
-                if (nTmp > static_cast<GUInt32>(UINT_MAX - nTagSize))
+                if (nTmp > static_cast<uint32_t>(UINT_MAX - nTagSize))
                 {
                     CPLError(CE_Failure, CPLE_NotSupported,
                              "Overflow with tag %d", nTag);

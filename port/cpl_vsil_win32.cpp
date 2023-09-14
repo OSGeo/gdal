@@ -241,7 +241,7 @@ int VSIWin32Handle::Seek(vsi_l_offset nOffset, int nWhence)
 
 {
     LONG dwMoveMethod, dwMoveHigh;
-    GUInt32 nMoveLow;
+    uint32_t nMoveLow;
     LARGE_INTEGER li;
 
     bEOF = false;
@@ -280,7 +280,7 @@ int VSIWin32Handle::Seek(vsi_l_offset nOffset, int nWhence)
 
         printf("[ERROR %d]\n %s\n", GetLastError(), (char *)lpMsgBuf); /*ok*/
         printf("nOffset=%u, nMoveLow=%u, dwMoveHigh=%u\n",             /*ok*/
-               static_cast<GUInt32>(nOffset), nMoveLow, dwMoveHigh);
+               static_cast<uint32_t>(nOffset), nMoveLow, dwMoveHigh);
 #endif
         errno = ErrnoFromGetLastError();
         return -1;

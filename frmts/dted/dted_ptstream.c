@@ -34,7 +34,7 @@ typedef struct
     char *pszFilename;
     DTEDInfo *psInfo;
 
-    GInt16 **papanProfiles;
+    int16_t **papanProfiles;
 
     int nLLLong;
     int nLLLat;
@@ -166,7 +166,7 @@ static int DTEDPtStreamNewTile(DTEDPtStream *psStream, int nCrLong, int nCrLat)
 
     psStream->pasCF[psStream->nOpenFiles - 1].psInfo = psInfo;
     psStream->pasCF[psStream->nOpenFiles - 1].papanProfiles =
-        CPLCalloc(sizeof(GInt16 *), psInfo->nXSize);
+        CPLCalloc(sizeof(int16_t *), psInfo->nXSize);
     psStream->pasCF[psStream->nOpenFiles - 1].pszFilename = pszFullFilename;
     psStream->pasCF[psStream->nOpenFiles - 1].nLLLat = nCrLat;
     psStream->pasCF[psStream->nOpenFiles - 1].nLLLong = nCrLong;
@@ -197,7 +197,7 @@ static int DTEDWritePtLL(CPL_UNUSED DTEDPtStream *psStream,
     if (psCF->papanProfiles[iProfile] == NULL)
     {
         psCF->papanProfiles[iProfile] =
-            CPLMalloc(sizeof(GInt16) * psInfo->nYSize);
+            CPLMalloc(sizeof(int16_t) * psInfo->nYSize);
 
         for (i = 0; i < psInfo->nYSize; i++)
             psCF->papanProfiles[iProfile][i] = DTED_NODATA_VALUE;
@@ -209,7 +209,7 @@ static int DTEDWritePtLL(CPL_UNUSED DTEDPtStream *psStream,
     iRow = (int)((psInfo->dfULCornerY - dfLat) / psInfo->dfPixelSizeY);
     iRow = MAX(0, MIN(psInfo->nYSize - 1, iRow));
 
-    psCF->papanProfiles[iProfile][iRow] = (GInt16)floor(dfElev + 0.5);
+    psCF->papanProfiles[iProfile][iRow] = (int16_t)floor(dfElev + 0.5);
 
     return TRUE;
 }
@@ -423,8 +423,8 @@ void DTEDClosePtStream(void *hStream)
 /************************************************************************/
 /*                           DTEDFillPixel()                            */
 /************************************************************************/
-static void DTEDFillPixel(DTEDInfo *psInfo, GInt16 **papanProfiles,
-                          GInt16 **papanDstProfiles, int iX, int iY,
+static void DTEDFillPixel(DTEDInfo *psInfo, int16_t **papanProfiles,
+                          int16_t **papanDstProfiles, int iX, int iY,
                           int nPixelSearchDist, float *pafKernel)
 
 {
@@ -440,7 +440,7 @@ static void DTEDFillPixel(DTEDInfo *psInfo, GInt16 **papanProfiles,
 
     for (iXS = nXMin; iXS <= nXMax; iXS++)
     {
-        GInt16 *panThisProfile = papanProfiles[iXS];
+        int16_t *panThisProfile = papanProfiles[iXS];
 
         if (panThisProfile == NULL)
             continue;
@@ -465,7 +465,7 @@ static void DTEDFillPixel(DTEDInfo *psInfo, GInt16 **papanProfiles,
     if (dfCoefSum == 0.0)
         papanDstProfiles[iX][iY] = DTED_NODATA_VALUE;
     else
-        papanDstProfiles[iX][iY] = (GInt16)floor(dfValueSum / dfCoefSum + 0.5);
+        papanDstProfiles[iX][iY] = (int16_t)floor(dfValueSum / dfCoefSum + 0.5);
 }
 
 /************************************************************************/
@@ -508,11 +508,11 @@ void DTEDFillPtStream(void *hStream, int nPixelSearchDist)
     for (iFile = 0; iFile < psStream->nOpenFiles; iFile++)
     {
         DTEDInfo *psInfo = psStream->pasCF[iFile].psInfo;
-        GInt16 **papanProfiles = psStream->pasCF[iFile].papanProfiles;
-        GInt16 **papanDstProfiles;
+        int16_t **papanProfiles = psStream->pasCF[iFile].papanProfiles;
+        int16_t **papanDstProfiles;
 
         papanDstProfiles =
-            (GInt16 **)CPLCalloc(sizeof(GInt16 *), psInfo->nXSize);
+            (int16_t **)CPLCalloc(sizeof(int16_t *), psInfo->nXSize);
 
         /* --------------------------------------------------------------------
          */
@@ -522,7 +522,7 @@ void DTEDFillPtStream(void *hStream, int nPixelSearchDist)
         for (iX = 0; iX < psInfo->nXSize; iX++)
         {
             papanDstProfiles[iX] =
-                (GInt16 *)CPLMalloc(sizeof(GInt16) * psInfo->nYSize);
+                (int16_t *)CPLMalloc(sizeof(int16_t) * psInfo->nYSize);
         }
 
         /* --------------------------------------------------------------------
@@ -596,7 +596,7 @@ void DTEDPtStreamTrimEdgeOnlyTiles(void *hStream)
     for (iFile = psStream->nOpenFiles - 1; iFile >= 0; iFile--)
     {
         DTEDInfo *psInfo = psStream->pasCF[iFile].psInfo;
-        GInt16 **papanProfiles = psStream->pasCF[iFile].papanProfiles;
+        int16_t **papanProfiles = psStream->pasCF[iFile].papanProfiles;
         int iProfile, iPixel, bGotNonEdgeData = FALSE;
 
         for (iProfile = 1; iProfile < psInfo->nXSize - 1; iProfile++)

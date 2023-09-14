@@ -134,32 +134,32 @@ char *SPrintArray(GDALDataType eDataType, const void *paDataArray, int nValues,
                 break;
             case GDT_Int8:
                 snprintf(pszField, iFieldSize + 1, "%d%s",
-                         reinterpret_cast<GInt8 *>(
+                         reinterpret_cast<int8_t *>(
                              const_cast<void *>(paDataArray))[i],
                          (i < nValues - 1) ? pszDelimiter : "");
                 break;
             case GDT_UInt16:
                 snprintf(pszField, iFieldSize + 1, "%u%s",
-                         reinterpret_cast<GUInt16 *>(
+                         reinterpret_cast<uint16_t *>(
                              const_cast<void *>(paDataArray))[i],
                          (i < nValues - 1) ? pszDelimiter : "");
                 break;
             case GDT_Int16:
             default:
                 snprintf(pszField, iFieldSize + 1, "%d%s",
-                         reinterpret_cast<GInt16 *>(
+                         reinterpret_cast<int16_t *>(
                              const_cast<void *>(paDataArray))[i],
                          (i < nValues - 1) ? pszDelimiter : "");
                 break;
             case GDT_UInt32:
                 snprintf(pszField, iFieldSize + 1, "%u%s",
-                         reinterpret_cast<GUInt32 *>(
+                         reinterpret_cast<uint32_t *>(
                              const_cast<void *>(paDataArray))[i],
                          (i < nValues - 1) ? pszDelimiter : "");
                 break;
             case GDT_Int32:
                 snprintf(pszField, iFieldSize + 1, "%d%s",
-                         reinterpret_cast<GInt32 *>(
+                         reinterpret_cast<int32_t *>(
                              const_cast<void *>(paDataArray))[i],
                          (i < nValues - 1) ? pszDelimiter : "");
                 break;
@@ -305,13 +305,13 @@ double HDF4Dataset::AnyTypeToDouble(int32 iNumType, void *pData)
         case DFNT_UINT8:
             return static_cast<double>(*reinterpret_cast<GByte *>(pData));
         case DFNT_INT16:
-            return static_cast<double>(*reinterpret_cast<GInt16 *>(pData));
+            return static_cast<double>(*reinterpret_cast<int16_t *>(pData));
         case DFNT_UINT16:
-            return static_cast<double>(*reinterpret_cast<GUInt16 *>(pData));
+            return static_cast<double>(*reinterpret_cast<uint16_t *>(pData));
         case DFNT_INT32:
-            return static_cast<double>(*reinterpret_cast<GInt32 *>(pData));
+            return static_cast<double>(*reinterpret_cast<int32_t *>(pData));
         case DFNT_UINT32:
-            return static_cast<double>(*reinterpret_cast<GUInt32 *>(pData));
+            return static_cast<double>(*reinterpret_cast<uint32_t *>(pData));
         case DFNT_INT64:
             return static_cast<double>(*reinterpret_cast<GInt64 *>(pData));
         case DFNT_UINT64:

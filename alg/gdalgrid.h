@@ -58,49 +58,49 @@ static const char szAlgNameLinear[] = "linear";
 CPL_C_START
 
 /*! @cond Doxygen_Suppress */
-typedef CPLErr (*GDALGridFunction)(const void *, GUInt32, const double *,
+typedef CPLErr (*GDALGridFunction)(const void *, uint32_t, const double *,
                                    const double *, const double *, double,
                                    double, double *, void *);
 /*! @endcond */
 
-CPLErr GDALGridInverseDistanceToAPower(const void *, GUInt32, const double *,
+CPLErr GDALGridInverseDistanceToAPower(const void *, uint32_t, const double *,
                                        const double *, const double *, double,
                                        double, double *, void *);
-CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(const void *, GUInt32,
+CPLErr GDALGridInverseDistanceToAPowerNearestNeighbor(const void *, uint32_t,
                                                       const double *,
                                                       const double *,
                                                       const double *, double,
                                                       double, double *, void *);
-CPLErr GDALGridInverseDistanceToAPowerNoSearch(const void *, GUInt32,
+CPLErr GDALGridInverseDistanceToAPowerNoSearch(const void *, uint32_t,
                                                const double *, const double *,
                                                const double *, double, double,
                                                double *, void *);
-CPLErr GDALGridMovingAverage(const void *, GUInt32, const double *,
+CPLErr GDALGridMovingAverage(const void *, uint32_t, const double *,
                              const double *, const double *, double, double,
                              double *, void *);
-CPLErr GDALGridNearestNeighbor(const void *, GUInt32, const double *,
+CPLErr GDALGridNearestNeighbor(const void *, uint32_t, const double *,
                                const double *, const double *, double, double,
                                double *, void *);
-CPLErr GDALGridDataMetricMinimum(const void *, GUInt32, const double *,
+CPLErr GDALGridDataMetricMinimum(const void *, uint32_t, const double *,
                                  const double *, const double *, double, double,
                                  double *, void *);
-CPLErr GDALGridDataMetricMaximum(const void *, GUInt32, const double *,
+CPLErr GDALGridDataMetricMaximum(const void *, uint32_t, const double *,
                                  const double *, const double *, double, double,
                                  double *, void *);
-CPLErr GDALGridDataMetricRange(const void *, GUInt32, const double *,
+CPLErr GDALGridDataMetricRange(const void *, uint32_t, const double *,
                                const double *, const double *, double, double,
                                double *, void *);
-CPLErr GDALGridDataMetricCount(const void *, GUInt32, const double *,
+CPLErr GDALGridDataMetricCount(const void *, uint32_t, const double *,
                                const double *, const double *, double, double,
                                double *, void *);
-CPLErr GDALGridDataMetricAverageDistance(const void *, GUInt32, const double *,
+CPLErr GDALGridDataMetricAverageDistance(const void *, uint32_t, const double *,
                                          const double *, const double *, double,
                                          double, double *, void *);
-CPLErr GDALGridDataMetricAverageDistancePts(const void *, GUInt32,
+CPLErr GDALGridDataMetricAverageDistancePts(const void *, uint32_t,
                                             const double *, const double *,
                                             const double *, double, double,
                                             double *, void *);
-CPLErr GDALGridLinear(const void *, GUInt32, const double *, const double *,
+CPLErr GDALGridLinear(const void *, uint32_t, const double *, const double *,
                       const double *, double, double, double *, void *);
 
 #ifndef GDAL_COMPILATION

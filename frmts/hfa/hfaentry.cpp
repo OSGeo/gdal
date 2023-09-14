@@ -72,7 +72,7 @@ HFAEntry::HFAEntry()
 /*      Construct an HFAEntry from the source file.                     */
 /************************************************************************/
 
-HFAEntry *HFAEntry::New(HFAInfo_t *psHFAIn, GUInt32 nPos, HFAEntry *poParentIn,
+HFAEntry *HFAEntry::New(HFAInfo_t *psHFAIn, uint32_t nPos, HFAEntry *poParentIn,
                         HFAEntry *poPrevIn)
 
 {
@@ -84,10 +84,10 @@ HFAEntry *HFAEntry::New(HFAInfo_t *psHFAIn, GUInt32 nPos, HFAEntry *poParentIn,
     poEntry->poPrev = poPrevIn;
 
     // Read the entry information from the file.
-    GInt32 anEntryNums[6] = {};
+    int32_t anEntryNums[6] = {};
 
     if (VSIFSeekL(poEntry->psHFA->fp, poEntry->nFilePos, SEEK_SET) == -1 ||
-        VSIFReadL(anEntryNums, sizeof(GInt32) * 6, 1, poEntry->psHFA->fp) < 1)
+        VSIFReadL(anEntryNums, sizeof(int32_t) * 6, 1, poEntry->psHFA->fp) < 1)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "VSIFReadL(%p,6*4) @ %u failed in HFAEntry().\n%s",
@@ -217,7 +217,7 @@ HFAEntry *HFAEntry::BuildEntryFromMIFObject(HFAEntry *poContainer,
         return nullptr;
     }
 
-    GInt32 nMIFObjectSize = 0;
+    int32_t nMIFObjectSize = 0;
     // We rudely look before the field data to get at the pointer/size info.
     memcpy(&nMIFObjectSize, pszField - 8, 4);
     HFAStandard(4, &nMIFObjectSize);
@@ -504,7 +504,7 @@ GByte *HFAEntry::MakeData(int nSize)
     if (nSize == 0 && poType->nBytes > 0)
         nSize = poType->nBytes;
 
-    // nDataSize is a GUInt32.
+    // nDataSize is a uint32_t.
     if (static_cast<int>(nDataSize) < nSize && nSize > 0)
     {
         pabyData = static_cast<GByte *>(CPLRealloc(pabyData, nSize));
@@ -718,10 +718,10 @@ int HFAEntry::GetFieldCount(const char *pszFieldPath, CPLErr * /* peErr */)
 /*                            GetIntField()                             */
 /************************************************************************/
 
-GInt32 HFAEntry::GetIntField(const char *pszFieldPath, CPLErr *peErr)
+int32_t HFAEntry::GetIntField(const char *pszFieldPath, CPLErr *peErr)
 
 {
-    GInt32 nIntValue = 0;
+    int32_t nIntValue = 0;
 
     if (!GetFieldValue(pszFieldPath, 'i', &nIntValue, nullptr))
     {
@@ -752,12 +752,12 @@ GIntBig HFAEntry::GetBigIntField(const char *pszFieldPath, CPLErr *peErr)
     char szFullFieldPath[1024];
 
     snprintf(szFullFieldPath, sizeof(szFullFieldPath), "%s[0]", pszFieldPath);
-    const GUInt32 nLower = GetIntField(szFullFieldPath, peErr);
+    const uint32_t nLower = GetIntField(szFullFieldPath, peErr);
     if (peErr != nullptr && *peErr != CE_None)
         return 0;
 
     snprintf(szFullFieldPath, sizeof(szFullFieldPath), "%s[1]", pszFieldPath);
-    const GUInt32 nUpper = GetIntField(szFullFieldPath, peErr);
+    const uint32_t nUpper = GetIntField(szFullFieldPath, peErr);
     if (peErr != nullptr && *peErr != CE_None)
         return 0;
 
@@ -939,7 +939,7 @@ CPLErr HFAEntry::FlushToDisk()
             return CE_Failure;
         }
 
-        GUInt32 nLong = nNextPos;
+        uint32_t nLong = nNextPos;
         HFAStandard(4, &nLong);
         bool bOK = VSIFWriteL(&nLong, 4, 1, psHFA->fp) > 0;
 

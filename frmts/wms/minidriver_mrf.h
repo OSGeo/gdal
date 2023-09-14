@@ -81,11 +81,12 @@ struct ILSize
     ILSize() : x(0), y(0), z(0), c(0), l(0)
     {
     }
-    ILSize(GInt32 _x, GInt32 _y, GInt32 _z = 1, GInt32 _c = 1, GInt32 _l = -1)
+    ILSize(int32_t _x, int32_t _y, int32_t _z = 1, int32_t _c = 1,
+           int32_t _l = -1)
         : x(_x), y(_y), z(_z), c(_c), l(_l)
     {
     }
-    GInt32 x, y, z, c;
+    int32_t x, y, z, c;
     GIntBig l;  // Dual use, sometimes it holds the number of pages
 };
 

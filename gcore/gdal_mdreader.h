@@ -232,7 +232,7 @@ class CPL_DLL GDALMDReaderManager
      */
     virtual GDALMDReaderBase *GetReader(const char *pszPath,
                                         char **papszSiblingFiles,
-                                        GUInt32 nType = MDR_ANY);
+                                        uint32_t nType = MDR_ANY);
 
   protected:
     //! @cond Doxygen_Suppress

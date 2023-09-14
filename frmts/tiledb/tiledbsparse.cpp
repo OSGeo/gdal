@@ -3274,7 +3274,8 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                     struct tm dt;
                     CPLUnixTimeToYMDHMS(timestamp, &dt);
 
-                    psField->Date.Year = static_cast<GInt16>(dt.tm_year + 1900);
+                    psField->Date.Year =
+                        static_cast<int16_t>(dt.tm_year + 1900);
                     psField->Date.Month = static_cast<GByte>(dt.tm_mon + 1);
                     psField->Date.Day = static_cast<GByte>(dt.tm_mday);
                     psField->Date.Hour = 0;
@@ -3300,7 +3301,7 @@ OGRFeature *OGRTileDBLayer::TranslateCurrentFeature()
                 psField->Set.nMarker1 = OGRUnsetMarker;
                 psField->Set.nMarker2 = OGRUnsetMarker;
                 psField->Set.nMarker3 = OGRUnsetMarker;
-                psField->Date.Year = static_cast<GInt16>(dt.tm_year + 1900);
+                psField->Date.Year = static_cast<int16_t>(dt.tm_year + 1900);
                 psField->Date.Month = static_cast<GByte>(dt.tm_mon + 1);
                 psField->Date.Day = static_cast<GByte>(dt.tm_mday);
                 psField->Date.Hour = static_cast<GByte>(dt.tm_hour);

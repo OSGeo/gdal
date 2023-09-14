@@ -149,8 +149,8 @@ class TerragenDataset final : public GDALPamDataset
     VSILFILE *m_fp;
     vsi_l_offset m_nDataOffset;
 
-    GInt16 m_nHeightScale;
-    GInt16 m_nBaseHeight;
+    int16_t m_nHeightScale;
+    int16_t m_nBaseHeight;
 
     char *m_pszFilename;
     OGRSpatialReference m_oSRS{};
@@ -175,10 +175,10 @@ class TerragenDataset final : public GDALPamDataset
     CPLErr SetSpatialRef(const OGRSpatialReference *poSRS) override;
 
   protected:
-    bool get(GInt16 &);
-    bool get(GUInt16 &);
+    bool get(int16_t &);
+    bool get(uint16_t &);
     bool get(float &);
-    bool put(GInt16);
+    bool put(int16_t);
     bool put(float);
     bool skip(size_t n)
     {
@@ -232,7 +232,7 @@ class TerragenRasterBand final : public GDALPamRasterBand
 /************************************************************************/
 
 TerragenRasterBand::TerragenRasterBand(TerragenDataset *poDSIn)
-    : m_pvLine(CPLMalloc(sizeof(GInt16) * poDSIn->GetRasterXSize())),
+    : m_pvLine(CPLMalloc(sizeof(int16_t) * poDSIn->GetRasterXSize())),
       m_bFirstTime(true)
 {
     poDS = poDSIn;
@@ -251,7 +251,7 @@ TerragenRasterBand::TerragenRasterBand(TerragenDataset *poDSIn)
 CPLErr TerragenRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                                       void *pImage)
 {
-    // CPLAssert( sizeof(float) == sizeof(GInt32) );
+    // CPLAssert( sizeof(float) == sizeof(int32_t) );
     CPLAssert(nBlockXOff == 0);
     CPLAssert(pImage != nullptr);
 
@@ -262,7 +262,7 @@ CPLErr TerragenRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
             Terragen is a bottom-top format, so we have to
             invert the row location.
      -------------------------------------------------------------------- */
-    const size_t rowbytes = nBlockXSize * sizeof(GInt16);
+    const size_t rowbytes = nBlockXSize * sizeof(int16_t);
 
     if (0 != VSIFSeekL(ds.m_fp,
                        ds.m_nDataOffset +
@@ -289,7 +289,7 @@ CPLErr TerragenRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 /*      Swap on MSB platforms.                                          */
 /* -------------------------------------------------------------------- */
 #ifdef CPL_MSB
-    GDALSwapWords(pImage, sizeof(GInt16), nRasterXSize, sizeof(GInt16));
+    GDALSwapWords(pImage, sizeof(int16_t), nRasterXSize, sizeof(int16_t));
 #endif
 
     return CE_None;
@@ -344,7 +344,7 @@ CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
     CPLAssert(pImage != nullptr);
     CPLAssert(m_pvLine != nullptr);
 
-    const size_t pixelsize = sizeof(GInt16);
+    const size_t pixelsize = sizeof(int16_t);
 
     TerragenDataset &ds = *reinterpret_cast<TerragenDataset *>(poDS);
     if (m_bFirstTime)
@@ -355,7 +355,7 @@ CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
     }
     const size_t rowbytes = nBlockXSize * pixelsize;
 
-    GInt16 *pLine = reinterpret_cast<GInt16 *>(m_pvLine);
+    int16_t *pLine = reinterpret_cast<int16_t *>(m_pvLine);
 
     if (0 == VSIFSeekL(ds.m_fp,
                        ds.m_nDataOffset +
@@ -368,7 +368,7 @@ CPLErr TerragenRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff,
         for (size_t x = 0; x < static_cast<size_t>(nBlockXSize); x++)
         {
             const double f = pfImage[x] * ds.m_dMetersPerElevUnit / ds.m_dSCAL;
-            const GInt16 hv = static_cast<GInt16>(
+            const int16_t hv = static_cast<int16_t>(
                 (f - ds.m_nBaseHeight) * 65536.0 / ds.m_nHeightScale
                 /*+ ds.m_nShift*/);
             pLine[x] = hv;
@@ -474,17 +474,17 @@ bool TerragenDataset::write_header()
     const int nYSize = GetRasterYSize();
 
     write_next_tag("SIZE");
-    put(static_cast<GInt16>(std::min(nXSize, nYSize) - 1));
-    pad(sizeof(GInt16));
+    put(static_cast<int16_t>(std::min(nXSize, nYSize) - 1));
+    pad(sizeof(int16_t));
 
     if (nXSize != nYSize)
     {
         write_next_tag("XPTS");
-        put(static_cast<GInt16>(nXSize));
-        pad(sizeof(GInt16));
+        put(static_cast<int16_t>(nXSize));
+        pad(sizeof(int16_t));
         write_next_tag("YPTS");
-        put(static_cast<GInt16>(nYSize));
-        pad(sizeof(GInt16));
+        put(static_cast<int16_t>(nYSize));
+        pad(sizeof(int16_t));
     }
 
     if (m_bIsGeo)
@@ -562,7 +562,7 @@ bool TerragenDataset::write_header()
     m_span_px[1] = m_span_m[1] / m_dSCAL;
 
     const double span_px = m_span_px[1] - m_span_px[0];
-    m_nHeightScale = static_cast<GInt16>(span_px);
+    m_nHeightScale = static_cast<int16_t>(span_px);
     if (m_nHeightScale == 0)
         m_nHeightScale++;
 
@@ -615,8 +615,8 @@ bool TerragenDataset::write_header()
         return false;
     }
 
-    m_nHeightScale = static_cast<GInt16>(hs);
-    m_nBaseHeight = static_cast<GInt16>(bh);
+    m_nHeightScale = static_cast<int16_t>(hs);
+    m_nBaseHeight = static_cast<int16_t>(bh);
 
     // m_nHeightScale is the one that gives us the
     // widest use of the 16-bit space. However, there
@@ -631,7 +631,7 @@ bool TerragenDataset::write_header()
 /*                                get()                                 */
 /************************************************************************/
 
-bool TerragenDataset::get(GInt16 &value)
+bool TerragenDataset::get(int16_t &value)
 {
     if (1 == VSIFReadL(&value, sizeof(value), 1, m_fp))
     {
@@ -641,7 +641,7 @@ bool TerragenDataset::get(GInt16 &value)
     return false;
 }
 
-bool TerragenDataset::get(GUInt16 &value)
+bool TerragenDataset::get(uint16_t &value)
 {
     if (1 == VSIFReadL(&value, sizeof(value), 1, m_fp))
     {
@@ -665,7 +665,7 @@ bool TerragenDataset::get(float &value)
 /*                                put()                                 */
 /************************************************************************/
 
-bool TerragenDataset::put(GInt16 n)
+bool TerragenDataset::put(int16_t n)
 {
     CPL_LSBPTR16(&n);
     return 1 == VSIFWriteL(&n, sizeof(n), 1, m_fp);
@@ -713,15 +713,15 @@ int TerragenDataset::LoadFromFile()
     if (!read_next_tag(szTag) || !tag_is(szTag, "SIZE"))
         return FALSE;
 
-    GUInt16 nSize;
+    uint16_t nSize;
     if (!get(nSize) || !skip(2))
         return FALSE;
 
     // Set dimensions to SIZE chunk. If we don't
     // encounter XPTS/YPTS chunks, we can assume
     // the terrain to be square.
-    GUInt16 xpts = nSize + 1;
-    GUInt16 ypts = nSize + 1;
+    uint16_t xpts = nSize + 1;
+    uint16_t ypts = nSize + 1;
 
     while (read_next_tag(szTag))
     {
@@ -759,7 +759,7 @@ int TerragenDataset::LoadFromFile()
         }
         if (tag_is(szTag, "CRVM"))
         {
-            if (!skip(sizeof(GUInt32)))
+            if (!skip(sizeof(uint32_t)))
                 return FALSE;
             continue;
         }
@@ -769,7 +769,7 @@ int TerragenDataset::LoadFromFile()
             get(m_nBaseHeight);
             m_nDataOffset = VSIFTellL(m_fp);
             if (!skip(static_cast<size_t>(xpts) * static_cast<size_t>(ypts) *
-                      sizeof(GInt16)))
+                      sizeof(int16_t)))
                 return FALSE;
             continue;
         }

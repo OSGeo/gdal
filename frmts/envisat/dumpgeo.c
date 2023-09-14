@@ -69,7 +69,7 @@ int main(int argc, char **argv)
     for (i_record = 0; i_record < num_dsr; i_record++)
     {
         GByte abyRecord[521];
-        GUInt32 unValue;
+        uint32_t unValue;
         float fValue;
         int sample;
 

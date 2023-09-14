@@ -975,7 +975,7 @@ void NITFRasterBand::Unpack(GByte *pData)
         case 12:
         {
             GByte *pabyImage = reinterpret_cast<GByte *>(pData);
-            GUInt16 *panImage = reinterpret_cast<GUInt16 *>(pData);
+            uint16_t *panImage = reinterpret_cast<uint16_t *>(pData);
             // DANGER: Non-standard decrement of counter in the test section of
             // for.
             for (int i = n; --i >= 0;)

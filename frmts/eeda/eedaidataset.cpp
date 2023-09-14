@@ -42,8 +42,8 @@ extern "C" void GDALRegister_EEDAI();
 
 static const int DEFAULT_BLOCK_SIZE = 256;
 
-const GUInt32 RETRY_PER_BAND = 1;
-const GUInt32 RETRY_SPATIAL_SPLIT = 2;
+const uint32_t RETRY_PER_BAND = 1;
+const uint32_t RETRY_SPATIAL_SPLIT = 2;
 
 // Eart engine server only allows up to 16 MB per request
 const int SERVER_BYTE_LIMIT = 16 * 1024 * 1024;
@@ -122,8 +122,8 @@ class GDALEEDAIRasterBand final : public GDALRasterBand
 
     CPLErr GetBlocks(int nBlockXOff, int nBlockYOff, int nXBlocks, int nYBlocks,
                      bool bQueryAllBands, void *pBuffer);
-    GUInt32 PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
-                           int nBufXSize, int nBufYSize, bool bQueryAllBands);
+    uint32_t PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
+                            int nBufXSize, int nBufYSize, bool bQueryAllBands);
 
   public:
     GDALEEDAIRasterBand(GDALEEDAIDataset *poDSIn, GDALDataType eDT);
@@ -707,9 +707,9 @@ CPLErr GDALEEDAIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 // Return or'ed flags among 0, RETRY_PER_BAND, RETRY_SPATIAL_SPLIT if the user
 // should try to split the request in smaller chunks
 
-GUInt32 GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize,
-                                            int nYSize, int nBufXSize,
-                                            int nBufYSize, bool bQueryAllBands)
+uint32_t GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize,
+                                             int nYSize, int nBufXSize,
+                                             int nBufYSize, bool bQueryAllBands)
 {
     CPL_IGNORE_RET_VAL(nBufXSize);
     CPL_IGNORE_RET_VAL(nBufYSize);
@@ -785,7 +785,7 @@ GUInt32 GDALEEDAIRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize,
     if (nXBlocks > 0 && nYBlocks > 0)
     {
         bool bMustReturn = false;
-        GUInt32 nRetryFlags = 0;
+        uint32_t nRetryFlags = 0;
 
         // Get the blocks if the number of already cached blocks is lesser
         // than 25% of the to be queried blocks
@@ -885,7 +885,7 @@ CPLErr GDALEEDAIRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     }
 
     GDALEEDAIDataset *poGDS = reinterpret_cast<GDALEEDAIDataset *>(poDS);
-    GUInt32 nRetryFlags =
+    uint32_t nRetryFlags =
         PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, nBufXSize, nBufYSize,
                        poGDS->m_bQueryMultipleBands);
     if ((nRetryFlags & RETRY_SPATIAL_SPLIT) && nXSize == nBufXSize &&
@@ -987,7 +987,7 @@ CPLErr GDALEEDAIDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     GDALEEDAIRasterBand *poBand =
         cpl::down_cast<GDALEEDAIRasterBand *>(GetRasterBand(1));
 
-    GUInt32 nRetryFlags =
+    uint32_t nRetryFlags =
         poBand->PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, nBufXSize,
                                nBufYSize, m_bQueryMultipleBands);
     int nBlockXSize, nBlockYSize;

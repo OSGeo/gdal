@@ -172,7 +172,7 @@ static void AddField(CPLXMLNode *psParent, CPLXMLNode *&psLastChild,
 
 static void AddField(CPLXMLNode *psParent, CPLXMLNode *&psLastChild,
                      DumpContext *psDumpContext, const char *pszFieldName,
-                     GUInt16 nVal, const char *pszDescription = nullptr)
+                     uint16_t nVal, const char *pszDescription = nullptr)
 {
     if (psDumpContext->nCurLineCount > psDumpContext->nMaxLineCount + 1)
     {
@@ -190,7 +190,7 @@ static void AddField(CPLXMLNode *psParent, CPLXMLNode *&psLastChild,
 
 static void AddField(CPLXMLNode *psParent, CPLXMLNode *&psLastChild,
                      DumpContext *psDumpContext, const char *pszFieldName,
-                     GUInt32 nVal, const char *pszDescription = nullptr)
+                     uint32_t nVal, const char *pszDescription = nullptr)
 {
     if (psDumpContext->nCurLineCount - 1 >= psDumpContext->nMaxLineCount)
     {
@@ -216,7 +216,7 @@ static const char *GetInterpretationOfBPC(GByte bpc)
         return CPLSPrintf("Unsigned %d bits", 1 + bpc);
 }
 
-static const char *GetStandardFieldString(GUInt16 nVal)
+static const char *GetStandardFieldString(uint16_t nVal)
 {
     switch (nVal)
     {
@@ -335,7 +335,7 @@ static void DumpFTYPBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (nRemainingLength >= 4)
         {
-            GUInt32 nVal;
+            uint32_t nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
             AddField(psDecodedContent, psLastChild, psDumpContext, "MinV",
@@ -379,7 +379,7 @@ static void DumpIHDRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         CPLXMLNode *psLastChild = nullptr;
         if (nRemainingLength >= 4)
         {
-            GUInt32 nVal;
+            uint32_t nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
             AddField(psDecodedContent, psLastChild, psDumpContext, "HEIGHT",
@@ -389,7 +389,7 @@ static void DumpIHDRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (nRemainingLength >= 4)
         {
-            GUInt32 nVal;
+            uint32_t nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
             AddField(psDecodedContent, psLastChild, psDumpContext, "WIDTH",
@@ -399,7 +399,7 @@ static void DumpIHDRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             AddField(psDecodedContent, psLastChild, psDumpContext, "NC", nVal);
@@ -516,7 +516,7 @@ static void DumpCOLRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (nRemainingLength >= 4)
         {
-            GUInt32 nVal;
+            uint32_t nVal;
             memcpy(&nVal, pabyIter, 4);
             CPL_MSBPTR32(&nVal);
             AddField(psDecodedContent, psLastChild, psDumpContext, "EnumCS",
@@ -549,11 +549,11 @@ static void DumpPCLRBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
         GIntBig nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
-        GUInt16 NE = 0;
+        uint16_t NE = 0;
         CPLXMLNode *psLastChild = nullptr;
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             NE = nVal;
@@ -624,7 +624,7 @@ static void DumpCMAPBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         while (nRemainingLength >= 2 + 1 + 1 &&
                nIndex < knbMaxJPEG2000Components)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             AddField(psDecodedContent, psLastChild, psDumpContext,
@@ -668,11 +668,11 @@ static void DumpCDEFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
         GIntBig nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
-        GUInt16 nChannels = 0;
+        uint16_t nChannels = 0;
         CPLXMLNode *psLastChild = nullptr;
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             nChannels = nVal;
             CPL_MSBPTR16(&nVal);
@@ -684,7 +684,7 @@ static void DumpCDEFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         {
             if (nRemainingLength >= 2)
             {
-                GUInt16 nVal;
+                uint16_t nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
                 AddField(psDecodedContent, psLastChild, psDumpContext,
@@ -694,7 +694,7 @@ static void DumpCDEFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             }
             if (nRemainingLength >= 2)
             {
-                GUInt16 nVal;
+                uint16_t nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
                 AddField(psDecodedContent, psLastChild, psDumpContext,
@@ -709,7 +709,7 @@ static void DumpCDEFBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             }
             if (nRemainingLength >= 2)
             {
-                GUInt16 nVal;
+                uint16_t nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
                 AddField(psDecodedContent, psLastChild, psDumpContext,
@@ -744,16 +744,16 @@ static void DumpRESxBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             CPLCreateXMLNode(psBox, CXT_Element, "DecodedContent");
         GIntBig nRemainingLength = nBoxDataLength;
         GByte *pabyIter = pabyBoxData;
-        GUInt16 nNumV = 0;
-        GUInt16 nNumH = 0;
-        GUInt16 nDenomV = 1;
-        GUInt16 nDenomH = 1;
-        GUInt16 nExpV = 0;
-        GUInt16 nExpH = 0;
+        uint16_t nNumV = 0;
+        uint16_t nNumH = 0;
+        uint16_t nDenomV = 1;
+        uint16_t nDenomH = 1;
+        uint16_t nExpV = 0;
+        uint16_t nExpH = 0;
         CPLXMLNode *psLastChild = nullptr;
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nNumV = nVal;
@@ -764,7 +764,7 @@ static void DumpRESxBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nDenomV = nVal;
@@ -775,7 +775,7 @@ static void DumpRESxBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nNumH = nVal;
@@ -786,7 +786,7 @@ static void DumpRESxBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         }
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             nDenomH = nVal;
@@ -881,10 +881,10 @@ static void DumpRREQBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             AddHexField(psDecodedContent, psLastChild, psDumpContext, "DCM",
                         static_cast<int>(ML), osHex.c_str());
         }
-        GUInt16 NSF = 0;
+        uint16_t NSF = 0;
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             NSF = nVal;
@@ -896,7 +896,7 @@ static void DumpRREQBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
         {
             if (nRemainingLength >= 2)
             {
-                GUInt16 nVal;
+                uint16_t nVal;
                 memcpy(&nVal, pabyIter, 2);
                 CPL_MSBPTR16(&nVal);
                 AddField(psDecodedContent, psLastChild, psDumpContext,
@@ -923,10 +923,10 @@ static void DumpRREQBox(CPLXMLNode *psBox, GDALJP2Box &oBox,
             else
                 break;
         }
-        GUInt16 NVF = 0;
+        uint16_t NVF = 0;
         if (nRemainingLength >= 2)
         {
-            GUInt16 nVal;
+            uint16_t nVal;
             memcpy(&nVal, pabyIter, 2);
             CPL_MSBPTR16(&nVal);
             NVF = nVal;
@@ -1196,7 +1196,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             continue;
         }
 
-        GUInt16 nMarkerSize;
+        uint16_t nMarkerSize;
         if (VSIFReadL(&nMarkerSize, 2, 1, fp) != 1)
         {
             AddError(psCSBox, psLastChildCSBox, psDumpContext,
@@ -1231,7 +1231,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
             break;
         }
         GByte *pabyMarkerDataIter = pabyMarkerData;
-        GUInt16 nRemainingMarkerSize = nMarkerSize - 2;
+        uint16_t nRemainingMarkerSize = nMarkerSize - 2;
         bool bError = false;
 
         auto READ_MARKER_FIELD_UINT8 =
@@ -1260,9 +1260,10 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
         };
 
         auto READ_MARKER_FIELD_UINT16 =
-            [&](const char *name, std::string (*commentFunc)(GUInt16) = nullptr)
+            [&](const char *name,
+                std::string (*commentFunc)(uint16_t) = nullptr)
         {
-            GUInt16 v;
+            uint16_t v;
             if (nRemainingMarkerSize >= 2)
             {
                 memcpy(&v, pabyMarkerDataIter, 2);
@@ -1285,9 +1286,10 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
         };
 
         auto READ_MARKER_FIELD_UINT32 =
-            [&](const char *name, std::string (*commentFunc)(GUInt32) = nullptr)
+            [&](const char *name,
+                std::string (*commentFunc)(uint32_t) = nullptr)
         {
-            GUInt32 v;
+            uint32_t v;
             if (nRemainingMarkerSize >= 4)
             {
                 memcpy(&v, pabyMarkerDataIter, 4);
@@ -1359,7 +1361,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 if (!psMarker)
                     break;
                 READ_MARKER_FIELD_UINT16("Isot");
-                GUInt32 PSOT = READ_MARKER_FIELD_UINT32("Psot");
+                uint32_t PSOT = READ_MARKER_FIELD_UINT32("Psot");
                 READ_MARKER_FIELD_UINT8("TPsot");
                 READ_MARKER_FIELD_UINT8("TNsot");
                 if (nRemainingMarkerSize > 0)
@@ -1382,7 +1384,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 psMarker = CreateCurrentMarker();
                 if (!psMarker)
                     break;
-                const GUInt32 Pcap = READ_MARKER_FIELD_UINT32("Pcap");
+                const uint32_t Pcap = READ_MARKER_FIELD_UINT32("Pcap");
                 for (int i = 0; i < 32; i++)
                 {
                     if ((Pcap >> (31 - i)) & 1)
@@ -1391,7 +1393,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                         {
                             READ_MARKER_FIELD_UINT16(
                                 CPLSPrintf("Scap_P%d", i + 1),
-                                [](GUInt16 v)
+                                [](uint16_t v)
                                 {
                                     std::string ret;
                                     if ((v >> 14) == 0)
@@ -1462,7 +1464,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     break;
                 READ_MARKER_FIELD_UINT16(
                     "Rsiz",
-                    [](GUInt16 v)
+                    [](uint16_t v)
                     {
                         return std::string((v == 0)   ? "Unrestricted profile"
                                            : (v == 1) ? "Profile 0"
@@ -1776,10 +1778,10 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                 psMarker = CreateCurrentMarker();
                 if (!psMarker)
                     break;
-                const GUInt16 Lcpf = nMarkerSize;
+                const uint16_t Lcpf = nMarkerSize;
                 if (Lcpf > 2 && (Lcpf % 2) == 0)
                 {
-                    for (GUInt16 i = 0; i < (Lcpf - 2) / 2; i++)
+                    for (uint16_t i = 0; i < (Lcpf - 2) / 2; i++)
                     {
                         READ_MARKER_FIELD_UINT16(CPLSPrintf("Pcpf%d", i + 1));
                     }
@@ -1838,7 +1840,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     {
                         READ_MARKER_FIELD_UINT16(
                             CPLSPrintf("SPqcd%d", i),
-                            [](GUInt16 v)
+                            [](uint16_t v)
                             {
                                 return std::string(CPLSPrintf(
                                     "mantissa_b = %d, epsilon_b = %d",
@@ -1899,7 +1901,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     {
                         READ_MARKER_FIELD_UINT16(
                             CPLSPrintf("SPqcc%d", i),
-                            [](GUInt16 v)
+                            [](uint16_t v)
                             {
                                 return std::string(CPLSPrintf(
                                     "mantissa_b = %d, epsilon_b = %d",
@@ -2006,7 +2008,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
                     break;
                 auto RCom = READ_MARKER_FIELD_UINT16(
                     "Rcom",
-                    [](GUInt16 v) {
+                    [](uint16_t v) {
                         return std::string((v == 0)   ? "Binary"
                                            : (v == 1) ? "LATIN1"
                                                       : "");

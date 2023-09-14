@@ -450,11 +450,11 @@ GDALDataset *GTXDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     memcpy(header + 24, &dfXSize, 8);
     CPL_MSBPTR64(header + 24);
 
-    GInt32 nYSize32 = nYSize;
+    int32_t nYSize32 = nYSize;
     memcpy(header + 32, &nYSize32, 4);
     CPL_MSBPTR32(header + 32);
 
-    GInt32 nXSize32 = nXSize;
+    int32_t nXSize32 = nXSize;
     memcpy(header + 36, &nXSize32, 4);
     CPL_MSBPTR32(header + 36);
 

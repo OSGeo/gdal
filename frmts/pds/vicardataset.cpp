@@ -942,22 +942,22 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
         {
             VSIFSeekL(poGDS->fpImage,
                       poGDS->m_anRecordOffsets[poGDS->m_nLastRecordOffset] -
-                          sizeof(GUInt32),
+                          sizeof(uint32_t),
                       SEEK_SET);
         }
         else
         {
             VSIFSeekL(poGDS->fpImage,
                       poGDS->m_nImageOffsetWithoutNBB +
-                          static_cast<vsi_l_offset>(sizeof(GUInt32)) *
+                          static_cast<vsi_l_offset>(sizeof(uint32_t)) *
                               poGDS->m_nLastRecordOffset,
                       SEEK_SET);
         }
-        GUInt32 nSize;
+        uint32_t nSize;
         VSIFReadL(&nSize, 1, sizeof(nSize), poGDS->fpImage);
         CPL_LSBPTR32(&nSize);
         if ((poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC &&
-             nSize <= sizeof(GUInt32)) ||
+             nSize <= sizeof(uint32_t)) ||
             (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC2 && nSize == 0))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Wrong size at record %d",
@@ -974,7 +974,7 @@ CPLErr VICARBASICRasterBand::IReadBlock(int /*nXBlock*/, int nYBlock,
     {
         nSize = static_cast<unsigned>(poGDS->m_anRecordOffsets[nRecord + 1] -
                                       poGDS->m_anRecordOffsets[nRecord] -
-                                      sizeof(GUInt32));
+                                      sizeof(uint32_t));
     }
     else
     {
@@ -1044,12 +1044,12 @@ CPLErr VICARBASICRasterBand::IWriteBlock(int /*nXBlock*/, int nYBlock,
         poGDS->m_anRecordOffsets[0] = poGDS->m_nLabelSize;
         if (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
         {
-            poGDS->m_anRecordOffsets[0] += sizeof(GUInt32);
+            poGDS->m_anRecordOffsets[0] += sizeof(uint32_t);
         }
         else
         {
             poGDS->m_anRecordOffsets[0] +=
-                static_cast<vsi_l_offset>(sizeof(GUInt32)) * nRasterYSize;
+                static_cast<vsi_l_offset>(sizeof(uint32_t)) * nRasterYSize;
         }
     }
     if (nYBlock != poGDS->m_nLastRecordOffset)
@@ -1105,26 +1105,26 @@ CPLErr VICARBASICRasterBand::IWriteBlock(int /*nXBlock*/, int nYBlock,
     if (poGDS->m_eCompress == VICARDataset::COMPRESS_BASIC)
     {
         VSIFSeekL(poGDS->fpImage,
-                  poGDS->m_anRecordOffsets[nYBlock] - sizeof(GUInt32),
+                  poGDS->m_anRecordOffsets[nYBlock] - sizeof(uint32_t),
                   SEEK_SET);
-        GUInt32 nSizeToWrite =
-            static_cast<GUInt32>(nCodedSize + sizeof(GUInt32));
+        uint32_t nSizeToWrite =
+            static_cast<uint32_t>(nCodedSize + sizeof(uint32_t));
         CPL_LSBPTR32(&nSizeToWrite);
-        VSIFWriteL(&nSizeToWrite, sizeof(GUInt32), 1, poGDS->fpImage);
+        VSIFWriteL(&nSizeToWrite, sizeof(uint32_t), 1, poGDS->fpImage);
         VSIFWriteL(poGDS->m_abyCodedBuffer.data(), nCodedSize, 1,
                    poGDS->fpImage);
         poGDS->m_anRecordOffsets[nYBlock + 1] =
-            poGDS->m_anRecordOffsets[nYBlock] + nCodedSize + sizeof(GUInt32);
+            poGDS->m_anRecordOffsets[nYBlock] + nCodedSize + sizeof(uint32_t);
     }
     else
     {
         VSIFSeekL(poGDS->fpImage,
                   poGDS->m_nLabelSize +
-                      static_cast<vsi_l_offset>(nYBlock) * sizeof(GUInt32),
+                      static_cast<vsi_l_offset>(nYBlock) * sizeof(uint32_t),
                   SEEK_SET);
-        GUInt32 nSizeToWrite = static_cast<GUInt32>(nCodedSize);
+        uint32_t nSizeToWrite = static_cast<uint32_t>(nCodedSize);
         CPL_LSBPTR32(&nSizeToWrite);
-        VSIFWriteL(&nSizeToWrite, sizeof(GUInt32), 1, poGDS->fpImage);
+        VSIFWriteL(&nSizeToWrite, sizeof(uint32_t), 1, poGDS->fpImage);
         VSIFSeekL(poGDS->fpImage, poGDS->m_anRecordOffsets[nYBlock], SEEK_SET);
         VSIFWriteL(poGDS->m_abyCodedBuffer.data(), nCodedSize, 1,
                    poGDS->fpImage);
@@ -2833,12 +2833,12 @@ GDALDataset *VICARDataset::Open(GDALOpenInfo *poOpenInfo)
         if (poDS->m_eCompress == COMPRESS_BASIC)
         {
             poDS->m_anRecordOffsets[0] =
-                poDS->m_nImageOffsetWithoutNBB + sizeof(GUInt32);
+                poDS->m_nImageOffsetWithoutNBB + sizeof(uint32_t);
         }
         else
         {
             poDS->m_anRecordOffsets[0] =
-                poDS->m_nImageOffsetWithoutNBB + sizeof(GUInt32) * nRecords;
+                poDS->m_nImageOffsetWithoutNBB + sizeof(uint32_t) * nRecords;
         }
     }
     else if (!EQUAL(osCompress, "NONE"))

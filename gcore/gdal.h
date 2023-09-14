@@ -1312,40 +1312,40 @@ bool CPL_DLL GDALDatasetSetQueryLoggerFunc(
     (eSrcType == GDT_Byte                                                                                     \
          ? CPL_REINTERPRET_CAST(const GByte *, papoSource)[ii]                                                \
          : (eSrcType == GDT_Int8                                                                              \
-                ? CPL_REINTERPRET_CAST(const GInt8 *, papoSource)[ii]                                         \
+                ? CPL_REINTERPRET_CAST(const int8_t *, papoSource)[ii]                                        \
                 : (eSrcType == GDT_Float32                                                                    \
                        ? CPL_REINTERPRET_CAST(const float *, papoSource)[ii]                                  \
                        : (eSrcType == GDT_Float64                                                             \
                               ? CPL_REINTERPRET_CAST(const double *,                                          \
                                                      papoSource)[ii]                                          \
                               : (eSrcType == GDT_Int32                                                        \
-                                     ? CPL_REINTERPRET_CAST(const GInt32 *,                                   \
+                                     ? CPL_REINTERPRET_CAST(const int32_t *,                                  \
                                                             papoSource)[ii]                                   \
                                      : (eSrcType == GDT_UInt16                                                \
                                             ? CPL_REINTERPRET_CAST(                                           \
-                                                  const GUInt16 *,                                            \
+                                                  const uint16_t *,                                           \
                                                   papoSource)[ii]                                             \
                                             : (eSrcType == GDT_Int16                                          \
                                                    ? CPL_REINTERPRET_CAST(                                    \
-                                                         const GInt16 *,                                      \
+                                                         const int16_t *,                                     \
                                                          papoSource)[ii]                                      \
                                                    : (eSrcType == GDT_UInt32                                  \
                                                           ? CPL_REINTERPRET_CAST(                             \
-                                                                const GUInt32                                 \
+                                                                const uint32_t                                \
                                                                     *,                                        \
                                                                 papoSource)                                   \
                                                                 [ii]                                          \
                                                           : (eSrcType ==                                      \
                                                                      GDT_CInt16                               \
                                                                  ? CPL_REINTERPRET_CAST(                      \
-                                                                       const GInt16                           \
+                                                                       const int16_t                          \
                                                                            *,                                 \
                                                                        papoSource)                            \
                                                                        [(ii)*2]                               \
                                                                  : (eSrcType ==                               \
                                                                             GDT_CInt32                        \
                                                                         ? CPL_REINTERPRET_CAST(               \
-                                                                              const GInt32                    \
+                                                                              const int32_t                   \
                                                                                   *,                          \
                                                                               papoSource)                     \
                                                                               [(ii)*2]                        \

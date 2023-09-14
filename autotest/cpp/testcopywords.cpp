@@ -154,20 +154,20 @@ class TestCopyWords : public ::testing::Test
             Test<InType, GByte, ConstantType>(intype, inval, invali, outtype,
                                               outval, outvali, numLine);
         else if (outtype == GDT_Int8)
-            Test<InType, GInt8, ConstantType>(intype, inval, invali, outtype,
-                                              outval, outvali, numLine);
+            Test<InType, int8_t, ConstantType>(intype, inval, invali, outtype,
+                                               outval, outvali, numLine);
         else if (outtype == GDT_Int16)
-            Test<InType, GInt16, ConstantType>(intype, inval, invali, outtype,
-                                               outval, outvali, numLine);
+            Test<InType, int16_t, ConstantType>(intype, inval, invali, outtype,
+                                                outval, outvali, numLine);
         else if (outtype == GDT_UInt16)
-            Test<InType, GUInt16, ConstantType>(intype, inval, invali, outtype,
-                                                outval, outvali, numLine);
+            Test<InType, uint16_t, ConstantType>(intype, inval, invali, outtype,
+                                                 outval, outvali, numLine);
         else if (outtype == GDT_Int32)
-            Test<InType, GInt32, ConstantType>(intype, inval, invali, outtype,
-                                               outval, outvali, numLine);
-        else if (outtype == GDT_UInt32)
-            Test<InType, GUInt32, ConstantType>(intype, inval, invali, outtype,
+            Test<InType, int32_t, ConstantType>(intype, inval, invali, outtype,
                                                 outval, outvali, numLine);
+        else if (outtype == GDT_UInt32)
+            Test<InType, uint32_t, ConstantType>(intype, inval, invali, outtype,
+                                                 outval, outvali, numLine);
         else if (outtype == GDT_Int64)
             Test<InType, std::int64_t, ConstantType>(
                 intype, inval, invali, outtype, outval, outvali, numLine);
@@ -181,11 +181,11 @@ class TestCopyWords : public ::testing::Test
             Test<InType, double, ConstantType>(intype, inval, invali, outtype,
                                                outval, outvali, numLine);
         else if (outtype == GDT_CInt16)
-            Test<InType, GInt16, ConstantType>(intype, inval, invali, outtype,
-                                               outval, outvali, numLine);
+            Test<InType, int16_t, ConstantType>(intype, inval, invali, outtype,
+                                                outval, outvali, numLine);
         else if (outtype == GDT_CInt32)
-            Test<InType, GInt32, ConstantType>(intype, inval, invali, outtype,
-                                               outval, outvali, numLine);
+            Test<InType, int32_t, ConstantType>(intype, inval, invali, outtype,
+                                                outval, outvali, numLine);
         else if (outtype == GDT_CFloat32)
             Test<InType, float, ConstantType>(intype, inval, invali, outtype,
                                               outval, outvali, numLine);
@@ -203,20 +203,20 @@ class TestCopyWords : public ::testing::Test
             FromR_2<GByte, ConstantType>(intype, inval, invali, outtype, outval,
                                          outvali, numLine);
         else if (intype == GDT_Int8)
-            FromR_2<GInt8, ConstantType>(intype, inval, invali, outtype, outval,
-                                         outvali, numLine);
+            FromR_2<int8_t, ConstantType>(intype, inval, invali, outtype,
+                                          outval, outvali, numLine);
         else if (intype == GDT_Int16)
-            FromR_2<GInt16, ConstantType>(intype, inval, invali, outtype,
-                                          outval, outvali, numLine);
+            FromR_2<int16_t, ConstantType>(intype, inval, invali, outtype,
+                                           outval, outvali, numLine);
         else if (intype == GDT_UInt16)
-            FromR_2<GUInt16, ConstantType>(intype, inval, invali, outtype,
-                                           outval, outvali, numLine);
+            FromR_2<uint16_t, ConstantType>(intype, inval, invali, outtype,
+                                            outval, outvali, numLine);
         else if (intype == GDT_Int32)
-            FromR_2<GInt32, ConstantType>(intype, inval, invali, outtype,
-                                          outval, outvali, numLine);
-        else if (intype == GDT_UInt32)
-            FromR_2<GUInt32, ConstantType>(intype, inval, invali, outtype,
+            FromR_2<int32_t, ConstantType>(intype, inval, invali, outtype,
                                            outval, outvali, numLine);
+        else if (intype == GDT_UInt32)
+            FromR_2<uint32_t, ConstantType>(intype, inval, invali, outtype,
+                                            outval, outvali, numLine);
         else if (intype == GDT_Int64)
             FromR_2<std::int64_t, ConstantType>(intype, inval, invali, outtype,
                                                 outval, outvali, numLine);
@@ -230,11 +230,11 @@ class TestCopyWords : public ::testing::Test
             FromR_2<double, ConstantType>(intype, inval, invali, outtype,
                                           outval, outvali, numLine);
         else if (intype == GDT_CInt16)
-            FromR_2<GInt16, ConstantType>(intype, inval, invali, outtype,
-                                          outval, outvali, numLine);
+            FromR_2<int16_t, ConstantType>(intype, inval, invali, outtype,
+                                           outval, outvali, numLine);
         else if (intype == GDT_CInt32)
-            FromR_2<GInt32, ConstantType>(intype, inval, invali, outtype,
-                                          outval, outvali, numLine);
+            FromR_2<int32_t, ConstantType>(intype, inval, invali, outtype,
+                                           outval, outvali, numLine);
         else if (intype == GDT_CFloat32)
             FromR_2<float, ConstantType>(intype, inval, invali, outtype, outval,
                                          outvali, numLine);
@@ -741,12 +741,12 @@ void CheckPacked(GDALDataType eIn, GDALDataType eOut)
 }
 
 template <>
-void CheckPacked<GUInt16, GByte>(GDALDataType eIn, GDALDataType eOut)
+void CheckPacked<uint16_t, GByte>(GDALDataType eIn, GDALDataType eOut)
 {
-    CheckPackedGeneric<GUInt16, GByte>(eIn, eOut);
+    CheckPackedGeneric<uint16_t, GByte>(eIn, eOut);
 
     const int N = 64 + 7;
-    GUInt16 arrayIn[N] = {0};
+    uint16_t arrayIn[N] = {0};
     GByte arrayOut[N] = {0};
     for (int i = 0; i < N; i++)
     {
@@ -767,13 +767,13 @@ void CheckPacked<GUInt16, GByte>(GDALDataType eIn, GDALDataType eOut)
     }
 }
 template <>
-void CheckPacked<GUInt16, GInt16>(GDALDataType eIn, GDALDataType eOut)
+void CheckPacked<uint16_t, int16_t>(GDALDataType eIn, GDALDataType eOut)
 {
-    CheckPackedGeneric<GUInt16, GInt16>(eIn, eOut);
+    CheckPackedGeneric<uint16_t, int16_t>(eIn, eOut);
 
     const int N = 64 + 7;
-    GUInt16 arrayIn[N] = {0};
-    GInt16 arrayOut[N] = {0};
+    uint16_t arrayIn[N] = {0};
+    int16_t arrayOut[N] = {0};
     for (int i = 0; i < N; i++)
     {
         arrayIn[i] = 32766 + (i % 4);
@@ -796,19 +796,19 @@ template <class Tin> void CheckPacked(GDALDataType eIn, GDALDataType eOut)
             CheckPacked<Tin, GByte>(eIn, eOut);
             break;
         case GDT_Int8:
-            CheckPacked<Tin, GInt8>(eIn, eOut);
+            CheckPacked<Tin, int8_t>(eIn, eOut);
             break;
         case GDT_UInt16:
-            CheckPacked<Tin, GUInt16>(eIn, eOut);
+            CheckPacked<Tin, uint16_t>(eIn, eOut);
             break;
         case GDT_Int16:
-            CheckPacked<Tin, GInt16>(eIn, eOut);
+            CheckPacked<Tin, int16_t>(eIn, eOut);
             break;
         case GDT_UInt32:
-            CheckPacked<Tin, GUInt32>(eIn, eOut);
+            CheckPacked<Tin, uint32_t>(eIn, eOut);
             break;
         case GDT_Int32:
-            CheckPacked<Tin, GInt32>(eIn, eOut);
+            CheckPacked<Tin, int32_t>(eIn, eOut);
             break;
         case GDT_UInt64:
             CheckPacked<Tin, std::uint64_t>(eIn, eOut);
@@ -835,19 +835,19 @@ static void CheckPacked(GDALDataType eIn, GDALDataType eOut)
             CheckPacked<GByte>(eIn, eOut);
             break;
         case GDT_Int8:
-            CheckPacked<GInt8>(eIn, eOut);
+            CheckPacked<int8_t>(eIn, eOut);
             break;
         case GDT_UInt16:
-            CheckPacked<GUInt16>(eIn, eOut);
+            CheckPacked<uint16_t>(eIn, eOut);
             break;
         case GDT_Int16:
-            CheckPacked<GInt16>(eIn, eOut);
+            CheckPacked<int16_t>(eIn, eOut);
             break;
         case GDT_UInt32:
-            CheckPacked<GUInt32>(eIn, eOut);
+            CheckPacked<uint32_t>(eIn, eOut);
             break;
         case GDT_Int32:
-            CheckPacked<GInt32>(eIn, eOut);
+            CheckPacked<int32_t>(eIn, eOut);
             break;
         case GDT_UInt64:
             CheckPacked<std::uint64_t>(eIn, eOut);
@@ -959,8 +959,8 @@ TEST_F(TestCopyWords, ByteToByte)
 TEST_F(TestCopyWords, Int16ToInt16)
 {
     memset(pIn, 0xff, 256);
-    GInt16 *pInShort = (GInt16 *)pIn;
-    GInt16 *pOutShort = (GInt16 *)pOut;
+    int16_t *pInShort = (int16_t *)pIn;
+    int16_t *pOutShort = (int16_t *)pOut;
     for (int i = 0; i < 9; i++)
     {
         pInShort[2 * i + 0] = 0x1234;

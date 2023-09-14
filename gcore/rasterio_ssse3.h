@@ -56,17 +56,17 @@ void GDALDeinterleave4Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
     defined(__INTEL_CLANG_COMPILER)
 // Restricted to GCC/ICC only as only verified with it that it can properly
 // auto-vectorize
-void GDALDeinterleave3UInt16_SSSE3(const GUInt16 *CPL_RESTRICT panSrc,
-                                   GUInt16 *CPL_RESTRICT panDest0,
-                                   GUInt16 *CPL_RESTRICT panDest1,
-                                   GUInt16 *CPL_RESTRICT panDest2,
+void GDALDeinterleave3UInt16_SSSE3(const uint16_t *CPL_RESTRICT panSrc,
+                                   uint16_t *CPL_RESTRICT panDest0,
+                                   uint16_t *CPL_RESTRICT panDest1,
+                                   uint16_t *CPL_RESTRICT panDest2,
                                    size_t nIters);
 
-void GDALDeinterleave4UInt16_SSSE3(const GUInt16 *CPL_RESTRICT panSrc,
-                                   GUInt16 *CPL_RESTRICT panDest0,
-                                   GUInt16 *CPL_RESTRICT panDest1,
-                                   GUInt16 *CPL_RESTRICT panDest2,
-                                   GUInt16 *CPL_RESTRICT panDest3,
+void GDALDeinterleave4UInt16_SSSE3(const uint16_t *CPL_RESTRICT panSrc,
+                                   uint16_t *CPL_RESTRICT panDest0,
+                                   uint16_t *CPL_RESTRICT panDest1,
+                                   uint16_t *CPL_RESTRICT panDest2,
+                                   uint16_t *CPL_RESTRICT panDest3,
                                    size_t nIters);
 #endif
 

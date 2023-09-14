@@ -45,11 +45,11 @@ CPL_C_START
 struct _CPL_SHA256Context
 {
     GUInt64 totalLength;
-    GUInt32 hash[CPL_SHA256_HASH_WORDS];
-    GUInt32 bufferLength;
+    uint32_t hash[CPL_SHA256_HASH_WORDS];
+    uint32_t bufferLength;
     union
     {
-        GUInt32 words[16];
+        uint32_t words[16];
         GByte bytes[64];
     } buffer;
 };

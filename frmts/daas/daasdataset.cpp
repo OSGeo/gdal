@@ -44,8 +44,8 @@ constexpr int knMIN_BLOCKSIZE = 64;
 constexpr int knDEFAULT_BLOCKSIZE = 512;
 constexpr int knMAX_BLOCKSIZE = 8192;
 
-constexpr GUInt32 RETRY_PER_BAND = 1;
-constexpr GUInt32 RETRY_SPATIAL_SPLIT = 2;
+constexpr uint32_t RETRY_PER_BAND = 1;
+constexpr uint32_t RETRY_SPATIAL_SPLIT = 2;
 
 // Let's limit to 100 MB uncompressed per request
 constexpr int knDEFAULT_SERVER_BYTE_LIMIT = 100 * 1024 * 1024;
@@ -180,8 +180,8 @@ class GDALDAASRasterBand final : public GDALRasterBand
     CPLErr GetBlocks(int nBlockXOff, int nBlockYOff, int nXBlocks, int nYBlocks,
                      const std::vector<int> &anRequestedBands, void *pBuffer);
 
-    GUInt32 PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
-                           const std::vector<int> &anRequestedBands);
+    uint32_t PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
+                            const std::vector<int> &anRequestedBands);
 
   public:
     GDALDAASRasterBand(GDALDAASDataset *poDS, int nBand,
@@ -1450,7 +1450,7 @@ int GDALDAASRasterBand::GetMaskFlags()
 /*                      CanSpatiallySplit()                             */
 /************************************************************************/
 
-static bool CanSpatiallySplit(GUInt32 nRetryFlags, int nXOff, int nYOff,
+static bool CanSpatiallySplit(uint32_t nRetryFlags, int nXOff, int nYOff,
                               int nXSize, int nYSize, int nBufXSize,
                               int nBufYSize, int nBlockXSize, int nBlockYSize,
                               GSpacing nPixelSpace, GSpacing nLineSpace,
@@ -1545,7 +1545,7 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         anRequestedBands.push_back(0);
     for (int i = 1; i <= GetRasterCount(); i++)
         anRequestedBands.push_back(i);
-    GUInt32 nRetryFlags =
+    uint32_t nRetryFlags =
         poBand->PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, anRequestedBands);
     int nBlockXSize, nBlockYSize;
     poBand->GetBlockSize(&nBlockXSize, &nBlockYSize);
@@ -1709,7 +1709,7 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         anRequestedBands.push_back(0);
     for (int i = 1; i <= poGDS->GetRasterCount(); i++)
         anRequestedBands.push_back(i);
-    GUInt32 nRetryFlags =
+    uint32_t nRetryFlags =
         PrefetchBlocks(nXOff, nYOff, nXSize, nYSize, anRequestedBands);
     int nXOff1 = 0;
     int nYOff1 = 0;
@@ -1778,7 +1778,7 @@ CPLErr GDALDAASRasterBand::AdviseRead(int nXOff, int nYOff, int nXSize,
 // Return or'ed flags among 0, RETRY_PER_BAND, RETRY_SPATIAL_SPLIT if the user
 // should try to split the request in smaller chunks
 
-GUInt32
+uint32_t
 GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
                                    const std::vector<int> &anRequestedBands)
 {
@@ -1911,7 +1911,7 @@ GDALDAASRasterBand::PrefetchBlocks(int nXOff, int nYOff, int nXSize, int nYSize,
     if (nXBlocks > 0 && nYBlocks > 0)
     {
         bool bMustReturn = false;
-        GUInt32 nRetryFlags = 0;
+        uint32_t nRetryFlags = 0;
 
         // Get the blocks if the number of already cached blocks is lesser
         // than 25% of the to be queried blocks

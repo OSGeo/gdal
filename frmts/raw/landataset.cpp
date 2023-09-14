@@ -445,14 +445,14 @@ GDALDataset *LANDataset::Open(GDALOpenInfo *poOpenInfo)
     }
     else
     {
-        GInt32 nTmp = 0;
+        int32_t nTmp = 0;
         memcpy(&nTmp, poDS->pachHeader + 16, 4);
         poDS->nRasterXSize = nTmp;
         memcpy(&nTmp, poDS->pachHeader + 20, 4);
         poDS->nRasterYSize = nTmp;
     }
 
-    GInt16 nTmp16 = 0;
+    int16_t nTmp16 = 0;
     memcpy(&nTmp16, poDS->pachHeader + 6, 2);
 
     int nPixelOffset = 0;
@@ -721,7 +721,7 @@ CPLErr LANDataset::SetSpatialRef(const OGRSpatialReference *poSRS)
     CPL_IGNORE_RET_VAL(VSIFSeekL(fpImage, 0, SEEK_SET));
     CPL_IGNORE_RET_VAL(VSIFReadL(abyHeader, 128, 1, fpImage));
 
-    GUInt16 nProjCode = 0;
+    uint16_t nProjCode = 0;
 
     if (poSRS->IsGeographic())
     {
@@ -840,8 +840,8 @@ void LANDataset::CheckForStatistics()
         if (poBand == nullptr)
             break;
 
-        GInt16 nMin = 0;
-        GInt16 nMax = 0;
+        int16_t nMin = 0;
+        int16_t nMax = 0;
 
         if (poBand->GetRasterDataType() != GDT_Byte)
         {
@@ -906,7 +906,7 @@ GDALDataset *LANDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     memcpy(abyHeader + 0, "HEAD74", 6);
 
     // Pixel type.
-    GInt16 n16Val = 0;
+    int16_t n16Val = 0;
     if (eType == GDT_Byte)  // Do we want 4bit?
         n16Val = 0;
     else
@@ -914,13 +914,13 @@ GDALDataset *LANDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     memcpy(abyHeader + 6, &n16Val, 2);
 
     // Number of Bands.
-    n16Val = static_cast<GInt16>(nBandsIn);
+    n16Val = static_cast<int16_t>(nBandsIn);
     memcpy(abyHeader + 8, &n16Val, 2);
 
     // Unknown (6).
 
     // Width.
-    GInt32 n32Val = nXSize;
+    int32_t n32Val = nXSize;
     memcpy(abyHeader + 16, &n32Val, 4);
 
     // Height.

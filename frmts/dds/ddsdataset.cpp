@@ -269,8 +269,8 @@ GDALDataset *DDSDataset::Open(GDALOpenInfo *poOpenInfo)
            sizeof(ddsDesc));
 #ifdef CPL_MSB
     {
-        GUInt32 *ddsDescAsUInt32 = reinterpret_cast<GUInt32 *>(&ddsDesc);
-        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(GUInt32); ++i)
+        uint32_t *ddsDescAsUInt32 = reinterpret_cast<uint32_t *>(&ddsDesc);
+        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(uint32_t); ++i)
         {
             CPL_LSBPTR32(&ddsDescAsUInt32[i]);
         }
@@ -646,8 +646,8 @@ GDALDataset *DDSDataset::CreateCopy(const char *pszFilename,
 
 #ifdef CPL_MSB
     {
-        GUInt32 *ddsDescAsUInt32 = reinterpret_cast<GUInt32 *>(&ddsDesc);
-        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(GUInt32); ++i)
+        uint32_t *ddsDescAsUInt32 = reinterpret_cast<uint32_t *>(&ddsDesc);
+        for (size_t i = 0; i < sizeof(ddsDesc) / sizeof(uint32_t); ++i)
         {
             CPL_LSBPTR32(&ddsDescAsUInt32[i]);
         }

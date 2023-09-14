@@ -679,8 +679,8 @@ CPLErr GDALHEIFRasterBand::IReadBlock(int, int nBlockYOff, void *pImage)
     else
     {
         for (int i = 0; i < nBlockXSize; i++)
-            (static_cast<GUInt16 *>(pImage))[i] =
-                (reinterpret_cast<const GUInt16 *>(
+            (static_cast<uint16_t *>(pImage))[i] =
+                (reinterpret_cast<const uint16_t *>(
                     pSrcData))[nBand - 1 + i * nBands];
     }
 

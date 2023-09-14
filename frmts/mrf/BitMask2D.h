@@ -216,7 +216,7 @@ template <typename T = unsigned long long> class BitMap2D
             }
             else
             {
-                CPL_SWAP16PTR(reinterpret_cast<GUInt16 *>(&_bits[i]));
+                CPL_SWAP16PTR(reinterpret_cast<uint16_t *>(&_bits[i]));
             }
         }
     }

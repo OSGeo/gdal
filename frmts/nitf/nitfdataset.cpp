@@ -3573,7 +3573,7 @@ int NITFDataset::ScanJPEGQLevel(GUIntBig *pnDataStart, bool *pbError)
     /*      Scan ahead for jpeg magic code.  In some files (eg. NSIF)       */
     /*      there seems to be some extra junk before the image data stream. */
     /* -------------------------------------------------------------------- */
-    GUInt32 nOffset = 0;
+    uint32_t nOffset = 0;
     while (nOffset < sizeof(abyHeader) - 23 &&
            (abyHeader[nOffset + 0] != 0xff || abyHeader[nOffset + 1] != 0xd8 ||
             abyHeader[nOffset + 2] != 0xff))
@@ -6747,7 +6747,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     int nOffset = 5;
 
     /* Version : 2.0 */
-    GUInt16 nUInt16 = 0x0200;
+    uint16_t nUInt16 = 0x0200;
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);
@@ -6757,13 +6757,13 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     nOffset++;
 
     /* Number of image blocks per row */
-    nUInt16 = (GUInt16)nNBPR;
+    nUInt16 = (uint16_t)nNBPR;
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);
 
     /* Number of image blocks per column */
-    nUInt16 = (GUInt16)nNBPC;
+    nUInt16 = (uint16_t)nNBPC;
     CPL_MSBPTR16(&nUInt16);
     memcpy(abyAPP6 + nOffset, &nUInt16, sizeof(nUInt16));
     nOffset += sizeof(nUInt16);
@@ -6823,16 +6823,16 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
     bool bOK = VSIFSeekL(fp, nStartOffset, SEEK_SET) == 0;
 
     const char *pszIC = CSLFetchNameValue(papszOptions, "IC");
-    GUInt32 nIMDATOFF = 0;
-    constexpr GUInt32 BLOCKMAP_HEADER_SIZE = 4 + 2 + 2 + 2;
+    uint32_t nIMDATOFF = 0;
+    constexpr uint32_t BLOCKMAP_HEADER_SIZE = 4 + 2 + 2 + 2;
     if (EQUAL(pszIC, "M3"))
     {
         /* Prepare the block map */
-        GUInt32 nIMDATOFF_MSB = BLOCKMAP_HEADER_SIZE + nNBPC * nNBPR * 4;
+        uint32_t nIMDATOFF_MSB = BLOCKMAP_HEADER_SIZE + nNBPC * nNBPR * 4;
         nIMDATOFF = nIMDATOFF_MSB;
-        GUInt16 nBMRLNTH = 4;
-        GUInt16 nTMRLNTH = 0;
-        GUInt16 nTPXCDLNTH = 0;
+        uint16_t nBMRLNTH = 4;
+        uint16_t nTMRLNTH = 0;
+        uint16_t nTPXCDLNTH = 0;
 
         CPL_MSBPTR32(&nIMDATOFF_MSB);
         CPL_MSBPTR16(&nBMRLNTH);
@@ -6872,7 +6872,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
                     nCurPos - nStartOffset - nIMDATOFF;
                 if (nBlockOffset <= UINT_MAX)
                 {
-                    GUInt32 nBlockOffset32 = (GUInt32)nBlockOffset;
+                    uint32_t nBlockOffset32 = (uint32_t)nBlockOffset;
                     CPL_MSBPTR32(&nBlockOffset32);
                     bOK &= VSIFWriteL(&nBlockOffset32, 4, 1, fp) == 1;
                 }
@@ -6883,7 +6883,7 @@ static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
                              ". Cannot fit into 32 bits...",
                              nBlockXOff, nBlockYOff, nBlockOffset);
 
-                    GUInt32 nBlockOffset32 = UINT_MAX;
+                    uint32_t nBlockOffset32 = UINT_MAX;
                     for (int i = nBlockYOff * nNBPR + nBlockXOff;
                          bOK && i < nNBPC * nNBPR; i++)
                     {

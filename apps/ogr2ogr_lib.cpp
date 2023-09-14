@@ -5515,7 +5515,7 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                     CPLUnixTimeToYMDHMS(nUnixTime, &brokendowntime);
 
                     psField->Date.Year =
-                        static_cast<GInt16>(brokendowntime.tm_year + 1900);
+                        static_cast<int16_t>(brokendowntime.tm_year + 1900);
                     psField->Date.Month =
                         static_cast<GByte>(brokendowntime.tm_mon + 1);
                     psField->Date.Day =

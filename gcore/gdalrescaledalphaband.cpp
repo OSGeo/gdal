@@ -106,7 +106,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
     {
         if (pTemp == nullptr)
         {
-            pTemp = VSI_MALLOC2_VERBOSE(sizeof(GUInt16), nRasterXSize);
+            pTemp = VSI_MALLOC2_VERBOSE(sizeof(uint16_t), nRasterXSize);
             if (pTemp == nullptr)
             {
                 return CE_Failure;
@@ -121,7 +121,7 @@ CPLErr GDALRescaledAlphaBand::IRasterIO(
                 return eErr;
 
             GByte *pabyImage = static_cast<GByte *>(pData) + j * nLineSpace;
-            GUInt16 *pSrc = static_cast<GUInt16 *>(pTemp);
+            uint16_t *pSrc = static_cast<uint16_t *>(pTemp);
 
             for (int i = 0; i < nBufXSize; i++)
             {

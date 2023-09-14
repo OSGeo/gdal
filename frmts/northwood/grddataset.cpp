@@ -686,8 +686,8 @@ int NWT_GRDDataset::UpdateHeader()
     poHeaderBlock->WriteFloat(pGrd->fVersion);
 
     // Dimensions
-    poHeaderBlock->WriteInt16(static_cast<GInt16>(pGrd->nXSide));
-    poHeaderBlock->WriteInt16(static_cast<GInt16>(pGrd->nYSide));
+    poHeaderBlock->WriteInt16(static_cast<int16_t>(pGrd->nXSide));
+    poHeaderBlock->WriteInt16(static_cast<int16_t>(pGrd->nYSide));
 
     // Extents
     poHeaderBlock->WriteDouble(pGrd->dfMinX);

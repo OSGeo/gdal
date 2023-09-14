@@ -755,7 +755,7 @@ OGRGeometry *NTFFileReader::ProcessGeometry3D(NTFRecord *poRecord,
 
         poGeometry = poLine;
         poLine->setNumPoints(nNumCoord);
-        const GUInt32 nErrorsBefore = CPLGetErrorCounter();
+        const uint32_t nErrorsBefore = CPLGetErrorCounter();
         for (int iCoord = 0; iCoord < nNumCoord; iCoord++)
         {
             const int iStart = 14 + iCoord * (GetXYLen() * 2 + nZWidth + 2);

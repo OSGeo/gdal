@@ -183,8 +183,8 @@ int TABMAPCoordBlock::CommitToFile()
     WriteInt16(TABMAP_COORD_BLOCK);  // Block type code
     CPLAssert(m_nSizeUsed >= MAP_COORD_HEADER_SIZE &&
               m_nSizeUsed < MAP_COORD_HEADER_SIZE + 32768);
-    WriteInt16(static_cast<GInt16>(m_nSizeUsed -
-                                   MAP_COORD_HEADER_SIZE));  // num. bytes used
+    WriteInt16(static_cast<int16_t>(m_nSizeUsed -
+                                    MAP_COORD_HEADER_SIZE));  // num. bytes used
     WriteInt32(m_nNextCoordBlock);
 
     if (CPLGetLastErrorType() == CE_Failure)
@@ -272,7 +272,7 @@ int TABMAPCoordBlock::InitNewBlock(VSILFILE *fpSrc, int nBlockSize,
  * Set the address (offset from beginning of file) of the coord. block
  * that follows the current one.
  **********************************************************************/
-void TABMAPCoordBlock::SetNextCoordBlock(GInt32 nNextCoordBlockAddress)
+void TABMAPCoordBlock::SetNextCoordBlock(int32_t nNextCoordBlockAddress)
 {
     m_nNextCoordBlock = nNextCoordBlockAddress;
     m_bModified = TRUE;
@@ -284,7 +284,7 @@ void TABMAPCoordBlock::SetNextCoordBlock(GInt32 nNextCoordBlockAddress)
  * Set the Compressed integer coordinates space origin to be used when
  * reading compressed coordinates using ReadIntCoord().
  **********************************************************************/
-void TABMAPCoordBlock::SetComprCoordOrigin(GInt32 nX, GInt32 nY)
+void TABMAPCoordBlock::SetComprCoordOrigin(int32_t nX, int32_t nY)
 {
     m_nComprOrgX = nX;
     m_nComprOrgY = nY;
@@ -303,7 +303,7 @@ void TABMAPCoordBlock::SetComprCoordOrigin(GInt32 nX, GInt32 nY)
  * Returns 0 if successful or -1 if an error happened, in which case
  * CPLError() will have been called.
  **********************************************************************/
-int TABMAPCoordBlock::ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY)
+int TABMAPCoordBlock::ReadIntCoord(GBool bCompressed, int32_t &nX, int32_t &nY)
 {
     if (bCompressed)
     {
@@ -342,7 +342,7 @@ int TABMAPCoordBlock::ReadIntCoord(GBool bCompressed, GInt32 &nX, GInt32 &nY)
  * CPLError() will have been called.
  **********************************************************************/
 int TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
-                                    GInt32 *panXY)
+                                    int32_t *panXY)
 {
     int i, numValues = numCoordPairs * 2;
 
@@ -404,7 +404,7 @@ int TABMAPCoordBlock::ReadIntCoords(GBool bCompressed, int numCoordPairs,
 int TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int nVersion,
                                        int numSections,
                                        TABMAPCoordSecHdr *pasHdrs,
-                                       GInt32 &numVerticesTotal)
+                                       int32_t &numVerticesTotal)
 {
     CPLErrorReset();
 
@@ -428,7 +428,7 @@ int TABMAPCoordBlock::ReadCoordSecHdrs(GBool bCompressed, int nVersion,
     const int nTotalHdrSizeUncompressed = nSectionSize * numSections;
 
     const int nVertexSize =
-        bCompressed ? 2 * sizeof(GUInt16) : 2 * sizeof(GUInt32);
+        bCompressed ? 2 * sizeof(uint16_t) : 2 * sizeof(uint32_t);
     numVerticesTotal = 0;
 
     for (int i = 0; i < numSections; i++)
@@ -566,11 +566,11 @@ int TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion, int numSections,
         if (nVersion >= 450)
             WriteInt32(pasHdrs[i].numVertices);
         else
-            WriteInt16(static_cast<GInt16>(pasHdrs[i].numVertices));
+            WriteInt16(static_cast<int16_t>(pasHdrs[i].numVertices));
         if (nVersion >= 800)
             WriteInt32(pasHdrs[i].numHoles);
         else
-            WriteInt16(static_cast<GInt16>(pasHdrs[i].numHoles));
+            WriteInt16(static_cast<int16_t>(pasHdrs[i].numHoles));
         WriteIntCoord(pasHdrs[i].nXMin, pasHdrs[i].nYMin, bCompressed);
         WriteIntCoord(pasHdrs[i].nXMax, pasHdrs[i].nYMax, bCompressed);
         WriteInt32(pasHdrs[i].nDataOffset);
@@ -592,7 +592,7 @@ int TABMAPCoordBlock::WriteCoordSecHdrs(int nVersion, int numSections,
  * CPLError() will have been called.
  **********************************************************************/
 
-int TABMAPCoordBlock::WriteIntCoord(GInt32 nX, GInt32 nY,
+int TABMAPCoordBlock::WriteIntCoord(int32_t nX, int32_t nY,
                                     GBool bCompressed /*=FALSE*/)
 {
 
@@ -849,8 +849,8 @@ void TABMAPCoordBlock::StartNewFeature()
  * Return the MBR of all the coords written using WriteIntCoord() since
  * the last call to StartNewFeature().
  **********************************************************************/
-void TABMAPCoordBlock::GetFeatureMBR(GInt32 &nXMin, GInt32 &nYMin,
-                                     GInt32 &nXMax, GInt32 &nYMax)
+void TABMAPCoordBlock::GetFeatureMBR(int32_t &nXMin, int32_t &nYMin,
+                                     int32_t &nXMax, int32_t &nYMax)
 {
     nXMin = m_nFeatureXMin;
     nYMin = m_nFeatureYMin;

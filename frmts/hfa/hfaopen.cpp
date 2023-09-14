@@ -226,25 +226,26 @@ HFAHandle HFAOpen(const char *pszFilename, const char *pszAccess)
     psInfo->bTreeDirty = false;
 
     // Where is the header?
-    GUInt32 nHeaderPos = 0;
-    bool bRet = VSIFReadL(&nHeaderPos, sizeof(GInt32), 1, fp) > 0;
+    uint32_t nHeaderPos = 0;
+    bool bRet = VSIFReadL(&nHeaderPos, sizeof(int32_t), 1, fp) > 0;
     HFAStandard(4, &nHeaderPos);
 
     // Read the header.
     bRet &= VSIFSeekL(fp, nHeaderPos, SEEK_SET) >= 0;
 
-    bRet &= VSIFReadL(&(psInfo->nVersion), sizeof(GInt32), 1, fp) > 0;
+    bRet &= VSIFReadL(&(psInfo->nVersion), sizeof(int32_t), 1, fp) > 0;
     HFAStandard(4, &(psInfo->nVersion));
 
     bRet &= VSIFReadL(szHeader, 4, 1, fp) > 0;  // Skip freeList.
 
-    bRet &= VSIFReadL(&(psInfo->nRootPos), sizeof(GInt32), 1, fp) > 0;
+    bRet &= VSIFReadL(&(psInfo->nRootPos), sizeof(int32_t), 1, fp) > 0;
     HFAStandard(4, &(psInfo->nRootPos));
 
-    bRet &= VSIFReadL(&(psInfo->nEntryHeaderLength), sizeof(GInt16), 1, fp) > 0;
+    bRet &=
+        VSIFReadL(&(psInfo->nEntryHeaderLength), sizeof(int16_t), 1, fp) > 0;
     HFAStandard(2, &(psInfo->nEntryHeaderLength));
 
-    bRet &= VSIFReadL(&(psInfo->nDictionaryPos), sizeof(GInt32), 1, fp) > 0;
+    bRet &= VSIFReadL(&(psInfo->nDictionaryPos), sizeof(int32_t), 1, fp) > 0;
     HFAStandard(4, &(psInfo->nDictionaryPos));
 
     // Collect file size.
@@ -257,7 +258,7 @@ HFAHandle HFAOpen(const char *pszFilename, const char *pszAccess)
         CPLFree(psInfo);
         return nullptr;
     }
-    psInfo->nEndOfFile = static_cast<GUInt32>(VSIFTellL(fp));
+    psInfo->nEndOfFile = static_cast<uint32_t>(VSIFTellL(fp));
 
     // Instantiate the root entry.
     psInfo->poRoot = HFAEntry::New(psInfo, psInfo->nRootPos, nullptr, nullptr);
@@ -1287,7 +1288,7 @@ CPLErr HFASetPEString(HFAHandle hHFA, const char *pszPEString)
         // handling for MIFObjects
         pabyData = poProX->GetData();
         int nDataSize = poProX->GetDataSize();
-        GUInt32 iOffset = poProX->GetDataPos();
+        uint32_t iOffset = poProX->GetDataPos();
 
         while (nDataSize > 10 &&
                !STARTS_WITH_CI((const char *)pabyData, "PE_COORDSYS,."))
@@ -1305,7 +1306,7 @@ CPLErr HFASetPEString(HFAHandle hHFA, const char *pszPEString)
         // Set the size and offset of the mifobject.
         iOffset += 8;
 
-        GUInt32 nSize = static_cast<GUInt32>(strlen(pszPEString) + 9);
+        uint32_t nSize = static_cast<uint32_t>(strlen(pszPEString) + 9);
 
         HFAStandard(4, &nSize);
         memcpy(pabyData, &nSize, 4);
@@ -1316,7 +1317,7 @@ CPLErr HFASetPEString(HFAHandle hHFA, const char *pszPEString)
         pabyData += 4;
 
         // Set the size and offset of the string value.
-        nSize = static_cast<GUInt32>(strlen(pszPEString) + 1);
+        nSize = static_cast<uint32_t>(strlen(pszPEString) + 1);
 
         HFAStandard(4, &nSize);
         memcpy(pabyData, &nSize, 4);
@@ -1829,16 +1830,16 @@ HFAHandle HFACreateLL(const char *pszFilename)
     // Write out the Ehfa_HeaderTag.
     bool bRet = VSIFWriteL((void *)"EHFA_HEADER_TAG", 1, 16, fp) > 0;
 
-    GInt32 nHeaderPos = 20;
+    int32_t nHeaderPos = 20;
     HFAStandard(4, &nHeaderPos);
     bRet &= VSIFWriteL(&nHeaderPos, 4, 1, fp) > 0;
 
     // Write the Ehfa_File node, locked in at offset 20.
-    GInt32 nVersion = 1;
-    GInt32 nFreeList = 0;
-    GInt32 nRootEntry = 0;
-    GInt16 nEntryHeaderLength = 128;
-    GInt32 nDictionaryPtr = 38;
+    int32_t nVersion = 1;
+    int32_t nFreeList = 0;
+    int32_t nRootEntry = 0;
+    int16_t nEntryHeaderLength = 128;
+    int32_t nDictionaryPtr = 38;
 
     psInfo->nEntryHeaderLength = nEntryHeaderLength;
     psInfo->nRootPos = 0;
@@ -1882,7 +1883,7 @@ HFAHandle HFACreateLL(const char *pszFilename)
 
     psInfo->poDictionary = new HFADictionary(psInfo->pszDictionary);
 
-    psInfo->nEndOfFile = static_cast<GUInt32>(VSIFTellL(fp));
+    psInfo->nEndOfFile = static_cast<uint32_t>(VSIFTellL(fp));
 
     // Create a root entry.
     psInfo->poRoot = new HFAEntry(psInfo, "root", "root", nullptr);
@@ -1922,7 +1923,7 @@ HFAHandle HFACreateLL(const char *pszFilename)
 /*      failure.                                                        */
 /************************************************************************/
 
-GUInt32 HFAAllocateSpace(HFAInfo_t *psInfo, GUInt32 nBytes)
+uint32_t HFAAllocateSpace(HFAInfo_t *psInfo, uint32_t nBytes)
 
 {
     // TODO(schwehr): Check if this will wrap over 2GB limit.
@@ -1957,12 +1958,12 @@ CPLErr HFAFlush(HFAHandle hHFA)
     }
 
     // Flush Dictionary to disk.
-    GUInt32 nNewDictionaryPos = hHFA->nDictionaryPos;
+    uint32_t nNewDictionaryPos = hHFA->nDictionaryPos;
     bool bRet = true;
     if (hHFA->poDictionary->bDictionaryTextDirty)
     {
         bRet &= VSIFSeekL(hHFA->fp, 0, SEEK_END) >= 0;
-        nNewDictionaryPos = static_cast<GUInt32>(VSIFTellL(hHFA->fp));
+        nNewDictionaryPos = static_cast<uint32_t>(VSIFTellL(hHFA->fp));
         bRet &=
             VSIFWriteL(hHFA->poDictionary->osDictionaryText.c_str(),
                        strlen(hHFA->poDictionary->osDictionaryText.c_str()) + 1,
@@ -1974,13 +1975,13 @@ CPLErr HFAFlush(HFAHandle hHFA)
     if (hHFA->nRootPos != hHFA->poRoot->GetFilePos() ||
         nNewDictionaryPos != hHFA->nDictionaryPos)
     {
-        GUInt32 nHeaderPos = 0;
+        uint32_t nHeaderPos = 0;
 
         bRet &= VSIFSeekL(hHFA->fp, 16, SEEK_SET) >= 0;
-        bRet &= VSIFReadL(&nHeaderPos, sizeof(GInt32), 1, hHFA->fp) > 0;
+        bRet &= VSIFReadL(&nHeaderPos, sizeof(int32_t), 1, hHFA->fp) > 0;
         HFAStandard(4, &nHeaderPos);
 
-        GUInt32 nOffset = hHFA->poRoot->GetFilePos();
+        uint32_t nOffset = hHFA->poRoot->GetFilePos();
         hHFA->nRootPos = nOffset;
         HFAStandard(4, &nOffset);
         bRet &= VSIFSeekL(hHFA->fp, nHeaderPos + 8, SEEK_SET) >= 0;
@@ -2077,7 +2078,7 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
         // Set block info headers.
 
         // Blockinfo count.
-        GUInt32 nValue = nBlocks;
+        uint32_t nValue = nBlocks;
         HFAStandard(4, &nValue);
         memcpy(pabyData + 14, &nValue, 4);
 
@@ -2092,7 +2093,7 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
             int nOffset = 22 + 14 * iBlock;
 
             // fileCode.
-            GInt16 nValue16 = 0;
+            int16_t nValue16 = 0;
             HFAStandard(2, &nValue16);
             memcpy(pabyData + nOffset, &nValue16, 2);
 
@@ -2222,8 +2223,8 @@ int HFACreateLayer(HFAHandle psInfo, HFAEntry *poParent,
         HFAEntry::New(psInfo, "Ehfa_Layer", "Ehfa_Layer", poEimg_Layer);
     poEhfa_Layer->MakeData();
     poEhfa_Layer->SetPosition();
-    const GUInt32 nLDict =
-        HFAAllocateSpace(psInfo, static_cast<GUInt32>(strlen(szLDict) + 1));
+    const uint32_t nLDict =
+        HFAAllocateSpace(psInfo, static_cast<uint32_t>(strlen(szLDict) + 1));
 
     poEhfa_Layer->SetStringField("type", "raster");
     poEhfa_Layer->SetIntField("dictionaryPtr", nLDict);
@@ -2572,11 +2573,11 @@ static CPLErr HFASetGDALMetadata(HFAHandle hHFA, int nBand, char **papszMD)
         poEdsc_Column->SetIntField("numRows", 1);
         poEdsc_Column->SetStringField("dataType", "string");
         poEdsc_Column->SetIntField("maxNumChars",
-                                   static_cast<GUInt32>(strlen(pszValue) + 1));
+                                   static_cast<uint32_t>(strlen(pszValue) + 1));
 
         // Write the data out.
         const int nOffset =
-            HFAAllocateSpace(hHFA, static_cast<GUInt32>(strlen(pszValue) + 1));
+            HFAAllocateSpace(hHFA, static_cast<uint32_t>(strlen(pszValue) + 1));
 
         poEdsc_Column->SetIntField("columnDataPtr", nOffset);
 
@@ -2767,7 +2768,7 @@ CPLErr HFASetMetadata(HFAHandle hHFA, int nBand, char **papszMD)
 
             poHisto->SetIntField("numRows", nNumBins);
             // Allocate space for the bin values.
-            GUInt32 nOffset = HFAAllocateSpace(hHFA, nNumBins * 8);
+            uint32_t nOffset = HFAAllocateSpace(hHFA, nNumBins * 8);
             poHisto->SetIntField("columnDataPtr", nOffset);
             poHisto->SetStringField("dataType", "real");
             poHisto->SetIntField("maxNumChars", 0);
@@ -3024,7 +3025,7 @@ bool HFACreateSpillStack(HFAInfo_t *psInfo, int nXSize, int nYSize, int nLayers,
     GByte bUnknown = 1;
     bRet &= VSIFWriteL(&bUnknown, 1, 1, fpVSIL) > 0;
 
-    GInt32 nValue32 = nLayers;
+    int32_t nValue32 = nLayers;
     HFAStandard(4, &nValue32);
     bRet &= VSIFWriteL(&nValue32, 4, 1, fpVSIL) > 0;
     nValue32 = nXSize;
@@ -3793,16 +3794,16 @@ CPLErr HFARenameReferences(HFAHandle hHFA, const char *pszNewBase,
         // Fetch all existing values.
         CPLString osFileName = poERDMS->GetStringField("fileName.string");
 
-        GInt32 anValidFlagsOffset[2] = {
+        int32_t anValidFlagsOffset[2] = {
             poERDMS->GetIntField("layerStackValidFlagsOffset[0]"),
             poERDMS->GetIntField("layerStackValidFlagsOffset[1]")};
 
-        GInt32 anStackDataOffset[2] = {
+        int32_t anStackDataOffset[2] = {
             poERDMS->GetIntField("layerStackDataOffset[0]"),
             poERDMS->GetIntField("layerStackDataOffset[1]")};
 
-        const GInt32 nStackCount = poERDMS->GetIntField("layerStackCount");
-        const GInt32 nStackIndex = poERDMS->GetIntField("layerStackIndex");
+        const int32_t nStackCount = poERDMS->GetIntField("layerStackCount");
+        const int32_t nStackIndex = poERDMS->GetIntField("layerStackIndex");
 
         // Update the filename.
         if (strncmp(osFileName, pszOldBase, strlen(pszOldBase)) == 0)

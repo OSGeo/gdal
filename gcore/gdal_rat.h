@@ -329,7 +329,7 @@ class GDALRasterAttributeField
 
     GDALRATFieldUsage eUsage = GFU_Generic;
 
-    std::vector<GInt32> anValues{};
+    std::vector<int32_t> anValues{};
     std::vector<double> adfValues{};
     std::vector<CPLString> aosValues{};
 };

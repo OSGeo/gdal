@@ -361,8 +361,8 @@ static const std::pair<int, int> &GetEdgeOwners(
 /*      Translate a multipatch representation to an OGR geometry        */
 /************************************************************************/
 
-OGRGeometry *OGRCreateFromMultiPatch(int nParts, const GInt32 *panPartStart,
-                                     const GInt32 *panPartType, int nPoints,
+OGRGeometry *OGRCreateFromMultiPatch(int nParts, const int32_t *panPartStart,
+                                     const int32_t *panPartType, int nPoints,
                                      const double *padfX, const double *padfY,
                                      const double *padfZ)
 {
@@ -560,7 +560,7 @@ OGRErr OGRWriteToShapeBin(const OGRGeometry *poGeom, GByte **ppabyShape,
         *ppabyShape = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nShpSize));
         if (*ppabyShape == nullptr)
             return OGRERR_FAILURE;
-        GUInt32 zero = SHPT_NULL;
+        uint32_t zero = SHPT_NULL;
         memcpy(*ppabyShape, &zero, nShpSize);
         *pnBytes = nShpSize;
         return OGRERR_NONE;
@@ -572,8 +572,8 @@ OGRErr OGRWriteToShapeBin(const OGRGeometry *poGeom, GByte **ppabyShape,
     const int nCoordDims = poGeom->CoordinateDimension();
 
     int nShpZSize = 0;  // Z gets tacked onto the end.
-    GUInt32 nPoints = 0;
-    GUInt32 nParts = 0;
+    uint32_t nPoints = 0;
+    uint32_t nParts = 0;
 
     /* -------------------------------------------------------------------- */
     /*      Calculate the shape buffer size                                 */
@@ -693,7 +693,7 @@ id,WKT
 6,"LINESTRING (31 0,30 2)" <-- not constant radius
     */
 
-    GUInt32 nTmp = 1;
+    uint32_t nTmp = 1;
     memcpy((*ppabyShape) + nShpSizeBeforeCurve, &nTmp, 4);
     nTmp = 0;
     memcpy((*ppabyShape) + nShpSizeBeforeCurve + 4, &nTmp, 4);
@@ -778,7 +778,7 @@ id,WKT
     /* -------------------------------------------------------------------- */
     /*      Write in the Shape type number now                              */
     /* -------------------------------------------------------------------- */
-    GUInt32 nGType = SHPT_NULL;
+    uint32_t nGType = SHPT_NULL;
 
     switch (nOGRType)
     {
@@ -918,17 +918,17 @@ id,WKT
         auto poLine = poGeom->toLineString();
 
         // Write in the nparts (1).
-        const GUInt32 nPartsLsb = CPL_LSBWORD32(nParts);
+        const uint32_t nPartsLsb = CPL_LSBWORD32(nParts);
         memcpy(pabyPtr, &nPartsLsb, 4);
         pabyPtr += 4;
 
         // Write in the npoints.
-        GUInt32 nPointsLsb = CPL_LSBWORD32(nPoints);
+        uint32_t nPointsLsb = CPL_LSBWORD32(nPoints);
         memcpy(pabyPtr, &nPointsLsb, 4);
         pabyPtr += 4;
 
         // Write in the part index (0).
-        GUInt32 nPartIndex = 0;
+        uint32_t nPartIndex = 0;
         memcpy(pabyPtr, &nPartIndex, 4);
         pabyPtr += 4;
 
@@ -937,7 +937,7 @@ id,WKT
                           reinterpret_cast<double *>(pabyPtrZ));
         if (bHasM)
         {
-            for (GUInt32 k = 0; k < nPoints; k++)
+            for (uint32_t k = 0; k < nPoints; k++)
             {
                 double dfM = poLine->getM(k);
                 memcpy(pabyPtrM + 8 * k, &dfM, 8);
@@ -951,7 +951,7 @@ id,WKT
         // Swap if necessary.
         if (OGR_SWAP(wkbNDR))
         {
-            for (GUInt32 k = 0; k < nPoints; k++)
+            for (uint32_t k = 0; k < nPoints; k++)
             {
                 CPL_SWAPDOUBLE(pabyPtr + 16 * k);
                 CPL_SWAPDOUBLE(pabyPtr + 16 * k + 8);
@@ -970,12 +970,12 @@ id,WKT
         auto poPoly = poGeom->toPolygon();
 
         // Write in the part count.
-        GUInt32 nPartsLsb = CPL_LSBWORD32(nParts);
+        uint32_t nPartsLsb = CPL_LSBWORD32(nParts);
         memcpy(pabyPtr, &nPartsLsb, 4);
         pabyPtr += 4;
 
         // Write in the total point count.
-        GUInt32 nPointsLsb = CPL_LSBWORD32(nPoints);
+        uint32_t nPointsLsb = CPL_LSBWORD32(nPoints);
         memcpy(pabyPtr, &nPointsLsb, 4);
         pabyPtr += 4;
 
@@ -995,7 +995,7 @@ id,WKT
 
         int nPointIndexCount = 0;
 
-        for (GUInt32 i = 0; i < nParts; i++)
+        for (uint32_t i = 0; i < nParts; i++)
         {
             // Check our Ring and condition it.
             std::unique_ptr<OGRLinearRing> poRing;
@@ -1025,7 +1025,7 @@ id,WKT
 #endif
 
             // Write in the part index.
-            GUInt32 nPartIndex = CPL_LSBWORD32(nPointIndexCount);
+            uint32_t nPartIndex = CPL_LSBWORD32(nPointIndexCount);
             memcpy(pabyPtr, &nPartIndex, 4);
 
             // Write in the point data.
@@ -1076,7 +1076,7 @@ id,WKT
         auto poMPoint = poGeom->toMultiPoint();
 
         // Write in the total point count.
-        GUInt32 nPointsLsb = CPL_LSBWORD32(nPoints);
+        uint32_t nPointsLsb = CPL_LSBWORD32(nPoints);
         memcpy(pabyPtr, &nPointsLsb, 4);
         pabyPtr += 4;
 
@@ -1143,12 +1143,12 @@ id,WKT
         auto poMLine = poGeom->toMultiLineString();
 
         // Write in the part count.
-        GUInt32 nPartsLsb = CPL_LSBWORD32(nParts);
+        uint32_t nPartsLsb = CPL_LSBWORD32(nParts);
         memcpy(pabyPtr, &nPartsLsb, 4);
         pabyPtr += 4;
 
         // Write in the total point count.
-        GUInt32 nPointsLsb = CPL_LSBWORD32(nPoints);
+        uint32_t nPointsLsb = CPL_LSBWORD32(nPoints);
         memcpy(pabyPtr, &nPointsLsb, 4);
         pabyPtr += 4;
 
@@ -1166,7 +1166,7 @@ id,WKT
             int nLineNumPoints = poLine->getNumPoints();
 
             // Write in the part index.
-            GUInt32 nPartIndex = CPL_LSBWORD32(nPointIndexCount);
+            uint32_t nPartIndex = CPL_LSBWORD32(nPointIndexCount);
             memcpy(pabyPtr, &nPartIndex, 4);
 
             // Write in the point data.
@@ -1218,12 +1218,12 @@ id,WKT
         auto poMPoly = poGeom->toMultiPolygon();
 
         // Write in the part count.
-        GUInt32 nPartsLsb = CPL_LSBWORD32(nParts);
+        uint32_t nPartsLsb = CPL_LSBWORD32(nParts);
         memcpy(pabyPtr, &nPartsLsb, 4);
         pabyPtr += 4;
 
         // Write in the total point count.
-        GUInt32 nPointsLsb = CPL_LSBWORD32(nPoints);
+        uint32_t nPointsLsb = CPL_LSBWORD32(nPoints);
         memcpy(pabyPtr, &nPointsLsb, 4);
         pabyPtr += 4;
 
@@ -1279,7 +1279,7 @@ id,WKT
                     return OGRERR_FAILURE;
 
                 // Write in the part index.
-                GUInt32 nPartIndex = CPL_LSBWORD32(nPointIndexCount);
+                uint32_t nPartIndex = CPL_LSBWORD32(nPointIndexCount);
                 memcpy(pabyPtr, &nPartIndex, 4);
 
                 // Write in the point data.
@@ -1579,8 +1579,8 @@ OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
     GByte *pabyPtr = *ppabyShape;
 
     // Write in the type number and advance the pointer.
-    GUInt32 nGType = bOmitZ ? CPL_LSBWORD32(SHPT_GENERALMULTIPATCH)
-                            : CPL_LSBWORD32(SHPT_MULTIPATCH);
+    uint32_t nGType = bOmitZ ? CPL_LSBWORD32(SHPT_GENERALMULTIPATCH)
+                             : CPL_LSBWORD32(SHPT_MULTIPATCH);
     memcpy(pabyPtr, &nGType, 4);
     pabyPtr += 4;
 
@@ -1600,12 +1600,12 @@ OGRErr OGRWriteMultiPatchToShapeBin(const OGRGeometry *poGeom,
     pabyPtr += 32;
 
     // Write in the part count.
-    GUInt32 nPartsLsb = CPL_LSBWORD32(nParts);
+    uint32_t nPartsLsb = CPL_LSBWORD32(nParts);
     memcpy(pabyPtr, &nPartsLsb, 4);
     pabyPtr += 4;
 
     // Write in the total point count.
-    GUInt32 nPointsLsb = CPL_LSBWORD32(nPoints);
+    uint32_t nPointsLsb = CPL_LSBWORD32(nPoints);
     memcpy(pabyPtr, &nPointsLsb, 4);
     pabyPtr += 4;
 
@@ -2070,8 +2070,8 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
     if (nBytes >= 14 && pabyShape[12] == 0x78 &&
         pabyShape[13] == 0xDA /* zlib marker */)
     {
-        GInt32 nUncompressedSize = 0;
-        GInt32 nCompressedSize = 0;
+        int32_t nUncompressedSize = 0;
+        int32_t nCompressedSize = 0;
         memcpy(&nUncompressedSize, pabyShape + 4, 4);
         memcpy(&nCompressedSize, pabyShape + 8, 4);
         CPL_LSBPTR32(&nUncompressedSize);
@@ -2186,9 +2186,9 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
         /*      to proper size. */
         /* --------------------------------------------------------------------
          */
-        GInt32 nPoints = 0;
+        int32_t nPoints = 0;
         memcpy(&nPoints, pabyShape + 40, 4);
-        GInt32 nParts = 0;
+        int32_t nParts = 0;
         memcpy(&nParts, pabyShape + 36, 4);
 
         CPL_LSBPTR32(&nPoints);
@@ -2231,8 +2231,8 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
             return OGRERR_FAILURE;
         }
 
-        GInt32 *panPartStart =
-            static_cast<GInt32 *>(VSI_MALLOC2_VERBOSE(nParts, sizeof(GInt32)));
+        int32_t *panPartStart = static_cast<int32_t *>(
+            VSI_MALLOC2_VERBOSE(nParts, sizeof(int32_t)));
         if (nParts != 0 && panPartStart == nullptr)
         {
             return OGRERR_FAILURE;
@@ -2276,12 +2276,12 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
         /*      If this is a multipatch, we will also have parts types. */
         /* --------------------------------------------------------------------
          */
-        GInt32 *panPartType = nullptr;
+        int32_t *panPartType = nullptr;
 
         if (bIsMultiPatch)
         {
-            panPartType = static_cast<GInt32 *>(
-                VSI_MALLOC2_VERBOSE(nParts, sizeof(GInt32)));
+            panPartType = static_cast<int32_t *>(
+                VSI_MALLOC2_VERBOSE(nParts, sizeof(int32_t)));
             if (panPartType == nullptr)
             {
                 CPLFree(panPartStart);
@@ -2902,7 +2902,7 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
     else if (nSHPType == SHPT_MULTIPOINT || nSHPType == SHPT_MULTIPOINTM ||
              nSHPType == SHPT_MULTIPOINTZ || nSHPType == SHPT_MULTIPOINTZM)
     {
-        GInt32 nPoints = 0;
+        int32_t nPoints = 0;
         memcpy(&nPoints, pabyShape + 36, 4);
         CPL_LSBPTR32(&nPoints);
 
@@ -2913,8 +2913,8 @@ OGRErr OGRCreateFromShapeBin(GByte *pabyShape, OGRGeometry **ppoGeom,
             return OGRERR_FAILURE;
         }
 
-        const GInt32 nOffsetZ = 40 + 2 * 8 * nPoints + 2 * 8;
-        GInt32 nOffsetM = 0;
+        const int32_t nOffsetZ = 40 + 2 * 8 * nPoints + 2 * 8;
+        int32_t nOffsetM = 0;
         if (bHasM)
             nOffsetM = bHasZ ? nOffsetZ + 2 * 8 * 8 * nPoints : nOffsetZ;
 

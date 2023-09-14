@@ -46,7 +46,7 @@ CPL_C_START
 typedef struct
 {
     int nRecordNum;
-    GUInt32 nRecordType;
+    uint32_t nRecordType;
     int nLength;
 
     char *pachData;

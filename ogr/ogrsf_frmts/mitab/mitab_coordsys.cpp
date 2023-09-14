@@ -349,7 +349,7 @@ int MITABCoordSys2TABProjInfo(const char *pszCoordSys, TABProjInfo *psProj)
         {
             psProj->nEllipsoidId = static_cast<GByte>(psDatumInfo->nEllipsoid);
             psProj->nDatumId =
-                static_cast<GInt16>(psDatumInfo->nMapInfoDatumID);
+                static_cast<int16_t>(psDatumInfo->nMapInfoDatumID);
             psProj->dDatumShiftX = psDatumInfo->dfShiftX;
             psProj->dDatumShiftY = psDatumInfo->dfShiftY;
             psProj->dDatumShiftZ = psDatumInfo->dfShiftZ;

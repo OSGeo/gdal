@@ -562,13 +562,13 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
                     }
                     else if (eDataType == GDT_Int32)
                     {
-                        reinterpret_cast<GInt32 *>(pImage)[idx] =
-                            static_cast<GInt32>(dfZ);
+                        reinterpret_cast<int32_t *>(pImage)[idx] =
+                            static_cast<int32_t>(dfZ);
                     }
                     else if (eDataType == GDT_Int16)
                     {
-                        reinterpret_cast<GInt16 *>(pImage)[idx] =
-                            static_cast<GInt16>(dfZ);
+                        reinterpret_cast<int16_t *>(pImage)[idx] =
+                            static_cast<int16_t>(dfZ);
                     }
                     else
                     {

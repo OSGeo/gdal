@@ -178,7 +178,7 @@ CPLErr PNG_Codec::DecompressPNG(buf_mgr &dst, buf_mgr &src)
         VSIUnlink(osTmpFilename.c_str());
     }
 
-    GInt32 height = static_cast<GInt32>(png_get_image_height(pngp, infop));
+    int32_t height = static_cast<int32_t>(png_get_image_height(pngp, infop));
     // Check the size
     if (dst.size < (png_get_rowbytes(pngp, infop) * height))
     {

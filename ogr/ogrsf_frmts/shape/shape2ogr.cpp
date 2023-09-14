@@ -1356,12 +1356,12 @@ OGRFeature *SHPReadOGRFeature(SHPHandle hSHP, DBFHandle hDBF,
                         static_cast<GByte>(atoi(pszDateValue + 0));
                     sFld.Date.Day = static_cast<GByte>(atoi(pszDateValue + 3));
                     sFld.Date.Year =
-                        static_cast<GInt16>(atoi(pszDateValue + 6));
+                        static_cast<int16_t>(atoi(pszDateValue + 6));
                 }
                 else
                 {
                     const int nFullDate = atoi(pszDateValue);
-                    sFld.Date.Year = static_cast<GInt16>(nFullDate / 10000);
+                    sFld.Date.Year = static_cast<int16_t>(nFullDate / 10000);
                     sFld.Date.Month =
                         static_cast<GByte>((nFullDate / 100) % 100);
                     sFld.Date.Day = static_cast<GByte>(nFullDate % 100);

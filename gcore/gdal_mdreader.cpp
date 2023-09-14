@@ -107,7 +107,7 @@ GDALMDReaderManager::~GDALMDReaderManager()
 
 GDALMDReaderBase *GDALMDReaderManager::GetReader(const char *pszPath,
                                                  char **papszSiblingFiles,
-                                                 GUInt32 nType)
+                                                 uint32_t nType)
 {
     if (!GDALCanFileAcceptSidecarFile(pszPath))
         return nullptr;

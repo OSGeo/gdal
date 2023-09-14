@@ -1067,7 +1067,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
     /* -------------------------------------------------------------------- */
     /*      Decode the geometry type.                                       */
     /* -------------------------------------------------------------------- */
-    GInt32 nGType = 0;
+    int32_t nGType = 0;
     memcpy(&nGType, pabyData, 4);
     if (NEED_SWAP_SPATIALITE())
         CPL_SWAP32PTR(&nGType);
@@ -1096,7 +1096,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
     /*      Point [XY]                                                      */
     /* -------------------------------------------------------------------- */
     OGRGeometry *poGeom = nullptr;
-    GInt32 compressedSize = 0;
+    int32_t compressedSize = 0;
 
     if (nGType == OGRSplitePointXY)
     {
@@ -1199,7 +1199,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1242,7 +1242,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1284,7 +1284,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1325,7 +1325,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1368,7 +1368,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1438,7 +1438,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1512,7 +1512,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1586,7 +1586,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nPointCount = 0;
+        int32_t nPointCount = 0;
         memcpy(&nPointCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nPointCount);
@@ -1667,7 +1667,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -1692,7 +1692,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -1747,7 +1747,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -1772,7 +1772,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -1825,7 +1825,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -1850,7 +1850,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -1903,7 +1903,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -1928,7 +1928,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -1984,7 +1984,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -2009,7 +2009,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -2086,7 +2086,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -2111,7 +2111,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -2192,7 +2192,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -2217,7 +2217,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -2299,7 +2299,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nRingCount = 0;
+        int32_t nRingCount = 0;
         memcpy(&nRingCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nRingCount);
@@ -2324,7 +2324,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
                 return OGRERR_NOT_ENOUGH_DATA;
             }
 
-            GInt32 nPointCount = 0;
+            int32_t nPointCount = 0;
             memcpy(&nPointCount, pabyData + nNextByte, 4);
             if (NEED_SWAP_SPATIALITE())
                 CPL_SWAP32PTR(&nPointCount);
@@ -2431,7 +2431,7 @@ OGRErr OGRSQLiteLayer::createFromSpatialiteInternal(
         if (nBytes < 8)
             return OGRERR_NOT_ENOUGH_DATA;
 
-        GInt32 nGeomCount = 0;
+        int32_t nGeomCount = 0;
         memcpy(&nGeomCount, pabyData + 4, 4);
         if (NEED_SWAP_SPATIALITE())
             CPL_SWAP32PTR(&nGeomCount);
@@ -3381,7 +3381,7 @@ int OGRSQLiteLayer::ExportSpatiaLiteGeometryInternal(
 }
 
 OGRErr OGRSQLiteLayer::ExportSpatiaLiteGeometry(
-    const OGRGeometry *poGeometry, GInt32 nSRID, OGRwkbByteOrder eByteOrder,
+    const OGRGeometry *poGeometry, int32_t nSRID, OGRwkbByteOrder eByteOrder,
     bool bSpatialite2D, bool bUseComprGeom, GByte **ppabyData,
     int *pnDataLength)
 
@@ -3630,7 +3630,7 @@ OGRErr OGRSQLiteImportSpatiaLiteGeometry(const GByte *pabyData, int nBytes,
 /************************************************************************/
 
 OGRErr OGRSQLiteExportSpatiaLiteGeometry(const OGRGeometry *poGeometry,
-                                         GInt32 nSRID,
+                                         int32_t nSRID,
                                          OGRwkbByteOrder eByteOrder,
                                          bool bSpatialite2D, bool bUseComprGeom,
                                          GByte **ppabyData, int *pnDataLength)

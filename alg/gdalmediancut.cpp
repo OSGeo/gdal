@@ -71,11 +71,11 @@ static int MAKE_COLOR_CODE(int r, int g, int b)
 // account ColorIndex in gdaldither.cpp.
 typedef struct
 {
-    GUInt32 nColorCode;
+    uint32_t nColorCode;
     int nCount;
-    GUInt32 nColorCode2;
+    uint32_t nColorCode2;
     int nCount2;
-    GUInt32 nColorCode3;
+    uint32_t nColorCode3;
     int nCount3;
 } HashHistogram;
 
@@ -152,12 +152,12 @@ extern "C" int CPL_STDCALL GDALComputeMedianCutPCT(
     const int nYSize = GDALGetRasterBandYSize(hRed);
     if (nYSize == 0)
         return CE_Failure;
-    if (static_cast<GUInt32>(nXSize) <
-        std::numeric_limits<GUInt32>::max() / static_cast<GUInt32>(nYSize))
+    if (static_cast<uint32_t>(nXSize) <
+        std::numeric_limits<uint32_t>::max() / static_cast<uint32_t>(nYSize))
     {
         return GDALComputeMedianCutPCTInternal(
             hRed, hGreen, hBlue, nullptr, nullptr, nullptr, pfnIncludePixel,
-            nColors, 5, static_cast<GUInt32 *>(nullptr), hColorTable,
+            nColors, 5, static_cast<uint32_t *>(nullptr), hColorTable,
             pfnProgress, pProgressArg);
     }
     else
@@ -169,16 +169,16 @@ extern "C" int CPL_STDCALL GDALComputeMedianCutPCT(
     }
 }
 
-static inline bool IsColorCodeSet(GUInt32 nColorCode)
+static inline bool IsColorCodeSet(uint32_t nColorCode)
 {
     return (nColorCode >> 31) == 0;
 }
 
 static inline int FindColorCount(const HashHistogram *psHashHistogram,
-                                 GUInt32 nColorCode)
+                                 uint32_t nColorCode)
 {
 
-    GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
+    uint32_t nIdx = nColorCode % PRIME_FOR_65536;
     while (true)
     {
         if (!IsColorCodeSet(psHashHistogram[nIdx].nColorCode))
@@ -221,9 +221,9 @@ static inline int FindColorCount(const HashHistogram *psHashHistogram,
 }
 
 static inline int *FindAndInsertColorCount(HashHistogram *psHashHistogram,
-                                           GUInt32 nColorCode)
+                                           uint32_t nColorCode)
 {
-    GUInt32 nIdx = nColorCode % PRIME_FOR_65536;
+    uint32_t nIdx = nColorCode % PRIME_FOR_65536;
     while (true)
     {
         if (psHashHistogram[nIdx].nColorCode == nColorCode)
@@ -337,8 +337,8 @@ int GDALComputeMedianCutPCTInternal(
     /* ==================================================================== */
     /*      STEP 1: create empty boxes.                                     */
     /* ==================================================================== */
-    if (static_cast<GUInt32>(nXSize) >
-        std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize))
+    if (static_cast<uint32_t>(nXSize) >
+        std::numeric_limits<T>::max() / static_cast<uint32_t>(nYSize))
     {
         CPLError(CE_Warning, CPLE_AppDefined,
                  "GDALComputeMedianCutPCTInternal() not called "
@@ -348,8 +348,8 @@ int GDALComputeMedianCutPCTInternal(
     T nPixels = 0;
     if (nBits == 8 && pabyRedBand != nullptr && pabyGreenBand != nullptr &&
         pabyBlueBand != nullptr &&
-        static_cast<GUInt32>(nXSize) <=
-            std::numeric_limits<T>::max() / static_cast<GUInt32>(nYSize))
+        static_cast<uint32_t>(nXSize) <=
+            std::numeric_limits<T>::max() / static_cast<uint32_t>(nYSize))
     {
         nPixels = static_cast<T>(nXSize) * static_cast<T>(nYSize);
     }
@@ -800,9 +800,9 @@ static void splitbox(Colorbox *ptr, const T *histogram,
             axis = BLUE;
     }
     // Get histogram along longest axis.
-    const GUInt32 nIters = (ptr->rmax - ptr->rmin + 1) *
-                           (ptr->gmax - ptr->gmin + 1) *
-                           (ptr->bmax - ptr->bmin + 1);
+    const uint32_t nIters = (ptr->rmax - ptr->rmin + 1) *
+                            (ptr->gmax - ptr->gmin + 1) *
+                            (ptr->bmax - ptr->bmin + 1);
 
     switch (axis)
     {
@@ -1215,11 +1215,11 @@ have_bmax:;
 }
 
 // Explicitly instantiate template functions.
-template int GDALComputeMedianCutPCTInternal<GUInt32>(
+template int GDALComputeMedianCutPCTInternal<uint32_t>(
     GDALRasterBandH hRed, GDALRasterBandH hGreen, GDALRasterBandH hBlue,
     GByte *pabyRedBand, GByte *pabyGreenBand, GByte *pabyBlueBand,
     int (*pfnIncludePixel)(int, int, void *), int nColors, int nBits,
-    GUInt32 *panHistogram, GDALColorTableH hColorTable,
+    uint32_t *panHistogram, GDALColorTableH hColorTable,
     GDALProgressFunc pfnProgress, void *pProgressArg);
 
 template int GDALComputeMedianCutPCTInternal<GUIntBig>(

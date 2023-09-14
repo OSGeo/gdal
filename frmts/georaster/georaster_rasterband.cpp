@@ -1040,17 +1040,17 @@ void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
         case GDT_Int16:
         case GDT_CInt16:
         {
-            GInt16 *pnBuffer = (GInt16 *)pBuffer;
+            int16_t *pnBuffer = (int16_t *)pBuffer;
 
             for (i = 0; i < n; i++)
             {
                 for (j = 0; j < nNoDataArraySz; j++)
                 {
-                    if (pnBuffer[i] == (GInt16)pahNoDataArray[j].dfLower ||
-                        (pnBuffer[i] > (GInt16)pahNoDataArray[j].dfLower &&
-                         pnBuffer[i] < (GInt16)pahNoDataArray[j].dfUpper))
+                    if (pnBuffer[i] == (int16_t)pahNoDataArray[j].dfLower ||
+                        (pnBuffer[i] > (int16_t)pahNoDataArray[j].dfLower &&
+                         pnBuffer[i] < (int16_t)pahNoDataArray[j].dfUpper))
                     {
-                        pnBuffer[i] = (GInt16)dfNoData;
+                        pnBuffer[i] = (int16_t)dfNoData;
                     }
                 }
             }
@@ -1060,17 +1060,17 @@ void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
         case GDT_Int32:
         case GDT_CInt32:
         {
-            GInt32 *pnBuffer = (GInt32 *)pBuffer;
+            int32_t *pnBuffer = (int32_t *)pBuffer;
 
             for (i = 0; i < n; i++)
             {
                 for (j = 0; j < nNoDataArraySz; j++)
                 {
-                    if (pnBuffer[i] == (GInt32)pahNoDataArray[j].dfLower ||
-                        (pnBuffer[i] > (GInt32)pahNoDataArray[j].dfLower &&
-                         pnBuffer[i] < (GInt32)pahNoDataArray[j].dfUpper))
+                    if (pnBuffer[i] == (int32_t)pahNoDataArray[j].dfLower ||
+                        (pnBuffer[i] > (int32_t)pahNoDataArray[j].dfLower &&
+                         pnBuffer[i] < (int32_t)pahNoDataArray[j].dfUpper))
                     {
-                        pnBuffer[i] = (GInt32)dfNoData;
+                        pnBuffer[i] = (int32_t)dfNoData;
                     }
                 }
             }
@@ -1079,17 +1079,17 @@ void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
         }
         case GDT_UInt16:
         {
-            GUInt16 *pnBuffer = (GUInt16 *)pBuffer;
+            uint16_t *pnBuffer = (uint16_t *)pBuffer;
 
             for (i = 0; i < n; i++)
             {
                 for (j = 0; j < nNoDataArraySz; j++)
                 {
-                    if (pnBuffer[i] == (GUInt16)pahNoDataArray[j].dfLower ||
-                        (pnBuffer[i] > (GUInt16)pahNoDataArray[j].dfLower &&
-                         pnBuffer[i] < (GUInt16)pahNoDataArray[j].dfUpper))
+                    if (pnBuffer[i] == (uint16_t)pahNoDataArray[j].dfLower ||
+                        (pnBuffer[i] > (uint16_t)pahNoDataArray[j].dfLower &&
+                         pnBuffer[i] < (uint16_t)pahNoDataArray[j].dfUpper))
                     {
-                        pnBuffer[i] = (GUInt16)dfNoData;
+                        pnBuffer[i] = (uint16_t)dfNoData;
                     }
                 }
             }
@@ -1098,17 +1098,17 @@ void GeoRasterRasterBand::ApplyNoDataArray(void *pBuffer) const
         }
         case GDT_UInt32:
         {
-            GUInt32 *pnBuffer = (GUInt32 *)pBuffer;
+            uint32_t *pnBuffer = (uint32_t *)pBuffer;
 
             for (i = 0; i < n; i++)
             {
                 for (j = 0; j < nNoDataArraySz; j++)
                 {
-                    if (pnBuffer[i] == (GUInt32)pahNoDataArray[j].dfLower ||
-                        (pnBuffer[i] > (GUInt32)pahNoDataArray[j].dfLower &&
-                         pnBuffer[i] < (GUInt32)pahNoDataArray[j].dfUpper))
+                    if (pnBuffer[i] == (uint32_t)pahNoDataArray[j].dfLower ||
+                        (pnBuffer[i] > (uint32_t)pahNoDataArray[j].dfLower &&
+                         pnBuffer[i] < (uint32_t)pahNoDataArray[j].dfUpper))
                     {
-                        pnBuffer[i] = (GUInt32)dfNoData;
+                        pnBuffer[i] = (uint32_t)dfNoData;
                     }
                 }
             }
