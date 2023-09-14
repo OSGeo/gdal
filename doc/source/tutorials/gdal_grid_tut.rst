@@ -89,7 +89,7 @@ The Moving Average is a simple data averaging algorithm. It uses a moving
 window of elliptic form to search values and averages all data points within
 the window. `Search Ellipse`_ can be rotated by
 specified angle, the center of ellipse located at the grid node. Also the
-minimum number of data points to average can be set.  If there are not enough
+minimum number of data points to average can be set. If there are not enough
 points in window, the grid node is considered empty and will be filled with
 specified NODATA value.
 
