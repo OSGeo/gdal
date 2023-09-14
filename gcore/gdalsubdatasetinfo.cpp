@@ -141,6 +141,7 @@ std::string GDALSubdatasetInfo::GetSubdatasetComponent() const
     return m_subdatasetComponent;
 }
 
+//! @cond Doxygen_Suppress
 std::string GDALSubdatasetInfo::unquote(const std::string &path)
 {
     if (path.length() >= 2)
@@ -195,3 +196,5 @@ void GDALSubdatasetInfo::init() const
         m_initialized = true;
     }
 }
+
+//! @endcond
