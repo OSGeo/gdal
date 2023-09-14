@@ -285,9 +285,7 @@ void VRTSimpleSource::GetDstWindow(double &dfDstXOff, double &dfDstYOff,
 /************************************************************************/
 
 static const char *const apszSpecialSyntax[] = {
-    "HDF5:\"{FILENAME}\":{ANY}",   "HDF5:{FILENAME}:{ANY}",
-    "NETCDF:\"{FILENAME}\":{ANY}", "NETCDF:{FILENAME}:{ANY}",
-    "NITF_IM:{ANY}:{FILENAME}",    "PDF:{ANY}:{FILENAME}",
+    "NITF_IM:{ANY}:{FILENAME}", "PDF:{ANY}:{FILENAME}",
     "RASTERLITE:{FILENAME},{ANY}", "TILEDB:\"{FILENAME}\":{ANY}",
     "TILEDB:{FILENAME}:{ANY}"};
 
@@ -336,55 +334,81 @@ CPLXMLNode *VRTSimpleSource::SerializeToXML(const char *pszVRTPath)
     {
         osSourceFilename = m_osSrcDSName;
         bRelativeToVRT = FALSE;
-        for (size_t i = 0;
-             i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]); ++i)
+
+        // Try subdatasetinfo API first
+        // Note: this will become the only branch when subdatasetinfo will become
+        //       avilable for NITF_IM, RASTERLITE and TILEDB
+        const auto oSubDSInfo{GDALGetSubdatasetInfo(osSourceFilename.c_str())};
+        if (oSubDSInfo && !oSubDSInfo->GetPathComponent().empty())
         {
-            const char *const pszSyntax = apszSpecialSyntax[i];
-            CPLString osPrefix(pszSyntax);
-            osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
-            if (pszSyntax[osPrefix.size()] == '"')
-                osPrefix += '"';
-            if (EQUALN(osSourceFilename.c_str(), osPrefix, osPrefix.size()))
+            auto path{oSubDSInfo->GetPathComponent()};
+            const bool bIsQuoted{path.at(0) == '"'};
+            if (bIsQuoted)
             {
-                if (STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}"))
+                path = path.substr(1, path.length() - 2);
+            }
+            std::string relPath{CPLExtractRelativePath(pszVRTPath, path.c_str(),
+                                                       &bRelativeToVRT)};
+            if (bIsQuoted)
+            {
+                relPath = '"' + relPath + '"';
+            }
+            osSourceFilename = oSubDSInfo->ModifyPathComponent(relPath);
+            GDALDestroySubdatasetInfo(oSubDSInfo);
+        }
+        else
+        {
+            for (size_t i = 0;
+                 i < sizeof(apszSpecialSyntax) / sizeof(apszSpecialSyntax[0]);
+                 ++i)
+            {
+                const char *const pszSyntax = apszSpecialSyntax[i];
+                CPLString osPrefix(pszSyntax);
+                osPrefix.resize(strchr(pszSyntax, ':') - pszSyntax + 1);
+                if (pszSyntax[osPrefix.size()] == '"')
+                    osPrefix += '"';
+                if (EQUALN(osSourceFilename.c_str(), osPrefix, osPrefix.size()))
                 {
-                    const char *pszLastPart =
-                        strrchr(osSourceFilename.c_str(), ':') + 1;
-                    // CSV:z:/foo.xyz
-                    if ((pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
-                        pszLastPart - osSourceFilename.c_str() >= 3 &&
-                        pszLastPart[-3] == ':')
-                        pszLastPart -= 2;
-                    CPLString osPrefixFilename(osSourceFilename);
-                    osPrefixFilename.resize(pszLastPart -
-                                            osSourceFilename.c_str());
-                    osSourceFilename = CPLExtractRelativePath(
-                        pszVRTPath, pszLastPart, &bRelativeToVRT);
-                    osSourceFilename = osPrefixFilename + osSourceFilename;
-                }
-                else if (STARTS_WITH_CI(pszSyntax + osPrefix.size(),
-                                        "{FILENAME}"))
-                {
-                    CPLString osFilename(osSourceFilename.c_str() +
-                                         osPrefix.size());
-                    size_t nPos = 0;
-                    if (osFilename.size() >= 3 && osFilename[1] == ':' &&
-                        (osFilename[2] == '\\' || osFilename[2] == '/'))
-                        nPos = 2;
-                    nPos = osFilename.find(
-                        pszSyntax[osPrefix.size() + strlen("{FILENAME}")],
-                        nPos);
-                    if (nPos != std::string::npos)
+                    if (STARTS_WITH_CI(pszSyntax + osPrefix.size(), "{ANY}"))
                     {
-                        const CPLString osSuffix = osFilename.substr(nPos);
-                        osFilename.resize(nPos);
+                        const char *pszLastPart =
+                            strrchr(osSourceFilename.c_str(), ':') + 1;
+                        // CSV:z:/foo.xyz
+                        if ((pszLastPart[0] == '/' || pszLastPart[0] == '\\') &&
+                            pszLastPart - osSourceFilename.c_str() >= 3 &&
+                            pszLastPart[-3] == ':')
+                            pszLastPart -= 2;
+                        CPLString osPrefixFilename(osSourceFilename);
+                        osPrefixFilename.resize(pszLastPart -
+                                                osSourceFilename.c_str());
                         osSourceFilename = CPLExtractRelativePath(
-                            pszVRTPath, osFilename, &bRelativeToVRT);
-                        osSourceFilename =
-                            osPrefix + osSourceFilename + osSuffix;
+                            pszVRTPath, pszLastPart, &bRelativeToVRT);
+                        osSourceFilename = osPrefixFilename + osSourceFilename;
                     }
+                    else if (STARTS_WITH_CI(pszSyntax + osPrefix.size(),
+                                            "{FILENAME}"))
+                    {
+                        CPLString osFilename(osSourceFilename.c_str() +
+                                             osPrefix.size());
+                        size_t nPos = 0;
+                        if (osFilename.size() >= 3 && osFilename[1] == ':' &&
+                            (osFilename[2] == '\\' || osFilename[2] == '/'))
+                            nPos = 2;
+                        nPos = osFilename.find(
+                            pszSyntax[osPrefix.size() + strlen("{FILENAME}")],
+                            nPos);
+                        if (nPos != std::string::npos)
+                        {
+                            const CPLString osSuffix = osFilename.substr(nPos);
+                            osFilename.resize(nPos);
+                            osSourceFilename = CPLExtractRelativePath(
+                                pszVRTPath, osFilename, &bRelativeToVRT);
+                            osSourceFilename =
+                                osPrefix + osSourceFilename + osSuffix;
+                        }
+                    }
+                    break;
                 }
-                break;
             }
         }
     }
