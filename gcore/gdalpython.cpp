@@ -97,6 +97,8 @@ int (*PyTuple_SetItem)(PyObject *, size_t, PyObject *) = nullptr;
 void (*PyObject_Print)(PyObject *, FILE *, int) = nullptr;
 Py_ssize_t (*PyBytes_Size)(PyObject *) = nullptr;
 const char *(*PyBytes_AsString)(PyObject *) = nullptr;
+int *(*PyBytes_AsStringAndSize)(PyObject *, char **, size_t *) = nullptr;
+PyObject *(*PyBytes_FromObject)(PyObject *) = nullptr;
 PyObject *(*PyBytes_FromStringAndSize)(const void *, size_t) = nullptr;
 PyObject *(*PyUnicode_FromString)(const char *) = nullptr;
 PyObject *(*PyUnicode_AsUTF8String)(PyObject *) = nullptr;
@@ -726,6 +728,8 @@ static bool LoadPythonAPI()
     LOAD(libHandle, PyLong_AsLongLong);
     LOAD(libHandle, PyBytes_Size);
     LOAD(libHandle, PyBytes_AsString);
+    LOAD(libHandle, PyBytes_AsStringAndSize);
+    LOAD(libHandle, PyBytes_FromObject);
     LOAD(libHandle, PyBytes_FromStringAndSize);
 
     LOAD(libHandle, PyModule_Create2);

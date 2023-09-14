@@ -81,35 +81,36 @@ constraints:
 
 The following directives must be declared:
 
-* ``# gdal: DRIVER_NAME`` = "some_name": the short name of the driver
-* ``# gdal: DRIVER_SUPPORTED_API_VERSION`` = [1]: the API version(s) supported by
+* ``# gdal: DRIVER_NAME = "NAME"``: the short name of the driver
+* ``# gdal: DRIVER_SUPPORTED_API_VERSION = [1]``: the API version(s) supported by
   the driver. Must include 1, which is the only currently supported version in GDAL 3.1
-* ``# gdal: DRIVER_DCAP_VECTOR`` = "YES": declares a vector driver
-* ``# gdal: DRIVER_DMD_LONGNAME`` = "a longer description of the driver"
+* ``# gdal: DRIVER_DCAP_VECTOR = "YES"``: declares a vector driver
+* ``# gdal: DRIVER_DMD_LONGNAME = "a longer name of the driver"``
 
 Additional directives:
 
-* ``# gdal: DRIVER_DMD_EXTENSIONS`` = "ext1 ext2": list of extension(s) recognized
+* ``# gdal: DRIVER_DMD_EXTENSIONS = "ext1 ext2"``: list of extension(s) recognized
   by the driver, without the dot, and separated by space
-* ``# gdal: DRIVER_DMD_HELPTOPIC`` = "url_to_hep_page"
-* ``# gdal: DRIVER_DMD_OPENOPTIONLIST`` = xml_value where xml_value is an OptionOptionList
-  specification, like "<OpenOptionList><Option name='OPT1' type='boolean' description='bla' default='NO'/></OpenOptionList>"**
-* and all other metadata items found in gdal.h starting with `GDAL_DMD_` (resp. `GDAL_DCAP`) by
-  creating an item name which starts with `# gdal: DRIVER_` and the value of the
-  `GDAL_DMD_` (resp. `GDAL_DCAP`) metadata item.
+* ``# gdal: DRIVER_DMD_HELPTOPIC = "https://example.com/my_help.html"``: URL to a help
+  page for the driver
+* ``# gdal: DRIVER_DMD_OPENOPTIONLIST = "<OpenOptionList><Option name='OPT1' type='boolean' description='bla' default='NO'/></OpenOptionList>"``
+  where the XML is an ``OptionOptionList``.
+* and all other metadata items found in gdal.h starting with ``GDAL_DMD_`` or ``GDAL_DCAP`` by
+  creating an item name which starts with ``# gdal: DRIVER_`` and the value of the
+  ``GDAL_DMD_`` or ``GDAL_DCAP`` metadata item.
   For example ``#define GDAL_DMD_CONNECTION_PREFIX "DMD_CONNECTION_PREFIX"`` becomes ``# gdal: DRIVER_DMD_CONNECTION_PREFIX``
 
 
 Example:
 
-.. code-block:: 
+.. code-block::
 
     # gdal: DRIVER_NAME = "DUMMY"
     # gdal: DRIVER_SUPPORTED_API_VERSION = [1]
     # gdal: DRIVER_DCAP_VECTOR = "YES"
-    # gdal: DRIVER_DMD_LONGNAME = "my super plugin"
+    # gdal: DRIVER_DMD_LONGNAME = "my dummy plugin"
     # gdal: DRIVER_DMD_EXTENSIONS = "foo bar"
-    # gdal: DRIVER_DMD_HELPTOPIC = "http://example.com/my_help.html"
+    # gdal: DRIVER_DMD_HELPTOPIC = "https://example.com/my_help.html"
 
 Driver class
 ------------
@@ -295,7 +296,7 @@ The following attributes are required and must defined at __init__ time:
 
         The SRS attached to the geometry field as a string that can be ingested by
         :cpp:func:`OGRSpatialReference::SetFromUserInput`, such as a PROJ string,
-        WKT string, or AUTHORITY:CODE.
+        WKT string, or ``AUTHORITY:CODE``.
 
     If that attribute is not set, a ``geometry_fields`` method must be defined and
     return such a sequence.
@@ -345,31 +346,33 @@ Feature iterator
 The Layer class must implement the iterator interface, so typically with
 a ``__iter__`` method.
 
-The iterator must return a dictionary with the feature content.
-
-Two keys allowed in the returned dictionary are:
+The resulting iterator must produce dictionaries for each feature's content. The
+keys allowed in the returned dictionary are:
 
 .. py:attribute:: id
     :noindex:
 
-    Strongly recommended. The value must be of type int to be recognized as a FID by GDAL
+    Strongly recommended. The value must be an integer to be recognized as a FID.
 
 .. py:attribute:: type
     :noindex:
 
-    Required. The value must be the string "OGRFeature"
+    Required. The value must be the string ``"OGRFeature"``
 
 .. py:attribute:: fields
     :noindex:
 
-    Required. The value must be a dictionary whose keys are field names, or None
+    Required. The value must be either a dictionary whose keys are field names; or None
 
 .. py:attribute:: geometry_fields
     :noindex:
 
     Required. the value must be a dictionary whose keys are geometry field names (possibly
-    the empty string for unnamed geometry columns), or None.
-    The value of each key must be a geometry encoded as WKT, or None.
+    the empty string for unnamed geometry columns); or None.
+
+    The value of each key must be either a geometry encoded as a WKT string; a geometry
+    encoded as ISO WKB as a `bytes-like object <https://docs.python.org/3/glossary.html#term-bytes-like-object>`__;
+    or None.
 
 .. py:attribute:: style
     :noindex:
@@ -469,7 +472,7 @@ attributes, and the ``attribute_filter_changed`` and ``spatial_filter_changed``
 method implementations, could have omitted with the same result.
 
 The connection strings recognized by the drivers are
-"PASSHTROUGH:connection_string_supported_by_non_python_drivers". Note that
+``PASSHTROUGH:connection_string_supported_by_non_python_drivers``. Note that
 the prefixing by the driver name is absolutely not a requirement, but something
 specific to this particular driver which is a bit artificial (without the prefix,
 the connection string would go directly to the native driver). The CityJSON
@@ -575,7 +578,7 @@ not need it.
                 g = ogr_f.GetGeomFieldRef(i)
                 if g:
                     geom_fields[layer_defn.GetGeomFieldDefn(
-                        i).GetName()] = g.ExportToIsoWkt()
+                        i).GetName()] = g.ExportToIsoWKb()
             return {'id': ogr_f.GetFID(),
                     'type': 'OGRFeature',
                     'style': ogr_f.GetStyleString(),

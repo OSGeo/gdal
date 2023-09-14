@@ -55,9 +55,11 @@ def setup_and_cleanup():
     assert not ogr.GetDriverByName("DUMMY")
 
 
-def test_pythondrivers_test_dummy():
+@pytest.mark.parametrize("geomformat", ["WKT", "WKB", "WKB/bytearray"])
+def test_pythondrivers_test_dummy(geomformat):
     assert not ogr.Open("UNRELATED:")
-    ds = ogr.Open("DUMMY:")
+
+    ds = gdal.OpenEx("DUMMY:", open_options=["GEOMFORMAT=" + geomformat])
     assert ds
     assert ds.GetLayerCount() == 1
     assert not ds.GetLayer(-1)
@@ -85,7 +87,9 @@ def test_pythondrivers_test_dummy():
         assert f["timeField"] == "12:34:56.789"
         assert f["dateField"] == "2017/04/26"
         assert f["datetimeField"] == "2017/04/26 12:34:56.789+00"
-        assert f.GetGeometryRef()
+        g = f.GetGeometryRef()
+        assert g is not None
+        assert g.GetPoint() == (2.0, 49.0, 0.0)
         count += 1
     assert count == 5
     assert lyr.TestCapability(ogr.OLCFastFeatureCount)
