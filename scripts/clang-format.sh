@@ -30,6 +30,10 @@ for f in $FILES; do
 	  continue
 	  ;;
 
+	*frmts/gif/giflib/*)
+	  continue
+	  ;;
+
 	*frmts/zlib/contrib/infback9/*)
 	  continue
 	  ;;
