@@ -1342,6 +1342,13 @@ GDALDataset *VRTDataset::OpenVRTProtocol(const char *pszSpec)
                 argv.AddString("-a_coord_epoch");
                 argv.AddString(pszValue);
             }
+            else if (EQUAL(pszKey, "nogcp"))
+            {
+                if (CPLTestBool(pszValue))
+                {
+                    argv.AddString("-nogcp");
+                }
+            }
 
             else
             {

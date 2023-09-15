@@ -1697,7 +1697,7 @@ For example:
 
 The supported options currently are ``bands``, ``a_srs``, ``a_ullr``, ``ovr``, ``expand``,
 ``a_scale``, ``a_offset``, ``ot``, ``gcp``, ``if``, ``scale``, ``exponent``, ``outsize``, ``projwin``,
-``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, and ``a_coord_epoch``.
+``projwin_srs``, ``tr``, ``r``, ``srcwin``, ``a_gt``, ``oo``, ``unscale``, ``a_coord_epoch``, and ``nogcp``.
 
 Other options may be added in the future.
 
@@ -1773,6 +1773,8 @@ The effect of the ``unscale`` option (added in GDAL 3.8) is to apply the scale/o
 
 The effect of the ``a_coord_epoch`` option (added in GDAL 3.8) is to assign a coordinate epoch, linked with the output SRS as
 with (:ref:`gdal_translate`).
+
+The effect of the ``nogcp`` option (added in GDAL 3.8) is to not copy the GCPs in the source dataset to the output dataset (:ref:`gdal_translate`).
 
 The options may be chained together separated by '&'. (Beware the need for quoting to protect
 the ampersand).
