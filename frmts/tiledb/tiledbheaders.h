@@ -29,6 +29,7 @@
 #ifndef TILEDB_HEADERS_H
 #define TILEDB_HEADERS_H
 
+#include <algorithm>
 #include <list>
 #include <variant>
 
@@ -77,6 +78,92 @@
 #if TILEDB_VERSION_MAJOR > 2 ||                                                \
     (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 15)
 #define HAS_TILEDB_DIMENSION_LABEL
+#endif
+
+#if TILEDB_VERSION_MAJOR > 2 ||                                                \
+    (TILEDB_VERSION_MAJOR == 2 && TILEDB_VERSION_MINOR >= 17)
+struct gdal_tiledb_vector_of_bool
+{
+    size_t m_size = 0;
+    size_t m_capacity = 0;
+    bool *m_v = nullptr;
+
+    gdal_tiledb_vector_of_bool() = default;
+    ~gdal_tiledb_vector_of_bool()
+    {
+        std::free(m_v);
+    }
+    gdal_tiledb_vector_of_bool(gdal_tiledb_vector_of_bool &&other)
+        : m_size(other.m_size), m_capacity(other.m_capacity),
+          m_v(std::move(other.m_v))
+    {
+        other.m_size = 0;
+        other.m_capacity = 0;
+        other.m_v = nullptr;
+    }
+    gdal_tiledb_vector_of_bool(const gdal_tiledb_vector_of_bool &) = delete;
+    gdal_tiledb_vector_of_bool &
+    operator=(const gdal_tiledb_vector_of_bool &) = delete;
+    gdal_tiledb_vector_of_bool &
+    operator=(gdal_tiledb_vector_of_bool &&) = delete;
+
+    size_t size() const
+    {
+        return m_size;
+    }
+    const bool *data() const
+    {
+        return m_v;
+    }
+    bool *data()
+    {
+        return m_v;
+    }
+    bool &operator[](size_t idx)
+    {
+        return m_v[idx];
+    }
+    bool operator[](size_t idx) const
+    {
+        return m_v[idx];
+    }
+    void resize(size_t new_size)
+    {
+        if (new_size > m_capacity)
+        {
+            const size_t new_capacity =
+                std::max<size_t>(new_size, 2 * m_capacity);
+            bool *new_v = static_cast<bool *>(
+                std::realloc(m_v, new_capacity * sizeof(bool)));
+            if (!new_v)
+            {
+                throw std::bad_alloc();
+            }
+            m_v = new_v;
+            m_capacity = new_capacity;
+        }
+        if (new_size > m_size)
+            memset(m_v + m_size, 0, (new_size - m_size) * sizeof(bool));
+        m_size = new_size;
+    }
+    void clear()
+    {
+        resize(0);
+    }
+    size_t capacity() const
+    {
+        return m_capacity;
+    }
+    void push_back(uint8_t v)
+    {
+        resize(size() + 1);
+        m_v[size() - 1] = static_cast<bool>(v);
+    }
+};
+#define VECTOR_OF_BOOL gdal_tiledb_vector_of_bool
+#define VECTOR_OF_BOOL_IS_NOT_UINT8_T
+#else
+#define VECTOR_OF_BOOL std::vector<uint8_t>
 #endif
 
 #ifdef HAS_TILEDB_DIMENSION_LABEL
@@ -228,6 +315,9 @@ class OGRTileDBLayer final : public OGRLayer,
 {
   public:
     typedef std::variant<std::shared_ptr<std::string>,
+#ifdef VECTOR_OF_BOOL_IS_NOT_UINT8_T
+                         std::shared_ptr<VECTOR_OF_BOOL>,
+#endif
                          std::shared_ptr<std::vector<uint8_t>>,
                          std::shared_ptr<std::vector<int16_t>>,
                          std::shared_ptr<std::vector<uint16_t>>,
