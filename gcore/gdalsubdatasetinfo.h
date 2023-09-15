@@ -38,7 +38,7 @@
  *
  * Drivers offering this functionality must override the parseFileName() method.
  */
-struct GDALSubdatasetInfo
+struct CPL_DLL GDALSubdatasetInfo
 {
 
   public:
