@@ -492,11 +492,11 @@ def test_hdf4_read_online_11():
     (
         (
             'HDF4_EOS:EOS_SWATH:"AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
-            '"AMSR_E_L2_Ocean_B01_200206182340_A.hdf"',
+            "AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
         ),
         (
             r'HDF4_EOS:EOS_SWATH:"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf":Swath1:Low_res_sst',
-            r'"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf"',
+            r"C:\AMSR_E_L2_Ocean_B01_200206182340_A.hdf",
         ),
         (
             "HDF4_EOS:EOS_SWATH:AMSR_E_L2_Ocean_B01_200206182340_A.hdf:Swath1:Low_res_sst",
