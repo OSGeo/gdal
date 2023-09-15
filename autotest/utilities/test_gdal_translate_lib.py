@@ -1169,3 +1169,25 @@ def test_gdal_translate_lib_dict_arguments():
         "-mo",
         "TIFFTAG_XRESOLUTION=123",
     ]
+
+
+###############################################################################
+# Test -ovr and RPC (https://github.com/OSGeo/gdal/issues/8386)
+
+
+def test_gdal_translate_ovr_rpc():
+
+    src_ds = gdal.Translate("", "../gcore/data/byte_rpc.tif", format="MEM")
+    src_ds.BuildOverviews("NEAR", [2])
+    ds = gdal.Translate("", src_ds, format="MEM", overviewLevel=0)
+    src_rpc = src_ds.GetMetadata("RPC")
+    ovr_rpc = ds.GetMetadata("RPC")
+    assert ovr_rpc
+    assert float(ovr_rpc["LINE_OFF"]) == pytest.approx(0.5 * float(src_rpc["LINE_OFF"]))
+    assert float(ovr_rpc["LINE_SCALE"]) == pytest.approx(
+        0.5 * float(src_rpc["LINE_SCALE"])
+    )
+    assert float(ovr_rpc["SAMP_OFF"]) == pytest.approx(0.5 * float(src_rpc["SAMP_OFF"]))
+    assert float(ovr_rpc["SAMP_SCALE"]) == pytest.approx(
+        0.5 * float(src_rpc["SAMP_SCALE"])
+    )
