@@ -3313,7 +3313,6 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
 {
     // On platforms where alignment matters, be careful
     const int nSrcDataTypeSize = GDALGetDataTypeSizeBytes(eSrcType);
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     const int nDstDataTypeSize = GDALGetDataTypeSizeBytes(eDstType);
     if (!(eSrcType == eDstType && nSrcPixelStride == nDstPixelStride) &&
         ((reinterpret_cast<GPtrDiff_t>(pSrcData) % nSrcDataTypeSize) != 0 ||
@@ -3355,7 +3354,6 @@ void CPL_STDCALL GDALCopyWords64(const void *CPL_RESTRICT pSrcData,
         }
         return;
     }
-#endif
 
     // Deal with the case where we're replicating a single word into the
     // provided buffer

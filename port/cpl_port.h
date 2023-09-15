@@ -1077,14 +1077,6 @@ int sprintf(char *str, const char *fmt, ...) CPL_PRINT_FUNC_FORMAT(2, 3)
 CPL_C_END
 #endif /* !defined(_MSC_VER) && !defined(__APPLE__) */
 
-#if defined(MAKE_SANITIZE_HAPPY) ||                                            \
-    !(defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) ||          \
-      defined(_M_X64))
-/*! @cond Doxygen_Suppress */
-#define CPL_CPU_REQUIRES_ALIGNED_ACCESS
-/*! @endcond */
-#endif
-
 #if defined(__cplusplus)
 #ifndef CPPCHECK
 /** Returns the size of C style arrays. */

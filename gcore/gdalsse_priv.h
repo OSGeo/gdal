@@ -51,48 +51,33 @@
 
 static inline __m128i GDALCopyInt16ToXMM(const void *ptr)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     unsigned short s;
     memcpy(&s, ptr, 2);
     return _mm_cvtsi32_si128(s);
-#else
-    return _mm_cvtsi32_si128(*static_cast<const unsigned short *>(ptr));
-#endif
 }
 
 static inline __m128i GDALCopyInt32ToXMM(const void *ptr)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     GInt32 i;
     memcpy(&i, ptr, 4);
     return _mm_cvtsi32_si128(i);
-#else
-    return _mm_cvtsi32_si128(*static_cast<const GInt32 *>(ptr));
-#endif
 }
 
 static inline __m128i GDALCopyInt64ToXMM(const void *ptr)
 {
 #if defined(__i386__) || defined(_M_IX86)
     return _mm_loadl_epi64(static_cast<const __m128i *>(ptr));
-#elif defined(CPL_CPU_REQUIRES_ALIGNED_ACCESS)
+#else
     GInt64 i;
     memcpy(&i, ptr, 8);
     return _mm_cvtsi64_si128(i);
-#else
-    return _mm_cvtsi64_si128(*static_cast<const GInt64 *>(ptr));
 #endif
 }
 
 static inline void GDALCopyXMMToInt16(const __m128i xmm, void *pDest)
 {
-#ifdef CPL_CPU_REQUIRES_ALIGNED_ACCESS
     GInt16 i = static_cast<GInt16>(_mm_extract_epi16(xmm, 0));
     memcpy(pDest, &i, 2);
-#else
-    *static_cast<GInt16 *>(pDest) =
-        static_cast<GInt16>(_mm_extract_epi16(xmm, 0));
-#endif
 }
 
 class XMMReg2Double
