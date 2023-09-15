@@ -551,6 +551,7 @@ int CPL_DLL OSRIsCompound(OGRSpatialReferenceH);
 int CPL_DLL OSRIsGeocentric(OGRSpatialReferenceH);
 int CPL_DLL OSRIsVertical(OGRSpatialReferenceH);
 int CPL_DLL OSRIsDynamic(OGRSpatialReferenceH);
+int CPL_DLL OSRHasPointMotionOperation(OGRSpatialReferenceH);
 int CPL_DLL OSRIsSameGeogCS(OGRSpatialReferenceH, OGRSpatialReferenceH);
 int CPL_DLL OSRIsSameVertCS(OGRSpatialReferenceH, OGRSpatialReferenceH);
 int CPL_DLL OSRIsSame(OGRSpatialReferenceH, OGRSpatialReferenceH);

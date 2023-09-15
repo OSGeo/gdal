@@ -1470,6 +1470,10 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
         bSourceLatLong = CPL_TO_BOOL(poSRSSource->IsGeographic());
         bSourceIsDynamicCRS = poSRSSource->IsDynamic();
         dfSourceCoordinateEpoch = poSRSSource->GetCoordinateEpoch();
+        if (!bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0)
+        {
+            bSourceIsDynamicCRS = poSRSSource->HasPointMotionOperation();
+        }
         poSRSSource->GetAxis(nullptr, 0, &m_eSourceFirstAxisOrient);
     }
     if (poSRSTarget)
@@ -1477,17 +1481,24 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
         bTargetLatLong = CPL_TO_BOOL(poSRSTarget->IsGeographic());
         bTargetIsDynamicCRS = poSRSTarget->IsDynamic();
         dfTargetCoordinateEpoch = poSRSTarget->GetCoordinateEpoch();
+        if (!bTargetIsDynamicCRS && dfTargetCoordinateEpoch > 0)
+        {
+            bTargetIsDynamicCRS = poSRSTarget->HasPointMotionOperation();
+        }
         poSRSTarget->GetAxis(nullptr, 0, &m_eTargetFirstAxisOrient);
     }
 
+#if PROJ_VERSION_MAJOR < 9 ||                                                  \
+    (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR < 4)
     if (bSourceIsDynamicCRS && bTargetIsDynamicCRS &&
         dfSourceCoordinateEpoch > 0 && dfTargetCoordinateEpoch > 0 &&
         dfSourceCoordinateEpoch != dfTargetCoordinateEpoch)
     {
         CPLError(CE_Warning, CPLE_AppDefined,
-                 "Coordinate transformation between different epochs are "
-                 "not currently supported");
+                 "Coordinate transformation between different epochs only"
+                 "supported since PROJ 9.4");
     }
+#endif
 
     /* -------------------------------------------------------------------- */
     /*      Setup source and target translations to radians for lat/long    */
@@ -1619,7 +1630,13 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
 #endif
 #ifdef DEBUG
         CPLDebug("OGR_CT", "Source CRS: '%s'", pszSrcSRS);
+        if (dfSourceCoordinateEpoch > 0)
+            CPLDebug("OGR_CT", "Source coordinate epoch: %.3f",
+                     dfSourceCoordinateEpoch);
         CPLDebug("OGR_CT", "Target CRS: '%s'", pszTargetSRS);
+        if (dfTargetCoordinateEpoch > 0)
+            CPLDebug("OGR_CT", "Target coordinate epoch: %.3f",
+                     dfTargetCoordinateEpoch);
 #endif
 
         if (m_eStrategy == Strategy::PROJ)
@@ -1659,6 +1676,24 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
                                         options.d->bOnlyBest ? "YES" : "NO");
             }
 #endif
+
+#if PROJ_VERSION_MAJOR > 9 ||                                                  \
+    (PROJ_VERSION_MAJOR == 9 && PROJ_VERSION_MINOR >= 4)
+            if (bSourceIsDynamicCRS && dfSourceCoordinateEpoch > 0 &&
+                bTargetIsDynamicCRS && dfTargetCoordinateEpoch > 0)
+            {
+                auto srcCM = proj_coordinate_metadata_create(
+                    ctx, srcCRS, dfSourceCoordinateEpoch);
+                proj_destroy(srcCRS);
+                srcCRS = srcCM;
+
+                auto targetCM = proj_coordinate_metadata_create(
+                    ctx, targetCRS, dfTargetCoordinateEpoch);
+                proj_destroy(targetCRS);
+                targetCRS = targetCM;
+            }
+#endif
+
             m_pj = proj_create_crs_to_crs_from_pj(ctx, srcCRS, targetCRS, area,
                                                   aosOptions.List());
             proj_destroy(srcCRS);
@@ -1694,7 +1729,9 @@ int OGRProjCT::Initialize(const OGRSpatialReference *poSourceIn,
 #endif
     }
 
-    if (options.d->osCoordOperation.empty() && poSRSSource && poSRSTarget)
+    if (options.d->osCoordOperation.empty() && poSRSSource && poSRSTarget &&
+        (dfSourceCoordinateEpoch == 0 || dfTargetCoordinateEpoch == 0 ||
+         dfSourceCoordinateEpoch == dfTargetCoordinateEpoch))
     {
         // Determine if we can skip the transformation completely.
         const char *const apszOptionsIsSame[] = {"CRITERION=EQUIVALENT",

@@ -17,6 +17,7 @@ Synopsis
 
     gdaltransform [--help] [--help-general]
         [-i] [-s_srs srs_def] [-t_srs srs_def] [-to "NAME=VALUE"]
+        [-s_coord_epoch epoch] [-t_coord_epoch epoch]
         [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc]
         [-gcp pixel line easting northing [elevation]]* [-output_xy]
         [srcfile [dstfile]]
@@ -39,6 +40,17 @@ projection,including GCP-based transformations.
     (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
     containing well known text.
 
+.. option:: -s_coord_epoch <epoch>
+
+    .. versionadded:: 3.8
+
+    Assign a coordinate epoch, linked with the source SRS. Useful when the
+    source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
+    is used.
+
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
+
 .. option:: -t_srs <srs_def>
 
     set target spatial reference.
@@ -46,6 +58,17 @@ projection,including GCP-based transformations.
     OGRSpatialReference.SetFromUserInput() call, which includes EPSG PCS and GCSes
     (i.e. EPSG:4296), PROJ.4 declarations (as above), or the name of a .prj file
     containing well known text.
+
+.. option:: -t_coord_epoch <epoch>
+
+    .. versionadded:: 3.8
+
+    Assign a coordinate epoch, linked with the output SRS. Useful when the
+    output SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
+    is used.
+
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>
 

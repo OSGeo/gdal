@@ -61,6 +61,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
 {
     printf("Usage: gdaltransform [--help] [--help-general]\n"
            "    [-i] [-s_srs srs_def] [-t_srs srs_def] [-to \"NAME=VALUE\"]\n"
+           "    [-s_coord_epoch epoch] [-t_coord_epoch epoch]\n"
            "    [-ct proj_string] [-order n] [-tps] [-rpc] [-geoloc] \n"
            "    [-gcp pixel line easting northing [elevation]]* [-output_xy]\n"
            "    [srcfile [dstfile]]\n"
@@ -177,6 +178,18 @@ MAIN_START(argc, argv)
             if (!IsValidSRS(pszSRS))
                 exit(1);
             aosTO.SetNameValue("SRC_SRS", pszSRS);
+        }
+        else if (EQUAL(argv[i], "-s_coord_epoch"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            const char *pszCoordinateEpoch = argv[++i];
+            aosTO.SetNameValue("SRC_COORDINATE_EPOCH", pszCoordinateEpoch);
+        }
+        else if (EQUAL(argv[i], "-t_coord_epoch"))
+        {
+            CHECK_HAS_ENOUGH_ADDITIONAL_ARGS(1);
+            const char *pszCoordinateEpoch = argv[++i];
+            aosTO.SetNameValue("DST_COORDINATE_EPOCH", pszCoordinateEpoch);
         }
         else if (EQUAL(argv[i], "-ct"))
         {

@@ -2259,8 +2259,12 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
     const bool bMayInsertCenterLong =
         (bCanUseSrcGeoTransform && !oSrcSRS.IsEmpty() && hSrcDS &&
          CPLFetchBool(papszOptions, "INSERT_CENTER_LONG", true));
+    const char *pszSrcCoordEpoch =
+        CSLFetchNameValue(papszOptions, "SRC_COORDINATE_EPOCH");
+    const char *pszDstCoordEpoch =
+        CSLFetchNameValue(papszOptions, "DST_COORDINATE_EPOCH");
     if ((!oSrcSRS.IsEmpty() && !oDstSRS.IsEmpty() &&
-         (!oSrcSRS.IsSame(&oDstSRS) ||
+         (pszSrcCoordEpoch || pszDstCoordEpoch || !oSrcSRS.IsSame(&oDstSRS) ||
           (oSrcSRS.IsGeographic() && bMayInsertCenterLong))) ||
         pszCO)
     {
@@ -2298,16 +2302,12 @@ void *GDALCreateGenImgProjTransformer2(GDALDatasetH hSrcDS, GDALDatasetH hDstDS,
             aosOptions.SetNameValue("COORDINATE_EPOCH", pszCoordEpoch);
         }
 
-        const char *pszSrcCoordEpoch =
-            CSLFetchNameValue(papszOptions, "SRC_COORDINATE_EPOCH");
         if (pszSrcCoordEpoch)
         {
             aosOptions.SetNameValue("SRC_COORDINATE_EPOCH", pszSrcCoordEpoch);
             oSrcSRS.SetCoordinateEpoch(CPLAtof(pszSrcCoordEpoch));
         }
 
-        const char *pszDstCoordEpoch =
-            CSLFetchNameValue(papszOptions, "DST_COORDINATE_EPOCH");
         if (pszDstCoordEpoch)
         {
             aosOptions.SetNameValue("DST_COORDINATE_EPOCH", pszDstCoordEpoch);

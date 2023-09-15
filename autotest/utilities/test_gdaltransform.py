@@ -28,10 +28,13 @@
 # DEALINGS IN THE SOFTWARE.
 ###############################################################################
 
+import sys
 
 import gdaltest
 import pytest
 import test_cli_utilities
+
+from osgeo import osr
 
 pytestmark = pytest.mark.skipif(
     test_cli_utilities.get_gdaltransform_path() is None,
@@ -225,3 +228,60 @@ def test_gdaltransform_ct_4D(gdaltransform_path):
     assert values[0] == pytest.approx(2.0000005420366, abs=1e-10), ret
     assert values[1] == pytest.approx(49.0000003766711, abs=1e-10), ret
     assert values[2] == pytest.approx(-0.0222802283242345, abs=1e-8), ret
+
+
+###############################################################################
+# Test s_coord_epoch
+
+
+@pytest.mark.require_proj(7, 2)
+def test_gdaltransform_s_coord_epoch(gdaltransform_path):
+
+    ret = gdaltest.runexternal(
+        gdaltransform_path
+        + " -s_srs EPSG:9000 -s_coord_epoch 2030 -t_srs EPSG:7844 -coord 150 -30"
+    )
+
+    values = [float(x) for x in ret.split(" ")]
+    assert len(values) == 3, ret
+    assert abs(values[0] - 150) > 1e-8, ret
+    assert abs(values[1] - -30) > 1e-8, ret
+
+
+###############################################################################
+# Test t_coord_epoch
+
+
+@pytest.mark.require_proj(7, 2)
+def test_gdaltransform_t_coord_epoch(gdaltransform_path):
+
+    ret = gdaltest.runexternal(
+        gdaltransform_path
+        + " -s_srs EPSG:7844 -t_srs EPSG:9000 -t_coord_epoch 2030 -coord 150 -30"
+    )
+
+    values = [float(x) for x in ret.split(" ")]
+    assert len(values) == 3, ret
+    assert abs(values[0] - 150) > 1e-8, ret
+    assert abs(values[1] - -30) > 1e-8, ret
+
+
+###############################################################################
+# Test s_coord_epoch and t_coord_epoch
+
+
+@pytest.mark.require_proj(9, 4)
+def test_gdaltransform_s_t_coord_epoch(gdaltransform_path):
+
+    sep = ";" if sys.platform == "win32" else ":"
+    PROJ_DATA = sep.join(osr.GetPROJSearchPaths())
+
+    ret = gdaltest.runexternal(
+        gdaltransform_path
+        + f' -s_srs EPSG:8254 -s_coord_epoch 2002 -t_srs EPSG:8254 -t_coord_epoch 2010 -coord -79.5 60.5 --config PROJ_DATA "{PROJ_DATA}"'
+    )
+
+    values = [float(x) for x in ret.split(" ")]
+    assert len(values) == 3, ret
+    assert abs(values[0] - -79.499999630188) < 1e-8, ret
+    assert abs(values[1] - 60.4999999378478) < 1e-8, ret

@@ -70,7 +70,7 @@ static void Usage(const char *pszErrorMsg = nullptr)
         "    [-b|-srcband n]* [-dstband n]*\n"
         "    [-s_srs srs_def] [-t_srs srs_def] [-ct string]\n"
         "    [-to \"NAME=VALUE\"]* [-vshift | -novshift]\n"
-        "    [[-s_coord_epoch epoch] | [-t_coord_epoch epoch]]\n"
+        "    [-s_coord_epoch epoch] [-t_coord_epoch epoch]\n"
         "    [-order n | -tps | -rpc | -geoloc] [-et err_threshold]\n"
         "    [-refine_gcps tolerance [minimum_gcps]]\n"
         "    [-te xmin ymin xmax ymax] [-te_srs srs_def]\n"

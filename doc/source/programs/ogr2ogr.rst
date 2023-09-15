@@ -49,7 +49,7 @@ Synopsis
             [-resolveDomains]
             [-explodecollections] [-zfield field_name]
             [-gcp ungeoref_x ungeoref_y georef_x georef_y [elevation]]* [-order n | -tps]
-            [[-s_coord_epoch epoch] | [-t_coord_epoch epoch] | [-a_coord_epoch epoch]]
+            [-s_coord_epoch epoch] [-t_coord_epoch epoch] [-a_coord_epoch epoch]
             [-nomd] [-mo "META-TAG=VALUE"]* [-noNativeData]
 
 Description
@@ -237,7 +237,7 @@ output coordinate system or even reprojecting the features during translation.
     output SRS is a dynamic CRS. Only taken into account if :option:`-t_srs`
     is used. It is also mutually exclusive with  :option:`-a_coord_epoch`.
 
-    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -s_srs <srs_def>
@@ -256,7 +256,7 @@ output coordinate system or even reprojecting the features during translation.
     source SRS is a dynamic CRS. Only taken into account if :option:`-s_srs`
     is used.
 
-    Currently :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
+    Before PROJ 9.4, :option:`-s_coord_epoch` and :option:`-t_coord_epoch` are
     mutually exclusive, due to lack of support for transformations between two dynamic CRS.
 
 .. option:: -ct <string>

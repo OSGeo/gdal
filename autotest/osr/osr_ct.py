@@ -768,3 +768,35 @@ def test_osr_ct_OGR_CT_PREFER_OFFICIAL_SRS_DEF():
         x, y, _ = ct.TransformPoint(826158.063, 2405844.125, 0)
         assert abs(x - 9.867) < 0.001, x
         assert abs(y - 71.125) < 0.001, y
+
+
+###############################################################################
+# Test NAD83(CSRS)v7 change of epoch
+
+
+@pytest.mark.require_proj(9, 4)
+def test_osr_ct_point_motion_operation():
+
+    s = osr.SpatialReference()
+    s.ImportFromEPSG(8254)  # NAD83(CSRS)v7 3D
+    s.SetCoordinateEpoch(2002)
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(8254)  # NAD83(CSRS)v7 3D
+    t.SetCoordinateEpoch(2010)
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, z = ct.TransformPoint(60.5, -79.5)
+    assert abs(x - 60.49999994) < 1e-8, x
+    assert abs(y - -79.49999963) < 1e-8, y
+    assert abs(z - 0.060) < 1e-3, z
+
+    t = osr.SpatialReference()
+    t.ImportFromEPSG(22717)  # "NAD83(CSRS)v7 / UTM zone 17N"
+    t.SetCoordinateEpoch(2010)
+
+    ct = osr.CoordinateTransformation(s, t)
+    x, y, z = ct.TransformPoint(60.5, -79.5)
+    assert abs(x - 582395.993) < 1e-3, x
+    assert abs(y - 6708035.973) < 1e-3, y
+    assert abs(z - 0.060) < 1e-3, z
