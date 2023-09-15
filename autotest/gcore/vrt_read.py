@@ -1626,6 +1626,9 @@ def test_vrt_protocol():
     with pytest.raises(Exception):
         assert not gdal.Open("vrt://data/minfloat.tif?a_ullr=0,1,1,0&unscale&")
 
+    ds = gdal.Open("vrt://data/gcps.vrt?nogcp=true")
+    assert ds.GetGCPCount() == 0
+
 
 @pytest.mark.require_proj(7, 2)
 def test_vrt_protocol_a_coord_epoch_option():
