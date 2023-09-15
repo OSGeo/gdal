@@ -596,7 +596,17 @@ VSI Virtual File System API support
 -----------------------------------
 
 Since GDAL 2.4, and with Linux kernel >=4.3 and libnetcdf >=4.5, read
-operations on /vsi file systems are supported.
+operations on /vsi file systems are supported using the userfaultfd Linux system
+call. If running from a container, that system call may be unavailable by default.
+For example with Docker, ``--security-opt seccomp=unconfined`` might be needed.
+
+Corollary: operations on /vsi file systems are *not* supported on Windows or
+MacOSX. If the netCDF file is a NetCDF 4 / HDF5 file, and the HDF5 driver is
+available, you may set the :config:`GDAL_SKIP` configuration option to
+``netCDF`` to force the use of the HDF5 driver. Note that specificities of
+the netCDF driver, such as support georeferencing with the netCDF CF conventions,
+will not be available.
+
 
 NetCDF-4 groups support on reading (GDAL >= 3.0)
 ------------------------------------------------
