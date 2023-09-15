@@ -97,7 +97,7 @@ Layer creation options
 -  .. lco:: WRITE_NON_FINITE_VALUES
       :choices: YES, NO
       :default: NO
-      :since: 2.4
+      :since: 3.8
 
       Whether to write
       NaN / Infinity values. Such values are not allowed in strict JSon
