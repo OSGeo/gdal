@@ -416,3 +416,16 @@ def test_ogr_pdf_no_attributes(tmp_vsimem):
     lyr = ds.GetLayer(0)
     assert lyr.GetFeatureCount() == 1
     ds = None
+
+
+###############################################################################
+# Test PDF with OCMD (Optional Content Group Membership Dictionary)
+
+
+@pytest.mark.skipif(not has_read_support(), reason="PDF driver lacks read support")
+def test_ogr_pdf_layer_with_ocmd(tmp_vsimem):
+
+    ds = ogr.Open("data/pdf/layer_with_ocmd.pdf")
+    assert ds.GetLayerCount() == 1
+    assert ds.GetLayer(0).GetName() == "parent_poly"
+    assert ds.GetLayer(0).GetFeatureCount() == 1

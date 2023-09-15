@@ -1,0 +1,111 @@
+%PDF-1.6
+%ÿÿÿÿ
+7 0 obj
+<< /BBox [ 0 0 1008 1024 ] /Measure 8 0 R /Name (Layer) /Type /Viewport >>
+endobj
+8 0 obj
+<< /Bounds [ 0 1 0 0 1 0 1 1 ] /GCS 9 0 R /GPTS [ 87.2583298629349144 162.9116240502870596 87.2648505771004181 162.8748229088069195 87.2631091225506879 162.7403248613985909 87.2565925536388818 162.7774219689663653 ] /LPTS [ 0 1 0 0 1 0 1 1 ] /Subtype /GEO /Type /Measure >>
+endobj
+9 0 obj
+<< /EPSG 27700 /Type /PROJCS /WKT (PROJCS["British_National_Grid",GEOGCS["GCS_OSGB_1936",DATUM["D_OSGB_1936",SPHEROID["Airy_1830",6377563.396,299.3249646]],PRIMEM["Greenwich",0.0],UNIT["Degree",0.0174532925199433]],PROJECTION["Transverse_Mercator"],PARAMETER["False_Easting",400000.0],PARAMETER["False_Northing",-100000.0],PARAMETER["Central_Meridian",-2.0],PARAMETER["Scale_Factor",0.9996012717],PARAMETER["Latitude_Of_Origin",49.0],UNIT["Meter",1.0]]) >>
+endobj
+3 0 obj
+<< /Annots 6 0 R /Contents 4 0 R /MediaBox [ 0 0 1008 1024 ] /Parent 1 0 R /Resources 5 0 R /Type /Page /UserUnit 1 /VP [ 7 0 R ] >>
+endobj
+10 0 obj
+<< /Name (parent) /Type /OCG >>
+endobj
+11 0 obj
+<< /Name (poly) /Type /OCG >>
+endobj
+13 0 obj
+<< /BBox [ -1 -2 1009 1025 ] /Length 14 0 R /Resources << /ExtGState << /GS1 << /Type /ExtGState /ca 0.5 >> >> >> /Subtype /Form /Type /XObject >>
+stream
+q
+/GS1 gs
+1.000000 w
+0 J
+0 j
+10 M
+[]0 d
+0.000000 0.000000 0.000000 RG
+0.498039 0.498039 0.498039 rg
+234.589245 440.021220 m
+58.615501 547.310345 l
+0.000000 696.700265 l
+113.159303 738.801061 l
+532.077758 927.575597 l
+527.072961 953.379310 l
+695.963646 1024.000000 l
+753.646049 849.485411 l
+974.493310 215.936340 l
+1008.000000 126.981432 l
+660.930068 -0.000000 l
+588.063620 167.045093 l
+591.711184 262.111406 l
+599.642515 384.339523 l
+560.409997 520.148541 l
+505.866195 628.795756 l
+452.255491 751.023873 l
+356.782631 697.379310 l
+288.920980 561.570292 l
+234.589245 440.021220 l
+h
+b*
+Qendstream
+endobj
+14 0 obj
+   584
+endobj
+15 0 obj
+<< /A << /O /UserProperties /P [ << /N (AREA) /V 215229.2660000000032596 >> << /N (EAS_ID) /V (168) >> << /N (PRFEDEA) /V (35043411) >> ] >> /K 0 /P 12 0 R /Pg 3 0 R /S /feature /T (feature0) >>
+endobj
+4 0 obj
+<< /Length 16 0 R >>
+stream
+/OC /Lyr11 BDC
+/feature <</MCID 0>> BDC
+/Vector13 Do
+EMC
+EMC
+endstream
+endobj
+16 0 obj
+   61
+endobj
+5 0 obj
+<< /Properties << /Lyr11 << /OCGs [ 10 0 R 11 0 R ] /Type /OCMD >> >> /XObject << /Vector13 13 0 R >> >>
+endobj
+6 0 obj
+[ ]
+endobj
+1 0 obj
+<< /Count 1 /Kids [ 3 0 R ] /Type /Pages >>
+endobj
+2 0 obj
+<< /OCProperties << /D << /Order [ 10 0 R [ 11 0 R ] ] >> /OCGs [ 10 0 R 11 0 R ] >> /Pages 1 0 R /Type /Catalog >>
+endobj
+xref
+0 17
+0000000000 65535 f 
+0000002381 00000 n 
+0000002440 00000 n 
+0000000866 00000 n 
+0000002106 00000 n 
+0000002242 00000 n 
+0000002362 00000 n 
+0000000015 00000 n 
+0000000105 00000 n 
+0000000394 00000 n 
+0000001014 00000 n 
+0000001062 00000 n 
+0000000000 00000 n 
+0000001108 00000 n 
+0000001872 00000 n 
+0000001895 00000 n 
+0000002220 00000 n 
+trailer
+<< /Root 2 0 R /Size 17 >>
+startxref
+2571
+%%EOF
