@@ -177,7 +177,7 @@ CPLErr netCDFDataset::LoadSGVarIntoLayer(int ncid, int nc_basevarId)
     if (sg->getGridMappingVarID() != nccfdriver::INVALID_VAR_ID)
         SetProjectionFromVar(ncid, nc_basevarId, true,
                              sg->getGridMappingName().c_str(), &return_gm,
-                             sg.get());
+                             sg.get(), /*paosRemovedMDItems=*/nullptr);
 
     // Geometry Type invalid, avoid further processing
     if (owgt == wkbNone)

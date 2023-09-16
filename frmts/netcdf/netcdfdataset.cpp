@@ -3296,11 +3296,10 @@ static bool IsDifferenceBelow(double dfA, double dfB, double dfError)
 /************************************************************************/
 /*                      SetProjectionFromVar()                          */
 /************************************************************************/
-void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
-                                         bool bReadSRSOnly,
-                                         const char *pszGivenGM,
-                                         std::string *returnProjStr,
-                                         nccfdriver::SGeometry_Reader *sg)
+void netCDFDataset::SetProjectionFromVar(
+    int nGroupId, int nVarId, bool bReadSRSOnly, const char *pszGivenGM,
+    std::string *returnProjStr, nccfdriver::SGeometry_Reader *sg,
+    std::vector<std::string> *paosRemovedMDItems)
 {
     bool bGotGeogCS = false;
     bool bGotCfSRS = false;
@@ -4244,6 +4243,7 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
     }
 
     // Set Projection from CF.
+    double dfLinearUnitsConvFactor = 1.0;
     if ((bGotGeogCS || bGotCfSRS))
     {
         if ((nVarDimXID != -1) && (nVarDimYID != -1) && xdim > 0 && ydim > 0)
@@ -4260,35 +4260,64 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
 
                 const char *pszUnits = nullptr;
 
-                // TODO: What to do if units are not equal in X and Y.
-                if ((pszUnitsX != nullptr) && (pszUnitsY != nullptr) &&
-                    EQUAL(pszUnitsX, pszUnitsY))
-                    pszUnits = pszUnitsX;
+                if (pszUnitsX && pszUnitsY)
+                {
+                    if (EQUAL(pszUnitsX, pszUnitsY))
+                        pszUnits = pszUnitsX;
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "X axis unit (%s) is different from Y axis "
+                                 "unit (%s). SRS will ignore axis unit and be "
+                                 "likely wrong.",
+                                 pszUnitsX, pszUnitsY);
+                    }
+                }
+                else if (pszUnitsX)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "X axis unit is defined, but not Y one ."
+                             "SRS will ignore axis unit and be likely wrong.");
+                }
+                else if (pszUnitsY)
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Y axis unit is defined, but not X one ."
+                             "SRS will ignore axis unit and be likely wrong.");
+                }
 
                 // Add units to PROJCS.
                 if (pszUnits != nullptr && !EQUAL(pszUnits, ""))
                 {
                     CPLDebug("GDAL_netCDF", "units=%s", pszUnits);
-                    if (EQUAL(pszUnits, "m"))
+                    if (EQUAL(pszUnits, "m") || EQUAL(pszUnits, "metre") ||
+                        EQUAL(pszUnits, "meter"))
                     {
                         oSRS.SetLinearUnits("metre", 1.0);
                         oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9001);
                     }
                     else if (EQUAL(pszUnits, "km"))
                     {
-                        oSRS.SetLinearUnits("kilometre", 1000.0);
+                        dfLinearUnitsConvFactor = 1000.0;
+                        oSRS.SetLinearUnits("kilometre",
+                                            dfLinearUnitsConvFactor);
                         oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9036);
                     }
                     else if (EQUAL(pszUnits, "US_survey_foot") ||
                              EQUAL(pszUnits, "US_survey_feet"))
                     {
+                        dfLinearUnitsConvFactor = CPLAtof(SRS_UL_US_FOOT_CONV);
                         oSRS.SetLinearUnits("US survey foot",
-                                            CPLAtof(SRS_UL_US_FOOT_CONV));
+                                            dfLinearUnitsConvFactor);
                         oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9003);
                     }
-                    // TODO: Check for other values.
-                    // else
-                    //     oSRS.SetLinearUnits(pszUnits, 1.0);
+                    else
+                    {
+                        CPLError(CE_Failure, CPLE_AppDefined,
+                                 "Unhandled X/Y axis unit %s. SRS will ignore "
+                                 "axis unit and be likely wrong.",
+                                 pszUnits);
+                    }
                 }
             }
             else if (oSRS.IsGeographic() && !bRotatedPole)
@@ -4733,6 +4762,129 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
             }
         }
 
+        const auto AreSRSEqualThroughProj4String =
+            [](const OGRSpatialReference &oSRS1,
+               const OGRSpatialReference &oSRS2)
+        {
+            char *pszProj4Str1 = nullptr;
+            oSRS1.exportToProj4(&pszProj4Str1);
+
+            char *pszProj4Str2 = nullptr;
+            oSRS2.exportToProj4(&pszProj4Str2);
+
+            {
+                char *pszTmp = strstr(pszProj4Str1, "+datum=");
+                if (pszTmp)
+                    memcpy(pszTmp, "+ellps=", strlen("+ellps="));
+            }
+
+            {
+                char *pszTmp = strstr(pszProj4Str2, "+datum=");
+                if (pszTmp)
+                    memcpy(pszTmp, "+ellps=", strlen("+ellps="));
+            }
+
+            bool bRet = false;
+            if (pszProj4Str1 && pszProj4Str2 &&
+                EQUAL(pszProj4Str1, pszProj4Str2))
+            {
+                bRet = true;
+            }
+
+            CPLFree(pszProj4Str1);
+            CPLFree(pszProj4Str2);
+            return bRet;
+        };
+
+        if (dfLinearUnitsConvFactor != 1.0)
+        {
+            // Special case for dataset
+            // https://thredds.met.no/thredds/catalog/osisaf/met.no/reprocessed/ice/drift_455m_files/merged/2020/12/catalog.html?dataset=osisaf/met.no/reprocessed/ice/drift_455m_files/merged/2020/12/ice_drift_nh_ease2-750_cdr-v1p0_24h-202012211200.nc
+            // which has
+            /*
+                int Lambert_Azimuthal_Equal_Area ;
+                        Lambert_Azimuthal_Equal_Area:grid_mapping_name = "lambert_azimuthal_equal_area" ;
+                        Lambert_Azimuthal_Equal_Area:longitude_of_projection_origin = 0.f ;
+                        Lambert_Azimuthal_Equal_Area:latitude_of_projection_origin = 90.f ;
+                        Lambert_Azimuthal_Equal_Area:false_easting = 0. ;
+                        Lambert_Azimuthal_Equal_Area:false_northing = 0. ;
+                        Lambert_Azimuthal_Equal_Area:semi_major_axis = 6378137. ;
+                        Lambert_Azimuthal_Equal_Area:inverse_flattening = 298.257223563 ;
+                        Lambert_Azimuthal_Equal_Area:proj4_string = "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +type=crs" ;
+                double xc(xc) ;
+                        xc:axis = "X" ;
+                        xc:units = "km" ;
+                        xc:long_name = "x coordinate of projection (eastings)" ;
+                        xc:standard_name = "projection_x_coordinate" ;
+                double yc(yc) ;
+                        yc:axis = "Y" ;
+                        yc:units = "km" ;
+                        yc:long_name = "y coordinate of projection (northings)" ;
+                        yc:standard_name = "projection_y_coordinate" ;
+                // global attributes:
+                        :geospatial_bounds_crs = "EPSG:6931" ;
+            */
+
+            const char *pszProj4String =
+                FetchAttr(pszGridMappingValue, "proj4_string");
+            if (pszProj4String && strstr(pszProj4String, " +units=m "))
+            {
+                // Check if we should normalize geotransform and SRS to metre
+                OGRSpatialReference oSRSTmp(oSRS);
+                oSRSTmp.SetLinearUnits("metre", 1.0);
+                oSRSTmp.SetAuthority("PROJCS|UNIT", "EPSG", 9001);
+
+                OGRSpatialReference oSRSProj4;
+                oSRSProj4.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+                if (oSRSProj4.importFromProj4(pszProj4String) == OGRERR_NONE &&
+                    AreSRSEqualThroughProj4String(oSRSTmp, oSRSProj4))
+                {
+                    for (int i = 0; i < 6; ++i)
+                        adfTempGeoTransform[i] *= dfLinearUnitsConvFactor;
+
+                    dfLinearUnitsConvFactor = 1.0;
+                    CPL_IGNORE_RET_VAL(dfLinearUnitsConvFactor);
+                    oSRS = oSRSTmp;
+                    SetSpatialRefNoUpdate(&oSRS);
+
+                    char szVarNameX[NC_MAX_NAME + 1];
+                    CPL_IGNORE_RET_VAL(
+                        nc_inq_varname(nGroupId, nVarDimXID, szVarNameX));
+
+                    char szVarNameY[NC_MAX_NAME + 1];
+                    CPL_IGNORE_RET_VAL(
+                        nc_inq_varname(nGroupId, nVarDimYID, szVarNameY));
+
+                    if (paosRemovedMDItems)
+                    {
+                        paosRemovedMDItems->push_back(
+                            CPLSPrintf("%s#units", szVarNameX));
+                        paosRemovedMDItems->push_back(
+                            CPLSPrintf("%s#units", szVarNameY));
+                    }
+                }
+            }
+        }
+
+        // If there is a global "geospatial_bounds_crs" attribute, check that it
+        // is consistent with the SRS, and if so, use it as the SRS
+        const char *pszGBCRS =
+            FetchAttr(nGroupId, NC_GLOBAL, "geospatial_bounds_crs");
+        if (pszGBCRS && STARTS_WITH(pszGBCRS, "EPSG:"))
+        {
+            OGRSpatialReference oSRSFromGBCRS;
+            oSRSFromGBCRS.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
+            if (oSRSFromGBCRS.SetFromUserInput(
+                    pszGBCRS,
+                    OGRSpatialReference::
+                        SET_FROM_USER_INPUT_LIMITATIONS_get()) == OGRERR_NONE &&
+                AreSRSEqualThroughProj4String(oSRS, oSRSFromGBCRS))
+            {
+                oSRS = oSRSFromGBCRS;
+                SetSpatialRefNoUpdate(&oSRS);
+            }
+        }
+
         CPLFree(pdfXCoord);
         CPLFree(pdfYCoord);
     }  // end if(has dims)
@@ -5027,7 +5179,7 @@ void netCDFDataset::SetProjectionFromVar(int nGroupId, int nVarId,
                                          bool bReadSRSOnly)
 {
     SetProjectionFromVar(nGroupId, nVarId, bReadSRSOnly, nullptr, nullptr,
-                         nullptr);
+                         nullptr, nullptr);
 }
 
 #ifdef NETCDF_HAS_NC4
@@ -9602,9 +9754,14 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Set projection info.
+    std::vector<std::string> aosRemovedMDItems;
     if (nd > 1)
     {
-        poDS->SetProjectionFromVar(cdfid, var, false);
+        poDS->SetProjectionFromVar(cdfid, var,
+                                   /*bReadSRSOnly=*/false,
+                                   /* pszGivenGM = */ nullptr,
+                                   /* returnProjStr = */ nullptr,
+                                   /* sg = */ nullptr, &aosRemovedMDItems);
     }
 
     // Override bottom-up with GDAL_NETCDF_BOTTOMUP config option.
@@ -9713,6 +9870,10 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     // Store Metadata.
+    for (const auto &osStr : aosRemovedMDItems)
+        poDS->papszMetadata =
+            CSLSetNameValue(poDS->papszMetadata, osStr.c_str(), nullptr);
+
     poDS->GDALPamDataset::SetMetadata(poDS->papszMetadata);
 
     // Create bands.
