@@ -373,6 +373,15 @@ Layer creation options
       mode, but some JSon parsers (libjson-c >= 0.12 for example) can
       understand them as they are allowed by ECMAScript.
 
+-  .. lco:: AUTODETECT_JSON_STRINGS
+      :choices: YES, NO
+      :default: YES
+      :since: 3.8
+
+      Whether to try to interpret string fields as JSON arrays or objects
+      if they start and end with brackets and braces, even if they do
+      not have their subtype set to JSON.
+
 VSI Virtual File System API support
 -----------------------------------
 

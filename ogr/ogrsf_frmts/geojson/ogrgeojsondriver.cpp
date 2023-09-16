@@ -724,6 +724,9 @@ void RegisterOGRGeoJSON()
         "description='Auto-generate feature ids' />"
         "  <Option name='WRITE_NON_FINITE_VALUES' type='boolean' "
         "description='Whether to write NaN / Infinity values' default='NO'/>"
+        "  <Option name='AUTODETECT_JSON_STRINGS' type='boolean' "
+        "description='Whether to try to interpret string fields as JSON "
+        "arrays or objects' default='YES'/>"
         "</LayerCreationOptionList>");
 
     poDriver->SetMetadataItem(GDAL_DCAP_VIRTUALIO, "YES");

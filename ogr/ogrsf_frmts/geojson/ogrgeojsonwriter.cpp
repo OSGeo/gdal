@@ -911,8 +911,9 @@ json_object *OGRGeoJSONWriteAttributes(OGRFeature *poFeature,
             const size_t nLen = strlen(pszStr);
 
             if (eSubType == OFSTJSON ||
-                ((pszStr[0] == '{' && pszStr[nLen - 1] == '}') ||
-                 (pszStr[0] == '[' && pszStr[nLen - 1] == ']')))
+                (oOptions.bAutodetectJsonStrings &&
+                 ((pszStr[0] == '{' && pszStr[nLen - 1] == '}') ||
+                  (pszStr[0] == '[' && pszStr[nLen - 1] == ']'))))
             {
                 if (bUseNativeMedia)
                 {

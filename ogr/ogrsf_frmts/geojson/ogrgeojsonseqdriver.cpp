@@ -283,6 +283,10 @@ OGRGeoJSONSeqLayer::OGRGeoJSONSeqLayer(
         atoi(CSLFetchNameValueDef(papszOptions, "COORDINATE_PRECISION", "7"));
     m_oWriteOptions.nSignificantFigures =
         atoi(CSLFetchNameValueDef(papszOptions, "SIGNIFICANT_FIGURES", "-1"));
+    m_oWriteOptions.bAllowNonFiniteValues = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "WRITE_NON_FINITE_VALUES", "FALSE"));
+    m_oWriteOptions.bAutodetectJsonStrings = CPLTestBool(
+        CSLFetchNameValueDef(papszOptions, "AUTODETECT_JSON_STRINGS", "TRUE"));
 }
 
 /************************************************************************/

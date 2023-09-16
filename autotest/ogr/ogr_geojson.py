@@ -3526,6 +3526,54 @@ def test_ogr_geojson_non_finite():
 
 
 ###############################################################################
+# Test writing fields with and without automatic JSON interpretation
+
+
+def test_ogr_geojson_json_string_autodetect():
+
+    json_content = """{
+  "type": "FeatureCollection",
+  "features": [
+      { "type": "Feature", "properties": { "jsonish": "[5]" }, "geometry": null }
+  ]
+}"""
+    with gdal.quiet_errors():
+        ds = ogr.Open(json_content)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    for i in range(1):
+        assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
+    assert f["jsonish"] == "[5]"
+    ds = None
+
+    tmpfilename = "/vsimem/out.json"
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(tmpfilename, json_content, options="-f GeoJSON")
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTIntegerList
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+    with gdal.quiet_errors():
+        gdal.VectorTranslate(
+            tmpfilename,
+            json_content,
+            options="-f GeoJSON -lco AUTODETECT_JSON_STRINGS=FALSE",
+        )
+    ds = ogr.Open(tmpfilename)
+    lyr = ds.GetLayer(0)
+    assert lyr.GetLayerDefn().GetFieldCount() == 1
+    assert lyr.GetLayerDefn().GetFieldDefn(i).GetType() == ogr.OFTString
+    f = lyr.GetNextFeature()
+    assert f["jsonish"] == "[5]"
+    ds = None
+    gdal.Unlink(tmpfilename)
+
+
+###############################################################################
 
 
 def test_ogr_geojson_random_reading_with_id():
