@@ -126,7 +126,7 @@ The following open options are available:
          the BAND_COUNT value and the number of bands of the tile.
 
    -  .. oo:: TILE_FORMAT
-         :choices: PNG, PNG8, JPEG
+         :choices: PNG, PNG8, JPEG, WEBP
          :default: PNG
          :since: 2.1
 

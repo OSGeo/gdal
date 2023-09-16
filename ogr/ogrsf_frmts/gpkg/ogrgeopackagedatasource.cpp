@@ -2625,6 +2625,24 @@ GPKGTileFormat GDALGPKGMBTilesGetTileFormat(const char *pszTF)
     return eTF;
 }
 
+const char *GDALMBTilesGetTileFormatName(GPKGTileFormat eTF)
+{
+    switch (eTF)
+    {
+        case GPKG_TF_PNG:
+        case GPKG_TF_PNG8:
+            return "png";
+        case GPKG_TF_JPEG:
+            return "jpg";
+        case GPKG_TF_WEBP:
+            return "webp";
+        default:
+            break;
+    }
+    CPLError(CE_Failure, CPLE_NotSupported,
+             "Unsuppoted value for TILE_FORMAT: %d", static_cast<int>(eTF));
+    return nullptr;
+}
 /************************************************************************/
 /*                         OpenRaster()                                 */
 /************************************************************************/
