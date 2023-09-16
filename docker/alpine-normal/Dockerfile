@@ -135,6 +135,10 @@ RUN if test "${FREEXL_VERSION}" != ""; then ( \
     && rm -f freexl-${FREEXL_VERSION}.tar.gz \
     && apk add --no-cache minizip-dev \
     && cd freexl-${FREEXL_VERSION} \
+    && wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD" -O config.guess \
+    && chmod +x config.guess \
+    && wget "http://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD" -O config.sub \
+    && chmod +x config.sub \
     && ./configure --prefix=/usr --disable-static \
     && make -j$(nproc) \
     && rm -f /usr/lib/libfreexl.* \
