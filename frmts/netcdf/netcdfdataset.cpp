@@ -9036,15 +9036,46 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     else
 #endif
     {
+        const bool bVsiFile =
+            !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
 #ifdef ENABLE_UFFD
-        bool bVsiFile = !strncmp(osFilenameForNCOpen, "/vsi", strlen("/vsi"));
         bool bReadOnly = (poOpenInfo->eAccess == GA_ReadOnly);
         void *pVma = nullptr;
         uint64_t nVmaSize = 0;
 
-        if (bVsiFile && bReadOnly && CPLIsUserFaultMappingSupported())
-            pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma,
-                                             &nVmaSize);
+        if (bVsiFile)
+        {
+            if (bReadOnly)
+            {
+                if (CPLIsUserFaultMappingSupported())
+                {
+                    pCtx = CPLCreateUserFaultMapping(osFilenameForNCOpen, &pVma,
+                                                     &nVmaSize);
+                }
+                else
+                {
+                    CPLError(CE_Failure, CPLE_AppDefined,
+                             "Opening a /vsi file with the netCDF driver "
+                             "requires Linux userfaultfd to be available. "
+                             "If running from Docker, "
+                             "--security-opt seccomp=unconfined might be "
+                             "needed.%s",
+                             ((poDS->eFormat == NCDF_FORMAT_NC4 ||
+                               poDS->eFormat == NCDF_FORMAT_HDF5) &&
+                              GDALGetDriverByName("HDF5"))
+                                 ? " Or you may set the GDAL_SKIP=netCDF "
+                                   "configuration option to force the use of "
+                                   "the HDF5 driver."
+                                 : "");
+                }
+            }
+            else
+            {
+                CPLError(CE_Failure, CPLE_AppDefined,
+                         "Opening a /vsi file with the netCDF driver is only "
+                         "supported in read-only mode");
+            }
+        }
         if (pCtx != nullptr && pVma != nullptr && nVmaSize > 0)
         {
             // netCDF code, at least for netCDF 4.7.0, is confused by filenames
@@ -9056,7 +9087,25 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         else
             status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
 #else
-        status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        if (bVsiFile)
+        {
+            CPLError(
+                CE_Failure, CPLE_AppDefined,
+                "Opening a /vsi file with the netCDF driver requires Linux "
+                "userfaultfd to be available.%s",
+                ((poDS->eFormat == NCDF_FORMAT_NC4 ||
+                  poDS->eFormat == NCDF_FORMAT_HDF5) &&
+                 GDALGetDriverByName("HDF5"))
+                    ? " Or you may set the GDAL_SKIP=netCDF "
+                      "configuration option to force the use of the HDF5 "
+                      "driver."
+                    : "");
+            status2 = NC_EIO;
+        }
+        else
+        {
+            status2 = GDAL_nc_open(osFilenameForNCOpen, nMode, &cdfid);
+        }
 #endif
     }
     if (status2 != NC_NOERR)
