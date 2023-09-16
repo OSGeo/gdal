@@ -1629,6 +1629,13 @@ def test_vrt_protocol():
     ds = gdal.Open("vrt://data/gcps.vrt?nogcp=true")
     assert ds.GetGCPCount() == 0
 
+    assert gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,20&eco=true&epo=true")
+    assert gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&eco=true")
+
+    with pytest.raises(Exception):
+        assert not gdal.Open("vrt://data/byte.tif?srcwin=0,0,20,21&epo=true")
+        assert not gdal.Open("vrt://data/byte.tif?srcwin=20,20,1,1&epo=false&eco=true")
+
 
 @pytest.mark.require_proj(7, 2)
 def test_vrt_protocol_a_coord_epoch_option():
