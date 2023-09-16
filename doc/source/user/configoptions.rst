@@ -708,8 +708,8 @@ Networking options
       or a double-quote character is needed in the value, then the key: value pair
       must be enclosed in double-quote characters. In that situation, backslash
       and double quote character must be backslash-escaped.  e.g
-      GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\, escaped double-quote
-      \", end of value",Another: Header
+      GDAL_HTTP_HEADERS=Foo: Bar,"Baz: escaped backslash \\\\, escaped double-quote
+      \\", end of value",Another: Header
 
 -  .. config:: GDAL_HTTP_MAX_RETRY
       :since: 2.3
