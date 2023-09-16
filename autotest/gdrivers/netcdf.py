@@ -1941,7 +1941,7 @@ def test_netcdf_49():
     expected_content = """WKT,int32
 "POINT Z (1 2 3)",1
 "POINT (1 2)",
-,,
+,
 """
     assert content == expected_content
 
