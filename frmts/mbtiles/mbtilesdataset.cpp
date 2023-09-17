@@ -3698,7 +3698,7 @@ void GDALRegister_MBTiles()
     "    <Value>WEBP</Value>"                                                  \
     "  </Option>"                                                              \
     "  <Option name='QUALITY' scope='raster' type='int' min='1' max='100' "    \
-    "description='Quality for JPEG tiles' default='75'/>"                      \
+    "description='Quality for JPEG and WEBP tiles' default='75'/>"             \
     "  <Option name='ZLEVEL' scope='raster' type='int' min='1' max='9' "       \
     "description='DEFLATE compression level for PNG tiles' default='6'/>"      \
     "  <Option name='DITHER' scope='raster' type='boolean' "                   \
