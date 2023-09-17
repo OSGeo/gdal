@@ -989,7 +989,7 @@ def test_ogr_csv_25():
     lyr = None
     ds = None
 
-    EXPECTED = 'foo,\n"windows newline:\r\nlinux newline:\nend of string:"\n'
+    EXPECTED = 'foo\n"windows newline:\r\nlinux newline:\nend of string:"\n'
 
     data = open("tmp/csvwrk/newlines.csv", "rb").read().decode("ascii")
     assert data == EXPECTED, "Newlines changed:\n\texpected=%s\n\tgot=     %s" % (
@@ -1024,7 +1024,7 @@ def test_ogr_csv_26():
     lyr = None
     ds = None
 
-    EXPECTED = "foo,\n10.5000000000000000000000000\n"
+    EXPECTED = "foo\n10.5000000000000000000000000\n"
 
     data = open("tmp/csvwrk/num_padding.csv", "rb").read().decode("ascii")
     assert data == EXPECTED, "expected=%s got= %s" % (repr(EXPECTED), repr(data))
