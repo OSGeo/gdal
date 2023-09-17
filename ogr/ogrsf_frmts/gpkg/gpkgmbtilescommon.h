@@ -54,6 +54,7 @@ typedef enum
 } GPKGTileFormat;
 
 GPKGTileFormat GDALGPKGMBTilesGetTileFormat(const char *pszTF);
+const char *GDALMBTilesGetTileFormatName(GPKGTileFormat);
 
 class GDALGPKGMBTilesLikePseudoDataset
 {

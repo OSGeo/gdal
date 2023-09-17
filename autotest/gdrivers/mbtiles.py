@@ -598,3 +598,75 @@ def test_mbtiles_create():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+# Test read support of WEBP compressed dataset
+
+
+@pytest.mark.require_driver("WEBP")
+def test_mbtiles_webp_read():
+
+    ds = gdal.Open("data/mbtiles/world_l1_webp.mbtiles")
+    assert ds is not None
+
+    assert ds.RasterCount == 4, "expected 4 bands"
+    assert ds.RasterXSize == 512 and ds.RasterYSize == 510, "bad dimensions"
+    assert ds.GetRasterBand(1).Checksum() == 37747
+    assert ds.GetRasterBand(2).Checksum() == 54303
+    assert ds.GetRasterBand(3).Checksum() == 13117
+    assert ds.GetRasterBand(4).Checksum() == 58907
+
+    gt = ds.GetGeoTransform()
+    expected_gt = (
+        -20037508.342789244,
+        78271.516964020484,
+        0.0,
+        19971868.880408563,
+        0.0,
+        -78271.516964020484,
+    )
+    assert gt == pytest.approx(expected_gt, rel=1e-15), "bad gt"
+
+    ds = None
+
+
+###############################################################################
+# Test write support of WEBP compressed dataset
+
+
+@pytest.mark.require_driver("WEBP")
+def test_mbtiles_webp_write():
+
+    # Test options
+    src_ds = gdal.Open("data/byte.tif")
+    options = []
+    options += ["TILE_FORMAT=WEBP"]
+    options += ["QUALITY=50"]
+    options += ["NAME=webp_mbtiles_name"]
+    options += ["DESCRIPTION=webp_mbtiles_dsc"]
+    options += ["TYPE=baselayer"]
+    options += ["WRITE_BOUNDS=no"]
+    gdaltest.mbtiles_drv.CreateCopy(
+        "/vsimem/mbtiles_webp_write.mbtiles", src_ds, options=options
+    )
+    src_ds = None
+
+    ds = gdal.Open("/vsimem/mbtiles_webp_write.mbtiles")
+    got_cs = ds.GetRasterBand(1).Checksum()
+    assert got_cs != 0
+    got_md = ds.GetMetadata()
+    expected_md = {
+        "ZOOM_LEVEL": "11",
+        "minzoom": "11",
+        "maxzoom": "11",
+        "format": "webp",
+        "version": "1.3",
+        "type": "baselayer",
+        "name": "webp_mbtiles_name",
+        "description": "webp_mbtiles_dsc",
+    }
+    assert got_md == expected_md
+    ds = None
+
+    gdal.Unlink("/vsimem/mbtiles_webp_write.mbtiles")
