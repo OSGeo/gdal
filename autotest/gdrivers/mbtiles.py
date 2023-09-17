@@ -666,7 +666,6 @@ def test_mbtiles_webp_write():
         "name": "webp_mbtiles_name",
         "description": "webp_mbtiles_dsc",
     }
-    print(got_md)
     assert got_md == expected_md
     ds = None
 
