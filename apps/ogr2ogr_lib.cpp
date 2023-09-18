@@ -442,8 +442,15 @@ struct TargetLayerInfo
     GIntBig m_nFeaturesRead = 0;
     bool m_bPerFeatureCT = 0;
     OGRLayer *m_poDstLayer = nullptr;
-    std::vector<std::unique_ptr<OGRCoordinateTransformation>> m_apoCT{};
-    std::vector<CPLStringList> m_aosTransformOptions{};
+
+    struct ReprojectionInfo
+    {
+        std::unique_ptr<OGRCoordinateTransformation> m_poCT{};
+        CPLStringList m_aosTransformOptions{};
+        bool m_bCanInvalidateValidity = true;
+    };
+    std::vector<ReprojectionInfo> m_aoReprojectionInfo{};
+
     std::vector<int> m_anMap{};
     struct ResolvedInfo
     {
@@ -463,6 +470,7 @@ struct TargetLayerInfo
     OGRGeometryH m_hSpatialFilter = nullptr;
     const char *m_pszGeomField = nullptr;
     std::vector<int> m_anDateTimeFieldIdx{};
+    bool m_bSupportCurves = false;
 };
 
 struct AssociatedLayers
@@ -4834,8 +4842,7 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
     psInfo->m_bPerFeatureCT = false;
     psInfo->m_poSrcLayer = poSrcLayer;
     psInfo->m_poDstLayer = poDstLayer;
-    psInfo->m_apoCT.resize(poDstLayer->GetLayerDefn()->GetGeomFieldCount());
-    psInfo->m_aosTransformOptions.resize(
+    psInfo->m_aoReprojectionInfo.resize(
         poDstLayer->GetLayerDefn()->GetGeomFieldCount());
     psInfo->m_anMap = std::move(anMap);
     psInfo->m_iSrcZField = iSrcZField;
@@ -4922,6 +4929,9 @@ SetupTargetLayer::Setup(OGRLayer *poSrcLayer, const char *pszNewLayerName,
             }
         }
     }
+
+    psInfo->m_bSupportCurves =
+        CPL_TO_BOOL(poDstLayer->TestCapability(OLCCurveGeometries));
 
     return psInfo;
 }
@@ -5081,10 +5091,11 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
             {
                 // do nothing
             }
-            else if (psInfo->m_apoCT[iGeom] != nullptr &&
-                     psInfo->m_apoCT[iGeom]->GetSourceCS() == poSourceSRS)
+            else if (psInfo->m_aoReprojectionInfo[iGeom].m_poCT != nullptr &&
+                     psInfo->m_aoReprojectionInfo[iGeom]
+                             .m_poCT->GetSourceCS() == poSourceSRS)
             {
-                poCT = psInfo->m_apoCT[iGeom].get();
+                poCT = psInfo->m_aoReprojectionInfo[iGeom].m_poCT.get();
             }
             else
             {
@@ -5126,7 +5137,11 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
                     return false;
                 }
                 poCT = new CompositeCT(poGCPCoordTrans, false, poCT, true);
-                psInfo->m_apoCT[iGeom].reset(poCT);
+                psInfo->m_aoReprojectionInfo[iGeom].m_poCT.reset(poCT);
+                psInfo->m_aoReprojectionInfo[iGeom].m_bCanInvalidateValidity =
+                    !(poGCPCoordTrans == nullptr && poSourceSRS &&
+                      poSourceSRS->IsGeographic() && poOutputSRS &&
+                      poOutputSRS->IsGeographic());
             }
         }
         else
@@ -5142,19 +5157,20 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
                         ->GetDataAxisToSRSAxisMapping() &&
                 poSourceSRS->IsSame(poDstGeomFieldDefnSpatialRef, apszOptions))
             {
-                psInfo->m_apoCT[iGeom].reset(new CompositeCT(
-                    new AxisMappingCoordinateTransformation(
-                        poSourceSRS->GetDataAxisToSRSAxisMapping(),
-                        poDstGeomFieldDefnSpatialRef
-                            ->GetDataAxisToSRSAxisMapping()),
-                    true, poGCPCoordTrans, false));
-                poCT = psInfo->m_apoCT[iGeom].get();
+                psInfo->m_aoReprojectionInfo[iGeom].m_poCT.reset(
+                    new CompositeCT(
+                        new AxisMappingCoordinateTransformation(
+                            poSourceSRS->GetDataAxisToSRSAxisMapping(),
+                            poDstGeomFieldDefnSpatialRef
+                                ->GetDataAxisToSRSAxisMapping()),
+                        true, poGCPCoordTrans, false));
+                poCT = psInfo->m_aoReprojectionInfo[iGeom].m_poCT.get();
             }
             else if (poGCPCoordTrans)
             {
-                psInfo->m_apoCT[iGeom].reset(
+                psInfo->m_aoReprojectionInfo[iGeom].m_poCT.reset(
                     new CompositeCT(poGCPCoordTrans, false, nullptr, false));
-                poCT = psInfo->m_apoCT[iGeom].get();
+                poCT = psInfo->m_aoReprojectionInfo[iGeom].m_poCT.get();
             }
         }
 
@@ -5195,7 +5211,8 @@ SetupCT(TargetLayerInfo *psInfo, OGRLayer *poSrcLayer, bool bTransform,
                 bHasWarned = true;
             }
 
-            psInfo->m_aosTransformOptions[iGeom].Assign(papszTransformOptions);
+            psInfo->m_aoReprojectionInfo[iGeom].m_aosTransformOptions.Assign(
+                papszTransformOptions);
         }
     }
     return true;
@@ -5663,46 +5680,133 @@ int LayerTranslator::Translate(OGRFeature *poFeatureIn, TargetLayerInfo *psInfo,
                 }
 
                 OGRCoordinateTransformation *const poCT =
-                    psInfo->m_apoCT[iGeom].get();
+                    psInfo->m_aoReprojectionInfo[iGeom].m_poCT.get();
                 char **const papszTransformOptions =
-                    psInfo->m_aosTransformOptions[iGeom].List();
+                    psInfo->m_aoReprojectionInfo[iGeom]
+                        .m_aosTransformOptions.List();
+                const bool bReprojCanInvalidateValidity =
+                    psInfo->m_aoReprojectionInfo[iGeom]
+                        .m_bCanInvalidateValidity;
 
                 if (poCT != nullptr || papszTransformOptions != nullptr)
                 {
-                    OGRGeometry *poReprojectedGeom =
-                        OGRGeometryFactory::transformWithOptions(
-                            poDstGeometry, poCT, papszTransformOptions,
-                            m_transformWithOptionsCache);
-                    if (poReprojectedGeom == nullptr)
+                    // If we need to change the geometry type to linear, and
+                    // we have a geometry with curves, then convert it to
+                    // linear first, to avoid invalidities due to the fact
+                    // that validity of arc portions isn't always kept while
+                    // reprojecting and then discretizing.
+                    if (bReprojCanInvalidateValidity &&
+                        (!psInfo->m_bSupportCurves ||
+                         m_eGeomTypeConversion == GTC_CONVERT_TO_LINEAR ||
+                         m_eGeomTypeConversion ==
+                             GTC_PROMOTE_TO_MULTI_AND_CONVERT_TO_LINEAR))
                     {
-                        if (psOptions->nGroupTransactions)
+                        if (poDstGeometry->hasCurveGeometry(TRUE))
                         {
-                            if (psOptions->nLayerTransaction)
+                            OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(
+                                poDstGeometry->getGeometryType());
+                            poDstGeometry = OGRGeometryFactory::forceTo(
+                                poDstGeometry, eTargetType);
+                        }
+                    }
+                    else if (bReprojCanInvalidateValidity &&
+                             eGType != GEOMTYPE_UNCHANGED &&
+                             !OGR_GT_IsNonLinear(
+                                 static_cast<OGRwkbGeometryType>(eGType)) &&
+                             poDstGeometry->hasCurveGeometry(TRUE))
+                    {
+                        poDstGeometry = OGRGeometryFactory::forceTo(
+                            poDstGeometry,
+                            static_cast<OGRwkbGeometryType>(eGType));
+                    }
+
+                    for (int iIter = 0; iIter < 2; ++iIter)
+                    {
+                        auto poReprojectedGeom = std::unique_ptr<OGRGeometry>(
+                            OGRGeometryFactory::transformWithOptions(
+                                poDstGeometry, poCT, papszTransformOptions,
+                                m_transformWithOptionsCache));
+                        if (poReprojectedGeom == nullptr)
+                        {
+                            if (psOptions->nGroupTransactions)
                             {
-                                if (poDstLayer->CommitTransaction() !=
-                                        OGRERR_NONE &&
-                                    !psOptions->bSkipFailures)
+                                if (psOptions->nLayerTransaction)
                                 {
-                                    delete poDstGeometry;
-                                    return false;
+                                    if (poDstLayer->CommitTransaction() !=
+                                            OGRERR_NONE &&
+                                        !psOptions->bSkipFailures)
+                                    {
+                                        delete poDstGeometry;
+                                        return false;
+                                    }
                                 }
+                            }
+
+                            CPLError(CE_Failure, CPLE_AppDefined,
+                                     "Failed to reproject feature " CPL_FRMT_GIB
+                                     " (geometry probably out of source or "
+                                     "destination SRS).",
+                                     nSrcFID);
+                            if (!psOptions->bSkipFailures)
+                            {
+                                delete poDstGeometry;
+                                return false;
                             }
                         }
 
-                        CPLError(CE_Failure, CPLE_AppDefined,
-                                 "Failed to reproject feature " CPL_FRMT_GIB
-                                 " (geometry probably out of source or "
-                                 "destination SRS).",
-                                 nSrcFID);
-                        if (!psOptions->bSkipFailures)
+                        // Check if a curve geometry is no longer valid after
+                        // reprojection
+                        const auto eType = poDstGeometry->getGeometryType();
+                        const auto eFlatType = wkbFlatten(eType);
+
+                        const auto IsValid = [](const OGRGeometry *poGeom)
+                        {
+                            CPLErrorHandlerPusher oErrorHandler(
+                                CPLQuietErrorHandler);
+                            return poGeom->IsValid();
+                        };
+
+                        if (iIter == 0 && bReprojCanInvalidateValidity &&
+                            OGRGeometryFactory::haveGEOS() &&
+                            (eFlatType == wkbCurvePolygon ||
+                             eFlatType == wkbCompoundCurve ||
+                             eFlatType == wkbMultiCurve ||
+                             eFlatType == wkbMultiSurface) &&
+                            poDstGeometry->hasCurveGeometry(TRUE) &&
+                            IsValid(poDstGeometry))
+                        {
+                            OGRwkbGeometryType eTargetType = OGR_GT_GetLinear(
+                                poDstGeometry->getGeometryType());
+                            auto poDstGeometryTmp =
+                                std::unique_ptr<OGRGeometry>(
+                                    OGRGeometryFactory::forceTo(
+                                        poReprojectedGeom->clone(),
+                                        eTargetType));
+                            if (!IsValid(poDstGeometryTmp.get()))
+                            {
+                                CPLDebug("OGR2OGR",
+                                         "Curve geometry no longer valid after "
+                                         "reprojection: transforming it into "
+                                         "linear one before reprojecting");
+                                poDstGeometry = OGRGeometryFactory::forceTo(
+                                    poDstGeometry, eTargetType);
+                                poDstGeometry = OGRGeometryFactory::forceTo(
+                                    poDstGeometry, eType);
+                            }
+                            else
+                            {
+                                delete poDstGeometry;
+                                poDstGeometry = poReprojectedGeom.release();
+                                break;
+                            }
+                        }
+                        else
                         {
                             delete poDstGeometry;
-                            return false;
+                            poDstGeometry = poReprojectedGeom.release();
+                            break;
                         }
                     }
-
-                    delete poDstGeometry;
-                    poDstGeometry = poReprojectedGeom;
                 }
                 else if (poOutputSRS != nullptr)
                 {
