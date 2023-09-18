@@ -534,8 +534,9 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-ms-");
     }
 
-    VSIVirtualHandle *CreateWriteHandle(const char *pszFilename,
-                                        CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
 
   public:
     explicit VSIAzureFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
@@ -708,7 +709,7 @@ VSICurlHandle *VSIAzureFSHandler::CreateFileHandle(const char *pszFilename)
 /*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
                                      CSLConstList papszOptions)
 {
@@ -717,14 +718,13 @@ VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
             pszFilename + GetFSPrefix().size(), GetFSPrefix());
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = new VSIAzureWriteHandle(this, pszFilename, poHandleHelper,
-                                            papszOptions);
+    auto poHandle = cpl::make_unique<VSIAzureWriteHandle>(
+        this, pszFilename, poHandleHelper, papszOptions);
     if (!poHandle->IsOK())
     {
-        delete poHandle;
         return nullptr;
     }
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

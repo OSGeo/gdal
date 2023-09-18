@@ -550,8 +550,8 @@ class VSICurlFilesystemHandlerBaseWritable : public VSICurlFilesystemHandlerBase
   protected:
     VSICurlFilesystemHandlerBaseWritable() = default;
 
-    virtual VSIVirtualHandle *CreateWriteHandle(const char *pszFilename,
-                                                CSLConstList papszOptions) = 0;
+    virtual VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename, CSLConstList papszOptions) = 0;
 
   public:
     VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,

@@ -656,8 +656,9 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-amz-");
     }
 
-    VSIVirtualHandle *CreateWriteHandle(const char *pszFilename,
-                                        CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
 
   public:
     explicit VSIS3FSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
@@ -2030,21 +2031,21 @@ int VSIS3WriteHandle::Close()
 /*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
-                                                    CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
+                                  CSLConstList papszOptions)
 {
     auto poHandleHelper =
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = new VSIS3WriteHandle(this, pszFilename, poHandleHelper,
-                                         false, papszOptions);
+    auto poHandle = cpl::make_unique<VSIS3WriteHandle>(
+        this, pszFilename, poHandleHelper, false, papszOptions);
     if (!poHandle->IsOK())
     {
-        delete poHandle;
         return nullptr;
     }
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -2058,16 +2059,41 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
         return nullptr;
 
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
+    if (strchr(pszAccess, '+'))
     {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
+        if (!SupportsRandomWrite(pszFilename, true))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for %s, unless "
+                     "%s not supported for %s, unless "
                      "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES",
-                     GetFSPrefix().c_str());
+                     pszAccess, GetFSPrefix().c_str());
             errno = EACCES;
+            return nullptr;
+        }
+
+        const std::string osTmpFilename(CPLGenerateTempFilename(nullptr));
+        if (strchr(pszAccess, 'r'))
+        {
+            auto poExistingFile =
+                VSIVirtualHandleUniquePtr(VSIFOpenL(pszFilename, "rb"));
+            if (!poExistingFile)
+            {
+                return nullptr;
+            }
+            if (VSICopyFile(pszFilename, osTmpFilename.c_str(),
+                            poExistingFile.get(), static_cast<vsi_l_offset>(-1),
+                            nullptr, nullptr, nullptr) != 0)
+            {
+                VSIUnlink(osTmpFilename.c_str());
+                return nullptr;
+            }
+        }
+
+        auto fpTemp = VSIVirtualHandleUniquePtr(
+            VSIFOpenL(osTmpFilename.c_str(), pszAccess));
+        if (!fpTemp)
+        {
+            VSIUnlink(osTmpFilename.c_str());
             return nullptr;
         }
 
@@ -2076,11 +2102,13 @@ VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
         {
             return nullptr;
         }
-        if (strchr(pszAccess, '+') != nullptr)
-        {
-            return VSICreateUploadOnCloseFile(poWriteHandle);
-        }
-        return poWriteHandle;
+
+        return VSICreateUploadOnCloseFile(std::move(poWriteHandle),
+                                          std::move(fpTemp), osTmpFilename);
+    }
+    else if (strchr(pszAccess, 'w') || strchr(pszAccess, 'a'))
+    {
+        return CreateWriteHandle(pszFilename, papszOptions).release();
     }
 
     if (CPLString(pszFilename).back() != '/')

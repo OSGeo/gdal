@@ -85,8 +85,9 @@ class VSIOSSFSHandler final : public IVSIS3LikeFSHandler
 
     void ClearCache() override;
 
-    VSIVirtualHandle *CreateWriteHandle(const char *pszFilename,
-                                        CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
 
   public:
     VSIOSSFSHandler() = default;
@@ -139,21 +140,21 @@ VSIOSSFSHandler::~VSIOSSFSHandler()
 /*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *VSIOSSFSHandler::CreateWriteHandle(const char *pszFilename,
-                                                     CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSIOSSFSHandler::CreateWriteHandle(const char *pszFilename,
+                                   CSLConstList papszOptions)
 {
     auto poHandleHelper =
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = new VSIS3WriteHandle(this, pszFilename, poHandleHelper,
-                                         false, papszOptions);
+    auto poHandle = cpl::make_unique<VSIS3WriteHandle>(
+        this, pszFilename, poHandleHelper, false, papszOptions);
     if (!poHandle->IsOK())
     {
-        delete poHandle;
         return nullptr;
     }
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

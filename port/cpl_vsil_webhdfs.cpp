@@ -88,8 +88,9 @@ class VSIWebHDFSFSHandler final : public VSICurlFilesystemHandlerBaseWritable
 
     CPLString GetURLFromFilename(const CPLString &osFilename) override;
 
-    VSIVirtualHandle *CreateWriteHandle(const char *pszFilename,
-                                        CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
 
   public:
     explicit VSIWebHDFSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
@@ -519,18 +520,16 @@ bool VSIWebHDFSWriteHandle::Append()
 /*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *
+VSIVirtualHandleUniquePtr
 VSIWebHDFSFSHandler::CreateWriteHandle(const char *pszFilename,
                                        CSLConstList /*papszOptions*/)
 {
-    VSIWebHDFSWriteHandle *poHandle =
-        new VSIWebHDFSWriteHandle(this, pszFilename);
+    auto poHandle = cpl::make_unique<VSIWebHDFSWriteHandle>(this, pszFilename);
     if (!poHandle->IsOK())
     {
-        delete poHandle;
         return nullptr;
     }
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

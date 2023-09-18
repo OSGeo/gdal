@@ -93,8 +93,9 @@ class VSIGSFSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-goog-");
     }
 
-    VSIVirtualHandle *CreateWriteHandle(const char *pszFilename,
-                                        CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
 
   public:
     explicit VSIGSFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
@@ -290,21 +291,21 @@ IVSIS3LikeHandleHelper *VSIGSFSHandler::CreateHandleHelper(const char *pszURI,
 /*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *VSIGSFSHandler::CreateWriteHandle(const char *pszFilename,
-                                                    CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSIGSFSHandler::CreateWriteHandle(const char *pszFilename,
+                                  CSLConstList papszOptions)
 {
     auto poHandleHelper =
         CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = new VSIS3WriteHandle(this, pszFilename, poHandleHelper,
-                                         false, papszOptions);
+    auto poHandle = cpl::make_unique<VSIS3WriteHandle>(
+        this, pszFilename, poHandleHelper, false, papszOptions);
     if (!poHandle->IsOK())
     {
-        delete poHandle;
         return nullptr;
     }
-    return poHandle;
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/

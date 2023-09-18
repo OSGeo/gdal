@@ -182,8 +182,9 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-ms-");
     }
 
-    VSIVirtualHandle *CreateWriteHandle(const char *pszFilename,
-                                        CSLConstList papszOptions) override;
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
 
   public:
     VSIADLSFSHandler() = default;
@@ -728,21 +729,22 @@ VSICurlHandle *VSIADLSFSHandler::CreateFileHandle(const char *pszFilename)
 /*                          CreateWriteHandle()                         */
 /************************************************************************/
 
-VSIVirtualHandle *VSIADLSFSHandler::CreateWriteHandle(const char *pszFilename,
-                                                      CSLConstList papszOptions)
+VSIVirtualHandleUniquePtr
+VSIADLSFSHandler::CreateWriteHandle(const char *pszFilename,
+                                    CSLConstList papszOptions)
 {
     VSIAzureBlobHandleHelper *poHandleHelper =
         VSIAzureBlobHandleHelper::BuildFromURI(
             pszFilename + GetFSPrefix().size(), GetFSPrefix());
     if (poHandleHelper == nullptr)
         return nullptr;
-    auto poHandle = std::unique_ptr<VSIADLSWriteHandle>(
-        new VSIADLSWriteHandle(this, pszFilename, poHandleHelper));
+    auto poHandle =
+        cpl::make_unique<VSIADLSWriteHandle>(this, pszFilename, poHandleHelper);
     if (!poHandle->CreateFile(papszOptions))
     {
         return nullptr;
     }
-    return poHandle.release();
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
