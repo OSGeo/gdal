@@ -561,7 +561,7 @@ def test_ogr_parquet_write_from_another_dataset(use_vsi, row_group_size, fid):
         j = json.loads(geo)
         assert j is not None
         assert "version" in j
-        assert j["version"] == "1.0.0-beta.1"
+        assert j["version"] == "1.0.0"
         assert "primary_column" in j
         assert j["primary_column"] == "geometry"
         assert "columns" in j
