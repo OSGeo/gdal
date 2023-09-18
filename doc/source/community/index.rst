@@ -120,11 +120,11 @@ decisions related to the GDAL/OGR project. The current members are (@github user
 - Kurt Schwehr         (@schwehr)
 - Norman Barker        (@normanb)
 - Sean Gillies         (@sgillies)
-- Mateusz Łoskot       (@mloskot)
 
 Past members:
 
 - Andrey Kiselev       (@strezen) (retired in 2019)
+- Mateusz Łoskot       (@mloskot) (retired in 2023)
 
 Note that discussion of proposals to the PSC take place on gdal-dev, and input
 from all subscribers is welcome. A :ref:`list of past RFC <rfclist>` is available for review.
