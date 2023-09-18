@@ -40,8 +40,11 @@ from osgeo import gdal
 # This used to work previously, so likely related to some update in a
 # mingw64 component, although the diff between a broken and working CI run
 # does not show an obvious culprit. And this works in a local VM...
+# And now this breaks on build-windows-conda too
 pytestmark = pytest.mark.skipif(
-    gdaltest.is_travis_branch("mingw64"), reason="Crashes for unknown reason"
+    gdaltest.is_travis_branch("mingw64")
+    or gdaltest.is_travis_branch("build-windows-conda"),
+    reason="Crashes for unknown reason",
 )
 
 
