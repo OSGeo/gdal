@@ -1296,7 +1296,12 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         /*      Compute stats if required. */
         /* --------------------------------------------------------------------
          */
-        if (psOptions->bStats)
+
+        if (psOptions->bStats && EQUAL(psOptions->osFormat.c_str(), "COG"))
+        {
+            psOptions->aosCreateOptions.SetNameValue("STATISTICS", "YES");
+        }
+        else if (psOptions->bStats)
         {
             for (int i = 0; i < poSrcDS->GetRasterCount(); i++)
             {
@@ -2568,7 +2573,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     /* -------------------------------------------------------------------- */
     /*      Compute stats if required.                                      */
     /* -------------------------------------------------------------------- */
-    if (psOptions->bStats)
+    if (psOptions->bStats && EQUAL(psOptions->osFormat.c_str(), "COG"))
+    {
+        psOptions->aosCreateOptions.SetNameValue("STATISTICS", "YES");
+    }
+    else if (psOptions->bStats)
     {
         for (int i = 0; i < poVDS->GetRasterCount(); i++)
         {

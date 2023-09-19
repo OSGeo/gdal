@@ -1838,3 +1838,66 @@ def test_cog_copy_mdd():
     ds = None
 
     gdal.Unlink(filename)
+
+
+###############################################################################
+@pytest.mark.parametrize(
+    "co,nbands,src_has_stats,expected_val",
+    [
+        ([], 1, False, None),
+        ([], 1, True, "10"),
+        (["STATISTICS=YES"], 1, False, "10"),
+        (["STATISTICS=YES"], 1, True, "10"),
+        (["STATISTICS=NO"], 1, False, None),
+        (["STATISTICS=NO"], 1, True, None),
+        (["TARGET_SRS=EPSG:32631"], 1, False, None),
+        (["TARGET_SRS=EPSG:32631"], 1, True, "10"),
+        (["TARGET_SRS=EPSG:32631", "STATISTICS=YES"], 1, False, "10"),
+        (["TARGET_SRS=EPSG:32631", "STATISTICS=YES"], 1, True, "10"),
+        (["TARGET_SRS=EPSG:32631", "STATISTICS=NO"], 1, False, None),
+        (["TARGET_SRS=EPSG:32631", "STATISTICS=NO"], 1, True, None),
+        (["COMPRESS=JPEG"], 4, False, None),
+        (["COMPRESS=JPEG"], 4, True, "10"),
+        (["COMPRESS=JPEG", "STATISTICS=YES"], 4, False, "10"),
+        (["COMPRESS=JPEG", "STATISTICS=NO"], 4, True, None),
+    ],
+)
+def test_cog_stats(tmp_vsimem, nbands, co, src_has_stats, expected_val):
+
+    if "COMPRESS=JPEG" in co and "JPEG" not in gdal.GetDriverByName(
+        "COG"
+    ).GetMetadataItem(gdal.DMD_CREATIONOPTIONLIST):
+        pytest.skip("JPEG not available")
+    src_filename = str(tmp_vsimem / "src.tif")
+    src_ds = gdal.GetDriverByName("GTiff").Create(src_filename, 1, 1, nbands)
+    if nbands == 4:
+        src_ds.GetRasterBand(4).SetColorInterpretation(gdal.GCI_AlphaBand)
+        src_ds.GetRasterBand(1).Fill(10)
+        src_ds.GetRasterBand(2).Fill(10)
+        src_ds.GetRasterBand(3).Fill(10)
+        src_ds.GetRasterBand(4).Fill(255)
+    else:
+        src_ds.GetRasterBand(1).Fill(10)
+    src_ds.SetGeoTransform([2, 1, 0, 49, 0, -1])
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    src_ds.SetSpatialRef(srs)
+    if src_has_stats:
+        src_ds.GetRasterBand(1).ComputeStatistics(False)
+    src_ds = None
+    filename = str(tmp_vsimem / "out.tif")
+    src_ds = gdal.Open(src_filename)
+    if co == ["STATISTICS=YES"]:
+        gdal.Translate(filename, src_ds, options="-of COG -stats")
+    else:
+        gdal.GetDriverByName("COG").CreateCopy(filename, src_ds, options=co)
+    src_ds = None
+    assert gdal.VSIStatL(src_filename + ".aux.xml") is None
+    ds = gdal.Open(filename)
+    if nbands == 4:
+        assert ds.RasterCount == 3
+        assert ds.GetRasterBand(1).GetMaskFlags() == gdal.GMF_PER_DATASET
+    assert ds.GetRasterBand(1).GetMetadataItem("STATISTICS_MINIMUM") == expected_val
+    if expected_val and ds.RasterCount == 2:
+        assert ds.GetRasterBand(2).GetMetadataItem("STATISTICS_MINIMUM") == "255"
+    ds = None

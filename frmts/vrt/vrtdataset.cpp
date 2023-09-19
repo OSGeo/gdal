@@ -2651,4 +2651,38 @@ CPLErr VRTDataset::ReadCompressedData(const char *pszFormat, int nXOff,
         ppBuffer, pnBufferSize, ppszDetailedFormat);
 }
 
+/************************************************************************/
+/*                          ClearStatistics()                           */
+/************************************************************************/
+
+void VRTDataset::ClearStatistics()
+{
+    for (int i = 1; i <= nBands; ++i)
+    {
+        bool bChanged = false;
+        GDALRasterBand *poBand = GetRasterBand(i);
+        char **papszOldMD = poBand->GetMetadata();
+        char **papszNewMD = nullptr;
+        for (char **papszIter = papszOldMD; papszIter && papszIter[0];
+             ++papszIter)
+        {
+            if (STARTS_WITH_CI(*papszIter, "STATISTICS_"))
+            {
+                bChanged = true;
+            }
+            else
+            {
+                papszNewMD = CSLAddString(papszNewMD, *papszIter);
+            }
+        }
+        if (bChanged)
+        {
+            poBand->SetMetadata(papszNewMD);
+        }
+        CSLDestroy(papszNewMD);
+    }
+
+    GDALDataset::ClearStatistics();
+}
+
 /*! @endcond */

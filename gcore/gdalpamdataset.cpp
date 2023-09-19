@@ -183,6 +183,21 @@ CPLErr GDALPamDataset::FlushCache(bool bAtClosing)
 }
 
 /************************************************************************/
+/*                            MarkPamDirty()                            */
+/************************************************************************/
+
+//! @cond Doxygen_Suppress
+void GDALPamDataset::MarkPamDirty()
+{
+    if ((nPamFlags & GPF_DIRTY) == 0 &&
+        CPLTestBool(CPLGetConfigOption("GDAL_PAM_ENABLE_MARK_DIRTY", "YES")))
+    {
+        nPamFlags |= GPF_DIRTY;
+    }
+}
+// @endcond
+
+/************************************************************************/
 /*                           SerializeToXML()                           */
 /************************************************************************/
 
