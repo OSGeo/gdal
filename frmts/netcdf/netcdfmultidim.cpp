@@ -809,6 +809,9 @@ static int CreateOrGetType(int gid, const GDALExtendedDataType &oType)
             case GDT_Byte:
                 nTypeId = NC_UBYTE;
                 break;
+            case GDT_Int8:
+                nTypeId = NC_BYTE;
+                break;
             case GDT_UInt16:
                 nTypeId = NC_USHORT;
                 break;
