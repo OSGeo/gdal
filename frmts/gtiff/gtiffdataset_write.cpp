@@ -3392,8 +3392,12 @@ static bool IsSRSCompatibleOfGeoTIFF(const OGRSpatialReference *poSRS)
     {
         CPLErrorStateBackuper oErrorStateBackuper;
         CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
-        if (poSRS->IsDerivedGeographic())
+        if (poSRS->IsDerivedGeographic() ||
+            (poSRS->IsProjected() && !poSRS->IsCompound() &&
+             poSRS->GetAxesCount() == 3))
+        {
             eErr = OGRERR_FAILURE;
+        }
         else
         {
             // Geographic3D CRS can't be exported to WKT1, but are
