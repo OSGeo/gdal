@@ -297,8 +297,12 @@ static uint32_t hashlittle(const void *key, size_t length, uint32_t initval)
 #define PRECISE_MEMORY_ACCESS 1
 #elif defined(__SANITIZE_ADDRESS__) /* GCC's ASAN */
 #define PRECISE_MEMORY_ACCESS 1
+#elif defined(__SANITIZE_HWADDRESS__) /* GCC's HWASAN */
+#define PRECISE_MEMORY_ACCESS 1
 #elif defined(__has_feature)
 #if __has_feature(address_sanitizer) /* Clang's ASAN */
+#define PRECISE_MEMORY_ACCESS 1
+#elif __has_feature(hwaddress_sanitizer) /* Clang's HWASAN */
 #define PRECISE_MEMORY_ACCESS 1
 #endif
 #endif
