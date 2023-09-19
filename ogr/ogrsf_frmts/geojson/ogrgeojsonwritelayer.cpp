@@ -75,6 +75,19 @@ OGRGeoJSONWriteLayer::OGRGeoJSONWriteLayer(const char *pszName,
         CSLFetchNameValueDef(papszOptions, "WRITE_NON_FINITE_VALUES", "FALSE"));
     oWriteOptions_.bAutodetectJsonStrings = CPLTestBool(
         CSLFetchNameValueDef(papszOptions, "AUTODETECT_JSON_STRINGS", "TRUE"));
+
+    {
+        CPLErrorStateBackuper oErrorStateBackuper;
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        OGRGeometry *poInputGeom = nullptr;
+        OGRGeometryFactory::createFromWkt("POLYGON((0 0,1 1,1 0,0 1,0 0))",
+                                          nullptr, &poInputGeom);
+        CPLAssert(poInputGeom);
+        OGRGeometry *poValidGeom = poInputGeom->MakeValid();
+        delete poInputGeom;
+        bHasMakeValid_ = poValidGeom != nullptr;
+        delete poValidGeom;
+    }
 }
 
 /************************************************************************/
@@ -214,6 +227,84 @@ OGRErr OGRGeoJSONWriteLayer::ICreateFeature(OGRFeature *poFeature)
     else
     {
         poFeatureToWrite = poFeature;
+    }
+
+    const auto IsValid = [](const OGRGeometry *poGeom)
+    {
+        CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
+        return poGeom->IsValid();
+    };
+
+    // Special processing to detect and repair invalid geometries due to
+    // coordinate precision.
+    OGRGeometry *poOrigGeom = poFeature->GetGeometryRef();
+    if (bHasMakeValid_ && nCoordPrecision_ >= 0 && poOrigGeom &&
+        wkbFlatten(poOrigGeom->getGeometryType()) != wkbPoint &&
+        IsValid(poOrigGeom))
+    {
+        struct CoordinateRoundingVisitor : public OGRDefaultGeometryVisitor
+        {
+            const double dfFactor_;
+            const double dfInvFactor_;
+
+            explicit CoordinateRoundingVisitor(int nCoordPrecision)
+                : dfFactor_(std::pow(10.0, double(nCoordPrecision))),
+                  dfInvFactor_(std::pow(10.0, double(-nCoordPrecision)))
+            {
+            }
+
+            using OGRDefaultGeometryVisitor::visit;
+            void visit(OGRPoint *p) override
+            {
+                p->setX(std::round(p->getX() * dfFactor_) * dfInvFactor_);
+                p->setY(std::round(p->getY() * dfFactor_) * dfInvFactor_);
+            }
+        };
+
+        CoordinateRoundingVisitor oVisitor(nCoordPrecision_);
+        auto poNewGeom = poFeature == poFeatureToWrite
+                             ? poOrigGeom->clone()
+                             : poFeatureToWrite->GetGeometryRef();
+        bool bDeleteNewGeom = (poFeature == poFeatureToWrite);
+        poNewGeom->accept(&oVisitor);
+        if (!IsValid(poNewGeom))
+        {
+            CPLDebug("GeoJSON", "Running MakeValid() to correct an invalid "
+                                "geometry due to reduced precision output");
+            auto poValidGeom = poNewGeom->MakeValid();
+            if (poValidGeom)
+            {
+                if (poFeature == poFeatureToWrite)
+                {
+                    poFeatureToWrite = new OGRFeature(poFeatureDefn_);
+                    poFeatureToWrite->SetFrom(poFeature);
+                    poFeatureToWrite->SetFID(poFeature->GetFID());
+                }
+
+                // It may happen that after MakeValid(), and rounding again,
+                // we end up with an invalid result. Run MakeValid() again...
+                poValidGeom->accept(&oVisitor);
+                if (!IsValid(poValidGeom))
+                {
+                    auto poValidGeom2 = poValidGeom->MakeValid();
+                    if (poValidGeom2)
+                    {
+                        delete poValidGeom;
+                        poValidGeom = poValidGeom2;
+                        if (!IsValid(poValidGeom))
+                        {
+                            // hopefully should not happen
+                            CPLDebug("GeoJSON",
+                                     "... still not valid! Giving up");
+                        }
+                    }
+                }
+
+                poFeatureToWrite->SetGeometryDirectly(poValidGeom);
+            }
+        }
+        if (bDeleteNewGeom)
+            delete poNewGeom;
     }
 
     if (oWriteOptions_.bGenerateID && poFeatureToWrite->GetFID() == OGRNullFID)
