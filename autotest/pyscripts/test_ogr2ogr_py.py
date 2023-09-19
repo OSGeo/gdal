@@ -217,99 +217,57 @@ def test_ogr2ogr_py_5(script_path):
 # Test -overwrite
 
 
-def test_ogr2ogr_py_6(script_path):
-
-    ogr_pg = pytest.importorskip("ogr_pg")
+def test_ogr2ogr_py_6(script_path, pg_ds):
 
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
-
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
-    )
+    assert pg_ds.GetLayerByName("tpoly") is None
 
     test_py_scripts.run_py_script(
         script_path,
         "ogr2ogr",
-        '-f PostgreSQL PG:"'
-        + gdaltest.pg_connection_string
-        + '" '
+        "-f PostgreSQL "
+        + f'"{pg_ds.GetDescription()}" '
         + test_py_scripts.get_data_path("ogr")
         + "poly.shp -nln tpoly",
     )
+
+    assert pg_ds.GetLayerByName("tpoly").GetFeatureCount() == 10
+
     test_py_scripts.run_py_script(
         script_path,
         "ogr2ogr",
-        '-update -overwrite -f PostgreSQL PG:"'
-        + gdaltest.pg_connection_string
-        + '" '
+        "-update -overwrite -f PostgreSQL "
+        + f'"{pg_ds.GetDescription()}" '
         + test_py_scripts.get_data_path("ogr")
         + "poly.shp -nln tpoly",
     )
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
-    assert ds is not None and ds.GetLayerByName("tpoly").GetFeatureCount() == 10
-    ds.Destroy()
-
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
-    )
+    assert pg_ds.GetLayerByName("tpoly").GetFeatureCount() == 10
 
 
 ###############################################################################
 # Test -gt
 
 
-def test_ogr2ogr_py_7(script_path):
-
-    ogr_pg = pytest.importorskip("ogr_pg")
+def test_ogr2ogr_py_7(script_path, pg_ds):
 
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
-
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
-    )
+    assert pg_ds.GetLayerByName("tpoly") is None
 
     test_py_scripts.run_py_script(
         script_path,
         "ogr2ogr",
-        '-f PostgreSQL PG:"'
-        + gdaltest.pg_connection_string
-        + '" '
+        "-f PostgreSQL "
+        + f'"{pg_ds.GetDescription()}" '
         + test_py_scripts.get_data_path("ogr")
         + "poly.shp -nln tpoly -gt 1",
     )
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
-    assert ds is not None and ds.GetLayerByName("tpoly").GetFeatureCount() == 10
-    ds.Destroy()
-
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
-    )
+    assert pg_ds.GetLayerByName("tpoly").GetFeatureCount() == 10
 
 
 ###############################################################################

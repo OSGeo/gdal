@@ -31,7 +31,6 @@
 
 import os
 import shutil
-import sys
 
 import gdaltest
 import ogrtest
@@ -157,98 +156,47 @@ def test_ogr2ogr_5(ogr2ogr_path, tmp_path):
     ), "Did not get expected value for field PRFEDEA"
 
 
-def check_if_has_ogr_pg():
-    path = "../ogr"
-    if path not in sys.path:
-        sys.path.append(path)
-    try:
-        import ogr_pg
-    except Exception:
-        pytest.skip()
-    ogr_pg.test_ogr_pg_1()
-    if gdaltest.pg_ds is None:
-        pytest.skip()
-    gdaltest.pg_ds.Destroy()
-
-
 ###############################################################################
 # Test -overwrite
 
 
-def test_ogr2ogr_6(ogr2ogr_path):
-
-    check_if_has_ogr_pg()
+def test_ogr2ogr_6(ogr2ogr_path, pg_ds):
 
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
+    ret = gdaltest.runexternal(
+        f"{ogr2ogr_path} -f PostgreSQL '{pg_ds.GetDescription()}' ../ogr/data/poly.shp -nln tpoly"
     )
+    assert "ERROR" not in ret
 
-    gdaltest.runexternal(
-        ogr2ogr_path
-        + ' -f PostgreSQL PG:"'
-        + gdaltest.pg_connection_string
-        + '" ../ogr/data/poly.shp -nln tpoly'
+    ret = gdaltest.runexternal(
+        f"{ogr2ogr_path} -f PostgreSQL '{pg_ds.GetDescription()}' ../ogr/data/poly.shp -nln tpoly -overwrite"
     )
-    gdaltest.runexternal(
-        ogr2ogr_path
-        + ' -update -overwrite -f PostgreSQL PG:"'
-        + gdaltest.pg_connection_string
-        + '" ../ogr/data/poly.shp -nln tpoly'
-    )
+    assert "ERROR" not in ret
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
-    assert ds is not None and ds.GetLayerByName("tpoly").GetFeatureCount() == 10
-    ds.Destroy()
-
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
-    )
+    ds = ogr.Open(pg_ds.GetDescription())
+    assert ds is not None
+    assert ds.GetLayerByName("tpoly").GetFeatureCount() == 10
 
 
 ###############################################################################
 # Test -gt
 
 
-def test_ogr2ogr_7(ogr2ogr_path):
-
-    check_if_has_ogr_pg()
+def test_ogr2ogr_7(ogr2ogr_path, pg_ds):
 
     if test_cli_utilities.get_ogrinfo_path() is None:
         pytest.skip()
 
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
+    ret = gdaltest.runexternal(
+        f"{ogr2ogr_path} -f PostgreSQL '{pg_ds.GetDescription()}' ../ogr/data/poly.shp -nln tpoly -gt 1"
     )
+    assert "ERROR" not in ret
 
-    gdaltest.runexternal(
-        ogr2ogr_path
-        + ' -f PostgreSQL PG:"'
-        + gdaltest.pg_connection_string
-        + '" ../ogr/data/poly.shp -nln tpoly -gt 1'
-    )
-
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
-    assert ds is not None and ds.GetLayerByName("tpoly").GetFeatureCount() == 10
-    ds.Destroy()
-
-    gdaltest.runexternal(
-        test_cli_utilities.get_ogrinfo_path()
-        + ' PG:"'
-        + gdaltest.pg_connection_string
-        + '" -sql "DELLAYER:tpoly"'
-    )
+    ds = ogr.Open(pg_ds.GetDescription())
+    assert ds is not None
+    assert ds.GetLayerByName("tpoly").GetFeatureCount() == 10
 
 
 ###############################################################################
@@ -1150,14 +1098,9 @@ def test_ogr2ogr_40(ogr2ogr_path, tmp_path):
 # Test 'ogr2ogr -update PG:xxxx PG:xxxx layersrc -nln layerdst' (#4270)
 
 
-def test_ogr2ogr_41(ogr2ogr_path):
+def test_ogr2ogr_41(ogr2ogr_path, pg_ds):
 
-    check_if_has_ogr_pg()
-
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
-    ds.ExecuteSQL("DELLAYER:test_ogr2ogr_41_src")
-    ds.ExecuteSQL("DELLAYER:test_ogr2ogr_41_target")
-    lyr = ds.CreateLayer("test_ogr2ogr_41_src")
+    lyr = pg_ds.CreateLayer("test_ogr2ogr_41_src")
     lyr.CreateField(ogr.FieldDefn("foo", ogr.OFTString))
     lyr.StartTransaction()
     for i in range(501):
@@ -1167,23 +1110,14 @@ def test_ogr2ogr_41(ogr2ogr_path):
         feat = None
     lyr.CommitTransaction()
     lyr = None
-    ds = None
 
-    gdaltest.runexternal(
-        ogr2ogr_path
-        + ' -update PG:"'
-        + gdaltest.pg_connection_string
-        + '" PG:"'
-        + gdaltest.pg_connection_string
-        + '" test_ogr2ogr_41_src -nln test_ogr2ogr_41_target'
+    ret = gdaltest.runexternal(
+        f"{ogr2ogr_path} -update '{pg_ds.GetDescription()}' '{pg_ds.GetDescription()}' test_ogr2ogr_41_src -nln test_ogr2ogr_41_target"
     )
+    assert "ERROR" not in ret
 
-    ds = ogr.Open("PG:" + gdaltest.pg_connection_string)
-    lyr = ds.GetLayerByName("test_ogr2ogr_41_target")
+    lyr = pg_ds.GetLayerByName("test_ogr2ogr_41_target")
     assert lyr.GetFeatureCount() == 501
-    ds.ExecuteSQL("DELLAYER:test_ogr2ogr_41_src")
-    ds.ExecuteSQL("DELLAYER:test_ogr2ogr_41_target")
-    ds = None
 
 
 ###############################################################################
