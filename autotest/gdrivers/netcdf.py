@@ -510,7 +510,9 @@ def test_netcdf_9():
 
 def test_netcdf_10():
 
-    ds = gdal.Open("data/netcdf/cf_no_sphere.nc")
+    ds = gdal.OpenEx(
+        "data/netcdf/cf_no_sphere.nc", open_options=["PRESERVE_AXIS_UNIT_IN_CRS=YES"]
+    )
 
     prj = ds.GetProjection()
 

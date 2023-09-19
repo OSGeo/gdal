@@ -4306,7 +4306,6 @@ void netCDFDataset::SetProjectionFromVar(
                     else if (EQUAL(pszUnits, "US_survey_foot") ||
                              EQUAL(pszUnits, "US_survey_feet"))
                     {
-                        dfLinearUnitsConvFactor = CPLAtof(SRS_UL_US_FOOT_CONV);
                         oSRS.SetLinearUnits("US survey foot",
                                             dfLinearUnitsConvFactor);
                         oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9003);
@@ -4317,6 +4316,20 @@ void netCDFDataset::SetProjectionFromVar(
                                  "Unhandled X/Y axis unit %s. SRS will ignore "
                                  "axis unit and be likely wrong.",
                                  pszUnits);
+                    }
+
+                    // If the user doesn't ask to preserve the axis unit,
+                    // then normalize to metre
+                    if (dfLinearUnitsConvFactor != 1.0 &&
+                        !CPLFetchBool(GetOpenOptions(),
+                                      "PRESERVE_AXIS_UNIT_IN_CRS", false))
+                    {
+                        oSRS.SetLinearUnits("metre", 1.0);
+                        oSRS.SetAuthority("PROJCS|UNIT", "EPSG", 9001);
+                    }
+                    else
+                    {
+                        dfLinearUnitsConvFactor = 1.0;
                     }
                 }
             }
@@ -4798,71 +4811,23 @@ void netCDFDataset::SetProjectionFromVar(
 
         if (dfLinearUnitsConvFactor != 1.0)
         {
-            // Special case for dataset
-            // https://thredds.met.no/thredds/catalog/osisaf/met.no/reprocessed/ice/drift_455m_files/merged/2020/12/catalog.html?dataset=osisaf/met.no/reprocessed/ice/drift_455m_files/merged/2020/12/ice_drift_nh_ease2-750_cdr-v1p0_24h-202012211200.nc
-            // which has
-            /*
-                int Lambert_Azimuthal_Equal_Area ;
-                        Lambert_Azimuthal_Equal_Area:grid_mapping_name = "lambert_azimuthal_equal_area" ;
-                        Lambert_Azimuthal_Equal_Area:longitude_of_projection_origin = 0.f ;
-                        Lambert_Azimuthal_Equal_Area:latitude_of_projection_origin = 90.f ;
-                        Lambert_Azimuthal_Equal_Area:false_easting = 0. ;
-                        Lambert_Azimuthal_Equal_Area:false_northing = 0. ;
-                        Lambert_Azimuthal_Equal_Area:semi_major_axis = 6378137. ;
-                        Lambert_Azimuthal_Equal_Area:inverse_flattening = 298.257223563 ;
-                        Lambert_Azimuthal_Equal_Area:proj4_string = "+proj=laea +lat_0=90 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs +type=crs" ;
-                double xc(xc) ;
-                        xc:axis = "X" ;
-                        xc:units = "km" ;
-                        xc:long_name = "x coordinate of projection (eastings)" ;
-                        xc:standard_name = "projection_x_coordinate" ;
-                double yc(yc) ;
-                        yc:axis = "Y" ;
-                        yc:units = "km" ;
-                        yc:long_name = "y coordinate of projection (northings)" ;
-                        yc:standard_name = "projection_y_coordinate" ;
-                // global attributes:
-                        :geospatial_bounds_crs = "EPSG:6931" ;
-            */
+            for (int i = 0; i < 6; ++i)
+                adfTempGeoTransform[i] *= dfLinearUnitsConvFactor;
 
-            const char *pszProj4String =
-                FetchAttr(pszGridMappingValue, "proj4_string");
-            if (pszProj4String && strstr(pszProj4String, " +units=m "))
+            if (paosRemovedMDItems)
             {
-                // Check if we should normalize geotransform and SRS to metre
-                OGRSpatialReference oSRSTmp(oSRS);
-                oSRSTmp.SetLinearUnits("metre", 1.0);
-                oSRSTmp.SetAuthority("PROJCS|UNIT", "EPSG", 9001);
+                char szVarNameX[NC_MAX_NAME + 1];
+                CPL_IGNORE_RET_VAL(
+                    nc_inq_varname(nGroupId, nVarDimXID, szVarNameX));
 
-                OGRSpatialReference oSRSProj4;
-                oSRSProj4.SetAxisMappingStrategy(OAMS_TRADITIONAL_GIS_ORDER);
-                if (oSRSProj4.importFromProj4(pszProj4String) == OGRERR_NONE &&
-                    AreSRSEqualThroughProj4String(oSRSTmp, oSRSProj4))
-                {
-                    for (int i = 0; i < 6; ++i)
-                        adfTempGeoTransform[i] *= dfLinearUnitsConvFactor;
+                char szVarNameY[NC_MAX_NAME + 1];
+                CPL_IGNORE_RET_VAL(
+                    nc_inq_varname(nGroupId, nVarDimYID, szVarNameY));
 
-                    dfLinearUnitsConvFactor = 1.0;
-                    CPL_IGNORE_RET_VAL(dfLinearUnitsConvFactor);
-                    oSRS = oSRSTmp;
-                    SetSpatialRefNoUpdate(&oSRS);
-
-                    char szVarNameX[NC_MAX_NAME + 1];
-                    CPL_IGNORE_RET_VAL(
-                        nc_inq_varname(nGroupId, nVarDimXID, szVarNameX));
-
-                    char szVarNameY[NC_MAX_NAME + 1];
-                    CPL_IGNORE_RET_VAL(
-                        nc_inq_varname(nGroupId, nVarDimYID, szVarNameY));
-
-                    if (paosRemovedMDItems)
-                    {
-                        paosRemovedMDItems->push_back(
-                            CPLSPrintf("%s#units", szVarNameX));
-                        paosRemovedMDItems->push_back(
-                            CPLSPrintf("%s#units", szVarNameY));
-                    }
-                }
+                paosRemovedMDItems->push_back(
+                    CPLSPrintf("%s#units", szVarNameX));
+                paosRemovedMDItems->push_back(
+                    CPLSPrintf("%s#units", szVarNameY));
             }
         }
 
@@ -11268,6 +11233,10 @@ void GDALRegister_netCDF()
         "a "
         "meaningful geotransform has been found, and is within the  "
         "bounds -180,360 -90,90, assume OGC:CRS84.' default='NO'/>"
+        "   <Option name='PRESERVE_AXIS_UNIT_IN_CRS' type='boolean' "
+        "scope='raster' description='Whether unusual linear axis unit (km) "
+        "should be kept as such, instead of being normalized to metre' "
+        "default='NO'/>"
         "</OpenOptionList>");
 
     // Make driver config and capabilities available.
