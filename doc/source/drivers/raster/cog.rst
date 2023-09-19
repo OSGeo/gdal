@@ -84,11 +84,20 @@ General creation options
       * For ZSTD, 22 is the slowest/higher compression rate. The default is 9.
 
 -  .. co:: MAX_Z_ERROR
+      :choices: <threshold>
       :default: 0
 
       Set the maximum error threshold on values
       for LERC/LERC_DEFLATE/LERC_ZSTD compression. The default is 0
       (lossless).
+
+-  .. co:: MAX_Z_ERROR_OVERVIEW
+      :choices: <threshold>
+      :since: 3.8
+
+      Set the maximum error threshold on values
+      for LERC/LERC_DEFLATE/LERC_ZSTD compression, on overviews.
+      The default is the value of :co:`MAX_Z_ERROR`
 
 -  .. co:: QUALITY
       :choices: <integer>

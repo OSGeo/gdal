@@ -388,6 +388,43 @@ def test_cog_creation_of_overviews_with_mask():
 
 
 ###############################################################################
+# Test MAX_Z_ERROR_OVERVIEW creation option
+
+
+@pytest.mark.require_creation_option("COG", "LERC")
+def test_cog_lerc_max_z_error_overview(tmp_vsimem):
+
+    fname = str(tmp_vsimem / "test_cog_lerc_max_z_error_overview.tif")
+
+    gdal.Translate(
+        fname,
+        "../gdrivers/data/utm.tif",
+        options="-of COG -co COMPRESS=LERC -outsize 256 256 -co BLOCKSIZE=128",
+    )
+    ds = gdal.Open(fname)
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")) == 0
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR_OVERVIEW", "_DEBUG_")) == 0.0
+    ref_cs_main = ds.GetRasterBand(1).Checksum()
+    ref_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    gdal.Translate(
+        fname,
+        "../gdrivers/data/utm.tif",
+        options="-of COG -co COMPRESS=LERC -co MAX_Z_ERROR_OVERVIEW=1.5 -outsize 256 256 -co BLOCKSIZE=128",
+    )
+    ds = gdal.Open(fname)
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")) == 0
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR_OVERVIEW", "_DEBUG_")) == 1.5
+    got_cs_main = ds.GetRasterBand(1).Checksum()
+    got_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    assert got_cs_main == ref_cs_main
+    assert got_cs_ovr != ref_cs_ovr
+
+
+###############################################################################
 # Test full world reprojection to WebMercator
 
 

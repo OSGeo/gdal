@@ -8651,6 +8651,81 @@ def test_tiff_write_lerc_overview(external_ovr, compression):
 
 
 ###############################################################################
+# Test MAX_Z_ERROR_OVERVIEW creation option
+
+
+@pytest.mark.parametrize("z_error", [0, 1.5])
+@pytest.mark.require_creation_option("GTiff", "LERC")
+def test_tiff_write_lerc_max_z_error_overview(tmp_vsimem, z_error):
+
+    src_ds = gdal.Open("../gdrivers/data/utm.tif")
+    data = src_ds.GetRasterBand(1).ReadRaster(0, 0, 512, 512, 256, 256)
+
+    fname = str(tmp_vsimem / "test_tiff_write_lerc_max_z_error_overview.tif")
+    options = ["COMPRESS=LERC"]
+    if z_error > 0:
+        options.append(f"MAX_Z_ERROR={z_error}")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        fname,
+        256,
+        256,
+        1,
+        options=options,
+    )
+    ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+    ds.BuildOverviews("AVERAGE", overviewlist=[2])
+    ds = None
+    ds = gdal.Open(fname)
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")) == z_error
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR_OVERVIEW", "_DEBUG_")) == z_error
+    assert (
+        float(
+            ds.GetRasterBand(1)
+            .GetOverview(0)
+            .GetDataset()
+            .GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")
+        )
+        == z_error
+    )
+    ref_cs_main = ds.GetRasterBand(1).Checksum()
+    ref_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    fname = str(tmp_vsimem / "test_tiff_write_lerc_max_z_error_overview.tif")
+    options = ["COMPRESS=LERC", "MAX_Z_ERROR_OVERVIEW=2.5"]
+    if z_error > 0:
+        options.append(f"MAX_Z_ERROR={z_error}")
+    ds = gdal.GetDriverByName("GTiff").Create(
+        fname,
+        256,
+        256,
+        1,
+        options=options,
+    )
+    ds.GetRasterBand(1).WriteRaster(0, 0, 256, 256, data)
+    ds.BuildOverviews("AVERAGE", overviewlist=[2])
+    ds = None
+    ds = gdal.Open(fname)
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")) == z_error
+    assert float(ds.GetMetadataItem("MAX_Z_ERROR_OVERVIEW", "_DEBUG_")) == 2.5
+    assert (
+        float(
+            ds.GetRasterBand(1)
+            .GetOverview(0)
+            .GetDataset()
+            .GetMetadataItem("MAX_Z_ERROR", "_DEBUG_")
+        )
+        == 2.5
+    )
+    got_cs_main = ds.GetRasterBand(1).Checksum()
+    got_cs_ovr = ds.GetRasterBand(1).GetOverview(0).Checksum()
+    ds = None
+
+    assert got_cs_main == ref_cs_main
+    assert got_cs_ovr != ref_cs_ovr
+
+
+###############################################################################
 # Test ZLEVEL_OVERVIEW effect while creating overviews
 # on a newly created dataset
 

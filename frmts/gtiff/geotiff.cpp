@@ -252,11 +252,16 @@ void GTIFFSetMaxZError(GDALDatasetH hGTIFFDS, double dfMaxZError)
 
     GTiffDataset *const poDS = static_cast<GTiffDataset *>(hGTIFFDS);
     poDS->m_dfMaxZError = dfMaxZError;
+    poDS->m_dfMaxZErrorOverview = dfMaxZError;
 
     poDS->ScanDirectories();
 
     for (int i = 0; i < poDS->m_nOverviewCount; ++i)
+    {
         poDS->m_papoOverviewDS[i]->m_dfMaxZError = poDS->m_dfMaxZError;
+        poDS->m_papoOverviewDS[i]->m_dfMaxZErrorOverview =
+            poDS->m_dfMaxZErrorOverview;
+    }
 }
 
 /************************************************************************/
@@ -1214,10 +1219,15 @@ void GDALRegister_GTiff()
             "   <Option name='ZSTD_LEVEL' type='int' description='ZSTD "
             "compression level 1(fast)-22(slow)' default='9'/>";
     if (bHasLERC)
+    {
         osOptions +=
             ""
             "   <Option name='MAX_Z_ERROR' type='float' description='Maximum "
-            "error for LERC compression' default='0'/>";
+            "error for LERC compression' default='0'/>"
+            "   <Option name='MAX_Z_ERROR_OVERVIEW' type='float' "
+            "description='Maximum error for LERC compression in overviews' "
+            "default='0'/>";
+    }
     if (bHasWebP)
     {
 #ifndef DEFAULT_WEBP_LEVEL
