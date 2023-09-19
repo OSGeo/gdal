@@ -38,7 +38,7 @@ import test_py_scripts
 
 from osgeo import gdal, ogr
 
-CURRENT_VERSION = "1.0.0-beta.1"
+CURRENT_VERSION = "1.0.0"
 PARQUET_JSON_SCHEMA = "../ogr/data/parquet/schema.json"
 
 

@@ -7,7 +7,7 @@
   "properties": {
     "version": {
       "type": "string",
-      "const": "1.0.0-beta.1"
+      "const": "1.0.0"
     },
     "primary_column": {
       "type": "string",
