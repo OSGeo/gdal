@@ -975,6 +975,7 @@ def test_netcdf_multidim_create_nc4():
 
         for dt in (
             gdal.GDT_Byte,
+            gdal.GDT_Int8,
             gdal.GDT_Int16,
             gdal.GDT_UInt16,
             gdal.GDT_Int32,
