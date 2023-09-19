@@ -907,6 +907,8 @@ class netCDFDataset final : public GDALPamDataset
 
 #ifdef NETCDF_HAS_NC4
     bool ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId);
+
+    bool ProcessNASAEMITGeoLocation(int nGroupId, int nVarId);
 #endif
 
     int ProcessCFGeolocation(int nGroupId, int nVarId,

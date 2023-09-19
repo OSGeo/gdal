@@ -5283,6 +5283,114 @@ bool netCDFDataset::ProcessNASAL2OceanGeoLocation(int nGroupId, int nVarId)
                                     "GEOLOCATION");
     return true;
 }
+
+bool netCDFDataset::ProcessNASAEMITGeoLocation(int nGroupId, int nVarId)
+{
+    // Cf https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/
+
+    // Check for a structure like:
+    /* netcdf EMIT_L2A_RFL_001_20220903T163129_2224611_012 {
+        dimensions:
+            downtrack = 1280 ;
+            crosstrack = 1242 ;
+            bands = 285 ;
+            [...]
+
+        variables:
+            float reflectance(downtrack, crosstrack, bands) ;
+
+        group: location {
+          variables:
+                double lon(downtrack, crosstrack) ;
+                        lon:_FillValue = -9999. ;
+                        lon:long_name = "Longitude (WGS-84)" ;
+                        lon:units = "degrees east" ;
+                double lat(downtrack, crosstrack) ;
+                        lat:_FillValue = -9999. ;
+                        lat:long_name = "Latitude (WGS-84)" ;
+                        lat:units = "degrees north" ;
+          } // group location
+
+    }
+    */
+
+    int nVarDims = 0;
+    NCDF_ERR(nc_inq_varndims(nGroupId, nVarId, &nVarDims));
+    if (nVarDims != 3)
+        return false;
+
+    int nLocationGrpId = 0;
+    if (nc_inq_grp_ncid(cdfid, "location", &nLocationGrpId) != NC_NOERR)
+        return false;
+
+    std::array<int, 3> anVarDimIds;
+    NCDF_ERR(nc_inq_vardimid(nGroupId, nVarId, anVarDimIds.data()));
+    if (nYDimID != anVarDimIds[0] || nXDimID != anVarDimIds[1])
+        return false;
+
+    int nLongitudeId = 0;
+    int nLatitudeId = 0;
+    if (nc_inq_varid(nLocationGrpId, "lon", &nLongitudeId) != NC_NOERR ||
+        nc_inq_varid(nLocationGrpId, "lat", &nLatitudeId) != NC_NOERR)
+    {
+        return false;
+    }
+
+    int nDimsLongitude = 0;
+    NCDF_ERR(nc_inq_varndims(nLocationGrpId, nLongitudeId, &nDimsLongitude));
+    int nDimsLatitude = 0;
+    NCDF_ERR(nc_inq_varndims(nLocationGrpId, nLatitudeId, &nDimsLatitude));
+    if (!(nDimsLongitude == 2 && nDimsLatitude == 2))
+    {
+        return false;
+    }
+
+    std::array<int, 2> anDimLongitudeIds;
+    NCDF_ERR(nc_inq_vardimid(nLocationGrpId, nLongitudeId,
+                             anDimLongitudeIds.data()));
+    std::array<int, 2> anDimLatitudeIds;
+    NCDF_ERR(
+        nc_inq_vardimid(nLocationGrpId, nLatitudeId, anDimLatitudeIds.data()));
+    if (anDimLongitudeIds != anDimLatitudeIds)
+    {
+        return false;
+    }
+
+    if (anDimLongitudeIds[0] != anVarDimIds[0] ||
+        anDimLongitudeIds[1] != anVarDimIds[1])
+    {
+        return false;
+    }
+
+    const char *pszGeolocXFullName = "/location/lon";
+    const char *pszGeolocYFullName = "/location/lat";
+
+    CPLDebug("GDAL_netCDF", "using variables %s and %s for GEOLOCATION",
+             pszGeolocXFullName, pszGeolocYFullName);
+
+    GDALPamDataset::SetMetadataItem("SRS", SRS_WKT_WGS84_LAT_LONG,
+                                    "GEOLOCATION");
+
+    CPLString osTMP;
+    osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocXFullName);
+
+    GDALPamDataset::SetMetadataItem("X_DATASET", osTMP, "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("X_BAND", "1", "GEOLOCATION");
+    osTMP.Printf("NETCDF:\"%s\":%s", osFilename.c_str(), pszGeolocYFullName);
+
+    GDALPamDataset::SetMetadataItem("Y_DATASET", osTMP, "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("Y_BAND", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("PIXEL_OFFSET", "0", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("PIXEL_STEP", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("LINE_OFFSET", "0", "GEOLOCATION");
+    GDALPamDataset::SetMetadataItem("LINE_STEP", "1", "GEOLOCATION");
+
+    GDALPamDataset::SetMetadataItem("GEOREFERENCING_CONVENTION", "PIXEL_CENTER",
+                                    "GEOLOCATION");
+    return true;
+}
 #endif
 
 int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
@@ -5423,6 +5531,9 @@ int netCDFDataset::ProcessCFGeolocation(int nGroupId, int nVarId,
     else
     {
         bAddGeoloc = ProcessNASAL2OceanGeoLocation(nGroupId, nVarId);
+
+        if (!bAddGeoloc)
+            bAddGeoloc = ProcessNASAEMITGeoLocation(nGroupId, nVarId);
     }
 #endif
 
@@ -9594,16 +9705,28 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
         }
     }
 
+    // For example for EMIT data (https://earth.jpl.nasa.gov/emit/data/data-portal/coverage-and-forecasts/),
+    // dimension order is downtrack, crosstrack, bands
+    bool bYXBandOrder = false;
+    if (nd == 3)
+    {
+        char szDimName[NC_MAX_NAME + 1] = {};
+        status = nc_inq_dimname(cdfid, poDS->m_anDimIds[2], szDimName);
+        NCDF_ERR(status);
+        bYXBandOrder =
+            strcmp(szDimName, "bands") == 0 || strcmp(szDimName, "band") == 0;
+    }
+
     // Get X dimensions information.
     size_t xdim;
-    poDS->nXDimID = poDS->m_anDimIds[nd - 1];
+    poDS->nXDimID = poDS->m_anDimIds[bYXBandOrder ? 1 : nd - 1];
     nc_inq_dimlen(cdfid, poDS->nXDimID, &xdim);
 
     // Get Y dimension information.
     size_t ydim;
     if (nd >= 2)
     {
-        poDS->nYDimID = poDS->m_anDimIds[nd - 2];
+        poDS->nYDimID = poDS->m_anDimIds[bYXBandOrder ? 0 : nd - 2];
         nc_inq_dimlen(cdfid, poDS->nYDimID, &ydim);
     }
     else
