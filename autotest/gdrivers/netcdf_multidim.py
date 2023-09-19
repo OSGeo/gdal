@@ -3576,3 +3576,73 @@ def test_netcdf_multidim_compute_statistics_update_metadata():
     finally:
         gdal.Unlink(filename)
         gdal.Unlink(filename + ".aux.xml")
+
+
+def test_netcdf_multidim_getresampled_with_geoloc_EMIT():
+
+    ds = gdal.OpenEx("data/netcdf/fake_EMIT.nc", gdal.OF_MULTIDIM_RASTER)
+    rg = ds.GetRootGroup()
+
+    ar = rg.OpenMDArray("reflectance")
+    coordinate_vars = ar.GetCoordinateVariables()
+    assert len(coordinate_vars) == 2
+    assert coordinate_vars[0].GetName() == "lon"
+    assert coordinate_vars[1].GetName() == "lat"
+
+    resampled_ar = ar.GetResampled(
+        [None, None, ar.GetDimensions()[2]], gdal.GRIORA_NearestNeighbour, None
+    )
+    assert resampled_ar is not None
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "dimY"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "dimX"
+    assert dims[1].GetSize() == 3
+    assert dims[2].GetName() == "bands"
+    assert dims[2].GetSize() == 2
+
+    resampled_ar = ar.GetResampled(
+        [None] * ar.GetDimensionCount(), gdal.GRIORA_NearestNeighbour, None
+    )
+    assert resampled_ar is not None
+    dims = resampled_ar.GetDimensions()
+    assert dims[0].GetName() == "dimY"
+    assert dims[0].GetSize() == 3
+    assert dims[1].GetName() == "dimX"
+    assert dims[1].GetSize() == 3
+    assert dims[2].GetName() == "bands"
+    assert dims[2].GetSize() == 2
+
+    resampled_ar_transposed = resampled_ar.Transpose([2, 0, 1])
+    dims = resampled_ar_transposed.GetDimensions()
+    assert dims[0].GetName() == "bands"
+    assert dims[0].GetSize() == 2
+    assert dims[1].GetName() == "dimY"
+    assert dims[1].GetSize() == 3
+    assert dims[2].GetName() == "dimX"
+    assert dims[2].GetSize() == 3
+
+    # By default, the classic netCDF driver would use bottom-up reordering,
+    # which slightly modifies the output of the geolocation interpolation,
+    # and would not make it possible to compare exactly with the GetResampled()
+    # result
+    with gdaltest.config_option("GDAL_NETCDF_BOTTOMUP", "NO"):
+        warped_ds = gdal.Warp(
+            "", 'NETCDF:"data/netcdf/fake_EMIT.nc":reflectance', format="MEM"
+        )
+    assert warped_ds.ReadRaster() == resampled_ar_transposed.Read()
+    xoff = 1
+    yoff = 2
+    xsize = 2
+    ysize = 1
+    band_count = 2
+    assert warped_ds.ReadRaster(
+        xoff, yoff, xsize, ysize
+    ) == resampled_ar_transposed.Read(
+        array_start_idx=[0, yoff, xoff], count=[band_count, ysize, xsize]
+    )
+    assert warped_ds.GetRasterBand(2).ReadRaster(
+        xoff, yoff, xsize, ysize
+    ) == resampled_ar_transposed.Read(
+        array_start_idx=[1, yoff, xoff], count=[1, ysize, xsize]
+    )

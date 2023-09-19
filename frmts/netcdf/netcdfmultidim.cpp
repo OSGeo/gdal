@@ -4040,6 +4040,28 @@ netCDFVariable::GetCoordinateVariables() const
         }
     }
 
+    // Special case for NASA EMIT datasets
+    auto apoDims = GetDimensions();
+    if (apoDims.size() == 3 && apoDims[0]->GetName() == "downtrack" &&
+        apoDims[1]->GetName() == "crosstrack" &&
+        apoDims[2]->GetName() == "bands")
+    {
+        auto poRootGroup = netCDFGroup::Create(m_poShared, nullptr, m_gid);
+        if (poRootGroup)
+        {
+            auto poLocationGroup = poRootGroup->OpenGroup("location");
+            if (poLocationGroup)
+            {
+                auto poLon = poLocationGroup->OpenMDArray("lon");
+                auto poLat = poLocationGroup->OpenMDArray("lat");
+                if (poLon && poLat)
+                {
+                    return {poLon, poLat};
+                }
+            }
+        }
+    }
+
     return ret;
 }
 

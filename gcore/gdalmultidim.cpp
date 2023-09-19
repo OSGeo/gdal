@@ -7366,8 +7366,8 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
     friend class GDALMDArrayResampledDatasetRasterBand;
 
     std::shared_ptr<GDALMDArray> m_poArray;
-    size_t m_iXDim;
-    size_t m_iYDim;
+    const size_t m_iXDim;
+    const size_t m_iYDim;
     double m_adfGeoTransform[6]{0, 1, 0, 0, 0, 1};
     bool m_bHasGT = false;
     mutable std::shared_ptr<OGRSpatialReference> m_poSRS{};
@@ -7586,7 +7586,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
                void *pDstBuffer) const override;
 
   public:
-    static std::shared_ptr<GDALMDArrayResampled>
+    static std::shared_ptr<GDALMDArray>
     Create(const std::shared_ptr<GDALMDArray> &poParent,
            const std::vector<std::shared_ptr<GDALDimension>> &apoNewDims,
            GDALRIOResampleAlg resampleAlg,
@@ -7669,7 +7669,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
 /*                   GDALMDArrayResampled::Create()                     */
 /************************************************************************/
 
-std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
+std::shared_ptr<GDALMDArray> GDALMDArrayResampled::Create(
     const std::shared_ptr<GDALMDArray> &poParent,
     const std::vector<std::shared_ptr<GDALDimension>> &apoNewDimsIn,
     GDALRIOResampleAlg resampleAlg, const OGRSpatialReference *poTargetSRS,
@@ -7743,8 +7743,22 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     anBlockSize.reserve(apoNewDimsIn.size());
     const auto &anParentBlockSize = poParent->GetBlockSize();
 
-    for (unsigned i = 0; i + 2 < apoNewDimsIn.size(); ++i)
+    auto apoParentDims = poParent->GetDimensions();
+    // Special case for NASA EMIT datasets
+    const bool bYXBandOrder = (apoParentDims.size() == 3 &&
+                               apoParentDims[0]->GetName() == "downtrack" &&
+                               apoParentDims[1]->GetName() == "crosstrack" &&
+                               apoParentDims[2]->GetName() == "bands");
+
+    const size_t iYDimParent =
+        bYXBandOrder ? 0 : poParent->GetDimensionCount() - 2;
+    const size_t iXDimParent =
+        bYXBandOrder ? 1 : poParent->GetDimensionCount() - 1;
+
+    for (unsigned i = 0; i < apoNewDimsIn.size(); ++i)
     {
+        if (i == iYDimParent || i == iXDimParent)
+            continue;
         if (apoNewDimsIn[i] == nullptr)
         {
             apoNewDims.emplace_back(aoParentDims[i]);
@@ -7765,15 +7779,13 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
         anBlockSize.emplace_back(anParentBlockSize[i]);
     }
 
-    const size_t iYDim = poParent->GetDimensionCount() - 2;
-    const size_t iXDim = poParent->GetDimensionCount() - 1;
     std::unique_ptr<GDALMDArrayResampledDataset> poParentDS(
-        new GDALMDArrayResampledDataset(poParent, iXDim, iYDim));
+        new GDALMDArrayResampledDataset(poParent, iXDimParent, iYDimParent));
 
     double dfXStart = 0.0;
     double dfXSpacing = 0.0;
     bool gotXSpacing = false;
-    auto poNewDimX = apoNewDimsIn[iXDim];
+    auto poNewDimX = apoNewDimsIn[iXDimParent];
     if (poNewDimX)
     {
         if (poNewDimX->GetSize() > static_cast<GUInt64>(INT_MAX))
@@ -7800,7 +7812,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
 
     double dfYStart = 0.0;
     double dfYSpacing = 0.0;
-    auto poNewDimY = apoNewDimsIn[iYDim];
+    auto poNewDimY = apoNewDimsIn[iYDimParent];
     bool gotYSpacing = false;
     if (poNewDimY)
     {
@@ -7884,8 +7896,8 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
             const auto &longDims = poLongVar->GetDimensions();
             const auto latDimCount = poLatVar->GetDimensionCount();
             const auto &latDims = poLatVar->GetDimensions();
-            const auto xDimSize = aoParentDims[iXDim]->GetSize();
-            const auto yDimSize = aoParentDims[iYDim]->GetSize();
+            const auto xDimSize = aoParentDims[iXDimParent]->GetSize();
+            const auto yDimSize = aoParentDims[iYDimParent]->GetSize();
             if (longDimCount == 1 && longDims[0]->GetSize() == xDimSize &&
                 latDimCount == 1 && latDims[0]->GetSize() == yDimSize)
             {
@@ -8074,6 +8086,14 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
     newAr->m_poVarY = varY;
     newAr->m_poReprojectedDS = std::move(poReprojectedDS);
     newAr->m_poParentDS = std::move(poParentDS);
+
+    // If the input array is y,x,band ordered, the above newAr is
+    // actually band,y,x ordered as it is more convenient for
+    // GDALMDArrayResampled::IRead() implementation. But transpose that
+    // array to the order of the input array
+    if (bYXBandOrder)
+        return newAr->Transpose(std::vector<int>{1, 2, 0});
+
     return newAr;
 }
 
@@ -8112,6 +8132,8 @@ bool GDALMDArrayResampled::IRead(const GUInt64 *arrayStartIdx,
     // Use an array to avoid a false positive warning from CLang Static
     // Analyzer about flushCaches being never read
     bool flushCaches[] = {false};
+    const bool bYXBandOrder =
+        m_poParentDS->m_iYDim == 0 && m_poParentDS->m_iXDim == 1;
 
 lbl_next_depth:
     if (dimIdx == iDimY)
@@ -8135,11 +8157,13 @@ lbl_next_depth:
     else
     {
         stack[dimIdx].nIters = count[dimIdx];
-        if (m_poParentDS->m_anOffset[dimIdx] != arrayStartIdx[dimIdx])
+        if (m_poParentDS->m_anOffset[bYXBandOrder ? 2 : dimIdx] !=
+            arrayStartIdx[dimIdx])
         {
             flushCaches[0] = true;
         }
-        m_poParentDS->m_anOffset[dimIdx] = arrayStartIdx[dimIdx];
+        m_poParentDS->m_anOffset[bYXBandOrder ? 2 : dimIdx] =
+            arrayStartIdx[dimIdx];
         while (true)
         {
             dimIdx++;
@@ -8150,7 +8174,7 @@ lbl_next_depth:
             if ((--stack[dimIdx].nIters) == 0)
                 break;
             flushCaches[0] = true;
-            ++m_poParentDS->m_anOffset[dimIdx];
+            ++m_poParentDS->m_anOffset[bYXBandOrder ? 2 : dimIdx];
             stack[dimIdx].dst_ptr += stack[dimIdx].dst_inc_offset;
         }
     }
@@ -8168,7 +8192,8 @@ lbl_next_depth:
  *
  * This is the same as the C function GDALMDArrayGetResampled().
  *
- * Currently this method can only resample along the last 2 dimensions.
+ * Currently this method can only resample along the last 2 dimensions, unless
+ * orthorectifying a NASA EMIT dataset.
  *
  * @param apoNewDims New dimensions. Its size should be GetDimensionCount().
  *                   apoNewDims[i] can be NULL to let the method automatically
@@ -11647,7 +11672,8 @@ GDALMDArrayH GDALMDArrayGetMask(GDALMDArrayH hArray, CSLConstList papszOptions)
  *
  * This is the same as the C++ method GDALMDArray::GetResampled().
  *
- * Currently this method can only resample along the last 2 dimensions.
+ * Currently this method can only resample along the last 2 dimensions, unless
+ * orthorectifying a NASA EMIT dataset.
  *
  * The returned object should be released with GDALMDArrayRelease().
  *
