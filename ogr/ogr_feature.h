@@ -716,6 +716,15 @@ class CPL_DLL OGRFeature
         FieldValue &operator=(int nVal);
         /** Set an integer value to the field. */
         FieldValue &operator=(int64_t nVal);
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+        //! @cond Doxygen_Suppress
+        inline FieldValue &operator=(long long nVal)
+        {
+            return operator=(static_cast<int64_t>(nVal));
+        }
+        //! @endcond
+#endif
         /** Set a real value to the field. */
         FieldValue &operator=(double dfVal);
         /** Set a string value to the field. */
@@ -834,6 +843,15 @@ class CPL_DLL OGRFeature
         {
             return GetAsInteger64();
         }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+        //! @cond Doxygen_Suppress
+        inline operator long long() const
+        {
+            return static_cast<long long>(GetAsInteger64());
+        }
+        //! @endcond
+#endif
         /** Return the field value as double, with potential conversion */
         operator double() const
         {
@@ -1124,10 +1142,28 @@ class CPL_DLL OGRFeature
 
     void SetField(int i, int nValue);
     void SetField(int i, int64_t nValue);
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(int i, long long nValue)
+    {
+        SetField(i, static_cast<int64_t>(nValue));
+    }
+    //! @endcond
+#endif
     void SetField(int i, double dfValue);
     void SetField(int i, const char *pszValue);
     void SetField(int i, int nCount, const int *panValues);
     void SetField(int i, int nCount, const int64_t *panValues);
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(int i, int nCount, const long long *panValues)
+    {
+        SetField(i, nCount, reinterpret_cast<const int64_t *>(panValues));
+    }
+    //! @endcond
+#endif
     void SetField(int i, int nCount, const double *padfValues);
     void SetField(int i, const char *const *papszValues);
     void SetField(int i, const OGRField *puValue);
@@ -1148,6 +1184,13 @@ class CPL_DLL OGRFeature
     {
         pauFields[i].Integer64 = nValue;
     }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    inline void SetFieldSameTypeUnsafe(int i, long long nValue)
+    {
+        SetFieldSameTypeUnsafe(i, static_cast<int64_t>(nValue));
+    }
+#endif
     void SetFieldSameTypeUnsafe(int i, double dfValue)
     {
         pauFields[i].Real = dfValue;
@@ -1166,6 +1209,15 @@ class CPL_DLL OGRFeature
     {
         SetField(GetFieldIndex(pszFName), nValue);
     }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(const char *pszFName, long long nValue)
+    {
+        SetField(pszFName, static_cast<int64_t>(nValue));
+    }
+    //! @endcond
+#endif
     void SetField(const char *pszFName, double dfValue)
     {
         SetField(GetFieldIndex(pszFName), dfValue);
@@ -1182,6 +1234,17 @@ class CPL_DLL OGRFeature
     {
         SetField(GetFieldIndex(pszFName), nCount, panValues);
     }
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES &&                          \
+    !defined(GDAL_DISABLE_LONG_LONG_COMPAT_LAYER)
+    //! @cond Doxygen_Suppress
+    inline void SetField(const char *pszFName, int nCount,
+                         const long long *panValues)
+    {
+        SetField(pszFName, nCount,
+                 reinterpret_cast<const int64_t *>(panValues));
+    }
+    //! @endcond
+#endif
     void SetField(const char *pszFName, int nCount, const double *padfValues)
     {
         SetField(GetFieldIndex(pszFName), nCount, padfValues);

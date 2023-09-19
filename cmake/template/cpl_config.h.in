@@ -46,6 +46,8 @@
 /* Define to 1 if you have the `std::isnan' function. */
 #define HAVE_STD_IS_NAN 1
 
+/* Define to 1 if long long and int64_t are different types, but that can be used indifferently (e.g true on Linux glibc x86_64) */
+#cmakedefine GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES 1
 
 #ifdef GDAL_COMPILATION
 

@@ -1484,6 +1484,24 @@ TEST_F(test_ogr, field_iterator)
         }
         oFeatureTmp["str_field"] = std::string("foo");
         oFeatureTmp["int_field"] = 123;
+#if GDAL_LONG_LONG_AND_INT64_T_ARE_DIFFERENT_TYPES
+        oFeatureTmp.SetField("int64_field",
+                             static_cast<long long>(-1234567890123));
+        EXPECT_EQ(oFeatureTmp.GetFieldAsInteger64("int64_field"),
+                  static_cast<long long>(-1234567890123));
+        oFeatureTmp.SetField(poFeatureDefn->GetFieldIndex("int64_field"),
+                             static_cast<long long>(1234567890123));
+        EXPECT_EQ(oFeatureTmp.GetFieldAsInteger64("int64_field"),
+                  static_cast<long long>(1234567890123));
+        oFeatureTmp.SetFieldSameTypeUnsafe(
+            poFeatureDefn->GetFieldIndex("int64_field"),
+            static_cast<long long>(-1234567890123));
+        EXPECT_EQ(oFeatureTmp.GetFieldAsInteger64("int64_field"),
+                  static_cast<long long>(-1234567890123));
+        oFeatureTmp["int64_field"] = static_cast<long long>(1234567890123);
+        ASSERT_EQ(static_cast<long long>(oFeatureTmp["int64_field"]),
+                  static_cast<long long>(1234567890123));
+#endif
         oFeatureTmp["int64_field"] = oFeatureTmp["int_field"];
         ASSERT_EQ(oFeatureTmp["int64_field"].GetInteger64(), 123);
         oFeatureTmp["int64_field"] = static_cast<int64_t>(1234567890123);
