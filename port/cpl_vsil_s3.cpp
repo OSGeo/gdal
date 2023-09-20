@@ -656,14 +656,15 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-amz-");
     }
 
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
+
   public:
     explicit VSIS3FSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
     }
     ~VSIS3FSHandler() override;
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
 
     const char *GetOptions() override;
 
@@ -684,14 +685,6 @@ class VSIS3FSHandler final : public IVSIS3LikeFSHandler
     {
         return true;
     }
-
-    bool SupportsSequentialWrite(const char * /* pszPath */,
-                                 bool /* bAllowLocalTempFile */) override
-    {
-        return true;
-    }
-    bool SupportsRandomWrite(const char * /* pszPath */,
-                             bool /* bAllowLocalTempFile */) override;
 
     std::string
     GetStreamingFilename(const std::string &osFilename) const override;
@@ -2035,44 +2028,87 @@ int VSIS3WriteHandle::Close()
 }
 
 /************************************************************************/
+/*                          CreateWriteHandle()                         */
+/************************************************************************/
+
+VSIVirtualHandleUniquePtr
+VSIS3FSHandler::CreateWriteHandle(const char *pszFilename,
+                                  CSLConstList papszOptions)
+{
+    auto poHandleHelper =
+        CreateHandleHelper(pszFilename + GetFSPrefix().size(), false);
+    if (poHandleHelper == nullptr)
+        return nullptr;
+    auto poHandle = cpl::make_unique<VSIS3WriteHandle>(
+        this, pszFilename, poHandleHelper, false, papszOptions);
+    if (!poHandle->IsOK())
+    {
+        return nullptr;
+    }
+    return VSIVirtualHandleUniquePtr(poHandle.release());
+}
+
+/************************************************************************/
 /*                                Open()                                */
 /************************************************************************/
 
-VSIVirtualHandle *VSIS3FSHandler::Open(const char *pszFilename,
-                                       const char *pszAccess, bool bSetError,
-                                       CSLConstList papszOptions)
+VSIVirtualHandle *VSICurlFilesystemHandlerBaseWritable::Open(
+    const char *pszFilename, const char *pszAccess, bool bSetError,
+    CSLConstList papszOptions)
 {
     if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
         return nullptr;
 
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
+    if (strchr(pszAccess, '+'))
     {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
+        if (!SupportsRandomWrite(pszFilename, true))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for /vsis3, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
+                     "%s not supported for %s, unless "
+                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES",
+                     pszAccess, GetFSPrefix().c_str());
             errno = EACCES;
             return nullptr;
         }
 
-        VSIS3HandleHelper *poS3HandleHelper = VSIS3HandleHelper::BuildFromURI(
-            pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str(), false);
-        if (poS3HandleHelper == nullptr)
-            return nullptr;
-        VSIS3WriteHandle *poHandle = new VSIS3WriteHandle(
-            this, pszFilename, poS3HandleHelper, false, papszOptions);
-        if (!poHandle->IsOK())
+        const std::string osTmpFilename(CPLGenerateTempFilename(nullptr));
+        if (strchr(pszAccess, 'r'))
         {
-            delete poHandle;
+            auto poExistingFile =
+                VSIVirtualHandleUniquePtr(VSIFOpenL(pszFilename, "rb"));
+            if (!poExistingFile)
+            {
+                return nullptr;
+            }
+            if (VSICopyFile(pszFilename, osTmpFilename.c_str(),
+                            poExistingFile.get(), static_cast<vsi_l_offset>(-1),
+                            nullptr, nullptr, nullptr) != 0)
+            {
+                VSIUnlink(osTmpFilename.c_str());
+                return nullptr;
+            }
+        }
+
+        auto fpTemp = VSIVirtualHandleUniquePtr(
+            VSIFOpenL(osTmpFilename.c_str(), pszAccess));
+        if (!fpTemp)
+        {
+            VSIUnlink(osTmpFilename.c_str());
             return nullptr;
         }
-        if (strchr(pszAccess, '+') != nullptr)
+
+        auto poWriteHandle = CreateWriteHandle(pszFilename, papszOptions);
+        if (!poWriteHandle)
         {
-            return VSICreateUploadOnCloseFile(poHandle);
+            return nullptr;
         }
-        return poHandle;
+
+        return VSICreateUploadOnCloseFile(std::move(poWriteHandle),
+                                          std::move(fpTemp), osTmpFilename);
+    }
+    else if (strchr(pszAccess, 'w') || strchr(pszAccess, 'a'))
+    {
+        return CreateWriteHandle(pszFilename, papszOptions).release();
     }
 
     if (CPLString(pszFilename).back() != '/')
@@ -2110,8 +2146,8 @@ VSIVirtualHandle *VSIS3FSHandler::Open(const char *pszFilename,
 /*                        SupportsRandomWrite()                         */
 /************************************************************************/
 
-bool VSIS3FSHandler::SupportsRandomWrite(const char *pszPath,
-                                         bool bAllowLocalTempFile)
+bool VSICurlFilesystemHandlerBaseWritable::SupportsRandomWrite(
+    const char *pszPath, bool bAllowLocalTempFile)
 {
     return bAllowLocalTempFile &&
            CPLTestBool(VSIGetPathSpecificOption(

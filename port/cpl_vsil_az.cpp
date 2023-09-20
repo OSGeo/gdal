@@ -534,6 +534,10 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
         return STARTS_WITH(pszHeaderName, "x-ms-");
     }
 
+    VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename,
+                      CSLConstList papszOptions) override;
+
   public:
     explicit VSIAzureFSHandler(const char *pszPrefix) : m_osPrefix(pszPrefix)
     {
@@ -548,9 +552,6 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     {
         return "AZURE";
     }
-
-    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
-                           bool bSetError, CSLConstList papszOptions) override;
 
     int Unlink(const char *pszFilename) override;
     int *UnlinkBatch(CSLConstList papszFiles) override;
@@ -593,14 +594,6 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     {
         return true;
     }
-
-    bool SupportsSequentialWrite(const char * /* pszPath */,
-                                 bool /* bAllowLocalTempFile */) override
-    {
-        return true;
-    }
-    bool SupportsRandomWrite(const char * /* pszPath */,
-                             bool /* bAllowLocalTempFile */) override;
 
     CPLString InitiateMultipartUpload(const std::string & /* osFilename */,
                                       IVSIS3LikeHandleHelper *,
@@ -675,6 +668,30 @@ class VSIAzureHandle final : public VSICurlHandle
 };
 
 /************************************************************************/
+/*                          VSIAzureWriteHandle                         */
+/************************************************************************/
+
+class VSIAzureWriteHandle final : public VSIAppendWriteHandle
+{
+    CPL_DISALLOW_COPY_ASSIGN(VSIAzureWriteHandle)
+
+    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
+    CPLStringList m_aosOptions{};
+    CPLStringList m_aosHTTPOptions{};
+
+    bool Send(bool bIsLastBlock) override;
+    bool SendInternal(bool bInitOnly, bool bIsLastBlock);
+
+    void InvalidateParentDirectory();
+
+  public:
+    VSIAzureWriteHandle(VSIAzureFSHandler *poFS, const char *pszFilename,
+                        VSIAzureBlobHandleHelper *poHandleHelper,
+                        CSLConstList papszOptions);
+    virtual ~VSIAzureWriteHandle();
+};
+
+/************************************************************************/
 /*                          CreateFileHandle()                          */
 /************************************************************************/
 
@@ -686,6 +703,28 @@ VSICurlHandle *VSIAzureFSHandler::CreateFileHandle(const char *pszFilename)
     if (poHandleHelper == nullptr)
         return nullptr;
     return new VSIAzureHandle(this, pszFilename, poHandleHelper);
+}
+
+/************************************************************************/
+/*                          CreateWriteHandle()                         */
+/************************************************************************/
+
+VSIVirtualHandleUniquePtr
+VSIAzureFSHandler::CreateWriteHandle(const char *pszFilename,
+                                     CSLConstList papszOptions)
+{
+    VSIAzureBlobHandleHelper *poHandleHelper =
+        VSIAzureBlobHandleHelper::BuildFromURI(
+            pszFilename + GetFSPrefix().size(), GetFSPrefix());
+    if (poHandleHelper == nullptr)
+        return nullptr;
+    auto poHandle = cpl::make_unique<VSIAzureWriteHandle>(
+        this, pszFilename, poHandleHelper, papszOptions);
+    if (!poHandle->IsOK())
+    {
+        return nullptr;
+    }
+    return VSIVirtualHandleUniquePtr(poHandle.release());
 }
 
 /************************************************************************/
@@ -1102,30 +1141,6 @@ VSIAzureFSHandler::GetStreamingFilename(const std::string &osFilename) const
 }
 
 /************************************************************************/
-/*                          VSIAzureWriteHandle                         */
-/************************************************************************/
-
-class VSIAzureWriteHandle final : public VSIAppendWriteHandle
-{
-    CPL_DISALLOW_COPY_ASSIGN(VSIAzureWriteHandle)
-
-    std::unique_ptr<VSIAzureBlobHandleHelper> m_poHandleHelper{};
-    CPLStringList m_aosOptions{};
-    CPLStringList m_aosHTTPOptions{};
-
-    bool Send(bool bIsLastBlock) override;
-    bool SendInternal(bool bInitOnly, bool bIsLastBlock);
-
-    void InvalidateParentDirectory();
-
-  public:
-    VSIAzureWriteHandle(VSIAzureFSHandler *poFS, const char *pszFilename,
-                        VSIAzureBlobHandleHelper *poHandleHelper,
-                        CSLConstList papszOptions);
-    virtual ~VSIAzureWriteHandle();
-};
-
-/************************************************************************/
 /*                        GetAzureBufferSize()                          */
 /************************************************************************/
 
@@ -1364,59 +1379,6 @@ void VSIAzureFSHandler::ClearCache()
     IVSIS3LikeFSHandler::ClearCache();
 
     VSIAzureBlobHandleHelper::ClearCache();
-}
-
-/************************************************************************/
-/*                                Open()                                */
-/************************************************************************/
-
-VSIVirtualHandle *VSIAzureFSHandler::Open(const char *pszFilename,
-                                          const char *pszAccess, bool bSetError,
-                                          CSLConstList papszOptions)
-{
-    if (!STARTS_WITH_CI(pszFilename, GetFSPrefix()))
-        return nullptr;
-
-    if (strchr(pszAccess, 'w') != nullptr || strchr(pszAccess, 'a') != nullptr)
-    {
-        if (strchr(pszAccess, '+') != nullptr &&
-            !SupportsRandomWrite(pszFilename, true))
-        {
-            CPLError(CE_Failure, CPLE_AppDefined,
-                     "w+ not supported for /vsiaz, unless "
-                     "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE is set to YES");
-            errno = EACCES;
-            return nullptr;
-        }
-
-        VSIAzureBlobHandleHelper *poHandleHelper =
-            VSIAzureBlobHandleHelper::BuildFromURI(
-                pszFilename + GetFSPrefix().size(), GetFSPrefix().c_str());
-        if (poHandleHelper == nullptr)
-            return nullptr;
-        auto poHandle = new VSIAzureWriteHandle(this, pszFilename,
-                                                poHandleHelper, papszOptions);
-        if (strchr(pszAccess, '+') != nullptr)
-        {
-            return VSICreateUploadOnCloseFile(poHandle);
-        }
-        return poHandle;
-    }
-
-    return VSICurlFilesystemHandlerBase::Open(pszFilename, pszAccess, bSetError,
-                                              papszOptions);
-}
-
-/************************************************************************/
-/*                        SupportsRandomWrite()                         */
-/************************************************************************/
-
-bool VSIAzureFSHandler::SupportsRandomWrite(const char * /* pszPath */,
-                                            bool bAllowLocalTempFile)
-{
-    return bAllowLocalTempFile &&
-           CPLTestBool(CPLGetConfigOption(
-               "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "NO"));
 }
 
 /************************************************************************/

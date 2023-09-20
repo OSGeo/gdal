@@ -4198,6 +4198,76 @@ def test_vsis3_random_write_gtiff_create_copy(aws_test_config, webserver_port):
 
 
 ###############################################################################
+# Test r+ access
+
+
+def test_vsis3_random_write_on_existing_file(aws_test_config, webserver_port):
+
+    gdal.VSICurlClearCache()
+
+    with gdal.quiet_errors():
+        assert gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b") is None
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/random_write/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents>
+                    <Key>test.bin</Key>
+                    <LastModified>1970-01-01T00:00:01.000Z</LastModified>
+                    <Size>1</Size>
+                </Contents>
+            </ListBucketResult>
+            """,
+    )
+    handler.add("GET", "/random_write/test.bin", 200, {}, "f")
+    handler.add("PUT", "/random_write/test.bin", 200, {}, expected_body=b"foo")
+    with webserver.install_http_handler(handler), gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
+        f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
+        assert f
+        assert gdal.VSIFSeekL(f, 1, 0) == 0
+        assert gdal.VSIFWriteL("oo", 2, 1, f) == 1
+        assert gdal.VSIFCloseL(f) == 0
+
+
+###############################################################################
+# Test r+ access
+
+
+def test_vsis3_random_write_on_existing_file_that_does_not_exist(
+    aws_test_config, webserver_port
+):
+
+    gdal.VSICurlClearCache()
+
+    handler = webserver.SequentialHandler()
+    handler.add(
+        "GET",
+        "/random_write/?delimiter=%2F",
+        200,
+        {"Content-type": "application/xml"},
+        """<?xml version="1.0" encoding="UTF-8"?>
+            <ListBucketResult>
+                <Prefix></Prefix>
+                <Contents/>
+            </ListBucketResult>
+            """,
+    )
+    with webserver.install_http_handler(handler), gdaltest.config_option(
+        "CPL_VSIL_USE_TEMP_FILE_FOR_RANDOM_WRITE", "YES", thread_local=False
+    ):
+        f = gdal.VSIFOpenL("/vsis3/random_write/test.bin", "r+b")
+        assert f is None
+
+
+###############################################################################
 # Read credentials from simulated ~/.aws/credentials
 
 

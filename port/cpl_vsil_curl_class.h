@@ -540,10 +540,37 @@ class VSICurlHandle : public VSIVirtualHandle
 };
 
 /************************************************************************/
+/*                  VSICurlFilesystemHandlerBaseWritable                */
+/************************************************************************/
+
+class VSICurlFilesystemHandlerBaseWritable : public VSICurlFilesystemHandlerBase
+{
+    CPL_DISALLOW_COPY_ASSIGN(VSICurlFilesystemHandlerBaseWritable)
+
+  protected:
+    VSICurlFilesystemHandlerBaseWritable() = default;
+
+    virtual VSIVirtualHandleUniquePtr
+    CreateWriteHandle(const char *pszFilename, CSLConstList papszOptions) = 0;
+
+  public:
+    VSIVirtualHandle *Open(const char *pszFilename, const char *pszAccess,
+                           bool bSetError, CSLConstList papszOptions) override;
+
+    bool SupportsSequentialWrite(const char * /* pszPath */,
+                                 bool /* bAllowLocalTempFile */) override
+    {
+        return true;
+    }
+    bool SupportsRandomWrite(const char * /* pszPath */,
+                             bool /* bAllowLocalTempFile */) override;
+};
+
+/************************************************************************/
 /*                        IVSIS3LikeFSHandler                           */
 /************************************************************************/
 
-class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
+class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBaseWritable
 {
     CPL_DISALLOW_COPY_ASSIGN(IVSIS3LikeFSHandler)
 

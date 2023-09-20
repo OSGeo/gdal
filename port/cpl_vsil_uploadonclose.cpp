@@ -37,18 +37,19 @@
 
 class VSIUploadOnCloseHandle final : public VSIVirtualHandle
 {
-    VSIVirtualHandle *m_poBaseHandle;
-    CPLString m_osTmpFilename;
-    VSILFILE *m_fpTemp;
+    VSIVirtualHandleUniquePtr m_poWritableHandle;
+    std::string m_osTmpFilename;
+    VSIVirtualHandleUniquePtr m_fpTemp;
 
     VSIUploadOnCloseHandle(const VSIUploadOnCloseHandle &) = delete;
     VSIUploadOnCloseHandle &operator=(const VSIUploadOnCloseHandle &) = delete;
 
   public:
-    VSIUploadOnCloseHandle(VSIVirtualHandle *poBaseHandle,
-                           const CPLString &osTmpFilename, VSILFILE *fpTemp)
-        : m_poBaseHandle(poBaseHandle), m_osTmpFilename(osTmpFilename),
-          m_fpTemp(fpTemp)
+    VSIUploadOnCloseHandle(VSIVirtualHandleUniquePtr &&poWritableHandle,
+                           const std::string &osTmpFilename,
+                           VSIVirtualHandleUniquePtr &&fpTemp)
+        : m_poWritableHandle(std::move(poWritableHandle)),
+          m_osTmpFilename(osTmpFilename), m_fpTemp(std::move(fpTemp))
     {
     }
 
@@ -56,45 +57,45 @@ class VSIUploadOnCloseHandle final : public VSIVirtualHandle
 
     int Seek(vsi_l_offset nOffset, int nWhence) override
     {
-        return VSIFSeekL(m_fpTemp, nOffset, nWhence);
+        return m_fpTemp->Seek(nOffset, nWhence);
     }
 
     vsi_l_offset Tell() override
     {
-        return VSIFTellL(m_fpTemp);
+        return m_fpTemp->Tell();
     }
 
     size_t Read(void *pBuffer, size_t nSize, size_t nCount) override
     {
-        return VSIFReadL(pBuffer, nSize, nCount, m_fpTemp);
+        return m_fpTemp->Read(pBuffer, nSize, nCount);
     }
 
     size_t Write(const void *pBuffer, size_t nSize, size_t nCount) override
     {
-        return VSIFWriteL(pBuffer, nSize, nCount, m_fpTemp);
+        return m_fpTemp->Write(pBuffer, nSize, nCount);
     }
 
     int Eof() override
     {
-        return VSIFEofL(m_fpTemp);
+        return m_fpTemp->Eof();
     }
 
     int Flush() override
     {
-        return VSIFFlushL(m_fpTemp);
+        return m_fpTemp->Flush();
     }
 
     int Close() override;
 
     int Truncate(vsi_l_offset nNewSize) override
     {
-        return VSIFTruncateL(m_fpTemp, nNewSize);
+        return m_fpTemp->Truncate(nNewSize);
     }
 
     VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
                                   vsi_l_offset nLength) override
     {
-        return VSIFGetRangeStatusL(m_fpTemp, nOffset, nLength);
+        return m_fpTemp->GetRangeStatus(nOffset, nLength);
     }
 };
 
@@ -105,11 +106,8 @@ class VSIUploadOnCloseHandle final : public VSIVirtualHandle
 VSIUploadOnCloseHandle::~VSIUploadOnCloseHandle()
 {
     VSIUploadOnCloseHandle::Close();
-    if (m_fpTemp)
-        VSIFCloseL(m_fpTemp);
     if (!m_osTmpFilename.empty())
-        VSIUnlink(m_osTmpFilename);
-    delete m_poBaseHandle;
+        VSIUnlink(m_osTmpFilename.c_str());
 }
 
 /************************************************************************/
@@ -121,15 +119,14 @@ int VSIUploadOnCloseHandle::Close()
     if (m_fpTemp == nullptr)
         return -1;
 
-    // Copy temporary files to m_poBaseHandle
-    if (VSIFSeekL(m_fpTemp, 0, SEEK_END) != 0)
+    // Copy temporary files to m_poWritableHandle
+    if (m_fpTemp->Seek(0, SEEK_END) != 0)
     {
-        VSIFCloseL(m_fpTemp);
-        m_fpTemp = nullptr;
+        m_fpTemp.reset();
         return -1;
     }
-    const auto nSize = VSIFTellL(m_fpTemp);
-    VSIFSeekL(m_fpTemp, 0, SEEK_SET);
+    const auto nSize = m_fpTemp->Tell();
+    m_fpTemp->Seek(0, SEEK_SET);
     constexpr size_t CHUNK_SIZE = 1024 * 1024;
     vsi_l_offset nOffset = 0;
     std::vector<GByte> abyBuffer(CHUNK_SIZE);
@@ -137,31 +134,29 @@ int VSIUploadOnCloseHandle::Close()
     {
         size_t nToRead = static_cast<size_t>(
             std::min(nSize - nOffset, static_cast<vsi_l_offset>(CHUNK_SIZE)));
-        if (VSIFReadL(&abyBuffer[0], nToRead, 1, m_fpTemp) != 1 ||
-            m_poBaseHandle->Write(&abyBuffer[0], nToRead, 1) != 1)
+        if (m_fpTemp->Read(&abyBuffer[0], nToRead, 1) != 1 ||
+            m_poWritableHandle->Write(&abyBuffer[0], nToRead, 1) != 1)
         {
-            VSIFCloseL(m_fpTemp);
-            m_fpTemp = nullptr;
+            m_fpTemp.reset();
             return -1;
         }
         nOffset += nToRead;
     }
-    VSIFCloseL(m_fpTemp);
-    m_fpTemp = nullptr;
-    return m_poBaseHandle->Close();
+    m_fpTemp.reset();
+    return m_poWritableHandle->Close();
 }
 
 /************************************************************************/
 /*                    VSICreateUploadOnCloseFile()                      */
 /************************************************************************/
 
-VSIVirtualHandle *VSICreateUploadOnCloseFile(VSIVirtualHandle *poBaseHandle)
+VSIVirtualHandle *
+VSICreateUploadOnCloseFile(VSIVirtualHandleUniquePtr &&poWritableHandle,
+                           VSIVirtualHandleUniquePtr &&poTmpFile,
+                           const std::string &osTmpFilename)
 {
-    CPLString osTmpFilename(CPLGenerateTempFilename(nullptr));
-    VSILFILE *fpTemp = VSIFOpenL(osTmpFilename, "wb+");
-    if (fpTemp == nullptr)
-        return nullptr;
-    const bool deleted = VSIUnlink(osTmpFilename) == 0;
-    return new VSIUploadOnCloseHandle(
-        poBaseHandle, deleted ? CPLString() : osTmpFilename, fpTemp);
+    const bool deleted = VSIUnlink(osTmpFilename.c_str()) == 0;
+    return new VSIUploadOnCloseHandle(std::move(poWritableHandle),
+                                      deleted ? std::string() : osTmpFilename,
+                                      std::move(poTmpFile));
 }
