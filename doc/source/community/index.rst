@@ -120,6 +120,7 @@ decisions related to the GDAL/OGR project. The current members are (@github user
 - Kurt Schwehr         (@schwehr)
 - Norman Barker        (@normanb)
 - Sean Gillies         (@sgillies)
+- Javier Jimenez Shaw  (@jjimenezshaw)
 
 Past members:
 
