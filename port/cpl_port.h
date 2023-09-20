@@ -236,10 +236,6 @@ typedef unsigned long long GUIntBig;
 #define GUINTBIG_MAX                                                           \
     ((CPL_STATIC_CAST(GUIntBig, 0xFFFFFFFFU) << 32) | 0xFFFFFFFFU)
 
-/*! @cond Doxygen_Suppress */
-#define CPL_HAS_GINT64 1
-/*! @endcond */
-
 /** Signed 64 bit integer type */
 typedef GIntBig GInt64;
 /** Unsigned 64 bit integer type */
