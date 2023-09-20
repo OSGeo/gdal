@@ -1,21 +1,48 @@
-MIGRATION GUIDE FROM GDAL 3.7 to GDAL 3.8
+MIGRATION GUIDE FROM GDAL 3.7 to GDAL 4.0
 -----------------------------------------
 
 - C++ methods in OGRStyleXXXX classes that used to take or return a ``GBool``
   now use ``bool``. This is both a API and ABI breakage, especially for methods
   that took ``GBool`` as argument, in the later case most compilers should error
   out in case of type mismatch.
-  External code that needs to deal with GDAL < 3.8 and >= 3.8 may need to add
+  External code that needs to deal with GDAL < 4.0 and >= 4.0 may need to add
   the following section in their code, and replace their use of ``GBool`` with
   ``GBool_cpp``:
 
   ```
-  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(3,8,0)
+  #if GDAL_VERSION_NUM >= GDAL_COMPUTE_VERSION(4,8,0)
   typedef bool GBool_cpp
   #else
   typedef int GBool_cpp
   #endif
   ```
+
+- The following Gxxx integer data types have been deprecated and replaced by
+  their C99 / C++11 equivalent. The old type names can still be used if
+  setting the GDAL_USE_OLD_INT_TYPES macro before including cpl_port.h.
+
+  ``GInt8``        --> ``int8_t``
+  ``GInt16``       --> ``int16_t``
+  ``GUInt16``      --> ``uint16_t``
+  ``GInt32``       --> ``int32_t``
+  ``GUInt32``      --> ``uint32_t``
+  ``GInt64``       --> ``int64_t``
+  ``GUInt64``      --> ``uint64_t``
+  ``GIntBig``      --> ``int64_t``
+  ``GUIntBig``     --> ``uint64_t``
+  ``GPtrDiff_t``   --> ``ptrdiff_t``
+  ``vsi_l_offset`` --> ``uint64_t``
+  ``GSpacing``     --> ``int64_t``
+
+  Note however that the GInt64/GIntBig types were previously aliased to
+  ``long long``, which depending on platforms isn't the same type as
+  ``int64_t`` (similarly for GUInt64/GUIntBig).
+  Hence code changes are needed for C functions and C++ methods that accept
+  or return those data types.
+
+  More details about those changes in RFC 95:
+  https://gdal.org/development/rfc/rfc95_standard_int_types.rst
+
 
 
 MIGRATION GUIDE FROM GDAL 3.6 to GDAL 3.7
