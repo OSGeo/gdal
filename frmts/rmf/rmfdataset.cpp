@@ -209,8 +209,8 @@ CPLErr RMFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         {
             const int nChunkSize =
                 std::max(1, GDALGetDataTypeSizeBytes(eDataType));
-            const GPtrDiff_t nWords =
-                static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+            const ptrdiff_t nWords =
+                static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
             GDALCopyWords64(&poGDS->sHeader.dfNoData, GDT_Float64, 0, pImage,
                             eDataType, nChunkSize, nWords);
         }
@@ -267,8 +267,8 @@ CPLErr RMFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     if (poGDS->bCurrentTileIsNull)
     {
         const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
-        const GPtrDiff_t nWords =
-            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+        const ptrdiff_t nWords =
+            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
         GDALCopyWords64(&poGDS->sHeader.dfNoData, GDT_Float64, 0, pImage,
                         eDataType, nChunkSize, nWords);
         return CE_None;

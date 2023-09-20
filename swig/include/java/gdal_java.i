@@ -192,12 +192,12 @@ import java.lang.Integer;
     size_t* localCounts =
       (size_t*) malloc(sizeof(size_t) * numDims);
 
-    GPtrDiff_t* localBufferStrides =
-      (GPtrDiff_t*) malloc(sizeof(GPtrDiff_t) * numDims);
+    ptrdiff_t* localBufferStrides =
+      (ptrdiff_t*) malloc(sizeof(ptrdiff_t) * numDims);
 
     for (int i = 0; i < numDims; i++) {
       localCounts[i] = (size_t) counts[i];
-      localBufferStrides[i] = (GPtrDiff_t) bufferStrides[i];
+      localBufferStrides[i] = (ptrdiff_t) bufferStrides[i];
     }
 
     bool retVal = GDALMDArrayRead(hMDA,
@@ -229,12 +229,12 @@ import java.lang.Integer;
     size_t* localCounts =
       (size_t*) malloc(sizeof(size_t) * numDims);
 
-    GPtrDiff_t* localBufferStrides =
-      (GPtrDiff_t*) malloc(sizeof(GPtrDiff_t) * numDims);
+    ptrdiff_t* localBufferStrides =
+      (ptrdiff_t*) malloc(sizeof(ptrdiff_t) * numDims);
 
     for (int i = 0; i < numDims; i++) {
       localCounts[i] = (size_t) counts[i];
-      localBufferStrides[i] = (GPtrDiff_t) bufferStrides[i];
+      localBufferStrides[i] = (ptrdiff_t) bufferStrides[i];
     }
 
     bool retVal = GDALMDArrayWrite(hMDA,

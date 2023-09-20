@@ -1536,12 +1536,12 @@ class VRTAttribute final : public GDALAttribute
 
   protected:
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -1605,7 +1605,7 @@ class VRTMDArraySource
     virtual ~VRTMDArraySource() = default;
 
     virtual bool Read(const uint64_t *arrayStartIdx, const size_t *count,
-                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                      const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const = 0;
 
@@ -1639,7 +1639,7 @@ class VRTMDArray final : public GDALMDArray
     std::string m_osFilename{};
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -1831,7 +1831,7 @@ class VRTMDArraySourceInlinedValues final : public VRTMDArraySource
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
 
     bool Read(const uint64_t *arrayStartIdx, const size_t *count,
-              const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+              const int64_t *arrayStep, const ptrdiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
               void *pDstBuffer) const override;
 
@@ -1854,7 +1854,7 @@ class VRTMDArraySourceRegularlySpaced final : public VRTMDArraySource
     }
 
     bool Read(const uint64_t *arrayStartIdx, const size_t *count,
-              const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+              const int64_t *arrayStep, const ptrdiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
               void *pDstBuffer) const override;
 
@@ -1908,7 +1908,7 @@ class VRTMDArraySourceFromArray final : public VRTMDArraySource
     Create(const VRTMDArray *poDstArray, const CPLXMLNode *psNode);
 
     bool Read(const uint64_t *arrayStartIdx, const size_t *count,
-              const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+              const int64_t *arrayStep, const ptrdiff_t *bufferStride,
               const GDALExtendedDataType &bufferDataType,
               void *pDstBuffer) const override;
 

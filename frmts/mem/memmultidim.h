@@ -170,8 +170,8 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
         size_t nIters = 0;
         const GByte *src_ptr = nullptr;
         GByte *dst_ptr = nullptr;
-        GPtrDiff_t src_inc_offset = 0;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t src_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
 
     void ReadWrite(bool bIsWrite, const size_t *count,
@@ -189,21 +189,21 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
     GDALExtendedDataType m_oType;
     size_t m_nTotalSize = 0;
     GByte *m_pabyArray{};
-    std::vector<GPtrDiff_t> m_anStrides{};
+    std::vector<ptrdiff_t> m_anStrides{};
 
     bool
-    IRead(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-          const size_t *count,             // array of size GetDimensionCount()
-          const int64_t *arrayStep,        // step in elements
-          const GPtrDiff_t *bufferStride,  // stride in elements
+    IRead(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+          const size_t *count,            // array of size GetDimensionCount()
+          const int64_t *arrayStep,       // step in elements
+          const ptrdiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const override;
 
     bool
-    IWrite(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-           const size_t *count,             // array of size GetDimensionCount()
-           const int64_t *arrayStep,        // step in elements
-           const GPtrDiff_t *bufferStride,  // stride in elements
+    IWrite(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+           const size_t *count,            // array of size GetDimensionCount()
+           const int64_t *arrayStep,       // step in elements
+           const ptrdiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType,
            const void *pSrcBuffer) override;
 
@@ -229,7 +229,7 @@ class CPL_DLL MEMAbstractMDArray : virtual public GDALAbstractMDArray
 
     bool
     Init(GByte *pData = nullptr,
-         const std::vector<GPtrDiff_t> &anStrides = std::vector<GPtrDiff_t>());
+         const std::vector<ptrdiff_t> &anStrides = std::vector<ptrdiff_t>());
 
     void SetWritable(bool bWritable)
     {

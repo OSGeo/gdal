@@ -36,7 +36,7 @@
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3(GByte *CPL_RESTRICT pDest,
                                       const GByte *CPL_RESTRICT pSrc,
-                                      GPtrDiff_t nIters);
+                                      ptrdiff_t nIters);
 
 void GDALDeinterleave3Byte_SSSE3(const GByte *CPL_RESTRICT pabySrc,
                                  GByte *CPL_RESTRICT pabyDest0,

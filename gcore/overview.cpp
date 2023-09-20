@@ -135,7 +135,7 @@ static CPLErr GDALResampleChunk_NearT(
 
         const T *const pSrcScanline =
             pChunk +
-            (static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize) -
+            (static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize) -
             nChunkXOff;
 
         /* --------------------------------------------------------------------
@@ -1364,7 +1364,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                     // regular x and y src spacing.
                     const T *pSrcScanlineShifted =
                         pChunk + pasSrcX[0].nLeftXOffShifted +
-                        static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) *
+                        static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) *
                             nChunkXSize;
                     int iDstPixel = 0;
 #ifdef USE_SSE2
@@ -1431,7 +1431,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                               eWrkDataType == GDT_Float64);
                     const T *pSrcScanlineShifted =
                         pChunk + pasSrcX[0].nLeftXOffShifted +
-                        static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) *
+                        static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) *
                             nChunkXSize;
                     int iDstPixel = 0;
 #ifdef USE_SSE2
@@ -1512,7 +1512,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                     {
                         auto pChunkShifted =
                             pChunk +
-                            static_cast<GPtrDiff_t>(nSrcYOff) * nChunkXSize;
+                            static_cast<ptrdiff_t>(nSrcYOff) * nChunkXSize;
                         int nCounterY = nSrcYOff2 - nSrcYOff - 1;
                         double dfWeightY = dfBottomWeight;
                         while (true)
@@ -1592,12 +1592,12 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                     }
                     else
                     {
-                        GPtrDiff_t nCount = 0;
+                        ptrdiff_t nCount = 0;
                         for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                         {
                             const auto pChunkShifted =
                                 pChunk +
-                                static_cast<GPtrDiff_t>(iY) * nChunkXSize;
+                                static_cast<ptrdiff_t>(iY) * nChunkXSize;
 
                             double dfTotalLine = 0;
                             double dfTotalWeightLine = 0;
@@ -1669,7 +1669,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                         if (nCount == 0 ||
                             (bPropagateNoData &&
                              nCount <
-                                 static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) *
+                                 static_cast<ptrdiff_t>(nSrcYOff2 - nSrcYOff) *
                                      (nSrcXOff2 - nSrcXOff)))
                         {
                             pDstScanline[iDstPixel] = tNoDataValue;
@@ -1727,16 +1727,16 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
                 const int nSrcXOff = pasSrcX[iDstPixel].nLeftXOffShifted;
                 const int nSrcXOff2 = pasSrcX[iDstPixel].nRightXOffShifted;
 
-                GPtrDiff_t nTotalR = 0;
-                GPtrDiff_t nTotalG = 0;
-                GPtrDiff_t nTotalB = 0;
-                GPtrDiff_t nCount = 0;
+                ptrdiff_t nTotalR = 0;
+                ptrdiff_t nTotalG = 0;
+                ptrdiff_t nTotalB = 0;
+                ptrdiff_t nCount = 0;
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
-                        const T val = pChunk[iX + static_cast<GPtrDiff_t>(iY) *
+                        const T val = pChunk[iX + static_cast<ptrdiff_t>(iY) *
                                                       nChunkXSize];
                         // cppcheck-suppress unsignedLessThanZero
                         if (val < 0 || val >= colorEntries.size())
@@ -1765,7 +1765,7 @@ static CPLErr GDALResampleChunk_AverageOrRMS_T(
 
                 if (nCount == 0 ||
                     (bPropagateNoData &&
-                     nCount < static_cast<GPtrDiff_t>(nSrcYOff2 - nSrcYOff) *
+                     nCount < static_cast<ptrdiff_t>(nSrcYOff2 - nSrcYOff) *
                                   (nSrcXOff2 - nSrcXOff)))
                 {
                     pDstScanline[iDstPixel] = tNoDataValue;
@@ -2064,12 +2064,12 @@ static CPLErr GDALResampleChunk_Gauss(
                     {
                         const double val =
                             padfSrcScanline[iX - nChunkXOff +
-                                            static_cast<GPtrDiff_t>(iY -
-                                                                    nSrcYOff) *
+                                            static_cast<ptrdiff_t>(iY -
+                                                                   nSrcYOff) *
                                                 nChunkXSize];
                         if (pabySrcScanlineNodataMask == nullptr ||
                             pabySrcScanlineNodataMask[iX - nChunkXOff +
-                                                      static_cast<GPtrDiff_t>(
+                                                      static_cast<ptrdiff_t>(
                                                           iY - nSrcYOff) *
                                                           nChunkXSize])
                         {
@@ -2106,8 +2106,8 @@ static CPLErr GDALResampleChunk_Gauss(
                     {
                         const double val =
                             padfSrcScanline[iX - nChunkXOff +
-                                            static_cast<GPtrDiff_t>(iY -
-                                                                    nSrcYOff) *
+                                            static_cast<ptrdiff_t>(iY -
+                                                                   nSrcYOff) *
                                                 nChunkXSize];
                         if (val < 0 || val >= colorEntries.size())
                             continue;
@@ -2218,12 +2218,12 @@ static CPLErr GDALResampleChunk_Mode_T(
 
         const T *const paSrcScanline =
             pChunk +
-            (static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
+            (static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize);
         const GByte *pabySrcScanlineNodataMask = nullptr;
         if (pabyChunkNodataMask != nullptr)
             pabySrcScanlineNodataMask =
                 pabyChunkNodataMask +
-                static_cast<GPtrDiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
+                static_cast<ptrdiff_t>(nSrcYOff - nChunkYOff) * nChunkXSize;
 
         T *const paDstScanline = pDstBuffer + (iDstLine - nDstYOff) * nDstXSize;
         /* --------------------------------------------------------------------
@@ -2309,8 +2309,8 @@ static CPLErr GDALResampleChunk_Mode_T(
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
-                    const GPtrDiff_t iTotYOff =
-                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize -
+                    const ptrdiff_t iTotYOff =
+                        static_cast<ptrdiff_t>(iY - nSrcYOff) * nChunkXSize -
                         nChunkXOff;
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
@@ -2367,8 +2367,8 @@ static CPLErr GDALResampleChunk_Mode_T(
 
                 for (int iY = nSrcYOff; iY < nSrcYOff2; ++iY)
                 {
-                    const GPtrDiff_t iTotYOff =
-                        static_cast<GPtrDiff_t>(iY - nSrcYOff) * nChunkXSize -
+                    const ptrdiff_t iTotYOff =
+                        static_cast<ptrdiff_t>(iY - nSrcYOff) * nChunkXSize -
                         nChunkXOff;
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
@@ -3279,8 +3279,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             {
                 for (; iSrcLineOff + 2 < nHeight; iSrcLineOff += 3)
                 {
-                    const GPtrDiff_t j =
-                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                    const ptrdiff_t j =
+                        static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -3306,8 +3306,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             {
                 for (; iSrcLineOff + 2 < nHeight; iSrcLineOff += 3)
                 {
-                    const GPtrDiff_t j =
-                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                    const ptrdiff_t j =
+                        static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -3334,8 +3334,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             {
                 for (; iSrcLineOff + 2 < nHeight; iSrcLineOff += 3)
                 {
-                    const GPtrDiff_t j =
-                        static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                    const ptrdiff_t j =
+                        static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                         (nSrcPixelStart - nChunkXOff);
                     double dfVal1 = 0.0;
                     double dfVal2 = 0.0;
@@ -3359,8 +3359,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
             }
             for (; iSrcLineOff < nHeight; ++iSrcLineOff)
             {
-                const GPtrDiff_t j =
-                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                const ptrdiff_t j =
+                    static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                     (nSrcPixelStart - nChunkXOff);
                 const double dfVal = GDALResampleConvolutionHorizontal(
                     pChunk + j, padfWeights, nSrcPixelCount);
@@ -3373,8 +3373,8 @@ static CPLErr GDALResampleChunk_ConvolutionT(
         {
             for (int iSrcLineOff = 0; iSrcLineOff < nHeight; ++iSrcLineOff)
             {
-                const GPtrDiff_t j =
-                    static_cast<GPtrDiff_t>(iSrcLineOff) * nChunkXSize +
+                const ptrdiff_t j =
+                    static_cast<ptrdiff_t>(iSrcLineOff) * nChunkXSize +
                     (nSrcPixelStart - nChunkXOff);
 
                 if (bKernelWithNegativeWeights)
@@ -3892,13 +3892,13 @@ static CPLErr GDALResampleChunkC32R(int nSrcWidth, int nSrcHeight,
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
                         const double dfR =
-                            pafSrcScanline[iX * 2 + static_cast<GPtrDiff_t>(
+                            pafSrcScanline[iX * 2 + static_cast<ptrdiff_t>(
                                                         iY - nSrcYOff) *
                                                         nSrcWidth * 2];
                         const double dfI =
                             pafSrcScanline[iX * 2 +
-                                           static_cast<GPtrDiff_t>(iY -
-                                                                   nSrcYOff) *
+                                           static_cast<ptrdiff_t>(iY -
+                                                                  nSrcYOff) *
                                                nSrcWidth * 2 +
                                            1];
                         dfTotalR += dfR;
@@ -3945,13 +3945,13 @@ static CPLErr GDALResampleChunkC32R(int nSrcWidth, int nSrcHeight,
                     for (int iX = nSrcXOff; iX < nSrcXOff2; ++iX)
                     {
                         const double dfR =
-                            pafSrcScanline[iX * 2 + static_cast<GPtrDiff_t>(
+                            pafSrcScanline[iX * 2 + static_cast<ptrdiff_t>(
                                                         iY - nSrcYOff) *
                                                         nSrcWidth * 2];
                         const double dfI =
                             pafSrcScanline[iX * 2 +
-                                           static_cast<GPtrDiff_t>(iY -
-                                                                   nSrcYOff) *
+                                           static_cast<ptrdiff_t>(iY -
+                                                                  nSrcYOff) *
                                                nSrcWidth * 2 +
                                            1];
 
@@ -3989,11 +3989,11 @@ static CPLErr GDALResampleChunkC32R(int nSrcWidth, int nSrcHeight,
                     {
                         // TODO(schwehr): Maybe use std::complex?
                         dfTotalR +=
-                            pafSrcScanline[iX * 2 + static_cast<GPtrDiff_t>(
+                            pafSrcScanline[iX * 2 + static_cast<ptrdiff_t>(
                                                         iY - nSrcYOff) *
                                                         nSrcWidth * 2];
                         dfTotalI += pafSrcScanline[iX * 2 +
-                                                   static_cast<GPtrDiff_t>(
+                                                   static_cast<ptrdiff_t>(
                                                        iY - nSrcYOff) *
                                                        nSrcWidth * 2 +
                                                    1];
@@ -4747,8 +4747,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             if (eWrkDataType == GDT_Float32)
             {
                 float *pafChunk = static_cast<float *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pafChunk[i] == 1.0)
@@ -4758,8 +4758,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Byte)
             {
                 GByte *pabyChunk = static_cast<GByte *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pabyChunk[i] == 1)
@@ -4769,8 +4769,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_UInt16)
             {
                 uint16_t *pasChunk = static_cast<uint16_t *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pasChunk[i] == 1)
@@ -4780,8 +4780,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Float64)
             {
                 double *padfChunk = static_cast<double *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (padfChunk[i] == 1.0)
@@ -4798,8 +4798,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             if (eWrkDataType == GDT_Float32)
             {
                 float *pafChunk = static_cast<float *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pafChunk[i] == 1.0)
@@ -4811,8 +4811,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Byte)
             {
                 GByte *pabyChunk = static_cast<GByte *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pabyChunk[i] == 1)
@@ -4824,8 +4824,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_UInt16)
             {
                 uint16_t *pasChunk = static_cast<uint16_t *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (pasChunk[i] == 1)
@@ -4837,8 +4837,8 @@ CPLErr GDALRegenerateOverviewsEx(GDALRasterBandH hSrcBand, int nOverviewCount,
             else if (eWrkDataType == GDT_Float64)
             {
                 double *padfChunk = static_cast<double *>(pChunk);
-                for (GPtrDiff_t i = 0;
-                     i < static_cast<GPtrDiff_t>(nChunkYSizeQueried) * nWidth;
+                for (ptrdiff_t i = 0;
+                     i < static_cast<ptrdiff_t>(nChunkYSizeQueried) * nWidth;
                      i++)
                 {
                     if (padfChunk[i] == 1.0)

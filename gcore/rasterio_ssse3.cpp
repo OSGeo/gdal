@@ -38,7 +38,7 @@
 
 void GDALUnrolledCopy_GByte_3_1_SSSE3(GByte *CPL_RESTRICT pDest,
                                       const GByte *CPL_RESTRICT pSrc,
-                                      GPtrDiff_t nIters)
+                                      ptrdiff_t nIters)
 {
     decltype(nIters) i;
     const __m128i xmm_shuffle0 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1,

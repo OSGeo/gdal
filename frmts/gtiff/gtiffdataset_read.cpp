@@ -2886,7 +2886,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     {
         const int nDTSize = nDTSizeBits / 8;
         const size_t nTempBufferForCommonDirectIOSize = static_cast<size_t>(
-            static_cast<GPtrDiff_t>(m_nBlockXSize) * m_nBlockYSize * nDTSize *
+            static_cast<ptrdiff_t>(m_nBlockXSize) * m_nBlockYSize * nDTSize *
             ((m_nPlanarConfig == PLANARCONFIG_CONTIG) ? nBands : 1));
         if (m_pTempBufferForCommonDirectIO == nullptr)
         {
@@ -3099,7 +3099,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
 /************************************************************************/
 
 bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
-                              GPtrDiff_t nBlockReqSize)
+                              ptrdiff_t nBlockReqSize)
 {
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     // Optimization by which we can save some libtiff buffer copy
@@ -3209,7 +3209,7 @@ CPLErr GTiffDataset::LoadBlockBuf(int nBlockId, bool bReadFromDisk)
     /* -------------------------------------------------------------------- */
     /*      Get block size.                                                 */
     /* -------------------------------------------------------------------- */
-    const GPtrDiff_t nBlockBufSize = static_cast<GPtrDiff_t>(
+    const ptrdiff_t nBlockBufSize = static_cast<ptrdiff_t>(
         TIFFIsTiled(m_hTIFF) ? TIFFTileSize(m_hTIFF) : TIFFStripSize(m_hTIFF));
     if (!nBlockBufSize)
     {

@@ -1761,7 +1761,7 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
 
         const GByte *pabyDstBandBuffer =
             pabyDstBuffer +
-            static_cast<GPtrDiff_t>(i) * nReqXSize * nReqYSize * nWordSize;
+            static_cast<ptrdiff_t>(i) * nReqXSize * nReqYSize * nWordSize;
 
         if (poBlock != nullptr)
         {
@@ -1773,7 +1773,7 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
                         pabyDstBandBuffer, psWO->eWorkingDataType, nWordSize,
                         poBlock->GetDataRef(), poBlock->GetDataType(),
                         GDALGetDataTypeSizeBytes(poBlock->GetDataType()),
-                        static_cast<GPtrDiff_t>(m_nBlockXSize) * m_nBlockYSize);
+                        static_cast<ptrdiff_t>(m_nBlockXSize) * m_nBlockYSize);
                 }
                 else
                 {
@@ -1784,10 +1784,10 @@ CPLErr VRTWarpedDataset::ProcessBlock(int iBlockX, int iBlockY)
                     for (int iY = 0; iY < nReqYSize; iY++)
                     {
                         GDALCopyWords(
-                            pabyDstBandBuffer + static_cast<GPtrDiff_t>(iY) *
+                            pabyDstBandBuffer + static_cast<ptrdiff_t>(iY) *
                                                     nReqXSize * nWordSize,
                             psWO->eWorkingDataType, nWordSize,
-                            pabyBlock + static_cast<GPtrDiff_t>(iY) *
+                            pabyBlock + static_cast<ptrdiff_t>(iY) *
                                             m_nBlockXSize * nDTSize,
                             poBlock->GetDataType(), nDTSize, nReqXSize);
                     }
@@ -1862,8 +1862,8 @@ CPLErr VRTWarpedRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
 {
     VRTWarpedDataset *poWDS = static_cast<VRTWarpedDataset *>(poDS);
-    const GPtrDiff_t nDataBytes =
-        static_cast<GPtrDiff_t>(GDALGetDataTypeSizeBytes(eDataType)) *
+    const ptrdiff_t nDataBytes =
+        static_cast<ptrdiff_t>(GDALGetDataTypeSizeBytes(eDataType)) *
         nBlockXSize * nBlockYSize;
 
     GDALRasterBlock *poBlock = GetLockedBlockRef(nBlockXOff, nBlockYOff, TRUE);

@@ -69,8 +69,8 @@ typedef struct
     char *pszTmpFilename;
     GByte *pabyBuffer;
     GByte *pabyCompressedBuffer;  // Owned by pszTmpFilename.
-    GPtrDiff_t nBufferSize;
-    GPtrDiff_t nCompressedBufferSize;
+    ptrdiff_t nBufferSize;
+    ptrdiff_t nCompressedBufferSize;
     int nHeight;
     int nStripOrTile;
     uint16_t nPredictor;
@@ -310,8 +310,7 @@ class GTiffDataset final : public GDALPamDataset
     bool m_bWriteCOGLayout : 1;
 
     void ScanDirectories();
-    bool ReadStrile(int nBlockId, void *pOutputBuffer,
-                    GPtrDiff_t nBlockReqSize);
+    bool ReadStrile(int nBlockId, void *pOutputBuffer, ptrdiff_t nBlockReqSize);
     CPLErr LoadBlockBuf(int nBlockId, bool bReadFromDisk = true);
     CPLErr FlushBlockBuf();
 
@@ -363,7 +362,7 @@ class GTiffDataset final : public GDALPamDataset
     CPLErr CreateInternalMaskOverviews(int nOvrBlockXSize, int nOvrBlockYSize);
     std::tuple<CPLErr, bool> Finalize();
 
-    void DiscardLsb(GByte *pabyBuffer, GPtrDiff_t nBytes, int iBand) const;
+    void DiscardLsb(GByte *pabyBuffer, ptrdiff_t nBytes, int iBand) const;
     void GetDiscardLsbOption(char **papszOptions);
     void InitCompressionThreads(bool bUpdateMode, CSLConstList papszOptions);
     void InitCreationOrOpenOptions(bool bUpdateMode, CSLConstList papszOptions);
@@ -371,8 +370,8 @@ class GTiffDataset final : public GDALPamDataset
     void WaitCompletionForJobIdx(int i);
     void WaitCompletionForBlock(int nBlockId);
     void WriteRawStripOrTile(int nStripOrTile, GByte *pabyCompressedBuffer,
-                             GPtrDiff_t nCompressedBufferSize);
-    bool SubmitCompressionJob(int nStripOrTile, GByte *pabyData, GPtrDiff_t cc,
+                             ptrdiff_t nCompressedBufferSize);
+    bool SubmitCompressionJob(int nStripOrTile, GByte *pabyData, ptrdiff_t cc,
                               int nHeight);
 
     int GuessJPEGQuality(bool &bOutHasQuantizationTable,

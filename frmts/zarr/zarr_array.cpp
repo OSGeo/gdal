@@ -1033,7 +1033,7 @@ lbl_next_depth:
 /************************************************************************/
 
 bool ZarrArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
-                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                      const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {
@@ -1046,7 +1046,7 @@ bool ZarrArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
     // Need to be kept in top-level scope
     std::vector<uint64_t> arrayStartIdxMod;
     std::vector<int64_t> arrayStepMod;
-    std::vector<GPtrDiff_t> bufferStrideMod;
+    std::vector<ptrdiff_t> bufferStrideMod;
 
     const size_t nDims = m_aoDims.size();
     bool negativeStep = false;
@@ -1079,7 +1079,7 @@ bool ZarrArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                 pDstBuffer =
                     static_cast<GByte *>(pDstBuffer) +
                     bufferStride[i] *
-                        static_cast<GPtrDiff_t>(nBufferDTSize * (count[i] - 1));
+                        static_cast<ptrdiff_t>(nBufferDTSize * (count[i] - 1));
             }
             else
             {
@@ -1099,11 +1099,11 @@ bool ZarrArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
     std::vector<uint64_t> indicesInnerLoop(nDims + 1);
     std::vector<GByte *> dstPtrStackInnerLoop(nDims + 1);
 
-    std::vector<GPtrDiff_t> dstBufferStrideBytes;
+    std::vector<ptrdiff_t> dstBufferStrideBytes;
     for (size_t i = 0; i < nDims; ++i)
     {
         dstBufferStrideBytes.push_back(bufferStride[i] *
-                                       static_cast<GPtrDiff_t>(nBufferDTSize));
+                                       static_cast<ptrdiff_t>(nBufferDTSize));
     }
     dstBufferStrideBytes.push_back(0);
 
@@ -1263,7 +1263,7 @@ lbl_next_depth:
                     abyTargetNoData.data(), bufferDataType.GetNumericDataType(),
                     0, dst_ptr, bufferDataType.GetNumericDataType(),
                     static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
-                    static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]));
+                    static_cast<ptrdiff_t>(countInnerLoopInit[dimIdxSubLoop]));
                 goto end_inner_loop;
             }
             else if (bEmptyTile)
@@ -1365,7 +1365,7 @@ lbl_next_depth:
                     static_cast<int>(step * nDTSize), dst_ptr,
                     bufferDataType.GetNumericDataType(),
                     static_cast<int>(dstBufferStrideBytes[dimIdxSubLoop]),
-                    static_cast<GPtrDiff_t>(countInnerLoopInit[dimIdxSubLoop]));
+                    static_cast<ptrdiff_t>(countInnerLoopInit[dimIdxSubLoop]));
 
                 goto end_inner_loop;
             }
@@ -1507,7 +1507,7 @@ lbl_next_depth:
                 break;
             dstPtrStackOuterLoop[dimIdx] +=
                 bufferStride[dimIdx] *
-                static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
+                static_cast<ptrdiff_t>(nIncr * nBufferDTSize);
             tileIndices[dimIdx] =
                 indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
         }
@@ -1523,7 +1523,7 @@ lbl_next_depth:
 /************************************************************************/
 
 bool ZarrArray::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                       const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                       const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                        const GDALExtendedDataType &bufferDataType,
                        const void *pSrcBuffer)
 {
@@ -1538,7 +1538,7 @@ bool ZarrArray::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
     // Need to be kept in top-level scope
     std::vector<uint64_t> arrayStartIdxMod;
     std::vector<int64_t> arrayStepMod;
-    std::vector<GPtrDiff_t> bufferStrideMod;
+    std::vector<ptrdiff_t> bufferStrideMod;
 
     const size_t nDims = m_aoDims.size();
     bool negativeStep = false;
@@ -1574,7 +1574,7 @@ bool ZarrArray::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
                 pSrcBuffer =
                     static_cast<const GByte *>(pSrcBuffer) +
                     bufferStride[i] *
-                        static_cast<GPtrDiff_t>(nBufferDTSize * (count[i] - 1));
+                        static_cast<ptrdiff_t>(nBufferDTSize * (count[i] - 1));
             }
             else
             {
@@ -1594,11 +1594,11 @@ bool ZarrArray::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
     std::vector<size_t> offsetDstBuffer(nDims + 1);
     std::vector<const GByte *> srcPtrStackInnerLoop(nDims + 1);
 
-    std::vector<GPtrDiff_t> srcBufferStrideBytes;
+    std::vector<ptrdiff_t> srcBufferStrideBytes;
     for (size_t i = 0; i < nDims; ++i)
     {
         srcBufferStrideBytes.push_back(bufferStride[i] *
-                                       static_cast<GPtrDiff_t>(nBufferDTSize));
+                                       static_cast<ptrdiff_t>(nBufferDTSize));
     }
     srcBufferStrideBytes.push_back(0);
 
@@ -1720,7 +1720,7 @@ lbl_next_depth:
                                 m_pabyNoData, m_oType.GetNumericDataType(), 0,
                                 dstPtr, m_oType.GetNumericDataType(),
                                 static_cast<int>(m_oType.GetSize()),
-                                static_cast<GPtrDiff_t>(nElts));
+                                static_cast<ptrdiff_t>(nElts));
                         }
                         else
                         {
@@ -1804,7 +1804,7 @@ lbl_next_depth:
                         static_cast<int>(srcBufferStrideBytes[dimIdxSubLoop]),
                         dst_ptr, m_oType.GetNumericDataType(),
                         static_cast<int>(step * nDTSize),
-                        static_cast<GPtrDiff_t>(
+                        static_cast<ptrdiff_t>(
                             countInnerLoopInit[dimIdxSubLoop]));
                 }
                 goto end_inner_loop;
@@ -1981,7 +1981,7 @@ lbl_next_depth:
                 break;
             srcPtrStackOuterLoop[dimIdx] +=
                 bufferStride[dimIdx] *
-                static_cast<GPtrDiff_t>(nIncr * nBufferDTSize);
+                static_cast<ptrdiff_t>(nIncr * nBufferDTSize);
             tileIndices[dimIdx] =
                 indicesOuterLoop[dimIdx] / m_anBlockSize[dimIdx];
         }
@@ -2203,7 +2203,7 @@ bool ZarrArray::CacheTilePresence()
     std::vector<uint64_t> anTileIdx(m_aoDims.size());
     const std::vector<size_t> anCount(m_aoDims.size(), 1);
     const std::vector<int64_t> anArrayStep(m_aoDims.size(), 0);
-    const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+    const std::vector<ptrdiff_t> anBufferStride(m_aoDims.size(), 0);
     const auto apoDimsCache = poTilePresenceArray->GetDimensions();
     const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
 

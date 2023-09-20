@@ -109,7 +109,7 @@ class GDALMDArrayGridded final : public GDALPamMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -192,7 +192,7 @@ class GDALMDArrayGridded final : public GDALPamMDArray
 
 bool GDALMDArrayGridded::IRead(const uint64_t *arrayStartIdx,
                                const size_t *count, const int64_t *arrayStep,
-                               const GPtrDiff_t *bufferStride,
+                               const ptrdiff_t *bufferStride,
                                const GDALExtendedDataType &bufferDataType,
                                void *pDstBuffer) const
 {
@@ -245,7 +245,7 @@ bool GDALMDArrayGridded::IRead(const uint64_t *arrayStartIdx,
         anTempStartIdx.push_back(0);
         const std::vector<int64_t> anTempArrayStep(
             m_poParent->GetDimensionCount(), 1);
-        std::vector<GPtrDiff_t> anTempBufferStride(
+        std::vector<ptrdiff_t> anTempBufferStride(
             m_poParent->GetDimensionCount() - 1, 0);
         anTempBufferStride.push_back(1);
         std::vector<size_t> anTempCount(m_poParent->GetDimensionCount() - 1, 1);
@@ -387,7 +387,7 @@ bool GDALMDArrayGridded::IRead(const uint64_t *arrayStartIdx,
             static_cast<int>(sizeof(double) * arrayStep[iDimX]),
             pabyDestBuffer + iY * bufferStride[iDimY] * nBufferDTSize,
             eBufferDT, static_cast<int>(bufferStride[iDimX] * nBufferDTSize),
-            static_cast<GPtrDiff_t>(count[iDimX]));
+            static_cast<ptrdiff_t>(count[iDimX]));
     }
 
     return true;
@@ -644,7 +644,7 @@ GDALMDArray::GetGridded(const std::string &osGridOptions,
     const uint64_t arrayStartIdx[] = {0};
     const size_t count[] = {adfXVals.size()};
     const int64_t arrayStep[] = {1};
-    const GPtrDiff_t bufferStride[] = {1};
+    const ptrdiff_t bufferStride[] = {1};
     if (!poXArray->Read(arrayStartIdx, count, arrayStep, bufferStride,
                         GDALExtendedDataType::Create(GDT_Float64),
                         adfXVals.data()))

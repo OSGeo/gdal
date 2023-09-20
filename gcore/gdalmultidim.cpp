@@ -94,12 +94,12 @@ class GDALMDArrayUnscaled final : public GDALPamMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -1796,15 +1796,15 @@ bool GDALExtendedDataType::CopyValue(const void *pSrc,
  */
 bool GDALExtendedDataType::CopyValues(const void *pSrc,
                                       const GDALExtendedDataType &srcType,
-                                      GPtrDiff_t nSrcStrideInElts, void *pDst,
+                                      ptrdiff_t nSrcStrideInElts, void *pDst,
                                       const GDALExtendedDataType &dstType,
-                                      GPtrDiff_t nDstStrideInElts,
+                                      ptrdiff_t nDstStrideInElts,
                                       size_t nValues)
 {
     const auto nSrcStrideInBytes =
-        nSrcStrideInElts * static_cast<GPtrDiff_t>(srcType.GetSize());
+        nSrcStrideInElts * static_cast<ptrdiff_t>(srcType.GetSize());
     const auto nDstStrideInBytes =
-        nDstStrideInElts * static_cast<GPtrDiff_t>(dstType.GetSize());
+        nDstStrideInElts * static_cast<ptrdiff_t>(dstType.GetSize());
     if (srcType.GetClass() == GEDTC_NUMERIC &&
         dstType.GetClass() == GEDTC_NUMERIC &&
         nSrcStrideInBytes >= std::numeric_limits<int>::min() &&
@@ -1838,11 +1838,11 @@ bool GDALExtendedDataType::CopyValues(const void *pSrc,
 //! @cond Doxygen_Suppress
 bool GDALAbstractMDArray::CheckReadWriteParams(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *&arrayStep, const GPtrDiff_t *&bufferStride,
+    const int64_t *&arrayStep, const ptrdiff_t *&bufferStride,
     const GDALExtendedDataType &bufferDataType, const void *buffer,
     const void *buffer_alloc_start, size_t buffer_alloc_size,
     std::vector<int64_t> &tmp_arrayStep,
-    std::vector<GPtrDiff_t> &tmp_bufferStride) const
+    std::vector<ptrdiff_t> &tmp_bufferStride) const
 {
     const auto lamda_error = []()
     {
@@ -1891,7 +1891,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
     bool bufferStride_all_positive = true;
     if (bufferStride == nullptr)
     {
-        GPtrDiff_t stride = 1;
+        ptrdiff_t stride = 1;
         // To compute strides we must proceed from the fastest varying dimension
         // (the last one), and then reverse the result
         for (size_t i = dims.size(); i != 0;)
@@ -1917,7 +1917,7 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
                 CPLError(CE_Failure, CPLE_OutOfMemory, "Too big count values");
                 return false;
             }
-            stride = static_cast<GPtrDiff_t>(newStride);
+            stride = static_cast<ptrdiff_t>(newStride);
         }
         std::reverse(tmp_bufferStride.begin(), tmp_bufferStride.end());
         bufferStride = tmp_bufferStride.data();
@@ -2135,8 +2135,8 @@ bool GDALAbstractMDArray::CheckReadWriteParams(
  */
 bool GDALAbstractMDArray::Read(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep,        // step in elements
-    const GPtrDiff_t *bufferStride,  // stride in elements
+    const int64_t *arrayStep,       // step in elements
+    const ptrdiff_t *bufferStride,  // stride in elements
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
     const void *pDstBufferAllocStart, size_t nDstBufferAllocSize) const
 {
@@ -2148,7 +2148,7 @@ bool GDALAbstractMDArray::Read(
     }
 
     std::vector<int64_t> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
+    std::vector<ptrdiff_t> tmp_bufferStride;
     if (!CheckReadWriteParams(arrayStartIdx, count, arrayStep, bufferStride,
                               bufferDataType, pDstBuffer, pDstBufferAllocStart,
                               nDstBufferAllocSize, tmp_arrayStep,
@@ -2167,7 +2167,7 @@ bool GDALAbstractMDArray::Read(
 
 //! @cond Doxygen_Suppress
 bool GDALAbstractMDArray::IWrite(const uint64_t *, const size_t *,
-                                 const int64_t *, const GPtrDiff_t *,
+                                 const int64_t *, const ptrdiff_t *,
                                  const GDALExtendedDataType &, const void *)
 {
     CPLError(CE_Failure, CPLE_AppDefined, "IWrite() not implemented");
@@ -2238,7 +2238,7 @@ bool GDALAbstractMDArray::IWrite(const uint64_t *, const size_t *,
  */
 bool GDALAbstractMDArray::Write(const uint64_t *arrayStartIdx,
                                 const size_t *count, const int64_t *arrayStep,
-                                const GPtrDiff_t *bufferStride,
+                                const ptrdiff_t *bufferStride,
                                 const GDALExtendedDataType &bufferDataType,
                                 const void *pSrcBuffer,
                                 const void *pSrcBufferAllocStart,
@@ -2252,7 +2252,7 @@ bool GDALAbstractMDArray::Write(const uint64_t *arrayStartIdx,
     }
 
     std::vector<int64_t> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
+    std::vector<ptrdiff_t> tmp_bufferStride;
     if (!CheckReadWriteParams(arrayStartIdx, count, arrayStep, bufferStride,
                               bufferDataType, pSrcBuffer, pSrcBufferAllocStart,
                               nSrcBufferAllocSize, tmp_arrayStep,
@@ -4012,9 +4012,9 @@ bool GDALMDArray::AdviseRead(const uint64_t *arrayStartIdx, const size_t *count,
     }
 
     std::vector<int64_t> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
+    std::vector<ptrdiff_t> tmp_bufferStride;
     const int64_t *arrayStep = nullptr;
-    const GPtrDiff_t *bufferStride = nullptr;
+    const ptrdiff_t *bufferStride = nullptr;
     if (!CheckReadWriteParams(arrayStartIdx, count, arrayStep, bufferStride,
                               GDALExtendedDataType::Create(GDT_Unknown),
                               nullptr, nullptr, 0, tmp_arrayStep,
@@ -4243,8 +4243,8 @@ bool GDALMDArray::Cache(CSLConstList papszOptions) const
 /************************************************************************/
 
 bool GDALMDArray::Read(const uint64_t *arrayStartIdx, const size_t *count,
-                       const int64_t *arrayStep,        // step in elements
-                       const GPtrDiff_t *bufferStride,  // stride in elements
+                       const int64_t *arrayStep,       // step in elements
+                       const ptrdiff_t *bufferStride,  // stride in elements
                        const GDALExtendedDataType &bufferDataType,
                        void *pDstBuffer, const void *pDstBufferAllocStart,
                        size_t nDstBufferAllocSize) const
@@ -4308,7 +4308,7 @@ bool GDALMDArray::Read(const uint64_t *arrayStartIdx, const size_t *count,
     }
 
     std::vector<int64_t> tmp_arrayStep;
-    std::vector<GPtrDiff_t> tmp_bufferStride;
+    std::vector<ptrdiff_t> tmp_bufferStride;
     if (!array->CheckReadWriteParams(arrayStartIdx, count, arrayStep,
                                      bufferStride, bufferDataType, pDstBuffer,
                                      pDstBufferAllocStart, nDstBufferAllocSize,
@@ -4329,7 +4329,7 @@ bool GDALMDArray::Read(const uint64_t *arrayStartIdx, const size_t *count,
 
 bool GDALMDArray::IsTransposedRequest(
     const size_t *count,
-    const GPtrDiff_t *bufferStride) const  // stride in elements
+    const ptrdiff_t *bufferStride) const  // stride in elements
 {
     /*
     For example:
@@ -4371,7 +4371,7 @@ bool GDALMDArray::IsTransposedRequest(
 template <size_t N>
 void CopyToFinalBufferSameDataType(const void *pSrcBuffer, void *pDstBuffer,
                                    size_t nDims, const size_t *count,
-                                   const GPtrDiff_t *bufferStride)
+                                   const ptrdiff_t *bufferStride)
 {
     std::vector<size_t> anStackCount(nDims);
     std::vector<GByte *> pabyDstBufferStack(nDims + 1);
@@ -4422,7 +4422,7 @@ static void CopyToFinalBuffer(const void *pSrcBuffer,
                               void *pDstBuffer,
                               const GDALExtendedDataType &eDstDataType,
                               size_t nDims, const size_t *count,
-                              const GPtrDiff_t *bufferStride)
+                              const ptrdiff_t *bufferStride)
 {
     const size_t nSrcDataTypeSize(eSrcDataType.GetSize());
     // Use specialized implementation for well-known data types when no
@@ -4589,7 +4589,7 @@ static bool TransposeLast2Dims(void *pDstBuffer,
 
 bool GDALMDArray::ReadForTransposedRequest(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     const size_t nDims(GetDimensionCount());
@@ -4602,7 +4602,7 @@ bool GDALMDArray::ReadForTransposedRequest(
     for (size_t i = 0; i < nDims; ++i)
         nElts *= count[i];
 
-    std::vector<GPtrDiff_t> tmpBufferStrides(nDims);
+    std::vector<ptrdiff_t> tmpBufferStrides(nDims);
     tmpBufferStrides.back() = 1;
     for (size_t i = nDims - 1; i > 0;)
     {
@@ -4685,7 +4685,7 @@ bool GDALMDArray::ReadForTransposedRequest(
 // defines a row-major ordered contiguous buffer.
 bool GDALMDArray::IsStepOneContiguousRowMajorOrderedSameDataType(
     const size_t *count, const int64_t *arrayStep,
-    const GPtrDiff_t *bufferStride,
+    const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType) const
 {
     if (bufferDataType != GetDataType())
@@ -4720,7 +4720,7 @@ bool GDALMDArray::IsStepOneContiguousRowMajorOrderedSameDataType(
 // content of that temporary buffer onto pDstBuffer.
 bool GDALMDArray::ReadUsingContiguousIRead(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     const size_t nDims(GetDimensionCount());
@@ -4728,8 +4728,8 @@ bool GDALMDArray::ReadUsingContiguousIRead(
     std::vector<size_t> anTmpCount(nDims);
     const auto &oType = GetDataType();
     size_t nMemArraySize = oType.GetSize();
-    std::vector<GPtrDiff_t> anTmpStride(nDims);
-    GPtrDiff_t nStride = 1;
+    std::vector<ptrdiff_t> anTmpStride(nDims);
+    ptrdiff_t nStride = 1;
     for (size_t i = nDims; i > 0;)
     {
         --i;
@@ -4796,11 +4796,11 @@ class GDALSlicedMDArray final : public GDALPamMDArray
     mutable std::vector<uint64_t> m_parentStart;
     mutable std::vector<size_t> m_parentCount;
     mutable std::vector<int64_t> m_parentStep;
-    mutable std::vector<GPtrDiff_t> m_parentStride;
+    mutable std::vector<ptrdiff_t> m_parentStride;
 
     void PrepareParentArrays(const uint64_t *arrayStartIdx, const size_t *count,
                              const int64_t *arrayStep,
-                             const GPtrDiff_t *bufferStride) const;
+                             const ptrdiff_t *bufferStride) const;
 
   protected:
     explicit GDALSlicedMDArray(
@@ -4827,12 +4827,12 @@ class GDALSlicedMDArray final : public GDALPamMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -4974,9 +4974,10 @@ class GDALSlicedMDArray final : public GDALPamMDArray
 /*                        PrepareParentArrays()                         */
 /************************************************************************/
 
-void GDALSlicedMDArray::PrepareParentArrays(
-    const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride) const
+void GDALSlicedMDArray::PrepareParentArrays(const uint64_t *arrayStartIdx,
+                                            const size_t *count,
+                                            const int64_t *arrayStep,
+                                            const ptrdiff_t *bufferStride) const
 {
     const size_t nParentDimCount = m_parentRanges.size();
     for (size_t i = 0; i < nParentDimCount; i++)
@@ -5021,7 +5022,7 @@ void GDALSlicedMDArray::PrepareParentArrays(
 
 bool GDALSlicedMDArray::IRead(const uint64_t *arrayStartIdx,
                               const size_t *count, const int64_t *arrayStep,
-                              const GPtrDiff_t *bufferStride,
+                              const ptrdiff_t *bufferStride,
                               const GDALExtendedDataType &bufferDataType,
                               void *pDstBuffer) const
 {
@@ -5037,7 +5038,7 @@ bool GDALSlicedMDArray::IRead(const uint64_t *arrayStartIdx,
 
 bool GDALSlicedMDArray::IWrite(const uint64_t *arrayStartIdx,
                                const size_t *count, const int64_t *arrayStep,
-                               const GPtrDiff_t *bufferStride,
+                               const ptrdiff_t *bufferStride,
                                const GDALExtendedDataType &bufferDataType,
                                const void *pSrcBuffer)
 {
@@ -5291,7 +5292,7 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -5394,7 +5395,7 @@ class GDALExtractFieldMDArray final : public GDALPamMDArray
 bool GDALExtractFieldMDArray::IRead(const uint64_t *arrayStartIdx,
                                     const size_t *count,
                                     const int64_t *arrayStep,
-                                    const GPtrDiff_t *bufferStride,
+                                    const ptrdiff_t *bufferStride,
                                     const GDALExtendedDataType &bufferDataType,
                                     void *pDstBuffer) const
 {
@@ -5659,11 +5660,11 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
     mutable std::vector<uint64_t> m_parentStart;
     mutable std::vector<size_t> m_parentCount;
     mutable std::vector<int64_t> m_parentStep;
-    mutable std::vector<GPtrDiff_t> m_parentStride;
+    mutable std::vector<ptrdiff_t> m_parentStride;
 
     void PrepareParentArrays(const uint64_t *arrayStartIdx, const size_t *count,
                              const int64_t *arrayStep,
-                             const GPtrDiff_t *bufferStride) const;
+                             const ptrdiff_t *bufferStride) const;
 
     static std::string
     MappingToStr(const std::vector<int> &anMapNewAxisToOldAxis)
@@ -5703,12 +5704,12 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -5857,7 +5858,7 @@ class GDALMDArrayTransposed final : public GDALPamMDArray
 
 void GDALMDArrayTransposed::PrepareParentArrays(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride) const
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride) const
 {
     for (size_t i = 0; i < m_anMapNewAxisToOldAxis.size(); ++i)
     {
@@ -5884,7 +5885,7 @@ void GDALMDArrayTransposed::PrepareParentArrays(
 
 bool GDALMDArrayTransposed::IRead(const uint64_t *arrayStartIdx,
                                   const size_t *count, const int64_t *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
+                                  const ptrdiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const
 {
@@ -5901,7 +5902,7 @@ bool GDALMDArrayTransposed::IRead(const uint64_t *arrayStartIdx,
 bool GDALMDArrayTransposed::IWrite(const uint64_t *arrayStartIdx,
                                    const size_t *count,
                                    const int64_t *arrayStep,
-                                   const GPtrDiff_t *bufferStride,
+                                   const ptrdiff_t *bufferStride,
                                    const GDALExtendedDataType &bufferDataType,
                                    const void *pSrcBuffer)
 {
@@ -5999,7 +6000,7 @@ GDALMDArray::Transpose(const std::vector<int> &anMapNewAxisToOldAxis) const
 
 bool GDALMDArrayUnscaled::IRead(const uint64_t *arrayStartIdx,
                                 const size_t *count, const int64_t *arrayStep,
-                                const GPtrDiff_t *bufferStride,
+                                const ptrdiff_t *bufferStride,
                                 const GDALExtendedDataType &bufferDataType,
                                 void *pDstBuffer) const
 {
@@ -6044,8 +6045,8 @@ bool GDALMDArrayUnscaled::IRead(const uint64_t *arrayStartIdx,
         return true;
     }
 
-    std::vector<GPtrDiff_t> actualBufferStrideVector;
-    const GPtrDiff_t *actualBufferStridePtr = bufferStride;
+    std::vector<ptrdiff_t> actualBufferStrideVector;
+    const ptrdiff_t *actualBufferStridePtr = bufferStride;
     void *pTempBuffer = pDstBuffer;
     if (bTempBufferNeeded)
     {
@@ -6078,8 +6079,8 @@ bool GDALMDArrayUnscaled::IRead(const uint64_t *arrayStartIdx,
         size_t nIters = 0;
         double *src_ptr = nullptr;
         GByte *dst_ptr = nullptr;
-        GPtrDiff_t src_inc_offset = 0;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t src_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     std::vector<Stack> stack(nDims);
     const size_t nBufferDTSize = bufferDataType.GetSize();
@@ -6088,7 +6089,7 @@ bool GDALMDArrayUnscaled::IRead(const uint64_t *arrayStartIdx,
         stack[i].src_inc_offset =
             actualBufferStridePtr[i] * (bDTIsComplex ? 2 : 1);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].src_ptr = static_cast<double *>(pTempBuffer);
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
@@ -6163,7 +6164,7 @@ lbl_next_depth:
 
 bool GDALMDArrayUnscaled::IWrite(const uint64_t *arrayStartIdx,
                                  const size_t *count, const int64_t *arrayStep,
-                                 const GPtrDiff_t *bufferStride,
+                                 const ptrdiff_t *bufferStride,
                                  const GDALExtendedDataType &bufferDataType,
                                  const void *pSrcBuffer)
 {
@@ -6209,7 +6210,7 @@ bool GDALMDArrayUnscaled::IWrite(const uint64_t *arrayStartIdx,
         }
     }
 
-    std::vector<GPtrDiff_t> tmpBufferStrideVector;
+    std::vector<ptrdiff_t> tmpBufferStrideVector;
     size_t nElts = 1;
     tmpBufferStrideVector.resize(nDims);
     for (size_t i = 0; i < nDims; i++)
@@ -6220,7 +6221,7 @@ bool GDALMDArrayUnscaled::IWrite(const uint64_t *arrayStartIdx,
         --i;
         tmpBufferStrideVector[i] = tmpBufferStrideVector[i + 1] * count[i + 1];
     }
-    const GPtrDiff_t *tmpBufferStridePtr = tmpBufferStrideVector.data();
+    const ptrdiff_t *tmpBufferStridePtr = tmpBufferStrideVector.data();
     void *pTempBuffer = VSI_MALLOC2_VERBOSE(nDTSize, nElts);
     if (!pTempBuffer)
         return false;
@@ -6230,8 +6231,8 @@ bool GDALMDArrayUnscaled::IWrite(const uint64_t *arrayStartIdx,
         size_t nIters = 0;
         double *dst_ptr = nullptr;
         const GByte *src_ptr = nullptr;
-        GPtrDiff_t src_inc_offset = 0;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t src_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     std::vector<Stack> stack(nDims);
     const size_t nBufferDTSize = bufferDataType.GetSize();
@@ -6240,7 +6241,7 @@ bool GDALMDArrayUnscaled::IWrite(const uint64_t *arrayStartIdx,
         stack[i].dst_inc_offset =
             tmpBufferStridePtr[i] * (bDTIsComplex ? 2 : 1);
         stack[i].src_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].dst_ptr = static_cast<double *>(pTempBuffer);
     stack[0].src_ptr = static_cast<const GByte *>(pSrcBuffer);
@@ -6415,11 +6416,11 @@ class GDALMDArrayMask final : public GDALPamMDArray
 
     template <typename Type>
     void
-    ReadInternal(const size_t *count, const GPtrDiff_t *bufferStride,
+    ReadInternal(const size_t *count, const ptrdiff_t *bufferStride,
                  const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
                  const void *pTempBuffer,
                  const GDALExtendedDataType &oTmpBufferDT,
-                 const std::vector<GPtrDiff_t> &tmpBufferStrideVector) const;
+                 const std::vector<ptrdiff_t> &tmpBufferStrideVector) const;
 
   protected:
     explicit GDALMDArrayMask(const std::shared_ptr<GDALMDArray> &poParent)
@@ -6432,7 +6433,7 @@ class GDALMDArrayMask final : public GDALPamMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -6699,13 +6700,13 @@ bool GDALMDArrayMask::Init(CSLConstList papszOptions)
 
 bool GDALMDArrayMask::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                             const int64_t *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
 {
     size_t nElts = 1;
     const size_t nDims = GetDimensionCount();
-    std::vector<GPtrDiff_t> tmpBufferStrideVector(nDims);
+    std::vector<ptrdiff_t> tmpBufferStrideVector(nDims);
     for (size_t i = 0; i < nDims; i++)
         nElts *= count[i];
     if (nDims > 0)
@@ -6751,14 +6752,14 @@ bool GDALMDArrayMask::IRead(const uint64_t *arrayStartIdx, const size_t *count,
         {
             size_t nIters = 0;
             GByte *dst_ptr = nullptr;
-            GPtrDiff_t dst_inc_offset = 0;
+            ptrdiff_t dst_inc_offset = 0;
         };
         std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
         const size_t nBufferDTSize = bufferDataType.GetSize();
         for (size_t i = 0; i < nDims; i++)
         {
             stack[i].dst_inc_offset =
-                static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+                static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
         }
         stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
 
@@ -6952,10 +6953,10 @@ template <> bool IsNan<float>(float val)
 
 template <typename Type>
 void GDALMDArrayMask::ReadInternal(
-    const size_t *count, const GPtrDiff_t *bufferStride,
+    const size_t *count, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
     const void *pTempBuffer, const GDALExtendedDataType &oTmpBufferDT,
-    const std::vector<GPtrDiff_t> &tmpBufferStrideVector) const
+    const std::vector<ptrdiff_t> &tmpBufferStrideVector) const
 {
     const size_t nDims = GetDimensionCount();
 
@@ -7069,17 +7070,17 @@ void GDALMDArrayMask::ReadInternal(
         size_t nIters = 0;
         const GByte *src_ptr = nullptr;
         GByte *dst_ptr = nullptr;
-        GPtrDiff_t src_inc_offset = 0;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t src_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     std::vector<Stack> stack(std::max(static_cast<size_t>(1), nDims));
     const size_t nBufferDTSize = bufferDataType.GetSize();
     for (size_t i = 0; i < nDims; i++)
     {
-        stack[i].src_inc_offset = static_cast<GPtrDiff_t>(
-            tmpBufferStrideVector[i] * nTmpBufferDTSize);
+        stack[i].src_inc_offset =
+            static_cast<ptrdiff_t>(tmpBufferStrideVector[i] * nTmpBufferDTSize);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].src_ptr = static_cast<const GByte *>(pTempBuffer);
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
@@ -7376,7 +7377,7 @@ class GDALMDArrayResampledDataset final : public GDALPamDataset
 
     std::vector<uint64_t> m_anOffset{};
     std::vector<size_t> m_anCount{};
-    std::vector<GPtrDiff_t> m_anStride{};
+    std::vector<ptrdiff_t> m_anStride{};
 
     std::string m_osFilenameLong{};
     std::string m_osFilenameLat{};
@@ -7535,12 +7536,12 @@ CPLErr GDALMDArrayResampledDatasetRasterBand::IRasterIO(
         l_poDS->m_anOffset[l_poDS->m_iXDim] = static_cast<uint64_t>(nXOff);
         l_poDS->m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
         l_poDS->m_anStride[l_poDS->m_iXDim] =
-            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize);
+            static_cast<ptrdiff_t>(nPixelSpaceBuf / nBufferDTSize);
 
         l_poDS->m_anOffset[l_poDS->m_iYDim] = static_cast<uint64_t>(nYOff);
         l_poDS->m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
         l_poDS->m_anStride[l_poDS->m_iYDim] =
-            static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize);
+            static_cast<ptrdiff_t>(nLineSpaceBuf / nBufferDTSize);
 
         return poArray->Read(l_poDS->m_anOffset.data(),
                              l_poDS->m_anCount.data(), nullptr,
@@ -7585,7 +7586,7 @@ class GDALMDArrayResampled final : public GDALPamMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -8083,7 +8084,7 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
 
 bool GDALMDArrayResampled::IRead(const uint64_t *arrayStartIdx,
                                  const size_t *count, const int64_t *arrayStep,
-                                 const GPtrDiff_t *bufferStride,
+                                 const ptrdiff_t *bufferStride,
                                  const GDALExtendedDataType &bufferDataType,
                                  void *pDstBuffer) const
 {
@@ -8094,7 +8095,7 @@ bool GDALMDArrayResampled::IRead(const uint64_t *arrayStartIdx,
     {
         size_t nIters = 0;
         GByte *dst_ptr = nullptr;
-        GPtrDiff_t dst_inc_offset = 0;
+        ptrdiff_t dst_inc_offset = 0;
     };
     const auto nDims = GetDimensionCount();
     std::vector<Stack> stack(nDims + 1);  // +1 to avoid -Wnull-dereference
@@ -8102,7 +8103,7 @@ bool GDALMDArrayResampled::IRead(const uint64_t *arrayStartIdx,
     for (size_t i = 0; i < nDims; i++)
     {
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
 
@@ -8214,7 +8215,7 @@ class GDALRasterBandFromArray final : public GDALRasterBand
 {
     std::vector<uint64_t> m_anOffset{};
     std::vector<size_t> m_anCount{};
-    std::vector<GPtrDiff_t> m_anStride{};
+    std::vector<ptrdiff_t> m_anStride{};
 
   protected:
     CPLErr IReadBlock(int, int, void *) override;
@@ -8670,13 +8671,13 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
         m_anOffset[l_poDS->m_iXDim] = static_cast<uint64_t>(nXOff);
         m_anCount[l_poDS->m_iXDim] = static_cast<size_t>(nXSize);
         m_anStride[l_poDS->m_iXDim] =
-            static_cast<GPtrDiff_t>(nPixelSpaceBuf / nBufferDTSize);
+            static_cast<ptrdiff_t>(nPixelSpaceBuf / nBufferDTSize);
         if (poArray->GetDimensionCount() >= 2)
         {
             m_anOffset[l_poDS->m_iYDim] = static_cast<uint64_t>(nYOff);
             m_anCount[l_poDS->m_iYDim] = static_cast<size_t>(nYSize);
             m_anStride[l_poDS->m_iYDim] =
-                static_cast<GPtrDiff_t>(nLineSpaceBuf / nBufferDTSize);
+                static_cast<ptrdiff_t>(nLineSpaceBuf / nBufferDTSize);
         }
         if (eRWFlag == GF_Read)
         {
@@ -8739,7 +8740,7 @@ GDALColorInterp GDALRasterBandFromArray::GetColorInterpretation()
             const auto oStringDT = GDALExtendedDataType::CreateString();
             const size_t nCount = 1;
             const int64_t arrayStep = 1;
-            const GPtrDiff_t bufferStride = 1;
+            const ptrdiff_t bufferStride = 1;
             char *pszValue = nullptr;
             poAttr->Read(&nStartIndex, &nCount, &arrayStep, &bufferStride,
                          oStringDT, &pszValue);
@@ -9027,7 +9028,7 @@ bool GDALMDArray::ComputeStatistics(bool bApproxOK, double *pdfMin,
                             static_cast<int>(oType.GetSize()),
                             &data->adfData[0], GDT_Float64,
                             static_cast<int>(sizeof(double)),
-                            static_cast<GPtrDiff_t>(nVals));
+                            static_cast<ptrdiff_t>(nVals));
         }
         for (size_t i = 0; i < nVals; i++)
         {
@@ -10868,7 +10869,7 @@ GDALExtendedDataTypeH GDALMDArrayGetDataType(GDALMDArrayH hArray)
  */
 int GDALMDArrayRead(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
                     const size_t *count, const int64_t *arrayStep,
-                    const GPtrDiff_t *bufferStride,
+                    const ptrdiff_t *bufferStride,
                     GDALExtendedDataTypeH bufferDataType, void *pDstBuffer,
                     const void *pDstBufferAllocStart,
                     size_t nDstBufferAllocSize)
@@ -10900,7 +10901,7 @@ int GDALMDArrayRead(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
  */
 int GDALMDArrayWrite(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
                      const size_t *count, const int64_t *arrayStep,
-                     const GPtrDiff_t *bufferStride,
+                     const ptrdiff_t *bufferStride,
                      GDALExtendedDataTypeH bufferDataType,
                      const void *pSrcBuffer, const void *pSrcBufferAllocStart,
                      size_t nSrcBufferAllocSize)
@@ -12680,7 +12681,7 @@ const GDALExtendedDataType &GDALAttributeString::GetDataType() const
 }
 
 bool GDALAttributeString::IRead(const uint64_t *, const size_t *,
-                                const int64_t *, const GPtrDiff_t *,
+                                const int64_t *, const ptrdiff_t *,
                                 const GDALExtendedDataType &bufferDataType,
                                 void *pDstBuffer) const
 {
@@ -12737,7 +12738,7 @@ const GDALExtendedDataType &GDALAttributeNumeric::GetDataType() const
 
 bool GDALAttributeNumeric::IRead(const uint64_t *arrayStartIdx,
                                  const size_t *count, const int64_t *arrayStep,
-                                 const GPtrDiff_t *bufferStride,
+                                 const ptrdiff_t *bufferStride,
                                  const GDALExtendedDataType &bufferDataType,
                                  void *pDstBuffer) const
 {
@@ -12816,7 +12817,7 @@ void GDALMDArrayRegularlySpaced::AddAttribute(
 
 bool GDALMDArrayRegularlySpaced::IRead(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);

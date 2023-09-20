@@ -117,7 +117,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         if ((nBitsPerLine & 7) != 0)
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
-        GPtrDiff_t iPixel = 0;
+        ptrdiff_t iPixel = 0;
 
         // Small optimization in 1 bit case.
         if (m_poGDS->m_nBitsPerSample == 1)
@@ -165,7 +165,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
         if (eDataType == GDT_Float32 && m_poGDS->m_nBitsPerSample == 16)
         {
-            for (; iPixel < static_cast<GPtrDiff_t>(nBlockYSize) * nBlockXSize;
+            for (; iPixel < static_cast<ptrdiff_t>(nBlockYSize) * nBlockXSize;
                  iPixel++)
             {
                 uint32_t nInWord = static_cast<uint32_t *>(pImage)[iPixel];
@@ -354,11 +354,11 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         if ((nBitsPerLine & 7) != 0)
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
-        GPtrDiff_t iPixel = 0;
+        ptrdiff_t iPixel = 0;
 
         if (eDataType == GDT_Float32 && m_poGDS->m_nBitsPerSample == 16)
         {
-            for (; iPixel < static_cast<GPtrDiff_t>(nBlockYSize) * nBlockXSize;
+            for (; iPixel < static_cast<ptrdiff_t>(nBlockYSize) * nBlockXSize;
                  iPixel++)
             {
                 uint32_t nInWord =
@@ -535,7 +535,7 @@ CPLErr GTiffOddBitsBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 static void ExpandPacked8ToByte1(const GByte *const CPL_RESTRICT pabySrc,
                                  GByte *const CPL_RESTRICT pabyDest,
-                                 GPtrDiff_t nBytes)
+                                 ptrdiff_t nBytes)
 {
     for (decltype(nBytes) i = 0, j = 0; i < nBytes; i++, j += 8)
     {
@@ -571,7 +571,7 @@ static inline GByte ExtractBitAndConvertTo255(GByte byVal, int nBit)
 
 static void ExpandPacked8ToByte255(const GByte *const CPL_RESTRICT pabySrc,
                                    GByte *const CPL_RESTRICT pabyDest,
-                                   GPtrDiff_t nBytes)
+                                   ptrdiff_t nBytes)
 {
     for (decltype(nBytes) i = 0, j = 0; i < nBytes; i++, j += 8)
     {
@@ -631,15 +631,15 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         /*      Translate 1bit data to eight bit. */
         /* --------------------------------------------------------------------
          */
-        GPtrDiff_t iDstOffset = 0;
+        ptrdiff_t iDstOffset = 0;
         const GByte *const CPL_RESTRICT m_pabyBlockBuf =
             m_poGDS->m_pabyBlockBuf;
         GByte *CPL_RESTRICT pabyDest = static_cast<GByte *>(pImage);
 
         for (int iLine = 0; iLine < nBlockYSize; ++iLine)
         {
-            GPtrDiff_t iSrcOffsetByte =
-                static_cast<GPtrDiff_t>((nBlockXSize + 7) >> 3) * iLine;
+            ptrdiff_t iSrcOffsetByte =
+                static_cast<ptrdiff_t>((nBlockXSize + 7) >> 3) * iLine;
 
             if (!m_poGDS->m_bPromoteTo8Bits)
             {
@@ -651,7 +651,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 ExpandPacked8ToByte255(m_pabyBlockBuf + iSrcOffsetByte,
                                        pabyDest + iDstOffset, nBlockXSize / 8);
             }
-            GPtrDiff_t iSrcOffsetBit = (iSrcOffsetByte + nBlockXSize / 8) * 8;
+            ptrdiff_t iSrcOffsetBit = (iSrcOffsetByte + nBlockXSize / 8) * 8;
             iDstOffset += nBlockXSize & ~0x7;
             const GByte bSetVal = m_poGDS->m_bPromoteTo8Bits ? 255 : 1;
             for (int iPixel = nBlockXSize & ~0x7; iPixel < nBlockXSize;
@@ -683,10 +683,10 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                 : m_poGDS->nBands * nWordBytes;
 
         const auto nBlockPixels =
-            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
         if (m_poGDS->m_nBitsPerSample == 16)
         {
-            for (GPtrDiff_t i = 0; i < nBlockPixels; ++i)
+            for (ptrdiff_t i = 0; i < nBlockPixels; ++i)
             {
                 static_cast<uint32_t *>(pImage)[i] = CPLHalfToFloat(
                     *reinterpret_cast<const uint16_t *>(pabyImage));
@@ -695,7 +695,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
         else if (m_poGDS->m_nBitsPerSample == 24)
         {
-            for (GPtrDiff_t i = 0; i < nBlockPixels; ++i)
+            for (ptrdiff_t i = 0; i < nBlockPixels; ++i)
             {
 #ifdef CPL_MSB
                 static_cast<uint32_t *>(pImage)[i] = CPLTripleToFloat(
@@ -732,15 +732,15 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         }
 
         // Bits per line rounds up to next byte boundary.
-        GPtrDiff_t nBitsPerLine =
-            static_cast<GPtrDiff_t>(nBlockXSize) * iPixelBitSkip;
+        ptrdiff_t nBitsPerLine =
+            static_cast<ptrdiff_t>(nBlockXSize) * iPixelBitSkip;
         if ((nBitsPerLine & 7) != 0)
             nBitsPerLine = (nBitsPerLine + 7) & (~7);
 
         int iPixel = 0;
         for (int iY = 0; iY < nBlockYSize; ++iY)
         {
-            GPtrDiff_t iBitOffset = iBandBitOffset + iY * nBitsPerLine;
+            ptrdiff_t iBitOffset = iBandBitOffset + iY * nBitsPerLine;
 
             for (int iX = 0; iX < nBlockXSize; ++iX)
             {
@@ -786,10 +786,10 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             iPixelByteSkip = m_poGDS->m_nBitsPerSample / 8;
         }
 
-        const GPtrDiff_t nBytesPerLine =
-            static_cast<GPtrDiff_t>(nBlockXSize) * iPixelByteSkip;
+        const ptrdiff_t nBytesPerLine =
+            static_cast<ptrdiff_t>(nBlockXSize) * iPixelByteSkip;
 
-        GPtrDiff_t iPixel = 0;
+        ptrdiff_t iPixel = 0;
         for (int iY = 0; iY < nBlockYSize; ++iY)
         {
             GByte *pabyImage =
@@ -839,7 +839,7 @@ CPLErr GTiffOddBitsBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
         const GByte *const m_pabyBlockBuf = m_poGDS->m_pabyBlockBuf;
         const unsigned nBitsPerSample = m_poGDS->m_nBitsPerSample;
-        GPtrDiff_t iPixel = 0;
+        ptrdiff_t iPixel = 0;
 
         if (nBitsPerSample == 1 && eDataType == GDT_Byte)
         {

@@ -1553,7 +1553,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                      pData)[iX * nPixelSpace + iY * nLineSpace +
                                             i * nBandSpace] = pabyIntermediate
                                     [iSrcX * nBandCount +
-                                     static_cast<GPtrDiff_t>(iSrcY) *
+                                     static_cast<ptrdiff_t>(iSrcY) *
                                          l_dims.size.x * nBandCount +
                                      i];
                             else if (eBufType == GDT_Int16 ||
@@ -1563,7 +1563,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                                     i * nBandSpace / 2] =
                                     ((uint16_t *)pabyIntermediate)
                                         [iSrcX * nBandCount +
-                                         static_cast<GPtrDiff_t>(iSrcY) *
+                                         static_cast<ptrdiff_t>(iSrcY) *
                                              l_dims.size.x * nBandCount +
                                          i];
                             else if (eBufType == GDT_Int32 ||
@@ -1573,7 +1573,7 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                                     i * nBandSpace / 4] =
                                     ((uint32_t *)pabyIntermediate)
                                         [iSrcX * nBandCount +
-                                         static_cast<GPtrDiff_t>(iSrcY) *
+                                         static_cast<ptrdiff_t>(iSrcY) *
                                              l_dims.size.x * nBandCount +
                                          i];
                         }

@@ -153,7 +153,7 @@ static void ExploreArray(const std::shared_ptr<GDALMDArray> &poArray,
         std::vector<uint64_t> anArrayStartIdx(nDimCount);
         std::vector<size_t> anCount(nDimCount, 1);
         std::vector<int64_t> anArrayStep(nDimCount);
-        std::vector<GPtrDiff_t> anBufferStride(nDimCount);
+        std::vector<ptrdiff_t> anBufferStride(nDimCount);
         std::vector<GByte> abyData(poArray->GetDataType().GetSize());
         poArray->Read(anArrayStartIdx.data(), anCount.data(),
                       anArrayStep.data(), anBufferStride.data(),

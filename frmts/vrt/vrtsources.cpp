@@ -1329,7 +1329,7 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eBandDataType, int nXOff,
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +
                      nOutXOff * nPixelSpace +
-                     static_cast<GPtrDiff_t>(nOutYOff) * nLineSpace;
+                     static_cast<ptrdiff_t>(nOutYOff) * nLineSpace;
 
     auto l_band = GetRasterBand();
     if (!l_band)
@@ -1355,7 +1355,7 @@ CPLErr VRTSimpleSource::RasterIO(GDALDataType eBandDataType, int nXOff,
                         pabyTemp +
                             static_cast<size_t>(iY) * nBandDTSize * nOutXSize,
                         eBandDataType, nBandDTSize,
-                        pabyOut + static_cast<GPtrDiff_t>(iY * nLineSpace),
+                        pabyOut + static_cast<ptrdiff_t>(iY * nLineSpace),
                         eBufType, static_cast<int>(nPixelSpace), nOutXSize);
                 }
             }
@@ -1601,7 +1601,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
 
     GByte *pabyOut = static_cast<unsigned char *>(pData) +
                      nOutXOff * nPixelSpace +
-                     static_cast<GPtrDiff_t>(nOutYOff) * nLineSpace;
+                     static_cast<ptrdiff_t>(nOutYOff) * nLineSpace;
 
     CPLErr eErr = CE_Failure;
 
@@ -1631,7 +1631,7 @@ CPLErr VRTSimpleSource::DatasetRasterIO(
                                 static_cast<size_t>(iY) * nBandDTSize *
                                     nOutXSize,
                             eBandDataType, nBandDTSize,
-                            pabyOut + static_cast<GPtrDiff_t>(
+                            pabyOut + static_cast<ptrdiff_t>(
                                           iY * nLineSpace + iBand * nBandSpace),
                             eBufType, static_cast<int>(nPixelSpace), nOutXSize);
                     }
@@ -1920,9 +1920,9 @@ CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eBandDataType*/, int nXOff,
             const float dfOutputValue = static_cast<float>(dfSum / nPixelCount);
 
             // Put it in the output buffer.
-            GByte *pDstLocation =
-                static_cast<GByte *>(pData) + nPixelSpace * iBufPixel +
-                static_cast<GPtrDiff_t>(nLineSpace) * iBufLine;
+            GByte *pDstLocation = static_cast<GByte *>(pData) +
+                                  nPixelSpace * iBufPixel +
+                                  static_cast<ptrdiff_t>(nLineSpace) * iBufLine;
 
             if (eBufType == GDT_Byte)
                 *pDstLocation = static_cast<GByte>(
@@ -2476,7 +2476,7 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eBandDataType, int nXOff,
         eErr = RasterIOInternal<double>(
             eBandDataType, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
             static_cast<GByte *>(pData) + nPixelSpace * nOutXOff +
-                static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
+                static_cast<ptrdiff_t>(nLineSpace) * nOutYOff,
             nOutXSize, nOutYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg,
             bIsComplex ? GDT_CFloat64 : GDT_Float64);
     }
@@ -2485,7 +2485,7 @@ CPLErr VRTComplexSource::RasterIO(GDALDataType eBandDataType, int nXOff,
         eErr = RasterIOInternal<float>(
             eBandDataType, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
             static_cast<GByte *>(pData) + nPixelSpace * nOutXOff +
-                static_cast<GPtrDiff_t>(nLineSpace) * nOutYOff,
+                static_cast<ptrdiff_t>(nLineSpace) * nOutYOff,
             nOutXSize, nOutYSize, eBufType, nPixelSpace, nLineSpace, psExtraArg,
             bIsComplex ? GDT_CFloat32 : GDT_Float32);
     }
@@ -2628,7 +2628,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
     for (int iY = 0; iY < nOutYSize; iY++)
     {
         GByte *pDstLocation = static_cast<GByte *>(pData) +
-                              static_cast<GPtrDiff_t>(nLineSpace) * iY;
+                              static_cast<ptrdiff_t>(nLineSpace) * iY;
 
         for (int iX = 0; iX < nOutXSize;
              iX++, pDstLocation += nPixelSpace, idxBuffer++)

@@ -1877,7 +1877,7 @@ CPLErr GDALEXRWritableRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
                                 ? static_cast<void *>(&poGDS->m_bufferFloat[0])
                                 : static_cast<void *>(dstPtr),
                             eDstDT, GDALGetDataTypeSizeBytes(eDstDT),
-                            static_cast<GPtrDiff_t>(nPixelsInBlock));
+                            static_cast<ptrdiff_t>(nPixelsInBlock));
             if (poGDS->m_pixelType == HALF)
             {
                 if (poGDS->m_bRescaleDiv255)

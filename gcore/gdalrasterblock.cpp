@@ -670,7 +670,7 @@ GDALRasterBlock::~GDALRasterBlock()
 /*                        GetEffectiveBlockSize()                       */
 /************************************************************************/
 
-static size_t GetEffectiveBlockSize(GPtrDiff_t nBlockSize)
+static size_t GetEffectiveBlockSize(ptrdiff_t nBlockSize)
 {
     // The real cost of a block allocation is more than just nBlockSize
     // As we allocate with 64-byte alignment, use 64 as a multiple.

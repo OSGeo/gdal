@@ -740,8 +740,7 @@ bool TileDBArray::EnsureOpenAs(tiledb_query_type_t mode) const
 /************************************************************************/
 
 bool TileDBArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
-                        const int64_t *arrayStep,
-                        const GPtrDiff_t *bufferStride,
+                        const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                         const GDALExtendedDataType &bufferDataType,
                         void *pDstBuffer) const
 {
@@ -805,7 +804,7 @@ bool TileDBArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
 
 bool TileDBArray::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
                          const int64_t *arrayStep,
-                         const GPtrDiff_t *bufferStride,
+                         const ptrdiff_t *bufferStride,
                          const GDALExtendedDataType &bufferDataType,
                          const void *pSrcBuffer)
 {

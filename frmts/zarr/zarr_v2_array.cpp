@@ -458,7 +458,7 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
         std::vector<uint64_t> anTileIdx(m_aoDims.size());
         const std::vector<size_t> anCount(m_aoDims.size(), 1);
         const std::vector<int64_t> anArrayStep(m_aoDims.size(), 0);
-        const std::vector<GPtrDiff_t> anBufferStride(m_aoDims.size(), 0);
+        const std::vector<ptrdiff_t> anBufferStride(m_aoDims.size(), 0);
         const auto eByteDT = GDALExtendedDataType::Create(GDT_Byte);
         for (size_t i = 0; i < m_aoDims.size(); ++i)
         {

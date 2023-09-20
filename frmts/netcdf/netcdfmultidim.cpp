@@ -445,18 +445,18 @@ class netCDFAttribute final : public GDALAttribute
                     CSLConstList papszOptions);
 
     bool
-    IRead(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-          const size_t *count,             // array of size GetDimensionCount()
-          const int64_t *arrayStep,        // step in elements
-          const GPtrDiff_t *bufferStride,  // stride in elements
+    IRead(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+          const size_t *count,            // array of size GetDimensionCount()
+          const int64_t *arrayStep,       // step in elements
+          const ptrdiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const override;
 
     bool
-    IWrite(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-           const size_t *count,             // array of size GetDimensionCount()
-           const int64_t *arrayStep,        // step in elements
-           const GPtrDiff_t *bufferStride,  // stride in elements
+    IWrite(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+           const size_t *count,            // array of size GetDimensionCount()
+           const int64_t *arrayStep,       // step in elements
+           const ptrdiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType,
            const void *pSrcBuffer) override;
 
@@ -530,7 +530,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
               typename ReadOrWriteOneElementType>
     bool
     IReadWriteGeneric(const size_t *arrayStartIdx, const size_t *count,
-                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                      const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       BufferType buffer, NCGetPutVar1FuncType NCGetPutVar1Func,
                       ReadOrWriteOneElementType ReadOrWriteOneElement) const;
@@ -540,7 +540,7 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
               typename ReadOrWriteOneElementType>
     bool IReadWrite(const bool bIsRead, const uint64_t *arrayStartIdx,
                     const size_t *count, const int64_t *arrayStep,
-                    const GPtrDiff_t *bufferStride,
+                    const ptrdiff_t *bufferStride,
                     const GDALExtendedDataType &bufferDataType,
                     BufferType buffer, NCGetPutVar1FuncType NCGetPutVar1Func,
                     NCGetPutVaraFuncType NCGetPutVaraFunc,
@@ -554,18 +554,18 @@ class netCDFVariable final : public GDALPamMDArray, public netCDFAttributeHolder
                    CSLConstList papszOptions);
 
     bool
-    IRead(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-          const size_t *count,             // array of size GetDimensionCount()
-          const int64_t *arrayStep,        // step in elements
-          const GPtrDiff_t *bufferStride,  // stride in elements
+    IRead(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+          const size_t *count,            // array of size GetDimensionCount()
+          const int64_t *arrayStep,       // step in elements
+          const ptrdiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const override;
 
     bool
-    IWrite(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-           const size_t *count,             // array of size GetDimensionCount()
-           const int64_t *arrayStep,        // step in elements
-           const GPtrDiff_t *bufferStride,  // stride in elements
+    IWrite(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+           const size_t *count,            // array of size GetDimensionCount()
+           const int64_t *arrayStep,       // step in elements
+           const ptrdiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType,
            const void *pSrcBuffer) override;
 
@@ -2098,7 +2098,7 @@ netCDFVariable::~netCDFVariable()
             std::vector<uint64_t> arrayStartIdx(nDimCount);
             std::vector<size_t> count(nDimCount, 1);
             std::vector<int64_t> arrayStep(nDimCount, 0);
-            std::vector<GPtrDiff_t> bufferStride(nDimCount, 0);
+            std::vector<ptrdiff_t> bufferStride(nDimCount, 0);
             for (size_t i = 0; i < nDimCount; ++i)
             {
                 arrayStartIdx[i] = m_dims[i]->GetSize() - 1;
@@ -2881,7 +2881,7 @@ template <typename BufferType, typename NCGetPutVar1FuncType,
           typename ReadOrWriteOneElementType>
 bool netCDFVariable::IReadWriteGeneric(
     const size_t *arrayStartIdx, const size_t *count, const int64_t *arrayStep,
-    const GPtrDiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
+    const ptrdiff_t *bufferStride, const GDALExtendedDataType &bufferDataType,
     BufferType buffer, NCGetPutVar1FuncType NCGetPutVar1Func,
     ReadOrWriteOneElementType ReadOrWriteOneElement) const
 {
@@ -2890,7 +2890,7 @@ bool netCDFVariable::IReadWriteGeneric(
     std::vector<size_t> stack_count_iters(m_nDims - 1);
     typedef typename GetGByteType<BufferType>::type GBytePtrType;
     std::vector<GBytePtrType> stack_ptr(m_nDims);
-    std::vector<GPtrDiff_t> ptr_inc;
+    std::vector<ptrdiff_t> ptr_inc;
     ptr_inc.reserve(m_nDims);
     const auto &eArrayEDT = GetDataType();
     const bool bSameDT = m_bPerfectDataTypeMatch && eArrayEDT == bufferDataType;
@@ -2930,7 +2930,7 @@ bool netCDFVariable::IReadWriteGeneric(
             // occur
             array_idx[nDimsMinus1] = CPLUnsanitizedAdd<size_t>(
                 array_idx[nDimsMinus1],
-                static_cast<GPtrDiff_t>(arrayStep[nDimsMinus1]));
+                static_cast<ptrdiff_t>(arrayStep[nDimsMinus1]));
         }
         return true;
     };
@@ -2954,7 +2954,7 @@ bool netCDFVariable::IReadWriteGeneric(
             // thus automatic conversion from negative to big unsigned might
             // occur
             array_idx[0] = CPLUnsanitizedAdd<size_t>(
-                array_idx[0], static_cast<GPtrDiff_t>(arrayStep[0]));
+                array_idx[0], static_cast<ptrdiff_t>(arrayStep[0]));
         }
     }
     else if (m_nDims == 3)
@@ -2977,7 +2977,7 @@ bool netCDFVariable::IReadWriteGeneric(
                 // and thus automatic conversion from negative to big unsigned
                 // might occur
                 array_idx[1] = CPLUnsanitizedAdd<size_t>(
-                    array_idx[1], static_cast<GPtrDiff_t>(arrayStep[1]));
+                    array_idx[1], static_cast<ptrdiff_t>(arrayStep[1]));
             }
             if ((--stack_count_iters[0]) == 0)
                 break;
@@ -2986,7 +2986,7 @@ bool netCDFVariable::IReadWriteGeneric(
             // thus automatic conversion from negative to big unsigned might
             // occur
             array_idx[0] = CPLUnsanitizedAdd<size_t>(
-                array_idx[0], static_cast<GPtrDiff_t>(arrayStep[0]));
+                array_idx[0], static_cast<ptrdiff_t>(arrayStep[0]));
         }
     }
     else
@@ -3014,7 +3014,7 @@ bool netCDFVariable::IReadWriteGeneric(
                 // might occur
                 array_idx[dimIdx] = CPLUnsanitizedAdd<size_t>(
                     array_idx[dimIdx],
-                    static_cast<GPtrDiff_t>(arrayStep[dimIdx]));
+                    static_cast<ptrdiff_t>(arrayStep[dimIdx]));
             }
             // If there was a test if( dimIdx > 0 ), that would be valid for
             // nDims == 2
@@ -3041,7 +3041,7 @@ bool netCDFVariable::IReadWriteGeneric(
                 // might occur
                 array_idx[dimIdx] = CPLUnsanitizedAdd<size_t>(
                     array_idx[dimIdx],
-                    static_cast<GPtrDiff_t>(arrayStep[dimIdx]));
+                    static_cast<ptrdiff_t>(arrayStep[dimIdx]));
             }
             if (dimIdx > 0)
                 goto lbl_return_to_caller;
@@ -3081,7 +3081,7 @@ template <typename BufferType, typename NCGetPutVar1FuncType,
           typename ReadOrWriteOneElementType>
 bool netCDFVariable::IReadWrite(
     const bool bIsRead, const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, BufferType buffer,
     NCGetPutVar1FuncType NCGetPutVar1Func,
     NCGetPutVaraFuncType NCGetPutVaraFunc,
@@ -3365,7 +3365,7 @@ bool netCDFVariable::ReadOneElement(const GDALExtendedDataType &src_datatype,
 
 bool netCDFVariable::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                            const int64_t *arrayStep,
-                           const GPtrDiff_t *bufferStride,
+                           const ptrdiff_t *bufferStride,
                            const GDALExtendedDataType &bufferDataType,
                            void *pDstBuffer) const
 {
@@ -3559,7 +3559,7 @@ bool netCDFVariable::WriteOneElement(const GDALExtendedDataType &dst_datatype,
 
 bool netCDFVariable::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
                             const int64_t *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             const void *pSrcBuffer)
 {
@@ -4393,7 +4393,7 @@ const GDALExtendedDataType &netCDFAttribute::GetDataType() const
 
 bool netCDFAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                             const int64_t *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
 {
@@ -4562,7 +4562,7 @@ bool netCDFAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
 
 bool netCDFAttribute::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
                              const int64_t *arrayStep,
-                             const GPtrDiff_t *bufferStride,
+                             const ptrdiff_t *bufferStride,
                              const GDALExtendedDataType &bufferDataType,
                              const void *pSrcBuffer)
 {

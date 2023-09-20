@@ -949,7 +949,7 @@ static bool CheckNumericDataType(GDALExtendedDataTypeHS* dt)
     }
 
     std::vector<size_t> count_internal(nExpectedDims+1);
-    std::vector<GPtrDiff_t> buffer_stride_internal(nExpectedDims+1);
+    std::vector<ptrdiff_t> buffer_stride_internal(nExpectedDims+1);
     const size_t nDTSize = GDALExtendedDataTypeGetSize(buffer_datatype);
     if( nDTSize == 0 )
     {

@@ -75,7 +75,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                 const uint64_t arrayStartIdx = 0;
                 const size_t count = 1;
                 const int64_t arrayStep = 0;
-                const GPtrDiff_t bufferStride = 0;
+                const ptrdiff_t bufferStride = 0;
                 const std::string str = item.ToString();
                 const char *c_str = str.c_str();
                 poAttr->Write(&arrayStartIdx, &count, &arrayStep, &bufferStride,
@@ -98,7 +98,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                 const uint64_t arrayStartIdx = 0;
                 const size_t count = 1;
                 const int64_t arrayStep = 0;
-                const GPtrDiff_t bufferStride = 0;
+                const ptrdiff_t bufferStride = 0;
                 const double val = item.ToDouble();
                 poAttr->Write(&arrayStartIdx, &count, &arrayStep, &bufferStride,
                               GDALExtendedDataType::Create(GDT_Float64), &val);
@@ -175,7 +175,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                         const uint64_t arrayStartIdx = idx;
                         const size_t count = 1;
                         const int64_t arrayStep = 0;
-                        const GPtrDiff_t bufferStride = 0;
+                        const ptrdiff_t bufferStride = 0;
                         const auto subItemType = subItem.GetType();
                         if (subItemType == CPLJSONObject::Type::String)
                         {
@@ -214,7 +214,7 @@ void ZarrAttributeGroup::Init(const CPLJSONObject &obj, bool bUpdatable)
                 const uint64_t arrayStartIdx = 0;
                 const size_t count = 1;
                 const int64_t arrayStep = 0;
-                const GPtrDiff_t bufferStride = 0;
+                const ptrdiff_t bufferStride = 0;
                 const std::string str = item.ToString();
                 const char *c_str = str.c_str();
                 poAttr->Write(&arrayStartIdx, &count, &arrayStep, &bufferStride,

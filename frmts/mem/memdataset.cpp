@@ -240,28 +240,26 @@ CPLErr MEMRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         for (int iLine = 0; iLine < nYSize; iLine++)
         {
-            GDALCopyWords(pabyData +
-                              nLineOffset *
-                                  static_cast<GPtrDiff_t>(iLine + nYOff) +
-                              nXOff * nPixelOffset,
-                          eDataType, static_cast<int>(nPixelOffset),
-                          static_cast<GByte *>(pData) +
-                              nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
-                          eBufType, static_cast<int>(nPixelSpaceBuf), nXSize);
+            GDALCopyWords(
+                pabyData + nLineOffset * static_cast<ptrdiff_t>(iLine + nYOff) +
+                    nXOff * nPixelOffset,
+                eDataType, static_cast<int>(nPixelOffset),
+                static_cast<GByte *>(pData) +
+                    nLineSpaceBuf * static_cast<ptrdiff_t>(iLine),
+                eBufType, static_cast<int>(nPixelSpaceBuf), nXSize);
         }
     }
     else
     {
         for (int iLine = 0; iLine < nYSize; iLine++)
         {
-            GDALCopyWords(static_cast<GByte *>(pData) +
-                              nLineSpaceBuf * static_cast<GPtrDiff_t>(iLine),
-                          eBufType, static_cast<int>(nPixelSpaceBuf),
-                          pabyData +
-                              nLineOffset *
-                                  static_cast<GPtrDiff_t>(iLine + nYOff) +
-                              nXOff * nPixelOffset,
-                          eDataType, static_cast<int>(nPixelOffset), nXSize);
+            GDALCopyWords(
+                static_cast<GByte *>(pData) +
+                    nLineSpaceBuf * static_cast<ptrdiff_t>(iLine),
+                eBufType, static_cast<int>(nPixelSpaceBuf),
+                pabyData + nLineOffset * static_cast<ptrdiff_t>(iLine + nYOff) +
+                    nXOff * nPixelOffset,
+                eDataType, static_cast<int>(nPixelOffset), nXSize);
         }
     }
     return CE_None;
@@ -1550,7 +1548,7 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(
         MEMMDArray::Create(GetFullName(), osName, aoDimensions, oType));
 
     GByte *pabyData = nullptr;
-    std::vector<GPtrDiff_t> anStrides;
+    std::vector<ptrdiff_t> anStrides;
     if (pData)
     {
         pabyData = static_cast<GByte *>(pData);
@@ -1567,7 +1565,7 @@ std::shared_ptr<GDALMDArray> MEMGroup::CreateMDArray(
             for (int i = 0; i < aosStrides.size(); i++)
             {
                 const auto nStride = CPLAtoGIntBig(aosStrides[i]);
-                anStrides.push_back(static_cast<GPtrDiff_t>(nStride));
+                anStrides.push_back(static_cast<ptrdiff_t>(nStride));
             }
         }
     }
@@ -1910,7 +1908,7 @@ void MEMAbstractMDArray::FreeArray()
 /************************************************************************/
 
 bool MEMAbstractMDArray::Init(GByte *pData,
-                              const std::vector<GPtrDiff_t> &anStrides)
+                              const std::vector<ptrdiff_t> &anStrides)
 {
     uint64_t nTotalSize = m_oType.GetSize();
     if (!m_aoDims.empty())
@@ -1951,9 +1949,8 @@ bool MEMAbstractMDArray::Init(GByte *pData,
     }
 
     // We restrict the size of the allocation so that all elements can be
-    // indexed by GPtrDiff_t
-    if (nTotalSize >
-        static_cast<size_t>(std::numeric_limits<GPtrDiff_t>::max()))
+    // indexed by ptrdiff_t
+    if (nTotalSize > static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()))
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
         return false;
@@ -1978,8 +1975,7 @@ bool MEMAbstractMDArray::Init(GByte *pData,
 
 template <int N>
 inline static void FastCopy(size_t nIters, GByte *dstPtr, const GByte *srcPtr,
-                            GPtrDiff_t dst_inc_offset,
-                            GPtrDiff_t src_inc_offset)
+                            ptrdiff_t dst_inc_offset, ptrdiff_t src_inc_offset)
 {
     if (nIters >= 8)
     {
@@ -2031,12 +2027,11 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite, const size_t *count,
         bBothAreNumericDT &&
         srcType.GetNumericDataType() == dstType.GetNumericDataType();
     const auto nSameDTSize = bSameNumericDT ? srcType.GetSize() : 0;
-    const bool bCanUseMemcpyLastDim =
-        bSameNumericDT &&
-        stack[nDimsMinus1].src_inc_offset ==
-            static_cast<GPtrDiff_t>(nSameDTSize) &&
-        stack[nDimsMinus1].dst_inc_offset ==
-            static_cast<GPtrDiff_t>(nSameDTSize);
+    const bool bCanUseMemcpyLastDim = bSameNumericDT &&
+                                      stack[nDimsMinus1].src_inc_offset ==
+                                          static_cast<ptrdiff_t>(nSameDTSize) &&
+                                      stack[nDimsMinus1].dst_inc_offset ==
+                                          static_cast<ptrdiff_t>(nSameDTSize);
     const size_t nCopySizeLastDim =
         bCanUseMemcpyLastDim ? nSameDTSize * count[nDimsMinus1] : 0;
     const bool bNeedsFreeDynamicMemory =
@@ -2100,7 +2095,7 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite, const size_t *count,
                                 static_cast<int>(src_inc_offset), dstPtr,
                                 dstType.GetNumericDataType(),
                                 static_cast<int>(dst_inc_offset),
-                                static_cast<GPtrDiff_t>(nIters));
+                                static_cast<ptrdiff_t>(nIters));
                 return;
             }
 
@@ -2210,7 +2205,7 @@ void MEMAbstractMDArray::ReadWrite(bool bIsWrite, const size_t *count,
 
 bool MEMAbstractMDArray::IRead(const uint64_t *arrayStartIdx,
                                const size_t *count, const int64_t *arrayStep,
-                               const GPtrDiff_t *bufferStride,
+                               const ptrdiff_t *bufferStride,
                                const GDALExtendedDataType &bufferDataType,
                                void *pDstBuffer) const
 {
@@ -2226,15 +2221,15 @@ bool MEMAbstractMDArray::IRead(const uint64_t *arrayStartIdx,
     }
     std::vector<StackReadWrite> stack(nDims);
     const auto nBufferDTSize = bufferDataType.GetSize();
-    GPtrDiff_t startSrcOffset = 0;
+    ptrdiff_t startSrcOffset = 0;
     for (size_t i = 0; i < nDims; i++)
     {
         startSrcOffset +=
-            static_cast<GPtrDiff_t>(arrayStartIdx[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStartIdx[i] * m_anStrides[i]);
         stack[i].src_inc_offset =
-            static_cast<GPtrDiff_t>(arrayStep[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStep[i] * m_anStrides[i]);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
     stack[0].src_ptr = m_pabyArray + startSrcOffset;
     stack[0].dst_ptr = static_cast<GByte *>(pDstBuffer);
@@ -2249,7 +2244,7 @@ bool MEMAbstractMDArray::IRead(const uint64_t *arrayStartIdx,
 
 bool MEMAbstractMDArray::IWrite(const uint64_t *arrayStartIdx,
                                 const size_t *count, const int64_t *arrayStep,
-                                const GPtrDiff_t *bufferStride,
+                                const ptrdiff_t *bufferStride,
                                 const GDALExtendedDataType &bufferDataType,
                                 const void *pSrcBuffer)
 {
@@ -2273,15 +2268,15 @@ bool MEMAbstractMDArray::IWrite(const uint64_t *arrayStartIdx,
     }
     std::vector<StackReadWrite> stack(nDims);
     const auto nBufferDTSize = bufferDataType.GetSize();
-    GPtrDiff_t startDstOffset = 0;
+    ptrdiff_t startDstOffset = 0;
     for (size_t i = 0; i < nDims; i++)
     {
         startDstOffset +=
-            static_cast<GPtrDiff_t>(arrayStartIdx[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStartIdx[i] * m_anStrides[i]);
         stack[i].dst_inc_offset =
-            static_cast<GPtrDiff_t>(arrayStep[i] * m_anStrides[i]);
+            static_cast<ptrdiff_t>(arrayStep[i] * m_anStrides[i]);
         stack[i].src_inc_offset =
-            static_cast<GPtrDiff_t>(bufferStride[i] * nBufferDTSize);
+            static_cast<ptrdiff_t>(bufferStride[i] * nBufferDTSize);
     }
 
     stack[0].dst_ptr = m_pabyArray + startDstOffset;
@@ -2707,9 +2702,9 @@ bool MEMMDArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
         }
         nNewTotalSize64 *= anNewDimSizes[0];
         // We restrict the size of the allocation so that all elements can be
-        // indexed by GPtrDiff_t
+        // indexed by ptrdiff_t
         if (nNewTotalSize64 >
-            static_cast<size_t>(std::numeric_limits<GPtrDiff_t>::max()))
+            static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max()))
         {
             CPLError(CE_Failure, CPLE_OutOfMemory, "Too big allocation");
             return false;
@@ -2760,7 +2755,7 @@ bool MEMMDArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
     std::vector<uint64_t> arrayStartIdx(nDimCount);
     std::vector<size_t> count(nDimCount);
     std::vector<int64_t> arrayStep(nDimCount, 1);
-    std::vector<GPtrDiff_t> bufferStride(nDimCount);
+    std::vector<ptrdiff_t> bufferStride(nDimCount);
     for (size_t i = nDimCount; i > 0;)
     {
         --i;
@@ -2768,8 +2763,8 @@ bool MEMMDArray::Resize(const std::vector<uint64_t> &anNewDimSizes,
             bufferStride[i] = 1;
         else
         {
-            bufferStride[i] = static_cast<GPtrDiff_t>(bufferStride[i + 1] *
-                                                      dims[i + 1]->GetSize());
+            bufferStride[i] = static_cast<ptrdiff_t>(bufferStride[i + 1] *
+                                                     dims[i + 1]->GetSize());
         }
         const auto nCount = std::min(anNewDimSizes[i], dims[i]->GetSize());
         count[i] = static_cast<size_t>(nCount);

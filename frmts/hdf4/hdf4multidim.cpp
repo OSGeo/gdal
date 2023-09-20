@@ -127,7 +127,7 @@ class HDF4AbstractAttribute : public GDALAttribute
 
   protected:
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -297,7 +297,7 @@ class HDF4SwathArray final : public GDALPamMDArray
         const std::vector<std::shared_ptr<GDALDimension>> &groupDims);
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -525,7 +525,7 @@ class HDF4EOSGridArray final : public GDALPamMDArray
         int32 iNumType,
         const std::vector<std::shared_ptr<GDALDimension>> &groupDims);
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -676,7 +676,7 @@ class HDF4SDSArray final : public GDALPamMDArray
                  int32 iNumType, int32 nAttrs, bool bIsGDALDS);
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -831,7 +831,7 @@ class HDF4GRArray final : public GDALPamMDArray
                 int32 nAttrs);
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -953,7 +953,7 @@ class HDF4GRPalette final : public GDALAttribute
 
   protected:
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -1590,7 +1590,7 @@ union ReadFunc
     intn (*pReadData)(int32, int32[], int32[], int32[], VOIDP);
 };
 
-static inline void IncrPointer(GByte *&ptr, GPtrDiff_t nInc, size_t nIncSize)
+static inline void IncrPointer(GByte *&ptr, ptrdiff_t nInc, size_t nIncSize)
 {
     if (nInc < 0)
         ptr -= (-nInc) * nIncSize;
@@ -1599,7 +1599,7 @@ static inline void IncrPointer(GByte *&ptr, GPtrDiff_t nInc, size_t nIncSize)
 }
 
 static bool ReadPixels(const uint64_t *arrayStartIdx, const size_t *count,
-                       const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                       const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                        const GDALExtendedDataType &bufferDataType,
                        void *pDstBuffer,
                        const std::shared_ptr<HDF4SharedResources> &poShared,
@@ -1621,7 +1621,7 @@ static bool ReadPixels(const uint64_t *arrayStartIdx, const size_t *count,
     std::vector<int32> sw_start(nDims);
     std::vector<int32> sw_stride(nDims);
     std::vector<int32> sw_edge(nDims);
-    std::vector<GPtrDiff_t> newBufferStride(nDims);
+    std::vector<ptrdiff_t> newBufferStride(nDims);
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     const size_t nBufferDataTypeSize = bufferDataType.GetSize();
     for (size_t i = 0; i < nDims; i++)
@@ -1646,7 +1646,7 @@ static bool ReadPixels(const uint64_t *arrayStartIdx, const size_t *count,
     for (size_t i = nDims; i > 0;)
     {
         --i;
-        if (newBufferStride[i] != static_cast<GPtrDiff_t>(nExpectedStride))
+        if (newBufferStride[i] != static_cast<ptrdiff_t>(nExpectedStride))
         {
             bContiguousStride = false;
         }
@@ -1720,7 +1720,7 @@ lbl_next_depth:
 
 bool HDF4SwathArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                            const int64_t *arrayStep,
-                           const GPtrDiff_t *bufferStride,
+                           const ptrdiff_t *bufferStride,
                            const GDALExtendedDataType &bufferDataType,
                            void *pDstBuffer) const
 {
@@ -1793,7 +1793,7 @@ HDF4AbstractAttribute::HDF4AbstractAttribute(
 
 bool HDF4AbstractAttribute::IRead(const uint64_t *arrayStartIdx,
                                   const size_t *count, const int64_t *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
+                                  const ptrdiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const
 {
@@ -2353,7 +2353,7 @@ std::shared_ptr<OGRSpatialReference> HDF4EOSGridArray::GetSpatialRef() const
 
 bool HDF4EOSGridArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                              const int64_t *arrayStep,
-                             const GPtrDiff_t *bufferStride,
+                             const ptrdiff_t *bufferStride,
                              const GDALExtendedDataType &bufferDataType,
                              void *pDstBuffer) const
 {
@@ -2820,7 +2820,7 @@ std::shared_ptr<OGRSpatialReference> HDF4SDSArray::GetSpatialRef() const
 
 bool HDF4SDSArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                          const int64_t *arrayStep,
-                         const GPtrDiff_t *bufferStride,
+                         const ptrdiff_t *bufferStride,
                          const GDALExtendedDataType &bufferDataType,
                          void *pDstBuffer) const
 {
@@ -3011,8 +3011,7 @@ HDF4GRArray::GetAttributes(CSLConstList) const
 /************************************************************************/
 
 bool HDF4GRArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
-                        const int64_t *arrayStep,
-                        const GPtrDiff_t *bufferStride,
+                        const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                         const GDALExtendedDataType &bufferDataType,
                         void *pDstBuffer) const
 {
@@ -3029,7 +3028,7 @@ bool HDF4GRArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
     std::vector<int32> sw_start(nDims);
     std::vector<int32> sw_stride(nDims);
     std::vector<int32> sw_edge(nDims);
-    std::vector<GPtrDiff_t> newBufferStride(nDims);
+    std::vector<ptrdiff_t> newBufferStride(nDims);
     GByte *pabyDstBuffer = static_cast<GByte *>(pDstBuffer);
     const size_t nBufferDataTypeSize = bufferDataType.GetSize();
     for (size_t i = 0; i < nDims; i++)
@@ -3054,7 +3053,7 @@ bool HDF4GRArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
     for (size_t i = nDims; i > 0;)
     {
         --i;
-        if (newBufferStride[i] != static_cast<GPtrDiff_t>(nExpectedStride))
+        if (newBufferStride[i] != static_cast<ptrdiff_t>(nExpectedStride))
         {
             bContiguousStride = false;
             break;
@@ -3146,7 +3145,7 @@ HDF4GRPalette::HDF4GRPalette(
 
 bool HDF4GRPalette::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                           const int64_t *arrayStep,
-                          const GPtrDiff_t *bufferStride,
+                          const ptrdiff_t *bufferStride,
                           const GDALExtendedDataType &bufferDataType,
                           void *pDstBuffer) const
 {

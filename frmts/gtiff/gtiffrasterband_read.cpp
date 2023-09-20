@@ -135,7 +135,7 @@ int GTiffRasterBand::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     {
         const int nDTSize = nDTSizeBits / 8;
         const size_t nTempBufferForCommonDirectIOSize = static_cast<size_t>(
-            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize * nDTSize *
+            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize * nDTSize *
             (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG ? m_poGDS->nBands
                                                              : 1));
         if (m_poGDS->m_pTempBufferForCommonDirectIO == nullptr)
@@ -457,8 +457,8 @@ CPLVirtualMem *GTiffRasterBand::GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
         return nullptr;
     }
 
-    GPtrDiff_t nBlockSize = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
-                            GDALGetDataTypeSizeBytes(eDataType);
+    ptrdiff_t nBlockSize = static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
+                           GDALGetDataTypeSizeBytes(eDataType);
     if (m_poGDS->m_nPlanarConfig == PLANARCONFIG_CONTIG)
         nBlockSize *= m_poGDS->nBands;
 
@@ -1186,16 +1186,15 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 {
     m_poGDS->Crystalize();
 
-    GPtrDiff_t nBlockBufSize = 0;
+    ptrdiff_t nBlockBufSize = 0;
     if (TIFFIsTiled(m_poGDS->m_hTIFF))
     {
-        nBlockBufSize = static_cast<GPtrDiff_t>(TIFFTileSize(m_poGDS->m_hTIFF));
+        nBlockBufSize = static_cast<ptrdiff_t>(TIFFTileSize(m_poGDS->m_hTIFF));
     }
     else
     {
         CPLAssert(nBlockXOff == 0);
-        nBlockBufSize =
-            static_cast<GPtrDiff_t>(TIFFStripSize(m_poGDS->m_hTIFF));
+        nBlockBufSize = static_cast<ptrdiff_t>(TIFFStripSize(m_poGDS->m_hTIFF));
     }
 
     const int nBlockId = ComputeBlockId(nBlockXOff, nBlockYOff);
@@ -1276,7 +1275,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         if (eErr != CE_None)
         {
             memset(pImage, 0,
-                   static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+                   static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                        GDALGetDataTypeSizeBytes(eDataType));
             return eErr;
         }
@@ -1288,7 +1287,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             ((eDataType == GDT_Byte && m_poGDS->m_nBitsPerSample == 8) ||
              (eDataType == GDT_Int16 && m_poGDS->m_nBitsPerSample == 16) ||
              (eDataType == GDT_UInt16 && m_poGDS->m_nBitsPerSample == 16)) &&
-            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                     GDALGetDataTypeSizeBytes(eDataType) <
                 GDALGetCacheMax64() / m_poGDS->nBands)
         {
@@ -1340,7 +1339,7 @@ CPLErr GTiffRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
             GDALCopyWords64(pabyImage, eDataType, m_poGDS->nBands * nWordBytes,
                             pImage, eDataType, nWordBytes,
-                            static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+                            static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize);
 
             eErr = FillCacheForOtherBands(nBlockXOff, nBlockYOff);
         }
@@ -1406,7 +1405,7 @@ CPLErr GTiffRasterBand::FillCacheForOtherBands(int nBlockXOff, int nBlockYOff)
         m_poGDS->nBands <
             128 &&  // avoid caching for datasets with too many bands
         !m_poGDS->m_bLoadingOtherBands &&
-        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+        static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                 GDALGetDataTypeSizeBytes(eDataType) <
             GDALGetCacheMax64() / m_poGDS->nBands)
     {

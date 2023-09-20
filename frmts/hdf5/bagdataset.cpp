@@ -1470,7 +1470,7 @@ CreateRAT(const std::shared_ptr<GDALMDArray> &poValues)
         const uint64_t arrayStartIdx = static_cast<uint64_t>(iRow);
         const size_t count = 1;
         const int64_t arrayStep = 0;
-        const GPtrDiff_t bufferStride = 0;
+        const ptrdiff_t bufferStride = 0;
         poValues->Read(&arrayStartIdx, &count, &arrayStep, &bufferStride,
                        oValuesDT, &abyRow[0]);
         int iCol = 0;
@@ -1672,7 +1672,7 @@ CPLErr BAGGeorefMDBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
             count[0] += (nRasterYSize - (nBlockYOff + 1) * nBlockYSize);
         }
         const int64_t arrayStep[2] = {1, 1};
-        const GPtrDiff_t bufferStride[2] = {nBlockXSize, 1};
+        const ptrdiff_t bufferStride[2] = {nBlockXSize, 1};
 
         if (!m_poKeys->Read(arrayStartIdx, count, arrayStep, bufferStride,
                             m_poKeys->GetDataType(), pImage))
@@ -1765,7 +1765,7 @@ CPLErr BAGGeorefMDSuperGridBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                        nBlockXSize};
         size_t count[2] = {1, static_cast<size_t>(nBlockXSize)};
         const int64_t arrayStep[2] = {1, 1};
-        const GPtrDiff_t bufferStride[2] = {nBlockXSize, 1};
+        const ptrdiff_t bufferStride[2] = {nBlockXSize, 1};
 
         if (!m_poKeys->Read(arrayStartIdx, count, arrayStep, bufferStride,
                             m_poKeys->GetDataType(), pImage))
@@ -2891,7 +2891,7 @@ OGRFeature *BAGTrackingListLayer::GetNextRawFeature()
     const uint64_t arrayStartIdx = static_cast<uint64_t>(m_nIdx);
     const size_t count = 1;
     const int64_t arrayStep = 0;
-    const GPtrDiff_t bufferStride = 0;
+    const ptrdiff_t bufferStride = 0;
     m_poArray->Read(&arrayStartIdx, &count, &arrayStep, &bufferStride,
                     oDataType, &abyRow[0]);
     int iCol = 0;

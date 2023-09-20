@@ -1075,9 +1075,9 @@ class CPL_DLL GDALRasterBlock
     /** Return the block size in bytes
      * @return block size.
      */
-    GPtrDiff_t GetBlockSize() const
+    ptrdiff_t GetBlockSize() const
     {
-        return static_cast<GPtrDiff_t>(nXSize) * nYSize *
+        return static_cast<ptrdiff_t>(nXSize) * nYSize *
                GDALGetDataTypeSizeBytes(eType);
     }
 
@@ -2193,9 +2193,9 @@ class CPL_DLL GDALExtendedDataType
 
     static bool CopyValues(const void *pSrc,
                            const GDALExtendedDataType &srcType,
-                           GPtrDiff_t nSrcStrideInElts, void *pDst,
+                           ptrdiff_t nSrcStrideInElts, void *pDst,
                            const GDALExtendedDataType &dstType,
-                           GPtrDiff_t nDstStrideInElts, size_t nValues);
+                           ptrdiff_t nDstStrideInElts, size_t nValues);
 
   private:
     GDALExtendedDataType(size_t nMaxStringLength,
@@ -2484,27 +2484,27 @@ class CPL_DLL GDALAbstractMDArray
 
     bool CheckReadWriteParams(const uint64_t *arrayStartIdx,
                               const size_t *count, const int64_t *&arrayStep,
-                              const GPtrDiff_t *&bufferStride,
+                              const ptrdiff_t *&bufferStride,
                               const GDALExtendedDataType &bufferDataType,
                               const void *buffer,
                               const void *buffer_alloc_start,
                               size_t buffer_alloc_size,
                               std::vector<int64_t> &tmp_arrayStep,
-                              std::vector<GPtrDiff_t> &tmp_bufferStride) const;
+                              std::vector<ptrdiff_t> &tmp_bufferStride) const;
 
     virtual bool
-    IRead(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-          const size_t *count,             // array of size GetDimensionCount()
-          const int64_t *arrayStep,        // step in elements
-          const GPtrDiff_t *bufferStride,  // stride in elements
+    IRead(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+          const size_t *count,            // array of size GetDimensionCount()
+          const int64_t *arrayStep,       // step in elements
+          const ptrdiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType,
           void *pDstBuffer) const = 0;
 
     virtual bool
-    IWrite(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-           const size_t *count,             // array of size GetDimensionCount()
-           const int64_t *arrayStep,        // step in elements
-           const GPtrDiff_t *bufferStride,  // stride in elements
+    IWrite(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+           const size_t *count,            // array of size GetDimensionCount()
+           const int64_t *arrayStep,       // step in elements
+           const ptrdiff_t *bufferStride,  // stride in elements
            const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer);
 
     void BaseRename(const std::string &osNewName);
@@ -2586,19 +2586,19 @@ class CPL_DLL GDALAbstractMDArray
                                  void *pUserData);
 
     virtual bool
-    Read(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-         const size_t *count,             // array of size GetDimensionCount()
-         const int64_t *arrayStep,        // step in elements
-         const GPtrDiff_t *bufferStride,  // stride in elements
+    Read(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+         const size_t *count,            // array of size GetDimensionCount()
+         const int64_t *arrayStep,       // step in elements
+         const ptrdiff_t *bufferStride,  // stride in elements
          const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
          const void *pDstBufferAllocStart = nullptr,
          size_t nDstBufferAllocSize = 0) const;
 
     bool
-    Write(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-          const size_t *count,             // array of size GetDimensionCount()
-          const int64_t *arrayStep,        // step in elements
-          const GPtrDiff_t *bufferStride,  // stride in elements
+    Write(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+          const size_t *count,            // array of size GetDimensionCount()
+          const int64_t *arrayStep,       // step in elements
+          const ptrdiff_t *bufferStride,  // stride in elements
           const GDALExtendedDataType &bufferDataType, const void *pSrcBuffer,
           const void *pSrcBufferAllocStart = nullptr,
           size_t nSrcBufferAllocSize = 0);
@@ -2733,7 +2733,7 @@ class CPL_DLL GDALAttributeString final : public GDALAttribute
 
   protected:
     bool IRead(const uint64_t *, const size_t *, const int64_t *,
-               const GPtrDiff_t *, const GDALExtendedDataType &bufferDataType,
+               const ptrdiff_t *, const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
   public:
@@ -2763,7 +2763,7 @@ class CPL_DLL GDALAttributeNumeric final : public GDALAttribute
 
   protected:
     bool IRead(const uint64_t *, const size_t *, const int64_t *,
-               const GPtrDiff_t *, const GDALExtendedDataType &bufferDataType,
+               const ptrdiff_t *, const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
   public:
@@ -2847,25 +2847,25 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
 
     // Returns if bufferStride values express a transposed view of the array
     bool IsTransposedRequest(const size_t *count,
-                             const GPtrDiff_t *bufferStride) const;
+                             const ptrdiff_t *bufferStride) const;
 
     // Should only be called if IsTransposedRequest() returns true
     bool ReadForTransposedRequest(const uint64_t *arrayStartIdx,
                                   const size_t *count, const int64_t *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
+                                  const ptrdiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const;
 
     bool IsStepOneContiguousRowMajorOrderedSameDataType(
         const size_t *count, const int64_t *arrayStep,
-        const GPtrDiff_t *bufferStride,
+        const ptrdiff_t *bufferStride,
         const GDALExtendedDataType &bufferDataType) const;
 
     // Should only be called if IsStepOneContiguousRowMajorOrderedSameDataType()
     // returns false
     bool ReadUsingContiguousIRead(const uint64_t *arrayStartIdx,
                                   const size_t *count, const int64_t *arrayStep,
-                                  const GPtrDiff_t *bufferStride,
+                                  const ptrdiff_t *bufferStride,
                                   const GDALExtendedDataType &bufferDataType,
                                   void *pDstBuffer) const;
 
@@ -3017,10 +3017,10 @@ class CPL_DLL GDALMDArray : virtual public GDALAbstractMDArray,
     bool Cache(CSLConstList papszOptions = nullptr) const;
 
     bool
-    Read(const uint64_t *arrayStartIdx,   // array of size GetDimensionCount()
-         const size_t *count,             // array of size GetDimensionCount()
-         const int64_t *arrayStep,        // step in elements
-         const GPtrDiff_t *bufferStride,  // stride in elements
+    Read(const uint64_t *arrayStartIdx,  // array of size GetDimensionCount()
+         const size_t *count,            // array of size GetDimensionCount()
+         const int64_t *arrayStep,       // step in elements
+         const ptrdiff_t *bufferStride,  // stride in elements
          const GDALExtendedDataType &bufferDataType, void *pDstBuffer,
          const void *pDstBufferAllocStart = nullptr,
          size_t nDstBufferAllocSize = 0) const override final;
@@ -3065,7 +3065,7 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
                             size_t iDimX, size_t iDimY,
                             const uint64_t *arrayStartIdx, const size_t *count,
                             const int64_t *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pBuffer);
 //! @endcond
@@ -3087,7 +3087,7 @@ class CPL_DLL GDALMDArrayRegularlySpaced : public GDALMDArray
 
   protected:
     bool IRead(const uint64_t *, const size_t *, const int64_t *,
-               const GPtrDiff_t *, const GDALExtendedDataType &bufferDataType,
+               const ptrdiff_t *, const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
   public:

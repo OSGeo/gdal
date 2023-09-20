@@ -1626,7 +1626,7 @@ class GRIBArray final : public GDALPamMDArray
 
   protected:
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
@@ -2117,7 +2117,7 @@ const std::vector<double> &GRIBSharedResource::LoadData(uint64_t nOffset,
 /************************************************************************/
 
 bool GRIBArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
-                      const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                      const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                       const GDALExtendedDataType &bufferDataType,
                       void *pDstBuffer) const
 {

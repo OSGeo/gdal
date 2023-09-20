@@ -90,7 +90,7 @@ TileDBAttribute::Create(const std::shared_ptr<TileDBAttributeHolder> &poParent,
 
 bool TileDBAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                             const int64_t *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pDstBuffer) const
 {
@@ -145,7 +145,7 @@ bool TileDBAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
 
 bool TileDBAttribute::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
                              const int64_t *arrayStep,
-                             const GPtrDiff_t *bufferStride,
+                             const ptrdiff_t *bufferStride,
                              const GDALExtendedDataType &bufferDataType,
                              const void *pSrcBuffer)
 {

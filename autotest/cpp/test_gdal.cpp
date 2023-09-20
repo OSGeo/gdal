@@ -1040,7 +1040,7 @@ TEST_F(test_gdal, GDALExtendedDataType)
 
       protected:
         bool IRead(const uint64_t *, const size_t *, const int64_t *,
-                   const GPtrDiff_t *, const GDALExtendedDataType &,
+                   const ptrdiff_t *, const GDALExtendedDataType &,
                    void *) const override
         {
             return false;

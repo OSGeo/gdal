@@ -186,7 +186,7 @@ CPLErr GTiffRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
         GDALCopyWords64(pabyThisImage, eDataType, nWordBytes, pabyOut,
                         eDataType, nWordBytes * nBands,
-                        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+                        static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize);
 
         if (poBlock != nullptr)
         {
@@ -1022,8 +1022,7 @@ CPLErr GTiffRasterBand::DeleteNoDataValue()
 void GTiffRasterBand::NullBlock(void *pData)
 
 {
-    const GPtrDiff_t nWords =
-        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+    const ptrdiff_t nWords = static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
     const int nChunkSize = std::max(1, GDALGetDataTypeSizeBytes(eDataType));
 
     int l_bNoDataSet = FALSE;

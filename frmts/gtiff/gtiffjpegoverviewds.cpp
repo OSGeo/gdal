@@ -207,7 +207,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
                                                  &nByteCount, &bErrOccurred))
     {
         memset(pImage, 0,
-               static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+               static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                    nDataTypeSize);
         if (bErrOccurred)
             return CE_Failure;
@@ -370,14 +370,14 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         if (nBlockXOff * nBlockXSize > m_poGDS->GetRasterXSize() - nBufXSize)
         {
             memset(pImage, 0,
-                   static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+                   static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                        nDataTypeSize);
             nBufXSize = m_poGDS->GetRasterXSize() - nBlockXOff * nBlockXSize;
         }
         if (nBlockYOff * nBlockYSize > m_poGDS->GetRasterYSize() - nBufYSize)
         {
             memset(pImage, 0,
-                   static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize *
+                   static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize *
                        nDataTypeSize);
             nBufYSize = m_poGDS->GetRasterYSize() - nBlockYOff * nBlockYSize;
         }
@@ -391,7 +391,7 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
             eErr = l_poDS->GetRasterBand(nSrcBand)->RasterIO(
                 GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize, pImage,
                 nBufXSize, nBufYSize, eDataType, 0,
-                static_cast<GPtrDiff_t>(nBlockXSize) * nDataTypeSize, nullptr);
+                static_cast<ptrdiff_t>(nBlockXSize) * nDataTypeSize, nullptr);
         }
     }
 

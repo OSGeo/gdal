@@ -597,7 +597,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
             if (iBand == 4)
             {
                 const auto pSrcA = localctx.psImage->comps[3].data;
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     memcpy(pDst + j * nBlockXSize,
                            pSrcA + j * localctx.stride(localctx.psImage->comps),
@@ -609,7 +609,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 const auto pSrcY = localctx.psImage->comps[0].data;
                 const auto pSrcCb = localctx.psImage->comps[1].data;
                 const auto pSrcCr = localctx.psImage->comps[2].data;
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     for (int i = 0; i < nWidthToRead; i++)
                     {
@@ -640,7 +640,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
 
             if (bPromoteTo8Bit)
             {
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     for (int i = 0; i < nWidthToRead; i++)
                     {
@@ -665,7 +665,7 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
 
             if (bPromoteTo8Bit)
             {
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     for (int i = 0; i < nWidthToRead; i++)
                     {
@@ -684,11 +684,11 @@ CPLErr JP2OPJLikeDataset<CODEC, BASE>::ReadBlock(int nBand, VSILFILE *fpIn,
                 GDALCopyWords64(
                     localctx.psImage->comps[iBand - 1].data, GDT_Int32, 4,
                     pDstBuffer, eDataType, nDataTypeSize,
-                    static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize);
+                    static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize);
             }
             else
             {
-                for (GPtrDiff_t j = 0; j < nHeightToRead; j++)
+                for (ptrdiff_t j = 0; j < nHeightToRead; j++)
                 {
                     GDALCopyWords(
                         localctx.psImage->comps[iBand - 1].data +

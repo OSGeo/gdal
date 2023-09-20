@@ -896,7 +896,7 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     for (iSrcLine = 0, iDstLine = 0; iDstLine < nBufYSize; iDstLine++)
     {
         NCSEcwReadStatus eRStatus;
-        GPtrDiff_t iDstLineOff = iDstLine * (GPtrDiff_t)nLineSpace;
+        ptrdiff_t iDstLineOff = iDstLine * (ptrdiff_t)nLineSpace;
         unsigned char *pabySrcBuf;
 
         if (bDirect)

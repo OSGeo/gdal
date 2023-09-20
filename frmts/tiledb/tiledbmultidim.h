@@ -358,12 +358,12 @@ class TileDBArray final : public GDALMDArray, public TileDBAttributeHolder
 
   protected:
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 
@@ -516,12 +516,12 @@ class TileDBAttribute final : public GDALAttribute
 
   protected:
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 

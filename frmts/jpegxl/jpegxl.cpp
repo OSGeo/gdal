@@ -1607,7 +1607,7 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             GDALCopyWords64(abyDecodedImage.data(), eNativeDT, nNativeDataSize,
                             pData, eBufType, nBufTypeSize,
-                            static_cast<GPtrDiff_t>(nRasterXSize) *
+                            static_cast<ptrdiff_t>(nRasterXSize) *
                                 nRasterYSize * nBandCount);
         }
         else

@@ -821,7 +821,7 @@ VRTAttribute::Create(const std::string &osParentName, const CPLXMLNode *psNode)
 
 bool VRTAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
                          const int64_t *arrayStep,
-                         const GPtrDiff_t *bufferStride,
+                         const ptrdiff_t *bufferStride,
                          const GDALExtendedDataType &bufferDataType,
                          void *pDstBuffer) const
 {
@@ -859,7 +859,7 @@ bool VRTAttribute::IRead(const uint64_t *arrayStartIdx, const size_t *count,
 
 bool VRTAttribute::IWrite(const uint64_t *arrayStartIdx, const size_t *count,
                           const int64_t *arrayStep,
-                          const GPtrDiff_t *bufferStride,
+                          const ptrdiff_t *bufferStride,
                           const GDALExtendedDataType &bufferDataType,
                           const void *pSrcBuffer)
 {
@@ -1106,7 +1106,7 @@ VRTMDArray::GetAttributes(CSLConstList) const
 
 bool VRTMDArraySourceRegularlySpaced::Read(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     GDALExtendedDataType dtFloat64(GDALExtendedDataType::Create(GDT_Float64));
@@ -1338,7 +1338,7 @@ static inline void IncrPointer(const GByte *&ptr, int64_t nInc, size_t nIncSize)
         ptr += nInc * nIncSize;
 }
 
-static inline void IncrPointer(GByte *&ptr, GPtrDiff_t nInc, size_t nIncSize)
+static inline void IncrPointer(GByte *&ptr, ptrdiff_t nInc, size_t nIncSize)
 {
     if (nInc < 0)
         ptr -= (-nInc) * nIncSize;
@@ -1348,7 +1348,7 @@ static inline void IncrPointer(GByte *&ptr, GPtrDiff_t nInc, size_t nIncSize)
 
 bool VRTMDArraySourceInlinedValues::Read(
     const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pDstBuffer) const
 {
     const auto nDims(m_poDstArray->GetDimensionCount());
@@ -1399,7 +1399,7 @@ bool VRTMDArraySourceInlinedValues::Read(
     }
 
     size_t nSrcOffset = 0;
-    GPtrDiff_t nDstOffset = 0;
+    ptrdiff_t nDstOffset = 0;
     const auto nBufferDataTypeSize(bufferDataType.GetSize());
     for (size_t i = 0; i < nDims; i++)
     {
@@ -1871,7 +1871,7 @@ static std::string CreateKey(const std::string &filename)
 bool VRTMDArraySourceFromArray::Read(const uint64_t *arrayStartIdx,
                                      const size_t *count,
                                      const int64_t *arrayStep,
-                                     const GPtrDiff_t *bufferStride,
+                                     const ptrdiff_t *bufferStride,
                                      const GDALExtendedDataType &bufferDataType,
                                      void *pDstBuffer) const
 {
@@ -2056,7 +2056,7 @@ bool VRTMDArraySourceFromArray::Read(const uint64_t *arrayStartIdx,
         }
     }
 
-    GPtrDiff_t nDstOffset = 0;
+    ptrdiff_t nDstOffset = 0;
     const auto nBufferDataTypeSize(bufferDataType.GetSize());
     std::vector<uint64_t> anSrcArrayOffset(nDims);
     std::vector<int64_t> anSrcArrayStep(nDims);
@@ -2084,7 +2084,7 @@ bool VRTMDArraySourceFromArray::Read(const uint64_t *arrayStartIdx,
 /************************************************************************/
 
 bool VRTMDArray::IRead(const uint64_t *arrayStartIdx, const size_t *count,
-                       const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                       const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                        const GDALExtendedDataType &bufferDataType,
                        void *pDstBuffer) const
 {

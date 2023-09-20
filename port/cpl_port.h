@@ -131,6 +131,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdarg.h>
+#include <stddef.h>  // ptrdiff_t
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
@@ -251,18 +252,9 @@ typedef GUIntBig GUInt64;
 /** Minimum GUInt64 value */
 #define GUINT64_MAX GUINTBIG_MAX
 
-#endif
-
-#if SIZEOF_VOIDP > 8
-#include <stddef.h>  // ptrdiff_t
 /** Integer type large enough to hold the difference between 2 addresses */
 typedef ptrdiff_t GPtrDiff_t;
-#elif SIZEOF_VOIDP == 8
-/** Integer type large enough to hold the difference between 2 addresses */
-typedef int64_t GPtrDiff_t;
-#else
-/** Integer type large enough to hold the difference between 2 addresses */
-typedef int GPtrDiff_t;
+
 #endif
 
 #ifdef GDAL_COMPILATION

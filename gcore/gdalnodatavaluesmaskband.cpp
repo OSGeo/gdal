@@ -86,7 +86,7 @@ GDALNoDataValuesMaskBand::~GDALNoDataValuesMaskBand()
 /************************************************************************/
 
 template <class T>
-static void FillOutBuffer(GPtrDiff_t nBlockOffsetPixels, int nBands,
+static void FillOutBuffer(ptrdiff_t nBlockOffsetPixels, int nBands,
                           const void *pabySrc, const double *padfNodataValues,
                           void *pImage)
 {
@@ -96,7 +96,7 @@ static void FillOutBuffer(GPtrDiff_t nBlockOffsetPixels, int nBands,
         paNoData[iBand] = static_cast<T>(padfNodataValues[iBand]);
     }
 
-    for (GPtrDiff_t i = 0; i < nBlockOffsetPixels; i++)
+    for (ptrdiff_t i = 0; i < nBlockOffsetPixels; i++)
     {
         int nCountNoData = 0;
         for (int iBand = 0; iBand < nBands; ++iBand)
@@ -191,9 +191,9 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
                    nBlockYSize);
     }
 
-    const GPtrDiff_t nBlockOffsetPixels =
-        static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
-    const GPtrDiff_t nBandOffsetByte = nWrkDTSize * nBlockOffsetPixels;
+    const ptrdiff_t nBlockOffsetPixels =
+        static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
+    const ptrdiff_t nBandOffsetByte = nWrkDTSize * nBlockOffsetPixels;
     for (int iBand = 0; iBand < nBands; ++iBand)
     {
         const CPLErr eErr = poDS->GetRasterBand(iBand + 1)->RasterIO(

@@ -810,12 +810,12 @@ class ZarrArray CPL_NON_FINAL : public GDALPamMDArray
     ZarrArray &operator=(const ZarrArray &) = delete;
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override;
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override;
 

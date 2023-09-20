@@ -1462,7 +1462,7 @@ CPLErr GDALRasterBand::Fill(double dfRealValue, double dfImaginaryValue)
         return CE_Failure;
 
     // Allocate the source block.
-    auto blockSize = static_cast<GPtrDiff_t>(nBlockXSize) * nBlockYSize;
+    auto blockSize = static_cast<ptrdiff_t>(nBlockXSize) * nBlockYSize;
     int elementSize = GDALGetDataTypeSizeBytes(eDataType);
     auto blockByteSize = blockSize * elementSize;
     unsigned char *srcBlock =
@@ -3681,11 +3681,11 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
                 (dfMin >= -0.5 && dfMin <= 0.5) && nYCheck == nBlockYSize &&
                 nXCheck == nBlockXSize && nBuckets == 256)
             {
-                const GPtrDiff_t nPixels =
-                    static_cast<GPtrDiff_t>(nXCheck) * nYCheck;
+                const ptrdiff_t nPixels =
+                    static_cast<ptrdiff_t>(nXCheck) * nYCheck;
                 GByte *pabyData = static_cast<GByte *>(pData);
 
-                for (GPtrDiff_t i = 0; i < nPixels; i++)
+                for (ptrdiff_t i = 0; i < nPixels; i++)
                 {
                     if (pabyMaskData && pabyMaskData[i] == 0)
                         continue;
@@ -3705,8 +3705,8 @@ CPLErr GDALRasterBand::GetHistogram(double dfMin, double dfMax, int nBuckets,
             {
                 for (int iX = 0; iX < nXCheck; iX++)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
 
                     if (pabyMaskData && pabyMaskData[iOffset] == 0)
                         continue;
@@ -4479,8 +4479,8 @@ struct ComputeStatisticsInternalGeneric
             {
                 for (int iX = 0; iX < nXCheck; iX++)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     const uint32_t nValue = pData[iOffset];
                     if (nValue == nNoDataValue)
                         continue;
@@ -4517,8 +4517,8 @@ struct ComputeStatisticsInternalGeneric
                 int iX;
                 for (iX = 0; iX + 3 < nXCheck; iX += 4)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     const uint64_t nValue = pData[iOffset];
                     const uint64_t nValue2 = pData[iOffset + 1];
                     const uint64_t nValue3 = pData[iOffset + 2];
@@ -4534,8 +4534,8 @@ struct ComputeStatisticsInternalGeneric
                 }
                 for (; iX < nXCheck; ++iX)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     const uint64_t nValue = pData[iOffset];
                     nSum += nValue;
                     nSumSquare += nValue * nValue;
@@ -4551,8 +4551,8 @@ struct ComputeStatisticsInternalGeneric
                 int iX;
                 for (iX = 0; iX + 1 < nXCheck; iX += 2)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     const uint32_t nValue = pData[iOffset];
                     const uint32_t nValue2 = pData[iOffset + 1];
                     if (nValue < nValue2)
@@ -4583,8 +4583,8 @@ struct ComputeStatisticsInternalGeneric
                 }
                 if (iX < nXCheck)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     const uint32_t nValue = pData[iOffset];
                     if (nValue < nMin)
                         nMin = nValue;
@@ -4640,8 +4640,8 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                     uint32_t nSampleCount32bit = 0;
                     for (; iX < iMax; iX++)
                     {
-                        const GPtrDiff_t iOffset =
-                            iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                        const ptrdiff_t iOffset =
+                            iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                         const uint32_t nValue = pData[iOffset];
 
                         nSampleCount32bit++;
@@ -4687,8 +4687,8 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                     uint32_t nSumSquare32bit = 0;
                     for (; iX + 3 < iMax; iX += 4)
                     {
-                        const GPtrDiff_t iOffset =
-                            iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                        const ptrdiff_t iOffset =
+                            iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                         const uint32_t nValue = pData[iOffset];
                         const uint32_t nValue2 = pData[iOffset + 1];
                         const uint32_t nValue3 = pData[iOffset + 2];
@@ -4707,8 +4707,8 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                 }
                 for (; iX < nXCheck; ++iX)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     const uint64_t nValue = pData[iOffset];
                     nSum += nValue;
                     nSumSquare += nValue * nValue;
@@ -4731,8 +4731,8 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                     uint32_t nSumSquare32bit = 0;
                     for (; iX + 1 < iMax; iX += 2)
                     {
-                        const GPtrDiff_t iOffset =
-                            iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                        const ptrdiff_t iOffset =
+                            iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                         const uint32_t nValue = pData[iOffset];
                         const uint32_t nValue2 = pData[iOffset + 1];
                         if (nValue < nValue2)
@@ -4765,8 +4765,8 @@ struct ComputeStatisticsInternalGeneric<GByte, COMPUTE_OTHER_STATS>
                 }
                 if (iX < nXCheck)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     const uint32_t nValue = pData[iOffset];
                     if (nValue < nMin)
                         nMin = nValue;
@@ -4811,7 +4811,7 @@ template <class T, bool COMPUTE_OTHER_STATS> struct ComputeStatisticsInternal
 #define ZERO256 GDALmm256_setzero_si256()
 
 template <bool COMPUTE_MIN, bool COMPUTE_MAX, bool COMPUTE_OTHER_STATS>
-static void ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
+static void ComputeStatisticsByteNoNodata(ptrdiff_t nBlockPixels,
                                           // assumed to be aligned on 256 bits
                                           const GByte *pData, uint32_t &nMin,
                                           uint32_t &nMax, uint64_t &nSum,
@@ -4838,12 +4838,12 @@ static void ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
 
     CPLAssert((reinterpret_cast<uintptr_t>(pData) % 32) == 0);
 
-    GPtrDiff_t i = 0;
+    ptrdiff_t i = 0;
     // Make sure that sumSquare can fit on uint32
     // * 8 since we can hold 8 sums per vector register
     const int nMaxIterationsPerInnerLoop =
         8 * ((std::numeric_limits<uint32_t>::max() / (255 * 255)) & ~31);
-    GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
+    ptrdiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
     if ((nBlockPixels % nMaxIterationsPerInnerLoop) != 0)
         nOuterLoops++;
 
@@ -4852,7 +4852,7 @@ static void ComputeStatisticsByteNoNodata(GPtrDiff_t nBlockPixels,
     GDALm256i ymm_max = ymm_min;
     const auto ymm_mask_8bits = GDALmm256_set1_epi16(0xFF);
 
-    for (GPtrDiff_t k = 0; k < nOuterLoops; k++)
+    for (ptrdiff_t k = 0; k < nOuterLoops; k++)
     {
         const auto iMax =
             std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
@@ -4981,7 +4981,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
                   uint64_t &nSumSquare, uint64_t &nSampleCount,
                   uint64_t &nValidCount)
     {
-        const auto nBlockPixels = static_cast<GPtrDiff_t>(nXCheck) * nYCheck;
+        const auto nBlockPixels = static_cast<ptrdiff_t>(nXCheck) * nYCheck;
         if (bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 32 &&
             nMin <= nMax)
         {
@@ -4999,7 +4999,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
 
             CPLAssert((reinterpret_cast<uintptr_t>(pData) % 32) == 0);
 
-            GPtrDiff_t i = 0;
+            ptrdiff_t i = 0;
             // Make sure that sumSquare can fit on uint32
             // * 8 since we can hold 8 sums per vector register
             const int nMaxIterationsPerInnerLoop =
@@ -5023,7 +5023,7 @@ struct ComputeStatisticsInternal<GByte, COMPUTE_OTHER_STATS>
             const bool bComputeMinMax =
                 nMin > nMinThreshold || nMax < nMaxThreshold;
 
-            for (GPtrDiff_t k = 0; k < nOuterLoops; k++)
+            for (ptrdiff_t k = 0; k < nOuterLoops; k++)
             {
                 const auto iMax =
                     std::min(nBlockPixels, i + nMaxIterationsPerInnerLoop);
@@ -5242,12 +5242,12 @@ struct ComputeStatisticsInternal<uint16_t, COMPUTE_OTHER_STATS>
                   uint64_t &nSumSquare, uint64_t &nSampleCount,
                   uint64_t &nValidCount)
     {
-        const auto nBlockPixels = static_cast<GPtrDiff_t>(nXCheck) * nYCheck;
+        const auto nBlockPixels = static_cast<ptrdiff_t>(nXCheck) * nYCheck;
         if (!bHasNoData && nXCheck == nBlockXSize && nBlockPixels >= 16)
         {
             CPLAssert((reinterpret_cast<uintptr_t>(pData) % 16) == 0);
 
-            GPtrDiff_t i = 0;
+            ptrdiff_t i = 0;
             // In SSE2, min_epu16 and max_epu16 do not exist, so shift from
             // UInt16 to SInt16 to be able to use min_epi16 and max_epi16.
             // Furthermore the shift is also needed to use madd_epi16
@@ -5262,7 +5262,7 @@ struct ComputeStatisticsInternal<uint16_t, COMPUTE_OTHER_STATS>
             // * 8 since we can hold 8 sums per vector register
             const int nMaxIterationsPerInnerLoop =
                 8 * ((std::numeric_limits<uint32_t>::max() / 65535) & ~15);
-            GPtrDiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
+            ptrdiff_t nOuterLoops = nBlockPixels / nMaxIterationsPerInnerLoop;
             if ((nBlockPixels % nMaxIterationsPerInnerLoop) != 0)
                 nOuterLoops++;
 
@@ -5392,7 +5392,7 @@ struct ComputeStatisticsInternal<uint16_t, COMPUTE_OTHER_STATS>
 /************************************************************************/
 
 static inline double GetPixelValue(GDALDataType eDataType, bool bSignedByte,
-                                   const void *pData, GPtrDiff_t iOffset,
+                                   const void *pData, ptrdiff_t iOffset,
                                    bool bGotNoDataValue, double dfNoDataValue,
                                    bool bGotFloatNoDataValue,
                                    float fNoDataValue, bool &bValid)
@@ -5989,8 +5989,8 @@ CPLErr GDALRasterBand::ComputeStatistics(int bApproxOK, double *pdfMin,
             {
                 for (int iX = 0; iX < nXCheck; iX++)
                 {
-                    const GPtrDiff_t iOffset =
-                        iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+                    const ptrdiff_t iOffset =
+                        iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
                     if (pabyMaskData && pabyMaskData[iOffset] == 0)
                         continue;
 
@@ -6236,8 +6236,8 @@ static void ComputeMinMaxGeneric(const void *pData, int nXCheck, int nYCheck,
     {
         for (int iX = 0; iX < nXCheck; iX++)
         {
-            const GPtrDiff_t iOffset =
-                iX + static_cast<GPtrDiff_t>(iY) * nBlockXSize;
+            const ptrdiff_t iOffset =
+                iX + static_cast<ptrdiff_t>(iY) * nBlockXSize;
             if (pabyMaskData && pabyMaskData[iOffset] == 0)
                 continue;
             bool bValid = true;
@@ -8330,7 +8330,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
 
     bool ReadWrite(GDALRWFlag eRWFlag, const uint64_t *arrayStartIdx,
                    const size_t *count, const int64_t *arrayStep,
-                   const GPtrDiff_t *bufferStride,
+                   const ptrdiff_t *bufferStride,
                    const GDALExtendedDataType &bufferDataType,
                    void *pBuffer) const;
 
@@ -8439,7 +8439,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
     }
 
     bool IRead(const uint64_t *arrayStartIdx, const size_t *count,
-               const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+               const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                const GDALExtendedDataType &bufferDataType,
                void *pDstBuffer) const override
     {
@@ -8448,7 +8448,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
     }
 
     bool IWrite(const uint64_t *arrayStartIdx, const size_t *count,
-                const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+                const int64_t *arrayStep, const ptrdiff_t *bufferStride,
                 const GDALExtendedDataType &bufferDataType,
                 const void *pSrcBuffer) override
     {
@@ -8584,7 +8584,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
         }
 
         bool IRead(const uint64_t *, const size_t *, const int64_t *,
-                   const GPtrDiff_t *,
+                   const ptrdiff_t *,
                    const GDALExtendedDataType &bufferDataType,
                    void *pDstBuffer) const override
         {
@@ -8621,7 +8621,7 @@ class GDALMDArrayFromRasterBand final : public GDALMDArray
 
 bool GDALMDArrayFromRasterBand::ReadWrite(
     GDALRWFlag eRWFlag, const uint64_t *arrayStartIdx, const size_t *count,
-    const int64_t *arrayStep, const GPtrDiff_t *bufferStride,
+    const int64_t *arrayStep, const ptrdiff_t *bufferStride,
     const GDALExtendedDataType &bufferDataType, void *pBuffer) const
 {
     constexpr size_t iDimX = 1;
@@ -8639,7 +8639,7 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
                             size_t iDimX, size_t iDimY,
                             const uint64_t *arrayStartIdx, const size_t *count,
                             const int64_t *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const ptrdiff_t *bufferStride,
                             const GDALExtendedDataType &bufferDataType,
                             void *pBuffer)
 {

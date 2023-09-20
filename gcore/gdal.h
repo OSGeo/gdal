@@ -1614,7 +1614,7 @@ void CPL_DLL CPL_STDCALL GDALCopyWords(const void *CPL_RESTRICT pSrcData,
 void CPL_DLL CPL_STDCALL GDALCopyWords64(
     const void *CPL_RESTRICT pSrcData, GDALDataType eSrcType,
     int nSrcPixelOffset, void *CPL_RESTRICT pDstData, GDALDataType eDstType,
-    int nDstPixelOffset, GPtrDiff_t nWordCount);
+    int nDstPixelOffset, ptrdiff_t nWordCount);
 
 void CPL_DLL GDALCopyBits(const GByte *pabySrcData, int nSrcOffset,
                           int nSrcStep, GByte *pabyDstData, int nDstOffset,
@@ -2167,13 +2167,13 @@ GDALExtendedDataTypeH CPL_DLL GDALMDArrayGetDataType(GDALMDArrayH hArray)
     CPL_WARN_UNUSED_RESULT;
 int CPL_DLL GDALMDArrayRead(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
                             const size_t *count, const int64_t *arrayStep,
-                            const GPtrDiff_t *bufferStride,
+                            const ptrdiff_t *bufferStride,
                             GDALExtendedDataTypeH bufferDatatype,
                             void *pDstBuffer, const void *pDstBufferAllocStart,
                             size_t nDstBufferllocSize);
 int CPL_DLL GDALMDArrayWrite(GDALMDArrayH hArray, const uint64_t *arrayStartIdx,
                              const size_t *count, const int64_t *arrayStep,
-                             const GPtrDiff_t *bufferStride,
+                             const ptrdiff_t *bufferStride,
                              GDALExtendedDataTypeH bufferDatatype,
                              const void *pSrcBuffer,
                              const void *psrcBufferAllocStart,

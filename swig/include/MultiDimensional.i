@@ -542,7 +542,7 @@ public:
 
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
     std::vector<size_t> count_internal(nExpectedDims + 1);
-    std::vector<GPtrDiff_t> buffer_stride_internal(nExpectedDims + 1);
+    std::vector<ptrdiff_t> buffer_stride_internal(nExpectedDims + 1);
     size_t nProductCount = 1;
     for( int i = 0; i < nExpectedDims; i++ )
     {
@@ -553,7 +553,7 @@ public:
             return CE_Failure;
         }
         nProductCount *= count_internal[i];
-        buffer_stride_internal[i] = (GPtrDiff_t)buffer_stride[i];
+        buffer_stride_internal[i] = (ptrdiff_t)buffer_stride[i];
         if( buffer_stride_internal[i] != buffer_stride[i] )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
@@ -764,7 +764,7 @@ public:
 
     const int nExpectedDims = (int)GDALMDArrayGetDimensionCount(self);
     std::vector<size_t> count_internal(nExpectedDims+1);
-    std::vector<GPtrDiff_t> buffer_stride_internal(nExpectedDims+1);
+    std::vector<ptrdiff_t> buffer_stride_internal(nExpectedDims+1);
     for( int i = 0; i < nExpectedDims; i++ )
     {
         count_internal[i] = (size_t)count[i];
@@ -773,7 +773,7 @@ public:
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");
             return CE_Failure;
         }
-        buffer_stride_internal[i] = (GPtrDiff_t)buffer_stride[i];
+        buffer_stride_internal[i] = (ptrdiff_t)buffer_stride[i];
         if( buffer_stride_internal[i] != buffer_stride[i] )
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Integer overflow");

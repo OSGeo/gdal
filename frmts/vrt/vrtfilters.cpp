@@ -249,8 +249,8 @@ CPLErr VRTFilteredSource::RasterIO(GDALDataType eBandDataType, int nXOff,
         return CE_Failure;
     }
 
-    const GPtrDiff_t nPixelOffset = GDALGetDataTypeSizeBytes(eOperDataType);
-    const GPtrDiff_t nLineOffset = nPixelOffset * nExtraXSize;
+    const ptrdiff_t nPixelOffset = GDALGetDataTypeSizeBytes(eOperDataType);
+    const ptrdiff_t nLineOffset = nPixelOffset * nExtraXSize;
 
     memset(pabyWorkData, 0, nLineOffset * nExtraYSize);
 
@@ -529,7 +529,7 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
             const int nJMin = (m_bSeparable ? 0 : m_nExtraEdgePixels);
             const int nJMax = nJSize - (m_bSeparable ? 0 : m_nExtraEdgePixels);
 
-            for (GPtrDiff_t iJ = nJMin; iJ < nJMax; ++iJ)
+            for (ptrdiff_t iJ = nJMin; iJ < nJMax; ++iJ)
             {
                 if (nAxis == 1)
                     memcpy(pafSrcData + iJ * nJStride,
@@ -537,7 +537,7 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
 
                 for (int iI = nIMin; iI < nIMax; ++iI)
                 {
-                    const GPtrDiff_t iIndex = iI * nIStride + iJ * nJStride;
+                    const ptrdiff_t iIndex = iI * nIStride + iJ * nJStride;
 
                     if (bHasNoData && pafSrcData[iIndex] == fNoData)
                     {
@@ -547,10 +547,10 @@ CPLErr VRTKernelFilteredSource::FilterData(int nXSize, int nYSize,
 
                     double dfSum = 0.0, dfKernSum = 0.0;
 
-                    for (GPtrDiff_t iII = -m_nExtraEdgePixels, iK = 0;
+                    for (ptrdiff_t iII = -m_nExtraEdgePixels, iK = 0;
                          iII <= m_nExtraEdgePixels; ++iII)
                     {
-                        for (GPtrDiff_t iJJ =
+                        for (ptrdiff_t iJJ =
                                  (m_bSeparable ? 0 : -m_nExtraEdgePixels);
                              iJJ <= (m_bSeparable ? 0 : m_nExtraEdgePixels);
                              ++iJJ, ++iK)
