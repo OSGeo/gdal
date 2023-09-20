@@ -71,8 +71,8 @@ class JP2LuraDataset final : public GDALJP2AbstractDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     static void WriteBox(VSILFILE *fp, GDALJP2Box *poBox);

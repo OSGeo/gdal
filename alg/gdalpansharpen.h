@@ -174,7 +174,7 @@ typedef struct
     int nBufYSize;
     int nBandCount;
     GDALRIOResampleAlg eResampleAlg;
-    GSpacing nBandSpace;
+    int64_t nBandSpace;
 
 #ifdef DEBUG_TIMING
     struct timeval *ptv;

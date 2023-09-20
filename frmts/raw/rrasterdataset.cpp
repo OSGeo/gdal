@@ -153,7 +153,7 @@ class RRASTERRasterBand final : public RawRasterBand
   protected:
     CPLErr IWriteBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALDataType, int64_t nPixelSpace, int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -318,7 +318,7 @@ CPLErr RRASTERRasterBand::SetNoDataValue(double dfNoData)
 
 template <class T>
 static void GetMinMax(const T *buffer, int nBufXSize, int nBufYSize,
-                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                      int64_t nPixelSpace, int64_t nLineSpace,
                       double dfNoDataValue, double &dfMin, double &dfMax)
 {
     for (int iY = 0; iY < nBufYSize; iY++)
@@ -336,7 +336,7 @@ static void GetMinMax(const T *buffer, int nBufXSize, int nBufYSize,
 }
 
 static void GetMinMax(const void *pBuffer, GDALDataType eDT, int nBufXSize,
-                      int nBufYSize, GSpacing nPixelSpace, GSpacing nLineSpace,
+                      int nBufYSize, int64_t nPixelSpace, int64_t nLineSpace,
                       double dfNoDataValue, double &dfMin, double &dfMax)
 {
     switch (eDT)
@@ -411,8 +411,8 @@ CPLErr RRASTERRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 CPLErr RRASTERRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
-                                    GDALDataType eBufType, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace,
+                                    GDALDataType eBufType, int64_t nPixelSpace,
+                                    int64_t nLineSpace,
                                     GDALRasterIOExtraArg *psExtraArg)
 
 {

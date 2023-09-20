@@ -2158,8 +2158,8 @@ CPLErr GDALDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               int nXSize, int nYSize, void *pData,
                               int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, int nBandCount,
-                              int *panBandMap, GSpacing nPixelSpace,
-                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              int *panBandMap, int64_t nPixelSpace,
+                              int64_t nLineSpace, int64_t nBandSpace,
                               GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -2344,8 +2344,8 @@ CPLErr GDALDataset::BandBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                       int nXSize, int nYSize, void *pData,
                                       int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType, int nBandCount,
-                                      int *panBandMap, GSpacing nPixelSpace,
-                                      GSpacing nLineSpace, GSpacing nBandSpace,
+                                      int *panBandMap, int64_t nPixelSpace,
+                                      int64_t nLineSpace, int64_t nBandSpace,
                                       GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -2559,8 +2559,8 @@ CPLErr GDALDataset::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -2751,9 +2751,8 @@ CPLErr CPL_STDCALL GDALDatasetRasterIO(GDALDatasetH hDS, GDALRWFlag eRWFlag,
 CPLErr CPL_STDCALL GDALDatasetRasterIOEx(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     int nYSize, void *pData, int nBufXSize, int nBufYSize,
-    GDALDataType eBufType, int nBandCount, int *panBandMap,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
-    GDALRasterIOExtraArg *psExtraArg)
+    GDALDataType eBufType, int nBandCount, int *panBandMap, int64_t nPixelSpace,
+    int64_t nLineSpace, int64_t nBandSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
     VALIDATE_POINTER1(hDS, "GDALDatasetRasterIOEx", CE_Failure);

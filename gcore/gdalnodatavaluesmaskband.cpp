@@ -200,7 +200,7 @@ CPLErr GDALNoDataValuesMaskBand::IReadBlock(int nXBlockOff, int nYBlockOff,
             GF_Read, nXBlockOff * nBlockXSize, nYBlockOff * nBlockYSize,
             nXSizeRequest, nYSizeRequest, pabySrc + iBand * nBandOffsetByte,
             nXSizeRequest, nYSizeRequest, eWrkDT, 0,
-            static_cast<GSpacing>(nBlockXSize) * nWrkDTSize, nullptr);
+            static_cast<int64_t>(nBlockXSize) * nWrkDTSize, nullptr);
         if (eErr != CE_None)
             return eErr;
     }

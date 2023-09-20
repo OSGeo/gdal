@@ -435,7 +435,7 @@ CPLErr JP2KAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
         GF_Read, nWXOff, nWYOff, nWXSize, nWYSize, pabyWrkBuffer, nXSize,
         nYSize, eDataType, static_cast<int>(anBands.size()), &anBands[0],
         nWordSize, nWordSize * nBlockXSize,
-        static_cast<GSpacing>(nWordSize) * nBlockXSize * nBlockYSize,
+        static_cast<int64_t>(nWordSize) * nBlockXSize * nBlockYSize,
         &sExtraArg);
 
     if (eErr == CE_None)
@@ -510,8 +510,8 @@ CPLErr JP2KAKRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr JP2KAKRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1316,8 +1316,8 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                                      int nYOff, int nXSize, int nYSize,
                                      void *pData, int nBufXSize, int nBufYSize,
                                      GDALDataType eBufType, int nBandCount,
-                                     int *panBandMap, GSpacing nPixelSpace,
-                                     GSpacing nLineSpace, GSpacing nBandSpace,
+                                     int *panBandMap, int64_t nPixelSpace,
+                                     int64_t nLineSpace, int64_t nBandSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1590,8 +1590,8 @@ CPLErr JP2KAKDataset::DirectRasterIO(GDALRWFlag /* eRWFlag */, int nXOff,
                     auto hBand = MEMCreateRasterBandEx(
                         poMEMDS.get(), i + 1,
                         pabyIntermediate + i * nDataTypeSize, eBufType,
-                        static_cast<GSpacing>(nDataTypeSize) * nBandCount,
-                        static_cast<GSpacing>(nDataTypeSize) * nBandCount *
+                        static_cast<int64_t>(nDataTypeSize) * nBandCount,
+                        static_cast<int64_t>(nDataTypeSize) * nBandCount *
                             l_dims.size.x,
                         false);
                     poMEMDS->AddMEMBand(hBand);
@@ -1728,8 +1728,8 @@ CPLErr JP2KAKDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
-                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                int *panBandMap, int64_t nPixelSpace,
+                                int64_t nLineSpace, int64_t nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 
 {

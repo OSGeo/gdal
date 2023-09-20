@@ -465,8 +465,8 @@ class VICARRawRasterBand final : public RawRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -518,8 +518,8 @@ CPLErr VICARRawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr VICARRawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {

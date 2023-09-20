@@ -549,8 +549,8 @@ CPLErr GDALWarpSrcAlphaMasker(void *pMaskFuncArg, int /* nBandCount */,
         // Read data.
         eErr = GDALRasterIOEx(
             hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize, pafMask, nXSize,
-            nYSize, eDT, static_cast<GSpacing>(sizeof(int)),
-            static_cast<GSpacing>(sizeof(int)) * nXSize, nullptr);
+            nYSize, eDT, static_cast<int64_t>(sizeof(int)),
+            static_cast<int64_t>(sizeof(int)) * nXSize, nullptr);
 
         if (eErr != CE_None)
             return eErr;
@@ -850,8 +850,8 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
             // Read data.
             const CPLErr eErr = GDALRasterIOEx(
                 hAlphaBand, GF_Read, nXOff, nYOff, nXSize, nYSize, pafMask,
-                nXSize, nYSize, eDT, static_cast<GSpacing>(sizeof(int)),
-                static_cast<GSpacing>(sizeof(int)) * nXSize, nullptr);
+                nXSize, nYSize, eDT, static_cast<int64_t>(sizeof(int)),
+                static_cast<int64_t>(sizeof(int)) * nXSize, nullptr);
 
             if (eErr != CE_None)
                 return eErr;
@@ -1038,8 +1038,8 @@ CPLErr GDALWarpDstAlphaMasker(void *pMaskFuncArg, int nBandCount,
             // Assumes little endianness here.
             eErr = GDALRasterIOEx(
                 hAlphaBand, GF_Write, nXOff, nYOff, nXSize, nYSize, pafMask,
-                nXSize, nYSize, eDT, static_cast<GSpacing>(sizeof(int)),
-                static_cast<GSpacing>(sizeof(int)) * nXSize, nullptr);
+                nXSize, nYSize, eDT, static_cast<int64_t>(sizeof(int)),
+                static_cast<int64_t>(sizeof(int)) * nXSize, nullptr);
         }
         else
 #endif

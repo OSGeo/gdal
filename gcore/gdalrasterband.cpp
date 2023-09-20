@@ -117,8 +117,8 @@ GDALRasterBand::~GDALRasterBand()
  *                                int nXOff, int nYOff, int nXSize, int nYSize,
  *                                void * pData, int nBufXSize, int nBufYSize,
  *                                GDALDataType eBufType,
- *                                GSpacing nPixelSpace,
- *                                GSpacing nLineSpace,
+ *                                int64_t nPixelSpace,
+ *                                int64_t nLineSpace,
  *                                GDALRasterIOExtraArg* psExtraArg )
  * \brief Read/write a region of image data for this band.
  *
@@ -266,8 +266,8 @@ GDALRasterBand::~GDALRasterBand()
 CPLErr GDALRasterBand::RasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eBufType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -431,8 +431,8 @@ CPLErr CPL_STDCALL GDALRasterIO(GDALRasterBandH hBand, GDALRWFlag eRWFlag,
 CPLErr CPL_STDCALL GDALRasterIOEx(GDALRasterBandH hBand, GDALRWFlag eRWFlag,
                                   int nXOff, int nYOff, int nXSize, int nYSize,
                                   void *pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace,
+                                  GDALDataType eBufType, int64_t nPixelSpace,
+                                  int64_t nLineSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -8674,10 +8674,10 @@ bool GDALMDRasterIOFromBand(GDALRasterBand *poBand, GDALRWFlag eRWFlag,
     return poBand->RasterIO(eRWFlag, nX, nY, nSizeX, nSizeY, pabyBuffer,
                             static_cast<int>(count[iDimX]),
                             static_cast<int>(count[iDimY]), eDT,
-                            static_cast<GSpacing>(
-                                nStrideXSign * bufferStride[iDimX] * nDTSize),
-                            static_cast<GSpacing>(
-                                nStrideYSign * bufferStride[iDimY] * nDTSize),
+                            static_cast<int64_t>(nStrideXSign *
+                                                 bufferStride[iDimX] * nDTSize),
+                            static_cast<int64_t>(nStrideYSign *
+                                                 bufferStride[iDimY] * nDTSize),
                             nullptr) == CE_None;
 }
 

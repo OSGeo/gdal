@@ -42,7 +42,7 @@ CPL_C_START
 GDALRasterBandH CPL_DLL MEMCreateRasterBand(GDALDataset *, int, GByte *,
                                             GDALDataType, int, int, int);
 GDALRasterBandH CPL_DLL MEMCreateRasterBandEx(GDALDataset *, int, GByte *,
-                                              GDALDataType, GSpacing, GSpacing,
+                                              GDALDataType, int64_t, int64_t,
                                               int);
 CPL_C_END
 
@@ -109,8 +109,8 @@ class CPL_DLL MEMDataset CPL_NON_FINAL : public GDALDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
-                             GSpacing nBandSpaceBuf,
+                             int64_t nPixelSpaceBuf, int64_t nLineSpaceBuf,
+                             int64_t nBandSpaceBuf,
                              GDALRasterIOExtraArg *psExtraArg) override;
     virtual CPLErr IBuildOverviews(const char *pszResampling, int nOverviews,
                                    const int *panOverviewList, int nListBands,
@@ -151,17 +151,16 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     friend class MEMDataset;
 
     GByte *pabyData;
-    GSpacing nPixelOffset;
-    GSpacing nLineOffset;
+    int64_t nPixelOffset;
+    int64_t nLineOffset;
     int bOwnData;
 
     bool m_bIsMask = false;
 
   public:
     MEMRasterBand(GDALDataset *poDS, int nBand, GByte *pabyData,
-                  GDALDataType eType, GSpacing nPixelOffset,
-                  GSpacing nLineOffset, int bAssumeOwnership,
-                  const char *pszPixelType = nullptr);
+                  GDALDataType eType, int64_t nPixelOffset, int64_t nLineOffset,
+                  int bAssumeOwnership, const char *pszPixelType = nullptr);
     virtual ~MEMRasterBand();
 
     virtual CPLErr IReadBlock(int, int, void *) override;
@@ -169,7 +168,7 @@ class CPL_DLL MEMRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
+                             int64_t nPixelSpaceBuf, int64_t nLineSpaceBuf,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int GetOverviewCount() override;

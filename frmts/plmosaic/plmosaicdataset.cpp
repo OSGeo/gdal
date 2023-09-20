@@ -123,8 +123,8 @@ class PLMosaicDataset final : public GDALPamDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLErr FlushCache(bool bAtClosing) override;
@@ -153,7 +153,7 @@ class PLMosaicRasterBand final : public GDALRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual const char *GetMetadataItem(const char *pszName,
@@ -237,8 +237,8 @@ CPLErr PLMosaicRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr PLMosaicRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     PLMosaicDataset *poMOSDS = reinterpret_cast<PLMosaicDataset *>(poDS);
@@ -1470,8 +1470,8 @@ CPLErr PLMosaicDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   int nXSize, int nYSize, void *pData,
                                   int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, int nBandCount,
-                                  int *panBandMap, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace, GSpacing nBandSpace,
+                                  int *panBandMap, int64_t nPixelSpace,
+                                  int64_t nLineSpace, int64_t nBandSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
     if (bUseTMSForMain && !apoTMSDS.empty())

@@ -107,7 +107,7 @@ std::shared_ptr<GDALMDArray> CPL_DLL MEMGroupCreateMDArray(GDALGroup* poGroup,
 CPL_C_START
 
 GDALRasterBandH CPL_DLL MEMCreateRasterBandEx( GDALDataset *, int, GByte *,
-                                               GDALDataType, GSpacing, GSpacing, int );
+                                               GDALDataType, int64_t, int64_t, int );
 CPL_C_END
 
 typedef char retStringAndCPLFree;
@@ -783,7 +783,7 @@ retStringAndCPLFree* GetArrayFilename(PyArrayObject *psArray)
         return CE_Failure;
     }
     int nxsize, nysize;
-    GSpacing pixel_space, line_space;
+    int64_t pixel_space, line_space;
     nxsize = static_cast<int>(PyArray_DIMS(psArray)[xdim]);
     nysize = static_cast<int>(PyArray_DIMS(psArray)[ydim]);
     pixel_space = PyArray_STRIDES(psArray)[xdim];

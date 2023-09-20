@@ -876,10 +876,12 @@ CPLErr VRTDerivedRasterBand::GetPixelFunctionArguments(
  *
  * @return CE_Failure if the access fails, otherwise CE_None.
  */
-CPLErr VRTDerivedRasterBand::IRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr VRTDerivedRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                       int nXSize, int nYSize, void *pData,
+                                       int nBufXSize, int nBufYSize,
+                                       GDALDataType eBufType,
+                                       int64_t nPixelSpace, int64_t nLineSpace,
+                                       GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag == GF_Write)
     {
@@ -1214,7 +1216,7 @@ CPLErr VRTDerivedRasterBand::IRasterIO(
         // buffer ?
         if (nBufferRadius != 0 || eDataType != eBufType ||
             nPixelSpace != nBufTypeSize ||
-            nLineSpace != static_cast<GSpacing>(nBufTypeSize) * nBufXSize)
+            nLineSpace != static_cast<int64_t>(nBufTypeSize) * nBufXSize)
         {
             pabyTmpBuffer = static_cast<GByte *>(VSI_CALLOC_VERBOSE(
                 static_cast<size_t>(nExtBufXSize) * nExtBufYSize,

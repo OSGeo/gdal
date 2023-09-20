@@ -207,8 +207,8 @@ static bool DownsamplingIntegerXFactor(
 CPLErr GDALRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                  int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType, GSpacing nPixelSpace,
-                                 GSpacing nLineSpace,
+                                 GDALDataType eBufType, int64_t nPixelSpace,
+                                 int64_t nLineSpace,
                                  GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1002,7 +1002,7 @@ static int GDALRasterIOTransformer(void *pTransformerArg, int bDstToSrc,
 CPLErr GDALRasterBand::RasterIOResampled(
     GDALRWFlag /* eRWFlag */, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     // Determine if we use warping resampling or overview resampling
     bool bUseWarp = false;
@@ -1051,8 +1051,8 @@ CPLErr GDALRasterBand::RasterIOResampled(
     // Create a MEM dataset that wraps the output buffer.
     GDALDataset *poMEMDS;
     void *pTempBuffer = nullptr;
-    GSpacing nPSMem = nPixelSpace;
-    GSpacing nLSMem = nLineSpace;
+    int64_t nPSMem = nPixelSpace;
+    int64_t nLSMem = nLineSpace;
     void *pDataMem = pData;
     GDALDataType eDTMem = eBufType;
     if (eBufType != eDataType)
@@ -1479,8 +1479,8 @@ CPLErr GDALDataset::RasterIOResampled(GDALRWFlag /* eRWFlag */, int nXOff,
                                       int nYOff, int nXSize, int nYSize,
                                       void *pData, int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType, int nBandCount,
-                                      int *panBandMap, GSpacing nPixelSpace,
-                                      GSpacing nLineSpace, GSpacing nBandSpace,
+                                      int *panBandMap, int64_t nPixelSpace,
+                                      int64_t nLineSpace, int64_t nBandSpace,
                                       GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -3690,10 +3690,12 @@ int GDALBandGetBestOverviewLevel2(GDALRasterBand *poBand, int &nXOff,
 /************************************************************************/
 
 //! @cond Doxygen_Suppress
-CPLErr GDALRasterBand::OverviewRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALRasterBand::OverviewRasterIO(GDALRWFlag eRWFlag, int nXOff,
+                                        int nYOff, int nXSize, int nYSize,
+                                        void *pData, int nBufXSize,
+                                        int nBufYSize, GDALDataType eBufType,
+                                        int64_t nPixelSpace, int64_t nLineSpace,
+                                        GDALRasterIOExtraArg *psExtraArg)
 
 {
     GDALRasterIOExtraArg sExtraArg;
@@ -3723,7 +3725,7 @@ CPLErr GDALRasterBand::OverviewRasterIO(
 CPLErr GDALRasterBand::TryOverviewRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg,
     int *pbTried)
 {
     int nXOffMod = nXOff;
@@ -3762,8 +3764,8 @@ CPLErr GDALRasterBand::TryOverviewRasterIO(
 CPLErr GDALDataset::TryOverviewRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArg, int *pbTried)
+    int nBandCount, int *panBandMap, int64_t nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, GDALRasterIOExtraArg *psExtraArg, int *pbTried)
 {
     int nXOffMod = nXOff;
     int nYOffMod = nYOff;
@@ -3906,8 +3908,8 @@ CPLErr GDALDataset::BlockBasedRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                        int nXSize, int nYSize, void *pData,
                                        int nBufXSize, int nBufYSize,
                                        GDALDataType eBufType, int nBandCount,
-                                       int *panBandMap, GSpacing nPixelSpace,
-                                       GSpacing nLineSpace, GSpacing nBandSpace,
+                                       int *panBandMap, int64_t nPixelSpace,
+                                       int64_t nLineSpace, int64_t nBandSpace,
                                        GDALRasterIOExtraArg *psExtraArg)
 
 {

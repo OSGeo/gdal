@@ -114,7 +114,7 @@ class CPL_DLL VRTSource
     virtual CPLErr RasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            int64_t nPixelSpace, int64_t nLineSpace,
                             GDALRasterIOExtraArg *psExtraArg) = 0;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) = 0;
@@ -282,8 +282,8 @@ class CPL_DLL VRTDataset CPL_NON_FINAL : public GDALDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLStringList
@@ -463,8 +463,8 @@ class VRTPansharpenedDataset final : public VRTDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     void GetBlockSize(int *, int *) const;
@@ -656,8 +656,8 @@ class CPL_DLL VRTSourcedRasterBand CPL_NON_FINAL : public VRTRasterBand
     virtual ~VRTSourcedRasterBand();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
@@ -798,7 +798,7 @@ class VRTPansharpenedRasterBand final : public VRTRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int GetOverviewCount() override;
@@ -849,8 +849,8 @@ class CPL_DLL VRTDerivedRasterBand CPL_NON_FINAL : public VRTSourcedRasterBand
     virtual ~VRTDerivedRasterBand();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int IGetDataCoverageStatus(int nXOff, int nYOff, int nXSize,
@@ -916,8 +916,8 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
     virtual CPLXMLNode *SerializeToXML(const char *pszVRTPath) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
@@ -1062,7 +1062,7 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     virtual CPLErr RasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            int64_t nPixelSpace, int64_t nLineSpace,
                             GDALRasterIOExtraArg *psExtraArgIn) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
@@ -1095,8 +1095,8 @@ class CPL_DLL VRTSimpleSource CPL_NON_FINAL : public VRTSource
     CPLErr DatasetRasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                            int nXSize, int nYSize, void *pData, int nBufXSize,
                            int nBufYSize, GDALDataType eBufType, int nBandCount,
-                           int *panBandMap, GSpacing nPixelSpace,
-                           GSpacing nLineSpace, GSpacing nBandSpace,
+                           int *panBandMap, int64_t nPixelSpace,
+                           int64_t nLineSpace, int64_t nBandSpace,
                            GDALRasterIOExtraArg *psExtraArg);
 
     void UnsetPreservedRelativeFilenames();
@@ -1123,7 +1123,7 @@ class VRTAveragedSource final : public VRTSimpleSource
     virtual CPLErr RasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            int64_t nPixelSpace, int64_t nLineSpace,
                             GDALRasterIOExtraArg *psExtraArgIn) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
@@ -1191,8 +1191,8 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     CPLErr
     RasterIOInternal(GDALDataType eBandDataType, int nReqXOff, int nReqYOff,
                      int nReqXSize, int nReqYSize, void *pData, int nOutXSize,
-                     int nOutYSize, GDALDataType eBufType, GSpacing nPixelSpace,
-                     GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg,
+                     int nOutYSize, GDALDataType eBufType, int64_t nPixelSpace,
+                     int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg,
                      GDALDataType eWrkDataType);
 
   public:
@@ -1204,7 +1204,7 @@ class CPL_DLL VRTComplexSource CPL_NON_FINAL : public VRTSimpleSource
     virtual CPLErr RasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            int64_t nPixelSpace, int64_t nLineSpace,
                             GDALRasterIOExtraArg *psExtraArgIn) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;
@@ -1270,7 +1270,7 @@ class VRTFilteredSource CPL_NON_FINAL : public VRTComplexSource
     virtual CPLErr RasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            int64_t nPixelSpace, int64_t nLineSpace,
                             GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -1344,7 +1344,7 @@ class VRTFuncSource final : public VRTSource
     virtual CPLErr RasterIO(GDALDataType eBandDataType, int nXOff, int nYOff,
                             int nXSize, int nYSize, void *pData, int nBufXSize,
                             int nBufYSize, GDALDataType eBufType,
-                            GSpacing nPixelSpace, GSpacing nLineSpace,
+                            int64_t nPixelSpace, int64_t nLineSpace,
                             GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetMinimum(int nXSize, int nYSize, int *pbSuccess) override;

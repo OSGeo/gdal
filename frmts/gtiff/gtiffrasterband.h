@@ -60,8 +60,8 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
 
     int DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                  int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                 GDALDataType eBufType, GSpacing nPixelSpace,
-                 GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg);
+                 GDALDataType eBufType, int64_t nPixelSpace, int64_t nLineSpace,
+                 GDALRasterIOExtraArg *psExtraArg);
 
     static void DropReferenceVirtualMem(void *pUserData);
     CPLVirtualMem *GetVirtualMemAutoInternal(GDALRWFlag eRWFlag,
@@ -121,7 +121,7 @@ class GTiffRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override final;
 
     virtual const char *GetDescription() const override final;

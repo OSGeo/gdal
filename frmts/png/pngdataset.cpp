@@ -138,7 +138,7 @@ CPLErr PNGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
         return IRasterIO(GF_Read, 0, 0, nRasterXSize, nRasterYSize, pImage,
                          nRasterXSize, nRasterYSize, eDataType, nDTSize,
-                         static_cast<GSpacing>(nDTSize) * nRasterXSize,
+                         static_cast<int64_t>(nDTSize) * nRasterXSize,
                          &sExtraArg);
     }
 #endif
@@ -364,8 +364,8 @@ AddVectors(const GByte *CPL_RESTRICT pabyInputLine1,
 }
 #endif  //  defined(__GNUC__) && !defined(__SSE2__)
 
-CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace, GSpacing nBandSpace,
+CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, int64_t nPixelSpace,
+                                  int64_t nLineSpace, int64_t nBandSpace,
                                   void *apabyBuffers[4])
 {
     if (fpImage == nullptr)
@@ -402,7 +402,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
         (nBands == 3 || nBands == 4) &&
         (apabyBuffers != nullptr ||
          (nPixelSpace == 1 &&
-          nBandSpace == static_cast<GSpacing>(nRasterXSize) * nRasterYSize));
+          nBandSpace == static_cast<int64_t>(nRasterXSize) * nRasterYSize));
 
     // Below should work without SSE2, but the lack of optimized
     // filters can sometimes make it slower than regular optimized libpng,
@@ -429,7 +429,7 @@ CPLErr PNGDataset::LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
         }
         else if (nPixelSpace == 1 && nLineSpace == nRasterXSize &&
                  nBandSpace ==
-                     static_cast<GSpacing>(nRasterXSize) * nRasterYSize)
+                     static_cast<int64_t>(nRasterXSize) * nRasterYSize)
         {
             pDataSize =
                 static_cast<size_t>(nRasterXSize) * nRasterYSize * nBands;
@@ -1024,8 +1024,8 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1098,7 +1098,7 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 const bool bCanUseDeinterleave =
                     (nBands == 3 || nBands == 4) && nPixelSpace == 1 &&
                     nBandSpace ==
-                        static_cast<GSpacing>(nRasterXSize) * nRasterYSize;
+                        static_cast<int64_t>(nRasterXSize) * nRasterYSize;
 
                 for (int y = 0; y < nYSize; ++y)
                 {
@@ -1164,8 +1164,8 @@ CPLErr PNGDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr PNGRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eBufType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 
 {

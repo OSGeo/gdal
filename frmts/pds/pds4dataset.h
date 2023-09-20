@@ -472,8 +472,8 @@ class PDS4RawRasterBand final : public RawRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;
@@ -532,8 +532,8 @@ class PDS4WrapperRasterBand final : public GDALProxyRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;

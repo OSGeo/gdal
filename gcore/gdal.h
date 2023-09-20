@@ -311,8 +311,10 @@ typedef void *GDALAsyncReaderH;
  */
 typedef void *GDALRelationshipH;
 
+#ifndef GDAL_COMPILATION
 /** Type to express pixel, line or band spacing. Signed 64 bit integer. */
 typedef int64_t GSpacing;
+#endif
 
 /** Enumeration giving the class of a GDALExtendedDataType.
  * @since GDAL 3.1
@@ -1137,7 +1139,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALDatasetRasterIOEx(
     GDALDatasetH hDS, GDALRWFlag eRWFlag, int nDSXOff, int nDSYOff,
     int nDSXSize, int nDSYSize, void *pBuffer, int nBXSize, int nBYSize,
     GDALDataType eBDataType, int nBandCount, int *panBandCount,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GSpacing nBandSpace,
+    int64_t nPixelSpace, int64_t nLineSpace, int64_t nBandSpace,
     GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 
 CPLErr CPL_DLL CPL_STDCALL GDALDatasetAdviseRead(
@@ -1406,7 +1408,7 @@ CPLErr CPL_DLL CPL_STDCALL GDALRasterIO(GDALRasterBandH hRBand,
 CPLErr CPL_DLL CPL_STDCALL GDALRasterIOEx(
     GDALRasterBandH hRBand, GDALRWFlag eRWFlag, int nDSXOff, int nDSYOff,
     int nDSXSize, int nDSYSize, void *pBuffer, int nBXSize, int nBYSize,
-    GDALDataType eBDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+    GDALDataType eBDataType, int64_t nPixelSpace, int64_t nLineSpace,
     GDALRasterIOExtraArg *psExtraArg) CPL_WARN_UNUSED_RESULT;
 CPLErr CPL_DLL CPL_STDCALL GDALReadBlock(GDALRasterBandH, int, int,
                                          void *) CPL_WARN_UNUSED_RESULT;

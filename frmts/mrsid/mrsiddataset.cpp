@@ -242,8 +242,8 @@ class MrSIDDataset final : public GDALJP2AbstractDataset
     char *GetOGISDefn(GTIFDefn *);
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
   protected:
@@ -294,8 +294,8 @@ class MrSIDRasterBand final : public GDALPamRasterBand
     ~MrSIDRasterBand();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual CPLErr IReadBlock(int, int, void *) override;
@@ -615,8 +615,8 @@ CPLErr MrSIDRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 CPLErr MrSIDRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   int nXSize, int nYSize, void *pData,
                                   int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace,
+                                  GDALDataType eBufType, int64_t nPixelSpace,
+                                  int64_t nLineSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -827,8 +827,8 @@ CPLErr MrSIDDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, int nBandCount,
-                               int *panBandMap, GSpacing nPixelSpace,
-                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               int *panBandMap, int64_t nPixelSpace,
+                               int64_t nLineSpace, int64_t nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg)
 
 {

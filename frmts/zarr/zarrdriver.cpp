@@ -1670,8 +1670,8 @@ CPLErr ZarrRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData)
 CPLErr ZarrRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                  int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                                 GSpacing nLineSpaceBuf,
+                                 GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                                 int64_t nLineSpaceBuf,
                                  GDALRasterIOExtraArg *psExtraArg)
 {
     const int nBufferDTSize(GDALGetDataTypeSizeBytes(eBufType));

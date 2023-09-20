@@ -813,8 +813,8 @@ CPLErr ECWRasterBand::SetStatistics(double dfMin, double dfMax, double dfMean,
 CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -983,8 +983,8 @@ CPLErr ECWRasterBand::OldIRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr ECWRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eBufType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag == GF_Write)
@@ -1850,8 +1850,8 @@ int ECWDataset::TryWinRasterIO(CPL_UNUSED GDALRWFlag eFlag, int nXOff,
                                int nYOff, int nXSize, int nYSize,
                                GByte *pabyData, int nBufXSize, int nBufYSize,
                                GDALDataType eDT, int nBandCount,
-                               int *panBandList, GSpacing nPixelSpace,
-                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               int *panBandList, int64_t nPixelSpace,
+                               int64_t nLineSpace, int64_t nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg)
 {
     int iBand, i;
@@ -2039,8 +2039,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -2067,7 +2067,7 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     if (nBandSpace == 0)
     {
         nBandSpace =
-            static_cast<GSpacing>(nDataTypeSize) * nBufXSize * nBufYSize;
+            static_cast<int64_t>(nDataTypeSize) * nBufXSize * nBufYSize;
     }
 
     // Use GDAL upsampling if non nearest
@@ -2385,8 +2385,8 @@ CPLErr ECWDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr ECWDataset::ReadBandsDirectly(void *pData, int nBufXSize, int nBufYSize,
                                      CPL_UNUSED GDALDataType eBufType,
                                      int nBandCount,
-                                     CPL_UNUSED GSpacing nPixelSpace,
-                                     GSpacing nLineSpace, GSpacing nBandSpace,
+                                     CPL_UNUSED int64_t nPixelSpace,
+                                     int64_t nLineSpace, int64_t nBandSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     CPLDebug("ECW", "ReadBandsDirectly(-> %dx%d) - reading lines directly.",
@@ -2441,8 +2441,8 @@ CPLErr ECWDataset::ReadBandsDirectly(void *pData, int nBufXSize, int nBufYSize,
 
 CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
                              GDALDataType eBufType, int nBandCount,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
     int i;
@@ -2454,7 +2454,7 @@ CPLErr ECWDataset::ReadBands(void *pData, int nBufXSize, int nBufYSize,
         (eBufType == eRasterDataType) && nDataTypeSize == nPixelSpace &&
         nLineSpace == (nPixelSpace * nBufXSize) &&
         nBandSpace ==
-            (static_cast<GSpacing>(nDataTypeSize) * nBufXSize * nBufYSize);
+            (static_cast<int64_t>(nDataTypeSize) * nBufXSize * nBufYSize);
     if (bDirect)
     {
         return ReadBandsDirectly(pData, nBufXSize, nBufYSize, eBufType,

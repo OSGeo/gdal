@@ -63,8 +63,8 @@ typedef struct
     int nBands;
     GDALDataType eType;
     int nPixelSpace;
-    GSpacing nLineSpace;
-    GSpacing nBandSpace;
+    int64_t nLineSpace;
+    int64_t nBandSpace;
     GDALDataType eBurnValueType;
     union
     {

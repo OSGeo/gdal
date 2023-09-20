@@ -59,8 +59,8 @@ class WEBPDataset final : public GDALPamDataset
     virtual ~WEBPDataset();
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual char **GetMetadataDomainList() override;
@@ -342,8 +342,8 @@ CPLErr WEBPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               int nXSize, int nYSize, void *pData,
                               int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, int nBandCount,
-                              int *panBandMap, GSpacing nPixelSpace,
-                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              int *panBandMap, int64_t nPixelSpace,
+                              int64_t nLineSpace, int64_t nBandSpace,
                               GDALRasterIOExtraArg *psExtraArg)
 
 {

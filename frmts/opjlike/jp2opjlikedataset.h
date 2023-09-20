@@ -165,8 +165,8 @@ class JP2OPJLikeDataset final : public GDALJP2AbstractDataset, public BASE
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int64_t GetEstimatedRAMUsage() override;
@@ -218,7 +218,7 @@ class JP2OPJLikeRasterBand final : public GDALPamRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual GDALColorInterp GetColorInterpretation() override;

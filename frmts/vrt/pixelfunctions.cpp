@@ -128,7 +128,7 @@ static CPLErr RealPixelFunc(void **papoSources, int nSources, void *pData,
                           nLineSpaceSrc * iLine,
                       eSrcType, nPixelSpaceSrc,
                       static_cast<GByte *>(pData) +
-                          static_cast<GSpacing>(nLineSpace) * iLine,
+                          static_cast<int64_t>(nLineSpace) * iLine,
                       eBufType, nPixelSpace, nXSize);
     }
 
@@ -162,7 +162,7 @@ static CPLErr ImagPixelFunc(void **papoSources, int nSources, void *pData,
                               nLineSpaceSrc * iLine,
                           eSrcBaseType, nPixelSpaceSrc,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine,
+                              static_cast<int64_t>(nLineSpace) * iLine,
                           eBufType, nPixelSpace, nXSize);
         }
     }
@@ -176,7 +176,7 @@ static CPLErr ImagPixelFunc(void **papoSources, int nSources, void *pData,
             // Always copy from the same location.
             GDALCopyWords(&dfImag, eSrcType, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine,
+                              static_cast<int64_t>(nLineSpace) * iLine,
                           eBufType, nPixelSpace, nXSize);
         }
     }
@@ -211,7 +211,7 @@ static CPLErr ComplexPixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -298,7 +298,7 @@ static CPLErr PolarPixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -337,7 +337,7 @@ static CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -357,7 +357,7 @@ static CPLErr ModulePixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -397,7 +397,7 @@ static CPLErr PhasePixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -410,7 +410,7 @@ static CPLErr PhasePixelFunc(void **papoSources, int nSources, void *pData,
         {
             GDALCopyWords(&dfZero, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine,
+                              static_cast<int64_t>(nLineSpace) * iLine,
                           eBufType, nPixelSpace, nXSize);
         }
     }
@@ -430,7 +430,7 @@ static CPLErr PhasePixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -471,7 +471,7 @@ static CPLErr ConjPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -534,7 +534,7 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfSum, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -559,7 +559,7 @@ static CPLErr SumPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfSum, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -603,7 +603,7 @@ static CPLErr DiffPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -625,7 +625,7 @@ static CPLErr DiffPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -688,7 +688,7 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -713,7 +713,7 @@ static CPLErr MulPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -767,7 +767,7 @@ static CPLErr DivPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -789,7 +789,7 @@ static CPLErr DivPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -836,7 +836,7 @@ static CPLErr CMulPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -858,7 +858,7 @@ static CPLErr CMulPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -913,7 +913,7 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(adfPixVal, GDT_CFloat64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -936,7 +936,7 @@ static CPLErr InvPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -977,7 +977,7 @@ static CPLErr IntensityPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -997,7 +997,7 @@ static CPLErr IntensityPixelFunc(void **papoSources, int nSources, void *pData,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -1031,7 +1031,7 @@ static CPLErr SqrtPixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -1079,7 +1079,7 @@ static CPLErr Log10PixelFuncHelper(void **papoSources, int nSources,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -1099,7 +1099,7 @@ static CPLErr Log10PixelFuncHelper(void **papoSources, int nSources,
 
                 GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                               static_cast<GByte *>(pData) +
-                                  static_cast<GSpacing>(nLineSpace) * iLine +
+                                  static_cast<int64_t>(nLineSpace) * iLine +
                                   iCol * nPixelSpace,
                               eBufType, nPixelSpace, 1);
             }
@@ -1163,7 +1163,7 @@ static CPLErr ExpPixelFuncHelper(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -1251,7 +1251,7 @@ static CPLErr PowPixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -1355,7 +1355,7 @@ CPLErr InterpolatePixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -1413,7 +1413,7 @@ static CPLErr ReplaceNoDataPixelFunc(void **papoSources, int nSources,
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -1461,7 +1461,7 @@ static CPLErr ScalePixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -1504,7 +1504,7 @@ static CPLErr NormDiffPixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -1582,7 +1582,7 @@ static CPLErr MinOrMaxPixelFunc(void **papoSources, int nSources, void *pData,
 
             GDALCopyWords(&dfRes, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }

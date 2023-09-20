@@ -1073,7 +1073,7 @@ GDALDataset *GDALEXRDataset::CreateCopy(const char *pszFilename,
         std::vector<uint32_t> bufferUInt;
         const size_t pixelTypeSize = (pixelType == HALF) ? 2 : 4;
         const GDALDataType eDT = (pixelType == UINT) ? GDT_UInt32 : GDT_Float32;
-        const GSpacing nDTSize = GDALGetDataTypeSizeBytes(eDT);
+        const int64_t nDTSize = GDALGetDataTypeSizeBytes(eDT);
 
         const bool bTiled =
             CPLTestBool(CSLFetchNameValueDef(papszOptions, "TILED", "YES"));

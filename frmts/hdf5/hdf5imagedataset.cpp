@@ -102,8 +102,8 @@ class HDF5ImageDataset final : public HDF5Dataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     Hdf5ProductType GetSubdatasetType() const
@@ -241,8 +241,8 @@ class HDF5ImageRasterBand final : public GDALPamRasterBand
 
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpace,
-                     GSpacing nLineSpace,
+                     GDALDataType eBufType, int64_t nPixelSpace,
+                     int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -404,7 +404,7 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                       int nXSize, int nYSize, void *pData,
                                       int nBufXSize, int nBufYSize,
                                       GDALDataType eBufType,
-                                      GSpacing nPixelSpace, GSpacing nLineSpace,
+                                      int64_t nPixelSpace, int64_t nLineSpace,
                                       GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -484,7 +484,7 @@ CPLErr HDF5ImageRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             // natural interleaving of the HDF5 dataset
             if (IRasterIO(eRWFlag, nXOff, nYOff, nXSize, nYSize, pMemData,
                           nXSize, nYSize, eDataType, nDTSize,
-                          static_cast<GSpacing>(nXSize) * nDTSize,
+                          static_cast<int64_t>(nXSize) * nDTSize,
                           psExtraArg) != CE_None)
             {
                 return CE_Failure;
@@ -509,8 +509,8 @@ CPLErr HDF5ImageDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
                                    GDALDataType eBufType, int nBandCount,
-                                   int *panBandMap, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace, GSpacing nBandSpace,
+                                   int *panBandMap, int64_t nPixelSpace,
+                                   int64_t nLineSpace, int64_t nBandSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -649,10 +649,10 @@ CPLErr HDF5ImageDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nYSize, eDT, nBandCount, panBandMap,
                     bIsBandInterleavedData ? nDTSize : nDTSize * nBandCount,
                     bIsBandInterleavedData
-                        ? static_cast<GSpacing>(nXSize) * nDTSize
-                        : static_cast<GSpacing>(nXSize) * nDTSize * nBandCount,
+                        ? static_cast<int64_t>(nXSize) * nDTSize
+                        : static_cast<int64_t>(nXSize) * nDTSize * nBandCount,
                     bIsBandInterleavedData
-                        ? static_cast<GSpacing>(nYSize) * nXSize * nDTSize
+                        ? static_cast<int64_t>(nYSize) * nXSize * nDTSize
                         : nDTSize,
                     psExtraArg) != CE_None)
             {

@@ -180,8 +180,8 @@ class WMTSDataset final : public GDALPamDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -206,7 +206,7 @@ class WMTSBand final : public GDALPamRasterBand
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImage) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
+                             GDALDataType, int64_t, int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -241,7 +241,7 @@ CPLErr WMTSBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 CPLErr WMTSBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                            int nYSize, void *pData, int nBufXSize,
                            int nBufYSize, GDALDataType eBufType,
-                           GSpacing nPixelSpace, GSpacing nLineSpace,
+                           int64_t nPixelSpace, int64_t nLineSpace,
                            GDALRasterIOExtraArg *psExtraArg)
 {
     WMTSDataset *poGDS = (WMTSDataset *)poDS;
@@ -468,8 +468,8 @@ CPLErr WMTSDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                               int nXSize, int nYSize, void *pData,
                               int nBufXSize, int nBufYSize,
                               GDALDataType eBufType, int nBandCount,
-                              int *panBandMap, GSpacing nPixelSpace,
-                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              int *panBandMap, int64_t nPixelSpace,
+                              int64_t nLineSpace, int64_t nBandSpace,
                               GDALRasterIOExtraArg *psExtraArg)
 {
     if ((nBufXSize < nXSize || nBufYSize < nYSize) && apoDatasets.size() > 1 &&

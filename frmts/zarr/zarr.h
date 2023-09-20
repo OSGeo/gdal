@@ -115,8 +115,8 @@ class ZarrRasterBand final : public GDALRasterBand
     CPLErr IWriteBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                     GSpacing nLineSpaceBuf,
+                     GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                     int64_t nLineSpaceBuf,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:

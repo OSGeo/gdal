@@ -54,8 +54,8 @@ class CPL_DLL RawDataset : public GDALPamDataset
 
   protected:
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing nPixelSpace,
-                     GSpacing nLineSpace, GSpacing nBandSpace,
+                     GDALDataType, int, int *, int64_t nPixelSpace,
+                     int64_t nLineSpace, int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     virtual CPLErr Close() override = 0;
 
@@ -139,7 +139,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     void Initialize();
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALDataType, int64_t nPixelSpace, int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     int CanUseDirectIO(int nXOff, int nYOff, int nXSize, int nYSize,

@@ -75,8 +75,7 @@ GDALRasterBandH MEMCreateRasterBand(GDALDataset *poDS, int nBand,
 
 GDALRasterBandH MEMCreateRasterBandEx(GDALDataset *poDS, int nBand,
                                       GByte *pabyData, GDALDataType eType,
-                                      GSpacing nPixelOffset,
-                                      GSpacing nLineOffset,
+                                      int64_t nPixelOffset, int64_t nLineOffset,
                                       int bAssumeOwnership)
 
 {
@@ -112,7 +111,7 @@ MEMRasterBand::MEMRasterBand(GByte *pabyDataIn, GDALDataType eTypeIn,
 
 MEMRasterBand::MEMRasterBand(GDALDataset *poDSIn, int nBandIn,
                              GByte *pabyDataIn, GDALDataType eTypeIn,
-                             GSpacing nPixelOffsetIn, GSpacing nLineOffsetIn,
+                             int64_t nPixelOffsetIn, int64_t nLineOffsetIn,
                              int bAssumeOwnership, const char *pszPixelType)
     : GDALPamRasterBand(FALSE), pabyData(pabyDataIn),
       nPixelOffset(nPixelOffsetIn), nLineOffset(nLineOffsetIn),
@@ -222,8 +221,8 @@ CPLErr MEMRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
 CPLErr MEMRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                                GSpacing nLineSpaceBuf,
+                                GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                                int64_t nLineSpaceBuf,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     if (nXSize != nBufXSize || nYSize != nBufYSize)
@@ -276,8 +275,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
-                             GSpacing nBandSpaceBuf,
+                             int64_t nPixelSpaceBuf, int64_t nLineSpaceBuf,
+                             int64_t nBandSpaceBuf,
                              GDALRasterIOExtraArg *psExtraArg)
 {
     const int eBufTypeSize = GDALGetDataTypeSize(eBufType) / 8;
@@ -291,8 +290,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         {
             GDALDataType eDT = GDT_Unknown;
             GByte *pabyData = nullptr;
-            GSpacing nPixelOffset = 0;
-            GSpacing nLineOffset = 0;
+            int64_t nPixelOffset = 0;
+            int64_t nLineOffset = 0;
             int eDTSize = 0;
             for (int iBandIndex = 0; iBandIndex < nBandCount; iBandIndex++)
             {
@@ -308,7 +307,7 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                     nPixelOffset = poBand->nPixelOffset;
                     nLineOffset = poBand->nLineOffset;
                     eDTSize = GDALGetDataTypeSizeBytes(eDT);
-                    if (nPixelOffset != static_cast<GSpacing>(nBands) * eDTSize)
+                    if (nPixelOffset != static_cast<int64_t>(nBands) * eDTSize)
                         return false;
                 }
                 else if (poBand->GetRasterDataType() != eDT ||
@@ -325,8 +324,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const auto IsBandSeparatedDataset = [this, nBandCount, panBandMap]()
         {
             GDALDataType eDT = GDT_Unknown;
-            GSpacing nPixelOffset = 0;
-            GSpacing nLineOffset = 0;
+            int64_t nPixelOffset = 0;
+            int64_t nLineOffset = 0;
             int eDTSize = 0;
             for (int iBandIndex = 0; iBandIndex < nBandCount; iBandIndex++)
             {
@@ -361,8 +360,8 @@ CPLErr MEMDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                 cpl::down_cast<MEMRasterBand *>(papoBands[0]);
             const GDALDataType eDT = poFirstBand->GetRasterDataType();
             GByte *pabyData = poFirstBand->pabyData;
-            const GSpacing nPixelOffset = poFirstBand->nPixelOffset;
-            const GSpacing nLineOffset = poFirstBand->nLineOffset;
+            const int64_t nPixelOffset = poFirstBand->nPixelOffset;
+            const int64_t nLineOffset = poFirstBand->nLineOffset;
             const int eDTSize = GDALGetDataTypeSizeBytes(eDT);
             if (eRWFlag == GF_Read)
             {
@@ -740,7 +739,7 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
 
 {
     const int nBandId = GetRasterCount() + 1;
-    const GSpacing nPixelSize = GDALGetDataTypeSizeBytes(eType);
+    const int64_t nPixelSize = GDALGetDataTypeSizeBytes(eType);
 
     /* -------------------------------------------------------------------- */
     /*      Do we need to allocate the memory ourselves?  This is the       */
@@ -748,7 +747,7 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
     /* -------------------------------------------------------------------- */
     if (CSLFetchNameValue(papszOptions, "DATAPOINTER") == nullptr)
     {
-        const GSpacing nTmp = nPixelSize * GetRasterXSize();
+        const int64_t nTmp = nPixelSize * GetRasterXSize();
         GByte *pData =
 #if SIZEOF_VOIDP == 4
             (nTmp > INT_MAX) ? nullptr :
@@ -776,14 +775,14 @@ CPLErr MEMDataset::AddBand(GDALDataType eType, char **papszOptions)
         pszDataPointer, static_cast<int>(strlen(pszDataPointer))));
 
     const char *pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
-    GSpacing nPixelOffset;
+    int64_t nPixelOffset;
     if (pszOption == nullptr)
         nPixelOffset = nPixelSize;
     else
         nPixelOffset = CPLAtoGIntBig(pszOption);
 
     pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
-    GSpacing nLineOffset;
+    int64_t nLineOffset;
     if (pszOption == nullptr)
         nLineOffset = GetRasterXSize() * static_cast<size_t>(nPixelOffset);
     else
@@ -1155,7 +1154,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     pszOption = CSLFetchNameValue(papszOptions, "PIXELOFFSET");
-    GSpacing nPixelOffset;
+    int64_t nPixelOffset;
     if (pszOption == nullptr)
         nPixelOffset = GDALGetDataTypeSizeBytes(eType);
     else
@@ -1163,7 +1162,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
     pszOption = CSLFetchNameValue(papszOptions, "LINEOFFSET");
-    GSpacing nLineOffset = 0;
+    int64_t nLineOffset = 0;
     if (pszOption == nullptr)
         nLineOffset = poDS->nRasterXSize * static_cast<size_t>(nPixelOffset);
     else
@@ -1171,7 +1170,7 @@ GDALDataset *MEMDataset::Open(GDALOpenInfo *poOpenInfo)
             CPLScanUIntBig(pszOption, static_cast<int>(strlen(pszOption)));
 
     pszOption = CSLFetchNameValue(papszOptions, "BANDOFFSET");
-    GSpacing nBandOffset = 0;
+    int64_t nBandOffset = 0;
     if (pszOption == nullptr)
         nBandOffset = nLineOffset * static_cast<size_t>(poDS->nRasterYSize);
     else

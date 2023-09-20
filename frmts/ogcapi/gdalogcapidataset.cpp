@@ -126,8 +126,8 @@ class OGCAPIDataset final : public GDALDataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     int CloseDependentDatasets() override;
@@ -174,7 +174,7 @@ class OGCAPIMapWrapperBand final : public GDALRasterBand
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImage) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
+                             GDALDataType, int64_t, int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -197,7 +197,7 @@ class OGCAPITilesWrapperBand final : public GDALRasterBand
     virtual CPLErr IReadBlock(int nBlockXOff, int nBlockYOff,
                               void *pImage) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
+                             GDALDataType, int64_t, int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -1423,10 +1423,12 @@ CPLErr OGCAPIMapWrapperBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr OGCAPIMapWrapperBand::IRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr OGCAPIMapWrapperBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
+                                       int nXSize, int nYSize, void *pData,
+                                       int nBufXSize, int nBufYSize,
+                                       GDALDataType eBufType,
+                                       int64_t nPixelSpace, int64_t nLineSpace,
+                                       GDALRasterIOExtraArg *psExtraArg)
 {
     OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
     return poGDS->m_poWMSDS->GetRasterBand(nBand)->RasterIO(
@@ -2145,7 +2147,7 @@ CPLErr OGCAPITilesWrapperBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr OGCAPITilesWrapperBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     OGCAPIDataset *poGDS = cpl::down_cast<OGCAPIDataset *>(poDS);
 
@@ -2207,8 +2209,8 @@ CPLErr OGCAPIDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
-                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                int *panBandMap, int64_t nPixelSpace,
+                                int64_t nLineSpace, int64_t nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     if (!m_apoDatasetsCropped.empty())

@@ -85,13 +85,13 @@ class JP2KAKDataset final : public GDALJP2AbstractDataset
 
     bool TestUseBlockIO(int, int, int, int, int, int, GDALDataType, int, int *);
     CPLErr DirectRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                          GDALDataType, int, int *, GSpacing nPixelSpace,
-                          GSpacing nLineSpace, GSpacing nBandSpace,
+                          GDALDataType, int, int *, int64_t nPixelSpace,
+                          int64_t nLineSpace, int64_t nBandSpace,
                           GDALRasterIOExtraArg *psExtraArg);
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -131,8 +131,8 @@ class JP2KAKRasterBand final : public GDALPamRasterBand
     GDALColorInterp eInterp;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     bool HasExternalOverviews()

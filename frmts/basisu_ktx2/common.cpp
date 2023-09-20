@@ -97,7 +97,7 @@ bool GDAL_KTX2_BASISU_CreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
 
     if (poSrcDS->RasterIO(GF_Read, 0, 0, nXSize, nYSize, pSrcData, nXSize,
                           nYSize, GDT_Byte, nBands, nullptr, nBands,
-                          static_cast<GSpacing>(nBands) * nXSize, 1,
+                          static_cast<int64_t>(nBands) * nXSize, 1,
                           nullptr) != CE_None)
     {
         VSIFree(pSrcData);

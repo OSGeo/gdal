@@ -157,14 +157,14 @@ class PNGDataset final : public GDALPamDataset
                     const char *pszDomain = nullptr) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing, GSpacing,
-                             GSpacing,
+                             GDALDataType, int, int *, int64_t, int64_t,
+                             int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
 #ifdef ENABLE_WHOLE_IMAGE_OPTIMIZATION
     bool IsCompatibleOfSingleBlock() const;
-    CPLErr LoadWholeImage(void *pSingleBuffer, GSpacing nPixelSpace,
-                          GSpacing nLineSpace, GSpacing nBandSpace,
+    CPLErr LoadWholeImage(void *pSingleBuffer, int64_t nPixelSpace,
+                          int64_t nLineSpace, int64_t nBandSpace,
                           void *apabyBuffers[4]);
 #endif
 
@@ -227,7 +227,7 @@ class PNGRasterBand final : public GDALPamRasterBand
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
+                             GDALDataType, int64_t, int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     int bHaveNoData;

@@ -266,7 +266,7 @@ class TileDBRasterDataset final : public TileDBDataset
 
     bool bStats = FALSE;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                     GDALDataType, int, int *, int64_t, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr CreateAttribute(GDALDataType eType, const CPLString &osAttrName,
                            const int nSubRasterCount = 1);

@@ -76,8 +76,8 @@ class HFADataset final : public GDALPamDataset
 
   protected:
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
   public:

@@ -787,8 +787,8 @@ float *GRIB2Section567Writer::GetFloatData()
         pafData + (m_adfGeoTransform[5] < 0 ? (m_nYSize - 1) * m_nXSize : 0),
         m_nXSize - m_nSplitAndSwap, m_nYSize, GDT_Float32, sizeof(float),
         m_adfGeoTransform[5] < 0
-            ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
-            : static_cast<GSpacing>(m_nXSize * sizeof(float)),
+            ? -static_cast<int64_t>(m_nXSize * sizeof(float))
+            : static_cast<int64_t>(m_nXSize * sizeof(float)),
         nullptr);
     if (eErr != CE_None)
     {
@@ -804,8 +804,8 @@ float *GRIB2Section567Writer::GetFloatData()
                 (m_nXSize - m_nSplitAndSwap),
             m_nSplitAndSwap, m_nYSize, GDT_Float32, sizeof(float),
             m_adfGeoTransform[5] < 0
-                ? -static_cast<GSpacing>(m_nXSize * sizeof(float))
-                : static_cast<GSpacing>(m_nXSize * sizeof(float)),
+                ? -static_cast<int64_t>(m_nXSize * sizeof(float))
+                : static_cast<int64_t>(m_nXSize * sizeof(float)),
             nullptr);
         if (eErr != CE_None)
         {

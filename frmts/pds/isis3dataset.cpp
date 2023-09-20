@@ -303,8 +303,8 @@ class ISIS3RawRasterBand final : public RawRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;
@@ -355,8 +355,8 @@ class ISIS3WrapperRasterBand final : public GDALProxyRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual double GetOffset(int *pbSuccess = nullptr) override;
@@ -788,8 +788,8 @@ CPLErr ISIS3RawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr ISIS3RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1132,7 +1132,7 @@ CPLErr ISIS3WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
 CPLErr ISIS3WrapperRasterBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 
 {
     ISIS3Dataset *poGDS = reinterpret_cast<ISIS3Dataset *>(poDS);

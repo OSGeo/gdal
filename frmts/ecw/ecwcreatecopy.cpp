@@ -232,9 +232,9 @@ CNCSError GDALECWCompressor::WriteReadLine(UINT32 nNextLine,
             m_nSwathLines = MIN_SWATH_LINES;
     }
 
-    GSpacing nPixelSpace = GDALGetDataTypeSize(eWorkDT) / 8;
-    GSpacing nLineSpace = sFileInfo.nSizeX * nPixelSpace;
-    GSpacing nBandSpace = nLineSpace * m_nSwathLines;
+    int64_t nPixelSpace = GDALGetDataTypeSize(eWorkDT) / 8;
+    int64_t nLineSpace = sFileInfo.nSizeX * nPixelSpace;
+    int64_t nBandSpace = nLineSpace * m_nSwathLines;
 
     if (m_pabySwathBuf == nullptr)
     {
@@ -1688,7 +1688,7 @@ class IRasterIORequest
     IRasterIORequest(GDALRasterBand *poBandIn, int nXOffIn, int nYOffIn,
                      int nXSizeIn, int nYSizeIn, void *pData, int nBufXSizeIn,
                      int nBufYSizeIn, GDALDataType eBufType,
-                     GSpacing nPixelSpace, GSpacing nLineSpace)
+                     int64_t nPixelSpace, int64_t nLineSpace)
         : poBand(poBandIn), nXOff(nXOffIn), nYOff(nYOffIn), nXSize(nXSizeIn),
           nYSize(nYSizeIn), pabyData(nullptr), nBufXSize(nBufXSizeIn),
           nBufYSize(nBufYSizeIn)
@@ -1755,8 +1755,8 @@ class ECWWriteDataset final : public GDALDataset
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 #endif
 };
@@ -1803,7 +1803,7 @@ class ECWWriteRasterBand final : public GDALRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 #endif
 };
@@ -2030,8 +2030,8 @@ CPLErr ECWWriteDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   int nXSize, int nYSize, void *pData,
                                   int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, int nBandCount,
-                                  int *panBandMap, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace, GSpacing nBandSpace,
+                                  int *panBandMap, int64_t nPixelSpace,
+                                  int64_t nLineSpace, int64_t nBandSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
     ECWWriteRasterBand *po4thBand = nullptr;
@@ -2165,8 +2165,8 @@ CPLErr ECWWriteRasterBand::IReadBlock(CPL_UNUSED int nBlockX,
 CPLErr ECWWriteRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     if (eRWFlag == GF_Write && nBand == 4 && poGDS->nBands == 4 &&

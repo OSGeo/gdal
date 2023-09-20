@@ -192,8 +192,8 @@ class GeoRasterDataset final : public GDALDataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBandMap,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     int GetGCPCount() override;
     const OGRSpatialReference *GetGCPSpatialRef() const override;

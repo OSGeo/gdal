@@ -236,7 +236,7 @@ class SENTINEL2AlphaBand final : public VRTSourcedRasterBand
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
                              GDALDataType,
 #ifdef GDAL_DCAP_RASTER
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg
 #else
                              int nPixelSpace, int nLineSpace
@@ -266,7 +266,7 @@ CPLErr SENTINEL2AlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nBufXSize, int nBufYSize,
                                      GDALDataType eBufType,
 #ifdef GDAL_DCAP_RASTER
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     int64_t nPixelSpace, int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg
 #else
                                      int nPixelSpace, int nLineSpace

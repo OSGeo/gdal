@@ -188,7 +188,7 @@ static int SortTilesByPKID(const void *a, const void *b)
 CPLErr PostGISRasterRasterBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+    int64_t nPixelSpace, int64_t nLineSpace, GDALRasterIOExtraArg *psExtraArg)
 {
     /**
      * TODO: Write support not implemented yet

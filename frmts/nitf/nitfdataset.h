@@ -146,8 +146,8 @@ class NITFDataset final : public GDALPamDataset
                               char **papszOptions) override;
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     const OGRSpatialReference *GetSpatialRef() const override;
@@ -248,8 +248,8 @@ class NITFProxyPamRasterBand CPL_NON_FINAL : public GDALPamRasterBand
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
   public:

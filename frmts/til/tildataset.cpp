@@ -82,8 +82,8 @@ class TILRasterBand final : public GDALPamRasterBand
 
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 };
 
@@ -120,8 +120,8 @@ CPLErr TILRasterBand::IReadBlock(int iBlockX, int iBlockY, void *pBuffer)
 CPLErr TILRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eBufType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 
 {

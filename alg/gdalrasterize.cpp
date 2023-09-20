@@ -491,8 +491,8 @@ static void GDALCollectRingsFromGeometry(const OGRGeometry *poShape,
 /************************************************************************/
 static void gv_rasterize_one_shape(
     unsigned char *pabyChunkBuf, int nXOff, int nYOff, int nXSize, int nYSize,
-    int nBands, GDALDataType eType, int nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace, int bAllTouched, const OGRGeometry *poShape,
+    int nBands, GDALDataType eType, int nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, int bAllTouched, const OGRGeometry *poShape,
     GDALDataType eBurnValueType, const double *padfBurnValues,
     const int64_t *panBurnValues, GDALBurnValueSrc eBurnValueSrc,
     GDALRasterMergeAlg eMergeAlg, GDALTransformerFunc pfnTransformer,
@@ -527,7 +527,7 @@ static void gv_rasterize_one_shape(
     }
     if (nLineSpace == 0)
     {
-        nLineSpace = static_cast<GSpacing>(nXSize) * nPixelSpace;
+        nLineSpace = static_cast<int64_t>(nXSize) * nPixelSpace;
     }
     if (nBandSpace == 0)
     {

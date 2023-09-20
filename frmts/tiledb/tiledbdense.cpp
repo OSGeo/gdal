@@ -58,7 +58,7 @@ class TileDBRasterBand final : public GDALPamRasterBand
     virtual CPLErr IReadBlock(int, int, void *) override;
     virtual CPLErr IWriteBlock(int, int, void *) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing, GSpacing,
+                             GDALDataType, int64_t, int64_t,
                              GDALRasterIOExtraArg *psExtraArg) override;
     virtual GDALColorInterp GetColorInterpretation() override;
 };
@@ -331,8 +331,8 @@ TileDBRasterBand::TileDBRasterBand(TileDBRasterDataset *poDSIn, int nBandIn,
 CPLErr TileDBRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 {
     if (poGDS->eIndexMode == ATTRIBUTES && eRWFlag == GF_Write)
@@ -546,8 +546,8 @@ TileDBRasterDataset::~TileDBRasterDataset()
 CPLErr TileDBRasterDataset::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace, CPL_UNUSED GDALRasterIOExtraArg *psExtraArg)
+    int nBandCount, int *panBandMap, int64_t nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, CPL_UNUSED GDALRasterIOExtraArg *psExtraArg)
 
 {
     // support special case of writing attributes for bands, all attributes have to be set at once

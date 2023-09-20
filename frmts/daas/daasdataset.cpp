@@ -156,8 +156,8 @@ class GDALDAASDataset final : public GDALDataset
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
                      GDALDataType eBufType, int nBandCount, int *panBands,
-                     GSpacing nPixelSpace, GSpacing nLineSpace,
-                     GSpacing nBandSpace,
+                     int64_t nPixelSpace, int64_t nLineSpace,
+                     int64_t nBandSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int /* nBufXSize */, int /* nBufYSize */,
@@ -190,8 +190,8 @@ class GDALDAASRasterBand final : public GDALRasterBand
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpace,
-                     GSpacing nLineSpace,
+                     GDALDataType eBufType, int64_t nPixelSpace,
+                     int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     CPLErr AdviseRead(int nXOff, int nYOff, int nXSize, int nYSize,
                       int /* nBufXSize */, int /* nBufYSize */,
@@ -1453,10 +1453,10 @@ int GDALDAASRasterBand::GetMaskFlags()
 static bool CanSpatiallySplit(uint32_t nRetryFlags, int nXOff, int nYOff,
                               int nXSize, int nYSize, int nBufXSize,
                               int nBufYSize, int nBlockXSize, int nBlockYSize,
-                              GSpacing nPixelSpace, GSpacing nLineSpace,
+                              int64_t nPixelSpace, int64_t nLineSpace,
                               int &nXOff1, int &nYOff1, int &nXSize1,
                               int &nYSize1, int &nXOff2, int &nYOff2,
-                              int &nXSize2, int &nYSize2, GSpacing &nDataShift2)
+                              int &nXSize2, int &nYSize2, int64_t &nDataShift2)
 {
     if ((nRetryFlags & RETRY_SPATIAL_SPLIT) && nXSize == nBufXSize &&
         nYSize == nBufYSize && nYSize > nBlockYSize)
@@ -1501,8 +1501,8 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   int nXSize, int nYSize, void *pData,
                                   int nBufXSize, int nBufYSize,
                                   GDALDataType eBufType, int nBandCount,
-                                  int *panBandMap, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace, GSpacing nBandSpace,
+                                  int *panBandMap, int64_t nPixelSpace,
+                                  int64_t nLineSpace, int64_t nBandSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 {
     m_eCurrentResampleAlg = psExtraArg->eResampleAlg;
@@ -1557,7 +1557,7 @@ CPLErr GDALDAASDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     int nYOff2 = 0;
     int nXSize2 = 0;
     int nYSize2 = 0;
-    GSpacing nDataShift2 = 0;
+    int64_t nDataShift2 = 0;
     if (CanSpatiallySplit(nRetryFlags, nXOff, nYOff, nXSize, nYSize, nBufXSize,
                           nBufYSize, nBlockXSize, nBlockYSize, nPixelSpace,
                           nLineSpace, nXOff1, nYOff1, nXSize1, nYSize1, nXOff2,
@@ -1671,8 +1671,8 @@ CPLErr GDALDAASRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                      int nXSize, int nYSize, void *pData,
                                      int nBufXSize, int nBufYSize,
-                                     GDALDataType eBufType,
-                                     GSpacing nPixelSpace, GSpacing nLineSpace,
+                                     GDALDataType eBufType, int64_t nPixelSpace,
+                                     int64_t nLineSpace,
                                      GDALRasterIOExtraArg *psExtraArg)
 {
     GDALDAASDataset *poGDS = reinterpret_cast<GDALDAASDataset *>(poDS);
@@ -1719,7 +1719,7 @@ CPLErr GDALDAASRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     int nYOff2 = 0;
     int nXSize2 = 0;
     int nYSize2 = 0;
-    GSpacing nDataShift2 = 0;
+    int64_t nDataShift2 = 0;
     if (CanSpatiallySplit(nRetryFlags, nXOff, nYOff, nXSize, nYSize, nBufXSize,
                           nBufYSize, nBlockXSize, nBlockYSize, nPixelSpace,
                           nLineSpace, nXOff1, nYOff1, nXSize1, nYSize1, nXOff2,

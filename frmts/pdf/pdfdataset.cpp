@@ -1017,10 +1017,10 @@ CPLErr PDFRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
         const int nReqXOff = nBlockXOff * nBlockXSize;
         const int nReqYOff = (nBlockYSize == 1) ? 0 : nBlockYOff * nBlockYSize;
-        const GSpacing nPixelSpace = 1;
-        const GSpacing nLineSpace = nBlockXSize;
-        const GSpacing nBandSpace =
-            static_cast<GSpacing>(nBlockXSize) *
+        const int64_t nPixelSpace = 1;
+        const int64_t nLineSpace = nBlockXSize;
+        const int64_t nBandSpace =
+            static_cast<int64_t>(nBlockXSize) *
             ((nBlockYSize == 1) ? nRasterYSize : nBlockYSize);
 
         CPLErr eErr = poGDS->ReadPixels(nReqXOff, nReqYOff, nReqXSize,
@@ -2002,8 +2002,8 @@ void PDFDataset::PDFiumRenderPageBitmap(FPDF_BITMAP bitmap, FPDF_PAGE page,
 /************************************************************************/
 
 CPLErr PDFDataset::ReadPixels(int nReqXOff, int nReqYOff, int nReqXSize,
-                              int nReqYSize, GSpacing nPixelSpace,
-                              GSpacing nLineSpace, GSpacing nBandSpace,
+                              int nReqYSize, int64_t nPixelSpace,
+                              int64_t nLineSpace, int64_t nBandSpace,
                               GByte *pabyData)
 {
     CPLErr eErr = CE_None;
@@ -2748,8 +2748,8 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
     // Try to pass the request to the most appropriate overview dataset.
@@ -2806,8 +2806,8 @@ CPLErr PDFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr PDFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eBufType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eBufType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     PDFDataset *poGDS = (PDFDataset *)poDS;

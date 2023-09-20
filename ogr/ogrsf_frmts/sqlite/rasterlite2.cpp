@@ -1421,8 +1421,8 @@ static int RasterLite2Callback(void *data, double dfTileMinX, double dfTileMinY,
                    nDTSize);
     }
 
-    const GSpacing nPixelSpacing = static_cast<GSpacing>(nDTSize) * nBands;
-    const GSpacing nLineSpacing = nPixelSpacing * (nXOff2 - nXOff);
+    const int64_t nPixelSpacing = static_cast<int64_t>(nDTSize) * nBands;
+    const int64_t nLineSpacing = nPixelSpacing * (nXOff2 - nXOff);
     CPLErr eErr = pCbkData->poSrcDS->RasterIO(
         GF_Read, nXOff, nYOff, nReqXSize, nReqYSize, pabyBuffer, nReqXSize,
         nReqYSize, eDT, nBands, nullptr, nPixelSpacing, nLineSpacing, nDTSize,

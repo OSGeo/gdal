@@ -675,8 +675,8 @@ GDALRasterBand *RMFRasterBand::GetOverview(int i)
 CPLErr RMFRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
-                                GDALDataType eType, GSpacing nPixelSpace,
-                                GSpacing nLineSpace,
+                                GDALDataType eType, int64_t nPixelSpace,
+                                int64_t nLineSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 {
     RMFDataset *poGDS = reinterpret_cast<RMFDataset *>(poDS);
@@ -2663,8 +2663,8 @@ CPLErr RMFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                              int nXSize, int nYSize, void *pData, int nBufXSize,
                              int nBufYSize, GDALDataType eBufType,
                              int nBandCount, int *panBandMap,
-                             GSpacing nPixelSpace, GSpacing nLineSpace,
-                             GSpacing nBandSpace,
+                             int64_t nPixelSpace, int64_t nLineSpace,
+                             int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg)
 {
 #ifdef DEBUG

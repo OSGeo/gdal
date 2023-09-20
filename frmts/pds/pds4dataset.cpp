@@ -193,10 +193,12 @@ CPLErr PDS4WrapperRasterBand::IWriteBlock(int nXBlock, int nYBlock,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr PDS4WrapperRasterBand::IRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr PDS4WrapperRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
+                                        int nYOff, int nXSize, int nYSize,
+                                        void *pData, int nBufXSize,
+                                        int nBufYSize, GDALDataType eBufType,
+                                        int64_t nPixelSpace, int64_t nLineSpace,
+                                        GDALRasterIOExtraArg *psExtraArg)
 
 {
     PDS4Dataset *poGDS = reinterpret_cast<PDS4Dataset *>(poDS);
@@ -328,8 +330,8 @@ CPLErr PDS4RawRasterBand::IWriteBlock(int nXBlock, int nYBlock, void *pImage)
 CPLErr PDS4RawRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
-                                    GDALDataType eBufType, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace,
+                                    GDALDataType eBufType, int64_t nPixelSpace,
+                                    int64_t nLineSpace,
                                     GDALRasterIOExtraArg *psExtraArg)
 
 {

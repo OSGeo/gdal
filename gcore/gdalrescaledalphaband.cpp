@@ -93,10 +93,12 @@ CPLErr GDALRescaledAlphaBand::IReadBlock(int nXBlockOff, int nYBlockOff,
 /*                             IRasterIO()                              */
 /************************************************************************/
 
-CPLErr GDALRescaledAlphaBand::IRasterIO(
-    GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
-    void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpace, GSpacing nLineSpace, GDALRasterIOExtraArg *psExtraArg)
+CPLErr GDALRescaledAlphaBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
+                                        int nYOff, int nXSize, int nYSize,
+                                        void *pData, int nBufXSize,
+                                        int nBufYSize, GDALDataType eBufType,
+                                        int64_t nPixelSpace, int64_t nLineSpace,
+                                        GDALRasterIOExtraArg *psExtraArg)
 {
     // Optimization in common use case.
     // This avoids triggering the block cache on this band, which helps

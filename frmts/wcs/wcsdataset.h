@@ -76,13 +76,13 @@ class WCSDataset CPL_NON_FINAL : public GDALPamDataset
 
     int TestUseBlockIO(int, int, int, int, int, int) const;
     CPLErr DirectRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                          GDALDataType, int, int *, GSpacing nPixelSpace,
-                          GSpacing nLineSpace, GSpacing nBandSpace,
+                          GDALDataType, int, int *, int64_t nPixelSpace,
+                          int64_t nLineSpace, int64_t nBandSpace,
                           GDALRasterIOExtraArg *psExtraArg);
 
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, int, int *, GSpacing nPixelSpace,
-                             GSpacing nLineSpace, GSpacing nBandSpace,
+                             GDALDataType, int, int *, int64_t nPixelSpace,
+                             int64_t nLineSpace, int64_t nBandSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual std::vector<double> GetExtent(int nXOff, int nYOff, int nXSize,

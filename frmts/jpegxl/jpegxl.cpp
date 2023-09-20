@@ -86,7 +86,7 @@ class JPEGXLDataset final : public GDALJP2AbstractDataset
 
   protected:
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                     GDALDataType, int, int *, int64_t, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -128,7 +128,7 @@ class JPEGXLRasterBand final : public GDALPamRasterBand
     CPLErr IReadBlock(int nBlockXOff, int nBlockYOff, void *pData) override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing, GSpacing,
+                     GDALDataType, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -1550,8 +1550,8 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                 int nXSize, int nYSize, void *pData,
                                 int nBufXSize, int nBufYSize,
                                 GDALDataType eBufType, int nBandCount,
-                                int *panBandMap, GSpacing nPixelSpace,
-                                GSpacing nLineSpace, GSpacing nBandSpace,
+                                int *panBandMap, int64_t nPixelSpace,
+                                int64_t nLineSpace, int64_t nBandSpace,
                                 GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -1579,7 +1579,7 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
         const bool bIsPixelInterleaveBuffer =
             ((nBandSpace == 0 && nBandCount == 1) ||
              nBandSpace == nBufTypeSize) &&
-            nPixelSpace == static_cast<GSpacing>(nBufTypeSize) * nBandCount &&
+            nPixelSpace == static_cast<int64_t>(nBufTypeSize) * nBandCount &&
             nLineSpace == nPixelSpace * nRasterXSize;
 
         const auto eNativeDT = GetRasterBand(1)->GetRasterDataType();
@@ -1666,8 +1666,8 @@ CPLErr JPEGXLDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
 CPLErr JPEGXLRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                    int nXSize, int nYSize, void *pData,
                                    int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArg)
 
 {

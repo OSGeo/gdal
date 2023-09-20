@@ -1409,7 +1409,7 @@ CPLErr GDALPansharpenOperation::ProcessRegion(int nXOff, int nYOff, int nXSize,
                         static_cast<int>(iNextStartLine - iStartLine);
                     pasJobs[i].nBandCount = psOptions->nInputSpectralBands;
                     pasJobs[i].nBandSpace =
-                        static_cast<GSpacing>(nXSize) * nYSize * nDataTypeSize;
+                        static_cast<int64_t>(nXSize) * nYSize * nDataTypeSize;
 #ifdef DEBUG_TIMING
                     pasJobs[i].ptv = &tv;
 #endif

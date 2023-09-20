@@ -156,7 +156,7 @@ class EHdrRasterBand final : public RawRasterBand
     int minmaxmeanstddev{};
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALDataType, int64_t nPixelSpace, int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     CPL_DISALLOW_COPY_ASSIGN(EHdrRasterBand)

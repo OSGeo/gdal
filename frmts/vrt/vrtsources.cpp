@@ -1253,8 +1253,8 @@ int VRTSimpleSource::NeedMaxValAdjustment() const
 CPLErr VRTSimpleSource::RasterIO(GDALDataType eBandDataType, int nXOff,
                                  int nYOff, int nXSize, int nYSize, void *pData,
                                  int nBufXSize, int nBufYSize,
-                                 GDALDataType eBufType, GSpacing nPixelSpace,
-                                 GSpacing nLineSpace,
+                                 GDALDataType eBufType, int64_t nPixelSpace,
+                                 int64_t nLineSpace,
                                  GDALRasterIOExtraArg *psExtraArgIn)
 
 {
@@ -1526,8 +1526,8 @@ CPLErr VRTSimpleSource::GetHistogram(int nXSize, int nYSize, double dfMin,
 CPLErr VRTSimpleSource::DatasetRasterIO(
     GDALDataType eBandDataType, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace, GDALRasterIOExtraArg *psExtraArgIn)
+    int nBandCount, int *panBandMap, int64_t nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace, GDALRasterIOExtraArg *psExtraArgIn)
 {
     if (!EQUAL(GetType(), "SimpleSource"))
     {
@@ -1742,8 +1742,8 @@ void VRTAveragedSource::SetNoDataValue(double dfNewNoDataValue)
 CPLErr VRTAveragedSource::RasterIO(GDALDataType /*eBandDataType*/, int nXOff,
                                    int nYOff, int nXSize, int nYSize,
                                    void *pData, int nBufXSize, int nBufYSize,
-                                   GDALDataType eBufType, GSpacing nPixelSpace,
-                                   GSpacing nLineSpace,
+                                   GDALDataType eBufType, int64_t nPixelSpace,
+                                   int64_t nLineSpace,
                                    GDALRasterIOExtraArg *psExtraArgIn)
 
 {
@@ -2391,8 +2391,8 @@ void VRTComplexSource::SetColorTableComponent(int nComponent)
 CPLErr VRTComplexSource::RasterIO(GDALDataType eBandDataType, int nXOff,
                                   int nYOff, int nXSize, int nYSize,
                                   void *pData, int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace,
+                                  GDALDataType eBufType, int64_t nPixelSpace,
+                                  int64_t nLineSpace,
                                   GDALRasterIOExtraArg *psExtraArgIn)
 
 {
@@ -2503,7 +2503,7 @@ template <class WorkingDT>
 CPLErr VRTComplexSource::RasterIOInternal(
     GDALDataType eBandDataType, int nReqXOff, int nReqYOff, int nReqXSize,
     int nReqYSize, void *pData, int nOutXSize, int nOutYSize,
-    GDALDataType eBufType, GSpacing nPixelSpace, GSpacing nLineSpace,
+    GDALDataType eBufType, int64_t nPixelSpace, int64_t nLineSpace,
     GDALRasterIOExtraArg *psExtraArg, GDALDataType eWrkDataType)
 {
     /* -------------------------------------------------------------------- */
@@ -2565,7 +2565,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
         const CPLErr eErr = l_band->RasterIO(
             GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize, pafData,
             nOutXSize, nOutYSize, eWrkDataType, nWordSize,
-            nWordSize * static_cast<GSpacing>(nOutXSize), psExtraArg);
+            nWordSize * static_cast<int64_t>(nOutXSize), psExtraArg);
         if (!m_osResampling.empty())
             psExtraArg->eResampleAlg = eResampleAlgBack;
 
@@ -2600,7 +2600,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
             if (poMaskBand->RasterIO(
                     GF_Read, nReqXOff, nReqYOff, nReqXSize, nReqYSize,
                     &abyMask[0], nOutXSize, nOutYSize, GDT_Byte, 1,
-                    static_cast<GSpacing>(nOutXSize), psExtraArg) != CE_None)
+                    static_cast<int64_t>(nOutXSize), psExtraArg) != CE_None)
             {
                 CPLFree(pafData);
                 return CE_Failure;
@@ -2786,7 +2786,7 @@ CPLErr VRTComplexSource::RasterIOInternal(
 template CPLErr VRTComplexSource::RasterIOInternal<float>(
     GDALDataType eBandDataType, int nReqXOff, int nReqYOff, int nReqXSize,
     int nReqYSize, void *pData, int nOutXSize, int nOutYSize,
-    GDALDataType eBufType, GSpacing nPixelSpace, GSpacing nLineSpace,
+    GDALDataType eBufType, int64_t nPixelSpace, int64_t nLineSpace,
     GDALRasterIOExtraArg *psExtraArg, GDALDataType eWrkDataType);
 
 /************************************************************************/
@@ -2891,8 +2891,8 @@ CPLXMLNode *VRTFuncSource::SerializeToXML(CPL_UNUSED const char *pszVRTPath)
 CPLErr VRTFuncSource::RasterIO(GDALDataType /*eBandDataType*/, int nXOff,
                                int nYOff, int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
-                               GDALDataType eBufType, GSpacing nPixelSpace,
-                               GSpacing nLineSpace,
+                               GDALDataType eBufType, int64_t nPixelSpace,
+                               int64_t nLineSpace,
                                GDALRasterIOExtraArg * /* psExtraArg */)
 {
     if (nPixelSpace * 8 == GDALGetDataTypeSize(eBufType) &&

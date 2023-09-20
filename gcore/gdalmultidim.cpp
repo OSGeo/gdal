@@ -7351,8 +7351,8 @@ class GDALMDArrayResampledDatasetRasterBand final : public GDALRasterBand
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                     GSpacing nLineSpaceBuf,
+                     GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                     int64_t nLineSpaceBuf,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -7522,7 +7522,7 @@ CPLErr GDALMDArrayResampledDatasetRasterBand::IReadBlock(int nBlockXOff,
 CPLErr GDALMDArrayResampledDatasetRasterBand::IRasterIO(
     GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    GSpacing nPixelSpaceBuf, GSpacing nLineSpaceBuf,
+    int64_t nPixelSpaceBuf, int64_t nLineSpaceBuf,
     GDALRasterIOExtraArg *psExtraArg)
 {
     auto l_poDS(cpl::down_cast<GDALMDArrayResampledDataset *>(poDS));
@@ -8221,8 +8221,8 @@ class GDALRasterBandFromArray final : public GDALRasterBand
     CPLErr IWriteBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                      int nYSize, void *pData, int nBufXSize, int nBufYSize,
-                     GDALDataType eBufType, GSpacing nPixelSpaceBuf,
-                     GSpacing nLineSpaceBuf,
+                     GDALDataType eBufType, int64_t nPixelSpaceBuf,
+                     int64_t nLineSpaceBuf,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
   public:
@@ -8656,8 +8656,8 @@ CPLErr GDALRasterBandFromArray::IRasterIO(GDALRWFlag eRWFlag, int nXOff,
                                           int nYOff, int nXSize, int nYSize,
                                           void *pData, int nBufXSize,
                                           int nBufYSize, GDALDataType eBufType,
-                                          GSpacing nPixelSpaceBuf,
-                                          GSpacing nLineSpaceBuf,
+                                          int64_t nPixelSpaceBuf,
+                                          int64_t nLineSpaceBuf,
                                           GDALRasterIOExtraArg *psExtraArg)
 {
     auto l_poDS(cpl::down_cast<GDALDatasetFromArray *>(poDS));

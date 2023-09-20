@@ -94,7 +94,7 @@ class DIMAPDataset final : public GDALPamDataset
     char **GetFileList() override;
 
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, int, int *, GSpacing, GSpacing, GSpacing,
+                     GDALDataType, int, int *, int64_t, int64_t, int64_t,
                      GDALRasterIOExtraArg *psExtraArg) override;
 
     static int Identify(GDALOpenInfo *);
@@ -276,7 +276,7 @@ class DIMAPRasterBand final : public GDALPamRasterBand
 
     CPLErr IReadBlock(int, int, void *) override;
     CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                     GDALDataType, GSpacing nPixelSpace, GSpacing nLineSpace,
+                     GDALDataType, int64_t nPixelSpace, int64_t nLineSpace,
                      GDALRasterIOExtraArg *psExtraArg) override;
     int GetOverviewCount() override;
     GDALRasterBand *GetOverview(int) override;
@@ -323,8 +323,8 @@ CPLErr DIMAPRasterBand::IReadBlock(int iBlockX, int iBlockY, void *pBuffer)
 CPLErr DIMAPRasterBand::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   int nXSize, int nYSize, void *pData,
                                   int nBufXSize, int nBufYSize,
-                                  GDALDataType eBufType, GSpacing nPixelSpace,
-                                  GSpacing nLineSpace,
+                                  GDALDataType eBufType, int64_t nPixelSpace,
+                                  int64_t nLineSpace,
                                   GDALRasterIOExtraArg *psExtraArg)
 
 {
@@ -349,8 +349,8 @@ CPLErr DIMAPDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, int nBandCount,
-                               int *panBandMap, GSpacing nPixelSpace,
-                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               int *panBandMap, int64_t nPixelSpace,
+                               int64_t nLineSpace, int64_t nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg)
 
 {

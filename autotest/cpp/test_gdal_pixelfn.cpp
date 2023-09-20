@@ -80,7 +80,7 @@ CPLErr CustomPixelFuncWithMetadata(void **papoSources, int nSources,
             const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 2;
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -111,7 +111,7 @@ CPLErr CustomPixelFunc(void **papoSources, int nSources, void *pData,
             const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 3;
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }
@@ -140,7 +140,7 @@ CPLErr CustomPixelFuncNoArgs(void **papoSources, int nSources, void *pData,
             const double dfPixVal = SRCVAL(papoSources[0], eSrcType, ii) * 4;
             GDALCopyWords(&dfPixVal, GDT_Float64, 0,
                           static_cast<GByte *>(pData) +
-                              static_cast<GSpacing>(nLineSpace) * iLine +
+                              static_cast<int64_t>(nLineSpace) * iLine +
                               iCol * nPixelSpace,
                           eBufType, nPixelSpace, 1);
         }

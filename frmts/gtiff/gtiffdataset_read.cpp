@@ -371,9 +371,9 @@ struct GTiffDecompressContext
     int nBufDTSize = 0;
     int nBandCount = 0;
     const int *panBandMap = nullptr;
-    GSpacing nPixelSpace = 0;
-    GSpacing nLineSpace = 0;
-    GSpacing nBandSpace = 0;
+    int64_t nPixelSpace = 0;
+    int64_t nLineSpace = 0;
+    int64_t nBandSpace = 0;
     bool bHasPRead = false;
     bool bCacheAllBands = false;
     bool bSkipBlockCache = false;
@@ -977,8 +977,8 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                                        int nYSize, void *pData,
                                        GDALDataType eBufType, int nBandCount,
                                        const int *panBandMap,
-                                       GSpacing nPixelSpace,
-                                       GSpacing nLineSpace, GSpacing nBandSpace)
+                                       int64_t nPixelSpace, int64_t nLineSpace,
+                                       int64_t nBandSpace)
 {
     auto poQueue = m_poThreadPool->CreateJobQueue();
     if (poQueue == nullptr)
@@ -1056,7 +1056,7 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     }
 
     if (m_nPlanarConfig == PLANARCONFIG_CONTIG && nBandCount == nBands &&
-        nPixelSpace == nBands * static_cast<GSpacing>(sContext.nBufDTSize))
+        nPixelSpace == nBands * static_cast<int64_t>(sContext.nBufDTSize))
     {
         sContext.bUseBIPOptim = true;
         for (int i = 0; i < nBands; ++i)
@@ -1453,8 +1453,8 @@ int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                int nXSize, int nYSize, void *pData,
                                int nBufXSize, int nBufYSize,
                                GDALDataType eBufType, int nBandCount,
-                               int *panBandMap, GSpacing nPixelSpace,
-                               GSpacing nLineSpace, GSpacing nBandSpace,
+                               int *panBandMap, int64_t nPixelSpace,
+                               int64_t nLineSpace, int64_t nBandSpace,
                                GDALRasterIOExtraArg *psExtraArg)
 {
     if (eAccess == GA_Update || eRWFlag == GF_Write || m_bStreamingIn)
@@ -1656,8 +1656,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
                                     int nXSize, int nYSize, void *pData,
                                     int nBufXSize, int nBufYSize,
                                     GDALDataType eBufType, int nBandCount,
-                                    int *panBandMap, GSpacing nPixelSpace,
-                                    GSpacing nLineSpace, GSpacing nBandSpace)
+                                    int *panBandMap, int64_t nPixelSpace,
+                                    int64_t nLineSpace, int64_t nBandSpace)
 {
     const auto poFirstBand =
         cpl::down_cast<GTiffRasterBand *>(GetRasterBand(1));
@@ -2788,8 +2788,8 @@ CPLErr GTiffDataset::CommonDirectIO(FetchBuffer &oFetcher, int nXOff, int nYOff,
 CPLErr GTiffDataset::CommonDirectIOClassic(
     FetchBufferDirectIO &oFetcher, int nXOff, int nYOff, int nXSize, int nYSize,
     void *pData, int nBufXSize, int nBufYSize, GDALDataType eBufType,
-    int nBandCount, int *panBandMap, GSpacing nPixelSpace, GSpacing nLineSpace,
-    GSpacing nBandSpace)
+    int nBandCount, int *panBandMap, int64_t nPixelSpace, int64_t nLineSpace,
+    int64_t nBandSpace)
 {
     return CommonDirectIO<FetchBufferDirectIO>(
         oFetcher, nXOff, nYOff, nXSize, nYSize, pData, nBufXSize, nBufYSize,
@@ -2809,8 +2809,8 @@ CPLErr GTiffDataset::CommonDirectIOClassic(
 int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
                            int nYSize, void *pData, int nBufXSize,
                            int nBufYSize, GDALDataType eBufType, int nBandCount,
-                           int *panBandMap, GSpacing nPixelSpace,
-                           GSpacing nLineSpace, GSpacing nBandSpace,
+                           int *panBandMap, int64_t nPixelSpace,
+                           int64_t nLineSpace, int64_t nBandSpace,
                            GDALRasterIOExtraArg *psExtraArg)
 {
     auto poProtoBand = cpl::down_cast<GTiffRasterBand *>(papoBands[0]);

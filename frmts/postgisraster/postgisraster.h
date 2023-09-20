@@ -371,8 +371,8 @@ class PostGISRasterRasterBand final : public VRTSourcedRasterBand
     virtual double GetNoDataValue(int *pbSuccess = nullptr) override;
     virtual CPLErr SetNoDataValue(double) override;
     virtual CPLErr IRasterIO(GDALRWFlag, int, int, int, int, void *, int, int,
-                             GDALDataType, GSpacing nPixelSpace,
-                             GSpacing nLineSpace,
+                             GDALDataType, int64_t nPixelSpace,
+                             int64_t nLineSpace,
                              GDALRasterIOExtraArg *psExtraArg) override;
 
     virtual int GetOverviewCount() override;
