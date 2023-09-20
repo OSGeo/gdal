@@ -899,3 +899,69 @@ def test_rasterize_bugfix_gh6981():
         )
         == gdal.CE_None
     )
+
+
+###############################################################################
+
+
+@pytest.mark.parametrize(
+    "wkt",
+    [
+        "POLYGON((12.5 2.5, 12.5 12.5, 2.5 12.5, 2.5 2.5, 12.5 2.5))",
+        "POLYGON((12.5 2.5, 2.5 2.5, 2.5 12.5, 12.5 12.5, 12.5 2.5))",
+        "LINESTRING(12.5 2.5, 2.5 2.5, 2.5 12.5, 12.5 12.5, 12.5 2.5)",
+    ],
+    ids=["clockwise", "counterclockwise", "linestring"],
+)
+@pytest.mark.parametrize(
+    "options",
+    [
+        ["MERGE_ALG=ADD", "ALL_TOUCHED=YES"],
+        ["ALL_TOUCHED=YES"],
+        ["MERGE_ALG=ADD"],
+        [],
+    ],
+)
+@pytest.mark.parametrize("nbands", [1, 2])
+def test_rasterize_bugfix_gh8437(wkt, options, nbands):
+
+    # Setup working spatial reference
+    sr_wkt = 'LOCAL_CS["arbitrary"]'
+    sr = osr.SpatialReference(sr_wkt)
+
+    # Create a memory raster to rasterize into.
+    target_ds = gdal.GetDriverByName("MEM").Create("", 15, 15, nbands, gdal.GDT_Byte)
+    target_ds.SetGeoTransform((15, -1, 0, 15, 0, -1))
+
+    target_ds.SetProjection(sr_wkt)
+
+    # Create a memory layer to rasterize from.
+    rast_ogr_ds = ogr.GetDriverByName("Memory").CreateDataSource("wrk")
+    rast_mem_lyr = rast_ogr_ds.CreateLayer("poly", srs=sr)
+
+    # Add a polygon.
+    feat = ogr.Feature(rast_mem_lyr.GetLayerDefn())
+    feat.SetGeometryDirectly(ogr.Geometry(wkt=wkt))
+
+    rast_mem_lyr.CreateFeature(feat)
+
+    # Run the algorithm.
+    gdal.RasterizeLayer(
+        target_ds,
+        [i + 1 for i in range(nbands)],
+        rast_mem_lyr,
+        burn_values=[80] * nbands,
+        options=options,
+    )
+
+    expected_checksum = (
+        519
+        if wkt.startswith("LINESTRING")
+        else 1727
+        if "ALL_TOUCHED=YES" in options
+        else 1435
+    )
+    for i in range(nbands):
+        _, maxval = target_ds.GetRasterBand(i + 1).ComputeRasterMinMax()
+        assert maxval == 80
+        assert target_ds.GetRasterBand(i + 1).Checksum() == expected_checksum
