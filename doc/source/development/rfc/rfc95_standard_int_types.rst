@@ -8,8 +8,8 @@ RFC 95: Use standard C/C++ integer types
 Author:        Even Rouault
 Contact:       even.rouault @ spatialys.com
 Started:       2023-Sep-15
-Status:        Draft
-Target:        GDAL 3.8
+Status:        Proposed
+Target:        GDAL 4.0
 ============== =============================================
 
 Summary
@@ -17,7 +17,8 @@ Summary
 
 This RFC replaces the use of the custom integer types defined in cpl_port.h
 (G[U]Int[8/16/32/64/Big]) by their standard [u]int[8/16/32/64]_t C99/C++11
-counterparts.
+counterparts, as well as other derived integer data types.
+Due to the API and ABI break, this will be implemented in GDAL 4.0.
 
 Motivation
 ----------
@@ -53,8 +54,9 @@ The following data types replacement are done in the whole code base:
 - ``GIntBig``   --> ``int64_t``
 - ``GUIntBig``  --> ``uint64_t``
 
-Not yet done in the candidate implementation, but candidates:
+Other changes have been done for other integer data types:
 
+- ``vsi_l_offset``-->  ``uint64_t``
 - ``GSpacing``    -->  ``int64_t``   (affects mostly C++ raster drivers)
 - ``GPtrDiff_t``  -->  ``ptrdiff_t`` (affects the multidimensional C and C++ API)
 
@@ -69,9 +71,10 @@ The following macro replacement are done in the whole code base:
 - ``GINTBIG_MIN``   --> ``std::numeric_limits<int64_t>::min()``
 - ``GUINTBIG_MAX``  --> ``std::numeric_limits<uint64_t>::max()``
 
-The old types are no longer used, and usable, in the GDAL code base since
-their definition is protected by ``#if !defined(GDAL_COMPILATION)``, which
-means they are still usable by external code.
+The old types are no longer used in the GDAL code base since
+their definition is protected by ``#ifdef GDAL_USE_OLD_INT_TYPES``, which
+external code might define to help for the migration (particularly if supporting
+GDAL < 4.0 and GDAL >= 4.0 is needed)
 
 Impacts in the code base
 ------------------------
@@ -144,42 +147,6 @@ Main impacts are:
     :cpp:func:`OGRLayer::GetFeatureCount`
 
   - the ones that implement the multidimensional API (no publicly ones known by us)
-
-Questions to answer before adoption
------------------------------------
-
-Q1: What to do with the 64-bit integer changes?
-
-A1: Potential alternatives:
-
-1) Proceed with them, keep GDAL 3.8 as version number. External code will have
-   to use #ifdef if support for GDAL < 3.8 and >= 3.8 is needed.
-
-2) Same as 1), but bump GDAL version number to 4.0. Cleaner way
-
-3) Revert all 64-bit integer related changes
-
-4) Partial revert of 64-bit integer related changes, to reintroduce
-   GIntBig/GUIntBig for the above mentionned methods of the C API
-   (i.e. GDALGetDefaultHistogramEx, etc), but not the C++ one.
-   This preserves C API.
-
-5) Variant of 4) where the revert is done only for the C raster and vector API,
-   but the thought-to-be-marginally-used multidimensional one uses the
-   int64_t/uint64_t types.
-
-
-Q2: Should the ``#if !defined(GDAL_COMPILATION)`` in cpl_port.h that controls
-whether the old types are accessible be changed to
-``#if !defined(GDAL_COMPILATION) && defined(GDAL_USE_OLD_INT_TYPES)``,
-so that users have to opt-in to use the legacy types?
-
-
-Q3: Should ``vsi_l_offset`` be replaced by ``uint64_t``? (they are now aliased
-through a typedef)
-
-A3: I'm 50% 50% on this. The name captures a semantic, which can be interesting
-to preserve (like they is a ``off_t`` type in Unix file API)
 
 Risks
 -----
