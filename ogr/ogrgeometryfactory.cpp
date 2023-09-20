@@ -5538,8 +5538,8 @@ static int OGRGF_DetectArc(const OGRLineString *poLS, int i,
                j, R_2, cx_2, cy_2, dfRelDiffR, dfRelDiffCx, dfRelDiffCy);
 #endif
 
-        if ((dfRelDiffR > 1.0e-6 && dfRelDiffCx > 1.0e-6 &&
-             dfRelDiffCy > 1.0e-6) ||
+        if (dfRelDiffR > 1.0e-7 || dfRelDiffCx > 1.0e-7 ||
+            dfRelDiffCy > 1.0e-7 ||
             dfDeltaAlpha10 * (alpha1_2 - alpha0_2) < 0.0)
         {
 #ifdef VERBOSE_DEBUG_CURVEFROMLINESTRING

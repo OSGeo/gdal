@@ -191,6 +191,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
 
     bool bRFC7946_;
     bool bWrapDateLine_ = false;
+    bool bHasMakeValid_ = false;
     OGRCoordinateTransformation *poCT_;
     OGRGeometryFactory::TransformWithOptionsCache oTransformCache_;
     OGRGeoJSONWriteOptions oWriteOptions_;

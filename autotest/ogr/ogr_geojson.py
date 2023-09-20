@@ -4304,3 +4304,77 @@ def test_ogr_geojson_open_with_non_C_locale():
         test_ogr_geojson_2()
     finally:
         locale.setlocale(locale.LC_ALL, original_locale)
+
+
+###############################################################################
+# Test geometry validity fixing due to limited coordinate precision
+
+
+def test_ogr_geojson_write_geometry_validity_fixing_rfc7946(tmp_vsimem):
+
+    # Check if MakeValid() is available
+    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
+        make_valid_available = g.MakeValid() is not None
+    if not make_valid_available:
+        pytest.skip("MakeValid() not available")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_write_geometry_validity_fixing.geojson"
+    )
+    ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(32632)
+    lyr = ds.CreateLayer("foo", srs=srs, options=["RFC7946=YES"])
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "CURVEPOLYGON (COMPOUNDCURVE ((318049.787 5688446.432,318056.628 5688447.908),CIRCULARSTRING (318056.628 5688447.908,318055.204 5688448.31,318054.25 5688449.44),(318054.25 5688449.44,318049.487 5688471.421,318049.381 5688471.91,318046.45 5688471.278,318051.318 5688448.807),CIRCULARSTRING (318051.318 5688448.807,318051.039 5688447.306,318049.787 5688446.432)))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().IsValid()
+
+
+###############################################################################
+# Test geometry validity fixing due to limited coordinate precision
+
+
+def test_ogr_geojson_write_geometry_validity_fixing(tmp_vsimem):
+
+    # Check if MakeValid() is available
+    g = ogr.CreateGeometryFromWkt("POLYGON ((0 0,10 10,0 10,10 0,0 0))")
+    with gdaltest.error_handler(), gdaltest.disable_exceptions():
+        make_valid_available = g.MakeValid() is not None
+    if not make_valid_available:
+        pytest.skip("MakeValid() not available")
+
+    filename = str(
+        tmp_vsimem / "test_ogr_geojson_write_geometry_validity_fixing.geojson"
+    )
+    ds = ogr.GetDriverByName("GeoJSON").CreateDataSource(filename)
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+    lyr = ds.CreateLayer("foo", srs=srs, options=["COORDINATE_PRECISION=7"])
+
+    f = ogr.Feature(lyr.GetLayerDefn())
+    f.SetGeometry(
+        ogr.CreateGeometryFromWkt(
+            "CURVEPOLYGON ((6.38889863954163 51.3181827925179,6.38899594962816 51.3181982385094,6.38899341741945 51.3181982023144,6.38899088736512 51.3181982771017,6.3889883718375 51.3181984625056,6.3889858831369 51.3181987576155,6.38898343343252 51.3181991609928,6.38898103470357 51.3181996706617,6.38897869867934 51.3182002841327,6.38897643678313 51.3182009984033,6.38897426007491 51.3182018099849,6.38897217919885 51.3182027149033,6.38897020433018 51.3182037087387,6.38896834512585 51.3182047866288,6.38896661067703 51.3182059433019,6.38896500946527 51.3182071731038,6.3889635493198 51.3182084700195,6.38896223738132 51.3182098277102,6.38896108006473 51.3182112395339,6.38888158690724 51.3184071643413,6.3888798178826 51.3184115229661,6.38883812537253 51.3184049086286,6.38891937389822 51.3182046159251,6.38891977479799 51.3182034182797,6.38892004565215 51.3182022064019,6.38892018522285 51.318200985823,6.38892019287242 51.3181997621242,6.38892006856587 51.3181985408984,6.38891981287105 51.3181973277249,6.38891942695666 51.3181961281515,6.38891891258675 51.3181949476556,6.38891827211159 51.3181937916355,6.38891750845846 51.3181926653737,6.38891662511696 51.3181915740195,6.38891562612488 51.3181905225562,6.3889145160472 51.3181895157905,6.38891329995705 51.3181885583257,6.38891198341239 51.318187654536,6.38891057242995 51.3181868085505,6.38890907345788 51.3181860242377,6.388907493347 51.3181853051815,6.38890583931839 51.3181846546672,6.38890411893121 51.3181840756684,6.38890234004799 51.3181835708295,6.38890051079796 51.3181831424602,6.38889863954163 51.3181827925179))"
+        )
+    )
+    lyr.CreateFeature(f)
+
+    ds = None
+
+    ds = ogr.Open(filename)
+    lyr = ds.GetLayer(0)
+    f = lyr.GetNextFeature()
+    assert f.GetGeometryRef().IsValid()
