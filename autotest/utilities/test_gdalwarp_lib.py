@@ -473,6 +473,66 @@ def test_gdalwarp_lib_21():
 
 
 ###############################################################################
+# Test cutline with sourceCRS != targetCRS and targetCRS == cutlineCRS
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GPKG")
+def test_gdalwarp_lib_cutline_reprojection(tmp_vsimem):
+
+    cutline_filename = str(tmp_vsimem / "cutline.gpkg")
+    gdal.VectorTranslate(
+        cutline_filename, "data/cutline.vrt", dstSRS="EPSG:4267", reproject=True
+    )
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/utmsmall.tif",
+        format="MEM",
+        dstSRS="EPSG:4267",
+        cutlineDSName=cutline_filename,
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 18883, "Bad checksum"
+
+    ds = None
+
+
+###############################################################################
+# Test cutline with sourceCRS != targetCRS and targetCRS == cutlineCRS and coordinateOperation
+
+
+@pytest.mark.require_driver("CSV")
+@pytest.mark.require_driver("GPKG")
+def test_gdalwarp_lib_cutline_reprojection_and_coordinate_operation(tmp_vsimem):
+
+    cutline_filename = str(tmp_vsimem / "cutline.gpkg")
+    ct = "+proj=pipeline +step +proj=affine +xoff=10000 +step +inv +proj=utm +zone=11 +ellps=clrk66 +step +proj=unitconvert +xy_in=rad +xy_out=deg +step +proj=axisswap +order=2,1"
+    gdal.VectorTranslate(
+        cutline_filename,
+        "data/cutline.vrt",
+        dstSRS="EPSG:4267",
+        coordinateOperation=ct,
+        reproject=True,
+    )
+
+    ds = gdal.Warp(
+        "",
+        "../gcore/data/utmsmall.tif",
+        format="MEM",
+        dstSRS="EPSG:4267",
+        cutlineDSName=cutline_filename,
+        coordinateOperation=ct,
+    )
+    assert ds is not None
+
+    assert ds.GetRasterBand(1).Checksum() == 18914, "Bad checksum"
+
+    ds = None
+
+
+###############################################################################
 # Test cutline from PostGIS (mostly to check that we open the dataset in
 # vector mode, and not in raster mode, which would cause the PostGISRaster
 # driver to be used)
