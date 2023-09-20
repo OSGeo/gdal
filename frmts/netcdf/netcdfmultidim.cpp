@@ -3211,7 +3211,10 @@ bool netCDFVariable::IReadWrite(
         int ret =
             NCGetPutVaraFunc(m_gid, m_varid, startp.data(), count, buffer);
         if (ret != NC_NOERR)
+        {
+            NCDF_ERR(ret);
             return false;
+        }
         if (bIsRead &&
             (!m_bPerfectDataTypeMatch ||
              bufferDataType.GetNumericDataType() != eDT.GetNumericDataType()))
