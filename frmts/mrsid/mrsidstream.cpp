@@ -218,7 +218,7 @@ LT_STATUS LTIVSIStream::seek(lt_int64 nOffset, LTIOSeekDir nOrigin)
             return LT_STS_Failure;
     }
 
-    if (poFileHandle->Seek((vsi_l_offset)nOffset, nWhence) == 0)
+    if (poFileHandle->Seek((uint64_t)nOffset, nWhence) == 0)
         return LT_STS_Success;
     else
     {

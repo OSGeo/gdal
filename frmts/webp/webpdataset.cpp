@@ -301,9 +301,8 @@ CPLErr WEBPDataset::Uncompress()
         return CE_Failure;
 
     VSIFSeekL(fpImage, 0, SEEK_END);
-    vsi_l_offset nSizeLarge = VSIFTellL(fpImage);
-    if (nSizeLarge !=
-        static_cast<vsi_l_offset>(static_cast<uint32_t>(nSizeLarge)))
+    uint64_t nSizeLarge = VSIFTellL(fpImage);
+    if (nSizeLarge != static_cast<uint64_t>(static_cast<uint32_t>(nSizeLarge)))
         return CE_Failure;
     VSIFSeekL(fpImage, 0, SEEK_SET);
     uint32_t nSize = static_cast<uint32_t>(nSizeLarge);

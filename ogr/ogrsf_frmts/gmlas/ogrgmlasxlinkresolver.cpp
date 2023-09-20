@@ -163,7 +163,7 @@ CPLString GMLASXLinkResolver::GetRawContent(const CPLString &osURL,
         {
             CPLDebug("GMLAS", "Use cached %s", osCachedFileName.c_str());
             GByte *pabyRet = nullptr;
-            vsi_l_offset nSize = 0;
+            uint64_t nSize = 0;
             CPLString osContent;
             if (VSIIngestFile(fp, nullptr, &pabyRet, &nSize, -1))
             {

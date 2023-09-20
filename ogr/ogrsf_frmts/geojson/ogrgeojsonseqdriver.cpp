@@ -94,7 +94,7 @@ class OGRGeoJSONSeqLayer final : public OGRLayer
     size_t m_nPosInBuffer = 0;
     size_t m_nBufferValidSize = 0;
 
-    vsi_l_offset m_nFileSize = 0;
+    uint64_t m_nFileSize = 0;
     int64_t m_nIter = 0;
 
     int64_t m_nTotalFeatures = 0;

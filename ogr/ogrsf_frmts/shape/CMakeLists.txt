@@ -11,7 +11,7 @@ if (GDAL_USE_SHAPELIB_INTERNAL)
   # ogrshape.h shapefil.h dbfopen.c sbnsearch.c shpopen.c shptree.c
   add_library(shapelib OBJECT sbnsearch_wrapper.c shpopen_wrapper.c shptree_wrapper.c dbfopen_wrapper.c)
   gdal_standard_includes(shapelib)
-  target_compile_definitions(shapelib PUBLIC -DSAOffset=vsi_l_offset)
+  target_compile_definitions(shapelib PUBLIC -DSAOffset=uint64_t)
   target_compile_options(shapelib PRIVATE ${GDAL_C_WARNING_FLAGS})
   if (RENAME_INTERNAL_SHAPELIB_SYMBOLS)
     target_compile_definitions(shapelib PUBLIC -DRENAME_INTERNAL_SHAPELIB_SYMBOLS -DSHPAPI_CALL=)

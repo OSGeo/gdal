@@ -1926,9 +1926,9 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
    if (nd5 > IS->ipackLen) {
       if( gribLen > 100 * 1024 * 1024 )
       {
-         vsi_l_offset curPos = VSIFTellL(fp);
+         uint64_t curPos = VSIFTellL(fp);
          VSIFSeekL(fp, 0, SEEK_END);
-         vsi_l_offset fileSize = VSIFTellL(fp);
+         uint64_t fileSize = VSIFTellL(fp);
          VSIFSeekL(fp, curPos, SEEK_SET);
          if( fileSize < gribLen )
          {
@@ -2009,9 +2009,9 @@ int ReadGrib1Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
      if (meta->gds.numPts > *grib_DataLen) {
       if( meta->gds.numPts > 100 * 1024 * 1024 )
       {
-          vsi_l_offset curPos = VSIFTellL(fp);
+          uint64_t curPos = VSIFTellL(fp);
           VSIFSeekL(fp, 0, SEEK_END);
-          vsi_l_offset fileSize = VSIFTellL(fp);
+          uint64_t fileSize = VSIFTellL(fp);
           VSIFSeekL(fp, curPos, SEEK_SET);
           // allow a compression ratio of 1:1000
           if( meta->gds.numPts / 1000 > (uInt4)fileSize )

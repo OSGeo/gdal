@@ -145,22 +145,21 @@ class VSIWebHDFSHandle final : public VSICurlHandle
     CPLString m_osUsernameParam{};
     CPLString m_osDelegationParam{};
 
-    std::string DownloadRegion(vsi_l_offset startOffset, int nBlocks) override;
+    std::string DownloadRegion(uint64_t startOffset, int nBlocks) override;
 
   public:
     VSIWebHDFSHandle(VSIWebHDFSFSHandler *poFS, const char *pszFilename,
                      const char *pszURL);
     ~VSIWebHDFSHandle() override = default;
 
-    int ReadMultiRange(int nRanges, void **ppData,
-                       const vsi_l_offset *panOffsets,
+    int ReadMultiRange(int nRanges, void **ppData, const uint64_t *panOffsets,
                        const size_t *panSizes) override
     {
         return VSIVirtualHandle::ReadMultiRange(nRanges, ppData, panOffsets,
                                                 panSizes);
     }
 
-    vsi_l_offset GetFileSize(bool bSetError) override;
+    uint64_t GetFileSize(bool bSetError) override;
 };
 
 /************************************************************************/
@@ -690,7 +689,7 @@ char **VSIWebHDFSFSHandler::GetFileList(const char *pszDirname,
             for (int i = 0; i < oFileStatus.Size(); i++)
             {
                 CPLJSONObject oItem = oFileStatus[i];
-                vsi_l_offset fileSize = oItem.GetLong("length");
+                uint64_t fileSize = oItem.GetLong("length");
                 size_t mTime = static_cast<size_t>(
                     oItem.GetLong("modificationTime") / 1000);
                 bool bIsDirectory = oItem.GetString("type") == "DIRECTORY";
@@ -961,7 +960,7 @@ VSIWebHDFSHandle::VSIWebHDFSHandle(VSIWebHDFSFSHandler *poFSIn,
 /*                           GetFileSize()                              */
 /************************************************************************/
 
-vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
+uint64_t VSIWebHDFSHandle::GetFileSize(bool bSetError)
 {
     if (oFileProp.bHasComputedFileSize)
         return oFileProp.fileSize;
@@ -1072,7 +1071,7 @@ vsi_l_offset VSIWebHDFSHandle::GetFileSize(bool bSetError)
 /*                          DownloadRegion()                            */
 /************************************************************************/
 
-std::string VSIWebHDFSHandle::DownloadRegion(const vsi_l_offset startOffset,
+std::string VSIWebHDFSHandle::DownloadRegion(const uint64_t startOffset,
                                              const int nBlocks)
 {
     if (bInterrupted && bStopOnInterruptUntilUninstall)
@@ -1094,7 +1093,7 @@ std::string VSIWebHDFSHandle::DownloadRegion(const vsi_l_offset startOffset,
     int nRetryCount = 0;
     double dfRetryDelay = m_dfRetryDelay;
     bool bInRedirect = false;
-    const vsi_l_offset nEndOffset =
+    const uint64_t nEndOffset =
         startOffset + nBlocks * VSICURLGetDownloadChunkSize() - 1;
 
 retry:

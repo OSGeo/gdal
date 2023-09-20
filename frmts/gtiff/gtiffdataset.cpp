@@ -760,15 +760,15 @@ void GTiffDataset::InitCreationOrOpenOptions(bool bUpdateMode,
 /*      zero then the block has never been committed to disk.           */
 /************************************************************************/
 
-bool GTiffDataset::IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset,
-                                    vsi_l_offset *pnSize, bool *pbErrOccurred)
+bool GTiffDataset::IsBlockAvailable(int nBlockId, uint64_t *pnOffset,
+                                    uint64_t *pnSize, bool *pbErrOccurred)
 
 {
     if (pbErrOccurred)
         *pbErrOccurred = false;
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-    std::pair<vsi_l_offset, vsi_l_offset> oPair;
+    std::pair<uint64_t, uint64_t> oPair;
     if (m_oCacheStrileToOffsetByteCount.tryGet(nBlockId, oPair))
     {
         if (pnOffset)
@@ -1497,7 +1497,7 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
     }
 
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
-    vsi_l_offset nImgOffset = panOffsets[0];
+    uint64_t nImgOffset = panOffsets[0];
     int64_t nPixelOffset = (m_nPlanarConfig == PLANARCONFIG_CONTIG)
                                ? static_cast<int64_t>(nDTSize) * nBands
                                : nDTSize;
@@ -1533,7 +1533,7 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
         const int nStrips = DIV_ROUND_UP(nRasterYSize, m_nRowsPerStrip);
         if (nBands == 1 || m_nPlanarConfig == PLANARCONFIG_CONTIG)
         {
-            vsi_l_offset nLastStripEnd = panOffsets[0] + panByteCounts[0];
+            uint64_t nLastStripEnd = panOffsets[0] + panByteCounts[0];
             for (int iStrip = 1; iStrip < nStrips; iStrip++)
             {
                 if (nLastStripEnd != panOffsets[iStrip])
@@ -1553,7 +1553,7 @@ bool GTiffDataset::GetRawBinaryLayout(GDALDataset::RawBinaryLayout &sLayout)
             for (int i = 0; i < nBands; i++)
             {
                 uint32_t iStripOffset = nStrips * i;
-                vsi_l_offset nLastStripEnd =
+                uint64_t nLastStripEnd =
                     panOffsets[iStripOffset] + panByteCounts[iStripOffset];
                 for (int iStrip = 1; iStrip < nStrips; iStrip++)
                 {

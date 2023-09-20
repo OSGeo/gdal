@@ -179,7 +179,7 @@ class OGRGeoJSONWriteLayer final : public OGRLayer
     /** Offset at which the '] }' terminating sequence has already been
      * written by SyncToDisk(). 0 if it has not been written.
      */
-    vsi_l_offset m_nPositionBeforeFCClosed = 0;
+    uint64_t m_nPositionBeforeFCClosed = 0;
 
     bool bWriteBBOX;
     bool bBBOX3D;
@@ -284,7 +284,7 @@ class OGRGeoJSONDataSource final : public OGRDataSource
     //
     char *pszName_;
     char *pszGeoData_;
-    vsi_l_offset nGeoDataLen_;
+    uint64_t nGeoDataLen_;
     OGRGeoJSONLayer **papoLayers_;
     OGRGeoJSONWriteLayer **papoLayersWriter_;
     int nLayers_;

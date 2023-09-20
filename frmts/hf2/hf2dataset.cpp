@@ -52,7 +52,7 @@ class HF2Dataset final : public GDALPamDataset
     VSILFILE *fp;
     double adfGeoTransform[6];
     OGRSpatialReference m_oSRS{};
-    vsi_l_offset *panBlockOffset;  // tile 0 is a the bottom left
+    uint64_t *panBlockOffset;  // tile 0 is a the bottom left
 
     int nTileSize;
     int bHasLoaderBlockMap;
@@ -139,9 +139,8 @@ CPLErr HF2RasterBand::IReadBlock(int nBlockXOff, int nLineYOff, void *pImage)
         if (nMaxTileHeight > 10 * 1024 * 1024 / nRasterXSize)
         {
             VSIFSeekL(poGDS->fp, 0, SEEK_END);
-            vsi_l_offset nSize = VSIFTellL(poGDS->fp);
-            if (nSize <
-                static_cast<vsi_l_offset>(nMaxTileHeight) * nRasterXSize)
+            uint64_t nSize = VSIFTellL(poGDS->fp);
+            if (nSize < static_cast<uint64_t>(nMaxTileHeight) * nRasterXSize)
             {
                 CPLError(CE_Failure, CPLE_FileIO, "File too short");
                 return CE_Failure;
@@ -309,18 +308,18 @@ int HF2Dataset::LoadBlockMap()
     const int nYBlocks = (nRasterYSize + nTileSize - 1) / nTileSize;
     if (nXBlocks * nYBlocks > 1000000)
     {
-        vsi_l_offset nCurOff = VSIFTellL(fp);
+        uint64_t nCurOff = VSIFTellL(fp);
         VSIFSeekL(fp, 0, SEEK_END);
-        vsi_l_offset nSize = VSIFTellL(fp);
+        uint64_t nSize = VSIFTellL(fp);
         VSIFSeekL(fp, nCurOff, SEEK_SET);
         // Check that the file is big enough to have 8 bytes per block
-        if (static_cast<vsi_l_offset>(nXBlocks) * nYBlocks > nSize / 8)
+        if (static_cast<uint64_t>(nXBlocks) * nYBlocks > nSize / 8)
         {
             return FALSE;
         }
     }
     panBlockOffset =
-        (vsi_l_offset *)VSIMalloc3(sizeof(vsi_l_offset), nXBlocks, nYBlocks);
+        (uint64_t *)VSIMalloc3(sizeof(uint64_t), nXBlocks, nYBlocks);
     if (panBlockOffset == nullptr)
     {
         return FALSE;
@@ -329,7 +328,7 @@ int HF2Dataset::LoadBlockMap()
     {
         for (int i = 0; i < nXBlocks; i++)
         {
-            vsi_l_offset nOff = VSIFTellL(fp);
+            uint64_t nOff = VSIFTellL(fp);
             panBlockOffset[j * nXBlocks + i] = nOff;
             // VSIFSeekL(fp, 4 + 4, SEEK_CUR);
             float fScale, fOff;
@@ -354,8 +353,7 @@ int HF2Dataset::LoadBlockMap()
                 // printf("nWordSize=%d\n", nWordSize);
                 if (nWordSize == 1 || nWordSize == 2 || nWordSize == 4)
                     VSIFSeekL(
-                        fp,
-                        static_cast<vsi_l_offset>(4 + nWordSize * (nCols - 1)),
+                        fp, static_cast<uint64_t>(4 + nWordSize * (nCols - 1)),
                         SEEK_CUR);
                 else
                 {

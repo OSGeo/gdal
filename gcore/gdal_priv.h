@@ -596,7 +596,7 @@ class CPL_DLL GDALDataset : public GDALMajorObject
         GDALDataType eDataType = GDT_Unknown;
         bool bLittleEndianOrder = false;
 
-        vsi_l_offset nImageOffset = 0;
+        uint64_t nImageOffset = 0;
         int64_t nPixelOffset = 0;
         int64_t nLineOffset = 0;
         int64_t nBandOffset = 0;

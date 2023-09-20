@@ -250,7 +250,7 @@ class BYNRasterBand final : public RawRasterBand
 
   public:
     BYNRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                  vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                  uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, int bNativeOrder);
     ~BYNRasterBand() override;
 

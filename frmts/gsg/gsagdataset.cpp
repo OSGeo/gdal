@@ -56,8 +56,7 @@ class GSAGDataset final : public GDALPamDataset
     static const int nFIELD_PRECISION;
     static const size_t nMAX_HEADER_SIZE;
 
-    static CPLErr ShiftFileContents(VSILFILE *, vsi_l_offset, int,
-                                    const char *);
+    static CPLErr ShiftFileContents(VSILFILE *, uint64_t, int, const char *);
 
     VSILFILE *fp;
     size_t nMinMaxZOffset;
@@ -104,7 +103,7 @@ class GSAGRasterBand final : public GDALPamRasterBand
     double dfMinZ;
     double dfMaxZ;
 
-    vsi_l_offset *panLineOffset;
+    uint64_t *panLineOffset;
     int nLastReadLine;
     size_t nMaxLineSize;
 
@@ -116,7 +115,7 @@ class GSAGRasterBand final : public GDALPamRasterBand
     CPLErr ScanForMinMaxZ();
 
   public:
-    GSAGRasterBand(GSAGDataset *, int, vsi_l_offset);
+    GSAGRasterBand(GSAGDataset *, int, uint64_t);
     ~GSAGRasterBand();
 
     CPLErr IReadBlock(int, int, void *) override;
@@ -149,7 +148,7 @@ static bool AlmostEqual(double dfVal1, double dfVal2)
 /************************************************************************/
 
 GSAGRasterBand::GSAGRasterBand(GSAGDataset *poDSIn, int nBandIn,
-                               vsi_l_offset nDataStart)
+                               uint64_t nDataStart)
     : dfMinX(0.0), dfMaxX(0.0), dfMinY(0.0), dfMaxY(0.0), dfMinZ(0.0),
       dfMaxZ(0.0), panLineOffset(nullptr), nLastReadLine(poDSIn->nRasterYSize),
       nMaxLineSize(128), padfRowMinZ(nullptr), padfRowMaxZ(nullptr),
@@ -167,15 +166,15 @@ GSAGRasterBand::GSAGRasterBand(GSAGDataset *poDSIn, int nBandIn,
     {
         // Sanity check to avoid excessive memory allocations
         VSIFSeekL(poDSIn->fp, 0, SEEK_END);
-        vsi_l_offset nFileSize = VSIFTellL(poDSIn->fp);
-        if (static_cast<vsi_l_offset>(poDSIn->nRasterYSize) > nFileSize)
+        uint64_t nFileSize = VSIFTellL(poDSIn->fp);
+        if (static_cast<uint64_t>(poDSIn->nRasterYSize) > nFileSize)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Truncated file");
             return;
         }
     }
-    panLineOffset = static_cast<vsi_l_offset *>(
-        VSI_CALLOC_VERBOSE(poDSIn->nRasterYSize + 1, sizeof(vsi_l_offset)));
+    panLineOffset = static_cast<uint64_t *>(
+        VSI_CALLOC_VERBOSE(poDSIn->nRasterYSize + 1, sizeof(uint64_t)));
     if (panLineOffset == nullptr)
     {
         return;
@@ -528,7 +527,7 @@ CPLErr GSAGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (nBlockYOff > 0)
     {
-        vsi_l_offset nNewOffset = panLineOffset[nBlockYOff] + nCharsExamined;
+        uint64_t nNewOffset = panLineOffset[nBlockYOff] + nCharsExamined;
         if (panLineOffset[nBlockYOff - 1] == 0)
         {
             panLineOffset[nBlockYOff - 1] = nNewOffset;
@@ -1166,7 +1165,7 @@ CPLErr GSAGDataset::SetGeoTransform(double *padfGeoTransform)
 /************************************************************************/
 /*                         ShiftFileContents()                          */
 /************************************************************************/
-CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
+CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, uint64_t nShiftStart,
                                       int nShiftSize, const char *pszEOL)
 {
     /* nothing to do for zero-shift */
@@ -1177,8 +1176,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
     /* Tautology is always false.  nShiftStart is unsigned. */
     if (/* nShiftStart < 0
            || */
-        (nShiftSize < 0 &&
-         nShiftStart < static_cast<vsi_l_offset>(-nShiftSize)))
+        (nShiftSize < 0 && nShiftStart < static_cast<uint64_t>(-nShiftSize)))
         nShiftStart = /*(nShiftSize > 0) ? 0 :*/ -nShiftSize;
 
     /* get offset at end of file */
@@ -1189,7 +1187,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         return CE_Failure;
     }
 
-    vsi_l_offset nOldEnd = VSIFTellL(fp);
+    uint64_t nOldEnd = VSIFTellL(fp);
 
     /* If shifting past end, just zero-pad as necessary */
     if (nShiftStart >= nOldEnd)
@@ -1205,7 +1203,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         }
         else
         {
-            for (vsi_l_offset nPos = nOldEnd; nPos < nShiftStart + nShiftSize;
+            for (uint64_t nPos = nOldEnd; nPos < nShiftStart + nShiftSize;
                  nPos++)
             {
                 if (VSIFWriteL((void *)" ", 1, 1, fp) != 1)
@@ -1308,7 +1306,7 @@ CPLErr GSAGDataset::ShiftFileContents(VSILFILE *fp, vsi_l_offset nShiftStart,
         }
 
         /* FIXME:  Should use SEEK_CUR, review integer promotions... */
-        vsi_l_offset nNewPos =
+        uint64_t nNewPos =
             (nShiftSize >= 0)
                 ? VSIFTellL(fp) + nShiftSize - nRead - nOverlap
                 : VSIFTellL(fp) - (-nShiftSize) - nRead - nOverlap;
@@ -1545,7 +1543,7 @@ GDALDataset *GSAGDataset::CreateCopy(const char *pszFilename,
     }
 
     /* Save the location and write placeholders for the min/max Z value */
-    vsi_l_offset nRangeStart = VSIFTellL(fp);
+    uint64_t nRangeStart = VSIFTellL(fp);
     const char *szDummyRange = "0.0000000000001 0.0000000000001\x0D\x0A";
     size_t nDummyRangeLen = strlen(szDummyRange);
     if (VSIFWriteL((void *)szDummyRange, 1, nDummyRangeLen, fp) !=

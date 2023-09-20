@@ -49,12 +49,12 @@ CPL_C_END
 class MerisL2FlagBand final : public GDALPamRasterBand
 {
   public:
-    MerisL2FlagBand(GDALDataset *, int, VSILFILE *, vsi_l_offset, int);
+    MerisL2FlagBand(GDALDataset *, int, VSILFILE *, uint64_t, int);
     ~MerisL2FlagBand() override;
     virtual CPLErr IReadBlock(int, int, void *) override;
 
   private:
-    vsi_l_offset nImgOffset;
+    uint64_t nImgOffset;
     int nPrefixBytes;
     size_t nBytePerPixel;
     size_t nRecordSize;
@@ -67,7 +67,7 @@ class MerisL2FlagBand final : public GDALPamRasterBand
 /*                        MerisL2FlagBand()                       */
 /************************************************************************/
 MerisL2FlagBand::MerisL2FlagBand(GDALDataset *poDSIn, int nBandIn,
-                                 VSILFILE *fpImageIn, vsi_l_offset nImgOffsetIn,
+                                 VSILFILE *fpImageIn, uint64_t nImgOffsetIn,
                                  int nPrefixBytesIn)
     : nImgOffset(nImgOffsetIn), nPrefixBytes(nPrefixBytesIn), nBytePerPixel(3),
       nRecordSize(0), nDataSize(0), pReadBuf(nullptr)
@@ -103,7 +103,7 @@ CPLErr MerisL2FlagBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     CPLAssert(nBlockXOff == 0);
     CPLAssert(pReadBuf != nullptr);
 
-    vsi_l_offset nOffset =
+    uint64_t nOffset =
         nImgOffset + nPrefixBytes + nBlockYOff * nBlockYSize * nRecordSize;
 
     if (VSIFSeekL(fpImage, nOffset, SEEK_SET) != 0)

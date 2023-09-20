@@ -288,7 +288,7 @@ OGRErr OGRGeoJSONLayer::ICreateFeature(OGRFeature *poFeature)
                 {
                     // Locate "} ] }" (or "[ ] }") pattern at end of file
                     VSIFSeekL(fp, 0, SEEK_END);
-                    vsi_l_offset nOffset = VSIFTellL(fp);
+                    uint64_t nOffset = VSIFTellL(fp);
                     nOffset -= 10;
                     VSIFSeekL(fp, nOffset, SEEK_SET);
                     char szBuffer[11];

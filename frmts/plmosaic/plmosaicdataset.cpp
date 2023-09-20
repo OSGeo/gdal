@@ -446,7 +446,7 @@ CPLHTTPResult *PLMosaicDataset::Download(const char *pszURL, int bQuiet404Error)
         CPLDebug("PLSCENES", "Fetching %s", pszURL);
         psResult = reinterpret_cast<CPLHTTPResult *>(
             CPLCalloc(1, sizeof(CPLHTTPResult)));
-        vsi_l_offset nDataLength = 0;
+        uint64_t nDataLength = 0;
         CPLString osURL(pszURL);
         if (osURL.back() == '/')
             osURL.resize(osURL.size() - 1);

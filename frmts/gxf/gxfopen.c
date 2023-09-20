@@ -112,7 +112,7 @@ static char **GXFReadHeaderValue(VSILFILE *fp, char *pszHTitle)
     /* -------------------------------------------------------------------- */
     do
     {
-        vsi_l_offset nCurPos;
+        uint64_t nCurPos;
         char chNextChar = 0;
         char *pszTrimmedLine;
         size_t nLen = strlen(pszLine);
@@ -378,13 +378,13 @@ GXFHandle GXFOpen(const char *pszFilename)
     /* Avoid excessive memory allocation */
     if (psGXF->nRawYSize >= 1000000)
     {
-        vsi_l_offset nCurOffset;
-        vsi_l_offset nFileSize;
+        uint64_t nCurOffset;
+        uint64_t nFileSize;
         nCurOffset = VSIFTellL(psGXF->fp);
         VSIFSeekL(psGXF->fp, 0, SEEK_END);
         nFileSize = VSIFTellL(psGXF->fp);
         VSIFSeekL(psGXF->fp, nCurOffset, SEEK_SET);
-        if ((vsi_l_offset)psGXF->nRawYSize > nFileSize)
+        if ((uint64_t)psGXF->nRawYSize > nFileSize)
         {
             GXFClose(psGXF);
             return NULL;
@@ -392,7 +392,7 @@ GXFHandle GXFOpen(const char *pszFilename)
     }
 
     psGXF->panRawLineOffset =
-        (vsi_l_offset *)VSICalloc(sizeof(vsi_l_offset), psGXF->nRawYSize + 1);
+        (uint64_t *)VSICalloc(sizeof(uint64_t), psGXF->nRawYSize + 1);
     if (psGXF->panRawLineOffset == NULL)
     {
         GXFClose(psGXF);
@@ -475,9 +475,8 @@ static double GXFParseBase90(GXFInfo_t *psGXF, const char *pszText, int bScale)
 /*                       GXFReadRawScanlineFrom()                       */
 /************************************************************************/
 
-static CPLErr GXFReadRawScanlineFrom(GXFInfo_t *psGXF, vsi_l_offset iOffset,
-                                     vsi_l_offset *pnNewOffset,
-                                     double *padfLineBuf)
+static CPLErr GXFReadRawScanlineFrom(GXFInfo_t *psGXF, uint64_t iOffset,
+                                     uint64_t *pnNewOffset, double *padfLineBuf)
 
 {
     const char *pszLine;

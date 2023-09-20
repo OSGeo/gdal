@@ -905,11 +905,11 @@ char **OGRCSVLayer::AutodetectFieldTypes(char **papszOpenOptions,
     constexpr int STREAMING_LIMIT = 1000 * 1000;
     // Use 1 000 000 as default maximum distance to be compatible with
     // /vsistdin/ caching.
-    vsi_l_offset nBytes = static_cast<vsi_l_offset>(CPLAtoGIntBig(
+    uint64_t nBytes = static_cast<uint64_t>(CPLAtoGIntBig(
         CSLFetchNameValueDef(papszOpenOptions, "AUTODETECT_SIZE_LIMIT",
                              CPLSPrintf("%d", STREAMING_LIMIT))));
     if (nBytes == 0)
-        nBytes = static_cast<vsi_l_offset>(-1);  // unlimited size
+        nBytes = static_cast<uint64_t>(-1);  // unlimited size
     if (bStreaming && (nBytes == 0 || nBytes > STREAMING_LIMIT))
     {
         CPLError(CE_Warning, CPLE_AppDefined,

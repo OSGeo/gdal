@@ -139,8 +139,8 @@ class NSIDCbinRasterBand final : public RawRasterBand
 
   public:
     NSIDCbinRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                       vsi_l_offset nImgOffset, int nPixelOffset,
-                       int nLineOffset, GDALDataType eDataType);
+                       uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
+                       GDALDataType eDataType);
     ~NSIDCbinRasterBand() override;
 
     double GetNoDataValue(int *pbSuccess = nullptr) override;
@@ -153,8 +153,7 @@ class NSIDCbinRasterBand final : public RawRasterBand
 /************************************************************************/
 
 NSIDCbinRasterBand::NSIDCbinRasterBand(GDALDataset *poDSIn, int nBandIn,
-                                       VSILFILE *fpRawIn,
-                                       vsi_l_offset nImgOffsetIn,
+                                       VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                        int nPixelOffsetIn, int nLineOffsetIn,
                                        GDALDataType eDataTypeIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,

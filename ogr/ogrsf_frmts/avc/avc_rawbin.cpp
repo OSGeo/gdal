@@ -220,9 +220,9 @@ void AVCRawBinSetFileDataSize(AVCRawBinFile *psFile, int nFileDataSize)
  *                      AVCRawBinIsFileGreaterThan()
  *
  **********************************************************************/
-int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize)
+int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, uint64_t nSize)
 {
-    vsi_l_offset nCurPos = VSIFTellL(psFile->fp);
+    uint64_t nCurPos = VSIFTellL(psFile->fp);
     VSIFSeekL(psFile->fp, 0, SEEK_END);
     bool bRet = VSIFTellL(psFile->fp) >= nSize;
     VSIFSeekL(psFile->fp, nCurPos, SEEK_SET);

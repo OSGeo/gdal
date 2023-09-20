@@ -72,7 +72,7 @@ typedef struct
     unsigned char type;  /*!< Element type (DGNT_*) */
     unsigned char stype; /*!< Structure type (DGNST_*) */
     unsigned char flags; /*!< Other flags */
-    vsi_l_offset offset; /*!< Offset within file (private) */
+    uint64_t offset;     /*!< Offset within file (private) */
 } DGNElementInfo;
 
 /**

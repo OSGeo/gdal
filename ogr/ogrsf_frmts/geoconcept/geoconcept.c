@@ -342,7 +342,7 @@ static long GCIOAPI_CALL _read_GCIO(GCExportFileH *hGXT)
 } /* _read_GCIO */
 
 /* -------------------------------------------------------------------- */
-static vsi_l_offset GCIOAPI_CALL _get_GCIO(GCExportFileH *hGXT)
+static uint64_t GCIOAPI_CALL _get_GCIO(GCExportFileH *hGXT)
 {
     if (GetGCStatus_GCIO(hGXT) == vEof_GCIO)
     {
@@ -358,7 +358,7 @@ static vsi_l_offset GCIOAPI_CALL _get_GCIO(GCExportFileH *hGXT)
     if (_read_GCIO(hGXT) == EOF)
     {
         SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vUnknownIO_ItemType_GCIO);
-        return (vsi_l_offset)EOF;
+        return (uint64_t)EOF;
     }
     SetGCWhatIs_GCIO(hGXT, (GCTypeKind)vStdCol_GCIO);
     if (strstr(GetGCCache_GCIO(hGXT), kCom_GCIO) == GetGCCache_GCIO(hGXT))
@@ -586,7 +586,7 @@ static void GCIOAPI_CALL _InitSubType_GCIO(GCSubType *theSubType)
     SetSubTypeDim_GCIO(theSubType, v2D_GCIO);
     SetSubTypeNbFields_GCIO(theSubType, -1);
     SetSubTypeNbFeatures_GCIO(theSubType, 0L);
-    SetSubTypeBOF_GCIO(theSubType, (vsi_l_offset)EOF);
+    SetSubTypeBOF_GCIO(theSubType, (uint64_t)EOF);
     SetSubTypeBOFLinenum_GCIO(theSubType, 0L);
     SetSubTypeExtent_GCIO(theSubType, NULL);
     SetSubTypeHeaderWritten_GCIO(theSubType, FALSE);
@@ -2651,7 +2651,7 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parseObject_GCIO(GCExportFileH *H)
     GCExportFileMetadata *Meta;
     GCSubType *theSubType;
     GCDim d;
-    vsi_l_offset coff;
+    uint64_t coff;
     OGREnvelope bbox, *pszBbox = &bbox;
 
     Meta = GetGCMeta_GCIO(H);
@@ -2660,12 +2660,12 @@ static GCExportFileMetadata GCIOAPI_CALL1(*) _parseObject_GCIO(GCExportFileH *H)
 
     d = vUnknown3D_GCIO;
     theSubType = NULL;
-    coff = (vsi_l_offset)EOF;
+    coff = (uint64_t)EOF;
 reloop:
     /* TODO: Switch to C++ casts below. */
     if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(H) == vComType_GCIO)
     {
-        if (_get_GCIO(H) == (vsi_l_offset)EOF)
+        if (_get_GCIO(H) == (uint64_t)EOF)
             return Meta;
         goto reloop;
     }
@@ -2694,17 +2694,17 @@ reloop:
             SetGCStatus_GCIO(H, vMemoStatus_GCIO);
             return Meta;
         }
-        if (_get_GCIO(H) == (vsi_l_offset)EOF)
+        if (_get_GCIO(H) == (uint64_t)EOF)
             return Meta;
         goto reloop;
     }
-    if (coff == (vsi_l_offset)EOF)
+    if (coff == (uint64_t)EOF)
         coff = GetGCCurrentOffset_GCIO(H);
     if (!_buildOGRFeature_GCIO(H, &theSubType, d, pszBbox))
     {
         return NULL;
     }
-    if (GetSubTypeBOF_GCIO(theSubType) == (vsi_l_offset)EOF)
+    if (GetSubTypeBOF_GCIO(theSubType) == (uint64_t)EOF)
     {
         SetSubTypeBOF_GCIO(theSubType,
                            coff); /* Begin Of Features for the Class.Subclass */
@@ -3213,7 +3213,7 @@ static OGRErr GCIOAPI_CALL _readConfigField_GCIO(GCExportFileH *hGCT)
     id = UNDEFINEDID_GCIO;
     knd = vUnknownItemType_GCIO;
     theField = NULL;
-    while (_get_GCIO(hGCT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGCT) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) ==
             vComType_GCIO)
@@ -3411,7 +3411,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldType_GCIO(GCExportFileH *hGCT,
     e[0] = '\0';
     id = UNDEFINEDID_GCIO;
     knd = vUnknownItemType_GCIO;
-    while (_get_GCIO(hGCT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGCT) != (uint64_t)EOF)
     {
         /* TODO: Switch to C++ casts below. */
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) ==
@@ -3592,7 +3592,7 @@ static OGRErr GCIOAPI_CALL _readConfigFieldSubType_GCIO(GCExportFileH *hGCT,
     e[0] = '\0';
     id = UNDEFINEDID_GCIO;
     knd = vUnknownItemType_GCIO;
-    while (_get_GCIO(hGCT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGCT) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) ==
             vComType_GCIO)
@@ -3772,7 +3772,7 @@ static OGRErr GCIOAPI_CALL _readConfigSubTypeType_GCIO(GCExportFileH *hGCT,
     knd = vUnknownItemType_GCIO;
     sys = v2D_GCIO;
     theSubType = NULL;
-    while (_get_GCIO(hGCT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGCT) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) ==
             vComType_GCIO)
@@ -3951,7 +3951,7 @@ static OGRErr GCIOAPI_CALL _readConfigType_GCIO(GCExportFileH *hGCT)
     n[0] = '\0';
     id = UNDEFINEDID_GCIO;
     theClass = NULL;
-    while (_get_GCIO(hGCT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGCT) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) ==
             vComType_GCIO)
@@ -4076,7 +4076,7 @@ static OGRErr GCIOAPI_CALL _readConfigMap_GCIO(GCExportFileH *hGCT)
     char *k;
 
     eom = 0;
-    while (_get_GCIO(hGCT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGCT) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) ==
             vComType_GCIO)
@@ -4161,7 +4161,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadConfig_GCIO(GCExportFileH *hGCT)
     GCExportFileMetadata *Meta;
 
     eoc = 0;
-    if (_get_GCIO(hGCT) == (vsi_l_offset)EOF)
+    if (_get_GCIO(hGCT) == (uint64_t)EOF)
     {
         return NULL;
     }
@@ -4178,7 +4178,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadConfig_GCIO(GCExportFileH *hGCT)
     {
         return NULL;
     }
-    while (_get_GCIO(hGCT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGCT) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGCT) ==
             vComType_GCIO)
@@ -4872,7 +4872,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadHeader_GCIO(GCExportFileH *hGXT)
 {
     GCExportFileMetadata *Meta;
 
-    if (_get_GCIO(hGXT) == (vsi_l_offset)EOF)
+    if (_get_GCIO(hGXT) == (uint64_t)EOF)
     {
         return NULL;
     }
@@ -4891,7 +4891,7 @@ GCExportFileMetadata GCIOAPI_CALL1(*) ReadHeader_GCIO(GCExportFileH *hGXT)
     }
     SetMetaExtent_GCIO(
         Meta, CreateExtent_GCIO(HUGE_VAL, HUGE_VAL, -HUGE_VAL, -HUGE_VAL));
-    while (_get_GCIO(hGXT) != (vsi_l_offset)EOF)
+    while (_get_GCIO(hGXT) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(hGXT) ==
             vComType_GCIO)
@@ -5600,7 +5600,7 @@ OGRFeatureH GCIOAPI_CALL ReadNextFeature_GCIO(GCSubType *theSubType)
         return NULL;
     }
     d = vUnknown3D_GCIO;
-    while (_get_GCIO(H) != (vsi_l_offset)EOF)
+    while (_get_GCIO(H) != (uint64_t)EOF)
     {
         if ((enum _tIO_MetadataType_GCIO)GetGCWhatIs_GCIO(H) == vComType_GCIO)
         {

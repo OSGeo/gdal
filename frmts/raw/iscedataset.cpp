@@ -100,7 +100,7 @@ class ISCERasterBand final : public RawRasterBand
 
   public:
     ISCERasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                   vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                   uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                    GDALDataType eDataType, int bNativeOrder);
 };
 
@@ -602,7 +602,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     const char *pszScheme = aosXmlProps.FetchNameValue("SCHEME");
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     bool bIntOverflow = false;
     if (EQUAL(pszScheme, "BIL"))
     {
@@ -613,7 +613,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         else
         {
             nLineOffset = nPixelOffset * nWidth * nBands;
-            nBandOffset = nDTSize * static_cast<vsi_l_offset>(nWidth);
+            nBandOffset = nDTSize * static_cast<uint64_t>(nWidth);
         }
     }
     else if (EQUAL(pszScheme, "BIP"))
@@ -658,7 +658,7 @@ GDALDataset *ISCEDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         else
         {
             nLineOffset = nPixelOffset * nWidth;
-            nBandOffset = nLineOffset * static_cast<vsi_l_offset>(nHeight);
+            nBandOffset = nLineOffset * static_cast<uint64_t>(nHeight);
         }
     }
     else
@@ -843,7 +843,7 @@ GDALDataset *ISCEDataset::Create(const char *pszFilename, int nXSize,
 /************************************************************************/
 
 ISCERasterBand::ISCERasterBand(GDALDataset *poDSIn, int nBandIn,
-                               VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                               VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                int nPixelOffsetIn, int nLineOffsetIn,
                                GDALDataType eDataTypeIn, int bNativeOrderIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,

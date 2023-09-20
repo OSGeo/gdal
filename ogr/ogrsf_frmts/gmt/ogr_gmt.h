@@ -51,7 +51,7 @@ class OGRGmtLayer final : public OGRLayer,
 
     bool bRegionComplete;
     OGREnvelope sRegion;
-    vsi_l_offset nRegionOffset;
+    uint64_t nRegionOffset;
 
     VSILFILE *m_fp = nullptr;
 

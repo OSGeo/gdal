@@ -375,7 +375,7 @@ void OGRNTFDataSource::ResetReading()
         papoNTFFileReader[i]->Close();
 
     iCurrentReader = -1;
-    nCurrentPos = (vsi_l_offset)-1;
+    nCurrentPos = (uint64_t)-1;
     nCurrentFID = 1;
     iCurrentFC = 0;
 }
@@ -415,7 +415,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
     if (iCurrentReader == -1)
     {
         iCurrentReader++;
-        nCurrentPos = (vsi_l_offset)-1;
+        nCurrentPos = (uint64_t)-1;
     }
 
     if (papoNTFFileReader[iCurrentReader]->GetFP() == nullptr)
@@ -428,7 +428,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
     /*      from for the last feature, even if some other access            */
     /*      mechanism has moved the file pointer.                           */
     /* -------------------------------------------------------------------- */
-    if (nCurrentPos != (vsi_l_offset)-1)
+    if (nCurrentPos != (uint64_t)-1)
         papoNTFFileReader[iCurrentReader]->SetFPPos(nCurrentPos, nCurrentFID);
 
     /* -------------------------------------------------------------------- */
@@ -444,7 +444,7 @@ OGRFeature *OGRNTFDataSource::GetNextFeature(OGRLayer **ppoBelongingLayer,
             papoNTFFileReader[iCurrentReader]->DestroyIndex();
 
         iCurrentReader++;
-        nCurrentPos = (vsi_l_offset)-1;
+        nCurrentPos = (uint64_t)-1;
         nCurrentFID = 1;
 
         poFeature = GetNextFeature(nullptr, nullptr, nullptr, nullptr);

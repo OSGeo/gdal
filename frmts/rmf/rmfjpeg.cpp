@@ -196,7 +196,7 @@ size_t RMFDataset::JPEGCompress(const GByte *pabyIn, uint32_t nSizeIn,
 
     GDALClose(hJpeg);
 
-    vsi_l_offset nDataLength = 0;
+    uint64_t nDataLength = 0;
     GByte *pabyBuffer = VSIGetMemFileBuffer(osTmpFilename, &nDataLength, TRUE);
 
     if (nDataLength < nSizeOut)

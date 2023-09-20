@@ -155,11 +155,10 @@ CPLStringList GTiffDataset::GetCompressionFormats(int nXOff, int nYOff,
         if (m_nPlanarConfig == PLANARCONFIG_SEPARATE && panBandList != nullptr)
             nBlockId += panBandList[0] * m_nBlocksPerBand;
 
-        vsi_l_offset nOffset = 0;
-        vsi_l_offset nSize = 0;
+        uint64_t nOffset = 0;
+        uint64_t nSize = 0;
         if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
-            nSize <
-                static_cast<vsi_l_offset>(std::numeric_limits<tmsize_t>::max()))
+            nSize < static_cast<uint64_t>(std::numeric_limits<tmsize_t>::max()))
         {
             switch (m_nCompression)
             {
@@ -235,11 +234,11 @@ CPLErr GTiffDataset::ReadCompressedData(const char *pszFormat, int nXOff,
                 panBandList != nullptr)
                 nBlockId += panBandList[0] * m_nBlocksPerBand;
 
-            vsi_l_offset nOffset = 0;
-            vsi_l_offset nSize = 0;
+            uint64_t nOffset = 0;
+            uint64_t nSize = 0;
             if (IsBlockAvailable(nBlockId, &nOffset, &nSize) &&
-                nSize < static_cast<vsi_l_offset>(
-                            std::numeric_limits<tmsize_t>::max()))
+                nSize <
+                    static_cast<uint64_t>(std::numeric_limits<tmsize_t>::max()))
             {
                 uint32_t nJPEGTableSize = 0;
                 void *pJPEGTable = nullptr;
@@ -405,8 +404,8 @@ struct GTiffDecompressJob
         0;  // in [0, nBandCount-1] in PLANARCONFIG_SEPARATE, or -1 in PLANARCONFIG_CONTIG
     int nXBlock = 0;
     int nYBlock = 0;
-    vsi_l_offset nOffset = 0;
-    vsi_l_offset nSize = 0;
+    uint64_t nOffset = 0;
+    uint64_t nSize = 0;
 };
 
 /************************************************************************/
@@ -1228,9 +1227,9 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
     }
 
     // Create one job per tile/strip
-    vsi_l_offset nFileSize = 0;
+    uint64_t nFileSize = 0;
     std::vector<GTiffDecompressJob> asJobs(nBlocks);
-    std::vector<vsi_l_offset> anOffsets(nBlocks);
+    std::vector<uint64_t> anOffsets(nBlocks);
     std::vector<size_t> anSizes(nBlocks);
     int iJob = 0;
     int nAdviseReadRanges = 0;
@@ -1336,10 +1335,9 @@ CPLErr GTiffDataset::MultiThreadedRead(int nXOff, int nYOff, int nXSize,
                 if (bAddToAdviseRead)
                 {
                     anOffsets[nAdviseReadRanges] = asJobs[iJob].nOffset;
-                    anSizes[nAdviseReadRanges] =
-                        static_cast<size_t>(std::min<vsi_l_offset>(
-                            std::numeric_limits<size_t>::max(),
-                            asJobs[iJob].nSize));
+                    anSizes[nAdviseReadRanges] = static_cast<size_t>(
+                        std::min<uint64_t>(std::numeric_limits<size_t>::max(),
+                                           asJobs[iJob].nSize));
                     ++nAdviseReadRanges;
                 }
 
@@ -1402,7 +1400,7 @@ class FetchBufferVirtualMemIO final
     {
     }
 
-    const GByte *FetchBytes(vsi_l_offset nOffset, int nPixels, int nDTSize,
+    const GByte *FetchBytes(uint64_t nOffset, int nPixels, int nDTSize,
                             bool bIsByteSwapped, bool bIsComplex, int nBlockId)
     {
         if (nOffset + nPixels * nDTSize > nMappingSize)
@@ -1421,7 +1419,7 @@ class FetchBufferVirtualMemIO final
         return pTempBuffer;
     }
 
-    bool FetchBytes(GByte *pabyDstBuffer, vsi_l_offset nOffset, int nPixels,
+    bool FetchBytes(GByte *pabyDstBuffer, uint64_t nOffset, int nPixels,
                     int nDTSize, bool bIsByteSwapped, bool bIsComplex,
                     int nBlockId)
     {
@@ -1485,7 +1483,7 @@ int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
     GByte *pabySrcData = nullptr;
     if (STARTS_WITH(m_pszFilename, "/vsimem/"))
     {
-        vsi_l_offset nDataLength = 0;
+        uint64_t nDataLength = 0;
         pabySrcData = VSIGetMemFileBuffer(m_pszFilename, &nDataLength, FALSE);
         nMappingSize = static_cast<size_t>(nDataLength);
         if (pabySrcData == nullptr)
@@ -1505,7 +1503,7 @@ int GTiffDataset::VirtualMemIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
             m_eVirtualMemIOUsage = VirtualMemIOEnum::NO;
             return -1;
         }
-        const vsi_l_offset nLength = VSIFTellL(fp);
+        const uint64_t nLength = VSIFTellL(fp);
         if (static_cast<size_t>(nLength) != nLength)
         {
             m_eVirtualMemIOUsage = VirtualMemIOEnum::NO;
@@ -2922,8 +2920,8 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
     const int nReqYSize = std::min(nBufYSize, nYSize);
     void **ppData =
         static_cast<void **>(VSI_MALLOC_VERBOSE(nReqYSize * sizeof(void *)));
-    vsi_l_offset *panOffsets = static_cast<vsi_l_offset *>(
-        VSI_MALLOC_VERBOSE(nReqYSize * sizeof(vsi_l_offset)));
+    uint64_t *panOffsets = static_cast<uint64_t *>(
+        VSI_MALLOC_VERBOSE(nReqYSize * sizeof(uint64_t)));
     size_t *panSizes =
         static_cast<size_t *>(VSI_MALLOC_VERBOSE(nReqYSize * sizeof(size_t)));
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
@@ -2974,8 +2972,7 @@ int GTiffDataset::DirectIO(GDALRWFlag eRWFlag, int nXOff, int nYOff, int nXSize,
             eErr = -1;
 
         panOffsets[iLine] +=
-            (nXOff +
-             static_cast<vsi_l_offset>(nYOffsetInBlock) * m_nBlockXSize) *
+            (nXOff + static_cast<uint64_t>(nYOffsetInBlock) * m_nBlockXSize) *
             nSrcPixelSize;
         panSizes[iLine] = nReqXSize * nSrcPixelSize;
     }
@@ -3106,7 +3103,7 @@ bool GTiffDataset::ReadStrile(int nBlockId, void *pOutputBuffer,
 {
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
     // Optimization by which we can save some libtiff buffer copy
-    std::pair<vsi_l_offset, vsi_l_offset> oPair;
+    std::pair<uint64_t, uint64_t> oPair;
     if (
 #if TIFFLIB_VERSION <= 20220520 && !defined(INTERNAL_LIBTIFF)
         // There's a bug, up to libtiff 4.4.0, in TIFFReadFromUserBuffer()
@@ -3385,7 +3382,7 @@ int GTiffDataset::Identify(GDALOpenInfo *poOpenInfo)
 static bool GTIFFExtendMemoryFile(const CPLString &osTmpFilename,
                                   VSILFILE *fpTemp, VSILFILE *fpL,
                                   int nNewLength, GByte *&pabyBuffer,
-                                  vsi_l_offset &nDataLength)
+                                  uint64_t &nDataLength)
 {
     if (nNewLength <= static_cast<int>(nDataLength))
         return true;
@@ -3435,7 +3432,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
         CPL_IGNORE_RET_VAL(VSIFCloseL(fpTemp));
         return false;
     }
-    vsi_l_offset nDataLength = 0;
+    uint64_t nDataLength = 0;
     GByte *pabyBuffer = static_cast<GByte *>(
         VSIGetMemFileBuffer(osTmpFilename, &nDataLength, FALSE));
     const bool bLittleEndian = (pabyBuffer[0] == 'I');
@@ -3445,7 +3442,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     const bool bSwap = bLittleEndian;
 #endif
     const bool bBigTIFF = pabyBuffer[2] == 43 || pabyBuffer[3] == 43;
-    vsi_l_offset nMaxOffset = 0;
+    uint64_t nMaxOffset = 0;
     if (bBigTIFF)
     {
         uint64_t nTmp = 0;
@@ -3519,7 +3516,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
                     VSIUnlink(osTmpFilename);
                     return false;
                 }
-                if (static_cast<vsi_l_offset>(nTmp + nTagSize) > nMaxOffset)
+                if (static_cast<uint64_t>(nTmp + nTagSize) > nMaxOffset)
                     nMaxOffset = nTmp + nTagSize;
             }
         }
@@ -3618,7 +3615,7 @@ static bool GTIFFMakeBufferedStream(GDALOpenInfo *poOpenInfo)
     }
     CPLAssert(nDataLength == VSIFTellL(poOpenInfo->fpL));
     poOpenInfo->fpL = VSICreateBufferedReaderHandle(
-        poOpenInfo->fpL, pabyBuffer, static_cast<vsi_l_offset>(INT_MAX) << 32);
+        poOpenInfo->fpL, pabyBuffer, static_cast<uint64_t>(INT_MAX) << 32);
     if (VSIFCloseL(fpTemp) != 0)
         return false;
     VSIUnlink(osTmpFilename);
@@ -4173,7 +4170,7 @@ void GTiffDataset::LookForProjectionFromXML()
     }
 
     GByte *pabyRet = nullptr;
-    vsi_l_offset nSize = 0;
+    uint64_t nSize = 0;
     constexpr int nMaxSize = 10 * 1024 * 1024;
     if (!VSIIngestFile(nullptr, osXMLFilename.c_str(), &pabyRet, &nSize,
                        nMaxSize))
@@ -6271,8 +6268,8 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
             auto poTileDriver = GDALGetDriverByName(pszDriverName);
             if (poTileDriver)
             {
-                vsi_l_offset nOffset = 0;
-                vsi_l_offset nSize = 0;
+                uint64_t nOffset = 0;
+                uint64_t nSize = 0;
                 IsBlockAvailable(0, &nOffset, &nSize);
                 if (nSize > 0)
                 {
@@ -6280,7 +6277,7 @@ const char *GTiffDataset::GetMetadataItem(const char *pszName,
                         CPLSPrintf("/vsisubfile/%" PRIu64 "_%d,%s",
                                    static_cast<uint64_t>(nOffset),
                                    static_cast<int>(std::min(
-                                       static_cast<vsi_l_offset>(1024), nSize)),
+                                       static_cast<uint64_t>(1024), nSize)),
                                    m_pszFilename));
                     const char *const apszDrivers[] = {pszDriverName, nullptr};
                     auto poWebPDataset =

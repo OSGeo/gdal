@@ -2910,7 +2910,7 @@ int OGROSMDataSource::Open(const char *pszFilename, char **papszOpenOptionsIn)
 
         CPLPushErrorHandler(CPLQuietErrorHandler);
         bool bSuccess =
-            VSIFSeekL(m_fpNodes, (vsi_l_offset)(nSize * 3 / 4), SEEK_SET) == 0;
+            VSIFSeekL(m_fpNodes, (uint64_t)(nSize * 3 / 4), SEEK_SET) == 0;
         CPLPopErrorHandler();
 
         if (bSuccess)
@@ -3001,7 +3001,7 @@ bool OGROSMDataSource::CreateTempDB()
 
             CPLPushErrorHandler(CPLQuietErrorHandler);
             bSuccess =
-                VSIFSeekL(fp, static_cast<vsi_l_offset>(nSize), SEEK_SET) == 0;
+                VSIFSeekL(fp, static_cast<uint64_t>(nSize), SEEK_SET) == 0;
             CPLPopErrorHandler();
 
             if (bSuccess)
@@ -4096,13 +4096,13 @@ bool OGROSMDataSource::TransferToDiskIfNecesserary()
                 if (fp)
                 {
                     VSIFSeekL(fp, 0, SEEK_END);
-                    vsi_l_offset nCurSize = VSIFTellL(fp);
+                    uint64_t nCurSize = VSIFTellL(fp);
                     int64_t nNewSize =
                         static_cast<int64_t>(m_nMaxSizeForInMemoryDBInMB) *
                         1024 * 1024;
                     CPLPushErrorHandler(CPLQuietErrorHandler);
                     const bool bSuccess =
-                        VSIFSeekL(fp, (vsi_l_offset)nNewSize, SEEK_SET) == 0;
+                        VSIFSeekL(fp, (uint64_t)nNewSize, SEEK_SET) == 0;
                     CPLPopErrorHandler();
 
                     if (bSuccess)

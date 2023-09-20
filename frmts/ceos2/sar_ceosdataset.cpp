@@ -83,7 +83,7 @@ static const char *const CeosExtension[][6] = {
     {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}};
 
 static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
-                       int max_records, vsi_l_offset max_bytes);
+                       int max_records, uint64_t max_bytes);
 
 static CeosTypeCode_t QuadToTC(int a, int b, int c, int d)
 {
@@ -2184,7 +2184,7 @@ GDALDataset *SAR_CEOSDataset::Open(GDALOpenInfo *poOpenInfo)
 /*                            ProcessData()                             */
 /************************************************************************/
 static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
-                       int max_records, vsi_l_offset max_bytes)
+                       int max_records, uint64_t max_bytes)
 
 {
     unsigned char temp_buffer[CEOS_HEADER_LENGTH];
@@ -2303,7 +2303,7 @@ static int ProcessData(VSILFILE *fp, int fileid, CeosSARVolume_t *sar,
             max_records--;
         if (max_bytes > 0)
         {
-            if ((vsi_l_offset)record->Length <= max_bytes)
+            if ((uint64_t)record->Length <= max_bytes)
                 max_bytes -= record->Length;
             else
             {

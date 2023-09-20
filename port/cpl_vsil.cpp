@@ -532,7 +532,7 @@ int VSIRename(const char *oldpath, const char *newpath)
  */
 
 int VSICopyFile(const char *pszSource, const char *pszTarget,
-                VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                VSILFILE *fpSource, uint64_t nSourceSize,
                 const char *const *papszOptions, GDALProgressFunc pProgressFunc,
                 void *pProgressData)
 
@@ -1273,7 +1273,7 @@ VSIVirtualHandle *VSIFilesystemHandler::Open(const char *pszFilename,
 /************************************************************************/
 
 int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
-                                   VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                                   VSILFILE *fpSource, uint64_t nSourceSize,
                                    CSLConstList papszOptions,
                                    GDALProgressFunc pProgressFunc,
                                    void *pProgressData)
@@ -1289,8 +1289,8 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
         }
         poFileHandleAutoClose.reset(fpSource);
     }
-    if (nSourceSize == static_cast<vsi_l_offset>(-1) &&
-        pProgressFunc != nullptr && pszSource != nullptr)
+    if (nSourceSize == static_cast<uint64_t>(-1) && pProgressFunc != nullptr &&
+        pszSource != nullptr)
     {
         VSIStatBufL sStat;
         if (VSIStatL(pszSource, &sStat) == 0)
@@ -1329,7 +1329,7 @@ int VSIFilesystemHandler::CopyFile(const char *pszSource, const char *pszTarget,
         if (pProgressFunc &&
             !pProgressFunc(nSourceSize == 0 ? 1.0
                            : nSourceSize > 0 &&
-                                   nSourceSize != static_cast<vsi_l_offset>(-1)
+                                   nSourceSize != static_cast<uint64_t>(-1)
                                ? double(nOffset) / nSourceSize
                                : 0.0,
                            pszSource ? osMsg.c_str() : nullptr, pProgressData))
@@ -2000,7 +2000,7 @@ int VSIFCloseL(VSILFILE *fp)
 /************************************************************************/
 
 /**
- * \fn int VSIVirtualHandle::Seek( vsi_l_offset nOffset, int nWhence )
+ * \fn int VSIVirtualHandle::Seek( uint64_t nOffset, int nWhence )
  * \brief Seek to requested offset.
  *
  * Seek to the desired offset (nOffset) in the indicated file.
@@ -2010,7 +2010,7 @@ int VSIFCloseL(VSILFILE *fp)
  *
  * Analog of the POSIX fseek() call.
  *
- * Caution: vsi_l_offset is a unsigned type, so SEEK_CUR can only be used
+ * Caution: uint64_t is a unsigned type, so SEEK_CUR can only be used
  * for positive seek. If negative seek is needed, use
  * handle->Seek( handle->Tell() + negative_offset, SEEK_SET ).
  *
@@ -2030,7 +2030,7 @@ int VSIFCloseL(VSILFILE *fp)
  *
  * Analog of the POSIX fseek() call.
  *
- * Caution: vsi_l_offset is a unsigned type, so SEEK_CUR can only be used
+ * Caution: uint64_t is a unsigned type, so SEEK_CUR can only be used
  * for positive seek. If negative seek is needed, use
  * VSIFSeekL( fp, VSIFTellL(fp) + negative_offset, SEEK_SET ).
  *
@@ -2041,7 +2041,7 @@ int VSIFCloseL(VSILFILE *fp)
  * @return 0 on success or -1 one failure.
  */
 
-int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
+int VSIFSeekL(VSILFILE *fp, uint64_t nOffset, int nWhence)
 
 {
     return fp->Seek(nOffset, nWhence);
@@ -2082,7 +2082,7 @@ int VSIFSeekL(VSILFILE *fp, vsi_l_offset nOffset, int nWhence)
  * @return file offset in bytes.
  */
 
-vsi_l_offset VSIFTellL(VSILFILE *fp)
+uint64_t VSIFTellL(VSILFILE *fp)
 
 {
     return fp->Tell();
@@ -2205,7 +2205,7 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
 
 /**
  * \fn VSIVirtualHandle::ReadMultiRange( int nRanges, void ** ppData,
- *                                       const vsi_l_offset* panOffsets,
+ *                                       const uint64_t* panOffsets,
  *                                       const size_t* panSizes )
  * \brief Read several ranges of bytes from file.
  *
@@ -2251,9 +2251,8 @@ size_t VSIFReadL(void *pBuffer, size_t nSize, size_t nCount, VSILFILE *fp)
  * @since GDAL 1.9.0
  */
 
-int VSIFReadMultiRangeL(int nRanges, void **ppData,
-                        const vsi_l_offset *panOffsets, const size_t *panSizes,
-                        VSILFILE *fp)
+int VSIFReadMultiRangeL(int nRanges, void **ppData, const uint64_t *panOffsets,
+                        const size_t *panSizes, VSILFILE *fp)
 {
     return fp->ReadMultiRange(nRanges, ppData, panOffsets, panSizes);
 }
@@ -2358,7 +2357,7 @@ int VSIFEofL(VSILFILE *fp)
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::Truncate( vsi_l_offset nNewSize )
+ * \fn VSIVirtualHandle::Truncate( uint64_t nNewSize )
  * \brief Truncate/expand the file to the specified size
 
  * This method goes through the VSIFileHandler virtualization and may
@@ -2387,7 +2386,7 @@ int VSIFEofL(VSILFILE *fp)
  * @since GDAL 1.9.0
  */
 
-int VSIFTruncateL(VSILFILE *fp, vsi_l_offset nNewSize)
+int VSIFTruncateL(VSILFILE *fp, uint64_t nNewSize)
 
 {
     return fp->Truncate(nNewSize);
@@ -2460,8 +2459,8 @@ int VSIFPutcL(int nChar, VSILFILE *fp)
 /************************************************************************/
 
 /**
- * \fn VSIVirtualHandle::GetRangeStatus( vsi_l_offset nOffset,
- *                                       vsi_l_offset nLength )
+ * \fn VSIVirtualHandle::GetRangeStatus( uint64_t nOffset,
+ *                                       uint64_t nLength )
  * \brief Return if a given file range contains data or holes filled with zeroes
  *
  * This uses the filesystem capabilities of querying which regions of
@@ -2500,8 +2499,8 @@ int VSIFPutcL(int nChar, VSILFILE *fp)
  * @since GDAL 2.2
  */
 
-VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nOffset,
-                                   vsi_l_offset nLength)
+VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, uint64_t nOffset,
+                                   uint64_t nLength)
 {
     return fp->GetRangeStatus(nOffset, nLength);
 }
@@ -2536,7 +2535,7 @@ VSIRangeStatus VSIFGetRangeStatusL(VSILFILE *fp, vsi_l_offset nOffset,
  */
 
 int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
-                  vsi_l_offset *pnSize, int64_t nMaxSize)
+                  uint64_t *pnSize, int64_t nMaxSize)
 {
     if (fp == nullptr && pszFilename == nullptr)
         return FALSE;
@@ -2565,11 +2564,11 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
             return FALSE;
     }
 
-    vsi_l_offset nDataLen = 0;
+    uint64_t nDataLen = 0;
 
     if (pszFilename == nullptr || strcmp(pszFilename, "/vsistdin/") == 0)
     {
-        vsi_l_offset nDataAlloc = 0;
+        uint64_t nDataAlloc = 0;
         if (VSIFSeekL(fp, 0, SEEK_SET) != 0)
         {
             if (bFreeFP)
@@ -2582,7 +2581,7 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
             {
                 nDataAlloc = (nDataAlloc * 4) / 3 + 8192 + 1;
                 if (nDataAlloc >
-                    static_cast<vsi_l_offset>(static_cast<size_t>(nDataAlloc)))
+                    static_cast<uint64_t>(static_cast<size_t>(nDataAlloc)))
                 {
                     CPLError(CE_Failure, CPLE_AppDefined,
                              "Input file too large to be opened");
@@ -2610,7 +2609,7 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
                 static_cast<int>(VSIFReadL(*ppabyRet + nDataLen, 1, 8192, fp));
             nDataLen += nRead;
 
-            if (nMaxSize >= 0 && nDataLen > static_cast<vsi_l_offset>(nMaxSize))
+            if (nMaxSize >= 0 && nDataLen > static_cast<uint64_t>(nMaxSize))
             {
                 CPLError(CE_Failure, CPLE_AppDefined,
                          "Input file too large to be opened");
@@ -2642,13 +2641,12 @@ int VSIIngestFile(VSILFILE *fp, const char *pszFilename, GByte **ppabyRet,
 
         // With "large" VSI I/O API we can read data chunks larger than
         // VSIMalloc could allocate. Catch it here.
-        if (nDataLen !=
-                static_cast<vsi_l_offset>(static_cast<size_t>(nDataLen)) ||
+        if (nDataLen != static_cast<uint64_t>(static_cast<size_t>(nDataLen)) ||
             nDataLen + 1 < nDataLen
             // opening a directory returns nDataLen = INT_MAX (on 32bit) or
             // INT64_MAX (on 64bit)
             || nDataLen + 1 > std::numeric_limits<size_t>::max() / 2 ||
-            (nMaxSize >= 0 && nDataLen > static_cast<vsi_l_offset>(nMaxSize)))
+            (nMaxSize >= 0 && nDataLen > static_cast<uint64_t>(nMaxSize)))
         {
             CPLError(CE_Failure, CPLE_AppDefined,
                      "Input file too large to be opened");
@@ -3250,17 +3248,17 @@ void VSICleanupFileManager()
 /*                            Truncate()                                */
 /************************************************************************/
 
-int VSIVirtualHandle::Truncate(vsi_l_offset nNewSize)
+int VSIVirtualHandle::Truncate(uint64_t nNewSize)
 {
-    const vsi_l_offset nOriginalPos = Tell();
+    const uint64_t nOriginalPos = Tell();
     if (Seek(0, SEEK_END) == 0 && nNewSize >= Tell())
     {
         // Fill with zeroes
         std::vector<GByte> aoBytes(4096, 0);
-        vsi_l_offset nCurOffset = nOriginalPos;
+        uint64_t nCurOffset = nOriginalPos;
         while (nCurOffset < nNewSize)
         {
-            constexpr vsi_l_offset nMaxOffset = 4096;
+            constexpr uint64_t nMaxOffset = 4096;
             const int nSize =
                 static_cast<int>(std::min(nMaxOffset, nNewSize - nCurOffset));
             if (Write(&aoBytes[0], nSize, 1) != 1)
@@ -3284,11 +3282,11 @@ int VSIVirtualHandle::Truncate(vsi_l_offset nNewSize)
 /************************************************************************/
 
 int VSIVirtualHandle::ReadMultiRange(int nRanges, void **ppData,
-                                     const vsi_l_offset *panOffsets,
+                                     const uint64_t *panOffsets,
                                      const size_t *panSizes)
 {
     int nRet = 0;
-    const vsi_l_offset nCurOffset = Tell();
+    const uint64_t nCurOffset = Tell();
     for (int i = 0; i < nRanges; i++)
     {
         if (Seek(panOffsets[i], SEEK_SET) < 0)
@@ -3348,7 +3346,7 @@ bool VSIVirtualHandle::HasPRead() const
  */
 size_t VSIVirtualHandle::PRead(CPL_UNUSED void *pBuffer,
                                CPL_UNUSED size_t nSize,
-                               CPL_UNUSED vsi_l_offset nOffset) const
+                               CPL_UNUSED uint64_t nOffset) const
 {
     return 0;
 }

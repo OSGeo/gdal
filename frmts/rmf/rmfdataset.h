@@ -290,7 +290,7 @@ class RMFDataset final : public GDALDataset
                        const RMFDataset *poDS);
 
     std::vector<RMFDataset *> poOvrDatasets;
-    vsi_l_offset nHeaderOffset;
+    uint64_t nHeaderOffset;
     RMFDataset *poParentDS;
 
   public:
@@ -300,7 +300,7 @@ class RMFDataset final : public GDALDataset
     static int Identify(GDALOpenInfo *poOpenInfo);
     static GDALDataset *Open(GDALOpenInfo *);
     static RMFDataset *Open(GDALOpenInfo *, RMFDataset *poParentDS,
-                            vsi_l_offset nNextHeaderOffset);
+                            uint64_t nNextHeaderOffset);
     static GDALDataset *Create(const char *, int, int, int, GDALDataType,
                                char **);
     static GDALDataset *Create(const char *, int, int, int, GDALDataType,
@@ -330,11 +330,11 @@ class RMFDataset final : public GDALDataset
                                    const char *pszDomain = "") override;
     virtual CPLErr SetMetadata(char **papszMetadata,
                                const char *pszDomain = "") override;
-    vsi_l_offset GetFileOffset(uint32_t iRMFOffset) const;
-    uint32_t GetRMFOffset(vsi_l_offset iFileOffset,
-                          vsi_l_offset *piNewFileOffset) const;
+    uint64_t GetFileOffset(uint32_t iRMFOffset) const;
+    uint32_t GetRMFOffset(uint64_t iFileOffset,
+                          uint64_t *piNewFileOffset) const;
     RMFDataset *OpenOverview(RMFDataset *poParentDS, GDALOpenInfo *);
-    vsi_l_offset GetLastOffset() const;
+    uint64_t GetLastOffset() const;
     CPLErr CleanOverviews();
     static GByte GetCompressionType(const char *pszCompressName);
     int SetupCompression(GDALDataType eType, const char *pszFilename);

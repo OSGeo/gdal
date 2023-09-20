@@ -406,7 +406,7 @@ static void GTIFF_Set_TIFFTAG_JPEGTABLES(TIFF *hTIFF,
 
     CPL_IGNORE_RET_VAL(VSIFCloseL(fpTABLES));
 
-    vsi_l_offset nSizeTables = 0;
+    uint64_t nSizeTables = 0;
     GByte *pabyJPEGTablesData =
         VSIGetMemFileBuffer(szTmpFilename, &nSizeTables, FALSE);
     TIFFSetField(hTIFF, TIFFTAG_JPEGTABLES, static_cast<int>(nSizeTables),
@@ -773,21 +773,21 @@ static CPLErr GTIFF_CopyBlockFromJPEG(GTIFF_CopyBlockFromJPEGArgs *psArgs)
     /* -------------------------------------------------------------------- */
     /*      Write the JPEG content with libtiff raw API                     */
     /* -------------------------------------------------------------------- */
-    vsi_l_offset nSize = 0;
+    uint64_t nSize = 0;
     GByte *pabyJPEGData = VSIGetMemFileBuffer(osTmpFilename, &nSize, FALSE);
 
     CPLErr eErr = CE_None;
 
     if (bIsTiled)
     {
-        if (static_cast<vsi_l_offset>(
+        if (static_cast<uint64_t>(
                 TIFFWriteRawTile(hTIFF, iX + iY * nXBlocks, pabyJPEGData,
                                  static_cast<tmsize_t>(nSize))) != nSize)
             eErr = CE_Failure;
     }
     else
     {
-        if (static_cast<vsi_l_offset>(
+        if (static_cast<uint64_t>(
                 TIFFWriteRawStrip(hTIFF, iX + iY * nXBlocks, pabyJPEGData,
                                   static_cast<tmsize_t>(nSize))) != nSize)
             eErr = CE_Failure;

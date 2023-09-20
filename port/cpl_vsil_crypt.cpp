@@ -429,10 +429,10 @@ static bool VSICryptReadError()
 
 // TODO(rouault): This function really needs a comment saying what it does.
 static std::string VSICryptGenerateSectorIV(const std::string &osIV,
-                                            vsi_l_offset nOffset)
+                                            uint64_t nOffset)
 {
     std::string osSectorIV(osIV);
-    const size_t nLength = std::min(sizeof(vsi_l_offset), osSectorIV.size());
+    const size_t nLength = std::min(sizeof(uint64_t), osSectorIV.size());
     for (size_t i = 0; i < nLength; i++)
     {
         // TODO(rouault): Explain what this block is trying to do?
@@ -454,7 +454,7 @@ VSICryptFileHeader::CryptKeyCheck(CryptoPP::BlockCipher *poEncCipher)
     CPLAssert(osIV.size() == poEncCipher->BlockSize());
     // Generate a unique IV with a sector offset of 0xFFFFFFFFFFFFFFFF.
     std::string osCheckIV(
-        VSICryptGenerateSectorIV(osIV, ~(static_cast<vsi_l_offset>(0))));
+        VSICryptGenerateSectorIV(osIV, ~(static_cast<uint64_t>(0))));
     CryptoPP::StreamTransformation *poMode;
     try
     {
@@ -762,22 +762,22 @@ class VSICryptFileHandle final : public VSIVirtualHandle
     VSIVirtualHandle *poBaseHandle = nullptr;
     VSICryptFileHeader *poHeader = nullptr;
     bool bUpdateHeader = false;
-    vsi_l_offset nCurPos = 0;
+    uint64_t nCurPos = 0;
     bool bEOF = false;
 
     CryptoPP::BlockCipher *poEncCipher = nullptr;
     CryptoPP::BlockCipher *poDecCipher = nullptr;
     int nBlockSize = 0;
 
-    vsi_l_offset nWBOffset = 0;
+    uint64_t nWBOffset = 0;
     GByte *pabyWB = nullptr;
     int nWBSize = 0;
     bool bWBDirty = false;
 
     bool bLastSectorWasModified = false;
 
-    void EncryptBlock(GByte *pabyData, vsi_l_offset nOffset);
-    bool DecryptBlock(GByte *pabyData, vsi_l_offset nOffset);
+    void EncryptBlock(GByte *pabyData, uint64_t nOffset);
+    bool DecryptBlock(GByte *pabyData, uint64_t nOffset);
     bool FlushDirty();
 
   public:
@@ -788,14 +788,14 @@ class VSICryptFileHandle final : public VSIVirtualHandle
 
     int Init(const CPLString &osKey, bool bWriteHeader = false);
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
     int Flush() override;
     int Close() override;
-    int Truncate(vsi_l_offset nNewSize) override;
+    int Truncate(uint64_t nNewSize) override;
 };
 
 /************************************************************************/
@@ -909,7 +909,7 @@ int VSICryptFileHandle::Init(const CPLString &osKey, bool bWriteHeader)
 /*                          EncryptBlock()                              */
 /************************************************************************/
 
-void VSICryptFileHandle::EncryptBlock(GByte *pabyData, vsi_l_offset nOffset)
+void VSICryptFileHandle::EncryptBlock(GByte *pabyData, uint64_t nOffset)
 {
     std::string osRes;
     std::string osIV(VSICryptGenerateSectorIV(poHeader->osIV, nOffset));
@@ -963,7 +963,7 @@ void VSICryptFileHandle::EncryptBlock(GByte *pabyData, vsi_l_offset nOffset)
 /*                          DecryptBlock()                              */
 /************************************************************************/
 
-bool VSICryptFileHandle::DecryptBlock(GByte *pabyData, vsi_l_offset nOffset)
+bool VSICryptFileHandle::DecryptBlock(GByte *pabyData, uint64_t nOffset)
 {
     std::string osRes;
     std::string osIV(VSICryptGenerateSectorIV(poHeader->osIV, nOffset));
@@ -1045,7 +1045,7 @@ bool VSICryptFileHandle::FlushDirty()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSICryptFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSICryptFileHandle::Seek(uint64_t nOffset, int nWhence)
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Seek(nOffset=" PRIu64 ", nWhence=%d)", nOffset,
@@ -1067,7 +1067,7 @@ int VSICryptFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                  Tell()                              */
 /************************************************************************/
 
-vsi_l_offset VSICryptFileHandle::Tell()
+uint64_t VSICryptFileHandle::Tell()
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Tell()=" PRIu64, nCurPos);
@@ -1124,7 +1124,7 @@ size_t VSICryptFileHandle::Read(void *pBuffer, size_t nSize, size_t nMemb)
             CPLAssert((nCurPos % poHeader->nSectorSize) == 0);
         }
 
-        vsi_l_offset nSectorOffset =
+        uint64_t nSectorOffset =
             (nCurPos / poHeader->nSectorSize) * poHeader->nSectorSize;
         poBaseHandle->Seek(poHeader->nHeaderSize + nSectorOffset, SEEK_SET);
         if (poBaseHandle->Read(pabyWB, poHeader->nSectorSize, 1) != 1)
@@ -1192,10 +1192,10 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
     {
         if (!FlushDirty())
             return 0;
-        vsi_l_offset nOffset =
+        uint64_t nOffset =
             (poHeader->nPayloadFileSize + poHeader->nSectorSize - 1) /
             poHeader->nSectorSize * poHeader->nSectorSize;
-        const vsi_l_offset nEndOffset =
+        const uint64_t nEndOffset =
             nCurPos / poHeader->nSectorSize * poHeader->nSectorSize;
         for (; nOffset < nEndOffset; nOffset += poHeader->nSectorSize)
         {
@@ -1254,9 +1254,9 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
             if (!FlushDirty())
                 break;
 
-            const vsi_l_offset nSectorOffset =
+            const uint64_t nSectorOffset =
                 (nCurPos / poHeader->nSectorSize) * poHeader->nSectorSize;
-            const vsi_l_offset nLastSectorOffset =
+            const uint64_t nLastSectorOffset =
                 (poHeader->nPayloadFileSize / poHeader->nSectorSize) *
                 poHeader->nSectorSize;
             if (nSectorOffset > nLastSectorOffset &&
@@ -1323,7 +1323,7 @@ size_t VSICryptFileHandle::Write(const void *pBuffer, size_t nSize,
 /************************************************************************/
 
 // Returns 0 on success.  Returns -1 on error.
-int VSICryptFileHandle::Truncate(vsi_l_offset nNewSize)
+int VSICryptFileHandle::Truncate(uint64_t nNewSize)
 {
 #ifdef VERBOSE_VSICRYPT
     CPLDebug("VSICRYPT", "Truncate(" PRIu64 ")", nNewSize);
@@ -1373,7 +1373,7 @@ int VSICryptFileHandle::Flush()
         if (bLastSectorWasModified &&
             (poHeader->nPayloadFileSize % poHeader->nSectorSize) != 0)
         {
-            const vsi_l_offset nLastSectorOffset =
+            const uint64_t nLastSectorOffset =
                 (poHeader->nPayloadFileSize / poHeader->nSectorSize) *
                 poHeader->nSectorSize;
             if (poBaseHandle->Seek(poHeader->nHeaderSize + nLastSectorOffset,

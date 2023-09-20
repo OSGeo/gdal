@@ -492,9 +492,9 @@ uint32_t TABMAPFile::GetFileSize()
 {
     if (!m_fp)
         return 0;
-    vsi_l_offset nCurPos = VSIFTellL(m_fp);
+    uint64_t nCurPos = VSIFTellL(m_fp);
     VSIFSeekL(m_fp, 0, SEEK_END);
-    vsi_l_offset nSize = VSIFTellL(m_fp);
+    uint64_t nSize = VSIFTellL(m_fp);
     VSIFSeekL(m_fp, nCurPos, SEEK_SET);
     return nSize > UINT_MAX ? UINT_MAX : static_cast<uint32_t>(nSize);
 }

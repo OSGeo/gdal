@@ -118,9 +118,8 @@ void OGRSXFLayer::AddClassifyCode(unsigned nClassCode, const char *szName)
 /*                           AddRecord()                                */
 /************************************************************************/
 
-bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode,
-                            vsi_l_offset nOffset, bool bHasSemantic,
-                            size_t nSemanticsSize)
+bool OGRSXFLayer::AddRecord(long nFID, unsigned nClassCode, uint64_t nOffset,
+                            bool bHasSemantic, size_t nSemanticsSize)
 {
     if (mnClassificators.find(nClassCode) != mnClassificators.end() ||
         EQUAL(GetName(), "Not_Classified"))

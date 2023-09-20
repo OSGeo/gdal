@@ -60,7 +60,7 @@ enum JP2_ENUM
 typedef struct
 {
     VSILFILE *fp_;
-    vsi_l_offset nBaseOffset;
+    uint64_t nBaseOffset;
 } JP2File;
 
 /************************************************************************/
@@ -90,8 +90,8 @@ struct JP2DatasetBase
     }
     std::string m_osFilename;
     VSILFILE *fp_ = nullptr; /* Large FILE API */
-    vsi_l_offset nCodeStreamStart = 0;
-    vsi_l_offset nCodeStreamLength = 0;
+    uint64_t nCodeStreamStart = 0;
+    uint64_t nCodeStreamLength = 0;
 
     int nRedIndex = 0;
     int nGreenIndex = 1;

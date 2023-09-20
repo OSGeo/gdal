@@ -286,7 +286,7 @@ GDALDataset *KTX2Dataset::Open(GDALOpenInfo *poOpenInfo)
     if (nMaxSize == 0 || nMaxSize > KTX2_LIMIT)
         nMaxSize = KTX2_LIMIT;
     GByte *pabyRet = nullptr;
-    vsi_l_offset nSizeLarge = 0;
+    uint64_t nSizeLarge = 0;
     int nRet = VSIIngestFile(fpL ? fpL : poOpenInfo->fpL, nullptr, &pabyRet,
                              &nSizeLarge, nMaxSize);
     if (fpL != nullptr)

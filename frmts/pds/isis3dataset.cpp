@@ -126,8 +126,8 @@ class ISIS3Dataset final : public RawDataset
       public:
         CPLString osSrcFilename;
         CPLString osDstFilename;  // empty for same file
-        vsi_l_offset nSrcOffset;
-        vsi_l_offset nSize;
+        uint64_t nSrcOffset;
+        uint64_t nSize;
         CPLString osPlaceHolder;  // empty if not same file
     };
 
@@ -292,7 +292,7 @@ class ISIS3RawRasterBand final : public RawRasterBand
 
   public:
     ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
-                       vsi_l_offset l_nImgOffset, int l_nPixelOffset,
+                       uint64_t l_nImgOffset, int l_nPixelOffset,
                        int l_nLineOffset, GDALDataType l_eDataType,
                        int l_bNativeOrder);
     virtual ~ISIS3RawRasterBand()
@@ -730,8 +730,7 @@ CPLErr ISISTiledBand::SetNoDataValue(double dfNewNoData)
 /************************************************************************/
 
 ISIS3RawRasterBand::ISIS3RawRasterBand(GDALDataset *l_poDS, int l_nBand,
-                                       VSILFILE *l_fpRaw,
-                                       vsi_l_offset l_nImgOffset,
+                                       VSILFILE *l_fpRaw, uint64_t l_nImgOffset,
                                        int l_nPixelOffset, int l_nLineOffset,
                                        GDALDataType l_eDataType,
                                        int l_bNativeOrder)
@@ -2271,7 +2270,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     int nLineOffset = 0;
     int nPixelOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
 
     if (EQUAL(osFormat, "BandSequential"))
     {
@@ -2285,7 +2284,7 @@ GDALDataset *ISIS3Dataset::Open(GDALOpenInfo *poOpenInfo)
         {
             return nullptr;
         }
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nRows;
 
         poDS->m_sLayout.osRawFilename = osQubeFile;
         if (nBands > 1)
@@ -3147,9 +3146,8 @@ void ISIS3Dataset::BuildLabel()
             NonPixelSection oSection;
             oSection.osSrcFilename = osLabelSrcFilename;
             oSection.nSrcOffset =
-                static_cast<vsi_l_offset>(oObj.GetInteger("StartByte")) - 1U;
-            oSection.nSize =
-                static_cast<vsi_l_offset>(oObj.GetInteger("Bytes"));
+                static_cast<uint64_t>(oObj.GetInteger("StartByte")) - 1U;
+            oSection.nSize = static_cast<uint64_t>(oObj.GetInteger("Bytes"));
 
             CPLString osName;
             CPLJSONObject oName = oObj.GetObj("Name");
@@ -3240,7 +3238,7 @@ void ISIS3Dataset::BuildHistory()
 
     if (m_oSrcJSonLabel.IsValid() && m_bUseSrcHistory)
     {
-        vsi_l_offset nHistoryOffset = 0;
+        uint64_t nHistoryOffset = 0;
         int nHistorySize = 0;
         CPLString osSrcFilename;
 
@@ -3267,7 +3265,7 @@ void ISIS3Dataset::BuildHistory()
                 if (oStartByte.ToInteger() > 0)
                 {
                     nHistoryOffset =
-                        static_cast<vsi_l_offset>(oStartByte.ToInteger()) - 1U;
+                        static_cast<uint64_t>(oStartByte.ToInteger()) - 1U;
                 }
             }
 
@@ -3436,22 +3434,21 @@ void ISIS3Dataset::WriteLabel()
 
     const GDALDataType eType = GetRasterBand(1)->GetRasterDataType();
     const int nDTSize = GDALGetDataTypeSizeBytes(eType);
-    vsi_l_offset nImagePixels = 0;
+    uint64_t nImagePixels = 0;
     if (m_poExternalDS == nullptr)
     {
         if (m_bIsTiled)
         {
             int nBlockXSize = 1, nBlockYSize = 1;
             GetRasterBand(1)->GetBlockSize(&nBlockXSize, &nBlockYSize);
-            nImagePixels = static_cast<vsi_l_offset>(nBlockXSize) *
-                           nBlockYSize * nBands *
-                           DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
+            nImagePixels = static_cast<uint64_t>(nBlockXSize) * nBlockYSize *
+                           nBands * DIV_ROUND_UP(nRasterXSize, nBlockXSize) *
                            DIV_ROUND_UP(nRasterYSize, nBlockYSize);
         }
         else
         {
             nImagePixels =
-                static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize * nBands;
+                static_cast<uint64_t>(nRasterXSize) * nRasterYSize * nBands;
         }
     }
 
@@ -3459,8 +3456,8 @@ void ISIS3Dataset::WriteLabel()
     char *pszHistoryStartBytes =
         strstr(pszLabel, pszHISTORY_STARTBYTE_PLACEHOLDER);
 
-    vsi_l_offset nHistoryOffset = 0;
-    vsi_l_offset nLastOffset = 0;
+    uint64_t nHistoryOffset = 0;
+    uint64_t nLastOffset = 0;
     if (pszHistoryStartBytes != nullptr)
     {
         CPLAssert(m_osExternalFilename.empty());
@@ -3543,7 +3540,7 @@ void ISIS3Dataset::WriteLabel()
 #ifdef CPL_MSB
             GDALSwapWords(pabyTemp, nDTSize, nMaxPerPage, nDTSize);
 #endif
-            for (vsi_l_offset i = 0; i < nImagePixels; i += nMaxPerPage)
+            for (uint64_t i = 0; i < nImagePixels; i += nMaxPerPage)
             {
                 int n;
                 if (i + nMaxPerPage <= nImagePixels)
@@ -3622,7 +3619,7 @@ void ISIS3Dataset::WriteLabel()
 
         VSIFSeekL(fpSrc, m_aoNonPixelSections[i].nSrcOffset, SEEK_SET);
         GByte abyBuffer[4096];
-        vsi_l_offset nRemaining = m_aoNonPixelSections[i].nSize;
+        uint64_t nRemaining = m_aoNonPixelSections[i].nSize;
         while (nRemaining)
         {
             size_t nToRead = 4096;
@@ -4195,8 +4192,8 @@ GDALDataset *ISIS3Dataset::Create(const char *pszFilename, int nXSize,
         {
             const int nPixelOffset = GDALGetDataTypeSizeBytes(eType);
             const int nLineOffset = nPixelOffset * nXSize;
-            const vsi_l_offset nBandOffset =
-                static_cast<vsi_l_offset>(nLineOffset) * nYSize;
+            const uint64_t nBandOffset =
+                static_cast<uint64_t>(nLineOffset) * nYSize;
             ISIS3RawRasterBand *poISISBand = new ISIS3RawRasterBand(
                 poDS, i + 1, poDS->m_fpImage,
                 nBandOffset * i,  // nImgOffset, to be

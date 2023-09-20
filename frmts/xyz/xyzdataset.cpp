@@ -436,7 +436,7 @@ CPLErr XYZRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
         bool bLastWasSep;
         do
         {
-            const vsi_l_offset nOffsetBefore = VSIFTellL(poGDS->fp);
+            const uint64_t nOffsetBefore = VSIFTellL(poGDS->fp);
             const char *pszLine = CPLReadLine2L(poGDS->fp, 100, nullptr);
             if (pszLine == nullptr)
             {

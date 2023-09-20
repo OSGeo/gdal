@@ -66,7 +66,7 @@ class RRASTERDataset final : public RawDataset
     static bool ComputeSpacings(const CPLString &osBandOrder, int nCols,
                                 int nRows, int l_nBands, GDALDataType eDT,
                                 int &nPixelOffset, int &nLineOffset,
-                                vsi_l_offset &nBandOffset);
+                                uint64_t &nBandOffset);
     void RewriteHeader();
 
     CPL_DISALLOW_COPY_ASSIGN(RRASTERDataset)
@@ -132,9 +132,8 @@ class RRASTERRasterBand final : public RawRasterBand
 
   public:
     RRASTERRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                      vsi_l_offset nImgOffset, int nPixelOffset,
-                      int nLineOffset, GDALDataType eDataType,
-                      int bNativeOrder);
+                      uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
+                      GDALDataType eDataType, int bNativeOrder);
 
     void SetMinMax(double dfMin, double dfMax);
     double GetMinimum(int *pbSuccess = nullptr) override;
@@ -163,8 +162,7 @@ class RRASTERRasterBand final : public RawRasterBand
 /************************************************************************/
 
 RRASTERRasterBand::RRASTERRasterBand(GDALDataset *poDSIn, int nBandIn,
-                                     VSILFILE *fpRawIn,
-                                     vsi_l_offset nImgOffsetIn,
+                                     VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                      int nPixelOffsetIn, int nLineOffsetIn,
                                      GDALDataType eDataTypeIn,
                                      int bNativeOrderIn)
@@ -498,7 +496,7 @@ void RRASTERDataset::InitImageIfNeeded()
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
     if (dfNoDataValue == 0.0)
     {
-        VSIFTruncateL(m_fpImage, static_cast<vsi_l_offset>(nRasterXSize) *
+        VSIFTruncateL(m_fpImage, static_cast<uint64_t>(nRasterXSize) *
                                      nRasterYSize * nBands * nDTSize);
     }
     else
@@ -969,7 +967,7 @@ int RRASTERDataset::Identify(GDALOpenInfo *poOpenInfo)
 bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
                                      int nRows, int l_nBands, GDALDataType eDT,
                                      int &nPixelOffset, int &nLineOffset,
-                                     vsi_l_offset &nBandOffset)
+                                     uint64_t &nBandOffset)
 {
     nPixelOffset = 0;
     nLineOffset = 0;
@@ -985,7 +983,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
             return false;
         }
         nLineOffset = nPixelSize * nCols * l_nBands;
-        nBandOffset = static_cast<vsi_l_offset>(nPixelSize) * nCols;
+        nBandOffset = static_cast<uint64_t>(nPixelSize) * nCols;
     }
     else if (EQUAL(osBandOrder, "BIP"))
     {
@@ -1008,7 +1006,7 @@ bool RRASTERDataset::ComputeSpacings(const CPLString &osBandOrder, int nCols,
         }
         nPixelOffset = nPixelSize;
         nLineOffset = nPixelSize * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nRows;
     }
     else if (l_nBands > 1)
     {
@@ -1185,7 +1183,7 @@ GDALDataset *RRASTERDataset::Open(GDALOpenInfo *poOpenInfo)
 
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     if (!ComputeSpacings(osBandOrder, nCols, nRows, l_nBands, eDT, nPixelOffset,
                          nLineOffset, nBandOffset))
     {
@@ -1451,7 +1449,7 @@ GDALDataset *RRASTERDataset::Create(const char *pszFilename, int nXSize,
 
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     CPLString osBandOrder(
         CSLFetchNameValueDef(papszOptions, "INTERLEAVE", "BIL"));
     if (!ComputeSpacings(osBandOrder, nXSize, nYSize, nBandsIn, eType,

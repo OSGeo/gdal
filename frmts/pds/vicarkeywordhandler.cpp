@@ -137,11 +137,11 @@ bool VICARKeywordHandler::Ingest(VSILFILE *fp, const GByte *pabyHeader)
         return false;
 
     // Position of EOL in case of compressed data
-    const vsi_l_offset nEOCI1 = static_cast<vsi_l_offset>(
+    const uint64_t nEOCI1 = static_cast<uint64_t>(
         CPLAtoGIntBig(CSLFetchNameValueDef(papszKeywordList, "EOCI1", "0")));
-    const vsi_l_offset nEOCI2 = static_cast<vsi_l_offset>(
+    const uint64_t nEOCI2 = static_cast<uint64_t>(
         CPLAtoGIntBig(CSLFetchNameValueDef(papszKeywordList, "EOCI2", "0")));
-    const vsi_l_offset nEOCI = (nEOCI2 << 32) | nEOCI1;
+    const uint64_t nEOCI = (nEOCI2 << 32) | nEOCI1;
 
     if (nImageOffsetWithoutNBB >
         std::numeric_limits<uint64_t>::max() - nImageSize)
@@ -150,7 +150,7 @@ bool VICARKeywordHandler::Ingest(VSILFILE *fp, const GByte *pabyHeader)
         return false;
     }
 
-    const vsi_l_offset nStartEOL =
+    const uint64_t nStartEOL =
         nEOCI ? nEOCI : nImageOffsetWithoutNBB + nImageSize;
 
     if (VSIFSeekL(fp, nStartEOL, SEEK_SET) != 0)

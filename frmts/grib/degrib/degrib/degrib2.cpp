@@ -994,9 +994,9 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
       if (nd5 > IS->ipackLen) {
          if( gribLen > 100 * 1024 * 1024 )
          {
-             vsi_l_offset curPos = VSIFTellL(fp);
+             uint64_t curPos = VSIFTellL(fp);
              VSIFSeekL(fp, 0, SEEK_END);
-             vsi_l_offset fileSize = VSIFTellL(fp);
+             uint64_t fileSize = VSIFTellL(fp);
              VSIFSeekL(fp, curPos, SEEK_SET);
              if( fileSize < gribLen )
              {
@@ -1096,12 +1096,12 @@ int ReadGrib2Record (VSILFILE *fp, sChar f_unit, double **Grib_Data,
         if( nd2x3 > 100 * 1024 * 1024 )
         {
 
-            vsi_l_offset curPos = VSIFTellL(fp);
+            uint64_t curPos = VSIFTellL(fp);
             VSIFSeekL(fp, 0, SEEK_END);
-            vsi_l_offset fileSize = VSIFTellL(fp);
+            uint64_t fileSize = VSIFTellL(fp);
             VSIFSeekL(fp, curPos, SEEK_SET);
             // allow a compression ratio of 1:1000
-            if( (vsi_l_offset)(nd2x3 / 1000) > fileSize )
+            if( (uint64_t)(nd2x3 / 1000) > fileSize )
             {
                 preErrSprintf ("File too short\n");
                 free (buff);

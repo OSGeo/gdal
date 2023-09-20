@@ -107,8 +107,8 @@ GDALDataset *RCreateCopy(const char *pszFilename, GDALDataset *poSrcDS,
     const bool bASCII = CPLFetchBool(papszOptions, "ASCII", false);
     const bool bCompressed = CPLFetchBool(papszOptions, "COMPRESS", !bASCII);
 
-    vsi_l_offset nSize = static_cast<vsi_l_offset>(nBands) * nXSize * nYSize;
-    if (nSize > static_cast<vsi_l_offset>(INT_MAX))
+    uint64_t nSize = static_cast<uint64_t>(nBands) * nXSize * nYSize;
+    if (nSize > static_cast<uint64_t>(INT_MAX))
     {
         CPLError(CE_Failure, CPLE_NotSupported, "Too big raster");
         return nullptr;

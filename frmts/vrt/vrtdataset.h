@@ -924,7 +924,7 @@ class CPL_DLL VRTRawRasterBand CPL_NON_FINAL : public VRTRasterBand
     virtual CPLErr IWriteBlock(int, int, void *) override;
 
     CPLErr SetRawLink(const char *pszFilename, const char *pszVRTPath,
-                      int bRelativeToVRT, vsi_l_offset nImageOffset,
+                      int bRelativeToVRT, uint64_t nImageOffset,
                       int nPixelOffset, int nLineOffset,
                       const char *pszByteOrder);
 

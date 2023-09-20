@@ -75,8 +75,8 @@ class VSIOCILobHandle : public VSIVirtualHandle
                     OCILobLocator *phLocatorIn, boolean bUpdateIn);
     ~VSIOCILobHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -426,7 +426,7 @@ VSIOCILobHandle::~VSIOCILobHandle()
 //                                                                       Seek()
 // ----------------------------------------------------------------------------
 
-int VSIOCILobHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIOCILobHandle::Seek(uint64_t nOffset, int nWhence)
 {
     if (nWhence == SEEK_END)
     {
@@ -447,7 +447,7 @@ int VSIOCILobHandle::Seek(vsi_l_offset nOffset, int nWhence)
 //                                                                       Tell()
 // ----------------------------------------------------------------------------
 
-vsi_l_offset VSIOCILobHandle::Tell()
+uint64_t VSIOCILobHandle::Tell()
 {
     return nCurOff;
 }

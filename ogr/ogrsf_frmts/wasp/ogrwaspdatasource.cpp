@@ -123,7 +123,7 @@ OGRErr OGRWAsPDataSource::Load(bool bSilent)
     if (poSpatialRef)
         poSpatialRef->Release();
 
-    const vsi_l_offset iOffset = VSIFTellL(hFile);
+    const uint64_t iOffset = VSIFTellL(hFile);
     pszLine = CPLReadLineL(hFile);
     if (!pszLine)
     {

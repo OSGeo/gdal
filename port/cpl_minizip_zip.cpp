@@ -203,7 +203,7 @@ typedef struct
     char *globalcomment;
 #endif
     int use_cpl_io;
-    vsi_l_offset vsi_raw_length_before;
+    uint64_t vsi_raw_length_before;
     VSIVirtualHandle *vsi_deflate_handle;
     size_t nChunkSize;
     int nThreads;
@@ -2471,7 +2471,7 @@ CPLErr CPLAddFileInZip(void *hZip, const char *pszArchiveFilename,
 
     constexpr int CHUNK_READ_MAX_SIZE = 1024 * 1024;
     std::vector<GByte> abyChunk(CHUNK_READ_MAX_SIZE);
-    vsi_l_offset nOffset = 0;
+    uint64_t nOffset = 0;
     while (true)
     {
         const int nRead = static_cast<int>(

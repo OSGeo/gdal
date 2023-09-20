@@ -89,7 +89,7 @@ typedef struct
 
 typedef struct
 {
-    vsi_l_offset Position;
+    uint64_t Position;
     VSILFILE *fp;
 } JP2_Gdal_Stream_Data;
 

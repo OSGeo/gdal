@@ -172,8 +172,8 @@ int TABIDFile::Open(const char *pszFname, TABAccess eAccess)
             return -1;
         }
 
-        if (static_cast<vsi_l_offset>(sStatBuf.st_size) >
-            static_cast<vsi_l_offset>(INT_MAX / 4))
+        if (static_cast<uint64_t>(sStatBuf.st_size) >
+            static_cast<uint64_t>(INT_MAX / 4))
             m_nMaxId = INT_MAX / 4;
         else
             m_nMaxId = static_cast<int>(sStatBuf.st_size / 4);

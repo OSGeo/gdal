@@ -101,21 +101,21 @@ class VSIWin32Handle final : public VSIVirtualHandle
 
     VSIWin32Handle() = default;
 
-    virtual int Seek(vsi_l_offset nOffset, int nWhence) override;
-    virtual vsi_l_offset Tell() override;
+    virtual int Seek(uint64_t nOffset, int nWhence) override;
+    virtual uint64_t Tell() override;
     virtual size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     virtual size_t Write(const void *pBuffer, size_t nSize,
                          size_t nMemb) override;
     virtual int Eof() override;
     virtual int Flush() override;
     virtual int Close() override;
-    virtual int Truncate(vsi_l_offset nNewSize) override;
+    virtual int Truncate(uint64_t nNewSize) override;
     virtual void *GetNativeFileDescriptor() override
     {
         return static_cast<void *>(hFile);
     }
-    virtual VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
-                                          vsi_l_offset nLength) override;
+    virtual VSIRangeStatus GetRangeStatus(uint64_t nOffset,
+                                          uint64_t nLength) override;
 };
 
 /************************************************************************/
@@ -237,7 +237,7 @@ int VSIWin32Handle::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIWin32Handle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIWin32Handle::Seek(uint64_t nOffset, int nWhence)
 
 {
     LONG dwMoveMethod, dwMoveHigh;
@@ -293,7 +293,7 @@ int VSIWin32Handle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSIWin32Handle::Tell()
+uint64_t VSIWin32Handle::Tell()
 
 {
     LARGE_INTEGER li;
@@ -301,7 +301,7 @@ vsi_l_offset VSIWin32Handle::Tell()
     li.HighPart = 0;
     li.LowPart = SetFilePointer(hFile, 0, &(li.HighPart), FILE_CURRENT);
 
-    return (static_cast<vsi_l_offset>(li.QuadPart));
+    return (static_cast<uint64_t>(li.QuadPart));
 }
 
 /************************************************************************/
@@ -386,9 +386,9 @@ int VSIWin32Handle::Eof()
 /*                             Truncate()                               */
 /************************************************************************/
 
-int VSIWin32Handle::Truncate(vsi_l_offset nNewSize)
+int VSIWin32Handle::Truncate(uint64_t nNewSize)
 {
-    vsi_l_offset nCur = Tell();
+    uint64_t nCur = Tell();
     Seek(0, SEEK_END);
     if (nNewSize > Tell())
     {
@@ -411,12 +411,12 @@ int VSIWin32Handle::Truncate(vsi_l_offset nNewSize)
 /*                           GetRangeStatus()                           */
 /************************************************************************/
 
-VSIRangeStatus VSIWin32Handle::GetRangeStatus(vsi_l_offset
+VSIRangeStatus VSIWin32Handle::GetRangeStatus(uint64_t
 #ifdef FSCTL_QUERY_ALLOCATED_RANGES
                                                   nOffset
 #endif
                                               ,
-                                              vsi_l_offset
+                                              uint64_t
 #ifdef FSCTL_QUERY_ALLOCATED_RANGES
                                                   nLength
 #endif

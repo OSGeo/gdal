@@ -238,7 +238,7 @@ class BMPDataset final : public GDALPamDataset
     double adfGeoTransform[6];
     int bGeoTransformValid;
     bool m_bNewFile = false;
-    vsi_l_offset m_nLargeFileSize = 0;
+    uint64_t m_nLargeFileSize = 0;
 
     char *pszFilename;
     VSILFILE *fp;
@@ -345,15 +345,15 @@ CPLErr BMPRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
                                  void *pImage)
 {
     BMPDataset *poGDS = (BMPDataset *)poDS;
-    vsi_l_offset iScanOffset = 0;
+    uint64_t iScanOffset = 0;
 
     if (poGDS->sInfoHeader.iHeight > 0)
         iScanOffset = poGDS->sFileHeader.iOffBits +
                       (poGDS->GetRasterYSize() - nBlockYOff - 1) *
-                          static_cast<vsi_l_offset>(nScanSize);
+                          static_cast<uint64_t>(nScanSize);
     else
         iScanOffset = poGDS->sFileHeader.iOffBits +
-                      nBlockYOff * static_cast<vsi_l_offset>(nScanSize);
+                      nBlockYOff * static_cast<uint64_t>(nScanSize);
 
     if (VSIFSeekL(poGDS->fp, iScanOffset, SEEK_SET) < 0)
     {
@@ -552,9 +552,9 @@ CPLErr BMPRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     CPLAssert(poGDS != nullptr && nBlockXOff >= 0 && nBlockYOff >= 0 &&
               pImage != nullptr);
 
-    vsi_l_offset iScanOffset = poGDS->sFileHeader.iOffBits +
-                               (poGDS->GetRasterYSize() - nBlockYOff - 1) *
-                                   static_cast<vsi_l_offset>(nScanSize);
+    uint64_t iScanOffset = poGDS->sFileHeader.iOffBits +
+                           (poGDS->GetRasterYSize() - nBlockYOff - 1) *
+                               static_cast<uint64_t>(nScanSize);
     if (VSIFSeekL(poGDS->fp, iScanOffset, SEEK_SET) < 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -1312,8 +1312,8 @@ GDALDataset *BMPDataset::Open(GDALOpenInfo *poOpenInfo)
             }
 
             if (VSIFSeekL(poDS->fp,
-                          BFH_SIZE + static_cast<vsi_l_offset>(
-                                         poDS->sInfoHeader.iSize),
+                          BFH_SIZE +
+                              static_cast<uint64_t>(poDS->sInfoHeader.iSize),
                           SEEK_SET) != 0 ||
                 VSIFReadL(poDS->pabyColorTable, poDS->nColorElems,
                           nColorTableSize, poDS->fp) != (size_t)nColorTableSize)
@@ -1543,8 +1543,8 @@ GDALDataset *BMPDataset::Create(const char *pszFilename, int nXSize, int nYSize,
                         "Windows Photo Viewer");
     }
 
-    const vsi_l_offset nLargeImageSize =
-        static_cast<vsi_l_offset>(nScanSize) * poDS->sInfoHeader.iHeight;
+    const uint64_t nLargeImageSize =
+        static_cast<uint64_t>(nScanSize) * poDS->sInfoHeader.iHeight;
     poDS->m_nLargeFileSize = poDS->sFileHeader.iOffBits + nLargeImageSize;
     if (nLargeImageSize > std::numeric_limits<uint32_t>::max())
     {

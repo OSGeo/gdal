@@ -87,7 +87,7 @@ static int OGRSQLiteIORead(sqlite3_file *pFile, void *pBuffer, int iAmt,
                            sqlite3_int64 iOfst)
 {
     OGRSQLiteFileStruct *pMyFile = (OGRSQLiteFileStruct *)pFile;
-    VSIFSeekL(pMyFile->fp, (vsi_l_offset)iOfst, SEEK_SET);
+    VSIFSeekL(pMyFile->fp, (uint64_t)iOfst, SEEK_SET);
     int nRead = (int)VSIFReadL(pBuffer, 1, iAmt, pMyFile->fp);
 #ifdef DEBUG_IO
     CPLDebug("SQLITE", "OGRSQLiteIORead(%p, %d, %d) = %d", pMyFile->fp, iAmt,
@@ -105,7 +105,7 @@ static int OGRSQLiteIOWrite(sqlite3_file *pFile, const void *pBuffer, int iAmt,
                             sqlite3_int64 iOfst)
 {
     OGRSQLiteFileStruct *pMyFile = (OGRSQLiteFileStruct *)pFile;
-    VSIFSeekL(pMyFile->fp, (vsi_l_offset)iOfst, SEEK_SET);
+    VSIFSeekL(pMyFile->fp, (uint64_t)iOfst, SEEK_SET);
     int nWritten = (int)VSIFWriteL(pBuffer, 1, iAmt, pMyFile->fp);
 #ifdef DEBUG_IO
     CPLDebug("SQLITE", "OGRSQLiteIOWrite(%p, %d, %d) = %d", pMyFile->fp, iAmt,
@@ -141,7 +141,7 @@ static int OGRSQLiteIOSync(DEBUG_ONLY sqlite3_file *pFile, DEBUG_ONLY int flags)
 static int OGRSQLiteIOFileSize(sqlite3_file *pFile, sqlite3_int64 *pSize)
 {
     OGRSQLiteFileStruct *pMyFile = (OGRSQLiteFileStruct *)pFile;
-    vsi_l_offset nCurOffset = VSIFTellL(pMyFile->fp);
+    uint64_t nCurOffset = VSIFTellL(pMyFile->fp);
     VSIFSeekL(pMyFile->fp, 0, SEEK_END);
     *pSize = VSIFTellL(pMyFile->fp);
     VSIFSeekL(pMyFile->fp, nCurOffset, SEEK_SET);

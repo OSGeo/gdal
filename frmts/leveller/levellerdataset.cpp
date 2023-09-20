@@ -253,11 +253,11 @@ class LevellerDataset final : public GDALPamDataset
     double m_dLogSpan[2];
 
     VSILFILE *m_fp;
-    vsi_l_offset m_nDataOffset;
+    uint64_t m_nDataOffset;
 
     bool load_from_file(VSILFILE *, const char *);
 
-    static bool locate_data(vsi_l_offset &, size_t &, VSILFILE *, const char *);
+    static bool locate_data(uint64_t &, size_t &, VSILFILE *, const char *);
     static bool get(int &, VSILFILE *, const char *);
     static bool get(size_t &n, VSILFILE *fp, const char *psz)
     {
@@ -988,8 +988,8 @@ bool LevellerDataset::write_tag(const char *pszTag, const char *psz)
     return false;
 }
 
-bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
-                                  VSILFILE *fp, const char *pszTag)
+bool LevellerDataset::locate_data(uint64_t &offset, size_t &len, VSILFILE *fp,
+                                  const char *pszTag)
 {
     // Locate the file offset of the desired tag's data.
     // If it is not available, return false.
@@ -1029,7 +1029,7 @@ bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
         else
         {
             // Seek to next tag.
-            if (0 != VSIFSeekL(fp, (vsi_l_offset)datalen, SEEK_CUR))
+            if (0 != VSIFSeekL(fp, (uint64_t)datalen, SEEK_CUR))
                 return false;
         }
     }
@@ -1041,7 +1041,7 @@ bool LevellerDataset::locate_data(vsi_l_offset &offset, size_t &len,
 
 bool LevellerDataset::get(int &n, VSILFILE *fp, const char *psz)
 {
-    vsi_l_offset offset;
+    uint64_t offset;
     size_t len;
 
     if (locate_data(offset, len, fp, psz))
@@ -1063,7 +1063,7 @@ bool LevellerDataset::get(int &n, VSILFILE *fp, const char *psz)
 
 bool LevellerDataset::get(double &d, VSILFILE *fp, const char *pszTag)
 {
-    vsi_l_offset offset;
+    uint64_t offset;
     size_t len;
 
     if (locate_data(offset, len, fp, pszTag))
@@ -1089,7 +1089,7 @@ bool LevellerDataset::get(char *pszValue, size_t maxchars, VSILFILE *fp,
     // to the *_d tag.
     snprintf(szTag, sizeof(szTag), "%sd", pszTag);
 
-    vsi_l_offset offset;
+    uint64_t offset;
     size_t len;
 
     if (locate_data(offset, len, fp, szTag))

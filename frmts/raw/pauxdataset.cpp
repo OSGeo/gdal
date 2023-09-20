@@ -106,7 +106,7 @@ class PAuxRasterBand final : public RawRasterBand
 
   public:
     PAuxRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                   vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                   uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                    GDALDataType eDataType, int bNativeOrder);
 
     ~PAuxRasterBand() override;
@@ -125,7 +125,7 @@ class PAuxRasterBand final : public RawRasterBand
 /************************************************************************/
 
 PAuxRasterBand::PAuxRasterBand(GDALDataset *poDSIn, int nBandIn,
-                               VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                               VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                int nPixelOffsetIn, int nLineOffsetIn,
                                GDALDataType eDataTypeIn, int bNativeOrderIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
@@ -791,7 +791,7 @@ GDALDataset *PAuxDataset::Open(GDALOpenInfo *poOpenInfo)
 #endif
         }
 
-        const vsi_l_offset nBandOffset = CPLScanUIntBig(
+        const uint64_t nBandOffset = CPLScanUIntBig(
             aosTokensBand[1], static_cast<int>(strlen(aosTokensBand[1])));
         const int nPixelOffset = atoi(aosTokensBand[2]);
         const int nLineOffset = atoi(aosTokensBand[3]);
@@ -946,13 +946,13 @@ GDALDataset *PAuxDataset::Create(const char *pszFilename, int nXSize,
     /*      sequential files for now as these are pretty efficiently        */
     /*      handled by GDAL.                                                */
     /* -------------------------------------------------------------------- */
-    vsi_l_offset nImgOffset = 0;
+    uint64_t nImgOffset = 0;
 
     for (int iBand = 0; iBand < nBandsIn; iBand++)
     {
         int nPixelOffset = 0;
         int nLineOffset = 0;
-        vsi_l_offset nNextImgOffset = 0;
+        uint64_t nNextImgOffset = 0;
 
         /* --------------------------------------------------------------------
          */
@@ -976,7 +976,7 @@ GDALDataset *PAuxDataset::Create(const char *pszFilename, int nXSize,
             nPixelOffset = GDALGetDataTypeSize(eType) / 8;
             nLineOffset = nXSize * nPixelOffset;
             nNextImgOffset =
-                nImgOffset + nYSize * static_cast<vsi_l_offset>(nLineOffset);
+                nImgOffset + nYSize * static_cast<uint64_t>(nLineOffset);
         }
 
         /* --------------------------------------------------------------------

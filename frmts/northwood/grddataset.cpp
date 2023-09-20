@@ -253,8 +253,7 @@ CPLErr NWT_GRDRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     const int nRecordSize = nBlockXSize * 2;
 
     // Seek to the write position in the GRD file
-    VSIFSeekL(poGDS->fp,
-              1024 + nRecordSize * static_cast<vsi_l_offset>(nBlockYOff),
+    VSIFSeekL(poGDS->fp, 1024 + nRecordSize * static_cast<uint64_t>(nBlockYOff),
               SEEK_SET);
 
     // Cast pImage to float
@@ -338,8 +337,7 @@ CPLErr NWT_GRDRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     const int nRecordSize = nBlockXSize * 2;
 
     // Seek to the data position
-    VSIFSeekL(poGDS->fp,
-              1024 + nRecordSize * static_cast<vsi_l_offset>(nBlockYOff),
+    VSIFSeekL(poGDS->fp, 1024 + nRecordSize * static_cast<uint64_t>(nBlockYOff),
               SEEK_SET);
 
     GByte *pabyRecord = static_cast<GByte *>(VSI_MALLOC_VERBOSE(nRecordSize));

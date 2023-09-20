@@ -571,7 +571,7 @@ int DDFRecord::ReadHeader()
         // --------------------------------------------------------------------
         int rewindSize = nFieldEntryWidth - 1;
         VSILFILE *fp = poModule->GetFP();
-        vsi_l_offset pos = VSIFTellL(fp) - rewindSize;
+        uint64_t pos = VSIFTellL(fp) - rewindSize;
         if (VSIFSeekL(fp, pos, SEEK_SET) < 0)
             return FALSE;
         nDataSize -= rewindSize;

@@ -515,7 +515,7 @@ IoInt64Type GDALEXRIOStream::tellg()
 
 void GDALEXRIOStream::seekg(IoInt64Type pos)
 {
-    VSIFSeekL(m_fp, static_cast<vsi_l_offset>(pos), SEEK_SET);
+    VSIFSeekL(m_fp, static_cast<uint64_t>(pos), SEEK_SET);
 }
 
 /************************************************************************/

@@ -521,7 +521,7 @@ bool ZarrV2Array::LoadTileData(const uint64_t *tileIndices, bool bUseMutex,
         VSIFSeekL(fp, 0, SEEK_END);
         const auto nSize = VSIFTellL(fp);
         VSIFSeekL(fp, 0, SEEK_SET);
-        if (nSize > static_cast<vsi_l_offset>(std::numeric_limits<int>::max()))
+        if (nSize > static_cast<uint64_t>(std::numeric_limits<int>::max()))
         {
             CPLError(CE_Failure, CPLE_AppDefined, "Too large tile %s",
                      osFilename.c_str());

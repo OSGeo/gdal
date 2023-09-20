@@ -417,7 +417,7 @@ GDALDataset *ELASDataset::Open(GDALOpenInfo *poOpenInfo)
     if (poDS->nBandOffset > 1000000)
     {
         VSIFSeekL(poDS->fp, 0, SEEK_END);
-        if (VSIFTellL(poDS->fp) < static_cast<vsi_l_offset>(poDS->nBandOffset))
+        if (VSIFTellL(poDS->fp) < static_cast<uint64_t>(poDS->nBandOffset))
         {
             CPLError(CE_Failure, CPLE_FileIO, "File too short");
             delete poDS;

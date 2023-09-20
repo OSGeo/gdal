@@ -463,9 +463,9 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
 
     for (int i = 0; i < static_cast<int>(nFrameFileIndexRecords); i++)
     {
-        vsi_l_offset nFrameOffset =
-            static_cast<vsi_l_offset>(frameFileIndexSubsectionPhysIndex) +
-            static_cast<vsi_l_offset>(frameFileIndexRecordLength) * i;
+        uint64_t nFrameOffset =
+            static_cast<uint64_t>(frameFileIndexSubsectionPhysIndex) +
+            static_cast<uint64_t>(frameFileIndexRecordLength) * i;
         if (VSIFSeekL(fp, nFrameOffset, SEEK_SET) != 0)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
@@ -618,11 +618,11 @@ RPFToc *RPFTOCReadFromBuffer(const char *pszFilename, VSILFILE *fp,
         /* New path_off offset from start of frame file index section of TOC??
          */
         /* Add pathoffset wrt frame file index table subsection (loc[3]) */
-        if (!bOK || VSIFSeekL(fp,
-                              static_cast<vsi_l_offset>(
-                                  frameFileIndexSubsectionPhysIndex) +
-                                  offsetFrameFilePathName,
-                              SEEK_SET) != 0)
+        if (!bOK ||
+            VSIFSeekL(fp,
+                      static_cast<uint64_t>(frameFileIndexSubsectionPhysIndex) +
+                          offsetFrameFilePathName,
+                      SEEK_SET) != 0)
         {
             CPLError(CE_Failure, CPLE_NotSupported,
                      "Invalid TOC file. Unable to seek to "

@@ -1059,7 +1059,7 @@ GDALDataset *RIKDataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         VSIFSeekL(poOpenInfo->fpL, 0, SEEK_END);
-        vsi_l_offset nBigFileSize = VSIFTellL(poOpenInfo->fpL);
+        uint64_t nBigFileSize = VSIFTellL(poOpenInfo->fpL);
         if (nBigFileSize > UINT_MAX)
             nBigFileSize = UINT_MAX;
         uint32_t fileSize = static_cast<uint32_t>(nBigFileSize);

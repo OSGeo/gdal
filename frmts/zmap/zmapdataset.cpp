@@ -51,7 +51,7 @@ class ZMapDataset final : public GDALPamDataset
     int nDecimalCount;
     int nColNum;
     double dfNoDataValue;
-    vsi_l_offset nDataStartOff;
+    uint64_t nDataStartOff;
     double adfGeoTransform[6];
 
   public:

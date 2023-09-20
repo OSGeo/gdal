@@ -2227,7 +2227,7 @@ CPLErr GDALGPKGMBTilesLikePseudoDataset::WriteTileInternal()
         if (poOutDS)
         {
             GDALClose(poOutDS);
-            vsi_l_offset nBlobSize = 0;
+            uint64_t nBlobSize = 0;
             GByte *pabyBlob =
                 VSIGetMemFileBuffer(osMemFileName, &nBlobSize, TRUE);
 

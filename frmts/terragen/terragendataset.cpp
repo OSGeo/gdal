@@ -147,7 +147,7 @@ class TerragenDataset final : public GDALPamDataset
         m_dMetersPerElevUnit, m_dLogSpan[2], m_span_m[2], m_span_px[2];
 
     VSILFILE *m_fp;
-    vsi_l_offset m_nDataOffset;
+    uint64_t m_nDataOffset;
 
     int16_t m_nHeightScale;
     int16_t m_nBaseHeight;

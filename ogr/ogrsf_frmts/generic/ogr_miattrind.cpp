@@ -284,7 +284,7 @@ OGRErr OGRMILayerAttrIndex::LoadConfigFromXML()
         VSIFCloseL(fp);
         return OGRERR_FAILURE;
     }
-    const vsi_l_offset nXMLSize = VSIFTellL(fp);
+    const uint64_t nXMLSize = VSIFTellL(fp);
     if (nXMLSize > 10 * 1024 * 1024 || VSIFSeekL(fp, 0, SEEK_SET) != 0)
     {
         VSIFCloseL(fp);

@@ -235,7 +235,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     // Block list upload
     bool UploadFile(const CPLString &osFilename, Event event,
-                    vsi_l_offset nPosition, const void *pabyBuffer,
+                    uint64_t nPosition, const void *pabyBuffer,
                     size_t nBufferSize,
                     IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
                     double dfRetryDelay, CSLConstList papszOptions);
@@ -268,7 +268,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
 
     CPLString UploadPart(const CPLString &osFilename, int /* nPartNumber */,
                          const std::string & /* osUploadID */,
-                         vsi_l_offset nPosition, const void *pabyBuffer,
+                         uint64_t nPosition, const void *pabyBuffer,
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry, double dfRetryDelay,
@@ -284,7 +284,7 @@ class VSIADLSFSHandler final : public IVSIS3LikeFSHandler
     bool CompleteMultipart(const CPLString &osFilename,
                            const CPLString & /* osUploadID */,
                            const std::vector<CPLString> & /* aosEtags */,
-                           vsi_l_offset nTotalSize,
+                           uint64_t nTotalSize,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry, double dfRetryDelay) override
     {
@@ -1921,8 +1921,8 @@ int VSIADLSFSHandler::CopyObject(const char *oldpath, const char *newpath,
 /************************************************************************/
 
 bool VSIADLSFSHandler::UploadFile(const CPLString &osFilename, Event event,
-                                  vsi_l_offset nPosition,
-                                  const void *pabyBuffer, size_t nBufferSize,
+                                  uint64_t nPosition, const void *pabyBuffer,
+                                  size_t nBufferSize,
                                   IVSIS3LikeHandleHelper *poHandleHelper,
                                   int nMaxRetry, double dfRetryDelay,
                                   CSLConstList papszOptions)

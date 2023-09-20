@@ -125,8 +125,8 @@ void NTFFileReader::EstablishRasterAccess()
     if (!GDALCheckDatasetDimensions(nRasterXSize, nRasterYSize))
         return;
 
-    panColumnOffset = static_cast<vsi_l_offset *>(
-        CPLCalloc(sizeof(vsi_l_offset), nRasterXSize));
+    panColumnOffset =
+        static_cast<uint64_t *>(CPLCalloc(sizeof(uint64_t), nRasterXSize));
 
     GetFPPos(panColumnOffset + 0, nullptr);
 

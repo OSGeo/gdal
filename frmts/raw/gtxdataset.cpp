@@ -119,7 +119,7 @@ class GTXRasterBand final : public RawRasterBand
 
   public:
     GTXRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                  vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                  uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, int bNativeOrder);
 
     ~GTXRasterBand() override;
@@ -132,7 +132,7 @@ class GTXRasterBand final : public RawRasterBand
 /************************************************************************/
 
 GTXRasterBand::GTXRasterBand(GDALDataset *poDSIn, int nBandIn,
-                             VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                             VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                              int nPixelOffsetIn, int nLineOffsetIn,
                              GDALDataType eDataTypeIn, int bNativeOrderIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,
@@ -287,8 +287,8 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     if (!GDALCheckDatasetDimensions(poDS->nRasterXSize, poDS->nRasterYSize) ||
-        static_cast<vsi_l_offset>(poDS->nRasterXSize) * poDS->nRasterYSize >
-            std::numeric_limits<vsi_l_offset>::max() / sizeof(double))
+        static_cast<uint64_t>(poDS->nRasterXSize) * poDS->nRasterYSize >
+            std::numeric_limits<uint64_t>::max() / sizeof(double))
     {
         return nullptr;
     }
@@ -298,11 +298,11 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     /*      Float32. Before it was double.                                  */
     /* -------------------------------------------------------------------- */
     CPL_IGNORE_RET_VAL(VSIFSeekL(poDS->fpImage, 0, SEEK_END));
-    const vsi_l_offset nSize = VSIFTellL(poDS->fpImage);
+    const uint64_t nSize = VSIFTellL(poDS->fpImage);
 
     GDALDataType eDT = GDT_Float32;
     if (nSize - 40 == sizeof(double) *
-                          static_cast<vsi_l_offset>(poDS->nRasterXSize) *
+                          static_cast<uint64_t>(poDS->nRasterXSize) *
                           poDS->nRasterYSize)
         eDT = GDT_Float64;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
@@ -316,7 +316,7 @@ GDALDataset *GTXDataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     auto poBand = cpl::make_unique<GTXRasterBand>(
         poDS.get(), 1, poDS->fpImage,
-        static_cast<vsi_l_offset>(poDS->nRasterYSize - 1) * poDS->nRasterXSize *
+        static_cast<uint64_t>(poDS->nRasterYSize - 1) * poDS->nRasterXSize *
                 nDTSize +
             40,
         nDTSize, poDS->nRasterXSize * -nDTSize, eDT, !CPL_IS_LSB);

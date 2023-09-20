@@ -430,8 +430,8 @@ GDALDataset *RDataset::Open(GDALOpenInfo *poOpenInfo)
     VSIStatBufL stat;
     const int dStatSuccess =
         VSIStatExL(osAdjustedFilename, &stat, VSI_STAT_SIZE_FLAG);
-    if (dStatSuccess != 0 || static_cast<vsi_l_offset>(nValueCount) >
-                                 stat.st_size - poDS->nStartOfData)
+    if (dStatSuccess != 0 ||
+        static_cast<uint64_t>(nValueCount) > stat.st_size - poDS->nStartOfData)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Corrupt file.  "

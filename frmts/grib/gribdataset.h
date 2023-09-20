@@ -162,7 +162,7 @@ class GRIBRasterBand final : public GDALPamRasterBand
 
     void UncacheData();
 
-    static void ReadGribData(VSILFILE *, vsi_l_offset, int, double **,
+    static void ReadGribData(VSILFILE *, uint64_t, int, double **,
                              grib_MetaData **);
 
   private:
@@ -170,9 +170,9 @@ class GRIBRasterBand final : public GDALPamRasterBand
     void FindNoDataGrib2(bool bSeekToStart = true);
     void FindMetaData();
     // Heuristic search for the start of the message
-    static vsi_l_offset FindTrueStart(VSILFILE *, vsi_l_offset);
+    static uint64_t FindTrueStart(VSILFILE *, uint64_t);
 
-    vsi_l_offset start;
+    uint64_t start;
     int subgNum;
     char *longFstLevel;
 

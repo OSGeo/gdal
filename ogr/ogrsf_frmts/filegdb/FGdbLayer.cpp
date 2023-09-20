@@ -273,7 +273,7 @@ int FGdbLayer::EditATXOrSPX(const CPLString &osIndex)
         return FALSE;
     }
     VSIFSeekL(fp, 0, SEEK_END);
-    vsi_l_offset nPos = VSIFTellL(fp);
+    uint64_t nPos = VSIFTellL(fp);
     int bRet = FALSE;
     int bInvalidateIndex = FALSE;
     if (nPos > 22)

@@ -1140,7 +1140,7 @@ CPLHTTPResult *CPLHTTPFetchEx(const char *pszURL, CSLConstList papszOptions,
             osURL += "&HEADERS=";
             osURL += pszHeaders;
         }
-        vsi_l_offset nLength = 0;
+        uint64_t nLength = 0;
         CPLHTTPResult *psResult =
             static_cast<CPLHTTPResult *>(CPLCalloc(1, sizeof(CPLHTTPResult)));
         GByte *pabyData = VSIGetMemFileBuffer(osURL, &nLength, FALSE);

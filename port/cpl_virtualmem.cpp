@@ -2013,10 +2013,11 @@ static void CPLVirtualMemFreeFileMemoryMapped(CPLVirtualMem *ctxt)
 /*                       CPLVirtualMemFileMapNew()                      */
 /************************************************************************/
 
-CPLVirtualMem *CPLVirtualMemFileMapNew(
-    VSILFILE *fp, vsi_l_offset nOffset, vsi_l_offset nLength,
-    CPLVirtualMemAccessMode eAccessMode,
-    CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData)
+CPLVirtualMem *
+CPLVirtualMemFileMapNew(VSILFILE *fp, uint64_t nOffset, uint64_t nLength,
+                        CPLVirtualMemAccessMode eAccessMode,
+                        CPLVirtualMemFreeUserData pfnFreeUserData,
+                        void *pCbkUserData)
 {
 #if SIZEOF_VOIDP == 4
     if (nLength != static_cast<size_t>(nLength))
@@ -2027,8 +2028,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
         return nullptr;
     }
     if (nOffset + CPLGetPageSize() !=
-        static_cast<vsi_l_offset>(
-            static_cast<off_t>(nOffset + CPLGetPageSize())))
+        static_cast<uint64_t>(static_cast<off_t>(nOffset + CPLGetPageSize())))
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "nOffset = %" PRIu64 " incompatible with 32 bit architecture",
@@ -2053,10 +2053,10 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
 
     // Need to ensure that the requested extent fits into the file size
     // otherwise SIGBUS errors will occur when using the mapping.
-    vsi_l_offset nCurPos = VSIFTellL(fp);
+    uint64_t nCurPos = VSIFTellL(fp);
     if (VSIFSeekL(fp, 0, SEEK_END) != 0)
         return nullptr;
-    vsi_l_offset nFileSize = VSIFTellL(fp);
+    uint64_t nFileSize = VSIFTellL(fp);
     if (nFileSize < nOffset + nLength)
     {
         if (eAccessMode != VIRTUALMEM_READWRITE)
@@ -2120,7 +2120,7 @@ CPLVirtualMem *CPLVirtualMemFileMapNew(
 #else  // HAVE_MMAP
 
 CPLVirtualMem *CPLVirtualMemFileMapNew(
-    VSILFILE * /* fp */, vsi_l_offset /* nOffset */, vsi_l_offset /* nLength */,
+    VSILFILE * /* fp */, uint64_t /* nOffset */, uint64_t /* nLength */,
     CPLVirtualMemAccessMode /* eAccessMode */,
     CPLVirtualMemFreeUserData /* pfnFreeUserData */, void * /* pCbkUserData */)
 {
@@ -2250,7 +2250,7 @@ int CPLVirtualMemIsAccessThreadSafe(CPLVirtualMem *ctxt)
 /************************************************************************/
 
 CPLVirtualMem *CPLVirtualMemDerivedNew(
-    CPLVirtualMem *pVMemBase, vsi_l_offset nOffset, vsi_l_offset nSize,
+    CPLVirtualMem *pVMemBase, uint64_t nOffset, uint64_t nSize,
     CPLVirtualMemFreeUserData pfnFreeUserData, void *pCbkUserData)
 {
     if (nOffset + nSize > pVMemBase->nSize)

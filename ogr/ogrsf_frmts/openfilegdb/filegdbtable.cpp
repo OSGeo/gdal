@@ -264,8 +264,7 @@ static void ReadVarUInt64NoCheck(GByte *&pabyIter, uint64_t &nOutVal)
 /*                      IsLikelyFeatureAtOffset()                       */
 /************************************************************************/
 
-int FileGDBTable::IsLikelyFeatureAtOffset(vsi_l_offset nOffset,
-                                          uint32_t *pnSize,
+int FileGDBTable::IsLikelyFeatureAtOffset(uint64_t nOffset, uint32_t *pnSize,
                                           int *pbDeletedRecord)
 {
     VSIFSeekL(m_fpTable, nOffset, SEEK_SET);
@@ -532,7 +531,7 @@ bool FileGDBTable::GuessFeatureLocations()
     int bReportDeletedFeatures = CPLTestBool(
         CPLGetConfigOption("OPENFILEGDB_REPORT_DELETED_FEATURES", "NO"));
 
-    vsi_l_offset nOffset = 40 + m_nFieldDescLength;
+    uint64_t nOffset = 40 + m_nFieldDescLength;
 
     if (m_nOffsetFieldDesc != 40)
     {
@@ -628,8 +627,8 @@ int FileGDBTable::ReadTableXHeader()
     returnErrorIf(m_nTablxOffsetSize < 4 || m_nTablxOffsetSize > 6);
 
     m_nOffsetTableXTrailer =
-        16 + m_nTablxOffsetSize * 1024 *
-                 static_cast<vsi_l_offset>(m_n1024BlocksPresent);
+        16 +
+        m_nTablxOffsetSize * 1024 * static_cast<uint64_t>(m_n1024BlocksPresent);
     if (m_n1024BlocksPresent != 0)
     {
         GByte abyTrailer[16];
@@ -1327,8 +1326,8 @@ static void ReadVarIntAndAddNoCheck(GByte *&pabyIter, int64_t &nOutVal)
 /*                       GetOffsetInTableForRow()                       */
 /************************************************************************/
 
-vsi_l_offset
-FileGDBTable::GetOffsetInTableForRow(int iRow, vsi_l_offset *pnOffsetInTableX)
+uint64_t FileGDBTable::GetOffsetInTableForRow(int iRow,
+                                              uint64_t *pnOffsetInTableX)
 {
     const int errorRetValue = 0;
     if (pnOffsetInTableX)
@@ -1342,7 +1341,7 @@ FileGDBTable::GetOffsetInTableForRow(int iRow, vsi_l_offset *pnOffsetInTableX)
         return GET_OFFSET(m_anFeatureOffsets[iRow]);
     }
 
-    vsi_l_offset nOffsetInTableX;
+    uint64_t nOffsetInTableX;
     if (!m_abyTablXBlockMap.empty())
     {
         uint32_t nCountBlocksBefore = 0;
@@ -1372,12 +1371,11 @@ FileGDBTable::GetOffsetInTableForRow(int iRow, vsi_l_offset *pnOffsetInTableX)
         m_nCountBlocksBeforeIBlockValue = nCountBlocksBefore;
         const int iCorrectedRow = nCountBlocksBefore * 1024 + (iRow % 1024);
         nOffsetInTableX =
-            16 + static_cast<vsi_l_offset>(m_nTablxOffsetSize) * iCorrectedRow;
+            16 + static_cast<uint64_t>(m_nTablxOffsetSize) * iCorrectedRow;
     }
     else
     {
-        nOffsetInTableX =
-            16 + static_cast<vsi_l_offset>(m_nTablxOffsetSize) * iRow;
+        nOffsetInTableX = 16 + static_cast<uint64_t>(m_nTablxOffsetSize) * iRow;
     }
 
     if (pnOffsetInTableX)
@@ -1388,7 +1386,7 @@ FileGDBTable::GetOffsetInTableForRow(int iRow, vsi_l_offset *pnOffsetInTableX)
     m_bError = VSIFReadL(abyBuffer, m_nTablxOffsetSize, 1, m_fpTableX) != 1;
     returnErrorIf(m_bError);
 
-    const vsi_l_offset nOffset = ReadFeatureOffset(abyBuffer);
+    const uint64_t nOffset = ReadFeatureOffset(abyBuffer);
 
 #ifdef DEBUG_VERBOSE
     const auto nOffsetHeaderEnd = m_nOffsetFieldDesc + m_nFieldDescLength;
@@ -1466,7 +1464,7 @@ int FileGDBTable::SelectRow(int iRow)
 
     if (m_nCurRow != iRow)
     {
-        vsi_l_offset nOffsetTable = GetOffsetInTableForRow(iRow);
+        uint64_t nOffsetTable = GetOffsetInTableForRow(iRow);
         if (nOffsetTable == 0)
         {
             m_nCurRow = -1;
@@ -2082,7 +2080,7 @@ int FileGDBTable::GetIndexCount()
     }
 
     VSIFSeekL(fpIndexes, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fpIndexes);
+    uint64_t nFileSize = VSIFTellL(fpIndexes);
     returnErrorAndCleanupIf(nFileSize > 1024 * 1024, VSIFCloseL(fpIndexes));
 
     GByte *pabyIdx = static_cast<GByte *>(

@@ -62,11 +62,11 @@ class VICARDataset final : public RawDataset
     CompressMethod m_eCompress = COMPRESS_NONE;
 
     int m_nRecordSize = 0;
-    vsi_l_offset m_nImageOffsetWithoutNBB = 0;
+    uint64_t m_nImageOffsetWithoutNBB = 0;
     int m_nLastRecordOffset = 0;
-    std::vector<vsi_l_offset> m_anRecordOffsets{};  // for BASIC/BASIC2
+    std::vector<uint64_t> m_anRecordOffsets{};  // for BASIC/BASIC2
     std::vector<GByte> m_abyCodedBuffer{};
-    vsi_l_offset m_nLabelSize = 0;
+    uint64_t m_nLabelSize = 0;
 
     CPLJSONObject m_oJSonLabel;
     CPLStringList m_aosVICARMD;
@@ -151,9 +151,9 @@ class VICARDataset final : public RawDataset
                             uint64_t &nImageOffsetWithoutNBB, uint64_t &nNBB,
                             uint64_t &nImageSize);
 
-    static vsi_l_offset GetVICARLabelOffsetFromPDS3(const char *pszHdr,
-                                                    VSILFILE *fp,
-                                                    std::string &osVICARHeader);
+    static uint64_t GetVICARLabelOffsetFromPDS3(const char *pszHdr,
+                                                VSILFILE *fp,
+                                                std::string &osVICARHeader);
 };
 
 #endif  // VICARDATASET_H

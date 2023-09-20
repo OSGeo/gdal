@@ -64,7 +64,7 @@
 
 static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
                                  uint64_t nImageOffset, int64_t nPixelCount,
-                                 const char *pszIC, vsi_l_offset nICOffset,
+                                 const char *pszIC, uint64_t nICOffset,
                                  CSLConstList papszCreationOptions);
 static bool NITFWriteExtraSegments(const char *pszFilename,
                                    CSLConstList papszCgmMD,
@@ -72,7 +72,7 @@ static bool NITFWriteExtraSegments(const char *pszFilename,
                                    CSLConstList papszOptions);
 
 #ifdef JPEG_SUPPORTED
-static bool NITFWriteJPEGImage(GDALDataset *, VSILFILE *, vsi_l_offset, char **,
+static bool NITFWriteJPEGImage(GDALDataset *, VSILFILE *, uint64_t, char **,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData);
 #endif
@@ -4344,8 +4344,8 @@ GDALDataset *NITFDataset::NITFDatasetCreate(const char *pszFilename, int nXSize,
 
     int nIMIndex = 0;
     int nImageCount = 0;
-    vsi_l_offset nImageOffset = 0;
-    vsi_l_offset nICOffset = 0;
+    uint64_t nImageOffset = 0;
+    uint64_t nICOffset = 0;
     if (!NITFCreateEx(pszFilename, nXSize, nYSize, nBandsIn,
                       GDALGetDataTypeSize(eType), pszPVType, papszFullOptions,
                       &nIMIndex, &nImageCount, &nImageOffset, &nICOffset))
@@ -5203,8 +5203,8 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
     int nIMIndex = 0;
     int nImageCount = 0;
-    vsi_l_offset nImageOffset = 0;
-    vsi_l_offset nICOffset = 0;
+    uint64_t nImageOffset = 0;
+    uint64_t nICOffset = 0;
     if (!NITFCreateEx(pszFilename, nXSize, nYSize, poSrcDS->GetRasterCount(),
                       GDALGetDataTypeSize(eType), pszPVType, papszFullOptions,
                       &nIMIndex, &nImageCount, &nImageOffset, &nICOffset))
@@ -5563,7 +5563,7 @@ GDALDataset *NITFDataset::NITFCreateCopy(const char *pszFilename,
 
 static bool NITFPatchImageLength(const char *pszFilename, int nIMIndex,
                                  uint64_t nImageOffset, int64_t nPixelCount,
-                                 const char *pszIC, vsi_l_offset nICOffset,
+                                 const char *pszIC, uint64_t nICOffset,
                                  CSLConstList papszCreationOptions)
 
 {
@@ -6238,9 +6238,8 @@ static bool NITFWriteTextSegments(const char *pszFilename, VSILFILE *&fpVSIL,
 /************************************************************************/
 
 static bool NITFWriteDES(VSILFILE *&fp, const char *pszFilename,
-                         vsi_l_offset nOffsetLDSH, int iDES,
-                         const char *pszDESName, const GByte *pabyDESData,
-                         int nArrayLen)
+                         uint64_t nOffsetLDSH, int iDES, const char *pszDESName,
+                         const GByte *pabyDESData, int nArrayLen)
 {
     constexpr int LEN_DE = 2;
     constexpr int LEN_DESID = 25;
@@ -6622,7 +6621,7 @@ int NITFWriteJPEGBlock(GDALDataset *poSrcDS, VSILFILE *fp, int nBlockXOff,
                        void *pProgressData);
 
 static bool NITFWriteJPEGImage(GDALDataset *poSrcDS, VSILFILE *fp,
-                               vsi_l_offset nStartOffset, char **papszOptions,
+                               uint64_t nStartOffset, char **papszOptions,
                                GDALProgressFunc pfnProgress,
                                void *pProgressData)
 {

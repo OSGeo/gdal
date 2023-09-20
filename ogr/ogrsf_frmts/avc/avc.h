@@ -673,7 +673,7 @@ void AVCRawBinClose(AVCRawBinFile *psInfo);
 void AVCRawBinFSeek(AVCRawBinFile *psInfo, int nOffset, int nFrom);
 bool AVCRawBinEOF(AVCRawBinFile *psInfo);
 void AVCRawBinSetFileDataSize(AVCRawBinFile *psInfo, int nDataSize);
-int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, vsi_l_offset nSize);
+int AVCRawBinIsFileGreaterThan(AVCRawBinFile *psFile, uint64_t nSize);
 
 void AVCRawBinReadBytes(AVCRawBinFile *psInfo, int nBytesToRead, GByte *pBuf);
 int16_t AVCRawBinReadInt16(AVCRawBinFile *psInfo);

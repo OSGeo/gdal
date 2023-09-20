@@ -907,7 +907,7 @@ class OGRDXFWriterDS final : public OGRDataSource
     OGRDXFDataSource oHeaderDS;
     char **papszLayersToCreate;
 
-    vsi_l_offset nHANDSEEDOffset;
+    uint64_t nHANDSEEDOffset;
 
     std::vector<int> anDefaultLayerCode;
     std::vector<CPLString> aosDefaultLayerText;

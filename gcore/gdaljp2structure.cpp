@@ -2048,7 +2048,7 @@ static CPLXMLNode *DumpJPK2CodeStream(CPLXMLNode *psBox, VSILFILE *fp,
 static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
                                              GDALJP2Box *poParentBox,
                                              int nRecLevel,
-                                             vsi_l_offset nFileOrParentBoxSize,
+                                             uint64_t nFileOrParentBoxSize,
                                              DumpContext *psDumpContext)
 {
     // Limit recursion to a reasonable level. I believe that in practice 2
@@ -2115,9 +2115,9 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
                 }
             }
             if (nFileOrParentBoxSize > 0 && nBoxDataLength > 0 &&
-                (static_cast<vsi_l_offset>(oBox.GetDataOffset()) >
+                (static_cast<uint64_t>(oBox.GetDataOffset()) >
                      nFileOrParentBoxSize ||
-                 static_cast<vsi_l_offset>(nBoxDataLength) >
+                 static_cast<uint64_t>(nBoxDataLength) >
                      nFileOrParentBoxSize - oBox.GetDataOffset()))
             {
                 CPLXMLNode *psLastChildBox = nullptr;
@@ -2137,7 +2137,7 @@ static void GDALGetJPEG2000StructureInternal(CPLXMLNode *psParent, VSILFILE *fp,
                 GDALGetJPEG2000StructureInternal(
                     psBox, fp, &oBox, nRecLevel + 1,
                     oBox.GetDataOffset() +
-                        static_cast<vsi_l_offset>(nBoxDataLength),
+                        static_cast<uint64_t>(nBoxDataLength),
                     psDumpContext);
             }
             else
@@ -2441,7 +2441,7 @@ CPLXMLNode *GDALGetJPEG2000Structure(const char *pszFilename, VSILFILE *fp,
     {
         psParent = CPLCreateXMLNode(nullptr, CXT_Element, "JP2File");
         CPLAddXMLAttributeAndValue(psParent, "filename", pszFilename);
-        vsi_l_offset nFileSize = 0;
+        uint64_t nFileSize = 0;
         GDALGetJPEG2000StructureInternal(psParent, fp, nullptr, 0, nFileSize,
                                          &dc);
     }

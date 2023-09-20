@@ -331,7 +331,7 @@ class L1BDataset final : public GDALPamDataset
     void FetchMetadata();
     void FetchMetadataNOAA15();
 
-    vsi_l_offset GetLineOffset(int nBlockYOff) const;
+    uint64_t GetLineOffset(int nBlockYOff) const;
 
     uint16_t GetUInt16(const void *pabyData) const;
     int16_t GetInt16(const void *pabyData) const;
@@ -631,13 +631,12 @@ L1BDataset::~L1BDataset()
 /*                          GetLineOffset()                             */
 /************************************************************************/
 
-vsi_l_offset L1BDataset::GetLineOffset(int nBlockYOff) const
+uint64_t L1BDataset::GetLineOffset(int nBlockYOff) const
 {
     return (eLocationIndicator == DESCEND)
-               ? nDataStartOffset + (vsi_l_offset)nBlockYOff * nRecordSize
+               ? nDataStartOffset + (uint64_t)nBlockYOff * nRecordSize
                : nDataStartOffset +
-                     (vsi_l_offset)(nRasterYSize - nBlockYOff - 1) *
-                         nRecordSize;
+                     (uint64_t)(nRasterYSize - nBlockYOff - 1) * nRecordSize;
 }
 
 /************************************************************************/

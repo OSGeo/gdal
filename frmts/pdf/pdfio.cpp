@@ -35,10 +35,10 @@
 #include "cpl_vsi.h"
 
 /* Poppler 0.31.0 is the first one that needs to know the file size */
-static vsi_l_offset VSIPDFFileStreamGetSize(VSILFILE *f)
+static uint64_t VSIPDFFileStreamGetSize(VSILFILE *f)
 {
     VSIFSeekL(f, 0, SEEK_END);
-    vsi_l_offset nSize = VSIFTellL(f);
+    uint64_t nSize = VSIFTellL(f);
     VSIFSeekL(f, 0, SEEK_SET);
     return nSize;
 }
@@ -66,8 +66,8 @@ VSIPDFFileStream::VSIPDFFileStream(VSILFILE *fIn, const char *pszFilename,
 /************************************************************************/
 
 VSIPDFFileStream::VSIPDFFileStream(VSIPDFFileStream *poParentIn,
-                                   vsi_l_offset startA, GBool limitedA,
-                                   vsi_l_offset lengthA,
+                                   uint64_t startA, GBool limitedA,
+                                   uint64_t lengthA,
                                    makeSubStream_object_type dictA)
     :
 #if POPPLER_MAJOR_VERSION >= 1 || POPPLER_MINOR_VERSION >= 58
@@ -333,8 +333,8 @@ void VSIPDFFileStream::setPos(setPos_offset_type pos, int dir)
         {
             VSIFSeekL(f, nStart + nLength, SEEK_SET);
         }
-        vsi_l_offset size = VSIFTellL(f);
-        vsi_l_offset newpos = (vsi_l_offset)pos;
+        uint64_t size = VSIFTellL(f);
+        uint64_t newpos = (uint64_t)pos;
         if (newpos > size)
             newpos = size;
         VSIFSeekL(f, nCurrentPos = size - newpos, SEEK_SET);

@@ -58,7 +58,7 @@ const static BYNEllipsoids EllipsoidTable[] = {
 /************************************************************************/
 
 BYNRasterBand::BYNRasterBand(GDALDataset *poDSIn, int nBandIn,
-                             VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                             VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                              int nPixelOffsetIn, int nLineOffsetIn,
                              GDALDataType eDataTypeIn, int bNativeOrderIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,

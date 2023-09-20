@@ -519,7 +519,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     void InvalidateRecursive(const CPLString &osDirnameIn);
 
     int CopyFile(const char *pszSource, const char *pszTarget,
-                 VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                 VSILFILE *fpSource, uint64_t nSourceSize,
                  const char *const *papszOptions,
                  GDALProgressFunc pProgressFunc, void *pProgressData) override;
 
@@ -614,7 +614,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
 
     CPLString UploadPart(const CPLString &osFilename, int nPartNumber,
                          const std::string & /* osUploadID */,
-                         vsi_l_offset /* nPosition */, const void *pabyBuffer,
+                         uint64_t /* nPosition */, const void *pabyBuffer,
                          size_t nBufferSize,
                          IVSIS3LikeHandleHelper *poS3HandleHelper,
                          int nMaxRetry, double dfRetryDelay,
@@ -628,7 +628,7 @@ class VSIAzureFSHandler final : public IVSIS3LikeFSHandler
     bool CompleteMultipart(const CPLString &osFilename,
                            const CPLString & /* osUploadID */,
                            const std::vector<CPLString> &aosEtags,
-                           vsi_l_offset /* nTotalSize */,
+                           uint64_t /* nTotalSize */,
                            IVSIS3LikeHandleHelper *poS3HandleHelper,
                            int nMaxRetry, double dfRetryDelay) override
     {
@@ -1195,7 +1195,7 @@ bool VSIAzureWriteHandle::Send(bool bIsLastBlock)
     if (!bIsLastBlock)
     {
         CPLAssert(m_nBufferOff == m_nBufferSize);
-        if (m_nCurOffset == static_cast<vsi_l_offset>(m_nBufferSize))
+        if (m_nCurOffset == static_cast<uint64_t>(m_nBufferSize))
         {
             // First full buffer ? Then create the blob empty
             if (!SendInternal(true, false))
@@ -1217,8 +1217,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
 
     bool bSuccess = true;
     const bool bSingleBlock =
-        bIsLastBlock &&
-        (m_nCurOffset <= static_cast<vsi_l_offset>(m_nBufferSize));
+        bIsLastBlock && (m_nCurOffset <= static_cast<uint64_t>(m_nBufferSize));
 
     // coverity[tainted_data]
     double dfRetryDelay = CPLAtof(
@@ -1280,7 +1279,7 @@ bool VSIAzureWriteHandle::SendInternal(bool bInitOnly, bool bIsLastBlock)
             osContentLength.Printf("Content-Length: %d", m_nBufferOff);
             headers = curl_slist_append(headers, osContentLength.c_str());
             CPLString osAppendPos;
-            vsi_l_offset nStartOffset = m_nCurOffset - m_nBufferOff;
+            uint64_t nStartOffset = m_nCurOffset - m_nBufferOff;
             osAppendPos.Printf("x-ms-blob-condition-appendpos: %" PRIu64,
                                nStartOffset);
             headers = curl_slist_append(headers, osAppendPos.c_str());
@@ -2028,7 +2027,7 @@ int VSIAzureFSHandler::DeleteContainer(const std::string &osDirname)
 /************************************************************************/
 
 int VSIAzureFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
-                                VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                                VSILFILE *fpSource, uint64_t nSourceSize,
                                 CSLConstList papszOptions,
                                 GDALProgressFunc pProgressFunc,
                                 void *pProgressData)

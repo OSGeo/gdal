@@ -1271,16 +1271,15 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
         // For gdal_translate_fuzzer
         if (psOptions->nLimitOutSize > 0)
         {
-            vsi_l_offset nRawOutSize =
-                static_cast<vsi_l_offset>(poSrcDS->GetRasterXSize()) *
+            uint64_t nRawOutSize =
+                static_cast<uint64_t>(poSrcDS->GetRasterXSize()) *
                 poSrcDS->GetRasterYSize() * psOptions->nBandCount;
             if (psOptions->nBandCount)
             {
                 nRawOutSize *= GDALGetDataTypeSizeBytes(
                     poSrcDS->GetRasterBand(1)->GetRasterDataType());
             }
-            if (nRawOutSize >
-                static_cast<vsi_l_offset>(psOptions->nLimitOutSize))
+            if (nRawOutSize > static_cast<uint64_t>(psOptions->nLimitOutSize))
             {
                 CPLError(CE_Failure, CPLE_IllegalArg,
                          "Attempt to create %dx%d dataset is above authorized "
@@ -1543,11 +1542,11 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
     // For gdal_translate_fuzzer
     if (psOptions->nLimitOutSize > 0)
     {
-        vsi_l_offset nRawOutSize = static_cast<vsi_l_offset>(nOXSize) * nOYSize;
+        uint64_t nRawOutSize = static_cast<uint64_t>(nOXSize) * nOYSize;
         if (psOptions->nBandCount)
         {
-            if (nRawOutSize > std::numeric_limits<vsi_l_offset>::max() /
-                                  psOptions->nBandCount)
+            if (nRawOutSize >
+                std::numeric_limits<uint64_t>::max() / psOptions->nBandCount)
             {
                 GDALTranslateOptionsFree(psOptions);
                 return nullptr;
@@ -1556,8 +1555,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             const int nDTSize = GDALGetDataTypeSizeBytes(
                 poSrcDS->GetRasterBand(1)->GetRasterDataType());
             if (nDTSize > 0 &&
-                nRawOutSize >
-                    std::numeric_limits<vsi_l_offset>::max() / nDTSize)
+                nRawOutSize > std::numeric_limits<uint64_t>::max() / nDTSize)
             {
                 GDALTranslateOptionsFree(psOptions);
                 poSrcDS->Release();
@@ -1565,7 +1563,7 @@ GDALDatasetH GDALTranslate(const char *pszDest, GDALDatasetH hSrcDataset,
             }
             nRawOutSize *= nDTSize;
         }
-        if (nRawOutSize > static_cast<vsi_l_offset>(psOptions->nLimitOutSize))
+        if (nRawOutSize > static_cast<uint64_t>(psOptions->nLimitOutSize))
         {
             CPLError(
                 CE_Failure, CPLE_IllegalArg,

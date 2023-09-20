@@ -90,7 +90,7 @@ class OGRArrowRandomAccessFile final : public arrow::io::RandomAccessFile
 
     arrow::Status Seek(int64_t position) override
     {
-        if (VSIFSeekL(m_fp, static_cast<vsi_l_offset>(position), SEEK_SET) == 0)
+        if (VSIFSeekL(m_fp, static_cast<uint64_t>(position), SEEK_SET) == 0)
             return arrow::Status::OK();
         return arrow::Status::IOError("Error while seeking");
     }

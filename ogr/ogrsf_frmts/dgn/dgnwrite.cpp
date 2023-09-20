@@ -101,7 +101,7 @@ int DGNResizeElement(DGNHandle hDGN, DGNElemCore *psElement, int nNewSize)
 
     if (psElement->offset != -1)
     {
-        vsi_l_offset nOldFLoc = VSIFTellL(psDGN->fp);
+        uint64_t nOldFLoc = VSIFTellL(psDGN->fp);
         unsigned char abyLeader[2];
 
         if (VSIFSeekL(psDGN->fp, psElement->offset, SEEK_SET) != 0 ||

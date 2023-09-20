@@ -4544,7 +4544,7 @@ PDFDataset *PDFDataset::Open(GDALOpenInfo *poOpenInfo)
             // https://bugs.chromium.org/p/oss-fuzz/issues/detail?id=37584
             // https://gitlab.freedesktop.org/poppler/poppler/-/issues/1137
             GByte *pabyRet = nullptr;
-            vsi_l_offset nSize = 0;
+            uint64_t nSize = 0;
             if (VSIIngestFile(fp.get(), pszFilename, &pabyRet, &nSize,
                               10 * 1024 * 1024))
             {

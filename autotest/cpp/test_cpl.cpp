@@ -4194,7 +4194,7 @@ TEST_F(test_cpl, VSI_plugin_minimal_testing)
     EXPECT_TRUE(fp != nullptr);
 
     // Check it doesn't crash
-    vsi_l_offset nOffset = 5;
+    uint64_t nOffset = 5;
     size_t nSize = 10;
     reinterpret_cast<VSIVirtualHandle *>(fp)->AdviseRead(1, &nOffset, &nSize);
 
@@ -4209,7 +4209,7 @@ TEST_F(test_cpl, VSI_plugin_advise_read)
     struct UserData
     {
         int nRanges = 0;
-        const vsi_l_offset *panOffsets = nullptr;
+        const uint64_t *panOffsets = nullptr;
         const size_t *panSizes = nullptr;
     };
     UserData userData;
@@ -4220,7 +4220,7 @@ TEST_F(test_cpl, VSI_plugin_advise_read)
     { return pUserData; };
 
     psCallbacks->advise_read = [](void *pFile, int nRanges,
-                                  const vsi_l_offset *panOffsets,
+                                  const uint64_t *panOffsets,
                                   const size_t *panSizes)
     {
         static_cast<UserData *>(pFile)->nRanges = nRanges;
@@ -4233,7 +4233,7 @@ TEST_F(test_cpl, VSI_plugin_advise_read)
     VSILFILE *fp = VSIFOpenL("/VSI_plugin_advise_read/test", "rb");
     EXPECT_TRUE(fp != nullptr);
 
-    vsi_l_offset nOffset = 5;
+    uint64_t nOffset = 5;
     size_t nSize = 10;
     reinterpret_cast<VSIVirtualHandle *>(fp)->AdviseRead(1, &nOffset, &nSize);
     EXPECT_EQ(userData.nRanges, 1);

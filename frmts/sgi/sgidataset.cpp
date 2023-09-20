@@ -115,9 +115,9 @@ static CPLErr ImageGetRow(ImageRec *image, unsigned char *buf, int y, int z)
     if (static_cast<int>(image->type) != 1)
     {
         VSIFSeekL(image->file,
-                  512 + (y * static_cast<vsi_l_offset>(image->xsize)) +
-                      (z * static_cast<vsi_l_offset>(image->xsize) *
-                       static_cast<vsi_l_offset>(image->ysize)),
+                  512 + (y * static_cast<uint64_t>(image->xsize)) +
+                      (z * static_cast<uint64_t>(image->xsize) *
+                       static_cast<uint64_t>(image->ysize)),
                   SEEK_SET);
         if (VSIFReadL(buf, 1, image->xsize, image->file) != image->xsize)
         {
@@ -306,9 +306,9 @@ CPLErr SGIRasterBand::IWriteBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     if (image->type == 0)
     {
         VSIFSeekL(image->file,
-                  512 + (nBlockYOff * static_cast<vsi_l_offset>(image->xsize)) +
-                      ((nBand - 1) * static_cast<vsi_l_offset>(image->xsize) *
-                       static_cast<vsi_l_offset>(image->ysize)),
+                  512 + (nBlockYOff * static_cast<uint64_t>(image->xsize)) +
+                      ((nBand - 1) * static_cast<uint64_t>(image->xsize) *
+                       static_cast<uint64_t>(image->ysize)),
                   SEEK_SET);
         if (VSIFWriteL(pImage, 1, image->xsize, image->file) != image->xsize)
         {

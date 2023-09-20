@@ -49,7 +49,7 @@ class OZIDataset final : public GDALPamDataset
     int nZoomLevelCount;
     int *panZoomLevelOffsets;
     OZIRasterBand **papoOvrBands;
-    vsi_l_offset nFileSize;
+    uint64_t nFileSize;
 
     int bOzi3;
     GByte nKeyInit;
@@ -221,7 +221,7 @@ CPLErr OZIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
               poGDS->panZoomLevelOffsets[nZoomLevel] + 12 + 1024 + 4 * nBlock,
               SEEK_SET);
     const int nPointer = ReadInt(poGDS->fp, poGDS->bOzi3, poGDS->nKeyInit);
-    if (nPointer < 0 || (vsi_l_offset)nPointer >= poGDS->nFileSize)
+    if (nPointer < 0 || (uint64_t)nPointer >= poGDS->nFileSize)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Invalid offset for block (%d, %d) : %d", nBlockXOff,
@@ -230,7 +230,7 @@ CPLErr OZIRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     }
     int nNextPointer = ReadInt(poGDS->fp, poGDS->bOzi3, poGDS->nKeyInit);
     if (nNextPointer <= nPointer + 16 ||
-        (vsi_l_offset)nNextPointer >= poGDS->nFileSize ||
+        (uint64_t)nNextPointer >= poGDS->nFileSize ||
         nNextPointer - nPointer > 10 * 64 * 64)
     {
         CPLError(CE_Failure, CPLE_AppDefined,
@@ -540,12 +540,12 @@ GDALDataset *OZIDataset::Open(GDALOpenInfo *poOpenInfo)
     }
 
     VSIFSeekL(fp, 0, SEEK_END);
-    const vsi_l_offset nFileSize = VSIFTellL(fp);
+    const uint64_t nFileSize = VSIFTellL(fp);
     poDS->nFileSize = nFileSize;
     VSIFSeekL(fp, nFileSize - 4, SEEK_SET);
     const int nZoomLevelTableOffset = ReadInt(fp, bOzi3, nKeyInit);
     if (nZoomLevelTableOffset < 0 ||
-        (vsi_l_offset)nZoomLevelTableOffset >= nFileSize)
+        (uint64_t)nZoomLevelTableOffset >= nFileSize)
     {
         CPLDebug("OZI", "nZoomLevelTableOffset = %d", nZoomLevelTableOffset);
         delete poDS;
@@ -561,7 +561,7 @@ GDALDataset *OZIDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         poDS->panZoomLevelOffsets[i] = ReadInt(fp, bOzi3, nKeyInit);
         if (poDS->panZoomLevelOffsets[i] < 0 ||
-            (vsi_l_offset)poDS->panZoomLevelOffsets[i] >= nFileSize)
+            (uint64_t)poDS->panZoomLevelOffsets[i] >= nFileSize)
         {
             CPLDebug("OZI", "panZoomLevelOffsets[%d] = %d", i,
                      poDS->panZoomLevelOffsets[i]);

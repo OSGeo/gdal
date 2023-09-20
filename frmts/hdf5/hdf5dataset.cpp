@@ -454,7 +454,7 @@ int HDF5Dataset::Identify(GDALOpenInfo *poOpenInfo)
         (EQUAL(osExt, "h5") || EQUAL(osExt, "hdf5") || EQUAL(osExt, "nc") ||
          EQUAL(osExt, "cdf") || EQUAL(osExt, "nc4")))
     {
-        vsi_l_offset nOffset = 512;
+        uint64_t nOffset = 512;
         for (int i = 0; i < 64; i++)
         {
             GByte abyBuf[8];

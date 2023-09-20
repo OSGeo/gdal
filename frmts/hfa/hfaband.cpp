@@ -333,7 +333,7 @@ CPLErr HFABand::LoadBlockInfo()
         return CE_Failure;
     }
 
-    if (sizeof(vsi_l_offset) + 2 * sizeof(int) >
+    if (sizeof(uint64_t) + 2 * sizeof(int) >
         (~(size_t)0) / static_cast<unsigned int>(nBlocks))
     {
         CPLError(CE_Failure, CPLE_OutOfMemory, "Too many blocks");
@@ -341,8 +341,8 @@ CPLErr HFABand::LoadBlockInfo()
     }
     const int MAX_INITIAL_BLOCKS = 1000 * 1000;
     const int nInitBlocks = std::min(nBlocks, MAX_INITIAL_BLOCKS);
-    panBlockStart = static_cast<vsi_l_offset *>(
-        VSI_MALLOC2_VERBOSE(sizeof(vsi_l_offset), nInitBlocks));
+    panBlockStart = static_cast<uint64_t *>(
+        VSI_MALLOC2_VERBOSE(sizeof(uint64_t), nInitBlocks));
     panBlockSize =
         static_cast<int *>(VSI_MALLOC2_VERBOSE(sizeof(int), nInitBlocks));
     panBlockFlag =
@@ -366,9 +366,8 @@ CPLErr HFABand::LoadBlockInfo()
 
         if (iBlock == MAX_INITIAL_BLOCKS)
         {
-            vsi_l_offset *panBlockStartNew =
-                static_cast<vsi_l_offset *>(VSI_REALLOC_VERBOSE(
-                    panBlockStart, sizeof(vsi_l_offset) * nBlocks));
+            uint64_t *panBlockStartNew = static_cast<uint64_t *>(
+                VSI_REALLOC_VERBOSE(panBlockStart, sizeof(uint64_t) * nBlocks));
             if (panBlockStartNew == nullptr)
             {
                 CPLFree(panBlockStart);
@@ -541,7 +540,7 @@ CPLErr HFABand::LoadExternalBlockInfo()
     // Validity is determined from the validity bitmap.
 
     nBlockStart = poDMS->GetBigIntField("layerStackDataOffset");
-    nBlockSize = (nBlockXSize * static_cast<vsi_l_offset>(nBlockYSize) *
+    nBlockSize = (nBlockXSize * static_cast<uint64_t>(nBlockYSize) *
                       HFAGetDataTypeBits(eDataType) +
                   7) /
                  8;
@@ -1201,7 +1200,7 @@ CPLErr HFABand::GetRasterBlock(int nXBlock, int nYBlock, void *pData,
     }
 
     // Otherwise we really read the data.
-    vsi_l_offset nBlockOffset = 0;
+    uint64_t nBlockOffset = 0;
     VSILFILE *fpData = nullptr;
 
     // Calculate block offset in case we have spill file. Use predefined
@@ -1416,7 +1415,7 @@ CPLErr HFABand::SetRasterBlock(int nXBlock, int nYBlock, void *pData)
 
     // Move to the location that the data sits.
     VSILFILE *fpData = nullptr;
-    vsi_l_offset nBlockOffset = 0;
+    uint64_t nBlockOffset = 0;
 
     // Calculate block offset in case we have spill file. Use predefined
     // block map otherwise.

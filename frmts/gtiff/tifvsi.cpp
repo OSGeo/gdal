@@ -87,7 +87,7 @@ struct GDALTiffHandleShared
     GDALTiffHandle *psActiveHandle;  // only used on the parent
     int nUserCounter;
     bool bAtEndOfFile;
-    vsi_l_offset nFileLength;
+    uint64_t nFileLength;
 };
 
 struct GDALTiffHandle
@@ -101,13 +101,13 @@ struct GDALTiffHandle
     int nWriteBufferSize;
 
     // For pseudo-mmap'ed /vsimem/ file
-    vsi_l_offset nDataLength;
+    uint64_t nDataLength;
     void *pBase;
 
     // If we pre-cached data (typically from /vsicurl/ )
     int nCachedRanges;
     void **ppCachedData;
-    vsi_l_offset *panCachedOffsets;
+    uint64_t *panCachedOffsets;
     size_t *panCachedSizes;
 };
 
@@ -126,7 +126,7 @@ static void SetActiveGTH(GDALTiffHandle *psGTH)
     }
 }
 
-void *VSI_TIFFGetCachedRange(thandle_t th, vsi_l_offset nOffset, size_t nSize)
+void *VSI_TIFFGetCachedRange(thandle_t th, uint64_t nOffset, size_t nSize)
 {
     GDALTiffHandle *psGTH = reinterpret_cast<GDALTiffHandle *>(th);
     for (int i = 0; i < psGTH->nCachedRanges; i++)
@@ -151,7 +151,7 @@ static tsize_t _tiffReadProc(thandle_t th, tdata_t buf, tsize_t size)
 
     if (psGTH->nCachedRanges)
     {
-        const vsi_l_offset nCurOffset = VSIFTellL(psGTH->psShared->fpL);
+        const uint64_t nCurOffset = VSIFTellL(psGTH->psShared->fpL);
         void *data =
             VSI_TIFFGetCachedRange(th, nCurOffset, static_cast<size_t>(size));
         if (data)
@@ -323,7 +323,7 @@ static toff_t _tiffSizeProc(thandle_t th)
         return static_cast<toff_t>(psGTH->psShared->nFileLength);
     }
 
-    const vsi_l_offset old_off = VSIFTellL(psGTH->psShared->fpL);
+    const uint64_t old_off = VSIFTellL(psGTH->psShared->fpL);
     CPL_IGNORE_RET_VAL(VSIFSeekL(psGTH->psShared->fpL, 0, SEEK_END));
 
     const toff_t file_size =
@@ -388,8 +388,7 @@ int VSI_TIFFWrite(TIFF *tif, const void *buffer, size_t buffersize)
 }
 
 void VSI_TIFFSetCachedRanges(thandle_t th, int nRanges, void **ppData,
-                             const vsi_l_offset *panOffsets,
-                             const size_t *panSizes)
+                             const uint64_t *panOffsets, const size_t *panSizes)
 {
     GDALTiffHandle *psGTH = reinterpret_cast<GDALTiffHandle *>(th);
     psGTH->nCachedRanges = nRanges;
@@ -399,10 +398,9 @@ void VSI_TIFFSetCachedRanges(thandle_t th, int nRanges, void **ppData,
             CPLRealloc(psGTH->ppCachedData, nRanges * sizeof(void *)));
         memcpy(psGTH->ppCachedData, ppData, nRanges * sizeof(void *));
 
-        psGTH->panCachedOffsets = static_cast<vsi_l_offset *>(CPLRealloc(
-            psGTH->panCachedOffsets, nRanges * sizeof(vsi_l_offset)));
-        memcpy(psGTH->panCachedOffsets, panOffsets,
-               nRanges * sizeof(vsi_l_offset));
+        psGTH->panCachedOffsets = static_cast<uint64_t *>(
+            CPLRealloc(psGTH->panCachedOffsets, nRanges * sizeof(uint64_t)));
+        memcpy(psGTH->panCachedOffsets, panOffsets, nRanges * sizeof(uint64_t));
 
         psGTH->panCachedSizes = static_cast<size_t *>(
             CPLRealloc(psGTH->panCachedSizes, nRanges * sizeof(size_t)));

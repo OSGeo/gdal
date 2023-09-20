@@ -184,7 +184,7 @@ void OGRIDFDataSource::Parse()
 
     VSIStatBufL sStatBuf;
     bool bGPKG = false;
-    vsi_l_offset nFileSize = 0;
+    uint64_t nFileSize = 0;
     bool bSpatialIndex = false;
     if (VSIStatL(m_osFilename, &sStatBuf) == 0 &&
         sStatBuf.st_size > CPLAtoGIntBig(CPLGetConfigOption(
@@ -281,7 +281,7 @@ void OGRIDFDataSource::Parse()
             ++nLineCount;
             if ((nLineCount % 32768) == 0)
             {
-                const vsi_l_offset nPos = VSIFTellL(m_fpL);
+                const uint64_t nPos = VSIFTellL(m_fpL);
                 CPLDebug("IDF", "Reading progress: %.2f %%",
                          100.0 * nPos / nFileSize);
             }
@@ -721,7 +721,7 @@ void OGRVDVDataSource::DetectLayers()
     bool bInTableName = false;
     CPLString osTableName;
     int64_t nFeatureCount = 0;
-    vsi_l_offset nStartOffset = 0;
+    uint64_t nStartOffset = 0;
     OGRVDVLayer *poLayer = nullptr;
     bool bFirstBuffer = true;
     bool bRecodeFromLatin1 = false;
@@ -861,7 +861,7 @@ void OGRVDVDataSource::DetectLayers()
 
 OGRVDVLayer::OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL,
                          bool bOwnFP, bool bRecodeFromLatin1,
-                         vsi_l_offset nStartOffset)
+                         uint64_t nStartOffset)
     : m_fpL(fpL), m_bOwnFP(bOwnFP), m_bRecodeFromLatin1(bRecodeFromLatin1),
       m_nStartOffset(nStartOffset), m_nCurOffset(0), m_nTotalFeatureCount(0),
       m_nFID(0), m_bEOF(false), m_iLongitudeVDV452(-1), m_iLatitudeVDV452(-1)
@@ -870,7 +870,7 @@ OGRVDVLayer::OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL,
     m_poFeatureDefn->SetGeomType(wkbNone);
     m_poFeatureDefn->Reference();
     SetDescription(osTableName);
-    vsi_l_offset nCurOffset = VSIFTellL(fpL);
+    uint64_t nCurOffset = VSIFTellL(fpL);
     VSIFSeekL(m_fpL, m_nStartOffset, SEEK_SET);
     CPLString osAtr, osFrm;
 
@@ -1845,8 +1845,8 @@ OGRLayer *OGRVDVDataSource::ICreateLayer(const char *pszLayerName,
         {
             // Find last non-empty line in the file
             VSIFSeekL(fpL, 0, SEEK_END);
-            vsi_l_offset nFileSize = VSIFTellL(fpL);
-            vsi_l_offset nOffset = nFileSize;
+            uint64_t nFileSize = VSIFTellL(fpL);
+            uint64_t nOffset = nFileSize;
             bool bTerminatingEOL = true;
             while (nOffset > 0)
             {

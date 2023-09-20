@@ -165,8 +165,8 @@ CPLErr ENVIDataset::Close()
             {
                 const int nDataSize = GDALGetDataTypeSizeBytes(
                     GetRasterBand(1)->GetRasterDataType());
-                const vsi_l_offset nExpectedFileSize =
-                    static_cast<vsi_l_offset>(nRasterXSize) * nRasterYSize *
+                const uint64_t nExpectedFileSize =
+                    static_cast<uint64_t>(nRasterXSize) * nRasterYSize *
                     nBands * nDataSize;
                 if (VSIFSeekL(fpImage, 0, SEEK_END) != 0)
                 {
@@ -1854,11 +1854,11 @@ void ENVIDataset::ProcessStatsFile()
 
     // TODO(schwehr): What are 1, 4, 8, and 40?
     unsigned lOffset = 0;
-    if (VSIFSeekL(fpStaFile, 40 + static_cast<vsi_l_offset>(nb + 1) * 4,
+    if (VSIFSeekL(fpStaFile, 40 + static_cast<uint64_t>(nb + 1) * 4,
                   SEEK_SET) == 0 &&
         VSIFReadL(&lOffset, sizeof(lOffset), 1, fpStaFile) == 1 &&
         VSIFSeekL(fpStaFile,
-                  40 + static_cast<vsi_l_offset>(nb + 1) * 8 +
+                  40 + static_cast<uint64_t>(nb + 1) * 8 +
                       byteSwapUInt(lOffset) + nb,
                   SEEK_SET) == 0)
     {
@@ -2314,7 +2314,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
     const int nDataSize = GDALGetDataTypeSizeBytes(eType);
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     CPLAssert(nDataSize != 0);
     CPLAssert(nBands != 0);
 
@@ -2329,7 +2329,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nLineOffset = nDataSize * nSamples * nBands;
         nPixelOffset = nDataSize;
-        nBandOffset = static_cast<vsi_l_offset>(nDataSize) * nSamples;
+        nBandOffset = static_cast<uint64_t>(nDataSize) * nSamples;
     }
     else if (STARTS_WITH_CI(osInterleave, "bip"))
     {
@@ -2355,7 +2355,7 @@ ENVIDataset *ENVIDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nLineOffset = nDataSize * nSamples;
         nPixelOffset = nDataSize;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nLines;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nLines;
     }
 
     const char *pszMajorFrameOffset = poDS->m_aosHeader["major_frame_offsets"];
@@ -2799,7 +2799,7 @@ GDALDataset *ENVIDataset::Create(const char *pszFilename, int nXSize,
 /************************************************************************/
 
 ENVIRasterBand::ENVIRasterBand(GDALDataset *poDSIn, int nBandIn,
-                               VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                               VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                int nPixelOffsetIn, int nLineOffsetIn,
                                GDALDataType eDataTypeIn,
                                RawRasterBand::ByteOrder eByteOrderIn)

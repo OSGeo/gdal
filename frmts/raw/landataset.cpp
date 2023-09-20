@@ -212,12 +212,12 @@ CPLErr LAN4BitRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Seek to profile.                                                */
     /* -------------------------------------------------------------------- */
-    const vsi_l_offset nOffset =
+    const uint64_t nOffset =
         ERD_HEADER_SIZE +
-        (static_cast<vsi_l_offset>(nBlockYOff) * nRasterXSize *
+        (static_cast<uint64_t>(nBlockYOff) * nRasterXSize *
          poLAN_DS->GetRasterCount()) /
             2 +
-        (static_cast<vsi_l_offset>(nBand - 1) * nRasterXSize) / 2;
+        (static_cast<uint64_t>(nBand - 1) * nRasterXSize) / 2;
 
     if (VSIFSeekL(poLAN_DS->fpImage, nOffset, SEEK_SET) != 0)
     {
@@ -971,18 +971,18 @@ GDALDataset *LANDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
     /*      Extend the file to the target size.                             */
     /* -------------------------------------------------------------------- */
-    vsi_l_offset nImageBytes = 0;
+    uint64_t nImageBytes = 0;
 
     if (eType != GDT_Byte)
-        nImageBytes = nXSize * static_cast<vsi_l_offset>(nYSize) * 2;
+        nImageBytes = nXSize * static_cast<uint64_t>(nYSize) * 2;
     else
-        nImageBytes = nXSize * static_cast<vsi_l_offset>(nYSize);
+        nImageBytes = nXSize * static_cast<uint64_t>(nYSize);
 
     memset(abyHeader, 0, sizeof(abyHeader));
 
     while (nImageBytes > 0)
     {
-        const vsi_l_offset nWriteThisTime =
+        const uint64_t nWriteThisTime =
             std::min(static_cast<size_t>(nImageBytes), sizeof(abyHeader));
 
         if (VSIFWriteL(abyHeader, 1, static_cast<size_t>(nWriteThisTime), fp) !=

@@ -87,7 +87,7 @@ class FileProp
   public:
     unsigned int nGenerationAuthParameters = 0;
     ExistStatus eExists = EXIST_UNKNOWN;
-    vsi_l_offset fileSize = 0;
+    uint64_t fileSize = 0;
     time_t mTime = 0;
     time_t nExpireTimestampLocal = 0;
     CPLString osRedirectURL{};
@@ -111,10 +111,10 @@ struct WriteFuncStruct
     size_t nSize = 0;
     bool bIsHTTP = false;
     bool bMultiRange = false;
-    vsi_l_offset nStartOffset = 0;
-    vsi_l_offset nEndOffset = 0;
+    uint64_t nStartOffset = 0;
+    uint64_t nEndOffset = 0;
     int nHTTPCode = 0;
-    vsi_l_offset nContentLength = 0;
+    uint64_t nContentLength = 0;
     bool bFoundContentRange = false;
     bool bError = false;
     bool bInterruptDownload = false;
@@ -166,9 +166,9 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     struct FilenameOffsetPair
     {
         std::string filename_;
-        vsi_l_offset offset_;
+        uint64_t offset_;
 
-        FilenameOffsetPair(const std::string &filename, vsi_l_offset offset)
+        FilenameOffsetPair(const std::string &filename, uint64_t offset)
             : filename_(filename), offset_(offset)
         {
         }
@@ -183,7 +183,7 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
         std::size_t operator()(const FilenameOffsetPair &k) const
         {
             return std::hash<std::string>()(k.filename_) ^
-                   std::hash<vsi_l_offset>()(k.offset_);
+                   std::hash<uint64_t>()(k.offset_);
         }
     };
 
@@ -313,16 +313,15 @@ class VSICurlFilesystemHandlerBase : public VSIFilesystemHandler
     }
 
     std::shared_ptr<std::string> GetRegion(const char *pszURL,
-                                           vsi_l_offset nFileOffsetStart);
+                                           uint64_t nFileOffsetStart);
 
-    void AddRegion(const char *pszURL, vsi_l_offset nFileOffsetStart,
-                   size_t nSize, const char *pData);
+    void AddRegion(const char *pszURL, uint64_t nFileOffsetStart, size_t nSize,
+                   const char *pData);
 
     std::string NotifyStartDownloadRegion(const std::string &osURL,
-                                          vsi_l_offset startOffset,
-                                          int nBlocks);
+                                          uint64_t startOffset, int nBlocks);
     void NotifyStopDownloadRegion(const std::string &osURL,
-                                  vsi_l_offset startOffset, int nBlocks,
+                                  uint64_t startOffset, int nBlocks,
                                   const std::string &osData);
 
     bool GetCachedFileProp(const char *pszURL, FileProp &oFileProp);
@@ -389,7 +388,7 @@ class VSICurlHandle : public VSIVirtualHandle
 
     char **m_papszHTTPOptions = nullptr;
 
-    vsi_l_offset lastDownloadedOffset = VSI_L_OFFSET_MAX;
+    uint64_t lastDownloadedOffset = VSI_L_OFFSET_MAX;
     int nBlocksToDownload = 1;
 
     bool bStopOnInterruptUntilUninstall = false;
@@ -402,16 +401,16 @@ class VSICurlHandle : public VSIVirtualHandle
 
     CPLStringList m_aosHeaders{};
 
-    void DownloadRegionPostProcess(const vsi_l_offset startOffset,
+    void DownloadRegionPostProcess(const uint64_t startOffset,
                                    const int nBlocks, const char *pBuffer,
                                    size_t nSize);
 
   private:
-    vsi_l_offset curOffset = 0;
+    uint64_t curOffset = 0;
 
     bool bEOF = false;
 
-    virtual std::string DownloadRegion(vsi_l_offset startOffset, int nBlocks);
+    virtual std::string DownloadRegion(uint64_t startOffset, int nBlocks);
 
     bool m_bUseHead = false;
     bool m_bUseRedirectURLIfNoQueryStringParams = false;
@@ -423,7 +422,7 @@ class VSICurlHandle : public VSIVirtualHandle
     void ManagePlanetaryComputerSigning() const;
 
     int ReadMultiRangeSingleGet(int nRanges, void **ppData,
-                                const vsi_l_offset *panOffsets,
+                                const uint64_t *panOffsets,
                                 const size_t *panSizes);
     CPLString GetRedirectURLIfValid(bool &bHasExpired) const;
 
@@ -436,7 +435,7 @@ class VSICurlHandle : public VSIVirtualHandle
         bool bDone = false;
         std::mutex oMutex{};
         std::condition_variable oCV{};
-        vsi_l_offset nStartOffset = 0;
+        uint64_t nStartOffset = 0;
         size_t nSize = 0;
         std::vector<GByte> abyData{};
     };
@@ -481,11 +480,10 @@ class VSICurlHandle : public VSIVirtualHandle
                   const char *pszURLIn = nullptr);
     ~VSICurlHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    int ReadMultiRange(int nRanges, void **ppData,
-                       const vsi_l_offset *panOffsets,
+    int ReadMultiRange(int nRanges, void **ppData, const uint64_t *panOffsets,
                        const size_t *panSizes) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -496,18 +494,17 @@ class VSICurlHandle : public VSIVirtualHandle
     {
         return true;
     }
-    size_t PRead(void *pBuffer, size_t nSize,
-                 vsi_l_offset nOffset) const override;
+    size_t PRead(void *pBuffer, size_t nSize, uint64_t nOffset) const override;
 
-    void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+    void AdviseRead(int nRanges, const uint64_t *panOffsets,
                     const size_t *panSizes) override;
 
     bool IsKnownFileSize() const
     {
         return oFileProp.bHasComputedFileSize;
     }
-    vsi_l_offset GetFileSizeOrHeaders(bool bSetError, bool bGetHeaders);
-    virtual vsi_l_offset GetFileSize(bool bSetError)
+    uint64_t GetFileSizeOrHeaders(bool bSetError, bool bGetHeaders);
+    virtual uint64_t GetFileSize(bool bSetError)
     {
         return GetFileSizeOrHeaders(bSetError, false);
     }
@@ -579,7 +576,7 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
     int Rename(const char *oldpath, const char *newpath) override;
 
     virtual int CopyFile(const char *pszSource, const char *pszTarget,
-                         VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                         VSILFILE *fpSource, uint64_t nSourceSize,
                          const char *const *papszOptions,
                          GDALProgressFunc pProgressFunc,
                          void *pProgressData) override;
@@ -604,7 +601,7 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
         int nMaxRetry, double dfRetryDelay, CSLConstList papszOptions);
     virtual CPLString UploadPart(const CPLString &osFilename, int nPartNumber,
                                  const std::string &osUploadID,
-                                 vsi_l_offset nPosition, const void *pabyBuffer,
+                                 uint64_t nPosition, const void *pabyBuffer,
                                  size_t nBufferSize,
                                  IVSIS3LikeHandleHelper *poS3HandleHelper,
                                  int nMaxRetry, double dfRetryDelay,
@@ -612,7 +609,7 @@ class IVSIS3LikeFSHandler : public VSICurlFilesystemHandlerBase
     virtual bool CompleteMultipart(const CPLString &osFilename,
                                    const CPLString &osUploadID,
                                    const std::vector<CPLString> &aosEtags,
-                                   vsi_l_offset nTotalSize,
+                                   uint64_t nTotalSize,
                                    IVSIS3LikeHandleHelper *poS3HandleHelper,
                                    int nMaxRetry, double dfRetryDelay);
     virtual bool AbortMultipart(const CPLString &osFilename,
@@ -674,7 +671,7 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
     CPLStringList m_aosOptions{};
     CPLStringList m_aosHTTPOptions{};
 
-    vsi_l_offset m_nCurOffset = 0;
+    uint64_t m_nCurOffset = 0;
     int m_nBufferOff = 0;
     int m_nBufferSize = 0;
     bool m_bClosed = false;
@@ -712,8 +709,8 @@ class VSIS3WriteHandle final : public VSIVirtualHandle
                      CSLConstList papszOptions);
     ~VSIS3WriteHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -738,7 +735,7 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
     CPLString m_osFSPrefix{};
     CPLString m_osFilename{};
 
-    vsi_l_offset m_nCurOffset = 0;
+    uint64_t m_nCurOffset = 0;
     int m_nBufferOff = 0;
     int m_nBufferSize = 0;
     int m_nBufferOffReadCallback = 0;
@@ -756,8 +753,8 @@ class VSIAppendWriteHandle : public VSIVirtualHandle
                          int nChunkSize);
     virtual ~VSIAppendWriteHandle();
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;

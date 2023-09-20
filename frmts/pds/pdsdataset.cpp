@@ -1218,7 +1218,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     int nLineOffset = nLinePrefixBytes;
 
     int nPixelOffset;
-    vsi_l_offset nBandOffset;
+    uint64_t nBandOffset;
 
     const auto CPLSM64 = [](int x) { return CPLSM(static_cast<int64_t>(x)); };
 
@@ -1236,7 +1236,7 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
             nPixelOffset = nItemSize;
             nLineOffset =
                 (CPLSM(nLineOffset) + CPLSM(nPixelOffset) * CPLSM(nCols)).v();
-            nBandOffset = static_cast<vsi_l_offset>(
+            nBandOffset = static_cast<uint64_t>(
                 (CPLSM64(nLineOffset) * CPLSM64(nRows) +
                  CPLSM64(nSuffixLines) *
                      (CPLSM64(nCols) + CPLSM64(nSuffixItems)) *
@@ -1266,8 +1266,8 @@ int PDSDataset::ParseImage(const CPLString &osPrefix,
     {
         auto poBand = RawRasterBand::Create(
             this, i + 1, fpImage,
-            nSkipBytes + static_cast<vsi_l_offset>(nBandOffset) * i,
-            nPixelOffset, nLineOffset, eDataType,
+            nSkipBytes + static_cast<uint64_t>(nBandOffset) * i, nPixelOffset,
+            nLineOffset, eDataType,
             chByteOrder == 'I' || chByteOrder == 'L'
                 ? RawRasterBand::ByteOrder::ORDER_LITTLE_ENDIAN
                 : RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN,

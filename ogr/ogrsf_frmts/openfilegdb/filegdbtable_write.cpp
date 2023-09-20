@@ -294,9 +294,8 @@ bool FileGDBTable::Sync(VSILFILE *fpTable, VSILFILE *fpTableX)
     if (m_bDirtyTableXTrailer && fpTableX)
     {
         m_nOffsetTableXTrailer =
-            TABLX_HEADER_SIZE +
-            m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE *
-                static_cast<vsi_l_offset>(m_n1024BlocksPresent);
+            TABLX_HEADER_SIZE + m_nTablxOffsetSize * TABLX_FEATURES_PER_PAGE *
+                                    static_cast<uint64_t>(m_n1024BlocksPresent);
         VSIFSeekL(fpTableX, m_nOffsetTableXTrailer, SEEK_SET);
         const uint32_t n1024BlocksTotal =
             DIV_ROUND_UP(m_nTotalRecordCount, TABLX_FEATURES_PER_PAGE);
@@ -1877,8 +1876,8 @@ bool FileGDBTable::UpdateFeature(int nFID,
     if (m_bDirtyFieldDescriptors && !WriteFieldDescriptors(m_fpTable))
         return false;
 
-    vsi_l_offset nOffsetInTableX = 0;
-    vsi_l_offset nOffsetInTable =
+    uint64_t nOffsetInTableX = 0;
+    uint64_t nOffsetInTable =
         GetOffsetInTableForRow(nFID - 1, &nOffsetInTableX);
     if (nOffsetInTable == 0)
         return false;
@@ -2023,8 +2022,8 @@ bool FileGDBTable::DeleteFeature(int nFID)
     if (m_bDirtyFieldDescriptors && !WriteFieldDescriptors(m_fpTable))
         return false;
 
-    vsi_l_offset nOffsetInTableX = 0;
-    vsi_l_offset nOffsetInTable =
+    uint64_t nOffsetInTableX = 0;
+    uint64_t nOffsetInTable =
         GetOffsetInTableForRow(nFID - 1, &nOffsetInTableX);
     if (nOffsetInTable == 0)
         return false;
@@ -2437,9 +2436,9 @@ bool FileGDBTable::Repack()
     for (uint32_t iPage = 0; !bRepackNeeded && iPage < m_n1024BlocksPresent;
          ++iPage)
     {
-        const vsi_l_offset nOffsetInTableX =
+        const uint64_t nOffsetInTableX =
             TABLX_HEADER_SIZE + m_nTablxOffsetSize *
-                                    static_cast<vsi_l_offset>(iPage) *
+                                    static_cast<uint64_t>(iPage) *
                                     TABLX_FEATURES_PER_PAGE;
         VSIFSeekL(m_fpTableX, nOffsetInTableX, SEEK_SET);
         if (VSIFReadL(abyBufferOffsets.data(),
@@ -2509,9 +2508,9 @@ bool FileGDBTable::Repack()
     // Rewrite all features
     for (uint32_t iPage = 0; iPage < m_n1024BlocksPresent; ++iPage)
     {
-        const vsi_l_offset nOffsetInTableX =
+        const uint64_t nOffsetInTableX =
             TABLX_HEADER_SIZE + m_nTablxOffsetSize *
-                                    static_cast<vsi_l_offset>(iPage) *
+                                    static_cast<uint64_t>(iPage) *
                                     TABLX_FEATURES_PER_PAGE;
         VSIFSeekL(oWholeFileRewriter.m_fpOldGdbtablx, nOffsetInTableX,
                   SEEK_SET);

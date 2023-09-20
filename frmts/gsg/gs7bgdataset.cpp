@@ -264,7 +264,7 @@ CPLErr GS7BGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
     if (VSIFSeekL(poGDS->fp,
                   (poGDS->nData_Position +
-                   sizeof(double) * static_cast<vsi_l_offset>(nRasterXSize) *
+                   sizeof(double) * static_cast<uint64_t>(nRasterXSize) *
                        (nRasterYSize - nBlockYOff - 1)),
                   SEEK_SET) != 0)
     {

@@ -186,7 +186,7 @@ CPLErr SRPRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
 
 {
     SRPDataset *l_poDS = (SRPDataset *)this->poDS;
-    vsi_l_offset offset;
+    uint64_t offset;
     int nBlock = nBlockYOff * l_poDS->NFC + nBlockXOff;
     if (nBlockXOff >= l_poDS->NFC || nBlockYOff >= l_poDS->NFL)
     {
@@ -212,15 +212,15 @@ CPLErr SRPRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     {
         if (l_poDS->PCB == 0)  // uncompressed
             offset = l_poDS->offsetInIMG +
-                     static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1) *
+                     static_cast<uint64_t>(l_poDS->TILEINDEX[nBlock] - 1) *
                          128 * 128;
         else  // compressed
             offset = l_poDS->offsetInIMG +
-                     static_cast<vsi_l_offset>(l_poDS->TILEINDEX[nBlock] - 1);
+                     static_cast<uint64_t>(l_poDS->TILEINDEX[nBlock] - 1);
     }
     else
         offset =
-            l_poDS->offsetInIMG + static_cast<vsi_l_offset>(nBlock) * 128 * 128;
+            l_poDS->offsetInIMG + static_cast<uint64_t>(nBlock) * 128 * 128;
 
     /* -------------------------------------------------------------------- */
     /*      Seek to target location.                                        */

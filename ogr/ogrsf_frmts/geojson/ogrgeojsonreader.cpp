@@ -389,7 +389,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
     OGRGeoJSONReaderStreamingParser oParser(*this, poLayer, true,
                                             bStoreNativeData_);
 
-    vsi_l_offset nFileSize = 0;
+    uint64_t nFileSize = 0;
     if (STARTS_WITH(poDS->GetDescription(), "/vsimem/") ||
         !STARTS_WITH(poDS->GetDescription(), "/vsi"))
     {
@@ -486,8 +486,7 @@ bool OGRGeoJSONReader::FirstPassReadLayer(OGRGeoJSONDataSource *poDS,
         // to avoid killing ourselves during layer deletion
         poLayer->UnsetReader();
         delete poLayer;
-        const vsi_l_offset nRAM =
-            static_cast<vsi_l_offset>(CPLGetUsablePhysicalRAM());
+        const uint64_t nRAM = static_cast<uint64_t>(CPLGetUsablePhysicalRAM());
         if (nFileSize == 0 || nRAM == 0 || nRAM > nFileSize * 20)
         {
             // Only try full ingestion if we have 20x more RAM than the file
@@ -697,8 +696,8 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, int64_t nFID)
         VSIFSeekL(fp_, 0, SEEK_SET);
         bFirstSeg_ = true;
         bJSonPLikeWrapper_ = false;
-        vsi_l_offset nCurOffset = 0;
-        vsi_l_offset nFeatureOffset = 0;
+        uint64_t nCurOffset = 0;
+        uint64_t nFeatureOffset = 0;
         while (true)
         {
             size_t nRead = VSIFReadL(pabyBuffer_, 1, nBufferSize_, fp_);
@@ -727,7 +726,7 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, int64_t nFID)
                 }
                 else if (oParser.IsEndFeature())
                 {
-                    vsi_l_offset nFeatureSize =
+                    uint64_t nFeatureSize =
                         (nCurOffset + i) - nFeatureOffset + 1;
                     auto poFeat = oParser.GetNextFeature();
                     if (poFeat)
@@ -737,8 +736,8 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, int64_t nFID)
                             oMapFIDToOffsetSize_.end())
                         {
                             oMapFIDToOffsetSize_[nThisFID] =
-                                std::pair<vsi_l_offset, vsi_l_offset>(
-                                    nFeatureOffset, nFeatureSize);
+                                std::pair<uint64_t, uint64_t>(nFeatureOffset,
+                                                              nFeatureSize);
                         }
                         delete poFeat;
                     }
@@ -800,8 +799,8 @@ OGRFeature *OGRGeoJSONReader::GetFeature(OGRGeoJSONLayer *poLayer, int64_t nFID)
 
 bool OGRGeoJSONReader::IngestAll(OGRGeoJSONLayer *poLayer)
 {
-    const vsi_l_offset nRAM =
-        static_cast<vsi_l_offset>(CPLGetUsablePhysicalRAM()) / 3 * 4;
+    const uint64_t nRAM =
+        static_cast<uint64_t>(CPLGetUsablePhysicalRAM()) / 3 * 4;
     if (nRAM && nTotalOGRFeatureMemEstimate_ > nRAM)
     {
         CPLError(CE_Failure, CPLE_OutOfMemory,

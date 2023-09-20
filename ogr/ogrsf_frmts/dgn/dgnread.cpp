@@ -1884,7 +1884,7 @@ void DGNBuildIndex(DGNInfo *psDGN)
 
     int nMaxElements = 0;
 
-    vsi_l_offset nLastOffset = VSIFTellL(psDGN->fp);
+    uint64_t nLastOffset = VSIFTellL(psDGN->fp);
     while (DGNLoadRawElement(psDGN, &nType, &nLevel))
     {
         if (psDGN->element_count == nMaxElements)

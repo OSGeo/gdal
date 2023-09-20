@@ -187,7 +187,7 @@ int GDALPDFUpdateWriter::ParseTrailerAndXRef()
 {
     VSIFSeekL(m_fp, 0, SEEK_END);
     char szBuf[1024 + 1];
-    vsi_l_offset nOffset = VSIFTellL(m_fp);
+    uint64_t nOffset = VSIFTellL(m_fp);
 
     if (nOffset > 128)
         nOffset -= 128;
@@ -463,9 +463,9 @@ GDALPDFObjectNum GDALPDFBaseWriter::AllocNewObject()
 /************************************************************************/
 
 void GDALPDFBaseWriter::WriteXRefTableAndTrailer(bool bUpdate,
-                                                 vsi_l_offset nLastStartXRef)
+                                                 uint64_t nLastStartXRef)
 {
-    vsi_l_offset nOffsetXREF = VSIFTellL(m_fp);
+    uint64_t nOffsetXREF = VSIFTellL(m_fp);
     VSIFPrintfL(m_fp, "xref\n");
 
     char buffer[16];
@@ -607,7 +607,7 @@ void GDALPDFBaseWriter::EndObjWithStream()
     m_fp = m_fpBack;
     m_fpBack = nullptr;
 
-    vsi_l_offset nStreamEnd = VSIFTellL(m_fp);
+    uint64_t nStreamEnd = VSIFTellL(m_fp);
     if (m_fpGZip)
         VSIFPrintfL(m_fp, "\n");
     m_fpGZip = nullptr;
@@ -4409,7 +4409,7 @@ GDALPDFObjectNum GDALPDFBaseWriter::WriteBlock(
 
         GDALClose(poJPEGDS);
 
-        vsi_l_offset nJPEGDataSize = 0;
+        uint64_t nJPEGDataSize = 0;
         GByte *pabyJPEGData = VSIGetMemFileBuffer(szTmp, &nJPEGDataSize, TRUE);
         VSIFWriteL(pabyJPEGData, static_cast<size_t>(nJPEGDataSize), 1, m_fp);
         CPLFree(pabyJPEGData);

@@ -69,28 +69,27 @@ class VSICachedFile final : public VSIVirtualHandle
         VSICachedFile::Close();
     }
 
-    bool LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount, void *pBuffer,
+    bool LoadBlocks(uint64_t nStartBlock, size_t nBlockCount, void *pBuffer,
                     size_t nBufferSize);
 
     VSIVirtualHandleUniquePtr m_poBase{};
 
-    vsi_l_offset m_nOffset = 0;
-    vsi_l_offset m_nFileSize = 0;
+    uint64_t m_nOffset = 0;
+    uint64_t m_nFileSize = 0;
 
     size_t m_nChunkSize = 0;
-    lru11::Cache<vsi_l_offset, cpl::NonCopyableVector<GByte>>
+    lru11::Cache<uint64_t, cpl::NonCopyableVector<GByte>>
         m_oCache;  // can only been initialized in constructor
 
     bool m_bEOF = false;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
-    int ReadMultiRange(int nRanges, void **ppData,
-                       const vsi_l_offset *panOffsets,
+    int ReadMultiRange(int nRanges, void **ppData, const uint64_t *panOffsets,
                        const size_t *panSizes) override;
 
-    void AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+    void AdviseRead(int nRanges, const uint64_t *panOffsets,
                     const size_t *panSizes) override
     {
         m_poBase->AdviseRead(nRanges, panOffsets, panSizes);
@@ -109,8 +108,7 @@ class VSICachedFile final : public VSIVirtualHandle
     {
         return m_poBase->HasPRead();
     }
-    size_t PRead(void *pBuffer, size_t nSize,
-                 vsi_l_offset nOffset) const override
+    size_t PRead(void *pBuffer, size_t nSize, uint64_t nOffset) const override
     {
         return m_poBase->PRead(pBuffer, nSize, nOffset);
     }
@@ -170,7 +168,7 @@ int VSICachedFile::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSICachedFile::Seek(vsi_l_offset nReqOffset, int nWhence)
+int VSICachedFile::Seek(uint64_t nReqOffset, int nWhence)
 
 {
     m_bEOF = false;
@@ -197,7 +195,7 @@ int VSICachedFile::Seek(vsi_l_offset nReqOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSICachedFile::Tell()
+uint64_t VSICachedFile::Tell()
 
 {
     return m_nOffset;
@@ -210,7 +208,7 @@ vsi_l_offset VSICachedFile::Tell()
 /*      buffer if it would be helpful.                                  */
 /************************************************************************/
 
-bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
+bool VSICachedFile::LoadBlocks(uint64_t nStartBlock, size_t nBlockCount,
                                void *pBuffer, size_t nBufferSize)
 
 {
@@ -223,8 +221,7 @@ bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
     /* -------------------------------------------------------------------- */
     if (nBlockCount == 1)
     {
-        if (m_poBase->Seek(static_cast<vsi_l_offset>(nStartBlock) *
-                               m_nChunkSize,
+        if (m_poBase->Seek(static_cast<uint64_t>(nStartBlock) * m_nChunkSize,
                            SEEK_SET) != 0)
         {
             return false;
@@ -267,7 +264,7 @@ bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
                           nBufferSize);
     }
 
-    if (m_poBase->Seek(static_cast<vsi_l_offset>(nStartBlock) * m_nChunkSize,
+    if (m_poBase->Seek(static_cast<uint64_t>(nStartBlock) * m_nChunkSize,
                        SEEK_SET) != 0)
         return false;
 
@@ -304,7 +301,7 @@ bool VSICachedFile::LoadBlocks(vsi_l_offset nStartBlock, size_t nBlockCount,
 
     for (size_t i = 0; i < nBlockCount; i++)
     {
-        const vsi_l_offset iBlock = nStartBlock + i;
+        const uint64_t iBlock = nStartBlock + i;
 
         const auto nDataFilled = (nDataRead >= (i + 1) * m_nChunkSize)
                                      ? m_nChunkSize
@@ -355,11 +352,10 @@ size_t VSICachedFile::Read(void *pBuffer, size_t nSize, size_t nCount)
     /* ==================================================================== */
     /*      Make sure the cache is loaded for the whole request region.     */
     /* ==================================================================== */
-    const vsi_l_offset nStartBlock = m_nOffset / m_nChunkSize;
-    const vsi_l_offset nEndBlock =
-        (m_nOffset + nRequestedBytes - 1) / m_nChunkSize;
+    const uint64_t nStartBlock = m_nOffset / m_nChunkSize;
+    const uint64_t nEndBlock = (m_nOffset + nRequestedBytes - 1) / m_nChunkSize;
 
-    for (vsi_l_offset iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++)
+    for (uint64_t iBlock = nStartBlock; iBlock <= nEndBlock; iBlock++)
     {
         if (!m_oCache.contains(iBlock))
         {
@@ -382,7 +378,7 @@ size_t VSICachedFile::Read(void *pBuffer, size_t nSize, size_t nCount)
 
     while (nAmountCopied < nRequestedBytes)
     {
-        const vsi_l_offset iBlock = (m_nOffset + nAmountCopied) / m_nChunkSize;
+        const uint64_t iBlock = (m_nOffset + nAmountCopied) / m_nChunkSize;
         const cpl::NonCopyableVector<GByte> *poData = m_oCache.getPtr(iBlock);
         if (poData == nullptr)
         {
@@ -397,8 +393,8 @@ size_t VSICachedFile::Read(void *pBuffer, size_t nSize, size_t nCount)
             }
         }
 
-        const vsi_l_offset nStartOffset =
-            static_cast<vsi_l_offset>(iBlock) * m_nChunkSize;
+        const uint64_t nStartOffset =
+            static_cast<uint64_t>(iBlock) * m_nChunkSize;
         if (nStartOffset + poData->size() < nAmountCopied + m_nOffset)
             break;
         const size_t nThisCopy =
@@ -428,7 +424,7 @@ size_t VSICachedFile::Read(void *pBuffer, size_t nSize, size_t nCount)
 /************************************************************************/
 
 int VSICachedFile::ReadMultiRange(int const nRanges, void **const ppData,
-                                  const vsi_l_offset *const panOffsets,
+                                  const uint64_t *const panOffsets,
                                   const size_t *const panSizes)
 {
     // If the base is /vsicurl/

@@ -54,12 +54,12 @@ class VSIUploadOnCloseHandle final : public VSIVirtualHandle
 
     ~VSIUploadOnCloseHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override
+    int Seek(uint64_t nOffset, int nWhence) override
     {
         return VSIFSeekL(m_fpTemp, nOffset, nWhence);
     }
 
-    vsi_l_offset Tell() override
+    uint64_t Tell() override
     {
         return VSIFTellL(m_fpTemp);
     }
@@ -86,13 +86,12 @@ class VSIUploadOnCloseHandle final : public VSIVirtualHandle
 
     int Close() override;
 
-    int Truncate(vsi_l_offset nNewSize) override
+    int Truncate(uint64_t nNewSize) override
     {
         return VSIFTruncateL(m_fpTemp, nNewSize);
     }
 
-    VSIRangeStatus GetRangeStatus(vsi_l_offset nOffset,
-                                  vsi_l_offset nLength) override
+    VSIRangeStatus GetRangeStatus(uint64_t nOffset, uint64_t nLength) override
     {
         return VSIFGetRangeStatusL(m_fpTemp, nOffset, nLength);
     }
@@ -131,12 +130,12 @@ int VSIUploadOnCloseHandle::Close()
     const auto nSize = VSIFTellL(m_fpTemp);
     VSIFSeekL(m_fpTemp, 0, SEEK_SET);
     constexpr size_t CHUNK_SIZE = 1024 * 1024;
-    vsi_l_offset nOffset = 0;
+    uint64_t nOffset = 0;
     std::vector<GByte> abyBuffer(CHUNK_SIZE);
     while (nOffset < nSize)
     {
         size_t nToRead = static_cast<size_t>(
-            std::min(nSize - nOffset, static_cast<vsi_l_offset>(CHUNK_SIZE)));
+            std::min(nSize - nOffset, static_cast<uint64_t>(CHUNK_SIZE)));
         if (VSIFReadL(&abyBuffer[0], nToRead, 1, m_fpTemp) != 1 ||
             m_poBaseHandle->Write(&abyBuffer[0], nToRead, 1) != 1)
         {

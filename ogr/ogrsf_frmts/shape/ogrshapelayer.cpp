@@ -3392,8 +3392,8 @@ void OGRShapeLayer::TruncateDBF()
         return;
 
     hDBF->sHooks.FSeek(hDBF->fp, 0, SEEK_END);
-    vsi_l_offset nOldSize = hDBF->sHooks.FTell(hDBF->fp);
-    vsi_l_offset nNewSize =
+    uint64_t nOldSize = hDBF->sHooks.FTell(hDBF->fp);
+    uint64_t nNewSize =
         hDBF->nRecordLength * static_cast<SAOffset>(hDBF->nRecords) +
         hDBF->nHeaderLength;
     if (hDBF->bWriteEndOfFileChar)

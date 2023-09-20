@@ -649,7 +649,7 @@ bool OGCAPIDataset::InitFromFile(GDALOpenInfo *poOpenInfo)
     SetRootURLFromURL(osURLProcess);
 
     GByte *pabyContent = nullptr;
-    vsi_l_offset nSize = 0;
+    uint64_t nSize = 0;
     if (!VSIIngestFile(poOpenInfo->fpL, nullptr, &pabyContent, &nSize,
                        1024 * 1024))
         return false;

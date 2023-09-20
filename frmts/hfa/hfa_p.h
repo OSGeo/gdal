@@ -153,13 +153,13 @@ class HFABand
     int nBlocks;
 
     // Used for single-file modification.
-    vsi_l_offset *panBlockStart;
+    uint64_t *panBlockStart;
     int *panBlockSize;
     int *panBlockFlag;
 
     // Used for spill-file modification.
-    vsi_l_offset nBlockStart;
-    vsi_l_offset nBlockSize;
+    uint64_t nBlockStart;
+    uint64_t nBlockSize;
     int nLayerStackCount;
     int nLayerStackIndex;
 

@@ -62,11 +62,11 @@
 struct CPL_DLL VSIVirtualHandle
 {
   public:
-    virtual int Seek(vsi_l_offset nOffset, int nWhence) = 0;
-    virtual vsi_l_offset Tell() = 0;
+    virtual int Seek(uint64_t nOffset, int nWhence) = 0;
+    virtual uint64_t Tell() = 0;
     virtual size_t Read(void *pBuffer, size_t nSize, size_t nCount) = 0;
     virtual int ReadMultiRange(int nRanges, void **ppData,
-                               const vsi_l_offset *panOffsets,
+                               const uint64_t *panOffsets,
                                const size_t *panSizes);
 
     /** This method is called when code plans to access soon one or several
@@ -82,7 +82,7 @@ struct CPL_DLL VSIVirtualHandle
      * @since GDAL 3.7
      */
     virtual void AdviseRead(CPL_UNUSED int nRanges,
-                            CPL_UNUSED const vsi_l_offset *panOffsets,
+                            CPL_UNUSED const uint64_t *panOffsets,
                             CPL_UNUSED const size_t *panSizes)
     {
     }
@@ -95,19 +95,18 @@ struct CPL_DLL VSIVirtualHandle
     }
     virtual int Close() = 0;
     // Base implementation that only supports file extension.
-    virtual int Truncate(vsi_l_offset nNewSize);
+    virtual int Truncate(uint64_t nNewSize);
     virtual void *GetNativeFileDescriptor()
     {
         return nullptr;
     }
-    virtual VSIRangeStatus GetRangeStatus(CPL_UNUSED vsi_l_offset nOffset,
-                                          CPL_UNUSED vsi_l_offset nLength)
+    virtual VSIRangeStatus GetRangeStatus(CPL_UNUSED uint64_t nOffset,
+                                          CPL_UNUSED uint64_t nLength)
     {
         return VSI_RANGE_STATUS_UNKNOWN;
     }
     virtual bool HasPRead() const;
-    virtual size_t PRead(void *pBuffer, size_t nSize,
-                         vsi_l_offset nOffset) const;
+    virtual size_t PRead(void *pBuffer, size_t nSize, uint64_t nOffset) const;
 
     // NOTE: when adding new methods, besides the "actual" implementations,
     // also consider the VSICachedFile one.
@@ -237,7 +236,7 @@ class CPL_DLL VSIFilesystemHandler
                       char ***ppapszOutputs);
 
     virtual int CopyFile(const char *pszSource, const char *pszTarget,
-                         VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                         VSILFILE *fpSource, uint64_t nSourceSize,
                          const char *const *papszOptions,
                          GDALProgressFunc pProgressFunc, void *pProgressData);
 
@@ -352,7 +351,7 @@ class VSIArchiveEntryFileOffset
 typedef struct
 {
     char *fileName;
-    vsi_l_offset uncompressed_size;
+    uint64_t uncompressed_size;
     VSIArchiveEntryFileOffset *file_pos;
     int bIsDir;
     int64_t nModifiedTime;
@@ -362,7 +361,7 @@ class VSIArchiveContent
 {
   public:
     time_t mTime = 0;
-    vsi_l_offset nFileSize = 0;
+    uint64_t nFileSize = 0;
     int nEntries = 0;
     VSIArchiveEntry *entries = nullptr;
 
@@ -461,7 +460,7 @@ VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle);
 VSIVirtualHandle *
 VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle,
                               const GByte *pabyBeginningContent,
-                              vsi_l_offset nCheatFileSize);
+                              uint64_t nCheatFileSize);
 VSIVirtualHandle CPL_DLL *VSICreateCachedFile(VSIVirtualHandle *poBaseHandle,
                                               size_t nChunkSize = 32768,
                                               size_t nCacheSize = 0);

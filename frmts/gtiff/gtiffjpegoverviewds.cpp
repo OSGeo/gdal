@@ -200,8 +200,8 @@ CPLErr GTiffJPEGOverviewBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 
     // Make sure it is available.
     const int nDataTypeSize = GDALGetDataTypeSizeBytes(eDataType);
-    vsi_l_offset nOffset = 0;
-    vsi_l_offset nByteCount = 0;
+    uint64_t nOffset = 0;
+    uint64_t nByteCount = 0;
     bool bErrOccurred = false;
     if (!m_poGDS->m_poParentDS->IsBlockAvailable(nBlockId, &nOffset,
                                                  &nByteCount, &bErrOccurred))

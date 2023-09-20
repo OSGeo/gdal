@@ -333,7 +333,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
 
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDataType);
     bool bIntOverflow = false;
     if (eInterleave == LINE)
@@ -344,7 +344,7 @@ GDALDataset *ROIPACDataset::Open(GDALOpenInfo *poOpenInfo)
         else
         {
             nLineOffset = nPixelOffset * nWidth * nBands;
-            nBandOffset = static_cast<vsi_l_offset>(nDTSize) * nWidth;
+            nBandOffset = static_cast<uint64_t>(nDTSize) * nWidth;
         }
     }
     else

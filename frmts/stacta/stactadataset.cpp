@@ -463,7 +463,7 @@ CPLErr STACTARawDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                             return CE_Failure;
                         }
                         GByte *pabyBuf = nullptr;
-                        vsi_l_offset nSize = 0;
+                        uint64_t nSize = 0;
                         if (!VSIIngestFile(fp, nullptr, &pabyBuf, &nSize, -1))
                         {
                             VSIFCloseL(fp);

@@ -475,9 +475,9 @@ cpl_uffd_context *CPLCreateUserFaultMapping(const char *pszFilename,
     ctx->file_size = static_cast<size_t>(statbuf.st_size);
     ctx->page_size = static_cast<size_t>(sysconf(_SC_PAGESIZE));
     ctx->vma_size = static_cast<size_t>(
-        ((static_cast<vsi_l_offset>(statbuf.st_size) / ctx->page_size) + 1) *
+        ((static_cast<uint64_t>(statbuf.st_size) / ctx->page_size) + 1) *
         ctx->page_size);
-    if (ctx->vma_size < static_cast<vsi_l_offset>(statbuf.st_size))
+    if (ctx->vma_size < static_cast<uint64_t>(statbuf.st_size))
     {  // Check for overflow
         uffd_cleanup(ctx);
         CPLError(

@@ -810,7 +810,7 @@ VSIS3WriteHandle::~VSIS3WriteHandle()
 /*                               Seek()                                 */
 /************************************************************************/
 
-int VSIS3WriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIS3WriteHandle::Seek(uint64_t nOffset, int nWhence)
 {
     if (!((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
           (nWhence == SEEK_CUR && nOffset == 0) ||
@@ -829,7 +829,7 @@ int VSIS3WriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                               Tell()                                 */
 /************************************************************************/
 
-vsi_l_offset VSIS3WriteHandle::Tell()
+uint64_t VSIS3WriteHandle::Tell()
 {
     return m_nCurOffset;
 }
@@ -975,7 +975,7 @@ bool VSIS3WriteHandle::UploadPart()
     }
     const CPLString osEtag = m_poFS->UploadPart(
         m_osFilename, m_nPartNumber, m_osUploadID,
-        static_cast<vsi_l_offset>(m_nBufferSize) * (m_nPartNumber - 1),
+        static_cast<uint64_t>(m_nBufferSize) * (m_nPartNumber - 1),
         m_pabyBuffer, m_nBufferOff, m_poS3HandleHelper, m_nMaxRetry,
         m_dfRetryDelay, nullptr);
     m_nBufferOff = 0;
@@ -988,7 +988,7 @@ bool VSIS3WriteHandle::UploadPart()
 
 CPLString IVSIS3LikeFSHandler::UploadPart(
     const CPLString &osFilename, int nPartNumber, const std::string &osUploadID,
-    vsi_l_offset /* nPosition */, const void *pabyBuffer, size_t nBufferSize,
+    uint64_t /* nPosition */, const void *pabyBuffer, size_t nBufferSize,
     IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
     double dfRetryDelay, CSLConstList /* papszOptions */)
 {
@@ -1423,7 +1423,7 @@ size_t VSIS3WriteHandle::Write(const void *pBuffer, size_t nSize, size_t nMemb)
         nBytesToWrite -= nToWriteInBuffer;
         if (m_nBufferOff == m_nBufferSize)
         {
-            if (m_nCurOffset == static_cast<vsi_l_offset>(m_nBufferSize))
+            if (m_nCurOffset == static_cast<uint64_t>(m_nBufferSize))
             {
                 m_osUploadID = m_poFS->InitiateMultipartUpload(
                     m_osFilename, m_poS3HandleHelper, m_nMaxRetry,
@@ -1590,7 +1590,7 @@ bool VSIS3WriteHandle::DoSinglePartPUT()
 
 bool IVSIS3LikeFSHandler::CompleteMultipart(
     const CPLString &osFilename, const CPLString &osUploadID,
-    const std::vector<CPLString> &aosEtags, vsi_l_offset /* nTotalSize */,
+    const std::vector<CPLString> &aosEtags, uint64_t /* nTotalSize */,
     IVSIS3LikeHandleHelper *poS3HandleHelper, int nMaxRetry,
     double dfRetryDelay)
 {
@@ -3582,7 +3582,7 @@ static CPLString ComputeMD5OfLocalFile(VSILFILE *fp)
 /************************************************************************/
 
 int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
-                                  VSILFILE *fpSource, vsi_l_offset nSourceSize,
+                                  VSILFILE *fpSource, uint64_t nSourceSize,
                                   CSLConstList papszOptions,
                                   GDALProgressFunc pProgressFunc,
                                   void *pProgressData)
@@ -3645,7 +3645,7 @@ int IVSIS3LikeFSHandler::CopyFile(const char *pszSource, const char *pszTarget,
 /************************************************************************/
 
 static bool CopyChunk(const char *pszSource, const char *pszTarget,
-                      vsi_l_offset nStartOffset, size_t nChunkSize)
+                      uint64_t nStartOffset, size_t nChunkSize)
 {
     VSILFILE *fpIn = VSIFOpenExL(pszSource, "rb", TRUE);
     if (fpIn == nullptr)
@@ -3886,9 +3886,9 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         CPLString osFilename{};
         int64_t nMTime = 0;
         CPLString osETag{};
-        vsi_l_offset nTotalSize = 0;
-        vsi_l_offset nStartOffset = 0;
-        vsi_l_offset nSize = 0;
+        uint64_t nTotalSize = 0;
+        uint64_t nStartOffset = 0;
+        uint64_t nSize = 0;
     };
     std::vector<ChunkToCopy> aoChunksToCopy;
     std::set<CPLString> aoSetDirsToCreate;
@@ -3950,7 +3950,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         int nExpectedCount = 0;
         // cppcheck-suppress unusedStructMember
         std::vector<CPLString> aosEtags{};
-        vsi_l_offset nTotalSize = 0;
+        uint64_t nTotalSize = 0;
     };
     std::map<CPLString, MultiPartDef> oMapMultiPartDefs;
 
@@ -4073,7 +4073,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
             else
             {
                 // Split file in possibly multiple chunks
-                const vsi_l_offset nChunksLarge =
+                const uint64_t nChunksLarge =
                     nMaxChunkSize == 0
                         ? 1
                         : (entry->nSize + nMaxChunkSize - 1) / nMaxChunkSize;
@@ -4097,9 +4097,8 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
                     chunk.nSize =
                         nChunks == 1
                             ? entry->nSize
-                            : std::min(
-                                  entry->nSize - chunk.nStartOffset,
-                                  static_cast<vsi_l_offset>(nMaxChunkSize));
+                            : std::min(entry->nSize - chunk.nStartOffset,
+                                       static_cast<uint64_t>(nMaxChunkSize));
                     aoChunksToCopy.push_back(chunk);
                     chunk.osETag.clear();
                 }
@@ -4366,7 +4365,7 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         }
 
         // Split file in possibly multiple chunks
-        const vsi_l_offset nChunksLarge =
+        const uint64_t nChunksLarge =
             nMaxChunkSize == 0
                 ? 1
                 : (sSource.st_size + nMaxChunkSize - 1) / nMaxChunkSize;
@@ -4385,11 +4384,10 @@ bool IVSIS3LikeFSHandler::Sync(const char *pszSource, const char *pszTarget,
         for (size_t iChunk = 0; iChunk < nChunks; iChunk++)
         {
             chunk.nStartOffset = iChunk * nMaxChunkSize;
-            chunk.nSize =
-                nChunks == 1
-                    ? sSource.st_size
-                    : std::min(sSource.st_size - chunk.nStartOffset,
-                               static_cast<vsi_l_offset>(nMaxChunkSize));
+            chunk.nSize = nChunks == 1
+                              ? sSource.st_size
+                              : std::min(sSource.st_size - chunk.nStartOffset,
+                                         static_cast<uint64_t>(nMaxChunkSize));
             aoChunksToCopy.push_back(chunk);
             anIndexToCopy.push_back(iChunk);
 

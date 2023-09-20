@@ -111,9 +111,9 @@ class VSIMemFile
 
     bool bOwnData = true;
     GByte *pabyData = nullptr;
-    vsi_l_offset nLength = 0;
-    vsi_l_offset nAllocLength = 0;
-    vsi_l_offset nMaxLength = VSI_L_OFFSET_MAX;
+    uint64_t nLength = 0;
+    uint64_t nAllocLength = 0;
+    uint64_t nMaxLength = VSI_L_OFFSET_MAX;
 
     time_t mTime = 0;
     CPL_SHARED_MUTEX_TYPE m_oMutex{};
@@ -121,7 +121,7 @@ class VSIMemFile
     VSIMemFile();
     virtual ~VSIMemFile();
 
-    bool SetLength(vsi_l_offset nNewSize);
+    bool SetLength(uint64_t nNewSize);
 };
 
 /************************************************************************/
@@ -136,7 +136,7 @@ class VSIMemHandle final : public VSIVirtualHandle
 
   public:
     std::shared_ptr<VSIMemFile> poFile = nullptr;
-    vsi_l_offset m_nOffset = 0;
+    uint64_t m_nOffset = 0;
     bool bUpdate = false;
     bool bEOF = false;
     bool bExtendFileAtNextWrite = false;
@@ -144,20 +144,20 @@ class VSIMemHandle final : public VSIVirtualHandle
     VSIMemHandle() = default;
     ~VSIMemHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
     int Close() override;
-    int Truncate(vsi_l_offset nNewSize) override;
+    int Truncate(uint64_t nNewSize) override;
 
     bool HasPRead() const override
     {
         return true;
     }
     size_t PRead(void * /*pBuffer*/, size_t /* nSize */,
-                 vsi_l_offset /*nOffset*/) const override;
+                 uint64_t /*nOffset*/) const override;
 };
 
 /************************************************************************/
@@ -236,7 +236,7 @@ VSIMemFile::~VSIMemFile()
 /************************************************************************/
 
 // Must be called under exclusive lock
-bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
+bool VSIMemFile::SetLength(uint64_t nNewLength)
 
 {
     if (nNewLength > nMaxLength)
@@ -262,10 +262,9 @@ bool VSIMemFile::SetLength(vsi_l_offset nNewLength)
             return false;
         }
 
-        const vsi_l_offset nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
+        const uint64_t nNewAlloc = (nNewLength + nNewLength / 10) + 5000;
         GByte *pabyNewData = nullptr;
-        if (static_cast<vsi_l_offset>(static_cast<size_t>(nNewAlloc)) ==
-            nNewAlloc)
+        if (static_cast<uint64_t>(static_cast<size_t>(nNewAlloc)) == nNewAlloc)
         {
             pabyNewData = static_cast<GByte *>(
                 VSIRealloc(pabyData, static_cast<size_t>(nNewAlloc)));
@@ -337,7 +336,7 @@ int VSIMemHandle::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIMemHandle::Seek(uint64_t nOffset, int nWhence)
 
 {
     CPL_SHARED_LOCK oLock(poFile->m_oMutex);
@@ -382,7 +381,7 @@ int VSIMemHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSIMemHandle::Tell()
+uint64_t VSIMemHandle::Tell()
 
 {
     return m_nOffset;
@@ -431,16 +430,15 @@ size_t VSIMemHandle::Read(void *pBuffer, size_t nSize, size_t nCount)
 /*                              PRead()                                 */
 /************************************************************************/
 
-size_t VSIMemHandle::PRead(void *pBuffer, size_t nSize,
-                           vsi_l_offset nOffset) const
+size_t VSIMemHandle::PRead(void *pBuffer, size_t nSize, uint64_t nOffset) const
 {
     CPL_SHARED_LOCK oLock(poFile->m_oMutex);
 
     if (nOffset < poFile->nLength)
     {
         const size_t nToCopy = static_cast<size_t>(
-            std::min(static_cast<vsi_l_offset>(poFile->nLength - nOffset),
-                     static_cast<vsi_l_offset>(nSize)));
+            std::min(static_cast<uint64_t>(poFile->nLength - nOffset),
+                     static_cast<uint64_t>(nSize)));
         memcpy(pBuffer, poFile->pabyData + static_cast<size_t>(nOffset),
                nToCopy);
         return nToCopy;
@@ -512,7 +510,7 @@ int VSIMemHandle::Eof()
 /*                             Truncate()                               */
 /************************************************************************/
 
-int VSIMemHandle::Truncate(vsi_l_offset nNewSize)
+int VSIMemHandle::Truncate(uint64_t nNewSize)
 {
     if (!bUpdate)
     {
@@ -564,11 +562,11 @@ VSIVirtualHandle *VSIMemFilesystemHandler::Open(const char *pszFilename,
     if (osFilename.empty())
         return nullptr;
 
-    vsi_l_offset nMaxLength = VSI_L_OFFSET_MAX;
+    uint64_t nMaxLength = VSI_L_OFFSET_MAX;
     const size_t iPos = osFilename.find("||maxlength=");
     if (iPos != std::string::npos)
     {
-        nMaxLength = static_cast<vsi_l_offset>(CPLAtoGIntBig(
+        nMaxLength = static_cast<uint64_t>(CPLAtoGIntBig(
             osFilename.substr(iPos + strlen("||maxlength=")).c_str()));
     }
 
@@ -922,8 +920,8 @@ int64_t VSIMemFilesystemHandler::GetDiskFreeSpace(const char * /*pszDirname*/)
  * buffer to another.
  *
  * \code
- * GByte *ConvertBufferFormat( GByte *pabyInData, vsi_l_offset nInDataLength,
- *                             vsi_l_offset *pnOutDataLength )
+ * GByte *ConvertBufferFormat( GByte *pabyInData, uint64_t nInDataLength,
+ *                             uint64_t *pnOutDataLength )
  * {
  *     // create memory file system object from buffer.
  *     VSIFCloseL( VSIFileFromMemBuffer( "/vsimem/work.dat", pabyInData,
@@ -984,7 +982,7 @@ void VSIInstallMemFileHandler()
  */
 
 VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
-                               vsi_l_offset nDataLength, int bTakeOwnership)
+                               uint64_t nDataLength, int bTakeOwnership)
 
 {
     if (VSIFileManager::GetHandler("") ==
@@ -1047,7 +1045,7 @@ VSILFILE *VSIFileFromMemBuffer(const char *pszFilename, GByte *pabyData,
  * @return pointer to memory buffer or NULL on failure.
  */
 
-GByte *VSIGetMemFileBuffer(const char *pszFilename, vsi_l_offset *pnDataLength,
+GByte *VSIGetMemFileBuffer(const char *pszFilename, uint64_t *pnDataLength,
                            int bUnlinkAndSeize)
 
 {

@@ -1518,7 +1518,7 @@ bool OGRShapeDataSource::UncompressIfNeeded()
     }
 
     CPLString osVSIZipDirname(GetVSIZipPrefixeDir());
-    vsi_l_offset nTotalUncompressedSize = 0;
+    uint64_t nTotalUncompressedSize = 0;
     CPLStringList aosFiles(VSIReadDir(osVSIZipDirname));
     for (int i = 0; i < aosFiles.size(); i++)
     {
@@ -1607,7 +1607,7 @@ bool OGRShapeDataSource::RecompressIfNeeded(
         oMapLayerOrder[layerNames[i]] = static_cast<int>(i);
 
     std::vector<CPLString> sortedFiles;
-    vsi_l_offset nTotalUncompressedSize = 0;
+    uint64_t nTotalUncompressedSize = 0;
     for (int i = 0; i < aosFiles.size(); i++)
     {
         sortedFiles.emplace_back(aosFiles[i]);

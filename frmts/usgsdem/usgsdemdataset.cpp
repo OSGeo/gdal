@@ -117,7 +117,7 @@ static void USGSDEMRefillBuffer(Buffer *psBuffer)
 /*                      USGSDEMGetCurrentFilePos()                      */
 /************************************************************************/
 
-static vsi_l_offset USGSDEMGetCurrentFilePos(const Buffer *psBuffer)
+static uint64_t USGSDEMGetCurrentFilePos(const Buffer *psBuffer)
 {
     return VSIFTellL(psBuffer->fp) - psBuffer->buffer_size +
            psBuffer->cur_index;
@@ -127,9 +127,9 @@ static vsi_l_offset USGSDEMGetCurrentFilePos(const Buffer *psBuffer)
 /*                      USGSDEMSetCurrentFilePos()                      */
 /************************************************************************/
 
-static void USGSDEMSetCurrentFilePos(Buffer *psBuffer, vsi_l_offset nNewPos)
+static void USGSDEMSetCurrentFilePos(Buffer *psBuffer, uint64_t nNewPos)
 {
-    vsi_l_offset nCurPosFP = VSIFTellL(psBuffer->fp);
+    uint64_t nCurPosFP = VSIFTellL(psBuffer->fp);
     if (nNewPos >= nCurPosFP - psBuffer->buffer_size && nNewPos < nCurPosFP)
     {
         psBuffer->cur_index =
@@ -517,8 +517,8 @@ CPLErr USGSDEMRasterBand::IReadBlock(CPL_UNUSED int nBlockXOff,
             // Seek to the next 1024 byte boundary.
             // Some files have 'junk' profile values after the valid/declared
             // ones
-            vsi_l_offset nCurPos = USGSDEMGetCurrentFilePos(&sBuffer);
-            vsi_l_offset nNewPos = (nCurPos + 1023) / 1024 * 1024;
+            uint64_t nCurPos = USGSDEMGetCurrentFilePos(&sBuffer);
+            uint64_t nNewPos = (nCurPos + 1023) / 1024 * 1024;
             if (nNewPos > nCurPos)
             {
                 USGSDEMSetCurrentFilePos(&sBuffer, nNewPos);

@@ -720,7 +720,7 @@ int wrapper_VSICopyFile(const char* pszSource,
 {
     return VSICopyFile(
         pszSource, pszTarget, fpSource,
-        nSourceSize < 0 ? static_cast<vsi_l_offset>(-1) : static_cast<vsi_l_offset>(nSourceSize),
+        nSourceSize < 0 ? static_cast<uint64_t>(-1) : static_cast<uint64_t>(nSourceSize),
         options, callback, callback_data );
 }
 }

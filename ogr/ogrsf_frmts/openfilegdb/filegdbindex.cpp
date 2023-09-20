@@ -778,7 +778,7 @@ bool FileGDBIndexIteratorBase::ReadTrailer(const std::string &osFilename)
     returnErrorIf(fpCurIdx == nullptr);
 
     VSIFSeekL(fpCurIdx, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fpCurIdx);
+    uint64_t nFileSize = VSIFTellL(fpCurIdx);
     returnErrorIf(nFileSize < FGDB_PAGE_SIZE + 22);
 
     VSIFSeekL(fpCurIdx, nFileSize - 22, SEEK_SET);
@@ -958,7 +958,7 @@ int FileGDBIndex::GetMaxWidthInBytes(const FileGDBTable *poTable) const
         return 0;
 
     VSIFSeekL(fpCurIdx, 0, SEEK_END);
-    vsi_l_offset nFileSize = VSIFTellL(fpCurIdx);
+    uint64_t nFileSize = VSIFTellL(fpCurIdx);
     if (nFileSize < FGDB_PAGE_SIZE + 22)
     {
         VSIFCloseL(fpCurIdx);
@@ -1167,7 +1167,7 @@ static int FileGDBUTF16StrCompare(const uint16_t *pasFirst,
 bool FileGDBIndexIterator::FindPages(int iLevel, int nPage)
 {
     const bool errorRetValue = false;
-    VSIFSeekL(fpCurIdx, static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+    VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
               SEEK_SET);
 #ifdef DEBUG
     iLoadedPage[iLevel] = nPage;
@@ -1511,8 +1511,7 @@ int FileGDBIndexIteratorBase::LoadNextFeaturePage()
             cachedPage.clear();
         }
 
-        VSIFSeekL(fpCurIdx,
-                  static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+        VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
                   SEEK_SET);
 #ifdef DEBUG
         iLoadedPage[nIndexDepth - 1] = nPage;
@@ -1823,8 +1822,7 @@ const OGRField *FileGDBIndexIterator::GetMinMaxValue(OGRField *psField,
     uint32_t nPage = 1;
     for (uint32_t iLevel = 0; iLevel < nIndexDepth - 1; iLevel++)
     {
-        VSIFSeekL(fpCurIdx,
-                  static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+        VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
                   SEEK_SET);
 #ifdef DEBUG
         iLoadedPage[iLevel] = nPage;
@@ -1840,7 +1838,7 @@ const OGRField *FileGDBIndexIterator::GetMinMaxValue(OGRField *psField,
         returnErrorIf(nPage < 2);
     }
 
-    VSIFSeekL(fpCurIdx, static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+    VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
               SEEK_SET);
 #ifdef DEBUG
     iLoadedPage[nIndexDepth - 1] = nPage;
@@ -2410,8 +2408,7 @@ bool FileGDBSpatialIndexIteratorImpl::FindPages(int iLevel, int nPage)
             cachedPage.clear();
         }
 
-        VSIFSeekL(fpCurIdx,
-                  static_cast<vsi_l_offset>(nPage - 1) * FGDB_PAGE_SIZE,
+        VSIFSeekL(fpCurIdx, static_cast<uint64_t>(nPage - 1) * FGDB_PAGE_SIZE,
                   SEEK_SET);
 #ifdef DEBUG
         iLoadedPage[iLevel] = nPage;

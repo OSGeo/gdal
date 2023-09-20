@@ -65,8 +65,8 @@ class VSIPDFFileStream final : public BaseStream
   public:
     VSIPDFFileStream(VSILFILE *f, const char *pszFilename,
                      makeSubStream_object_type dictA);
-    VSIPDFFileStream(VSIPDFFileStream *poParent, vsi_l_offset startA,
-                     GBool limitedA, vsi_l_offset lengthA,
+    VSIPDFFileStream(VSIPDFFileStream *poParent, uint64_t startA,
+                     GBool limitedA, uint64_t lengthA,
                      makeSubStream_object_type dictA);
     virtual ~VSIPDFFileStream();
 
@@ -110,13 +110,13 @@ class VSIPDFFileStream final : public BaseStream
     VSIPDFFileStream *poParent;
     GooString *poFilename;
     VSILFILE *f;
-    vsi_l_offset nStart;
+    uint64_t nStart;
     GBool bLimited;
-    vsi_l_offset nLength;
+    uint64_t nLength;
 
-    vsi_l_offset nCurrentPos;
+    uint64_t nCurrentPos;
     int bHasSavedPos;
-    vsi_l_offset nSavedPos;
+    uint64_t nSavedPos;
 
     GByte abyBuffer[BUFFER_SIZE];
     int nPosInBuffer;

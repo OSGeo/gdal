@@ -63,8 +63,8 @@
 #ifndef DOXYGEN_SKIP
 
 #include "cpl_vsi.h"
-#define uLong64 vsi_l_offset
-typedef vsi_l_offset ZPOS64_T;
+#define uLong64 uint64_t
+typedef uint64_t ZPOS64_T;
 
 #ifdef __cplusplus
 extern "C"

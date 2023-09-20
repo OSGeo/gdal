@@ -142,9 +142,9 @@ class EHdrRasterBand final : public RawRasterBand
 
     bool m_bValid = false;
     int nBits{};
-    vsi_l_offset nStartBit{};
+    uint64_t nStartBit{};
     int nPixelOffsetBits{};
-    vsi_l_offset nLineOffsetBits{};
+    uint64_t nLineOffsetBits{};
 
     int bNoDataSet{};  // TODO(schwehr): Convert to bool.
     double dfNoData{};
@@ -163,7 +163,7 @@ class EHdrRasterBand final : public RawRasterBand
 
   public:
     EHdrRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                   vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                   uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                    GDALDataType eDataType,
                    RawRasterBand::ByteOrder eByteOrderIn, int nBits);
 

@@ -1282,7 +1282,7 @@ NTFRecord *NTFFileReader::ReadRecord()
 /*      Return the current file pointer position.                       */
 /************************************************************************/
 
-void NTFFileReader::GetFPPos(vsi_l_offset *pnPos, long *pnFID)
+void NTFFileReader::GetFPPos(uint64_t *pnPos, long *pnFID)
 
 {
     if (poSavedRecord != nullptr)
@@ -1298,7 +1298,7 @@ void NTFFileReader::GetFPPos(vsi_l_offset *pnPos, long *pnFID)
 /*                              SetFPPos()                              */
 /************************************************************************/
 
-int NTFFileReader::SetFPPos(vsi_l_offset nNewPos, long nNewFID)
+int NTFFileReader::SetFPPos(uint64_t nNewPos, long nNewFID)
 
 {
     if (nNewFID == nSavedFeatureId)

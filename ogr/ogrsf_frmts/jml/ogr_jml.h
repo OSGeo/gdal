@@ -157,7 +157,7 @@ class OGRJMLWriterLayer final : public OGRLayer
     int nNextFID;
     CPLString osSRSAttr;
     OGREnvelope sLayerExtent;
-    vsi_l_offset nBBoxOffset;
+    uint64_t nBBoxOffset;
 
     void WriteColumnDeclaration(const char *pszName, const char *pszType);
 

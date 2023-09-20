@@ -264,7 +264,7 @@ json_object *OGRPLScenesDataV1Dataset::RunRequest(const char *pszURL,
     if (STARTS_WITH(m_osBaseURL, "/vsimem/") && STARTS_WITH(pszURL, "/vsimem/"))
     {
         psResult = (CPLHTTPResult *)CPLCalloc(1, sizeof(CPLHTTPResult));
-        vsi_l_offset nDataLengthLarge = 0;
+        uint64_t nDataLengthLarge = 0;
         CPLString osURL(pszURL);
         if (osURL[osURL.size() - 1] == '/')
             osURL.resize(osURL.size() - 1);

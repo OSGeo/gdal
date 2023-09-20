@@ -354,9 +354,9 @@ CPLErr GTiffDataset::FillEmptyTiles()
 
             VSILFILE *fpTIF = VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF));
             VSIFSeekL(fpTIF, 0, SEEK_END);
-            const vsi_l_offset nOffset = VSIFTellL(fpTIF);
+            const uint64_t nOffset = VSIFTellL(fpTIF);
 
-            vsi_l_offset iBlockToZero = 0;
+            uint64_t iBlockToZero = 0;
             for (int iBlock = 0; iBlock < nBlockCount; ++iBlock)
             {
                 if (panByteCounts[iBlock] == 0)
@@ -368,7 +368,7 @@ CPLErr GTiffDataset::FillEmptyTiles()
                 }
             }
             CPLAssert(iBlockToZero ==
-                      static_cast<vsi_l_offset>(nCountBlocksToZero));
+                      static_cast<uint64_t>(nCountBlocksToZero));
 
             if (VSIFTruncateL(fpTIF, nOffset + iBlockToZero * nBlockBytes) != 0)
             {
@@ -386,7 +386,7 @@ CPLErr GTiffDataset::FillEmptyTiles()
     /* -------------------------------------------------------------------- */
 
     GByte *pabyRaw = nullptr;
-    vsi_l_offset nRawSize = 0;
+    uint64_t nRawSize = 0;
     CPLErr eErr = CE_None;
     for (int iBlock = 0; iBlock < nBlockCount; ++iBlock)
     {
@@ -400,7 +400,7 @@ CPLErr GTiffDataset::FillEmptyTiles()
                     break;
                 }
 
-                vsi_l_offset nOffset = 0;
+                uint64_t nOffset = 0;
                 if (!IsBlockAvailable(iBlock, &nOffset, &nRawSize))
                     break;
 
@@ -414,7 +414,7 @@ CPLErr GTiffDataset::FillEmptyTiles()
                     {
                         VSILFILE *fp =
                             VSI_TIFFGetVSILFile(TIFFClientdata(m_hTIFF));
-                        const vsi_l_offset nCurOffset = VSIFTellL(fp);
+                        const uint64_t nCurOffset = VSIFTellL(fp);
                         VSIFSeekL(fp, nOffset, SEEK_SET);
                         VSIFReadL(pabyRaw, 1, static_cast<size_t>(nRawSize),
                                   fp);
@@ -979,10 +979,10 @@ void GTiffDataset::ThreadCompressionFunc(void *pData)
 
     if (bOK)
     {
-        vsi_l_offset nFileSize = 0;
+        uint64_t nFileSize = 0;
         GByte *pabyCompressedBuffer =
             VSIGetMemFileBuffer(psJob->pszTmpFilename, &nFileSize, FALSE);
-        CPLAssert(static_cast<vsi_l_offset>(
+        CPLAssert(static_cast<uint64_t>(
                       nOffset + psJob->nCompressedBufferSize) <= nFileSize);
         psJob->pabyCompressedBuffer = pabyCompressedBuffer + nOffset;
     }
@@ -2056,7 +2056,7 @@ void GTiffDataset::Crystalize()
         GTiffFillStreamableOffsetAndCount(m_hTIFF, nSize);
         TIFFWriteDirectory(m_hTIFF);
 
-        vsi_l_offset nDataLength = 0;
+        uint64_t nDataLength = 0;
         void *pabyBuffer =
             VSIGetMemFileBuffer(m_pszTmpFilename, &nDataLength, FALSE);
         if (static_cast<int>(VSIFWriteL(
@@ -7251,7 +7251,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             ReportError(pszFilename, CE_Failure, CPLE_FileIO, "Cannot seek");
         const int nSize = static_cast<int>(VSIFTellL(l_fpL));
 
-        vsi_l_offset nDataLength = 0;
+        uint64_t nDataLength = 0;
         VSIGetMemFileBuffer(l_osTmpFilename, &nDataLength, FALSE);
         TIFFSetDirectory(l_hTIFF, 0);
         GTiffFillStreamableOffsetAndCount(l_hTIFF, nSize);
@@ -7269,7 +7269,7 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
     VSILFILE *fpStreaming = nullptr;
     if (bStreaming)
     {
-        vsi_l_offset nDataLength = 0;
+        uint64_t nDataLength = 0;
         void *pabyBuffer =
             VSIGetMemFileBuffer(l_osTmpFilename, &nDataLength, FALSE);
         fpStreaming = VSIFOpenL(pszFilename, "wb");
@@ -7279,9 +7279,9 @@ GDALDataset *GTiffDataset::CreateCopy(const char *pszFilename,
             CPL_IGNORE_RET_VAL(VSIFCloseL(l_fpL));
             return nullptr;
         }
-        if (static_cast<vsi_l_offset>(VSIFWriteL(pabyBuffer, 1,
-                                                 static_cast<int>(nDataLength),
-                                                 fpStreaming)) != nDataLength)
+        if (static_cast<uint64_t>(VSIFWriteL(pabyBuffer, 1,
+                                             static_cast<int>(nDataLength),
+                                             fpStreaming)) != nDataLength)
         {
             ReportError(pszFilename, CE_Failure, CPLE_FileIO,
                         "Could not write %d bytes",

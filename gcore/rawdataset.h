@@ -108,7 +108,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 
     VSILFILE *fpRawL{};
 
-    vsi_l_offset nImgOffset{};
+    uint64_t nImgOffset{};
     int nPixelOffset{};
     int nLineOffset{};
     int nLineSize{};
@@ -129,11 +129,11 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 
     int bOwnsFP{};
 
-    int Seek(vsi_l_offset, int);
+    int Seek(uint64_t, int);
     size_t Read(void *, size_t, size_t);
     size_t Write(void *, size_t, size_t);
 
-    CPLErr AccessBlock(vsi_l_offset nBlockOff, size_t nBlockSize, void *pData,
+    CPLErr AccessBlock(uint64_t nBlockOff, size_t nBlockSize, void *pData,
                        size_t nValues);
     int IsSignificantNumberOfLinesLoaded(int nLineOff, int nLines);
     void Initialize();
@@ -154,33 +154,33 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 
     // IsValid() should be called afterwards
     RawRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                  vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                  uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, int bNativeOrder, OwnFP bOwnsFP);
 
     // IsValid() should be called afterwards
     RawRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                  vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                  uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, ByteOrder eByteOrder, OwnFP bOwnsFP);
 
     // IsValid() should be called afterwards
-    RawRasterBand(VSILFILE *fpRaw, vsi_l_offset nImgOffset, int nPixelOffset,
+    RawRasterBand(VSILFILE *fpRaw, uint64_t nImgOffset, int nPixelOffset,
                   int nLineOffset, GDALDataType eDataType, int bNativeOrder,
                   int nXSize, int nYSize, OwnFP bOwnsFP);
 
     // IsValid() should be called afterwards
-    RawRasterBand(VSILFILE *fpRaw, vsi_l_offset nImgOffset, int nPixelOffset,
+    RawRasterBand(VSILFILE *fpRaw, uint64_t nImgOffset, int nPixelOffset,
                   int nLineOffset, GDALDataType eDataType, ByteOrder eByteOrder,
                   int nXSize, int nYSize, OwnFP bOwnsFP);
 
     // Returns nullptr in case of error
     static std::unique_ptr<RawRasterBand>
-    Create(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-           vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
-           GDALDataType eDataType, ByteOrder eByteOrder, OwnFP bOwnsFP);
+    Create(GDALDataset *poDS, int nBand, VSILFILE *fpRaw, uint64_t nImgOffset,
+           int nPixelOffset, int nLineOffset, GDALDataType eDataType,
+           ByteOrder eByteOrder, OwnFP bOwnsFP);
 
     // Returns nullptr in case of error
     static std::unique_ptr<RawRasterBand>
-    Create(VSILFILE *fpRaw, vsi_l_offset nImgOffset, int nPixelOffset,
+    Create(VSILFILE *fpRaw, uint64_t nImgOffset, int nPixelOffset,
            int nLineOffset, GDALDataType eDataType, ByteOrder eByteOrder,
            int nXSize, int nYSize, OwnFP bOwnsFP);
 
@@ -216,7 +216,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     void StoreNoDataValue(double);
 
     // Query methods for internal data.
-    vsi_l_offset GetImgOffset() const
+    uint64_t GetImgOffset() const
     {
         return nImgOffset;
     }
@@ -248,7 +248,7 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
     void DoByteSwap(void *pBuffer, size_t nValues, int nByteSkip,
                     bool bDiskToCPU) const;
     bool IsBIP() const;
-    vsi_l_offset ComputeFileOffset(int iLine) const;
+    uint64_t ComputeFileOffset(int iLine) const;
     bool FlushCurrentLine(bool bNeedUsableBufferAfter);
     CPLErr BIPWriteBlock(int nBlockYOff, int nCallingBand, const void *pImage);
 };
@@ -257,9 +257,8 @@ class CPL_DLL RawRasterBand : public GDALPamRasterBand
 
 bool CPL_DLL RAWDatasetCheckMemoryUsage(int nXSize, int nYSize, int nBands,
                                         int nDTSize, int nPixelOffset,
-                                        int nLineOffset,
-                                        vsi_l_offset nHeaderSize,
-                                        vsi_l_offset nBandOffset, VSILFILE *fp);
+                                        int nLineOffset, uint64_t nHeaderSize,
+                                        uint64_t nBandOffset, VSILFILE *fp);
 
 #endif
 

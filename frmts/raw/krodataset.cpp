@@ -197,10 +197,9 @@ GDALDataset *KRODataset::Open(GDALOpenInfo *poOpenInfo)
         return nullptr;
     }
 
-    vsi_l_offset nExpectedSize = static_cast<vsi_l_offset>(poDS->nRasterXSize) *
-                                     poDS->nRasterYSize * nComp *
-                                     nDataTypeSize +
-                                 20;
+    uint64_t nExpectedSize = static_cast<uint64_t>(poDS->nRasterXSize) *
+                                 poDS->nRasterYSize * nComp * nDataTypeSize +
+                             20;
     VSIFSeekL(poDS->fpImage, 0, SEEK_END);
     if (VSIFTellL(poDS->fpImage) < nExpectedSize)
     {
@@ -302,7 +301,7 @@ GDALDataset *KRODataset::Create(const char *pszFilename, int nXSize, int nYSize,
     /* -------------------------------------------------------------------- */
 
     CPL_IGNORE_RET_VAL(VSIFSeekL(fp,
-                                 static_cast<vsi_l_offset>(nXSize) * nYSize *
+                                 static_cast<uint64_t>(nXSize) * nYSize *
                                          GDALGetDataTypeSizeBytes(eType) *
                                          nBandsIn -
                                      1,

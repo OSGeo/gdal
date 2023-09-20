@@ -101,14 +101,14 @@ class NTv2Dataset final : public RawDataset
     VSILFILE *fpImage = nullptr;  // image data file.
 
     size_t nRecordSize = 0;
-    vsi_l_offset nGridOffset = 0;
+    uint64_t nGridOffset = 0;
 
     OGRSpatialReference m_oSRS{};
     double adfGeoTransform[6];
 
     void CaptureMetadataItem(const char *pszItem);
 
-    bool OpenGrid(const char *pachGridHeader, vsi_l_offset nDataStart);
+    bool OpenGrid(const char *pachGridHeader, uint64_t nDataStart);
 
     CPL_DISALLOW_COPY_ASSIGN(NTv2Dataset)
 
@@ -521,7 +521,7 @@ GDALDataset *NTv2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* ==================================================================== */
     /*      Loop over grids.                                                */
     /* ==================================================================== */
-    vsi_l_offset nGridOffset = 11 * poDS->nRecordSize;
+    uint64_t nGridOffset = 11 * poDS->nRecordSize;
 
     for (int iGrid = 0; iGrid < nSubFileCount; iGrid++)
     {
@@ -572,7 +572,7 @@ GDALDataset *NTv2Dataset::Open(GDALOpenInfo *poOpenInfo)
         }
 
         nGridOffset +=
-            (11 + static_cast<vsi_l_offset>(nGSCount)) * poDS->nRecordSize;
+            (11 + static_cast<uint64_t>(nGSCount)) * poDS->nRecordSize;
     }
 
     /* -------------------------------------------------------------------- */
@@ -596,7 +596,7 @@ GDALDataset *NTv2Dataset::Open(GDALOpenInfo *poOpenInfo)
 /*      portions of the header.                                         */
 /************************************************************************/
 
-bool NTv2Dataset::OpenGrid(const char *pachHeader, vsi_l_offset nGridOffsetIn)
+bool NTv2Dataset::OpenGrid(const char *pachHeader, uint64_t nGridOffsetIn)
 
 {
     nGridOffset = nGridOffsetIn;
@@ -651,7 +651,7 @@ bool NTv2Dataset::OpenGrid(const char *pachHeader, vsi_l_offset nGridOffsetIn)
             this, iBand + 1, fpImage,
             nGridOffset + 4 * iBand + 11 * nRecordSize +
                 (nRasterXSize - 1) * nPixelSize +
-                static_cast<vsi_l_offset>(nRasterYSize - 1) * nPixelSize *
+                static_cast<uint64_t>(nRasterYSize - 1) * nPixelSize *
                     nRasterXSize,
             -nPixelSize, -nPixelSize * nRasterXSize, GDT_Float32, m_eByteOrder,
             RawRasterBand::OwnFP::NO);
@@ -943,7 +943,7 @@ GDALDataset *NTv2Dataset::Create(const char *pszFilename, int nXSize,
         SwapPtr32IfNecessary(bMustSwap, &nNumFile);
 
         CPL_IGNORE_RET_VAL(VSIFSeekL(fp, 0, SEEK_END));
-        const vsi_l_offset nEnd = VSIFTellL(fp);
+        const uint64_t nEnd = VSIFTellL(fp);
         CPL_IGNORE_RET_VAL(VSIFSeekL(fp, nEnd - 16, SEEK_SET));
     }
 

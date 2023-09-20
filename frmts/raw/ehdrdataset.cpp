@@ -71,7 +71,7 @@ constexpr int HAS_ALL_FLAGS =
 /************************************************************************/
 
 EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
-                               VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                               VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                                int nPixelOffsetIn, int nLineOffsetIn,
                                GDALDataType eDataTypeIn,
                                RawRasterBand::ByteOrder eByteOrderIn,
@@ -99,7 +99,7 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
         }
         else
         {
-            nStartBit = static_cast<vsi_l_offset>(nSkipBytes) * 8;
+            nStartBit = static_cast<uint64_t>(nSkipBytes) * 8;
         }
         if (nBand >= 2)
         {
@@ -112,14 +112,14 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
                          "Invalid BANDROWBYTES: %" PRId64, nBandRowBytes);
                 nBandRowBytes = 0;
             }
-            vsi_l_offset nRowBytes = 0;
+            uint64_t nRowBytes = 0;
             if (nBandRowBytes == 0)
                 nRowBytes =
-                    (static_cast<vsi_l_offset>(nBits) * poDS->GetRasterXSize() +
+                    (static_cast<uint64_t>(nBits) * poDS->GetRasterXSize() +
                      7) /
                     8;
             else
-                nRowBytes = static_cast<vsi_l_offset>(nBandRowBytes);
+                nRowBytes = static_cast<uint64_t>(nBandRowBytes);
 
             nStartBit += nRowBytes * (nBand - 1) * 8;
         }
@@ -137,9 +137,9 @@ EHdrRasterBand::EHdrRasterBand(GDALDataset *poDSIn, int nBandIn,
             nTotalRowBytes = 0;
         }
         if (nTotalRowBytes > 0)
-            nLineOffsetBits = static_cast<vsi_l_offset>(nTotalRowBytes * 8);
+            nLineOffsetBits = static_cast<uint64_t>(nTotalRowBytes * 8);
         else
-            nLineOffsetBits = static_cast<vsi_l_offset>(nPixelOffsetBits) *
+            nLineOffsetBits = static_cast<uint64_t>(nPixelOffsetBits) *
                               poDS->GetRasterXSize();
 
         nBlockXSize = poDS->GetRasterXSize();
@@ -161,17 +161,15 @@ CPLErr EHdrRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         return RawRasterBand::IReadBlock(nBlockXOff, nBlockYOff, pImage);
 
     // Establish desired position.
-    const vsi_l_offset nLineStart =
-        (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
+    const uint64_t nLineStart = (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset =
         static_cast<int>((nStartBit + nLineOffsetBits * nBlockYOff) % 8);
-    const vsi_l_offset nLineEnd =
+    const uint64_t nLineEnd =
         (nStartBit + nLineOffsetBits * nBlockYOff +
-         static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize - 1) /
+         static_cast<uint64_t>(nPixelOffsetBits) * nBlockXSize - 1) /
         8;
-    const vsi_l_offset nLineBytesBig = nLineEnd - nLineStart + 1;
-    if (nLineBytesBig >
-        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()))
+    const uint64_t nLineBytesBig = nLineEnd - nLineStart + 1;
+    if (nLineBytesBig > static_cast<uint64_t>(std::numeric_limits<int>::max()))
         return CE_Failure;
     const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
 
@@ -224,17 +222,15 @@ CPLErr EHdrRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff, void *pImage)
         return RawRasterBand::IWriteBlock(nBlockXOff, nBlockYOff, pImage);
 
     // Establish desired position.
-    const vsi_l_offset nLineStart =
-        (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
+    const uint64_t nLineStart = (nStartBit + nLineOffsetBits * nBlockYOff) / 8;
     int iBitOffset =
         static_cast<int>((nStartBit + nLineOffsetBits * nBlockYOff) % 8);
-    const vsi_l_offset nLineEnd =
+    const uint64_t nLineEnd =
         (nStartBit + nLineOffsetBits * nBlockYOff +
-         static_cast<vsi_l_offset>(nPixelOffsetBits) * nBlockXSize - 1) /
+         static_cast<uint64_t>(nPixelOffsetBits) * nBlockXSize - 1) /
         8;
-    const vsi_l_offset nLineBytesBig = nLineEnd - nLineStart + 1;
-    if (nLineBytesBig >
-        static_cast<vsi_l_offset>(std::numeric_limits<int>::max()))
+    const uint64_t nLineBytesBig = nLineEnd - nLineStart + 1;
+    if (nLineBytesBig > static_cast<uint64_t>(std::numeric_limits<int>::max()))
         return CE_Failure;
     const unsigned int nLineBytes = static_cast<unsigned int>(nLineBytesBig);
 
@@ -1250,7 +1246,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
 
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
 
     if (EQUAL(szLayout, "BIP"))
     {
@@ -1261,7 +1257,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nPixelOffset = nItemSize * l_nBands;
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nItemSize);
+        nBandOffset = static_cast<uint64_t>(nItemSize);
     }
     else if (EQUAL(szLayout, "BSQ"))
     {
@@ -1272,7 +1268,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nPixelOffset = nItemSize;
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nRows;
     }
     else
     {
@@ -1284,7 +1280,7 @@ GDALDataset *EHdrDataset::Open(GDALOpenInfo *poOpenInfo, bool bFileSizeCheck)
         }
         nPixelOffset = nItemSize;
         nLineOffset = nItemSize * l_nBands * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
+        nBandOffset = static_cast<uint64_t>(nItemSize) * nCols;
     }
 
     if (nBits >= 8 && bFileSizeCheck &&

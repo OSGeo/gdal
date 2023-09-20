@@ -148,9 +148,9 @@ static bool WriteFloat32(VSILFILE *fp, float fVal)
 /*                         PatchSectionSize()                           */
 /************************************************************************/
 
-static void PatchSectionSize(VSILFILE *fp, vsi_l_offset nStartSection)
+static void PatchSectionSize(VSILFILE *fp, uint64_t nStartSection)
 {
-    vsi_l_offset nCurOffset = VSIFTellL(fp);
+    uint64_t nCurOffset = VSIFTellL(fp);
     VSIFSeekL(fp, nStartSection, SEEK_SET);
     uint32_t nSect3Size = static_cast<uint32_t>(nCurOffset - nStartSection);
     WriteUInt32(fp, nSect3Size);
@@ -619,7 +619,7 @@ bool GRIB2Section3Writer::WriteLAEA()
 bool GRIB2Section3Writer::Write()
 {
     // Section 3: Grid Definition Section
-    vsi_l_offset nStartSection = VSIFTellL(fp);
+    uint64_t nStartSection = VSIFTellL(fp);
 
     WriteUInt32(fp, GRIB2MISSING_u4);  // section size
 
@@ -1551,7 +1551,7 @@ bool GRIB2Section567Writer::WritePNG()
     WriteByte(m_fp, GRIB2MISSING_u1);  // no bitmap
 
     // Section 7: Data Section
-    vsi_l_offset nDataLength = 0;
+    uint64_t nDataLength = 0;
     GByte *pabyData = VSIGetMemFileBuffer(osTmpFile, &nDataLength, FALSE);
     WriteUInt32(m_fp, static_cast<uint32_t>(5 + nDataLength));  // section size
     WriteByte(m_fp, 7);  // section number
@@ -1741,7 +1741,7 @@ bool GRIB2Section567Writer::WriteJPEG2000(char **papszOptions)
     WriteByte(m_fp, GRIB2MISSING_u1);  // no bitmap
 
     // Section 7: Data Section
-    vsi_l_offset nDataLength = 0;
+    uint64_t nDataLength = 0;
     GByte *pabyData = VSIGetMemFileBuffer(osTmpFile, &nDataLength, FALSE);
     WriteUInt32(m_fp, static_cast<uint32_t>(5 + nDataLength));  // section size
     WriteByte(m_fp, 7);  // section number
@@ -2198,7 +2198,7 @@ static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
                           char **papszOptions, float &fValOffset)
 {
     // Section 4: Product Definition Section
-    vsi_l_offset nStartSection4 = VSIFTellL(fp);
+    uint64_t nStartSection4 = VSIFTellL(fp);
     WriteUInt32(fp, GRIB2MISSING_u4);  // section size
     WriteByte(fp, 4);                  // section number
     WriteUInt16(fp, 0);  // Number of coordinate values after template
@@ -2293,7 +2293,7 @@ static bool WriteSection4(VSILFILE *fp, GDALDataset *poSrcDS, int nBand,
         // Read back section
         PatchSectionSize(fp, nStartSection4);
 
-        vsi_l_offset nCurOffset = VSIFTellL(fp);
+        uint64_t nCurOffset = VSIFTellL(fp);
         VSIFSeekL(fp, nStartSection4, SEEK_SET);
         size_t nSizeSect4 = static_cast<size_t>(nCurOffset - nStartSection4);
         GByte *pabySect4 = static_cast<GByte *>(CPLMalloc(nSizeSect4));
@@ -2504,8 +2504,8 @@ GDALDataset *GRIBDataset::CreateCopy(const char *pszFilename,
     }
     VSIFSeekL(fp, 0, SEEK_END);
 
-    vsi_l_offset nStartOffset = 0;
-    vsi_l_offset nTotalSizeOffset = 0;
+    uint64_t nStartOffset = 0;
+    uint64_t nTotalSizeOffset = 0;
     int nSplitAndSwapColumn = 0;
     // Note: WRITE_SUBGRIDS=YES should not be used blindly currently, as it
     // does not check that the content of the DISCIPLINE and IDS are the same.
@@ -2569,7 +2569,7 @@ GDALDataset *GRIBDataset::CreateCopy(const char *pszFilename,
             VSIFWriteL("7777", 4, 1, fp);
 
             // Patch total message size at end of section 0
-            vsi_l_offset nCurOffset = VSIFTellL(fp);
+            uint64_t nCurOffset = VSIFTellL(fp);
             if (nCurOffset - nStartOffset > INT_MAX)
             {
                 CPLError(CE_Failure, CPLE_NotSupported,

@@ -383,7 +383,7 @@ class FileGDBTable
 {
     VSILFILE *m_fpTable = nullptr;
     VSILFILE *m_fpTableX = nullptr;
-    vsi_l_offset m_nFileSize = 0; /* only read when needed */
+    uint64_t m_nFileSize = 0; /* only read when needed */
     bool m_bUpdate = false;
 
     std::string m_osFilename{};
@@ -415,7 +415,7 @@ class FileGDBTable
 
     uint32_t m_nTablxOffsetSize =
         0;  // 4 (4 GB limit), 5 (1 TB limit), 6 (256 TB limit)
-    std::vector<vsi_l_offset>
+    std::vector<uint64_t>
         m_anFeatureOffsets{}; /* MSb set marks deleted feature. Only used when
                                  no .gdbtablx file */
 
@@ -511,7 +511,7 @@ class FileGDBTable
     bool WriteHeaderX(VSILFILE *fpTableX);
 
     int ReadTableXHeader();
-    int IsLikelyFeatureAtOffset(vsi_l_offset nOffset, uint32_t *pnSize,
+    int IsLikelyFeatureAtOffset(uint64_t nOffset, uint32_t *pnSize,
                                 int *pbDeletedRecord);
     bool GuessFeatureLocations();
     bool WriteFieldDescriptors(VSILFILE *fpTable);
@@ -618,8 +618,8 @@ class FileGDBTable
     void ComputeOptimalSpatialIndexGridResolution();
     bool CreateSpatialIndex();
 
-    vsi_l_offset
-    GetOffsetInTableForRow(int iRow, vsi_l_offset *pnOffsetInTableX = nullptr);
+    uint64_t GetOffsetInTableForRow(int iRow,
+                                    uint64_t *pnOffsetInTableX = nullptr);
 
     int HasDeletedFeaturesListed() const
     {

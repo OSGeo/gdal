@@ -157,13 +157,12 @@ CPLErr GenBinBitRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
     /* -------------------------------------------------------------------- */
     /*      Establish desired position.                                     */
     /* -------------------------------------------------------------------- */
-    const vsi_l_offset nLineStart =
-        (static_cast<vsi_l_offset>(nBlockXSize) * nBlockYOff * nBits) / 8;
+    const uint64_t nLineStart =
+        (static_cast<uint64_t>(nBlockXSize) * nBlockYOff * nBits) / 8;
     int iBitOffset = static_cast<int>(
-        (static_cast<vsi_l_offset>(nBlockXSize) * nBlockYOff * nBits) % 8);
+        (static_cast<uint64_t>(nBlockXSize) * nBlockYOff * nBits) % 8);
     const unsigned int nLineBytes = static_cast<unsigned int>(
-        (static_cast<vsi_l_offset>(nBlockXSize) * (nBlockYOff + 1) * nBits +
-         7) /
+        (static_cast<uint64_t>(nBlockXSize) * (nBlockYOff + 1) * nBits + 7) /
             8 -
         nLineStart);
 
@@ -637,7 +636,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
     const int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
     int nPixelOffset = 0;
     int nLineOffset = 0;
-    vsi_l_offset nBandOffset = 0;
+    uint64_t nBandOffset = 0;
     bool bIntOverflow = false;
 
     const char *pszInterleaving = CSLFetchNameValue(papszHdr, "INTERLEAVING");
@@ -653,7 +652,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
         {
             nLineOffset = nItemSize * poDS->nRasterXSize;
             nBandOffset =
-                nLineOffset * static_cast<vsi_l_offset>(poDS->nRasterYSize);
+                nLineOffset * static_cast<uint64_t>(poDS->nRasterYSize);
         }
     }
     else if (EQUAL(pszInterleaving, "BIP"))
@@ -681,8 +680,7 @@ GDALDataset *GenBinDataset::Open(GDALOpenInfo *poOpenInfo)
         else
         {
             nLineOffset = nPixelOffset * nBands * poDS->nRasterXSize;
-            nBandOffset =
-                nItemSize * static_cast<vsi_l_offset>(poDS->nRasterXSize);
+            nBandOffset = nItemSize * static_cast<uint64_t>(poDS->nRasterXSize);
         }
     }
 

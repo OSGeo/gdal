@@ -218,7 +218,7 @@ void CPLJSONDocument::SetRoot(const CPLJSONObject &oRoot)
 bool CPLJSONDocument::Load(const std::string &osPath)
 {
     GByte *pabyOut = nullptr;
-    vsi_l_offset nSize = 0;
+    uint64_t nSize = 0;
     if (!VSIIngestFile(nullptr, osPath.c_str(), &pabyOut, &nSize,
                        100 * 1024 * 1024))  // Maximum 100 Mb allowed
     {

@@ -649,7 +649,7 @@ CPLXMLNode *LERC_Band::GetMRFConfig(GDALOpenInfo *poOpenInfo)
         // here
         static const int64_t MAX_L2SIZE(10 * 1024 * 1024);  // 10MB
         GByte *buffer = nullptr;
-        vsi_l_offset l2size;
+        uint64_t l2size;
 
 #define INFOIDX(T) static_cast<size_t>(L2NS::InfoArrOrder::T)
 

@@ -53,8 +53,8 @@ class OGRSXFLayer final : public OGRLayer
     VSILFILE *fpSXF;
     GByte nLayerID;
     std::map<unsigned, CPLString> mnClassificators;
-    std::map<long, vsi_l_offset> mnRecordDesc;
-    std::map<long, vsi_l_offset>::const_iterator oNextIt;
+    std::map<long, uint64_t> mnRecordDesc;
+    std::map<long, uint64_t>::const_iterator oNextIt;
     SXFMapDescription stSXFMapDescription;
     std::set<uint16_t> snAttributeCodes;
     int m_nSXFFormatVer;
@@ -111,7 +111,7 @@ class OGRSXFLayer final : public OGRLayer
     }
     virtual void AddClassifyCode(unsigned nClassCode,
                                  const char *szName = nullptr);
-    virtual bool AddRecord(long nFID, unsigned nClassCode, vsi_l_offset nOffset,
+    virtual bool AddRecord(long nFID, unsigned nClassCode, uint64_t nOffset,
                            bool bHasSemantic, size_t nSemanticsSize);
 
   private:

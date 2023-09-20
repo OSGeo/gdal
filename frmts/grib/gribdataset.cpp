@@ -214,7 +214,7 @@ void GRIBRasterBand::FindMetaData()
 /*      Scan after the official start of the message to find its        */
 /*      true starting offset.                                           */
 /************************************************************************/
-vsi_l_offset GRIBRasterBand::FindTrueStart(VSILFILE *fp, vsi_l_offset start)
+uint64_t GRIBRasterBand::FindTrueStart(VSILFILE *fp, uint64_t start)
 {
     // GRIB messages can be preceded by "garbage". GRIB2Inventory()
     // does not return the offset to the real start of the message
@@ -1045,7 +1045,7 @@ double GRIBRasterBand::GetNoDataValue(int *pbSuccess)
 /*                            ReadGribData()                            */
 /************************************************************************/
 
-void GRIBRasterBand::ReadGribData(VSILFILE *fp, vsi_l_offset start, int subgNum,
+void GRIBRasterBand::ReadGribData(VSILFILE *fp, uint64_t start, int subgNum,
                                   double **data, grib_MetaData **metaData)
 {
     // Initialization, for calling the ReadGrib2Record function.
@@ -1532,7 +1532,7 @@ GDALDataset *GRIBDataset::Open(GDALOpenInfo *poOpenInfo)
 struct GRIBSharedResource
 {
     VSILFILE *m_fp = nullptr;
-    vsi_l_offset m_nOffsetCurData = static_cast<vsi_l_offset>(-1);
+    uint64_t m_nOffsetCurData = static_cast<uint64_t>(-1);
     std::vector<double> m_adfCurData{};
     std::string m_osFilename;
     std::shared_ptr<GDALPamMultiDim> m_poPAM{};
@@ -1540,7 +1540,7 @@ struct GRIBSharedResource
     GRIBSharedResource(const std::string &osFilename, VSILFILE *fp);
     ~GRIBSharedResource();
 
-    const std::vector<double> &LoadData(vsi_l_offset nOffset, int subgNum);
+    const std::vector<double> &LoadData(uint64_t nOffset, int subgNum);
 
     const std::shared_ptr<GDALPamMultiDim> &GetPAM()
     {
@@ -1614,7 +1614,7 @@ class GRIBArray final : public GDALPamMDArray
     std::vector<std::shared_ptr<GDALDimension>> m_dims{};
     GDALExtendedDataType m_dt = GDALExtendedDataType::Create(GDT_Float64);
     std::shared_ptr<OGRSpatialReference> m_poSRS{};
-    std::vector<vsi_l_offset> m_anOffsets{};
+    std::vector<uint64_t> m_anOffsets{};
     std::vector<int> m_anSubgNums{};
     std::vector<double> m_adfTimes{};
     std::vector<std::shared_ptr<GDALAttribute>> m_attributes{};
@@ -1642,7 +1642,7 @@ class GRIBArray final : public GDALPamMDArray
 
     void Init(GRIBGroup *poGroup, GRIBDataset *poDS, GRIBRasterBand *poBand,
               inventoryType *psInv);
-    void ExtendTimeDim(vsi_l_offset nOffset, int subgNum, double dfValidTime);
+    void ExtendTimeDim(uint64_t nOffset, int subgNum, double dfValidTime);
     void Finalize(GRIBGroup *poGroup, inventoryType *psInv);
 
     bool IsWritable() const override
@@ -1947,8 +1947,7 @@ void GRIBArray::Init(GRIBGroup *poGroup, GRIBDataset *poDS,
 /*                         ExtendTimeDim()                              */
 /************************************************************************/
 
-void GRIBArray::ExtendTimeDim(vsi_l_offset nOffset, int subgNum,
-                              double dfValidTime)
+void GRIBArray::ExtendTimeDim(uint64_t nOffset, int subgNum, double dfValidTime)
 {
     m_anOffsets.push_back(nOffset);
     m_anSubgNums.push_back(subgNum);
@@ -2054,7 +2053,7 @@ void GRIBArray::Finalize(GRIBGroup *poGroup, inventoryType *psInv)
 /*                              LoadData()                              */
 /************************************************************************/
 
-const std::vector<double> &GRIBSharedResource::LoadData(vsi_l_offset nOffset,
+const std::vector<double> &GRIBSharedResource::LoadData(uint64_t nOffset,
                                                         int subgNum)
 {
     if (m_nOffsetCurData == nOffset)

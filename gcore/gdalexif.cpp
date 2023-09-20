@@ -520,7 +520,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error reading EXIF Directory count at %" PRIu64,
-                 static_cast<vsi_l_offset>(nOffset) + nTIFFHEADER);
+                 static_cast<uint64_t>(nOffset) + nTIFFHEADER);
         return CE_Failure;
     }
 
@@ -659,7 +659,7 @@ CPLErr EXIFExtractMetadata(char **&papszMetadata, void *fpInL, int nOffset,
             continue;
         }
 
-        vsi_l_offset nTagValueOffset = poTIFFDirEntry->tdir_offset;
+        uint64_t nTagValueOffset = poTIFFDirEntry->tdir_offset;
 
         /* --------------------------------------------------------------------
          */

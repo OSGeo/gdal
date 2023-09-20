@@ -307,12 +307,12 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 
 %rename (VSIGetMemFileBuffer_unsafe) wrapper_VSIGetMemFileBuffer;
 
-%typemap(in, numinputs=0) (GByte **out, vsi_l_offset *length) (GByte *out = NULL, vsi_l_offset length) {
+%typemap(in, numinputs=0) (GByte **out, uint64_t *length) (GByte *out = NULL, uint64_t length) {
     $1 = &out;
     $2 = &length;
 }
 
-%typemap(argout) (GByte **out, vsi_l_offset *length) {
+%typemap(argout) (GByte **out, uint64_t *length) {
     if (*$1 == NULL) {
         if( GetUseExceptions() ) {
             PyErr_SetString(PyExc_RuntimeError, "Could not find path");
@@ -340,12 +340,12 @@ unsigned int wrapper_VSIFReadL( void **buf, unsigned int nMembSize, unsigned int
 }
 
 %inline %{
-void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, vsi_l_offset *length)
+void wrapper_VSIGetMemFileBuffer(const char *utf8_path, GByte **out, uint64_t *length)
 {
     *out = VSIGetMemFileBuffer(utf8_path, length, 0);
 }
 %}
-%clear (GByte **out, vsi_l_offset *length);
+%clear (GByte **out, uint64_t *length);
 
 
 

@@ -998,7 +998,7 @@ void OGRSXFDataSource::FillLayers()
     // 2. Read all records (only classify code and offset) and add this to
     // correspondence layer
     int nObjectsRead = 0;
-    vsi_l_offset nOffset = 0;
+    uint64_t nOffset = 0;
 
     // get record count
     uint32_t nRecordCountMax = 0;
@@ -1047,7 +1047,7 @@ void OGRSXFDataSource::FillLayers()
         if (bHasSemantic)  // check has attributes
         {
             // we have already 24 byte read
-            vsi_l_offset nOffsetSemantic = 8 + buff[2];
+            uint64_t nOffsetSemantic = 8 + buff[2];
             VSIFSeekL(fpSXF, nOffsetSemantic, SEEK_CUR);
         }
 
@@ -1178,7 +1178,7 @@ void OGRSXFDataSource::CreateLayers(VSILFILE *fpRSC,
     VSIFSeekL(fpRSC, stRSCFileHeader.Layers.nOffset - sizeof(szLayersID),
               SEEK_SET);
     VSIFReadL(&szLayersID, sizeof(szLayersID), 1, fpRSC);
-    vsi_l_offset nOffset = stRSCFileHeader.Layers.nOffset;
+    uint64_t nOffset = stRSCFileHeader.Layers.nOffset;
     _layer LAYER;
 
     for (uint32_t i = 0; i < stRSCFileHeader.Layers.nRecordCount; ++i)

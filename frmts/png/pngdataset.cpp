@@ -1558,9 +1558,9 @@ void PNGDataset::CollectXMPMetadata()
         return;
 
     // Save current position to avoid disturbing PNG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(fpImage);
+    const uint64_t nCurOffset = VSIFTellL(fpImage);
 
-    vsi_l_offset nOffset = 8;
+    uint64_t nOffset = 8;
     VSIFSeekL(fpImage, nOffset, SEEK_SET);
 
     // Loop over chunks.

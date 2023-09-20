@@ -67,7 +67,7 @@ class GDALTGADataset final : public GDALPamDataset
     struct ScanlineState
     {
         // Offset in the file of the start of the scanline
-        vsi_l_offset nOffset = 0;
+        uint64_t nOffset = 0;
         bool bRemainingPixelsAreRLERun = false;
         // Number of pixels remaining from a previous scanline.
         // See
@@ -478,9 +478,9 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
     if (nBands == 1)
     {
-        vsi_l_offset nOffset =
+        uint64_t nOffset =
             poGDS->m_nImageDataOffset +
-            static_cast<vsi_l_offset>(nLine) * nRasterXSize * nDTSize;
+            static_cast<uint64_t>(nLine) * nRasterXSize * nDTSize;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
         VSIFReadL(pImage, 1, nRasterXSize * nDTSize, poGDS->m_fpImage);
 #ifdef CPL_MSB
@@ -496,9 +496,9 @@ CPLErr GDALTGARasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
             (nBands == 4) ? 4 : poGDS->m_sImageHeader.nPixelDepth / 8;
         std::vector<GByte> abyData;
         abyData.resize(nBytesPerPixel * nRasterXSize);
-        vsi_l_offset nOffset =
+        uint64_t nOffset =
             poGDS->m_nImageDataOffset +
-            static_cast<vsi_l_offset>(nLine) * nRasterXSize * nBytesPerPixel;
+            static_cast<uint64_t>(nLine) * nRasterXSize * nBytesPerPixel;
         VSIFSeekL(poGDS->m_fpImage, nOffset, SEEK_SET);
         VSIFReadL(&abyData[0], 1, nRasterXSize * nBytesPerPixel,
                   poGDS->m_fpImage);

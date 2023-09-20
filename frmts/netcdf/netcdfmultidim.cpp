@@ -4871,7 +4871,7 @@ GDALDataset *netCDFDataset::OpenMultiDim(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(osFilenameForNCOpen, "/vsimem/") &&
         poOpenInfo->eAccess == GA_ReadOnly)
     {
-        vsi_l_offset nLength = 0;
+        uint64_t nLength = 0;
         poDS->fpVSIMEM = VSIFOpenL(osFilenameForNCOpen, "rb");
         if (poDS->fpVSIMEM)
         {

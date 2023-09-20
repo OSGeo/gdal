@@ -743,7 +743,7 @@ class ERSRasterBand final : public RawRasterBand
 {
   public:
     ERSRasterBand(GDALDataset *poDS, int nBand, VSILFILE *fpRaw,
-                  vsi_l_offset nImgOffset, int nPixelOffset, int nLineOffset,
+                  uint64_t nImgOffset, int nPixelOffset, int nLineOffset,
                   GDALDataType eDataType, int bNativeOrder);
 
     double GetNoDataValue(int *pbSuccess = nullptr) override;
@@ -755,7 +755,7 @@ class ERSRasterBand final : public RawRasterBand
 /************************************************************************/
 
 ERSRasterBand::ERSRasterBand(GDALDataset *poDSIn, int nBandIn,
-                             VSILFILE *fpRawIn, vsi_l_offset nImgOffsetIn,
+                             VSILFILE *fpRawIn, uint64_t nImgOffsetIn,
                              int nPixelOffsetIn, int nLineOffsetIn,
                              GDALDataType eDataTypeIn, int bNativeOrderIn)
     : RawRasterBand(poDSIn, nBandIn, fpRawIn, nImgOffsetIn, nPixelOffsetIn,

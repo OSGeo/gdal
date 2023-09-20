@@ -7481,7 +7481,7 @@ NetCDFFormatEnum netCDFDataset::IdentifyFormat(GDALOpenInfo *poOpenInfo,
         (!bCheckExt || EQUAL(pszExtension, "nc") ||
          EQUAL(pszExtension, "cdf") || EQUAL(pszExtension, "nc4")))
     {
-        vsi_l_offset nOffset = 512;
+        uint64_t nOffset = 512;
         for (int i = 0; i < 64; i++)
         {
             GByte abyBuf[8];
@@ -9133,7 +9133,7 @@ GDALDataset *netCDFDataset::Open(GDALOpenInfo *poOpenInfo)
     if (STARTS_WITH(osFilenameForNCOpen, "/vsimem/") &&
         poOpenInfo->eAccess == GA_ReadOnly)
     {
-        vsi_l_offset nLength = 0;
+        uint64_t nLength = 0;
         poDS->fpVSIMEM = VSIFOpenL(osFilenameForNCOpen, "rb");
         if (poDS->fpVSIMEM)
         {

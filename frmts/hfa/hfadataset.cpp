@@ -587,7 +587,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
             {
                 if (VSIFSeekL(hHFA->fp,
                               aoFields[iField].nDataOffset +
-                                  (static_cast<vsi_l_offset>(iStartRow) *
+                                  (static_cast<uint64_t>(iStartRow) *
                                    aoFields[iField].nElementSize),
                               SEEK_SET) != 0)
                 {
@@ -732,7 +732,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         {
             if (VSIFSeekL(hHFA->fp,
                           aoFields[iField].nDataOffset +
-                              (static_cast<vsi_l_offset>(iStartRow) *
+                              (static_cast<uint64_t>(iStartRow) *
                                aoFields[iField].nElementSize),
                           SEEK_SET) != 0)
             {
@@ -1027,7 +1027,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
         {
             if (VSIFSeekL(hHFA->fp,
                           aoFields[iField].nDataOffset +
-                              (static_cast<vsi_l_offset>(iStartRow) *
+                              (static_cast<uint64_t>(iStartRow) *
                                aoFields[iField].nElementSize),
                           SEEK_SET) != 0)
             {
@@ -1091,7 +1091,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                         CPL_IGNORE_RET_VAL(
                             VSIFSeekL(hHFA->fp,
                                       aoFields[iField].nDataOffset +
-                                          (static_cast<vsi_l_offset>(i) *
+                                          (static_cast<uint64_t>(i) *
                                            aoFields[iField].nElementSize),
                                       SEEK_SET));
                         // Read in old data.
@@ -1099,11 +1099,11 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                             VSIFReadL(pszBuffer, aoFields[iField].nElementSize,
                                       1, hHFA->fp));
                         // Seek to new place.
-                        bool bOK = VSIFSeekL(hHFA->fp,
-                                             nNewOffset +
-                                                 (static_cast<vsi_l_offset>(i) *
-                                                  nNewMaxChars),
-                                             SEEK_SET) == 0;
+                        bool bOK =
+                            VSIFSeekL(hHFA->fp,
+                                      nNewOffset + (static_cast<uint64_t>(i) *
+                                                    nNewMaxChars),
+                                      SEEK_SET) == 0;
                         // Write data to new place.
                         bOK &=
                             VSIFWriteL(pszBuffer, aoFields[iField].nElementSize,
@@ -1149,7 +1149,7 @@ CPLErr HFARasterAttributeTable::ValuesIO(GDALRWFlag eRWFlag, int iField,
                     // write.
                     if (VSIFSeekL(hHFA->fp,
                                   nNewOffset +
-                                      (static_cast<vsi_l_offset>(iStartRow) *
+                                      (static_cast<uint64_t>(iStartRow) *
                                        nNewMaxChars),
                                   SEEK_SET) != 0)
                     {
@@ -1212,7 +1212,7 @@ CPLErr HFARasterAttributeTable::ColorsIO(GDALRWFlag eRWFlag, int iField,
 
     if (VSIFSeekL(hHFA->fp,
                   aoFields[iField].nDataOffset +
-                      (static_cast<vsi_l_offset>(iStartRow) *
+                      (static_cast<uint64_t>(iStartRow) *
                        aoFields[iField].nElementSize),
                   SEEK_SET) != 0)
     {

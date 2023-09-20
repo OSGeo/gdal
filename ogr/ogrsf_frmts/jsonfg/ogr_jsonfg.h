@@ -298,7 +298,7 @@ class OGRJSONFGDataset final : public GDALDataset
     /** Offset at which the '] }' terminating sequence has already been
      * written by SyncToDisk(). 0 if it has not been written.
      */
-    vsi_l_offset m_nPositionBeforeFCClosed = 0;
+    uint64_t m_nPositionBeforeFCClosed = 0;
 
     bool ReadFromFile(GDALOpenInfo *poOpenInfo, const char *pszUnprefixed);
     bool ReadFromService(GDALOpenInfo *poOpenInfo, const char *pszSource);

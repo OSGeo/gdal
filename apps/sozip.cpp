@@ -105,7 +105,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
 
                 const char *pszStartIdxDataOffset =
                     CSLFetchNameValue(papszMD, "SOZIP_START_DATA_OFFSET");
-                const vsi_l_offset nStartIdxOffset =
+                const uint64_t nStartIdxOffset =
                     std::strtoull(pszStartIdxDataOffset, nullptr, 10);
                 VSILFILE *fpRaw = VSIFOpenL(pszZipFilename, "rb");
                 CPLAssert(fpRaw);
@@ -220,7 +220,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
 
                 const char *pszStartDataOffset =
                     CSLFetchNameValue(papszMD, "START_DATA_OFFSET");
-                const vsi_l_offset nStartOffset =
+                const uint64_t nStartOffset =
                     std::strtoull(pszStartDataOffset, nullptr, 10);
                 VSILFILE *fp = VSIFOpenL(osFilenameInZip.c_str(), "rb");
                 if (!fp)
@@ -265,8 +265,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                     }
                     if (!abyData.empty())
                     {
-                        if (VSIFSeekL(fp,
-                                      static_cast<vsi_l_offset>(i) * nChunkSize,
+                        if (VSIFSeekL(fp, static_cast<uint64_t>(i) * nChunkSize,
                                       SEEK_SET) != 0)
                         {
                             fprintf(stderr, "VSIFSeekL() failed.\n");
@@ -288,7 +287,7 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                 if (fp)
                 {
                     if (VSIFSeekL(fp,
-                                  static_cast<vsi_l_offset>(nChunksItems) *
+                                  static_cast<uint64_t>(nChunksItems) *
                                       nChunkSize,
                                   SEEK_SET) != 0)
                     {
@@ -297,10 +296,10 @@ static int Validate(const char *pszZipFilename, bool bVerbose)
                     }
                     const size_t nRead =
                         VSIFReadL(&abyData[0], 1, nChunkSize, fp);
-                    if (nRead != static_cast<size_t>(
-                                     nUncompressedSize -
-                                     static_cast<vsi_l_offset>(nChunksItems) *
-                                         nChunkSize))
+                    if (nRead !=
+                        static_cast<size_t>(
+                            nUncompressedSize -
+                            static_cast<uint64_t>(nChunksItems) * nChunkSize))
                     {
                         bSeekOptimizedValid = false;
                         fprintf(

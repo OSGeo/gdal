@@ -75,7 +75,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *buf, size_t len)
     CPLErrorHandlerPusher oErrorHandler(CPLQuietErrorHandler);
 
     GByte *paby = nullptr;
-    vsi_l_offset nSize = 0;
+    uint64_t nSize = 0;
     if (!VSIIngestFile(nullptr, "/vsitar//vsimem/input.tar/filename", &paby,
                        &nSize, -1))
     {

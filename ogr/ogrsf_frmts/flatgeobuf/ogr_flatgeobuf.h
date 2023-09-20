@@ -76,7 +76,7 @@ class OGRFlatGeobufLayer final : public OGRLayer,
     std::string m_osLayerName;
 
     VSILFILE *m_poFp = nullptr;
-    vsi_l_offset m_nFileSize = 0;
+    uint64_t m_nFileSize = 0;
 
     const FlatGeobuf::Header *m_poHeader = nullptr;
     GByte *m_headerBuf = nullptr;

@@ -252,7 +252,7 @@ CPLErr GSBGRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff, void *pImage)
     GSBGDataset *poGDS = reinterpret_cast<GSBGDataset *>(poDS);
     if (VSIFSeekL(poGDS->fp,
                   GSBGDataset::nHEADER_SIZE +
-                      4 * static_cast<vsi_l_offset>(nRasterXSize) *
+                      4 * static_cast<uint64_t>(nRasterXSize) *
                           (nRasterYSize - nBlockYOff - 1),
                   SEEK_SET) != 0)
     {

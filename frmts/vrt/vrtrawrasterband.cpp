@@ -174,9 +174,9 @@ CPLErr VRTRawRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
 
 CPLErr VRTRawRasterBand::SetRawLink(const char *pszFilename,
                                     const char *pszVRTPath,
-                                    int bRelativeToVRTIn,
-                                    vsi_l_offset nImageOffset, int nPixelOffset,
-                                    int nLineOffset, const char *pszByteOrder)
+                                    int bRelativeToVRTIn, uint64_t nImageOffset,
+                                    int nPixelOffset, int nLineOffset,
+                                    const char *pszByteOrder)
 
 {
     ClearRawLink();
@@ -387,7 +387,7 @@ VRTRawRasterBand::XMLInit(CPLXMLNode *psTree, const char *pszVRTPath,
     int nWordDataSize = GDALGetDataTypeSizeBytes(GetRasterDataType());
 
     const char *pszImageOffset = CPLGetXMLValue(psTree, "ImageOffset", "0");
-    const vsi_l_offset nImageOffset = CPLScanUIntBig(
+    const uint64_t nImageOffset = CPLScanUIntBig(
         pszImageOffset, static_cast<int>(strlen(pszImageOffset)));
 
     int nPixelOffset = nWordDataSize;

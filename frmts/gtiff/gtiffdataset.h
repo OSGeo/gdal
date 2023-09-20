@@ -160,7 +160,7 @@ class GTiffDataset final : public GDALPamDataset
     CPLMutex *m_hCompressThreadPoolMutex = nullptr;
 
 #ifdef SUPPORTS_GET_OFFSET_BYTECOUNT
-    lru11::Cache<int, std::pair<vsi_l_offset, vsi_l_offset>>
+    lru11::Cache<int, std::pair<uint64_t, uint64_t>>
         m_oCacheStrileToOffsetByteCount{1024};
 #endif
 
@@ -329,8 +329,8 @@ class GTiffDataset final : public GDALPamDataset
 
     int GetJPEGOverviewCount();
 
-    bool IsBlockAvailable(int nBlockId, vsi_l_offset *pnOffset = nullptr,
-                          vsi_l_offset *pnSize = nullptr,
+    bool IsBlockAvailable(int nBlockId, uint64_t *pnOffset = nullptr,
+                          uint64_t *pnSize = nullptr,
                           bool *pbErrOccurred = nullptr);
 
     void ApplyPamInfo();

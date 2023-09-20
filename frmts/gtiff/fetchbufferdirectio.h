@@ -52,7 +52,7 @@ class FetchBufferDirectIO final
     {
     }
 
-    const GByte *FetchBytes(vsi_l_offset nOffset, int nPixels, int nDTSize,
+    const GByte *FetchBytes(uint64_t nOffset, int nPixels, int nDTSize,
                             bool bIsByteSwapped, bool bIsComplex, int nBlockId)
     {
         if (!FetchBytes(pTempBuffer, nOffset, nPixels, nDTSize, bIsByteSwapped,
@@ -63,11 +63,11 @@ class FetchBufferDirectIO final
         return pTempBuffer;
     }
 
-    bool FetchBytes(GByte *pabyDstBuffer, vsi_l_offset nOffset, int nPixels,
+    bool FetchBytes(GByte *pabyDstBuffer, uint64_t nOffset, int nPixels,
                     int nDTSize, bool bIsByteSwapped, bool bIsComplex,
                     int nBlockId)
     {
-        vsi_l_offset nSeekForward = 0;
+        uint64_t nSeekForward = 0;
         if (nOffset <= VSIFTellL(fp) ||
             (nSeekForward = nOffset - VSIFTellL(fp)) > nTempBufferSize)
         {
@@ -82,7 +82,7 @@ class FetchBufferDirectIO final
         {
             while (nSeekForward > 0)
             {
-                vsi_l_offset nToRead = nSeekForward;
+                uint64_t nToRead = nSeekForward;
                 if (nToRead > nTempBufferSize)
                     nToRead = nTempBufferSize;
                 if (VSIFReadL(pTempBuffer, static_cast<size_t>(nToRead), 1,

@@ -74,12 +74,12 @@ class GDALFakePDFDataset final : public GDALDataset
 class GDALXRefEntry
 {
   public:
-    vsi_l_offset nOffset = 0;
+    uint64_t nOffset = 0;
     int nGen = 0;
     int bFree = FALSE;
 
     GDALXRefEntry() = default;
-    explicit GDALXRefEntry(vsi_l_offset nOffsetIn, int nGenIn = 0)
+    explicit GDALXRefEntry(uint64_t nOffsetIn, int nGenIn = 0)
         : nOffset(nOffsetIn), nGen(nGenIn)
     {
     }
@@ -171,7 +171,7 @@ class GDALPDFBaseWriter
     GDALPDFObjectNum m_nContentLengthId{};
     VSILFILE *m_fpBack = nullptr;
     VSILFILE *m_fpGZip = nullptr;
-    vsi_l_offset m_nStreamStart = 0;
+    uint64_t m_nStreamStart = 0;
 
     std::vector<GDALPDFObjectNum> m_asPageId{};
     std::vector<GDALPDFOCGDesc> m_asOCGs{};
@@ -233,7 +233,7 @@ class GDALPDFBaseWriter
     void StartNewDoc();
     void Close();
 
-    void WriteXRefTableAndTrailer(bool bUpdate, vsi_l_offset nLastStartXRef);
+    void WriteXRefTableAndTrailer(bool bUpdate, uint64_t nLastStartXRef);
 
     GDALPDFObjectNum WriteSRS_ISO32000(GDALDataset *poSrcDS, double dfUserUnit,
                                        const char *pszNEATLINE,
@@ -306,7 +306,7 @@ class GDALPDFBaseWriter
 class GDALPDFUpdateWriter final : public GDALPDFBaseWriter
 {
     bool m_bUpdateNeeded = false;
-    vsi_l_offset m_nLastStartXRef = 0;
+    uint64_t m_nLastStartXRef = 0;
     int m_nLastXRefSize = 0;
 
   public:

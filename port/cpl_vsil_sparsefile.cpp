@@ -89,8 +89,8 @@ class VSISparseFileHandle : public VSIVirtualHandle
 
     std::vector<SFRegion> aoRegions{};
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -113,8 +113,7 @@ class VSISparseFileFilesystemHandler : public VSIFilesystemHandler
     ~VSISparseFileFilesystemHandler() override = default;
 
     int DecomposePath(const char *pszPath, CPLString &osFilename,
-                      vsi_l_offset &nSparseFileOffset,
-                      vsi_l_offset &nSparseFileSize);
+                      uint64_t &nSparseFileOffset, uint64_t &nSparseFileSize);
 
     // TODO(schwehr): Fix VSISparseFileFilesystemHandler::Stat to not need
     // using.
@@ -170,7 +169,7 @@ int VSISparseFileHandle::Close()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSISparseFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSISparseFileHandle::Seek(uint64_t nOffset, int nWhence)
 
 {
     bEOF = false;
@@ -197,7 +196,7 @@ int VSISparseFileHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                                Tell()                                */
 /************************************************************************/
 
-vsi_l_offset VSISparseFileHandle::Tell()
+uint64_t VSISparseFileHandle::Tell()
 
 {
     return nCurOffset;

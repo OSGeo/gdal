@@ -68,8 +68,8 @@ class OGRVDVLayer final : public OGRLayer
     VSILFILE *m_fpL;
     bool m_bOwnFP;
     bool m_bRecodeFromLatin1;
-    vsi_l_offset m_nStartOffset;
-    vsi_l_offset m_nCurOffset;
+    uint64_t m_nStartOffset;
+    uint64_t m_nCurOffset;
     int64_t m_nTotalFeatureCount;
     int64_t m_nFID;
     OGRFeatureDefn *m_poFeatureDefn;
@@ -79,7 +79,7 @@ class OGRVDVLayer final : public OGRLayer
 
   public:
     OGRVDVLayer(const CPLString &osTableName, VSILFILE *fpL, bool bOwnFP,
-                bool bRecodeFromLatin1, vsi_l_offset nStartOffset);
+                bool bRecodeFromLatin1, uint64_t nStartOffset);
     virtual ~OGRVDVLayer();
 
     virtual void ResetReading() override;

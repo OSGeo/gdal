@@ -40,7 +40,7 @@
 
 extern "C" CPL_DLL void GDALRegister_JP2Lura();
 
-static vsi_l_offset JP2LuraFindCodeStream(VSILFILE *fp, vsi_l_offset *pnLength);
+static uint64_t JP2LuraFindCodeStream(VSILFILE *fp, uint64_t *pnLength);
 
 /************************************************************************/
 /*                         FloorPowerOfTwo()                            */
@@ -933,7 +933,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
         /*      Add JP2 boxes. */
         /* --------------------------------------------------------------------
          */
-        // vsi_l_offset nStartJP2C = 0;
+        // uint64_t nStartJP2C = 0;
         bool bUseXLBoxes = false;
 
         if (bIsJP2OrJPX)
@@ -1215,8 +1215,8 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
         /*      Try lossless reuse of an existing JPEG2000 codestream */
         /* --------------------------------------------------------------------
          */
-        vsi_l_offset nCodeStreamLength = 0;
-        vsi_l_offset nCodeStreamStart = 0;
+        uint64_t nCodeStreamLength = 0;
+        uint64_t nCodeStreamStart = 0;
         VSILFILE *fpSrc = nullptr;
         if (USE_SRC_CODESTREAM)
         {
@@ -1250,7 +1250,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             // Start codestream box
             // nStartJP2C = VSIFTellL(fp);
             if (nCodeStreamLength)
-                bUseXLBoxes = ((vsi_l_offset)(uint32_t)nCodeStreamLength !=
+                bUseXLBoxes = ((uint64_t)(uint32_t)nCodeStreamLength !=
                                nCodeStreamLength);
             /*else
                 bUseXLBoxes =
@@ -1290,7 +1290,7 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
             }
             GByte abyBuffer[4096];
             VSIFSeekL(fpSrc, nCodeStreamStart, SEEK_SET);
-            vsi_l_offset nRead = 0;
+            uint64_t nRead = 0;
             while (nRead < nCodeStreamLength)
             {
                 int nToRead = (nCodeStreamLength - nRead > 4096)
@@ -1582,10 +1582,10 @@ GDALDataset *JP2LuraDataset::CreateCopy(const char *pszFilename,
 /*                        JP2LuraFindCodeStream()                       */
 /************************************************************************/
 
-static vsi_l_offset JP2LuraFindCodeStream(VSILFILE *fp, vsi_l_offset *pnLength)
+static uint64_t JP2LuraFindCodeStream(VSILFILE *fp, uint64_t *pnLength)
 {
-    vsi_l_offset nCodeStreamStart = 0;
-    vsi_l_offset nCodeStreamLength = 0;
+    uint64_t nCodeStreamStart = 0;
+    uint64_t nCodeStreamLength = 0;
 
     VSIFSeekL(fp, 0, SEEK_SET);
     GByte abyHeader[16];

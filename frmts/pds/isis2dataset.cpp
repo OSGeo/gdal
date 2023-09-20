@@ -682,7 +682,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
     /* -------------------------------------------------------------------- */
     int nItemSize = GDALGetDataTypeSizeBytes(eDataType);
     int nLineOffset, nPixelOffset;
-    vsi_l_offset nBandOffset;
+    uint64_t nBandOffset;
 
     if (EQUAL(szLayout, "BIP"))
     {
@@ -702,7 +702,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         nLineOffset = nPixelOffset * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nLineOffset) * nRows;
+        nBandOffset = static_cast<uint64_t>(nLineOffset) * nRows;
     }
     else /* assume BIL */
     {
@@ -713,7 +713,7 @@ GDALDataset *ISIS2Dataset::Open(GDALOpenInfo *poOpenInfo)
             return nullptr;
         }
         nLineOffset = nItemSize * nBands * nCols;
-        nBandOffset = static_cast<vsi_l_offset>(nItemSize) * nCols;
+        nBandOffset = static_cast<uint64_t>(nItemSize) * nCols;
     }
 
     /* -------------------------------------------------------------------- */

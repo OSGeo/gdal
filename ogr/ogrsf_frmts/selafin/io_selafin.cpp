@@ -386,8 +386,7 @@ int write_integer(VSILFILE *fp, int nData)
     return 1;
 }
 
-int read_string(VSILFILE *fp, char *&pszData, vsi_l_offset nFileSize,
-                bool bDiscard)
+int read_string(VSILFILE *fp, char *&pszData, uint64_t nFileSize, bool bDiscard)
 {
     int nLength = 0;
     read_integer(fp, nLength);
@@ -447,7 +446,7 @@ int write_string(VSILFILE *fp, char *pszData, size_t nLength)
     return 1;
 }
 
-int read_intarray(VSILFILE *fp, int *&panData, vsi_l_offset nFileSize,
+int read_intarray(VSILFILE *fp, int *&panData, uint64_t nFileSize,
                   bool bDiscard)
 {
     int nLength = 0;
@@ -540,7 +539,7 @@ int write_float(VSILFILE *fp, double dfData)
     return 1;
 }
 
-int read_floatarray(VSILFILE *fp, double **papadfData, vsi_l_offset nFileSize,
+int read_floatarray(VSILFILE *fp, double **papadfData, uint64_t nFileSize,
                     bool bDiscard)
 {
     int nLength = 0;
@@ -776,12 +775,12 @@ Header *read_header(VSILFILE *fp, const char *pszFilename)
     // Update the size of the header and calculate the number of time steps
     poHeader->setUpdated();
     int nPos = poHeader->getPosition(0);
-    if (static_cast<vsi_l_offset>(nPos) > poHeader->nFileSize)
+    if (static_cast<uint64_t>(nPos) > poHeader->nFileSize)
     {
         delete poHeader;
         return nullptr;
     }
-    vsi_l_offset nStepsBig =
+    uint64_t nStepsBig =
         poHeader->nVar != 0
             ? (poHeader->nFileSize - nPos) / (poHeader->getPosition(1) - nPos)
             : 0;

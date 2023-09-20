@@ -668,9 +668,9 @@ CPLErr JPEG_Codec::DecompressJPEG(buf_mgr &dst, buf_mgr &isrc)
         /* store for all coefficients */
         /* See call to jinit_d_coef_controller() from master_selection() */
         /* in libjpeg */
-        vsi_l_offset nRequiredMemory =
-            static_cast<vsi_l_offset>(cinfo.image_width) * cinfo.image_height *
-            cinfo.num_components * ((cinfo.data_precision + 7) / 8);
+        uint64_t nRequiredMemory = static_cast<uint64_t>(cinfo.image_width) *
+                                   cinfo.image_height * cinfo.num_components *
+                                   ((cinfo.data_precision + 7) / 8);
         /* BLOCK_SMOOTHING_SUPPORTED is generally defined, so we need */
         /* to replicate the logic of jinit_d_coef_controller() */
         if (cinfo.progressive_mode)

@@ -207,8 +207,7 @@ class OGRGeoJSONReader : public OGRGeoJSONBaseReader
     int64_t nTotalFeatureCount_;
     uint64_t nTotalOGRFeatureMemEstimate_;
 
-    std::map<int64_t, std::pair<vsi_l_offset, vsi_l_offset>>
-        oMapFIDToOffsetSize_;
+    std::map<int64_t, std::pair<uint64_t, uint64_t>> oMapFIDToOffsetSize_;
     //
     // Copy operations not supported.
     //

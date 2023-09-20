@@ -65,7 +65,7 @@ class RDataset final : public GDALPamDataset
     int bASCII;
     CPLString osLastStringRead;
 
-    vsi_l_offset nStartOfData;
+    uint64_t nStartOfData;
 
     double *padfMatrixValues;
 

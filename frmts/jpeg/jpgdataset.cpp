@@ -164,7 +164,7 @@ void JPGDatasetCommon::ReadImageStructureMetadata()
         return;  // quality guessing not implemented for 12-bit JPEG for now
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     GByte abyChunkHeader[4];
     int nChunkLoc = 2;
@@ -235,7 +235,7 @@ void JPGDatasetCommon::ReadEXIFMetadata()
     CPLAssert(papszMetadata == nullptr);
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     if (EXIFInit(m_fpImage))
     {
@@ -306,7 +306,7 @@ void JPGDatasetCommon::ReadXMPMetadata()
         return;
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     // Search for APP1 chunk.
     constexpr int APP1_BYTE = 0xe1;
@@ -388,7 +388,7 @@ void JPGDatasetCommon::ReadFLIRMetadata()
     bHasReadFLIRMetadata = true;
 
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     int nChunkLoc = 2;
     // size of APP1 segment marker + size of "FLIR\0"
@@ -1006,7 +1006,7 @@ void JPGDatasetCommon::ReadICCProfile()
         return;
     bHasReadICCMetadata = true;
 
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     int nChunkCount = -1;
     int anChunkSize[256] = {};
@@ -1728,7 +1728,7 @@ GDALDataset *JPGDatasetCommon::InitEXIFOverview()
     {
         CPLError(CE_Failure, CPLE_AppDefined,
                  "Error reading EXIF Directory count at %" PRIu64,
-                 static_cast<vsi_l_offset>(nTiffDirStart) + nTIFFHEADER);
+                 static_cast<uint64_t>(nTiffDirStart) + nTIFFHEADER);
         return nullptr;
     }
 
@@ -1867,7 +1867,7 @@ void JPGDatasetCommon::InitInternalOverviews()
         GDALDataset *poEXIFOverview = nullptr;
         if (nRasterXSize > 512 || nRasterYSize > 512)
         {
-            const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+            const uint64_t nCurOffset = VSIFTellL(m_fpImage);
             poEXIFOverview = InitEXIFOverview();
             if (poEXIFOverview != nullptr)
             {
@@ -2076,7 +2076,7 @@ CPLErr JPGDataset::StartDecompress()
         /* in libjpeg */
 
         // 1 MB for regular libjpeg usage
-        vsi_l_offset nRequiredMemory = 1024 * 1024;
+        uint64_t nRequiredMemory = 1024 * 1024;
 
         for (int ci = 0; ci < sDInfo.num_components; ci++)
         {
@@ -2088,8 +2088,8 @@ CPLErr JPGDataset::StartDecompress()
                 return CE_Failure;
             }
             nRequiredMemory +=
-                static_cast<vsi_l_offset>(DIV_ROUND_UP(
-                    compptr->width_in_blocks, compptr->h_samp_factor)) *
+                static_cast<uint64_t>(DIV_ROUND_UP(compptr->width_in_blocks,
+                                                   compptr->h_samp_factor)) *
                 DIV_ROUND_UP(compptr->height_in_blocks,
                              compptr->v_samp_factor) *
                 sizeof(JBLOCK);
@@ -2107,7 +2107,7 @@ CPLErr JPGDataset::StartDecompress()
 
         if (sDInfo.mem->max_memory_to_use > 0 &&
             nRequiredMemory >
-                static_cast<vsi_l_offset>(sDInfo.mem->max_memory_to_use) &&
+                static_cast<uint64_t>(sDInfo.mem->max_memory_to_use) &&
             CPLGetConfigOption("GDAL_ALLOW_LARGE_LIBJPEG_MEM_ALLOC", nullptr) ==
                 nullptr)
         {
@@ -3285,7 +3285,7 @@ void JPGDatasetCommon::CheckForMask()
 
 {
     // Save current position to avoid disturbing JPEG stream decoding.
-    const vsi_l_offset nCurOffset = VSIFTellL(m_fpImage);
+    const uint64_t nCurOffset = VSIFTellL(m_fpImage);
 
     // Go to the end of the file, pull off four bytes, and see if
     // it is plausibly the size of the real image data.
@@ -4013,7 +4013,7 @@ void JPGAddEXIF(GDALDataType eWorkDT, GDALDataset *poSrcDS, char **papszOptions,
             nOvrHeight = 1;
     }
 
-    vsi_l_offset nJPEGIfByteCount = 0;
+    uint64_t nJPEGIfByteCount = 0;
     GByte *pabyOvr = nullptr;
 
     if (bGenerateEXIFThumbnail && nXSize > nOvrWidth && nYSize > nOvrHeight)

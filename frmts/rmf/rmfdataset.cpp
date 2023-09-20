@@ -978,7 +978,7 @@ CPLErr RMFDataset::WriteHeader()
         }
     }
 
-    vsi_l_offset iCurrentFileSize(GetLastOffset());
+    uint64_t iCurrentFileSize(GetLastOffset());
     sHeader.nFileSize0 = GetRMFOffset(iCurrentFileSize, &iCurrentFileSize);
     sHeader.nSize = sHeader.nFileSize0 - GetRMFOffset(nHeaderOffset, nullptr);
     /* -------------------------------------------------------------------- */
@@ -1252,7 +1252,7 @@ GDALDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo)
 }
 
 RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
-                             vsi_l_offset nNextHeaderOffset)
+                             uint64_t nNextHeaderOffset)
 {
     if (!Identify(poOpenInfo) ||
         (poParentDS == nullptr && poOpenInfo->fpL == nullptr))
@@ -1596,7 +1596,7 @@ RMFDataset *RMFDataset::Open(GDALOpenInfo *poOpenInfo, RMFDataset *poParentDS,
     if (poDS->sHeader.nTileTblSize > 1000000)
     {
         VSIFSeekL(poDS->fp, 0, SEEK_END);
-        vsi_l_offset nFileSize = VSIFTellL(poDS->fp);
+        uint64_t nFileSize = VSIFTellL(poDS->fp);
         if (nFileSize < poDS->sHeader.nTileTblSize)
         {
             delete poDS;
@@ -2243,7 +2243,7 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     // poDS->sHeader.nROIOffset = 0x00;
     // poDS->sHeader.nROISize = 0x00;
 
-    vsi_l_offset nCurPtr = poDS->nHeaderOffset + RMF_HEADER_SIZE;
+    uint64_t nCurPtr = poDS->nHeaderOffset + RMF_HEADER_SIZE;
 
     // Extended header
     poDS->sHeader.nExtHdrOffset = poDS->GetRMFOffset(nCurPtr, &nCurPtr);
@@ -2417,18 +2417,18 @@ GDALDataset *RMFDataset::Create(const char *pszFilename, int nXSize, int nYSize,
 }
 
 // GIS Panorama 11 was introduced new format for huge files (greater than 3 Gb)
-vsi_l_offset RMFDataset::GetFileOffset(uint32_t iRMFOffset) const
+uint64_t RMFDataset::GetFileOffset(uint32_t iRMFOffset) const
 {
     if (sHeader.iVersion >= RMF_VERSION_HUGE)
     {
-        return ((vsi_l_offset)iRMFOffset) * RMF_HUGE_OFFSET_FACTOR;
+        return ((uint64_t)iRMFOffset) * RMF_HUGE_OFFSET_FACTOR;
     }
 
-    return (vsi_l_offset)iRMFOffset;
+    return (uint64_t)iRMFOffset;
 }
 
-uint32_t RMFDataset::GetRMFOffset(vsi_l_offset nFileOffset,
-                                  vsi_l_offset *pnNewFileOffset) const
+uint32_t RMFDataset::GetRMFOffset(uint64_t nFileOffset,
+                                  uint64_t *pnNewFileOffset) const
 {
     if (sHeader.iVersion >= RMF_VERSION_HUGE)
     {
@@ -2463,7 +2463,7 @@ RMFDataset *RMFDataset::OpenOverview(RMFDataset *poParent,
         return nullptr;
     }
 
-    vsi_l_offset nSubOffset = GetFileOffset(sHeader.nOvrOffset);
+    uint64_t nSubOffset = GetFileOffset(sHeader.nOvrOffset);
 
     CPLDebug("RMF", "Try to open overview subfile at %" PRIu64 " for '%s'",
              nSubOffset, poOpenInfo->pszFilename);
@@ -2684,14 +2684,14 @@ CPLErr RMFDataset::IRasterIO(GDALRWFlag eRWFlag, int nXOff, int nYOff,
                                   nBandSpace, psExtraArg);
 }
 
-vsi_l_offset RMFDataset::GetLastOffset() const
+uint64_t RMFDataset::GetLastOffset() const
 {
-    vsi_l_offset nLastTileOff = 0;
+    uint64_t nLastTileOff = 0;
     uint32_t nTiles(sHeader.nTileTblSize / sizeof(uint32_t));
 
     for (uint32_t n = 0; n < nTiles; n += 2)
     {
-        vsi_l_offset nTileOffset = GetFileOffset(paiTiles[n]);
+        uint64_t nTileOffset = GetFileOffset(paiTiles[n]);
         uint32_t nTileBytes = paiTiles[n + 1];
         nLastTileOff = std::max(nLastTileOff, nTileOffset + nTileBytes);
     }
@@ -2739,7 +2739,7 @@ CPLErr RMFDataset::CleanOverviews()
     }
     poOvrDatasets.clear();
 
-    vsi_l_offset nLastTileOff = GetLastOffset();
+    uint64_t nLastTileOff = GetLastOffset();
 
     if (0 != VSIFSeekL(fp, 0, SEEK_END))
     {
@@ -2748,7 +2748,7 @@ CPLErr RMFDataset::CleanOverviews()
                  "overviews cleanup failed.");
     }
 
-    vsi_l_offset nFileSize = VSIFTellL(fp);
+    uint64_t nFileSize = VSIFTellL(fp);
     if (nFileSize < nLastTileOff)
     {
         CPLError(CE_Failure, CPLE_FileIO,
@@ -3060,7 +3060,7 @@ CPLErr RMFDataset::WriteRawTile(int nBlockXOff, int nBlockYOff, GByte *pabyData,
 
     const uint32_t nTile = nBlockYOff * nXTiles + nBlockXOff;
 
-    vsi_l_offset nTileOffset = GetFileOffset(paiTiles[2 * nTile]);
+    uint64_t nTileOffset = GetFileOffset(paiTiles[2 * nTile]);
     size_t nTileSize = static_cast<size_t>(paiTiles[2 * nTile + 1]);
 
     if (nTileOffset && nTileSize <= nTileBytes)
@@ -3085,7 +3085,7 @@ CPLErr RMFDataset::WriteRawTile(int nBlockXOff, int nBlockYOff, GByte *pabyData,
             return CE_Failure;
         }
         nTileOffset = VSIFTellL(fp);
-        vsi_l_offset nNewTileOffset = 0;
+        uint64_t nNewTileOffset = 0;
         paiTiles[2 * nTile] = GetRMFOffset(nTileOffset, &nNewTileOffset);
 
         if (nTileOffset != nNewTileOffset)
@@ -3152,7 +3152,7 @@ CPLErr RMFDataset::ReadTile(int nBlockXOff, int nBlockYOff, GByte *pabyData,
     {
         return CE_Failure;
     }
-    vsi_l_offset nTileOffset = GetFileOffset(paiTiles[2 * nTile]);
+    uint64_t nTileOffset = GetFileOffset(paiTiles[2 * nTile]);
     uint32_t nTileBytes = paiTiles[2 * nTile + 1];
     // RMF doesn't store compressed tiles with size greater than 80% of
     // uncompressed size. But just in case, select twice as many.

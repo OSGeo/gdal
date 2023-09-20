@@ -508,7 +508,7 @@ int VSICurlHandle::UninstallReadCbk()
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSICurlHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSICurlHandle::Seek(uint64_t nOffset, int nWhence)
 {
     if (nWhence == SEEK_SET)
     {
@@ -1036,8 +1036,7 @@ void VSICurlHandle::ManagePlanetaryComputerSigning() const
 /*                     GetFileSizeOrHeaders()                           */
 /************************************************************************/
 
-vsi_l_offset VSICurlHandle::GetFileSizeOrHeaders(bool bSetError,
-                                                 bool bGetHeaders)
+uint64_t VSICurlHandle::GetFileSizeOrHeaders(bool bSetError, bool bGetHeaders)
 {
     if (oFileProp.bHasComputedFileSize && !bGetHeaders)
         return oFileProp.fileSize;
@@ -1556,7 +1555,7 @@ bool VSICurlHandle::Exists(bool bSetError)
 /*                                  Tell()                              */
 /************************************************************************/
 
-vsi_l_offset VSICurlHandle::Tell()
+uint64_t VSICurlHandle::Tell()
 {
     return curOffset;
 }
@@ -1610,13 +1609,13 @@ struct CurrentDownload
 {
     VSICurlFilesystemHandlerBase *m_poFS = nullptr;
     std::string m_osURL{};
-    vsi_l_offset m_nStartOffset = 0;
+    uint64_t m_nStartOffset = 0;
     int m_nBlocks = 0;
     std::string m_osData{};
     bool m_bDone = false;
 
     CurrentDownload(VSICurlFilesystemHandlerBase *poFS, const char *pszURL,
-                    vsi_l_offset startOffset, int nBlocks)
+                    uint64_t startOffset, int nBlocks)
         : m_poFS(poFS), m_osURL(pszURL), m_nStartOffset(startOffset),
           m_nBlocks(nBlocks)
     {
@@ -1655,7 +1654,7 @@ struct CurrentDownload
 /************************************************************************/
 
 std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
-    const std::string &osURL, vsi_l_offset startOffset, int nBlocks)
+    const std::string &osURL, uint64_t startOffset, int nBlocks)
 {
     std::string osId(osURL);
     osId += '_';
@@ -1695,7 +1694,7 @@ std::string VSICurlFilesystemHandlerBase::NotifyStartDownloadRegion(
 /************************************************************************/
 
 void VSICurlFilesystemHandlerBase::NotifyStopDownloadRegion(
-    const std::string &osURL, vsi_l_offset startOffset, int nBlocks,
+    const std::string &osURL, uint64_t startOffset, int nBlocks,
     const std::string &osData)
 {
     std::string osId(osURL);
@@ -1730,7 +1729,7 @@ void VSICurlFilesystemHandlerBase::NotifyStopDownloadRegion(
 /*                          DownloadRegion()                            */
 /************************************************************************/
 
-std::string VSICurlHandle::DownloadRegion(const vsi_l_offset startOffset,
+std::string VSICurlHandle::DownloadRegion(const uint64_t startOffset,
                                           const int nBlocks)
 {
     if (bInterrupted && bStopOnInterruptUntilUninstall)
@@ -2093,7 +2092,7 @@ void VSICurlHandle::UpdateRedirectInfo(
 /*                      DownloadRegionPostProcess()                     */
 /************************************************************************/
 
-void VSICurlHandle::DownloadRegionPostProcess(const vsi_l_offset startOffset,
+void VSICurlHandle::DownloadRegionPostProcess(const uint64_t startOffset,
                                               const int nBlocks,
                                               const char *pBuffer, size_t nSize)
 {
@@ -2110,7 +2109,7 @@ void VSICurlHandle::DownloadRegionPostProcess(const vsi_l_offset startOffset,
                 static_cast<unsigned int>(nBlocks * knDOWNLOAD_CHUNK_SIZE));
     }
 
-    vsi_l_offset l_startOffset = startOffset;
+    uint64_t l_startOffset = startOffset;
     while (nSize > 0)
     {
 #if DEBUG_VERBOSE
@@ -2151,7 +2150,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
              static_cast<int>(curOffset), static_cast<int>(nBufferRequestSize));
 #endif
 
-    vsi_l_offset iterOffset = curOffset;
+    uint64_t iterOffset = curOffset;
     const int knMAX_REGIONS = GetMaxRegions();
     const int knDOWNLOAD_CHUNK_SIZE = VSICURLGetDownloadChunkSize();
     while (nBufferRequestSize)
@@ -2169,7 +2168,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             break;
         }
 
-        const vsi_l_offset nOffsetToDownload =
+        const uint64_t nOffsetToDownload =
             (iterOffset / knDOWNLOAD_CHUNK_SIZE) * knDOWNLOAD_CHUNK_SIZE;
         std::string osRegion;
         std::shared_ptr<std::string> psRegion =
@@ -2197,7 +2196,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
 
             // Ensure that we will request at least the number of blocks
             // to satisfy the remaining buffer size to read.
-            const vsi_l_offset nEndOffsetToDownload =
+            const uint64_t nEndOffsetToDownload =
                 ((iterOffset + nBufferRequestSize + knDOWNLOAD_CHUNK_SIZE - 1) /
                  knDOWNLOAD_CHUNK_SIZE) *
                 knDOWNLOAD_CHUNK_SIZE;
@@ -2233,7 +2232,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             }
         }
 
-        const vsi_l_offset nRegionOffset = iterOffset - nOffsetToDownload;
+        const uint64_t nRegionOffset = iterOffset - nOffsetToDownload;
         if (osRegion.size() < nRegionOffset)
         {
             if (iterOffset == curOffset)
@@ -2245,9 +2244,9 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
             break;
         }
 
-        const int nToCopy = static_cast<int>(
-            std::min(static_cast<vsi_l_offset>(nBufferRequestSize),
-                     osRegion.size() - nRegionOffset));
+        const int nToCopy =
+            static_cast<int>(std::min(static_cast<uint64_t>(nBufferRequestSize),
+                                      osRegion.size() - nRegionOffset));
         memcpy(pBuffer, osRegion.data() + nRegionOffset, nToCopy);
         pBuffer = static_cast<char *>(pBuffer) + nToCopy;
         iterOffset += nToCopy;
@@ -2273,7 +2272,7 @@ size_t VSICurlHandle::Read(void *const pBufferIn, size_t const nSize,
 /************************************************************************/
 
 int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
-                                  const vsi_l_offset *const panOffsets,
+                                  const uint64_t *const panOffsets,
                                   const size_t *const panSizes)
 {
     if (bInterrupted && bStopOnInterruptUntilUninstall)
@@ -2540,14 +2539,14 @@ int VSICurlHandle::ReadMultiRange(int const nRanges, void **const ppData,
 // remove it
 int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
                                            void **const ppData,
-                                           const vsi_l_offset *const panOffsets,
+                                           const uint64_t *const panOffsets,
                                            const size_t *const panSizes)
 {
     CPLString osRanges;
     CPLString osFirstRange;
     CPLString osLastRange;
     int nMergedRanges = 0;
-    vsi_l_offset nTotalReqSize = 0;
+    uint64_t nTotalReqSize = 0;
     for (int i = 0; i < nRanges; i++)
     {
         CPLString osCurRange;
@@ -2706,7 +2705,7 @@ int VSICurlHandle::ReadMultiRangeSingleGet(int const nRanges,
     if (nMergedRanges == 1)
     {
         size_t nAccSize = 0;
-        if (static_cast<vsi_l_offset>(nSize) < nTotalReqSize)
+        if (static_cast<uint64_t>(nSize) < nTotalReqSize)
             goto end;
 
         for (int i = 0; i < nRanges; i++)
@@ -2917,8 +2916,7 @@ end:
 /*                              PRead()                                 */
 /************************************************************************/
 
-size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
-                            vsi_l_offset nOffset) const
+size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize, uint64_t nOffset) const
 {
     // Try to use AdviseRead ranges fetched asynchronously
     if (!m_aoAdviseReadRanges.empty())
@@ -2943,7 +2941,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
                 if (nOffset >= nEndOffset)
                     return 0;
                 const size_t nToCopy = static_cast<size_t>(
-                    std::min<vsi_l_offset>(nSize, nEndOffset - nOffset));
+                    std::min<uint64_t>(nSize, nEndOffset - nOffset));
                 memcpy(pBuffer,
                        poRange->abyData.data() +
                            static_cast<size_t>(nOffset - poRange->nStartOffset),
@@ -3089,7 +3087,7 @@ size_t VSICurlHandle::PRead(void *pBuffer, size_t nSize,
 /*                         AdviseRead()                                 */
 /************************************************************************/
 
-void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
+void VSICurlHandle::AdviseRead(int nRanges, const uint64_t *panOffsets,
                                const size_t *panSizes)
 {
     if (!CPLTestBool(
@@ -3102,7 +3100,7 @@ void VSICurlHandle::AdviseRead(int nRanges, const vsi_l_offset *panOffsets,
     }
 
     // Give up if we need to allocate too much memory
-    vsi_l_offset nMaxSize = 0;
+    uint64_t nMaxSize = 0;
     for (int i = 0; i < nRanges; ++i)
     {
         if (panSizes[i] > 100 * 1024 * 1024 - nMaxSize)
@@ -3603,7 +3601,7 @@ VSICurlFilesystemHandlerBase::GetRegionCache()
 
 std::shared_ptr<std::string>
 VSICurlFilesystemHandlerBase::GetRegion(const char *pszURL,
-                                        vsi_l_offset nFileOffsetStart)
+                                        uint64_t nFileOffsetStart)
 {
     CPLMutexHolder oHolder(&hMutex);
 
@@ -3626,7 +3624,7 @@ VSICurlFilesystemHandlerBase::GetRegion(const char *pszURL,
 /************************************************************************/
 
 void VSICurlFilesystemHandlerBase::AddRegion(const char *pszURL,
-                                             vsi_l_offset nFileOffsetStart,
+                                             uint64_t nFileOffsetStart,
                                              size_t nSize, const char *pData)
 {
     CPLMutexHolder oHolder(&hMutex);
@@ -5309,7 +5307,7 @@ VSIAppendWriteHandle::~VSIAppendWriteHandle()
 /*                               Seek()                                 */
 /************************************************************************/
 
-int VSIAppendWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIAppendWriteHandle::Seek(uint64_t nOffset, int nWhence)
 {
     if (!((nWhence == SEEK_SET && nOffset == m_nCurOffset) ||
           (nWhence == SEEK_CUR && nOffset == 0) ||
@@ -5328,7 +5326,7 @@ int VSIAppendWriteHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                               Tell()                                 */
 /************************************************************************/
 
-vsi_l_offset VSIAppendWriteHandle::Tell()
+uint64_t VSIAppendWriteHandle::Tell()
 {
     return m_nCurOffset;
 }

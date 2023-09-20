@@ -273,10 +273,9 @@ CPLErr IRISRasterBand::IReadBlock(int /* nBlockXOff */, int nBlockYOff,
 
     VSIFSeekL(poGDS->fp,
               640 +
-                  static_cast<vsi_l_offset>(nDataLength) *
-                      poGDS->GetRasterXSize() * poGDS->GetRasterYSize() *
-                      (this->nBand - 1) +
-                  static_cast<vsi_l_offset>(nBlockXSize) * nDataLength *
+                  static_cast<uint64_t>(nDataLength) * poGDS->GetRasterXSize() *
+                      poGDS->GetRasterYSize() * (this->nBand - 1) +
+                  static_cast<uint64_t>(nBlockXSize) * nDataLength *
                       (poGDS->GetRasterYSize() - 1 - nBlockYOff),
               SEEK_SET);
 

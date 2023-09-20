@@ -252,8 +252,8 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
                      : GDT_Int16;
     const int nDTSize = GDALGetDataTypeSizeBytes(eDT);
     if (!GDALCheckDatasetDimensions(nCols, nRows) ||
-        (nDTSize > 0 && static_cast<vsi_l_offset>(nCols) * nRows >
-                            std::numeric_limits<vsi_l_offset>::max() / nDTSize))
+        (nDTSize > 0 && static_cast<uint64_t>(nCols) * nRows >
+                            std::numeric_limits<uint64_t>::max() / nDTSize))
     {
         return nullptr;
     }
@@ -301,7 +301,7 @@ GDALDataset *NOAA_B_Dataset::Open(GDALOpenInfo *poOpenInfo)
         poDS.get(), 1, fpImage,
         // skip to beginning of northern-most line
         HEADER_SIZE +
-            static_cast<vsi_l_offset>(poDS->nRasterYSize - 1) * nLineSize +
+            static_cast<uint64_t>(poDS->nRasterYSize - 1) * nLineSize +
             FORTRAN_HEADER_SIZE,
         nDTSize, -nLineSize, eDT,
         bBigEndian ? RawRasterBand::ByteOrder::ORDER_BIG_ENDIAN

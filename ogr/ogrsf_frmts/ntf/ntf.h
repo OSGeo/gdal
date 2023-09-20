@@ -245,9 +245,9 @@ class NTFFileReader
     double dfScale;
     double dfPaperToGround;
 
-    vsi_l_offset nStartPos;
-    vsi_l_offset nPreSavedPos;
-    vsi_l_offset nPostSavedPos;
+    uint64_t nStartPos;
+    uint64_t nPreSavedPos;
+    uint64_t nPostSavedPos;
     NTFRecord *poSavedRecord;
 
     long nSavedFeatureId;
@@ -282,7 +282,7 @@ class NTFFileReader
 
     OGRNTFRasterLayer *poRasterLayer;
 
-    vsi_l_offset *panColumnOffset;
+    uint64_t *panColumnOffset;
 
     int bCacheLines;
     int nLineCacheSize;
@@ -300,8 +300,8 @@ class NTFFileReader
     {
         return fp;
     }
-    void GetFPPos(vsi_l_offset *pnPos, long *pnFeatureId);
-    int SetFPPos(vsi_l_offset nPos, long nFeatureId);
+    void GetFPPos(uint64_t *pnPos, long *pnFeatureId);
+    int SetFPPos(uint64_t nPos, long nFeatureId);
     void Reset();
     void SetBaseFID(long nFeatureId);
 
@@ -442,7 +442,7 @@ class OGRNTFLayer final : public OGRLayer
     OGRNTFDataSource *poDS;
 
     int iCurrentReader;
-    vsi_l_offset nCurrentPos;
+    uint64_t nCurrentPos;
     long nCurrentFID;
 
   public:
@@ -580,7 +580,7 @@ class OGRNTFDataSource final : public OGRDataSource
 
     int iCurrentFC;
     int iCurrentReader;
-    vsi_l_offset nCurrentPos;
+    uint64_t nCurrentPos;
     long nCurrentFID;
 
     int nNTFFileCount;

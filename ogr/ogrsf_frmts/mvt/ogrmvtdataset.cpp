@@ -3047,7 +3047,7 @@ GDALDataset *OGRMVTDataset::Open(GDALOpenInfo *poOpenInfo)
     {
         // Check file size and ingest into memory
         VSIFSeekL(fp, 0, SEEK_END);
-        vsi_l_offset nFileSizeL = VSIFTellL(fp);
+        uint64_t nFileSizeL = VSIFTellL(fp);
         if (nFileSizeL > 10 * 1024 * 1024)
         {
             VSIFCloseL(fp);
@@ -4592,7 +4592,7 @@ static void GZIPCompress(std::string &oTileBuffer)
             VSIFWriteL(oTileBuffer.data(), 1, oTileBuffer.size(), fpGZip);
             VSIFCloseL(fpGZip);
 
-            vsi_l_offset nCompressedSize = 0;
+            uint64_t nCompressedSize = 0;
             GByte *pabyCompressed =
                 VSIGetMemFileBuffer(osTmpFilename, &nCompressedSize, false);
             oTileBuffer.assign(reinterpret_cast<char *>(pabyCompressed),

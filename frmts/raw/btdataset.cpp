@@ -139,7 +139,7 @@ CPLErr BTRasterBand::IReadBlock(int nBlockXOff, CPL_UNUSED int nBlockYOff,
     /* -------------------------------------------------------------------- */
     if (VSIFSeekL(fpImage,
                   256 + nBlockXOff * nDataSize *
-                            static_cast<vsi_l_offset>(nRasterYSize),
+                            static_cast<uint64_t>(nRasterYSize),
                   SEEK_SET) != 0)
     {
         CPLError(CE_Failure, CPLE_FileIO, ".bt Seek failed:%s",
@@ -920,7 +920,7 @@ GDALDataset *BTDataset::Create(const char *pszFilename, int nXSize, int nYSize,
     if (VSIFWriteL(abyHeader, 256, 1, fp) != 1 ||
         VSIFSeekL(fp,
                   (GDALGetDataTypeSize(eType) / 8) * nXSize *
-                          static_cast<vsi_l_offset>(nYSize) -
+                          static_cast<uint64_t>(nYSize) -
                       1,
                   SEEK_CUR) != 0 ||
         VSIFWriteL(abyHeader + 255, 1, 1, fp) != 1)

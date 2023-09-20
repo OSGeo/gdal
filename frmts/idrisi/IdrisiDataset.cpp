@@ -1007,8 +1007,7 @@ GDALDataset *IdrisiDataset::Create(const char *pszFilename, int nXSize,
                               : EQUAL(pszLDataType, rstINTEGER) ? 2
                               : EQUAL(pszLDataType, rstRGB24)   ? 3
                                                                 : 4;
-    VSIFTruncateL(fp,
-                  static_cast<vsi_l_offset>(nXSize) * nYSize * nTargetDTSize);
+    VSIFTruncateL(fp, static_cast<uint64_t>(nXSize) * nYSize * nTargetDTSize);
     VSIFCloseL(fp);
 
     return (IdrisiDataset *)GDALOpen(pszFilename, GA_Update);
@@ -1439,8 +1438,7 @@ CPLErr IdrisiRasterBand::IReadBlock(int nBlockXOff, int nBlockYOff,
 {
     IdrisiDataset *poGDS = (IdrisiDataset *)poDS;
 
-    if (VSIFSeekL(poGDS->fp, vsi_l_offset(nRecordSize) * nBlockYOff, SEEK_SET) <
-        0)
+    if (VSIFSeekL(poGDS->fp, uint64_t(nRecordSize) * nBlockYOff, SEEK_SET) < 0)
     {
         CPLError(CE_Failure, CPLE_FileIO,
                  "Can't seek(%s) block with X offset %d and Y offset %d.\n%s",
@@ -1501,8 +1499,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
     {
         if (nBand > 1)
         {
-            VSIFSeekL(poGDS->fp, vsi_l_offset(nRecordSize) * nBlockYOff,
-                      SEEK_SET);
+            VSIFSeekL(poGDS->fp, uint64_t(nRecordSize) * nBlockYOff, SEEK_SET);
             VSIFReadL(pabyScanLine, 1, nRecordSize, poGDS->fp);
         }
         int i, j;
@@ -1518,7 +1515,7 @@ CPLErr IdrisiRasterBand::IWriteBlock(int nBlockXOff, int nBlockYOff,
         GDALSwapWords(pImage, 4, nBlockXSize * nBlockYSize, 4);
 #endif
 
-    VSIFSeekL(poGDS->fp, vsi_l_offset(nRecordSize) * nBlockYOff, SEEK_SET);
+    VSIFSeekL(poGDS->fp, uint64_t(nRecordSize) * nBlockYOff, SEEK_SET);
 
     if ((int)VSIFWriteL(pabyScanLine, 1, nRecordSize, poGDS->fp) < nRecordSize)
     {

@@ -61,7 +61,7 @@ class PDS4TableBaseLayer CPL_NON_FINAL : public OGRLayer
     VSILFILE *m_fp = nullptr;
     int64_t m_nFeatureCount = -1;
     int64_t m_nFID = 1;
-    vsi_l_offset m_nOffset = 0;
+    uint64_t m_nOffset = 0;
     CPLStringList m_aosLCO{};
     std::string m_osLineEnding{};
 
@@ -337,7 +337,7 @@ class PDS4Dataset final : public RawDataset
     friend class PDS4WrapperRasterBand;
 
     VSILFILE *m_fpImage = nullptr;
-    vsi_l_offset m_nBaseOffset = 0;
+    uint64_t m_nBaseOffset = 0;
     GDALDataset *m_poExternalDS = nullptr;  // external dataset (GeoTIFF)
     OGRSpatialReference m_oSRS{};
     bool m_bGotTransform = false;
@@ -462,7 +462,7 @@ class PDS4RawRasterBand final : public RawRasterBand
 
   public:
     PDS4RawRasterBand(GDALDataset *l_poDS, int l_nBand, VSILFILE *l_fpRaw,
-                      vsi_l_offset l_nImgOffset, int l_nPixelOffset,
+                      uint64_t l_nImgOffset, int l_nPixelOffset,
                       int l_nLineOffset, GDALDataType l_eDataType,
                       RawRasterBand::ByteOrder eByteOrderIn);
     virtual ~PDS4RawRasterBand()

@@ -975,11 +975,11 @@ CPLErr AIGReadBlockIndex(AIGInfo_t *psInfo, AIGTileInfo *psTInfo,
     if (psTInfo->nBlocks >= 1000000)
     {
         // Avoid excessive memory consumption.
-        vsi_l_offset nFileSize;
+        uint64_t nFileSize;
         VSIFSeekL(fp, 0, SEEK_END);
         nFileSize = VSIFTellL(fp);
         if (nFileSize < 100 ||
-            (vsi_l_offset)psTInfo->nBlocks > (nFileSize - 100) / 8)
+            (uint64_t)psTInfo->nBlocks > (nFileSize - 100) / 8)
         {
             CPL_IGNORE_RET_VAL_INT(VSIFCloseL(fp));
             return CE_Failure;

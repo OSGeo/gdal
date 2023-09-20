@@ -151,8 +151,8 @@ struct VSILibArchiveClientData
             whence = SEEK_SET;
             offset = poClientData->m_poBaseHandle->Tell() + offset;
         }
-        if (poClientData->m_poBaseHandle->Seek(
-                static_cast<vsi_l_offset>(offset), whence) != 0)
+        if (poClientData->m_poBaseHandle->Seek(static_cast<uint64_t>(offset),
+                                               whence) != 0)
             return ARCHIVE_FATAL;
         return static_cast<la_int64_t>(poClientData->m_poBaseHandle->Tell());
     }
@@ -363,7 +363,7 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
     const std::string m_osFilename;
     std::unique_ptr<VSILibArchiveReader> m_poReader;
     std::unique_ptr<VSIArchiveEntryFileOffset> m_pOffset;
-    vsi_l_offset m_nOffset = 0;
+    uint64_t m_nOffset = 0;
     bool m_bEOF = false;
     bool m_bError = false;
 
@@ -376,8 +376,8 @@ class VSILibArchiveHandler final : public VSIVirtualHandle
     }
 
     virtual size_t Read(void *pBuffer, size_t nSize, size_t nCount) override;
-    virtual int Seek(vsi_l_offset nOffset, int nWhence) override;
-    virtual vsi_l_offset Tell() override
+    virtual int Seek(uint64_t nOffset, int nWhence) override;
+    virtual uint64_t Tell() override
     {
         return m_nOffset;
     }
@@ -421,7 +421,7 @@ size_t VSILibArchiveHandler::Read(void *pBuffer, size_t nSize, size_t nCount)
 /*                                Seek()                                */
 /************************************************************************/
 
-int VSILibArchiveHandler::Seek(vsi_l_offset nOffset, int nWhence)
+int VSILibArchiveHandler::Seek(uint64_t nOffset, int nWhence)
 {
     if (m_bError)
         return -1;
@@ -456,7 +456,7 @@ int VSILibArchiveHandler::Seek(vsi_l_offset nOffset, int nWhence)
     while (m_nOffset < nNewOffset)
     {
         size_t nToRead = static_cast<size_t>(
-            std::min<vsi_l_offset>(abyBuffer.size(), nNewOffset - m_nOffset));
+            std::min<uint64_t>(abyBuffer.size(), nNewOffset - m_nOffset));
         if (Read(abyBuffer.data(), 1, nToRead) != nToRead)
             break;
     }

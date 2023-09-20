@@ -63,20 +63,20 @@ class VSIBufferedReaderHandle final : public VSIVirtualHandle
     uint64_t nCurOffset = 0;
     bool bNeedBaseHandleSeek = false;
     bool bEOF = false;
-    vsi_l_offset nCheatFileSize = 0;
+    uint64_t nCheatFileSize = 0;
 
-    int SeekBaseTo(vsi_l_offset nTargetOffset);
+    int SeekBaseTo(uint64_t nTargetOffset);
 
   public:
     explicit VSIBufferedReaderHandle(VSIVirtualHandle *poBaseHandle);
     VSIBufferedReaderHandle(VSIVirtualHandle *poBaseHandle,
                             const GByte *pabyBeginningContent,
-                            vsi_l_offset nCheatFileSizeIn);
+                            uint64_t nCheatFileSizeIn);
     // TODO(schwehr): Add override when support dropped for VS2008.
     ~VSIBufferedReaderHandle() override;
 
-    int Seek(vsi_l_offset nOffset, int nWhence) override;
-    vsi_l_offset Tell() override;
+    int Seek(uint64_t nOffset, int nWhence) override;
+    uint64_t Tell() override;
     size_t Read(void *pBuffer, size_t nSize, size_t nMemb) override;
     size_t Write(const void *pBuffer, size_t nSize, size_t nMemb) override;
     int Eof() override;
@@ -98,7 +98,7 @@ VSIVirtualHandle *VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle)
 VSIVirtualHandle *
 VSICreateBufferedReaderHandle(VSIVirtualHandle *poBaseHandle,
                               const GByte *pabyBeginningContent,
-                              vsi_l_offset nCheatFileSizeIn)
+                              uint64_t nCheatFileSizeIn)
 {
     return new VSIBufferedReaderHandle(poBaseHandle, pabyBeginningContent,
                                        nCheatFileSizeIn);
@@ -118,7 +118,7 @@ VSIBufferedReaderHandle::VSIBufferedReaderHandle(VSIVirtualHandle *poBaseHandle)
 
 VSIBufferedReaderHandle::VSIBufferedReaderHandle(
     VSIVirtualHandle *poBaseHandle, const GByte *pabyBeginningContent,
-    vsi_l_offset nCheatFileSizeIn)
+    uint64_t nCheatFileSizeIn)
     : m_poBaseHandle(poBaseHandle),
       pabyBuffer(static_cast<GByte *>(CPLMalloc(
           std::max(MAX_BUFFER_SIZE, static_cast<int>(poBaseHandle->Tell()))))),
@@ -143,7 +143,7 @@ VSIBufferedReaderHandle::~VSIBufferedReaderHandle()
 /*                               Seek()                                 */
 /************************************************************************/
 
-int VSIBufferedReaderHandle::Seek(vsi_l_offset nOffset, int nWhence)
+int VSIBufferedReaderHandle::Seek(uint64_t nOffset, int nWhence)
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("BUFFERED", "Seek(%d,%d)", static_cast<int>(nOffset),
@@ -180,7 +180,7 @@ int VSIBufferedReaderHandle::Seek(vsi_l_offset nOffset, int nWhence)
 /*                               Tell()                                 */
 /************************************************************************/
 
-vsi_l_offset VSIBufferedReaderHandle::Tell()
+uint64_t VSIBufferedReaderHandle::Tell()
 {
 #ifdef DEBUG_VERBOSE
     CPLDebug("BUFFERED", "Tell() = %d", static_cast<int>(nCurOffset));
@@ -192,7 +192,7 @@ vsi_l_offset VSIBufferedReaderHandle::Tell()
 /*                           SeekBaseTo()                               */
 /************************************************************************/
 
-int VSIBufferedReaderHandle::SeekBaseTo(vsi_l_offset nTargetOffset)
+int VSIBufferedReaderHandle::SeekBaseTo(uint64_t nTargetOffset)
 {
     if (m_poBaseHandle->Seek(nTargetOffset, SEEK_SET) == 0)
         return TRUE;
@@ -201,7 +201,7 @@ int VSIBufferedReaderHandle::SeekBaseTo(vsi_l_offset nTargetOffset)
     if (nCurOffset > nTargetOffset)
         return FALSE;
 
-    const vsi_l_offset nMaxOffset = 8192;
+    const uint64_t nMaxOffset = 8192;
 
     std::vector<char> oTemp(nMaxOffset, 0);
     char *pabyTemp = &oTemp[0];

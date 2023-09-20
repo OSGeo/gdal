@@ -3564,8 +3564,8 @@ static void NITFLoadColormapSubSection(NITFImage *psImage)
 
     for (i = 0; bOK && i < nOffsetRecs; i++)
     {
-        vsi_l_offset nOffset = (vsi_l_offset)nLocBaseColormapSubSection +
-                               colormapRecords[i].colorTableOffset;
+        uint64_t nOffset = (uint64_t)nLocBaseColormapSubSection +
+                           colormapRecords[i].colorTableOffset;
         if (VSIFSeekL(psFile->fp, nOffset, SEEK_SET) != 0)
         {
             CPLError(CE_Failure, CPLE_FileIO, "Failed to seek to %" PRIu64 ".",
@@ -4043,8 +4043,8 @@ static int NITFLoadVQTables(NITFImage *psImage, int bTryGuessingOffset)
         bOK &= VSIFReadL(&nVQVector, 1, 4, psImage->psFile->fp) == 4;
         nVQVector = CPL_MSBWORD32(nVQVector);
 
-        bOK &= VSIFSeekL(psImage->psFile->fp,
-                         (vsi_l_offset)(nVQOffset) + nVQVector, SEEK_SET) == 0;
+        bOK &= VSIFSeekL(psImage->psFile->fp, (uint64_t)(nVQOffset) + nVQVector,
+                         SEEK_SET) == 0;
         bOK &= VSIFReadL(psImage->apanVQLUT[i], 4, 4096, psImage->psFile->fp) ==
                4096;
         if (!bOK)

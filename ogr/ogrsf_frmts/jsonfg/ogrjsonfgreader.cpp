@@ -293,9 +293,8 @@ bool OGRJSONFGReader::AnalyzeWithStreamingParser(
     if (!oParser.IsTypeKnown() || !oParser.IsFeatureCollection())
     {
         fp->Seek(0, SEEK_END);
-        const vsi_l_offset nFileSize = fp->Tell();
-        const vsi_l_offset nRAM =
-            static_cast<vsi_l_offset>(CPLGetUsablePhysicalRAM());
+        const uint64_t nFileSize = fp->Tell();
+        const uint64_t nRAM = static_cast<uint64_t>(CPLGetUsablePhysicalRAM());
         if (nRAM == 0 || nRAM > nFileSize * 20)
         {
             // Only try full ingestion if we have 20x more RAM than the file

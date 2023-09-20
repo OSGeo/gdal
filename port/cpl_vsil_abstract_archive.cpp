@@ -165,7 +165,7 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
     {
         VSIArchiveContent *content = oFileList[archiveFilename];
         if (static_cast<time_t>(sStat.st_mtime) > content->mTime ||
-            static_cast<vsi_l_offset>(sStat.st_size) != content->nFileSize)
+            static_cast<uint64_t>(sStat.st_size) != content->nFileSize)
         {
             CPLDebug("VSIArchive",
                      "The content of %s has changed since it was cached",
@@ -196,7 +196,7 @@ VSIArchiveFilesystemHandler::GetContentOfArchive(const char *archiveFilename,
 
     VSIArchiveContent *content = new VSIArchiveContent;
     content->mTime = sStat.st_mtime;
-    content->nFileSize = static_cast<vsi_l_offset>(sStat.st_size);
+    content->nFileSize = static_cast<uint64_t>(sStat.st_size);
     content->nEntries = 0;
     content->entries = nullptr;
     oFileList[archiveFilename] = content;
