@@ -1198,12 +1198,8 @@ def test_ogr_parquet_statistics():
             outfilename, "data/parquet/test.parquet", options="-lco STATISTICS=NO"
         )
         ds = ogr.Open(outfilename)
-        with pytest.raises(
-            Exception,
-            match=r".*Use of field function MIN\(\) on string field string illegal.*",
-        ):
-            # Generic OGR SQL doesn't support MIN() on string field
-            ds.ExecuteSQL("SELECT MIN(string) FROM out")
+        with ds.ExecuteSQL("SELECT MIN(string) FROM out") as sql_lyr:
+            pass
         ds = None
 
     finally:
