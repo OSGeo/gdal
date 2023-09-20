@@ -142,7 +142,7 @@ int CPL_DLL VSIStat(const char *, VSIStatBuf *) CPL_WARN_UNUSED_RESULT;
 /*      otherwise redefine to use the regular api.                      */
 /* ==================================================================== */
 
-#ifndef GDAL_COMPILATION
+#if defined(GDAL_USE_OLD_INT_TYPES)
 /** Type for a file offset */
 typedef uint64_t vsi_l_offset;
 #endif

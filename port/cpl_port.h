@@ -177,7 +177,7 @@
 #endif
 #endif /* __cplusplus */
 
-#ifndef GDAL_COMPILATION
+#if defined(GDAL_USE_OLD_INT_TYPES)
 /*---------------------------------------------------------------------
  *        Deprecated types for 16 and 32 bits integers, etc...
  *--------------------------------------------------------------------*/
@@ -216,7 +216,7 @@ typedef unsigned char GByte;
 #endif
 /*! @endcond */
 
-#ifndef GDAL_COMPILATION
+#if defined(GDAL_USE_OLD_INT_TYPES)
 /*---------------------------------------------------------------------
  *        Deprecated types for 64bit integers
  * -------------------------------------------------------------------- */
