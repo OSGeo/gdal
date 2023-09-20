@@ -1153,10 +1153,8 @@ def test_tiff_srs_read_esri_pcs_gcs_ellipsoid_names():
     assert 'ELLIPSOID["Bessel 1841"' in wkt
 
 
+@pytest.mark.require_proj(9, 0)
 def test_tiff_srs_write_projected_3d():
-
-    if osr.GetPROJVersionMajor() < 9:
-        pytest.skip()
 
     filename = "/vsimem/test_tiff_srs_write_projected_3d.tif"
     srs = osr.SpatialReference()
@@ -1168,6 +1166,30 @@ def test_tiff_srs_write_projected_3d():
     gdal.ErrorReset()
     ds = None
     assert gdal.GetLastErrorMsg() == ""
+    assert gdal.VSIStatL(filename + ".aux.xml") is not None
+
+    ds = gdal.Open(filename)
+    gdal.ErrorReset()
+    got_srs = ds.GetSpatialRef()
+    assert got_srs.IsSame(srs)
+    ds = None
+
+    gdal.Unlink(filename)
+
+
+@pytest.mark.require_proj(9, 0)
+def test_tiff_srs_write_projected_3d_built_as_pseudo_compound():
+
+    filename = "/vsimem/test_tiff_srs_write_projected_3d_built_as_pseudo_compound.tif"
+    srs = osr.SpatialReference()
+    srs.SetFromUserInput("EPSG:6340+6319")
+
+    ds = gdal.GetDriverByName("GTiff").Create(filename, 1, 1)
+    ds.SetSpatialRef(srs)
+    gdal.ErrorReset()
+    ds = None
+    assert gdal.GetLastErrorMsg() == ""
+    assert gdal.VSIStatL(filename + ".aux.xml") is not None
 
     ds = gdal.Open(filename)
     gdal.ErrorReset()
