@@ -71,6 +71,7 @@ ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libi
 ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libinternalproj.so"
 
 rm "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib"/libproj.*
+ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO}"
 ln -s "libinternalproj.so.${PROJ_SO}" "${DESTDIR}${PROJ_INSTALL_PREFIX}/lib/libproj.so.${PROJ_SO_FIRST}"
 
 if [ "${WITH_DEBUG_SYMBOLS}" = "yes" ]; then
