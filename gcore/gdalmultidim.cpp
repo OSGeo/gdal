@@ -7758,6 +7758,10 @@ std::shared_ptr<GDALMDArrayResampled> GDALMDArrayResampled::Create(
                      i);
             return nullptr;
         }
+        else
+        {
+            apoNewDims.emplace_back(aoParentDims[i]);
+        }
         anBlockSize.emplace_back(anParentBlockSize[i]);
     }
 
